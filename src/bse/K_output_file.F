@@ -150,10 +150,8 @@ subroutine K_output_file(iq,mode)
    if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
  endif
  if(l_jdos_out) call of_open_close(jdos_file_name,title_mode)
- if(l_esrt_out) then
-   call of_open_close(e_ip_file_name,title_mode)
-   call of_open_close(esort_file_name,title_mode)
- endif
+ if(l_esrt_out) call of_open_close(e_ip_file_name,title_mode)
+ if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name,title_mode)
  !
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -663,10 +661,8 @@ subroutine K_output_file(iq,mode)
      endif
      !
      if(l_jdos_out) call of_open_close(jdos_file_name)
-     if(l_esrt_out) then
-       call of_open_close(e_ip_file_name)
-       call of_open_close(esort_file_name)
-     endif
+     if(l_esrt_out) call of_open_close(e_ip_file_name)
+     if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name)
      !
    end subroutine
    !

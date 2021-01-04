@@ -25,7 +25,7 @@ subroutine ELECTR_initial_check(k,Dip)
  !
  use pars,        ONLY:SP
  use units,       ONLY:AU2VMm1
- use com,         ONLY:error,msg,warning
+ use com,         ONLY:msg
  use DIPOLES,     ONLY:DIPOLE_t
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
@@ -66,7 +66,7 @@ subroutine ELECTR_initial_check(k,Dip)
  Efield(1)%t_initial     =0._SP
  Efield(1)%ef_pol        ="linear"
  !
- call Check_symmetries(Efield(1)%versor)
+ call Check_symmetries(Efield(1)%versor,"electric")
  !
  Dip%approach='Covariant'
  !
@@ -77,6 +77,6 @@ subroutine ELECTR_initial_check(k,Dip)
  !
  call msg( 'sr', 'Static Electric Field ')
  call msg( 'sr', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'sr', 'Efield Amplitude    [kV/cm]',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
+ call msg( 'sr', 'Efield Amplitude           ',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP,"[kV/cm]")
  !
 end subroutine

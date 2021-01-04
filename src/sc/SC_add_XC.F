@@ -143,14 +143,10 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
      !
      if (.not.l_oep_iterative) V_xc_sc=0._SP
      !
-     !
-     !
      ! OEP's
      !=======
      !
      if (l_sc_exx.or.l_sc_srpa) call OEP_driver(X,Xw(2),E,k,q,V_xc_sc)
-     !
-     !
      !
      ! DFT-like 
      !==========

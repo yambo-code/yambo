@@ -172,7 +172,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1
          do i1=H_ref_bands(1),en%nbf
-            Sm1_plus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz,i_sp),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+            Sm1_plus(i1,i2,id+(istep-1)*3)=&
+            &  Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz,i_sp),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
          enddo
        enddo
 !$omp end parallel do

@@ -36,7 +36,8 @@ subroutine SLK_test(E,k,q)
  use SLK_m,          ONLY:POOL_group,ORTHO_group,SLK_test_H_dim
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use interfaces,     ONLY:PARALLEL_global_indexes,LINEAR_ALGEBRA_driver
+ use interfaces,     ONLY:LINEAR_ALGEBRA_driver
+ use parallel_int,   ONLY:PARALLEL_global_indexes
  use linear_algebra, ONLY:INV,DIAGO,LIN_SYS,MAT_MUL,USE_LK,USE_SLK
  use matrix_operate, ONLY:hermitian
  !
@@ -155,9 +156,9 @@ end subroutine SLK_test
  ! build A = I + scal * randmat
  ! a small value of scal ensures A is invertible
  !
- use pars,       ONLY:SP,DP
- use parallel_m, ONLY:PP_redux_wait
- use SLK_m,      ONLY:SLK_COM_A2A
+ use pars,           ONLY:SP,DP
+ use parallel_int,   ONLY:PP_redux_wait
+ use SLK_m,          ONLY:SLK_COM_A2A
  !
  implicit none
  !

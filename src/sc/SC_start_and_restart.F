@@ -29,7 +29,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  use com,            ONLY:msg
  use electrons,      ONLY:E_reset,E_duplicate
  use dipoles,        ONLY:DIPOLE_t
- use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
+ use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_sc_electric,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp
@@ -82,19 +82,12 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
  ! Magnetic logical setup
  !========================
  !
-#if defined _MAGNETIC
- !
  if (l_sc_magnetic) call MAG_initial_check()
  !
-#endif
- !
-#if defined _ELECTRIC
- !
- call ELECTR_initial_check(Xk,Dip)
- !
- if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
- !
-#endif
+ if(l_sc_electric) then
+   call ELECTR_initial_check(Xk)
+   if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
+ endif
  !
  ! Switch to the user defined potential (if appropriate)
  !========
@@ -147,7 +140,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
    !
    call msg('nr','[SC] Found   accuracy on density      ',rho_convergence)
    call msg('nr','[SC] Found   accuracy on magnetization',magn_convergence)
-   call msg('rn','[SC]                  on energies [ev]',E_convergence*HA2EV)
+   call msg('rn','[SC]                  on energies     ',E_convergence*HA2EV,"[eV]")
    l_SC_cycle=.true. !.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
@@ -187,7 +180,7 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
    call msg('r' ,'[SC] N (N-1) order mixing             ',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      ',SC_rho_threshold)
    if(n_spin>1) call msg('r' ,'[SC]                  on magnetization',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]',SC_E_threshold*HA2EV)
+   call msg('rn','[SC]                  on energies     ',SC_E_threshold*HA2EV,"[eV]")
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &

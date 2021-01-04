@@ -28,26 +28,26 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_RT,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
+&                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
  use collision_ext, ONLY:COH_collisions,HXC_collisions,GW_NEQ_collisions
  use matrix_operate,ONLY:UP_matrix_index
  use hamiltonian,   ONLY:B_mat_index
- use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd,RT_nk
+ use real_time,     ONLY:RT_bands,l_RT_uses_E_FineGd
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,    &
+ use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,&
 &                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k, &
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k,&
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
  ! INDEX
- use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index,PAR_COM_VAL_INDEX_X,PAR_COM_QP_INDEX,&
-&                        PAR_COM_CON_INDEX_X
+ use parallel_m,    ONLY:PAR_DIPk_ibz_index,PAR_Xk_ibz_index,PAR_Q_bz_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range
+ use parallel_m,    ONLY:PAR_DIPk_nibz,PAR_nQ_bz,PAR_Xk_nibz,PAR_G_k_range,PAR_n_Bp_mat_elements
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Bp_mat_ID,PAR_IND_Xk_ibz_ID,      &
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz_ID,&
 &                        PAR_IND_DIPk_ibz_ID,PAR_IND_Q_bz_ID,PAR_IND_WF_b_ID
  !
 #include<memory.h>
@@ -58,7 +58,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO,TOTAL_Nk
+ integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -76,33 +76,26 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  ! The routine PARALLEL_assign_chains_and_COMMs cannot define COMMUNICATORS for internal
  ! A2A when there is no internal distribution
  !
- if (PAR_COM_G_b_INDEX%n_CPU==1) then
-   call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
- endif
- if (PAR_COM_Q_INDEX%n_CPU==1) then
-   call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
- endif
- !
+ if (PAR_COM_G_b_INDEX%n_CPU==1) call COMM_copy(PAR_COM_Xk_ibz_A2A,PAR_COM_G_b_A2A)
+ if (PAR_COM_Q_INDEX%n_CPU==1)   call COMM_copy(PAR_COM_G_b_A2A,PAR_COM_Q_A2A)
  call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_WF_b_INDEX)
- call COMM_copy(PAR_COM_QP_INDEX,PAR_COM_CON_INDEX_X(X_type))
- call COMM_copy(PAR_COM_G_b_INDEX,PAR_COM_VAL_INDEX_X(X_type))
  !
  ! K-points (IBZ)
  !
  CONSECUTIVE=.not.l_RT_uses_E_FineGd
 #if defined _PAR_IO
  CONSECUTIVE=.TRUE.
- TOTAL_Nk   =Xk%nibz
-#else
- CONSECUTIVE=.not.l_RT_uses_E_FineGd
- TOTAL_Nk   =RT_nk
 #endif
+ nk_SERIAL=Xk%nibz
+ if (allocated(PAR_IND_Xk_ibz%weight_1D)) then
+   nk_SERIAL=sum( PAR_IND_Xk_ibz%weight_1D )
+ endif
  call PARALLEL_index(PAR_IND_Xk_ibz,(/Xk%nibz/),COMM=PAR_COM_Xk_ibz_INDEX,CONSECUTIVE=CONSECUTIVE,NO_EMPTIES=.TRUE.)
  PAR_IND_Xk_ibz_ID=PAR_COM_Xk_ibz_INDEX%CPU_id
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT="Real_Time",&
-&         LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=TOTAL_Nk,&
-&         NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
+&                           LOADED=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1),TOTAL=nk_SERIAL,&
+&                           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)
  !
  !.........................................................................
  ! Wave Functions (derived from PAR_COM_Xk_ibz_INDEX and PAR_COM_G_b_INDEX)
@@ -157,7 +150,9 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
    call PP_indexes_reset(PAR_IND_DIPk_ibz)
    !
  endif
- call G_b_to_B_mat(PAR_COM_G_b_INDEX,'B',RT_bands)
+ !
+ call PARALLEL_MATRIX_distribute(PAR_COM_G_b_INDEX,PAR_IND_B_mat,RT_bands)
+ !
  call PAR_INDEX_copy(PAR_IND_Xk_ibz,PAR_IND_DIPk_ibz)
  PAR_IND_DIPk_ibz_ID=PAR_IND_Xk_ibz_ID
  YAMBO_ALLOC(PAR_DIPk_ibz_index,(Xk%nibz))
@@ -178,12 +173,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  do ik = 1, Xk%nibz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
    if (nk_G_IO==0) PAR_G_k_range=ik
-   if (nk_G_IO >0) then
-#if defined _PAR_IO
-     if (ik/=PAR_G_k_range(2)+1) call error(" Non contiguous G distr is not allowed")
-#endif
-     PAR_G_k_range(2)=ik
-   endif
+   if (nk_G_IO >0) PAR_G_k_range(2)=ik
    nk_G_IO=nk_G_IO+1
  enddo
  !
@@ -267,7 +257,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !   "qp"  -> Bp_mat (m,m')
  !.........................................................................
  !
- call G_b_to_B_mat(PAR_COM_Plasma_INDEX,'Bp',RT_bands)
+ call PARALLEL_MATRIX_distribute(PAR_COM_Plasma_INDEX,PAR_IND_Bp_mat,RT_bands,PAR_n_elements=PAR_n_Bp_mat_elements)
  !
  ! Messaging...
  !
@@ -278,7 +268,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  endif
  !
  call PARALLEL_live_message("Bands Matrix (prime)",ENVIRONMENT="Real_Time",&
-&                           LOADED=PAR_IND_Bp_mat%n_of_elements(PAR_IND_Bp_mat_ID+1),&
+&                           LOADED=PAR_n_Bp_mat_elements,&
 &                           TOTAL=(RT_bands(2)-RT_bands(1)+1)**2,NCPU=PAR_COM_Plasma_INDEX%n_CPU)
  !
  ! When the collisons are note evaluated the I/O is dictated by Response_G_space

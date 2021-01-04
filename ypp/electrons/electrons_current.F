@@ -54,8 +54,9 @@ subroutine electrons_current(Xk,Xen)
  !
  v2plot=v2plot/abs(maxval( v2plot ))
  !
- call msg("s",'Current integrals (x,y,z) [nAmpere]',&
-&             (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere)
+ call msg("s",'Current integrals (x,y,z)',&
+&             (/Sum(el_cur(:,1)),Sum(el_cur(:,2)),Sum(el_cur(:,3))/)*AU2nAmpere,&
+&             '[nAmpere]')
  !
  l_norm_to_one=.true.
  !

@@ -45,18 +45,40 @@ module BS
  logical :: BS_K_has_been_calculated_loaded
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
+ character(schlen) :: BSE_prop
  character(schlen) :: BSK_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  !
+ ! Kind of response function
+ !===========================
+ logical :: l_BS_jdos
+ logical :: l_BS_trace
+ logical :: l_BS_abs
+ logical :: l_BS_kerr
+ logical :: l_BS_photolum
+ logical :: l_BS_magnons
+ logical :: l_BS_dichroism
+ logical :: l_BS_optics
+ logical :: l_BS_esort
+ logical :: l_BS_anomalous_hall
+ logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
+                            ! - n_sp_pol==2 finite Q or magnons, Res and Ares are independent: --> no coupling = diag 2 BSE matricies
+                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
+                            ! - n_spinor==2, finite Q only,      Res and Ares are independent: --> no coupling = diag 2 BSE matricies
+                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
+ !
  ! Dimensions
  !=============
- integer :: BS_K_dim
+ integer :: BS_K_dim(2)
  integer :: BS_H_dim
- integer :: BS_IO_dim(2)
+ integer :: BS_mat_res_ares_dim ! If resonant and non-resonant part are not related
+ integer :: BS_res_ares_dim     ! If resonant and non-resonant part are not related
+ integer :: BS_IO_dim(2,4)
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ integer :: BS_dip_size
  real(SP):: BS_K_cutoff
  real(SP):: BS_max_val
  real(SP),allocatable :: BSqpts(:,:)
@@ -81,27 +103,43 @@ module BS
  type(elemental_collision), save :: K_EXCH_collision
  type(elemental_collision), save :: K_CORR_collision
  !
+ ! Dimensions tables
+ ! 
+ ! R/A Asymmetry: finite q BSE & magnons with n_sp_pol=2
+ ! In the asymmetric case also the anti-resonant residuals are in the groups
+ !
+ !  R/A symm    RES/RET/CPL   BSS_f/BSS_E/BSS_dip   res_ares_dim    BS_mats_to_solve     BS_mat_size    
+ !
+ !    S          RES             BS_K_dim(1)              1              1                 BS_K_dim(1)
+ !
+ !    S          RET             BS_K_dim(1)              1              1                 BS_K_dim(1)
+ !    S          CPL             BS_H_dim                 1              1                 BS_H_dim
+ !
+ !    A          RET      BS_H_dim=BS_K(1)+BS_K(2)        2              2                 BS_K_dim(1),BS_K_dim(2)
+ !    A          CPL             BS_H_dim                 2              1                 BS_H_dim
+ !
+ !
  ! CV transitions space ...
  !=========================
  type BS_T_group
    !
-   integer                       :: ik         ! ik index (IBZ)
-   integer                       :: first_cv   ! Position in the cv transitions @ k
-   integer                       :: size       
-   integer,     allocatable      :: table(:,:) ! (/ikbz,iv,ic,i_sp/) (i_sp is spin, is is symmetry)
-   complex(SP), allocatable      :: dipoles_R(:)
-   complex(SP), allocatable      :: dipoles_A(:)
-   complex(SP), allocatable      :: dipoles_R_kerr(:)
-   complex(SP), allocatable      :: dipoles_A_kerr(:)
-   complex(SP), allocatable      :: dipoles_R_PL(:,:)
-   complex(SP), allocatable      :: dipoles_A_PL(:,:)
-   complex(SP), allocatable      :: Z(:)
-   real(SP)   , allocatable      :: E(:)
+   integer                       :: i_T_ref                    ! first group of the res or ares block
+   integer                       :: i_res_ares                 ! if it is a resonant or an anti-resonant transition
+   integer                       :: ik                         ! ik index (IBZ)
+   integer                       :: first_cv                   ! Position in the cv transitions @ k
+   integer                       :: size
+   integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
+   real(SP)   , allocatable      :: E(:)                       ! (/ i_Tr  /)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
-   real(SP)   , allocatable      :: f_PL(:,:)
+   real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent
    real(SP)   , allocatable      :: W(:)
-   real(SP)   , allocatable      :: E_SOC_corr(:,:)
+   real(SP)   , allocatable      :: E_SOC_corr(:,:)            ! (/2/n_sp_pol; i_Tr /)
+   complex(SP), allocatable      :: Z(:)
+   ! For dipoles the anti-resonant component is always stored
+   complex(SP), allocatable      :: dipoles_opt(:,:,:)         ! (/x,y,z ; i_Tr ;   2)
+   complex(SP), allocatable      :: dipoles_dic(:,:,:)         ! (/x,y,z ; i_Tr ;   2) 
+   complex(SP), allocatable      :: dipoles_mag(:,:,:)         ! (/S+,S-,Sz ; i_Tr; 2)
    !
    ! Exchange Oscillators
    !
@@ -124,6 +162,10 @@ module BS
    integer                       :: ip            ! ip index (ik -> ip transition) (IBZ)
    integer                       :: iT_k          ! Index (among n_BS_T_grps) of the cv transitions @ k
    integer                       :: iT_p          ! Index (among n_BS_T_grps) of the cv transitions @ p
+   integer                       :: iT_k_st       ! Index to start counting for H_pos @ k
+   integer                       :: iT_p_st       ! Index to start counting for H_pos @ p
+   integer                       :: ira_k         ! Index if transition is resonant or aresonant @ k
+   integer                       :: ira_p         ! Index if transition is resonant or aresonant @ p
    integer                       :: size(2)       ! rows x columns
    integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
    character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
@@ -184,8 +226,8 @@ module BS
      use pars,       ONLY:IP
      use stderr,     ONLY:intc
      !
-     logical :: EXCHANGE,CORRELATION
-     integer :: iG,iB
+     logical, intent(in) :: EXCHANGE,CORRELATION
+     integer, intent(in) :: iG,iB
      !
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
@@ -208,7 +250,7 @@ module BS
    !
    subroutine BS_oscillators_free(iG_ref,iB_ref)
      use stderr,     ONLY:intc
-     integer :: iG_ref,iB_ref
+     integer, intent(in) :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
        YAMBO_FREE(BS_T_grp(iG)%O_x)
@@ -242,35 +284,28 @@ module BS
    subroutine BS_Blocks_and_Transitions_alloc(E,iT)
      !
      use pars,       ONLY:IP,cZERO
-     use drivers,    ONLY:l_kerr,l_photolum
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
-     integer      :: iT,nT
-     type(levels) :: E
-     !
-     if(iT==0) then
-       return
-     endif
+     integer,      intent(in) :: iT
+     type(levels), intent(in) :: E
+     integer :: nT,nDIP
      !
      nT=BS_T_grp(iT)%size
+     nDIP=2/BS_res_ares_dim
      !
-     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R,(nT))
-     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A,(nT))
-     BS_T_grp(iT)%dipoles_R=cZERO
-     BS_T_grp(iT)%dipoles_A=cZERO
-     if(l_kerr) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_kerr,(nT))
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_kerr,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%dipoles_opt,(BS_dip_size,nT,nDIP))
+     BS_T_grp(iT)%dipoles_opt=cZERO
+     if(l_BS_magnons) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_mag,(2,nT,nDIP))
      endif
-     if(l_photolum) then
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_R_PL,(nT,3))
-       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_A_PL,(nT,3))
+     if(l_BS_dichroism) then
+       YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
-     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,4))
+     YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
-     YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(2,nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(nT,2))
      if (allocated(E%Z)) then
        YAMBO_ALLOC(BS_T_grp(iT)%Z,(nT))
      endif
@@ -283,9 +318,12 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_blks_free()
+   subroutine BS_blks_free(i_BS_mat)
+     integer, intent(in) :: i_BS_mat
      integer :: iB
      do iB=1,n_BS_blks
+       if(i_BS_mat/=BS_blk(iB)%ira_k) cycle
+       if(.not.allocated(BS_blk(iB)%mat)) cycle
        YAMBO_FREE(BS_blk(iB)%mat)
        deallocate(BS_blk(iB)%done)
      enddo
@@ -293,7 +331,6 @@ module BS
    !
    subroutine BS_Blocks_and_Transitions_free()
      use stderr,     ONLY:intc
-     use drivers,    ONLY:l_kerr,l_photolum
      use parallel_m, ONLY:PAR_BS_T_grps_index
      integer :: iT
      !
@@ -305,11 +342,12 @@ module BS
        !
        if (.not.allocated(BS_T_grp(iT)%table)) cycle
        !
-       YAMBO_FREE(BS_T_grp(iT)%dipoles_R)
-       YAMBO_FREE(BS_T_grp(iT)%dipoles_A)
-       if (l_kerr) then
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_R_kerr)
-         YAMBO_FREE(BS_T_grp(iT)%dipoles_A_kerr)
+       YAMBO_FREE(BS_T_grp(iT)%dipoles_opt)
+       if (l_BS_magnons) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_mag)
+       endif
+       if (l_BS_dichroism) then
+         YAMBO_FREE(BS_T_grp(iT)%dipoles_dic)
        endif
        YAMBO_FREE(BS_T_grp(iT)%table)
        YAMBO_FREE(BS_T_grp(iT)%E)
@@ -351,20 +389,25 @@ module BS
        i_Tk  =BS_blk(i_B)%iT_k
        i_Tp  =BS_blk(i_B)%iT_p
        !
-       ! Resonant part (mode ==R) is hermitian
-       ! Coupling part (mode ==A) is symmetric
-       !
        if (i_Tk/=i_Tp) cycle
        !
-       do i_r=1,BS_blk(i_B)%size(1)
-         do i_c=i_r+1,BS_blk(i_B)%size(2)
-           if (BS_blk(i_B)%mode=="R") then
+       select case(BS_blk(i_B)%mode)
+       case("R","A")
+         ! Resonant ("R") and anti-resonant ("A") parts are hermitian
+         do i_r=1,BS_blk(i_B)%size(1)
+           do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-           else
-             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
-           endif
+           enddo
          enddo
-       enddo
+       case("C","Q")
+         if (l_BS_ares_asymm) cycle
+         ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_asymm=.true.
+         do i_r=1,BS_blk(i_B)%size(1)
+           do i_c=i_r+1,BS_blk(i_B)%size(2)
+             BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
+           enddo
+         enddo
+       end select
        !
      enddo
      !

@@ -144,7 +144,7 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _SLEPC_OFF
-   subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
@@ -152,11 +152,8 @@ module interfaces
      use petscmatdef,    ONLY:tmat
      implicit none
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
+     logical                     :: l_target_energy
      integer                     :: n_eig        ! number of eigenvalues to compute
-     character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
-     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
-     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
@@ -193,57 +190,6 @@ module interfaces
      logical     ,optional :: keep_fft
    end subroutine
    !
-   subroutine PARALLEL_WF_index(COMM)
-     use parallel_m,      ONLY:MPI_comm
-     type(MPI_comm), optional :: COMM
-   end subroutine
-   !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
-     use X_m,           ONLY:X_t
-     use DIPOLES,       ONLY:DIPOLE_t
-     use electrons,     ONLY:levels
-     use R_lattice,     ONLY:bz_samp
-     implicit none
-     type(levels)             ::E
-     type(bz_samp)            ::Xk,q
-     character(*)             ::ENVIRONMENT
-     type(X_t),       optional::X
-     type(DIPOLE_t),  optional::Dip
-     logical,         optional::RESET
-   end subroutine
-   !
-   subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )
-     integer               :: N_par_elements
-     integer,     optional :: WORLD,WORLD_size
-     character(*),optional :: MSG
-   end subroutine
-   !
-   subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,NCPU)
-     use pars,           ONLY:SP
-     character(*)          :: WHAT
-     character(*),optional :: ENVIRONMENT
-     integer,     optional :: LOADED,TOTAL,NCPU
-     real(SP),    optional :: LOADED_r,TOTAL_r
-   end subroutine
-   !
-   subroutine PARALLEL_WF_distribute(B_index,Bp_index,K_index,B_and_K_index,&
-&                                    QP_index,PLASMA_index,Bm_index,CLEAN_UP)
-     !
-     use parallel_m,      ONLY:PP_indexes
-     !
-     implicit none
-     !
-     type(PP_indexes),    optional :: K_index
-     type(PP_indexes),    optional :: B_index
-     type(PP_indexes),    optional :: Bp_index
-     type(PP_indexes),    optional :: B_and_K_index
-     type(PP_indexes),    optional :: QP_index
-     type(PP_indexes),    optional :: PLASMA_index
-     type(PP_indexes),    optional :: Bm_index
-     logical, intent(in), optional :: CLEAN_UP
-     !
-   end subroutine 
-   !
    subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
      use pars,          ONLY: SP
      use electrons,     ONLY:levels,n_sp_pol
@@ -257,48 +203,22 @@ module interfaces
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
-   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
-     use BS,            ONLY:BS_H_dim
+   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+     use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
      type(w_samp),intent(in)  :: W
-     integer,     intent(in)  :: iq
-     complex(SP), intent(in)  :: BS_E(BS_H_dim)
-     complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
-     real(SP),    pointer     :: BS_E_SOC_corr(:,:)
-     complex(SP), pointer     :: BS_R_kerr(:)
-     real(SP),    pointer     :: BS_R_PL(:,:)
+     integer,     intent(in)  :: iq,i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+     real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
+     complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
+     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+     real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
-&                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
-&                                              COMM_A2A_3,COMM_A2A_4)
-     use parallel_m,    ONLY:MPI_comm
-     integer                 :: n_elements
-     type(MPI_comm)          :: COMM_index_1
-     type(MPI_comm),optional :: COMM_index_2
-     type(MPI_comm),optional :: COMM_index_3
-     type(MPI_comm),optional :: COMM_index_4
-     type(MPI_comm),optional :: COMM_index_5
-     type(MPI_comm),optional :: COMM_A2A_1
-     type(MPI_comm),optional :: COMM_A2A_2
-     type(MPI_comm),optional :: COMM_A2A_3
-     type(MPI_comm),optional :: COMM_A2A_4
-   end subroutine
-   !
-   subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
-     use parallel_m, ONLY:PP_indexes,MPI_COMM
-     type(PP_indexes)       ::px
-     integer                ::uplim(:)
-     integer, optional      ::low_range(:)
-     type(MPI_COMM),optional::COMM
-     logical,       optional::CONSECUTIVE
-     logical,       optional::ORDERED
-     logical,       optional::NO_EMPTIES
-     logical,       optional::MASK(:)
-   end subroutine
-   !
-   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,MAP)
+   subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)
      use pars, ONLY:SP
      use QP_m, ONLY:QP_t
      implicit none
@@ -308,7 +228,7 @@ module interfaces
      type(QP_t),  optional:: qp(N_qp)
      character(*),optional:: OP(N)
      real(SP)    ,optional:: PRE_FAC(N)
-     integer     ,optional:: MAP(N)
+     character(*),optional:: FILES(N)
    end subroutine QP_DBs_merge
    !
    integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
@@ -329,8 +249,14 @@ module interfaces
      type(QP_t),optional ::qp              
    end subroutine
    !
+   subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
+     use ELPH,          ONLY:GKKP_me
+     character(*)      :: what
+     type(GKKP_me), optional:: GKKP
+     integer,       optional:: Nb(2),Nk_mem,Nm(2),Nq_mem
+   end subroutine
+   !
  end interface
- !
  !
  interface WF_shift_kpoint
    !

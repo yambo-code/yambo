@@ -123,7 +123,7 @@ subroutine K_output_file(iq,mode)
  !
  eval_beta = eval_alpha .and. l_kerr_out
  if ( l_kerr_out.and.l_Haydock ) then
-   eval_beta = eval_alpha .and. (l_col_cut .or. ( (l_FINALIZE.or.l_INIT) .and. (.not.trim(alpha_dim)=="volume") ) )
+   eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
  endif
  !
  n_headers=5
@@ -423,8 +423,10 @@ subroutine K_output_file(iq,mode)
    !
    ! eps_xy
    !
+   w(:)    =real(Epsilon_ii(:,1))*HA2EV
+   !
    do iw=1,BSS_n_freqs 
-     output_data(1:5)=(/real(Epsilon_ij(iw,1))*HA2EV,aimag(Epsilon_ij(iw,2)),real(Epsilon_ij(iw,2)),&
+     output_data(1:5)=(/w(iw),aimag(Epsilon_ij(iw,2)),real(Epsilon_ij(iw,2)),&
 &                  aimag(Epsilon_ij(iw,3)),real(Epsilon_ij(iw,3))/)
      n_output_data=5
      if (l_print_col4) then ; n_output_data=7 ; output_data(6:7)=(/aimag(Epsilon_ij(iw,4)),real(Epsilon_ij(iw,4))/) ; endif
@@ -438,7 +440,7 @@ subroutine K_output_file(iq,mode)
      !
      ! beta=alpha_xy
      !
-     if(l_col_cut) then
+     if(l_col_cut.or.trim(alpha_dim)=="volume") then
        alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
        beta(:,1)=Epsilon_ij(:,2)*alpha_factor
        beta(:,2)=Epsilon_ij(:,3)*alpha_factor

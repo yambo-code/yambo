@@ -205,6 +205,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
        !
      endif
      !
+   else if (retarded) then
+     X_a=conjg(X_a)
    endif
    !
    if (retarded) then

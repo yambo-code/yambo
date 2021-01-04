@@ -34,7 +34,7 @@ subroutine K_output_file(iq,mode)
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
-&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,e_ip_filename,&
+&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,e_ip_file_name,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write

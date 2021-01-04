@@ -34,7 +34,7 @@ subroutine K_output_file(iq,mode)
  use com,       ONLY:msg,of_open_close
  use parser_m,  ONLY:parser
  use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
-&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,&
+&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,e_ip_filename,&
 &                    X_write_messages_before_headers,X_write_q_plus_g
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write
@@ -141,7 +141,10 @@ subroutine K_output_file(iq,mode)
    if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
  endif
  if(l_jdos_out) call of_open_close(jdos_file_name,title_mode)
- if(l_esrt_out) call of_open_close(esort_file_name,title_mode)
+ if(l_esrt_out) then
+   call of_open_close(e_ip_file_name,title_mode)
+   call of_open_close(esort_file_name,title_mode)
+ endif
  !
  call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
@@ -610,7 +613,8 @@ subroutine K_output_file(iq,mode)
        if(E_size==2) output_data(1:2)=(/real(BS_E_sorted(i1,1,i_IP_BSE),SP),aimag(BS_E_sorted(i1,1,i_IP_BSE))/)*HA2EV
        if (output_data(1)==0._SP) cycle
        output_data(E_size+1:n_output_data+E_size-1)=real(BS_E_sorted(i1,2:n_output_data,i_IP_BSE),SP)
-       call msg("o Esort",'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
+       if(i_IP_BSE==1) call msg("o E_IP" ,'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
+       if(i_IP_BSE==2) call msg("o Esort",'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo
    !
@@ -649,7 +653,10 @@ subroutine K_output_file(iq,mode)
      endif
      !
      if(l_jdos_out) call of_open_close(jdos_file_name)
-     if(l_esrt_out) call of_open_close(esort_file_name)
+     if(l_esrt_out) then
+       call of_open_close(e_ip_file_name)
+       call of_open_close(esort_file_name)
+     endif
      !
    end subroutine
    !

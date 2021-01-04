@@ -36,7 +36,7 @@ module X_output
  character(15)     :: headers(7)
  character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name,pl_file_name
  character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name,magp_file_name,magm_file_name
- character(schlen) :: dichr_file_name,esort_file_name
+ character(schlen) :: dichr_file_name,e_ip_file_name,esort_file_name
  !
  contains
    !
@@ -153,6 +153,7 @@ module X_output
      refl_file_name ='refl_q'//trim(intc(iq))
      eel_file_name  ='eel_q'//trim(intc(iq))
      alpha_file_name='alpha_q'//trim(intc(iq))
+     e_ip_file_name ='E_IP_q'//trim(intc(iq))
      esort_file_name='Esort_q'//trim(intc(iq))
      !
      off_file_name  ='off_q'//trim(intc(iq))

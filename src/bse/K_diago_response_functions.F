@@ -74,7 +74,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if(l_BS_esort.and.i_BS_mat==1) then
    EDIM=BSS_n_eig
-   nVAR=1
+   nVAR=2
    if(l_BS_abs)       nVAR=nVAR+1
    if(l_BS_kerr)      nVAR=nVAR+1
    if(l_BS_dichroism) nVAR=nVAR+1
@@ -110,7 +110,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      !
      if(l_BS_esort.and.i_BS_mat==1) then
        BS_E_sorted_tmp(i1,1)=EXC_E(1)
-       nVAR=1
+       nVAR=2
      endif
      !
      if(l_BS_jdos) then
@@ -192,6 +192,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      BS_E_sorted(:,i_VAR,2)=cZERO
      do i_grp=1,n_deg_grp
        if(i_grp>EDIM) cycle
+       if(i_VAR==2) then
+         BS_E_sorted(i_grp,i_VAR,2)=real(n_of_exc(i_grp),SP)
+         cycle
+       endif
        do i_lambda=first_exc(i_grp)+i1-1,first_exc(i_grp)+n_of_exc(i_grp)-1+i1-1
          BS_E_sorted(i_grp,i_VAR,2)=BS_E_sorted(i_grp,i_VAR,2)+BS_E_sorted_tmp(sort_indx(i_lambda),i_VAR)
        enddo

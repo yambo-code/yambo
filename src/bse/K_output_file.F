@@ -64,10 +64,12 @@ subroutine K_output_file(iq,mode)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
  complex(SP)       :: beta(BSS_n_freqs,3)
  logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
- logical           :: eval_alpha_loc,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,l_IP,l_INIT,&
- &                    l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
+ logical           :: eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
+ &                    l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
  l_INIT      = index(mode,"open")/=0
+ l_FINALIZE  = index(mode,"final")/=0
+ !
  l_Haydock   = index(mode,"Haydock")/=0
  l_Diago     = index(mode,"Diago")/=0
  l_Slepc     = index(mode,"Slepc")/=0
@@ -106,15 +108,22 @@ subroutine K_output_file(iq,mode)
  !
  ! EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_abs_out.and. ((.not.l_Haydock).or.index(mode,"final")>0.or.l_INIT) ) then
-   eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
-   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
+ if (l_abs_out) then
    call parser('Reflectivity',eval_reflectivity)
+   eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
+   !
+   if (eval_eels) eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
+   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
  else
    eval_eels=.false.
    eval_alpha_loc=.false.
    eval_reflectivity=.false.
+ endif
+ !
+ eval_beta = eval_alpha .and. l_kerr_out
+ if ( l_kerr_out.and.l_Haydock ) then
+   eval_beta = eval_alpha .and. (l_col_cut .or. ( (l_FINALIZE.or.l_INIT) .and. (.not.trim(alpha_dim)=="volume") ) )
  endif
  !
  n_headers=5
@@ -131,8 +140,8 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
-   if (.not.eval_alpha_loc) call of_open_close(moke_file_name,title_mode)
-   if (     eval_alpha_loc) call of_open_close(beta_file_name,title_mode)
+   if (.not.eval_beta) call of_open_close(moke_file_name,title_mode)
+   if (     eval_beta) call of_open_close(beta_file_name,title_mode)
  endif
  if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
  if(l_phot_out) call of_open_close(pl_file_name,title_mode)
@@ -183,7 +192,7 @@ subroutine K_output_file(iq,mode)
    call msg('o eps','#')
  endif
  !
- if(l_kerr_out .and. eval_alpha_loc) then
+ if(l_kerr_out .and. eval_beta) then
    ! Alpha units
    call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
    call msg('o beta','#')
@@ -244,12 +253,12 @@ subroutine K_output_file(iq,mode)
    call X_setup_headers('off')
    call msg("o off",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    !
-   if (eval_alpha_loc) then 
+   if (eval_beta) then 
      call X_setup_headers('beta')
    call msg("o beta",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
-   if (.not.eval_alpha_loc)  then
+   if (.not.eval_beta)  then
      call X_setup_headers('moke')
      call msg("o moke",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
@@ -428,7 +437,7 @@ subroutine K_output_file(iq,mode)
    enddo
    !
    !
-   if(eval_alpha_loc) then
+   if(eval_beta) then
      !
      ! beta=alpha_xy
      !
@@ -571,8 +580,9 @@ subroutine K_output_file(iq,mode)
  !
  if (l_esrt_out) then
    !
-   n_output_data=1
+   n_output_data=2
    headers(1)="E [eV]"
+   headers(2)="n_deg"
    if(l_abs_out) then
      headers(n_output_data+1:n_output_data+1)="abs"
      n_output_data=n_output_data+1
@@ -605,16 +615,17 @@ subroutine K_output_file(iq,mode)
        headers(1)="Re(E) [eV]"
        headers(2)="Im(E) [eV]"
      endif
-     call msg("o Esort",'#')
-     call msg("o Esort",'#',headers(:n_output_data+E_size-1),INDENT=0,USE_TABS=.TRUE.)
-     call msg("o Esort",'#')
+     if(i_IP_BSE==1) name_="E_IP"
+     if(i_IP_BSE==2) name_="Esort"
+     call msg("o "//trim(name_),'#')
+     call msg("o "//trim(name_),'#',headers(:n_output_data+E_size-1),INDENT=0,USE_TABS=.TRUE.)
+     call msg("o "//trim(name_),'#')
      do i1=1,min(BS_H_dim,1000)
        if(E_size==1) output_data(1)=real(BS_E_sorted(i1,1,i_IP_BSE),SP)*HA2EV
        if(E_size==2) output_data(1:2)=(/real(BS_E_sorted(i1,1,i_IP_BSE),SP),aimag(BS_E_sorted(i1,1,i_IP_BSE))/)*HA2EV
        if (output_data(1)==0._SP) cycle
        output_data(E_size+1:n_output_data+E_size-1)=real(BS_E_sorted(i1,2:n_output_data,i_IP_BSE),SP)
-       if(i_IP_BSE==1) call msg("o E_IP" ,'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
-       if(i_IP_BSE==2) call msg("o Esort",'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
+       call msg("o "//trim(name_) ,'',output_data(:n_output_data+E_size-1),INDENT=-2,USE_TABS=.TRUE.)
      enddo
    enddo
    !

@@ -174,7 +174,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if(l_BS_esort) then
    EDIM=BS_K_dim(1)
-   nVAR=1
+   nVAR=2
    if(l_BS_abs) nVAR=nVAR+1
    if(l_BS_kerr)      nVAR=nVAR+1
    if(l_BS_dichroism) nVAR=nVAR+1
@@ -233,9 +233,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      if(l_BS_esort.and.i_res_ares==1) then
-       nVAR=1
        i_E_sort=sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T !+(i_res_ares-1)*BS_K_dim(1)
-       BS_E_sorted_tmp(i_E_sort,nVAR)=E_plus_W0
+       BS_E_sorted_tmp(i_E_sort,1)=E_plus_W0
+       nVAR=2
      endif
      !
      ! c1.Compute "dipoles"
@@ -384,7 +384,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1))
          res_dich=res_dich/3._SP
        endif
-       res_dich=res_dich*f_*Z_/(q0_def_norm*cI)                    !       f_ = occupations
+       res_dich=res_dich*f_*Z_/(q0_def_norm)                    !       f_ = occupations
        if(l_BS_esort.and.i_res_ares==1) then
          BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1
@@ -515,6 +515,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      BS_E_sorted(:,i_VAR,1)=cZERO
      do i_grp=1,n_deg_grp
        if(i_grp>EDIM) cycle
+       if(i_VAR==2) then
+         BS_E_sorted(i_grp,i_VAR,1)=real(n_of_el(i_grp),SP)
+         cycle
+       endif
        do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
          BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+BS_E_sorted_tmp(sort_indx(i_cv),i_VAR)
        enddo

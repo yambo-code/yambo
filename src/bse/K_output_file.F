@@ -113,7 +113,7 @@ subroutine K_output_file(iq,mode)
    eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
    !
    if (eval_eels) eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
-   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) )
+   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
  else
    eval_eels=.false.
@@ -379,7 +379,7 @@ subroutine K_output_file(iq,mode)
  !
  if (eval_alpha_loc) then
    !
-   if(l_col_cut) then
+   if(l_col_cut.or.trim(alpha_dim)=="volume") then
      alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
      alpha(:,1)=Epsilon_ii(:,2)*alpha_factor
      alpha(:,2)=Epsilon_ii(:,3)*alpha_factor

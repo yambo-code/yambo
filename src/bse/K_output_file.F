@@ -314,9 +314,8 @@ subroutine K_output_file(iq,mode)
      w(:)    =real(Epsilon_ii(:,1))*HA2EV
      eps(:,1)=Epsilon_ii(:,2)+1._SP
      eps(:,2)=Epsilon_ii(:,3)+1._SP
-     if (l_print_col4) eps(:,3)=Epsilon_ii(:,4)+1._SP
-     !
      ! Haydock n-1 iteration / Inversion with diagonal shift from BSE matrix
+     if (l_print_col4) eps(:,3)=Epsilon_ii(:,4)+1._SP
      !
      output_data(1:5)=(/w(iw),aimag(eps(iw,1)),real(eps(iw,1)),aimag(eps(iw,2)),real(eps(iw,2))/)
      n_output_data=5

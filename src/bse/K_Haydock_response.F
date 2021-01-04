@@ -130,6 +130,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    X_o=cZERO
    !
+   X_t=cZERO
    if (UseTerminator) then 
      select case(scheme)
      case("hermitian")
@@ -141,12 +142,19 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
      end select
    endif
    !
-   X_o(1:2,it) = 1._SP/(freq_axis(iw)-Af(it)-Bf(it+1)**2*X_t(1))
-   if (retarded) X_a(1:2,it)= -1._SP/(conjg(freq_axis(iw))+Af(it)+Bf(it+1)**2*X_t(2))
+   ! Respoinse functions at iteration it
+   !
+   X_o(1,it) = 1._SP/(freq_axis(iw)-Af(it)-Bf(it+1)**2*X_t(1))
+   if (retarded) X_a(1,it)= -1._SP/(conjg(freq_axis(iw))+Af(it)+Bf(it+1)**2*X_t(2))
    do i1=it-1,1,-1
      X_o(1,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
      if (retarded) X_a(1,i1)= -1._SP/(conjg(freq_axis(iw))+Af(i1)+Bf(i1+1)**2*X_a(1,i1+1))
    enddo
+   !
+   ! Respoinse functions at iteration it-1
+   !
+   X_o(2,it-1) = 1._SP/(freq_axis(iw)-Af(it-1)-Bf(it)**2*X_t(1))
+   if (retarded) X_a(2,it-1)= -1._SP/(conjg(freq_axis(iw))+Af(it-1)+Bf(it)**2*X_t(2))
    do i1=it-2,1,-1
      X_o(2,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
      if (retarded) X_a(2,i1)= -1._SP/(conjg(freq_axis(iw))+Af(i1)+Bf(i1+1)**2*X_a(2,i1+1))

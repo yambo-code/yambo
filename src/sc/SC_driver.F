@@ -299,7 +299,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
  !
- if (l_sc_hartree.and.COLLISIONS_have_HARTREE.and..not.l_SC_nl_mix) then
+ if (l_sc_hartree.and.COLLISIONS_have_HARTREE.and..not.l_SC_nl_mix.and..not.trim(SC_preconditioning)=="none") then
    call warning(' Non local mixing imposed since Hartree is in the collisions')
    l_SC_nl_mix=.true.
    YAMBO_ALLOC(H_nl_nm1,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
@@ -679,12 +679,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
                        call msg('r' ,'[SC] Trace over rho_ij              ',DELTA)
                        call msg('r' ,'[SC] Order Parameter           [eV] ',DELTA_NEW)
    endif
-#if defined _ELECTRIC
    if(l_sc_electric) then
       call msg('r' ,'[SC] Polarization [Re]              ', real(Polarization,SP))
       call msg('r' ,'[SC] Polarization [Im]              ',aimag(Polarization)   )
    endif
-#endif
    if (l_sc_hartree)   call msg('r' ,'[SC] Fermi shift part        [Ha/Ry]',E_Fermi*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] Bands Energy            [Ha/Ry]',E_tot_bands*(/1._SP,2._SP/))
    if (l_sc_hartree)   call msg('r' ,'[SC] T+V Energy              [Ha/Ry]',E_tot_zero*(/1._SP,2._SP/))

@@ -55,8 +55,10 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  ! PARS1
  !
- var_size=33
- if (iq>1)  var_size=35
+ var_size=29
+ if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
+ if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
+ if (iq>1)                               var_size=35
  !
  call IO_desc_reset(desc)
  !

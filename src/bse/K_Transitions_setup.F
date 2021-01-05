@@ -282,11 +282,11 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
- ! Special case, slepc with distributed matrix need doubling of the number of occupations
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling.and. (.not.BSS_slepc_matrix)
+ ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorith 
+ ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
  l_BS_ares_asymm=l_BS_ares_asymm .or. (l_slepc_special.and..not.l_BS_ares_symm)
  BSS_slepc_double_grp=(.not.l_BS_ares_asymm).and.l_slepc_special
 #endif

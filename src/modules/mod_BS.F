@@ -395,6 +395,7 @@ module BS
        case("R","A")
          ! Resonant ("R") and anti-resonant ("A") parts are hermitian
          do i_r=1,BS_blk(i_B)%size(1)
+           BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
            do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
            enddo

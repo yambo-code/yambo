@@ -266,7 +266,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  if (l_NSC_shot) call live_timing('[NSC] Single shot loop',QP_nk)
  !
- if (l_sc_hartree.and.COLLISIONS_have_HARTREE.and..not.l_SC_nl_mix) then
+ if (l_sc_hartree.and.COLLISIONS_have_HARTREE.and..not.l_SC_nl_mix.and..not.trim(SC_preconditioning)=="none") then
    call warning(' Non local mixing imposed since Hartree is in the collisions')
    l_SC_nl_mix=.true.
    YAMBO_ALLOC(H_nl_nm1,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))

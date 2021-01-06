@@ -33,7 +33,7 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling
+ use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,l_BS_ares_asymm
  use BS_solvers,    ONLY:BSS_desc,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
@@ -114,9 +114,9 @@ integer function io_BS(iq,X,ID)
    call def_variable_bulk(ID,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
    call io_variable_bulk(ID,1,C2=BS_blk(i_block)%mat)
  else
-   if (.not.BS_K_coupling           ) n_blocks=1
-   if (     BS_K_coupling.and. iq==1) n_blocks=2
-   if (     BS_K_coupling.and. iq/=1) n_blocks=4
+   if (.not.BS_K_coupling) n_blocks=1
+   if (     BS_K_coupling) n_blocks=2
+   if ( l_BS_ares_asymm  ) n_blocks=n_blocks+1
    if (BS_blk(i_block)%mode=="R") VAR_ID=1
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
    if (BS_blk(i_block)%mode=="A") VAR_ID=3

@@ -63,8 +63,23 @@ subroutine K_blocks(iq)
  if (     BS_K_coupling) n_new_blocks=2/BS_res_ares_dim
  !
  ! Count the blocks
- n_BS_blks=count(PAR_IND_T_ordered%element_2D)
- allocate(BS_blk(n_BS_blks*n_new_blocks*BS_res_ares_dim))
+ n_BS_blks=0
+ do i_T=1,BS_nT_grps
+   do j_T=1,BS_nT_grps
+     !
+     i_res_ares=BS_T_grp(i_T)%i_res_ares
+     j_res_ares=BS_T_grp(j_T)%i_res_ares
+     if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
+     !
+     if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+     n_BS_blks=n_BS_blks+n_new_blocks
+     !
+   enddo
+ enddo
+ !
+ allocate(BS_blk(n_BS_blks))
+ BS_blk(:)%size(1)=0
+ BS_blk(:)%size(2)=0
  !
  ! Define blocks parameters
  n_BS_blks=0

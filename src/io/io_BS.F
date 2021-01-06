@@ -33,12 +33,13 @@ integer function io_BS(iq,X,ID)
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
  use pointers,      ONLY:linkM2V
- use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,l_BS_ares_asymm
+ use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
+&                        l_BS_ares_asymm,BS_mat_res_ares_dim
  use BS_solvers,    ONLY:BSS_desc,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
 &                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+&                        io_fragment,IO_NOT_ALLOWED,io_BS_K,variable_exist
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
@@ -121,7 +122,8 @@ integer function io_BS(iq,X,ID)
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
    if (BS_blk(i_block)%mode=="A") VAR_ID=3
    if (BS_blk(i_block)%mode=="Q") VAR_ID=4
-   if (i_block<=n_blocks) call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
+   if (.not.variable_exist(ID,trim(ch))) &
+   &  call def_variable_bulk(ID,trim(ch),VAR_ID,(/2,sum(BS_blk(:)%size(1)*BS_blk(:)%size(2))/),SP)
    n1=BS_blk(i_block)%size(1)
    n2=BS_blk(i_block)%size(2)
    block_pos=sum(BS_blk(:i_block-1)%size(1)*BS_blk(:i_block-1)%size(2))+1

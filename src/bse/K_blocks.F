@@ -40,7 +40,7 @@ subroutine K_blocks(iq)
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
-&                       BS_res_ares_dim,BS_mat_res_ares_dim
+&                       BS_res_ares_dim,BS_mat_res_ares_dim,BS_IO_dim
  use com,          ONLY:msg
  !
 #include<memory.h>
@@ -84,6 +84,7 @@ subroutine K_blocks(iq)
  ! Define blocks parameters
  n_BS_blks=0
  TMP_SIZE=0
+ BS_IO_dim=0
  i_T_start=1
  j_T_start=1
  do i_T=1,BS_nT_grps
@@ -111,6 +112,11 @@ subroutine K_blocks(iq)
          if (i_res_ares==2.and.j_res_ares==1) BS_blk(iB)%mode="Q"
          if (i_res_ares==2.and.j_res_ares==2) BS_blk(iB)%mode="A"
        endif
+#if !defined _PAR_IO
+       if (BS_blk(iB)%mode=="R") BS_IO_dim(:,1)=BS_IO_dim(:,1)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="C") BS_IO_dim(:,2)=BS_IO_dim(:,2)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="A") BS_IO_dim(:,3)=BS_IO_dim(:,3)+BS_blk(iB)%size(:)
+#endif
        BS_blk(iB)%iT_k=i_T
        BS_blk(iB)%iT_p=j_T
        BS_blk(iB)%iT_k_st=i_T_start

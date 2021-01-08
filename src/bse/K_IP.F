@@ -48,7 +48,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  &                       BS_mat_res_ares_dim
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_COM_Xk_ibz_INDEX
+&                        PAR_COM_Xk_ibz_INDEX,myid
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
@@ -556,7 +556,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (trim(L_kind)=="full") then
    do i_T_g=1,BS_nT_grps
      if (.not.allocated(BS_T_grp(i_T_g)%dipoles_opt) ) then
-       YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,BS_res_ares_dim))
+       YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,2/BS_res_ares_dim))
        BS_T_grp(i_T_g)%dipoles_opt=cZERO
      endif
      call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_opt, COMM=PAR_COM_Xk_ibz_INDEX%COMM )

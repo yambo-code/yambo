@@ -151,7 +151,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! In case input is mispelled fallback to Krylov-Schur
  if (epskind==EPSKRYLOVSCHUR) BSS_slepc_approach="Krylov-Schur"
  !
- call msg( 's', '[SLEPC] Approach                          ',BSS_slepc_approach)
+ call msg( 'sr', '[SLEPC] Approach                          ',BSS_slepc_approach)
  !
  call EPSSetType(eps,epskind,ierr)
  !
@@ -178,7 +178,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
    BSS_slepc_precondition=trim(kspkind)//"+"//trim(pckind)
    !
-   call msg( 's', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
+   call msg( 'sr', '[SLEPC] Precondition method               ',BSS_slepc_precondition)
    !
    call EPSGetST(eps,st,ierr)
    call STGetKSP(st,ksp,ierr)
@@ -190,7 +190,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
  endif
  !
- call msg( 's', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
+ call msg( 'sr', '[SLEPC] Extraction method                 ',BSS_slepc_extraction)
  !
  if (BSS_slepc_extraction == 'ritz')              extr = EPS_RITZ
  if (BSS_slepc_extraction == 'harmonic')          extr = EPS_HARMONIC         
@@ -202,16 +202,16 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  call EPSSetExtraction(eps, extr, ierr)
  !
- call msg( 's', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
+ call msg( 'sr', '[SLEPC] Number of requested eigenvalues   ', n_eig ) 
  !
  if (l_target_energy.or.l_precondition) then
    target_energy=0._SP
    if(l_target_energy) target_energy=BSS_slepc_target_E
-   call msg( 'ns', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
+   call msg( 'nsr', '[SLEPC] Criterion is target energy        ', real(target_energy,SP)*HA2EV,'[eV]')
    call EPSSetTarget(eps,target_energy,ierr)
    call EPSSetWhichEigenpairs(eps,EPS_TARGET_REAL,ierr)
  else
-   call msg( 'ns', '[SLEPC] Criterion is smaller eigenvalues')
+   call msg( 'nsr', '[SLEPC] Criterion is smaller eigenvalues')
    call EPSSetWhichEigenpairs(eps,EPS_SMALLEST_MAGNITUDE,ierr)
  endif
  !
@@ -235,8 +235,8 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !call EPSGetType(eps,tname,ierr)
  call EPSGetTolerances(eps,tol,maxit,ierr)
  !
- call msg( 's', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
- call msg( 's', '[SLEPC] Stopping condition max iterations ', int(maxit) )
+ call msg( 'sr', '[SLEPC] Stopping condition tolerance      ', real(tol,SP) )
+ call msg( 'sr', '[SLEPC] Stopping condition max iterations ', int(maxit) )
 
  !Set monitor
  call EPSMonitorSet(eps,MyEPSMonitor,0,PETSC_NULL_FUNCTION,ierr)
@@ -247,18 +247,18 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  call EPSSolve(eps,ierr)
  call EPSGetIterationNumber(eps,its,ierr)
- call msg( 's', '[SLEPC] Number of iterations              ', int(its) )
+ call msg( 'sr', '[SLEPC] Number of iterations              ', int(its) )
  call EPSGetDimensions(eps,nev,ncv,mpd,ierr)
- call msg( 's', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
- call msg( 's', '[SLEPC] Max. subspace size of solver [NCV]', int(ncv) )
- call msg( 's', '[SLEPC] Max. allowed dim             [MPD]', int(mpd) )
+ call msg( 'sr', '[SLEPC] Number of eigenvalues        [NEV]', int(nev) )
+ call msg( 'sr', '[SLEPC] Max. subspace size of solver [NCV]', int(ncv) )
+ call msg( 'sr', '[SLEPC] Max. allowed dim             [MPD]', int(mpd) )
 
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Display solution and clean up
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !
  call EPSGetConverged(eps,nconv,ierr)
- call msg( 'sn', '[SLEPC] Number of converged states        ', int(nconv))
+ call msg( 'srn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
    call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(nconv))//' eigenvalues')
    n_eig = nconv

@@ -152,6 +152,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Allocation (BS_R and BS_E)
    !===========================
+   YAMBO_ALLOC(BS_E,(BSS_n_eig))
    call local_alloc("E")
    !
    ! Diagonalization DB (IN)
@@ -302,6 +303,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    endif
    !
+   YAMBO_FREE(BS_E)
    call local_free( )
    !
  enddo
@@ -331,7 +333,6 @@ subroutine K_diago_driver(iq,W,X_static)
      select case(what)
      case("E")
        !
-       YAMBO_ALLOC(BS_E,(BSS_n_eig))
        if( BS_perturbative_SOC) then
          YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
          YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
@@ -379,7 +380,6 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    subroutine local_free()
      !
-     YAMBO_FREE(BS_E)
      YAMBO_FREE(BS_E_real)
      YAMBO_FREE(BS_corrections)
      YAMBO_FREE(BS_V_right)

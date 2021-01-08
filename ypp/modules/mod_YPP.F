@@ -274,8 +274,8 @@ module YPPm
  !
  ! BSE data
  !
- complex(SP), allocatable ::BS_R_left(:)
- complex(SP), allocatable ::BS_R_right(:)
+ complex(SP), pointer     ::BS_R_left(:)
+ complex(SP), pointer     ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()

@@ -35,7 +35,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
@@ -156,9 +156,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   eval_eels= .not. (l_col_cut .or. trim(alpha_dim)=="volume")
+   if(eval_eels) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
-   if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut)
+   if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut.or.trim(alpha_dim)=="volume")
    !
    ! OutPut files...
    !
@@ -312,7 +313,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      call of_open_close(alpha_file_name,'oa')
      !
-     if(l_col_cut) then
+     if(l_col_cut.or.trim(alpha_dim)=="volume") then
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=Alpha(:,1)*alpha_factor
        if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor

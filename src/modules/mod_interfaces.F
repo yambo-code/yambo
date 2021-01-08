@@ -132,7 +132,7 @@ module interfaces
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _SLEPC_OFF
-   subroutine MATRIX_slepc(M_slepc,n_eig,target_energy,extraction,slepc_ncv,slepc_tol,V_right,V_left,E_real,E_cmpl)
+   subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
 #include <petsc/finclude/petscsys.h>
@@ -140,11 +140,8 @@ module interfaces
      use petscmatdef,    ONLY:tmat
      implicit none
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
+     logical                     :: l_target_energy
      integer                     :: n_eig        ! number of eigenvalues to compute
-     character(schlen)           :: extraction   ! extraction method for the eigenvalues
-     PetscScalar                 :: target_energy! energy near where to find the eigenvalues
-     PetscReal                   :: slepc_tol    ! tolerance of the iterative solver
-     PetscFortranInt             :: slepc_ncv    ! dimension of the subspace
      complex(SP)                 :: V_right(:,:) ! right eigenvalues
      complex(SP),  optional      :: V_left(:,:)  ! left eigenvalues
      complex(SP),  optional      :: E_cmpl(:)    ! complex eigenvalues
@@ -194,17 +191,19 @@ module interfaces
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
-   subroutine K_diago_compute_epsilon(iq,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
-     use BS,            ONLY:BS_H_dim
+   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+     use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
      type(w_samp),intent(in)  :: W
-     integer,     intent(in)  :: iq
-     complex(SP), intent(in)  :: BS_E(BS_H_dim)
-     complex(SP), intent(in)  :: BS_R_left(BS_H_dim),BS_R_right(BS_H_dim)
-     real(SP),    pointer     :: BS_E_SOC_corr(:,:)
-     complex(SP), pointer     :: BS_R_kerr(:)
-     real(SP),    pointer     :: BS_R_PL(:,:)
+     integer,     intent(in)  :: iq,i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+     real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
+     complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
+     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+     real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
    subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)

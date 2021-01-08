@@ -315,7 +315,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
        l_eliashberg       =STRING_match(rstr_piece(i1+1),'e')
 #endif
        !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
        l_angular_momentum =STRING_match(rstr_piece(i1+1),'l')
        l_position         =STRING_match(rstr_piece(i1+1),'p')
 #endif
@@ -391,7 +391,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  if (l_gkkp)             call initactivate(1,'gkkp')
  !
 #endif
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  !
  if (l_angular_momentum) call initactivate(1,'angular_m')
  if (l_position)         call initactivate(1,'position')
@@ -468,7 +468,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
 #if defined _YPP_NL
  l_NL_X   =runlevel_is_on('nonlinear')
 #endif
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  l_angular_momentum = runlevel_is_on('angular_m').and.runlevel_is_on('electrons')
  l_position         = runlevel_is_on('position').and.runlevel_is_on('electrons')
 #endif
@@ -629,7 +629,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  if (l_angular_momentum.or.l_position) call initactivate(1,"FFTGvecs")
  if (l_current) call initactivate(1,'PhaseTrick')
 #endif
@@ -690,18 +690,12 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
 #endif
 #if defined _YPP_SC
- if (.not.l_init_QP) l_init_QP=l_electrons.and.l_mean_potential
+ if (.not.l_init_QP) l_init_QP=(l_electrons.and.l_mean_potential).or.l_angular_momentum.or.l_position
 #endif
-#if defined _YPP_MAGNETIC
- if (.not.l_init_QP) l_init_QP=l_angular_momentum.or.l_position
-#endif
- !
 #if defined _YPP_RT
  if (.not.l_init_QP) l_init_QP=(l_RT_occupations.or.l_RT_lifetimes).and..not.l_RT_bands.and..not.l_RT_dos
- if (     l_init_QP) call INIT_QP(" ")
-#else
- if (l_init_QP) call INIT_QP(" ")
 #endif
+ if (l_init_QP) call INIT_QP(" ")
  !
  ! Check and fill all possible vectorial USER fields
  !

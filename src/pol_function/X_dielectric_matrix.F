@@ -207,18 +207,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call PP_redux_wait()
  !
- do iq=X%iq(1),X%iq(2)
-   !
-   if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+ if (X%iq(1)<=1 .and. 1<=X%iq(2) .and. io_X_done(1)<=0 .and. PAR_IND_Q_ibz%element_1D(1) ) then
    !
    ! TDDFT setup
    !
-   call TDDFT_do_X_W_typs(iq,X,Xw)
+   call TDDFT_do_X_W_typs(1,X,Xw)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(iq,Xk)
+   call X_Double_Grid_setup(1,Xk)
    !
    ! ALDA (only once) 
    !
@@ -230,9 +227,38 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   if (iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+   !
+ endif
+ !
+ call PP_redux_wait()
+ !
+ do iq=X%iq(1),X%iq(2)
+   !
+   if (     io_X_done(iq) > 0       ) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   !
+   if (iq/=1) then
+     !
+     ! TDDFT setup
+     !
+     call TDDFT_do_X_W_typs(iq,X,Xw)
+     !
+     ! DbGd setup
+     !
+     call X_Double_Grid_setup(iq,Xk)
+     !
+     ! ALDA (only once) 
+     !
+     if (l_alda_fxc.and..not.allocated(FXC)) then
+       !
+       call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
+       !
+       call TDDFT_ALDA_G_space(Xen,Xk)
+       !
+     endif
+     !
    endif
    !
    ! Allocation

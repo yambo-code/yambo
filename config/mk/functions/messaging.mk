@@ -4,14 +4,13 @@ define make_message
   echo " [components]     core sc-project (...) libs (...) utils clean";      echo;\
   echo " *** Main components *** ";\
   echo -n " [core]          "; for target in $(CORE); do echo -n " $$target" ; done;echo;\
+  echo -n " [main]          "; for target in $(MAIN); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Projects ***";\
   echo -n " [sc-project]    "; for target in $(SC_PROJ); do echo -n " $$target" ; done;echo;\
-  echo -n " [magn-project]  "; for target in $(MAG_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [ph-project]    "; for target in $(PH_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [rt-project]    "; for target in $(RT_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [nl-project]    "; for target in $(NL_PROJ); do echo -n " $$target" ; done;echo;\
   echo -n " [rtext-project] "; for target in $(RTE_PROJ); do echo -n " $$target" ; done;echo;\
-  echo -n " [kerr-project]  "; for target in $(KERR_PROJ); do echo -n " $$target" ; done;echo;\
   echo; echo " *** GPL components *** ";\
   echo -n " [gpl]           "; for target in $(GPL); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Libraries ***";\

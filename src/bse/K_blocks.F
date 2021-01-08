@@ -39,7 +39,8 @@ subroutine K_blocks(iq)
  use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
-&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min
+&                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
+&                       BS_res_ares_dim,BS_mat_res_ares_dim,BS_IO_dim
  use com,          ONLY:msg
  !
 #include<memory.h>
@@ -48,44 +49,83 @@ subroutine K_blocks(iq)
  !
  ! YAMBO_PAR_ALLOC
  !
- integer :: HOST_SIZE(1),TMP_SIZE,LOCAL_SIZE(1)
+ integer(IPL) :: HOST_SIZE(1),TMP_SIZE,LOCAL_SIZE(1)
  complex(SP), allocatable :: BS_MAT(:)
  !
  ! Work Space
  !
- integer      :: i_T,j_T,i_block,iB,n_new_blocks,n_BS_blks_CPUs(ncpu)
+ integer      :: i_T,j_T,i_T_start,j_T_start,i_block,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
+ logical      :: test_full
  real(SP)     :: N_Ts_total,N_Ts_local
  !
- if (.not.BS_K_coupling           ) n_new_blocks=1
- if (     BS_K_coupling.and. iq==1) n_new_blocks=2
- if (     BS_K_coupling.and. iq/=1) n_new_blocks=4
+ if (.not.BS_K_coupling) n_new_blocks=1
+ if (     BS_K_coupling) n_new_blocks=2/BS_res_ares_dim
  !
  ! Count the blocks
- n_BS_blks=count(PAR_IND_T_ordered%element_2D)
- allocate(BS_blk(n_BS_blks*n_new_blocks))
+ n_BS_blks=0
+ do i_T=1,BS_nT_grps
+   do j_T=1,BS_nT_grps
+     !
+     i_res_ares=BS_T_grp(i_T)%i_res_ares
+     j_res_ares=BS_T_grp(j_T)%i_res_ares
+     if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
+     !
+     if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+     n_BS_blks=n_BS_blks+n_new_blocks
+     !
+   enddo
+ enddo
+ !
+ allocate(BS_blk(n_BS_blks))
+ BS_blk(:)%size(1)=0
+ BS_blk(:)%size(2)=0
  !
  ! Define blocks parameters
  n_BS_blks=0
  TMP_SIZE=0
+ BS_IO_dim=0
+ i_T_start=1
+ j_T_start=1
  do i_T=1,BS_nT_grps
    do j_T=1,BS_nT_grps
+     !
+     i_res_ares=BS_T_grp(i_T)%i_res_ares
+     j_res_ares=BS_T_grp(j_T)%i_res_ares
+     if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
+     !
+     i_T_start=BS_T_grp(i_T)%i_T_ref
+     j_T_start=BS_T_grp(j_T)%i_T_ref
      !
      if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
      !
      do i_block=1,n_new_blocks
-        iB = n_BS_blks + i_block
-        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
-        TMP_SIZE=TMP_SIZE+BS_T_grp(i_T)%size*BS_T_grp(j_T)%size
-        if (i_block==1) BS_blk(iB)%mode="R"
-        if (i_block==2) BS_blk(iB)%mode="C"
-        if (i_block==3) BS_blk(iB)%mode="A"
-        if (i_block==4) BS_blk(iB)%mode="Q"
-        BS_blk(iB)%iT_k=i_T
-        BS_blk(iB)%iT_p=j_T
-        BS_blk(iB)%ik=BS_T_grp(i_T)%ik
-        BS_blk(iB)%ip=BS_T_grp(j_T)%ik
-        BS_blk(iB)%coordinate=(/sum(BS_T_grp(:i_T-1)%size)+1,sum(BS_T_grp(:j_T-1)%size)+1/)
+       iB = n_BS_blks + i_block
+       BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
+       TMP_SIZE=TMP_SIZE+int(BS_T_grp(i_T)%size*BS_T_grp(j_T)%size,IPL)
+       if (BS_res_ares_dim==1) then
+         if (i_block==1) BS_blk(iB)%mode="R"
+         if (i_block==2) BS_blk(iB)%mode="C"
+       else
+         if (i_res_ares==1.and.j_res_ares==1) BS_blk(iB)%mode="R"
+         if (i_res_ares==1.and.j_res_ares==2) BS_blk(iB)%mode="C"
+         if (i_res_ares==2.and.j_res_ares==1) BS_blk(iB)%mode="Q"
+         if (i_res_ares==2.and.j_res_ares==2) BS_blk(iB)%mode="A"
+       endif
+#if !defined _PAR_IO
+       if (BS_blk(iB)%mode=="R") BS_IO_dim(:,1)=BS_IO_dim(:,1)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="C") BS_IO_dim(:,2)=BS_IO_dim(:,2)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="A") BS_IO_dim(:,3)=BS_IO_dim(:,3)+BS_blk(iB)%size(:)
+#endif
+       BS_blk(iB)%iT_k=i_T
+       BS_blk(iB)%iT_p=j_T
+       BS_blk(iB)%iT_k_st=i_T_start
+       BS_blk(iB)%iT_p_st=j_T_start
+       BS_blk(iB)%ik=BS_T_grp(i_T)%ik
+       BS_blk(iB)%ip=BS_T_grp(j_T)%ik
+       BS_blk(iB)%ira_k=i_res_ares
+       BS_blk(iB)%ira_p=j_res_ares
+       BS_blk(iB)%coordinate=(/sum(BS_T_grp(i_T_start:i_T-1)%size)+1,sum(BS_T_grp(j_T_start:j_T-1)%size)+1/)
      enddo
      !
      n_BS_blks=n_BS_blks+n_new_blocks
@@ -126,8 +166,10 @@ subroutine K_blocks(iq)
  ! REPORT
  !========
  !
- call msg('rsn','[BSK] Size (resonant)',BS_K_dim)
+ if(BS_res_ares_dim==1) call msg('rsn','[BSK] Size (resonant)',BS_K_dim(1))
+ if(BS_res_ares_dim==2) call msg('rsn','[BSK] Size (res,ares)',BS_K_dim)
  call msg('rsn','[BSK]         (total)',BS_H_dim)
+ call msg('rsn','[BSK] Matricies      ',BS_mat_res_ares_dim)
  !
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !

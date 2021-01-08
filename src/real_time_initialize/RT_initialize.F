@@ -264,7 +264,7 @@ subroutine RT_initialize(E,k,q)
      !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
-     call Check_symmetries(Efield(i1)%versor)
+     call Check_symmetries(Efield(i1)%versor,"electric")
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2

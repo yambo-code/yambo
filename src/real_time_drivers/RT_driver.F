@@ -149,7 +149,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! WFs loading
  !=============

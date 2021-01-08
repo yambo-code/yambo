@@ -43,17 +43,18 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
- use D_lattice,     ONLY:Tel,non_periodic_directions,Bose_Temp
+ use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
- use BS,            ONLY:BSE_mode,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
+ use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
-&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig
+&                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
 #if defined _SLEPC && !defined _SLEPC_OFF
- use BS_solvers,    ONLY:BSS_target_E,BSS_slepc_extraction, BSS_slepc_ncv, BSS_slepc_tol
+ use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
+ &                       BSS_slepc_precondition,BSS_slepc_approach
 #endif
  use TDDFT,         ONLY:FXC_n_g_corr,FXC_per_memstps,FXC_LRC_alpha,FXC_LRC_beta, &
 &                        FXC_SVD_digits,FXC_PF_alpha
@@ -95,10 +96,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
 &                        NL_verb_name,n_order
 #endif 
-#if defined _NL | defined _ELECTRIC
+#if defined _NL | defined _SC
  use fields,        ONLY:Efield
 #endif 
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,      ONLY:MAG_B,MAG_hamiltonian_type,MAG_radius,MAG_gauge,MAG_psi,MAG_theta
 #endif
 #if defined _ELPH 
@@ -111,9 +112,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
 #endif
-#if defined _PL
  use PHOTOLUM,      ONLY:PL_weights
-#endif
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold
 #endif
@@ -192,6 +191,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
+ call it(defs,'MolPos',  '[X/BSS] Molecule coord in supercell, 0.5 is the middle',molecule_position,verb_level=V_resp)
  call it(defs,'K_grids', '[KPT] Select the grids (X=response, S=sigma, C=collisions, B=bse) [default X S C B]',&
 &                        k_GRIDS_string,verb_level=V_kpt)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
@@ -297,6 +297,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
+ call it(defs,'BSEprop',   '[BSS] abs/kerr/magn/dichr trace',BSE_prop)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -304,7 +305,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
  call it(defs,'BSHayTrs',  '[BSS] Relative [o/o] Haydock threshold. Strict(>0)/Average(<0)',Haydock_threshold)
- call it(defs,'BSHayItr',  '[BSS] Iterations between IO for Haydock restart.',Haydock_iterIO,verb_level=V_resp)
+ call it(defs,'BSHayItrMAX','[BSS] MaX number of Haydock iterations.',Haydock_iterMAX,verb_level=V_resp)
+ call it(defs,'BSHayItrIO', '[BSS] Iterations between IO for Haydock restart.',Haydock_iterIO,verb_level=V_resp)
  call it(defs,'BSEPSInvTrs', '[BSS EPS] Inversion treshold. Relative[o/o](>0)/Absolute(<0)',K_INV_EPS%treshold)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
@@ -313,11 +315,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC && !defined _SLEPC_OFF
- call it(defs,'BSSNEig',    '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
- call it(defs,'BSSEnTarget','[SLEPC] Target energy to find eigenvalues',BSS_target_E,E_unit,verb_level=V_resp)
- call it(defs,'BSSSlepcExtraction' , '[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
- call it(defs,'BSSSlepcNCV', '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
- call it(defs,'BSSSlepcTol', '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
+ call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',BSS_slepc_approach)
+ call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
+ call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit,verb_level=V_resp)
+ call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit,verb_level=V_resp)
+ call it(defs,'BSSSlepcPrecondition','[SLEPC] Precondition technique (none|preonly+jacobi|bcgs+jacobi)',&
+ &                                                                              BSS_slepc_precondition,verb_level=V_resp)
+ call it(defs,'BSSSlepcExtraction','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
+ call it(defs,'BSSSlepcNCV',   '[SLEPC] Dimension of the subspace',BSS_slepc_ncv,verb_level=V_resp)
+ call it(defs,'BSSSlepcTol',   '[SLEPC] Tolerance for the iterative solver',BSS_slepc_tol,verb_level=V_resp)
+ call it('f',defs,'BSSSlepcMatrix','[SLEPC] Store slepc matrix, faster but more memory consuming',verb_level=V_resp)
 #endif
 #if !defined _SC
  call it('f',defs,'ALLGexx', '[BSS] Force the use use all RL vectors for the exchange part',verb_level=V_resp)
@@ -339,18 +346,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
  call it(defs,'QShiftOrder','[Xd] Pick-up the (QShiftOrder)th q+G vector',Q_Shift_Order,verb_level=V_resp)
  !
-#if defined _PL
- call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights)
-#endif
+ ! BSE properties: kerr, magnons, absorption, ...
  !
-#if defined _KERR
- !
- ! BSE: Kerr
- !
- call it('f',defs,'EvalKerr', '[BSE] Compute the Kerr effect')
  call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
- !
-#endif
+ call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights,verb_level=V_resp)
  !
 #if defined _RT
  !
@@ -525,11 +524,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
-#if defined _ELECTRIC
+#if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
 #endif
+ !
 #if defined _SCALAPACK
  !
  ! SLK test
@@ -537,7 +537,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)
  call it(defs,'B_Field',       '[MAG] Magnetic field modulus',MAG_B,unit=Bfield_unit)
  call it(defs,'B_psi',         '[MAG] Magnetic field psi angle',MAG_psi,unit=Angle_unit(1),verb_level=V_sc)

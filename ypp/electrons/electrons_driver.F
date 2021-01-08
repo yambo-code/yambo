@@ -113,7 +113,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !===============
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  !
  ! Angular momentum 
  !==================

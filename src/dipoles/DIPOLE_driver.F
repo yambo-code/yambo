@@ -52,16 +52,16 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parser_m,       ONLY:parser
-#if defined _RT
  use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
  use electrons,      ONLY:n_spin,n_spinor
-#endif
 #if defined _NL
  use nl_optics,      ONLY:l_use_DIPOLES
 #endif
 #if defined _SC || defined _RT
  use DIPOLES,        ONLY:P_square
 #endif
+ use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -85,6 +85,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    io_DIP=.true.
  endif
  !
+ l_BS_magnons= (index(BSE_prop,'magn')/=0)
+ l_BS_dichroism= (index(BSE_prop,'dich')/=0)
+ l_BS_photolum= (index(BSE_prop,'photolum')/=0)
+ if(l_BS_dichroism.or.l_BS_magnons) Dip%bands_ordered=.false.
+ !
 #if defined _NL
  if (l_nl_optics) then
    call parser('UseDipoles',l_use_DIPOLES)
@@ -102,13 +107,18 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use_covariant_approach      = trim(Dip%approach)=='Covariant'
  use_shifted_grids_approach  = trim(Dip%approach)=='Shifted grids'
  !
-#if defined _SC || defined _RT || defined _NL
- compute_P2_dipoles          = index(Dip%computed,"P2")  /=0 .or. l_sc_run .or. l_real_time
+ compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
+ compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
+ compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
+#if defined _SC
+ compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
 #endif
 #if defined _RT
- compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0 .or. (l_real_time .and. n_spin>1)
- compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0 .or. (l_real_time .and. n_spin>1)
+ compute_P2_dipoles          = compute_P2_dipoles   .or. l_real_time
+ compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_real_time .and. n_spin>1)
+ compute_Orb_dipoles         = compute_Orb_dipoles  .or. (l_real_time .and. n_spin>1)
 #endif
+ compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_BS_magnons .and. n_spin>1)
  !
  if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
    call warning(' Dipoles approach defined in input not recognised. Reverting to G-space v')
@@ -120,6 +130,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 #if defined _SC || defined _RT || defined _NL
  Dip%force_v_g_space=Dip%force_v_g_space.or.l_sc_run.or.l_real_time.or.l_nl_optics
 #endif
+ Dip%force_v_g_space     =Dip%force_v_g_space.or.l_BS_photolum
  Dip%force_v_g_space     =Dip%force_v_g_space.and.(.not.use_g_space_approach)
  use_dipole_transverse   =.true.
  idir_not_done           =.true.
@@ -174,13 +185,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    if (use_dipole_transverse)      call DIPOLE_transverse(Xen,Xk,Dip)
    !
-#if defined _RT
-   if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-   !
    if (Compute_Spin_dipoles)       call DIPOLE_spin_magnetization(Xen,Xk,Dip)
-#endif
    !
    call DIPOLES_ppredux_and_symmetrize()
+   !
+#if defined _RT
+   if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
+#else
+   if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
+#endif
+   !
+   call DIPOLES_ppredux_and_symmetrize_orbt()
    !
    ! If the calculation of the dipoles is very short the I/O is switched off
    !
@@ -210,13 +225,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  call DIP_alloc('DIP_v')
  if (use_covariant_approach) call DIP_alloc('DIP_S')
  if (compute_P2_dipoles)     call DIP_alloc('P_square') 
-#if defined _RT
  if (compute_Orb_dipoles)    call DIP_alloc('DIP_orbital')
- if (compute_Spin_dipoles) then
-   call DIP_alloc('DIP_spin')
-   if(n_spinor==2) call DIP_alloc('DIP_P_spinor')
- endif
+ if (compute_Spin_dipoles)   call DIP_alloc('DIP_spin')
+#if defined _RT
+ if (compute_Spin_dipoles.and.n_spinor==2) call DIP_alloc('DIP_P_spinor')
 #endif
+ !
+ if(l_BS_dichroism) call DIP_alloc('DIP_orbital')
  !
  contains
    !
@@ -229,7 +244,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
      DIP_P=cZERO
      DIP_v=cZERO
      !
-#if defined _RT
      if (compute_Orb_dipoles) then
        call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,2/))
        DIP_orbital=cZERO
@@ -237,10 +251,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
      if (compute_Spin_dipoles) then
        call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        DIP_spin=cZERO
-       if (n_spinor==2) then
-         call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
-         DIP_P_spinor=cZERO
-       endif
+     endif
+#if defined _RT
+     if (compute_Spin_dipoles.and.n_spinor==2) then
+       call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+       DIP_P_spinor=cZERO
      endif
 #endif
      !
@@ -250,6 +265,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
        P_square=cZERO
      endif
 #endif
+     !
+     if (l_BS_dichroism) then
+       call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,1/))
+       DIP_orbital=cZERO
+     endif
+     !
      if(use_covariant_approach) then
        call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
        DIP_S=cZERO
@@ -261,9 +282,15 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,i_sp_pol_inv,i_sp_pol_tmp,ik,ik_mem
+    !
+    i_sp_pol_inv=1
     !
     do i_sp_pol=1,n_sp_pol
+      !
+      if(i_sp_pol==1 .and. n_sp_pol==2) i_sp_pol_inv=2
+      if(i_sp_pol==2 .and. n_sp_pol==2) i_sp_pol_inv=1
+      !
       do ik=1,Xk%nibz
         !
         if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
@@ -274,21 +301,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
+        if (compute_Spin_dipoles.and.i_sp_pol==1) then
+          do i_sp_pol_tmp=1,n_sp_pol
+            call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol_tmp),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+          enddo
+        endif
 #if defined _RT
-        !
-        if (compute_Orb_dipoles) then
-          call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        endif
-        if (compute_Spin_dipoles) then
-          call PP_redux_wait(DIP_spin(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-          if (n_spinor==2) call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        endif
-        !
+        if (compute_Spin_dipoles.and.n_spinor==2) &
+        & call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
 #endif
 #if defined _SC || defined _RT || defined _NL
-        !
         if (compute_P2_dipoles) call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        !
 #endif
         !
         ! Symmetrization 
@@ -301,15 +324,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             !
+            ! Warning: if n_sp_pol==2 DIP_spin(iv,iv) is not the expectation value but <iv up |S | iv dn>
+            if (compute_Spin_dipoles.and.(.not.n_sp_pol==2) ) &
+            & DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
 #if defined _RT
-            if (compute_Orb_dipoles) then
-              DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-            endif
-            if (compute_Spin_dipoles) then
-              DIP_spin(:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_spin(:,iv,iv,ik_mem,i_sp_pol)),0. ,SP)
-              if(n_spinor==2) &
-&               DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
-            endif
+            if (compute_Spin_dipoles.and.n_spinor==2) &
+            & DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
 #endif
 #if defined _SC || defined _RT
             if (compute_P2_dipoles) then
@@ -318,20 +338,20 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 #endif
             !
           endif
+          !
           do ic=iv+1,Dip%ib(2)
             if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
               DIP_iR(:,iv,ic,ik_mem,i_sp_pol) = -conjg(DIP_iR(:,ic,iv,ik_mem,i_sp_pol))
               DIP_P (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_P (:,ic,iv,ik_mem,i_sp_pol))
               DIP_v (:,iv,ic,ik_mem,i_sp_pol) =  conjg(DIP_v (:,ic,iv,ik_mem,i_sp_pol))
-#if defined _RT
-              if (compute_Orb_dipoles) then
-                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
-              endif
               if (compute_Spin_dipoles) then
-                DIP_spin(:,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(:,ic,iv,ik_mem,i_sp_pol))
-                if (n_spinor==2) &
-&                 DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
+                DIP_spin(1,iv,ic,ik_mem,i_sp_pol_inv)= conjg(DIP_spin(1,ic,iv,ik_mem,i_sp_pol))
+                DIP_spin(2,iv,ic,ik_mem,i_sp_pol_inv)= conjg(DIP_spin(2,ic,iv,ik_mem,i_sp_pol))
+                DIP_spin(3,iv,ic,ik_mem,i_sp_pol)= conjg(DIP_spin(3,ic,iv,ik_mem,i_sp_pol))
               endif
+#if defined _RT
+              if (compute_Spin_dipoles.and.n_spinor==2) &
+              & DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
 #endif
 #if defined _SC || defined _RT
               if (compute_P2_dipoles) &
@@ -346,5 +366,52 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize
+   !
+   !
+   subroutine DIPOLES_ppredux_and_symmetrize_orbt()
+    !
+    use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
+    !
+    integer  :: ic,iv,i_sp_pol,ik,ik_mem
+    !
+    do i_sp_pol=1,n_sp_pol
+      !
+      do ik=1,Xk%nibz
+        !
+        if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+        !
+        ik_mem=PAR_DIPk_ibz_index(ik)
+        !
+        if (compute_Orb_dipoles) &
+        & call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        if(l_BS_dichroism) call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        !
+        ! Symmetrization 
+        !================
+        do iv=Dip%ib(1),Dip%ib_lim(1)
+          if(iv>=Dip%ib_lim(2)) then
+            if (compute_Orb_dipoles) &
+            & DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
+           if(l_BS_dichroism) then
+             DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP) 
+           endif
+          endif
+          !
+          do ic=iv+1,Dip%ib(2)
+            if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
+              if (compute_Orb_dipoles) &
+              & DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
+              if(l_BS_dichroism) then
+                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,1)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1))
+              endif
+            endif
+          enddo
+        enddo
+        !
+      enddo
+    enddo
+    !
+   end subroutine DIPOLES_ppredux_and_symmetrize_orbt
+   !
    !
 end subroutine

@@ -31,13 +31,10 @@ subroutine INIT_activate()
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,       ONLY:MAG_landau
 #endif
 #if defined _RT
@@ -147,7 +144,7 @@ subroutine INIT_activate()
 #endif
  !
  !
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs')
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse)/)))  call initactivate(1,'NonPDirs MolPos')
  !
  !RIM
  !
@@ -159,8 +156,7 @@ subroutine INIT_activate()
  !
  !XX
  !
- if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs')  
- if (l_HF_and_locXC) call initactivate(1,'UseNLCC')  
+ if (l_HF_and_locXC) call initactivate(1,'EXXRLvcs VXCRLvcs UseNLCC')  
  !
  ! Kernels
  !
@@ -171,7 +167,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipComputed DipPDirect ShiftedPaths')
-#if defined _NL || defined _ELECTRIC
+#if defined _NL || defined _SC
  if (l_dipoles) call initactivate(1,'EvPolarization')
 #endif
  !
@@ -181,7 +177,7 @@ subroutine INIT_activate()
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc UseNLCC')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
@@ -237,14 +233,6 @@ subroutine INIT_activate()
    !
  endif
  !
-#if defined _PL
- !
- ! PL
- !
- if (l_photolum) call initactivate(1,'PL_weights')
- !
-#endif
- !
  ! BSE
  !
  if (l_optics.and.l_bse) then
@@ -258,13 +246,12 @@ subroutine INIT_activate()
    !
    call initactivate(1,'NoCondSumRule MetDamp')
    !
-#if defined _NL || defined _ELECTRIC
+#if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-#if defined _KERR
-   call initactivate(1,'EvalKerr AnHall')
-#endif
+   call initactivate(1,'BSEprop')
+   call initactivate(1,'PL_weights')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
@@ -289,17 +276,16 @@ subroutine INIT_activate()
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
-   if (index(BSS_mode,'d')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
-   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer')
+   if (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
+   if (index(BSS_mode,'h')/=0)  call initactivate(1,'BSHayTrs BSHayTer BSHayItrIO BSHayItrMAX')
    if (index(BSS_mode,'s')/=0)  then
-     call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcExtraction BSSSlepcNCV BSSSlepcTol WRbsWF')
+     call initactivate(1,'BSSNEig BSSEnTarget BSSSlepcApproach BSSSlepcPrecondition BSSSlepcExtraction')
+     call initactivate(1,'BSSSlepcMaxIt BSSSlepcNCV BSSSlepcTol BSSSlepcMatrix')
    endif
    !
    ! Special project dependent variables
    !
-#if defined _PL 
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSPLInvTrs')
-#endif
 #if defined _ELPH 
    if (l_elph_corr.and..not.elph_use_q_grid) call initactivate(1,'ElPhRndNq')
 #endif
@@ -474,7 +460,7 @@ subroutine INIT_activate()
    !
    if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
    if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&
@@ -551,7 +537,7 @@ subroutine INIT_activate()
  endif
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  !
  ! Magnetic
  !

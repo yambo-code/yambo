@@ -35,6 +35,7 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
 #endif
  use wrapper,      ONLY:V_by_V_pwise,M_by_V,Vstar_dot_V
  use deviceXlib_m, ONLY:dev_conjg
+ use com,           ONLY:msg
  !
  implicit none
  !
@@ -102,5 +103,6 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  if (.not.BS_W_is_diagonal) call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
  !
  K_correlation_kernel=Vstar_dot_V(BS_n_g_W,O2,O_times_W)*4._SP*pi
+ call msg("r", "c kernel =", real(K_correlation_kernel))
  !
 end function K_correlation_kernel

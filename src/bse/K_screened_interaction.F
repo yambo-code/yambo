@@ -26,9 +26,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
- use drivers,      ONLY:l_td_hf
+ use drivers,      ONLY:l_td_hf,l_RIM_W
  use collision_el, ONLY:elemental_collision,elemental_collision_free
- use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
+ use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,RIM_W,RIM_W_is_diagonal,&
+&                       RIM_W_ng,RIM_vpW
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
@@ -36,6 +37,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
  use cuda_m,       ONLY:have_cuda
+ use com,           ONLY:msg
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -52,13 +54,15 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  integer    :: nibz
  !
  integer    :: BS_W_size2,i_g2,i_g3,iq_W
- logical    :: W_is_em1s,W_is_pp
+ logical    :: W_is_em1s,W_is_pp,l_RIM_W_g
  !
  ! I/O
  !
  integer           :: XID,IO_ACT
  integer, external :: io_X
- ! 
+ !
+ YAMBO_ALLOC(RIM_vpW,(RIM_W_ng,RIM_W_ng))
+ !
  if (l_td_hf) then
    !
    io_X_err=0
@@ -141,6 +145,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      endif
      !
      forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
+     if(l_RIM_W) then
+       RIM_vpW = RIM_W(iq_W,:,:)
+       forall(i_g2=1:RIM_W_ng) RIM_vpW(i_g2,i_g2)=RIM_W(iq_W,i_g2,i_g2)+2._SP*isc%gamp(i_g2,i_g2)
+     end if
      !
 #ifdef _CUDA
      ! device <- host transfer
@@ -170,8 +178,21 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      else if (.not.BS_W_is_diagonal) then
        do i_g3=1,BS_n_g_W
          do i_g2=1,BS_n_g_W
-           BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2,i_g3,1)*isc%gamp(i_g2,i_g3)
-           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
+           !    
+           !RIM_W support
+           l_RIM_W_g=(l_RIM_W.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
+           if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(i_g2==i_g3)
+           !
+           if (l_RIM_W_g) then
+             if(i_g2 == 1 .and. i_g3 == 1) call msg("r", "RIM support activated")
+             BS_W(i_g2,i_g3,iq_W) = cmplx(RIM_vpW(i_g2,i_g3)/2._SP, &
+&                             aimag(X_mat(i_g2,i_g3,1))*real(isc%gamp(i_g2,i_g3)),kind=SP)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)= cmplx(RIM_vpW(i_g3,i_g2)/2._SP, &
+&                             aimag(X_mat(i_g3,i_g2,1))*real(isc%gamp(i_g2,i_g3)),kind=SP)
+           else
+             BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2,i_g3,1)*isc%gamp(i_g2,i_g3)     !<-----
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
+           end if
          enddo
        enddo
      endif

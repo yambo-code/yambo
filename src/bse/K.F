@@ -28,13 +28,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_bss
+ use drivers,      ONLY:l_bs_fxc,l_bss,l_RIM_W
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -59,6 +59,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PP_redux_wait
+ use parser_m,      ONLY:parser
  !
 #if defined _KERR
  use KERR,           ONLY:BSS_KERR_free
@@ -236,6 +237,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Screened interaction
  !======================
+ !
+ !Check if there is RIM_W
+ call parser('RIM_W',l_RIM_W)
+ call parser('RIM_W_diag',RIM_W_is_diagonal)
+ if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
+ if (l_RIM_W) call interpolate_W(X,Xw,q)
+ !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
  !

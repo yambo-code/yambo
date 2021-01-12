@@ -32,10 +32,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP_interfaces, ONLY:PROJECTION_setup
  use YPPm,           ONLY:l_density,l_mag,v2plot,&
 &                         nr,l_sp_wf,DOS_bands,plot_title,l_dos,l_bands,l_current,&
-&                         l_angular_momentum,l_position,l_mean_potential
+&                         l_angular_momentum,l_position,l_mean_potential,INTERP_input_mode
  use xc_functionals, ONLY:magn
  use interfaces,     ONLY:WF_load,WF_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interpolate,    ONLY:INTERP_mode
  !
 #include<memory.h>
  !
@@ -51,6 +52,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !
  if ( .not. any((/l_density,l_mag,l_sp_wf,l_dos,l_bands,l_current,&
 &                 l_mean_potential,l_angular_momentum,l_position/)) ) return
+ !
+ INTERP_input_mode=INTERP_mode
  !
  ! Projection
  !============

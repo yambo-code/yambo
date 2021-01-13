@@ -64,7 +64,7 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  if (.not.present(BS_overlap)) scheme="hermitian"
  if (     present(BS_overlap)) scheme="non-hermitian"
  !
- velocity_correction=trim(mode)=="opti".and.trim(global_gauge)=="velocity"
+ velocity_correction=(trim(mode)=="opti").and.(trim(global_gauge)=="velocity")
  !
  if (.not.BS_K_coupling) res_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
  if (     BS_K_coupling) res_range=(/1,BS_H_dim/)
@@ -73,9 +73,7 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  n_res=res_range(2)-res_range(1)+1
  !
  if (trim(scheme)=="hermitian")     BS_R_tmp => BS_R_left
- if (trim(scheme)=="non-hermitian") then
-   allocate(BS_R_tmp(BSS_n_eig))
- endif
+ if (trim(scheme)=="non-hermitian") allocate(BS_R_tmp(BSS_n_eig))
  !
  ! [1] BS_R_tmp(i)= <i_K|j><j|q0> 
  !                = conjg( BS_V_left(k,i))*BSS_dipoles(k)*R_k

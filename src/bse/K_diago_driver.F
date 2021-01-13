@@ -266,8 +266,8 @@ subroutine K_diago_driver(iq,W,X_static)
        if(l_BS_optics.or.l_BS_kerr.or.l_BS_dichroism) &
        &                 call K_diago_left_residuals("opti",i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
        if(l_BS_magnons) then
-                         call K_diago_left_residuals("magn1",i_BS_mat,BS_E,BS_R_left_magn(1,:),BS_V_left,BS_overlap)
-         if(n_spinor==2) call K_diago_left_residuals("magn2",i_BS_mat,BS_E,BS_R_left_magn(2,:),BS_V_left,BS_overlap)
+                         call K_diago_left_residuals("mag1",i_BS_mat,BS_E,BS_R_left_magn(1,:),BS_V_left,BS_overlap)
+         if(n_spinor==2) call K_diago_left_residuals("mag2",i_BS_mat,BS_E,BS_R_left_magn(2,:),BS_V_left,BS_overlap)
        endif
        !
        ! DS: this also should be changed according to the general structure

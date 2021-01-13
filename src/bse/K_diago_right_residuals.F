@@ -42,13 +42,13 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  character(*),intent(in)  :: mode
  integer,     intent(in)  :: i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
- complex(SP), intent(in)  :: BS_V_right(BS_H_dim,BSS_n_eig)
  complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
+ complex(SP), intent(in)  :: BS_V_right(BS_H_dim,BSS_n_eig)
  !
  ! Workspace
  !
  type(PP_indexes)     ::px
- integer              ::i1,n_res,res_range(2)
+ integer              ::i_lambda,n_res,res_range(2)
  logical              ::velocity_correction
  !
  complex(SP),allocatable :: tmp_res(:)
@@ -57,7 +57,7 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_R_right=cZERO
- velocity_correction=trim(mode)=="abs".or.trim(mode)=="kerr".and.trim(global_gauge)=="velocity"
+ velocity_correction=(trim(mode)=="abs".or.trim(mode)=="kerr").and.trim(global_gauge)=="velocity"
  !
  if (.not.BS_K_coupling) res_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
  if (     BS_K_coupling) res_range=(/1,BS_H_dim/)
@@ -77,11 +77,11 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  if (allocated(BSS_eh_Z)) tmp_res=tmp_res*sqrt(BSS_eh_Z(res_range(1):res_range(2)))
  if (velocity_correction) tmp_res=tmp_res/BSS_eh_E(res_range(1):res_range(2))
  !
- do i1=1,BSS_n_eig
-   if (.not.px%element_1D(i1)) cycle
+ do i_lambda=1,BSS_n_eig
+   if (.not.px%element_1D(i_lambda)) cycle
    !
-   BS_R_right(i1)=V_dot_V_omp(n_res,tmp_res,BS_V_right(:,i1))
-   if (velocity_correction) BS_R_right(i1)=BS_R_right(i1)*BS_E(i1)
+   BS_R_right(i_lambda)=V_dot_V_omp(n_res,tmp_res,BS_V_right(:,i_lambda))
+   if (velocity_correction) BS_R_right(i_lambda)=BS_R_right(i_lambda)*BS_E(i_lambda)
    !
    call live_timing(steps=1)
  enddo

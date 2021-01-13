@@ -230,20 +230,19 @@ subroutine K_diago_driver(iq,W,X_static)
        if(l_slepc) call MATRIX_slepc(slepc_mat,l_target_energy,BSS_n_eig,BS_mat,E_real=BS_E_real)
 #endif
        !
-       BS_E=cmplx(BS_E_real,0._SP,SP)
+       BS_E=cmplx(BS_E_real,0._SP,kind=SP)
        !
      endif
      !
 #if defined _SLEPC && !defined _SLEPC_OFF
      !
-     ! BSS_n_eig could be lowered by MATRIX_slepc
-     if (Input_n_eig>BSS_n_eig) then
-       call K_slepc_resize_variables()
+     if (l_slepc) then
+       ! BSS_n_eig could be lowered by MATRIX_slepc
+       if (Input_n_eig>BSS_n_eig) call K_slepc_resize_variables()
+       ! Destroy the matrix
+       call MatDestroy(slepc_mat,ierr)
      endif
      !
-     ! Destroy the matrix
-     !============================
-     if(l_slepc) call MatDestroy(slepc_mat,ierr)
 #endif
      !
      if(l_diago) call live_timing( )
@@ -277,7 +276,8 @@ subroutine K_diago_driver(iq,W,X_static)
      else
        !
        ! Right residuals
-       if(l_BS_optics   ) call K_diago_right_residuals("abs", i_BS_mat,BS_E,BS_R_right,     BS_mat)
+       if(l_BS_optics.or.l_BS_kerr.or.l_BS_dichroism) &
+       &                  call K_diago_right_residuals("abs", i_BS_mat,BS_E,BS_R_right,     BS_mat)
        if(l_BS_kerr     ) call K_diago_right_residuals("kerr",i_BS_mat,BS_E,BS_R_right_kerr,BS_mat)
        if(l_BS_dichroism) call K_diago_right_residuals("dich",i_BS_mat,BS_E,BS_R_right_dich,BS_mat)
        if(l_BS_magnons) then
@@ -286,9 +286,8 @@ subroutine K_diago_driver(iq,W,X_static)
        endif
        !
        ! Left residuals
-       if(l_BS_optics)                  BS_R_left=conjg(BS_R_right)
-       if(l_BS_magnons)                 BS_R_left_magn=conjg(BS_R_right_magn)
-       if(l_BS_kerr.or.l_BS_dichroism)  call K_diago_left_residuals("opti",i_BS_mat,BS_E,BS_R_left,BS_V_left)
+       if(l_BS_optics.or.l_BS_kerr.or.l_BS_dichroism)  BS_R_left=conjg(BS_R_right)
+       if(l_BS_magnons)                                BS_R_left_magn=conjg(BS_R_right_magn)
        !
        ! DS: this also should be changed according to the general structure
        if(l_BS_photolum) call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)

@@ -29,7 +29,7 @@ AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
 
-if test -d "src/real_time_lifetimes/"; then
+if test -d "src/real_time_el-ph/"; then
   #
   # develop procedure
   #
@@ -47,7 +47,7 @@ else
   #
   # gpl procedure
   #
-  if ! test -d "./lib/yambo/driver/src"; then
+  if ! test -d "lib/yambo/driver/src"; then
     cd lib/yambo/
     VERSION="0.0.1"
     TARBALL="${VERSION}.tar.gz"

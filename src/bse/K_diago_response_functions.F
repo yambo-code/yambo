@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
+subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
  &                    BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
@@ -48,7 +48,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  type(w_samp),intent(in)  :: W
  integer,     intent(in)  :: iq,i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
- complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+ complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
  complex(SP), pointer, intent(in) :: BS_R_right_kerr(:),BS_R_right_dich(:)
@@ -99,7 +99,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    if (l_BS_kerr.and.l_BS_anomalous_Hall) then
      if (trim(global_gauge)=='length'  ) gauge_factor=cONE
      if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-     B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2
+     B_Hall(2)=B_Hall(2)+   BS_R_left_abs(i1)*BS_R_right_kerr(i1) / gauge_factor **2
    endif
    !
    if (     BS_perturbative_SOC) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
@@ -121,7 +121,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      !
      if(l_BS_abs) then
-       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
+       res_abs=BS_R_left_abs(i1)*BS_R_right_abs(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
@@ -136,7 +136,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      !
      if(l_BS_kerr) then
-       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
+       res_kerr=BS_R_left_abs(i1)*BS_R_right_kerr(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
@@ -148,7 +148,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      !
      if(l_BS_dichroism) then
-       res_dich=BS_R_left(i1)*BS_R_right_dich(i1)*ares_fac
+       res_dich=BS_R_left_abs(i1)*BS_R_right_dich(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1

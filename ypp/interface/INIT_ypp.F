@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine INIT_ypp(E,Dip,instr,FINALIZE)
+subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
@@ -31,7 +31,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
 &                         U_k_pts,U_interp_pts,U_q_pts,U_q_shifts,FineGd_DB1_paths,l_angular_momentum,l_position,&
-&                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid
+&                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid,DIPs
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
  use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
@@ -47,7 +47,6 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
- use DIPOLES,        ONLY:DIPOLE_t
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -79,7 +78,6 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
 #include<memory.h>
  !
  type(levels)     ::E
- type(DIPOLE_t)   ::Dip
  character(*)     ::instr
  logical          ::FINALIZE
  !
@@ -180,9 +178,9 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_COL_CUT(ID) 
  !
- Dip%ib= (/1,E%nb/)
+ DIPs%ib= (/1,E%nb/)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=io_DIPOLES(Dip,ID)
+ io_err=io_DIPOLES(DIPs,ID)
  !
  ! Defaults->Defs + Initialization
  !
@@ -621,6 +619,12 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
    !
+   ! Dipoles Mask
+   !
+   if (l_dipoles.and.l_RT_bands) then
+     call initactivate(1,"DIP_E_range DIP_bands DIP_direction cooOut")
+   endif
+   !
  endif
 #endif
  !
@@ -759,7 +763,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    !
    subroutine before_infile_write_setup 
      !
-     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,DIPOLES_bands
+     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,DIPs_bands
      use electrons,      ONLY:n_bands
      !
      ! After DB reading/stdin logicals I propose here values for the input file
@@ -767,7 +771,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
      SOC_bands_to_map=(/ 1, n_bands /)
      BANDS_bands=(/1,n_bands/)
      DOS_bands=(/1,n_bands/)
-     DIPOLES_bands=Dip%ib
+     DIPs_bands=DIPs%ib
      !
    end subroutine
    !

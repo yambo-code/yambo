@@ -404,10 +404,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      implicit none
      logical :: all_bands,l_local
      !
-     call parser('DipBandsAll',all_bands)
+     call parser('DipBandsALL',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
-     l_local=l_sc_run.or.l_real_time.or.l_nl_optics !.or.l_BS_dichroism
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics 
      if (l_local)         Dip%bands_ordered=.false.
 #if defined _QED
      if (l_elphoton_corr) Dip%bands_ordered=.false.

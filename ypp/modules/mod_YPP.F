@@ -29,6 +29,7 @@ module YPPm
  use QP_m,      ONLY:QP_t
  use electrons, ONLY:levels
  use X_m,       ONLY:X_t
+ use DIPOLES,   ONLY:DIPOLE_t
  !
  implicit none
  !
@@ -156,10 +157,11 @@ module YPPm
  !
  ! Dipoles
  !
- logical      ::l_dipoles
- integer      ::DIPOLES_bands(2)
- real(SP)     ::DIPOLES_E_range(2)
- real(SP)     ::DIPOLES_direction(3)=(/1._SP,0._SP,0._SP/)
+ type(DIPOLE_t) ::DIPs
+ logical        ::l_dipoles
+ integer        ::DIPs_bands(2)
+ real(SP)       ::DIPs_E_range(2)
+ real(SP)       ::DIPs_direction(3)=(/1._SP,0._SP,0._SP/)
  !
  ! Exc/SP Properties
  !

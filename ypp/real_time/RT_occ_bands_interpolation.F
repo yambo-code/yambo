@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
+subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  !
  use pars,           ONLY:SP,schlen,zero_dfl,rZERO
  use units,          ONLY:HA2EV,AUT2FS
@@ -30,8 +30,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg,of_open_close
  use YPPm,           ONLY:BANDS_steps,Nel_fac,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,&
+&                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,l_dipoles,DIPs,DIPs_direction,DIPs_bands,&
 &                         CIRCUIT_E_db,CIRCUIT_k_label,l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par
+ use DIPOLES,        ONLY:DIP_iR
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special
  use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
@@ -47,18 +48,18 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 #include<memory.h>
  !
  integer,       intent(in)    :: n_T_steps
- type(bz_samp), intent(in)    :: k
+ type(bz_samp), intent(in)    :: k,q
  type(levels),  intent(inout) :: en
  !
  ! Work space
  !
  type(bz_samp)         :: RT_k
  type(levels)          :: CIRCUIT_E,CIRCUIT_dE,RT_E
- real(SP)              :: Max_occ,values(3+2*(n_spinor-1))
- real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:)
+ real(SP)              :: Max_occ,values(3+2*(n_spinor-1)),k_weight
+ real(SP), allocatable :: integrated_dF_elecs(:,:,:),integrated_dF_holes(:,:,:),ARPES_mask(:,:,:)
  character(schlen)     :: headings(3+2*(n_spinor-1)),file_name_rt,file_name_rt_save,operation,extension,k_label,sec_name
  logical               :: WARN_negative_electrons_df,WARN_positive_holes_df,is_PROJECTED,is_INTERPOLATED
- integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path
+ integer               :: ib,ik,i_RT,i_T,n_values,ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,ik_path,i_spin
  logical, external     :: file_exists
  integer, external     :: PROJECTION_k_on_the_path_or_plane
  !
@@ -115,6 +116,23 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  ! ... and Eo in RT_E...
  call RT_carriers_to_RT_E(en,RT_E,"Eo")
  !
+ if (l_dipoles) then
+   !
+   call section('=',"The Dipoles `Mask`")
+   !=====================================
+   call DIPOLES_driver("Database",k,en,q)
+   YAMBO_ALLOC(ARPES_mask,(RT_bands(1):RT_bands(2),k%nibz,n_sp_pol))
+   do ik=1,k%nibz
+     do ib=RT_bands(1),RT_bands(2)
+       do i_spin=1,n_sp_pol
+         ARPES_mask(ib,ik,i_spin)=abs(dot_product(DIPs_direction,DIP_iR(:,DIPs_bands(2)-DIPs%ib_lim(2)+1,ib,ik,i_spin)))**2.
+       enddo
+     enddo
+   enddo
+   call DIPOLES_driver("Clean",k,en,q)
+   !
+ endif
+ !
  if (.not.is_PROJECTED.and.is_INTERPOLATED) then
    !
    call section('=',"Levels interpolation")
@@ -165,6 +183,10 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    do i_RT=1,RT_carriers%nstates
      ib      =RT_carriers%table(i_RT,1)
      ik      =RT_carriers%table(i_RT,3)
+     i_spin  =RT_carriers%table(i_RT,4)
+     ! ... Apply the ARPES Mask
+     if (l_dipoles) RT_carriers%OCC_el%dN(i_RT)=RT_carriers%OCC_el%dN(i_RT)*ARPES_mask(ib,ik,i_spin)
+     !
      if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
      if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
    enddo
@@ -177,6 +199,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    operation=trim(operation)//" Time "//trim(intc(i_T))//"/"//trim(intc(n_T_steps))
    !
    if (is_PROJECTED) then
+     !
      if (is_INTERPOLATED) then
        call INTERPOLATION_driver_seed(trim(operation),ID_grid,RT_bands,RT_k,SEED_RT=RT_carriers,&
 &                                     QUIET=trim(INTERP_mode)=="NN".and.N_T_steps>1)

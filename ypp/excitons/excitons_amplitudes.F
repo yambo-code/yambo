@@ -55,7 +55,6 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  !==================================================
  !
  !call parser('DipWeight',l_weight_with_dipoles)
- !!
  !if(l_weight_with_dipoles) then
  !  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  !  io_err=io_DIPOLES(Dip,io_ID)

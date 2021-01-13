@@ -34,7 +34,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS_solvers,     ONLY:run_Slepc
 #endif
  use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,&
- &                       BS_blks_free,l_BS_jdos,l_BS_abs
+ &                       BS_blks_free,l_BS_jdos,l_BS_abs,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_m,           ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -140,9 +140,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
    !
-   if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs")
-   if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr")
-   if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons")
+   if(l_BS_abs)       call K_Haydock(iq,W_bss,"abs")
+   if(l_BS_kerr)      call K_Haydock(iq,W_bss,"kerr")
+   if(l_BS_magnons)   call K_Haydock(iq,W_bss,"magnons")
+   if(l_BS_dichroism) call K_Haydock(iq,W_bss,"dichroism")
    !
  endif
  !

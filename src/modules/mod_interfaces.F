@@ -192,7 +192,7 @@ module interfaces
    end subroutine 
    !
    subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
@@ -202,9 +202,22 @@ module interfaces
      complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:),BS_R_right_dich(:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
+   !
+   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap) 
+     use BS,            ONLY:BS_H_dim
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
+     complex(SP),         intent(in)  :: BS_V_left(BS_H_dim,BSS_n_eig)
+     complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
+   end subroutine K_diago_left_residuals
    !
    subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)
      use pars, ONLY:SP

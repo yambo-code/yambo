@@ -219,6 +219,7 @@ subroutine K_Haydock(iq,W,mode)
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
    if (trim(mode)=="abs")       V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
    if (trim(mode)=="kerr")      V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+   if (trim(mode)=="dichroism") V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_dic(1,:,1)
    if (trim(mode)=="magnons")   V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_mag(1,:,1)
    V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
@@ -238,7 +239,8 @@ subroutine K_Haydock(iq,W,mode)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (trim(mode)=="dichroism") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_dic(1,:,1)
      W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo

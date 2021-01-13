@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
- &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+ &                    BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
@@ -39,7 +39,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:B_Hall
- use X_m,            ONLY:Epsilon_ij,X_magnons
+ use X_m,            ONLY:Epsilon_ij,X_magnons,X_dichroism
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  !
@@ -51,7 +51,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+ complex(SP), pointer, intent(in) :: BS_R_right_kerr(:),BS_R_right_dich(:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
  ! Work space
@@ -65,7 +65,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
- complex(SP)               :: gauge_factor,res_kerr,res_magn(2)
+ complex(SP)               :: gauge_factor,res_kerr,res_dich,res_magn(2)
  !
  n_SOC=1
  ares_fac=(-1)**(i_BS_mat-1)
@@ -99,7 +99,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    if (l_BS_kerr.and.l_BS_anomalous_Hall) then
      if (trim(global_gauge)=='length'  ) gauge_factor=cONE
      if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-     B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2._SP
+     B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2
    endif
    !
    if (     BS_perturbative_SOC) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
@@ -146,6 +146,19 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
          Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
+     !
+     if(l_BS_dichroism) then
+       res_dich=BS_R_left(i1)*BS_R_right_dich(i1)*ares_fac
+       if(l_BS_esort.and.i_BS_mat==1) then
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_dich
+         nVAR=nVAR+1
+       endif
+       X_dichroism(:,2)=X_dichroism(:,2)-res_dich/(W%p(:)-EXC_E(i_pert_SOC))
+       if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
+         X_dichroism(:,2)=X_dichroism(:,2)+conjg(res_dich)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
+       endif
+     endif
+     !
      if(l_BS_magnons) then
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
@@ -159,6 +172,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
          X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
+     !
      if(l_BS_photolum) then
        PL(:,2)=PL(:,2)+PL_prefactor*ares_fac*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
@@ -224,6 +238,10 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    if(l_BS_anomalous_Hall) call PP_redux_wait(B_Hall(2))
  endif
  !
+ if(l_BS_dichroism) then
+   call PP_redux_wait(X_dichroism(:,2))
+ endif
+ !
  if(l_BS_magnons) then
    call PP_redux_wait(X_magnons(:,:,2))
  endif
@@ -266,6 +284,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    endif
    !
  endif
+ !
+ ! Factors to be fixed
+ if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*Co_factor/(4._SP*pi)
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

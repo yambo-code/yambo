@@ -206,8 +206,18 @@ module interfaces
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
-   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap) 
-     use BS,            ONLY:BS_H_dim
+   subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
+     complex(SP), intent(in)  :: BS_V_right(:,:)
+   end subroutine K_diago_right_residuals
+   !
+   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      implicit none
@@ -215,7 +225,7 @@ module interfaces
      integer,     intent(in)  :: i_BS_mat
      complex(SP), intent(in)  :: BS_E(BSS_n_eig)
      complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
-     complex(SP),         intent(in)  :: BS_V_left(BS_H_dim,BSS_n_eig)
+     complex(SP),         intent(in)  :: BS_V_left(:,:)
      complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
    end subroutine K_diago_left_residuals
    !

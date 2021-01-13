@@ -39,7 +39,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,K_diago_left_residuals,LINEAR_ALGEBRA_driver
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,&
+ &                        K_diago_left_residuals,K_diago_right_residuals
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
@@ -59,7 +60,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_matrix,BSS_slepc_double_grp,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
  use MAGNONS,        ONLY:BSS_MAGN_free

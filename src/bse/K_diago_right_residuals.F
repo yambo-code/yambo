@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right) 
+subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  !
  ! BS_R_right_XX(i)=<q0_XX|j><j|i_R>
  !                 =conjg(BSS_dipoles(j))*BS_V_right(j,i)
@@ -43,7 +43,7 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  integer,     intent(in)  :: i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
  complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
- complex(SP), intent(in)  :: BS_V_right(BS_H_dim,BSS_n_eig)
+ complex(SP), intent(in)  :: BS_V_right(:,:)
  !
  ! Workspace
  !

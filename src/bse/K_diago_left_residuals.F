@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap) 
+subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
  !
  !  The left eigenvector u(j) of A satisfies
  !                u(j)**H * A = lambda(j) * u(j)**H
@@ -45,7 +45,7 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  integer,     intent(in)  :: i_BS_mat
  complex(SP), intent(in)  :: BS_E(BSS_n_eig)
  complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
- complex(SP),         intent(in)  :: BS_V_left(BS_H_dim,BSS_n_eig)
+ complex(SP),         intent(in)  :: BS_V_left(:,:)
  complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
  !
  ! Workspace

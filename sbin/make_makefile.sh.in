@@ -99,7 +99,7 @@ lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
 lIO="\$(liotk) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
 lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
 #
-lf90libinclude="\$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml) \$(idriver)"
+lf90libinclude="\$(iiotk) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml) \$(idriver)"
 #
 case $target in
   yambo*)

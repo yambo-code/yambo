@@ -1088,7 +1088,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1106,7 +1106,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1118,7 +1118,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1136,7 +1136,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1148,7 +1148,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1166,7 +1166,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine

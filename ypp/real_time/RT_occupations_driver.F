@@ -23,20 +23,29 @@
 !
 subroutine RT_occupations_driver(k,q,en)
  !
+ use pars,           ONLY:rZERO
  use drivers,        ONLY:l_rt_carriers_in_use
+ use DIPOLES,        ONLY:DIP_iR
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
+ use parallel_m,     ONLY:PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use YPP_interfaces, ONLY:PROJECTION_setup
  use RT_control,     ONLY:RT_apply,CARR_RT_IO_t
  use real_time,      ONLY:RT_bands
+ use YPPm,           ONLY:DIPs_mask,DIPs_bands,DIPs_direction,l_dipoles,DIPs
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
- implicit none
+#include<memory.h>
  !
  type(bz_samp) :: k,q
  type(levels)  :: en
+ !
+ ! Workspace
+ !
+ integer :: ik,ib,i_spin,ik_mem
  !
  call section('+','Real-Time components (Occupations, Lifetimes,...)')
  !=====================================================================
@@ -46,6 +55,25 @@ subroutine RT_occupations_driver(k,q,en)
  call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
+ !
+ if (l_dipoles) then
+   call section('=',"The Dipoles `Mask`")
+   !=====================================
+   call DIPOLES_driver("Database",k,en,q)
+   YAMBO_ALLOC(DIPs_mask,(RT_bands(1):RT_bands(2),k%nibz,n_sp_pol))
+   DIPs_mask=rZERO
+   do ik=1,k%nibz
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
+     ik_mem=PAR_DIPk_ibz_index(ik)
+     do ib=RT_bands(1),RT_bands(2)
+       do i_spin=1,n_sp_pol
+         DIPs_mask(ib,ik,i_spin)=abs(dot_product(DIPs_direction,DIP_iR(:,DIPs_bands(2)-DIPs%ib_lim(2)+1,ib,ik_mem,i_spin)))**2.
+       enddo
+     enddo
+   enddo
+   call PP_redux_wait(DIPs_mask)
+   call DIPOLES_driver("Clean",k,en,q)
+ endif
  !
  ! Setups
  !========
@@ -74,5 +102,8 @@ subroutine RT_occupations_driver(k,q,en)
  ! Occupations bands fit 
  !=======================
  if (l_RT_bands) call RT_occ_bands_interpolation(en,k,q,RT_conf%T_n_steps)
+ !
+ ! Clean..
+ YAMBO_FREE(DIPs_mask)
  !
 end subroutine RT_occupations_driver

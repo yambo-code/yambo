@@ -33,7 +33,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use QP_m,           ONLY:QP_table,QP_n_states
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use YPP_interfaces, ONLY:k_special
- use YPPm,           ONLY:BANDS_path,CIRCUIT_k
+ use YPPm,           ONLY:BANDS_path,CIRCUIT_k,l_dipoles,DIPs_mask
  use LIVE_t,         ONLY:live_timing
  use com,            ONLY:msg,of_open_close
  use vec_operate,    ONLY:c2a,v_norm
@@ -239,11 +239,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      endif
      !
      if (l_OCCgroup_path) then
-       !if (ib<10.or.ib>11) cycle
-       !if (Ec*HA2EV>0.8) cycle
        !
        Ec=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
        df=RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
+       ! ... Apply the DIPOLES Mask
+       if (l_dipoles) df=df*DIPs_mask(ib,ik,i_spin)
        !
        if (ik_RT/=last_ik) then
          last_ik=ik_RT
@@ -263,6 +263,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        endif
      else
        data_to_plot(2)=RT_carriers%OCC_el%dN(i_RT)
+       ! ... Apply the DIPOLES Mask
+       if (l_dipoles) data_to_plot(2)=data_to_plot(2)*DIPs_mask(ib,ik,i_spin)
        call msg('o '//trim(output_fname_short(1)),'',data_to_plot(:n_output),INDENT=-2,USE_TABS=.true.)
        call of_open_close(output_fname(1,i_RT))
      endif

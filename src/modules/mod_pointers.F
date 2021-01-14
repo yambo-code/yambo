@@ -28,6 +28,10 @@ module pointers
  !
  implicit none
  !
+ interface linkX2M
+   module procedure linkM4_to_M2_complex,linkM5_to_M3_complex
+ end interface
+ !
  interface linkM2M
    module procedure linkM2M_3D_real,linkM2M_3D_real_B
  end interface
@@ -61,6 +65,22 @@ module pointers
      complex(SP), pointer :: VEC_pointer(:)
      call C_F_POINTER(C_LOC(M), VEC_pointer, N )
    end function linkM2V_2D_complex
+   !
+   ! Interface which links Multi-dimensional vector to Matrix
+   !
+   function linkM4_to_M2_complex(M,N) result(M_pointer)
+     complex(SP),   target  :: M(1,1,1,1)
+     integer, intent(in) :: N(2)
+     complex(SP), pointer, contiguous :: M_pointer(:,:)
+     call C_F_POINTER(C_LOC(M), M_pointer, N )
+   end function linkM4_to_M2_complex
+   !
+   function linkM5_to_M3_complex(M,N) result(M_pointer)
+     complex(SP),   target  :: M(1,1,1,1,1)
+     integer, intent(in) :: N(3)
+     complex(SP), pointer, contiguous :: M_pointer(:,:,:)
+     call C_F_POINTER(C_LOC(M), M_pointer, N )
+   end function linkM5_to_M3_complex
    !
    ! Interface which links Matrix to Matrix
    !

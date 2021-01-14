@@ -27,19 +27,15 @@ module parallel_int
  use parallel_m, ONLY:ncpu,myid,comm_default_value
 #if defined _MPI
  use mpi
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
 #else
  use parallel_m, ONLY:mpi_comm_world,mpi_comm_null
 #endif
  !
  implicit none
- !
-#if defined _MPI
-! 2021/01/14 DS, commented.
-! It maybe needed for old libraries
-! To be uncommented but protected with precompiler flags on gfortran compiler
-! include 'mpif.h'
-#endif
- !
  !
  integer, private   :: i_err
  integer, private   :: local_type

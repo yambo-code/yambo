@@ -143,11 +143,16 @@ module wrapper
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), intent(in)  :: A,B
      complex(SP), intent(out) :: C
+     !
+     complex(SP) :: Av(1) ,Bv(1), Cv(1)
+     Av = A
+     Bv = B
 #if defined _DOUBLE
-     call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,Av,LDA,Bv,LDB,BETA,Cv,LDC)
 #else
-     call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,Av,LDA,Bv,LDB,BETA,Cv,LDC)
 #endif
+     C = Cv(1)
    end subroutine mm_cgemm_APIscal
    !
 #ifdef _CUDA
@@ -172,11 +177,16 @@ module wrapper
      character,   intent(in)  :: TRANSA,TRANSB
      complex(SP), device, intent(in)  :: A,B
      complex(SP), device, intent(out) :: C
+     !
+     complex(SP) :: Av(1) ,Bv(1), Cv(1)
+     Av = A
+     Bv = B
 #  if defined _DOUBLE
-     call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,Av,LDA,Bv,LDB,BETA,Cv,LDC)
 #else
-     call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+     call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,Av,LDA,Bv,LDB,BETA,Cv,LDC)
 #  endif
+     C = Cv(1)
    end subroutine mm_cgemm_APIscal_gpu
    !
 #endif

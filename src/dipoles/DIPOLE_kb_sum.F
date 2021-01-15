@@ -32,6 +32,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
+ use pointers,      ONLY:linkX2M
  use cuda_m,        ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy
  !
@@ -41,13 +42,13 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  integer     :: iv_wf,ic_wf
  complex(SP) :: rho(3)
- complex(SP) DEV_ATTR :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
  integer     :: i1,i2,i_spinor,dims(2)
- complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
- complex(SP) DEV_ATTR :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
+ complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:),kbv_p(:,:),XX_p(:,:,:)
+ complex(SP) DEV_ATTR, target :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
 #ifdef _CUDA
  complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
@@ -55,7 +56,8 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  if (pp_kbv_dim_yambo==0) return
  !
- WF_p => DEV_VAR(WF%c)
+ ! Note: this works since WF has the target attribute in mod_wave_function 
+ WF_p => WF%c
  !
  ! This is the fortran expanded code for the M?by?M calls below
  ! note that an extra i_spinor index is added for the sake of using ZGEMM
@@ -80,10 +82,10 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! A direct call to CGEMM/cublasCGEMM is also possible, but I think
  ! the wrapped M_by_M interface is cleaner
  !
- call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(1,1,iv_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
-              cZERO, XX(1,1,1,1,1), n_spinor)
- call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(1,1,ic_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
-              cZERO, XX(1,1,1,1,2), n_spinor)
+ kbv_p => linkX2M(kbv,(/wf_ng,dims(2)/))
+ XX_p  => linkX2M(XX ,(/n_spinor,dims(2),2/))
+ call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,1), n_spinor)
+ call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,2), n_spinor)
  !
  !
 #if defined _CUDA

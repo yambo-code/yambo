@@ -26,16 +26,17 @@ subroutine RT_time_step_update( E )
  use pars,           ONLY:SP,cZERO
  use stderr,         ONLY:real2ch
  use units,          ONLY:AUT2FS
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,Life_MEM_steps
  use real_time,      ONLY:RT_bands,dG_lesser,MEM_pointer,i_MEM_old,l_Update_Time_Step,&
-&                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,&
-&                         RT_life_extrap_times,Life_MEM_steps,NE_time,&
+&                         i_MEM_prev,i_MEM_now,RT_step,RT_dyn_step,NE_time,&
 &                         NE_step_update_treshold,NE_i_time,NE_time_step_update_last_point,RT_MAX_step,&
 &                         NE_initial_time_step_update,RT_nk,RTibz
  use RT_control,     ONLY:TIME_adjust
  use RT_output_m,    ONLY:TIME_STEP_desc
  use com,            ONLY:msg
  use electrons,      ONLY:levels
- use parallel_m,     ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:DESC_write
  use IO_m,           ONLY:IO_and_Messaging_switch
  !

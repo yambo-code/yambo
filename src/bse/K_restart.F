@@ -50,8 +50,6 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  integer, external :: io_BS,io_BS_PAR_init,io_BS_header
  real(SP),external :: best_cutoff_allocated
  !
- ! GPL_EXCLUDE_START
- !
  ! BS/FXC DB I/O
  !===============
  if (l_bs_fxc) then
@@ -63,8 +61,6 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
    return
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _PAR_IO
  !

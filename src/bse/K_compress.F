@@ -97,7 +97,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  use LIVE_t,       ONLY:live_timing
  use IO_m,         ONLY:io_control,OP_APP,OP_RD,RD,WR
  use BS,           ONLY:BS_lin_size_compressed,BS_blk,BS_nT_grps,n_BS_blks
- use parallel_m,   ONLY:ncpu,myid,PP_redux_wait,PAR_IND_T_ordered
+ use parallel_m,   ONLY:ncpu,myid,PAR_IND_T_ordered
+ use parallel_int, ONLY:PP_redux_wait
  !
  implicit none
  !

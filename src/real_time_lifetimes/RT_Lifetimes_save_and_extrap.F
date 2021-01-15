@@ -21,31 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
+subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,LIFE)
  !
  use pars,           ONLY:SP
- use drivers,        ONLY:l_elel_scatt,l_elphoton_scatt,l_elph_scatt
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:SAVED_times,Life_MEM_steps,SAVED_lifetime,RT_nk,&
-&                         ADD_to_saved_values,RT_E_occupations,RT_E_occupations_reference,&
-&                         RT_H_occupations,RT_H_occupations_reference,RT_bands,&
-&                         l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes,RTibz
+ use RT_lifetimes,   ONLY:SAVED_times,Life_MEM_steps,l_RT_extrapolate_lifetimes,l_RT_constant_lifetimes,RT_lifetime
+ use RT_operations,  ONLY:ADD_to_saved_values
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use real_time,      ONLY:RT_nk,RT_bands,RTibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
  implicit none
  !
- type(levels),  intent(in)    :: E
- type(bz_samp), intent(in)    :: k
- integer,       intent(in)    :: SAVE_index
- real(SP),      intent(in)    :: Time
- real(SP),      intent(inout) :: LIFE(RT_bands(1):RT_bands(2),RT_nk)
- logical                      :: EVAL
+ real(SP),          intent(in)    :: Time
+ logical                          :: EVAL
+ type(RT_lifetime), intent(inout) :: LIFE
  !
  ! Work Space
  !
  integer          :: ib,ik
- logical          :: SAVE_it
+ !
+ if (.not.LIFE%active) return
  !
  if (EVAL) then
    !
@@ -53,19 +48,7 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
    ! SAVE
    !======
    !
-   ! ... the time points where the lifetimes have been saved ...
-   !
-   ! This call must be done only once. That's why it is called depending on the logicals
-   !
-   if (l_elel_scatt.and.SAVE_index==1) then
-     SAVE_it=.TRUE.
-   else if (l_elph_scatt.and.SAVE_index==3) then
-     SAVE_it=.TRUE.
-   else if (l_elphoton_scatt.and.SAVE_index==7) then
-     SAVE_it=.TRUE.
-   endif
-   !
-   ! ... and the lifetimes themeselves ...
+   ! The lifetimes themeselves ...
    !
    do ik=1,RT_nk
      !
@@ -73,16 +56,17 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
      !
      do ib=RT_bands(1),RT_bands(2)
        !
-       call ADD_to_saved_values(LIFE(ib,ik),SAVED_lifetime(ib,ik,SAVE_index,:),Life_MEM_steps)
+       call ADD_to_saved_values(LIFE%emit(ib,ik),LIFE%emit_save(ib,ik,:),Life_MEM_steps)
+       call ADD_to_saved_values(LIFE%abs(ib,ik), LIFE%abs_save(ib,ik,:), Life_MEM_steps)
        !
      enddo
    enddo
    !
    ! Store the occupations related to the last saved lifetimes
    !-----------------------------------------------------------
-   if (SAVE_it) then
-     RT_E_occupations_reference=RT_E_occupations
-     RT_H_occupations_reference=RT_H_occupations
+   if (.not.trim(LIFE%kind)=="el-ph_abs") then
+     RT_el_occ%N_ref=RT_el_occ%N
+     RT_ho_occ%N_ref=RT_ho_occ%N
    endif
    !
  else if (l_RT_extrapolate_lifetimes.or.l_RT_constant_lifetimes) then 
@@ -98,7 +82,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
        !=============
        !
        if (l_RT_extrapolate_lifetimes) then
-         call RT_Lifetimes_Extrapolation(LIFE(ib,ik),Time,SAVED_lifetime(ib,ik,SAVE_index,:),SAVED_times)
+         call RT_Lifetimes_Extrapolation(LIFE%emit(ib,ik),Time,LIFE%emit_save(ib,ik,:),SAVED_times)
+         call RT_Lifetimes_Extrapolation(LIFE%abs(ib,ik),Time,LIFE%abs_save(ib,ik,:),SAVED_times)
        endif
        !
        !===============
@@ -106,7 +91,8 @@ subroutine RT_Lifetimes_save_and_extrap(Time,EVAL,E,k,LIFE,SAVE_index)
        !===============
        !
        if (l_RT_constant_lifetimes) then
-         LIFE(ib,ik)=SAVED_lifetime(ib,ik,SAVE_index,Life_MEM_steps)
+         LIFE%emit(ib,ik)=LIFE%emit_save(ib,ik,Life_MEM_steps)
+         LIFE%abs(ib,ik)=LIFE%abs_save(ib,ik,Life_MEM_steps)
        endif
        !
      enddo

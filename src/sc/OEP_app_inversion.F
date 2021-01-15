@@ -45,8 +45,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use QP_m,            ONLY:QP_ng_Sx
  use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_oep_kli,l_oep_ceda
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index,LINEAR_ALGEBRA_driver 
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver 
+ use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc

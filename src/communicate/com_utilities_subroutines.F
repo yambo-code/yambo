@@ -56,6 +56,8 @@ subroutine of_open_close(of_name_extension,mode)
  !
  if (present(mode)) then
    !
+   if (.not.write_to_of) return
+   !
    ! Get full filename, including path and jobname, from extension
    !  
    of_name_complete=get_name(desc=trim(of_name_extension),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
@@ -82,7 +84,7 @@ subroutine of_open_close(of_name_extension,mode)
      of_name_complete=of_name(file_index)
    endif
    !
-   if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
+   if ( (index(mode,'o')==0.and.index(mode,'O')==0)) return
    !
    ! Here I open the unit using file_name to define the name
    !
@@ -146,7 +148,6 @@ subroutine of_open_close(of_name_extension,mode)
  endif
  !
 end subroutine of_open_close
-!
 !
 #if !defined _io_lib
 subroutine write_the_logo(unit_,comment_)

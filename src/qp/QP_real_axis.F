@@ -35,12 +35,13 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
@@ -137,7 +138,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     ',QP_n_G_bands)
- call msg('r', '[GW] G damping   [ev]',QP_G_damp*HA2EV)
+ call msg('r', '[GW] G damping       ',QP_G_damp*HA2EV,"[eV]")
  !
  call QP_state_print( )
  !

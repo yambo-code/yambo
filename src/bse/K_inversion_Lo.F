@@ -34,17 +34,16 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_W,&
 &                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_res_ares_dim
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
  use BS,             ONLY:BS_bands
 #endif
-#if defined _KERR
  use BS,             ONLY:l_BS_photolum
  use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
-#endif
  !
 #include<memory.h>
  !
@@ -60,19 +59,13 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
  &                   i_res_ares,i_loop,n_loop,i_eps,i_Lo,transition(4)
  complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
-#if defined _KERR
  complex(SP)      :: SF(W%n_freqs,2)
-#endif
  character(schlen):: LT_title
- !
-#if defined _KERR
  !
  ! PL_0
  !=======
  call PL_init( )
  PL(:,3) = rZERO
- !
-#endif
  !
  Epsilon_ii(:,3:4) = cZERO
  !
@@ -83,8 +76,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  ! Look for the W(iw_ref) closest 0
  !==================================
  call FREQUENCIES_set_reference_point(W%p,W%n_freqs,iw_ref)
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
  !
@@ -98,8 +89,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  if (     K_diago_in_BS_mat) n_loop=1
  if (.not.K_diago_in_BS_mat) n_loop=2
  !
@@ -108,14 +97,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    i_eps=2+i_loop
    !
    if(n_loop==2) then
-#if defined _KERR
      if(l_BS_photolum) then
        if(i_loop==1) LT_title='IP PL'
        if(i_loop==2) LT_title='Shifted GF and PL'
      else
-#else
-     if(.true.) then
-#endif
        if(i_loop==1) LT_title='IP Absorption'
        if(i_loop==2) LT_title='Shifted GF and Absorption'
      endif
@@ -181,7 +166,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
        if (BSS_add_antiresonant.or.BS_K_coupling) &
        &                 call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
-#if defined _KERR
        if (l_BS_photolum) then
          if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r" ,"eh",.TRUE.,.FALSE.)
          if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
@@ -189,7 +173,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          &                 call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
          Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
        endif
-#endif
        !
      else 
        !
@@ -215,7 +198,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
      endif
      !
-#if defined _KERR
      if (l_BS_photolum.and.i_loop==1) then
        residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
        PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
@@ -223,7 +205,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
        endif
      endif
-#endif
      !
      if (k%sstar(ik_bz,2)==1) call live_timing(steps=1)
      !
@@ -236,9 +217,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    !
    call PP_redux_wait(Epsilon_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    call PP_redux_wait(para_term_w0,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-#if defined _KERR
    if (l_BS_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-#endif
    !
    if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    if (     skip_cond_sum_rule) diam_term_used=diam_term_exact

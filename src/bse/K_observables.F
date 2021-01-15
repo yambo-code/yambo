@@ -28,12 +28,10 @@ subroutine K_observables(WHAT,W)
  use frequency,     ONLY:w_samp
  use BS_solvers,    ONLY:BSS_n_freqs
  use BS,            ONLY:BS_H_dim,l_BS_abs,l_BS_jdos,l_BS_esort
-#if defined _KERR
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
  use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
-#endif
  !
 #include<memory.h>
  !
@@ -42,7 +40,6 @@ subroutine K_observables(WHAT,W)
  !
  if (WHAT=="ALLOC") then
    !
-#if defined _KERR
    if(l_BS_kerr) then
      YAMBO_ALLOC(Epsilon_ij,(BSS_n_freqs,4))
      Epsilon_ij=cZERO
@@ -68,7 +65,6 @@ subroutine K_observables(WHAT,W)
      PL=rZERO
      PL(:,1) = W%p(:)  
    endif
-#endif
    !
    if(l_BS_abs) then
      call X_alloc("EPS",(/BSS_n_freqs,4/))
@@ -88,15 +84,10 @@ subroutine K_observables(WHAT,W)
    !
  else if (WHAT=="FREE") then
    !
-#if defined _KERR
    YAMBO_FREE(Epsilon_ij)
-   !
    YAMBO_FREE(X_magnons)
-   !
    YAMBO_FREE(X_dichroism)
-   !
    YAMBO_FREE(PL)
-#endif
    !
    call X_alloc("EPS")
    !

@@ -42,17 +42,16 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  endif
  !
  if (n_sp_pol==2) then
-   ! Optical Fxc
    if(.not.l_BS_magnons) then
+     ! Optical Fxc
      do is1 = 1,n_sp_pol
        do is2 = 1,n_sp_pol
          is_xc = xc_spin_map1(is1,is2)
          forall(ifft=1:fft_size) F_xc(ifft,is1,is2) = F_xc(ifft,is1,is2) + real(v2rho2(is_xc,ifft),SP)
        enddo
      enddo
-#if defined _KERR
-   ! Magnons Fxc
    else
+     ! Magnons Fxc
      do ifft=1,fft_size
        mod_mag=abs(magn(ifft,3))*real(fft_size,SP)/DL_vol
        if(mod_mag< 1.E-8_SP) one_over_magn=0._SP
@@ -66,7 +65,6 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
      enddo
      ! Here 2,1 means -- and 12 ++ (or viceversa, to be checked)
      F_xc(:,2,1)=F_xc(:,1,2)
-#endif
    endif
  endif
  !

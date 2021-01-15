@@ -65,7 +65,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  integer                 :: ID,io_KB_real_space_err,ACT
  integer, external       :: io_KB_real_space
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
 #endif
  !
@@ -87,7 +87,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  H_pseudo=cZERO
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz*n_sp_pol)
 #endif
  !
@@ -97,7 +97,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      !
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
      !
-#if defined _MAGNETIC
+#if defined _SC
      if(l_sc_magnetic) then
        call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
        ACT=OP_RD_CL
@@ -158,7 +158,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      if(l_real_time) call timing('Pseudo correction',OPR='stop')
 #endif
    !
-#if defined _MAGNETIC
+#if defined _SC
    if(l_sc_magnetic) then
      call live_timing(steps=1)
      call WF_free(WF)
@@ -169,7 +169,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
    !
  enddo  ! i_sp_pol
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) then
    call live_timing()
    if(.not.l_equilibrium) Hzero=Hzero+H_pseudo

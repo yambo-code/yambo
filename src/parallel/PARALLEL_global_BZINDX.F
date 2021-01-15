@@ -27,7 +27,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_BZINDX,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_BZINDXk_ibz_INDEX
@@ -60,7 +60,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  ! ... indexes
  !
  allocate(PAR_BZINDXk_bz_index(Xk%nbz))
- call distribute_BZk_using_IBZk(PAR_COM_BZINDXk_ibz_INDEX,Xk,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_ibz_ID,&
+ call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_BZINDXk_ibz_INDEX,Xk,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_ibz_ID,&
 &                                                         PAR_IND_BZINDXk_bz, PAR_IND_BZINDXk_bz_ID,&
 &                                                         PAR_BZINDXk_bz_index,PAR_BZINDXk_nbz)
  !

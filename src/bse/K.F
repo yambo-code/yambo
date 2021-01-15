@@ -34,8 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free,&
-&                       qindx_B_init,qindx_B_close,qindx_B_load
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -59,14 +58,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PP_redux_wait,PAR_K_scheme
- !
-#if defined _KERR
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
+ use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
-#if defined _PAR_IO
-#endif
  !
 #include<memory.h>
 #include<yambo_bse.h>
@@ -104,7 +99,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
  integer, external ::io_BS,io_BS_PAR_init,io_BS_header
- integer, external ::io_QINDX
+ integer, external ::io_QINDX,qindx_B_init,qindx_B_close,qindx_B_load
  !
  ! Timing and restart
  !
@@ -188,11 +183,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call warning('Bethe Salpter section skipped. Impossible to build the kernel.')
    n_BS_blks=0
    call BS_blks_free(1)
-   !
-#if defined _KERR
    call BSS_MAGN_free( )
    call BSS_PL_free( )
-#endif
    !
    YAMBO_FREE(BS_W)
    !
@@ -201,8 +193,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  call timing('X T_space Kernel',OPR='start')
- !
- ! GPL_EXCLUDE_START
  !
  ! TDDFT xc-kernel Setup
  !======================
@@ -220,17 +210,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Wave Functions
  !================
  bands_to_load=BS_bands
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
  section_title='-BSK'
- ! GPL_EXCLUDE_START
  if (l_bs_fxc) section_title='-BSK->Fxc'
- ! GPL_EXCLUDE_END
  !
  call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
@@ -540,12 +526,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   ! GPL_EXCLUDE_START
-   !
    YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
-   !
-   ! GPL_EXCLUDE_END
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)

@@ -36,13 +36,16 @@ module X_output
  character(15)     :: headers(7)
  character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name,pl_file_name
  character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name,magp_file_name,magm_file_name
- character(schlen) :: dichr_file_name,esort_file_name
+ character(schlen) :: dichr_file_name,e_ip_file_name,esort_file_name
  !
  contains
    !
    subroutine X_write_messages_before_headers(iq,GreenF,Vnl_included,ordering)
+     !
      use drivers,   ONLY:l_chi,l_bss
      use global_XC, ONLY:X_E_xc_string,X_WF_xc_string,K_E_xc_string,K_WF_xc_string
+     use DIPOLES,   ONLY:DIP_desc
+     !
      integer      :: iq
      logical      :: Vnl_included,GreenF
      character(2)      :: ordering
@@ -77,6 +80,7 @@ module X_output
      !
      ! Fine Grid
      !
+     call DESC_write(trim(files),'#',DIP_desc)
      call DESC_write(trim(files),'#',FineGd_desc)
      !
    end subroutine
@@ -87,45 +91,52 @@ module X_output
      integer,optional   :: ig
      real(SP)           :: Q_plus_G_pt(3)
      character(msg_len) :: message(11)
+     character(schlen)  :: unit_msg
      !
      if (iq==1.and.ig==1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='q->0 direction')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')')
        message(3) = com_compose_msg(pre='# ',&
-&                   body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(5) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')',post='q->0 direction')
-       message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')',post='q->0 direction')
+&                   body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       message(5) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q('//trim(intc(iq))//')')
+       message(6) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q('//trim(intc(iq))//')')
+       message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')')
+       message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')')
+       unit_msg="[q->0 direction]"
      else  if (iq/=1.and.ig==1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')',post='iku')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')',post='iku')
-       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
-&                                   ' @ Q('//trim(intc(iq))//')',post='iku')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')')
+       message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//' @ Q('//trim(intc(iq))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       unit_msg="[iku]"
      else  if (ig/=1) then
-       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')',post='iku')
-       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'',post='iku')
+       message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')')
+       message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//'')
        message(3) = com_compose_msg(pre='# ',body='Polarizability ( -<<X>> ) ['//trim(alpha_dim)//&
-&                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')',post='iku')
-       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')',post='iku')
+&                                   ' @ Q('//trim(intc(iq))//')  + G('//trim(intc(ig))//')')
+       message(4) = com_compose_msg(pre='# ',body='F_xc @ Q('//trim(intc(iq))//')')
+       unit_msg="[iku]"
      endif
+     !
+     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     !
      message(9) = ' Joint density of states @ Q('//trim(intc(iq))//')'
      message(10)= ' Magnons (S+-) @ Q('//trim(intc(iq))//')'
      message(11)= ' Magnons (S-+) @ Q('//trim(intc(iq))//')'
-     call msg("o eps_q",trim(message(1)),Q_plus_G_pt,INDENT=0)
-     call msg("o eel_q",trim(message(2)),Q_plus_G_pt,INDENT=0)
-     call msg("o alpha",trim(message(3)),Q_plus_G_pt,INDENT=0)
-     call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0)
-     call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0)
-     call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0)
-     call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0)
-     call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0)
+     !
      call msg("o jdos","#",trim(message(9)),INDENT=0)
      call msg("o Spm" ,"#",trim(message(10)),INDENT=0)
      call msg("o Smp" ,"#",trim(message(11)),INDENT=0)
-     call msg('o eps refl eel fxc alpha off moke Spm Smp CD','#')
+     !
+     call msg('o eps refl eel fxc alpha off moke jdos Spm Smp CD','#')
      !
    end subroutine
    !
@@ -142,6 +153,7 @@ module X_output
      refl_file_name ='refl_q'//trim(intc(iq))
      eel_file_name  ='eel_q'//trim(intc(iq))
      alpha_file_name='alpha_q'//trim(intc(iq))
+     e_ip_file_name ='E_IP_q'//trim(intc(iq))
      esort_file_name='Esort_q'//trim(intc(iq))
      !
      off_file_name  ='off_q'//trim(intc(iq))

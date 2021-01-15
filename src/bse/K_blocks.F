@@ -36,12 +36,12 @@ subroutine K_blocks(iq)
  !end type BS_block
  !
  use pars,         ONLY:cZERO,SP,IP,IPL
- use parallel_m,   ONLY:PAR_IND_T_ordered,PP_redux_wait,PAR_COM_HOST,myid,ncpu
+ use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
-&                       BS_res_ares_dim,BS_mat_res_ares_dim
+&                       BS_res_ares_dim,BS_mat_res_ares_dim,BS_IO_dim
  use com,          ONLY:msg
- use interfaces,   ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  !
@@ -63,14 +63,30 @@ subroutine K_blocks(iq)
  if (     BS_K_coupling) n_new_blocks=2/BS_res_ares_dim
  !
  ! Count the blocks
- n_BS_blks=count(PAR_IND_T_ordered%element_2D)
- allocate(BS_blk(n_BS_blks*n_new_blocks*BS_res_ares_dim))
+ n_BS_blks=0
+ do i_T=1,BS_nT_grps
+   do j_T=1,BS_nT_grps
+     !
+     i_res_ares=BS_T_grp(i_T)%i_res_ares
+     j_res_ares=BS_T_grp(j_T)%i_res_ares
+     if((.not.BS_K_coupling) .and. i_res_ares/=j_res_ares) cycle
+     !
+     if (.not.PAR_IND_T_ordered%element_2D(i_T,j_T)) cycle
+     n_BS_blks=n_BS_blks+n_new_blocks
+     !
+   enddo
+ enddo
+ !
+ allocate(BS_blk(n_BS_blks))
+ BS_blk(:)%size(1)=0
+ BS_blk(:)%size(2)=0
  !
  ! Allocate the blocks
  ! Proceed by columns since we are in fortran
  !
  n_BS_blks=0
  TMP_SIZE=0
+ BS_IO_dim=0
  i_T_start=1
  j_T_start=1
  do j_T=1,BS_nT_grps
@@ -98,6 +114,11 @@ subroutine K_blocks(iq)
          if (i_res_ares==2.and.j_res_ares==1) BS_blk(iB)%mode="Q"
          if (i_res_ares==2.and.j_res_ares==2) BS_blk(iB)%mode="A"
        endif
+#if !defined _PAR_IO
+       if (BS_blk(iB)%mode=="R") BS_IO_dim(:,1)=BS_IO_dim(:,1)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="C") BS_IO_dim(:,2)=BS_IO_dim(:,2)+BS_blk(iB)%size(:)
+       if (BS_blk(iB)%mode=="A") BS_IO_dim(:,3)=BS_IO_dim(:,3)+BS_blk(iB)%size(:)
+#endif
        BS_blk(iB)%iT_k=i_T
        BS_blk(iB)%iT_p=j_T
        BS_blk(iB)%iT_k_st=i_T_start

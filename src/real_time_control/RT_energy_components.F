@@ -36,7 +36,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
- use RT_interfaces,  ONLY:RT_average_operator
+ use RT_operations,  ONLY:RT_average_operator
  !
  implicit none 
  !

@@ -41,7 +41,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  !
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_init,qindx_B_close,qindx_B_load
+ use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,l_BS_magnons,&
 &                        BS_K_dim,l_BS_ares_asymm,BS_K_is_ALDA
@@ -64,6 +64,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  DEFINE_BSK_COMMON_INDEXES
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  character(1):: mode_now
+ !
+ integer, external    :: qindx_B_init,qindx_B_close,qindx_B_load
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  !

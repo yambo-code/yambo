@@ -91,7 +91,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  endif
  call MatSetUp(slepc_mat,ierr)
  !
- ! Symmetrize the BS_blks
+ ! Symmetrize BS_blk%mat to be used in K_multiply_by_V
  !
  call BS_blocks_symmetrize_K()
  !

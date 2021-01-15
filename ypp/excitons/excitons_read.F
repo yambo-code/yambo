@@ -60,16 +60,12 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  if(l_check) then
    !
-   ! GPL_EXCLUDE_START
-   !
    ! E SOC perturbative
    ! 
    if(n_spin==1) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
      io_err=io_E_SOC_map(en,k,io_ID)
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
    YAMBO_ALLOC(BSqpts,(3,iq))
    !

@@ -25,7 +25,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used, &
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
- use interfaces,    ONLY:PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_live_message
  use stderr,        ONLY:intc
  !
  implicit none
@@ -81,7 +81,9 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
      call GIMME_a_parallel_proposal(4,(/" k"," b","qp"," q"/))
-  case("Non_Linear") 
+   case("Phonon_Self_Energy") 
+     call GIMME_a_parallel_proposal(3,(/"q","k","b"/))
+   case("Non_Linear") 
      call GIMME_a_parallel_proposal(2,(/" w"," k"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"

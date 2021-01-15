@@ -25,7 +25,8 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:MPI_COMM_WORLD,PP_redux_wait,master_cpu
+ use parallel_m,    ONLY:MPI_COMM_WORLD,master_cpu
+ use parallel_int,  ONLY:PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:SP,schlen,lchlen
  use stderr,        ONLY:intc,real2ch
@@ -243,16 +244,16 @@ integer function io_BS_PAR_init(iq,ID,mode)
    BSK_n_dims=2
    n_replica=1
    !
-   dim_names(2:3,1) = ['BS_K_dim1', 'BS_K_dim1']
+   dim_names(2:3,1) = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
    BS_IO_dim(:,1) = (/BS_K_dim(1),BS_K_dim(1)/)
    !
    if(BS_res_ares_dim==2) then
-     dim_names(2:3,2) = ['BS_K_dim1', 'BS_K_dim2']
+     dim_names(2:3,2) = [character(schlen) ::  'BS_K_dim', 'BS_K_dim_A']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
-     dim_names(2:3,3) = ['BS_K_dim2', 'BS_K_dim2']
+     dim_names(2:3,3) = [character(schlen) :: 'BS_K_dim_A', 'BS_K_dim_A']
      BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(2)/)
    else if (BS_K_coupling) then
-     dim_names(2:3,2) = ['BS_K_dim1', 'BS_K_dim1']
+     dim_names(2:3,2) = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
    endif
    !
@@ -284,7 +285,8 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  ! close BSE netcdf parallel file
  !
  use pars,          ONLY:SP
- use parallel_m,    ONLY:PP_redux_wait,master_cpu
+ use parallel_m,    ONLY:master_cpu
+ use parallel_int,  ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded,BS_K_cutoff
  use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on,io_BS_K
  !

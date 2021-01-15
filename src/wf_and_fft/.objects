@@ -19,7 +19,7 @@ WF_rot_object =
 #if defined _SC
 WF_rot_object = WF_rotate.o
 #endif
-#if defined _MAGNETIC || defined _RT
+#if defined _SC || defined _RT
 WF_der_objects = WF_derivative.o
 #endif
 #if defined _CUDA

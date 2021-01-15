@@ -96,7 +96,7 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
-   io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,T_EL=.true.,XC_KIND=local_XC_KIND,&
+   io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,TEMP=.true.,XC_KIND=local_XC_KIND,&
 &                    CUTOFF=.true.,GAUGE=.TRUE.,FRAG=frag_RESPONSE)
    if (io_X/=0) goto 1
    !
@@ -168,12 +168,12 @@ integer function io_X(X,Xw,ID)
    !
    if (perform_IO) then
      if (X%whoami==4) then
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="ev",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="eV",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
      endif
      if (X%whoami/=4) then
        call io_variable_elemental(ID,           VAR="Current Q-pt index      ",I0=iq)
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X energy range",TERMINATOR="ev ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X damping range",TERMINATOR="ev",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X energy range",TERMINATOR="eV ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID,UNIT=HA2EV,VAR="X damping range",TERMINATOR="eV",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif
      !

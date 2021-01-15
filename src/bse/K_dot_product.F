@@ -30,7 +30,8 @@ subroutine K_dot_product(dot,V,W,i_kind)
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:Haydock_vector
  use BS,             ONLY:BS_nT_grps,BS_T_grp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
@@ -48,7 +49,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
  ! NOTE FOR DEVELOPERS:
  ! Anti-block contains the same vector components as the corresponding 
  ! res-block. Sum on all blocks will give twice the value in the case
- ! with coupling. So anti-blocks are skipped.
+ ! with coupling. So anti-blocks are skipped if BS_res_ares_dim=1
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle

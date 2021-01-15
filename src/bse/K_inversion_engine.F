@@ -30,13 +30,9 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V
- use BS,             ONLY:BS_H_dim
- use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk
-#if defined _KERR
- use BS,             ONLY:l_BS_photolum
- use BS_solvers,     ONLY:K_INV_PL
+ use BS,             ONLY:BS_H_dim,l_BS_photolum
+ use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
-#endif
  !
 #include<memory.h>
  !
@@ -53,9 +49,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  character(1) :: Gr
  complex(SP)              :: gauge_factor
  complex(SP), allocatable :: Mm1(:,:)
-#if defined _KERR
  integer,        external :: PL_via_perturbative_inversion
-#endif
  integer,        external :: EPS_via_perturbative_inversion
  !
  if (do_it_full.and..not.K_slk%kind=="SLK") then
@@ -77,9 +71,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      !
      if(.not.px%element_1D(iw)) then
        K_INV_EPS%err(iw)=0
-#if defined _KERR
        if(l_BS_photolum) K_INV_PL%err(iw)=0
-#endif
        cycle
      endif
      !
@@ -88,8 +80,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
 &                                                       Epsilon_ii(iw,2),Lo(:,iw,:))
      endif
      !
-#if defined _KERR
-     !
      if(l_BS_photolum) then
        if (K_INV_PL%err(iw)/=0) then
          K_INV_PL%err(iw)=PL_via_perturbative_inversion(BS_H_dim,Lo_dim,Lo_n_loop,BSS_dipoles_PL,PL_prefactor,&
@@ -97,7 +87,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
        endif
      endif
      !
-#endif
    else
      !
      do i_L=1,Lo_n_loop
@@ -115,16 +104,12 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
          K_INV_EPS%err(iw)=0
        endif
        !
-#if defined _KERR
-       !
        if(l_BS_photolum) then
          if (what=="PLS".or.what=="any") then
            call PL_compose(i_L)
            K_INV_PL%err(iw)=0
          endif
        endif
-       !
-#endif
        !
      enddo
      !
@@ -142,7 +127,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  !
  contains
    !
-#if defined _KERR
    subroutine PL_compose(i_L_)
      complex(SP) :: Vp(BS_H_dim),V(BS_H_dim)
      integer     :: i_L_,i_c,i_cv,i1,i2
@@ -162,7 +146,6 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
        PL(iw,2)=PL(iw,2)+PL_prefactor*Vstar_dot_V(BS_H_dim,V,Vp)
     enddo
    end subroutine
-#endif
    !
    subroutine EPS_compose(i_L_)
      integer     :: i_L_

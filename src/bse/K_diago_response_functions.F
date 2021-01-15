@@ -27,6 +27,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
  use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
+ use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
@@ -35,7 +36,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim,l_BS_abs,l_BS_jdos,l_BS_esort
  use BS_solvers,     ONLY:BSS_n_eig,BSS_add_antiresonant,Co_factor,diam_term_exact,BSS_eels_to_eps
- use R_lattice,      ONLY:bare_qpg
+ use R_lattice,      ONLY:bare_qpg,q0_def_norm
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:B_Hall
@@ -148,7 +149,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      endif
      !
      if(l_BS_dichroism) then
-       res_dich=BS_R_left_abs(i1)*BS_R_right_dich(i1)*ares_fac
+       res_dich=BS_R_left_abs(i1)*BS_R_right_dich(i1)*ares_fac/q0_def_norm
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1
@@ -286,7 +287,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  endif
  !
  ! Factors to be fixed
- if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*Co_factor/(4._SP*pi)
+ if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

@@ -24,6 +24,7 @@ subroutine K_Haydock(iq,W,mode)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use functions,      ONLY:NAN
+ use R_lattice,      ONLY:q0_def_norm
  use X_m,            ONLY:global_gauge
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
  use frequency,      ONLY:w_samp
@@ -240,7 +241,7 @@ subroutine K_Haydock(iq,W,mode)
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      if (trim(mode)=="kerr")      W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-     if (trim(mode)=="dichroism") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_dic(1,:,1)
+     if (trim(mode)=="dichroism") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)/q0_def_norm
      W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo

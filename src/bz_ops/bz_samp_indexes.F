@@ -351,6 +351,14 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !------------
  if (sigma_scattering) then
    !
+ 
+
+   Davide: The new implementation of Andrea clashes with the implementation based
+           on the use of the HDF5 disk for buffering
+           Merging to be finalized
+
+
+   !
    call section('+',trim(string(2))//' indexes')
    !============================================
    !

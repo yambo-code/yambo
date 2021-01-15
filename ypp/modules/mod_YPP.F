@@ -157,11 +157,12 @@ module YPPm
  !
  ! Dipoles
  !
- type(DIPOLE_t) ::DIPs
- logical        ::l_dipoles
- integer        ::DIPs_bands(2)
- real(SP)       ::DIPs_E_range(2)
- real(SP)       ::DIPs_direction(3)=(/1._SP,0._SP,0._SP/)
+ type(DIPOLE_t)    ::DIPs
+ character(schlen) ::DIPs_kind="IP" 
+ logical           ::l_dipoles
+ integer           ::DIPs_bands(2)
+ real(SP)          ::DIPs_E_range(2)
+ real(SP)          ::DIPs_direction(3)=(/1._SP,0._SP,0._SP/)
  real(SP), allocatable :: DIPs_mask(:,:,:)
  !
  ! Exc/SP Properties

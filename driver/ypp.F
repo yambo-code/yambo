@@ -37,7 +37,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use parallel_int,        ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles
+&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,DIPs_kind
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -198,6 +198,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Specific SECTIONS
  !===================
  !
+ if (l_dipoles.and.trim(DIPs_kind)/="MASK") call DIPOLES_driver(Xk,Xen,q)
+ !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !
  if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
@@ -229,20 +231,18 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !   ======
 #endif
  !
- l_flag=l_excitons.and..not.l_dipoles
+ l_flag=l_excitons
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_abs
 #endif
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
- l_flag=l_electrons.and..not.l_dipoles
+ l_flag=l_electrons
 #if defined _YPP_ELPH && !defined _YPP_RT
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
  !
  if (l_flag)    call electrons_driver(Xk,Xen,q)
- !
- if (l_dipoles.and.l_electrons) call DIPOLES_driver("Electrons",Xk,Xen,q)
  !
 #if defined _YPP_ELPH
  !

@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLES_driver(what,k,E,q)
+subroutine DIPOLES_driver(k,E,q)
  !
  use pars,           ONLY:SP,rZERO
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin
  use YPPm,           ONLY:DIPs_bands,DIPs_E_range,DIPs_direction,K_transform,coo_out,INTERP_grid,&
-&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par,DIPs
+&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par,DIPs,DIPs_mask,DIPs_kind
  use DIPOLES,        ONLY:DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
@@ -42,25 +42,19 @@ subroutine DIPOLES_driver(what,k,E,q)
  !
  type(bz_samp)  :: k,q
  type(levels)   :: E
- character(*)   :: what
  !
  ! Work Space
  !
- integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem
+ integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,V_range(2),C_range(2)
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
  real(SP), allocatable :: DIP_plane(:,:,:)
  integer,  external    :: PROJECTION_k_on_the_path_or_plane
  !
- if (what=="Clean") then
-   call LOCAL_clean( )
-   return
- endif
- !
- if (what=="Electrons") then
+ if (trim(DIPs_kind)=="IP") then
    !
-   call section('*','Dipole Properties:'//what)
-   !===========================================
+   call section('*','IP Dipole Properties')
+   !=======================================================
    !
    ! ... Apply QP corrections
    call QP_apply(DIPs_bands,E,k,'G',msg_fmt='rs')
@@ -89,29 +83,47 @@ subroutine DIPOLES_driver(what,k,E,q)
  !
  DIPs_direction=DIPs_direction/v_norm(DIPs_direction)
  !
- if (what=="Database") return
+ ! ... Init
+ C_range=(/E%nbf+1,DIPs_bands(2)/)
+ V_range=(/DIPs_bands(1),E%nbm/)
+ if (trim(DIPs_kind)=="MASK") then
+   YAMBO_ALLOC(DIPs_mask,(DIPs_bands(1):DIPs_bands(2),k%nibz,n_spin))
+   DIPs_mask=rZERO
+   C_range=DIPs_bands
+   V_range=DIPs_bands
+ endif
+ if (trim(DIPs_kind)=="IP") DIP_accumulated=rZERO
  !
  ! ... Loop
- DIP_accumulated=rZERO
  do ik=1,k%nibz
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
    ik_mem=PAR_DIPk_ibz_index(ik)
-   do iv=DIPs_bands(1),E%nbm
+   do iv=V_range(1),V_range(2)
      if (.not.PAR_IND_CON_BANDS_DIP%element_1D(iv)) cycle
-     do ic=E%nbf+1,DIPs_bands(2)
+     do ic=C_range(1),C_range(2)
        if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
          if (DIPs_E_range(1)>0. .and. delta_E<DIPs_E_range(1)) cycle
          if (DIPs_E_range(2)>0. .and. delta_E>DIPs_E_range(2)) cycle
          DIP_projected=dot_product(DIPs_direction,DIP_iR(:,ic,iv,ik_mem,is))
-         DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+         if (trim(DIPs_kind)=="IP") then
+           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+         endif
+         if (trim(DIPs_kind)=="MASK") then
+           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2._SP
+         endif
        enddo
      enddo
    enddo
  enddo
  !
- call PP_redux_wait( DIP_accumulated(1,:,1))
+ if (trim(DIPs_kind)=="IP")   call PP_redux_wait( DIP_accumulated(1,:,1))
+ if (trim(DIPs_kind)=="MASK") call PP_redux_wait( DIPs_mask )
+ if (.not.trim(DIPs_kind)=="IP") then
+   call LOCAL_clean()
+   return
+ endif
  !
  !... Normalization
  DIP_accumulated=DIP_accumulated/maxval( DIP_accumulated )

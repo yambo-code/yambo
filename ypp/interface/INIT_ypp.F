@@ -25,7 +25,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
-&                         l_free_hole,l_fix_syms,l_excitons,l_dipoles,l_exc_wf,&
+&                         l_free_hole,l_fix_syms,l_excitons,l_dipoles,l_exc_wf,DIPs_kind,&
 &                         l_amplitude,l_bands,l_bz_grids,l_current,BANDS_bands,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
@@ -295,10 +295,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        !
      endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
-       l_electrons=STRING_match(rstr_piece(i1+1),'el')
-       l_excitons =STRING_match(rstr_piece(i1+1),'exc')
-       if (l_electrons) call initactivate(1,'electrons')
-       if (l_excitons ) call initactivate(1,'excitons')
+       if (STRING_match(rstr_piece(i1+1),'ip') ) DIPs_kind="IP"
+       if (STRING_match(rstr_piece(i1+1),'exc')) DIPs_kind="EXCITONIC"
+       if (STRING_match(rstr_piece(i1+1),'m'))   DIPs_kind="MASK"
      endif
      if ( trim(rstr_piece(i1)) == 'electrons') then
        !
@@ -510,22 +509,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
  if ((l_dos.or.l_bands).and.n_spinor==2) call initactivate(1,'WFReference')
- !
- l_flag=l_bands
-#if defined _YPP_RT
- l_flag=l_bands.or.l_RT_bands
-#endif
- !
- if (l_flag) then
-   !
-   call initactivate(1,"INTERP_mode OutputAlat cooIn cooOut NormN NelFac")
-   !
-   if (l_bands) call initactivate(1,"BANDS_bands")
-   !
-   call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
-   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
-   !
- endif
  !	   
  l_map_kpts  = runlevel_is_on('kpts_map')
  !
@@ -551,23 +534,55 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
  ! Wannier 90 interface
- !
  if (l_wannier) call initactivate(1,"Seed WriteAMU QPdbPath")
  !
  if (l_map_kpts) call initactivate(1,"FineGd_mode BZ_DbGd_Nk BZ_FineGd_nkpts SkipCheck SkipBorderPts")
  !
  if (l_SOC_map)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
+ ! Projections
+ l_flag=l_dipoles.or.(l_electrons.and.l_dos)
+ if (l_flag) then
+   call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")  
+ endif
+ if (l_electrons.and.l_bands)   call initactivate(1,"PROJECT_mode PROJECT_threshold")  
+#if defined _YPP_RT
+ if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
+#endif
+ !
+ ! Interpolation
+ l_flag=l_dipoles.or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
+#if defined _YPP_RT
+ l_flag=l_flag.or.(l_RealTime.and.l_RT_bands).or.(l_RealTime.and.l_RT_dos)
+#endif
+ if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
+ !
+ l_flag=l_electrons.and.l_dos
+#if defined _YPP_RT
+ l_flag=l_flag.or.(l_RealTime.and.l_RT_dos)
+#endif
+ if (l_flag) call initactivate(1,"INTERP_Grid")
+ !
+ if (l_excitons.and.l_interp) call initactivate(1,"BANDS_steps cooIn cooOut")
+ l_flag=l_bands
+#if defined _YPP_RT
+ l_flag=l_flag.or.l_RT_bands
+#endif
+ if (l_flag) then
+   call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
+   if (l_bands) call initactivate(1,"BANDS_bands")
+   call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
+ endif
+ !
+ ! Dipoles
+ if (l_dipoles) then
+   call INIT_QP_ctl_switch('G')
+   call initactivate(1,"DIP_kind DIP_E_range DIP_bands DIP_direction cooOut")
+ endif
+ !
+ ! Electrons
  if (l_electrons) then
    if (l_dos.or.l_bands.or.l_dipoles) call INIT_QP_ctl_switch('G')
-   if (l_dos.or.l_dipoles) call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")
-   if (         l_bands  ) call initactivate(1,"PROJECT_mode PROJECT_threshold")
-   if (l_dipoles) then
-     call initactivate(1,"DIP_E_range DIP_bands DIP_direction cooOut")
-   endif
-   if (l_dos.or.l_dipoles) then
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
-   endif
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -605,25 +620,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
    if (l_RT_occupations.or.l_RT_lifetimes) then
-     if (l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
-     call initactivate(1,"INTERP_mode INTERP_Grid INTERP_Shell_Fac INTERP_NofNN")
      call INIT_QP_ctl_switch('G')
    endif
    if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
    if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
-   !
-   ! Dipoles Mask
-   !
-   if (l_dipoles.and.l_RT_bands) then
-     call initactivate(1,"DIP_E_range DIP_bands DIP_direction cooOut")
-   endif
    !
  endif
 #endif
@@ -664,7 +671,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
-   if (l_interp) call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
  endif
  !
 #if defined _YPP_ELPH

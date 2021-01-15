@@ -41,18 +41,18 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
  type(levels)     :: Xen
  integer          :: BS_E_degs(BSS_n_eig),iq
  !
+ ! Workspace
  integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
  integer          :: ikpbz,ikp,isp
  real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
  character(schlen):: titles(9),ch_dummy(2)
- !
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans
  real(SP)             :: amp_range(2),amp_damping,amp_I(amp_steps),amp_trans(BS_H_dim,2)
  complex(SP)          :: amp_E(amp_steps) 
  !
  call section('=','Amplitude and weights')
- !==================================================
+ !========================================
  !
  !call parser('DipWeight',l_weight_with_dipoles)
  !if(l_weight_with_dipoles) then
@@ -108,14 +108,11 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
    ch_dummy(2)='exc_qpt'//trim(intc(iq))//'_amplitude_at_'//trim(intc(i_l_grp))
    call of_open_close(ch_dummy(1),'ot')
    call of_open_close(ch_dummy(2),'ot')
-   
-!
-!Note that BSS_description is empty as io_BS it is not called anymore 
-!
+   !
+   ! Note that BSS_description is empty as io_BS it is not called anymore 
    !
    call DESC_write('o weight amp','#',BSS_desc)
-   
-
+   !
    call msg('o weight amp',"#")
    call msg('o weight amp',&
 &   '# Electron-Hole pairs that contribute to Excitonic State '//&

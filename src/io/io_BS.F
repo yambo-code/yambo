@@ -32,7 +32,7 @@ integer function io_BS(iq,X,ID)
  use X_m,           ONLY:X_t
  use stderr,        ONLY:intc
  use parallel_m,    ONLY:myid
- use pointers,      ONLY:linkM2V
+ use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
 &                        l_BS_ares_asymm,BS_IO_dim
  use BS_solvers,    ONLY:BSS_desc,variables_BS
@@ -129,7 +129,7 @@ integer function io_BS(iq,X,ID)
      if (BS_blk(j_block)%mode/=BS_blk(i_block)%mode) cycle
      block_pos=block_pos+BS_blk(j_block)%size(1)*BS_blk(j_block)%size(2)
    enddo
-   tmp_link => linkM2V(BS_blk(i_block)%mat,(/n1*n2/))
+   call C_F_POINTER(C_LOC(BS_blk(i_block)%mat),tmp_link,(/n1*n2/))
    call io_variable_bulk(ID,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif

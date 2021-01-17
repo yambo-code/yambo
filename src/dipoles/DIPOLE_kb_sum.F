@@ -32,10 +32,14 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
- use pointers,      ONLY:linkX2M
  use cuda_m,        ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy
- !
+#if defined _CUDA
+ use iso_c_binding, ONLY:C_DEVLOC,C_F_POINTER
+#else
+ use iso_c_binding, ONLY:C_LOC,C_F_POINTER
+#endif
+!
 #include<dev_defs.h>
  !
  implicit none
@@ -82,8 +86,13 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! A direct call to CGEMM/cublasCGEMM is also possible, but I think
  ! the wrapped M_by_M interface is cleaner
  !
- kbv_p => linkX2M(kbv,(/wf_ng,dim_flat/))
- XX_p  => linkX2M(XX ,(/n_spinor,dim_flat,2/))
+#if defined _CUDA
+ call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat,2/) )
+#else
+ call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
+ call C_F_POINTER(C_LOC(XX),  XX_p,  (/n_spinor,dim_flat,2/) )
+#endif
  call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_p(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,1), n_spinor)
  call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_p(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,2), n_spinor)
  !

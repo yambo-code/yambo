@@ -47,13 +47,13 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  integer     :: iv_wf,ic_wf
  complex(SP) :: rho(3)
- complex(SP) DEV_ATTR, contiguous, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
  integer     :: i1,i2,i3,ig,i_spinor,j_spinor,dim_flat
  !
- complex(SP) DEV_ATTR, contiguous, target :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo),XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, target :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo),XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XXv_p(:,:),XXc_p(:,:)
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
  !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)

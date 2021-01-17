@@ -34,10 +34,11 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use cuda_m,        ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy
+ use iso_c_binding, ONLY:C_F_POINTER
 #if defined _CUDA
- use iso_c_binding, ONLY:C_DEVLOC,C_F_POINTER
+ use cudafor,       ONLY:C_DEVLOC
 #else
- use iso_c_binding, ONLY:C_LOC,C_F_POINTER
+ use iso_c_binding, ONLY:C_LOC
 #endif
 !
 #include<dev_defs.h>
@@ -46,56 +47,46 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  integer     :: iv_wf,ic_wf
  complex(SP) :: rho(3)
- complex(SP) DEV_ATTR, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, contiguous, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i_spinor,dim_flat
- complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:),kbv_p(:,:),XX_p(:,:,:)
- complex(SP) DEV_ATTR, target :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
+ integer     :: i1,i2,i3,ig,i_spinor,j_spinor,dim_flat
+ !
+ complex(SP) DEV_ATTR, contiguous, target :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo),XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XXv_p(:,:),XXc_p(:,:)
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
+ !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
 #ifdef _CUDA
+ complex(SP) DEV_ATTR :: WF_v(wf_ng,n_spinor),WF_c(wf_ng,n_spinor)
  complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
 #endif
  !
  if (pp_kbv_dim_yambo==0) return
  !
- ! Note: this works since WF has the target attribute in mod_wave_function 
- WF_p => WF%c
+ dim_flat=n_spinor*4*pp_kbv_dim_yambo
  !
- ! This is the fortran expanded code for the M?by?M calls below
- ! note that an extra i_spinor index is added for the sake of using ZGEMM
- !
- ! XX=cZERO
- ! do i1=1,pp_kbv_dim_yambo
- !   do i2=1,4
- !     do i_spinor=1,n_spinor
- !       do ig=1,wf_ng
- !         XX(i_spinor,i2,i1,1)=XX(i_spinor,i2,i1,1)+WF_p(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
- !         XX(i_spinor,i2,i1,2)=XX(i_spinor,i2,i1,2)+WF_p(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
- !       enddo
- !     enddo
- !   enddo
- ! enddo
- !
- dim_flat = n_spinor*4*pp_kbv_dim_yambo
- !
- ! here I use the interface with all scalars instead of that for
- ! rank 2 objects because reshape seems not to work properly on
- ! "device" data (at least using PGI 19.10).
- ! A direct call to CGEMM/cublasCGEMM is also possible, but I think
- ! the wrapped M_by_M interface is cleaner
+ ! This works since WF has the target attribute in mod_wave_function 
  !
 #if defined _CUDA
  call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
- call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat,2/) )
+ call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XXc), XXv_p, (/n_spinor,dim_flat/) )
+ !
+ !WF_p => WF%c
+ call dev_memcpy(WF_v,WF%c(:,:,iv_wf))
+ call dev_memcpy(WF_c,WF%c(:,:,ic_wf))
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_v, wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_c, wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
 #else
  call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
- call C_F_POINTER(C_LOC(XX),  XX_p,  (/n_spinor,dim_flat,2/) )
-#endif
- call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_p(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,1), n_spinor)
- call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_p(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XX_p(:,:,2), n_spinor)
+ call C_F_POINTER(C_LOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
+ call C_F_POINTER(C_LOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
+#endif
  !
 #if defined _CUDA
  !$cuf kernel do(3) <<<*,*>>>
@@ -105,8 +96,8 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
-       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XX(i_spinor,i_spinor,1,i1,1))*XX(i_spinor,i_spinor,i2+1,i1,2)+ &
-&                                    conjg(XX(i_spinor,i_spinor,i2+1,i1,1))*XX(i_spinor,i_spinor,1,i1,2)
+       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XXv(i_spinor,i_spinor,1,i1))*XXc(i_spinor,i_spinor,i2+1,i1)+ &
+&                                    conjg(XXv(i_spinor,i_spinor,i2+1,i1))*XXc(i_spinor,i_spinor,1,i1)
      enddo
    enddo
  enddo

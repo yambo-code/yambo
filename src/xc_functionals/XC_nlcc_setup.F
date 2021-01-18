@@ -30,6 +30,7 @@ subroutine XC_nlcc_setup()
  use pars,          ONLY:DP
  use D_lattice,     ONLY:DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+ use com,           ONLY:msg
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
@@ -56,10 +57,9 @@ subroutine XC_nlcc_setup()
  pp_has_nlcc=(io_err==0)
  if (.not.use_nlcc) pp_has_nlcc=.false.
  !
- if (.not.pp_has_nlcc) then
-   call PP_nlcc_free()
-   return
- endif
+ if (.not.pp_has_nlcc) return
+ !
+ call msg('s','[xc] Including NLCC, core corrections density loaded from pseudo')
  !
  if (all(pp_has_nlcc_atom(:)==0)) call error(' [xc] Unexpected zero NLCC')
  !

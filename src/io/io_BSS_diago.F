@@ -21,11 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR_pl)
+integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
+&                             bsL_magn,bsR_magn,bsR_kerr,bsR_pl)
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC
+ use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_mat_res_ares_dim
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
  use X_m,           ONLY:X_t
  use descriptors,   ONLY:IO_desc
@@ -37,10 +38,10 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  implicit none
  !
  type(X_t),intent(inout)        :: X_static
- integer                        :: iq,ID
- complex(SP)        , optional  :: bsE(BSS_n_eig),bsRl(BSS_n_eig),bsRr(BSS_n_eig)
+ integer                        :: iq,ID,i_BS_mat
+ complex(SP)        , optional  :: bsE(:)
  real(SP)   ,pointer, optional  :: BsE_corr(:,:),bsR_pl(:,:)
- complex(SP),pointer, optional  :: bsR_kerr(:)
+ complex(SP),pointer, optional  :: bsR_kerr(:),bsL_magn(:,:),bsR_magn(:,:),bsRl(:),bsRr(:)
  !
  ! Work Space
  !
@@ -49,7 +50,12 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
  !
  call timing('io_BSS_diago',OPR='start')
  !
- db_name='BS_diago_Q'//trim(intc(iq))
+ if (BS_mat_res_ares_dim>1) then
+   if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))//'_res'
+   if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
+ else
+   db_name='BS_diago_Q'//trim(intc(iq))
+ endif
  !
  io_BSS_diago=io_connect(desc=trim(db_name),type=2,ID=ID)
  if (io_BSS_diago/=0) goto 1
@@ -63,17 +69,15 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    io_BSS_diago=variables_BS(ID,iq,local_desc,.FALSE.,X=X_static)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
-   call io_elemental(ID,VAR=&
-&       " BSS|Eigenstates included     ",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates included",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))
    if(iq==1) then
-     call io_elemental(ID,VAR=&
-&       "    |Field direction          ",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
+     call io_elemental(ID,VAR="[BSS] Field direction",R1=BSS_q0,CHECK=.true.,OP=(/"==","==","=="/))
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
-   call io_elemental(ID,VAR=&
-&       "    |Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return
@@ -111,7 +115,19 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      call io_bulk(ID,C1=bsRr)
    endif
    !
-   ! GPL_EXCLUDE_START
+   if(present(bsL_magn)) then
+     if(associated(bsL_magn)) then
+       call io_bulk(ID,'BS_L_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=bsL_magn)
+     endif
+   endif
+   !
+   if(present(bsR_magn)) then
+     if(associated(bsR_magn)) then
+       call io_bulk(ID,'BS_R_magn_Residuals',VAR_SZ=(/2,2,BSS_n_eig/))
+       call io_bulk(ID,C2=bsR_magn)
+     endif
+   endif
    !
    if(present(bsR_kerr)) then
      if(associated(bsR_kerr)) then
@@ -127,8 +143,6 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
      endif
    endif
    !
-   ! GPL_EXCLUDE_END
-   !
  endif
  !
  if (any((/io_sec(ID,:)==3/))) then
@@ -142,8 +156,8 @@ integer function io_BSS_diago(iq,ID,X_static,bsE,bsRl,bsRr,BsE_corr,bsR_kerr,bsR
    !
    ! BS_eh_table
    !
-   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim,3+n_sp_pol-1/))
-   call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim,:))
+   call io_bulk(ID,'BS_TABLE',VAR_SZ=(/BS_K_dim(1),5/))
+   call io_bulk(ID,I2=BSS_eh_table(:BS_K_dim(1),:))
    !
    ! Eigenstates (resonant only matrix)
    !

@@ -23,18 +23,21 @@
 !                  
 subroutine RT_databases_IO(E,DO_IT)
  !
- use drivers,        ONLY:l_elph_scatt
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
 &                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix
+ use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
+#endif
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
-&                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,THETA_matrix,&
-&                         l_RT_CCA_Kernel,RT_carriers,G_MEM_steps
- use IO_m,           ONLY:io_control,manage_action,NONE,REP, &
+&                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,RT_carriers,G_MEM_steps
+ use IO_m,           ONLY:io_control,manage_action,NONE, &
 &                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
- use parallel_m,     ONLY:PP_redux_wait,PP_bcast,HEAD_k_cpu,PAR_G_k_range
+ use parallel_m,     ONLY:HEAD_k_cpu,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait,PP_bcast
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
@@ -111,8 +114,6 @@ subroutine RT_databases_IO(E,DO_IT)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  ! Carriers 
  !=========
  if (io_CARRIERs) then
@@ -149,13 +150,15 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      if(.not.SAVE_G_history) IO_ACT=OP_WR_CL
      if(     SAVE_G_history) IO_ACT=OP_APP_CL
-     call io_control(ACTION=IO_ACT,COM=REP, SEC=(/1/),ID=ID(5))
+     call io_control(ACTION=IO_ACT,COM=NONE, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
      !
-     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+#if defined _ELPH_ITERATIVE
+     if (l_RT_iterative_ELPH_lifetimes) then
        call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=ID(7))
        io_THETA=io_RT_components('THETA',ID(7))
      endif
+#endif
      !
    endif
    !
@@ -219,9 +222,8 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      call IO_and_Messaging_switch("RESTORE")
      !
-#if defined _ELPH
-     !
-     if (l_elph_scatt.and..not.l_RT_CCA_Kernel) then
+#if defined _ELPH_ITERATIVE
+     if (l_RT_iterative_ELPH_lifetimes) then
        !
        do ik = 1, RT_nk
          !
@@ -242,7 +244,6 @@ subroutine RT_databases_IO(E,DO_IT)
        enddo
        !
      endif
-     !
 #endif
    !
    endif
@@ -253,7 +254,7 @@ subroutine RT_databases_IO(E,DO_IT)
  if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
  if (write_G)    call PP_bcast(  GF_RT_IO_t%last_point,0)
  !
- ! GPL_EXCLUDE_END
+ !
  !
  call timing('RT databases IO',OPR='stop')
  !

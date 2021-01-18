@@ -65,7 +65,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (l_cohsex) then
    !
-   call msg('r', '[Newton] Sc step   [ev]',QP_dSc_delta*HA2EV)
+   call msg('r', '[Newton] Sc step       ',QP_dSc_delta*HA2EV,"[eV]")
    call msg('r', '[Newton] Sc steps      ',QP_dSc_steps)
    !
  endif
@@ -166,8 +166,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations
    !
-   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
-&                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
+   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle',&
+&                      (/SC_corr_prev,SC_corr_now/)*HA2EV,"[eV]")
    SC_corr_prev=SC_corr_now
    !
    if (.not.GWo_SC_done.and.SC_iterations/=0) then

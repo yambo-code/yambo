@@ -1,5 +1,4 @@
 objs = acknowledge_yambo.o REPORT_Occupations.o section.o REPORT_Energies.o \
-       com_compose_msg.o \
-       com_utilities_subroutines.o com_utilities_functions.o com_utilities_netcdf.o \
-       msg_manager.o \
-       msg_characters_vector_int.o msg_integers_vector_int.o msg_reals_vector_int.o DESC_write.o
+       com_compose_msg.o com_utilities_subroutines.o com_utilities_functions.o com_utilities_netcdf.o \
+       msg_manager.o msg_characters_vector_int.o msg_integers_vector_int.o msg_reals_vector_int.o \
+       DESC_write.o OUTPUT_unit_conversion.o OUTPUT_add_column.o 

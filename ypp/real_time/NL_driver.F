@@ -149,11 +149,11 @@ subroutine NL_driver(en,k)
        Harmonic_Frequency(i_order,:)=real(i_order,SP)*Probe_Frequency(:)
      enddo
      !
-     call msg('s',' Harmonic frequencies    [eV]',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV)
+     call msg('s',' Harmonic frequencies        ',(/minval(Harmonic_Frequency),maxval(Harmonic_Frequency)/)*HA2EV,"[eV]")
      !
      ! Find the Fourier coefficients by inversion
      !
-     call msg('s','[RT] Effective max time period [fs]',T_period*AUT2FS)
+     call msg('s','[RT] Effective max time period     ',T_period*AUT2FS,"[fs]")
      !
      call live_timing('X effective ', n_frequencies)
      !

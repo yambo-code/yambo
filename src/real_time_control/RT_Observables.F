@@ -63,7 +63,9 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
    return
  endif
  !
- ! GPL_EXCLUDE_START
+ ! Carriers number
+ !================
+ call RT_carriers_number(en,k,NCarr)
  !
  ! Temperature
  !=============
@@ -78,8 +80,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  OBSERVABLES(1:21)=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:)/)
- !
- ! GPL_EXCLUDE_END
  !
  call timing('RT observables',OPR='stop')
  !

@@ -27,9 +27,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  use pars,                ONLY:SP,schlen,cZERO
  use drivers,             ONLY:l_sc_run,l_nl_optics
-#if defined _PL
- use drivers,             ONLY:l_photolum
-#endif
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
@@ -80,13 +77,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  l_eval_DIP_iR=use_g_space_approach
  l_eval_DIP_V =use_g_space_approach.or.Dip%force_v_g_space
  l_eval_DIP_P2=compute_P2_dipoles
- !
-#if defined _PL
- l_eval_DIP_V =l_eval_DIP_V.or.l_photolum
-#endif
-#if defined _NL && !defined _PL
- l_eval_DIP_V =l_eval_DIP_V.or.l_nl_optics
-#endif
  !
  ! Synchronize some memory
  if (have_cuda) then
@@ -215,8 +205,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          DIP_P(:,ic,iv,ik_mem,i_sp_pol)=rho
          !
-         ! GPL_EXCLUDE_START
-         !
          !======
          ! <P^2>
          !======
@@ -230,8 +218,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #if defined _RT
          if (compute_Spin_dipoles.and.n_spinor==2) DIP_P_spinor(:,:,:,ic,iv,ik_mem)=rho_spinor
 #endif
-         !
-         ! GPL_EXCLUDE_END
          !
          if(.not.(l_eval_dip_V.or.l_eval_dip_iR)) then
            cycle

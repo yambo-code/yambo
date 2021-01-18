@@ -32,6 +32,7 @@ module D_lattice
  ! Non periodic directions
  !
  character(lchlen) :: non_periodic_directions
+ real(SP)          :: molecule_position(3)
  !
  !
  ! Temperature

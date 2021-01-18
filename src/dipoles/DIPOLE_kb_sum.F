@@ -71,7 +71,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
 #if defined _CUDA
  call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
- call C_F_POINTER(C_DEVLOC(XXc), XXv_p, (/n_spinor,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
  !WF_p => WF%c
  call dev_memcpy(WF_v,WF%c(:,:,iv_wf))

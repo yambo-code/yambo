@@ -27,7 +27,8 @@ subroutine RT_X_response(en,k,q)
 &                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,&
 &                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
  use RT_control,     ONLY:OBS_RT_IO_t
- use pars,           ONLY:lchlen
+ use pars,           ONLY:lchlen,schlen
+ use stderr,         ONLY:STRING_split
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use fields,         ONLY:Efield
@@ -41,21 +42,22 @@ subroutine RT_X_response(en,k,q)
  !
  ! Work Space
  !
- integer           :: i_f,i_Probe
+ integer           :: i_f,i_Probe,Ndefs
  character(lchlen) :: jobstr_save
+ character(schlen) :: probe_defs(3)
  logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
  !
  call RT_OBSERVABLES_IO_paths('JP',en)
  !
  i_Probe=1
  !
- l_RT_LRR_real_field= all((/&
-&   .not.any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="RES",&
-&   trim(Efield(i_Probe)%ef_name)=="SIN"/)),N_pumps==0, N_probes==1, X_order==1/) )
+ call STRING_split(Efield(i_Probe)%ef_name,probe_defs,n_non_empty_strings=Ndefs)
  !
- l_RT_SHG_qssin     = all( (/ trim(Efield(i_Probe)%ef_name)=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
+ l_RT_LRR_real_field= all( (/ Ndefs==1 ,N_pumps==0, N_probes==1, X_order==1/) )
  !
- l_RT_X_effective   = all((/any((/trim(Efield(i_Probe)%ef_name)=="ANTIRES",trim(Efield(i_Probe)%ef_name)=="SIN"/)),X_order>=0/))
+ l_RT_SHG_qssin     = all( (/ trim(probe_defs(1))=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
+ !
+ l_RT_X_effective   = all((/ trim(probe_defs(1))=="SIN" ,X_order>=0/))
  !
  if (l_RT_X_effective) l_RT_X_inversion=all((/ X_order>=0, N_probe_frequencies==1, N_pumps==0/))
  !

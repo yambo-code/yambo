@@ -23,8 +23,9 @@
 !
 module fields
  !
- use pars, ONLY:SP,DP,schlen,lchlen,pi,n_ext_fields_max
- use units,ONLY:FS2AUT
+ use pars,  ONLY:SP,DP,schlen,lchlen,pi,n_ext_fields_max
+ use stderr,ONLY:STRING_split
+ use units, ONLY:FS2AUT
  !
  implicit none
  !
@@ -72,17 +73,17 @@ module fields
    !
    logical function field_is_ok(E_field)
      type(ext_field)   ::E_field
-     field_is_ok= any((/ trim(E_field%ef_name) == 'SIN' ,&
-&                        trim(E_field%ef_name) == 'SOFTSIN' ,& 
-&                        trim(E_field%ef_name) == 'ANTIRES' ,& 
-&                        trim(E_field%ef_name) == 'RES' ,& 
-&                        trim(E_field%ef_name) == 'DELTA' ,& 
-&                        trim(E_field%ef_name) == 'GAUSS' ,& 
-&                        trim(E_field%ef_name) == 'THETA' ,& 
-&                        trim(E_field%ef_name) == 'PULSE' ,& 
-&                        trim(E_field%ef_name) == 'QSSIN' ,&
-&                        trim(E_field%ef_name) == 'SPULSE',&
-&                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
+     character(schlen) ::field_defs(3)
+     call string_split(trim(E_field%ef_name),field_defs)
+     field_is_ok= any((/ trim(field_defs(1)) == 'SIN'    ,&
+&                        trim(field_defs(1)) == 'SOFTSIN',&
+&                        trim(field_defs(1)) == 'DELTA'  ,&
+&                        trim(field_defs(1)) == 'GAUSS'  ,&
+&                        trim(field_defs(1)) == 'THETA'  ,&
+&                        trim(field_defs(1)) == 'PULSE'  ,&
+&                        trim(field_defs(1)) == 'QSSIN'  ,&
+&                        trim(field_defs(1)) == 'SPULSE' ,&
+&                        trim(field_defs(1)) == 'QSFIELD' /)).and. &
 &                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
 &                        trim(E_field%ef_pol)  == 'circular' /))
    end function
@@ -117,7 +118,7 @@ module fields
      ! Note that A is evolved using A''(t) starting from A(0) and A'(0). 
      !
      use X_m,       ONLY:global_gauge
-     use pars,      ONLY:cI,cONE,cZERO,pi
+     use pars,      ONLY:cI,cONE,cZERO,pi,schlen
      use wrapper,   ONLY:FADEVA
      !
      type(ext_field), intent(inout)   ::E_field
@@ -133,7 +134,8 @@ module fields
      !
      integer           ::i_fr,i_field,n_fields
      real(SP)          ::T_0,W_0,sigma,WtimesT,EXPf,fr_shift(2),W_field,cos_wt,sin_wt
-     complex(SP)       ::f_now,f_t(2),cZ,cS,exp_iwt,erfi_z
+     complex(SP)       ::f_now,f_t(2),f0t,f1t,cZ,cS,exp_iwt,erfi_z
+     character(schlen) ::field_defs(3)
      logical           ::envelop_only_
      !
      ! Zeroing
@@ -153,7 +155,9 @@ module fields
      fr_shift(1)=0._SP
      fr_shift(2)=pi/2._SP
      !
-     select case( trim(E_field%ef_name) )
+     call STRING_split(trim(E_field%ef_name),field_defs)
+     !
+     select case( trim(field_defs(1)) )
        case('STATIC','SIN','ANTIRES','RES','DELTA')
          ! Fields which do not need T_0
          W_0=0._SP
@@ -169,6 +173,10 @@ module fields
          ! Fields which need T_0
          W_0=field_frequency(E_field,1)
          T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+         if(trim(field_defs(2))=="2SIGMA" .or. trim(field_defs(3))=="2SIGMA") T_0=2._SP*sigma
+         if(trim(field_defs(2))=="3SIGMA" .or. trim(field_defs(3))=="3SIGMA") T_0=3._SP*sigma
+         if(trim(field_defs(2))=="4SIGMA" .or. trim(field_defs(3))=="4SIGMA") T_0=4._SP*sigma
+         if(trim(field_defs(2))=="5SIGMA" .or. trim(field_defs(3))=="5SIGMA") T_0=5._SP*sigma
      end select
      !
      E_field%To=T_0
@@ -179,31 +187,33 @@ module fields
          if (envelop_only_) then
            W_field=0._SP
            WtimesT=fr_shift(i_field)
-           cos_wt=1._SP ; sin_wt=1._SP ; exp_iwt=1._SP
+           f0t=cONE ; f1t=cONE
          else
            W_field=field_frequency(E_field,i_fr)
            WtimesT=W_field*(T-T_0)+fr_shift(i_field)
-           cos_wt=cos(WtimesT) ; sin_wt=sin(WtimesT)
-           exp_iwt=cos_wt+cI*sin_wt
+           cos_wt=cos(WtimesT) ; sin_wt=sin(WtimesT); exp_iwt=cos_wt+cI*sin_wt
+           f0t=cmplx(cos_wt,0._SP) ; f1t=cmplx(sin_wt,0._SP)
+           if(trim(field_defs(2))=="ANTIRES")     then ; f0t= 0.5_SP*      exp_iwt  ; f1t=-cI*0.5_SP*      exp_iwt   ; endif
+           if(trim(field_defs(2))=="RES")         then ; f0t= 0.5_SP*conjg(exp_iwt) ; f1t= cI*0.5_SP*conjg(exp_iwt)  ; endif
          endif
          EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
          !
-         select case( trim(E_field%ef_name) )
+         select case( trim(field_defs(1)) )
          case('STATIC')
            if (order==0 ) f_now=T
            if (order==1 ) f_now=1._SP
            if (order==2 ) f_now=0._SP
            !
          case('SIN')
-           if (order==0 ) f_now=      -(cos_wt-1._SP)/W_field
-           if (order==1 ) f_now=        sin_wt
-           if (order==2 ) f_now=W_field*cos_wt
+           if (order==0 ) f_now=      -(f0t-1._SP)/W_field
+           if (order==1 ) f_now=        f1t
+           if (order==2 ) f_now=W_field*f0t
            !
          case('SOFTSIN')
            if (order==-1) f_now=-2
-           if (order== 0) f_now=-damp_func*(cos_wt-1._SP)/W_field
-           if (order== 1) f_now=+damp_func* sin_wt
-           if (order== 2) f_now=+damp_func*W_field*cos_wt
+           if (order== 0) f_now=-damp_func*(f0t-1._SP)/W_field
+           if (order== 1) f_now=+damp_func* f1t
+           if (order== 2) f_now=+damp_func*W_field*f0t
            !
          case('THETA')
            damp_func=1._SP
@@ -212,16 +222,6 @@ module fields
            if (order==0 ) f_now=damp_func*T
            if (order==1 ) f_now=damp_func
            if (order==2 ) f_now=0._SP
-           !
-         case('ANTIRES')
-           if (order==0 ) f_now=-cI*        exp_iwt/W_field
-           if (order==1 ) f_now=+           exp_iwt
-           if (order==2 ) f_now=+cI*W_field*exp_iwt
-           !
-         case('RES')
-           if (order==0 ) f_now=+cI*        conjg(exp_iwt)/W_field
-           if (order==1 ) f_now=-           conjg(exp_iwt)
-           if (order==2 ) f_now=-cI*W_field*conjg(exp_iwt)
            !
          case('DELTA')
            if (order==0 ) f_now=1._SP
@@ -250,39 +250,39 @@ module fields
            if (order==0 .and. trim(global_gauge)=="length" )   erfi_z=cZERO
            !
            if (order==0 ) f_now= erfi_z
-           if (order==1 ) f_now=                        sin_wt          *EXPf
-           if (order==2 ) f_now=(W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)*EXPf
+           if (order==1 ) f_now=                     f1t          *EXPf
+           if (order==2 ) f_now=(W_field*f0t-(T-T_0)*f1t/sigma**2)*EXPf
            !
          case('QSFIELD')
            !
-           if (order==0 ) f_now=                         sin_wt          *EXPf
-           if (order==1 ) f_now=( W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)*EXPf
-           if (order==2 ) f_now=(-W_field*sin_wt-sin_wt/sigma**2                           &
-                          &             -W_field*(T-T_0)*sin_wt/sigma**2                    &
-                          &             -(T-T_0)*(W_field*cos_wt-(T-T_0)*sin_wt/sigma**2)/sigma**2)*EXPf
+           if (order==0 ) f_now=                      f1t          *EXPf
+           if (order==1 ) f_now=( W_field*f0t-(T-T_0)*f1t/sigma**2)*EXPf
+           if (order==2 ) f_now=(-W_field*f1t-f1t/sigma**2                           &
+                          &             -W_field*(T-T_0)*f1t/sigma**2                    &
+                          &             -(T-T_0)*(W_field*f0t-(T-T_0)*f1t/sigma**2)/sigma**2)*EXPf
            !
          case('PULSE')
            if(abs((T-T_0))< sigma) then
              if (order==0 ) f_now= 0._SP
-             if (order==1 ) f_now=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4      *cos_wt
-             if (order==2 ) f_now=(4._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4)*cos_wt &
-&                                       -(1._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4)*W_field*sin_wt
+             if (order==1 ) f_now=       (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4 *f0t
+             if (order==2 ) f_now=(4._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4)*f0t &
+&                                       -(1._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4)*W_field*f1t
            endif
            !
          case('SPULSE')
            T_0=sigma
            W_0=W_field
            if(abs((T-T_0))< sigma) then
-             if (order==0 ) f_now=(4.0*W_0*(T-T_0)*cos(WtimesT)*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
-&              +sin(WtimesT)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
+             if (order==0 ) f_now=(4.0*W_0*(T-T_0)*f0t*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
+&              +f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &
 &               W_0**2*(T -T_0)**2+24))/W_0**5/sigma**4+                                                          &
-&               ((4.0*W_0*sigma*cos(W_0*sigma)*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
-&              +sin(W_0*sigma)*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
+&               ((4.0*W_0*sigma*f0t*(-sigma**2*W_0**2+W_0**2*sigma**2-6.0)                             &
+&              +f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*sigma**2-2.0)+W_0**4*sigma**4-12.0*   &
 &               W_0**2*sigma**2+24))/W_0**5/sigma**4)                                                             
-             if (order==1 ) f_now=((T-T_0)**2 - sigma**2)**2/sigma**4*cos(WtimesT)
+             if (order==1 ) f_now=((T-T_0)**2 - sigma**2)**2/sigma**4*f0t
              if (order==2 ) f_now=(2._SP*(T-T_0 + sigma)    *(T-T_0 -sigma)**2/sigma**4                 &
-&                                        +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *cos(WtimesT) &
-&                                        -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*sin(WtimesT)
+&                                        +2._SP*(T-T_0 + sigma)**2 *(T-T_0 -sigma)   /sigma**4 )    *f0t &
+&                                        -      (T-T_0 + sigma)**2 *(T-T_0 -sigma)**2/sigma**4  *W_0*f1t
            endif
          end select
          !
@@ -297,37 +297,42 @@ module fields
    !
    complex(SP) function small_a_frequency(W_i,E_field,iErr)
      !
-     use pars,      ONLY:cZERO,cI,pi
+     use pars,      ONLY:cZERO,cI,pi,schlen
      type(ext_field)   ::E_field
      complex(SP)       ::W_i
      integer           ::iErr
      !
      integer           ::i_f
      real(SP)          ::W_0
-     complex(SP)       ::local_a
+     complex(SP)       ::local_a(2)
+     character(schlen) ::field_defs(3)
      !
      iErr=-1
      local_a=cZERO
      !
+     call STRING_split(trim(E_field%ef_name),field_defs)
+     !
      do i_f=1,E_field%n_frequencies     
        W_0=field_frequency(E_field,i_f)
-       select case( trim(E_field%ef_name) )
+       select case( trim(field_defs(1)) )
        case('SIN')
          iErr=0
-         local_a=local_a+   (1._SP/(W_i-W_0)-1._SP/(W_i+W_0))/2._SP-1._SP/W_0
-       case('ANTIRES')
-         iErr=0
-         local_a=local_a+cI*(               -1._SP/(W_i+W_0)       -1._SP/W_0)
-       case('RES')
-         iErr=0
-         local_a=       -cI*(1._SP/(W_i-W_0)                       -1._SP/W_0)
+         local_a(1)=local_a(1)+(1._SP/(W_i-W_0)                 -1._SP/W_0)/2._SP  ! RES
+         local_a(2)=local_a(2)+(               -1._SP/(W_i+W_0) -1._SP/W_0)/2._SP  ! ARES
        case('DELTA')
          iErr=0
-         local_a=1._SP
+         local_a=1._SP/2._SP
        end select
      enddo
      !
-     small_a_frequency=local_a
+     select case( trim(field_defs(2)) )
+       case('RES')
+         local_a(2)=0._SP
+       case('ANTIRES')
+         local_a(1)=0._SP
+     end select
+     !
+     small_a_frequency=local_a(1)+local_a(2)
      !
    end function small_a_frequency
    !
@@ -396,27 +401,27 @@ module fields
        Rabi_Factor=2._SP*sum(R(:)*Field%versor(:))*Field%amplitude
      else 
        Rabi_Factor=2._SP*sum(P(:)*Field%versor(:))*Field%amplitude
-       if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
-       if( any( trim(Field%ef_name)==(/'RES'/)) )               Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
+       !if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
+       !if( any( trim(Field%ef_name)==(/'RES'/)) )               Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
      endif
    end function Rabi_Factor
    !
    complex(SP) function Divide_by_Field(Field,order)
      !
-     use pars, ONLY: cI,pi
+     use pars, ONLY: cI,pi,schlen
      type(ext_field):: Field
      integer        :: order
      ! work space
      complex(SP) :: E_w
      real(SP)    :: T_0, sigma, W_0, T
+     character(schlen) ::field_defs(3)
      !
-     select case(Field%ef_name)
-       case('ANTIRES')
-         if (order/=0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**order
-         if (order==0) Divide_by_Field =(1._SP,0._SP)/Field%amplitude**2
+     call STRING_split(trim(Field%ef_name),field_defs)
+     !
+     select case(trim(field_defs(1)))
        case('SIN','SOFTSIN')
-         Divide_by_Field =  (-2._SP*cI/Field%amplitude)**order
-         if (order==0) Divide_by_Field =  (4._SP,0._SP)/Field%amplitude**2
+         if (order/=0) Divide_by_Field =((-2._SP,0._SP)/Field%amplitude)**order
+         if (order==0) Divide_by_Field = ( 4._SP,0._SP)/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%width
          T_0=10._SP*sigma

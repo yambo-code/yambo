@@ -130,7 +130,7 @@ subroutine fix_QP_DBs(k,k_save,kpoints_map,action_kind)
  qp_expanded%k  = k%pt
  qp_expanded%wk = k%weights
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1,2,3/),COM=NONE,ID=ID)
  io_QP_and_GF_err=io_QP_and_GF("QP",qp_expanded,ID)
  !
  core_io_path=core_io_path_save

@@ -46,8 +46,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
  integer           :: lwork,lrwork
- real(SP)          :: rvar
- complex(SP)       :: cvar
+ real(SP)          :: rvar(1)
+ complex(SP)       :: cvar(1)
  type(LALGEBRA_WS) :: WS
  !
  E=0.0_SP

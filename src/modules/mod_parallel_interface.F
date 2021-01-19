@@ -25,15 +25,17 @@ module parallel_int
  !
  use pars,       ONLY:SP,DP
  use parallel_m, ONLY:ncpu,myid,comm_default_value
-#if !defined _MPI
+#if defined _MPI
+ use mpi
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
+#else
  use parallel_m, ONLY:mpi_comm_world,mpi_comm_null
 #endif
  !
  implicit none
- !
-#if defined _MPI
- include 'mpif.h'
-#endif
  !
  integer, private   :: i_err
  integer, private   :: local_type
@@ -1086,7 +1088,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1104,7 +1106,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1116,7 +1118,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1134,7 +1136,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1146,7 +1148,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1164,7 +1166,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine

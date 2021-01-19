@@ -206,6 +206,15 @@ module interfaces
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
    !
+   subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
+     use pars,           ONLY:SP
+     use BS,             ONLY:BS_H_dim
+     logical,    intent(in)  :: K_is_not_hermitian
+     complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim)
+     real(SP)   ,intent(out) :: BS_R_PL(2,BS_H_dim)
+     complex(SP),optional,intent(in)  :: BS_overlap(BS_H_dim,BS_H_dim)
+   end subroutine
+   !
    subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)
      use pars, ONLY:SP
      use QP_m, ONLY:QP_t

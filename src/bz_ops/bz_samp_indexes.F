@@ -653,16 +653,20 @@ subroutine bz_samp_indexes(k,Xk,q)
      character(*), intent(in) :: message
      call qindx_free('ALL')
      nqibz=1
-     call qindx_alloc('X')
+     if (X_scattering) then
+       call qindx_alloc('X')
+       do i1=1,Xk%nbz
+         qindx_X(1,i1,1)=i1
+         qindx_X(1,i1,2)=1
+       enddo
+     endif
      call msg('nsrn',trim(message))
      call q_shadows(.true.)
      Xk_grid_is_uniform=.false.
      bse_scattering=.false.
-     sigma_scattering=.FALSE.
-     do i1=1,Xk%nbz
-       qindx_X(1,i1,1)=i1
-       qindx_X(1,i1,2)=1
-     enddo
+     sigma_scattering=.false.
+     X_scattering=.false.
+     sigma_scattering=.false.
    end subroutine bz_X_only_exit
    !
 end subroutine

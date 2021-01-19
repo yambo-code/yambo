@@ -219,10 +219,6 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  d3q_factor=RL_vol/real(q%nbz)
  !
- ! Allocate
- !
- call qindx_alloc('XB')
- !
  ! X indexes
  !
  ! qindx_X(iq,ikbz,1)=okbz
@@ -242,7 +238,11 @@ subroutine bz_samp_indexes(k,Xk,q)
  call PP_indexes_reset(PAR_IND_k)
  call PARALLEL_index(PAR_IND_k,(/k%nbz/))
  !
- if (X_scattering) then
+ if (X_scattering.and.Xk_grid_is_uniform) then
+   !
+   ! Allocate
+   !
+   call qindx_alloc('XB')
    !
    call section('+',trim(string(1))//' indexes')
    !============================================
@@ -665,8 +665,7 @@ subroutine bz_samp_indexes(k,Xk,q)
      Xk_grid_is_uniform=.false.
      bse_scattering=.false.
      sigma_scattering=.false.
-     X_scattering=.false.
-     sigma_scattering=.false.
+     coll_scattering=.false.
    end subroutine bz_X_only_exit
    !
 end subroutine

@@ -37,7 +37,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use parallel_int,        ONLY:PARALLEL_global_indexes
  use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,DIPs_kind
+&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,DIPs_kind,DIPs_bands
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -198,7 +198,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Specific SECTIONS
  !===================
  !
- if (l_dipoles.and.trim(DIPs_kind)/="MASK") call DIPOLES_driver(Xk,Xen,q)
+ if (l_dipoles.and.trim(DIPs_kind)/="MASK") call DIPOLES_driver(DIPs_bands,Xk,Xen,q)
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !

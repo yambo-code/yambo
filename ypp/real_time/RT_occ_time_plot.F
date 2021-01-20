@@ -42,6 +42,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use real_time,      ONLY:RT_carriers,RT_bands
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use interfaces,     ONLY:DESC_write
+ use timing_m,       ONLY:timing
  !
 #include<memory.h>
  !
@@ -63,6 +64,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
  if(all(QP_table==0)) return
+ !
+ call timing('RT_occ_time',OPR='start')
  !
  ! Setup
  !-------
@@ -326,6 +329,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  YAMBO_FREE(spin_factors)
  YAMBO_FREE(magn_factors)
+ !
+ call timing('RT_occ_time',OPR='stop')
  !
  contains
    !

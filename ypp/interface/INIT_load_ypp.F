@@ -238,7 +238,7 @@ subroutine INIT_ypp_load(defs)
  !
  ! DIPOLES
  !
- call it(defs,'DIP_kind',      'Kind of DIPOLES use (IP, EXCITONIC, MASK)',DIPs_kind)
+ call it(defs,'DIP_kind',      'Kind of DIPOLES use (IP, EXCITONIC, MASK)',DIPs_kind,protect=.FALSE.)
  call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPs_E_range,E_unit)
  call it(defs,'DIP_direction', 'Field direction versor',DIPs_direction)
  call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPs_bands)
@@ -264,7 +264,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
- call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq)
+ call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq,protect=.FALSE.)
  !
 #if defined _YPP_SC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')

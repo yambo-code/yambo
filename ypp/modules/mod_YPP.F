@@ -158,7 +158,7 @@ module YPPm
  ! Dipoles
  !
  type(DIPOLE_t)    ::DIPs
- character(schlen) ::DIPs_kind="IP" 
+ character(schlen) ::DIPs_kind
  logical           ::l_dipoles
  integer           ::DIPs_bands(2)
  real(SP)          ::DIPs_E_range(2)

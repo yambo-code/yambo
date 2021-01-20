@@ -31,8 +31,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                              PAR_IND_VAL_BANDS_DIP,&
-&                              PAR_IND_CON_BANDS_DIP
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
@@ -143,7 +142,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  enddo
  n_LT_steps=n_LT_steps*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
- write (*,*) n_LT_steps
  !
  ! Main loop over k in IBZ
  do i_sp_pol=1,n_sp_pol

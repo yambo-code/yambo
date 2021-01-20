@@ -34,8 +34,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 &                         l_QP_DB_expand,l_average_eh,l_interp,l_regular_grid,DIPs
  use pars,           ONLY:pi,schlen
  use D_lattice,      ONLY:i_time_rev
- use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on,&
-&                         PARSER_force_command_line_value
+ use it_tools,       ONLY:ofiles_append,infile_dump,runlevel_is_on
  use it_m,           ONLY:initdefs,initmode,infile,nrnlvls,rnlvls,infile_verbosity,&
                           V_general,V_qp,V_all,V_real_time,V_nl_optics
  use drivers,        ONLY:infile_editing
@@ -201,8 +200,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  call before_infile_write_setup( )
  !
- call call_INIT_load('load_defaults')
- !
  l_rtplot=.FALSE.
  l_rtmode=.FALSE.
  !
@@ -271,12 +268,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      endif
 #endif
      if ( trim(rstr_piece(i1)) == 'BSiq') then
-       !
        read(rstr_piece(i1+1),'(i10)') BSiq 
        if (l_sort) infile_editing=.false.
-       !
-       call PARSER_force_command_line_value(defs,"BSQindex",I1=BSiq)
-       !
      endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
@@ -361,6 +354,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      !    
    enddo
  enddo
+ !
+ call call_INIT_load('load_defaults')
  !
 #if defined _YPP_RT
  !

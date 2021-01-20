@@ -21,9 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLES_driver(k,E,q)
+subroutine DIPOLES_driver(bands,k,E,q)
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
+ use com,            ONLY:msg
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin
  use YPPm,           ONLY:DIPs_bands,DIPs_E_range,DIPs_direction,K_transform,coo_out,INTERP_grid,&
@@ -40,14 +42,16 @@ subroutine DIPOLES_driver(k,E,q)
  !
 #include<memory.h>
  !
+ integer        :: bands(2)
  type(bz_samp)  :: k,q
  type(levels)   :: E
  !
  ! Work Space
  !
- integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,V_range(2),C_range(2)
+ integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,V_range(2),C_range(2),BANDS_done(DIPs_bands(2))
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
+ character(schlen)     :: BANDS_str
  real(SP), allocatable :: DIP_plane(:,:,:)
  integer,  external    :: PROJECTION_k_on_the_path_or_plane
  !
@@ -73,24 +77,31 @@ subroutine DIPOLES_driver(k,E,q)
    !
  endif
  !
+ ! ... Dimensions
+ V_range=(/bands(1),E%nbm/)
+ C_range=(/E%nbf+1,DIPs_bands(2)/)
+ if (trim(DIPs_kind)=="MASK") then
+   C_range=DIPs_bands
+   V_range=bands
+ endif
+ DIPs%ib    =(/V_range(1),C_range(2)/)
+ DIPs%ib_lim=(/V_range(2),C_range(1)/)
+ !
  ! ... PARALLEL setup
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
  call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs)
  !
  ! ... IO
- call DIPOLE_dimensions(E,DIPs,DIPs_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
  !
  DIPs_direction=DIPs_direction/v_norm(DIPs_direction)
  !
- ! ... Init
- C_range=(/E%nbf+1,DIPs_bands(2)/)
- V_range=(/DIPs_bands(1),E%nbm/)
+ ! ... Alloc
  if (trim(DIPs_kind)=="MASK") then
-   YAMBO_ALLOC(DIPs_mask,(DIPs_bands(1):DIPs_bands(2),k%nibz,n_spin))
+   YAMBO_ALLOC(DIPs_mask,(bands(1):bands(2),k%nibz,n_spin))
    DIPs_mask=rZERO
-   C_range=DIPs_bands
-   V_range=DIPs_bands
+   BANDS_str=" "
+   BANDS_done=0
  endif
  if (trim(DIPs_kind)=="IP") DIP_accumulated=rZERO
  !
@@ -99,9 +110,9 @@ subroutine DIPOLES_driver(k,E,q)
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
    ik_mem=PAR_DIPk_ibz_index(ik)
    do iv=V_range(1),V_range(2)
-     if (.not.PAR_IND_CON_BANDS_DIP%element_1D(iv)) cycle
+     if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
      do ic=C_range(1),C_range(2)
-       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(ic)) cycle
+       if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
          if (DIPs_E_range(1)>0. .and. delta_E<DIPs_E_range(1)) cycle
@@ -112,14 +123,19 @@ subroutine DIPOLES_driver(k,E,q)
          endif
          if (trim(DIPs_kind)=="MASK") then
            DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2._SP
+           if (BANDS_done(ic)==0) BANDS_str=trim(BANDS_str)//" "//trim(intc(ic))
+           BANDS_done(ic)=1
          endif
        enddo
      enddo
    enddo
  enddo
  !
- if (trim(DIPs_kind)=="IP")   call PP_redux_wait( DIP_accumulated(1,:,1))
- if (trim(DIPs_kind)=="MASK") call PP_redux_wait( DIPs_mask )
+ if (trim(DIPs_kind)=="MASK") then
+   call PP_redux_wait( DIPs_mask )
+   call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
+ endif
+ if (trim(DIPs_kind)=="IP") call PP_redux_wait( DIP_accumulated(1,:,1))
  if (.not.trim(DIPs_kind)=="IP") then
    call LOCAL_clean()
    return

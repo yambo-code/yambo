@@ -31,16 +31,13 @@ subroutine RT_occupations_driver(k,q,en)
  use YPP_interfaces, ONLY:PROJECTION_setup
  use RT_control,     ONLY:RT_apply,CARR_RT_IO_t
  use real_time,      ONLY:RT_bands
- use YPPm,           ONLY:DIPs_mask,DIPs_bands,l_dipoles,DIPs
+ use YPPm,           ONLY:DIPs_mask,l_dipoles,DIPs
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
 #include<memory.h>
  !
  type(bz_samp) :: k,q
  type(levels)  :: en
- !
- ! Workspace
- !
  !
  call section('+','Real-Time components (Occupations, Lifetimes,...)')
  !=====================================================================
@@ -54,7 +51,7 @@ subroutine RT_occupations_driver(k,q,en)
  if (l_dipoles) then
    call section('=',"The Dipoles `Mask`")
    !=====================================
-   call DIPOLES_driver(k,en,q)
+   call DIPOLES_driver(RT_bands,k,en,q)
  endif
  !
  ! Setups

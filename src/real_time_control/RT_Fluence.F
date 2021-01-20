@@ -291,7 +291,8 @@ subroutine Rabi_frequency_all(En,i_field)
        do i_grp2=i_grp1+1,n_deg_grp
          ib2=first_el(i_grp2)+RT_bands(1)-1
          delta_E=En%E(ib2,ik,i_sp_pol)-En%E(ib1,ik,i_sp_pol)
-         if ( En%f(ib1,ik,i_sp_pol)*(spin_occ-En%f(ib2,ik,i_sp_pol))==0._SP ) cycle
+         !if ( En%f(ib1,ik,i_sp_pol)*(spin_occ-En%f(ib2,ik,i_sp_pol))==0._SP ) cycle
+         if (delta_E<1.E-5_SP/HA2EV) cycle
          POL_or_Jtot=cZERO
          do ib1=first_el(i_grp1)+RT_bands(1)-1,first_el(i_grp1)+n_of_el(i_grp1)-1+RT_bands(1)-1
            do ib2=first_el(i_grp2)+RT_bands(1)-1,first_el(i_grp2)+n_of_el(i_grp2)-1+RT_bands(1)-1

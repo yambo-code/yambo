@@ -160,7 +160,8 @@ module YPPm
  type(DIPOLE_t)    ::DIPs
  character(schlen) ::DIPs_kind
  logical           ::l_dipoles
- integer           ::DIPs_bands(2)
+ integer           ::DIPs_C_bands(2)
+ integer           ::DIPs_V_bands(2)
  real(SP)          ::DIPs_E_range(2)
  real(SP)          ::DIPs_direction(3)=(/1._SP,0._SP,0._SP/)
  real(SP), allocatable :: DIPs_mask(:,:,:)

@@ -41,7 +41,7 @@ subroutine INIT_ypp_load(defs)
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
-&                        DIPs_direction,DIPs_E_range,DIPs_bands,DIPs_kind
+&                        DIPs_direction,DIPs_E_range,DIPs_C_bands,DIPs_V_bands,DIPs_kind
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -241,7 +241,8 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DIP_kind',      'Kind of DIPOLES use (IP, EXCITONIC, MASK)',DIPs_kind,protect=.FALSE.)
  call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPs_E_range,E_unit)
  call it(defs,'DIP_direction', 'Field direction versor',DIPs_direction)
- call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPs_bands)
+ call it(defs,'DIP_C_bands',     'E/h pairs conduction bands selection',DIPs_C_bands,verb_level=V_general)
+ call it(defs,'DIP_V_bands',     'E/h pairs valence bands selection',DIPs_V_bands,verb_level=V_general)
  !
  ! Excitons
  !

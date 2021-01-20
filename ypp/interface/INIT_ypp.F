@@ -572,7 +572,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  ! Dipoles
  if (l_dipoles) then
    call INIT_QP_ctl_switch('G')
-   call initactivate(1,"DIP_kind DIP_E_range DIP_bands DIP_direction cooOut")
+   call initactivate(1,"DIP_kind DIP_E_range DIP_C_bands DIP_direction cooOut")
+#if !defined _YPP_RT
+   call initactivate(1,"DIP_V_bands")
+#endif
  endif
  !
  ! Electrons
@@ -764,7 +767,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    subroutine before_infile_write_setup 
      !
-     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,DIPs_bands
+     use YPPm,           ONLY:DOS_bands,SOC_bands_to_map,DIPs_C_bands,DIPs_V_bands
      use electrons,      ONLY:n_bands
      !
      ! After DB reading/stdin logicals I propose here values for the input file
@@ -772,7 +775,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      SOC_bands_to_map=(/ 1, n_bands /)
      BANDS_bands=(/1,n_bands/)
      DOS_bands=(/1,n_bands/)
-     DIPs_bands=DIPs%ib
+     DIPs_C_bands=DIPs%ib
+     DIPs_V_bands=DIPs%ib
      !
    end subroutine
    !

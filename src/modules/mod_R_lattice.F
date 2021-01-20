@@ -268,14 +268,16 @@ module R_lattice
    subroutine bz_samp_FineGd_default(FG,k,nk)
      type(bz_fine_grid)::FG
      type(bz_samp)     ::k
-     integer           ::ik,ic
      integer, optional ::nk 
-     if ( .not.present(nk) ) then
-       nk=k%nibz
+     ! ws
+     integer           ::ik,ic,nk_
+     nk_=k%nibz
+     if (present(nk)) then
+       nk_=nk
      endif
-     FG%N=nk
-     do ik=1,nk
-       if (nk>k%nibz) then
+     FG%N=nk_
+     do ik=1,nk_
+       if (nk_>k%nibz) then
          FG%pt(ik,:)=k%ptbz(ik,:)
          FG%weights(ik)=1._SP
        else

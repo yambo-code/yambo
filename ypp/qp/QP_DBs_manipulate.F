@@ -38,7 +38,7 @@ subroutine QP_DBs_manipulate( E )
  !
  ! Work Space
  !
- integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c,i_loop
  integer,    external    :: io_QP_and_GF
  character(schlen)       :: QP_merged_name,QP_db_kind,ACTION,kind_to_add
  logical,           allocatable :: plan_EWZG(:,:)
@@ -107,12 +107,16 @@ subroutine QP_DBs_manipulate( E )
  call msg('s','Merging...')
  !==========================
  n_GROUNDS=-1
- call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
- allocate(qp(n_GROUNDS))
- do i_qp=1,n_GROUNDS
-   call QP_reset(qp(i_qp))
+ do i_loop=1,2
+   if (i_loop==2) then
+     allocate(qp(n_GROUNDS))
+     do i_qp=1,n_GROUNDS
+       call QP_reset(qp(i_qp))
+     enddo
+   endif
+   call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,&
+&                    qp=qp,OP=QP_db_operation,PRE_FAC=QP_db_prefactor,FILES=QP_db_input_control(:,4))
  enddo
- call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp=qp,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
  call msg('l','done')
  !
  call msg('s','I/O...')
@@ -126,9 +130,7 @@ subroutine QP_DBs_manipulate( E )
      if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)     kind_to_add="_el_ph"
      if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0)    kind_to_add="_el_photon"
      if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)     kind_to_add="_gw_ppa"
-     ! DEBUG [AM] To be ADDED
-     !if (index(qp(i_qp)%desc%sval(i_d),"COHSEX")>0)  kind_to_add="_gw_cohsex"
-     ! DEBUG [AM] To be ADDED
+     if (index(qp(i_qp)%desc%sval(i_d),"COHSEX")>0)  kind_to_add="_gw_cohsex"
      if (len_trim(kind_to_add)==0) cycle
      if (index(QP_db_kind,trim(kind_to_add))==0)     QP_db_kind=trim(QP_db_kind)//trim(kind_to_add)
    enddo

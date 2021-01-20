@@ -23,6 +23,7 @@
 !
 subroutine INIT_ypp_load(defs)
  !
+ use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
@@ -36,10 +37,11 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,DIPOLES_direction,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,DIPOLES_E_range,DIPOLES_bands,&
-&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
+&                        DIPOLES_direction,DIPOLES_E_range,DIPOLES_bands
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -80,8 +82,9 @@ subroutine INIT_ypp_load(defs)
  !
  ! GPL_EXCLUDE_END
  !
- call it('r',defs,'Random_Grid','[R] Random grids')
- call it('r',defs,'High_Symm',  '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Random_Grid', '[R] Random grids')
+ call it('r',defs,'High_Symm',   '[R] High_Symmetry points and paths') 
+ call it('r',defs,'Regular_Grid','[R] Regular grid')
  !
  call it('r',defs,'amplitude',    '[R] Amplitude')
  call it('r',defs,'plot',         '[R] Plot')
@@ -89,6 +92,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'current',      '[R] Current')
  call it('r',defs,'bnds',         '[R] Bands')
  call it('r',defs,'wavefunction', '[R] Wavefunction')
+ call it('r',defs,'interpolate',  '[R] Interpolate')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
 #endif

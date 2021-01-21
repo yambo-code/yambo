@@ -114,8 +114,8 @@ subroutine K_blocks(iq)
        endif
 #if !defined _PAR_IO
        if (BS_blk(iB)%mode=="R") BS_IO_dim(1,1)=BS_IO_dim(1,1)+BS_blk(iB)%size(1)*BS_blk(iB)%size(2)
-       if (BS_blk(iB)%mode=="C") BS_IO_dim(2,1)=BS_IO_dim(2,1)+BS_blk(iB)%size(1)*BS_blk(iB)%size(2)
-       if (BS_blk(iB)%mode=="A") BS_IO_dim(3,1)=BS_IO_dim(3,1)+BS_blk(iB)%size(1)*BS_blk(iB)%size(2)
+       if (BS_blk(iB)%mode=="C") BS_IO_dim(1,2)=BS_IO_dim(1,2)+BS_blk(iB)%size(1)*BS_blk(iB)%size(2)
+       if (BS_blk(iB)%mode=="A") BS_IO_dim(1,3)=BS_IO_dim(1,3)+BS_blk(iB)%size(1)*BS_blk(iB)%size(2)
 #endif
        BS_blk(iB)%iT_k=i_T
        BS_blk(iB)%iT_p=j_T

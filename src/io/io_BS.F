@@ -103,8 +103,8 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==0.and..not.frag_BS_K) then
    call def_variable_bulk(ID,"BSE_RESONANT",1,(/2,BS_IO_dim(1,1)/),SP)
-   if (BS_K_coupling)   call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(2,1)/),SP)
-   if (l_BS_ares_asymm) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(3,1)/),SP)
+   if (BS_K_coupling)   call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(1,2)/),SP)
+   if (l_BS_ares_asymm) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(1,3)/),SP)
    goto 1
  endif
  !

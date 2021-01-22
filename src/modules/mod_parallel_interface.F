@@ -25,15 +25,17 @@ module parallel_int
  !
  use pars,       ONLY:SP,DP
  use parallel_m, ONLY:ncpu,myid,comm_default_value
-#if !defined _MPI
+#if defined _MPI
+ use mpi
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
+#else
  use parallel_m, ONLY:mpi_comm_world,mpi_comm_null
 #endif
  !
  implicit none
- !
-#if defined _MPI
- include 'mpif.h'
-#endif
  !
  integer, private   :: i_err
  integer, private   :: local_type
@@ -77,25 +79,25 @@ module parallel_int
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
 &                                              COMM_A2A_3,COMM_A2A_4)
-     use parallel_m,    ONLY:MPI_comm
+     use parallel_m,    ONLY:yMPI_comm
      integer                 :: n_elements
-     type(MPI_comm)          :: COMM_index_1
-     type(MPI_comm),optional :: COMM_index_2
-     type(MPI_comm),optional :: COMM_index_3
-     type(MPI_comm),optional :: COMM_index_4
-     type(MPI_comm),optional :: COMM_index_5
-     type(MPI_comm),optional :: COMM_A2A_1
-     type(MPI_comm),optional :: COMM_A2A_2
-     type(MPI_comm),optional :: COMM_A2A_3
-     type(MPI_comm),optional :: COMM_A2A_4
+     type(yMPI_comm)          :: COMM_index_1
+     type(yMPI_comm),optional :: COMM_index_2
+     type(yMPI_comm),optional :: COMM_index_3
+     type(yMPI_comm),optional :: COMM_index_4
+     type(yMPI_comm),optional :: COMM_index_5
+     type(yMPI_comm),optional :: COMM_A2A_1
+     type(yMPI_comm),optional :: COMM_A2A_2
+     type(yMPI_comm),optional :: COMM_A2A_3
+     type(yMPI_comm),optional :: COMM_A2A_4
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
-     use parallel_m, ONLY:PP_indexes,MPI_COMM
+     use parallel_m, ONLY:PP_indexes,yMPI_COMM
      type(PP_indexes)       ::px
      integer                ::uplim(:)
      integer, optional      ::low_range(:)
-     type(MPI_COMM),optional::COMM
+     type(yMPI_COMM),optional::COMM
      logical,       optional::CONSECUTIVE
      logical,       optional::ORDERED
      logical,       optional::NO_EMPTIES
@@ -103,8 +105,8 @@ module parallel_int
    end subroutine
    !
    subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
-     use parallel_m,    ONLY:MPI_comm,PP_indexes
-     type(MPI_comm)   :: COMM
+     use parallel_m,    ONLY:yMPI_comm,PP_indexes
+     type(yMPI_comm)   :: COMM
      type(PP_indexes) :: PAR_IND
      integer          :: nb(2)
      integer, optional:: PAR_index(:,:)
@@ -113,8 +115,8 @@ module parallel_int
    end subroutine
    !
    subroutine PARALLEL_WF_index(COMM)
-     use parallel_m,      ONLY:MPI_comm
-     type(MPI_comm), optional :: COMM
+     use parallel_m,      ONLY:yMPI_comm
+     type(yMPI_comm), optional :: COMM
    end subroutine
    !
    subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
@@ -1086,7 +1088,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1104,7 +1106,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1116,7 +1118,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1134,7 +1136,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine
@@ -1146,7 +1148,7 @@ module parallel_int
      integer, optional   :: COMM
      integer, optional   :: TAG
 #if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
+     integer, dimension(MPI_STATUS_SIZE) :: MP_status
      integer::LOCAL_COMM,LOCAl_TAG,i_err! Work Space
      if (ncpu==1) return
      !
@@ -1164,7 +1166,7 @@ module parallel_int
      if (LOCAL_COMM==comm_default_value) return
      !
      if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MPI_status, i_err)
+     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,LOCAL_TAG, LOCAL_COMM, MP_status, i_err)
      !
 #endif
    end subroutine

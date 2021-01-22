@@ -54,8 +54,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  ! Workspace
  !
  type(PP_indexes)  :: px
- integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_spin,ir,ir_hole,j1,&
-&                     n_lambda_deg,neh1,iv1,ic1,ikbz1,ikibz1,i_spin1,is1
+ integer           :: iv,ic,ikbz,ikibz,is,neh,i1,i2,i_l,i_lambda,j_lambda,i_sp_pol,ir,ir_hole,j1,&
+&                     n_lambda_deg,neh1,iv1,ic1,ikbz1,ikibz1,i_sp_pol1,is1
  integer           :: ikpbz,ikp,isp
  real(SP)          :: r_hole_rlu(3),kp_dot_r_h,k_dot_r_e
  complex(SP)       :: wf_,wf_vc(BS_H_dim),WF1_ir(n_spinor),WF2_ir(n_spinor),phase,B_coeff
@@ -166,7 +166,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
            ikbz  = BSS_eh_table(neh,1)
            iv    = BSS_eh_table(neh,2)
            ic    = BSS_eh_table(neh,3)
-           i_spin= spin(BSS_eh_table(neh,:))
+           i_sp_pol = spin(BSS_eh_table(neh,:))
            !
            ikibz = Xk%sstar(ikbz,1)
            is    = Xk%sstar(ikbz,2)
@@ -176,7 +176,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
              ikbz1  = BSS_eh_table(neh1,1)
              iv1    = BSS_eh_table(neh1,2)
              ic1    = BSS_eh_table(neh1,3)
-             i_spin1= spin(BSS_eh_table(neh1,:))
+             i_sp_pol1 = spin(BSS_eh_table(neh1,:))
              !
              ikibz1 = Xk%sstar(ikbz1,1)
              is1    = Xk%sstar(ikbz1,2)
@@ -189,19 +189,21 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
                  !      
                  B_coeff =  BS_mat(neh, i_l)* conjg(BS_mat(neh1, i_l))   
                  !
-                 WF1_ir=WF_symm(rindex(ir),(/iv, ikibz,is,i_spin/))
-                 WF2_ir=WF_symm(rindex(ir),(/iv1,ikibz1,is1,i_spin1/))
+                 WF1_ir=WF_symm(rindex(ir),(/iv, ikibz,is,i_sp_pol/))
+                 WF2_ir=WF_symm(rindex(ir),(/iv1,ikibz1,is1,i_sp_pol1/))
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*WF1_ir(1)*conjg(WF2_ir(1))
+                 if(n_spinor==2) v2plot(ir) = v2plot(ir)+B_coeff*WF1_ir(2)*conjg(WF2_ir(2))
                  !
                elseif(iv1==iv.and.trim(AVE_exc)=='e') then
                  !      
                  B_coeff =  conjg(BS_mat(neh, i_l))*BS_mat(neh1, i_l)   
                  !
-                 WF1_ir=WF_symm(rindex(ir),(/ic, ikibz,is,i_spin/))
-                 WF2_ir=WF_symm(rindex(ir),(/ic1,ikibz1,is1,i_spin1/))
+                 WF1_ir=WF_symm(rindex(ir),(/ic, ikibz,is,i_sp_pol/))
+                 WF2_ir=WF_symm(rindex(ir),(/ic1,ikibz1,is1,i_sp_pol1/))
                  !
                  v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(1))*WF2_ir(1)
+                 if(n_spinor==2) v2plot(ir) = v2plot(ir)+B_coeff*conjg(WF1_ir(2))*WF2_ir(2)
                  !
                endif
                !
@@ -220,7 +222,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
    else
      !   
      !$omp parallel default(shared), firstprivate(ir_hole,r_hole), &
-     !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_spin,ikibz,is, ikpbz,ikp,isp, &
+     !$omp private(wf_vc, ir,neh, ikbz,iv,ic,i_sp_pol,ikibz,is, ikpbz,ikp,isp, &
      !$omp &       k_dot_r_e,kp_dot_r_h, WF1_ir,WF2_ir,phase, i_l,wf_ )
      !
      call OPENMP_update(master_thread)
@@ -241,7 +243,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          ikbz  = BSS_eh_table(neh,1)
          iv    = BSS_eh_table(neh,2)
          ic    = BSS_eh_table(neh,3)
-         i_spin= spin(BSS_eh_table(neh,:))
+         i_sp_pol = spin(BSS_eh_table(neh,:))
          !
          ikibz = Xk%sstar(ikbz,1)
          is    = Xk%sstar(ikbz,2)
@@ -253,8 +255,8 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
          k_dot_r_e  = dot_product(r_cell_cc(:,ir),Xk%ptbz(ikbz,:)/alat(:))*2._SP*pi
          kp_dot_r_h = dot_product(r_hole,Xk%ptbz(ikpbz,:)/alat(:))*2._SP*pi
          !
-         WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_spin/))
-         WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_spin/))
+         WF1_ir=WF_symm(rindex(ir_hole),(/iv,ikp,isp,i_sp_pol/))
+         WF2_ir=WF_symm(rindex(ir     ),(/ic,ikibz,is,i_sp_pol/))
          !
          wf_vc(neh) = conjg(WF1_ir(1))*WF2_ir(1)
          if(n_spinor==2) wf_vc(neh) = wf_vc(neh) + conjg(WF1_ir(2))*WF2_ir(2)

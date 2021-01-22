@@ -54,13 +54,19 @@ module parallel_m
  !    - return the maximum and the location 
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
+#if defined _MPI
+ use mpi
+#endif
  !
 #if !defined _io_lib
 #include<memory.h>
 #endif
  !
 #if defined _MPI
- include 'mpif.h'
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
  integer, parameter :: mpi_comm_null =0
@@ -102,19 +108,19 @@ module parallel_m
  !
  ! MPI intra-groups Communicators
  !
- type MPI_comm 
+ type yMPI_comm 
    integer  :: COMM      
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
- end type MPI_comm
+ end type yMPI_comm
  ! 
  ! CHAINS 
  !========
- type(MPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
- type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
- type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
+ type(yMPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
+ type(yMPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
+ type(yMPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
                                                        ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
@@ -177,8 +183,8 @@ module parallel_m
  ! SCHEMEs ...
  !========================
  type PAR_scheme
-   type(MPI_comm)      :: COMM_i
-   type(MPI_comm)      :: COMM_a2a
+   type(yMPI_comm)      :: COMM_i
+   type(yMPI_comm)      :: COMM_a2a
    type(PP_indexes)    :: IND
    integer             :: ID
    integer             :: D(2)
@@ -210,8 +216,8 @@ module parallel_m
  !type(PAR_scheme),SAVE :: PARs_RT_plasma
  !
  type PARk_str
-   type(MPI_comm)      :: COM_ibz_INDEX
-   type(MPI_comm)      :: COM_ibz_A2A
+   type(yMPI_comm)      :: COM_ibz_INDEX
+   type(yMPI_comm)      :: COM_ibz_A2A
    type(PP_indexes)    :: IND_ibz
    type(PP_indexes)    :: IND_bz
    integer,allocatable :: ibz_index(:)
@@ -370,82 +376,82 @@ module parallel_m
  ! PAR_COM_*_A2A   is the intrachain comunicator
  !
  ! ... World
- type(MPI_comm),SAVE :: PAR_COM_WORLD
+ type(yMPI_comm),SAVE :: PAR_COM_WORLD
  ! ... Serial
- type(MPI_comm),SAVE :: PAR_COM_NULL
+ type(yMPI_comm),SAVE :: PAR_COM_NULL
  ! ... HOST
- type(MPI_comm),SAVE :: PAR_COM_HOST
+ type(yMPI_comm),SAVE :: PAR_COM_HOST
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_SLK
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
+ type(yMPI_comm),SAVE :: PAR_COM_SLK
+ type(yMPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
+ type(yMPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
- type(MPI_comm),SAVE :: PAR_COM_RL_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
- type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
- type(MPI_comm),SAVE :: PAR_COM_QP_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_QP_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_QP_A2A
  !
  ! ... Plasma
- type(MPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
  !
  ! ... G bands
- type(MPI_comm),SAVE :: PAR_COM_G_b_INDEX
- type(MPI_comm),SAVE :: PAR_COM_G_b_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_A2A
  !
  ! ... WF
- type(MPI_comm),SAVE :: PAR_COM_WF_k_A2A
- type(MPI_comm),SAVE :: PAR_COM_WF_k_INDEX
- type(MPI_comm),SAVE :: PAR_COM_WF_b_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_WF_k_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_WF_k_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_WF_b_INDEX
  !
  ! ... BZ (Electrons)
- type(MPI_comm),SAVE :: PAR_COM_Q_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Q_A2A
- type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
- type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_Q_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Q_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
  ! ... BZINDX
- type(MPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_BZINDXk_bz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_bz_INDEX
  !
  ! ... DIPOLES
- type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
- type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
  !
  ! ... Overlaps
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
  !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
+ type(yMPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
+ type(yMPI_comm),SAVE :: PAR_COM_X_WORLD
  !
  ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
- type(MPI_comm),SAVE :: PAR_COM_T_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_eh_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... Haydock solver
- type(MPI_comm),allocatable,SAVE :: PAR_COM_T_Haydock(:)
+ type(yMPI_comm),allocatable,SAVE :: PAR_COM_T_Haydock(:)
  !
  ! ... density
- type(MPI_comm),SAVE :: PAR_COM_density
+ type(yMPI_comm),SAVE :: PAR_COM_density
  !
  ! ... Frequencies 
- type(MPI_comm),SAVE :: PAR_COM_freqs
- type(MPI_comm),SAVE :: PAR_COM_freqs_A2A
- type(MPI_comm),SAVE :: PAR_COM_freqs_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_freqs
+ type(yMPI_comm),SAVE :: PAR_COM_freqs_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_freqs_INDEX
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================
@@ -528,7 +534,7 @@ module parallel_m
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err
-     type(MPI_comm):: COMM
+     type(yMPI_comm):: COMM
      if (ncpu==1) return
 #if defined _MPI
      call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
@@ -631,7 +637,7 @@ module parallel_m
    end subroutine
    !
    subroutine COMM_reset(COMM)
-     type(MPI_comm):: COMM
+     type(yMPI_comm):: COMM
      COMM%n_CPU      =1
      COMM%COMM       =comm_default_value
      COMM%my_CHAIN   =1
@@ -640,7 +646,7 @@ module parallel_m
    end subroutine
    !
    subroutine COMM_copy(COMM_in,COMM_out)
-     type(MPI_comm):: COMM_in,COMM_out
+     type(yMPI_comm):: COMM_in,COMM_out
      COMM_out%n_CPU      =COMM_in%n_CPU
      COMM_out%my_CHAIN   =COMM_in%my_CHAIN
      COMM_out%chain_order=COMM_in%chain_order

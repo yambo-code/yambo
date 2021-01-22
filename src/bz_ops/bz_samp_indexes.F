@@ -77,7 +77,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_mem,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
- logical :: connected_grids,user_defined_qpts,user_grids,do_qindx_B
+ logical :: connected_grids,user_defined_qpts,user_grids,do_qindx_B,do_qindx_X,do_qindx_X_ik
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -113,13 +113,17 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if (bse_scattering)  X_scattering    =.TRUE.
  if (coll_scattering) sigma_scattering=.TRUE.
  !
- ! Parallelization
- !==================
+#if defined _PAR_IO
+ !
+ ! Parallelization with Memory distribution
+ !==========================================
  !
  if(bse_scattering) then
    call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
    call PARALLEL_SETUP_K_scheme("BZINDX")
  endif
+ !
+#endif
  !
  q%description='q'
  !
@@ -138,6 +142,14 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! First I map the Xk grid in a simple cubic Net
  !
  call k_ibz2bz(Xk,'a',.false.)  
+ !
+ ! Parallelization without Memory distribution
+ !=============================================
+ !
+ call PP_indexes_reset(PAR_IND_Xk)
+ call PARALLEL_index(PAR_IND_Xk,(/Xk%nbz/))
+ call PP_indexes_reset(PAR_IND_k)
+ call PARALLEL_index(PAR_IND_k,(/k%nbz/))
  !
  YAMBO_ALLOC(q_map,(k_grid(1),k_grid(2),k_grid(3)))
  YAMBO_ALLOC(q_iptbz,(Xk%nbz,3))
@@ -228,11 +240,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  endif
  !
  d3q_factor=RL_vol/real(q%nbz)
- do_qindx_B=.false.
- !
- ! Allocate
- !
- call qindx_alloc('XB')
  !
  ! X indexes
  !
@@ -247,13 +254,11 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if ( bse_scattering)  string(1)=trim(string(1))//' + BSE'
  if (coll_scattering)  string(2)=trim(string(2))//' + COLL'
  !
- ! ... PARALLEL (Xk) 
- call PP_indexes_reset(PAR_IND_Xk)
- call PARALLEL_index(PAR_IND_Xk,(/Xk%nbz/))
- call PP_indexes_reset(PAR_IND_k)
- call PARALLEL_index(PAR_IND_k,(/k%nbz/))
- !
- if (X_scattering) then
+ if (X_scattering.and.Xk_grid_is_uniform) then
+   !
+   ! Allocate
+   !
+   call qindx_alloc('XB')
    !
    call section('+',trim(string(1))//' indexes')
    !============================================
@@ -270,12 +275,18 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    !$omp do
    do ikbz=1,Xk%nbz
      !
-     if (.not.PAR_IND_Xk%element_1D(ikbz)) cycle 
+     do_qindx_X_ik=PAR_IND_Xk%element_1D(ikbz)
+     do_qindx_B   =PAR_IND_Xk%element_1D(ikbz).and.bse_scattering
+     ikbz_mem=ikbz
      !
+#if defined _PAR_IO
      if(bse_scattering) then
        do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz)
        ikbz_mem=PAR_K_scheme%bz_index(ikbz)
      endif
+#endif
+     !
+     if ((.not.do_qindx_X_ik).and.(.not.do_qindx_B)) cycle
      !
      do ikbz_p=1,Xk%nbz
        !
@@ -305,18 +316,21 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        iqbz =q_map(iv1(1),iv1(2),iv1(3))
        iqibz=q%sstar(iqbz,1)
        iqs  =q%sstar(iqbz,2)
-       if (iqs/=1.and..not.do_qindx_B) cycle
        !
-       if (iqs==1)     qindx_X(iqibz,ikbz,1)=ikbz_p
+       do_qindx_X=do_qindx_X_ik .and. iqs==1
+       !
+       if ((.not.do_qindx_X).and.(.not.do_qindx_B)) cycle
+       !
+       if (do_qindx_X) qindx_X(iqibz,ikbz,1)=ikbz_p
        if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,1)=iqbz
        !
        v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
        call c2a(v_in=v1,mode='ka2i')
        !
-       if (iqs==1)     qindx_X(iqibz, ikbz    ,2)=G_index(v1,.true.)
+       if (do_qindx_X) qindx_X(iqibz, ikbz    ,2)=G_index(v1,.true.)
        if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,2)=G_index(v1,.false.)
        !
-       if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
+       if ( do_qindx_X .and. qindx_X(iqibz,ikbz,2)==0 ) exit
        !
      enddo
      !
@@ -333,10 +347,12 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    do ikbz=1,Xk%nbz
      call PP_redux_wait(qindx_X(:,ikbz,1))
      call PP_redux_wait(qindx_X(:,ikbz,2))
+#if !defined _PAR_IO
      if (bse_scattering) then
        call PP_redux_wait(qindx_B(:,ikbz,1))
        call PP_redux_wait(qindx_B(:,ikbz,2))
      endif
+#endif
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -351,23 +367,13 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !------------
  if (sigma_scattering) then
    !
- 
-
-   Davide: The new implementation of Andrea clashes with the implementation based
-           on the use of the HDF5 disk for buffering
-           Merging to be finalized
-
-
-   !
    call section('+',trim(string(2))//' indexes')
    !============================================
    !
-   if(coll_scattering) then
-     call live_timing(trim(string(2))//' [eval]',max(1,Xk%nbz/n_threads))
-   else
-     i1=QP_states_k(2)-QP_states_k(1)+1
-     call live_timing(trim(string(2))//' [eval]',max(1,i1/n_threads))
-   endif
+   if(     coll_scattering) i1=Xk%nbz
+   if(.not.coll_scattering) i1=QP_states_k(2)-QP_states_k(1)+1
+   !
+   call live_timing(trim(string(2))//' [eval]',max(1,i1/n_threads))
    !
    call k_ibz2bz(k,'a',.false.)
    !
@@ -447,6 +453,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    call live_timing()
    !
    ! ... PARALLEL redux
+   !
    call live_timing(trim(string(2))//'[REDUX]',nqbz)
    do iqbz=1,nqbz
      call PP_redux_wait(qindx_S(:,iqbz,1))
@@ -489,7 +496,12 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call PP_redux_wait()
  !
- if (PAR_K_scheme%COM_ibz_A2A%CPU_id==0) then
+ do_qindx_B=master_cpu
+#if defined _PAR_IO
+ do_qindx_B=PAR_K_scheme%COM_ibz_A2A%CPU_id==0
+#endif
+ !
+ if (do_qindx_B) then
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
    io_err=io_QINDX(Xk,q,io_db)
  endif
@@ -691,16 +703,19 @@ subroutine bz_samp_indexes(en,k,Xk,q)
      character(*), intent(in) :: message
      call qindx_free('ALL')
      nqibz=1
-     call qindx_alloc('X')
+     if (X_scattering) then
+       call qindx_alloc('X')
+       do i1=1,Xk%nbz
+         qindx_X(1,i1,1)=i1
+         qindx_X(1,i1,2)=1
+       enddo
+     endif
      call msg('nsrn',trim(message))
      call q_shadows(.true.)
      Xk_grid_is_uniform=.false.
      bse_scattering=.false.
-     sigma_scattering=.FALSE.
-     do i1=1,Xk%nbz
-       qindx_X(1,i1,1)=i1
-       qindx_X(1,i1,2)=1
-     enddo
+     sigma_scattering=.false.
+     coll_scattering=.false.
    end subroutine bz_X_only_exit
    !
 end subroutine

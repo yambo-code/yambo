@@ -23,13 +23,13 @@
 !
 subroutine PARALLEL_MATRIX_distribute(COMM,PAR_IND,nb,PAR_index,PAR_ID,PAR_n_elements)
  !
- use parallel_m,    ONLY:MPI_comm,PP_indexes
+ use parallel_m,    ONLY:yMPI_comm,PP_indexes
  use parallel_int,  ONLY:PARALLEL_index
  use hamiltonian,   ONLY:B_mat_index
  !
  implicit none
  !
- type(MPI_comm)   :: COMM
+ type(yMPI_comm)   :: COMM
  type(PP_indexes) :: PAR_IND
  integer          :: nb(2)
  !

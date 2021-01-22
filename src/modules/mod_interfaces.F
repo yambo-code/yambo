@@ -21,6 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+! headers
+!
+#if defined _SLEPC && !defined _SLEPC_OFF
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#endif
+!
 module interfaces
  !
 #include<dev_defs.h>
@@ -57,7 +67,7 @@ module interfaces
    !
    subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
      !
-     use parallel_m,     ONLY:MPI_comm
+     use parallel_m,     ONLY:yMPI_comm
      use matrix,         ONLY:PAR_matrix
      use BS,             ONLY:BS_block
      use pars,           ONLY:SP
@@ -70,7 +80,7 @@ module interfaces
      complex(SP),      optional :: M(:,:)
      logical,          optional :: SND
      logical,          optional :: RCV
-     type(MPI_comm),   optional :: COMM
+     type(yMPI_comm),   optional :: COMM
      character(*),     optional :: COMM_name
      !
    end subroutine
@@ -105,7 +115,6 @@ module interfaces
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      use FFT_m,          ONLY:fft_size
-     implicit none
      type(bz_samp)::k
      type(levels) ::E       
      real(SP), optional             ::rho(fft_size)
@@ -120,7 +129,6 @@ module interfaces
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
      use electrons,      ONLY:n_spin
-     implicit none
      type(bz_samp), intent(in)  :: Xk
      type(levels),  intent(in)  :: Xen
      real(SP),      intent(in)  :: dos_E,DOS_broadening
@@ -135,10 +143,9 @@ module interfaces
    subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen
+     use petscmatdef,    ONLY:tmat
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscmat.h>
-     use petscmatdef,    ONLY:tmat
-     implicit none
      Mat                         :: M_slepc      ! matrix to diagonalize of stype from slepc
      logical                     :: l_target_energy
      integer                     :: n_eig        ! number of eigenvalues to compute
@@ -151,11 +158,10 @@ module interfaces
 #endif
    !
    integer function eval_G_minus_G(iG,iGo,force_recompute,COMM)
-     use parallel_m,      ONLY:MPI_comm
-     implicit none
+     use parallel_m,      ONLY:yMPI_comm
      integer :: iG,iGo
      logical,        optional :: force_recompute
-     type(MPI_comm), optional :: COMM
+     type(yMPI_comm), optional :: COMM
    end function
    !
    subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
@@ -218,7 +224,6 @@ module interfaces
    subroutine QP_DBs_merge(N,DBs,plan,N_qp,qp,OP,PRE_FAC,FILES)
      use pars, ONLY:SP
      use QP_m, ONLY:QP_t
-     implicit none
      integer              :: N,N_qp
      type(QP_t)           :: DBs(N)
      logical              :: plan(N,3)
@@ -242,7 +247,6 @@ module interfaces
    !
    subroutine QP_state_print(qp)
      use QP_m,          ONLY:QP_t
-     implicit none
      type(QP_t),optional ::qp              
    end subroutine
    !
@@ -262,7 +266,6 @@ module interfaces
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
      use R_lattice,     ONLY:bz_samp
-     implicit none
      integer,       intent(in) :: wf_shift(3),ikbz,b_to_shift(2)
      type(bz_samp), intent(in) :: Xk
      complex(SP), intent(in)  DEV_ATTR :: &
@@ -279,7 +282,6 @@ module interfaces
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
-     implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
      complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
@@ -291,7 +293,6 @@ module interfaces
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
      use electrons,     ONLY:n_spinor,n_sp_pol
-     implicit none
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
      complex(SP),   intent(out) DEV_ATTR :: &
@@ -306,7 +307,6 @@ module interfaces
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
-     implicit none
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
    end subroutine WF_apply_symm_cpu
@@ -316,7 +316,6 @@ module interfaces
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
-     implicit none
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu

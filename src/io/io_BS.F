@@ -34,7 +34,7 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
-&                        l_BS_ares_asymm,BS_IO_dim
+&                        l_BS_ares_asymm,BS_IO_dim,n_BS_blks,BS_K_dim
  use BS_solvers,    ONLY:BSS_desc,variables_BS
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
 &                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
@@ -102,11 +102,13 @@ integer function io_BS(iq,X,ID)
  i_block=maxval(io_sec(ID,:))-1
  !
  if (i_block==0.and..not.frag_BS_K) then
-   call def_variable_bulk(ID,"BSE_RESONANT",1,(/2,BS_IO_dim(1,1)*BS_IO_dim(2,1)/),SP)
-   if (BS_K_coupling)   call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(1,2)*BS_IO_dim(2,2)/),SP)
-   if (l_BS_ares_asymm) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(1,3)*BS_IO_dim(2,3)/),SP)
+   call def_variable_bulk(ID,"BSE_RESONANT",1,(/2,BS_IO_dim(1,1)/),SP)
+   if (BS_K_coupling)   call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(1,2)/),SP)
+   if (l_BS_ares_asymm) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(1,3)/),SP)
    goto 1
  endif
+ !
+ if (i_block==n_BS_blks+1.and..not.frag_BS_K) goto 1
  !
  call io_fragment(ID,i_fragment=i_block)
  !

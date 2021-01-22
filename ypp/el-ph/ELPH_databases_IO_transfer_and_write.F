@@ -26,7 +26,7 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  use pars,                ONLY:SP,DP,rZERO,cZERO
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:bz_samp
- use ELPH,                ONLY:GKKP_me
+ use ELPH,                ONLY:GKKP_me,elph_use_q_grid
  use YPP_ELPH,            ONLY:DB_ph_pol_vec,DB_E_k,DB_kind,DB_K_map,DB_nk,DB_gkkp,&
 &                              DB_nb,DB_ph_modes,DB_grad_at_gamma,DB_E_k_plus_q,DB_Q_map
  use electrons,           ONLY:levels
@@ -44,7 +44,8 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  complex(DP) :: DW_ws_L(n_atoms),DW_ws_R(n_atoms)
  real(SP)    :: E_shift
  !
- iq=DB_Q_map(IDB)
+ if (elph_use_q_grid) iq=DB_Q_map(IDB)
+ if (.not.elph_use_q_grid) iq=IDB
  !
  GKKP%dVc=cZERO
  if (allocated(GKKP%dVr)) GKKP%dVr=rZERO

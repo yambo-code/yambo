@@ -172,6 +172,7 @@ subroutine ELPH_databases(k,E,q)
    enddo
  enddo
  elph_use_q_grid=all((/DB_Q_map/=0/))
+ if (.not.elph_use_q_grid.and.DB_Q_map(1)/=1) call error("First qpt must be Gamma.")
  !
  ! ... Transfer and write ...
  !----------------------------
@@ -214,6 +215,7 @@ subroutine ELPH_databases(k,E,q)
        PH_pol_vector(:,:,:,iq_bz)=DB_PH_pol_vec(idb,:,:,:)
      enddo
    else
+     if (.not.elph_use_q_grid) iq = idb
      PH_freqs_sq(iq,:)      =abs(DB_ph_freq_sq(idb,:))
      PH_qpt(iq,:)           =DB_PH_qpt(idb,:)
      PH_pol_vector(:,:,:,iq)=DB_PH_pol_vec(idb,:,:,:)
@@ -227,12 +229,12 @@ subroutine ELPH_databases(k,E,q)
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
-   call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP)
+   if (elph_use_q_grid) call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP)
    !
    if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
      call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
-     call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare)
+     if (elph_use_q_grid) call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare)
    endif
    !
    call live_timing(steps=1)

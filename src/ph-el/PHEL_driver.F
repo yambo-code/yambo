@@ -27,7 +27,7 @@ subroutine PHEL_driver(E,k,q)
  use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
-&                              l_GKKP_hosts_bare_dV,elph_nb
+&                              l_GKKP_hosts_bare_dV,elph_nb,elph_nQ
  use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps,&
@@ -75,6 +75,13 @@ subroutine PHEL_driver(E,k,q)
    return
  endif
  !
+ ! Q ranges
+ !============================
+ !
+ !             / ypp_ph            elph_use_q_grid=F
+ ! elph_nQ = | 
+ !             \ nqibz             elph_use_q_grid=T
+ !
  ! Parallel Setup
  !===============
  call PARALLEL_global_indexes(E,k,q,"Phonon_Self_Energy")
@@ -119,11 +126,11 @@ subroutine PHEL_driver(E,k,q)
  !
  ! ... allocs
  Life_MEM_steps=1
- call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nqibz)
- if (fat_log) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,nqibz)
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,elph_nQ)
+ if (fat_log) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,elph_nQ)
  !
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
- call RT_PH_occupations_alloc(elph_branches,nqibz)
+ call RT_PH_occupations_alloc(elph_branches,elph_nQ)
  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
    YAMBO_ALLOC(E_FG%E,(elph_nb,k_FG%N,n_sp_pol))
    YAMBO_ALLOC(E_FG%W,(elph_nb,k_FG%N,n_sp_pol))

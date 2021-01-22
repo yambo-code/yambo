@@ -32,10 +32,10 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz
+ use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz,k_the_nearest
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,&
-&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,elph_use_q_grid,&
+&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,elph_nQ
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_G_damp
@@ -60,7 +60,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim,N_yes(nqibz),N_tot(nqibz)
+ integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim,N_yes(elph_nQ),N_tot(elph_nQ)
  ! ... energy related quantities ...
  real(SP) :: DELTA_E,DELTA_W
  !
@@ -85,7 +85,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
    ! 
    ! Main loop over iq in the ibz
    !==============================
-   do iq=1,nqibz
+   do iq=1,elph_nQ
      !
      if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
@@ -95,14 +95,23 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        !
        if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
        !
+       ! [TODO] Restructure this if structures + calls to k_the_nearest
 #if defined _RT
        ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
-       ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
+       if (elph_use_q_grid) then
+         ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
+       else
+         !ik_m_q= k_the_nearest(k-q,rotate)
+       endif
        ! Obtain k in the ibz from k in the bz: 
        ik = k%sstar(ikbz,1)
 #else
        ! Obtain k-q in the bz from k in the bz and q in the ibz
-       ik_m_q = qindx_X(iq,ikbz,1)
+       if (elph_use_q_grid) then
+         ik_m_q = qindx_X(iq,ikbz,1)
+       else
+         !ik_m_q= k_the_nearest(k-q)
+       endif
        ! Use k in the bz
        ik = ikbz
 #endif
@@ -195,7 +204,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
  ! Output info
  !===============
- do iq=1,nqibz
+ do iq=1,elph_nQ
    ratio = 0._SP
    if (N_tot(iq)>0) ratio = float(N_yes(iq))/float(N_tot(iq))*100._SP
    call msg('r','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))

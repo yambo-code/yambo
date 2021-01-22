@@ -26,7 +26,8 @@ subroutine PH_of(q)
  use pars,           ONLY:SP
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use RT_lifetimes,   ONLY:RT_PE_life,RT_PE_extra
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,PHEL_desc,ELPH_desc,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+ use ELPH,           ONLY:PH_freqs_sq,elph_branches,PHEL_desc,ELPH_desc,elph_nQ,&
+ &                        l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
  use com,            ONLY:fat_log
@@ -46,7 +47,7 @@ subroutine PH_of(q)
  call DESC_write('o ph','#',PHEL_desc)
  call DESC_write('o ph','#',ELPH_desc)
  !
- do iq=1,nqibz
+ do iq=1,elph_nQ
    do il=elph_branches(1),elph_branches(2)
      call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
      if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))

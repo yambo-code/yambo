@@ -37,8 +37,9 @@ subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_
  implicit none
  !
  logical,    intent(in)  :: K_is_not_hermitian
- complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim),BS_overlap(BS_H_dim,BS_H_dim)
+ complex(SP),intent(in)  :: BS_V_left(BS_H_dim,BS_H_dim),BS_V_right(BS_H_dim,BS_H_dim)
  real(SP)   ,intent(out) :: BS_R_PL(2,BS_H_dim)
+ complex(SP),optional,intent(in)  :: BS_overlap(BS_H_dim,BS_H_dim)
  !
  ! Workspace
  !

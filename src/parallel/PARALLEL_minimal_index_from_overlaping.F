@@ -23,14 +23,14 @@
 !
 subroutine PARALLEL_minimal_index_from_overlaping(IND_in,IND_out,PAR_COMM)
  !
- use parallel_m,     ONLY:PP_indexes,MPI_comm,PAR_INDEX_copy
+ use parallel_m,     ONLY:PP_indexes,yMPI_comm,PAR_INDEX_copy
  use parallel_int,   ONLY:PP_redux_wait
  use vec_operate,    ONLY:sort
  !
  implicit none
  !
  type(PP_indexes)       ::IND_in,IND_out
- type(MPI_comm)         ::PAR_COMM
+ type(yMPI_comm)         ::PAR_COMM
  !
  ! Work Space
  !

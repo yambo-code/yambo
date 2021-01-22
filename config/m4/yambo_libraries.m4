@@ -47,7 +47,7 @@ else
   #
   # gpl procedure
   #
-  if ! test -d "yambo/driver/src"; then
+  if ! test -d "lib/yambo/driver/src"; then
     cd lib/yambo/
     VERSION="0.0.1"
     TARBALL="${VERSION}.tar.gz"

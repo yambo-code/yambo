@@ -21,6 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+! headers
+!
+#if defined _SLEPC && !defined _SLEPC_OFF
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#endif
+!
 subroutine K_diago_driver(iq,W,X_static) 
  !
  ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
@@ -39,20 +49,12 @@ subroutine K_diago_driver(iq,W,X_static)
  use com,            ONLY:isec
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver
+ use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,PL_diago_residual
  use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
- !
- ! headers
- !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
  !
  use petscmat
  use slepceps
@@ -152,6 +154,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    ! Allocation (BS_R and BS_E)
    !===========================
+   YAMBO_ALLOC(BS_E,(BSS_n_eig))
    call local_alloc("E")
    !
    ! Diagonalization DB (IN)
@@ -302,6 +305,7 @@ subroutine K_diago_driver(iq,W,X_static)
      !
    endif
    !
+   YAMBO_FREE(BS_E)
    call local_free( )
    !
  enddo
@@ -331,7 +335,6 @@ subroutine K_diago_driver(iq,W,X_static)
      select case(what)
      case("E")
        !
-       YAMBO_ALLOC(BS_E,(BSS_n_eig))
        if( BS_perturbative_SOC) then
          YAMBO_ALLOC(BS_corrections,(2/n_sp_pol,BSS_n_eig))
          YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
@@ -379,7 +382,6 @@ subroutine K_diago_driver(iq,W,X_static)
    !
    subroutine local_free()
      !
-     YAMBO_FREE(BS_E)
      YAMBO_FREE(BS_E_real)
      YAMBO_FREE(BS_corrections)
      YAMBO_FREE(BS_V_right)

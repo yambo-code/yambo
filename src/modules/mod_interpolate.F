@@ -108,7 +108,7 @@ module interpolate
  end type INTERP_element
  !
  type(INTERP_coeff)   :: interpls(max_interpls)
- type(INTERP_element) :: INTERP_obj(max_interpls)
+ type(INTERP_element), target :: INTERP_obj(max_interpls)
  !
  interface
    !

@@ -659,7 +659,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    if (l_exc_wf.or.l_amplitude.or.l_dipoles) call initactivate(1,"Degen_Step Weight_treshold")
    if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
-   if (l_exc_wf.and.l_average_eh) call initactivate(1,"WFAverage")
+   if (l_exc_wf.and.l_average_eh) call initactivate(1,"EHdensity")
    if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 

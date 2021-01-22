@@ -126,6 +126,7 @@ subroutine electrons_bands(Xk,Xen)
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
    if(n_spinor>1 .and. BANDS_steps> 0) then
+     INTERP_mode='NN'
      call section('=','Interpolation@work: Spin and Magnetization')
      call electrons_spin_and_magn_interpolate("S M",Xk,CIRCUIT_k,BANDS_bands,ID_spin,ID_magn)
    endif

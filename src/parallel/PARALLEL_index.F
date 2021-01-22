@@ -25,7 +25,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  !
  use pars,        ONLY:SP
  use parallel_m,  ONLY:PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
-&                      MPI_comm,comm_default_value,PP_indexes_reset
+&                      yMPI_comm,comm_default_value,PP_indexes_reset
  use parallel_int,ONLY:PP_redux_wait
  use stderr,      ONLY:intc
  use vec_operate, ONLY:sort
@@ -35,7 +35,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  type(PP_indexes)       ::px
  integer                ::uplim(:)
  integer,       optional::low_range(:)
- type(MPI_comm),optional::COMM
+ type(yMPI_comm),optional::COMM
  logical       ,optional::CONSECUTIVE
  logical       ,optional::ORDERED
  logical       ,optional::NO_EMPTIES

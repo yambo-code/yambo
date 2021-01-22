@@ -32,7 +32,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
- use parallel_m,   ONLY:MPI_comm,PP_indexes,PP_indexes_reset,myid
+ use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
  use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
 #ifdef _CUDA
@@ -42,7 +42,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
 #include<memory.h>
  !
  integer :: iG,iGo
- type(MPI_comm), optional :: COMM
+ type(yMPI_comm), optional :: COMM
  !
  ! Work Space
  !

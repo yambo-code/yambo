@@ -44,8 +44,6 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  type(X_t)         :: X(2)
  type(bz_samp)     :: Xk
  !
- integer           :: NG_tmp
- !
  ! Dipoles dimensions
  !===================
  !
@@ -71,7 +69,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
    !
    if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
      !
-     NG_TMP=eval_G_minus_G(X(2)%ng,0)
+     X(2)%ng=eval_G_minus_G(X(2)%ng,0)
      !
      WF_G_max=max(QP_ng_Sx,maxval(G_m_G))
      if (l_real_time.and..not.(l_sc_exx.or.l_sc_srpa)) WF_G_max=wf_ng
@@ -104,9 +102,6 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  if (l_sc_hartree    ) WF_G_max=maxval((/QP_ng_SH, WF_G_max/))
  if (l_sc_XC_is_local) WF_G_max=maxval((/QP_ng_Vxc,WF_G_max/))
 #endif
- !
- if(.not.allocated(k_map%k_map_dir)) call k_map_nearest_by_dir(Xk,k_map)
- if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
  !
  ! SC shadow variables
  !====================

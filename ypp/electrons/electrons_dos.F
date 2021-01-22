@@ -27,7 +27,7 @@ subroutine electrons_dos(Xk,Xen)
  use pars,           ONLY:SP,schlen,rZERO
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
- use pointers,       ONLY:linkM2M
+ use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use electrons,      ONLY:levels,spin,n_spinor,n_spin,n_sp_pol,E_reset
  use LIVE_t,         ONLY:live_timing
  use YPP_interfaces, ONLY:electrons_dos_elemental,PROJECTION_plot,PROJECTION_setup
@@ -54,7 +54,7 @@ subroutine electrons_dos(Xk,Xen)
  real(SP),pointer, contiguous :: PDOS_fac_p(:,:,:) => null()
  real(SP),        allocatable :: el_dos(:,:,:)
  !
- integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp,ik_path,n_t
+ integer               :: i_E,i_f,N_files,is,ib,ik,ikbz,IDe,IDf,IDs,IDp,ik_path,n_t,LB(3),UB(3)
  character(schlen)     :: titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
@@ -133,15 +133,17 @@ subroutine electrons_dos(Xk,Xen)
    if (l_PROJECT_atom) then
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDp,DOS_bands,Xk,SEED_R3=PDOS_fac_v)
      call INTERPOLATION_driver_do("PDOS_factors_on_built_in",IDp,GRID_k)
-     PDOS_fac_p => linkM2M(INTERP_obj(IDp)%INTERP,shape(INTERP_obj(IDp)%INTERP),&
- &                         lbound(INTERP_obj(IDp)%INTERP),ubound(INTERP_obj(IDp)%INTERP))
+     call C_F_POINTER(C_LOC(INTERP_obj(IDp)%INTERP), PDOS_fac_p, shape(INTERP_obj(IDp)%INTERP) )
+     LB=lbound(INTERP_obj(IDp)%INTERP) ; UB=ubound(INTERP_obj(IDp)%INTERP)
+     PDOS_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => PDOS_fac_p
    endif
    !
    if (n_spinor==2) then
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",IDs,DOS_bands,Xk,SEED_R3=SPIN_fac_v)
      call INTERPOLATION_driver_do("SPIN_factors_on_built_in",IDs,GRID_k)
-     SPIN_fac_p   => linkM2M(INTERP_obj(IDs)%INTERP,shape(INTERP_obj(IDs)%INTERP),&
-&                            lbound(INTERP_obj(IDs)%INTERP),ubound(INTERP_obj(IDs)%INTERP))
+     call C_F_POINTER(C_LOC(INTERP_obj(IDs)%INTERP), SPIN_fac_p, shape(INTERP_obj(IDs)%INTERP) )
+     LB=lbound(INTERP_obj(IDs)%INTERP) ; UB=ubound(INTERP_obj(IDs)%INTERP)
+     SPIN_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => SPIN_fac_p
    endif
    !
    call INTERPOLATION_driver_end(0)

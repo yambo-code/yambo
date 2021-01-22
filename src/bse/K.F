@@ -307,7 +307,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
  call io_BS_PAR_init(iq,X,ID)
 #else
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
 #endif
  !
@@ -519,7 +519,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call io_control(ACTION=WR,ID=ID)
    call io_BS_PAR_block(iq,i_block,ID)
 #else
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_block+1/),ID=ID)
+   call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
 #endif
    !
@@ -536,6 +536,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
  call io_BS_PAR_free(ID,.true.)
+#else
+ call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
 #endif
  !
  if (n_steps>0) call live_timing( )

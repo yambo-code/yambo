@@ -144,7 +144,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
 !         ! data distribution indexes
 !       INTEGER, EXTERNAL :: ldim_block, gind_block
          ! data distribution functions
-       REAL(SP), ALLOCATABLE :: ps(:,:)
+       REAL(SP), ALLOCATABLE :: ps(:,:), qqs(:,:)
          ! the product vkb and psi
        !
 !       IF( becp%comm == mp_get_comm_null() ) THEN
@@ -177,8 +177,10 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
        !
        DO nt = 1, nsp
           IF ( upf(nt)%tvanp ) THEN
+             ALLOCATE( qqs(nh(nt),nh(nt)) )
              DO na = 1, nat
                 IF ( ityp(na) == nt ) THEN
+                   qqs(:,:) = REAL ( qq_at(1:nh(nt),1:nh(nt),na), KIND=SP )
                    !
                    ! Next operation computes ps(l',i)=\sum_m qq(l,m) becp(m',i)
                    ! (l'=l+ijkb0, m'=m+ijkb0, indices run from 1 to nh(nt))
@@ -186,34 +188,35 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
                    IF ( m_loc > 0 ) THEN
 #if defined _DOUBLE
                       CALL DGEMM('N', 'N', nh(nt), m_loc, nh(nt), 1.0_dp, &
-                                  qq_at(1,1,na), nhm, becp%r(indv_ijkb0(na)+1,1),&
+                                  qqs, nhm, becp%r(indv_ijkb0(na)+1,1),&
                                   nkb, 0.0_dp, ps(indv_ijkb0(na)+1,1), nkb )
 #else
                       CALL SGEMM('N', 'N', nh(nt), m_loc, nh(nt), 1.0_SP, &
-                                  qq_at(1,1,na), nhm, becp%r(indv_ijkb0(na)+1,1),&
+                                  qqs, nhm, becp%r(indv_ijkb0(na)+1,1),&
                                   nkb, 0.0_SP, ps(indv_ijkb0(na)+1,1), nkb )
 #endif
                    END IF
                 END IF
              END DO
+             DEALLOCATE( qqs )
           END IF
        END DO
        !
 !       IF( becp%comm == mp_get_comm_null() ) THEN
           IF ( m == 1 ) THEN
 #if defined _DOUBLE
-             CALL DGEMV( 'N', 2 * n, nkb, 1.D0, vkb, &
+             CALL DGEMV( 'N', 2 * n, nkb, 1.D0, real(vkb,SP), &
                   2 * lda, ps, 1, 1.D0, spsi, 1 )
 #else
-             CALL SGEMV( 'N', 2 * n, nkb, 1.0_SP, vkb, &
+             CALL SGEMV( 'N', 2 * n, nkb, 1.0_SP, real(vkb,SP), &
                   2 * lda, ps, 1, 1.0_SP, spsi, 1 )
 #endif
           ELSE
 #if defined _DOUBLE
-             CALL DGEMM( 'N', 'N', 2 * n, m, nkb, 1.D0, vkb, &
+             CALL DGEMM( 'N', 'N', 2 * n, m, nkb, 1.D0, real(vkb,SP), &
                   2 * lda, ps, nkb, 1.D0, spsi, 2 * lda )
 #else
-             CALL SGEMM( 'N', 'N', 2 * n, m, nkb, 1.0_SP, vkb, &
+             CALL SGEMM( 'N', 'N', 2 * n, m, nkb, 1.0_SP, real(vkb,SP), &
                   2 * lda, ps, nkb, 1.0_SP, spsi, 2 * lda )
 #endif
           END IF

@@ -1,6 +1,7 @@
 #
 # storing options
 #
+keep_driver=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
@@ -19,6 +20,7 @@ keep_futile=no
 #
 # tarball names
 #
+tarball_driver=0.0.1.tar.gz
 tarball_iotk=iotk-y1.2.2.tar.gz
 tarball_netcdf=netcdf-c-4.7.4.tar.gz
 tarball_netcdff=netcdf-fortran-4.5.3.tar.gz
@@ -38,6 +40,7 @@ tarball_futile=futile-yambo.tar.gz
 #
 # package names
 #
+package_name=yambo_driver
 pkgname_iotk=iotk
 pkgname_netcdf=netcdf-c-4.7.4
 pkgname_netcdff=netcdf-fortran-4.5.3
@@ -57,6 +60,7 @@ pkgname_futile=futile-yambo
 #
 # URL's
 #
+url_driver=https://github.com/yambo-code/yambo-libraries/archive/$(tarball_driver)
 url_netcdf=https://github.com/yambo-code/yambo/files/4570415/$(tarball_netcdf)
 url_netcdff=https://github.com/yambo-code/yambo/files/5815675/$(tarball_netcdff)
 url_pnetcdf=https://github.com/yambo-code/yambo/files/4570465/$(tarball_pnetcdf)

@@ -74,6 +74,7 @@ module fields
    logical function field_is_ok(E_field)
      type(ext_field)   ::E_field
      character(schlen) ::field_defs(3)
+     field_defs=""
      call string_split(trim(E_field%ef_name),field_defs)
      field_is_ok= any((/ trim(field_defs(1)) == 'SIN'    ,&
 &                        trim(field_defs(1)) == 'SOFTSIN',&
@@ -155,6 +156,7 @@ module fields
      fr_shift(1)=0._SP
      fr_shift(2)=pi/2._SP
      !
+     field_defs=""
      call STRING_split(trim(E_field%ef_name),field_defs)
      !
      select case( trim(field_defs(1)) )
@@ -310,6 +312,7 @@ module fields
      iErr=-1
      local_a=cZERO
      !
+     field_defs=""
      call STRING_split(trim(E_field%ef_name),field_defs)
      !
      do i_f=1,E_field%n_frequencies     
@@ -325,12 +328,8 @@ module fields
        end select
      enddo
      !
-     select case( trim(field_defs(2)) )
-       case('RES')
-         local_a(2)=0._SP
-       case('ANTIRES')
-         local_a(1)=0._SP
-     end select
+     if(trim(field_defs(2))==    'RES') local_a(2)=0._SP
+     if(trim(field_defs(2))=='ANTIRES') local_a(1)=0._SP
      !
      small_a_frequency=local_a(1)+local_a(2)
      !

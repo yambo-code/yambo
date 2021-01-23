@@ -56,7 +56,7 @@ subroutine RT_time_step_update( E )
  !
  l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
  !
- l_Update_Time_Step_Manual=abs(NE_time-NE_time_step_update_manual)<RT_dyn_step/2._SP
+ l_Update_Time_Step_Manual=abs(NE_time-NE_time_step_update_manual)<RT_dyn_step/2._SP .and. NE_time>0._SP
  !
  if (.not.(l_Update_Time_Step.or.l_Update_Time_Step_Manual)) return
  !

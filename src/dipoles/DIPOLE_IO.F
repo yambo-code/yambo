@@ -274,17 +274,30 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      !
      if(.not.allocated(DIP_spin)) return
      !
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
+       do ic=Dip%ib_lim(2),Dip%ib(2)
+         !
+         if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
+           DIP_spin   (:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
+         endif
+         if (ic> Xen%nbf .and. iv> Xen%nbf ) then
+           DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+         endif
+         !
+       enddo
+     enddo
+     !
+     if(.not.allocated(DIP_orbital)) return
+     !
      DIP_orbital=cZERO
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        do ic=Dip%ib_lim(2),Dip%ib(2)
          !
          if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
-           DIP_spin   (:,ic,iv,:,:,2)=DIP_spin(:,ic,iv,:,:,1)
            DIP_orbital(:,ic,iv,:,:,1)=DIP_v(:,ic,iv,:,:)
          endif
          if (ic> Xen%nbf .and. iv> Xen%nbf ) then
-           DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
            DIP_orbital(:,ic,iv,:,:,2)=DIP_v(:,ic,iv,:,:)
          endif
          !

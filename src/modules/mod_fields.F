@@ -171,6 +171,8 @@ module fields
          a =  3._SP/sigma**4 
          b = -8._SP/sigma**3
          c =  6._SP/sigma**2
+         damp_func=1._SP
+         if(real(T)<sigma.and.sigma>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2) 
        case('GAUSS','QSSIN','QSFIELD','PULSE','SPULSE')
          ! Fields which need T_0
          W_0=field_frequency(E_field,1)
@@ -218,9 +220,6 @@ module fields
            if (order== 2) f_now=+damp_func*W_field*f0t
            !
          case('THETA')
-           damp_func=1._SP
-           if(real(T)<T_0.and.T_0>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2)       
-           !
            if (order==0 ) f_now=damp_func*T
            if (order==1 ) f_now=damp_func
            if (order==2 ) f_now=0._SP
@@ -407,7 +406,7 @@ module fields
    !
    complex(SP) function Divide_by_Field(Field,order)
      !
-     use pars, ONLY: cI,pi,schlen
+     use pars, ONLY: cI,cONE,pi,schlen
      type(ext_field):: Field
      integer        :: order
      ! work space
@@ -419,8 +418,8 @@ module fields
      !
      select case(trim(field_defs(1)))
        case('SIN','SOFTSIN')
-         if (order/=0) Divide_by_Field =((-2._SP,0._SP)/Field%amplitude)**order
-         if (order==0) Divide_by_Field = ( 4._SP,0._SP)/Field%amplitude**2
+         if (order/=0) Divide_by_Field =(-2._SP*cI  /Field%amplitude)**order
+         if (order==0) Divide_by_Field =  4._SP*cONE/Field%amplitude**2
        case('QSSIN') !Approximate relations/does not work yet
          sigma=Field%width
          T_0=10._SP*sigma
@@ -428,8 +427,8 @@ module fields
          T = 2._SP*pi/W_0
          E_w= sqrt(pi/2._SP)*Field%amplitude*sigma*exp(-cI*W_0*T_0)*&
               &(erf((T-T_0)/sqrt(2._SP)/sigma)+erf(T_0/sqrt(2._SP)/sigma))
-         if (order/=0) Divide_by_Field =  (2._SP*cI/E_w)**order
-         if (order==0) Divide_by_Field =  (4._SP,0._SP)/(E_w*conjg(E_w))
+         if (order/=0) Divide_by_Field =  (2._SP*cI  / E_w)**order
+         if (order==0) Divide_by_Field =   4._SP*cONE/(E_w*conjg(E_w))
        end select
        !
    end function Divide_by_Field

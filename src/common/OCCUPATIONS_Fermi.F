@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
+subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !
  ! Mode = "FERMI" 
  !  Update the Fermi energy
@@ -51,13 +51,14 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  type(bz_samp) ::K
  character(*), OPTIONAL ::mode,OBJ
  integer,      OPTIONAL ::n_bands
+ logical,      OPTIONAL ::impose_balance
  !
  ! Work Space
  !
  integer :: i1,is,ib,ik,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd,nel_diff_zero,n_elecs,n_holes,balance
- logical :: Fermi_is_converged
+ logical :: Fermi_is_converged,impose_balance_
  real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
@@ -229,20 +230,25 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  i_trials(1)=1
  T_elecs=Tel
  T_holes=Tel
- call ef2nel(T_holes,E%E_Fermi,n_holes,'holes')
- do while (i_trials(1)<5000)
-   call ef2nel(T_elecs,E%E_Fermi,n_elecs,'elecs')
-   if(abs(n_elecs+n_holes)==0._SP) exit
-   balance=(n_holes-n_elecs)/(n_elecs+n_holes)
-   if ( abs(balance)< 1.E-5 ) exit
-   if (     balance <-1.E-5 ) T_elecs=T_elecs-Tel_step*abs(n_holes-n_elecs)*1000
-   if (     balance > 1.E-5 ) T_elecs=T_elecs+Tel_step*abs(n_holes-n_elecs)*1000
-   i_trials(1)=i_trials(1)+1
-   if (i_trials(1)==5000) then
-     T_elecs=Tel
-     call warning(' Impossible to balance electrons and holes number')
-   endif
- enddo
+ !
+ impose_balance_=.false.
+ if(present(impose_balance)) impose_balance_=impose_balance
+ if (impose_balance_) then
+   call ef2nel(T_holes,E%E_Fermi,n_holes,'holes')
+   do while (i_trials(1)<5000)
+     call ef2nel(T_elecs,E%E_Fermi,n_elecs,'elecs')
+     if(abs(n_elecs+n_holes)==0._SP) exit
+     balance=(n_holes-n_elecs)/(n_elecs+n_holes)
+     if ( abs(balance)< 1.E-5 ) exit
+     if (     balance <-1.E-5 ) T_elecs=T_elecs-Tel_step*abs(n_holes-n_elecs)*1000
+     if (     balance > 1.E-5 ) T_elecs=T_elecs+Tel_step*abs(n_holes-n_elecs)*1000
+     i_trials(1)=i_trials(1)+1
+     if (i_trials(1)==5000) then
+       T_elecs=Tel
+       call warning(' Impossible to balance electrons and holes number')
+     endif
+   enddo
+ endif
  !
  !
  ! Mode = 0. Check only for the Fermi energy

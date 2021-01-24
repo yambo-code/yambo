@@ -116,12 +116,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call RT_carriers_to_RT_k(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
- if (.not.l_update_E) then
-   !
-   ! ... and Eo in RT_E...
-   call RT_carriers_to_RT_E(en,RT_E,"Eo")
-   !
- endif
+ ! ... and Eo in RT_E...
+ call RT_carriers_to_RT_E(en,RT_E,"Eo")
  !
  if (.not.is_PROJECTED.and.is_INTERPOLATED) then
    !

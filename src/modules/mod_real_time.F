@@ -202,9 +202,11 @@ module real_time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
  complex(SP), allocatable :: I1_matrix(:,:)
  !
- ! COLLISIONS
- !------------
+ ! RT_Hamiltonian
+ !----------------
+ !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: H_EQ(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !

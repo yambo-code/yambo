@@ -526,6 +526,9 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    !
    call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
+#if defined _YPP_RT
+   call initactivate(1,"UPDATE_E STD_style")
+#endif
    !
  endif
  !	   

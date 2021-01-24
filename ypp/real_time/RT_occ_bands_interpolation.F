@@ -24,6 +24,7 @@
 subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  use pars,           ONLY:SP,schlen,rZERO
+ use parser_m,       ONLY:parser
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
  use R_lattice,      ONLY:bz_samp
@@ -62,9 +63,9 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  call section('*','Interpolation tool')
  !=====================================
  !
- plot_STD_style=.true.
- plot_RT_style =.false.
- l_update_E    =.true.
+ call parser("UPDATE_E",l_update_E)
+ call parser("STD_style",plot_STD_style)
+ plot_RT_style = .not.plot_STD_style
  !
  ID_circuit=-1
  ID_spin   =-1
@@ -230,10 +231,18 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
      if (plot_STD_style) then
        IDs=0
-       nqnt=2
-       nfiles(1:2)=n_sp_pol
-       IDs(1)=ID_bands(2)
-       IDs(2)=ID_circuit
+       nqnt=1
+       IDs(1)=ID_circuit
+       nfiles(1)=n_sp_pol
+       ! DS it is useless to plot each time the
+       !    bands if the energies are not updated
+       !    However to activate the following if I would need 
+       !    to modify the subroutine plot_interpolated_values
+       !if(l_update_E.or.i_T==1) then
+         nqnt=nqnt+1
+         nfiles(2)=n_sp_pol
+         IDs(2)=ID_bands(2)
+       !endif
        if(n_spinor==2.and.i_T==1) then
          nqnt=nqnt+2
          nfiles(nqnt-1:nqnt)=(/2,3/)

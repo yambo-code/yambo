@@ -66,6 +66,13 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  plot_RT_style =.false.
  l_update_E    =.true.
  !
+ ID_circuit=-1
+ ID_spin   =-1
+ ID_magn   =-1
+ ID_bands  =-1
+ ID_grid   =-1
+ IDs       =-1
+ !
  ! Logicals & Sectioning...
  sec_name="Levels"
  is_INTERPOLATED = .not.STRING_same(trim(INTERP_mode),"none")
@@ -112,20 +119,27 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  call section('=',"Real-Time components maps")
  !============================================
- ! Map the RT k in RT_k...
+ !
+ ! Map the RT k in RT_k
  call RT_carriers_to_RT_k(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
- ! ... and Eo in RT_E...
- call RT_carriers_to_RT_E(en,RT_E,"Eo")
+ if (.not.l_update_E) then
+   ! Eo in RT_E
+   call RT_carriers_to_RT_E(en,RT_E,"Eo")
+ endif
  !
  if (.not.is_PROJECTED.and.is_INTERPOLATED) then
    !
    call section('=',"Levels interpolation")
    !
-   ! Perform the energies interpolation
-   !====================================
-   call electrons_bands_interpolate(RT_E,RT_k,RT_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
+   if (.not.l_update_E) then
+     !
+     ! Perform the energies interpolation
+     !====================================
+     call electrons_bands_interpolate(RT_E,RT_k,RT_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
+     !
+   endif
    !
    ! Perform interpolation of spinorial factors and magnetization
    !==============================================================
@@ -232,6 +246,11 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
      !
    endif
    !
+   if (l_update_E) then
+     if(ID_bands(1)/=-1) call INTERPOLATION_driver_end(ID_bands(1))
+     if(ID_bands(2)/=-1) call INTERPOLATION_driver_end(ID_bands(2))
+     if(ID_bands(3)/=-1) call INTERPOLATION_driver_end(ID_bands(3))
+   endif
    if (     is_PROJECTED) call INTERPOLATION_driver_end(ID_grid)
    if (.not.is_PROJECTED) call INTERPOLATION_driver_end(ID_circuit)
    !
@@ -259,7 +278,6 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  !
  ! Clean
  !
- if(n_spinor>1) call INTERPOLATION_driver_end(ID_spin)
  call INTERPOLATION_driver_end(0)
  call RT_carriers_object(RT_carriers,WHAT='free')
  call E_reset(CIRCUIT_E)

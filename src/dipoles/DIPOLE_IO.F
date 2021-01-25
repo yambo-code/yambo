@@ -24,6 +24,7 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,       ONLY:SP,cI,cZERO
+ use parser_m,   ONLY:parser
  use com,        ONLY:msg
  use IO_m,       ONLY:io_DIP
  use R_lattice,  ONLY:bz_samp
@@ -33,6 +34,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
+#if defined _RT
+ use RT_control,  ONLY:l_project_spin_dipoles
+#endif
  !
  implicit none
  !
@@ -58,6 +62,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  writing=trim(check_read_or_write)=="write"
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
+ !
+#if defined _RT
+ call parser("SPINprojected",l_project_spin_dipoles)
+#endif
  !
  call DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
  !
@@ -197,7 +205,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
- if(reading) call project_dipoles(Dip)
+ !
+#if defined _RT
+ if(reading.and.l_project_spin_dipoles) call project_dipoles(Dip)
+#endif
  !
  contains
    !
@@ -268,6 +279,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      !
    end subroutine
    !
+#if defined _RT
    subroutine project_dipoles(Dip)
      use DIPOLES,   ONLY:DIP_spin,DIP_orbital,DIP_v
      type(DIPOLE_t),  intent(in) :: Dip
@@ -287,24 +299,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
        enddo
      enddo
      !
-     if(.not.allocated(DIP_orbital)) return
-     !
-     DIP_orbital=cZERO
-     !
-     do iv=Dip%ib(1),Dip%ib_lim(1) 
-       do ic=Dip%ib_lim(2),Dip%ib(2)
-         !
-         if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
-           DIP_orbital(:,ic,iv,:,:,1)=DIP_v(:,ic,iv,:,:)
-         endif
-         if (ic> Xen%nbf .and. iv> Xen%nbf ) then
-           DIP_orbital(:,ic,iv,:,:,2)=DIP_v(:,ic,iv,:,:)
-         endif
-         !
-       enddo
-     enddo
-     !
    end subroutine project_dipoles
-   !
+#endif
    !
 end subroutine DIPOLE_IO

@@ -55,6 +55,7 @@ module RT_control
  !
  logical                  :: RT_NAN_found=.FALSE.
  logical                  :: SAVE_G_history
+ logical                  :: l_project_spin_dipoles
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
  type(RT_IO_t),save  :: CARR_RT_IO_t

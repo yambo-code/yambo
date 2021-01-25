@@ -57,6 +57,8 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  real(SP)              :: ph_freq,Delta_Broad,ratio
  real(SP)              :: broad_factor=3._SP
  integer               :: i_loop
+ ! ... nearest k-q table ...
+ integer               :: k_nearest_table(elph_nQ,k%nbz)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
@@ -66,10 +68,14 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
  call section("+","Phonon mediated scattering analysis")
  !
+ ! Get nearest k-q table if using custom qpoints
+ if (.not.elph_use_q_grid) then 
+   call PHEL_k_nearest_table(k,q,k_nearest_table)
+ endif
+ !
  ! Loop to allocate phel_table
  !=============================
  do i_loop=1,2
-   !
    !
    if (i_loop==1) then
      call live_timing('Compatibility scan',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
@@ -95,26 +101,20 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        !
        if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
        !
-       ! [TODO] Restructure this if structures + calls to k_the_nearest
-#if defined _RT
-       ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
-       if (elph_use_q_grid) then
-         ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
-       else
-         !ik_m_q= k_the_nearest(k-q,rotate)
-       endif
-       ! Obtain k in the ibz from k in the bz: 
-       ik = k%sstar(ikbz,1)
-#else
-       ! Obtain k-q in the bz from k in the bz and q in the ibz
+       ! Obtain k-q in the full BZ from k in the bz and q in the ibz
        if (elph_use_q_grid) then
          ik_m_q = qindx_X(iq,ikbz,1)
-       else
-         !ik_m_q= k_the_nearest(k-q)
+       else 
+         ik_m_q = k_nearest_table(iq,ikbz)
        endif
        ! Use k in the bz
        ik = ikbz
-#endif
+       !
+       ! If running RT: obtain k-q and k in the IBZ
+#if defined _RT
+       ik_m_q =k%sstar(ik_m_q,1)
+       ik = k%sstar(ik,1)
+#endif       
        !
        ! Loop over il, i.e., phonon branches
        !====================================    

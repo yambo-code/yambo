@@ -1,0 +1,68 @@
+!
+!        Copyright (C) 2000-2020 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): FP
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine PHEL_k_nearest_table(k,q,k_nearest_table)
+ !
+ ! In the case of custom/random qpoints, prepare a table of 
+ ! the k-q indices as ik_m_q ~ ikp where ikp is the closest point
+ ! in the k grid.
+ !
+ use R_lattice,      ONLY:bz_samp,k_the_nearest
+ use ELPH,           ONLY:elph_nQ,PH_qpt
+ use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_Q_ibz
+ use parallel_int,   ONLY:PP_redux_wait
+ use LIVE_t,         ONLY:live_timing
+ !
+#include<memory.h>
+ !
+ type(bz_samp), intent(in)    :: k,q
+ integer,       intent(inout) :: k_nearest_table(elph_nQ,k%nbz)
+ !
+ ! Work Space ...
+ !
+ integer :: iq,ikbz,i_err
+ !
+ call live_timing('Finding K-Q_custom indices',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+ !
+ do iq=1,elph_nQ
+   !
+   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
+   !
+   do ikbz=1,k%nbz
+     !
+     if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
+     !
+     ! Notice that k-q_yambo ==> k+q_PH because of the MinusQ convention
+     k_nearest_table(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,size(k%ptbz(:,1)),i_err=i_err)
+     !
+     call live_timing( steps=1 )
+     !
+   enddo
+   !
+ enddo
+ !
+ call PP_redux_wait(k_nearest_table)
+ !
+ call live_timing( )
+ !
+end subroutine PHEL_k_nearest_table

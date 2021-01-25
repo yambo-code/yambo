@@ -281,7 +281,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
 #if defined _RT
    subroutine project_dipoles(Dip)
-     use DIPOLES,   ONLY:DIP_spin,DIP_orbital,DIP_v
+     use DIPOLES,   ONLY:DIP_spin
      type(DIPOLE_t),  intent(in) :: Dip
      !
      if(.not.allocated(DIP_spin)) return

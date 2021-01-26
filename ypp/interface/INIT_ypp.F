@@ -26,7 +26,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:l_plot,l_SOC_map,l_map_kpts,l_mag,l_k_grid,l_high_sym_pts,BSiq,&
 &                         l_free_hole,l_fix_syms,l_excitons,l_dipoles,l_exc_wf,DIPs_kind,&
-&                         l_amplitude,l_bands,l_bz_grids,l_current,BANDS_bands,&
+&                         l_amplitude,l_bands,l_bz_grids,l_current,BANDS_bands,BSiq_via_command_line,&
 &                         l_density,l_dos,l_electrons,l_q_grid,l_QP_DBs_create_and_modify,&
 &                         l_QP_DBs_manipulate,l_random_grid,l_shifted_grid,l_sort,l_sp_wf,l_spin,&
 &                         l_wannier,l_wavefunction,n_FineGd_DBs,n_u_interp_pts,n_u_k_pts,n_u_q_pts,&
@@ -269,6 +269,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
      if ( trim(rstr_piece(i1)) == 'BSiq') then
        read(rstr_piece(i1+1),'(i10)') BSiq 
+       BSiq_via_command_line=.TRUE.
        if (l_sort) infile_editing=.false.
      endif
      if ( trim(rstr_piece(i1)) == 'excitons') then

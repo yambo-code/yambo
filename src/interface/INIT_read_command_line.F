@@ -239,8 +239,7 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'dyson' ) then
        QP_solver=trim(rstr_piece(i1+1))
-       if (trim(QP_solver)/='n'.and.trim(QP_solver)/='s'.and.&
-&              trim(QP_solver)/='g') QP_solver='n'
+       if (.not.any((/trim(QP_solver)=='n',trim(QP_solver)=='s',trim(QP_solver)=='g',trim(QP_solver)=='r'/)))  QP_solver='n'
 #if !defined  _ELPH && !defined _QED
          l_elel_corr=.true.
 #endif
@@ -278,27 +277,27 @@ subroutine INIT_read_command_line(rstr,init_)
        if (trim(rstr_piece(i1+1))=='p') then
          infile_editing=.true.
          l_ppa=.TRUE.
-         QP_solver="n"
+         if (i_cycle==1) QP_solver="n"
          call initactivate(1,'ppa')
        else if (trim(rstr_piece(i1+1))=='c') then
          infile_editing=.true.
-         QP_solver="n"
+         if (i_cycle==1) QP_solver="n"
          call initactivate(1,'cohsex dyson')
        else if (trim(rstr_piece(i1+1))=='r') then
          infile_editing=.true.
-         QP_solver="s"
+         if (i_cycle==1) QP_solver="s"
          call initactivate(1,'em1d')
 #if defined  _ELPH 
        else if (trim(rstr_piece(i1+1))=='fan') then
          infile_editing=.true.
-         QP_solver="n"
+         if (i_cycle==1) QP_solver="n"
          call initactivate(1,'el_ph_corr')
          l_elph_corr=.TRUE.
 #endif
 #if defined _PHEL
        else if (trim(rstr_piece(i1+1))=='X') then
          infile_editing=.true.
-         QP_solver="n"
+         if (i_cycle==1) QP_solver="n"
          call initactivate(1,'ph_el_corr')
          l_phel_corr=.TRUE.
 #endif

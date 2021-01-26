@@ -179,6 +179,7 @@ module YPPm
  logical      ::l_position
  integer      ::ncell(3) 
  integer      ::BSiq    
+ logical      ::BSiq_via_command_line=.FALSE.
  real(SP)     ::r_hole(3)    
  real(SP)     ::deg_energy   
  real(SP)     ::EXCITON_E_treshold

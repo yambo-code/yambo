@@ -211,7 +211,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge AnHall')
    !
  endif
  !
@@ -382,7 +382,6 @@ subroutine INIT_activate()
 &          call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                          'DrudeW','EhEngy','LongDr'/)) 
-         !
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then

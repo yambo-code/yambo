@@ -62,7 +62,7 @@ subroutine MAG_Hamiltonian()
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
 &                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
  use electrons,      ONLY:n_sp_pol,n_spinor,n_spin
- use SC,             ONLY:SC_bands
+ use SC,             ONLY:SC_bands,SC_nbands
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
@@ -152,7 +152,7 @@ subroutine MAG_Hamiltonian()
  ! Parallel indexes
  !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/nkibz,SC_bands(2)/))
+ call PARALLEL_index(px,(/nkibz,SC_bands(2)/),low_range=(/1,SC_bands(1)/))
  call PP_redux_wait
  !==================================================
  !
@@ -168,21 +168,21 @@ subroutine MAG_Hamiltonian()
  do ik=1,nkibz   
    ! 
    if( any(px%element_2D(ik,:)) ) then
-     if (MAG_landau) call WF_derivative((/1,SC_bands(2)/),(/ik,ik/),do_derivatives)
-     call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
+     if (MAG_landau) call WF_derivative((/SC_bands(1),SC_bands(2)/),(/ik,ik/),do_derivatives)
+     call WF_load(WF,0,1,(/SC_bands(1),SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
      if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1)*n_sp_pol)
      timing_init=.false.
    endif
    !
    do i_sp_pol=1,n_sp_pol   
      !
-     do ib=1,SC_bands(2)
+     do ib=SC_bands(1),SC_bands(2)
        !
        if (.not.px%element_2D(ik,ib)) cycle
        !
        i_wf=WF%index(ib ,ik,i_sp_pol)
        !
-       do ibp=1,SC_bands(2)
+       do ibp=SC_bands(1),SC_bands(2)
          !
          ip_wf=WF%index(ibp,ik,i_sp_pol)
          !

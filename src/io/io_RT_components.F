@@ -97,7 +97,7 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               :: local_COMM
 #endif
- integer               :: ik,db_type,T_size,G_IO_steps
+ integer               :: ik,db_type,T_size,G_IO_steps,ID_frag
  logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,&
 &                         loading_carr_before_neq,par_IO
  !
@@ -120,6 +120,8 @@ integer function io_RT_components(what,ID)
  db_name="RT_"//trim(what)
  if (l_OBS)    db_name="RT_OBSERVABLES"
  if (l_REF)    db_name="RT_reference_components"
+ !
+ ID_frag=0
  !
  db_type=2
  if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF/))) then
@@ -215,15 +217,14 @@ integer function io_RT_components(what,ID)
  ! 3rd SECTION
  !=============
  !
-#if !defined _PAR_IO
- !
- ! === deal with K-fragments ===
- !
  if (l_THETA.or.l_G) then
+#if defined _PAR_IO
+   ID_frag=ID
+#else
+   ! === deal with K-fragments ===
    ik = max(1,maxval(io_sec(ID,:))-2)
-   call io_fragment(ID,i_fragment=ik)
+   call io_fragment(ID,ID_frag,i_fragment=ik)
  endif
- !
 #endif
  !
 #if defined _ELPH_ITERATIVE
@@ -234,15 +235,15 @@ integer function io_RT_components(what,ID)
    !
    ! This should be replaced by call THETA_IO
    !
-   call def_variable_bulk(ID,"RT_THETA_K"//trim(intc(ik)),4,(/2,2*nqbz*ph_modes,RT_nbands,RT_nbands/),SP)
-   call  io_variable_bulk(ID,4,C3=THETA_matrix(:,:,:,ik))
+   call def_variable_bulk(ID_frag,"RT_THETA_K"//trim(intc(ik)),4,(/2,2*nqbz*ph_modes,RT_nbands,RT_nbands/),SP)
+   call  io_variable_bulk(ID_frag,4,C3=THETA_matrix(:,:,:,ik))
  endif
  !
 #endif
  !
  ! lesser Green Function
  !=======================
- if ( l_G ) call io_RT_components_G_lesser(ID,T_size)
+ if ( l_G ) call io_RT_components_G_lesser(ID_frag,T_size)
  !
  ! Carrier components
  !====================
@@ -261,6 +262,10 @@ integer function io_RT_components(what,ID)
  ! Current and Polarization
  !==========================
  if (l_OBS) call io_RT_components_OBS(ID,l_JP,l_M,"FILL")
+ !
+#if !defined _PAR_IO
+ if (l_THETA.or.l_G) call io_fragment_disconnect(ID,ID_frag)
+#endif
  !
 1 call io_disconnect(ID=ID)
  !

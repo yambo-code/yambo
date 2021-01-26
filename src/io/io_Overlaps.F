@@ -38,7 +38,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err,ID_frag
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !
@@ -49,6 +49,8 @@ integer function io_Overlaps(Dip,ID)
  endif
  !
  call timing('io_Overlaps',OPR='start')
+ !
+ ID_frag=0
  !
  io_extension(ID)='Overlap'
  !
@@ -84,19 +86,18 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
- if(io_err/=0) then
-   io_Overlaps=io_err
-   goto 1
- endif
+ call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_Overlaps)
+ if(io_Overlaps/=0) goto 1
  !
  ! DIP_S
  !
  write (VAR_name,'(3(a,i4.4))') 'DIP_S_k_',ik,'_sp_pol_',i_sp_pol
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,Dip%ib(2),Dip%ib(2),6/))
- call io_bulk(ID,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=(/2,Dip%ib(2),Dip%ib(2),6/))
+ call io_bulk(ID_frag,C3=DIP_S(:,:,:,ik_mem,i_sp_pol))
  !
-1 call io_disconnect(ID=ID)
+1 call io_fragment_disconnect(ID,ID_frag)
+ !
+ call io_disconnect(ID=ID)
  !
  call timing('io_Overlaps',OPR='stop')
  !

@@ -152,6 +152,8 @@ subroutine io_fragment_disconnect(ID,ID_frag)
  !
  integer, intent(in) :: ID,ID_frag
  !
+ if(ID_frag==0) return
+ !
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
      if (.not.frag_WF) return

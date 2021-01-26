@@ -89,25 +89,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  alternative_file=" "
  !
  if (len_trim(io_file(ID))==0) then
-   !
-   if (write_mode) then
-     !
-     ! NEW databases are always written respecting the "type" (see mod_com.F)
-     !
-     io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-     !
-   else if (read_mode) then
-     !
-     io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-     !
-     if (type==1.or.type==2) then
-       !
-       alternative_file=all_locations(desc,subfolder_)
-       !
-     endif
-     !
-   endif
-   !
+   io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+   if (read_mode .and. (type==1.or.type==2) ) alternative_file=all_locations(desc,subfolder_)
  endif
  !
  ! Keep the extension for the fragment-related procedures

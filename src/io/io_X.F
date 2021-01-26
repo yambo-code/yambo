@@ -72,6 +72,8 @@ integer function io_X(X,Xw,ID)
  !
  different_db_RL_order=.false.
  !
+ ID_frag=0
+ !
  if (X%whoami==1) db_desc='Xx'
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
@@ -149,6 +151,7 @@ integer function io_X(X,Xw,ID)
  if (iq==0) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ if (io_err/=0) goto 1
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -162,8 +165,8 @@ integer function io_X(X,Xw,ID)
    ! Important: once the file has been opend in PAR mode all the CPUs belonging to the COMM
    !            must go through the definitions of the variables although only one is writing
    !
-   io_com_save=io_com(ID)
-   if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID)=NONE
+   io_com_save=io_com(ID_frag)
+   if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID_frag)=NONE
    call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
    if (perform_IO) then
@@ -233,8 +236,6 @@ integer function io_X(X,Xw,ID)
    !
  endif
  !
- call io_fragment_disconnect(ID,ID_frag)
- !
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point
  !
@@ -243,7 +244,9 @@ integer function io_X(X,Xw,ID)
    if (io_err==0) io_X=iq
  endif
  !
-1 call io_disconnect(ID)
+1 call io_fragment_disconnect(ID,ID_frag)
+ !
+ call io_disconnect(ID)
  !
  if (io_RESPONSE) call timing('io_X',OPR='stop')
  !

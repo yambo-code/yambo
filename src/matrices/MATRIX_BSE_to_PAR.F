@@ -123,8 +123,8 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
              !  - - -  - - - Cpl
              !  - - -  - - -  
              !
-             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
-             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim(1), K_coo(1:2) )
+             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim(1), K_coo(3:4) )
              if (.not.any(K_coo==0)) call elemental_transfer('-C')
              call PP_redux_wait( )
              !
@@ -158,9 +158,9 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
                !  - - -  - - -  
                !
                call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), &
-&                                                 BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
+&                                                 BSE_components(i_c2,i_B,3:4)+BS_K_dim(1), K_coo(1:2) )
                call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), &
-&                                                 BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
+&                                                 BSE_components(i_c2,i_B,1:2)+BS_K_dim(1), K_coo(3:4) )
                if (.not.any(K_coo==0)) call elemental_transfer('-T')
                call PP_redux_wait( )
                !
@@ -180,7 +180,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
            !  - - -  - - -  
            !
            call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2), K_coo(1:2) )
-           call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(3:4) )
+           call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4)+BS_K_dim(1), K_coo(3:4) )
            if (.not.any(K_coo==0)) call elemental_transfer('N')
            !
            if (BS_K_coupling) then
@@ -194,7 +194,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
              !  - - -  - - - Cpl
              !  - - -  - - -  
              !
-             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(1:2) )
+             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,1:2)+BS_K_dim(1), K_coo(1:2) )
              call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,3:4), K_coo(3:4) )
              if (.not.any(K_coo==0)) call elemental_transfer('-C')
              !
@@ -212,7 +212,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
              !  - - -  - - -  
              !
              call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4), K_coo(1:2) )
-             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2)+BS_K_dim, K_coo(3:4) )
+             call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2)+BS_K_dim(1), K_coo(3:4) )
              if (.not.any(K_coo==0)) call elemental_transfer('T')
              !
              if (BS_K_coupling) then
@@ -226,7 +226,7 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
                !  X - -  - - - Cpl
                !  - - -  - - -  
                !
-               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4)+BS_K_dim, K_coo(1:2) )
+               call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,1:2), BSE_components(i_c2,i_B,3:4)+BS_K_dim(1), K_coo(1:2) )
                call MATRIX_transfer_side_crop(SLK_coordinates(i_c1,3:4), BSE_components(i_c2,i_B,1:2), K_coo(3:4) )
                if (.not.any(K_coo==0)) call elemental_transfer('-H')
                !
@@ -267,15 +267,15 @@ subroutine MATRIX_BSE_to_PAR( M_bse , M_slk )
            if (mode=="N".or.mode=="C".or.mode=="-C") then
              i_r_in_BLK=i_r-BSE_components(i_c2,i_B,1)+1
              i_c_in_BLK=i_c-BSE_components(i_c2,i_B,3)+1
-             if (i_r>BS_K_dim) i_r_in_BLK=i_r_in_BLK-BS_K_dim
-             if (i_c>BS_K_dim) i_c_in_BLK=i_c_in_BLK-BS_K_dim
+             if (i_r>BS_K_dim(1)) i_r_in_BLK=i_r_in_BLK-BS_K_dim(1)
+             if (i_c>BS_K_dim(1)) i_c_in_BLK=i_c_in_BLK-BS_K_dim(1)
            endif
            !
            if (mode=="H".or.mode=="T".or.mode=="-H".or.mode=="-T") then
              i_r_in_BLK=i_c-BSE_components(i_c2,i_B,1)+1
              i_c_in_BLK=i_r-BSE_components(i_c2,i_B,3)+1
-             if (i_c>BS_K_dim) i_r_in_BLK=i_r_in_BLK-BS_K_dim
-             if (i_r>BS_K_dim) i_c_in_BLK=i_c_in_BLK-BS_K_dim
+             if (i_c>BS_K_dim(1)) i_r_in_BLK=i_r_in_BLK-BS_K_dim(1)
+             if (i_r>BS_K_dim(1)) i_c_in_BLK=i_c_in_BLK-BS_K_dim(1)
            endif
            !
            if (mode=="N".or.mode=="T") then

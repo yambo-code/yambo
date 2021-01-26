@@ -20,63 +20,59 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock(iq,W)
+subroutine K_Haydock(iq,W,mode)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use functions,      ONLY:NAN
+ use X_m,            ONLY:global_gauge
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
- use X_m,            ONLY:Epsilon_ii,Epsilon_ij,X_drude_term,global_gauge,skip_cond_sum_rule
- use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
- use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,Co_factor,diam_term_exact,&
-&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod,Haydock_iterIO,&
-&                         BSS_eels_to_eps
- use BS,             ONLY:BS_K_Coupling,BSE_mode,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim
+ use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
+&                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
+&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size
+ use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
+&                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use parallel_int,   ONLY:PP_bcast
- use parallel_m,     ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,PAR_COM_T_Haydock,master_cpu,PAR_COM_Xk_ibz_INDEX, &
-                             PAR_COM_eh_INDEX
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,PAR_COM_T_Haydock,PAR_COM_Xk_ibz_INDEX, &
+                          PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
-#if defined _KERR
- use KERR,           ONLY:B_Hall
- use drivers,        ONLY:l_kerr,l_anomalous_Hall
-#endif
  use descriptors,    ONLY:IO_desc_add
  !
 #include<memory.h>
  !
- type(w_samp)  ::W
- integer       ::iq
+ type(w_samp), intent(in) :: W
+ integer,      intent(in) :: iq
+ character(*), intent(in) :: mode
  !
  ! Work Space
  !
  integer            ::it,it_on_disk,i_g,ID,io_err,i_desc_acc,i_desc_iter
- integer, parameter ::Max_iterations=1000
  type(Haydock_vector),allocatable :: Vn(:),Vnm1(:),Vnp1(:),V0(:),V_tmp(:)
- complex(SP),allocatable :: Cf(:)
- complex(SP),allocatable :: Vn_f(:),Vnm1_f(:),Vnp1_f(:) 
+ complex(SP), pointer :: Vn_f(:)   => null()
+ complex(SP), pointer :: Vnm1_f(:) => null()
+ complex(SP), pointer :: Vnp1_f(:) => null()
+ complex(SP), allocatable :: Cf(:) 
  !
-#if defined _KERR
- type(Haydock_vector),allocatable :: V0_kerr(:)
- complex(SP),allocatable :: Cf_kerr(:)
-#endif
+ type(Haydock_vector),allocatable :: W0(:)
  !
  real(SP)           ::reached_threshold
- real(SP)           ::Bf(Max_iterations),Af(Max_iterations)
- integer            ::ItParity
+ real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
+ integer            ::ItParity,Cf_size,Haydock_n_converged,Haydock_required_converged
  complex(SP)        ::v0_mod_
  character(schlen)  ::dumb_ch
- logical            ::use_cpl_scheme
+ logical            ::impose_pseudo_herm_scheme,use_left_and_right,velocity_correction,tmp_converged
  logical, external  ::STOP_now
  character(1)       ::sec
+ character(11)      ::scheme
  !
- ! I/O
+ if (BS_mat_res_ares_dim==2) call error(" Haydock not coded for case  with two BSE matricies")
  !
- !integer           :: ID,io_err
+ call K_output_file(iq,"open Haydock "//trim(mode))
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')
  !
@@ -84,46 +80,56 @@ subroutine K_Haydock(iq,W)
  !
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
- call section(sec,'Haydock Solver @q'//trim(intc(iq)))
+ !
+ Haydock_n_converged=0
+ Haydock_required_converged=2
  !
  call BS_Blocks_symmetrize_K()
  !
  ! Use terminator?
  if (.not.Haydock_terminator) call parser('BSHayTer',Haydock_terminator)
+ ! Developer option
+ call parser('ImposePseudoHerm',impose_pseudo_herm_scheme)
  !
  ! Which approach
- use_cpl_scheme=BS_K_Coupling !.or.allocated(BS_T_grp(1)%Z)
+ use_left_and_right=.false.
+ scheme="hermitian"
+ if(BS_K_Coupling.or.impose_pseudo_herm_scheme) scheme="pseudo-herm"
+ !if(BS_K_Coupling.or.impose_pseudo_herm_scheme.or.allocated(BS_T_grp(1)%Z)) scheme="pseudo-herm"
+ use_left_and_right=trim(mode)=="kerr".or.trim(mode)=="dichroism"
+ velocity_correction= trim(global_gauge)=="velocity" .and. (trim(mode)=="abs" .or. trim(mode)=="kerr")
  !
-#if defined _KERR
- use_cpl_scheme=BS_K_Coupling.or.l_kerr
-#endif
+ call section(sec,'Haydock Solver for '//trim(mode)//' @q'//trim(intc(iq))//", scheme "//trim(scheme))
  !
+ if (.not.l_BS_ares_asymm) HAYVEC_size = BS_K_dim(1)
+ if (     l_BS_ares_asymm) then
+   if(.not.BS_K_coupling) HAYVEC_size = BS_K_dim(1)
+   if(     BS_K_coupling) HAYVEC_size = BS_H_dim
+ endif
  !
  ! Allocate Haydock vectors:
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0)
- if(trim(global_gauge)=="velocity") then
+ !
+ if(velocity_correction) then
    allocate(V_tmp(BS_nT_grps))
    call BS_HAYVEC_alloc(V_tmp)
  endif
  !
-#if defined _KERR
- if(l_kerr) then
-   allocate(V0_kerr(BS_nT_grps))
-   call BS_HAYVEC_alloc(V0_kerr)
+ if(use_left_and_right) then
+   allocate(W0(BS_nT_grps))
+   call BS_HAYVEC_alloc(W0)
  endif
-#endif
  !
+ ItParity=1
+ it_on_disk=0
+ reached_threshold=100._SP
  !
- if (use_cpl_scheme) then
-   YAMBO_ALLOC(Cf,(Max_iterations+1))
-   !
-#if defined _KERR
-   YAMBO_ALLOC(Cf_kerr,(Max_iterations+1))
-#endif
-   !
- end if
+ Cf_size=2
+ if (trim(scheme)=="pseudo-herm".or.use_left_and_right) Cf_size=Haydock_iterMAX+1
+ YAMBO_ALLOC(Cf,(Cf_size))
+ Cf=cZERO
  !
  allocate(Vn(BS_nT_grps))
  allocate(Vnp1(BS_nT_grps))
@@ -134,84 +140,54 @@ subroutine K_Haydock(iq,W)
  !
  ! Haydock Coefficients and restart vector from disk
  !=================================================
- it_on_disk=0
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
- allocate(Vn_f(BS_K_dim),Vnm1_f(BS_K_dim))
+ io_err=io_BSS_Haydock(ID,iq,1,reached_threshold,mode,Af(1),Bf(:2),Cf(:2),Vnm1_f,Vn_f,Vnp1_f)
  !
- if (use_cpl_scheme) then
-   allocate(Vnp1_f(BS_K_dim))
- !
-#if defined _KERR
- !  if(l_kerr) then
- !    io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),  &
- !    &                   Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:2),Cf_kerr=Cf_kerr(:2))
- !  else
-#endif
- !
- io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),&
-&       Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:2))   
- !
-#if defined _KERR
- !  endif
-#endif
- !
- else
-   io_err=io_BSS_Haydock(ID,1,reached_threshold,Af(1),Bf(:2),Vnm1_f,Vn_f)
- endif
- !
- !
- !if (io_err>0) call error('K_Haydock: restart of Haydock temporary disabled') 
- !
- if (io_err>0) then 
+ if (io_err>0) then
    !
-   it_on_disk=io_err 
+   YAMBO_ALLOC_P(Vn_f,(HAYVEC_size))
+   YAMBO_ALLOC_P(Vnm1_f,(HAYVEC_size))
+   if (scheme=="pseudo-herm") then
+     YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
+   endif
+   !
+   it_on_disk=io_err
+   if (scheme=="pseudo-herm") Cf_size=it_on_disk
    call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),ID=ID)
-   if (use_cpl_scheme) then 
- !
-#if defined _KERR
- !    if(l_kerr) then
- !      io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),Bf(:it_on_disk+1),&
- !      &                    Vnm1,Vn,Vnp1=Vnp1,Cf=Cf(:it_on_disk+1),Cf_kerr=Cf_kerr(:it_on_disk+1))
- !    else
-#endif
- 
-     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),&
-&                   Bf(:it_on_disk+1),Vnm1_f,Vn_f,Vnp1=Vnp1_f,Cf=Cf(:it_on_disk+1))
- !
-#if defined _KERR
- !    endif
-#endif
- !
-   else
-     io_err=io_BSS_Haydock(ID,it_on_disk,reached_threshold,Af(:it_on_disk),&
-     &      Bf(:it_on_disk+1),Vnm1_f,Vn_f)
-     call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
-   end if
+   io_err=io_BSS_Haydock(ID,iq,it_on_disk,reached_threshold,mode,Af(:it_on_disk),&
+&                   Bf(:it_on_disk+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
+   !
+   call msg('s','[Haydock] Restart DB with accuracy ',reached_threshold)
    !  
-   call PP_bcast(Af,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
-   call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)  
-   call PP_bcast(Bf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
-   call PP_bcast(Bf,0,COMM=PAR_COM_eh_INDEX%COMM)  
-   call HAYVEC_scatter(Vn,Vn_f)
-   call HAYVEC_scatter(Vnm1,Vnm1_f)
-   if (use_cpl_scheme) then
+   call PP_bcast(Af,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_bcast(Af,0,COMM=PAR_COM_eh_INDEX%COMM)
+   call PP_bcast(Bf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_bcast(Bf,0,COMM=PAR_COM_eh_INDEX%COMM)
+   if (scheme=="pseudo-herm".or.use_left_and_right) then
      call PP_bcast(Cf,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
      call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
-     call HAYVEC_scatter(Vnp1,Vnp1_f)
+   endif
+   !
+   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size)
+   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size)
+   if (scheme=="pseudo-herm") call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size)
+   !
+   YAMBO_FREE_P(Vnm1_f)
+   YAMBO_FREE_P(Vn_f)
+   if (scheme=="pseudo-herm") then
+     YAMBO_FREE_P(Vnp1_f)
    endif
    !
  end if
- deallocate(Vnm1_f,Vn_f)
- if (use_cpl_scheme) deallocate(Vnp1_f)
  !
  ! Update Descriptions
  !=====================
  call IO_desc_add(BSS_desc,kind="s",str=" ",S=" ")
  !
  call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (requested)',term='o/o',R=(/Haydock_threshold/))
- call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/0._SP/))
+ call IO_desc_add(BSS_desc,kind="r",str='[Haydock] Accuracy (reached)',term='o/o',R=(/reached_threshold/))
  i_desc_acc=BSS_desc%n
- call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/0/))
+ call IO_desc_add(BSS_desc,kind="i",str='[Haydock] Iterations',I=(/it_on_disk/))
  i_desc_iter=BSS_desc%n
  !
  call msg('r','Accuracy (requested)      ',Haydock_threshold,"[o/o]")
@@ -229,11 +205,8 @@ subroutine K_Haydock(iq,W)
      Vnp1(i_g)%fragment= cZERO
      !
      V0(i_g)%fragment  = cZERO
-     if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment = cZERO
-     !
-#if defined _KERR
-     if(l_kerr) V0_kerr(i_g)%fragment  = cZERO
-#endif
+     if(use_left_and_right) W0(i_g)%fragment  = cZERO
+     if(velocity_correction) V_tmp(i_g)%fragment = cZERO
      !
    enddo
    !
@@ -244,121 +217,129 @@ subroutine K_Haydock(iq,W)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   V0(i_g)%fragment(:) =BS_T_grp(i_g)%dipoles_R(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
-   if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+   if (trim(mode)=="abs")       V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+   if (trim(mode)=="kerr")      V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+   if (trim(mode)=="magnons")   V0(i_g)%fragment = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+   V0(i_g)%fragment = V0(i_g)%fragment*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+   if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
- ! 
+ !
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-   if(trim(global_gauge)=="velocity") call PP_bcast(V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-   if(trim(global_gauge)=="length")   call PP_bcast(   V0(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+   if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+   if(.not.velocity_correction) call PP_bcast(   V0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
  enddo
  !
- if(trim(global_gauge)=="velocity") call K_multiply_by_V(V_tmp,V0,1)
+ if(velocity_correction) call K_multiply_by_V(V_tmp,V0,1)
  !
-#if defined _KERR
- if(l_kerr) then
+ if(use_left_and_right) then
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     V0_kerr(i_g)%fragment  =BS_T_grp(i_g)%dipoles_R_kerr(:)*sqrt(BS_T_grp(i_g)%f_RES(:))
-     if(trim(global_gauge)=="velocity") V_tmp(i_g)%fragment(:) = V0_kerr(i_g)%fragment(:)/BS_T_grp(i_g)%E(:)
+     if (trim(mode)=="kerr") W0(i_g)%fragment = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     W0(i_g)%fragment = W0(i_g)%fragment*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-     if(trim(global_gauge)=="velocity") call PP_bcast(  V_tmp(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
-     if(trim(global_gauge)=="length")   call PP_bcast(V0_kerr(i_g)%fragment(:),0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
+     if(.not.velocity_correction) call PP_bcast(   W0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
    enddo
    !
-   if(trim(global_gauge)=="velocity") call K_multiply_by_V(V_tmp,V0_kerr,1)
+   if(velocity_correction) call K_multiply_by_V(V_tmp,W0,1)
    !
  endif
-#endif
  !
- if(trim(global_gauge)=="velocity") then
+ if(velocity_correction) then
    call BS_HAYVEC_free(V_tmp)
    deallocate(V_tmp)
  endif
  !
- if (use_cpl_scheme) then ! [***] Initialization non Hermitian case
+ if (it_on_disk==0) then
    !
-   ! Before starting iterate one needs
-   !
-   ! | Vm > =     |q->0>/(<q->0| F (H |q->0>))
-   ! | Vmp1 > = H |Vm>
-   !
-   ItParity = (-1)**it_on_disk
-   if (it_on_disk==0) then
-      Cf= cZERO
-      !
-#if defined _KERR
-      if(l_kerr) Cf_kerr= cZERO
-#endif
-      !
-      call K_multiply_by_V(V0,Vnp1,ItParity)
-      call K_dot_product(v0_mod_,V0,Vnp1)
-      Haydock_v0_mod=sqrt(2._SP*real(v0_mod_))
-      Cf(1) = cZERO
-      !
-#if defined _KERR
-      if(l_kerr) then
-        call K_dot_product(v0_mod_,V0_kerr,Vnp1)
-        Cf_kerr(1)= 2._SP*cI*aimag(v0_mod_)/Haydock_v0_mod**2._SP
-      endif
-#endif
-      !
-      do i_g=1,BS_nT_grps
-        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-        !
-        Vn(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
-        Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
-      enddo
-   else
-      !   Haydock_v0_mod = Bf(1)
-      !   Bf(1) = 0._SP
-   endif
-   !
- else ! [***] Initialization Hermitian case
-   !
-   ! it=1:|Vm>=|q->0>/(<q->0|q->0>)^(1/2)
-   !
-   call K_dot_product(v0_mod_,V0,V0) 
-   Haydock_v0_mod=sqrt(real(v0_mod_,SP))
-   !
-   if (it_on_disk==0) then
+   if (scheme=="pseudo-herm") then       ! [***] Initialization non Hermitian case
+     !
+     ! Before starting iterate one needs
+     !
+     ! | Vn > =     |V0>/(<V0|F(H|V0>))
+     ! | Vnp1 > = H |Vn>
+     !
+     Cf= cZERO
+     !
+     call K_multiply_by_V(V0,Vnp1,-1)
+     call K_dot_product(v0_mod_,V0,Vnp1,1)
+     !
+     ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, -iu0*)
+     ! At each iteration however the relation changes V1= (u1, iu1*),
+     ! this is why the ItParity is needed 
+     !
+     if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
+     if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       Vn(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
+       V0(i_g)%fragment   = V0(i_g)%fragment/Haydock_v0_mod
+       if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
+       Vn(i_g)%fragment   = V0(i_g)%fragment
+       Vnp1(i_g)%fragment = Vnp1(i_g)%fragment/Haydock_v0_mod
      enddo
+     !
+     ! <w0|u0>=<V0|F|V0>  since <w0|=<V0|F
+     ! Is it correct that also V0 was renormalized ??
+     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,V0,1)
+     if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
+     !
+     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
+     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
+     !
+   else                           ! [***] Initialization Hermitian case
+     !
+     ! it=1:|Vn>=|q->0>/(<q->0|q->0>)^(1/2)
+     !
+     call K_dot_product(v0_mod_,V0,V0,1)
+     Haydock_v0_mod=sqrt(real(v0_mod_,SP))
+     !
+     do i_g=1,BS_nT_grps
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+       V0(i_g)%fragment  = V0(i_g)%fragment/Haydock_v0_mod
+       if (use_left_and_right) W0(i_g)%fragment = W0(i_g)%fragment/Haydock_v0_mod
+       Vn(i_g)%fragment  = V0(i_g)%fragment
+     enddo
+     !
+     if (use_left_and_right) then
+       call K_dot_product(v0_mod_,W0,V0,1)
+       Cf(1)= v0_mod_
+     endif
+     !
    endif
    !
  endif
  !
+ ! DEBUG <
+ ! write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
+ ! DEBUG >
+ !
  ! [***] Loop ...
  !
- do it=it_on_disk+1,Max_iterations
+ do it=it_on_disk+1,Haydock_iterMAX
    !
-   reached_threshold=0._SP
-   !
-   if (.not.use_cpl_scheme) then
+   if (trim(scheme)=="hermitian") then  ! [***] Hermitian case:
      !
-     ! [***] Hermitian case: 
-     !
-     !|Vm+1> = H |Vm>
+     !|Vn+1> = H |Vn>
      !
      call  K_multiply_by_V(Vn,Vnp1,1)
      !
-     ! A(n) = <Vm|Vm+1>
+     ! A(n) = <Vn|Vn+1>
      !
-     call K_dot_product(v0_mod_,Vn,Vnp1) 
+     call K_dot_product(v0_mod_,Vn,Vnp1,1)
      Af(it)=real(v0_mod_,SP)
      !
-     !|Vm+1> = |Vm+1> - A(n)|Vm> - B(n)|Vm-1>
+     !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -366,46 +347,67 @@ subroutine K_Haydock(iq,W)
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
-     ! B(n+1)= <Vm+1|Vm+1>^(1/2)
+     ! B(n+1)= <Vn+1|Vn+1>^(1/2)
      !
-     call K_dot_product(v0_mod_,Vnp1,Vnp1) 
+     call K_dot_product(v0_mod_,Vnp1,Vnp1,1)
      Bf(it+1)=sqrt(real(v0_mod_,SP))
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=NaN likely because some eigenvalue of the BSE is negative.')
      !
-     !|Vm-1> = |Vm>
+     !|Vn-1> = |Vn>
      !
      do i_g=1,BS_nT_grps
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle 
+       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vnm1(i_g)%fragment  =Vn(i_g)%fragment
      enddo
      !
-     !|Vm> =|Vm+1> / B(n+1)
+     !|Vn> =|Vn+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        Vn(i_g)%fragment  =Vnp1(i_g)%fragment/Bf(it+1)
      enddo
      !
-   else 
+     ! DEBUG <
+     !! check orthonotmality
+     !call K_dot_product(v0_mod_,V0,Vn,1)
+     !write(100,*) "Ortho check = ",v0_mod_
+     ! DEBUG
      !
-     ! [***] Non-Hermitian case: 
+     if (use_left_and_right) then
+       Cf_size=it+1
+       call K_dot_product(v0_mod_,W0,Vn,1)
+       Cf(it+1)= v0_mod_
+     endif
      !
+   else                           ! [***] Non-Hermitian case:
      !
-     ! A(n) = <Vm+1|F|Vm+1> (that is <Vm|HFH|Vm>), 
-     !      =  0   by symmetry 
+     ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>),
      !
-     ItParity=(-1)**it
-     Af(it)=0._SP
+     if (.not.l_BS_ares_asymm) then
+       ! A(n) =  0   by symmetry
+       Af(it)=0._SP
+       ItParity=(-1)**(it+1)
+     else
+       call K_dot_product(v0_mod_,Vnp1,Vnp1,1)
+       Af(it)=real(v0_mod_,SP)
+     endif
      !
-     !|Vm+1> = |Vm+1> - B(n)|Vm-1> (as Am is zero by symmetry)
+     !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
+     !
+     if (l_BS_ares_asymm) then
+       do i_g = 1,BS_nT_grps
+         if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+       enddo
+     endif
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
-     ! |Vm-1> = |Vm> 
-     ! |Vm>   = |Vm+1> 
+     ! |Vn-1> = |Vn>
+     ! |Vn>   = |Vn+1>
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -413,22 +415,23 @@ subroutine K_Haydock(iq,W)
        Vn(i_g)%fragment   = Vnp1(i_g)%fragment
      enddo
      !
-     !|Vm+1> = H |Vm>
+     !|Vn+1> = H |Vn>
      !
      call K_multiply_by_V(Vn,Vnp1,ItParity)
      !
-     ! B(n+1)= <Vm|F|Vm+1>^(1/2) (that is <Vm|FH|Vm>^(1/2))
-     !       = (2*Re(<Vm|Vmp1>))^(1/2) by symmetry, 
-     !          where the dot_product is just on eh pair space 
+     ! B(n+1)= <Vn|F|Vn+1>^(1/2) (that is <Vn|FH|Vn>^(1/2))
      !
-     call K_dot_product(v0_mod_,Vn,Vnp1) 
-     Bf(it+1)=sqrt(2._SP*real(v0_mod_,SP))
+     call K_dot_product(v0_mod_,Vn,Vnp1,1) 
+     !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry,
+     !          where the dot_product is just on eh pair space
+     if (.not.l_BS_ares_asymm) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
+     if (     l_BS_ares_asymm) Bf(it+1)=sqrt(  real(v0_mod_,SP))
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN
      if (NAN(Bf(it+1)))  call error(' Bf=NaN likely because some eigenvalue of BSE is negative.')
      !
-     !|Vm> =|Vm+1> / B(n+1)
+     !|Vn> =|Vn+1> / B(n+1)
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -436,93 +439,95 @@ subroutine K_Haydock(iq,W)
        Vn(i_g)%fragment    =Vn(i_g)%fragment/Bf(it+1)
      enddo
      !
-     ! Using symmetry arguments
-     ! Cf=(1-ItParity)Re(<dipoles|Vm>) + i*(1+ItParity)Im(<dipoles|Vm>) 
-     ! with all product evaluated just in the eh pairs subspace 
+     ! Cf(n) = <w0|q_n> = <V0|F|Vn>
+     ! F is needed since <w0| = <V0| F
      !
-     call K_dot_product(v0_mod_,V0,Vn) 
-     Cf(it+1)= ((1._SP-real(ItParity,SP))*real(v0_mod_,SP))/Haydock_v0_mod
+     Cf_size=it+1
      !
-#if defined _KERR
-     if(l_kerr) then
-       call K_dot_product(v0_mod_,V0_kerr,Vn) 
-       Cf_kerr(it+1)= ((1._SP+real(ItParity,SP))*cI*aimag(v0_mod_))/Haydock_v0_mod
+     if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
+     if (     use_left_and_right) call K_dot_product(v0_mod_,W0,Vn,1)
+     !
+     if (.not.l_BS_ares_asymm) then
+       ! Using symmetry arguments
+       ! Cf=(1-ItParity)Re(<dipoles|Vn>) + i*(1+ItParity)Im(<dipoles|Vn>)
+       ! with all product evaluated just in the eh pairs subspace
+       Cf(it+1)=   ((1._SP+real(ItParity,SP))*real(v0_mod_,SP)) +&
+       &        cI*((1._SP-real(ItParity,SP))*aimag(v0_mod_))
+     else
+       Cf(it+1)=   v0_mod_
      endif
-#endif
      !
    endif
    !
+   !
    if (it>2) then
      !
-     if (use_cpl_scheme) then 
-       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,1,Cf(:it))
-     else
-       call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,1)
-     end if
-     !
-#if defined _KERR
-     if(l_kerr) call build_L_and_check_convergence(Af(:it),Bf(:it+1),it,2,Cf_kerr(:it))
-#endif
+     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold)
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it
      !
-     call K_output_file(iq,"Haydock")
      dumb_ch='[Haydock] Iteration '//trim(intc(it))//' Accuracy '//&
 &            trim(real2ch(reached_threshold))//'|'//trim(real2ch(Haydock_threshold))
-     if (tty_size>0.and.it_on_disk==0) call LIVE_message(dumb_ch,"r","","%s")
-     if (tty_size>0.and.it_on_disk> 0) call LIVE_message(dumb_ch,"n","","%s")
+     if (tty_size>0.and.(it_on_disk==0.or. it_on_disk< it-1)) call LIVE_message(dumb_ch,"r","","%s")
+     if (tty_size>0.and.(it_on_disk> 0.and.it_on_disk==it-1)) call LIVE_message(dumb_ch,"n","","%s")
      if (tty_size<0) call LIVE_message(dumb_ch,"n","","%s")
+     !
    else
      !
      dumb_ch='[Haydock] Iteration '//trim(intc(it))
-     if (tty_size<0) call LIVE_message(dumb_ch,"n","","%s")
-     if (tty_size>0.and.it==1) call LIVE_message(dumb_ch,"n","","%s")
-     if (tty_size>0.and.it==2) call LIVE_message(dumb_ch,"n","","%s")
+     call LIVE_message(dumb_ch,"n","","%s")
      !
    endif
    !
-   ! Haydock Coefficients and restart vectors to disk
-   !--------------------------------------------------
-   if ( mod(it,Haydock_iterIO)==0 .or. &
-&       (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       STOP_now(.FALSE.)    ) then
+   !
+   ! DEBUG<
+   !write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
+   ! DEBUG>
+   !
+   tmp_converged=(reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)
+   !
+   if(     tmp_converged) Haydock_n_converged=Haydock_n_converged+1
+   if(.not.tmp_converged) Haydock_n_converged=0
+   !
+   if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output_file(iq,"Haydock "//trim(mode))
+   !
+   if ( mod(it,Haydock_iterIO)==0 .or. Haydock_n_converged==Haydock_required_converged) then
      !
-     call HAYVEC_gather(Vnm1,Vnm1_f)
-     call HAYVEC_gather(Vn,Vn_f)
-     if (use_cpl_scheme) call HAYVEC_gather(Vnp1,Vnp1_f) 
-     !  
+     ! Haydock Coefficients and restart vectors to disk
+     !--------------------------------------------------
+     !
+     YAMBO_ALLOC_P(Vn_f,(HAYVEC_size))
+     YAMBO_ALLOC_P(Vnm1_f,(HAYVEC_size))
+     if (trim(scheme)=="pseudo-herm") then
+       YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
+     endif
+     !
+     call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size)
+     call HAYVEC_gather(Vn,Vn_f,HAYVEC_size)
+     if (trim(scheme)=="pseudo-herm") then
+       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size) 
+     endif
+     !
      call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
-     if (use_cpl_scheme) then
-       Bf(1) = Haydock_v0_mod
-#if defined _KERR
-!
-!       MG: DS to check        
-!
-!       if(l_kerr) then
-!         io_err=&
-!         io_BSS_Haydock(ID,it,reached_threshold,Cf=Cf(:it+1),Cf_kerr=Cf_kerr(:it+1))
-!       else 
-#endif
-         io_err=&
-           io_BSS_Haydock(ID,it,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f,Cf=Cf(:it+1),Vnp1=Vnp1_f)
-         Bf(1) = 0._SP
-#if defined _KERR
-!        endif
-#endif 
-     else
-       io_err=io_BSS_Haydock(ID,it,reached_threshold,Af(:it),Bf(:it+1),Vnm1_f,Vn_f)
-     end if
+     io_err=io_BSS_Haydock(ID,iq,it,reached_threshold,mode,Af(:it),Bf(:it+1),Cf(:Cf_size),Vnm1_f,Vn_f,Vnp1_f)
      !
-     if (master_cpu) deallocate(Vn_f, Vnm1_f)
-     if (master_cpu.and.use_cpl_scheme) deallocate(Vnp1_f) 
+     YAMBO_FREE_P(Vn_f)
+     YAMBO_FREE_P(Vnm1_f)
+     if (trim(scheme)=="pseudo-herm") then
+       YAMBO_FREE_P(Vnp1_f)
+     endif
+     !
    endif
    !
-   if ( (reached_threshold>0.and.reached_threshold<abs(Haydock_threshold)) .or. &
-&       STOP_now(.FALSE.)) then
+   if (Haydock_n_converged==Haydock_required_converged) then
+     !
+     call K_output_file(iq,"Haydock final "//trim(mode))
+     !
      call msg('r','Accuracy (reached)        ',reached_threshold,"[o/o]")
      call msg('r','Iterations                ',it)
      exit
+     !
    endif
    !
  enddo
@@ -535,291 +540,93 @@ subroutine K_Haydock(iq,W)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
  !
- if (use_cpl_scheme)  then
-   call BS_HAYVEC_free(V0)
-   if (allocated(V0)) deallocate(V0)
+ call BS_HAYVEC_free(V0)
+ deallocate(V0)
+ if (use_left_and_right)  then
+   call BS_HAYVEC_free(W0)
+   deallocate(W0)
+ endif
+ if (use_left_and_right.or.trim(scheme)=="pseudo-herm")  then
    YAMBO_FREE(Cf)
-   !
-#if defined _KERR
-   YAMBO_FREE(Cf_kerr)
-#endif
-   !
  end if
  !
  call PARALLEL_Haydock_VEC_COMMs('reset')
  !
- ! This is allocated in K_Transitions setup
- YAMBO_FREE(PAR_IND_T_Haydock%element_1D)
- !
  call timing('Haydock Solver',OPR='stop')
  !
- contains
-   !
-   subroutine build_L_and_check_convergence(Af,Bf,it,ii,Cf)
-     implicit none
-     integer,    intent(in)          :: it,ii
-     real(SP),   intent(in)          :: Bf(it+1),Af(it)
-     complex(SP),intent(in),optional :: Cf(it)
-     !
-     ! Work Space
-     !
-     logical     :: update_thresh
-     integer     :: i1,iw,iw_start,i_eps(2)
-     real(SP)    :: Co,tmp_tresh
-     complex(SP) :: sums,diff
-     !
-     complex(SP) :: para_term_w0(2),diam_term_used(2)
-     complex(SP) :: gauge_factor
-     complex(SP) :: freq_axis(0:W%n_freqs)
-     !
-     complex(SP) :: X_o(4,it), YbyX(2)
-     complex(SP),allocatable :: X_i(:,:)
-     !
-     ! related to terminator
-     !
-     complex(SP) :: X_t(2)
-     real(SP)    :: Av1, Av2
-     integer, parameter :: RES = 3, ARES = 2, COUPL = 1, MIN_ITER = 10
-     logical     :: UseTerminator
-     logical     :: retarded, coupling
-     !
-     Co=Co_factor*Haydock_v0_mod**2._SP
-     !
-     X_t =cZERO
-     UseTerminator = .false.  
-     !
-     retarded  = (trim(BSE_mode)=='retarded'.and..not.use_cpl_scheme)
-     coupling= use_cpl_scheme
-     !
-     i_eps(1)=2
-     i_eps(2)=4
-     !
-     para_term_w0  =cZERO
-     diam_term_used=cZERO
-     !
-     if(trim(global_gauge)=='length'  ) gauge_factor=cONE*Co/bare_qpg(iq,1)**2
-     !
-     if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
-     if (coupling) allocate(X_i(2,it))
-     if (Useterminator) then 
-       if (.not.coupling) then
-         Av1 = 0._SP
-         Av2 = 0._SP
-         do i1 = 1, it
-           Av1 = Av1 + Af(i1)
-           Av2 = Av2 + Bf(i1)
-         end do
-         Av1 = Av1/it
-         Av2 = Av2/it
-       else
-         Av1 = 0._SP
-         Av2 = 0._SP
-         do i1 = 2,it+1,2
-           Av1 = Av1 + Bf(i1)
-           Av2 = Av2 + Bf(i1+1)
-         end do
-         Av1 = Av1/(it/2+mod(it,2))
-         Av2 = Av2/(it/2)
-       end if
-     end if
-     !
-     iw_start=1
-     if(trim(global_gauge)=='velocity') iw_start=0
-     !
-     freq_axis(0 )=cZERO
-     freq_axis(1:)=W%p(:)
-     !
-     do iw=iw_start,W%n_freqs
-       X_o=cZERO
-       if (UseTerminator) then 
-         if (.not.coupling) then
-           X_t(1) = terminator(freq_axis(iw), Av1,Av2, RES)
-           if (retarded) X_t(2) = terminator(freq_axis(iw),-Av1,Av2,ARES)
-         endif
-         if (coupling.and.(mod(it,2)==0)) X_t(1) = terminator(freq_axis(iw),Av1,Av2,COUPL)
-         if (coupling.and.(mod(it,2)==1)) X_t(1) = terminator(freq_axis(iw),Av2,Av1,COUPL)
-       endif
-       X_o(1:2,it) = 1._SP/(freq_axis(iw)-Af(it)-Bf(it+1)**2*X_t(1))
-       if (retarded) X_o(3:4,it)= 1._SP/(freq_axis(iw)+Af(it)-Bf(it+1)**2*X_t(2))
-       do i1=it-1,1,-1
-         X_o(1,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(1,i1+1) )
-         if (retarded) X_o(3,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(3,i1+1))
-       enddo
-       do i1=it-2,1,-1
-         X_o(2,i1) = 1._SP/(freq_axis(iw)-Af(i1)-Bf(i1+1)**2*X_o(2,i1+1) )
-         if (retarded) X_o(4,i1)= 1._SP/(freq_axis(iw)+Af(i1)-Bf(i1+1)**2*X_o(4,i1+1))
-       enddo
-       if (coupling) then
-         X_i(:,1) = -X_o(:2,1)
-         X_i(:,2) = -Bf(2)*X_o(:2,2)*X_i(:,1)
-         YbyX(:) = X_i(:,1)*Cf(1) + X_i(:,2)*Cf(2)
-         do i1 = 2,it-1
-           X_i(1,i1+1) = -Bf(i1+1)*X_o(1,i1+1)*X_i(1,i1)
-           YbyX(1) = YbyX(1) + Cf(i1+1)*X_i(1,i1+1)
-         end do
-         do i1 = 2,it-2
-           X_i(2,i1+1) = -Bf(i1+1)*X_o(2,i1+1)*X_i(2,i1)
-           YbyX(2) = YbyX(2) + Cf(i1+1)*X_i(2,i1+1)
-         end do
-         X_o(:2,1) = YbyX(:)
-       endif
-       !
-       if(trim(global_gauge)=='velocity'.and.iw==0) then
-         if (.not.retarded) para_term_w0(:)=X_o(1:2,1)
-         if (     retarded) para_term_w0(:)=X_o(1:2,1)-X_o(3:4,1)
-         cycle
-       endif
-       !
-       Epsilon_ii(iw,1)=W%p(iw)
-       !
-       select case(ii)
-       case(1)
-         if (.not.retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)           )
-         if (     retarded) Epsilon_ii(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
-       case(2)
-         if (.not.retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)           )
-         if (     retarded) Epsilon_ij(iw,i_eps(:))=-(X_o(1:2,1)-X_o(3:4,1))
-       end select
-       !
-     enddo
-     !
-     if (trim(global_gauge)=='velocity') then
-       if (     skip_cond_sum_rule) diam_term_used(:)=diam_term_exact
-       if (.not.skip_cond_sum_rule) diam_term_used(:)=para_term_w0(:)
-     endif
-     !
-     do iw=1,W%n_freqs
-       !
-       if (trim(global_gauge)=='velocity') gauge_factor=Co/W%p(iw)**2
-       !
-       if (ii==1) Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-       if (ii==2) Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-       !
-       if (ii==1) then
-         if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
-         Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
-       endif
-       !
-#if defined _KERR
-       !
-       ! I add the term describing the Anomalous Hall effect which is
-       ! missing in the length gauge (this should be zero for systems with a gap)
-       !
-       if (l_anomalous_Hall) then
-         if (trim(global_gauge)=='length') then
-           B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
-           Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
-         else if (trim(global_gauge)=='velocity') then
-           B_Hall(2)=B_Hall(2)*Co
-         endif
-       endif
-       !
-#endif
-       !
-       select case(ii)
-       case(1)
-         sums=(Epsilon_ii(iw,2)+Epsilon_ii(iw,4))/2._SP
-         diff= Epsilon_ii(iw,2)-Epsilon_ii(iw,4)
-       case(2)
-         sums=(Epsilon_ij(iw,2)+Epsilon_ij(iw,4))/2._SP
-         diff= Epsilon_ij(iw,2)-Epsilon_ij(iw,4)
-       end select
-       !
-       update_thresh = abs(real(sums))>0._SP .and. abs(aimag(sums))>0._SP
-       !
-       if (update_thresh) then
-         tmp_tresh=max( abs(real(diff)/real(sums)) , abs(aimag(diff)/aimag(sums)) )
-         if (Haydock_threshold>0._SP ) reached_threshold=max(reached_threshold,tmp_tresh)
-         if (Haydock_threshold<0._SP ) reached_threshold=reached_threshold+tmp_tresh/real(W%n_freqs)
-       endif
-       !
-     enddo
-     !
-     if (use_cpl_scheme) deallocate(X_i)
-     !
-   end subroutine
-   !
-   subroutine HAYVEC_gather(V,fullV)
-     !
-     ! Gather the Haydock vector fragments into one 
-     ! large vector of full dimension  
-     ! on the master for I/O 
-     ! 
-     use parallel_int,  ONLY:PP_redux_wait
-     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
-                             PAR_COM_eh_INDEX
-     type(Haydock_vector),intent(in) :: V(BS_nT_grps)
-     complex(SP),allocatable,intent(out) :: fullV(:)
-     ! ws: 
-     integer                 :: istart_g,istop_g
-     !
-     YAMBO_ALLOC(fullV,(BS_K_dim))
-     fullV = cZERO
-     istop_g = 0
-     !
-     ! In this loop I need T_groups indexes since I do not want duplicates 
-     !
-     do i_g=1,BS_nT_grps
-       istart_g = istop_g + 1 
-       istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-       if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
-       fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
-     enddo
-     !
-     call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-     call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
-     !
-     if (.not.master_cpu) deallocate(fullV)
-   end subroutine HAYVEC_gather  
-   !
-   subroutine HAYVEC_scatter(V,fullV)
-     !
-     ! Scatter the full dimension vector on the master (read from disk/restart)
-     ! into Haydock vector fragments 
-     ! 
-     use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX, &
-                             PAR_COM_eh_INDEX
-     complex(SP),intent(in) :: fullV(BS_K_dim)
-     type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
-     ! ws: 
-     integer                 :: istart_g,istop_g
-     !
-     ! In this loop I need T_groups Haydock since I do need duplicates 
-     !
-     call PP_bcast(fullV,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
-     call PP_bcast(fullV,0,COMM=PAR_COM_eh_INDEX%COMM)  
-     istop_g = 0
-     !
-     do i_g=1,BS_nT_grps
-       istart_g = istop_g + 1 
-       istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-       if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       V(i_g)%fragment(1:BS_T_grp(i_g)%size) = fullV(istart_g:istop_g)  
-     enddo
-     !
-   end subroutine HAYVEC_SCATTER
-   !
-   function terminator(x,c1,c2,which)
-     !
-     complex(SP) :: terminator, f, g, x
-     real(SP) :: c1,c2
-     integer  :: which
-     !
-     select case(which)
-     case (1) 
-       f = x**2 - c1**2 + c2**2
-       g = 2._SP*x*c2**2
-       terminator = f + sqrt(f**2 -2._SP*x*g) 
-       terminator = terminator/g
-     case (2)
-       f = (x+c1)
-       terminator = f + sqrt(f**2 -4._SP*c2**2)
-       terminator = terminator/2._SP/c2**2
-     case (3)
-       f = (x-c1)
-       terminator = f + sqrt(f**2 -4._SP*c2**2)
-       terminator = terminator/2._SP/c2**2
-     end select
-   end function terminator
-   !
 end subroutine
+!
+!
+subroutine HAYVEC_gather(V,fullV,fullV_size)
+ !
+ ! Gather the Haydock vector fragments into one 
+ ! large vector of full dimension  
+ ! on the master for I/O 
+ ! 
+ use pars,          ONLY:SP,cZERO
+ use BS,            ONLY:BS_T_grp,BS_nT_grps
+ use BS_solvers,    ONLY:Haydock_vector
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_T_groups, &
+                         PAR_COM_eh_INDEX
+ !
+ implicit none
+ !
+ type(Haydock_vector),intent(in) :: V(BS_nT_grps)
+ integer,    intent(in)  :: fullV_size
+ complex(SP),intent(out) :: fullV(fullV_size)
+ ! ws: 
+ integer                 :: istart_g,istop_g,i_g
+ !
+ fullV = cZERO
+ istop_g = 0
+ !
+ ! In this loop I need T_groups indexes since I do not want duplicates 
+ !
+ do i_g=1,BS_nT_grps
+   istart_g = istop_g + 1 
+   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+   if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
+   fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
+ enddo
+ !
+ call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
+ !
+end subroutine HAYVEC_gather  
+!
+!
+subroutine HAYVEC_scatter(V,fullV,fullV_size)
+ !
+ ! Scatter the full dimension vector on the master (read from disk/restart)
+ ! into Haydock vector fragments 
+ ! 
+ use pars,          ONLY:SP
+ use BS,            ONLY:BS_T_grp,BS_nT_grps
+ use BS_solvers,    ONLY:Haydock_vector
+ use parallel_int,  ONLY:PP_bcast
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX,PAR_IND_T_Haydock
+ !
+ implicit none
+ !
+ integer,    intent(in) :: fullV_size
+ complex(SP),intent(in) :: fullV(fullV_size)
+ !
+ type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
+ ! ws: 
+ integer                 :: istart_g,istop_g,i_g
+ !
+ ! In this loop I need T_groups Haydock since I do need duplicates 
+ !
+ call PP_bcast(fullV,0,COMM=PAR_COM_Xk_ibz_INDEX%COMM)  
+ call PP_bcast(fullV,0,COMM=PAR_COM_eh_INDEX%COMM)  
+ istop_g = 0
+ !
+ do i_g=1,BS_nT_grps
+   istart_g = istop_g + 1 
+   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+   V(i_g)%fragment(1:BS_T_grp(i_g)%size) = fullV(istart_g:istop_g)  
+ enddo
+ !
+end subroutine HAYVEC_scatter

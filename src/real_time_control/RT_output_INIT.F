@@ -67,8 +67,6 @@ subroutine RT_output_INIT( )
    if (i_fp==1) call RT_FILE_add(TITLES=(/"Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
  enddo
  !
- ! GPL_EXCLUDE_START 
- ! 
  call RT_FILE_add('energy',TITLES=(/"Time[fs]  ","dE_kin[eV]","dE_ion[eV]"/))
  if(     l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Hxc[eV]","dE_tot[eV]"/))
  if(.not.l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Har[eV]","dE_xc [eV]","dE_tot[eV]"/))
@@ -82,16 +80,12 @@ subroutine RT_output_INIT( )
 &  TITLES=(/"Time[fs]   ","dE   [eV]  ","dE(h)[eV]  ","dE(e)[eV]  ","dS   [eV/K]",&
 &           "dS(h)[eV/K]","dS(e)[eV/K]","T    [K]   ","T(h) [K]   ","T(e) [K]   "/))
  !
- ! GPL_EXCLUDE_END
- !
  do i_order=0,N_MAX_RT_X_order,1
    call RT_FILE_add('dP_order_'//trim(intc(i_order)),TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
  enddo
  !
  call RT_FILE_add('P_minus_P_pump',TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
  !
- ! GPL_EXCLUDE_START 
- ! 
  call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time [fs]       ","Hole  Abs  [meV]","Elec  Emit [meV]"/))
  if(RT_EP_abs_life%active) call RT_FILE_add(TITLES=(/"Hole Emit [meV]","Elec Abs  [meV]"/))
  if(l_RT_lifetimes_Tfit) call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
@@ -109,8 +103,6 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('BGR',(/"Time[fs]  "/))
  call RT_FILE_add(TITLES=(/"DirGap [meV]","IndGap [meV]"/))
  call RT_FILE_add(TITLES=(/"DeltaDirGap [meV]","DeltaIndGap [meV]"/))
- !
- ! GPL_EXCLUDE_END
  !
  ! ... energy resolved ...
  !=========================
@@ -150,8 +142,6 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add('X_effective',TITLES=(/'T [fs]','E [eV]','X/Im  ','X/Re  '/))
  !
- ! GPL_EXCLUDE_START 
- ! 
  call RT_FILE_add('single_time_dos',TITLES=(/'E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
@@ -199,8 +189,6 @@ subroutine RT_output_INIT( )
    enddo
  enddo
  !
- ! GPL_EXCLUDE_END 
- ! 
  call msg('l','done')
  !
  call timing('RT output (INIT)',OPR='stop')

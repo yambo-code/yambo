@@ -74,13 +74,7 @@ subroutine RT_start_and_restart(E,k,q)
  integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(8)
  character(schlen) :: db_name(8)
  integer, external :: io_RT_components
- !
- ! GPL_EXCLUDE_START
- !
  integer, external :: RT_Lifetimes_evaluation_plan
- !
- ! GPL_EXCLUDE_END
- !
  logical :: RESTART
  !
  ! Initialize the Gf, potentials, levels and occupations
@@ -121,9 +115,6 @@ subroutine RT_start_and_restart(E,k,q)
  !=====================================================
  !
  RESTART=.FALSE.
- !
- ! GPL_EXCLUDE_START
- !
  db_name(4)='OBSERVABLES'
  db_name(5)='G'
  db_name(6)='carriers'
@@ -235,8 +226,6 @@ subroutine RT_start_and_restart(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  if (.not.RESTART) NE_time=0._SP
  !
  ! Zeroing DESCs
@@ -254,13 +243,10 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================
- !
- ! GPL_EXCLUDE_START
  if (l_velocity_gauge_corr) then
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(k,E,.true.)
  endif
- ! GPL_EXCLUDE_END
  !
  call msg('r','')
  !
@@ -278,9 +264,6 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Retarded Green Functions matrix
  ! ===============================
- !
- ! GPL_EXCLUDE_START
- !
  if (l_elph_scatt.or.l_elel_scatt) then
    !
    call k_build_up_BZ_tables(q)
@@ -297,8 +280,6 @@ subroutine RT_start_and_restart(E,k,q)
    call IO_desc_add(Gr_desc,'s',"[Gr] Retarded Green`s function",S="none")
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  call PP_redux_wait()
  !

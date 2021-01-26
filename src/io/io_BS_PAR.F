@@ -32,7 +32,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
-&                        l_BSK_IO_triangular
+&                        l_BSK_IO_triangular,l_BS_ares_asymm,BS_mat_res_ares_dim,BS_res_ares_dim
  use BS_solvers,    ONLY:variables_BS,BSS_desc
  use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,&
 &                        io_connect,io_elemental,def_variable_bulk,&
@@ -48,11 +48,11 @@ subroutine io_BS_PAR_init(iq,X,ID)
  integer, external :: variables_BS_more
  !
  logical :: def_var
- integer :: io_BS,    VAR_IDs(8), n_vars, i1
+ integer :: io_BS,    VAR_IDs(6),n_vars,i1,i2
  type(IO_desc)     :: local_desc
  character(schlen) :: db_name
- character(lchlen) :: full_db_name,ch(4)
- character(schlen) :: dim_names(3),dim_names_done(2)
+ character(lchlen) :: full_db_name,ch(3)
+ character(schlen) :: dim_names(3,3)
  !
  ! Connect to parallel netCDF file.
  !
@@ -100,6 +100,7 @@ subroutine io_BS_PAR_init(iq,X,ID)
      call msg("s","Complete BSE file found in "//trim(io_file(ID))//". Loading kernel.")
    else
      call msg("s","Partial BSE file found in "//trim(io_file(ID))//". Not accepted in reading mode.")
+     return
    endif
  endif
  !
@@ -116,26 +117,24 @@ subroutine io_BS_PAR_init(iq,X,ID)
  ch(1)="BSE_RESONANT"
  ch(2)="BSE_COUPLING"
  ch(3)="BSE_ANTI-RESONANT"
- ch(4)="BSE_ANTI-COUPLING"
- VAR_IDs=(/1,2,3,4,5,6,7,8/)
+ VAR_IDs=(/1,2,3,4,5,6/)
  !
- if (.not.BS_K_coupling)           n_vars=1
- if (     BS_K_coupling.and.iq==1) n_vars=2
- if (     BS_K_coupling.and.iq/=1) n_vars=4
+ if (.not.BS_K_coupling) n_vars=1
+ if (     BS_K_coupling) n_vars=2
+ if ( l_BS_ares_asymm  ) n_vars=n_vars+1
  !
  if(l_BSK_IO_triangular) then
    !
    ! This is the upper triangular mode
    !
-   dim_names  =     [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
-   dim_names_done = [character(schlen) :: 'BS_IO_dim1','BS_IO_dim2']
+   dim_names(:,1) = [character(schlen) :: 'complex', 'BS_IO_dim1','BS_IO_dim2']
    !
-   if(mod(BS_K_dim,2)==0) then
-     BS_IO_dim(1) = BS_K_dim+1
-     BS_IO_dim(2) = BS_K_dim/2
+   if(mod(BS_K_dim(1),2)==0) then
+     BS_IO_dim(1,1) = BS_K_dim(1)+1
+     BS_IO_dim(2,1) = BS_K_dim(1)/2
    else
-     BS_IO_dim(1) = BS_K_dim
-     BS_IO_dim(2) = (BS_K_dim+1)/2
+     BS_IO_dim(1,1) = BS_K_dim(1)
+     BS_IO_dim(2,1) = (BS_K_dim(1)+1)/2
    endif
    !
    do i1=1,n_vars
@@ -146,18 +145,28 @@ subroutine io_BS_PAR_init(iq,X,ID)
    !
    ! Here is the 2D mode
    !
-   dim_names =      [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
-   dim_names_done = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
+   dim_names(:,1) = [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
+   BS_IO_dim(:,1) = (/BS_K_dim(1),BS_K_dim(1)/)
    !
-   BS_IO_dim = BS_K_dim
+   if(BS_res_ares_dim==2) then
+     dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim_A']
+     BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
+     dim_names(:,3) = [character(schlen) :: 'complex', 'BS_K_dim_A', 'BS_K_dim_A']
+     BS_IO_dim(:,3) = (/BS_K_dim(2),BS_K_dim(2)/)
+   else if (BS_K_coupling) then
+     dim_names(:,2) = [character(schlen) :: 'complex', 'BS_K_dim', 'BS_K_dim']
+     BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(1)/)
+   endif
    !
  endif
  !
  do i1=1,n_vars
-   call def_variable_bulk(ID,trim(ch(i1)),       VAR_IDs(2*i1-1),&
-           &               [2,BS_IO_dim],SP,dim_names,     par_io_kind='independent')
-   call def_variable_bulk(ID,trim(ch(i1))//"_DONE",VAR_IDs(2*i1),&
-           &                  BS_IO_dim , 0,dim_names_done,par_io_kind='independent')
+   i2=i1
+   if(i1==2 .and. BS_mat_res_ares_dim==2) then; i2=3; endif
+   call def_variable_bulk(ID,trim(ch(i2)),       VAR_IDs(2*i2-1),&
+           &               [2,BS_IO_dim(:,i2)],SP,dim_names(:,i2),par_io_kind='independent')
+   call def_variable_bulk(ID,trim(ch(i2))//"_DONE",VAR_IDs(2*i2),&
+           &                  BS_IO_dim(:,i2), 0,dim_names(2:3,i2),par_io_kind='independent')
  enddo
  !
 end subroutine
@@ -167,9 +176,9 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  !
  ! close BSE netcdf parallel file
  !
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded
- use IO_m,          ONLY:io_disconnect
+ use IO_m,          ONLY:io_disconnect,io_BS_K
  !
  implicit none
  !
@@ -182,7 +191,7 @@ subroutine io_BS_PAR_free(ID,l_kernel_complete)
  call PP_redux_wait()
  !
  BS_K_has_been_calculated_loaded=l_kernel_complete
- l_BSE_kernel_complete          =l_kernel_complete
+ l_BSE_kernel_complete          =l_kernel_complete.and.io_BS_K
  !
  io_BS=variables_BS_more(ID,'end')
  !
@@ -228,8 +237,6 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
    VAR_IDs=(/3,4/)
  case("A")
    VAR_IDs=(/5,6/)
- case("Q")
-   VAR_IDs=(/7,8/)
  end select
  !
  ! Get dimensions
@@ -253,8 +260,8 @@ subroutine io_BS_PAR_block(iq,i_block,ID)
      ! Write element by element in a reduced 2D matrix
      !
      do i1=1,imax
-       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1),kind=IPL)),kind=IP)+1
-       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1),kind=IPL),kind=IP)+1
+       idx1=int(mod(idx+int(i1-2,kind=IPL),int(BS_IO_dim(1,1),kind=IPL)),kind=IP)+1
+       idx2=int((idx+int(i1-2,kind=IPL))/int(BS_IO_dim(1,1),kind=IPL),kind=IP)+1
        call io_variable_bulk(ID, VAR_IDs(1),  C2=BS_blk(i_block)%mat(i1:i1,i2:i2),  IPOS=[1,idx1,idx2] )
        call io_variable_bulk(ID, VAR_IDs(2), CH2=BS_blk(i_block)%done(i1:i1,i2:i2), IPOS=[  idx1,idx2] )
      enddo

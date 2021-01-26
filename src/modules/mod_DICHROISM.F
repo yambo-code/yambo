@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2018 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -21,29 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module KERR
+module DICHROISM
  !
- use drivers, ONLY:l_kerr
  use pars,    ONLY:SP
+ use BS,      ONLY:l_BS_dichroism
+ !
 #include<memory.h>
  !
- complex(SP)              :: A_drude(2)
- complex(SP)              :: B_Hall(2)
- complex(SP), allocatable :: BSS_dipoles_kerr(:)
+ complex(SP), allocatable :: BSS_dipoles_dich(:,:)
  !
  contains
    !
-   subroutine BSS_KERR_alloc( )
+   subroutine BSS_DICH_alloc( )
      use pars,       ONLY:cZERO
-     use BS,         ONLY:BS_H_dim,BS_K_dim
-     if (.not.l_kerr) return
-     YAMBO_ALLOC(BSS_dipoles_kerr,(BS_H_dim))
-     BSS_dipoles_kerr = cZERO
+     use BS,         ONLY:BS_dip_size,BS_H_dim
+     if (.not.l_BS_dichroism) return
+     YAMBO_ALLOC(BSS_dipoles_dich,(BS_dip_size,BS_H_dim))
+     BSS_dipoles_dich = cZERO
    end subroutine
    !
-   subroutine BSS_KERR_free( )
-     if (.not.l_kerr) return
-     YAMBO_FREE(BSS_dipoles_kerr)
+   subroutine BSS_DICH_free( )
+     if (.not.l_BS_dichroism) return
+     YAMBO_FREE(BSS_dipoles_dich)
    end subroutine
    !
 end module

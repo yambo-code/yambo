@@ -23,7 +23,7 @@
 !
 subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
  !
- use pars,         ONLY:SP,DP
+ use pars,         ONLY:SP,DP,IPL
  use parallel_m,   ONLY:host_name
  use stderr,       ONLY:real2ch
  use units,        ONLY:Kilobyte
@@ -33,7 +33,7 @@ subroutine MEM_global_mesg(what,xkind,HOST_SIZE)
  !
  character(*), intent(in) :: what
  integer,      intent(in) :: xkind
- integer,      intent(in) :: HOST_SIZE(:)
+ integer(IPL), intent(in) :: HOST_SIZE(:)
  !
  integer   :: i1
  real(DP)  :: MEM_size

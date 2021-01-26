@@ -111,6 +111,7 @@ module YPPm
  integer               ::BANDS_steps
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
+ character(schlen)     ::INTERP_input_mode='BOLTZ'
  type(levels)          ::CIRCUIT_E_db
  integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
@@ -273,8 +274,8 @@ module YPPm
  !
  ! BSE data
  !
- complex(SP), allocatable ::BS_R_left(:)
- complex(SP), allocatable ::BS_R_right(:)
+ complex(SP), pointer     ::BS_R_left(:)
+ complex(SP), pointer     ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()

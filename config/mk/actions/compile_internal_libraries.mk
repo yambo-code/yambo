@@ -1,7 +1,7 @@
 int-libs: 
 	@for target in $(INT_LIBS) ; do $(MAKE) $$target; done
 #
-qe-pseudo: ext-libs
+qe_pseudo: ext-libs
 	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 slatec: ext-libs
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)

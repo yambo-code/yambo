@@ -30,6 +30,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
+ use BS,            ONLY:BS_res_ares_dim
  ! SCHEMES
  use parallel_m,    ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz,PARs_PH_eh_bands,PAR_scheme_reset
  ! COMMUNICATORS
@@ -47,7 +48,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_Xk_bz,&
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q_ibz,PAR_IND_Q_bz,PAR_IND_SLK,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
-&                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_WF_linear,&
+&                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_WF_linear,PAR_IND_T_Haydock,&
 &                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_WF_b_and_k,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_freqs,&
 &                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP
@@ -104,11 +105,13 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PP_indexes_reset(PAR_IND_WF_b_and_k)
  call PP_indexes_reset(PAR_IND_WF_linear)
  call PP_indexes_reset(PAR_IND_T_ordered)
+ call PP_indexes_reset(PAR_IND_T_Haydock)
  call PP_indexes_reset(PAR_IND_freqs)
  !
  if (ENVIRONMENT=="Response_T_space") then
-   if (.not.allocated(PAR_IND_eh)) allocate(PAR_IND_eh(nXkibz))
-   do i_k=1,nXkibz
+   if (allocated(PAR_IND_eh)) deallocate(PAR_IND_eh)
+   allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
+   do i_k=1,nXkibz*BS_res_ares_dim
      call PP_indexes_reset(PAR_IND_eh(i_k))
    enddo
  endif

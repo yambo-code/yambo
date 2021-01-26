@@ -178,8 +178,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range so to be easily convoluted
@@ -187,8 +185,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  if (allocated(Xen%GreenF).and.current_iq==0) call X_GreenF_remap(X%ib,Xen,Xw)
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Time-Rev is Spatial Inv => only half X is eval
  !                            ===================
@@ -300,23 +296,15 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    ! 2) Then the frequency dependent term
    !=======================================
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _ELPH
    if(     allocated(Xen%GreenF)) call X_GreenF_convoluted(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering)
    if(.not.allocated(Xen%GreenF)) & 
 &       call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
 #else
    !
-   ! GPL_EXCLUDE_END
-   !
    call X_GreenF_analytical(iq,X_poles_tab(i_bg,:),Xw,Xen,Xk,GreenF,X%ordering,'G',.FALSE.,l_X_terminator)
    !
-   ! GPL_EXCLUDE_START
-   !
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
    ! 3) Finally multiply residual and frequency dependent term
    !===========================================================

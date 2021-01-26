@@ -86,8 +86,6 @@ subroutine RT_initialize(E,k,q)
  call parser('VelGaugeNoDiam',       l_velocity_gauge_tmp)
  l_velocity_gauge_diam=.not.l_velocity_gauge_tmp
  !
- ! GPL_EXCLUDE_START
- !
  call parser('DephCVonly',           RT_deph_cv_only)
  call parser('RADmagnific',          RAD_magnification)
  call parser('VelGaugeCorr',         l_velocity_gauge_corr)
@@ -129,8 +127,6 @@ subroutine RT_initialize(E,k,q)
 #else
  l_RT_iterative_ELPH_lifetimes  = .FALSE.
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
@@ -175,8 +171,6 @@ subroutine RT_initialize(E,k,q)
  call section('+P','Dephasing matrix setup')
  !
  call RT_Dephasing_Matrix(E)
- !
- ! GPL_EXCLUDE_START
  !
  if (.not.RT_is_statically_dephased) then
    !
@@ -232,8 +226,6 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! External fields checks
  !========================
  !
@@ -272,7 +264,7 @@ subroutine RT_initialize(E,k,q)
      !
      Efield(i1)%t_initial=real(Efield(i1)%t_initial_indx-1)*RT_step
      !
-     call Check_symmetries(Efield(i1)%versor)
+     call Check_symmetries(Efield(i1)%versor,"electric")
      !
      if ( Efield(i1)%ef_name=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
@@ -290,13 +282,9 @@ subroutine RT_initialize(E,k,q)
  !
  l_NE_dynamics= l_NE_with_fields .or. l_rt_carriers_in_use
  !
- ! GPL_EXCLUDE_START
- !
  ! Check on the PROBE/PUMP frequencies
  !====================================
  call RT_Field_Commensurable_Frequencies()
- !
- ! GPL_EXCLUDE_END
  !
  if ( .not. l_NE_dynamics ) call error('No external fields nor manual pumping provided')
  !
@@ -309,8 +297,6 @@ subroutine RT_initialize(E,k,q)
  enddo
  call PP_redux_wait(NK_cpu,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
- ! GPL_EXCLUDE_START
- !
  ! Memory Depth & Simulation points (Lifetimes)
  !=============================================
  if (l_elph_scatt.or.l_elel_scatt) then
@@ -321,8 +307,6 @@ subroutine RT_initialize(E,k,q)
    endif
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! Checking extended COLLISIONS
  !==============================
  !
@@ -330,18 +314,14 @@ subroutine RT_initialize(E,k,q)
    !
    call section('=','Electronic Collisions loading and setup')
    !
-   ! GPL_EXCLUDE_START
    if (l_elel_scatt) then
      call PLASMA_build_up(E,k,q)
      call PLASMA_parallel_setup(EH_gas)
    endif
-   ! GPL_EXCLUDE_END
    !
    if (io_COLLs) call COLLISIONS_load(.TRUE.)
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _ELPH
  !
@@ -352,13 +332,9 @@ subroutine RT_initialize(E,k,q)
  !
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  l_RT_is_WFfree = (l_use_Hxc_collisions .or. trim(RT_potential)=="IP")   .and.     &
 &                 (.not.eval_energy) .and. (.not.l_velocity_gauge_corr)  .and.     &
 &                 (COLLISIONS_have_HARTREE.or.index(trim(RT_potential),"HARTREE")==0)
- !
- ! GPL_EXCLUDE_START
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt.or.l_phel_scatt
  !
@@ -366,8 +342,6 @@ subroutine RT_initialize(E,k,q)
  if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
  !
  call RT_adjust_equilibrium()
- !
- ! GPL_EXCLUDE_END
  !
  ! LOG
  ! ===
@@ -379,8 +353,6 @@ subroutine RT_initialize(E,k,q)
  call msg( 'r', 'Simulation time            ',NE_tot_time*AUT2FS,"[fs]")
  call msg( 'r', 'Basic time step            ',RT_step*AUT2FS,"[fs]")
  call msg( 'r', '           steps           ',NE_steps)
- !
- ! GPL_EXCLUDE_START
  !
  call msg( 'r', '      time step   (now)    ',RT_dyn_step*AUT2FS,"[fs]")
  !
@@ -409,13 +381,9 @@ subroutine RT_initialize(E,k,q)
    call msg( 'r', 'Equilibrium scattering included',l_RT_include_eq_scatt)
  endif
  !
- ! GPL_EXCLUDE_END
- !
  call msg( 'nr','---Flags (if any)---')
  !
  call msg( 'r','Hxc approximation          ',trim(RT_potential))
- !
- ! GPL_EXCLUDE_START
  !
  if (l_elph_scatt)         call msg( 'r','El-Ph         scattering   ',l_elph_scatt)
 #if defined _PHEL
@@ -428,8 +396,6 @@ subroutine RT_initialize(E,k,q)
  endif
  if (l_update_SOC)         call msg( 'r','Update SOC Interaction     ',l_update_SOC)
  !
- ! GPL_EXCLUDE_END
- !
  call msg( 'nr','---I/O---')
  call                          msg('r', 'T cache step  of J,P,M     ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
@@ -437,8 +403,6 @@ subroutine RT_initialize(E,k,q)
  call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
- !
- ! GPL_EXCLUDE_START
  !
  if(Phase_LifeTime>thresh.or.RAD_LifeTime>thresh) then
    call msg( 'nr','---Damping---')
@@ -477,8 +441,6 @@ subroutine RT_initialize(E,k,q)
  else
    call msg( 'r',    'K-points            (TOTAL)',RT_nk)
  endif
- !
- ! GPL_EXCLUDE_END
  !
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')

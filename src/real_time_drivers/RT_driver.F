@@ -107,11 +107,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title))
  !
- ! GPL_EXCLUDE_START
- !
- !call msg('s','Scattering(s)'//trim(sec_title(1))//' '//trim(sec_title(2))//' '//trim(sec_title(3)))
- !
- ! GPL_EXCLUDE_END
  !
  call section('+','Initialization')
  !#################################
@@ -146,11 +141,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call IO_and_Messaging_switch("RESET")
  !
- ! GPL_EXCLUDE_START
- !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
- !
- ! GPL_EXCLUDE_END
  !
  ! Core initialization
  !
@@ -158,7 +149,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles & WF dimensions
  !=========================
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,k)
  !
  ! WFs loading
  !=============
@@ -167,9 +158,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   ! GPL_EXCLUDE_START
    if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
-   ! GPL_EXCLUDE_END
    !
    call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
@@ -186,13 +175,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  call RT_alloc(E,"all")
  call RT_control_alloc("all")
  !
- ! GPL_EXCLUDE_START
- !
  ! Initial allocation and basic definitions of the RT_carriers object
  !
  call RT_carriers_object(RT_carriers,E,k,WHAT='allocate')
- !
- ! GPL_EXCLUDE_END
  !
  ! Restart from a previous RT run or from a SC calculation
  !
@@ -232,8 +217,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  if(l_use_collisions .and. io_COLLs)  call COLLISIONS_load(.FALSE.)
  !
- ! GPL_EXCLUDE_START
- !
  ! Reference lifetimes and/or G_lesser
  !=====================================
  !
@@ -255,8 +238,6 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  endif
  !
  l_initial_equilibrium=.FALSE.
- !
- ! GPL_EXCLUDE_END
  !
  ! Qindx_X and Qindx_S not needed in real-time they are used only in dipoles and collisions calculations
  !
@@ -302,37 +283,25 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !============================================
    call RT_Hamiltonian(dG_lesser(:,:,:,i_MEM_now),A_tot,E,k)
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Rotation in the Coherent Hamiltonian basis
    !============================================
    call RT_Hamiltonian_diagonalize(E,k,OBSERVABLES(22:25),A_tot)
-   !
-   ! GPL_EXCLUDE_END
    !
    ! Energy, number of carriers, fit of electronic temperatures
    !=============================================================
    call RT_Observables(E,k,dG_lesser(:,:,:,i_MEM_now),OBSERVABLES)
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Calculate all relaxation and dissipation terms
    !===============================================
    call RT_relaxation(E,k,q,NE_time)
-   !
-   ! GPL_EXCLUDE_END
    !
    ! Write DBs and output
    !=====================
    call RT_output_and_IO_driver('write',E,k,OBSERVABLES)
    !
-   ! GPL_EXCLUDE_START
-   !
    ! Time step update
    !=======================
    call RT_time_step_update( E )
-   !
-   ! GPL_EXCLUDE_END
    !
    ! Memory maps for the step (to be done before the NE_time/NE_i_time update)
    !=========================
@@ -367,13 +336,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
      call RT_control_free("all")
      call WF_free(WF)
      !
-     ! GPL_EXCLUDE_START
-     !
      call PLASMA_free(EH_gas)
      call RT_carriers_object(RT_carriers,WHAT='free')
      if (allocated(GW_NEQ_COLL_element)) call COLLISIONS_alloc_and_free("GW_NEQ","v3","clean",0)
-     !
-     ! GPL_EXCLUDE_END
      !
      if (allocated(HXC_COLL_element))    call COLLISIONS_alloc_and_free("SEX","v1 table","clean",0)
    end subroutine

@@ -52,8 +52,6 @@ integer function variables_RT_dynamic(ID)
  call io_variable_elemental(ID,&
 &    VAR=" [RT] NE steps(done)",I0=NE_i_time,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,TERMINATOR="[fs]")
  !
- ! GPL_EXCLUDE_START
- !
  call io_variable_elemental(ID,VAR=" [RT] Lif Extr Inte/Intr(now)",R1=RT_life_extrap_times,DB_R1=RT_life_extrap_times,&
 &    DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
  !

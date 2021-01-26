@@ -34,9 +34,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
-#if defined _PL
- use drivers,        ONLY:l_photolum
-#endif
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -308,9 +305,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_chi=runlevel_is_on('chi')
        l_bse=runlevel_is_on('bse')
        l_bss=runlevel_is_on('bss')
-#if defined _PL
-       l_photolum=runlevel_is_on('photolum')
-#endif
        l_tddft=runlevel_is_on('tddft')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
@@ -322,23 +316,16 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_rim=runlevel_is_on('rim_cut')
        l_col_cut=runlevel_is_on('rim_cut')
        l_cohsex=runlevel_is_on('cohsex')
-       !
-       ! GPL_EXCLUDE_START
-       !
        l_acfdt=runlevel_is_on('acfdt')
-       !
-       ! GPL_EXCLUDE_END
-       !
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
 #endif
 #if defined _RT
        !
        l_real_time=runlevel_is_on('negf')
-       ! GPL_EXCLUDE_START
        l_elel_scatt =runlevel_is_on('el_el_scatt')
+       l_elph_scatt=runlevel_is_on('el_ph_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
-       ! GPL_EXCLUDE_END
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
@@ -372,15 +359,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
            call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
          endif
          !
-         ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
-         ! GPL_EXCLUDE_END
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
-         l_phel_corr=runlevel_is_on('ph_el_corr')
-         ! GPL_EXCLUDE_START
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
-         ! GPL_EXCLUDE_END
+         l_phel_corr=runlevel_is_on('ph_el_corr')
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
 #endif
@@ -419,16 +402,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    subroutine Dip_check_ordered
      !
      implicit none
-     logical :: all_bands
+     logical :: all_bands,l_local
      !
      call parser('DipBandsAll',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
-#if defined _SC  || defined _RT || defined _NL
-     if ( l_sc_run.or.l_real_time.or.l_nl_optics ) Dip%bands_ordered=.false.
-#endif
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics !.or.l_BS_dichroism
+     if (l_local)         Dip%bands_ordered=.false.
 #if defined _QED
-     if (l_elphoton_corr)                          Dip%bands_ordered=.false.
+     if (l_elphoton_corr) Dip%bands_ordered=.false.
 #endif
      !
    end subroutine Dip_check_ordered
@@ -477,10 +459,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      endif
      !
      if (l_gw0.and.l_cohsex) call parser('UseEbands',COHSEX_use_empties)
-     !
-#if defined _PL
-     if (l_photolum) call initactivate(1,'bse optics dipoles')
-#endif
      !
 #if defined _SC
      if (l_sc_magnetic) call initactivate(1,'potential')
@@ -566,6 +544,5 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      !
    end subroutine varsetup2
-   !
    !
 end function

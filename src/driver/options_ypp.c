@@ -115,7 +115,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Electronic properties";
  /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
-#if defined _YPP_ELPH  
+#if defined _ELPH  
  options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias";
 #elif defined _YPP_MAGNETIC 
  options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,angu(l)ar,(p)osition";
@@ -138,7 +138,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_opt='e';
  options[*i_opt].bin="ypp ypp_ph";
  /* GPL_EXCLUDE_START */
-#if defined _YPP_ELPH  
+#if defined _ELPH  
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,(e)lias,(g)kkp";
 #else
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate";

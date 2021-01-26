@@ -140,7 +140,6 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _RT
        if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
 #endif
-!GPL_EXCLUDE_START
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
@@ -149,7 +148,6 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
          enddo
        endif
 #endif
-!GPL_EXCLUDE_END
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
        !
@@ -233,7 +231,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  endif
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
+ ! DEBUG>
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
+ !DEBUG<
  !
  ! Symmetrization
  !
@@ -245,9 +245,10 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    do i_symm=1,rho_syms
      rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_symm))/real(nsym,SP)
    enddo
-   if (mag_syms)      return
-   if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
-   if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
+   if (.not.mag_syms) then
+     if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
+     if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
+   endif
  endif
  !
  !if (l_J) then

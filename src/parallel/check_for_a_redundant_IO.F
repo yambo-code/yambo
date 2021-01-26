@@ -31,8 +31,12 @@ subroutine check_for_a_redundant_IO(path_,cpu_seen_by_me,cpu_seen_by_any)
  use pars,      ONLY:lchlen
  use stderr,    ONLY:cstr,intc
  use parallel_m,ONLY:myid,ncpu
+ use mpi
  implicit none
- include 'mpif.h'
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
  character(*)    ::path_
  !
  ! Work Space

@@ -114,7 +114,7 @@ module DIPOLES
          DIP_S=cZERO
        case('DIP_orbital')
          if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,d(7)))
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
@@ -203,9 +203,11 @@ module DIPOLES
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)
      !
      use pars,           ONLY:cZERO
-     use D_lattice,      ONLY:i_time_rev,dl_sop,nsym
+     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use electrons,      ONLY:n_spinor
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
+     use matrix_operate, ONLY:m3det
      !
      implicit none
      !
@@ -218,6 +220,7 @@ module DIPOLES
      ! Work space
      !
      complex(SP) :: DIP_in(3)
+     real(SP)    :: tmp_sop(3,3)
      integer :: ik,is,ik_mem
      logical :: t_rev
      !
@@ -226,15 +229,37 @@ module DIPOLES
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
      !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     tmp_sop=dl_sop(:,:,is)
+     !
+     if(trim(what)=="DIP_S" ) then
+       if (n_spinor==2) then
+         ! pseudo vectors are invariant under inversion but reverse under t_rev
+         tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+         if( t_rev ) tmp_sop=-tmp_sop
+       else
+         ! in case n_sp_pol==2 the spin is assumed to be independent on symmetries
+         tmp_sop=dl_sop(:,:,1)
+         t_rev=.false.
+       endif
+     endif
+     !
+     if(trim(what)=="DIP_L" ) then
+       ! pseudo vectors are invariant under inversion but reverse under t_rev
+       tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+       if( t_rev ) tmp_sop=-tmp_sop
+     endif
+     !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_L" ) DIP_in=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)  
      !
-     DIP_rotated = matmul( dl_sop(:,:,is) , DIP_in  )
-     !
-     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     DIP_rotated = matmul( tmp_sop , DIP_in  )
      !
      if (t_rev) DIP_rotated = conjg( DIP_rotated )
      !

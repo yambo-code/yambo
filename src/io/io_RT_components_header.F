@@ -60,8 +60,6 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  if (l_THETA) then
    call def_variable_bulk(ID,"Q_weight",3,(/nqbz/),SP)
    call  io_variable_bulk(ID,3,R1=q_weight_RT(:,1,1))
@@ -86,8 +84,6 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
    call  io_variable_bulk(ID,6,I2=RT_carriers%table)
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  if (l_G) then
    call def_variable_elemental(ID,"Save_G_history",1,LP+100,0) 

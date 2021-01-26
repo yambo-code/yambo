@@ -105,9 +105,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !=====================
  if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
- !
- !GPL_EXCLUDE_START
- !
  ! Excitonic Eliashberg function 
  !================================
 #if defined _YPP_ELPH
@@ -125,8 +122,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
  !
 #endif
- !
- !GPL_EXCLUDE_END
  !
  ! CLEAN
  !

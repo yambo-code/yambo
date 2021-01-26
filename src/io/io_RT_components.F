@@ -215,8 +215,6 @@ integer function io_RT_components(what,ID)
  ! 3rd SECTION
  !=============
  !
- ! GPL_EXCLUDE_START
- !
 #if !defined _PAR_IO
  !
  ! === deal with K-fragments ===
@@ -259,8 +257,6 @@ integer function io_RT_components(what,ID)
    if (write_is_on(ID)) CARR_RT_IO_t%first_IO(3)=.FALSE.
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
  ! Current and Polarization
  !==========================

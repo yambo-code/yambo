@@ -40,7 +40,7 @@ subroutine INIT_read_command_line(rstr,init_)
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_pauli,MAG_landau
 #endif
 #if defined _RT
@@ -366,7 +366,7 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
 #endif
      !
-#if defined _MAGNETIC
+#if defined _SC
      if ( trim(rstr_piece(i1)) == 'magnetic' )  then
        if ( STRING_match(rstr_piece(i1+1),'p') ) then
          MAG_hamiltonian_type='pauli'

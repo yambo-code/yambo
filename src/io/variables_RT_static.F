@@ -41,8 +41,6 @@ integer function variables_RT_static(ID,what,l_carriers)
  use ELPH,           ONLY:elph_branches
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
  use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status,read_is_on
@@ -77,8 +75,6 @@ integer function variables_RT_static(ID,what,l_carriers)
  call def_variable_elemental(ID,VAR="POTENTIAL",VAR_SZ=1,VAR_KIND=0,MENU=0)
  call io_variable_elemental(ID,CH0=RT_potential,VAR=' [RT] Potential',WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  !
- ! GPL_EXCLUDE_START
- !
  ! ELPH_vars
  !
 #if defined _ELPH
@@ -108,8 +104,6 @@ integer function variables_RT_static(ID,what,l_carriers)
  ! 
  variables_RT_static=io_descriptors(FineGd_desc,"FineGd",ID,.FALSE.)
  !
- ! GPL_EXCLUDE_END
- !
  if(any((/l_OBS,l_G,l_carriers_/))) then
    !
    ! RT_DYNAMICS
@@ -122,8 +116,6 @@ integer function variables_RT_static(ID,what,l_carriers)
 &    DESCRIPTOR=RT_desc,TERMINATOR="[fs]")
    call io_variable_elemental(ID,VAR=" [RT] NE steps      (planned)",I0=NE_steps,WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
-   ! GPL_EXCLUDE_START
-   !
    call io_variable_elemental(ID,VAR=" [RT] Lif Extr Inte/Intr(sav)",R1=RT_life_extrap_times_INPUT,CHECK=.true.,OP=(/"==","=="/),&
 &    DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
    !
@@ -132,8 +124,6 @@ integer function variables_RT_static(ID,what,l_carriers)
    call def_variable_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,VAR_KIND=LP+100,MENU=0)
    call io_variable_elemental(ID,L0=l_RT_lifetimes_extrapolation,&
 &                             VAR=" [RT] Lifetimes extrapolation",WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   !
-   ! GPL_EXCLUDE_END
    !
    ! INTEGRATOR
    !   
@@ -154,13 +144,9 @@ integer function variables_RT_static(ID,what,l_carriers)
    call io_variable_elemental(ID,L0=l_RT_diamagnetic,VAR=' [RT] Diamagnetic term',  CHECK=.false.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,L0=l_RT_induced_field,VAR=' [RT] Induced field',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
-   ! GPL_EXCLUDE_START
-   !
    ! G retarded variables
    !======================
    variables_RT_static=io_descriptors(Gr_desc,"Gr",ID,.FALSE.)
-   !
-   ! GPL_EXCLUDE_END
    !
    ! Double Grid
    !======================
@@ -170,8 +156,6 @@ integer function variables_RT_static(ID,what,l_carriers)
    call io_variable_elemental(ID,R0=DbGd_EE_percent,&
 &                             VAR=' [DbGd] Used for e-e',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,TERMINATOR="[o/o]")
    !
-   ! GPL_EXCLUDE_START
-   !
    ! CONSTRAINS
    !======================
    call def_variable_elemental(ID,VAR="CONSTRAINS",VAR_SZ=2,VAR_KIND=LP+100,MENU=0) 
@@ -179,8 +163,6 @@ integer function variables_RT_static(ID,what,l_carriers)
 &      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep)',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,L0=l_RT_impose_E,&
 &      VAR=' [CONSTRAINS] IP Energy      (ee)',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   !
-   ! GPL_EXCLUDE_END
    !
    ! FIELDS
    !======================

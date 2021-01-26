@@ -24,7 +24,7 @@
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:SP,schlen,LP
- use IO_m,           ONLY:io_connect,io_sec,ver_is_gt_or_eq,&
+ use IO_m,           ONLY:io_connect,io_sec,ver_is_gt_or_eq,io_disconnect,&
 &                         io_variable_elemental,io_status,io_bulk,io_header,&
 &                         read_is_on,write_is_on,def_variable_elemental,&
 &                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR

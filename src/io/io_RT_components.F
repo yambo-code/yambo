@@ -224,8 +224,8 @@ integer function io_RT_components(what,ID)
    ! === deal with K-fragments ===
    ik = max(1,maxval(io_sec(ID,:))-2)
    call io_fragment(ID,ID_frag,i_fragment=ik)
- endif
 #endif
+ endif
  !
 #if defined _ELPH_ITERATIVE
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_k_nearest_table(k,q,k_nearest_table)
+subroutine PHEL_k_nearest_table(k,q)
  !
  ! In the case of custom/random qpoints, prepare a table of 
  ! the k-q indices as ik_m_q ~ ikp where ikp is the closest point
@@ -29,20 +29,22 @@ subroutine PHEL_k_nearest_table(k,q,k_nearest_table)
  !
  use R_lattice,      ONLY:bz_samp,k_the_nearest
  use ELPH,           ONLY:elph_nQ,PH_qpt
+ use PHEL,           ONLY:KpQ_IO_map
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  !
-#include<memory.h>
+ implicit none
  !
  type(bz_samp), intent(in)    :: k,q
- integer,       intent(inout) :: k_nearest_table(elph_nQ,k%nbz)
  !
  ! Work Space ...
  !
  integer :: iq,ikbz,i_err
  !
  call live_timing('Finding K-Q_custom indices',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+ !
+ KpQ_IO_map=0
  !
  do iq=1,elph_nQ
    !
@@ -53,7 +55,7 @@ subroutine PHEL_k_nearest_table(k,q,k_nearest_table)
      if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
      !
      ! Notice that k-q_yambo ==> k+q_PH because of the MinusQ convention
-     k_nearest_table(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,size(k%ptbz(:,1)),i_err=i_err)
+     KpQ_IO_map(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,k%nbz,i_err=i_err)
      !
      call live_timing( steps=1 )
      !
@@ -61,7 +63,7 @@ subroutine PHEL_k_nearest_table(k,q,k_nearest_table)
    !
  enddo
  !
- call PP_redux_wait(k_nearest_table)
+ call PP_redux_wait(KpQ_IO_map)
  !
  call live_timing( )
  !

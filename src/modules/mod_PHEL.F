@@ -33,6 +33,9 @@ module PHEL
  integer              :: PH_DbGd_points=-1
  logical              :: l_PH_uses_E_FineGd=.FALSE.
  !
+ ! ... Maps
+ integer,     allocatable :: KpQ_io_map(:,:)
+ !
  ! ... Scatterings
  type phel_scatterings
    integer               :: N=0        ! Number of accepted transitions

@@ -32,7 +32,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  use units,          ONLY:HA2EV
  use electrons,      ONLY:E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid,nqibz,k_the_nearest
+ use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,elph_use_q_grid,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,elph_nQ
@@ -40,7 +40,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
@@ -57,8 +57,6 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  real(SP)              :: ph_freq,Delta_Broad,ratio
  real(SP)              :: broad_factor=3._SP
  integer               :: i_loop
- ! ... nearest k-q table ...
- integer               :: k_nearest_table(elph_nQ,k%nbz)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
@@ -70,7 +68,8 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
  ! Get nearest k-q table if using custom qpoints
  if (.not.elph_use_q_grid) then 
-   call PHEL_k_nearest_table(k,q,k_nearest_table)
+   YAMBO_ALLOC(KpQ_IO_map,(elph_nQ,k%nbz) )
+   call PHEL_k_nearest_table(k,q)
  endif
  !
  ! Loop to allocate phel_table
@@ -105,7 +104,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        if (elph_use_q_grid) then
          ik_m_q = qindx_X(iq,ikbz,1)
        else 
-         ik_m_q = k_nearest_table(iq,ikbz)
+         ik_m_q = KpQ_IO_map(iq,ikbz)
        endif
        ! Use k in the bz
        ik = ikbz
@@ -113,7 +112,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        ! If running RT: obtain k-q and k in the IBZ
 #if defined _RT
        ik_m_q =k%sstar(ik_m_q,1)
-       ik = k%sstar(ik,1)
+       ik     =k%sstar(ik,1)
 #endif       
        !
        ! Loop over il, i.e., phonon branches

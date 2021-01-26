@@ -136,7 +136,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
    ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k*N_FG_k_m_q) accounting for the double grid at each bz point.
    !
-   pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
+   pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi!/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
    !
    ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
    !
@@ -158,7 +158,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
      if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
 #endif
      !
-     DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
+     DELTA_E=1.!E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
      DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
      !
    else

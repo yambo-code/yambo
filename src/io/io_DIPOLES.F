@@ -50,7 +50,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4)
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4),ID_frag
 #if defined _RT || defined _SC
  integer :: P2_size(3),P2_ipos(3),Pspinor_size(6),Pspinor_ipos(6)
 #endif
@@ -138,7 +138,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment)
+ call io_fragment(ID,ID_frag,i_fragment=i_fragment)
  !
  ! iR
  !
@@ -219,7 +219,9 @@ if (l_BS_dichroism) then
     write (VAR_name,'(3(a,i4.4))') 'DIP_orbital_k_',ik,'_spin_',i_sp_pol
     call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=DIP_size)
     call io_bulk(ID,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)  
- endif   
+ endif
+ ! 
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

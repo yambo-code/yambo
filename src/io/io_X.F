@@ -51,7 +51,7 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err,io_com_save,io_err
+ integer             ::sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
  logical             ::different_db_RL_order,perform_IO
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
@@ -148,7 +148,7 @@ integer function io_X(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- call io_fragment(ID,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  !
  !  type(X_t)    ::X(4)  x s d p
  !
@@ -232,6 +232,8 @@ integer function io_X(X,Xw,ID)
    endif
    !
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
  ! Sections 1 & 2 are used in VERIFY mode. 
  ! Now that the menu is closed I can return with io_X/=0 if there is a restart point

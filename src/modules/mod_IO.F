@@ -294,8 +294,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
-     integer           :: ID
+   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
+     integer, intent(in)   :: ID
+     integer, intent(out)  :: ID_frag
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
 #endif

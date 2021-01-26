@@ -49,7 +49,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  ! Work Space
  !
  character(schlen)     :: db_name
- integer               :: V_kind_disk,i_coll_loop,io_err,i_coll,SIZE_
+ integer               :: V_kind_disk,i_coll_loop,io_err,i_coll,SIZE_,ID_frag
  !
  integer, external     :: io_descriptors
  !
@@ -187,11 +187,13 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    do i_coll_loop=1,COLL%N
      if (.not.COLL%PAR_IND%element_1D(i_coll_loop)) cycle
      io_extension(ID)=io_raw_extension(ID)
-     call io_fragment(ID,i_fragment=i_coll_loop,ierr=io_err)
+     call io_fragment(ID,ID_frag,i_fragment=i_coll_loop,ierr=io_err)
      if (io_err==0) then
        COLL%IO_status(i_coll_loop)=1
+       call io_fragment_disconnect(ID,ID_frag)
      else
        COLL%IO_status(i_coll_loop)=-1
+       call io_fragment_disconnect(ID,ID_frag)
        exit
      endif
    enddo
@@ -202,10 +204,12 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    ! QP-based fragmentation
    !
-   call io_fragment(ID,i_fragment=i_coll)
+   call io_fragment(ID,ID_frag,i_fragment=i_coll)
    !
    call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
    call  io_variable_bulk(ID,1,I0=COLL_element%N)
+   !
+   call io_fragment_disconnect(ID,ID_frag)
    !
  endif
  !
@@ -213,7 +217,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
    ! Fragmentation
    !
-   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,i_fragment=i_coll)
+   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,ID_frag,i_fragment=i_coll)
    !
    call def_variable_bulk(ID,'COLLISIONS_TABLE',1,&
 &                           (/COLL%D(1,2)-COLL%D(1,1)+1,&
@@ -233,6 +237,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N/),SP,silent=.true.)
      call  io_variable_bulk(ID,1,C1=COLL_element%v_c)
    endif
+   !
+   if (.not.any(io_sec(ID,:)==2)) call io_fragment_disconnect(ID,ID_frag)
    !
  endif
  !

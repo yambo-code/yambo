@@ -200,47 +200,43 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
  endif
  !
+ if ( .not.(any(io_sec(ID,:)==2).or.any(io_sec(ID,:)==3)) ) goto 1
+ !
+ ! QP-based fragmentation
+ !
+ call io_fragment(ID,ID_frag,i_fragment=i_coll)
+ !
  if (any(io_sec(ID,:)==2)) then     
    !
-   ! QP-based fragmentation
-   !
-   call io_fragment(ID,ID_frag,i_fragment=i_coll)
-   !
-   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
-   call  io_variable_bulk(ID,1,I0=COLL_element%N)
-   !
-   call io_fragment_disconnect(ID,ID_frag)
+   call def_variable_bulk(ID_frag,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
+   call  io_variable_bulk(ID_frag,1,I0=COLL_element%N)
    !
  endif
  !
  if (any(io_sec(ID,:)==3)) then     
    !
-   ! Fragmentation
-   !
-   if (.not.any(io_sec(ID,:)==2)) call io_fragment(ID,ID_frag,i_fragment=i_coll)
-   !
-   call def_variable_bulk(ID,'COLLISIONS_TABLE',1,&
+   call def_variable_bulk(ID_frag,'COLLISIONS_TABLE',1,&
 &                           (/COLL%D(1,2)-COLL%D(1,1)+1,&
 &                             COLL%D(2,2)-COLL%D(2,1)+1,&
 &                             COLL%D(3,2)-COLL%D(3,1)+1/),0,silent=.true.)
    !
-   call  io_variable_bulk(ID,1,CH3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
+   call  io_variable_bulk(ID_frag,1,CH3=COLL_element%table(COLL%D(1,1):COLL%D(1,2),&
 &                                                    COLL%D(2,1):COLL%D(2,2),&
 &                                                    COLL%D(3,1):COLL%D(3,2)))
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     call def_variable_bulk(ID,'COLLISIONS_v',1,(/COLL_element%N/),SP,silent=.true.)
-     call  io_variable_bulk(ID,1,R1=COLL_element%v_r)
+     call def_variable_bulk(ID_frag,'COLLISIONS_v',1,(/COLL_element%N/),SP,silent=.true.)
+     call  io_variable_bulk(ID_frag,1,R1=COLL_element%v_r)
    else
      ! Complex collisions
-     call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N/),SP,silent=.true.)
-     call  io_variable_bulk(ID,1,C1=COLL_element%v_c)
+     call def_variable_bulk(ID_frag,'COLLISIONS_v',1,(/2,COLL_element%N/),SP,silent=.true.)
+     call  io_variable_bulk(ID_frag,1,C1=COLL_element%v_c)
    endif
    !
-   if (.not.any(io_sec(ID,:)==2)) call io_fragment_disconnect(ID,ID_frag)
-   !
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 continue
  !

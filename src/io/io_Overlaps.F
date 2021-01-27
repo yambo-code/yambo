@@ -67,8 +67,6 @@ integer function io_Overlaps(Dip,ID)
    !
  endif
  !
- if(io_Overlaps/=0) goto 1
- !
  i_fragment=maxval(io_sec(ID,:))-1
  if(i_fragment<=nXkbz) then
    i_sp_pol=1

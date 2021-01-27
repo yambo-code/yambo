@@ -48,6 +48,7 @@ module PHEL
    !
    subroutine PHEL_free( )
       YAMBO_FREE(phel_info%table)
+      YAMBO_FREE(KpQ_io_map)
    end subroutine
    !
 end module

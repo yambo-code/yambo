@@ -63,7 +63,9 @@ subroutine PHEL_k_nearest_table(k,q)
    !
  enddo
  !
- call PP_redux_wait(KpQ_IO_map)
+ ! Only PARALLEL_wait in k and q, NOT in bands
+ call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_K_bz%COMM_i%COMM)
+ call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  !
  call live_timing( )
  !

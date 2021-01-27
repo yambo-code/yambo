@@ -111,6 +111,8 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  call io_control(ACTION=ACT_NOW,SEC=(/i_frag/),COM=io_com(ID),MODE=io_mode(ID),ID=ID_frag)
  !
+ io_sec(ID_frag,:)=io_sec(ID,:)
+ !
  ! io_file is redefined by io_connect
  !
  io_file(ID_frag)=' '

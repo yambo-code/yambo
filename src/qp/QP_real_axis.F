@@ -332,7 +332,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(RD_CL_IF_END,iqbz,i_q_to_start,nqibz)
+       IO_ACT=manage_action(RD_CL_IF_END,iqbz,i_q_to_start,nqibz,PAR_INDEX=PAR_IND_Q_ibz)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
        !
        if (l_life) then

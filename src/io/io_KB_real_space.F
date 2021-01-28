@@ -76,9 +76,9 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  call io_fragment(ID,ID_frag,i_fragment=ifrag)
  !
- call io_bulk(ID,VAR='PP_KB_RSPACE_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),&
+ call io_bulk(ID_frag,VAR='PP_KB_RSPACE_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),&
  &               VAR_SZ=(/2,fft_size,n_spinor,pp_kbv_dim_yambo/))
- call io_bulk(ID,C3=kbv_real_space(:,:,:))
+ call io_bulk(ID_frag,C3=kbv_real_space(:,:,:))
  !
  call io_fragment_disconnect(ID,ID_frag)
  ! 

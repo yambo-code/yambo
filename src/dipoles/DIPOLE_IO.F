@@ -131,29 +131,19 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  io_err=io_DIPOLES(Dip,ID)
  IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     i_fragment=ik+(i_sp_pol-1)*Xk%nibz
+     if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
+     if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
 #if !defined _PAR_IO
- do i_cpu=1,PAR_COM_X_WORLD%n_CPU
+     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
 #endif
-   do i_sp_pol=1,n_sp_pol
-#if !defined _PAR_IO
-     if (i_cpu/=PAR_COM_X_WORLD%CPU_id+1) cycle
-#endif
-     do ik=1,Xk%nibz
-       i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-       if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
-       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
-#if !defined _PAR_IO
-       IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
-#endif
-       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
-       io_err=io_DIPOLES(Dip,ID)
-       if (io_err/=0) call error(" Reading dipoles with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
-     enddo
+     call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
+     io_err=io_DIPOLES(Dip,ID)
+     if (io_err/=0) call error(" Reading dipoles with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
    enddo
-#if !defined _PAR_IO
-   call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
  enddo
-#endif
 #if defined _PAR_IO
  IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
  call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID)
@@ -167,29 +157,20 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    io_err=io_Overlaps(Dip,ID_S)
    IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,Xk%nbz
+       i_fragment=ik+(i_sp_pol-1)*Xk%nbz
+       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) .and.writing) cycle
 #if !defined _PAR_IO
-  do i_cpu=1,PAR_COM_X_WORLD%n_CPU
+       if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)
+       if (reading) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol)
 #endif
-     do i_sp_pol=1,n_sp_pol
-#if !defined _PAR_IO
-       if (i_cpu/=PAR_COM_X_WORLD%CPU_id+1) cycle
-#endif
-       do ik=1,Xk%nbz
-         i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-         if ((.not.PAR_K_scheme%IND_bz%element_1D(ik))            ) cycle
-         if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
-#if !defined _PAR_IO
-         IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)
-#endif
-         call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
-         io_err=io_Overlaps(Dip,ID_S)
-         if (io_err/=0) call error(" Reading overlaps with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
-       enddo
+       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
+       io_err=io_Overlaps(Dip,ID_S)
+       if (io_err/=0) call error(" Reading overlaps with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
      enddo
-#if !defined _PAR_IO
-     call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
    enddo
-#endif
 #if defined _PAR_IO
    IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
    call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID_S)

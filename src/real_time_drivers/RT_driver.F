@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 #endif
  use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing
- use electrons,      ONLY:levels,n_spin,n_spinor
+ use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use wave_func,      ONLY:WF

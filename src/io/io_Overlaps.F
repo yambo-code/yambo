@@ -28,8 +28,7 @@ integer function io_Overlaps(Dip,ID)
  use R_lattice,     ONLY:nXkbz
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
 &                        io_bulk,read_is_on,io_header,io_extension,&
-&                        &
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment
+&                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -54,7 +53,7 @@ integer function io_Overlaps(Dip,ID)
  !
  io_extension(ID)='Overlap'
  !
- io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_DIP)
  if (io_Overlaps/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

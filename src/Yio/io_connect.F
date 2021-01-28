@@ -113,9 +113,11 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
  endif
  !
- ! Open if to open and to write
+ if(.not.open_is_on(ID)) return
  !
- if (open_is_on(ID).and.write_mode) then
+ ! It to write
+ !
+ if (write_mode) then
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
@@ -145,9 +147,9 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    !
  endif
  !
- ! Open if to open and to read
+ ! If to read
  !
- if (open_is_on(ID).and.read_mode) then
+ if (read_mode) then
    !
    if (.not.file_exists(trim(io_file(ID)))) then
      !
@@ -177,6 +179,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    !
  endif
  !
- if (open_is_on(ID)) io_type(ID)=type
+ io_type(ID)=type
  !
 end function io_connect

@@ -82,21 +82,17 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    il     = phel_info%table(it,1) ! phonon branch
    iq     = phel_info%table(it,2) ! phonon momentum (ibz)
    ikbz   = phel_info%table(it,3) ! electron momentum (bz)
-   ik_rim = phel_info%table(it,4) ! fine grid elec. momentum
-   ip_rim = phel_info%table(it,5) ! fine grid scattered elec. momentum
-   i_n    = phel_info%table(it,6) ! electronic band
-   i_np   = phel_info%table(it,7) ! electronic band
+   ik_m_q = phel_into%table(it,4) ! scattered elec. momentum (bz if _PH / ibz if _RT) 
+   ik_rim = phel_info%table(it,5) ! fine grid elec. momentum
+   ip_rim = phel_info%table(it,6) ! fine grid scattered elec. momentum
+   i_n    = phel_info%table(it,7) ! electronic band
+   i_np   = phel_info%table(it,8) ! electronic band
    !
-#if defined _RT
-   ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
-   ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
-   ! Obtain k in the ibz from k in the bz: 
-   ik = k%sstar(ikbz,1)
-#else
-   ! Obtain k-q in the bz from k in the bz and q in the ibz
-   ik_m_q = qindx_X(iq,ikbz,1)
    ! Use k in the bz
    ik = ikbz
+   ! If running RT: use k in the ibz
+#if defined _RT
+   ik = k%sstar(ikbz,1)
 #endif
    !
    ! Index for q-parallelised quantities
@@ -136,7 +132,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
    ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k*N_FG_k_m_q) accounting for the double grid at each bz point.
    !
-   pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi!/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
+   pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
    !
    ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
    !
@@ -158,7 +154,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
      if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
 #endif
      !
-     DELTA_E=1.!E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
+     DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
      DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
      !
    else

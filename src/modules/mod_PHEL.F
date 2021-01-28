@@ -37,10 +37,14 @@ module PHEL
  integer,     allocatable :: KpQ_io_map(:,:)
  !
  ! ... Scatterings
+ !
+ ! table:
+ ! 1 -> il [ph mode], 2 -> iq [ph q ibz], 3 -> ikbz [k bz], 4 -> ik_m_q [k-q (i)bz],
+ ! 5 -> ik_fg [k (i)bz DbGd], 6 -> ip_fg [k-q (i)bz DbGd], 7 -> i_n [bnd], 8 -> i_np [bnd]
  type phel_scatterings
    integer               :: N=0        ! Number of accepted transitions
-   integer, allocatable  :: table(:,:) ! Indices of accepted transitions: 
- end type phel_scatterings             ! 1-> PH_freqs_CG, 2-> ikbz, 3-> ik_fg, 4->ip_fg, 5-> i_n, 6-> i_np
+   integer, allocatable  :: table(:,:) ! Indices of accepted transitions: see above
+ end type phel_scatterings             
  !
  type(phel_scatterings)  :: phel_info
  !

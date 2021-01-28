@@ -80,7 +80,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
      call live_timing('Compatibility scan',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
    else
      if (phel_info%N==0) call error('No allowed scattering found')
-     YAMBO_ALLOC(phel_info%table,(phel_info%N,7) )
+     YAMBO_ALLOC(phel_info%table,(phel_info%N,8) )
      call live_timing('Compatibility fill',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
    endif
    !
@@ -175,7 +175,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                    phel_info%N  = phel_info%N+1
                    N_yes(iq)    = N_yes(iq)+1
                    !
-                   if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ikbz,ik_rim,ip_rim,i_n,i_np/)
+                   if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ikbz,ik_m_q,ik_rim,ip_rim,i_n,i_np/)
                    !
                  endif
                  !

@@ -82,7 +82,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    il     = phel_info%table(it,1) ! phonon branch
    iq     = phel_info%table(it,2) ! phonon momentum (ibz)
    ikbz   = phel_info%table(it,3) ! electron momentum (bz)
-   ik_m_q = phel_into%table(it,4) ! scattered elec. momentum (bz if _PH / ibz if _RT) 
+   ik_m_q = phel_info%table(it,4) ! scattered elec. momentum (_PH: bz / _RT: ibz) 
    ik_rim = phel_info%table(it,5) ! fine grid elec. momentum
    ip_rim = phel_info%table(it,6) ! fine grid scattered elec. momentum
    i_n    = phel_info%table(it,7) ! electronic band

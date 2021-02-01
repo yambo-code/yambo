@@ -39,7 +39,7 @@ integer function io_ATMPROJ_pwscf(ID)
  ! 
  ! Work Space
  !
- integer           :: ifrag,ik,i_sp_pol
+ integer           :: ifrag,ik,i_sp_pol,ID_frag
  character(schlen) :: varname
  !
  call timing('io_ATMPROJ_pwscf',OPR='start')
@@ -88,11 +88,13 @@ integer function io_ATMPROJ_pwscf(ID)
    endif
  endif
  !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  varname="ATOM_PROJ_IK"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
- call def_variable_bulk(ID,trim(varname),1,(/2,n_atom_wfc,n_proj_bands/),SP)
- call  io_variable_bulk(ID,1,C2=atomic_projections(:,:,ik,i_sp_pol))
+ call def_variable_bulk(ID_frag,trim(varname),1,(/2,n_atom_wfc,n_proj_bands/),SP)
+ call  io_variable_bulk(ID_frag,1,C2=atomic_projections(:,:,ik,i_sp_pol))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

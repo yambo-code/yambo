@@ -40,7 +40,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  ! Work Space
  !
- integer      :: ioScatt
+ integer      :: ioScatt,id_frag
  !
  call timing('io_QINDX',OPR='start')
  !
@@ -127,9 +127,10 @@ integer function io_QINDX(Xk,q,io_db)
    !
    if (X_scattering) then
      io_extension(io_db)='kindx'
-     call io_fragment(io_db,i_fragment=1)
-     call def_variable_bulk(io_db,"Qindx",1,shape(qindx_X),IP+100)
-     call  io_variable_bulk(io_db,1,I3=qindx_X)
+     call io_fragment(io_db,id_frag,i_fragment=1)
+     call def_variable_bulk(id_frag,"Qindx",1,shape(qindx_X),IP+100)
+     call  io_variable_bulk(id_frag,1,I3=qindx_X)
+     call io_fragment_disconnect(io_db,id_frag)
    endif
    !
    if (sigma_scattering) then
@@ -137,9 +138,10 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (2): Self-Energy indx
      !
      io_extension(io_db)='kindx'
-     call io_fragment(io_db,i_fragment=2)
-     call def_variable_bulk(io_db,"Sindx",2,shape(qindx_S),IP+100)
-     call  io_variable_bulk(io_db,2,I3=qindx_S)
+     call io_fragment(io_db,id_frag,i_fragment=2)
+     call def_variable_bulk(id_frag,"Sindx",2,shape(qindx_S),IP+100)
+     call  io_variable_bulk(id_frag,2,I3=qindx_S)
+     call io_fragment_disconnect(io_db,id_frag)
    endif
    !
    if (bse_scattering) then
@@ -147,8 +149,8 @@ integer function io_QINDX(Xk,q,io_db)
      ! Fragmentation (3): BSE indx
      !
      io_extension(io_db)='kindx'
-     call io_fragment(io_db,i_fragment=3)
-     call def_variable_bulk(io_db,"Bindx",3,shape(qindx_B),IP+100)
+     call io_fragment(io_db,id_frag,i_fragment=3)
+     call def_variable_bulk(id_frag,"Bindx",3,shape(qindx_B),IP+100)
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz
      ! NETCDF has problems in reading when this number overcomes 2147483647
@@ -156,18 +158,20 @@ integer function io_QINDX(Xk,q,io_db)
      do i3=1,2
        do i2=1,nXkbz,i2_step
          i2_up=min(i2-1+i2_step,nXkbz)
-         call  io_variable_bulk(io_db,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
+         call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
        enddo
      enddo
+     call io_fragment_disconnect(id_frag,id_frag)
    endif
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
      !
      ! Fragmentation (4): COLL indx
      !
      io_extension(io_db)='kindx'
-     call io_fragment(io_db,i_fragment=4)
-     call def_variable_bulk(io_db,"Cindx",4,shape(qindx_C),IP+100)
-     call  io_variable_bulk(io_db,4,I3=qindx_C)
+     call io_fragment(io_db,id_frag,i_fragment=4)
+     call def_variable_bulk(id_frag,"Cindx",4,shape(qindx_C),IP+100)
+     call  io_variable_bulk(id_frag,4,I3=qindx_C)
+     call io_fragment_disconnect(io_db,id_frag)
    endif
  endif
  !

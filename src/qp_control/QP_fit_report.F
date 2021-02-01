@@ -91,15 +91,15 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (db_scissor/=0._SP) then
-     call msg(' r',' Gap correction (database) [ev]',db_scissor*HA2EV)
+     call msg(' r',' Gap correction (database)     ',db_scissor*HA2EV,"[eV]")
    endif
    !
    if (fit_scissor/=0._SP) then
-     call msg(' r','             (FIT, actual) [ev]',fit_scissor*HA2EV)
+     call msg(' r','             (FIT, actual)     ',fit_scissor*HA2EV,"[eV]")
    endif
    !
    if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
-     call msg(' r',' Energies 0th order        [ev]',(/E(1),E(3)/)*HA2EV)
+     call msg(' r',' Energies 0th order            ',(/E(1),E(3)/)*HA2EV,"[eV]")
      call msg(' r',' Energies 1st order            ',(/E(2),E(4)/))
      if (any((/E_err/=0._SP/)))then
        call msg(' r','                          Error',E_err)
@@ -108,16 +108,16 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (any((/W/=0._SP/))) then
-     call msg(' r',' Widths 0th order          [ev]',(/W(1),W(4)/)*HA2EV)
+     call msg(' r',' Widths 0th order              ',(/W(1),W(4)/)*HA2EV,"[eV]")
      call msg(' r',' Widths 1st order              ',(/W(2),W(5)/)*HA2EV)
-     call msg(' r',' Widths 2st order        [1/eV]',(/W(3),W(6)/)/HA2EV)
+     call msg(' r',' Widths 2st order              ',(/W(3),W(6)/)/HA2EV,"[1/eV]")
      if (any((/W_err(1:2)/=0._SP/))) then
        call msg(' r','                          Error',W_err(1:2)*HA2EV)
      endif
      l_W=.TRUE.
    endif
    if (any((/W_dos/=0._SP/))) then
-     call msg(' r',' Widths dos prop.          [eV]',(/W_dos(1),W_dos(2)/)*HA2EV)
+     call msg(' r',' Widths dos prop.              ',(/W_dos(1),W_dos(2)/)*HA2EV,"[eV]")
      if (any((/W_dos_err(1:2)/=0._SP/))) then
        call msg(' r','                          Error',W_dos_err(1:2)*HA2EV)
      endif

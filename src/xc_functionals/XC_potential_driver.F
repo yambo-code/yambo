@@ -97,6 +97,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  !
  call XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION=local_exx_fraction,&
 &                     EXX_SCREENING=local_exx_screening)
+ !
  if (local_exx_fraction.gt.rZERO) then
    if (present(EXX_FRACTION)) EXX_FRACTION = local_exx_fraction 
    call msg('rsn','[xc] Hybrid functional. EXX fraction ',EXX_FRACTION)

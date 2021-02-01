@@ -130,36 +130,40 @@ module com
      call msg_characters_vector(how,trim(mesg),crap,INDENT=INDENT)
    end subroutine
    !
-   subroutine msg_logical(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_logical(how,mesg,val,USE_TABS,INDENT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      logical          :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     if (     val) call msg_character(how,mesg,"yes",USE_TABS=USE_TABS,INDENT=INDENT)
-     if (.not.val) call msg_character(how,mesg,"no" ,USE_TABS=USE_TABS,INDENT=INDENT)
+     character(lchlen), optional :: MSG_string
+     if (     val) call msg_character(how,mesg,"yes",USE_TABS=USE_TABS,INDENT=INDENT,MSG_string=MSG_string)
+     if (.not.val) call msg_character(how,mesg,"no" ,USE_TABS=USE_TABS,INDENT=INDENT,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_character(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_character(how,mesg,val,USE_TABS,INDENT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_characters_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT)
+     character(lchlen), optional :: MSG_string
+     call msg_characters_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_integer(how,mesg,val,after_msg,USE_TABS,INDENT)
+   subroutine msg_integer(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val
      character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,INDENT=INDENT,after_msg=after_msg)
+     character(lchlen), optional :: MSG_string
+     call msg_integers_vector_int(how,mesg,(/val/),USE_TABS=USE_TABS,&
+&                                 INDENT=INDENT,after_msg=after_msg,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
+   subroutine msg_real(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val
@@ -167,29 +171,34 @@ module com
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
+     character(lchlen), optional :: MSG_string
+     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,&
+&                              INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_characters_vector(how,mesg,val,USE_TABS,INDENT)
+   subroutine msg_characters_vector(how,mesg,val,USE_TABS,INDENT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      character(*)     :: val(:)
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_characters_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT)
+     character(lchlen), optional :: MSG_string
+     call msg_characters_vector_int(how,mesg,val,USE_TABS=USE_TABS,INDENT=INDENT,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_integers_vector(how,mesg,val,after_msg,USE_TABS,INDENT)
+   subroutine msg_integers_vector(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      integer          :: val(:)
      character(*), optional :: after_msg
      integer,optional :: INDENT
      logical,optional :: USE_TABS
-     call msg_integers_vector_int(how,mesg,val,after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT)
+     character(lchlen), optional :: MSG_string
+     call msg_integers_vector_int(how,mesg,val,after_msg=after_msg,USE_TABS=USE_TABS,&
+&                                 INDENT=INDENT,MSG_string=MSG_string)
    end subroutine
    !
-   subroutine msg_reals_vector(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
+   subroutine msg_reals_vector(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT,MSG_string)
      character(*)     :: mesg
      character(*)     :: how
      real(SP)         :: val(:)
@@ -197,7 +206,9 @@ module com
      integer,optional :: INDENT
      logical,optional :: USE_TABS
      logical,optional :: EXT_FORMAT
-     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,INDENT=INDENT,EXT_FORMAT=EXT_FORMAT)
+     character(lchlen), optional :: MSG_string
+     call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,&
+&                              INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,MSG_string=MSG_string)
    end subroutine
    !
 end module com

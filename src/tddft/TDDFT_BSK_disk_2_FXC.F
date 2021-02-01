@@ -32,7 +32,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait
  use D_lattice,     ONLY:DL_vol
  use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF
@@ -89,7 +89,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! Kernel 2 FXC
  !
- YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+ YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
  YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W%n_freqs))
  O_x_dim=maxval(BS_nT_at_k)
  FXC_K_diagonal=0._SP

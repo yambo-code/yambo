@@ -25,7 +25,7 @@ subroutine XCo_report(qp,E,k)
  !
  use drivers,       ONLY:l_real_time,l_gw0
  use units,         ONLY:HA2EV
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_redux_wait
  use pars,          ONLY:schlen
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate

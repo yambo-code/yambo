@@ -54,7 +54,7 @@ clean_all:
 	- rm -rf package-ready-stamp configure-stamp package-installed
 
 define install
- cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; \
+ cd $(PACKAGE);  cp *.a SRC/liblapack.a $(LIBPATH)/lib ; \
  chmod +x $(LIBPATH)/lib/*lapack*.a ; \
  chmod +x $(LIBPATH)/lib/*blas*.a   
 endef  

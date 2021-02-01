@@ -31,8 +31,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
 &                        BS_R_right,BS_E,BS_E_SOC_corr,l_interp
  use BS_solvers,    ONLY:BSS_n_eig
- use BS,            ONLY:BS_H_dim,&
-&                        BSqpts
+ use BS,            ONLY:BS_H_dim
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
 #endif
@@ -106,9 +105,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !=====================
  if (l_exc_wf)     call exciton_WFs(Xk,BS_E_degs,iq)
  !
- !
- !
- !
  ! Excitonic Eliashberg function 
  !================================
 #if defined _YPP_ELPH
@@ -126,8 +122,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
  !
 #endif
- !
- !
  !
  ! CLEAN
  !

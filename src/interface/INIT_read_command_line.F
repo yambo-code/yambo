@@ -374,8 +374,11 @@ subroutine INIT_read_command_line(rstr,init_)
        else if ( STRING_match(rstr_piece(i1+1),'l') ) then
          MAG_hamiltonian_type='landau'
          MAG_landau=.true.
+       else if ( STRING_match(rstr_piece(i1+1),'a') ) then
+         MAG_hamiltonian_type='all'
+         MAG_pauli=.true.
+         MAG_landau=.true.
        endif
-       if (MAG_landau.and.MAG_pauli) MAG_hamiltonian_type='all'
      endif
 #endif
      !

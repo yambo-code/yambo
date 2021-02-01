@@ -1,9 +1,6 @@
-#if defined _RT_SCATT
-RT_scatt=RT_relaxation.o
-#else
+#if !defined _RT_SCATT
 RT_scatt=RT_empty.o
 #endif
-
 #if defined _PHEL || defined _RT
 PH_objs = RT_occupations_and_levels_init.o 
 #endif

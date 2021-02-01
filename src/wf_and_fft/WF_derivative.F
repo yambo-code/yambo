@@ -37,7 +37,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
  use parallel_m,     ONLY:PAR_IND_WF_linear
-#if defined _MAGNETIC
+#if defined _SC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
  !
@@ -66,7 +66,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  ! 
  call fft_setup(0,1,.false.)
  !
-#if defined _MAGNETIC
+#if defined _SC
  if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands(2)/) )) then
    bands_to_load=(/1,SC_bands(2)/)
    call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands(2)))//' bands to be derived')

@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
-&                                    NN,QUIET,SERIAL)
+&                                    NEAREST,QUIET,SERIAL)
  !
  !  INTERPOLATION_driver_seed at present interpolates only from a single grid, not from both
  !  Defines the coefficients to be used for the interpolation starting from SEED_k
@@ -62,7 +62,7 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  type(levels),  intent(in), optional :: SEED_E
  type(QP_t),    intent(in), optional :: SEED_QP
  real(SP),      intent(in), optional :: SEED_R3(:,:,:)
- logical,       intent(in), optional :: NN
+ logical,       intent(in), optional :: NEAREST
  logical,       intent(in), optional :: QUIET
  logical,       intent(in), optional :: SERIAL
  !
@@ -122,9 +122,9 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  if (present(SEED_RT)) call init_ID(ID,dims,SEED_k,operation,"RT")
  if (present(SEED_QP)) call init_ID(ID,dims,SEED_k,operation,"QP")
  !
- if (present(NN)) then
-   INTERP_obj(ID)%use_NN=NN
-   if (NN) INTERP_mode="NN"
+ if (present(NEAREST)) then
+   INTERP_obj(ID)%use_NN=NEAREST 
+   if (NEAREST) INTERP_mode="NN"
  endif
  !
  if (.not.INTERPOLATE_initialized.and..not.INTERP_obj(ID)%use_NN) then

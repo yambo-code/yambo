@@ -33,7 +33,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
- use interfaces,          ONLY:PARALLEL_live_message
+ use parallel_int,        ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  type(levels)                 :: en 

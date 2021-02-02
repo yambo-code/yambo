@@ -161,7 +161,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _RT_SCATT && _PHEL
  call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
 #endif
-#if defined _RT_SCATT && _QED
+#if defined _RT_SCATT
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _ELPH 

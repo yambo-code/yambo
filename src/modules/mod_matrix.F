@@ -24,7 +24,7 @@
 module matrix
  !
  use pars,       ONLY:schlen,SP
- use parallel_m, ONLY:MPI_comm
+ use parallel_m, ONLY:yMPI_comm
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -34,14 +34,14 @@ module matrix
  integer, parameter   :: desc_len= 9
  logical              :: I_do_RCV=.TRUE.
  logical              :: I_do_SND=.TRUE.
- type(MPI_comm)       :: TRANSFER_world
+ type(yMPI_comm)       :: TRANSFER_world
  !
  ! PAR to PAR special COMMs
  !
  integer              :: N_MAX_PAR_to_PAR_comms=0
  integer              :: N_PAR_to_PAR_comms    =0
  character(schlen)    :: PAR_to_PAR_comm_NAME
- type(MPI_comm),    allocatable  :: PAR_to_PAR_comm_SAVE(:)
+ type(yMPI_comm),    allocatable  :: PAR_to_PAR_comm_SAVE(:)
  character(schlen), allocatable  :: PAR_to_PAR_comm_SAVE_NAME(:)
  !
  type PAR_matrix
@@ -70,8 +70,8 @@ module matrix
    !
    ! COMMs
    !
-   type(MPI_comm) :: INTRA_comm
-   type(MPI_comm) :: INTER_comm 
+   type(yMPI_comm) :: INTRA_comm
+   type(yMPI_comm) :: INTER_comm 
    !
    ! DATA
    !

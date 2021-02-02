@@ -31,9 +31,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use LIVE_t,          ONLY:live_timing
  use DIPOLES,         ONLY:DIPOLE_t,DIP_rotated
  use vec_operate,     ONLY:v_norm,rot_v_xy_plane
-#if defined _KERR
- use drivers,         ONLY:l_kerr
-#endif
+ use BS,              ONLY:l_BS_kerr
  use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
@@ -41,7 +39,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use BS,              ONLY:BS_bands
  use BS_solvers,      ONLY:BSS_eh_table,BS_mat
  use frequency,       ONLY:w_samp
- use interfaces,      ONLY:PARALLEL_global_indexes
+ use parallel_int,    ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
  use parser_m,        ONLY:parser
  !
@@ -68,9 +66,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  real(SP)                :: field_dir(3),kerr_dir(3)
  !
  l_RT_abs_YAMBO=.TRUE.
-#if defined _KERR
- l_kerr=.TRUE.
-#endif
+ l_BS_kerr=.TRUE.
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
@@ -151,11 +147,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
        delta_f_cv=(Xen%df(i_v,i_kibz,i_spin)-Xen%df(i_c,i_kibz,i_spin))/spin_occ
        !
        dip_tmp=DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk)
-#if defined _KERR
-       dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
-#else
-       dipole=dot_product(field_dir,dip_tmp)
-#endif
+       if( l_BS_kerr) then
+         dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
+       else
+         dipole=dot_product(field_dir,dip_tmp)
+       endif
        BS_R0(i_l)=BS_R0(i_l)-dipole*BS_mat(neh,i_l)*sqrt(cmplx(f_cv,0.))
        BS_R1(i_l)=BS_R1(i_l)-dipole*BS_mat(neh,i_l)*delta_f_cv/sqrt(cmplx(f_cv,0.))
        !
@@ -191,11 +187,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              !
              f_vpv=-Xen%f(i_v,i_kibz,i_spin)*(Xen%df(i_vp,i_kibz,i_spin))/spin_occ/spin_occ
              dip_tmp=DIP_rotated(i_vp,i_v,i_kbz,i_spin,"DIP_iR",Xk)
-#if defined _KERR
-             dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
-#else
-             dipole=dot_product(field_dir,dip_tmp)
-#endif
+             if( l_BS_kerr) then
+               dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
+             else
+               dipole=dot_product(field_dir,dip_tmp)
+             endif
              IP_R=-conjg(dipole)*sqrt(f_vpv)
              IP_E=Xen%E(i_vp,i_kibz,i_spin)-Xen%E(i_v,i_kibz,i_spin)
              ! Photo-induced absorption and stimulated emission in v-v'
@@ -213,11 +209,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
              !
              f_ccp= (Xen%df(i_cp,i_kibz,i_spin))*(spin_occ-Xen%f(i_c,i_kibz,i_spin))/spin_occ/spin_occ
              dip_tmp=DIP_rotated(i_c,i_cp,i_kbz,i_spin,"DIP_iR",Xk)
-#if defined _KERR
-             dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
-#else
-             dipole=dot_product(field_dir,dip_tmp)
-#endif
+             if( l_BS_kerr) then
+               dipole=sqrt(0.5_SP)*(dot_product(field_dir,dip_tmp)+cI*dot_product(kerr_dir,dip_tmp))
+             else
+               dipole=dot_product(field_dir,dip_tmp)
+             endif
              IP_R=-conjg(dipole)*sqrt(f_ccp)
              IP_E=Xen%E(i_c,i_kibz,i_spin)-Xen%E(i_cp,i_kibz,i_spin)
              Epsilon_ii(:,2)=Epsilon_ii(:,2)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)

@@ -192,7 +192,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  !
  if (.not.SUCCESS) return
  !
- RT_carriers%delta_f=0._SP
+ RT_carriers%OCC_el%dN=0._SP
  ic=0
  STOP_the_LOOP=.FALSE.
  !
@@ -209,10 +209,10 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
        occupation=1.
      endif
      if (Pump_level(ib,ik)>0) then
-       RT_carriers%delta_f(i_RT)= spin_occ*occupation
-       delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*2._SP*RTibz%weights(ik)
+       RT_carriers%OCC_el%dN(i_RT)= spin_occ*occupation
+       delta_Nel=delta_Nel+RT_carriers%OCC_el%dN(i_RT)*2._SP*RTibz%weights(ik)
      else if (Pump_level(ib,ik)<0) then
-       RT_carriers%delta_f(i_RT)=-spin_occ*occupation
+       RT_carriers%OCC_el%dN(i_RT)=-spin_occ*occupation
      endif
    enddo
    if (.not.STOP_the_LOOP) STOP_the_LOOP=delta_Nel>Eh_pumped_Nel
@@ -220,7 +220,7 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  !
  call msg('sr','[RT] Carrier number  [USER]',Eh_pumped_Nel)
  call msg('sr','[RT]                 [GRID]',delta_Nel)
- call msg('sr','[RT]         density [cm-3]',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
+ call msg('sr','[RT]         density       ',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP),"[cm-3]")
  !
  call E_reset(E_local)
  !

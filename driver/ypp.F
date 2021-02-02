@@ -34,10 +34,11 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
- use interfaces,          ONLY:PARALLEL_global_indexes
- use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
+ use parallel_int,        ONLY:PARALLEL_global_indexes
+ use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              l_fix_save,alat_used_for_output,l_QP_DB_expand,coo_out,coo_in
+&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles
+ use DIPOLES,             ONLY:DIPOLE_t
 #if defined _YPP_RT
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
@@ -58,16 +59,15 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir
  ! 
- ! I/O 
- !
+ ! ... I/O 
  logical           :: l_flag
  integer           :: ID,i_err
  integer, external :: io_DB1,io_QINDX,io_GROT
  integer           :: i_err_DbGd
  integer, external :: io_Double_Grid
-#if defined _YPP_ELPH
- integer, external :: ELPH_databases
-#endif
+ ! 
+ ! ...dipoles
+ type(DIPOLE_t)    :: Dip
  !
  ! Presets
  !
@@ -134,7 +134,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  ! INPUT FILE parsing
  !
- call INIT_ypp(en,instr,.false.)
+ call INIT_ypp(en,Dip,instr,.false.)
  if (infile_editing) then
    iinf=1
    call ypp_finalize(" ",instr)
@@ -150,8 +150,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: Temperature           :',input_GS_Tel,"[eV]")
+ call msg('s',':: Lattice factors       :',alat,"[a.u.]")
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym)
@@ -206,7 +206,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
- if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
+ if (l_SOC_map) call WF_map_perturbative_SOC(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
@@ -217,8 +217,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if (l_wannier) call WANNIER_driver(k,en)
  !
  if (l_fix_syms) call symmetries_driver(en,k)
- !
- if (l_fix_save) call WF_format_converter(en,k,q)
  !
 #if defined _YPP_RT
  !
@@ -235,24 +233,26 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !   ======
 #endif
  !
- l_flag=l_excitons
+ l_flag=l_excitons.and..not.l_dipoles
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_abs
 #endif
- if (l_flag) call excitons_driver(k,Xk,en,Xen,q)
+ if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
- l_flag=l_electrons
+ l_flag=l_electrons.and..not.l_dipoles
 #if defined _YPP_ELPH && !defined _YPP_RT
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
  !
- if (l_flag) call electrons_driver(Xk,Xen,q)
+ if (l_flag)    call electrons_driver(Xk,Xen,q)
+ !
+ if (l_dipoles) call DIPOLES_driver(Xk,Xen,q,Dip)
  !
 #if defined _YPP_ELPH
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
+   if (l_gkkp)                call ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
  endif
@@ -266,7 +266,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call CLOSE_the_run(.TRUE.,.TRUE.,.FALSE.)
  !
- call INIT_ypp(en,instr,.TRUE.)
+ call INIT_ypp(en,Dip,instr,.TRUE.)
  !
  return
  !
@@ -280,7 +280,7 @@ contains
       if (len_trim(STRING)==0) call section('X','Game Over')
       call msg("nln"," ")
     endif
-    if (.not.infile_editing) call INIT_ypp(en,instr,.TRUE.)
+    if (.not.infile_editing) call INIT_ypp(en,Dip,instr,.TRUE.)
   end subroutine
   !
 end function ypp

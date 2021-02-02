@@ -28,12 +28,11 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  !
  use pars,           ONLY:SP,cZERO,cI
  use wrapper_omp,    ONLY:V_dot_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
- use KERR,           ONLY:BSS_dipoles_kerr
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
+ use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig,BSS_dipoles_opt
  use BS,             ONLY:BS_K_dim,BS_H_dim
  !
  implicit none
@@ -56,8 +55,8 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  !
  call live_timing('KERR residuals ',px%n_of_elements(myid+1))
  !
- forall(i1=1:BS_K_dim)          tmp_res(i1) =    conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1)         ) 
- forall(i1=BS_K_dim+1:BS_H_dim) tmp_res(i1) = cI*conjg(BSS_dipoles_kerr(i1))*sqrt(BSS_eh_f(i1-BS_K_dim))
+ forall(i1=1:BS_K_dim(1))          tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP)) 
+ forall(i1=BS_K_dim(1)+1:BS_H_dim) tmp_res(i1) = conjg(BSS_dipoles_opt(2,i1))*sqrt(cmplx(BSS_eh_f(i1),kind=SP))
  if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
  !

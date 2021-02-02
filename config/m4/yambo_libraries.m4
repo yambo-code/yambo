@@ -49,7 +49,7 @@ else
   #
   if ! test -d "lib/yambo/driver/src"; then
     cd lib/yambo/
-    VERSION="0.0.1"
+    VERSION="0.0.2"
     TARBALL="${VERSION}.tar.gz"
     URL="https://github.com/yambo-code/yambo-libraries/archive/${TARBALL}"
     rm -rf $TARBALL

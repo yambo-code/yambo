@@ -152,12 +152,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
-#if defined _PHEL
+#if defined _RT_SCATT
+ call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')
+#endif
+#if defined _RT_SCATT && _ELPH
+ call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
+#endif
+#if defined _RT_SCATT && _PHEL
  call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
 #endif
 #if defined _RT_SCATT
- call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
- call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _ELPH 

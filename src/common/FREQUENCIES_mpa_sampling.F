@@ -159,13 +159,27 @@
                w(2*np) = w2
                lp=log(-1._SP+2._SP*np)/log(2._SP)
                r=mod(2*np-1,2**lp)
-               do i=2,2*r
-                 w(i)=w1+ws*(i-1)/2._SP**(lp+1)
-               enddo
-               !
-               do i=2*r+1,2*np-1
-                 w(i)=w1+ws*(i-1-r)/2._SP**(lp)
-               enddo
+!               do i=2,2*r
+!                 w(i)=w1+ws*(i-1)/2._SP**(lp+1)
+!               enddo
+!               !
+!               do i=2*r+1,2*np-1
+!                 w(i)=w1+ws*(i-1-r)/2._SP**(lp)
+!               enddo
+               if (r>0) then
+                 do i=2,2*r
+                   w(i)=w1+ws*(i-1)/2._SP**(lp+1)
+                 enddo
+                 !
+                 do i=2*r+1,2*np-1
+                   w(i)=w1+ws*(i-1-r)/2._SP**(lp)
+                 enddo
+               else
+                 w(2)=w1+ws/2._SP**(lp+1)
+                 do i=2*r+3,2*np-1
+                   w(i)=w1+ws*(i-2-r)/2._SP**(lp)
+                 enddo
+               endif 
                !    
            end select
        end select

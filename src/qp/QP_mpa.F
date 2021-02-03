@@ -86,7 +86,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer          :: i_np,pole_p,poles_f,ID2
  real(SP)         :: bose_PPA_E, edigits(2), rdigits 
  complex(SP), allocatable :: MPA_Xo(:)
- logical          :: isdiagonal
  character(len=99):: str
  !
  integer, external::io_X,io_MPA,QP_state_extract
@@ -250,7 +249,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      poles_f=0
      !
-     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo,isdiagonal), &
+     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo), &
      !$omp &        reduction(+:poles_f)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
@@ -261,9 +260,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)!*isc%gamp(ig1,ig2) 
          !
-         isdiagonal = .false.
-         if (ig1==ig2) isdiagonal = .true.
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),isdiagonal,edigits,rdigits)
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),edigits,rdigits)
          !
 #ifdef _DARIO
          write(11,*) 'ER lost digits: ', edigits, rdigits
@@ -352,7 +349,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      iscp%qs=isc%qs
      !
      dc=cZERO
-     !
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !

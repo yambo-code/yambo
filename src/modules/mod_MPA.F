@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!-------------------------------------------------------
+!--------------------------------------------------------
 ! Multipole solution for the polarizability 
 ! in the GW approximation
 !                           exact solution for 1-3 poles
@@ -36,9 +36,9 @@
 !   5) Use real(R), imaginary(I) or complex(C) w
 !
 ! * The module works for scalar polarizabilities, so if 
-!   you want the solution for matrix element X(G,G',q)
-!   you should call RQ_solver for each G, G' and q.  
-!-------------------------------------------------------
+!   one wants the solution for matrix element X(G,G',q)
+!   then RQ_solver should be called for each G, G' and q.  
+!--------------------------------------------------------
 !
 module mpa_m
  !
@@ -76,7 +76,7 @@ contains
    complex(SP),  intent(in)     :: z(2)
    complex(SP),  intent(inout)  :: E
    ! 
-   if(NAN(abs(E)) .or. abs(E)<0.000001_SP) then
+   if(NAN(abs(E)) .or. abs(E)<0.00001_SP) then
      E=abs(z(2))-cI*epsilon(1._SP)   
    elseif(real(E)>0._SP) then     
      E = sqrt(E)
@@ -86,7 +86,6 @@ contains
    endif
    if(real(E)<0._SP) E=-E
    if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
-   !E=real(E,SP)-cI*epsilon(1._SP)
    !
  end subroutine mpa_cond1
  !
@@ -534,13 +533,12 @@ contains
  end subroutine mpa_E_solver
  !
  !
- subroutine mpa_RE_solver(np, w, x, R, E,isdiagonal,edigits,rdigits) ! version 2.1
+ subroutine mpa_RE_solver(np, w, x, R, E,edigits,rdigits) ! version 2.1
    implicit none
    !
    integer,      intent(in)     :: np
    complex(SP),  intent(in)     :: w(2*np), x(2*np)
    complex(SP),  intent(out)    :: R(np), E(np)
-   logical,      intent(in)     :: isdiagonal
    real(SP),     intent(out)    :: edigits(2),rdigits
    ! 
    integer                      :: npr

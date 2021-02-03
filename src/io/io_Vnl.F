@@ -42,7 +42,7 @@ integer function io_Vnl(Dip,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin
+ integer :: i1,ixyz,sec_size,i_spin,ID_frag
  integer :: db_nbm,db_nbf,db_nb(2)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: Vnl_disk(:,:,:) ! complex, ic, iv
@@ -103,7 +103,7 @@ integer function io_Vnl(Dip,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='Vnl'
-     call io_fragment(ID,i_fragment=i1)
+     call io_fragment(ID,ID_frag,i_fragment=i1)
      !
      do ixyz=1,3
        !
@@ -112,14 +112,16 @@ integer function io_Vnl(Dip,Xen,ID)
          if (write_is_on(ID)) call mat_c2r(Vnl(ixyz,:,:,i1,i_spin),Vnl_disk)
          !
          write (VAR_name,'(3(a,i4.4))') 'Vnl_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(Vnl_disk))
-         call io_bulk(ID,R3=Vnl_disk)
+         call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(Vnl_disk))
+         call io_bulk(ID_frag,R3=Vnl_disk)
          !
          if (read_is_on(ID)) call mat_r2c(Vnl_disk,Vnl(ixyz,:,:,i1,i_spin))
          !
        enddo
        !
      enddo
+     !
+     call io_fragment_disconnect(ID,ID_frag)
      !
    enddo
    !

@@ -282,7 +282,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
      endif
      if ( trim(rstr_piece(i1)) == 'excitons') then
        l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
-       l_sort           =STRING_match(rstr_piece(i1+1),'s')
+       l_sort           =STRING_match(rstr_piece(i1+1),'s').and..not.STRING_match(rstr_piece(i1+1),'sp')
        l_amplitude      =STRING_match(rstr_piece(i1+1),'a')
 #if defined _YPP_ELPH
        l_gkkp           =STRING_match(rstr_piece(i1+1),'g')

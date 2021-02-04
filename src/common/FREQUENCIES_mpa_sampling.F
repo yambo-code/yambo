@@ -99,7 +99,7 @@
            select case(gs)
              case ('ho') !homo
                w=(/w1,w1+0.2_SP*ws,w1+0.4_SP*ws,w1+0.6_SP*ws,w1+0.8_SP*ws,w2/)
-             case ('hP') !lPPS
+             case ('lP') !lPPS
                w=(/w1,w1+0.0625_SP*ws,w1+0.25_SP*ws,w1+0.5_SP*ws,w1+0.75_SP*ws,w2/)
              case ('qP') !qPPS
                w=(/w1,w1+0.00390625_SP*ws,w1+0.0625_SP*ws,w1+0.25_SP*ws,w1+0.5625_SP*ws,w2/)
@@ -159,13 +159,6 @@
                w(2*np) = w2
                lp=log(-1._SP+2._SP*np)/log(2._SP)
                r=mod(2*np-1,2**lp)
-!               do i=2,2*r
-!                 w(i)=w1+ws*(i-1)/2._SP**(lp+1)
-!               enddo
-!               !
-!               do i=2*r+1,2*np-1
-!                 w(i)=w1+ws*(i-1-r)/2._SP**(lp)
-!               enddo
                if (r>0) then
                  do i=2,2*r
                    w(i)=w1+ws*(i-1)/2._SP**(lp+1)

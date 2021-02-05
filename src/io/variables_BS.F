@@ -31,11 +31,12 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
-&                        BS_K_is_ALDA,BS_cpl_K_exchange,BSE_mode,&
-&                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC,BSE_mode
+&                        BS_K_is_ALDA,BS_cpl_K_exchange,&
+&                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
+ use IO_m,        ONLY:io_code_revision
 #if defined _PAR_IO
  use BS,            ONLY:l_BSK_IO_triangular
 #endif
@@ -179,13 +180,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &       VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    endif
    !
- endif
- !
- ! BSE mode
- ! 
- if (ver_is_gt_or_eq(ID,revision=19454)) then
-       call def_variable_elemental(ID,"BSE_mode",1,0,0)
-       call io_variable_elemental(ID,VAR="BSE mode",CH0=BSE_mode,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  !
 #if defined _PAR_IO

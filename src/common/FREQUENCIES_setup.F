@@ -45,8 +45,10 @@ subroutine FREQUENCIES_setup(W)
  if (allocated(W%p)) then
    if (size(W%p)==W%n_freqs.and.&
 &      abs(  real(W%p(1))-W%er(1) )<1.E-5.and.&
+&      abs( aimag(W%p(1))-W%ir(1) )<1.E-5.and.&
 &      abs( aimag(W%p(1))-W%dr(1) )<1.E-5.and.&
 &      abs(  real(W%p(W%n_freqs))-W%er(2) )<1.E-5.and.&
+&      abs( aimag(W%p(W%n_freqs))-W%ir(2) )<1.E-5.and.&
 &      abs( aimag(W%p(W%n_freqs))-W%dr(2) )<1.E-5) return
  endif
  !
@@ -60,8 +62,8 @@ subroutine FREQUENCIES_setup(W)
    if (mod(W%n_freqs,2)/=0) call error("[MPA] Invalid number of frequencies")
    YAMBO_ALLOC(W%p,(W%n_freqs))
    !
-   w_tmp2(1:2)=cmplx(W%er(1:2),W%dr(1:2),kind=SP)
-   call FREQUENCIES_mpa_sampling(W%n_freqs/2,w_tmp2(1),w_tmp2(2),'2l','lP',W%p)
+   w_tmp2(1:2)=cmplx(W%er(1:2),W%ir(1:2),kind=SP)
+   call FREQUENCIES_mpa_sampling(W%n_freqs/2,w_tmp2(1),w_tmp2(2),W%dr,W%samp_type,'lP',W%p)
    !
    return
  endif

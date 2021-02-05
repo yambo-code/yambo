@@ -350,7 +350,7 @@ subroutine INIT_activate()
    endif
    if (l_mpa) then
      call X_activate('Xm',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                           'EhEngy','LongDr','EnRnge','DmRnge','ETStps'/))
+&                           'EhEngy','LongDr','EnSamp','EnRnge','ImRnge','DmRnge','ETStps'/))
    endif
    if (l_cohsex) then
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))

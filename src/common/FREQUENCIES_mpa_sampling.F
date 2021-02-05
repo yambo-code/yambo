@@ -40,30 +40,31 @@
 ! *The samplings do not depend on the sampled function 
 !---------------------------------------------------------------
 
- subroutine FREQUENCIES_mpa_sampling(np, w1, w2, ps, gs, w) 
-   use pars,     ONLY:SP,DP,cZERO,cI
+ subroutine FREQUENCIES_mpa_sampling(np, w1, w2, d, ps, gs, w) 
+   use pars,     ONLY:SP,DP,cI
    implicit none
    !
-   integer,     intent(in)    :: np       ! number of desired frequency pairs/poles
-   complex(SP), intent(in)    :: w1,w2    ! segment [w1,w2]
-   character(2),   intent(in)    :: ps    ! flavour of sampling: 1line, 2lines, ...
-   character(2),   intent(in)    :: gs    ! type of grid: homo, lPPS, qPPS, cPPS, ...
-   complex(SP), intent(out)   :: w(2*np)
+   integer,      intent(in)  :: np       ! number of desired frequency pairs/poles
+   complex(SP),  intent(in)  :: w1,w2    ! segment [w1,w2]
+   real(SP),     intent(in)  :: d(2)     ! shift
+   character(2), intent(in)  :: ps       ! flavour of sampling: 1line, 2lines, ...
+   character(2), intent(in)  :: gs       ! type of grid: homo, lPPS, qPPS, cPPS, ...
+   complex(SP),  intent(out) :: w(2*np)
    !
    integer     :: i
    integer(SP) :: lp,r,c,p
    real(SP)    :: aux
-   complex(SP) :: ws, uni=0.1_SP*cI
+   complex(SP) :: ws
    real(SP), parameter :: log2=0.693147180560_SP
    !
    ws = w2-w1
    select case(np)
      case(1)
-       w = (/w1, w2/)
+       w = (/w1+epsilon(1._SP), w2/)
      case(2)
        select case(ps)
          case('2l') !2lines
-           w = (/real(w1,SP)+cZERO, real(w2,SP)+uni, w1, w2/)
+           w = (/real(w1,SP)+d(1)*cI, real(w2,SP)+d(2)*cI, w1, w2/)
          case('1l') !1line
            select case(gs)
              case ('ho') !homo
@@ -85,13 +86,13 @@
          case('2l') !2lines
            select case(gs)
              case ('ho') !homo
-               w=(/real(w1,SP)+cZERO,real(w1+0.5_SP*ws)+uni,real(w2,SP)+uni,w1,w1+0.5_SP*ws,w2/)
+               w=(/real(w1,SP)+d(1)*cI,real(w1+0.5_SP*ws)+d(2)*cI,real(w2,SP)+d(2)*cI,w1,w1+0.5_SP*ws,w2/)
              case ('lP') !lPPS
-               w=(/real(w1,SP)+cZERO,real(w1+0.5_SP*ws)+uni,real(w2,SP)+uni,w1,w1+0.5_SP*ws,w2/)
+               w=(/real(w1,SP)+d(1)*cI,real(w1+0.5_SP*ws)+d(2)*cI,real(w2,SP)+d(2)*cI,w1,w1+0.5_SP*ws,w2/)
              case ('qP') !qPPS
-               w=(/real(w1,SP)+cZERO,real(w1+0.25_SP*ws)+uni,real(w2,SP)+uni,w1,w1+0.25_SP*ws,w2/)
+               w=(/real(w1,SP)+d(1)*cI,real(w1+0.25_SP*ws)+d(2)*cI,real(w2,SP)+d(2)*cI,w1,w1+0.25_SP*ws,w2/)
              case ('cP') !cPPS
-               w=(/real(w1,SP)+cZERO,real(w1+0.125_SP*ws)+uni,real(w2,SP)+uni,w1,w1+0.125_SP*ws,w2/)
+               w=(/real(w1,SP)+d(1)*cI,real(w1+0.125_SP*ws)+d(2)*cI,real(w2,SP)+d(2)*cI,w1,w1+0.125_SP*ws,w2/)
              case default
                ! error 
            end select
@@ -115,34 +116,34 @@
            select case(gs)
              case('ho') !homo
                w(np+1) = w1
-               w(1)=real(w1,SP)+cZERO!+uni
+               w(1)=real(w1,SP)+d(1)*cI
                do i=2, np 
                  w(np+i)=w1+ws*(i-1)/(np-1) 
-                 w(i)=real(w(np+i),SP)+uni
+                 w(i)=real(w(np+i),SP)+d(2)*cI
                enddo
-             case('lP') !hPPS
+             case('lP') !lPPS
                w(np+1) = w1
-               w(1)=real(w1,SP)+cZERO!+uni
+               w(1)=real(w1,SP)+d(1)*cI
                w(2*np) = w2
-               w(np)=real(w2,SP)+cZERO+uni
+               w(np)=real(w2,SP)+d(2)*cI
                lp=log(-1._SP+np)/log(2._SP)
                r=mod(np-1,2**lp)
                if (r>0) then
                  do i=2,2*r
                    w(np+i)=w1+ws*(i-1)/2._SP**(lp+1)
-                   w(i)=real(w(np+i),SP)+uni 
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
                  enddo
                  !
                  do i=2*r+1,np-1
                    w(np+i)=w1+ws*(i-1-r)/2._SP**(lp)
-                   w(i)=real(w(np+i),SP)+uni 
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
                  enddo
                else
                  w(np+2)=w1+ws/2._SP**(lp+1)
-                 w(2)=real(w(np+2),SP)+uni 
+                 w(2)=real(w(np+2),SP)+d(2)*cI 
                  do i=2*r+3,np-1
                    w(np+i)=w1+ws*(i-2-r)/2._SP**(lp)
-                   w(i)=real(w(np+i),SP)+uni 
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
                  enddo
                endif  
                !

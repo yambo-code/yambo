@@ -460,7 +460,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_mpa) then
        Xw(5)%n_freqs=4
-       Xw(5)%dr=(/1._SP,1._SP/)!/HA2EV damping for MPA
+       Xw(5)%dr=(/0._SP,0.1_SP/)!/HA2EV !damping for MPA
      endif
      !
      if (l_bse) then

@@ -72,6 +72,7 @@ all: ext-libs
 #==============
 #
 # External libraries
+include config/mk/actions/download_external_libraries.mk
 include config/mk/actions/compile_external_libraries.mk
 #
 # Internal libraries

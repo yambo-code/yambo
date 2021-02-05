@@ -112,10 +112,10 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  !====================
  if (l_INTERP_f.and.l_integral_respect) then
    if (SWITCH_the_grid("COARSE")) then
-     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP       ,l_integral_respect,OUT_k%nibz)
+     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP       ,OUT_k%nibz)
    endif
    if (SWITCH_the_grid("FINE")) then
-     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,l_integral_respect,Nk_FineGd)
+     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,Nk_FineGd)
    endif
  endif
  !
@@ -176,6 +176,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
        if (trim(INTERP_FineGd)=="BARE") Nk_FineGd=OUT_k%FGbare%N
        SWITCH_the_grid=Nk_FineGd>0
        OUT_k_nk=Nk_FineGd
+       return
      endif
      !
    end function

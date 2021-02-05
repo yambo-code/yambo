@@ -21,6 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+! headers
+!
+#if defined _SLEPC && !defined _SLEPC_OFF
+#include <petsc/finclude/petscsys.h>
+#include <petsc/finclude/petscvec.h>
+#include <petsc/finclude/petscmat.h>
+#include <slepc/finclude/slepcsys.h>
+#include <slepc/finclude/slepceps.h>
+#endif
+!
 subroutine K_diago_driver(iq,W,X_static) 
  !
  ! Generic diagonalization method to solve resonant and non resonant Hamiltonians.
@@ -46,14 +56,6 @@ subroutine K_diago_driver(iq,W,X_static)
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
  use interfaces,     ONLY:MATRIX_slepc
- !
- ! headers
- !
-#include <petsc/finclude/petscsys.h>
-#include <petsc/finclude/petscvec.h>
-#include <petsc/finclude/petscmat.h>
-#include <slepc/finclude/slepcsys.h>
-#include <slepc/finclude/slepceps.h>
  !
  use petscmat
  use slepceps

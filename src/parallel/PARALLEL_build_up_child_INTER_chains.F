@@ -27,12 +27,12 @@ subroutine PARALLEL_build_up_child_INTER_chains(i_child,COMM_child,i_father)
  !
 #if defined _MPI
  !
- use parallel_m,    ONLY:MPI_comm,myid,PAR_COM_WORLD,ncpu_chain,nchains_group,&
+ use parallel_m,    ONLY:yMPI_comm,myid,PAR_COM_WORLD,ncpu_chain,nchains_group,&
 &                        n_groups,ncpu,i_INTER_CHAIN,CREATE_the_COMM
  !
  implicit none
  !
- type(MPI_comm) :: COMM_child
+ type(yMPI_comm) :: COMM_child
  integer        :: i_child,i_father,n_father,n_child
  !
  n_father = ncpu/product(ncpu_chain(nchains_group(n_groups*2-1):i_father))

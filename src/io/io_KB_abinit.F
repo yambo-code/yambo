@@ -41,10 +41,11 @@ integer function io_KB_abinit(ID)
  !
  ! Workspace
  !
- integer :: ik,ifrag,i1,i_sp_pol,var_size
+ integer :: ik,ifrag,i1,i_sp_pol,var_size,ID_frag
  !
  call timing('io_KB_abinit',OPR='start')
  !
+ ID_frag=0
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then
    ik=ifrag
@@ -130,18 +131,20 @@ integer function io_KB_abinit(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- call io_fragment(ID,i_fragment=ifrag)
+ call io_fragment(ID,ID_frag,i_fragment=ifrag)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    pp_kbd=0._SP
  endif
  ! 
- call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
- call io_bulk(ID,R3=pp_kb(:,:,:,i_sp_pol))
+ call io_bulk(ID_frag,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
+ call io_bulk(ID_frag,R3=pp_kb(:,:,:,i_sp_pol))
  ! 
- call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
- call io_bulk(ID,R3=pp_kbd(:,:,:,i_sp_pol))
+ call io_bulk(ID_frag,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
+ call io_bulk(ID_frag,R3=pp_kbd(:,:,:,i_sp_pol))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

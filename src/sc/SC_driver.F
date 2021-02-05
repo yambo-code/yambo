@@ -103,7 +103,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  ! SC_bands(2)
  !=============
- if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
+ if (SC_bands(2)> E%nb)  call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
+ if (SC_bands(2)< E%nbm) then
+   SC_bands(2)=E%nbm
+   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(E%nbm)))
+ endif
  !
  spread       =rZERO
  max_overlap  =rZERO
@@ -471,7 +475,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! Reload and rotate wave-functions if W is updated
        ! =======================================
        !
-       call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
+       call WF_load(WF,WF_G_max,WF_Go_indx,SC_bands,(/1,nkibz/),title='-SC',force_WFo=.true.)
        !
        do ik=1,QP_nk
          call WF_rotate(ik,i_sp_pol,WFo,fft_size)

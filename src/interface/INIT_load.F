@@ -153,7 +153,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
- call it('r',defs,'mpa',     '[R][Xp] Multi Pole Approximation for the Screened Interaction')
+ call it('r',defs,'mpa',     '[R][Xm] Multi Pole Approximation for the Screened Interaction')
  !
  ! GPL_EXCLUDE_START
  !
@@ -268,7 +268,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'NewtDchk',  '[GW] Test dSc/dw convergence',verb_level=V_qp)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  !
- ! Xs Xd Xp
+ ! Xs Xd Xp Xm
  !
  call it(defs,'Chimod',       '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.,case="A")
  call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys,cpu/gpu',Chi_linalg_mode,verb_level=V_resp,case="A")
@@ -842,7 +842,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      V_iq     =0
      V_DmRnge = 0
      !
-     if (.not.X%whoami==3) then
+     if (.not.X%whoami==3 .and. .not.X%whoami==5) then
        V_iq     = V_resp 
        V_DmRnge = V_resp
      endif

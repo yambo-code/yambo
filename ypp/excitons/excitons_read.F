@@ -32,7 +32,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts,BSE_mode,BS_mat_res_ares_dim
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
  !
 #include<memory.h>
@@ -57,6 +57,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  l_eigenval=index(what,"eigenvalues")  >0
  l_eigenvec=index(what,"eigenvectors") >0
  l_clean   =index(what,"clean")        >0
+ !
+ if(BSE_mode=='retarded'.and.iq>1) BS_mat_res_ares_dim=2
  !
  if(l_check) then
    !
@@ -103,7 +105,6 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    if(en%nb_SOC/=0) then
      YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
    endif
-   !
    !
    do i_sec=1,2
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)

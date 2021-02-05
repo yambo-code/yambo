@@ -58,7 +58,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  l_eigenvec=index(what,"eigenvectors") >0
  l_clean   =index(what,"clean")        >0
  !
- if(BSE_mode=='retarded'.and.iq>1) BS_mat_res_ares_dim=2
+ if(trim(BSE_mode)=='retarded'.and.iq>1) BS_mat_res_ares_dim=2
  !
  if(l_check) then
    !

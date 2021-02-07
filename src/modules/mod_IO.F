@@ -306,8 +306,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
-     integer           :: ID
+   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
+     integer, intent(in)   :: ID
+     integer, intent(out)  :: ID_frag
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
 #endif
@@ -704,14 +705,6 @@ module IO_m
        if(.not.variable_exist) var_ID=-1
      endif
    end function
-   !
-   subroutine IO_return(ID,timing_string)
-     use timing_m,       ONLY:timing
-     integer          :: ID
-     character(*)     :: timing_string
-     call io_disconnect(ID=ID)
-     call timing(timing_string,OPR='stop')
-   end subroutine
    !
    subroutine deliver_IO_error_message(i_err,DB,STOP_it)
      !

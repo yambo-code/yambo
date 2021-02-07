@@ -37,6 +37,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use parallel_m,    ONLY:master_cpu
+ use IO_m,        ONLY:io_code_revision
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif

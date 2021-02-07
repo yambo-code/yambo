@@ -92,11 +92,6 @@ module wave_func
  integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
  !
- ! Allocation/deallocation messaging verbosity
- !
- logical                :: QUIET_free
- logical                :: QUIET_alloc
- !
  interface
    !
    integer function io_WF_old(ID,wf_old)

@@ -269,7 +269,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    !
    if (Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
    !
-   !$omp parallel default(shared), private(ikbz,ikbz_p,v1,iv1,iqbz,iqibz,iqs)
+   !$omp parallel default(shared), private(ikbz,ikbz_mem,ikbz_p,v1,iv1,iqbz,iqibz,iqs,do_qindx_B,do_qindx_X,do_qindx_X_ik)
    call OPENMP_update(master_thread)
    !
    !$omp do

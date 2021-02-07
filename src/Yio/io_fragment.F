@@ -23,17 +23,12 @@
 !
 subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
- ! This routine closes the main DB and opens the fragment. 
- !
- ! Note that, as io_disconnect is called with a negative
- ! argument io_reset is no called. This is needed to save
- ! the properties of the DB that have been read previously 
- ! (like io_nectdf_support or io_code_version/revision).
+ ! This routine opens the fragment.
  !
  use pars,        ONLY:schlen
- use IO_m,        ONLY:close_is_on,io_connect,io_resetable,io_file,io_mode,io_com,&
-&                      io_sec,io_extension,io_action,read_is_on,write_is_on,&
-&                      OP_RD_CL,OP_APP_CL,io_type,io_disconnect,io_folder,io_raw_extension
+ use IO_m,        ONLY:close_is_on,io_connect,io_file,io_mode,io_com,&
+&                      io_sec,io_extension,read_is_on,write_is_on,&
+&                      OP_RD_CL,OP_APP_CL,io_type,io_folder,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
                        frag_SC,frag_RT,frag_ELPH,frag_BS_K,io_control
  use stderr,      ONLY:intc,write_fragments_IO_log,logfile
@@ -146,9 +141,11 @@ end subroutine io_fragment
 !
 subroutine io_fragment_disconnect(ID,ID_frag)
  !
+ ! This routine closes the fragment. 
+ !
  use IO_m,        ONLY:io_disconnect,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                       frag_SC,frag_RT,frag_ELPH,frag_BS_K
+                       frag_SC,frag_RT,frag_ELPH
  !
  implicit none
  !

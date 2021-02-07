@@ -51,7 +51,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  call timing('io_BSS_diago',OPR='start')
  !
  if (BS_mat_res_ares_dim>1) then
-   if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))//'_res'
+   if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))
    if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
  else
    db_name='BS_diago_Q'//trim(intc(iq))

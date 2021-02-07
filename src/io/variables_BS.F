@@ -36,6 +36,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
 &                        def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
+ use IO_m,        ONLY:io_code_revision
 #if defined _PAR_IO
  use BS,            ONLY:l_BSK_IO_triangular
 #endif

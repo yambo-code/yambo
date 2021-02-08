@@ -254,6 +254,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'EHdensity', 'Calculate (h)ole/(e)lectron density from BSE wave-function',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
+ call it('f',defs,'PrtDOS', 'Print Exciton Density of States') 
  !
  ! WFs
  !

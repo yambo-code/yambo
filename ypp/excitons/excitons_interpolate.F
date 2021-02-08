@@ -23,21 +23,26 @@
 !
 subroutine excitons_interpolate(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,DP,schlen,pi,cZERO,cONE
+ use pars,          ONLY:SP,DP,schlen,pi,cZERO,cONE,rZERO
  use LIVE_t,        ONLY:live_timing
- use R_lattice,     ONLY:bz_samp,bz_samp_reset,bz_map
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
  use electrons,     ONLY:levels,n_sp_pol
+ use functions,     ONLY:Fermi_fnc_derivative
  use units,         ONLY:HA2EV
  use BS_solvers,    ONLY:BSS_n_eig,BS_mat,BSS_eh_table,BS_H_dim
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
-&                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k     
+&                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step,DOS_E_range, &
+&                        DOS_E_steps,DOS_broadening
  use interpolate,   ONLY:nshells
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
- use vec_operate,   ONLY:iku_v_norm,k_periodic_idx
- use wrapper_omp,   ONLY:M_by_V_omp,Vstar_dot_V_omp
+ use vec_operate,   ONLY:iku_v_norm
+ use LIVE_t,        ONLY:live_timing
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+
  !
 #include<memory.h> 
  !
@@ -46,27 +51,23 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP,ik,ib,ibp,iqbz,iqbzp,iqp
- integer :: iqm, iqm_ibz, iqp_ibz
- integer :: id,idxp(3),idx(3),max_step,istep
+ integer :: iq,i_c,i_l,ID_INTERP,ik,ib,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
- real(SP)                 :: deltaQ
- complex(SP) ,allocatable :: BS_mat_all(:,:,:),BSS_eh_table_all(:,:,:),EXC_OVLP(:,:,:,:),V_tmp(:,:,:)
+ complex(SP) ,allocatable :: BS_mat_all(:,:,:),BSS_eh_table_all(:,:,:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: coo_out_,file_name
  character(schlen), allocatable :: headings(:)
- logical                  :: GRID_interpolate
- real(SP)                 :: real_ctl,tmp_q(3)
- type(bz_map)             :: q_map
- logical                  :: l_interp_dip,l_interp_epc,l_interp_wfc
+ logical                  :: GRID_interpolate,l_prt_dos
+ real(SP)                 :: tmp_q(3)
+ real(SP)                 :: dos_E(DOS_E_steps),exc_DOS(DOS_E_steps)
+ type(PP_indexes)         :: px
  !
  ! Parse the different interpolations
  !
- call parser('InterpDIP',l_interp_dip)
- call parser('InterpEPC',l_interp_epc)
- call parser('InterpWFC',l_interp_wfc)
+ call parser('PrtDOS',l_prt_dos)
+ GRID_interpolate    = all(INTERP_grid>0)
  !
- if(l_interp_epc) l_interp_wfc=.true.
+ if(l_prt_dos.and..not.GRID_interpolate) call error("You need to specify a Q-grid for the DOS")
  !
  ! Allocate arrays for all eigenvalues/eigenvectors
  ! 
@@ -124,8 +125,6 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  !
  if(BANDS_steps>0) call k_circuit_made_of_user_points( )
  !
- GRID_interpolate    = all(INTERP_grid>0)
- !
  ! Interpolate and write on disk
  !
  if(BANDS_steps>0)  then
@@ -162,15 +161,43 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  endif
  !
  YAMBO_FREE(values)
- deallocate(headings)
  !  
- ! Interpolate and write on database
+ ! Interpolate exciton on a grid and calculate the DOS
  !
- if(GRID_interpolate) then
+ if(l_prt_dos) then
+   !      
    call INTERPOLATION_create_the_grid(GRID_q,'i',INTERP_grid)
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))      
    call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
+   call PP_indexes_reset(px)
+   call PARALLEL_index(px,(/DOS_E_steps/))
+   !
+   call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
+   !
+   exc_dos=rZERO
+   !
+   do i_E=1,DOS_E_steps
+     if (.not.px%element_1D(i_E)) cycle
+     do iq=1,GRID_q%nibz
+       do i_c=1,EXCITONS_n_user_states
+         exc_dos(i_E)=exc_dos(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E))*HA2EV,DOS_broadening)*GRID_q%weights(iq)
+       enddo
+     enddo
+     call live_timing(steps=1)
+   enddo
+   !
+   call live_timing( )
+   !
+   call PP_redux_wait(exc_dos)
+   !
+   file_name="excitons_dos"
+   call of_open_close(trim(file_name),'ot')
+   call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+   call msg('o '//trim(file_name),"#")
+   !
  endif
+ !
+ deallocate(headings)
  !
 end subroutine

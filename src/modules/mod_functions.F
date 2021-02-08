@@ -131,25 +131,27 @@ module functions
      !
    end function
    !
-   function Fermi_fnc_derivative(E,T)
+   pure function Fermi_fnc_derivative(E,T)
      !
      ! This is the energy derivative of the Fermi-Dirac function.
      ! It can be considered and approximation to the delta function.
      !
      ! Note that the function defined here is integrated to 1.
      !
-     real(SP) :: E,T,Fermi_fnc_derivative
+     real(SP) ::Fermi_fnc_derivative
+     real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_derivative=0._SP
      if (T/=0._SP) Fermi_fnc_derivative=1._SP/(2._SP+exp(E/T)+exp(-E/T))/T
      if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0._SP
    end function
    !
-   function Fermi_fnc_T_derivative(E,T)
+   pure function Fermi_fnc_T_derivative(E,T)
      !
      ! This is the Temperature derivative of the Fermi-Dirac function.
      !
-     real(SP) :: E,T,Fermi_fnc_T_derivative
+     real(SP) :: Fermi_fnc_T_derivative
+     real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_T_derivative=0._SP
      if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2

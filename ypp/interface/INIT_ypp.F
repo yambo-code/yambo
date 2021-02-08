@@ -661,7 +661,10 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
-   if (l_interp) call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
+   if (l_interp) then
+     call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
+     call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
+   endif
  endif
  !
 #if defined _YPP_ELPH

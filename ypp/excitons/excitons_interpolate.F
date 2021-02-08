@@ -33,7 +33,7 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  use BS_solvers,    ONLY:BSS_n_eig,BS_mat,BSS_eh_table,BS_H_dim
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step,DOS_E_range, &
-&                        DOS_E_steps,DOS_broadening
+&                        DOS_E_steps,DOS_broadening,USER_k
  use interpolate,   ONLY:nshells
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
@@ -127,7 +127,10 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
  !
  ! Interpolate and write on disk
  !
- if(BANDS_steps>0)  then
+ if(USER_k%nbz>0)  then
+   !
+   call msg('s','Exciton bands interpolation')
+   !   
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
@@ -160,15 +163,16 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
    call of_open_close(trim(file_name))
  endif
  !
- YAMBO_FREE(values)
- !  
  ! Interpolate exciton on a grid and calculate the DOS
  !
  if(l_prt_dos) then
    !      
-   call INTERPOLATION_create_the_grid(GRID_q,'i',INTERP_grid)
+   call msg('s','Exciton Density of States')
+   !
+   GRID_q%description="INTERP"
+   call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))      
-   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
+   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/DOS_E_steps/))
@@ -176,6 +180,8 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
    call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !
    exc_dos=rZERO
+   !
+   call live_timing("EXC DOS",px%n_of_elements(myid+1))
    !
    do i_E=1,DOS_E_steps
      if (.not.px%element_1D(i_E)) cycle
@@ -193,11 +199,21 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q)
    !
    file_name="excitons_dos"
    call of_open_close(trim(file_name),'ot')
-   call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+   headings(1)=" E [eV] "
+   headings(2)=" Dos    "
+   call msg('o '//trim(file_name),"#",headings(1:2),INDENT=0,USE_TABS=.true.)
    call msg('o '//trim(file_name),"#")
+   do i_E=1,DOS_E_steps
+     values(1)=dos_E(i_E)*HA2EV
+     values(2)=exc_dos(i_E)
+     call msg('o '//trim(file_name),' ',values(1:2),INDENT=0,USE_TABS=.true.)
+   enddo
+   !
+   call of_open_close(trim(file_name))
    !
  endif
  !
+ YAMBO_FREE(values)
  deallocate(headings)
  !
 end subroutine

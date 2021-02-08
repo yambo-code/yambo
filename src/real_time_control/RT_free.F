@@ -25,7 +25,9 @@ subroutine RT_free( )
  !
  use R_lattice,      ONLY:bz_samp_FineGd_reset
  use DIPOLES,        ONLY:DIP_alloc
+#if defined _ELPH
  use interfaces,     ONLY:ELPH_alloc
+#endif
  use ELPH,           ONLY:Q_io_map,GKKP_ep_sq,GKKP_pe_sq
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
@@ -88,8 +90,10 @@ subroutine RT_free( )
  YAMBO_FREE(RT_Deph_Matrix)
  YAMBO_FREE(Q_io_map)
  !
+#if defined _ELPH
  call ELPH_alloc('FREE',GKKP=GKKP_ep_sq)
  call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
+#endif
  !
  call bz_samp_FineGd_reset(RTibz)
  !

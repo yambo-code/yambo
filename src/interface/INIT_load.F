@@ -621,6 +621,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _NL
  call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
+#if defined _RT
+ call it('f',defs,'SPINprojected', '[DIP] Project the spin dipoles in the c/v channels ',verb_level=V_real_time)
+#endif
  !
  ! El-Ph
  !

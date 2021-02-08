@@ -294,6 +294,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
 #if defined _YPP_ELPH
        l_eliashberg      =STRING_match(rstr_piece(i1+1),'e')
 #endif
+       l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
      endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then

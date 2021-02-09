@@ -46,7 +46,7 @@
    !
    integer,      intent(in)  :: np       ! number of desired frequency pairs/poles
    complex(SP),  intent(in)  :: w1,w2    ! segment [w1,w2]
-   real(SP),     intent(in)  :: d(2)     ! shift
+   real(SP),     intent(in)  :: d(2)     ! shifts
    character(2), intent(in)  :: ps       ! flavour of sampling: 1line, 2lines, ...
    character(2), intent(in)  :: gs       ! type of grid: homo, lPPS, qPPS, cPPS, ...
    complex(SP),  intent(out) :: w(2*np)

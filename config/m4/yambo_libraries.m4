@@ -28,19 +28,62 @@ DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
-cd lib/
-if ! test -d "yambo/driver/src"; then
- git clone git@github.com:yambo-code/yambo-libraries.git yambo
-else
- cd yambo
- git pull
- cd ../
+
+
+
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
+ if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
-cd ../
+
+if test -d "$srcdir/src/real_time_lifetimes/"; then
+  #
+  # develop procedure
+  #
+  cd lib/
+  if ! test -d "yambo/driver/src"; then
+    git clone git@github.com:yambo-code/yambo-libraries.git yambo
+  else
+    cd yambo
+    git pull
+    cd ../
+  fi
+  cd ../
+  #
+else
+  #
+  # gpl procedure
+  #
+  if ! test -d "lib/yambo/driver/src"; then
+    cd lib/yambo/
+    VERSION="0.0.2"
+    TARBALL="${VERSION}.tar.gz"
+    URL="https://github.com/yambo-code/yambo-libraries/archive/${TARBALL}"
+    rm -rf $TARBALL
+    rm -rf yambo-libraries-${VERSION}
+    if test -x $(command -v wget) ; then
+      wget --no-check-certificate -O ${TARBALL} ${URL} ;
+    elif test -x $(command -v curl) ; then
+      curl -L --progress-bar -o ${TARBALL} ${URL} ;
+    fi
+    if test ! -s $TARBALL ; then
+      echo "*** Unable to download ${TARBALL}. Test whether curl or wget is installed and working," ;
+      echo "*** if you have direct access to the internet." ;
+      echo "*** If not, download ${URL} into folder lib and extract it" ;
+    else
+      echo "Extracting yambo internal library ${TARBALL}" ;
+      tar -xzf $TARBALL
+      rm -rf driver
+      mv yambo-libraries-${VERSION}/* ./
+      rm -rf yambo-libraries-${VERSION}
+    fi
+    cd ../../
+  fi
+  #
+fi
 
 m4_include([lib/yambo/driver/config/version.m4])
 
 AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
-
 
 ])

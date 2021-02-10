@@ -30,7 +30,8 @@ subroutine RT_k_grid(E,k,q)
  use electrons,      ONLY:levels
  use real_time,      ONLY:DbGd_EE_scatt_table,DbGd_EE_percent,DbGd_EE_Nk_table,RTibz,&
 &                         l_RT_uses_E_FineGd,RT_nk,RT_bands
- use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg
+ use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_alloc,bz_samp_duplicate_Fg,&
+&                         bz_samp_FineGd_default
  use parallel_m,     ONLY:PAR_IND_Xk_ibz
  !
 #include<memory.h>
@@ -44,24 +45,14 @@ subroutine RT_k_grid(E,k,q)
  logical :: l_check(k%nibz,k%nibz)
  integer :: ik,ik_rim,iqbz,ik_m_q,ik_m_q_rim,i_loops,N_loops,Nk_rim,Nk_m_q_rim,i1,N_pts
  ! 
- ! GPL_EXCLUDE_START
- !
  l_RT_uses_E_FineGd=k%FGibz%N>0.and.E%FG%nb>=RT_bands(2)
- !
- ! GPL_EXCLUDE_END
- !
- ! GPL_INCLUDE_START
- !
- !l_RT_uses_E_DbGd=.FALSE.
- !
- ! GPL_INCLUDE_END
  !
  ! No DbGd, trivial definitions
  !==============================
  if (.not.l_RT_uses_E_FineGd) then
    !
    RTibz%N = 0
-   RT_nk     = k%nibz
+   RT_nk   = k%nibz
    !
    call bz_samp_FineGd_alloc(RTibz,k%nibz)
    !
@@ -72,20 +63,12 @@ subroutine RT_k_grid(E,k,q)
      DbGd_EE_scatt_table=.true.
      DbGd_EE_Nk_table=1
    endif
-   do ik=1,k%nibz
-     RTibz%pt(ik,:)=k%pt(ik,:)
-     RTibz%k_range(ik,:)=ik
-     RTibz%E_map(ik)=ik
-     RTibz%k_map(ik)=ik
-     RTibz%N_mapped(ik)=1
-     RTibz%weights(ik)=k%weights(ik)
-   enddo
+   !
+   call bz_samp_FineGd_default(RTibz,k)
    !
    return
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
  ! DbGd support
  !=============
@@ -160,7 +143,5 @@ subroutine RT_k_grid(E,k,q)
    enddo
    !
  endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine RT_k_grid

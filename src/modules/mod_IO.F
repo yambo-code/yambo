@@ -279,10 +279,10 @@ module IO_m
    end subroutine io_variable_bulk
    !
 #if !defined _io_lib
-   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
+   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
 &                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE,NOWARN_SER
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE,NOWARN_SER
      character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !
@@ -296,8 +296,9 @@ module IO_m
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,i_fragment,j_fragment,ierr,COMM,cpu_id)
-     integer           :: ID
+   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
+     integer, intent(in)   :: ID
+     integer, intent(out)  :: ID_frag
      integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
    end subroutine
 #endif
@@ -408,7 +409,8 @@ module IO_m
    !
    subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
      !
-     use parallel_m,    ONLY:master_cpu,PP_bcast,myid
+     use parallel_int,  ONLY:PP_bcast
+     use parallel_m,    ONLY:master_cpu,myid
      !
      integer,intent(in)    :: ACTION
      integer,intent(inout) :: ID
@@ -423,8 +425,8 @@ module IO_m
      ! Assign a new unit if the unit is not already open
      !
      define_ID=any((/ACTION==OP_RD_CL, ACTION==OP_WR_CL,    &
-&                     ACTION==OP_APP_CL,ACTION==OP_RD,      &
-&                     ACTION==OP_APP,   ACTION==OP_WR/))
+&                    ACTION==OP_APP_CL,ACTION==OP_RD,      &
+&                    ACTION==OP_APP,   ACTION==OP_WR/))
      !
      if (  define_ID .and. (master_cpu .or. (.not.present(COMM))) ) then
        ID=-1
@@ -649,7 +651,7 @@ module IO_m
        if(present(VAR)) VARNAME=VAR
        if( read_is_on(ID)) write (msg,'(6a)') ' Reading File ',trim(FILENAME),'; Variable ',&
 &                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
-       if(write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
+       if (write_is_on(ID)) write (msg,'(6a)') ' Writing File ',trim(FILENAME),'; Variable ',&
 &                                             trim(VARNAME),'; ',trim(nf90_strerror(status))
        call error(trim(msg))
      end if

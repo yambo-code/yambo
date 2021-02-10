@@ -132,7 +132,6 @@ module pseudo
    !
    subroutine PP_nlcc_alloc()
      use R_lattice,  ONLY:ng_vec
-     use FFT_m,      ONLY:fft_size
      implicit none
      YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
      YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))

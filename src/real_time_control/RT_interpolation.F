@@ -25,19 +25,18 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
- use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed,INTERPOLATION_driver_do,l_integral_respect,NN_n_of_nearest
- use RT_control,     ONLY:RT_carriers_to_RT_k
+ use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
  !
 #include<memory.h>
  !
  integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E
- type(bz_samp), intent(in)    :: K
+ type(bz_samp), intent(inout) :: K
  character(3),  intent(in)    :: what ! X,K,G,R
  character(*),  intent(in)    :: mode ! NN,BOLTZ
  real(SP),      intent(in)    :: Time
@@ -45,19 +44,17 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  ! Work space
  !
- integer               :: nb(2),ID
+ integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
- type(bz_samp)         :: RT_k
  !
  ! Setup
  !-------
  l_DbGd=K%FGibz%N>0     .and. .not.l_RT_abs_yambo
  l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
  NN_n_of_nearest=NN
- ID=0
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -82,10 +79,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
      E%FG%df=0._SP
    endif
    !
-   call bz_samp_reset(RT_k)
-   call RT_carriers_to_RT_k(RT_k)
-   !
-   call Interpolate_and_transfer("df",K)
+   call Interpolate_and_transfer("df",K,E,nb,l_B,N_carriers,df_Max,dE_Max)
    !
    E%f=E%fo+E%df
    if (l_DbGd) E%FG%f=E%FG%f+E%FG%df
@@ -103,7 +97,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
      E%Eo=E%E
    endif
    !
-   call Interpolate_and_transfer("dE",K)
+   call Interpolate_and_transfer("dE",K,E,nb,l_B,N_carriers,df_Max,dE_Max)
    !
  endif
  !
@@ -122,7 +116,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '['//trim(title)//'] Reference Time           [fs] ',Time*AUT2FS)
+ call msg('r',    '['//trim(title)//'] Reference Time                ',Time*AUT2FS,"[fs]")
  call msg('r',    '['//trim(title)//'] Bands range                   ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
@@ -132,30 +126,48 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  endif
  !
  if (l_E) then
-   call msg('r',  '['//trim(title)//'] Max energy levels change [ev] ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change      ',dE_Max*HA2EV,"[eV]")
  endif
  !
  call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
- call INTERPOLATION_driver_end(ID)
+end subroutine RT_interpolation
+!
+!
+subroutine Interpolate_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,dE_Max)
  !
- contains
-  !
-  subroutine Interpolate_and_transfer(OBJ,K)
+ use pars,           ONLY:SP
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use real_time,      ONLY:RT_carriers
+ use RT_control,     ONLY:RT_carriers_to_RT_k
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ !
+ implicit none
+ !
+ character(*)  :: OBJ
+ type(levels),  intent(inout) :: E
+ type(bz_samp), intent(inout) :: K
+ logical,       intent(in)    :: l_B
+ integer       :: nb(2)
+ real(SP)      :: df_Max,dE_Max,N_carriers(2)
+ !
+ ! Work Space
+ !
+ logical       :: HAS_DBGD
+ integer       :: ik,i_carr,nb_max,nb_max_FineGd,ID
+ type(bz_samp) :: RT_k
     !
-    character(*) :: OBJ
-    type(bz_samp):: K
-    !
-    ! Work Space
-    logical      :: HAS_DBGD
-    integer      :: ik,i_carr,nb_max,nb_max_FineGd
-    !
+    ID=0
     HAS_DBGD=allocated(K%FGibz%pt)
     !
     nb_max=    nb(2)
     if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%FG%nb)
+    !
+    call bz_samp_reset(RT_k)
+    call RT_carriers_to_RT_k(RT_k)
     !
     call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
     !
@@ -195,6 +207,6 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
       !
     endif
     !
-  end subroutine Interpolate_and_transfer
-  !
-end subroutine
+    call INTERPOLATION_driver_end(ID)
+    !
+end subroutine Interpolate_and_transfer

@@ -32,9 +32,12 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
+#endif
+#if defined _ELPH
+ use drivers,       ONLY:l_elph_Hamiltonian
 #endif
  use X_m,           ONLY:X_t
  use DIPOLES,       ONLY:DIPOLE_t
@@ -46,9 +49,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
-#if defined _ELPH
- use drivers,       ONLY:l_elph_Hamiltonian
-#endif
  !
  implicit none
  !
@@ -164,7 +164,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Logicals for \eps^-1
  !======================
  !
- l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. l_life .or. l_ppa .or. l_mpa
+ l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_life.and.l_elel_corr) .or. l_ppa .or. l_mpa
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
  i_X_kind=1
@@ -179,7 +179,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run.or.l_nl_optics
  !
- if (driver_now) call DIPOLE_driver(DIPen, Xk, q, X(i_X_kind), Dip)
+ if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
  if (driver_now) call mem_manager_report
  !
  ! OPTICS
@@ -221,7 +221,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now=l_gw0.or.l_life
  !
- if (driver_now) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+ if (driver_now.and..not.l_phel_corr) call QP_driver(X(i_X_kind),Xen,Xk,en,k,q,Xw(i_X_kind),Dip)
+#if defined _PHEL
+ if (driver_now.and.     l_phel_corr) call PHEL_driver(en,k,q)
+#endif
  if (driver_now) call mem_manager_report
  !
  ! BETHE-SALPETER
@@ -231,8 +234,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (driver_now) call mem_manager_report
- !
- ! GPL_EXCLUDE_START
  !
  ! ACFDT
  !=======
@@ -253,8 +254,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _RT
  !
@@ -280,8 +279,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
 #endif
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _ELPH
  !
  ! Electron-Phonon Hamiltonian
@@ -293,8 +290,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _SCALAPACK 
  !

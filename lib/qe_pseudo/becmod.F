@@ -72,9 +72,6 @@ CONTAINS
     INTEGER, OPTIONAL :: nbnd
     !
     INTEGER :: local_nbnd
-!    INTEGER, EXTERNAL :: ldim_block, gind_block
-    INTEGER :: m_loc, m_begin, ip
-    REAL(SP), ALLOCATABLE :: dtmp(:,:)
     !
     IF ( present (nbnd) ) THEN
         local_nbnd = nbnd
@@ -84,30 +81,7 @@ CONTAINS
 
     IF ( gamma_only ) THEN
        !
-!       IF( betapsi%comm == mp_get_comm_null() ) THEN
-!          !
-!          CALL calbec_gamma ( npw, beta, psi, betapsi%r, local_nbnd, intra_bgrp_comm )
-           CALL calbec_gamma ( npw, beta, psi, betapsi%r, ibnd_s, local_nbnd )
-!          !
-!       ELSE
-!          !
-!          ALLOCATE( dtmp( SIZE( betapsi%r, 1 ), SIZE( betapsi%r, 2 ) ) )
-!          !
-!          DO ip = 0, betapsi%nproc - 1
-!             m_loc   = ldim_block( betapsi%nbnd , betapsi%nproc, ip )
-!             m_begin = gind_block( 1,  betapsi%nbnd, betapsi%nproc, ip )
-!             IF( ( m_begin + m_loc - 1 ) > local_nbnd ) m_loc = local_nbnd - m_begin + 1
-!             IF( m_loc > 0 ) THEN
-!                CALL calbec_gamma ( npw, beta, psi(:,m_begin:m_begin+m_loc-1), dtmp, m_loc, betapsi%comm )
-!                IF( ip == betapsi%mype ) THEN
-!                   betapsi%r(:,1:m_loc) = dtmp(:,1:m_loc)
-!                END IF
-!             END IF
-!          END DO
-!
-!          DEALLOCATE( dtmp )
-!          !
-!       END IF
+       CALL calbec_gamma ( npw, beta, psi, betapsi%r, ibnd_s, local_nbnd )
        !
     ELSEIF ( noncolin) THEN
        !

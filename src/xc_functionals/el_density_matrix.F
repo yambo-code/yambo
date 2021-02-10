@@ -35,7 +35,8 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF,WAVEs
  use real_time,      ONLY:RT_bands,RTibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing
  !

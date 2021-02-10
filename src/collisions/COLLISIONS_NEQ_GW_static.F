@@ -29,7 +29,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PAR_PLASMA_index,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_PLASMA_index,&
 &                        PAR_IND_Q_bz,PAR_Q_bz_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
 &                        PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc

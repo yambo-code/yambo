@@ -34,15 +34,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
 &                        PAR_COM_X_WORLD_RL_resolved
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth
  use TDDFT,         ONLY:FXC
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
-&                        PARALLEL_WF_index,WF_load,WF_free
+ use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset
  !
@@ -66,6 +66,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! logicals and control
  !
  self_detect_E_range=.false.
+ !
+ ! Some check
+ !
+ if(X%ib(2)>Xen%nb) call error("Too many bands required in X. Run DFT with more bands!")
  !
  l_X_terminator = X_terminator_Kind/='none'
  if (l_X_terminator.and.trim(X_terminator_Kind)/='BG') then
@@ -219,18 +223,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call PP_redux_wait()
  !
- do iq=X%iq(1),X%iq(2)
-   !
-   if (     io_X_done(iq) > 0       ) cycle
-   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+ if (X%iq(1)<=1 .and. 1<=X%iq(2) .and. io_X_done(1)<=0 .and. PAR_IND_Q_ibz%element_1D(1) ) then
    !
    ! TDDFT setup
    !
-   call TDDFT_do_X_W_typs(iq,X,Xw)
+   call TDDFT_do_X_W_typs(1,X,Xw)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(iq,Xk)
+   call X_Double_Grid_setup(1,Xk)
    !
    ! ALDA (only once) 
    !
@@ -242,9 +243,38 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   if (iq==1) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
+   i_err=io_X(X,Xw,Xdb)
+   !
+ endif
+ !
+ call PP_redux_wait()
+ !
+ do iq=X%iq(1),X%iq(2)
+   !
+   if (     io_X_done(iq) > 0       ) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
+   !
+   if (iq/=1) then
+     !
+     ! TDDFT setup
+     !
+     call TDDFT_do_X_W_typs(iq,X,Xw)
+     !
+     ! DbGd setup
+     !
+     call X_Double_Grid_setup(iq,Xk)
+     !
+     ! ALDA (only once) 
+     !
+     if (l_alda_fxc.and..not.allocated(FXC)) then
+       !
+       call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
+       !
+       call TDDFT_ALDA_G_space(Xen,Xk)
+       !
+     endif
+     !
    endif
    !
    ! Allocation

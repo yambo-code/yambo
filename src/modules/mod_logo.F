@@ -67,28 +67,11 @@ module LOGO
      character(schlen) :: comment(4),ch
      integer           :: max_length,i1,left_space,iA,ic
      !
-     ! GPL_EXCLUDE_START
-     !
      comment(1)='Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
 &                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash '//trim(code_hash)
      !
-     ! GPL_EXCLUDE_END
-     !
-     ! GPL_INCLUDE_START
-!     comment(1)='GPL Version '//&
-!&                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-!&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_GPL_revision))//&
-!&                '.'//' (Based on r.'//trim(intc(code_revision))//' h.'//trim(code_hash)//')'
-     ! GPL_INCLUDE_END
-     !
-     ! GPL_EXCLUDE_START
      comment(2)="Branch is "//trim(code_branch)
-     ! GPL_EXCLUDE_END
-     !
-     ! GPL_INCLUDE_START
-     !comment(2)=""
-     ! GPL_INCLUDE_END
      !
      comment(3)=trim(code_libraries)//" Build"
      !

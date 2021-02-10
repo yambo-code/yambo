@@ -68,7 +68,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    enddo
  enddo
  !
- f_eh=f_eh/real(drude_n_states,SP)
+ if(drude_n_states>0) f_eh=f_eh/real(drude_n_states,SP)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================

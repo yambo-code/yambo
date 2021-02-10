@@ -72,7 +72,7 @@ subroutine symmetries_driver(E,Xk)
    call WF_load(WF,0,1,(/1,E%nbm/),(/1,Xk%nibz/),title='-Magn')
    YAMBO_ALLOC(magn,(fft_size,3))
    call el_magnetization(E,Xk,magn)
-   call msg('s','Total magnetization (x,y,z) [Bohr_magneton] ',real(Spin_magn(:),SP))
+   call msg('s','Total magnetization (x,y,z)',real(Spin_magn(:),SP),"[Bohr_magneton]")
    YAMBO_FREE(magn)
    call WF_free(WF)
  endif

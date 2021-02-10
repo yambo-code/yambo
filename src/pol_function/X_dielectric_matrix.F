@@ -60,7 +60,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
- complex(SP)          :: Z_ene(2)
  character(1)         :: sec_mode
  !
  ! logicals and control

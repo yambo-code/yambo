@@ -67,7 +67,11 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
      call WHAT_update(i_db)
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
      call ADD_the_DB_desc( N_GROUNDS, i_db,"[DB #"//trim(intc(i_db))//"]")
-     call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="[DB #"//trim(intc(i_db))//"]")
+     if(i_db == 1) then
+       call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="")
+     else
+       call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="[DB #"//trim(intc(i_db))//"]")
+     endif
    endif
    !
    do i_db_p=i_db+1,n_dbs

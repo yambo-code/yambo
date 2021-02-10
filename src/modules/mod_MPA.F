@@ -449,7 +449,7 @@ contains
    integer                         :: i, j, info, ind(np), ILO,IHI    
    real(SP)                        :: anorm, Wm
    ! 
-   Wm = maxval(abs(z),np)
+   Wm = maxval(abs(z(1:np)))
    !    
    do j = 1, np
      ind(j) = j

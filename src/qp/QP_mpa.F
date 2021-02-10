@@ -33,7 +33,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_sc_run
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -47,8 +49,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_np,MPA_E_mat,MPA_R_mat,MPA_freqs,&

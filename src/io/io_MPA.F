@@ -38,6 +38,7 @@ integer function io_MPA(X,Xw,ID)
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:PAR_COM_X_WORLD
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
  !
 #include<memory.h>
@@ -48,7 +49,7 @@ integer function io_MPA(X,Xw,ID)
  !
  !Work Space
  !
- integer           :: sec_size,i1,iq,i_err,io_com_save,io_err
+ integer           :: sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
  logical           :: different_db_RL_order,perform_IO
  character(schlen) :: ch,db_desc
  character(2)      :: local_XC_KIND
@@ -69,6 +70,8 @@ integer function io_MPA(X,Xw,ID)
  call timing('io_MPA',OPR='start')
  !
  different_db_RL_order=.false.
+ !
+ ID_frag=0
  !
  io_extension(ID)='mpa_ER'
  !
@@ -115,7 +118,8 @@ integer function io_MPA(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- call io_fragment(ID,i_fragment=iq,ierr=io_err)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err, &
+&                 COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  !
  !  type(X_t)    ::X(5)  x s d p m
  !
@@ -128,19 +132,19 @@ integer function io_MPA(X,Xw,ID)
    ! Important: once the file has been opend in PAR mode all the CPUs belonging to the COMM
    !            must go through the definitions of the variables although only one is writing
    !
-   io_com_save=io_com(ID)
-   call def_variable_elemental(ID,trim(ch),sec_size,SP,1)
+   io_com_save=io_com(ID_frag)
+   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
    if (perform_IO) then
-     call io_variable_elemental(ID,  VAR=" :: Current Q-pt index     :",I0=iq)
-     call io_variable_elemental(ID,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
+     call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
+     call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
      !
    endif
    !
-   call def_variable_elemental(ID,"",0,0,1)
-   io_MPA=io_status(ID)
+   call def_variable_elemental(ID_frag,"",0,0,1)
+   io_MPA=io_status(ID_frag)
    !
-   io_com(ID)=io_com_save
+   io_com(ID_frag)=io_com_save
    !
    if (io_MPA/=0) goto 1
    !
@@ -157,11 +161,11 @@ integer function io_MPA(X,Xw,ID)
    !
 !   ch="FREQ_sec_iq"//trim(intc(iq))
 !#if defined _PAR_IO
-!   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP,par_io_kind='independent')
+!   call def_variable_bulk(ID_frag,trim(ch),1,(/4,Xw%n_freqs/2/),SP,par_io_kind='independent')
 !#else
-!   call def_variable_bulk(ID,trim(ch),1,(/4,Xw%n_freqs/2/),SP)
+!   call def_variable_bulk(ID_frag,trim(ch),1,(/4,Xw%n_freqs/2/),SP)
 !#endif
-!   if(perform_IO) call io_variable_bulk(ID,1,C1=Xw%p)
+!   if(perform_IO) call io_variable_bulk(ID_frag,1,C1=Xw%p)
    !
    ! allocations
    !
@@ -174,14 +178,14 @@ integer function io_MPA(X,Xw,ID)
 !#if defined _PAR_IO
 !   if(write_is_on(ID)) then
 !     !
-!     call def_variable_bulk(ID,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
-!     call  io_variable_bulk(ID,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
+!     call def_variable_bulk(ID_frag,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
+!     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
 !     !
 !   else if(read_is_on(ID)) then
 !#endif
      !
-     call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
-     call  io_variable_bulk(ID,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
+     call  io_variable_bulk(ID_frag,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
      !
 !#if defined _PAR_IO
 !   endif
@@ -200,8 +204,8 @@ integer function io_MPA(X,Xw,ID)
 !   else if(read_is_on(ID)) then
 !#endif
      !
-     call def_variable_bulk(ID,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
-     call  io_variable_bulk(ID,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
+     call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
+     call  io_variable_bulk(ID_frag,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
      !
 !#if defined _PAR_IO
 !   endif
@@ -228,7 +232,8 @@ integer function io_MPA(X,Xw,ID)
    if (io_err==0) io_MPA=iq
  endif
  !
-1 call io_disconnect(ID)
+1 call io_fragment_disconnect(ID,ID_frag)
+ call io_disconnect(ID)
  !
  call timing('io_MPA',OPR='stop')
  !

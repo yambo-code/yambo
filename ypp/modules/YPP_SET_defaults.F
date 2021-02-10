@@ -32,7 +32,7 @@ subroutine YPP_SET_defaults()
 &                         WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,AVE_exc,l_interp,  &
 &                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
 &                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane,K_grid,&
-&                         DIPOLES_bands,DIPOLES_E_range
+&                         DIPOLES_bands,DIPOLES_E_range,ChemPot
  use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -170,6 +170,7 @@ subroutine YPP_SET_defaults()
  WF_multiplier=1._SP
  BSiq=1
  AVE_exc='h'
+ ChemPot=0.0 ! Chemical potential
  !
 #if defined _YPP_ELPH
  !

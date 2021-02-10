@@ -284,15 +284,14 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
        l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
        l_sort           =STRING_match(rstr_piece(i1+1),'s').and..not.STRING_match(rstr_piece(i1+1),'sp')
        l_amplitude      =STRING_match(rstr_piece(i1+1),'a')
-#if defined _YPP_ELPH
-       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
-#endif
        !
        l_spin  =STRING_match(rstr_piece(i1+1),'sp').and.n_spin>1
        l_mag   =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
 #if defined _YPP_ELPH
-       l_eliashberg      =STRING_match(rstr_piece(i1+1),'e')
+       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
+       l_eliashberg     =STRING_match(rstr_piece(i1+1),'e')
+       l_ph_ass_dos     =STRING_match(rstr_piece(i1+1),'p')
 #endif
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
@@ -385,6 +384,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  if (l_mag)            call initactivate(1,'magnetization')
  if (l_wavefunction)   call initactivate(1,'wavefunction')
  if (l_interp)         call initactivate(1,'interpolate')
+ if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
  !
 #if defined _YPP_ELPH
  !
@@ -488,7 +488,8 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
- l_interp   =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
+ l_interp    =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
+ l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
@@ -662,8 +663,13 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
 #endif
    if (l_interp) then
+     call initactivate(-1,"BSQindex")
      call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
      call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
+   endif
+   if (l_ph_ass_dos) then
+     call initactivate(-1,"BSQindex")
+     call initactivate(1,"ChemPot BoseTemp PHfreqF DOSERange DOSESteps DOS_broad")
    endif
  endif
  !

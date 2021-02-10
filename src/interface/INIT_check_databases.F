@@ -205,7 +205,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- do i1=1,4 ! Xx Xs Xd Xp
+ do i1=1,5 ! Xx Xs Xd Xp Xm
    ! .a
    X(i1)%ib=(/1,en%nb/)
    ! .b

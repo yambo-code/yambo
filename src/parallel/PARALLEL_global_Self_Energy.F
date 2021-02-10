@@ -290,7 +290,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
      call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    endif

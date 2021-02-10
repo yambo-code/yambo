@@ -48,7 +48,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
+ integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE,ID_frag
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_TEMP
  real(SP), allocatable :: E_tmp(:,:)
  !
@@ -64,6 +64,8 @@ integer function io_SC_components(what,E_sc,ID)
  l_MP=what=="MP"
  l_WF=what=="WF"
  l_V =what=="V"
+ !
+ ID_frag=0
  !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
@@ -185,25 +187,20 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(any((/l_E,l_V,l_WF,l_MP/))) then
-   !
-   if (ik==0) goto 1
-   !
-   ! Fragmentation
-   !===============
-   !
-   call io_fragment(ID,i_fragment=ik)
-   !
- endif
+ if (ik==0) goto 1
+ !
+ ! Fragmentation
+ !===============
+ if(any((/l_E,l_V,l_WF,l_MP/))) call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  if (l_V.and..not.l_sc_V_is_local) then
    !
    ! H_sc
    !======
    !
-   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_nl_sc)
+   call io_bulk(ID_frag,C2=H_nl_sc)
    !
  endif
  !
@@ -212,9 +209,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_rotation(:,:,ik,i_sp_pol))
+   call io_bulk(ID_frag,C2=H_rotation(:,:,ik,i_sp_pol))
    !
    if (allocated(H_rotation_ref).and.(write_is_on(ID).or..not.l_sc_run)) then
      call io_bulk(ID,VAR="REF_Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
@@ -229,11 +226,13 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,fft_size,SC_bands(2)/))
-   call io_bulk(ID,C2=V_mean)
+   call io_bulk(ID_frag,C2=V_mean)
    !
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

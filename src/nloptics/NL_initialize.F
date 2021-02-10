@@ -305,7 +305,7 @@ subroutine NL_initialize(E,k,q)
  ! LOG
  ! ===
  !
- call section('=','Messaging')
+ call section('+','Messaging')
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 ',trim(Integrator_name))

@@ -31,7 +31,7 @@ subroutine RT_driver(E,X,k,q,Dip)
 #endif
  use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing
- use electrons,      ONLY:levels,n_spin,n_spinor
+ use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use wave_func,      ONLY:WF
@@ -158,9 +158,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   if(n_spinor==2.and.l_update_SOC) call WF_derivative(RT_bands,(/1,k%nibz/),(/1,n_sp_pol/),(/.true.,.true.,.true./),.true.)
    !
-   call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
+   call WF_load(WF,WF_G_max,WF_Go_indx,RT_bands,(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
    ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size

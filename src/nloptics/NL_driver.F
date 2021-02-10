@@ -72,7 +72,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  RT_bands =NL_bands
  RT_nbands=NL_nbands
  !
- call section('+','Initialization')
+ call section('*','NL Initialization')
  !#################################
  !
  ! Initialize
@@ -181,6 +181,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Initialization
  ! ==================
+ call section('*','NL Start and Restart')
  call NL_start_and_restart(E,k,Dip)
  !
  ! Check if calculation was already done

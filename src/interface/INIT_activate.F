@@ -74,8 +74,8 @@ subroutine INIT_activate()
  !
  ! CPU structure
  !
- if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
-   if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life) then
+   if (l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life) then
      call CPU_activate("X_and_IO")
    else
      call CPU_activate("X")

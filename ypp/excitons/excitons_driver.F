@@ -33,7 +33,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use BS_solvers,    ONLY:BSS_n_eig
  use BS,            ONLY:BS_H_dim
 #if defined _YPP_ELPH
- use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp
+ use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp,l_ph_ass_dos
 #endif
 #if defined _YPP_RT
  use YPP_real_time, ONLY:l_RT_abs
@@ -86,8 +86,17 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !=========================================
  if(.not.l_sort) call get_user_excitonic_states( )
  !
+ ! Exciton dispersion interpolation
+ ! =======================================
  if(l_interp) then
    call excitons_interpolate(k,Xk,en,Xen,q)
+   return
+ endif
+ !
+ ! Phonon assisted exciton density of states
+ ! =========================================
+ if(l_ph_ass_dos) then
+   call excitons_ph_ass_dos(k,Xk,en,Xen,q)
    return
  endif
  !

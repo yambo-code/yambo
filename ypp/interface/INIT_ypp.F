@@ -669,7 +669,8 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
    endif
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
-     call initactivate(1,"ChemPot BoseTemp PHfreqF DOSERange DOSESteps DOS_broad")
+     call initactivate(1,"ChemPot PHfreqF DOSERange DOSESteps DOS_broad")
+     call initactivate(2,"BoseTemp")
    endif
  endif
  !

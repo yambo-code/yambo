@@ -30,7 +30,6 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use electrons,     ONLY:levels,n_sp_pol
  use functions,     ONLY:Fermi_fnc_derivative
  use units,         ONLY:HA2EV
- use BS_solvers,    ONLY:BSS_n_eig,BS_mat,BSS_eh_table,BS_H_dim
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step,DOS_E_range, &
 &                        DOS_E_steps,DOS_broadening,USER_k
@@ -53,7 +52,6 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  integer :: iq,i_c,i_l,ID_INTERP,ik,ib,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
- complex(SP) ,allocatable :: BS_mat_all(:,:,:),BSS_eh_table_all(:,:,:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: coo_out_,file_name
  character(schlen), allocatable :: headings(:)

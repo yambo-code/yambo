@@ -28,7 +28,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_bss
+ use drivers,      ONLY:l_bs_fxc,l_bss,l_tddft
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
@@ -54,7 +54,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
- use global_XC,     ONLY:WF_xc_functional,WF_kind
+ use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
@@ -500,6 +500,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
        end select
+       !
+       if (l_tddft.and.WF_exx_fraction>0._SP) H_c=H_c*WF_exx_fraction
        !
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))

@@ -39,6 +39,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
+ use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_tools,       ONLY:it,infile_dump,ofiles_append,&
@@ -509,10 +510,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_bse) then
        if (l_rpa_IP)                   BS_res_mode='none'
        if (l_td_hartree)               BS_res_mode='x'
-       if (l_tddft)                    BS_res_mode='x'
+       if (l_tddft) then
+                                       BS_res_mode='x'
+         if(WF_exx_fraction > 0._SP)   BS_res_mode='xcd'
+         if(WF_exx_screening> 0._SP)   BS_res_mode='xc'
+       endif
        if (l_bs_fxc)                   BS_res_mode='c'
        if (l_td_hf)                    BS_res_mode='xcd'
        if (l_W_eh)                     BS_res_mode='xc'
+       !
        if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
        !
        if(l_W_eh) then

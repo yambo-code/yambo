@@ -32,12 +32,12 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-		if test -e ${prefix}/lib/iotk/make.sys ; then rm ${prefix}/lib/iotk/make.sys ; fi ; \
-	        if test -e ${prefix}/lib/iotk/make_iotk.inc ; then \
-	           cp ${prefix}/lib/iotk/make_iotk.inc ${prefix}/lib/iotk/make.sys ; \
+		if test -e ${compdir}/lib/iotk/make.sys ; then rm ${compdir}/lib/iotk/make.sys ; fi ; \
+	        if test -e ${compdir}/lib/iotk/make_iotk.inc ; then \
+	           cp ${compdir}/lib/iotk/make_iotk.inc ${compdir}/lib/iotk/make.sys ; \
 	        fi ; \
 	        if test -e ${srcdir}/lib/iotk/iotk_specials.h ; then \
-	           cp ${srcdir}/lib/iotk/iotk_specials.h ${prefix}/lib/iotk/$(PACKAGE)/include ; \
+	           cp ${srcdir}/lib/iotk/iotk_specials.h ${compdir}/lib/iotk/$(PACKAGE)/include ; \
 	        fi ) ; \
 	fi
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \

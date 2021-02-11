@@ -24,6 +24,7 @@
 subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  use pars,           ONLY:SP
+ use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,&
 &                         LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
@@ -37,11 +38,15 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  integer           :: lwork
  type(LALGEBRA_WS) :: WS
  !
- call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
- !
  lwork=-1
  allocate(WS%v_cmplx(1))
- YAMBO_ALLOC(WS%v_real,(max(1,3*n-2)))
+ !
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing('SERIAL_HERMITIAN_diagonalization',OPR='start')
+   YAMBO_ALLOC(WS%v_real,(max(1,3*n-2)))
+ else
+   allocate(WS%v_real(max(1,3*n-2)))
+ endif
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
@@ -51,7 +56,12 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  lwork=nint(real(WS%v_cmplx(1)))
  deallocate(WS%v_cmplx)
- YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ !
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ else
+   allocate(WS%v_cmplx(lwork))
+ endif
  !
 #if defined _DOUBLE
  call ZHEEV('V','U',n,M,size(M,1),E,WS%v_cmplx,lwork,WS%v_real,WS%i_fail)
@@ -63,6 +73,8 @@ subroutine SERIAL_HERMITIAN_diagonalization(n,M,E)
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  !
- call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+ if(.not.(l_nl_optics.or.l_real_time)) then
+   call timing('SERIAL_HERMITIAN_diagonalization',OPR='stop')
+ endif
  !
 end subroutine

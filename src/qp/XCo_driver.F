@@ -24,17 +24,16 @@
 subroutine XCo_driver(E,k,Xk,q)
  !
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen,rZERO,SP,cZERO
+ use pars,          ONLY:schlen,rZERO,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
+ use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
 &                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
- use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
@@ -168,10 +167,6 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (l_Vxc) then
    !
-   ! non-linear core corrections (NLCC)
-   !
-   call XC_nlcc_setup()
-   !
    call XCo_local(E,Xk)
    !
    if (.not.l_screen_hyb) then
@@ -180,8 +175,6 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      call QP_XCo_free(l_screen_hyb=.true.)
    endif
-   !
-   call PP_nlcc_free()
    !
  endif
  !

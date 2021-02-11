@@ -29,7 +29,7 @@ subroutine RT_occupations_driver(k,en)
  use IO_m,           ONLY:LOG
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_interfaces, ONLY:PROJECTION_setup
- use RT_control,     ONLY:RT_apply,OBS_RT_IO_t
+ use RT_control,     ONLY:RT_apply,CARR_RT_IO_t
  use real_time,      ONLY:RT_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
@@ -43,7 +43,7 @@ subroutine RT_occupations_driver(k,en)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
- call RT_apply(RT_bands,en,k,IO_COM=LOG,keep_RT_carriers=.TRUE.)
+ call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
  !
@@ -51,13 +51,13 @@ subroutine RT_occupations_driver(k,en)
  !========
  call PROJECTION_setup("setup")
  !
- call RT_time_configuration_setup("CARRIERS",OBS_RT_IO_t)
+ call RT_time_configuration_setup("CARRIERS",CARR_RT_IO_t)
  !
  ! Additional QP corrections
  !===========================
  call QP_state_table_setup(en)
  !
- call QP_apply(RT_bands,en,k,'G',msg_fmt='s')
+ call QP_apply(RT_bands,en,k,'G',msg_fmt='rs')
  !
  ! Occupations energy plot 
  !=========================
@@ -72,7 +72,7 @@ subroutine RT_occupations_driver(k,en)
  if (l_RT_dos)    call RT_dos_time_plot(en,k,RT_conf%T_n_steps)
  !
  ! Occupations bands fit 
- !=========================
+ !=======================
  if (l_RT_bands) call RT_occ_bands_interpolation(en,k,RT_conf%T_n_steps)
  !
 end subroutine RT_occupations_driver

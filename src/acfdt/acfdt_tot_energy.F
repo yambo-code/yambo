@@ -30,9 +30,10 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use frequency,      ONLY:w_samp,W_reset
  use wave_func,      ONLY:WF
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use interfaces,     ONLY:WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use linear_algebra, ONLY:INV,USE_LK
- use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free,el_density_and_current,LINEAR_ALGEBRA_driver 
  use DIPOLES,        ONLY:DIPOLE_t
  use R_lattice,      ONLY:bz_samp,bare_qpg,nqibz
  use electrons,      ONLY:levels,nel
@@ -167,17 +168,17 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    ! Report
    !
    sug_E_rng=(nel/DL_vol)**(2./3.)*HA2EV
-   call msg('r','[E] Energy borders [ev][suggested]',(/25.*sug_E_rng,250*sug_E_rng/))
+   call msg('r','[E] Energy borders     [suggested]',(/25.*sug_E_rng,250*sug_E_rng/),"[eV]")
    call msg('r','                            [used]',(/ACFDT_E_range*HA2EV/))
    call msg('r','    Energy points                 ',(/(ACFDT_n_freqs-1)/2+1,ACFDT_n_freqs/))
-   call msg('r','    First point               [ev]',(/freq(1)*HA2EV/))
+   call msg('r','    First point                   ',(/freq(1)*HA2EV/),"[eV]")
    call msg('nr','[L] Pts(1-5)',(/lambda(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Wgs(1-5)',(/lambda_weight(1:min(5,ACFDT_n_lambda))/))
    call msg(' r','    Points  ',(/ACFDT_n_lambda/))
    !
    call section('=','Non-interacting Response Function [Xo]')
    !
-   call X_pre_setup(Xen,X)
+   call X_pre_setup(Xen,Xk,X)
    !
    do iqibz=1,nqibz
      X%iq=iqibz

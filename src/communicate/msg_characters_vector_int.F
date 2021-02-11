@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
+subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  !
  use pars,         ONLY:lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file,STRING_remove
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,terminator,of_unit
  use com_interfcs, ONLY:composed_fmt
@@ -35,16 +35,17 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  !
  implicit none
  !
- character(*)     :: mesg
- character(*)     :: how
- character(*)     :: val(:)
- integer,optional :: INDENT
- logical,optional :: USE_TABS
+ character(*)                :: how
+ character(*)                :: mesg
+ character(*)                :: val(:)
+ logical,           optional :: USE_TABS
+ integer,           optional :: INDENT
+ character(lchlen), optional :: MSG_string
  ! 
  ! Work Space
  !
- integer          :: i1,i2,l_indent,i1_limits(2)
- character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val))
+ integer          :: i1,i2,l_indent,i1_limits(2),nm
+ character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val)),mesg_plus
  logical          :: l_tabs,OUT_msg,REP_msg,LOG_msg,STD_msg,&
 &                    l_new_line(2) !left and right
 #if defined _YAML_OUTPUT
@@ -75,10 +76,22 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  i1_limits=(/1,-1/)
  if(OUT_msg) i1_limits=(/1,max_open_ofs/)
  if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
+ !
+ if (present(MSG_string)) then
+   if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
+     call add_the_semi_column(mesg,nm,mesg_plus)
+     write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
+   else
+     write (MSG_string,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+   endif
+   return
+ endif
+ !
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
-     write (of_unit(i1),trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+     call add_the_semi_column(mesg,nm,mesg_plus)
+     write (of_unit(i1),trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
    else
      write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    endif
@@ -98,12 +111,17 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT)
  if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
  !
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
-  if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
-   write (lch,trim(msgfmt)) mesg//": ",(trim(val(i2)),i2=1,size(val))
+ if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
+   call add_the_semi_column(mesg,nm,mesg_plus)
+   write (lch,trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif
- if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ !
+ if (LOG_msg) then
+   if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+   if(     log_as_a_file) call yambo_flush(logfile_unit)
+ endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine
@@ -113,9 +131,13 @@ subroutine add_the_semi_column(string,n,string_plus)
  implicit none
  character(*)      :: string
  character(lchlen) :: string_plus
- integer           :: n
+ integer           :: n,ic
  n=len_trim(string)
  string_plus=string
+ do ic=n,1,-1
+   if (string(ic:ic)/=" ".and.string(ic:ic)/=":") exit
+   if (string(ic:ic)==":") return
+ enddo
  if (n>0) then
    string_plus=string//": "
    n=len(string)+2

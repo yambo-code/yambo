@@ -25,7 +25,7 @@ integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V OBSERVABLES (J,P,D...) G
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_sc_run
  use R_lattice,      ONLY:nkibz
  use stderr,         ONLY:intc
@@ -48,8 +48,8 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
- logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_T_EL
+ integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE,ID_frag
+ logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_TEMP
  real(SP), allocatable :: E_tmp(:,:)
  !
  if (.not.io_SC) then
@@ -64,6 +64,8 @@ integer function io_SC_components(what,E_sc,ID)
  l_MP=what=="MP"
  l_WF=what=="WF"
  l_V =what=="V"
+ !
+ ID_frag=0
  !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
@@ -92,14 +94,14 @@ integer function io_SC_components(what,E_sc,ID)
  if (any((/io_sec(ID,:)==1/))) then
    !
    l_IMPOSE_SN=.not.l_V
-   l_T_EL=.false.
+   l_TEMP=.false.
 #if defined _ELPH
-   l_T_EL=.true.
+   l_TEMP=.true.
 #endif
    !
    if (any((/l_E,l_V,l_WF,l_MP/))) then
      if (write_is_on(ID).or.variable_exist(ID,"TEMPERATURES")) then
-       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,T_EL=l_T_EL,FRAG=frag_SC)
+       io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,TEMP=l_TEMP,FRAG=frag_SC)
      else
        io_SC_components=io_header(ID,IMPOSE_SN=l_IMPOSE_SN,CUTOFF=.true.,FRAG=frag_Sc)
      endif
@@ -185,25 +187,20 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(any((/l_E,l_V,l_WF,l_MP/))) then
-   !
-   if (ik==0) goto 1
-   !
-   ! Fragmentation
-   !===============
-   !
-   call io_fragment(ID,i_fragment=ik)
-   !
- endif
+ if (ik==0) goto 1
+ !
+ ! Fragmentation
+ !===============
+ if(any((/l_E,l_V,l_WF,l_MP/))) call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  if (l_V.and..not.l_sc_V_is_local) then
    !
    ! H_sc
    !======
    !
-   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_nl_sc)
+   call io_bulk(ID_frag,C2=H_nl_sc)
    !
  endif
  !
@@ -212,9 +209,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_rotation(:,:,ik,i_sp_pol))
+   call io_bulk(ID_frag,C2=H_rotation(:,:,ik,i_sp_pol))
    !
  endif
  !
@@ -223,11 +220,13 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,fft_size,SC_bands(2)/))
-   call io_bulk(ID,C2=V_mean)
+   call io_bulk(ID_frag,C2=V_mean)
    !
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

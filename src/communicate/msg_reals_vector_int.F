@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT)
+subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMAT,MSG_string)
  !
  use pars,         ONLY:SP,schlen,lchlen,max_open_ofs,repfile_index
- use stderr,       ONLY:c_print,write_to_log,log_as_a_file,gen_fmt,STRING_remove
+ use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,gen_fmt,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use IO_m,         ONLY:NO_VAR
  use com,          ONLY:repfile,of_unit,terminator
@@ -36,13 +36,14 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  !
  implicit none
  !
- character(*)     :: mesg
- character(*)     :: how
- real(SP)         :: val(:)
- character(*), optional :: after_msg
- integer,optional :: INDENT
- logical,optional :: USE_TABS
- logical,optional :: EXT_FORMAT
+ character(*)                :: how
+ character(*)                :: mesg
+ real(SP)                    :: val(:)
+ character(*),      optional :: after_msg
+ logical,           optional :: USE_TABS
+ integer,           optional :: INDENT
+ logical,           optional :: EXT_FORMAT
+ character(lchlen), optional :: MSG_string
  ! 
  ! Work Space
  !
@@ -84,6 +85,17 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  i1_limits=(/1,-1/)
  if(OUT_msg) i1_limits=(/1,max_open_ofs/)
  if(REP_msg) i1_limits=(/repfile_index,repfile_index/)
+ !
+ if (present(MSG_string)) then
+   if (size(val)==1 .and. val(1)==NO_VAR) then
+     write (MSG_string,trim(msgfmt)) mesg
+   else        
+     call add_the_semi_column(mesg,nm,mesg_plus)
+     if (len_trim(after_msg_)==0) write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),val
+     if (len_trim(after_msg_)> 0) write (MSG_string,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
+   endif
+   return
+ endif
  !
  do i1=i1_limits(1),i1_limits(2)
    if (of_unit(i1)<=0) cycle
@@ -127,7 +139,10 @@ subroutine msg_reals_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,EXT_FORMA
  if (len_trim(after_msg_)==0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val
  if (len_trim(after_msg_)> 0) write (lch,trim(msgfmt)) mesg_plus(1:nm),val,trim(after_msg_)
  !
- if (LOG_msg.and..not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+ if (LOG_msg) then
+   if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")
+   if(     log_as_a_file) call yambo_flush(logfile_unit)
+ endif
  if (STD_msg) call LIVE_message(trim(lch),"n","","%s")
  !
 end subroutine

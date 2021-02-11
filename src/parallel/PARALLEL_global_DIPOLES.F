@@ -27,7 +27,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  use R_lattice,     ONLY:bz_samp
  use IO_m,          ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index,&
 &                        PAR_n_c_bands,PAR_n_v_bands
  ! COMMUNICATORS
@@ -47,7 +47,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
 &                        PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID,&
 &                        PAR_IND_CON_BANDS_OVLP_ID,PAR_IND_VAL_BANDS_OVLP_ID
  use DIPOLES,       ONLY:eval_OVERLAPS
- use parallel_m,    ONLY:PAR_Q_range,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_Q_bz_range,PAR_IND_Q_bz
  !
  implicit none
  !
@@ -77,7 +77,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    ! ... indexes
    !
    allocate(PAR_DIPk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
+   call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_DIPk_ibz_INDEX,Xk,PAR_IND_DIPk_ibz,PAR_IND_DIPk_ibz_ID,&
 &                                                         PAR_IND_DIPk_bz, PAR_IND_DIPk_bz_ID,&
 &                                                         PAR_DIPk_bz_index,PAR_DIPk_nbz)
    !
@@ -96,7 +96,6 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
    endif
    !
    call OPENMP_set_threads(n_threads_in=n_threads_DIP)
-   !
    !
    ! Dipoles conduction bands
    !
@@ -125,7 +124,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
      ! Add the neighboars k-points
      !
      call PARALLEL_add_Q_to_K_list("overlaps",PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_IND_OVLPk_ibz,PAR_IND_OVLPk_ibz_ID,&
-&                                  PAR_IND_Q,PAR_COM_DIPk_ibz_INDEX,PAR_Q_range,Xk,q)
+&                                  PAR_IND_Q_bz,PAR_COM_DIPk_ibz_INDEX,PAR_Q_bz_range,Xk,q)
    
      ! Overlaps conduction bands
      !

@@ -26,7 +26,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
  use pars,           ONLY:cZERO,rZERO
  use plasma,         ONLY:N_plasma_poles_global
  use R_lattice,      ONLY:nqbz,nkibz
- use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ
+ use parallel_m,     ONLY:PAR_nPlasma,PAR_nQ_bz
  use collision_ext,  ONLY:COLLISIONS_element,COH_COLL_element,HXC_COLL_element,GW_NEQ_COLL_element,&
 &                         COLL_bands,&
 &                         GW_NEQ_collisions,COH_collisions,HXC_collisions,P_collisions,COLLISIONS_group
@@ -145,7 +145,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    D(3,:)=(/1,nqbz/)
    if (l_distribute.and.(l_v3.or.l_table)) then
      D(1,:)=(/1,PAR_nPlasma/)
-     D(3,:)=(/1,PAR_nQ/)
+     D(3,:)=(/1,PAR_nQ_bz/)
    endif
    if (l_collision.and.l_alloc) then
      allocate(GW_NEQ_COLL_element(size_))

@@ -24,7 +24,7 @@
 subroutine MEM_treshold_estimate( )
  !
  use pars,         ONLY:SP
- use units,        ONLY:Kilobyte
+ use units,        ONLY:Kilobyte,Megabyte
  use electrons,    ONLY:n_spin,n_bands
  use R_lattice,    ONLY:nkibz
  use wave_func,    ONLY:wf_ng
@@ -34,6 +34,6 @@ subroutine MEM_treshold_estimate( )
  !
  ! In Kb!
  !
- MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),10000)
+ MEM_treshold=max(int(n_spin*nkibz*n_bands*wf_ng*2.*SP/Kilobyte/10.),int(50.*Megabyte/Kilobyte))
  !
 end subroutine

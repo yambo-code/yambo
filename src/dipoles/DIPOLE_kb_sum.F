@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM, DS, AF
 !
 ! Copyright (C) 1992-2005, Lucia Reining, Valerio Olevano,
 !   Francesco Sottile, Stefan Albrecht, Giovanni Onida,
@@ -27,154 +27,82 @@
 !
 subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
- use pars,          ONLY:SP,cZERO
- use wrapper,       ONLY:V_dot_V
+ use pars,          ONLY:SP,cONE,cZERO
+ use wrapper,       ONLY:M_by_M
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
- use pseudo,        ONLY:pp_kbv_dim
- use timing_m
+ use pseudo,        ONLY:pp_kbv_dim_yambo
+ use cuda_m,        ONLY:have_cuda
+ use deviceXlib_m,  ONLY:dev_memcpy
+ use iso_c_binding, ONLY:C_F_POINTER
+#if defined _CUDA
+ use cudafor,       ONLY:C_DEVLOC
+#else
+ use iso_c_binding, ONLY:C_LOC
+#endif
+!
+#include<dev_defs.h>
  !
  implicit none
  !
- integer    :: iv_wf,ic_wf
- complex(SP):: rho(3),kbv(wf_ng,pp_kbv_dim,4,n_spinor)
-#ifdef _CUDA
- attributes(device) :: kbv
-#endif
+ integer     :: iv_wf,ic_wf
+ complex(SP) :: rho(3)
+ complex(SP) DEV_ATTR, target :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i3,i_spinor
+ integer     :: i1,i2,i3,ig,i_spinor,j_spinor,dim_flat
+ !
+ complex(SP) DEV_ATTR, target :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo),XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XXv_p(:,:),XXc_p(:,:)
+ complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
+ !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
 #ifdef _CUDA
- complex(SP), pointer, device :: WF_c_d(:,:,:)
- complex(SP):: drho(3)
- complex(SP):: Cv_c,Cc_c,Vv_1c,Vv_2c,Vv_3c,Vc_1c,Vc_2c,Vc_3c
- real(SP)   :: Cv_r,Cc_r,Vv_1r,Vv_2r,Vv_3r,Vc_1r,Vc_2r,Vc_3r
- real(SP)   :: Cv_i,Cc_i,Vv_1i,Vv_2i,Vv_3i,Vc_1i,Vc_2i,Vc_3i
-#else
- complex(SP) :: Cv(n_spinor),Cc(n_spinor),Vv(3,n_spinor),Vc(3,n_spinor),drho(3,pp_kbv_dim,n_spinor)
+ complex(SP) DEV_ATTR :: WF_v(wf_ng,n_spinor),WF_c(wf_ng,n_spinor)
+ complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
 #endif
  !
- !call timing("DIPOLE_kb_sum","start")
+ if (pp_kbv_dim_yambo==0) return
  !
-#ifdef _CUDA
+ dim_flat=n_spinor*4*pp_kbv_dim_yambo
  !
- WF_c_d => WF%c_d
- drho(:)=cZERO
+ ! This works since WF has the target attribute in mod_wave_function 
  !
- ! All the complex algebra below has been worked out
- ! explicitly (at the level of the cuf kernel reduction)
- ! in order to workaround a bug of PGI compilers (17.x-18.x at least)
+#if defined _CUDA
+ call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
- do i_spinor=1,n_spinor
-   do i1=1,pp_kbv_dim
-     !
-     Cv_r=cZERO
-     Cv_i=cZERO
-     Cc_r=cZERO
-     Cc_i=cZERO
-     !
-     Vv_1r=cZERO
-     Vv_1i=cZERO
-     Vv_2r=cZERO
-     Vv_2i=cZERO
-     Vv_3r=cZERO
-     Vv_3i=cZERO
-     !
-     Vc_1r=cZERO
-     Vc_1i=cZERO
-     Vc_2r=cZERO
-     Vc_2i=cZERO
-     Vc_3r=cZERO
-     Vc_3i=cZERO
-     !
-     !$cuf kernel do(1)
-     do i3=1,wf_ng
-       !
-       Cv_c=WF_c_d(i3,i_spinor,iv_wf)*kbv(i3,i1,1,i_spinor)
-       Cv_r=Cv_r +real(Cv_c)
-       Cv_i=Cv_i +aimag(Cv_c)
-       !
-       Cc_c=WF_c_d(i3,i_spinor,ic_wf)*kbv(i3,i1,1,i_spinor)
-       Cc_r=Cc_r +real(Cc_c)
-       Cc_i=Cc_i +aimag(Cc_c)
-       !
-       Vv_1c=WF_c_d(i3,i_spinor,iv_wf)*kbv(i3,i1,2,i_spinor)
-       Vv_1r=Vv_1r +real(Vv_1c)
-       Vv_1i=Vv_1i +aimag(Vv_1c)
-       !
-       Vv_2c=WF_c_d(i3,i_spinor,iv_wf)*kbv(i3,i1,3,i_spinor)
-       Vv_2r=Vv_2r +real(Vv_2c)
-       Vv_2i=Vv_2i +aimag(Vv_2c)
-       !
-       Vv_3c=WF_c_d(i3,i_spinor,iv_wf)*kbv(i3,i1,4,i_spinor)
-       Vv_3r=Vv_3r +real(Vv_3c)
-       Vv_3i=Vv_3i +aimag(Vv_3c)
-       !
-       Vc_1c=WF_c_d(i3,i_spinor,ic_wf)*kbv(i3,i1,2,i_spinor)
-       Vc_1r=Vc_1r +real(Vc_1c)
-       Vc_1i=Vc_1i +aimag(Vc_1c)
-       !
-       Vc_2c=WF_c_d(i3,i_spinor,ic_wf)*kbv(i3,i1,3,i_spinor)
-       Vc_2r=Vc_2r +real(Vc_2c)
-       Vc_2i=Vc_2i +aimag(Vc_2c)
-       !
-       Vc_3c=WF_c_d(i3,i_spinor,ic_wf)*kbv(i3,i1,4,i_spinor)
-       Vc_3r=Vc_3r +real(Vc_3c)
-       Vc_3i=Vc_3i +aimag(Vc_3c)
-       !
+ !WF_p => WF%c
+ call dev_memcpy(WF_v,WF%c(:,:,iv_wf))
+ call dev_memcpy(WF_c,WF%c(:,:,ic_wf))
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_v, wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF_c, wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
+#else
+ call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ng,dim_flat/) )
+ call C_F_POINTER(C_LOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
+ call C_F_POINTER(C_LOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
+#endif
+ !
+#if defined _CUDA
+ !$cuf kernel do(3) <<<*,*>>>
+#else
+ !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
+#endif
+ do i1=1,pp_kbv_dim_yambo
+   do i2=1,3
+     do i_spinor=1,n_spinor
+       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XXv(i_spinor,i_spinor,1,i1))*XXc(i_spinor,i_spinor,i2+1,i1)+ &
+&                                    conjg(XXv(i_spinor,i_spinor,i2+1,i1))*XXc(i_spinor,i_spinor,1,i1)
      enddo
-     !
-     Cv_c=cmplx(Cv_r,Cv_i,SP)
-     Cc_c=cmplx(Cc_r,Cc_i,SP)
-     !
-     Vv_1c=cmplx(Vv_1r,Vv_1i,SP)
-     Vv_2c=cmplx(Vv_2r,Vv_2i,SP)
-     Vv_3c=cmplx(Vv_3r,Vv_3i,SP)
-     !
-     Vc_1c=cmplx(Vc_1r,Vc_1i,SP)
-     Vc_2c=cmplx(Vc_2r,Vc_2i,SP)
-     Vc_3c=cmplx(Vc_3r,Vc_3i,SP)
-     !
-     drho(1)=drho(1) +conjg(Cv_c)*Vc_1c+conjg(Vv_1c)*Cc_c
-     drho(2)=drho(2) +conjg(Cv_c)*Vc_2c+conjg(Vv_2c)*Cc_c
-     drho(3)=drho(3) +conjg(Cv_c)*Vc_3c+conjg(Vv_3c)*Cc_c
-     !
    enddo
  enddo
  !
- rho(:)=rho(:)+drho(:)
- !
-#else
- !
- drho=cZERO
- !
- !$omp parallel do default(shared), private(i_spinor,i1,i2,Cv,Cc,Vv,Vc), collapse(2)
- do i_spinor=1,n_spinor
-   do i1=1,pp_kbv_dim
-     !
-     Cv(i_spinor)=V_dot_V(wf_ng,WF%c(:,i_spinor,iv_wf),kbv(:,i1,1,i_spinor))
-     Cc(i_spinor)=V_dot_V(wf_ng,WF%c(:,i_spinor,ic_wf),kbv(:,i1,1,i_spinor))
-     !
-     if ( Cc(i_spinor)==cZERO .and. Cv(i_spinor)==cZERO ) cycle
-     !
-     do i2=1,3
-       !
-       Vv(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,i_spinor,iv_wf),kbv(:,i1,1+i2,i_spinor))
-       Vc(i2,i_spinor)=V_dot_V(wf_ng,WF%c(:,i_spinor,ic_wf),kbv(:,i1,1+i2,i_spinor))
-       !
-       drho(i2,i1,i_spinor)=conjg(Cv(i_spinor))*Vc(i2,i_spinor)+conjg(Vv(i2,i_spinor))*Cc(i_spinor)
-       !
-     enddo
-     !
-   enddo
- enddo
- !$omp end parallel do
- !
- forall(i2=1:3) rho(i2)=rho(i2)+sum(drho(i2,:,:))
- !
-#endif
- !
- !call timing("DIPOLE_kb_sum","stop")
+ if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
+ forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine

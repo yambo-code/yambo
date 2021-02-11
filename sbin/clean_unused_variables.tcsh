@@ -1,5 +1,27 @@
 #! /bin/tcsh
 #
+#        Copyright (C) 2000-2020 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): HM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
 unalias mv rm cp
 
 set OBJ="."
@@ -216,9 +238,9 @@ EOF
 set FILES = (  )
 
 if (-d $OBJ) then
- foreach kind ( "modified" "new" "renamed" )  
+ foreach kind ( "modified:" )  
   git status -uno $OBJ | grep $kind | grep -v '\.pl' | grep  -v '\.pm'  | grep -v '\.c' |grep -v '\.m4' | grep -v '\.git' |grep -v '\.\.\/' > LIST
-  cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" > LIST
+  cat LIST | grep -v "mod_" | grep -v "Makefile" | grep -v "configure" | grep -v "\.h" | grep -v "\.object" | grep -v "\.tcsh" | grep -v "lib/yambo" > LIST
   sed -i -e 's/new file/new_file/g' LIST
   if ($kind =~ "renamed") then
    set FILES=($FILES `awk '{print $4}' "LIST"`)
@@ -228,12 +250,12 @@ if (-d $OBJ) then
  end
 endif
 if ($filter =~ "all" && $OBJ =~ ".") then
- set FILES = `find src -name '*.F' |grep -v "SLK_test" `
+ set FILES = `find src -name '*.F' `
  set FILES = ($FILES `find ypp -name '*.F' `)
  set FILES = ($FILES `find interfaces -name '*.F' `)
 endif
 if ($filter =~ "all" && $OBJ !~ ".") then
- set FILES = `find $OBJ -name '*.F' |grep -v "SLK_test" `
+ set FILES = `find $OBJ -name '*.F'`
 endif
 
 if (-f $OBJ) then
@@ -241,8 +263,8 @@ if (-f $OBJ) then
 endif
 
 foreach file ($FILES)
- gawk -f AWK_split ${file}
  #echo "processing $file..."
+ gawk -f AWK_split ${file}
  @ N_unused=0
  foreach source (MODULE_*)
   #echo "$file $source..."

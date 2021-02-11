@@ -28,21 +28,21 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use collision_ext, ONLY:HXC_collisions
  use nl_optics,     ONLY:NL_bands
  use IO_m,          ONLY:IO_and_Messaging_switch
- use interfaces,    ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
+ use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_freqs_INDEX,PAR_COM_freqs_A2A,PAR_COM_freqs,&
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_WF_k_INDEX,PAR_COM_Xk_ibz_A2A
  ! IND
- use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_OVLPk_ibz,PAR_IND_Xk_ibz, &
-&                        PAR_IND_QP,PAR_IND_Q,PAR_IND_WF_k,PAR_IND_Xk_bz
+ use parallel_m,    ONLY:PAR_IND_freqs,PAR_IND_Xk_ibz, &
+&                        PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_WF_k,PAR_IND_Xk_bz
  ! INDEX
  use parallel_m,    ONLY:PAR_freqs_index,PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_QP_index
  ! DIMENSIONS
  use parallel_m,    ONLY:PAR_n_freqs,PAR_nQP,PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ID,PAR_IND_WF_k_ID,&
-&                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID,myid
+ use parallel_m,    ONLY:PAR_IND_freqs_ID,PAR_IND_Q_ibz_ID,PAR_IND_WF_k_ID,&
+&                        PAR_IND_Xk_bz_ID,PAR_IND_Xk_ibz_ID
  use nl_optics,     ONLY:n_frequencies
  use openmp,        ONLY:n_threads_NL,OPENMP_set_threads
  use QP_m,          ONLY:QP_n_states,QP_table
@@ -76,7 +76,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    !
    call PARALLEL_index(PAR_IND_freqs,(/n_frequencies/),COMM=PAR_COM_freqs_INDEX)
    PAR_IND_freqs_ID=PAR_COM_freqs_INDEX%CPU_id
-   PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ID+1)
+   PAR_n_freqs     =PAR_IND_freqs%n_of_elements(PAR_IND_Q_ibz_ID+1)
    call PARALLEL_live_message("Freqs",ENVIRONMENT=ENVIRONMENT,         &
 &                             LOADED=PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1), &
 &                             TOTAL=n_frequencies,NCPU=PAR_COM_freqs_INDEX%n_CPU)
@@ -98,7 +98,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
    ! Define the Xk_bz indeces for BZ parallelization
    ! 
    allocate(PAR_Xk_bz_index(Xk%nbz))
-   call distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
+   call PARALLEL_distribute_BZk_using_IBZk(PAR_COM_Xk_ibz_INDEX,Xk,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                                         PAR_IND_Xk_bz, PAR_IND_Xk_bz_ID,&
 &                                                         PAR_Xk_bz_index,PAR_Xk_nbz)
 

@@ -44,9 +44,10 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  use electrons,      ONLY:levels,nel
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:global_gauge
+ use parallel_m,     ONLY:PAR_G_k_range
  use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
 &                         l_RT_induced_field,Integrator_step,Integrator_nsteps,&
-&                         RT_bands,RT_nk
+&                         RT_bands
  use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset
  !
  implicit none
@@ -56,7 +57,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  real(SP),             intent(in) :: T,T_step
  type(gauge_field),    intent(in) :: A_old
  type(gauge_field),   intent(out) :: A_new
- complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk)
+ complex(SP),          intent(in) :: G_inp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  !
  ! Work space
  !

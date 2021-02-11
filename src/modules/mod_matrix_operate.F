@@ -76,7 +76,7 @@ module matrix_operate
    function hermitian(M)
      implicit none
      complex(SP), intent(in) :: M(:,:)
-     complex(SP) :: hermitian(size(M(:,1)),size(M(1,:)))
+     complex(SP) :: hermitian(size(M,2),size(M,1))
      !
      hermitian=conjg(transpose(M))
      !
@@ -87,25 +87,18 @@ module matrix_operate
      integer     :: D,i1
      complex, allocatable :: V(:)
      D=size(M,1)
-#if defined _OPENMP
-!$omp parallel default(shared), private(V,i1)
-#endif
+     !
+     !$omp parallel default(shared), private(V,i1)
      allocate(V(D))
-#if defined _OPENMP
-!$omp do 
-#endif
+     !$omp do 
      do i1=1,D
        V(i1:D)=M(i1,i1:D)
        M(i1,i1:D)=M(i1:D,i1)
        M(i1:D,i1)=V(i1:D)
      enddo
-#if defined _OPENMP
-!$omp end do
-#endif
+     !$omp end do
      deallocate(V)
-#if defined _OPENMP
-!$omp end parallel
-#endif
+     !$omp end parallel
    end subroutine
    !
    subroutine mat_r2c_ordered(mr,mc,m_order) 

@@ -24,6 +24,7 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
+ use cuda_m,      ONLY:have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -31,6 +32,7 @@ module D_lattice
  ! Non periodic directions
  !
  character(lchlen) :: non_periodic_directions
+ real(SP)          :: molecule_position(3)
  !
  !
  ! Temperature
@@ -56,8 +58,8 @@ module D_lattice
  integer, allocatable    :: irt(:,:,:)     ! (nsym,nat,n_at_species) gives the index of a rotated atomic position
  integer, allocatable    :: icell(:,:,:,:) ! (3,nsym,nat,n_at_species) gives the referene cell after a symm is operated
  ! device memory
- complex(SP),allocatable DEV_ATTRIBUTE :: spin_sop_d(:,:,:)
- integer,    allocatable DEV_ATTRIBUTE :: sop_inv_d(:)
+ complex(SP),allocatable DEV_ATTR :: spin_sop_d(:,:,:)
+ integer,    allocatable DEV_ATTR :: sop_inv_d(:)
  !
  ! Pauli matrices
  !
@@ -133,10 +135,10 @@ module D_lattice
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'Group table correct   ',.true.)
      !
-#ifdef _CUDA
-     if(allocated(sop_inv_d)) deallocate(sop_inv_d)
-     allocate(sop_inv_d,source=sop_inv)
-#endif
+     if (have_cuda) then
+       YAMBO_FREE(sop_inv_d)
+       YAMBO_ALLOC_SOURCE(sop_inv_d,sop_inv)
+     endif
      !
    end subroutine symmetry_group_table
    !

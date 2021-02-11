@@ -33,14 +33,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q,PAR_IND_Q_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_index,n_WF_bands_to_load,HEAD_QP_cpu
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
@@ -48,8 +50,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
 #if defined _SC
@@ -138,7 +139,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]',QP_G_damp*HA2EV)
+     call msg('r', '[GW/PPA] G damping       ',QP_G_damp*HA2EV,"[eV]")
      call msg('r','')
    endif
    ch=trim(SECTION_name)
@@ -157,7 +158,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Redefine iq_to_start to be CPU-dependent
  !
  do iqbz=1,q%nbz 
-   if (PAR_IND_Q%element_1D(q%sstar(iqbz,1))) then
+   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
      iq_to_start=iqbz
      exit
    endif
@@ -217,7 +218,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  call PP_redux_wait
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
-&             PAR_IND_Q%n_of_elements(PAR_IND_Q_ID+1)*&
+&             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
 &             count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
  !
  ch=trim(SECTION_name)
@@ -233,7 +234,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
-   if (.not.PAR_IND_Q%element_1D(q%sstar(iqbz,1))) cycle
+   if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
    isc%qs(2:)=(/q%sstar(iqbz,1),q%sstar(iqbz,2)/)
    iqibz=isc%qs(2)
@@ -241,18 +242,18 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    if (iqibz/=isc%iqref) then
      !
-     iq_mem=PAR_Q_index(iqibz)
+     iq_mem=PAR_Q_ibz_index(iqibz)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call DEV_SUBNAME(scatter_Gamp)(isc,'c')
+     call DEV_SUB(scatter_Gamp)(isc,'c')
      if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
      ! I/O
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz)
+       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz,PAR_INDEX=PAR_IND_Q_ibz)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
@@ -350,7 +351,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
        isc%qs=(/1,1,1/)
 
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
        !
        if (l_GW_terminator) then
@@ -438,12 +439,12 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        isc%os(1)=ib
        !
-       call DEV_SUBNAME(scatter_Bamp)(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
-         call DEV_SUBNAME(scatter_Bamp)(iscp)
+         call DEV_SUB(scatter_Bamp)(iscp)
          if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
        else
          iscp%rhotw=isc%rhotw
@@ -643,7 +644,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
  ! energy degenerations. 
  !
- if (.not.l_sc_run.and..not.l_rt_carriers_in_use) then
+ if (.not.l_sc_run.and..not.l_rt_carriers_in_use.and.l_QP_symmetrize) then
    do i_w=1,QP_dSc_steps
      if (i_w==1) call QP_states_simmetrize(E,what="COHSEX Sc",V_complex=QP_Sc(:,1),warn_me=.TRUE.)
      if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))

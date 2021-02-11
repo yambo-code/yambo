@@ -39,9 +39,11 @@ module YPPm
  logical  :: l_q_grid
  logical  :: l_shifted_grid
  logical  :: l_random_grid
+ logical  :: l_regular_grid
  logical  :: l_high_sym_pts
- integer  :: n_path_pts
+ integer  :: N_path_pts
  integer  :: BZ_random_nkpts
+ integer  :: K_grid(3)
  real(SP) :: alat_used_for_output
  character(schlen) :: coo_in
  character(schlen) :: coo_out
@@ -59,7 +61,7 @@ module YPPm
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
- integer, parameter        :: n_SPECIAL_k_MAX=20
+ integer, parameter        :: n_SPECIAL_k_MAX=100
  real(SP),          allocatable :: CIRCUIT_k_norm(:)
  character(schlen), allocatable :: CIRCUIT_k_label(:)
  character(schlen) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
@@ -70,18 +72,20 @@ module YPPm
  !
  ! Projection mode
  !
- type(bz_samp)     :: SLICE_k
- type(levels)      :: SLICE_E
- character(schlen) :: PROJECT_mode="none" ! ATOM,LINE,PLANE
- character(schlen) :: PROJECT_path="none" 
- integer           :: PROJECT_steps=-1
- integer           :: PROJECT_depth=-1
- real(SP)          :: PROJECT_threshold=5.
- real(SP)          :: PROJECT_plane_X(3)
- real(SP)          :: PROJECT_plane_Y(3)
- logical           :: l_PROJECT_atom
- logical           :: l_PROJECT_line
- logical           :: l_PROJECT_plane
+ type(bz_samp)        :: SLICE_k
+ type(levels)         :: SLICE_E
+ character(schlen)    :: PROJECT_mode="none" ! ATOM,LINE,PLANE
+ character(schlen)    :: PROJECT_path="none" 
+ integer              :: PROJECT_steps=-1
+ integer              :: PROJECT_N_par=0
+ integer              :: PROJECT_N_perp=1
+ real(SP)             :: PROJECT_threshold=5.
+ real(SP)             :: PROJECT_plane_X(3)
+ real(SP)             :: PROJECT_plane_Y(3)
+ integer, allocatable :: PROJECT_k_map(:)
+ logical              :: l_PROJECT_atom
+ logical              :: l_PROJECT_line
+ logical              :: l_PROJECT_plane
  ! 
  ! DOS
  !
@@ -107,6 +111,7 @@ module YPPm
  integer               ::BANDS_steps
  character(lchlen)     ::CIRCUIT_E_DB_path  = "none"
  character(schlen)     ::BANDS_path  = " "
+ character(schlen)     ::INTERP_input_mode='BOLTZ'
  type(levels)          ::CIRCUIT_E_db
  integer               ::INTERP_grid(3)  ! Interpolation Grid
  real(SP)              ::Nel_fac
@@ -149,6 +154,13 @@ module YPPm
  real(SP), allocatable ::v2plot2D(:,:)
  real(SP)              ::current_dir(3)=(/1.,1.,1./)
  !
+ ! Dipoles
+ !
+ logical      ::l_dipoles
+ integer      ::DIPOLES_bands(2)
+ real(SP)     ::DIPOLES_E_range(2)
+ real(SP)     ::DIPOLES_direction(3)=(/1._SP,0._SP,0._SP/)
+ !
  ! Exc/SP Properties
  !
  logical      ::l_excitons
@@ -157,6 +169,7 @@ module YPPm
  logical      ::l_amplitude
  logical      ::l_spin
  logical      ::l_free_hole
+ logical      ::l_average_eh
  logical      ::l_angular_momentum
  logical      ::l_position
  integer      ::ncell(3) 
@@ -167,7 +180,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
- character(schlen)    ::state_ctl 
+ character(schlen)    :: AVE_exc
+ character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0
  integer, allocatable :: EXCITONS_user_indexes(:)
  type EXCITON_spin
@@ -196,16 +210,15 @@ module YPPm
  !
  ! BZ Double Grid
  !
- integer, parameter :: MAX_DbGd_DBs=20
- integer  :: n_DbGd_DBs
- integer  :: BZ_DbGd_nkpts_to_use
- logical  :: l_map_kpts
- logical  :: l_map_WFs
- real(SP) :: Gamma_radius
- character(lchlen) :: DbGd_DB1_paths(MAX_DbGd_DBs,1)
+ logical            :: l_map_kpts
+ integer, parameter :: MAX_FineGd_DBs=20
+ integer            :: n_FineGd_DBs
+ integer            :: BZ_FineGd_nkpts_to_use
+ character(lchlen)  :: FineGd_DB1_paths(MAX_FineGd_DBs,1)
  !
  ! Perturbative SOC
  !
+ logical           :: l_SOC_map
  integer           :: SOC_bands_to_map(2)
  integer           :: SOC_bands_buffer
  character(lchlen) :: perturbative_SOC_path
@@ -253,27 +266,16 @@ module YPPm
  !
  logical  :: l_mean_potential
  !
- ! Wannier bands
- !
- logical           :: l_bxsf
- character(lchlen) :: w90_fname
- integer           :: wannier_bands(2)   ! Bands Range
- integer           :: ord_dgrid_ipol     ! order of interpolation using double grid
- !
  ! Reduce Symmetries
  !
  logical     :: l_fix_syms
  real(SP)    :: E_field(2,3)
  real(SP)    :: B_field,B_theta,B_psi
  !
- ! Convert wave--functions
- !
- logical     :: l_fix_save
- !
  ! BSE data
  !
- complex(SP), allocatable ::BS_R_left(:)
- complex(SP), allocatable ::BS_R_right(:)
+ complex(SP), pointer     ::BS_R_left(:)
+ complex(SP), pointer     ::BS_R_right(:)
  complex(SP), allocatable ::BS_E(:)
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()
@@ -290,7 +292,6 @@ module YPPm
      character(*)          ::form
      real(SP),    optional ::wk(nk)
      character(*),optional ::coo_out
-     !
    end subroutine
    !
    subroutine excitons_degeneracy_average(N,BS_E_degs,R,C,VERB)
@@ -309,6 +310,7 @@ module YPPm
    !
    subroutine K_transform(k,in_mode)
      !
+     use stderr,       ONLY:STRING_same
      use units,        ONLY:pi
      use vec_operate,  ONLY:c2a
      !
@@ -317,22 +319,22 @@ module YPPm
      !
      select case (in_mode)
        case ('cc')
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="kc2i")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="kc2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="kc2i")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="kc2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            k=k*alat_used_for_output/2./pi
          endif
        case ('iku')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ki2c")
-         if (trim(coo_out)=="rlu")  call c2a(v_in=k,mode="ki2a")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ki2c")
+         if (STRING_same(trim(coo_out),"rlu"))  call c2a(v_in=k,mode="ki2a")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ki2c")
            k=k*alat_used_for_output/2./pi
          endif
        case ('rlu')
-         if (trim(coo_out)=="cc")   call c2a(v_in=k,mode="ka2c")
-         if (trim(coo_out)=="iku")  call c2a(v_in=k,mode="ka2i")
-         if (trim(coo_out)=="alat") then
+         if (STRING_same(trim(coo_out),"cc"))   call c2a(v_in=k,mode="ka2c")
+         if (STRING_same(trim(coo_out),"iku"))  call c2a(v_in=k,mode="ka2i")
+         if (STRING_same(trim(coo_out),"alat")) then
            call c2a(v_in=k,mode="ka2c")
            k=k*alat_used_for_output/2./pi
          endif

@@ -48,6 +48,7 @@ module RT_output_m
  type(IO_desc)            :: Gr_desc
  type(IO_desc)            :: RT_desc
  type(IO_desc)            :: TIME_STEP_desc
+ integer                  :: n_RT_desc_static
  logical                  :: RT_descriptors_dumped(N_MAX_RT_o_files)
  !
  contains

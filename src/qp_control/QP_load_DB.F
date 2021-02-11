@@ -48,7 +48,7 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  io_err=io_QP_and_GF(trim(QP_action(i_ACTION)%CTL(1)%db),qp,ID)
  !
  if (io_err/=0) then
-   call warning("I/O problems from QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
+   call warning("I/O problems in reading QP database "//trim(QP_action(i_ACTION)%CTL(1)%db))
    QP_action(i_ACTION)%active=.FALSE.
    return
  endif

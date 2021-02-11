@@ -39,7 +39,7 @@ integer function io_WF(ID,wf,wf_d)
  attributes(device) :: wf_d
 #endif
  !
- integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io
+ integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io,ID_frag
  character(schlen)         :: VAR_NAME
  !
  call timing('io_WF',OPR='start')
@@ -73,7 +73,7 @@ integer function io_WF(ID,wf,wf_d)
    i_sp_pol=2
  endif
  !
- io_WF=io_connect(desc="wf",type=0,ID=ID)
+ io_WF=io_connect(desc="wf",type=0,ID=ID,FORCE_READ_MODE=(head_io/=1).and.frag_WF)
  if (io_WF/=0) goto 1
  !
  ! S/N
@@ -144,20 +144,22 @@ integer function io_WF(ID,wf,wf_d)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=ifrag,j_fragment=ib_grp)
+ call io_fragment(ID,ID_frag,i_fragment=ifrag,j_fragment=ib_grp)
  !
  VAR_NAME="WF_COMPONENTS_@_SP_POL"//trim(intc(i_sp_pol))//"_K"//trim(intc(ik))//"_BAND_GRP_"//trim(intc(ib_grp))
- call io_bulk(ID,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
+ call io_bulk(ID_frag,VAR=trim(VAR_NAME),VAR_SZ=(/2,wf_ncx,n_spinor,wf_nb_io/))
  !
  do ib_block=1,n_blocks
    if(ib_grp>1) ib_lim(1,ib_block)=mod(ib_lim(1,ib_block)-1,wf_nb_io)+1
-   call io_bulk(ID,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
+   call io_bulk(ID_frag,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
 #ifdef _CUDA
    if(present(wf_d)) then
       wf_d(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)) = wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block))
    endif
 #endif
  enddo
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

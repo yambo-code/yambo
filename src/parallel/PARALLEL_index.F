@@ -23,15 +23,19 @@
 !
 subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
  !
- use parallel_m, ONLY:PP_redux_wait,PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
-&                     MPI_comm,comm_default_value,PP_indexes_reset
- use stderr,     ONLY:intc
+ use pars,        ONLY:SP
+ use parallel_m,  ONLY:PP_indexes,ncpu,myid,p_prod,mpi_comm_world,&
+&                      yMPI_comm,comm_default_value,PP_indexes_reset
+ use parallel_int,ONLY:PP_redux_wait
+ use stderr,      ONLY:intc
+ use vec_operate, ONLY:sort
+ !
 #include<memory.h>
  !
  type(PP_indexes)       ::px
  integer                ::uplim(:)
  integer,       optional::low_range(:)
- type(MPI_comm),optional::COMM
+ type(yMPI_comm),optional::COMM
  logical       ,optional::CONSECUTIVE
  logical       ,optional::ORDERED
  logical       ,optional::NO_EMPTIES
@@ -42,7 +46,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  integer :: nindxs,i1,i2,i3,d2,ic,average_steps,tot_steps,myid_loop,ncpu_loop,local_comm,&
 &           i_range(2),missing_cpus,par_kind_2D
  logical :: NO_EMPTIES_,SERIAL,local_ORDERED,local_CONSECUTIVE
- integer,allocatable :: i_done(:),lowlim(:)
+ integer, allocatable :: i_done(:),lowlim(:),W_out_index(:),W_in_index(:)
+ real(SP),allocatable :: W_out(:),W_out_sorted(:),W_in(:)
  !
  myid_loop =myid
  ncpu_loop =ncpu
@@ -137,10 +142,22 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    !
    ! Here the linear chain is distributed
    !
-   do i1=lowlim(1)+myid_loop,uplim(1),ncpu_loop
-     if (px%n_of_elements(myid_loop+1)>=average_steps) cycle
+   allocate(W_in(uplim(1)-lowlim(1)+1),W_in_index(uplim(1)-lowlim(1)+1))
+   do i1=lowlim(1),uplim(1)
+     W_in(i1-lowlim(1)+1)=px%weight_1D(i1)
+   enddo
+   call sort(arrin=W_in,indx=W_in_index)
+   allocate(W_out(ncpu_loop),W_out_sorted(ncpu_loop),W_out_index(ncpu_loop))
+   W_out =0._SP
+   do i1=uplim(1)-lowlim(1)+1,1,-1
+     call sort(arrin=W_out,arrout=W_out_sorted,indx=W_out_index)
+     W_out(W_out_index(1))=W_out(W_out_index(1))+W_in(i1)
+     if (myid_loop==W_out_index(1)-1) px%element_1D( W_in_index(i1) )=.true.
+   enddo
+   !
+   do i1=lowlim(1),uplim(1)
+     if (.not.px%element_1D(i1)) cycle
      if (px%first_of_1D(myid_loop+1)==-1) px%first_of_1D(myid_loop+1)=i1
-     px%element_1D(i1)=.true.
      i_done(i1)=0
      px%n_of_elements(myid_loop+1)=px%n_of_elements(myid_loop+1)+px%weight_1D(i1)
    enddo
@@ -162,6 +179,8 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
    enddo
    !
    if (any(i_done==1)) call error('Incomplete Parallel Index Filling')
+   !
+   deallocate(W_in,W_in_index,W_out,W_out_sorted,W_out_index)
    !
  else if (nindxs==2) then
    !

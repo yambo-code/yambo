@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,29 +21,22 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
-&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
+&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
  use pars,          ONLY:SP,DP,schlen
- use com,           ONLY:msg,core_io_path
+ use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
  use electrons,     ONLY:nel,n_spinor,n_sp_pol
  use R_lattice,     ONLY:nkibz,k_pt,b
  use interfaces,    ONLY:WF_free
- use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size
-#if defined _FFTW
- use FFT_m,         ONLY:fftw_plan
-#endif
-#ifdef _CUDA
- use FFT_m,         ONLY:cufft_plan,fft_g_table_d
- use wave_func,     ONLY:wf_igk_d
-#endif
- use wave_func,     ONLY:wf_nc_k,wf_igk,WF_buffer,&
+ use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
+&                        fftw_plan,cufft_plan,fft_g_table_d
+ use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
-&                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,QUIET_alloc,&
-&                        QUIET_free,WAVEs,states_to_load
+&                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
 &                        DUMP,IO_and_Messaging_switch
  use wrapper,       ONLY:Vstar_dot_V
@@ -55,17 +48,20 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
+ use cuda_m,        ONLY:have_cuda
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF
- integer     ,optional :: sp_pol_to_load(2)
+ integer,     optional :: sp_pol_to_load(2)
  character(*),optional :: space
  character(*),optional :: title
- logical     ,optional :: impose_free_and_alloc
- logical     ,optional :: force_WFo
- logical     ,optional :: keep_states_to_load
+ logical,     optional :: impose_free_and_alloc
+ logical,     optional :: force_WFo
+ logical,     optional :: keep_states_to_load
+ logical,     optional, intent(in) :: quiet
  !
  ! Work Space
  !
@@ -77,14 +73,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
+ logical          ::QUIET_wf
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
-#ifdef _CUDA
- complex(DP), allocatable, device :: wf_DP_d(:)
- complex(SP), allocatable, device :: wf_disk_d(:,:,:)
- complex(SP), pointer, device :: wfcd(:,:,:)
- integer :: WFN, IWFspace
-#endif
+ !
+ complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
+ complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
+ complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
+ integer :: WFN
  !
  ! I/O
  !
@@ -185,13 +181,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
- QUIET_alloc   =.FALSE.
- QUIET_free    =.FALSE.
- if (kpts_to_load(1)==kpts_to_load(2)) then
-   QUIET_alloc    =kpts_to_load(1)>1
-   QUIET_free     =kpts_to_load(2)<nkibz
-   if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
- endif
+ !
+ QUIET_wf = .false.
+ if (kpts_to_load(1)==kpts_to_load(2)) QUIET_wf = .true.
+ if (present(quiet))                   QUIET_wf = quiet
+ if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
  !
  ! First WF_free then fft_setup.
  !
@@ -271,18 +265,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
-#ifdef _CUDA
- allocate(wf_DP_d, mold=wf_DP)
- wfcd => WF%c_d
- WFN = WF%N
- IWFspace = 0
- if (WF%space=='R') IWFspace = 1
- if (WF%space=='C'.or.WF%space=='B') IWFspace = 2
-#endif
+ !
+ if (have_cuda) then
+   YAMBO_ALLOC(wf_DP_d,(wf_grid_size))
+   wfc_d => WF%c_d
+   WFN = WF%N
+ endif
  !
  ! LOG the states loaded
  !
- if (.not.(QUIET_alloc.or.QUIET_free)) then
+ if ((.not.QUIET_wf).and.fat_log) then
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else
@@ -290,7 +282,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
  endif
  !
- if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
+ if (WF%space=='R'.and.(.not.QUIET_wf)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
 
  !
  ! actual IO
@@ -356,16 +348,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        if (.not.buffer_is_ok) then
          !
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
-#ifdef _CUDA
-         allocate(wf_disk_d, mold=wf_disk)
-#endif
+         if (have_cuda) then
+           YAMBO_ALLOC(wf_disk_d,(wf_ncx,n_spinor,wf_nb_to_load))
+         endif
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-#ifdef _CUDA
-         io_err=io_WF(ID,wf_disk,wf_disk_d)
-#else
-         io_err=io_WF(ID,wf_disk)
-#endif
+         if (have_cuda) then
+           io_err=io_WF(ID,wf_disk,wf_disk_d)
+         else
+           io_err=io_WF(ID,wf_disk)
+         endif
          !
          if (pp_is_uspp) then
             call PP_compute_becp( becp(ikibz,i_sp_pol), wf_nc_k(ikibz), wf_nb_to_load, wf_disk, wf_b_indx)
@@ -413,7 +405,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WFN = WF%N
               !$cuf kernel do(1)
               do ic=1,wf_grid_size
-                wfcd(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+                wfc_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
               enddo
               !
             enddo  ! i_spinor
@@ -461,23 +453,24 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        !
        if (.not.buffer_is_ok) then
          YAMBO_FREE(wf_disk)
-#ifdef _CUDA
          YAMBO_FREE(wf_disk_d)
-#endif
        endif
        !
      enddo      ! i_b_grp
    enddo        ! i_k
  enddo          ! i_sp_pol
 
-#ifdef _CUDA
- call msg('rns', '[WF] Copying WF data from GPU device')
- if(WF%space=='R') then
-   WF%c = WF%c_d
- else
-   WF%c_d = WF%c
+ if (have_cuda) then
+   !
+   call msg('rns', '[WF] Copying WF data from GPU device')
+   if(WF%space=='R') then
+     WF%c = WF%c_d
+   else
+     WF%c_d = WF%c
+   endif
+   !
  endif
-#endif
+ !
  call timing('WF_load_FFT',"stop")
  !
  ! CLEAN
@@ -492,9 +485,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  endif
  !
  YAMBO_FREE(wf_DP)
-#ifdef _CUDA
- deallocate(wf_DP_d)
-#endif
+ YAMBO_FREE(wf_DP_d)
 
  !
  ! The states_to_load is a temporary array that points to the states to be loaded
@@ -545,9 +536,14 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
+       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
      enddo
    enddo
+   !
+   if (have_cuda) then
+     call msg('rns', '[WF] Updating WF data on GPU device after SC load')
+     WF%c_d = WF%c
+   endif
    !
    call load_SC_components('WF_clean')
    !
@@ -556,7 +552,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #endif
  !
  if (.not.wf_norm_test) then
-   if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
+   if (QUIET_wf) call IO_and_Messaging_switch("+report +log ")
    return
  endif
  !
@@ -580,7 +576,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  wf_norm_test=.false.
  call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  ',(/mndp,mxdp/))
  !
- if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
+ if (QUIET_wf) call IO_and_Messaging_switch("+report +log ")
  !
  contains
    !

@@ -24,14 +24,15 @@
 subroutine YPP_SET_defaults()
  !
  use YPPm,           ONLY:DOS_broadening,DOS_E_range,r_hole,deg_energy ,EXCITON_weight_treshold,&
-                          WF_multiplier,gamma_radius,SOC_split,BANDS_bands,BANDS_steps,&
+                          WF_multiplier,SOC_split,BANDS_bands,BANDS_steps,&
 &                         coo_in,coo_out,DOS_E_steps,INTERP_grid ,l_amplitude,l_bands,l_current,l_density  ,&
 &                         l_dos,l_exc_wf   ,l_mag,l_norm_to_one,l_sort,l_sp_wf,l_spin,l_wannier,mag_dir    ,&
-&                         N_path_pts,ncell ,ord_dgrid_ipol ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
+&                         N_path_pts,ncell ,output_fname,p_dir,p_format   ,perturbative_SOC_path,&
 &                         plot_title,PtsPath,seed_name,SOC_bands_buffer,SOC_bands_to_map,state_ctl ,V_value,&
-&                         w90_fname,wannier_bands,WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,  &
+&                         WF_ref,what_to_write,SP,HA2EV,E_field,Nel_fac,DOS_bands,AVE_exc,l_interp,  &
 &                         BSiq,l_PROJECT_atom,PDOS_atoms,PDOS_kinds,PDOS_wfcs,PDOS_l,PDOS_j,PDOS_m,&
-&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane
+&                         EXCITON_Res_treshold,EXCITON_E_treshold,l_PROJECT_line,l_PROJECT_plane,K_grid,&
+&                         DIPOLES_bands,DIPOLES_E_range
  use YPP_symm,       ONLY:wf_ng_cut
  use units,          ONLY:FS2AUT
  use interpolate,    ONLY:INTERP_shell_factor,interpls,max_interpls
@@ -41,13 +42,10 @@ subroutine YPP_SET_defaults()
  use wave_func,      ONLY:wf_ng
  use LIVE_t,         ONLY:live_timing_is_on
 #if defined _YPP_SC
- use YPPm,           ONLY:l_mean_potential
-#endif
-#if defined _YPP_MAGNETIC
- use YPPm,           ONLY:B_field,B_psi,B_theta,l_angular_momentum,l_position
+ use YPPm,           ONLY:l_mean_potential,B_field,B_psi,B_theta,l_angular_momentum,l_position
 #endif
 #if defined _YPP_RT
- use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_regions,Eh_pumped_pair_BZ_width,&
+ use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
 &                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes   ,l_RT_occupations,&
 &                         l_RT_time  ,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
@@ -151,11 +149,17 @@ subroutine YPP_SET_defaults()
  output_fname=' '
  plot_title=' '
  !
+ ! DIPOLES
+ !
+ DIPOLES_bands=(/1,n_bands/)
+ DIPOLES_E_range=-1./HA2EV
+ !
  ! EXC WF
  !
  l_spin=.false.
  l_sort=.false.
  l_amplitude=.false.
+ l_interp=.false.
  ncell = (/1, 1, 1/) 
  r_hole= (/0._SP,0._SP,0._SP/)
  state_ctl = '0 - 0'
@@ -165,6 +169,7 @@ subroutine YPP_SET_defaults()
  EXCITON_weight_treshold =0.05_SP
  WF_multiplier=1._SP
  BSiq=1
+ AVE_exc='h'
  !
 #if defined _YPP_ELPH
  !
@@ -197,10 +202,7 @@ subroutine YPP_SET_defaults()
  coo_out="rlu"
  PtsPath= ' '
  N_path_pts=0
- !
- ! BZ RIM
- !
- gamma_radius=0._SP
+ K_grid=0
  !
  ! WFs perturbative SOC
  !
@@ -208,14 +210,6 @@ subroutine YPP_SET_defaults()
  SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
- !
- ! BXSF interpolation
- !
- w90_fname="./w90.bxsf"
- wannier_bands=(/1,n_bands/)
- ord_dgrid_ipol = 0
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _YPP_RT
  !
@@ -236,12 +230,11 @@ subroutine YPP_SET_defaults()
  !
  !MANUAL PUMP
  !
- Eh_pumped_pair_n_BZ_regions=1
+ Eh_pumped_pair_n_BZ_regions=0
  Eh_pumped_pair_deltaE=-1._SP/HA2EV
  Eh_pumped_pair_energy=-1._SP/HA2EV
  Eh_pumped_pair_width=0.1_SP/HA2EV
  Eh_pumped_pair_BZ_width=0.1_SP
- Eh_pumped_pair_BZ_regions=-1.0_SP
  Eh_pumped_Nel=1._SP
  !
  !FERMI FUNCTION PUMP
@@ -258,7 +251,7 @@ subroutine YPP_SET_defaults()
  !
  ! ANGULAR MOMENTUM & ELECTRON DISPLACEMENT
  !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  !
  l_angular_momentum=.false.
  l_position=.false.
@@ -271,7 +264,5 @@ subroutine YPP_SET_defaults()
  B_psi=0._SP
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine YPP_SET_defaults

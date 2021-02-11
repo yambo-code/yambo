@@ -37,7 +37,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use R_lattice,     ONLY:g_vec_d
 #endif
 #if defined _RT
- use drivers,       ONLY:l_real_time
+ use dipoles,       ONLY:compute_spin_dipoles
  use real_time,     ONLY:l_update_SOC
 #endif
  !
@@ -67,7 +67,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  eval_spinor_matrix=.false.
 #if defined _RT
- eval_spinor_matrix=l_real_time.and.n_spinor==2.and.l_update_SOC
+ eval_spinor_matrix=compute_spin_dipoles.and.n_spinor==2.and.l_update_SOC
 #endif
  !
  do i1=1,3
@@ -164,8 +164,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #endif
    !
-   ! GPL_EXCLUDE_START 
-   !
 #if defined _SC || defined _RT
    if(l_eval_P2) then
      !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
@@ -181,8 +179,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      P2=Vstar_dot_V_omp(wf_ng*n_spinor,wf_der_sq(:,:),WF%c(:,:,ic_wf))
    endif
 #endif
-   !
-   ! GPL_EXCLUDE_END 
    !
  enddo
  !

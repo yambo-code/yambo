@@ -178,8 +178,8 @@ module LIVE_t
      ! Work Space
      !
      real(DP) ltcpu
-     integer:: d,h,m,s
-     integer, parameter :: st=1
+     integer :: d,h,m,s
+     character(4) :: cs,cm,ch,cd
      ltcpu=abs(tcpu)
      d=int(ltcpu/86400.d0)
      ltcpu=ltcpu-d*86400.d0
@@ -187,11 +187,24 @@ module LIVE_t
      ltcpu=ltcpu-h*3600.d0
      m=int(ltcpu/60.d0)
      s=int(ltcpu-m*60.d0)
-     time_string=' '
-     if (s>=st) write (time_string,'(i2.2,a)') s,'s'
-     if (m/=0)  write (time_string,'(2(i2.2,a))') m,'m-',s,'s'
-     if (h/=0)  write (time_string,'(3(i2.2,a))') h,'h-',m,'m-',s,'s'
-     if (d/=0)  write (time_string,'(4(i2.2,a))') d,'d-',h,'h-',m,'m-',s,'s'
+     cs=" "
+     cm=" "
+     ch=" "
+     cd=" "
+     if (d>0) then
+       write (cd,'(i2.2,a)') d,'d'
+       write (ch,'(a,i2.2,a)') '-',h,'h'
+       write (cm,'(a,i2.2,a)') '-',m,'m'
+     else if (h>0) then
+       write (ch,'(i2.2,a)') h,'h'
+       write (cm,'(a,i2.2,a)') '-',m,'m'
+     else if (m>0) then
+       write (cm,'(i2.2,a)') m,'m'
+       write (cs,'(a,i2.2,a)') '-',s,'s'
+     else if (s>1) then
+       write (cs,'(i2.2,a)') s,'s'
+     endif
+     time_string=trim(cd)//trim(ch)//trim(cm)//trim(cs)
    end function
    !
    subroutine LIVE_message(message,lfmt,rfmt,sfmt,CPU_TIME,CPU_ID)
@@ -203,7 +216,7 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,logfile_unit,write_to_log,intc,logfile_unit
+     use stderr,     ONLY : c_print,logfile_unit,write_to_log,intc
      use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
@@ -220,8 +233,7 @@ module LIVE_t
      !
      rfmt_=" "
      sfmt_="%s"
-     if (.not.log_as_a_file) lfmt_="r"
-     if (     log_as_a_file) lfmt_="n"
+     lfmt_="n"
      !
      if (present(lfmt)) lfmt_=trim(lfmt)
      if (present(rfmt)) rfmt_=trim(rfmt)
@@ -283,6 +295,7 @@ module LIVE_t
        log_line=trim(message_composed) 
        if (trim(rfmt_)=="n".or.trim(rfmt_)=="nn") log_line=""
        if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
+       call yambo_flush(logfile_unit)
        return
      endif
      fmt_here='(2a)'
@@ -296,7 +309,7 @@ module LIVE_t
        if (trim(rfmt_)=="nn") write (logfile_unit,'(a/)') ""
        log_line=""
      endif
-     flush(logfile_unit)
+     call yambo_flush(logfile_unit)
      !
    end subroutine
    !

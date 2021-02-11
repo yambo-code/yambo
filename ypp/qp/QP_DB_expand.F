@@ -41,6 +41,9 @@ subroutine QP_DB_expand( k )
  integer,    external    :: io_QP_and_GF
  character(schlen)       :: QP_expanded_name
  !
+ call section("=",'QP database expansion in the full BZ')
+ !=======================================================
+ !
  ! Load
  !------
  call QP_reset(qp)

@@ -27,6 +27,7 @@ module X_m
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use cuda_m,         ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -37,6 +38,7 @@ module X_m
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
  logical                  :: l_drude
+ integer                  :: drude_n_states
  !
  ! Main Gauge
  !
@@ -58,18 +60,17 @@ module X_m
  !
  integer              :: X_DbGd_nkpts
  logical              :: use_X_DbGd
- real(SP)             :: X_DbGd_percentual=0.5
+ real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
-#ifdef _CUDA
  !
- ! GPU X_irredux_residuals workspace
+ ! workspace for X_irredux_residuals on GPUs
  !
- complex(SP), allocatable, device :: rhotw_save_d(:), rhotw_save2_d(:)
-#endif
+ complex(SP), allocatable DEV_ATTR :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !
+ complex(SP), allocatable :: BS_E_sorted(:,:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 
@@ -77,11 +78,14 @@ module X_m
  complex(SP), allocatable :: Alpha(:,:)
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
+ complex(SP), allocatable :: X_magnons(:,:,:)
+ complex(SP), allocatable :: X_dichroism(:,:)
  !
  ! Response function
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
+ logical                  :: X_use_gpu=have_cuda
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)
@@ -115,7 +119,7 @@ module X_m
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
  complex(SP),      allocatable :: X_mat(:,:,:)
- complex(SP),      allocatable DEV_ATTRIBUTE :: X_mat_d(:,:,:)
+ complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
@@ -152,7 +156,6 @@ module X_m
    !
    subroutine X_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol,n_spinor
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
@@ -164,10 +167,8 @@ module X_m
          if (allocated(Epsilon_ii)) return
          YAMBO_ALLOC(Epsilon_ii,(d(1),d(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
          YAMBO_ALLOC(X_drude_term,(d(1)))
-         YAMBO_ALLOC(Joint_DOS,(d(1),d(2)))
          Epsilon_ii   = cZERO
          X_drude_term = cZERO
-         Joint_DOS    = cZERO
        case('X')
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
@@ -181,7 +182,6 @@ module X_m
        case('EPS')
          YAMBO_FREE(Epsilon_ii)
          YAMBO_FREE(X_drude_term)
-         YAMBO_FREE(Joint_DOS)
        case('X')
          !
          ! I clean the RL components mapping

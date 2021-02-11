@@ -25,7 +25,7 @@ subroutine PARSER_close_G(ng,what)
  !
  use pars,        ONLY:SP
  use units,       ONLY:HA2EV
- use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
+ use R_lattice,   ONLY:n_g_shells
  implicit none
  integer :: ng
  integer,  external  :: G2G,E2G
@@ -70,7 +70,7 @@ subroutine PARSER_close_G(ng,what)
 end subroutine
 !
 integer function G2G(ng2close)
-  use R_lattice,   ONLY:n_g_shells,E_of_shell,ng_in_shell
+  use R_lattice,   ONLY:n_g_shells,ng_in_shell
   implicit none
   integer, intent(in) :: ng2close
   integer :: i1

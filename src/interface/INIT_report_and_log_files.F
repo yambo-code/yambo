@@ -54,6 +54,7 @@ subroutine INIT_report_and_log_files()
   endif
  endif
  do i_r=1,nrnlvls
+   if (trim(rnlvls(i_r,1)) == "infver") cycle
    rch=repfile
    if (rstatus(i_r)/=0) then
      write (rch,'(3a)') trim(repfile),'_',trim(rnlvls(i_r,1))
@@ -65,6 +66,7 @@ subroutine INIT_report_and_log_files()
      logfile=jch
    endif
  enddo
+ if (all(rstatus==0)) repfile=trim(repfile)//'_ypp'
  if (ncpu>1.and.log_as_a_file) then
    jch=logfile
    logfile=trim(jch)//"_CPU_"//trim(intc(myid+1))
@@ -99,7 +101,7 @@ subroutine INIT_report_and_log_files()
    !
  endif
  !
- if (log_as_a_file) then
+ if (log_as_a_file.and.write_to_log) then
    !
    ! Log file
    !

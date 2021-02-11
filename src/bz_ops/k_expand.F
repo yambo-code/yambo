@@ -80,7 +80,6 @@ subroutine k_expand(k)
  YAMBO_FREE(k%star)
  YAMBO_FREE(k%nstar)
  YAMBO_FREE(k%weights)
- 
  !
  YAMBO_ALLOC(k%star,(k%nibz,nsym))
  YAMBO_ALLOC(k%nstar,(k%nibz))
@@ -95,7 +94,7 @@ subroutine k_expand(k)
      call c2a(v_in=v,v_out=kstar(is,:),mode='ki2a')
      k_found=.false.
      do i2=1,k%nstar(i1)
-       if(rlu_v_is_zero(kstar(is,:)-kstar(k%star(i1,i2),:),zero_=k_rlu_zero)) k_found=.true.
+       if (rlu_v_is_zero(kstar(is,:)-kstar(k%star(i1,i2),:),zero_=k_rlu_zero)) k_found=.true.
        if (k_found) exit
      enddo
      if (.not.k_found) k%nstar(i1)=k%nstar(i1)+1

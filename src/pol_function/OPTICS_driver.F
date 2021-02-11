@@ -31,24 +31,25 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,BZ_DbGd_tot_nk_levels
+ use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        FXC,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute,WF_load,&
-&                        WF_free,DESC_write
+ use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
+ use IO_m,          ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -71,7 +72,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Basical Checks
  !
- call X_pre_setup(Xen,X)
+ call X_pre_setup(Xen,Xk,X)
  !
  allocate(X_par(1))
  !
@@ -112,11 +113,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! workaround for possible compiler bug
 #ifdef _PGI
-   if (iq>1.and.size(PAR_IND_Q%n_of_elements)>1) then
+   if (iq>1.and.size(PAR_IND_Q_ibz%n_of_elements)>1) then
 #else
    if (iq>1) then
 #endif
-     if (.not.PAR_IND_Q%element_1D(iq)) cycle
+     if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    endif
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
@@ -155,17 +156,20 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Check if EELS can be evaluated
    !
-   eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   eval_eels= .not. (l_col_cut .or. trim(alpha_dim)=="volume")
+   if(eval_eels) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
-   if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut)
+   if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut.or.trim(alpha_dim)=="volume")
    !
    ! OutPut files...
    !
    if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
    if(     l_rpa_IP) call X_setup_file_names(iq,'ip','','',ig=i_G_shift)
    !
-   ! ... open ...
+   ! ... permissions ...
+   if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
    !
+   ! ... open ...
    call of_open_close(eps_file_name,'ot')
    if (     eval_eels)  call of_open_close(eel_file_name,'ot')
    if (.not.eval_eels)  eel_file_name=' '
@@ -173,6 +177,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (.not.eval_alpha) alpha_file_name=' '
    if (     l_bs_fxc)   call of_open_close(fxc_file_name,'ot')
    if (.not.l_bs_fxc)   fxc_file_name=' '
+   if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
    !
    ! Initial Messages
    !
@@ -230,9 +235,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
      !
-!    Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)*&
-!&                                                bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus+1._SP)
-     !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
    endif
@@ -254,10 +256,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
    call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
-   !
-   ! BZ Double Grid
-   !
-   if (use_X_DbGd) call msg('o eps_q eel_q fxc alpha','# DbGd| Energy Points   ',BZ_DbGd_tot_nk_levels,INDENT=0)
    !
    ! Titles 
    !
@@ -315,7 +313,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      call of_open_close(alpha_file_name,'oa')
      !
-     if(l_col_cut) then
+     if(l_col_cut.or.trim(alpha_dim)=="volume") then
        alpha_factor=eps_2_alpha/4._SP/pi
        Alpha(:,1)=Alpha(:,1)*alpha_factor
        if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor

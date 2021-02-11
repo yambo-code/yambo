@@ -188,6 +188,10 @@ module vec_operate
    !
    subroutine c2a(b_in,v_in,v_out,mode)
      !
+     ! rlu = Reduced Lattice Units (crystal coordinated in Quantum-Espresso)
+     ! cc  = Cartesian Coordinates (atomic units)
+     ! iku = Internal K-Units (internal Yambo units similar to 2pi/Alat in QE but with 3 scaling foctors)
+     !
      ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
      ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)
      ! mode = 'k/r i2c' 'k/r c2i' (cc  <-> iku)

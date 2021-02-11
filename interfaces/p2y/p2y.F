@@ -29,7 +29,8 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use com,                 ONLY:msg,core_io_path
  use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
- use parallel_m,          ONLY:ncpu,myid,PARALLEL_wait,PP_indexes,PP_indexes_reset
+ use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset
+ use parallel_int,        ONLY:PARALLEL_wait,PARALLEL_index,PARALLEL_live_message,PP_redux_wait
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
@@ -38,7 +39,6 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              IO_and_Messaging_switch,IO_write,IO_read
  use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
  use stderr,              ONLY:intc
- use interfaces,          ONLY:PARALLEL_index,PARALLEL_live_message
  use qexml_module
  !
 #include<memory.h>
@@ -76,7 +76,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  ! ... Internal Defaults
  !
- call SET_defaults(instr,ind,od,com_dir)
+ call SET_defaults(instr,od,od,com_dir)
  !
  ! ... C_driver -> YPP information transfer
  !
@@ -89,6 +89,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call E_reset(en)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
+ call MEM_treshold_estimate( )
 #endif
  !
  ! Switch off report file support & Handle logs
@@ -117,7 +118,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  ! Open XML index files and units
  !
- call pw_init(instr,inf)
+ call pw_init(instr,ind)
  !
  ! Make db1 database
  !
@@ -163,19 +164,26 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call PP_indexes_reset(PAR_IND_wfc_io)
  ! 
  call PARALLEL_index(PAR_IND_wfc_io,(/wf_nb_io_groups,nkibz/))
- call PARALLEL_live_message("[p2y] wfc_io",LOADED=PAR_IND_wfc_Io%n_of_elements(myid+1),TOTAL=wf_nb_io_groups*nkibz)
+ call PARALLEL_live_message("[p2y] WF I/O",LOADED=PAR_IND_wfc_Io%n_of_elements(myid+1),TOTAL=wf_nb_io_groups*nkibz)
  !
  n_live=PAR_IND_wfc_Io%n_of_elements(myid+1) 
- if (n_live>0) call live_timing("[p2y] wfc_io",n_live)
+ if (n_live>0) call live_timing("[p2y] WF I/O",n_live)
  !
  IO_write_save=IO_write
  IO_read_save =IO_read
- IO_write=.true.
- IO_read=.true.
  !
  ! IO
  !
  YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_io))
+ !
+ ! Write the standard wf header
+ call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
+ io_err=io_WF(ID)
+ !
+ call PP_redux_wait()
+ !
+ IO_write=.true.
+ IO_read=.true.
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -196,17 +204,10 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
         !
         if (.not.PAR_IND_wfc_io%element_2D(ib_grp,ik)) cycle
         !
-        if (ifrag==1.and.ib_grp==1) then
-          call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
-          io_err=io_WF(ID)
-        endif
-        !
-        ! Read a single wfc component from disk
-        !
+        ! Read a single wfc component from disk...
         call p2y_wf(wf_disk,i_sp_pol,ik,ib_grp)
         !
-        ! Write the standard wf header
-        !
+        ! ... and write it
         call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
         io_err=io_WF(ID,wf_disk)
         !

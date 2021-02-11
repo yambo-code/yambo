@@ -26,19 +26,20 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use pars,           ONLY:lchlen,SP,DP
  use stderr,         ONLY:log_as_a_file,intc
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
-&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,verbose
+&                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
  use it_m,           ONLY:infile
  use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
 &                         mpi_comm_world,myid,COMM_reset,PAR_COM_NULL,host_name,&
-&                         master_cpu,PP_redux_wait,n_IO_nodes,PP_bcast
+&                         master_cpu,n_IO_nodes
+ use parallel_int,   ONLY:PP_bcast,PP_redux_wait 
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use LIVE_t,         ONLY:USER_wall_time_string
- use cuda_m,         ONLY:cuda_setup,cuda_visible_devices,have_cuda_devices
+ use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
  implicit none
  !
  type(levels)  :: en
@@ -46,9 +47,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  ! 
  ! Work Space
  !
- integer           :: ID,i_err,i_s,n_max_threads,i_cpu
+ integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
+#ifdef _CUDA
+ integer, external :: cudaGetDevice
+#endif
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -90,12 +94,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !
 #endif
  !
- ! GET CUDA ENVIROMENT defs 
- !============================
- !
- call cuda_setup()
- !
- !
  ! CPU structure REPORT
  !======================
  !
@@ -125,6 +123,9 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
  call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
+ call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
+ ierr = cudaGetDevice(i_dev)
+ call msg('s', 'MPI assigned to GPU ',i_dev)
 #endif
  !
  ! I/O and more
@@ -136,7 +137,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Communications      ',trim(com_path))
  call msg('r', 'Input file          ',trim(infile))
  call msg('r', 'Report file         ',trim(repfile))
- call msg('r', 'Verbose log/report  ',verbose)
+ call msg('r', 'Verbose log/report  ',fat_log)
  if (log_as_a_file) then
    call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  endif

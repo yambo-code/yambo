@@ -432,7 +432,402 @@ subroutine sp_dev_conjg_c4d(array_inout, &
     !
 end subroutine sp_dev_conjg_c4d
 !
+!
+!=======================================
+!
+#if defined(__HAVE_DEVICE)
+!
 
+subroutine dp_dev_conjg_h_c1d(array_inout, &
+                                    
+                                   range1, lbound1 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(14,200)
+    complex(PRCSN), intent(inout) :: array_inout(:)
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    do i1 = d1s, d1e
+        array_inout(i1 ) = &
+            conjg (  array_inout (i1 ) )
+    enddo
+    !
+end subroutine dp_dev_conjg_h_c1d
+!
+subroutine dp_dev_conjg_h_c2d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(14,200)
+    complex(PRCSN), intent(inout) :: array_inout(:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2 ) = &
+            conjg (  array_inout (i1,i2 ) )
+    enddo
+    enddo
+    !
+end subroutine dp_dev_conjg_h_c2d
+!
+subroutine dp_dev_conjg_h_c3d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2, & 
+                                   range3, lbound3 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(14,200)
+    complex(PRCSN), intent(inout) :: array_inout(:,:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_inout, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2,i3 ) = &
+            conjg (  array_inout (i1,i2,i3 ) )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_conjg_h_c3d
+!
+subroutine dp_dev_conjg_h_c4d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2, & 
+                                   range3, lbound3, & 
+                                   range4, lbound4 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(14,200)
+    complex(PRCSN), intent(inout) :: array_inout(:,:,:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_inout, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_inout, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2,i3,i4 ) = &
+            conjg (  array_inout (i1,i2,i3,i4 ) )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_conjg_h_c4d
+!
+subroutine sp_dev_conjg_h_c1d(array_inout, &
+                                    
+                                   range1, lbound1 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(6, 37)
+    complex(PRCSN), intent(inout) :: array_inout(:)
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    do i1 = d1s, d1e
+        array_inout(i1 ) = &
+            conjg (  array_inout (i1 ) )
+    enddo
+    !
+end subroutine sp_dev_conjg_h_c1d
+!
+subroutine sp_dev_conjg_h_c2d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(6, 37)
+    complex(PRCSN), intent(inout) :: array_inout(:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2 ) = &
+            conjg (  array_inout (i1,i2 ) )
+    enddo
+    enddo
+    !
+end subroutine sp_dev_conjg_h_c2d
+!
+subroutine sp_dev_conjg_h_c3d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2, & 
+                                   range3, lbound3 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(6, 37)
+    complex(PRCSN), intent(inout) :: array_inout(:,:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_inout, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2,i3 ) = &
+            conjg (  array_inout (i1,i2,i3 ) )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_conjg_h_c3d
+!
+subroutine sp_dev_conjg_h_c4d(array_inout, &
+                                    
+                                   range1, lbound1, & 
+                                   range2, lbound2, & 
+                                   range3, lbound3, & 
+                                   range4, lbound4 )
+    implicit none
+    !
+    integer, parameter :: PRCSN = selected_real_kind(6, 37)
+    complex(PRCSN), intent(inout) :: array_inout(:,:,:,:)
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+    !
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_inout, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_inout, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_inout, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_inout, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_inout(i1,i2,i3,i4 ) = &
+            conjg (  array_inout (i1,i2,i3,i4 ) )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_conjg_h_c4d
+!
+!
+#endif
 
 subroutine dxlib_errore( calling_routine, message, ierr )
     implicit none
@@ -841,7 +1236,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     !   
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -851,11 +1246,9 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -865,13 +1258,11 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -881,11 +1272,9 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal / v1(i) * mat(i,j) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -895,9 +1284,7 @@ subroutine dp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = mat(i,j) /v1(i) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     else
       call dxlib_errore("dp_mat_upd_dMd_r2d","invalid op1/op2",10)
@@ -926,7 +1313,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     !   
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -936,11 +1323,9 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -950,13 +1335,11 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -966,11 +1349,9 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal / v1(i) * mat(i,j) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -980,13 +1361,11 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = mat(i,j) /v1(i) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="C".and.op2=="C") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -996,11 +1375,9 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * conjg(v1(i)) * mat(i,j) * conjg(v2(j))
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1010,9 +1387,7 @@ subroutine dp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = conjg(v1(i)) * mat(i,j) * conjg(v2(j))
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     else
       call dxlib_errore("dp_mat_upd_dMd_c2d","invalid op1/op2",10)
@@ -1041,7 +1416,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     !   
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1051,11 +1426,9 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1065,13 +1438,11 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1081,11 +1452,9 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal / v1(i) * mat(i,j) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1095,9 +1464,7 @@ subroutine sp_dev_mat_upd_dMd_r2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = mat(i,j) /v1(i) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     else
       call dxlib_errore("sp_mat_upd_dMd_r2d","invalid op1/op2",10)
@@ -1126,7 +1493,7 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
     !   
     if (op1=="N".and.op2=="N") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1136,11 +1503,9 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1150,13 +1515,11 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = v1(i) * mat(i,j) * v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="R".and.op2=="R") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1166,11 +1529,9 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal / v1(i) * mat(i,j) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1180,13 +1541,11 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = mat(i,j) /v1(i) / v2(j)
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     elseif (op1=="C".and.op2=="C") then
        if (present(scal)) then
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1196,11 +1555,9 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = scal * conjg(v1(i)) * mat(i,j) * conjg(v2(j))
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        else
-#ifndef _CUDA
+#ifndef __CUDA
          !$omp parallel do default(shared), private(i,j), collapse(2)
 #else
          !$cuf kernel do(2)
@@ -1210,15 +1567,1016 @@ subroutine sp_dev_mat_upd_dMd_c2d(ndim1, ndim2, mat, v1,op1, v2,op2, scal)
              mat(i,j) = conjg(v1(i)) * mat(i,j) * conjg(v2(j))
          enddo
          enddo
-#ifndef _CUDA
-         !$omp end parallel do
-#endif
+
        endif
     else
       call dxlib_errore("sp_mat_upd_dMd_c2d","invalid op1/op2",10)
     endif
     !
 end subroutine sp_dev_mat_upd_dMd_c2d
+!
+!
+!======================
+!
+subroutine dp_dev_mem_addscal_r1d(array_out, array_in, scal, &
+                                            range1, lbound1 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(14,200)), intent(inout) :: array_out(:)
+    real(selected_real_kind(14,200)), intent(in)    :: array_in(:)
+    real(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(14,200)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(1)
+    do i1 = d1s, d1e
+        array_out(i1 ) = &
+            array_out(i1 ) + &
+            scal_*array_in(i1 )
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_r1d
+!
+subroutine dp_dev_mem_addscal_r2d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:)
+    real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:)
+    real(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(14,200)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(2)
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2 ) = &
+            array_out(i1,i2 ) + &
+            scal_*array_in(i1,i2 )
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_r2d
+!
+subroutine dp_dev_mem_addscal_r3d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:)
+    real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:)
+    real(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(14,200)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(3)
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3 ) = &
+            array_out(i1,i2,i3 ) + &
+            scal_*array_in(i1,i2,i3 )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_r3d
+!
+subroutine dp_dev_mem_addscal_r4d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3, &
+                                            range4, lbound4 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:,:)
+    real(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:,:)
+    real(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(14,200)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_out, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(4)
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3,i4 ) = &
+            array_out(i1,i2,i3,i4 ) + &
+            scal_*array_in(i1,i2,i3,i4 )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_r4d
+!
+subroutine sp_dev_mem_addscal_r1d(array_out, array_in, scal, &
+                                            range1, lbound1 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(6, 37)), intent(inout) :: array_out(:)
+    real(selected_real_kind(6, 37)), intent(in)    :: array_in(:)
+    real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(6, 37)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(1)
+    do i1 = d1s, d1e
+        array_out(i1 ) = &
+            array_out(i1 ) + &
+            scal_*array_in(i1 )
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_r1d
+!
+subroutine sp_dev_mem_addscal_r2d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:)
+    real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:)
+    real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(6, 37)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(2)
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2 ) = &
+            array_out(i1,i2 ) + &
+            scal_*array_in(i1,i2 )
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_r2d
+!
+subroutine sp_dev_mem_addscal_r3d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:)
+    real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:)
+    real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(6, 37)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(3)
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3 ) = &
+            array_out(i1,i2,i3 ) + &
+            scal_*array_in(i1,i2,i3 )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_r3d
+!
+subroutine sp_dev_mem_addscal_r4d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3, &
+                                            range4, lbound4 )
+    use iso_fortran_env
+    implicit none
+    !
+    real(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:,:)
+    real(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:,:)
+    real(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    real(selected_real_kind(6, 37)) :: scal_ = 1.0
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_out, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(4)
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3,i4 ) = &
+            array_out(i1,i2,i3,i4 ) + &
+            scal_*array_in(i1,i2,i3,i4 )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_r4d
+!
+subroutine dp_dev_mem_addscal_c1d(array_out, array_in, scal, &
+                                            range1, lbound1 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(14,200)), intent(inout) :: array_out(:)
+    complex(selected_real_kind(14,200)), intent(in)    :: array_in(:)
+    complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(14,200)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(1)
+    do i1 = d1s, d1e
+        array_out(i1 ) = &
+            array_out(i1 ) + &
+            scal_*array_in(i1 )
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_c1d
+!
+subroutine dp_dev_mem_addscal_c2d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:)
+    complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:)
+    complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(14,200)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(2)
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2 ) = &
+            array_out(i1,i2 ) + &
+            scal_*array_in(i1,i2 )
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_c2d
+!
+subroutine dp_dev_mem_addscal_c3d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:)
+    complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:)
+    complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(14,200)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(3)
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3 ) = &
+            array_out(i1,i2,i3 ) + &
+            scal_*array_in(i1,i2,i3 )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_c3d
+!
+subroutine dp_dev_mem_addscal_c4d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3, &
+                                            range4, lbound4 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(14,200)), intent(inout) :: array_out(:,:,:,:)
+    complex(selected_real_kind(14,200)), intent(in)    :: array_in(:,:,:,:)
+    complex(selected_real_kind(14,200)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(14,200)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_out, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(4)
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3,i4 ) = &
+            array_out(i1,i2,i3,i4 ) + &
+            scal_*array_in(i1,i2,i3,i4 )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine dp_dev_mem_addscal_c4d
+!
+subroutine sp_dev_mem_addscal_c1d(array_out, array_in, scal, &
+                                            range1, lbound1 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:)
+    complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:)
+    complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2)
+    integer, optional, intent(in) ::  lbound1
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(6, 37)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(1)
+    do i1 = d1s, d1e
+        array_out(i1 ) = &
+            array_out(i1 ) + &
+            scal_*array_in(i1 )
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_c1d
+!
+subroutine sp_dev_mem_addscal_c2d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:)
+    complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:)
+    complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2)
+    integer, optional, intent(in) ::  lbound1, lbound2
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(6, 37)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(2)
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2 ) = &
+            array_out(i1,i2 ) + &
+            scal_*array_in(i1,i2 )
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_c2d
+!
+subroutine sp_dev_mem_addscal_c3d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:)
+    complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:)
+    complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(6, 37)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(3)
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3 ) = &
+            array_out(i1,i2,i3 ) + &
+            scal_*array_in(i1,i2,i3 )
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_c3d
+!
+subroutine sp_dev_mem_addscal_c4d(array_out, array_in, scal, &
+                                            range1, lbound1, &
+                                            range2, lbound2, &
+                                            range3, lbound3, &
+                                            range4, lbound4 )
+    use iso_fortran_env
+    implicit none
+    !
+    complex(selected_real_kind(6, 37)), intent(inout) :: array_out(:,:,:,:)
+    complex(selected_real_kind(6, 37)), intent(in)    :: array_in(:,:,:,:)
+    complex(selected_real_kind(6, 37)), optional, intent(in) :: scal
+    integer, optional, intent(in) ::  range1(2), range2(2), range3(2), range4(2)
+    integer, optional, intent(in) ::  lbound1, lbound2, lbound3, lbound4
+#if defined(__CUDA)
+    attributes(device) :: array_out, array_in
+#endif
+    !
+    complex(selected_real_kind(6, 37)) :: scal_ = (1.0, 0.0)
+    integer :: i1, d1s, d1e
+    integer :: lbound1_, range1_(2)
+    integer :: i2, d2s, d2e
+    integer :: lbound2_, range2_(2)
+    integer :: i3, d3s, d3e
+    integer :: lbound3_, range3_(2)
+    integer :: i4, d4s, d4e
+    integer :: lbound4_, range4_(2)
+    !
+    lbound1_=1
+    if (present(lbound1)) lbound1_=lbound1 
+    range1_=(/1,size(array_out, 1)/)
+    if (present(range1)) range1_=range1 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d1s = range1_(1) -lbound1_ +1
+    d1e = range1_(2) -lbound1_ +1
+    !
+    lbound2_=1
+    if (present(lbound2)) lbound2_=lbound2 
+    range2_=(/1,size(array_out, 2)/)
+    if (present(range2)) range2_=range2 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d2s = range2_(1) -lbound2_ +1
+    d2e = range2_(2) -lbound2_ +1
+    !
+    lbound3_=1
+    if (present(lbound3)) lbound3_=lbound3 
+    range3_=(/1,size(array_out, 3)/)
+    if (present(range3)) range3_=range3 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d3s = range3_(1) -lbound3_ +1
+    d3e = range3_(2) -lbound3_ +1
+    !
+    lbound4_=1
+    if (present(lbound4)) lbound4_=lbound4 
+    range4_=(/1,size(array_out, 4)/)
+    if (present(range4)) range4_=range4 
+    !
+    ! the lower bound of the assumed shape array passed to the subroutine is 1
+    ! lbound and range instead refer to the indexing in the parent caller.
+    d4s = range4_(1) -lbound4_ +1
+    d4e = range4_(2) -lbound4_ +1
+    !
+    !
+    if (present(scal)) scal_=scal
+    !
+    !$cuf kernel do(4)
+    do i4 = d4s, d4e
+    do i3 = d3s, d3e
+    do i2 = d2s, d2e
+    do i1 = d1s, d1e
+        array_out(i1,i2,i3,i4 ) = &
+            array_out(i1,i2,i3,i4 ) + &
+            scal_*array_in(i1,i2,i3,i4 )
+    enddo
+    enddo
+    enddo
+    enddo
+    !
+end subroutine sp_dev_mem_addscal_c4d
 !
 !
 !======================

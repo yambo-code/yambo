@@ -56,6 +56,8 @@ subroutine of_open_close(of_name_extension,mode)
  !
  if (present(mode)) then
    !
+   if (.not.write_to_of) return
+   !
    ! Get full filename, including path and jobname, from extension
    !  
    of_name_complete=get_name(desc=trim(of_name_extension),type=3,CORE_IO=.false.,MORE_IO=.false.,COM_IO=.true.)
@@ -67,6 +69,7 @@ subroutine of_open_close(of_name_extension,mode)
    ! Flush output if file is opened
    !
    if (index(mode,'f')/=0.and.(len_trim(of_opened(file_index))>0)) then
+     ! here I do not use yambo_flush since it could cause a significant drop of performances
      flush(abs(of_unit(file_index)))
      if (trim(mode)=='f') return
    endif
@@ -81,7 +84,7 @@ subroutine of_open_close(of_name_extension,mode)
      of_name_complete=of_name(file_index)
    endif
    !
-   if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
+   if ( (index(mode,'o')==0.and.index(mode,'O')==0)) return
    !
    ! Here I open the unit using file_name to define the name
    !
@@ -146,6 +149,7 @@ subroutine of_open_close(of_name_extension,mode)
  !
 end subroutine of_open_close
 !
+#if !defined _io_lib
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
@@ -181,6 +185,7 @@ subroutine write_the_logo(unit_,comment_)
  if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
  !
 end subroutine write_the_logo
+#endif
 !
 subroutine rename_file(name)
  !
@@ -207,7 +212,9 @@ end subroutine rename_file
 !
 subroutine warning(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
+#endif
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
  !
@@ -215,13 +222,17 @@ subroutine warning(mesg)
  !
  character(*) :: mesg
  call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+#endif
  !
 end subroutine warning
 !
 subroutine error(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
+#endif
  use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
@@ -239,12 +250,16 @@ subroutine error(mesg)
  !
  if (len_trim(secnm)>0) then
    call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
+#if !defined _io_lib
    call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
+#endif
  endif
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
- if(log_as_a_file) flush(logfile_unit)
+#endif
+ if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
  if (ncpu>1) call MPI_Abort(mpi_comm_world,1,ierr)
@@ -252,3 +267,28 @@ subroutine error(mesg)
  stop
  !
 end subroutine error
+!
+!
+subroutine yambo_flush(unit)
+  !
+  !
+  implicit none
+  !
+  integer, intent(in) :: unit
+  !
+  flush(unit)
+  !
+  ! compiler specific instructions below
+  !
+#ifdef __GFORTRAN__
+  ! 2020/05/18 DS
+  ! These two lines are useful in long simulations
+  ! since fsync forces to write the message to file.
+  ! However in short simulations (i.e. the test-suite)
+  ! they cause a small drop of performances.
+  ! Thus I comment them for now
+  !ierr = fsync(fnum(unit))
+  !if (ierr /= 0) stop "Error calling fsync"
+#endif
+  !
+end subroutine yambo_flush

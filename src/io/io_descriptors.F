@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): DS, AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,12 +23,13 @@
 !
 function io_descriptors(desc,name,ID,QUIET)
  !
- use pars,          ONLY:schlen,SP,DP,IP,LP
- use descriptors,   ONLY:IO_desc
- use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,&
-&                        def_variable_bulk,io_variable_bulk,io_status,&
-&                        variable_exist,read_is_on,io_com,NONE
- use stderr,        ONLY:intc
+ use pars,           ONLY:schlen,SP,DP,IP,LP
+ use descriptors,    ONLY:IO_desc
+ use IO_m,           ONLY:def_variable_elemental,io_variable_elemental,&
+&                         def_variable_bulk,io_variable_bulk,io_status,&
+&                         variable_exist,read_is_on,io_com,NONE
+ use stderr,         ONLY:intc
+ use netcdf,         ONLY:NF90_UNLIMITED
  !
  implicit none
  !
@@ -42,7 +43,8 @@ function io_descriptors(desc,name,ID,QUIET)
  ! Work Space
  !
  character(schlen), external :: desc_to_varname
- integer :: n_descs_disk,i1,N,VAR_KIND,io_com_save
+ character(schlen)           :: dim_name(2)
+ integer :: n_descs_disk,i1,N,VAR_KIND,io_com_save,desc_size
  !
  if (read_is_on(ID) .and. .not.variable_exist(ID,name//"_N_DESCRIPTORS")) return
  !
@@ -54,16 +56,22 @@ function io_descriptors(desc,name,ID,QUIET)
    return
  endif
  !
- call def_variable_elemental(ID,name//"_DESCRIPTORS_SIZES",n_descs_disk,IP+100,0)
- call  io_variable_elemental(ID,I1=desc%size(:n_descs_disk))
+ desc_size=n_descs_disk
+ if (name=="TIME_STEP") desc_size=NF90_UNLIMITED
  !
- call def_variable_bulk(ID,name//"_DESCRIPTORS_NAMES",1,(/schlen,n_descs_disk/),0)
+ dim_name(1)=trim(name)//"_string_len"
+ dim_name(2)=trim(name)//"_desc_size"
+ !
+ call def_variable_bulk(ID,name//"_DESCRIPTORS_SIZES",2,(/desc_size/),IP+100,dim_names=dim_name(2:2))
+ call  io_variable_bulk(ID,2,I1=desc%size(:n_descs_disk))
+ !
+ call def_variable_bulk(ID,name//"_DESCRIPTORS_NAMES",1,(/schlen,desc_size/),0,dim_names=dim_name)
  call  io_variable_bulk(ID,1,STR1=desc%str(:n_descs_disk))
  !
- call def_variable_bulk(ID,name//"_DESCRIPTORS_KINDS",1,(/schlen,n_descs_disk/),0)
+ call def_variable_bulk(ID,name//"_DESCRIPTORS_KINDS",1,(/schlen,desc_size/),0,dim_names=dim_name)
  call  io_variable_bulk(ID,1,STR1=desc%kind(:n_descs_disk))
  !
- call def_variable_bulk(ID,name//"_DESCRIPTORS_TERMS",1,(/schlen,n_descs_disk/),0)
+ call def_variable_bulk(ID,name//"_DESCRIPTORS_TERMS",1,(/schlen,desc_size/),0,dim_names=dim_name)
  call  io_variable_bulk(ID,1,STR1=desc%term(:n_descs_disk))
  !
  io_com_save=io_com(ID)
@@ -92,22 +100,22 @@ function io_descriptors(desc,name,ID,QUIET)
    !
    if(N==1) then
      if(desc%kind(i1)=='i') call io_variable_elemental(ID,I0=desc%ival(1,i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
      if(desc%kind(i1)=='r') call io_variable_elemental(ID,R0=desc%rval(1,i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
      if(desc%kind(i1)=='d') call io_variable_elemental(ID,D0=desc%dval(i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
      if(desc%kind(i1)=='c') call io_variable_elemental(ID,C0=desc%cval(i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
      if(desc%kind(i1)=='l') call io_variable_elemental(ID,L0=desc%lval(i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
      if(desc%kind(i1)=='s') call io_variable_elemental(ID,CH0=desc%sval(i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:1,i1))
    else
      if(desc%kind(i1)=='i') call io_variable_elemental(ID,I1=desc%ival(1:N,i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:N,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:N,i1))
      if(desc%kind(i1)=='r') call io_variable_elemental(ID,R1=desc%rval(1:N,i1),VAR=desc%str(i1),TERMINATOR=desc%term(i1),&
-                            &                             CHECK=desc%check(i1),OP=desc%ops(1:N,i1))
+&                                                         CHECK=desc%check(i1),OP=desc%ops(1:N,i1))
      if(desc%kind(i1)=='c') call error(' Vector of complex not allowed in descriptors ')
      if(desc%kind(i1)=='d') call error(' Vector of doubles not allowed in descriptors ')
      if(desc%kind(i1)=='l') call error(' Vector of logical not allowed in descriptors ')

@@ -67,14 +67,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  !
  character(1) :: sec
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
- logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
+ logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans,FORCE_EQ_noocc
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
  &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares
  !
  FORCE_EQ_trans=.true.
+ FORCE_EQ_noocc=.false.
  !
 #if defined _RT
  call parser('ForceEqTrans',FORCE_EQ_trans)
+ call parser('ForceEqNoOcc',FORCE_EQ_noocc)
 #endif
  !
  if (isec(3)/=0) sec="-"
@@ -98,9 +100,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  !
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
-!#if defined _RT
+#if defined _RT
+ if(FORCE_EQ_noocc) nb=BS_bands
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
-!#endif
+#endif
  !
  do i_loop=1,n_loops
    !
@@ -147,7 +150,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
                !
                if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
-               &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+               &   FORCE_EQ_trans,FORCE_EQ_noocc,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
                !
                i_T_now=i_T_now+1
                i_T_group_now=T_group(i_T_now)
@@ -260,14 +263,16 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  ! Work Space
  !
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
- logical      :: FORCE_EQ_trans,l_BS_ares_symm,l_slepc_special
+ logical      :: FORCE_EQ_trans,FORCE_EQ_noocc,l_BS_ares_symm,l_slepc_special
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ib1,ib2,isp1,&
  &               i_star,nb(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares
  !
  FORCE_EQ_trans=.true.
+ FORCE_EQ_noocc=.false.
  !
 #if defined _RT
  call parser('ForceEqTrans',FORCE_EQ_trans)
+ call parser('ForceEqNoOcc',FORCE_EQ_noocc)
 #endif
  !
  ! Here we will have two options to initialize the slepc matrix:
@@ -307,9 +312,10 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
-!#if defined _RT
+#if defined _RT
+ if(FORCE_EQ_noocc) nb=BS_bands
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
-!#endif
+#endif
  !
  do i_res_ares=1,BS_res_ares_dim
    do i_sp_c=1,n_sp_pol
@@ -335,7 +341,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
              if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_v ; endif
              !
              if (.not.T_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
-             &                FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+             &    FORCE_EQ_trans,FORCE_EQ_noocc,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
              !
              BS_K_dim(i_res_ares)=BS_K_dim(i_res_ares)+1
              !
@@ -373,7 +379,8 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
 end subroutine
 !
 !
-logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_trans,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
+logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
+&                        FORCE_EQ_trans,FORCE_EQ_noocc,E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
  !
  use pars,         ONLY:SP 
  use X_m,          ONLY:global_gauge
@@ -390,7 +397,7 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  type(levels),   intent(in) :: Ken
  type(DIPOLE_t), intent(in) :: Dip
  integer,        intent(in) :: iq,ik,ikp,iv,ic,i_sp_c,i_res_ares
- logical,        intent(in) :: FORCE_EQ_trans
+ logical,        intent(in) :: FORCE_EQ_trans,FORCE_EQ_noocc
  real(SP),       intent(out):: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  !
  ! Work Space
@@ -409,6 +416,8 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
  if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and. iq==1 .and..not.l_BS_magnons) T_is_ok=.FALSE.
+ ! Null energy transitions are always removed
+ if ( abs(Eo_eh) == 0._SP ) T_is_ok=.FALSE.
  !
  if( BS_perturbative_SOC ) then
    if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -453,6 +462,17 @@ logical function T_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,FORCE_EQ_tran
  endif
  !
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ !
+#if defined _RT
+ if(force_EQ_noocc) then
+   f_eh_REF=1._SP
+   f_eh    =1._SP
+   f_eh_RES=1._SP
+   f_check =1._SP
+   f_e     =1._SP
+   f_h     =1._SP
+ endif
+#endif
  !
  ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.

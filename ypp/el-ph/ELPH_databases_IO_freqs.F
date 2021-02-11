@@ -21,53 +21,56 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function interger ELPH_databases_IO_freqs(ph_freqs_file,q_pt,ph_freq,n_q)
+subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
  !
- use pars,           ONLY:SP 
+ use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
  !
  implicit none
  !
- integer :: n_modes = n_atoms*3
- integer,  optional, intent(in)  :: n_q
+ character(schlen), intent(in)   :: ph_freqs_file
+ integer,      intent(inout)     :: n_q
  real(SP), optional, intent(out) :: q_pt(n_q,3)
- real(SP), optional, intent(out) :: ph_freq(n_q,n_modes)
+ real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
  !
  ! Work Space
  !
  integer :: io_unit=99
- integer :: i1
+ integer :: i1,i_q,ph_modes
  !
- ELPH_databases_IO_freqs=0
+ ph_modes=3*n_atoms
  !
- if(.not.present(n_q)) then
+ if(.not.present(q_pt).and..not.present(ph_freq)) then
    !
    ! Return the number of q-points
    !
    open(unit=io_unit,file=trim(ph_freqs_file))
    read(io_unit,*,end=100)
+   n_q=0
    do 
      read(io_unit,*,end=100)  ! read q-point
      do i1=1,ph_modes,6
        read(io_unit,*,end=100)  ! frequencies
      enddo
+     n_q=n_q+1
    enddo
    !
    100 close(io_unit)
-   return ELPH_databases_IO_freq
    !
  else
    !
    ! Fill q_pt and ph_freq without any conversion or check
    !
    open(unit=io_unit,file=trim(ph_freqs_file))
-   read(io_unit,*,end=100)
+   read(io_unit,*)
    do i_q=1,n_q
-     read(io_unit,*,end=100)    q_pt(i_q,:) ! read q-point
-     do i1=1,1+ceiling(real(n_modes)/6.)
-       read(io_unit,*,end=100)  ph_freq(i_q,i1:min(i1+5,n_modes)  ! frequencies
+     read(io_unit,*)  q_pt(i_q,:) ! read q-point
+     do i1=1,ceiling(real(ph_modes)/6.)
+       read(io_unit,*)  ph_freq(i_q,i1:min(i1+5,ph_modes))  ! frequencies
      enddo
    enddo
+   !
+   close(io_unit)
    !
  endif
  !

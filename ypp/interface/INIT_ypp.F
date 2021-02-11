@@ -384,12 +384,12 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  if (l_mag)            call initactivate(1,'magnetization')
  if (l_wavefunction)   call initactivate(1,'wavefunction')
  if (l_interp)         call initactivate(1,'interpolate')
- if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
  !
 #if defined _YPP_ELPH
  !
  if (l_eliashberg)       call initactivate(1,'eliashberg')
  if (l_gkkp)             call initactivate(1,'gkkp')
+ if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
  !
 #endif
 #if defined _YPP_SC
@@ -443,6 +443,7 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+ l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
  !
@@ -489,7 +490,6 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
  l_interp    =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
- l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
@@ -667,11 +667,13 @@ subroutine INIT_ypp(E,Dip,instr,FINALIZE)
      call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
      call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
    endif
+#if defined _YPP_ELPH
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
      call initactivate(1,"ChemPot PHfreqF DOSERange DOSESteps DOS_broad")
      call initactivate(2,"BoseTemp")
    endif
+#endif
  endif
  !
 #if defined _YPP_ELPH

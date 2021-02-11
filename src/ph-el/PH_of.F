@@ -30,7 +30,7 @@ subroutine PH_of(q)
  &                        l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use R_lattice,      ONLY:nqibz,bz_samp
  use interfaces,     ONLY:DESC_write
- use com,            ONLY:fat_log
+ use QP_m,           ONLY:l_extended_output
  !
  implicit none
  !
@@ -56,7 +56,7 @@ subroutine PH_of(q)
      call OUTPUT_add_column("ph",TITLES=(/"Width(emit)"/),R_VALUES=(/RT_PE_life%emit(il,iq)/),UNIT="meV")
      call OUTPUT_add_column("ph",TITLES=(/"Width(abs)"/),R_VALUES=(/RT_PE_life%abs(il,iq)/),UNIT="meV")
      !
-     if (fat_log) then
+     if (l_extended_output) then
        call OUTPUT_add_column("ph",TITLES=(/"Width(eq)"/),R_VALUES=(/RT_PE_extra%linewidth(il,iq)/),UNIT="meV")
        call OUTPUT_add_column("ph",TITLES=(/"Width(interb)"/),R_VALUES=(/RT_PE_extra%interband(il,iq)/),UNIT="meV")
        call OUTPUT_add_column("ph",TITLES=(/"Width(intrab)"/),R_VALUES=(/RT_PE_extra%intraband(il,iq)/),UNIT="meV")
@@ -64,7 +64,7 @@ subroutine PH_of(q)
      !
      call OUTPUT_add_column("ph",ORDER=(/"Q-point","Branch ","Energy "/))
      call OUTPUT_add_column("ph",ORDER=(/"Width(emit)","Width(abs) "/))
-     if (fat_log) then
+     if (l_extended_output) then
        call OUTPUT_add_column("ph",ORDER=(/"Width(eq)    ","Width(interb)","Width(intrab)"/))
      endif
      call OUTPUT_add_column("ph",action="write")

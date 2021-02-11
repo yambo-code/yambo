@@ -34,7 +34,8 @@ subroutine PHEL_driver(E,k,q)
 &                              RT_PE_extra,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
- use com,                 ONLY:fat_log
+ use parser_m,            ONLY:parser
+ use QP_m,                ONLY:l_extended_output
  use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
  !
 #include<memory.h>
@@ -54,6 +55,7 @@ subroutine PHEL_driver(E,k,q)
  ! Setup
  !=======
  if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
+ call parser('ExtendOut',  l_extended_output)
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
  !
@@ -127,7 +129,7 @@ subroutine PHEL_driver(E,k,q)
  ! ... allocs
  Life_MEM_steps=1
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,elph_nQ)
- if (fat_log) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,elph_nQ)
+ if (l_extended_output) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,elph_nQ)
  !
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
  call RT_PH_occupations_alloc(elph_branches,elph_nQ)
@@ -155,7 +157,7 @@ subroutine PHEL_driver(E,k,q)
  !=======
  call PP_redux_wait(RT_PE_life%emit)
  call PP_redux_wait(RT_PE_life%abs)
- if (fat_log) then
+ if (l_extended_output) then
    call PP_redux_wait(RT_PE_extra%linewidth)
    call PP_redux_wait(RT_PE_extra%interband)
    call PP_redux_wait(RT_PE_extra%intraband)

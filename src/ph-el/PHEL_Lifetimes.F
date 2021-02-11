@@ -41,9 +41,8 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use ELPH,           ONLY:PH_freqs_sq,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_Q_ibz
- use QP_m,           ONLY:QP_G_damp
+ use QP_m,           ONLY:QP_G_damp,l_extended_output
  use LIVE_t,         ONLY:live_timing
- use com,            ONLY:fat_log
  use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
  !
  implicit none
@@ -205,14 +204,14 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
    TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   if (fat_log) TMP_linewidth     = (f_mkq-f_nk)*D_res
+   if (l_extended_output) TMP_linewidth     = (f_mkq-f_nk)*D_res
    !
    ! Phonon emission (stimulated and spontaneous)
    RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
    ! Phonon absorption
    RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
    !    
-   if (fat_log) then
+   if (l_extended_output) then
      !
      RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
      ! Interband and intraband (Drude) components of the Emit lifetimes  

@@ -53,7 +53,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
  call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz)
- call msg('s',"Number of phonon modes found : ",q_matdyn%nibz)
+ call msg('s',"Number of phonon q-points in the IBZ : ",q_matdyn%nibz)
  !
  YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
  YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
@@ -69,7 +69,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  enddo
  !
  call k_expand(q_matdyn)
- call msg('s',"Number of q-points in the BZ : ",q_matdyn%nbz)
+ call msg('s',"Number of phonon q-points in the BZ : ",q_matdyn%nbz)
  !
  ! Interpolate Excitons on the same grid
  ! 

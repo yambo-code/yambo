@@ -51,7 +51,7 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,j_block,n1,n2,block_pos,VAR_ID
+ integer             ::i_block,j_block,n1,n2,block_pos,VAR_ID,ID_frag
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  type(IO_desc)       ::local_desc
  !
@@ -110,7 +110,7 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==n_BS_blks+1.and..not.frag_BS_K) goto 1
  !
- call io_fragment(ID,i_fragment=i_block)
+ call io_fragment(ID,ID_frag,i_fragment=i_block)
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="C") ch="BSE_COUPLING"
@@ -135,6 +135,8 @@ integer function io_BS(iq,X,ID)
    call io_variable_bulk(ID,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 continue
  !

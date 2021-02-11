@@ -24,11 +24,11 @@
 subroutine PARALLEL_distribute_BZk_using_IBZk(COMM,K,IND_ibz,IBZ_id,IND_out,BZ_id,BZ_index,PAR_n_bz)
  !
  use R_lattice,     ONLY:bz_samp
- use parallel_m,    ONLY:PP_indexes,MPI_comm
+ use parallel_m,    ONLY:PP_indexes,yMPI_comm
  !
 #include <memory.h>
  !
- type(MPI_comm)   :: COMM
+ type(yMPI_comm)   :: COMM
  type(PP_indexes) :: IND_ibz,IND_out
  type(bz_samp)    :: K
  !

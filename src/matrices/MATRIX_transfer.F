@@ -25,7 +25,7 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  ! General, multi-purpose M <-> M transfer
  !
- use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
+ use parallel_m,     ONLY:yMPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
@@ -43,7 +43,7 @@ subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  complex(SP),      optional :: M(:,:)
  logical,          optional :: SND
  logical,          optional :: RCV
- type(MPI_comm),   optional :: COMM
+ type(yMPI_comm),   optional :: COMM
  character(*),     optional :: COMM_name
  !
  ! Work Space

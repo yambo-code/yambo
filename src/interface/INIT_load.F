@@ -152,12 +152,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
-#if defined _PHEL
+#if defined _RT_SCATT
+ call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')
+#endif
+#if defined _RT_SCATT && _ELPH
+ call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
+#endif
+#if defined _RT_SCATT && _PHEL
  call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
 #endif
 #if defined _RT_SCATT
- call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
- call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _ELPH 
@@ -286,8 +290,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]', &
-&         BS_n_g_W,G_unit,verb_level=V_resp)
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)

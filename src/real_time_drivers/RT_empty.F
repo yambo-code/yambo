@@ -21,33 +21,18 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function RT_Lifetimes_evaluation_plan( )
+subroutine RT_relaxation(E,k,q,Time)
  !
- return
- !
-end function RT_Lifetimes_evaluation_plan
-!
-!
-subroutine RT_ELPH_initialize(E,k,q)
- ! 
+ use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  !
- type(levels)             :: E
- type(bz_samp),intent(in) :: k,q
+ implicit none
  !
-end subroutine RT_ELPH_initialize
-!
-!
-subroutine RT_ELPH_zeroing()
+ type(levels),  intent(inout) :: E
+ type(bz_samp), intent(in)    :: k,q
+ real(SP),      intent(in)    :: Time
  !
  return
  !
-end subroutine RT_ELPH_zeroing
-!
-!
-subroutine RT_relaxation_logicals( )
- !
- return
- !
-end subroutine RT_relaxation_logicals
+end subroutine RT_relaxation

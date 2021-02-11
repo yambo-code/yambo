@@ -57,7 +57,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  endif
 #endif
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic)  kpt_factor=cONE
 #endif
  !

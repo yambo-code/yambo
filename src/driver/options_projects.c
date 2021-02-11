@@ -28,12 +28,13 @@
 void options_projects(struct options_struct options[],int *i_opt)
 {
  char *desc;
+ int i_desc=0;
  desc="Hamiltonians & Potentials";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Single-Particle Calculations";
  options[*i_opt].long_opt="sc";
  options[*i_opt].short_opt='s';
- options[*i_opt].bin="yambo_sc yambo_electric yambo_magnetic";
+ options[*i_opt].bin="yambo_sc";
  options[*i_opt].yambo_string="scrun";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
@@ -55,14 +56,14 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[13]="Potentials can be combined. Example: use hf for Hartree-Fock";
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
- options[*i_opt].bin="yambo_sc yambo_magnetic yambo_rt yambo_electric yambo_nl";
+ options[*i_opt].bin="yambo_sc yambo_rt yambo_nl";
  options[*i_opt].yambo_string="potential";
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Magnetic Calculations";
  options[*i_opt].long_opt="magnetic";
- options[*i_opt].bin="yambo_magnetic";
+ options[*i_opt].bin="yambo_sc";
  options[*i_opt].yambo_string="magnetic";
  options[*i_opt].long_desc[0]="<string>=(p)auli/(l)andau";
  options[*i_opt].char_var=1;
@@ -70,14 +71,14 @@ void options_projects(struct options_struct options[],int *i_opt)
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Self-Consistent Static Electric Field Calculations";
  options[*i_opt].long_opt="electric";
- options[*i_opt].bin="yambo_electric";
+ options[*i_opt].bin="yambo_sc";
  options[*i_opt].yambo_string="electric";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Collisions";
  options[*i_opt].long_opt="collisions";
  options[*i_opt].short_opt='e';
- options[*i_opt].bin="yambo_rt yambo_sc yambo_electric yambo_magnetic yambo_nl";
+ options[*i_opt].bin="yambo_rt yambo_sc yambo_nl";
  options[*i_opt].yambo_string="collisions";
  options[*i_opt].section=desc;
  /* GPL_EXCLUDE_START */
@@ -114,7 +115,26 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/p(h)otons/(a)ll";
+ i_desc=0;
+ options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+#if defined _QED 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
+#endif
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
+#endif
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
+#endif
+#if defined _PHEL || defined _PHEL
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]=" ";
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="Use -scattering ee+ep/ee+pe to activate more than one kind simultaneously";
+#endif
  options[*i_opt].long_opt="scattering";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="yambo_rt";
@@ -123,14 +143,19 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Correlation kind";
-#if defined _QED && defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/p(h)otons/(p)honons/(a)ll";
+ i_desc=0;
+ options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";
+#if defined _QED 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(eh):electron-photon interaction";
 #endif
-#if defined _QED && !defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/p(h)otons/(a)ll";
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(ep):electron-phonon interaction";
 #endif
-#if !defined _QED && defined _ELPH
- options[*i_opt].long_desc[0]="<string>=(e)lectrons/(p)honons/(a)ll";
+#if defined _ELPH 
+ i_desc=i_desc+1;
+ options[*i_opt].long_desc[i_desc]="<string>=(pe):phonon-electron interaction";
 #endif
  options[*i_opt].long_opt="correlation";
  options[*i_opt].short_opt='c';

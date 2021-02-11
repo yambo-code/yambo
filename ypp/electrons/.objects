@@ -1,4 +1,4 @@
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
 magnetic_objects = electrons_angular_momentum.o electrons_position.o
 #endif
 objs = electrons_driver.o electrons_spin_factors.o electrons_pdos_factors.o electrons_magn_factors.o \

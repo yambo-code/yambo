@@ -135,10 +135,10 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    call io_bulk(ID,C1=FXC_W%p)
    !
    if (.not.allocated(FXC_K_diagonal)) then
-     YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim))
+     YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
    endif
    !
-   call io_bulk(ID,VAR='FXC_K_diagonal',VAR_SZ=(/BS_K_dim/))
+   call io_bulk(ID,VAR='FXC_K_diagonal',VAR_SZ=(/BS_K_dim(1)/))
    call io_bulk(ID,R1=FXC_K_diagonal)
    !
  endif

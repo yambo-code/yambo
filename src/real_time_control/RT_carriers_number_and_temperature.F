@@ -27,8 +27,8 @@ subroutine RT_carriers_number(en,k,Ncarr)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RTibz,NE_i_time,RT_levels,&
-&                         RT_E_occupations,RT_H_occupations,RT_bands,RT_delta_occupations
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use real_time,      ONLY:RTibz,NE_i_time,RT_levels,RT_bands
  !
  implicit none
  !
@@ -50,11 +50,11 @@ subroutine RT_carriers_number(en,k,Ncarr)
      VALUE_tmp=0._SP
      do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
        if ( RT_levels%E(ib,ik_RT,1)<=0._SP ) then
-         if (NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_H_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
-         if (NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time==NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)+RT_ho_occ%N(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time/=NE_i_start_time) VALUE_tmp(1)=VALUE_tmp(1)-RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
        else
-         if (NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_E_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
-         if (NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_delta_occupations(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time==NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_el_occ%N(ib,ik_RT)*RTibz%weights(ik_RT)
+         if (NE_i_time/=NE_i_start_time) VALUE_tmp(2)=VALUE_tmp(2)+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
        endif
      enddo
      Ncarr(2:3)=Ncarr(2:3)+VALUE_tmp
@@ -70,7 +70,7 @@ subroutine RT_temperature(Tfit,EfFit)
  use pars,           ONLY:SP
  use units,          ONLY:HA2KEL,HA2EV
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use real_time,      ONLY:RT_E_occupations
+ use RT_occupations, ONLY:RT_el_occ
  !
  implicit none
  !
@@ -85,7 +85,7 @@ subroutine RT_temperature(Tfit,EfFit)
  !
  if ( (l_elel_scatt.or.l_elph_scatt)) then
    !
-   call RT_occupations_FIT(Tfit,EfFit,RT_E_occupations)
+   call RT_occupations_FIT(Tfit,EfFit,RT_el_occ%N)
    !
    if (abs(Tfit(1))>50000._SP/HA2KEL) then
      Tfit(1)=0._SP

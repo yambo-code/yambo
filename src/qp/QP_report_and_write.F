@@ -174,8 +174,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(n_shadows)=100._SP-int(dSc_diff*100._SP)
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _ELPH
    if (l_elph_corr) then
      n_shadows=n_shadows+1
@@ -194,8 +192,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      endif
    endif 
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
    if (l_life) then
      !
@@ -272,9 +268,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  call QP_reset(qp_expanded)
  !
- ! GPL_EXCLUDE_START
  if (l_QP_Expand) call QP_expand(k,qp,qp_expanded)
- ! GPL_EXCLUDE_END
  !
  ! QP DATABASE i/o
  !=================

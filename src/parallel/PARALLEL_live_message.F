@@ -30,10 +30,11 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,
  !
  implicit none
  !
- character(*)          :: WHAT
- character(*),optional :: ENVIRONMENT
- integer,optional      :: LOADED,TOTAL,NC
- real(SP),optional     :: LOADED_r,TOTAL_r
+ character(*)               :: WHAT
+ character(*),optional      :: ENVIRONMENT
+ integer,optional           :: LOADED,TOTAL,NC
+ real(SP),optional          :: LOADED_r,TOTAL_r
+ !
  ! Work Space
  integer               :: PERCENTUAL
  character(lchlen)     :: local_message,local_env

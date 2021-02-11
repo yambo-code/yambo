@@ -28,18 +28,22 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
- use parallel_m,     ONLY:PAR_IND_WF_k,PP_redux_wait,PAR_IND_WF_linear
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
+ use parallel_int,   ONLY:PP_redux_wait
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
  use interfaces,     ONLY:el_density_and_current,WF_load
  use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
+#if defined _SC
+ use drivers,        ONLY:l_sc_run
+#endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
-#if defined _MAGNETIC
+#if defined _SC
  use drivers,        ONLY:l_sc_magnetic
 #endif
 #include<memory.h>
@@ -49,13 +53,13 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! Work space
  !
- integer     :: ik,ib,i_sp_pol
+ integer     :: ik,ib,i_sp_pol,WFbands(2)
  !
  Hzero=cZERO
  !
  call timing('Bare_Hamiltonian',OPR='start')
  !
-#if defined _MAGNETIC
+#if defined _SC
  !
  if (l_sc_magnetic) then
    !
@@ -80,22 +84,22 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- call WF_load(WF,WF_G_max,WF_Go_indx,(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/),(/1,nkibz/),title='-SC')
+ WFbands=(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/)
+ call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-SC')
  !
 #if defined _RT
  if(l_real_time) then
    rho_n=rho_reference
    if(n_spin>1) magn_n=magn_reference
- else
-#endif
- call el_density_and_current(E,Xk,rho=rho_n)
- !
- if(n_spin>1) call el_magnetization(E,Xk,magn_n)
-#if defined _RT
  endif
 #endif
  !
- V_xc_sc=V_xc
+#if defined _SC
+ if(l_sc_run) then
+   call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+ endif
+#endif
  !
  ! The Hzero = -nabla**2. + V_ext is deduced from the input energies en0:
  !
@@ -117,6 +121,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  QP_Vxc=cZERO
  !
  call XCo_local(E,k)
+ !
+ V_xc_sc=V_xc
  !
  do i_sp_pol=1,n_sp_pol
    !

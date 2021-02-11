@@ -45,7 +45,7 @@ subroutine msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,NEW_lines)
  ! Work Space
  !
  integer          ::i1,i2
- character(schlen)::ch_piece(10),adjusted_how
+ character(schlen)::ch_piece(20),adjusted_how
  character(lchlen)::stripped_file_name
  !
  terminator(1)='('
@@ -61,7 +61,7 @@ subroutine msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,NEW_lines)
  !
  if (how(:1)=="o".and.write_to_of) then
    call STRING_split(how,ch_piece)
-   do i2=2,10
+   do i2=2,20
      if (len_trim(ch_piece(i2))==0) cycle
      do i1=1,n_ofs_defined
        if (len_trim(of_name(i1))==0) cycle

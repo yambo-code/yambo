@@ -28,7 +28,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
- use pointers,       ONLY:linkM2M
+ use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use YPP_interfaces, ONLY:electrons_dos_elemental
  use YPPm,           ONLY:DOS_broadening,DOS_E_steps,&
 &                         INTERP_grid,DOS_E_step,l_PROJECT_atom,&
@@ -60,7 +60,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  real(SP),   external  :: RIntegrate
  !
- integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,lb(3),ub(3)
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,LB(3),UB(3)
  logical               :: space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -127,7 +127,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Interpolation GRID INIT 
  !
- if (l_interp) call INTERPOLATION_driver_create_grid(INTERP_grid)
+ if (l_interp) call INTERPOLATION_create_the_grid(INTERP_grid)
  !
  ! T-D DOS
  !=========
@@ -173,15 +173,17 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      if (l_PROJECT_atom) then
        call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=RT_PDOS_fac)
        call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
-       PDOS_fac_p => linkM2M(INTERP_obj(ID_pdos)%INTERP,shape(INTERP_obj(ID_pdos)%INTERP),&
-&                            lbound(INTERP_obj(ID_pdos)%INTERP),ubound(INTERP_obj(ID_pdos)%INTERP))
+       call C_F_POINTER(C_LOC(INTERP_obj(ID_pdos)%INTERP), PDOS_fac_p, shape(INTERP_obj(ID_pdos)%INTERP) )
+       LB=lbound(INTERP_obj(ID_pdos)%INTERP) ; UB=ubound(INTERP_obj(ID_pdos)%INTERP)
+       PDOS_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => PDOS_fac_p
      endif
      !
      if (n_spinor==2) then
        call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=RT_SPIN_fac)
        call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
-       SPIN_fac_p => linkM2M(INTERP_obj(ID_spin)%INTERP,shape(INTERP_obj(ID_spin)%INTERP),&
-&                            lbound(INTERP_obj(ID_spin)%INTERP),ubound(INTERP_obj(ID_spin)%INTERP))
+       call C_F_POINTER(C_LOC(INTERP_obj(ID_spin)%INTERP), SPIN_fac_p, shape(INTERP_obj(ID_spin)%INTERP) )
+       LB=lbound(INTERP_obj(ID_spin)%INTERP) ; UB=ubound(INTERP_obj(ID_spin)%INTERP)
+       SPIN_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => SPIN_fac_p
      endif
      !
      !... DOS

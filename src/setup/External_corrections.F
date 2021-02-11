@@ -29,19 +29,14 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
- !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  use drivers,       ONLY:l_cohsex,l_real_time,l_ppa
  use RT_control,    ONLY:RT_apply
 #endif
- !
- ! GPL_EXCLUDE_END
- !
 #if defined _ELPH
+ use IO_m,          ONLY:io_control,OP_IF_START_RD_CL_IF_END,manage_action,DUMP,NONE
  use drivers,       ONLY:l_elph_corr
- use ELPH,          ONLY:E_k_p_q,elph_nb
+ use ELPH,          ONLY:GKKP,elph_nQ
 #endif
  !
  implicit none
@@ -51,14 +46,16 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  type(bz_samp)::k,Xk
  !
  ! Work Space
- !
- ! GPL_EXCLUDE_START
+ ! 
+ integer  :: iq
  !
 #if defined _RT
- logical       ::l_apply_RT_corrections
+ logical           :: l_apply_RT_corrections
 #endif
- !
- ! GPL_EXCLUDE_END
+#if defined _ELPH
+ integer           :: ID,io_err
+ integer, external :: io_ELPH
+#endif
  !
  logical       ::l_apply_QP_corrections,l_dynamical
  integer       ::X_kind,bands_to_correct(2)
@@ -75,16 +72,12 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  if( l_dynamical .and. .not.l_ppa ) X_kind=4
  if (l_apply_QP_corrections) call QP_apply(X(X_kind)%ib,Xen,Xk,"X",msg_fmt='rs',main_section=.TRUE.)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and.        &
 &    (     ((l_em1s.or.l_ppa.or.l_gw0).and..not.l_real_time)   &
 &      .or.(l_optics.and.l_chi)          )
  if (l_apply_RT_corrections) call RT_apply(X(X_kind)%ib,Xen,Xk,what="X",VERBOSE=.true.)
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! 2) BSE
  ! ========
@@ -97,8 +90,6 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  l_apply_QP_corrections=(l_optics.and.l_bse.and..not.l_ppa).or.l_bss
  if (l_apply_QP_corrections) call QP_apply(BS_bands,Ken,Xk,"K",msg_fmt='rs',main_section=.TRUE.)
  !
- ! GPL_EXCLUDE_START
- !
 #if defined _RT
  l_apply_RT_corrections=l_apply_QP_corrections.and..not.l_real_time
  if (l_apply_RT_corrections) then
@@ -107,25 +98,25 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  endif
 #endif
  !
- ! GPL_EXCLUDE_END
- !
  ! 3) Green's Function used to compute QP corrections
  ! ====================================================
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #if defined _ELPH
  !    Green's Function (k+q levels loaded for the _ELPH)
- if (l_gw0.and.l_elph_corr) call QP_apply((/1,elph_nb/),E_k_p_q,k,"G",msg_fmt='rs',main_section=.TRUE.)
+ if (l_gw0.and.l_elph_corr) then
+   do iq=0,elph_nQ
+     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,0,elph_nQ),COM=NONE,MODE=DUMP,SEC=(/iq+1/),ID=ID)
+     io_err=io_ELPH(ID,'no_matrix_elements')
+     if (iq>0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
+   enddo
+ endif
 #endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _RT
  l_apply_RT_corrections=l_cohsex.or.l_ppa.or.l_gw0
  if (l_apply_RT_corrections) call RT_apply(bands_to_correct,en,k,what="G",VERBOSE=.true.)
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  call E_duplicate(en,DIPen)
  DIPen%nbf=minval((/en%nbf,Xen%nbf,Ken%nbf/))

@@ -51,6 +51,7 @@ module QP_m
  logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
+ logical           :: l_QP_symmetrize=.FALSE.
  logical           :: l_GW_terminator=.FALSE.
  logical           :: l_update_W=.FALSE.
  logical           :: On_Mass_Shell_approx
@@ -253,7 +254,7 @@ module QP_m
      qp%nb=qp%nb
      qp%n_states=qp_in%n_states
      qp%GreenF_n_steps=qp_in%GreenF_n_steps
-     call IO_desc_duplicate(qp_in%desc,qp%desc)
+     if (what=="ALL") call IO_desc_duplicate(qp_in%desc,qp%desc)
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
@@ -333,7 +334,6 @@ module QP_m
      !
      use functions,   ONLY:bose_f
      use electrons,   ONLY:levels
-     use drivers,     ONLY:Finite_Tel
      use electrons,   ONLY:spin_occ
      integer      ::is(3),os(3),e2et
      type(levels) ::E

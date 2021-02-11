@@ -36,12 +36,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
 &                              elemental_collision_copy
  use collision_ext,       ONLY:P_COLL_element,COLL_bands,P_collisions
  use wave_func,           ONLY:WF
- use interfaces,          ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,PARALLEL_WF_distribute
  use COLL_interfaces,     ONLY:SCATTERING_GW_kinematics
  use LIVE_t,              ONLY:live_timing
  use vec_operate,         ONLY:v_norm
- use parallel_m,          ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                              PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
+ use interfaces,          ONLY:WF_load,WF_free
+ use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
+ use parallel_m,          ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_IND_Q_ibz,PAR_nQ_ibz,PAR_nQP
  use functions,           ONLY:theta_function
  use timing_m,            ONLY:timing
  !
@@ -353,7 +353,6 @@ subroutine QED_Sigma_c(E,k,q,qp)
        Sc_im=Sc_im+P_square_times_tau(1)/3._SP/SPEED_OF_LIGHT**2*abs(E_diff)*&
 &                  ( QP_time_order_sign*(1._SP-f_k_m_q)*theta_function( E_diff,0.01/HA2EV,0) +&
 &                                              f_k_m_q *theta_function(-E_diff,0.01/HA2EV,0) )
-  
        !
      enddo G_loop
      !

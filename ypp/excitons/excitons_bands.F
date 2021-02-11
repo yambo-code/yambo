@@ -92,26 +92,6 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
  enddo
  !
- ! Write in the report the exciton energies
- !
- call msg('nr','Excitons Energies:')
- headings(1:3)=(/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
- do i_c=1,EXCITONS_n_user_states
-    i_l=EXCITONS_user_indexes(i_c)
-    headings(i_c+3)=' e'//trim(intc(i_l))//' [eV]'
- enddo
- call msg('r',"#",headings(1:EXCITONS_n_user_states+3))
- do iq=1,q%nibz
-   tmp_q=q%pt(iq,:3)
-   call K_transform(tmp_q,'iku')
-   values(1:3)=tmp_q
-   do i_c=1,EXCITONS_n_user_states
-      i_l=EXCITONS_user_indexes(i_c)
-      values(i_c+3)=BS_all_E(i_c,iq)*HA2EV
-   enddo
-   call msg('r',' ',values(1:EXCITONS_n_user_states+3))
- enddo
- !
  ! Fourier interpolation of exciton dispersion
  !
  call INTERPOLATION_BZ_setup(q)
@@ -132,33 +112,8 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
-   headings(1)=" |q| (a.u.) "
-   do i_c=1,EXCITONS_n_user_states
-      i_l=EXCITONS_user_indexes(i_c)
-      headings(i_c+1)=' e'//intc(i_l)
-   enddo
-   headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
-&           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+   call print_BANDS()
    !
-   file_name="excitons_interpolated"
-   call of_open_close(trim(file_name),'ot')
-   call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name),"#")
-   !
-   values=0._SP
-   !
-   do iq=1,CIRCUIT_k%nibz
-     !
-     if (iq>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(iq,:3)-CIRCUIT_k%pt(iq-1,:3))
-     !
-     tmp_q=CIRCUIT_k%pt(iq,:3)
-     !
-     call K_transform(tmp_q,'iku')
-     values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
-     values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
-     call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
-   enddo
-   call of_open_close(trim(file_name))
  endif
  !
  ! Interpolate exciton on a grid and calculate the DOS
@@ -195,23 +150,65 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
    call PP_redux_wait(exc_dos)
    !
-   file_name="excitons_dos"
-   call of_open_close(trim(file_name),'ot')
-   headings(1)=" E [eV] "
-   headings(2)=" Dos    "
-   call msg('o '//trim(file_name),"#",headings(1:2),INDENT=0,USE_TABS=.true.)
-   call msg('o '//trim(file_name),"#")
-   do i_E=1,DOS_E_steps
-     values(1)=dos_E(i_E)*HA2EV
-     values(2)=exc_dos(i_E)
-     call msg('o '//trim(file_name),' ',values(1:2),INDENT=0,USE_TABS=.true.)
-   enddo
-   !
-   call of_open_close(trim(file_name))
+   call print_DOS()
    !
  endif
  !
  YAMBO_FREE(values)
  deallocate(headings)
+ !
+ contains 
+   !
+   subroutine print_DOS()
+     implicit none
+     ! 
+     file_name="excitons_dos"
+     call of_open_close(trim(file_name),'ot')
+     headings(1)=" E [eV] "
+     headings(2)=" Dos    "
+     call msg('o '//trim(file_name),"#",headings(1:2),INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name),"#")
+     do i_E=1,DOS_E_steps
+       values(1)=dos_E(i_E)*HA2EV
+       values(2)=exc_dos(i_E)
+       call msg('o '//trim(file_name),' ',values(1:2),INDENT=0,USE_TABS=.true.)
+     enddo
+     !
+     call of_open_close(trim(file_name))
+     !
+   end subroutine print_DOS
+   ! 
+   subroutine print_BANDS()
+     implicit none
+     !
+     headings(1)=" |q| (a.u.) "
+     do i_c=1,EXCITONS_n_user_states
+        i_l=EXCITONS_user_indexes(i_c)
+        headings(i_c+1)=' e'//intc(i_l)
+     enddo
+     headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
+&           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+     !
+     file_name="excitons_interpolated"
+     call of_open_close(trim(file_name),'ot')
+     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name),"#")
+     !
+     values=0._SP
+     !
+     do iq=1,CIRCUIT_k%nibz
+       !
+       if (iq>1) values(1)=values(1)+iku_v_norm(CIRCUIT_k%pt(iq,:3)-CIRCUIT_k%pt(iq-1,:3))
+       !
+       tmp_q=CIRCUIT_k%pt(iq,:3)
+       !
+       call K_transform(tmp_q,'iku')
+       values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
+       values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
+       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+     enddo
+     call of_open_close(trim(file_name))
+     !
+   end subroutine print_BANDS
  !
 end subroutine

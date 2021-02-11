@@ -21,28 +21,33 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_interpolate(k,Xk,en,Xen,q,q_fine,EXC_interp_en)
+subroutine excitons_interpolate(k,Xk,en,Xen,q,q_fine,EXC_interp_en,report)
  !
  ! This subroutine read and interpolate exciton dispersion from q to q_fine grid
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,schlen
+ use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
- use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states
+ use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out
  use com,           ONLY:msg
-
+ use stderr,        ONLY:intc
  !
 #include<memory.h> 
  !
  type(bz_samp) ::Xk,k,q,q_fine
  type(levels)  ::Xen,en
+ logical       ::report
  !
  ! Work space
  !
  integer :: iq,ID_INTERP,i_c,i_l
  real(SP), allocatable    :: BS_all_E(:,:)
  real(SP), intent(out) :: EXC_interp_en(EXCITONS_n_user_states,q_fine%nibz)
+ real(SP), allocatable    :: values(:)
+ real(SP) :: tmp_q(3)
+ character(schlen), allocatable :: headings(:)
 
  !
  ! Allocate arrays for all eigenvalues/eigenvectors
@@ -67,6 +72,37 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q,q_fine,EXC_interp_en)
    call excitons_read(k,Xk,en,Xen,iq,"clean")
    !
  enddo
+ !
+ if(report.eqv..true.) then
+   !
+   ! Write in the report the exciton energies
+   !
+   YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
+   allocate(headings(EXCITONS_n_user_states+4))
+   !
+   call msg('nr','Excitons Energies:')
+   headings(1:3)=(/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+   !
+   do i_c=1,EXCITONS_n_user_states
+      i_l=EXCITONS_user_indexes(i_c)
+      headings(i_c+3)=' e'//trim(intc(i_l))//' [eV]'
+   enddo
+   call msg('r',"#",headings(1:EXCITONS_n_user_states+3))
+   do iq=1,q%nibz
+     tmp_q=q%pt(iq,:3)
+     call K_transform(tmp_q,'iku')
+     values(1:3)=tmp_q
+     do i_c=1,EXCITONS_n_user_states
+        i_l=EXCITONS_user_indexes(i_c)
+        values(i_c+3)=BS_all_E(i_c,iq)*HA2EV
+     enddo
+     call msg('r',' ',values(1:EXCITONS_n_user_states+3))
+   enddo
+   !
+   YAMBO_FREE(values)
+   deallocate(headings)
+   !
+ endif
  !
  ! Fourier interpolation of exciton dispersion
  !

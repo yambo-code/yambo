@@ -99,16 +99,14 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  INTERP_obj(ID_INTERP)%what="excitons"
  call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP,ID_obj=ID_INTERP)
  !
- ! Excitons Interpolation on GRID or CIRCUIT
- !
- if(BANDS_steps>0) call k_circuit_made_of_user_points( )
- !
  ! Interpolate and write on disk
  !
- if(USER_k%nbz>0)  then
+ if(USER_k%nbz>0.and.BANDS_steps>0)  then
    !
    call msg('s','Exciton bands interpolation')
    !   
+   call k_circuit_made_of_user_points( )
+   !
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
    !
@@ -124,13 +122,15 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
    GRID_q%description="INTERP"
    call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
+   !
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))      
+   !
    call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP)
+   !
+   call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/DOS_E_steps/))
-   !
-   call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !
    exc_dos=rZERO
    !

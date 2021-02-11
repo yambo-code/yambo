@@ -49,28 +49,33 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  call bz_samp_reset(q_matdyn)
  !
- if(file_exists(trim(ph_freqs_file))) then
-   call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
-   call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz)
-   call msg('s',"Number of phonon modes found : ",q_matdyn%nibz)
-   !
-   YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
-   YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
-   !
-   call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz,q_matdyn%pt,ph_freqs)
-   !
-   q_matdyn%pt=q_matdyn%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
-   !
-   do i_q=1,q_matdyn%nibz
-     write(*,*) q_matdyn%pt(i_q,:) 
-     call c2a(v_in=q_matdyn%pt(i_q,:),mode="kc2i")
-   enddo
-   !
-   call k_expand(q_matdyn)
-   call msg('s',"Number of q-points in the BZ : ",q_matdyn%nbz)
-   !
- else
-   call error("Phonon frequencies file not found!")      
- endif
+ if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")      
  !
+ call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
+ call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz)
+ call msg('s',"Number of phonon modes found : ",q_matdyn%nibz)
+ !
+ YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
+ YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
+ !
+ call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz,q_matdyn%pt,ph_freqs)
+ !
+ q_matdyn%pt=q_matdyn%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
+ !
+ ! Converto to iku units
+ !
+ do i_q=1,q_matdyn%nibz
+   call c2a(v_in=q_matdyn%pt(i_q,:),mode="kc2i")
+ enddo
+ !
+ call k_expand(q_matdyn)
+ call msg('s',"Number of q-points in the BZ : ",q_matdyn%nbz)
+ !
+ ! Interpolate Excitons on the same grid
+ ! 
+ ! 
+ ! Calculate the phonon assisted density of states
+ !
+ !  ph_ass_dos(w) = \sum_{Q,l,n} Bose(E^exc_{l,Q}, T) * Bose(w_{n,q}, T) \delta { E^exc_{l,Q} - w_{n,q} - w } \delta {Q,q}
+ ! 
 end subroutine

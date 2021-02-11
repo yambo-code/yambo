@@ -89,7 +89,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  ! Exciton dispersion interpolation
  ! =======================================
  if(l_interp) then
-   call excitons_interpolate(k,Xk,en,Xen,q)
+   call excitons_bands(k,Xk,en,Xen,q)
    return
  endif
  !

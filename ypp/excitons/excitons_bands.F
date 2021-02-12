@@ -118,7 +118,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      if (.not.px%element_1D(i_E)) cycle
      do iq=1,GRID_q%nibz
        do i_c=1,EXCITONS_n_user_states
-         exc_DOS(i_E)=exc_DOS(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E))*HA2EV,DOS_broadening)*GRID_q%weights(iq)
+         exc_DOS(i_E)=exc_DOS(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E)),DOS_broadening)*GRID_q%weights(iq)
        enddo
      enddo
      call live_timing(steps=1)

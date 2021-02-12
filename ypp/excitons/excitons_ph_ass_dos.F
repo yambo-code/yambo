@@ -23,7 +23,7 @@
 !
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
- use pars,          ONLY:SP,pi,rZERO
+ use pars,          ONLY:SP,pi,rZERO,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use electrons,     ONLY:levels
@@ -46,11 +46,12 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  type(levels)  ::Xen,en
  !
  logical, external     :: file_exists
+ character(schlen)     :: file_name
  integer               :: i_q,i_c,i_E,ph_modes,i_idx,i_l
+ integer               :: ID_INTERP_EXC,n_full_q
  type(bz_samp)         :: q_matdyn
  real(SP), allocatable :: ph_freqs(:,:)
  integer, allocatable  :: iq_indx(:)
- integer               :: ID_INTERP_EXC,n_full_q
  real(SP), allocatable :: BSE_interp_E(:,:)
  real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Bose_F_exc,Bose_F_ph 
  type(PP_indexes)      :: px
@@ -149,7 +150,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
        !
        forall(i_E=1:DOS_E_steps)
           exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Bose_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
-    &                     Fermi_fnc_derivative((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E))*HA2EV,DOS_broadening)    
+    &                     Fermi_fnc_derivative((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
        end forall
        !
      enddo
@@ -160,6 +161,17 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
    !
  enddo
  !
- call msg('s',"Nomber of excited excitons ",exc_OCC)
+ call msg('sr',"Nomber of excited excitons ",exc_OCC)
+ !
+ file_name='exc_ph_dos'
+ call of_open_close(file_name,'ot')
+ call msg('o dos','#',' Phonon-assisted exciton DOS',INDENT=0)
+ call msg('o dos','#','',INDENT=0)
+ call msg('o dos','#',(/'E(meV)       ','EXC-PH-DOS(w)'/),USE_TABS=.true.)
+ call msg('o dos','#','',INDENT=0)
+ do i_E=1,DOS_E_steps
+   call msg('o dos','',(/dos_E(i_E),exc_ph_dos(i_E)/),USE_TABS=.true.)
+ enddo
+ call of_open_close(file_name)
  !
 end subroutine

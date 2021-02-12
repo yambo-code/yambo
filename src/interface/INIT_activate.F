@@ -244,7 +244,7 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('R')
 #endif
    !
-   call initactivate(1,'NoCondSumRule MetDamp')
+   call initactivate(1,'NoCondSumRule MetDamp AnHall')
    !
 #if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')

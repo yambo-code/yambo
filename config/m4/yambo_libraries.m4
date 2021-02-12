@@ -29,7 +29,14 @@ AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
 
-if test -d "src/real_time_lifetimes/"; then
+
+
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
+ if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
+fi
+
+if test -d "$srcdir/src/real_time_lifetimes/"; then
   #
   # develop procedure
   #

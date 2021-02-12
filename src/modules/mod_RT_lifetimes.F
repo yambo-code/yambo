@@ -35,9 +35,9 @@ module RT_lifetimes
    integer                  :: D2=0
    real(SP),    allocatable :: abs(:,:)
    real(SP),    allocatable :: emit(:,:)
+   real(SP),    allocatable :: linewidth_eq(:,:)
    real(SP),    allocatable :: abs_save(:,:,:)
    real(SP),    allocatable :: emit_save(:,:,:)
-   real(SP),    allocatable :: linewidth_eq(:,:,:)
    real(SP)                 :: prefactor(2)=rZERO ! 1=abs, 2=emit
    real(SP)                 :: mean(2)=rZERO      ! 
    real(SP)                 :: Tfit(2)=rZERO      ! 

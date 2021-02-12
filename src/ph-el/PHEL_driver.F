@@ -159,6 +159,7 @@ subroutine PHEL_driver(E,k,q)
  call PP_redux_wait(RT_PE_life%abs)
  if (l_initial_equilibrium) then
    call PP_redux_wait(RT_PE_life%linewidth_eq)
+ endif
  if (l_extended_output) then
    call PP_redux_wait(RT_PE_extra%interband)
    call PP_redux_wait(RT_PE_extra%intraband)

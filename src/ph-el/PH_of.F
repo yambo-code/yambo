@@ -63,7 +63,7 @@ subroutine PH_of(q)
      endif
      !
      call OUTPUT_add_column("ph",ORDER=(/"Q-point","Branch ","Energy "/))
-     call OUTPUT_add_column("ph",ORDER=(/"Width(emit)","Width(abs) ","Width(eq)    "/))
+     call OUTPUT_add_column("ph",ORDER=(/"Width(emit)  ","Width(abs)   ","Width(eq)    "/))
      if (l_extended_output) then
        call OUTPUT_add_column("ph",ORDER=(/"Width(interb)","Width(intrab)"/))
      endif

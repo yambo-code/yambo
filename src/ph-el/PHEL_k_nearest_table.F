@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_k_nearest_table(k,q)
+subroutine PHEL_k_nearest_table(k)
  !
  ! In the case of custom/random qpoints, prepare a table of 
  ! the k-q indices as ik_m_q ~ ikp where ikp is the closest point
@@ -36,7 +36,7 @@ subroutine PHEL_k_nearest_table(k,q)
  !
  implicit none
  !
- type(bz_samp), intent(in)    :: k,q
+ type(bz_samp), intent(in)    :: k
  !
  ! Work Space ...
  !

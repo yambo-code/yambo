@@ -69,7 +69,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  ! Get nearest k-q table if using custom qpoints
  if (.not.elph_use_q_grid) then 
    YAMBO_ALLOC(KpQ_IO_map,(elph_nQ,k%nbz) )
-   call PHEL_k_nearest_table(k,q)
+   call PHEL_k_nearest_table(k)
  endif
  !
  ! Loop to allocate phel_table

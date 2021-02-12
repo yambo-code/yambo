@@ -28,20 +28,20 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_bss
+ use drivers,      ONLY:l_bs_fxc,l_bss,l_tddft
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
- use interfaces,   ONLY:WF_load,WF_free
+ use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,ng_closed
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,&
-&                       O_ng,BS_n_g_exch,BS_identifier,BS_LiveTiming_steps,&
+&                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
@@ -52,9 +52,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
- use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
+ use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
- use global_XC,     ONLY:WF_xc_functional,WF_kind
+ use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
@@ -160,6 +160,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
+ if (BS_K_is_ALDA .and. BS_n_g_fxc/=ng_closed) then
+   if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+     BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
+     call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+   endif
+   O_ng=maxval(G_m_G)
+   O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
+ endif
+ !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=maxval(G_m_G)
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
@@ -252,9 +261,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Allocation
    !-----------
    YAMBO_ALLOC(FXC_K_diagonal,(BS_K_dim(1)))
-   YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
+   YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,W_bss%n_freqs))
    FXC_K_diagonal=0._SP
-   FXC=cZERO
+   F_xc_gspace=cZERO
    !
  endif
  !
@@ -286,6 +295,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
    if(n_spin>1) then
      YAMBO_FREE(magn)
+   endif
+   if ( BS_n_g_fxc/=ng_closed) then
+     FXC_n_g_corr=BS_n_g_fxc
+     call TDDFT_ALDA_lower_cutoff()
+     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
  endif
  !
@@ -487,6 +501,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
        end select
        !
+       if (l_tddft.and.WF_exx_fraction>0._SP) H_c=H_c*WF_exx_fraction
+       !
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
@@ -554,7 +570,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (l_bs_fxc) then
    !
-   YAMBO_FREE(FXC)
+   YAMBO_FREE(F_xc_gspace)
    YAMBO_FREE(FXC_K_diagonal)
    !
  else if (BS_K_is_ALDA) then

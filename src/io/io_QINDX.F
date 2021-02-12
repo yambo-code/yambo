@@ -161,7 +161,7 @@ integer function io_QINDX(Xk,q,io_db)
          call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
        enddo
      enddo
-     call io_fragment_disconnect(id_frag,id_frag)
+     call io_fragment_disconnect(io_db,id_frag)
    endif
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
      !

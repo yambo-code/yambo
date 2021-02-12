@@ -25,7 +25,7 @@ ypp_nl: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; ADF="-D_DOUBLE -D_SLEPC_OFF" ; $(mk_internal_lib)
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="ypp_nl_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL -D_ypp"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(YPPNL_MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL -D_RT -D_NL"; $(mk_src)
-	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_ELPH -D_YPP_RT -D_YPP_NL"; $(mk_ypp_src)
+	@+LIBS2DO="$(YPPRT_LIBS)"; XPATH="ypp"; VPATH="$(topdir)/ypp"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL"; $(mk_ypp_src)
 	@+X2DO="ypp_nl"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
 	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_NL -D_YPP_RT"; $(mk_ypp)
 ypp_sc: ext-libs

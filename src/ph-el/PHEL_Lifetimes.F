@@ -106,8 +106,10 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !
    if (iq==1 .and. PH_acoustic_branch(il)) cycle
    !
+#if defined _RT
    if (     l_initial_equilibrium) N_q = RT_ph_occ%N_ref(il,iq)
    if (.not.l_initial_equilibrium) N_q = RT_ph_occ%N(il,iq)
+#endif
    !
    ! Electron-phonon matrix elements
    !====================================
@@ -201,24 +203,25 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    TMP_eh_lifetime=rZERO
    TMP_linewidth=rZERO
    !
-   TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
-   TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
+   TMP_Emit_lifetime = f_mkq*Hole_f_nk*D_ares+Hole_f_mkq*f_nk*D_res
+   TMP_Abs_lifetime  = f_mkq*Hole_f_nk*D_res +Hole_f_mkq*f_nk*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   if (l_extended_output) TMP_linewidth     = (f_mkq-f_nk)*D_res
+   !if (l_extended_output) TMP_linewidth     = (f_mkq-f_nk)*D_res
+   if (l_extended_output) TMP_linewidth      = f_mkq*Hole_f_nk*D_res-Hole_f_mkq*f_nk*D_res
    !
    ! Phonon emission (stimulated and spontaneous)
-   RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+   RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor
    ! Phonon absorption
-   RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
+   RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor
    !    
    if (l_extended_output) then
      !
      RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
      ! Interband and intraband (Drude) components of the Emit lifetimes  
      if (i_np == i_n) then
-       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
      else
-       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
      endif
      !
    endif

@@ -110,7 +110,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/DOS_E_steps/))
    !
-   exc_dos=rZERO
+   exc_DOS=rZERO
    !
    call live_timing("EXC DOS",px%n_of_elements(myid+1))
    !
@@ -118,7 +118,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      if (.not.px%element_1D(i_E)) cycle
      do iq=1,GRID_q%nibz
        do i_c=1,EXCITONS_n_user_states
-         exc_dos(i_E)=exc_dos(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E))*HA2EV,DOS_broadening)*GRID_q%weights(iq)
+         exc_DOS(i_E)=exc_DOS(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E))*HA2EV,DOS_broadening)*GRID_q%weights(iq)
        enddo
      enddo
      call live_timing(steps=1)
@@ -126,7 +126,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
    call live_timing( )
    !
-   call PP_redux_wait(exc_dos)
+   call PP_redux_wait(exc_DOS)
    !
    call print_DOS()
    !
@@ -148,7 +148,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      call msg('o '//trim(file_name),"#")
      do i_E=1,DOS_E_steps
        values(1)=dos_E(i_E)*HA2EV
-       values(2)=exc_dos(i_E)
+       values(2)=exc_DOS(i_E)
        call msg('o '//trim(file_name),' ',values(1:2),INDENT=0,USE_TABS=.true.)
      enddo
      !

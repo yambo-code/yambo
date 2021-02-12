@@ -23,23 +23,32 @@
 !
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,rZERO
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use electrons,     ONLY:levels
+ use vec_operate,   ONLY:c2a
  use com,           ONLY:msg
  use D_lattice,     ONLY:n_atoms,alat
+ use interpolate,   ONLY:INTERPOLATION_BZ
+ use YPPm,          ONLY:EXCITONS_n_user_states,DOS_E_step,DOS_E_range,DOS_E_steps
  use YPP_ELPH,      ONLY:ph_freqs_file,ELPH_databases_IO_freqs
- use vec_operate,   ONLY:c2a
+ use LIVE_t,        ONLY:live_timing
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  !
 #include<memory.h> 
  !
  type(bz_samp) ::Xk,k,q_exc
  type(levels)  ::Xen,en
  !
- logical, external  :: file_exists
- integer            :: i_q,ph_modes
- type(bz_samp)      :: q_matdyn
+ logical, external     :: file_exists
+ integer               :: i_q,i_c,i_E,ph_modes
+ type(bz_samp)         :: q_matdyn
  real(SP), allocatable :: ph_freqs(:,:)
+ integer               :: ID_INTERP_EXC
+ real(SP), allocatable :: BSE_interp_E(:,:)
+ real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps) 
+ type(PP_indexes)      :: px
  !
  ph_modes=3*n_atoms
  !
@@ -71,10 +80,32 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  call k_expand(q_matdyn)
  call msg('s',"Number of phonon q-points in the BZ : ",q_matdyn%nbz)
  !
- ! Interpolate Excitons on the same grid
- ! 
- ! 
+ ! Read and interpolate excitons dispersion
+ !
+ ID_INTERP_EXC=1
+ call excitons_interpolate_setup(k,Xk,en,Xen,q_exc,ID_INTERP_EXC,.TRUE.)
+ YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,q_matdyn%nibz))
+ call INTERPOLATION_BZ(K=q_matdyn,NK=q_matdyn%nibz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
+ !
  ! Calculate the phonon assisted density of states
+ !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/q_matdyn%nibz/))
+ !
+ exc_ph_DOS=rZERO
+ !
+ call live_timing("EXC PH-DOS",px%n_of_elements(myid+1))
+ !
+ do i_q=1,q_matdyn%nibz
+   if (.not.px%element_1D(i_q)) cycle
+     do i_c=1,EXCITONS_n_user_states
+!       Bolz_exc=
+       do i_E=1,DOS_E_steps
+!        exc_dos(i_E)=exc_dos(i_E)+Fermi_fnc_derivative((BSE_interp_E(i_c,iq)-dos_E(i_E))*HA2EV,DOS_broadening)*GRID_q%weights(iq)
+       enddo
+   enddo
+   call live_timing(steps=1)
+ enddo
  !
  !  ph_ass_dos(w) = \sum_{Q,l,n} Bose(E^exc_{l,Q}, T) * Bose(w_{n,q}, T) \delta { E^exc_{l,Q} - w_{n,q} - w } \delta {Q,q}
  ! 

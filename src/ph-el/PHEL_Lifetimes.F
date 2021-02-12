@@ -67,7 +67,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  integer               :: iq,ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
-&            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
+&            TMP_Emit_lifetime,TMP_Abs_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  real (SP) :: TMP_linewidth
  !
@@ -200,28 +200,41 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !
    TMP_Emit_lifetime=rZERO
    TMP_Abs_lifetime=rZERO
-   TMP_eh_lifetime=rZERO
    TMP_linewidth=rZERO
    !
    TMP_Emit_lifetime = f_mkq*Hole_f_nk*D_ares+Hole_f_mkq*f_nk*D_res
    TMP_Abs_lifetime  = f_mkq*Hole_f_nk*D_res +Hole_f_mkq*f_nk*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   !if (l_extended_output) TMP_linewidth     = (f_mkq-f_nk)*D_res
-   if (l_extended_output) TMP_linewidth      = f_mkq*Hole_f_nk*D_res-Hole_f_mkq*f_nk*D_res
+   if (l_initial_equilibrium) TMP_linewidth      = f_mkq*Hole_f_nk*D_res-Hole_f_mkq*f_nk*D_res
    !
    ! Phonon emission (stimulated and spontaneous)
    RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor
    ! Phonon absorption
    RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor
-   !    
+   ! Linewidth at equilibrium
+   if (l_initial_equilibrium) then
+     RT_PE_life%linewidth_eq(il,iq_life)=RT_PE_life%linewidth_eq(il,iq_life)+TMP_linewidth*pre_factor
+   endif
+   !
+   ! Interband and intraband (Drude) components of the lifetimes (eq or emit depending on calc.)
    if (l_extended_output) then
      !
-     RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
-     ! Interband and intraband (Drude) components of the Emit lifetimes  
      if (i_np == i_n) then
-       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       ! Intraband
+       if (l_initial_equilibrium) then
+         RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_linewidth*pre_factor
+       else
+         RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       endif
+       !
      else
-       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       ! Interband
+       if (l_initial_equilibrium) then
+         RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_linewidth*pre_factor
+       else
+         RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       endif
+       !
      endif
      !
    endif

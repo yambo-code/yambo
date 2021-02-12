@@ -37,6 +37,7 @@ module RT_lifetimes
    real(SP),    allocatable :: emit(:,:)
    real(SP),    allocatable :: abs_save(:,:,:)
    real(SP),    allocatable :: emit_save(:,:,:)
+   real(SP),    allocatable :: linewidth_eq(:,:,:)
    real(SP)                 :: prefactor(2)=rZERO ! 1=abs, 2=emit
    real(SP)                 :: mean(2)=rZERO      ! 
    real(SP)                 :: Tfit(2)=rZERO      ! 
@@ -47,7 +48,6 @@ module RT_lifetimes
    character(schlen)        :: KIND="none"
    integer                  :: D1(2)=0
    integer                  :: D2=0
-   real(SP),    allocatable :: linewidth(:,:)
    real(SP),    allocatable :: interband(:,:)
    real(SP),    allocatable :: intraband(:,:)
  end type RT_extra_lifetime
@@ -166,12 +166,14 @@ module RT_lifetimes
      LIFE%D2=D2
      YAMBO_ALLOC(LIFE%emit,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%abs,(D1(1):D1(2),D2))
+     YAMBO_ALLOC(LIFE%linewidth_eq,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%emit_save,(D1(1):D1(2),D2,Life_MEM_steps))
      YAMBO_ALLOC(LIFE%abs_save,(D1(1):D1(2),D2,Life_MEM_steps))
      LIFE%KIND=KIND
      LIFE%active=.true.
      LIFE%emit=rZERO
      LIFE%abs =rZERO
+     LIFE%linewidth_eq=rZERO
      LIFE%emit_save=rZERO
      LIFE%abs_save=rZERO
      LIFE%prefactor=rZERO
@@ -185,6 +187,7 @@ module RT_lifetimes
      LIFE%active=.FALSE.
      YAMBO_FREE(LIFE%emit)
      YAMBO_FREE(LIFE%abs)
+     YAMBO_FREE(LIFE%linewidth_eq)
      YAMBO_FREE(LIFE%abs_save)
      YAMBO_FREE(LIFE%emit_save)
    end subroutine
@@ -195,12 +198,10 @@ module RT_lifetimes
      integer :: D1(2),D2
      LIFE%D1=D1
      LIFE%D2=D2
-     YAMBO_ALLOC(LIFE%linewidth,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%interband,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%intraband,(D1(1):D1(2),D2))
      LIFE%KIND=KIND
      LIFE%active=.true.
-     LIFE%linewidth=rZERO
      LIFE%interband=rZERO
      LIFE%intraband=rZERO
    end subroutine
@@ -209,7 +210,6 @@ module RT_lifetimes
      type(RT_extra_lifetime) :: LIFE
      LIFE%KIND="none"
      LIFE%active=.FALSE.
-     YAMBO_FREE(LIFE%linewidth)
      YAMBO_FREE(LIFE%interband)
      YAMBO_FREE(LIFE%intraband)
    end subroutine

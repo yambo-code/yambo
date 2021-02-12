@@ -90,10 +90,10 @@ integer function io_PH(ID)
    call def_variable_bulk(ID,"PH_LIFE_ABS",3,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
    call io_variable_bulk(ID,3,R2=RT_PE_life%abs(:,:))
    !
+   call def_variable_bulk(ID,"PH_LIFE_EQ",4,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
+   call io_variable_bulk(ID,4,R2=RT_PE_life%linewidth_eq(:,:))
+   !
    if (l_extended_output) then
-     !
-     call def_variable_bulk(ID,"PH_LIFE_EQ",4,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
-     call io_variable_bulk(ID,4,R2=RT_PE_extra%linewidth(:,:))
      !
      call def_variable_bulk(ID,"PH_LIFE_INTERBAND",5,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
      call io_variable_bulk(ID,5,R2=RT_PE_extra%interband(:,:))

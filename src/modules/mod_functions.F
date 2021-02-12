@@ -194,6 +194,20 @@ module functions
      !
    end function
    !
+   ! Boltzman function
+   !----------------
+   !
+   pure function boltzman_f(Eb)
+     !
+     use D_lattice, ONLY:Bose_Temp
+     real(SP), intent(in):: Eb
+     real(SP)            :: boltzman_f
+     !
+     boltzman_f=exp(-Eb/Bose_Temp)
+     !
+   end function
+
+   !
    logical function K_scatter(E,Ep,Er,Dr)
      !
      real(SP)::E,Ep,Er(2),Dr(2),D

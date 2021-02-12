@@ -26,19 +26,19 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use pars,          ONLY:SP,pi,rZERO,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:c2a
  use com,           ONLY:msg
  use D_lattice,     ONLY:n_atoms,alat,Bose_Temp
  use interpolate,   ONLY:INTERPOLATION_BZ
- use YPPm,          ONLY:EXCITONS_n_user_states,DOS_E_step,DOS_E_range,DOS_E_steps,ChemPot,DOS_broadening
+ use YPPm,          ONLY:EXCITONS_n_user_states,DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
  use stderr,        ONLY:real2ch
  use YPP_ELPH,      ONLY:ph_freqs_file,ELPH_databases_IO_freqs
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold
- use functions,     ONLY:Fermi_fnc_derivative
+ use functions,     ONLY:Fermi_fnc_derivative,boltzman_f,bose_f
  !
 #include<memory.h> 
  !
@@ -53,7 +53,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  real(SP), allocatable :: ph_freqs(:,:)
  integer, allocatable  :: iq_indx(:)
  real(SP), allocatable :: BSE_interp_E(:,:)
- real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Bose_F_exc,Bose_F_ph 
+ real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Boltz_F_exc,Bose_F_ph,min_E 
  type(PP_indexes)      :: px
  !
  ph_modes=3*n_atoms
@@ -95,9 +95,9 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  ! Calculate the phonon assisted density of states
  !
- ChemPot=ChemPot+minval(BSE_interp_E(1,:))
+ min_E=minval(BSE_interp_E(1,:))
  !
- call msg('s',"Chemical Potential                 : ",ChemPot)
+ call msg('s',"Minumum Excitonn Energy            : ",min_E*HA2EV)
  !
  ! Find occupaied excitons
  ! 
@@ -109,8 +109,8 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  do i_q=1,q_matdyn%nibz
    do i_c=1,EXCITONS_n_user_states
-     Bose_f_exc=1.0/(exp((BSE_interp_E(i_c,i_q)-ChemPot)/Bose_Temp)-1._SP)
-     if(Bose_f_exc>epsilon(1.)) then
+     Boltz_f_exc=boltzman_f(BSE_interp_E(i_c,i_q)-min_E)
+     if(Boltz_f_exc>epsilon(1.)) then
        n_full_q=n_full_q+1
        iq_indx(n_full_q)=i_q
        exit
@@ -120,7 +120,8 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  enddo
  call live_timing( )
  !
- call msg('sr',"Number of filled q-points "//real2ch(real(n_full_q)/real(q_matdyn%nibz)*100.0)//" % ")
+ call msg('sr',"Number of filled q-points "//trim(real2ch(real(n_full_q)/real(q_matdyn%nibz)*100.0))//"% ")
+ if(n_full_q==0) call error("Zero excitons, decrease the chemical potential! ")
  !
  exc_OCC   =rZERO
  exc_ph_DOS=rZERO
@@ -138,18 +139,18 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
    !
    do i_c=1,EXCITONS_n_user_states
      !
-     Bose_F_exc=1.0/(exp((BSE_interp_E(i_c,i_q)-ChemPot)/Bose_Temp)-1._SP)
+     Boltz_F_exc=boltzman_f(BSE_interp_E(i_c,i_q)-min_E)
      !
-     exc_OCC=exc_OCC+Bose_F_exc*q_matdyn%weights(i_q)
+     exc_OCC=exc_OCC+Boltz_F_exc*q_matdyn%weights(i_q)
      !
      do i_l=1,ph_modes
        !
        if(ph_freqs(i_q,i_l)<FAN_deltaE_treshold) cycle
        !
-       Bose_F_ph=(1.0+1.0/(exp(ph_freqs(i_q,i_l)/Bose_Temp)-1._SP))
+       Bose_F_ph=(1.0+bose_f(ph_freqs(i_q,i_l))/spin_occ)
        !
        forall(i_E=1:DOS_E_steps)
-          exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Bose_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
+          exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Boltz_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
     &                     Fermi_fnc_derivative((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
        end forall
        !
@@ -163,15 +164,15 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  call msg('sr',"Nomber of excited excitons ",exc_OCC)
  !
- file_name='exc_ph_dos'
- call of_open_close(file_name,'ot')
- call msg('o dos','#',' Phonon-assisted exciton DOS',INDENT=0)
- call msg('o dos','#','',INDENT=0)
- call msg('o dos','#',(/'E(meV)       ','EXC-PH-DOS(w)'/),USE_TABS=.true.)
- call msg('o dos','#','',INDENT=0)
+ file_name='excitons_ph_dos'
+ call of_open_close(trim(file_name),'ot')
+ call msg('o '//trim(file_name),'#',' Phonon-assisted exciton DOS',INDENT=0)
+ call msg('o '//trim(file_name),'#','',INDENT=0)
+ call msg('o '//trim(file_name),'#',(/'E(meV)       ','EXC-PH-DOS(w)'/),USE_TABS=.true.)
+ call msg('o '//trim(file_name),'#','',INDENT=0)
  do i_E=1,DOS_E_steps
-   call msg('o dos','',(/dos_E(i_E),exc_ph_dos(i_E)/),USE_TABS=.true.)
+   call msg('o '//trim(file_name),' ',(/dos_E(i_E)*HA2EV,exc_ph_dos(i_E)/),USE_TABS=.true.)
  enddo
- call of_open_close(file_name)
+ call of_open_close(trim(file_name))
  !
 end subroutine

@@ -26,14 +26,13 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,DP,schlen,pi,cZERO,cONE,rZERO
  use LIVE_t,        ONLY:live_timing
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
+ use interpolate,   ONLY:INTERPOLATION_BZ
  use electrons,     ONLY:levels,n_sp_pol
  use functions,     ONLY:Fermi_fnc_derivative
  use units,         ONLY:HA2EV
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step,DOS_E_range, &
 &                        DOS_E_steps,DOS_broadening,USER_k
- use interpolate,   ONLY:nshells
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
@@ -50,7 +49,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP,ik,ib,i_E
+ integer :: iq,i_c,i_l,ID_INTERP_EXC,ik,ib,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: coo_out_,file_name
@@ -73,42 +72,21 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  YAMBO_ALLOC(values,(EXCITONS_n_user_states+4))
  allocate(headings(EXCITONS_n_user_states+4))
  !
+ ! Read and interpolate excitons dispersion
  !
- call section('*','Excitons Interpolation')
- !
- call excitons_read(k,Xk,en,Xen,1,"clean")
- !
- ! Read all eigenvalues and eigenvectors
- !
- do iq=1,q%nibz
-   call msg('s','Reading excitons at @ Q-index #',iq)
-   call excitons_read(k,Xk,en,Xen,iq,"check")
-   call excitons_read(k,Xk,en,Xen,iq,"eigenvalues")
-   do i_c=1,EXCITONS_n_user_states
-     i_l=EXCITONS_user_indexes(i_c)
-     BS_all_E(i_c,iq)=BS_E(i_l)
-   enddo
-   call excitons_read(k,Xk,en,Xen,iq,"clean")
-   !
- enddo
- !
- ! Fourier interpolation of exciton dispersion
- !
- call INTERPOLATION_BZ_setup(q)
- ID_INTERP=1
- INTERP_obj(ID_INTERP)%what="excitons"
- call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP,ID_obj=ID_INTERP)
+ ID_INTERP_EXC=1
+ call excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,.TRUE.)
  !
  ! Interpolate and write on disk
  !
+ call k_circuit_made_of_user_points( )
+ !
  if(USER_k%nbz>0.and.BANDS_steps>0)  then
    !
-   call msg('s','Exciton bands interpolation')
+   call msg('s','Exciton bands')
    !   
-   call k_circuit_made_of_user_points( )
-   !
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
-   call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP)
+   call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
    call print_BANDS()
    !
@@ -125,7 +103,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))      
    !
-   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP)
+   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
    call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !

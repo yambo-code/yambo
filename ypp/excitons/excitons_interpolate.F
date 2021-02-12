@@ -21,30 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_interpolate(k,Xk,en,Xen,q,q_fine,EXC_interp_en,report)
+subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  !
- ! This subroutine read and interpolate exciton dispersion from q to q_fine grid
+ ! This subroutine read and interpolate exciton 
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
- use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out
+ use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,K_transform
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
 #include<memory.h> 
  !
- type(bz_samp) ::Xk,k,q,q_fine
+ type(bz_samp) ::Xk,k,q
  type(levels)  ::Xen,en
- logical       ::report
+ logical, intent(in) :: report
+ integer, intent(inout) :: ID_INTERP_EXC
  !
  ! Work space
  !
- integer :: iq,ID_INTERP,i_c,i_l
+ integer :: iq,i_c,i_l
  real(SP), allocatable    :: BS_all_E(:,:)
- real(SP), intent(out) :: EXC_interp_en(EXCITONS_n_user_states,q_fine%nibz)
  real(SP), allocatable    :: values(:)
  real(SP) :: tmp_q(3)
  character(schlen), allocatable :: headings(:)
@@ -107,9 +107,7 @@ subroutine excitons_interpolate(k,Xk,en,Xen,q,q_fine,EXC_interp_en,report)
  ! Fourier interpolation of exciton dispersion
  !
  call INTERPOLATION_BZ_setup(q)
- ID_INTERP=1
- INTERP_obj(ID_INTERP)%what="excitons"
- call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP,ID_obj=ID_INTERP)
- call INTERPOLATION_BZ(K=q_fine,NK=q_fine%nbz,R1D=EXC_interp_en,ID=ID_INTERP)
+ INTERP_obj(ID_INTERP_EXC)%what="excitons"
+ call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP_EXC,ID_obj=ID_INTERP_EXC)
  !
 end subroutine

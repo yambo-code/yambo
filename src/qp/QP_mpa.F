@@ -52,7 +52,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:mpa_RE_solver,err_func_np,MPA_E_mat,MPA_R_mat,MPA_freqs,&
+ use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
 &                        MPA_alloc,MPA_free
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
@@ -64,7 +64,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(bz_samp)::Xk,k,q
  type(X_t)    ::X
  type(QP_t)   ::qp
- type(w_samp) ::Xw!,Xw_MPA
+ type(w_samp) ::Xw
  integer      ::GW_iter
  !
  ! Work Space
@@ -84,8 +84,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA variables
  !
- integer          :: i_np,pole_p,poles_f,ID2
- real(SP)         :: bose_PPA_E, edigits(2), rdigits 
+ integer          :: i_np,ID2
+ logical          :: MPred
+ real(SP)         :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,MP_err,MP_Qerr,cond_num(2),cond_numQ(2) 
  complex(SP), allocatable :: MPA_Xo(:)
  character(len=99):: str
  !
@@ -248,10 +249,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      write(11,*) 'err(size,size) ='
 #endif
      !
-     poles_f=0
+     MPred_rate=0._SP
+     PPcond_Qrate=0._SP
+     MP_Qerr=0._SP
+     cond_numQ(:)=0._SP
      !
-     !$omp parallel default(shared), private(ig1,ig2,pole_p,i_np,MPA_Xo), &
-     !$omp &        reduction(+:poles_f)
+     !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo), &
+     !$omp & reduction(+:MPred_rate),reduction(+:PPcond_Qrate),reduction(+:MP_Qerr),reduction(+:cond_numQ)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
@@ -260,27 +264,17 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        do ig1=1,X%ng
          !
          MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)!*isc%gamp(ig1,ig2) 
+         MPred=.false.
+         PPcond_rate=0._SP
+         MP_err=0._SP
+         cond_num(:)=0._SP
          !
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),edigits,rdigits)
-         !
-#ifdef _DARIO
-         write(11,*) 'ER lost digits: ', edigits, rdigits
-         write(11,*) 'error: ', err_func_np(X%mpa_npoles, MPA_R_mat(ig1,ig2,:), &
-                                MPA_E_mat(ig1,ig2,:), MPA_freqs*(1._SP,0._SP), X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2))
-#endif
-         !    
-         pole_p=0
-         do i_np=1,X%mpa_npoles
-           !
-           if(aimag(MPA_E_mat(ig1,ig2,i_np)) > 0._SP ) pole_p=pole_p+1
-           ! 
-#ifdef _DARIO
-           write(10,*) real(MPA_E_mat(ig1,ig2,i_np),DP),aimag(MPA_E_mat(ig1,ig2,i_np)), &
-                       real(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2),DP),aimag(MPA_R_mat(ig1,ig2,i_np)/isc%gamp(ig1,ig2)), ','  
-#endif
-         enddo
-         !
-         if(pole_p>0) poles_f=poles_f+1
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
+&                                                                MPred,PPcond_rate,MP_err,cond_num)
+         if(MPred) MPred_rate=MPred_rate+1._SP
+         PPcond_Qrate=PPcond_Qrate+PPcond_rate
+         MP_Qerr=MP_Qerr+MP_err
+         cond_numQ(:)=cond_numQ(:)+cond_num(:)
          !
        enddo
      enddo
@@ -292,8 +286,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      X_is_TR_rotated=.false.
      !
-     call msg('r',' MPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
-     !
+     MPred_rate=MPred_rate/X%ng**2
+     PPcond_Qrate=PPcond_Qrate/X%ng**2
+     MP_Qerr=MP_Qerr/X%ng**2
+     cond_numQ(:)=cond_numQ(:)/X%ng**2
      !
      ! I/O MPA
      !
@@ -306,6 +302,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),  ID=ID2)
        io_err=io_MPA(X,Xw,ID2)
+       call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
+       call msg('r',' :: Mean np reduction    ',MPred_rate)
+       call msg('r',' :: Mean Xm rel dev      ',MP_Qerr)
+       call msg('r',' :: Condition numbers    ',cond_numQ)
        !
      endif
      !

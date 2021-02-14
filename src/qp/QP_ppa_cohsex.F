@@ -100,7 +100,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), external ::QP_ppa_EET_terminator
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
- integer               :: cond_g,cond_f,poles_f  !Dario: counts 
+ real(SP)              :: PPcond_rate,TO_rate  !Dario: counts 
  !
  ! Reset & checks
  !
@@ -275,22 +275,20 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       cond_f=0
-       cond_g=0
-       poles_f=0
+       PPcond_rate=0.
+       TO_rate=0.
        !
-       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_f,cond_g,poles_f), collapse(2)
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:PPcond_rate,TO_rate), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
              if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
                X_mat(ig1,ig2,X_range(2))=X%ppaE
-               cond_f=cond_f+1
+               PPcond_rate=PPcond_rate+1.
              else
                X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-               cond_g=cond_g+1
                if(real(1._SP/X_mat(ig1,ig2,X_range(2)),SP)*aimag(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
-                 poles_f = poles_f + 1
+                 TO_rate = TO_rate + 1.
                endif
              endif
            else
@@ -300,9 +298,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
        !$omp end parallel do
        !
-       call msg('r','     PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
-       call msg('r','     PPA condition fail [iqibz,count]: ', (/iqibz,cond_f/) )
-       call msg('r',' PPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
+       call msg('r',' Current Q-pt index             ',iqibz)
+       call msg('r',' :: PP condition fails/tot      ',PPcond_rate/X%ng**2)
+       call msg('r',' :: Time ordering fails/rest    ',TO_rate/(X%ng**2-PPcond_rate))
        !
 #if defined _SC
      endif
@@ -555,13 +553,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                dp_dummy=dp_dummy+ctmp
                !
-               if (i_w==1 .and. i_qp==1 .and. iqbz==1 .and. ib==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
-                 write(*,*)
-                 write(*,*) "G=",ig1
-                 write(*,*) "ppaE=",PPA_E
-                 write(*,*) "ppaR=",PPA_R/isc%gamp(ig1,ig2)
-                 write(*,*) 
-               endif
              enddo
            enddo
            !$omp end parallel do

@@ -367,14 +367,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (trim(QP_solver)=='g') then
    !
-! AF
-!   if (l_elel_corr.and.l_mpa)   call QP_mpa(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+   ! Dario: GF for ppa and mpa
+   if (l_ppa.or.l_mpa) QP_dSc_steps=100
+   !
+   if (l_elel_corr.and.l_mpa)   call QP_mpa(X,Xk,en,k,q,qp,Xw,0) ! AF, dario
+   if (l_elel_corr.and.l_ppa)   call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0) ! AF, dario
    if (l_elel_corr.and.(.not.l_ppa.and..not.l_mpa.and..not.l_cohsex)) &
 &                               call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
-# if defined _ELPH 
+#if defined _ELPH 
    !
-   if (l_elph_corr)                                    call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr)                               call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -438,6 +441,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      ! Cohsex is static
      !
      if (l_cohsex)                    QP_dSc_steps=1
+     !
+     ! Dario: GF for ppa and mpa
+     if (trim(QP_solver)/='g' .and.(l_ppa.or.l_mpa)) QP_dSc_steps=100
      !
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !

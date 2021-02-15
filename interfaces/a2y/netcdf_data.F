@@ -50,6 +50,11 @@ module netcdf_data
     integer                          :: netcdf_error, varid, dimid
     
     netcdf_error = nf90_inq_dimid(ncid,dim_name,dimid)
+    if ( netcdf_error/=0) then
+      call warning(" Dimension "//trim(dim_name//" not found"))
+      dim_value=-1
+      return
+    endif
     call netcdf_check(ncid,netcdf_error, dimid, dim_name)
     netcdf_error = nf90_inquire_dimension(ncid, dimid, len = dim_value)
     call netcdf_check(ncid,netcdf_error, dimid)

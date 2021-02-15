@@ -45,8 +45,6 @@ module mod_wf2y
      wf_nb_io=n_bands
      if (wf_nb_io_user>0) then
        !
-       !if (wf_nb_io_user>=n_bands) return
-       !
        wf_nb_io=wf_nb_io_user
        wf_nb_io_groups=ceiling(real(n_bands,SP)/real(wf_nb_io,SP))
        !

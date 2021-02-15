@@ -114,8 +114,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  call parser('SkipCheck',l_skip_check)
  !
  call msg('s',':: Electrons                 :',default_nel)
- call msg('s',':: Temperature       [ev]    :',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]    :',alat)
+ call msg('s',':: Temperature               :',input_GS_Tel,"[eV]")
+ call msg('s',':: Lattice factors           :',alat,"[a.u.]")
  do i_db=1,n_FineGd_DBs
    if (i_db==1) call msg('s',':: K points       [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
    if (i_db> 1) call msg('s','::                [DB #'//trim(intc(i_db))//']    :',FineGd_io_E(i_db)%nk)
@@ -201,8 +201,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  if (i_time_rev==1) call msg('s',':: Time reversal included ')
  if (i_time_rev==0) call msg('s',':: Time reversal not included')
  if (Xen%nbf==Xen%nbm) then
-   call msg('s',':: Gap indirect      [ev]    :',gap(1)*HA2EV)
-   call msg('s','::     direct        [ev]    :',gap(2)*HA2EV)
+   call msg('s',':: Gap indirect              :',gap(1)*HA2EV,"[eV]")
+   call msg('s','::     direct                :',gap(2)*HA2EV,"[eV]")
  endif
  !
  ! See if there is correspondance between the random and the built-in

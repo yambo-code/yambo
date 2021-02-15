@@ -1,1 +1,0 @@
-objs = RT_Hamiltonian.o RT_apply_field.o 

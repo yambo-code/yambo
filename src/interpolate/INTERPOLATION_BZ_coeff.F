@@ -38,8 +38,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  use R_lattice,         ONLY:bz_samp
  use vec_operate,       ONLY:c2a
  use LIVE_t,            ONLY:live_timing
- use interfaces,        ONLY:PARALLEL_index
- use parallel_m,        ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
+ use parallel_m,        ONLY:PP_indexes,PP_indexes_reset,myid,PAR_build_index,ncpu
+ use parallel_int,      ONLY:PP_redux_wait,PARALLEL_index 
  !
 #include<memory.h>
  !
@@ -87,14 +87,17 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  PAR_nshells=nshells
  call PP_indexes_reset(px)
+ YAMBO_ALLOC(SHELL_index,(nshells))
  if (INTERPOLATE_is_serial) then
    YAMBO_ALLOC(px%element_1D,(nshells))
    YAMBO_ALLOC(px%n_of_elements,(ncpu))
    px%n_of_elements=nshells
    px%element_1D=.TRUE.
+   do i_shell=1,nshells
+     SHELL_index(i_shell)=i_shell
+   enddo
  else
    call PARALLEL_index(px,(/nshells/))
-   YAMBO_ALLOC(SHELL_index,(nshells))
    call PAR_build_index(px,nshells,SHELL_index,px%n_of_elements(myid+1))
    PAR_nshells=px%n_of_elements(myid+1)
  endif

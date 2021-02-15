@@ -59,7 +59,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
 #else
  character(32) :: subname="scatter_Gamp"
 #endif
-
+ !
  call timing(subname,opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
@@ -94,7 +94,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  else
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
-
+ !
 #ifdef _CUDA_LOC
  if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
    YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
@@ -107,7 +107,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ng=shape(isc%gamp)
  ng1=ng(1)
  ng2=ng(2)
-
+ !
  gamp_p => DEV_VAR(isc%gamp)
  !
 #ifdef _CUDA_LOC
@@ -192,5 +192,6 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  endif
  !
  call timing(subname,opr="stop")
+ !
 end subroutine
 

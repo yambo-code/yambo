@@ -74,7 +74,6 @@ subroutine cutoff_driver(q)
  !
  integer ::ID,io_err
  integer, external :: io_COL_CUT
-
  !
  ! First check if the cutoff written on disk is consistent
  !
@@ -86,10 +85,10 @@ subroutine cutoff_driver(q)
  call STRING_split(cut_geometry,str_piece)
  !
  cut_is_sphere=trim(str_piece(1))=='sphere'
- cut_is_box=trim(str_piece(1))=='box'
- cut_is_cyl=trim(str_piece(1))=='cylinder'
- cut_is_ws=trim(str_piece(1))=='ws'
- cut_is_slab=trim(str_piece(1))=='slab'
+ cut_is_box=trim(str_piece(1))   =='box'
+ cut_is_cyl=trim(str_piece(1))   =='cylinder'
+ cut_is_ws=trim(str_piece(1))    =='ws'
+ cut_is_slab=trim(str_piece(1))  =='slab'
  !
  ! Cutoffed directions
  !
@@ -160,7 +159,7 @@ subroutine cutoff_driver(q)
  !lengths
  !
  if (cut_is_sphere) then 
-   call msg('r','Sphere radius   [au]',cyl_ph_radius)
+   call msg('r','Sphere radius       ',cyl_ph_radius,"[a.u.]")
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', cyl_ph_radius
  endif
  if (cut_is_ws) then
@@ -183,15 +182,15 @@ subroutine cutoff_driver(q)
    if (is_cut(2)) length(i1)=box_length(2)
    if (is_cut(3)) i1=i1+1
    if (is_cut(3)) length(i1)=box_length(3)
-   call msg('r','Box sides        [au]',length(:i1))
+   call msg('r','Box sides            ',length(:i1),"[a.u.]")
    write (cut_description,'(a,3f6.3)') trim(cut_geometry)//' ', length(:i1)
  else if (cut_is_cyl) then
    if (cyl_length > 0.) then
-     call msg('r','Cyl. length      [au]',cyl_length)
+     call msg('r','Cyl. length          ',cyl_length,"[a.u.]")
    else
      call msg('r','Cyl. length          : infinite')
    endif
-   call msg('r',  'Cyl. radius      [au]',cyl_ph_radius)
+   call msg('r',  'Cyl. radius          ',cyl_ph_radius,"[a.u.]")
    if (cyl_length > 0.) then
      write (cut_description,'(a,f6.3,a,f6.3)') trim(cut_geometry)//' ',cyl_length,' ',cyl_ph_radius 
    else
@@ -228,6 +227,7 @@ subroutine cutoff_driver(q)
    if (.not.is_cut(2)) sym_points(:,2)=0.
    if (.not.is_cut(3)) sym_points(:,3)=0.
  endif
+ !
  call msg('rn','Symmetry test passed ',geometry_sym_is_ok())
  if (.not.geometry_sym_is_ok()) return
  !

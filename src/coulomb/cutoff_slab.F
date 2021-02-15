@@ -30,8 +30,7 @@
  use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol,&
 &                        d3q_factor,RIM_qpg,q_norm,q0_def_norm,idir
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
- !
+ use parallel_int,  ONLY:PARALLEL_index
  implicit none
  !
  ! Work Space

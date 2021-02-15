@@ -33,9 +33,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
  use parser_m,      ONLY:parser
- use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
+ use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,QP_n_G_bands,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
-&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
+&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
@@ -74,13 +74,17 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  call parser('OnMassShell',On_Mass_Shell_approx)
  call parser('QPExpand'   ,l_QP_Expand)
  call parser('UseEbands',  COHSEX_use_empties)
- ! GPL_EXCLUDE_START
+ call parser('QPsymmtrz',   l_QP_symmetrize)
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- ! GPL_EXCLUDE_END
  call parser('ExtendOut',  l_extended_output)
  !
+ ! Some check
+ if (QP_n_G_bands(2)>en%nb) call error("Too many bands required in Green's function. Run DFT with more bands!")
+ !
  if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
+ !
+ if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
  !
  l_GW_terminator=GW_terminator_Kind/='none'
  !
@@ -97,7 +101,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
 #endif
  !
- if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
+ if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr/))) then
    call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
@@ -108,8 +112,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! Some checks for the self-consistent GW
  ! =======================================
- if (GW_iterations/=0.and.GWo_iterations/=0) &
- &   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ if (GW_iterations/=0.and.GWo_iterations/=0) then
+   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ endif
  if (GW_iterations/=0) l_update_W=.TRUE.
  !
  ! Setup Temperature pre-factor
@@ -141,8 +146,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (trim(QP_solver)=='g') then
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
-   call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
+   call msg('r', '[Green] Sc energy range (centered in the bare value)     ',QP_G_er*HA2EV,"[eV]")
+   call msg('rn','[Green] Sc damping range                                 ',QP_G_dr*HA2EV,"[eV]")
    !
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !
@@ -378,13 +383,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (l_life) then
    !
+   ! GW Lifetimes 
+   !==============
    if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !
    ! Radiative Lifetimes (Using <p>)
    !=================================
-   !
    if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif

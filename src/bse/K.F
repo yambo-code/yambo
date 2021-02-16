@@ -75,6 +75,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Work Space ...
  !
  character(schlen) :: section_title
+ character(10)     :: ALDA_cut_scheme
  character(1)      :: mode_now
  !
  ! ... Kernel loop
@@ -160,13 +161,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
- if (BS_K_is_ALDA .and. BS_n_g_fxc/=ng_closed) then
-   if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
-     BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
-     call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+ if (BS_K_is_ALDA) then
+   O_ng=BS_n_g_fxc
+   ! This is manually set for now
+   ALDA_cut_scheme="lower_Gmax"
+   if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
+     if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+       BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
+       call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+     endif
+     O_ng=maxval(G_m_G)
+     O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
    endif
-   O_ng=maxval(G_m_G)
-   O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
  endif
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
@@ -298,7 +304,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    if ( BS_n_g_fxc/=ng_closed) then
      FXC_n_g_corr=BS_n_g_fxc
-     call TDDFT_ALDA_lower_cutoff()
+     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
  endif

@@ -212,7 +212,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge AnHall')
    !
  endif
  !
@@ -350,6 +350,8 @@ subroutine INIT_activate()
  !
  if (l_gw0.or.l_life) then
    !
+   if (l_gw0.and..not.trim(QP_solver)=="g") call initactivate(1,'QPsymmtrz')
+   !
 #if defined _QED
    if (l_elphoton_corr) then
      if (l_gw0) then
@@ -358,7 +360,7 @@ subroutine INIT_activate()
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter GWIter SCEtresh')
-         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand QPsymmtrz')
+         if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
      else if (l_life) then
        call initactivate(1,'GbndRnge') 
@@ -387,14 +389,13 @@ subroutine INIT_activate()
 &          call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                          'DrudeW','EhEngy','LongDr'/)) 
-         !
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
            call initactivate(1,'GWoIter GWIter SCEtresh')
-           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand QPsymmtrz')
+           if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif
        !
@@ -402,16 +403,14 @@ subroutine INIT_activate()
      !
      if (l_life.and..not.l_phel_corr) then
        call initactivate(1,'LifeTrCG')
-       if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk',&
-&                                     'DmRnge','CGrdSp',&
-&                                     'DrudeW','EhEngy','LongDr'/)) 
+       if (l_elel_corr) call X_activate('Xd',(/'BndsRn','NGsBlk','DmRnge','CGrdSp','DrudeW','EhEngy','LongDr'/)) 
      endif
    endif
    !
 #if defined  _PHEL 
    !
    if (l_phel_corr) call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping ElPhModes PHDbGdsize')
-  !
+   !
 #endif
 #if defined  _ELPH 
    !

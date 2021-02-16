@@ -161,6 +161,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   O_ng=maxval(G_m_G)
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   ! Hybrid functional.
+   ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
+   if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+   if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
+ endif
+ !
  if (BS_K_is_ALDA) then
    O_ng=BS_n_g_fxc
    ! This is manually set for now
@@ -173,12 +182,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      O_ng=maxval(G_m_G)
      O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
    endif
- endif
- !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
-   O_ng=maxval(G_m_G)
-   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
-   if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif
  !
  ! BS/FXC DB I/O

@@ -39,7 +39,7 @@ subroutine TDDFT_ALDA_lower_cutoff()
  !
  integer     :: i1,i2,ig_fxc,isp1,isp2,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
- logical     :: procedure1=.false., procedure2=.true.
+ logical     :: procedure1=.false., procedure2=.true., procedure3=.false.
  !
  BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))
  call PARSER_close_G(BS_n_g_fxc,'tRL')
@@ -99,7 +99,7 @@ subroutine TDDFT_ALDA_lower_cutoff()
      ! In both previous procedures I can use up to ng_closed vectors max
      ! However Fxc is not smooth and may need more, up to fft_size, in principle
      ! With this direct procedure all g-vectors are used
-     !F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
+     if (procedure3) F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
      ! DEBUG >
      !
      ! FFT call: FORWARD (G->R)
@@ -117,7 +117,7 @@ subroutine TDDFT_ALDA_lower_cutoff()
    enddo
  enddo
  !
- call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
+ if (procedure1) call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
  !
  ! DEBUG <
  ! write(*,*) "F_xc= ",F_xc(1:10,1,1)

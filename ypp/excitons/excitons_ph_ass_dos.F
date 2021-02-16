@@ -46,7 +46,6 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  type(levels)  ::Xen,en
  !
  logical, external     :: file_exists
- character(schlen)     :: file_name
  integer               :: i_q,i_c,i_E,ph_modes,i_idx,i_l
  integer               :: ID_INTERP_EXC,n_full_q
  type(bz_samp)         :: q_matdyn
@@ -126,6 +125,14 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  exc_OCC   =rZERO
  exc_ph_DOS=rZERO
  !
+ ! Setup DOS
+ !
+ DOS_E_step=(DOS_E_range(2)-DOS_E_range(1))/DOS_E_steps
+ !
+ do i_E=1,DOS_E_steps
+   dos_E(i_E)=DOS_E_range(1)+real(i_E,SP)*DOS_E_step
+ enddo
+ !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/n_full_q/))
  !
@@ -136,6 +143,8 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  do i_idx=1,n_full_q
    !  
    i_q=iq_indx(i_idx)
+   write(*,*) i_q,q_matdyn%pt(i_q,:)
+   if(i_q/=1) cycle
    !
    do i_c=1,EXCITONS_n_user_states
      !
@@ -149,10 +158,10 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
        !
        Bose_F_ph=(1.0+bose_f(ph_freqs(i_q,i_l))/spin_occ)
        !
-       forall(i_E=1:DOS_E_steps)
+       do i_E=1,DOS_E_steps
           exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Boltz_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
     &                     Fermi_fnc_derivative((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
-       end forall
+       enddo
        !
      enddo
      !
@@ -164,15 +173,30 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  call msg('sr',"Nomber of excited excitons ",exc_OCC)
  !
- file_name='excitons_ph_dos'
- call of_open_close(trim(file_name),'ot')
- call msg('o '//trim(file_name),'#',' Phonon-assisted exciton DOS',INDENT=0)
- call msg('o '//trim(file_name),'#','',INDENT=0)
- call msg('o '//trim(file_name),'#',(/'E(meV)       ','EXC-PH-DOS(w)'/),USE_TABS=.true.)
- call msg('o '//trim(file_name),'#','',INDENT=0)
- do i_E=1,DOS_E_steps
-   call msg('o '//trim(file_name),' ',(/dos_E(i_E)*HA2EV,exc_ph_dos(i_E)/),USE_TABS=.true.)
- enddo
- call of_open_close(trim(file_name))
+ call print_DOS()
  !
+ contains
+   !
+   subroutine print_DOS()
+     !
+     use com,           ONLY:msg,of_open_close
+     implicit none
+     !
+     character(schlen)     :: file_name
+     !
+     file_name='excitons_ph_dos'
+     call of_open_close(trim(file_name),'ot')
+     call msg('o '//trim(file_name),'#',' Phonon-assisted exciton DOS',INDENT=0)
+     call msg('o '//trim(file_name),'#','',INDENT=0)
+     call msg('o '//trim(file_name),'#',(/'E(meV)       ','EXC-PH-DOS(w)'/),USE_TABS=.true.)
+     call msg('o '//trim(file_name),'#','',INDENT=0)
+     do i_E=1,DOS_E_steps
+       call msg('o '//trim(file_name),' ',(/dos_E(i_E)*HA2EV,exc_ph_dos(i_E)/),USE_TABS=.true.)
+     enddo
+     !
+     call of_open_close(trim(file_name))
+     !
+     end subroutine
+   !
 end subroutine
+   !

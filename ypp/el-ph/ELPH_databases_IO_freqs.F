@@ -25,6 +25,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
+ use units,          ONLY:HA2CMm1
  !
  implicit none
  !
@@ -69,6 +70,8 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
        read(io_unit,*)  ph_freq(i_q,i1:min(i1+5,ph_modes))  ! frequencies
      enddo
    enddo
+   !
+   ph_freq=ph_freq/HA2CMm1
    !
    close(io_unit)
    !

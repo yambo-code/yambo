@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
@@ -32,7 +32,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
  character(schlen), intent(in)   :: ph_freqs_file
  integer,      intent(inout)     :: n_q
  real(SP), optional, intent(out) :: q_pt(n_q,3)
- real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+ real(SP), optional, intent(out) :: ph_freqs(n_q,3*n_atoms)
  !
  ! Work Space
  !
@@ -41,7 +41,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
  !
  ph_modes=3*n_atoms
  !
- if(.not.present(q_pt).and..not.present(ph_freq)) then
+ if(.not.present(q_pt).and..not.present(ph_freqs)) then
    !
    ! Return the number of q-points
    !
@@ -66,12 +66,12 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
    read(io_unit,*)
    do i_q=1,n_q
      read(io_unit,*)  q_pt(i_q,:) ! read q-point
-     do i1=1,ceiling(real(ph_modes)/6.)
-       read(io_unit,*)  ph_freq(i_q,i1:min(i1+5,ph_modes))  ! frequencies
+     do i1=1,ph_modes,6
+       read(io_unit,*)  ph_freqs(i_q,i1:min(i1+5,ph_modes))  ! frequencies
      enddo
    enddo
    !
-   ph_freq=ph_freq/HA2CMm1
+   ph_freqs=ph_freqs/HA2CMm1
    !
    close(io_unit)
    !

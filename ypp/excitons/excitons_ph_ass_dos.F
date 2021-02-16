@@ -24,7 +24,7 @@
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  use pars,          ONLY:SP,pi,rZERO,schlen
- use units,         ONLY:HA2EV
+ use units,         ONLY:HA2EV,HA2CMm1
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:c2a
@@ -53,6 +53,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  integer, allocatable  :: iq_indx(:)
  real(SP), allocatable :: BSE_interp_E(:,:)
  real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Boltz_F_exc,Bose_F_ph,min_E 
+ real(SP)              :: occ_threshold=1E-5
  type(PP_indexes)      :: px
  !
  ph_modes=3*n_atoms
@@ -109,7 +110,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  do i_q=1,q_matdyn%nibz
    do i_c=1,EXCITONS_n_user_states
      Boltz_f_exc=boltzman_f(BSE_interp_E(i_c,i_q)-min_E)
-     if(Boltz_f_exc>epsilon(1.)) then
+     if(Boltz_f_exc>occ_threshold) then
        n_full_q=n_full_q+1
        iq_indx(n_full_q)=i_q
        exit
@@ -143,8 +144,6 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  do i_idx=1,n_full_q
    !  
    i_q=iq_indx(i_idx)
-   write(*,*) i_q,q_matdyn%pt(i_q,:)
-   if(i_q/=1) cycle
    !
    do i_c=1,EXCITONS_n_user_states
      !

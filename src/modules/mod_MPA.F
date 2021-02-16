@@ -240,7 +240,7 @@ contains
    logical,      intent(out)       :: PPcond(np)
    real(SP),     intent(out)       :: econd(2)
    ! 
-   complex(SP)                     :: R(np), Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
+   complex(SP)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
    complex(SP)                     :: M(np,np), b(np), Companion(np,np)
    complex(SP)                     :: rwork(2*np),work(2*np),VR(np),VL(np),S(np),RCE(np,np),RCV(np,np),ABNRM
    integer                         :: i, j, info, ind(np), ILO,IHI    
@@ -328,6 +328,70 @@ contains
    ! 
  end subroutine mpa_E_solver
  !
+ subroutine mpa_E_solver_Pade(np, npr, z, X, E, PPcond, econd)
+   implicit none
+   integer,      intent(in)        :: np
+   integer,      intent(out)       :: npr
+   complex(SP),  intent(in)        :: z(2*np)
+   complex(SP),  intent(in)        :: X(2*np)
+   complex(SP),  intent(out)       :: E(np)
+   logical,      intent(out)       :: PPcond(np)
+   real(SP),     intent(out)       :: econd(2)
+   ! 
+   complex(SP)                     :: c(2*np), b(np+1), Companion(np,np)
+   complex(SP)                     :: c_m1(2*np), b_m1(np+1), b_m2(np+1)
+   complex(SP)                     :: rwork(2*np),work(2*np),VR(np),VL(np)
+   integer                         :: i, j, info   
+   real(SP)                        :: rcond, anorm, Wm
+   ! 
+   PPcond(:)=.true.
+   b_m1(1)=1._SP
+   b_m2(1)=1._SP
+   b_m1(2:)=0._SP
+   b_m2(2:)=0._SP
+   b=b_m1
+   c=X
+   c_m1=c
+   ! 
+   do i=2, 2*np  
+     do j=i, 2*np
+       c(j)=(c_m1(i-1)-c_m1(j))/((z(j)-z(i-1))*c_m1(j))
+     enddo
+     c_m1=c
+     do j=1, np+1
+       b(j)=b_m1(j)-z(i-1)*c(i)*b_m2(j)
+     enddo
+     do j=1, np
+       b_m2(np+2-j)=c(i)*b_m2(np+1-j)
+     enddo
+     do j=1, np
+       b(j+1)=b(j+1)+b_m2(j+1)
+     enddo
+     b_m2=b_m1
+     b_m1=b
+   enddo
+   ! 
+   Companion=0._SP
+   Companion(1,np) = -b(1)/b(np+1)
+   do i = 2, np
+     Companion(i,np)  = -b(i)/b(np+1)
+     Companion(i,i-1) = 1._SP
+   enddo
+   !
+#ifdef _DOUBLE
+   call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
+#else
+   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call cgeevx('P','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,10._SP,RCE,RCV,work,2*np,rwork,info)
+#endif
+   ! 
+   ! here we need to force real(E) to be positive.
+   ! This is because of the way the residue integral is performed, later.
+   ! 
+   call mpa_cond(np, npr, z, E, PPcond)
+   ! 
+ end subroutine mpa_E_solver_Pade
  !
  subroutine mpa_RE_solver(np, w, x, R, E,MPred,PPcond_rate,MP_err,cond_num) ! version 3.0
    implicit none
@@ -354,7 +418,8 @@ contains
    !  call mpa_RQ_3p_solver(w, x, R, E)
    case default
      !
-     call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
+     !call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
+     call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond, cond_num)
      cond_num=log10(1._SP/cond_num)
      if(npr<np) MPred=.true.
      call mpa_R_fit(np, npr, w, x, R, E)
@@ -365,7 +430,7 @@ contains
      PPcond_rate=PPcond_rate/sum(abs(R(:)))
    end select
    !
-   MP_err=MP_err+err_func_X(np, R, E, w, x)
+   MP_err=err_func_X(np, R, E, w, x)
    !
  end subroutine mpa_RE_solver
  !

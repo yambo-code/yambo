@@ -38,7 +38,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
- use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc,V_xc,xc_setup_hyb,&
+ use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc_mat,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
 &                         xc_spin,xc_spin_map1, &
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
@@ -284,6 +284,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==0) then 
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
    if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*exsr
+ endif
+ !
+ if (ORDER==2) then
+   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
+   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
  endif
  !
  if (EvaluateDGradient) then

@@ -45,6 +45,8 @@ module xc_functionals
  real(SP), public, allocatable:: V_xc(:,:)
  real(SP), public, allocatable:: E_xc(:)
  !
+ complex(SP), allocatable:: F_xc_mat(:,:,:,:,:)
+ !
  ! Messagging
  !
  character(lchlen) :: current_xc_string = ' '

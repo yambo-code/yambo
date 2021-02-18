@@ -193,7 +193,7 @@ subroutine rim(mode)
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
      !
      if (iq==1) then
-       call msg('r','Gamma point sphere radius             ',G_sph_radii,"[a.u.]")
+       call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
        call msg('r','Points outside the sphere             ',n_out_G)
        call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))

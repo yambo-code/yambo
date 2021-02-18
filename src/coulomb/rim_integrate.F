@@ -181,7 +181,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,&
+&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,RIM_W_is_metal,&
 &                        RIM_W,f_coeff,cut_is_slab,idir,RIM_id_epsm1_reference
  use D_lattice,     ONLY:alat,a
  !
@@ -255,50 +255,58 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  RIM_acc=0._DP
  RIM_acc_anis=0._DP
  !
- do i1=1,RIM_n_rand_pts
+ if (RIM_W_is_metal) then
    !
-   slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
-&                    (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
-   !kxy
-   r1=iku_v_norm(qr(:,i1))
-   !Regularization
-   if (slab_vplane1 < 1.e-5) then
-     vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
-     RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2
-     RIM_acc_anis = RIM_acc_anis + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2 &
-&                   *0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
-     cycle
+   i1min = 1
+   !
+ else
+   i1min = 2
+   !
+   do i1=1,RIM_n_rand_pts
+     !
+     slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
+&                      (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+     !kxy
+     r1=iku_v_norm(qr(:,i1))
+     !Regularization
+     if (slab_vplane1 < 1.e-5) then
+       vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
+       RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2
+       RIM_acc_anis = RIM_acc_anis + rfac*f_coeff(1,1,1,1,1)*(4*pi*lcut)**2 &
+&                     *0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
+       cycle
+     end if
+     !
+     !Evaluate v_slab
+     vslab(i1,1)=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
+     !
+     !Evaluate interpolation function
+     func = f_coeff(1,1,1,1,1)*exp(-sqrt((f_coeff(2,1,1,1,1)*(qr(2,i1)+a(2,1)/a(1,1)*qr(1,i1)))**2+&
+&                                        (f_coeff(3,1,1,1,1)*(qr(1,i1)+a(2,1)/a(1,1)*qr(2,i1)))**2))
+     !
+     !Evaluate W
+     RIM_acc = RIM_acc + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
+     !Anisotropy contribution
+     anis_fact=dot_product(em1_anis,(2._SP*pi*qr(:,i1)/(alat(:)*r1))**2)
+     func = func*anis_fact
+     RIM_acc_anis = RIM_acc_anis + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
+     !
+     !Store the square root of vslab
+     vslab(i1,1) = sqrt(vslab(i1,1))/r1
+     !
+   enddo
+   !
+   if (RIM_id_epsm1_reference == 0) then
+     RIM_W(1,1,1)=RIM_acc
+   else   
+     RIM_W(1,1,1)=RIM_acc_anis
    end if
-   !
-   !Evaluate v_slab
-   vslab(i1,1)=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
-   !
-   !Evaluate interpolation function
-   func = f_coeff(1,1,1,1,1)*exp(-sqrt((f_coeff(2,1,1,1,1)*(qr(2,i1)+a(2,1)/a(1,1)*qr(1,i1)))**2+&
-&                                      (f_coeff(3,1,1,1,1)*(qr(1,i1)+a(2,1)/a(1,1)*qr(2,i1)))**2))
-   !
-   !Evaluate W
-   RIM_acc = RIM_acc + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
-   !Anisotropy contribution
-   anis_fact=dot_product(em1_anis,(2._SP*pi*qr(:,i1)/(alat(:)*r1))**2)
-   func = func*anis_fact
-   RIM_acc_anis = RIM_acc_anis + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
-   !
-   !Store the square root of vslab
-   vslab(i1,1) = sqrt(vslab(i1,1))/r1
-   !
- enddo
- !
- if (RIM_id_epsm1_reference == 0) then
-   RIM_W(1,1,1)=RIM_acc
- else   
-   RIM_W(1,1,1)=RIM_acc_anis
  end if
  !
  ! wings q == 0
  !
  if (RIM_W_is_diagonal) return
- do i2=2,RIM_W_ng
+ do i2=i1min,RIM_W_ng
    RIM_acc=0._DP
    !
    do i3=1,RIM_n_rand_pts

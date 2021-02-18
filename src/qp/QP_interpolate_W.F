@@ -27,7 +27,7 @@ subroutine interpolate_W(X,Xw,q)
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E,&
-&                        RIM_id_epsm1_reference,RIM_epsm1
+&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_W_is_metal
  use memory,        ONLY:MEM_err
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
@@ -366,7 +366,7 @@ subroutine interpolate_W(X,Xw,q)
       enddo
       !
       ! q == 0 terms must be tratened separately
-      if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
+      if (iq1 == 1 .and. igr == 1 .and. igc == 1 .and. (.not. RIM_W_is_metal)) then
         !
         if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
           !vX is included in the anis_factor
@@ -462,7 +462,7 @@ subroutine interpolate_W(X,Xw,q)
  do ig2=1,RIM_W_ng
    do ig1=1,RIM_W_ng
      !
-     if(ig1==1.and.ig2==1) then
+     if(ig1==1.and.ig2==1.and.(.not. RIM_W_is_metal)) then
        dummy(:) = f_coeff(1,1,1,1,:)  
        if (RIM_id_epsm1_reference/=0) then
          dummy(1) = dummy(1)*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))

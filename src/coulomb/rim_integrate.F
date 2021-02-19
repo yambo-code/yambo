@@ -194,7 +194,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  integer  :: i1,i1min,i2,i2max,i3
  real(DP) :: func,vslab(RIM_n_rand_pts,RIM_W_ng)
  real(DP) :: r1,rfac,RIM_acc,RIM_acc_anis
- real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,anis_fact
+ real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,anis_fact,vslab2
  !
  rfac=8._SP*k_grid_uc_vol/real(N_out)/(2._SP*pi)**4
  !
@@ -255,12 +255,37 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  RIM_acc=0._DP
  RIM_acc_anis=0._DP
  !
+ !If the system is a metal, the head is obtained
+ !with the q\=0 formula
  if (RIM_W_is_metal) then
    !
-   i1min = 1
-   !
+   do i1=1,RIM_n_rand_pts
+     slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
+&                      (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+     !kxy
+     r1=iku_v_norm(qr(:,i1))
+     if (slab_vplane1 < 1.e-5) then
+       vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
+       RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)
+       cycle
+     end if
+     !
+     !Evaluate v_slab
+     vslab2 = 4._DP*pi*(1.-exp(-slab_vplane1*lcut))/r1**2
+     !
+     !Evaluate func
+     !
+     func = f_coeff(1,1,1,1,1)+qr(1,i1)*(f_coeff(2,1,1,1,1)+qr(1,i1)*f_coeff(4,1,1,1,1))&
+&                             +qr(2,i1)*(f_coeff(3,1,1,1,1)+qr(2,i1)*f_coeff(6,1,1,1,1)&
+&                             +2_SP*qr(1,i1)*f_coeff(5,1,1,1,1))
+     !
+     RIM_acc = RIM_acc + rfac*vslab2*func*vslab2/(1._DP-vslab2*func)
+     !
+     !Store the square root of vslab
+     vslab(i1,1) = sqrt(vslab2)
+     !
+   end do   
  else
-   i1min = 2
    !
    do i1=1,RIM_n_rand_pts
      !
@@ -278,35 +303,35 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
      end if
      !
      !Evaluate v_slab
-     vslab(i1,1)=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
+     vslab2=4._DP*pi*(1.-exp(-slab_vplane1*lcut))
      !
      !Evaluate interpolation function
      func = f_coeff(1,1,1,1,1)*exp(-sqrt((f_coeff(2,1,1,1,1)*(qr(2,i1)+a(2,1)/a(1,1)*qr(1,i1)))**2+&
 &                                        (f_coeff(3,1,1,1,1)*(qr(1,i1)+a(2,1)/a(1,1)*qr(2,i1)))**2))
      !
      !Evaluate W
-     RIM_acc = RIM_acc + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
+     RIM_acc = RIM_acc + rfac*vslab2*func*vslab2/(r1**2*(1-vslab2*func))
      !Anisotropy contribution
      anis_fact=dot_product(em1_anis,(2._SP*pi*qr(:,i1)/(alat(:)*r1))**2)
      func = func*anis_fact
-     RIM_acc_anis = RIM_acc_anis + rfac*vslab(i1,1)*func*vslab(i1,1)/(r1**2*(1-vslab(i1,1)*func))
+     RIM_acc_anis = RIM_acc_anis + rfac*vslab2*func*vslab2/(r1**2*(1-vslab2*func))
      !
      !Store the square root of vslab
-     vslab(i1,1) = sqrt(vslab(i1,1))/r1
+     vslab(i1,1) = sqrt(vslab2)/r1
      !
    enddo
-   !
-   if (RIM_id_epsm1_reference == 0) then
-     RIM_W(1,1,1)=RIM_acc
-   else   
-     RIM_W(1,1,1)=RIM_acc_anis
-   end if
+ end if
+ !
+ if (RIM_id_epsm1_reference == 0) then
+   RIM_W(1,1,1)=RIM_acc
+ else   
+   RIM_W(1,1,1)=RIM_acc_anis
  end if
  !
  ! wings q == 0
  !
  if (RIM_W_is_diagonal) return
- do i2=i1min,RIM_W_ng
+ do i2=2,RIM_W_ng
    RIM_acc=0._DP
    !
    do i3=1,RIM_n_rand_pts
@@ -317,7 +342,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
 &                               +qr(2,i3)*(f_coeff(3,1,i2,iq,1)+qr(2,i3)*f_coeff(6,1,i2,iq,1)&
 &                               +2_SP*qr(1,i3)*f_coeff(5,1,i2,iq,1))
      !
-     RIM_acc = RIM_acc + rfac*vslab(i3,1)**2*func*vslab(i3,i2)**2/(1-vslab(i3,1)*func*vslab(i3,i2))
+     RIM_acc = RIM_acc + rfac*vslab(i3,1)**2*func*vslab(i3,i2)**2/(1._DP-vslab(i3,1)*func*vslab(i3,i2))
    enddo
    RIM_W(iq,1,i2)=RIM_acc
    RIM_W(iq,i2,1)=RIM_W(iq,1,i2)

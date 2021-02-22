@@ -80,20 +80,21 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  DIPOLES_direction=DIPOLES_direction/v_norm(DIPOLES_direction)
  !
  ! ... Loop
+ !
  DIP_accumulated=rZERO
  do ik=1,k%nibz
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
    ik_mem=PAR_DIPk_ibz_index(ik)
    do iv=DIPOLES_bands(1),E%nbm
-     if (.not.PAR_IND_CON_BANDS_DIP%element_1D(iv)) cycle
+     if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
      do ic=E%nbf+1,DIPOLES_bands(2)
-       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(ic)) cycle
+       if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
          if (DIPOLES_E_range(1)>0. .and. delta_E<DIPOLES_E_range(1)) cycle
          if (DIPOLES_E_range(2)>0. .and. delta_E>DIPOLES_E_range(2)) cycle
          DIP_projected=dot_product(DIPOLES_direction,DIP_iR(:,ic,iv,ik_mem,is))
-         DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+         DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2
        enddo
      enddo
    enddo

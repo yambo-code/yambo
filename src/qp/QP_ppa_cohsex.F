@@ -100,7 +100,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), external ::QP_ppa_EET_terminator
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
- real(SP)              :: PPcond_rate,TO_rate  !Dario: counts 
+ real(SP)              :: PPcond_rate,TO_rate,PP_err  !Dario: counts 
  !
  ! Reset & checks
  !
@@ -277,12 +277,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        PPcond_rate=0.
        TO_rate=0.
+       PP_err=0.
        !
-       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:PPcond_rate,TO_rate), collapse(2)
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
              if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+               PP_err=PP_err+abs(X_mat(ig1,ig2,X_range(1))/(X%ppaE**2+1._SP)-X_mat(ig1,ig2,X_range(2)) )/&
+&                            maxval(abs(X_mat(ig1,ig2,X_range(:2))))
                X_mat(ig1,ig2,X_range(2))=X%ppaE
                PPcond_rate=PPcond_rate+1.
              else
@@ -299,8 +302,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !$omp end parallel do
        !
        call msg('r',' Current Q-pt index             ',iqibz)
-       call msg('r',' :: PP condition fails/tot      ',PPcond_rate/X%ng**2)
+       call msg('r',' :: PP condition fails/total    ',PPcond_rate/X%ng**2)
        call msg('r',' :: Time ordering fails/rest    ',TO_rate/(X%ng**2-PPcond_rate))
+       call msg('r',' :: Mean rel dev of PP cond     ',PP_err/X%ng**2)
        !
 #if defined _SC
      endif

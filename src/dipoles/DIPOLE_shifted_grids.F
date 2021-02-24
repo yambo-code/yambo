@@ -109,6 +109,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  grid_order=0
  !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
+ !
  idir_not_done=.true.
  !
  do iq =1,num_shifted_grids

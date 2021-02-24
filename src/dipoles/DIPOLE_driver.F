@@ -39,7 +39,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !                              and then <v> as <r>*DeltaE
  !
  use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_nl_optics
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
  use R_lattice,      ONLY:bz_samp
@@ -73,7 +73,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Work Space
  !
  integer           :: ik,io_err
- logical           :: use_dipole_transverse,idir_not_done(3)
+ character(schlen) :: msg
+ logical           :: l_warning,use_dipole_transverse,idir_not_done(3)
  !
  call timing('Dipoles',OPR='start')
  !
@@ -209,10 +210,24 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  call timing('Dipoles',OPR='stop')
  !
+ l_warning=(.not.Vnl_commutator_warning).and.l_optics
+ !
+ ! Warn about missing [Sigma,r] commutator
+ !
+ if (      Dip%Vnl_included .and.l_warning.and.(use_g_space_approach.or.Dip%force_v_g_space)) then
+   msg=' Only commutator with non-local pseudopotential contribution included in'
+   if (.not.use_g_space_approach) msg=trim(msg)//' velocity dipoles'
+   if (     use_g_space_approach) msg=trim(msg)//' position and velocity dipoles'
+   call warning(trim(msg))
+ endif
+ !
  ! Warn about missing [Vnl,r] commutator
  !
- if (.not.Dip%Vnl_included.and..not.Vnl_commutator_warning.and.l_optics.and.use_dipole_transverse) then
-   call warning(' Missing non-local pseudopotential contribution')
+ if ((.not.Dip%Vnl_included).and.l_warning) then
+   msg=' Missing commutator with non-local pseudopotential contribution in'
+   if (.not.use_g_space_approach) msg=trim(msg)//' velocity dipoles'
+   if (     use_g_space_approach) msg=trim(msg)//' position and velocity dipoles'
+   call warning(trim(msg))
    Vnl_commutator_warning=.TRUE.
  endif
  !

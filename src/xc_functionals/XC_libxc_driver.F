@@ -151,7 +151,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    endif
  endif
  !
- forall(i1=1:fft_size,i2=1:n_spin)  spin_rho_DP(i2,i1)=spin_rho_SP(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
+ do i1=1,fft_size
+   do i2=1,n_spin
+     spin_rho_DP(i2,i1)=real(spin_rho_SP(i1,i2),DP)*real(fft_size,DP)/real(DL_vol,DP)
+     if (spin_rho_DP(i2,i1)<1.E-10_DP) spin_rho_DP(i2,i1)=0._DP
+   enddo
+ enddo
  !
  !=============================
  ! Electronic density gradient
@@ -206,6 +211,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
          sigma(is_xc,i1) = real(V_dot_V(3,drho(i1,is1,:),drho(i1,is2,:)),DP)
+         !if(sigma(is_xc,i1)<1.E-10_DP) sigma(is_xc,i1)= 0._DP
        end do
      end do
    end do

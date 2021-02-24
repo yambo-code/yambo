@@ -115,6 +115,21 @@ module functions
      !
    end function
    !
+   ! Lorentzian function
+   !
+   pure function Lorentzian_func(x, damp)
+     !
+     ! From Mathworld
+     ! https://mathworld.wolfram.com/LorentzianFunction.html
+     !
+     use pars, ONLY:pi
+     real(SP), intent(in) :: x,damp
+     real(SP) :: Lorentzian_func
+     !
+     Lorentzian_func=1.0/pi*(0.5*damp)/(x**2+(0.5*damp)**2)
+     !
+   end
+   !
    ! Fermi functions
    !-----------------
    !

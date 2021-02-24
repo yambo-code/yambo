@@ -38,7 +38,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold
- use functions,     ONLY:Fermi_fnc_derivative,boltzman_f,bose_f
+ use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  !
 #include<memory.h> 
  !
@@ -159,7 +159,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
        !
        do i_E=1,DOS_E_steps
           exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Boltz_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
-    &                     Fermi_fnc_derivative((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
+    &                     Lorentzian_func((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
        enddo
        !
      enddo

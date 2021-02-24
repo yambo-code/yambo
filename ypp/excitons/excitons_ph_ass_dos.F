@@ -97,7 +97,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  min_E=minval(BSE_interp_E(1,:))
  !
- call msg('s',"Minumum Excitonn Energy            : ",min_E*HA2EV)
+ call msg('s',"Minumum Excitonn Energy (chemical potential)      : ",min_E*HA2EV)
  !
  ! Find occupaied excitons
  ! 

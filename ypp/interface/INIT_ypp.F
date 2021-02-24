@@ -288,6 +288,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
      endif
+#if defined _YPP_ELPH
+     if ( trim(rstr_piece(i1)) == 'gkkp') then
+       l_gkkp_db =STRING_match(rstr_piece(i1+1),'g')
+       l_gkkp_dg =STRING_match(rstr_piece(i1+1),'d')
+     endif
+#endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
        if (STRING_match(rstr_piece(i1+1),'ip') ) DIPs_kind="IP"
        if (STRING_match(rstr_piece(i1+1),'exc')) DIPs_kind="EXCITONIC"
@@ -380,8 +386,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_ELPH
  !
- if (l_eliashberg)       call initactivate(1,'eliashberg')
- if (l_gkkp)             call initactivate(1,'gkkp')
+ if (l_eliashberg)        call initactivate(1,'eliashberg')
+ if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp_db)           call initactivate(1,'gkkp_db')
+ if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
  if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
  !
 #endif
@@ -436,6 +444,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+ l_gkkp_db   =runlevel_is_on('gkkp_db')
+ l_gkkp_dg   =runlevel_is_on('gkkp_dg')
  l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
@@ -687,7 +697,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

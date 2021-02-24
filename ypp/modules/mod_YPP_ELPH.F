@@ -42,6 +42,8 @@ module YPP_ELPH
  !
  ! ...GKKP I/O
  logical :: l_gkkp
+ logical :: l_gkkp_db
+ logical :: l_gkkp_dg
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path

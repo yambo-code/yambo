@@ -52,6 +52,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
 &                                ic_wf,iv_wf,idir,n_LT_steps
  real(SP)                     :: Ev_m_Ec_KS,x_center(3)
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
+ !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  ! 
  call fft_setup(0,1,.true.)      ! FFT size
  !

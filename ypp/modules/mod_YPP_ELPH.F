@@ -32,6 +32,7 @@ module YPP_ELPH
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
+ logical :: l_ph_ass_dos
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -79,6 +80,20 @@ module YPP_ELPH
      integer, optional  :: BS_E_degs(:)
      integer, optional  :: lambda_s(:)
      integer, optional  :: n_lambda
+   end subroutine
+   !
+   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+     !
+     use pars,           ONLY:schlen,SP 
+     use D_lattice,      ONLY:n_atoms
+     !
+     implicit none
+     !
+     character(schlen), intent(in)   :: ph_freqs_file
+     integer,      intent(inout)     :: n_q
+     real(SP), optional, intent(out) :: q_pt(n_q,3)
+     real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+     !
    end subroutine
    !
  end interface

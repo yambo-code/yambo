@@ -88,6 +88,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'interpolate',  '[R] Interpolate')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
+ call it('r',defs,'ph_ass_dos',   '[R] Phonon-assisted DOS')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
@@ -256,6 +257,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'EHdensity', 'Calculate (h)ole/(e)lectron density from BSE wave-function',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
+ call it('f',defs,'PrtDOS', 'Print Exciton Density of States') 
  !
  ! WFs
  !

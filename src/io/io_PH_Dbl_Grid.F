@@ -34,14 +34,4 @@ integer function io_PH_Dbl_Grid(Freqs,q,ID)
  !
  ! Work Space
  !
- call timing('io_PH_Double_Grid',OPR='start')
- !
- io_PH_Dbl_Grid=-1
- !
- io_PH_Dbl_Grid=io_connect(desc='PH_Double_Grid',type=2,ID=ID)
- !
- if (io_PH_Dbl_Grid/=0) goto 1
- !
- io_PH_Dbl_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
- !
 end function

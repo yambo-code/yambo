@@ -85,7 +85,7 @@ module YPP_ELPH
      integer, optional  :: n_lambda
    end subroutine
    !
-   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
      !
      use pars,           ONLY:schlen,SP 
      use D_lattice,      ONLY:n_atoms
@@ -95,7 +95,7 @@ module YPP_ELPH
      character(schlen), intent(in)   :: ph_freqs_file
      integer,      intent(inout)     :: n_q
      real(SP), optional, intent(out) :: q_pt(n_q,3)
-     real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+     real(SP), optional, intent(out) :: ph_freqs(n_q,3*n_atoms)
      !
    end subroutine
    !

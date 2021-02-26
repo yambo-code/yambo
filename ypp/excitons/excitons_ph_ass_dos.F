@@ -67,13 +67,13 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")      
  !
  call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
- call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz)
+ call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=q_matdyn%nibz)
  call msg('s',"Number of phonon q-points in the IBZ : ",q_matdyn%nibz)
  !
  YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
  YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
  !
- call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz,q_matdyn%pt,ph_freqs)
+ call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=q_matdyn%nibz,q_pt=q_matdyn%pt,ph_freqs=ph_freqs)
  !
  q_matdyn%pt=q_matdyn%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
  !

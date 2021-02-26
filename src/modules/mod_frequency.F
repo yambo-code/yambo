@@ -91,7 +91,7 @@ module frequency
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
      W%samp_type="2l"
-     W%grid_type=""
+     W%grid_type="" ! DALV: conflict with FF real axis in FREQUENCIES_setup
    end subroutine W_reset
    !
 end module frequency

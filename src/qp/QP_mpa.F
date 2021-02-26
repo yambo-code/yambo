@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 ! 
-subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! Multi-pole approximation to the Correlation Self-Energy
  !
@@ -60,12 +60,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
 #include<memory.h>
  !
- type(levels) ::E
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(QP_t)   ::qp
- type(w_samp) ::Xw
- integer      ::GW_iter
+ type(levels)        ::E
+ type(bz_samp)       ::Xk,k,q
+ type(X_t)           ::X
+ type(QP_t)          ::qp
+ type(w_samp)        ::Xw
+ real(SP),intent(in) ::W(QP_dSc_steps) ! this is the frequency grid for Sc now set in the solvers('n','s','g')
+ integer             ::GW_iter
  !
  ! Work Space
  !
@@ -305,7 +306,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
        call msg('r',' :: Mean np reduction    ',MPred_rate)
        call msg('r',' :: Mean Xm rel dev      ',MP_Qerr)
-       call msg('r',' :: Condition numbers    ',cond_numQ)
+       !call msg('r',' :: Condition numbers    ',cond_numQ)
        !
      endif
      !
@@ -350,6 +351,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      iscp%qs=isc%qs
      !
      dc=cZERO
+     forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp ! DALV: here the grid is center in E0
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -367,7 +369,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        dc=cZERO
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
        E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
        f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -383,7 +385,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
-               ! inline bose_f function Dario:
+               ! DALV: inline bose_f function
                bose_PPA_E=0._SP
                if (real(MPA_E_mat(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
                if (Finite_Tel) then

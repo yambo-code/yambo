@@ -84,15 +84,15 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa) then
        !
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
        !
      else if (l_mpa) then
        !
-       call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
+       call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
        !
      else if (l_cohsex) then
        !
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
        !
      else 
        !

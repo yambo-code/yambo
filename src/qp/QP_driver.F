@@ -66,6 +66,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  integer           :: lw_bnd
  integer, external ::io_QP_and_GF
  real(SP),external ::G2E
+ real(SP)          ::W(QP_Sc_steps) ! DALV: frequency grid for Sc in the Green Function
  !
  ! Driver Logicals
  !=================
@@ -368,12 +369,30 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (trim(QP_solver)=='g') then
    !
    ! Dario: GF for ppa and mpa
-   if (l_ppa.or.l_mpa) QP_dSc_steps=100; QP_G_damp=epsilon(1._SP)
+   if (l_ppa.or.l_mpa) QP_dSc_steps=100!; QP_G_damp=epsilon(1._SP)
    !
-   if (l_elel_corr.and.l_mpa)   call QP_mpa(X,Xk,en,k,q,qp,Xw,0) ! AF, dario
-   if (l_elel_corr.and.l_ppa)   call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0) ! AF, dario
    if (l_elel_corr.and.(.not.l_ppa.and..not.l_mpa.and..not.l_cohsex)) &
 &                               call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+   if (l_elel_corr.and.l_ppa) then ! AF, DALV
+     !
+     QP_G_damp=0._SP
+     !
+     W(1)=QP_G_er(1)
+     forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
+     !
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,W,0)
+     !
+   endif
+   if (l_elel_corr.and.l_mpa) then ! AF, DALV
+     !
+     !QP_G_damp=0._SP
+     !
+     W(1)=QP_G_er(1)
+     forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
+     !
+     call QP_mpa(X,Xk,en,k,q,qp,Xw,W,0)
+     !
+   endif
    !
 #if defined _ELPH 
    !

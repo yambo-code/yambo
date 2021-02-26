@@ -57,7 +57,7 @@ subroutine FREQUENCIES_setup(W)
  !
  ! Build mpa-type grids
  !
- if (trim(W%grid_type)=="mpa-h") then
+ if (trim(W%grid_type)=="mpa-lP") then
    !
    if (mod(W%n_freqs,2)/=0) call error("[MPA] Invalid number of frequencies")
    YAMBO_ALLOC(W%p,(W%n_freqs))

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
@@ -74,6 +74,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
+ real(SP),intent(in) ::W(QP_dSc_steps) ! DALV: this is the frequency grid for Sc now set in the solvers('n','s','g')
  !
  ! Work Space
  !
@@ -100,7 +101,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), external ::QP_ppa_EET_terminator
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
- real(SP)              :: PPcond_rate,TO_rate,PP_err  !Dario: counts 
+ real(SP)              :: PPcond_rate,TO_rate,PP_err  !DALV: counts 
  !
  ! Reset & checks
  !
@@ -483,7 +484,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !$omp end parallel do
          endif
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -598,7 +600,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if(l_GW_terminator) then
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
        !
        do i_w=1,QP_dSc_steps
          !

@@ -54,7 +54,9 @@ subroutine K_dot_product(dot,V,W,i_kind)
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
    i_factor= ( (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) )**i_kind
-   dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
+   dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,1),W(i_T_g)%fragment(:,1))
+!aim137: added dimension harcoded at 1
+!aim137: add loop over fine grid
  enddo
  !
  ! Reduce all

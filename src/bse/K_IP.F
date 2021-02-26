@@ -222,6 +222,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! b.Energy
      !=========
      !
+!aim137: must add extra index in both %E
      if(allocated(BS_T_grp(i_T_g)%W)) then
        E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
      else

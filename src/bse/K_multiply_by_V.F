@@ -43,6 +43,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  implicit none
  !
  integer                ::iter_par
+!aim137: change allocation to (BS_nT_grps,range+1)
  type(Haydock_vector)   ::Vi(BS_nT_grps),Vo(BS_nT_grps)
  !
  ! Work Space
@@ -53,6 +54,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
+!aim137: question: do I change this fragment to fragment(:,1)
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
  do i_B=1,n_BS_blks
@@ -61,24 +63,32 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
    i_Tp  =BS_blk(i_B)%iT_p
    !
    select case(BS_blk(i_B)%mode)
+!aim137: add new loop over new index in Haydock_vector%fragments
    case("R")
      !
      ! Resonant part 
      !
+!aim137: added fragments looping index hard coded to 1
+!aim137: every %fragment(:) in this file changed to %fragment(:,1)
      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-     &                       Vo(i_Tk)%fragment(:),1)
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+     &                       Vo(i_Tk)%fragment(:,1),1)
      !
      ! Resonant part is hermitian
      !
+!aim137: new index here as well
      if (i_Tk.ne.i_Tp) &
      &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-     &                       Vo(i_Tp)%fragment(:),1)
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+     &                       Vo(i_Tp)%fragment(:,1),1)
      !
      ! Add the energy diffs on the diagonal
      !
-     if (i_Tk.eq.i_Tp) Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+!aim137: new index here as well
+!aim137: must add extra index to %E
+!aim137: get the correct energies of the transtions in the fine grid
+!aim137: I could get rid of all the (:,1) here... point by point multiplication
+     if (i_Tk.eq.i_Tp) Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,1)
      !
    case("C")
      !
@@ -87,29 +97,29 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        ! Coupling part
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:)),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:,1)),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Coupling part can be symmetric
        !
        if ( i_Tk.ne.i_Tp ) & 
        &  call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:)),1,cONE,&
-       &                       Vo(i_Tp)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:,1)),1,cONE,&
+       &                       Vo(i_Tp)%fragment(:,1),1)
        !
      else
        !
        ! Coupling part
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Anti-coupling Q = -conjg(C)
        !
        call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-cONE,&
-       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-       &                     Vo(i_Tp)%fragment(:),1)
+       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+       &                     Vo(i_Tp)%fragment(:,1),1)
        !
      endif
      !
@@ -118,20 +128,21 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      ! Anti-Resonant part 
      !
      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-     &                       Vo(i_Tk)%fragment(:),1)
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+     &                       Vo(i_Tk)%fragment(:,1),1)
      !
      ! Anti-Resonant part is hermitian
      !
      if (i_Tk.ne.i_Tp) &
      &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-     &                       Vo(i_Tp)%fragment(:),1)
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+     &                       Vo(i_Tp)%fragment(:,1),1)
      !
      ! Add the energy diffs on the diagonal
      !
-     if (i_Tk.eq.i_Tp) Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+     if (i_Tk.eq.i_Tp) Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,1)
      !
+!aim137: end new loop
    end select
    !
  end do
@@ -180,6 +191,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !
+!aim137: question: do I change this fragment to fragment(:,1)
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
  do i_B=1,n_BS_blks
@@ -195,23 +207,23 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
      if (i_Tk==i_Tp) then
        !
        call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Add the energy diffs on the diagonal
-       Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+       Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,1)
        !
      else
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Resonant part is hermitian
        !
        call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-       &                       Vo(i_Tp)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tp)%fragment(:,1),1)
        !
      endif
      !
@@ -224,29 +236,29 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
        ! Coupling part
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-alpha,&
-       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:)),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:,1)),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Coupling part can be symmetric
        !
        if ( i_Tk.ne.i_Tp ) & 
        &  call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-alpha,&
-       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:)),1,cONE,&
-       &                       Vo(i_Tp)%fragment(:),1)
+       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:,1)),1,cONE,&
+       &                       Vo(i_Tp)%fragment(:,1),1)
        !
      else
        !
        ! Coupling part
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-cONE,&
-       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Anti-coupling Q = -(-(C)*)^dag=C^t
        !
        call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-       &                     Vo(i_Tp)%fragment(:),1)
+       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+       &                     Vo(i_Tp)%fragment(:,1),1)
        !
      endif
      !
@@ -257,24 +269,24 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
      if (i_Tk==i_Tp) then
        !
        call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Add the energy diffs on the diagonal
        !
-       Vo(i_Tk)%fragment(:) = Vo(i_Tk)%fragment(:) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:)
+       Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,1)
        !
      else
        !
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:),1,cONE,&
-       &                       Vo(i_Tk)%fragment(:),1)
+       &                       conjg(BS_blk(i_B)%mat),BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Anti-Resonant part is hermitian
        !
        call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:),1,cONE,&
-       &                       Vo(i_Tp)%fragment(:),1)
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,1),1,cONE,&
+       &                       Vo(i_Tp)%fragment(:,1),1)
        !
      endif
      !

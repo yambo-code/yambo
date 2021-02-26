@@ -40,7 +40,8 @@ module BS_solvers
  ! Haydock
  !========== 
  type Haydock_vector
-   complex(SP), allocatable :: fragment(:)
+!aim137: Expanded fragment adding one dimension
+   complex(SP), allocatable :: fragment(:,:)
  end type Haydock_vector
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
@@ -363,7 +364,8 @@ module BS_solvers
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size))
+!aim137: Allocated extra dimension of %fragment to hard coded 1
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size,1))
      enddo
    end subroutine BS_HAYVEC_alloc
    !

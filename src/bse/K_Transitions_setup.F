@@ -192,6 +192,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
                endif
                !
+!aim137: must add extra index to E
+!aim137: will need to see how this works in the loop
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
                !

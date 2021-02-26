@@ -129,10 +129,12 @@ module BS
    integer                       :: first_cv                   ! Position in the cv transitions @ k
    integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
-   real(SP)   , allocatable      :: E(:)                       ! (/ i_Tr  /)
+!aim137: must add extra index to %E
+   real(SP)   , allocatable      :: E(:)                     ! (/ i_Tr; k%FGbz%N_mapped(:)+1/)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
    real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent
+!aim137: question: what is W, it is substracted from E in K_IP.F
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)            ! (/2/n_sp_pol; i_Tr /)
    complex(SP), allocatable      :: Z(:)
@@ -302,6 +304,7 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
+!aim137: must add extra index to %E
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))

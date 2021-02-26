@@ -49,6 +49,7 @@ module YPP_ELPH
  character(schlen)    :: elph_dbs_path
  character(schlen)    :: ph_freqs_file
  character(schlen)    :: ph_modes_file
+ character(schlen)    :: EkplusQ_mode="interp"
  !
  ! ... GKKP DB shadow objects
  character(schlen)        :: DB_kind="none"

@@ -359,16 +359,15 @@ module BS_solvers
    subroutine BS_HAYVEC_alloc(V,dom_k)
      use parallel_m,    ONLY:PAR_IND_T_Haydock
      type(Haydock_vector) :: V(BS_nT_grps)
-!aim137: added input to subroutine
      ! ws:
      integer :: i_g
      integer :: dom_k
+!aim137: added input to subroutine
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 !aim137: Allocated extra dimension of %fragment 
-       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size,1))
-print*, dom_k
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size,dom_k))
      enddo
    end subroutine BS_HAYVEC_alloc
    !

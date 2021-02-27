@@ -42,7 +42,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
  !
  ! Workspace
  !
- integer       :: i_T_g,i_factor
+ integer       :: i_T_g,i_factor,i_dom_k,dom_k
  !
  dot = cZERO
  ! 
@@ -54,9 +54,12 @@ subroutine K_dot_product(dot,V,W,i_kind)
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
    i_factor= ( (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) )**i_kind
-   dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,1),W(i_T_g)%fragment(:,1))
-!aim137: added dimension harcoded at 1
-!aim137: add loop over fine grid
+   dom_k = size(V(i_T_g)%fragment,2)
+!aim137: unsure. loop over fine grid
+!aim137: question. what does Vstar_dot_V_omp do
+   do i_dom_k=1,dom_k
+     dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,i_dom_k),W(i_T_g)%fragment(:,i_dom_k))
+   enddo
  enddo
  !
  ! Reduce all

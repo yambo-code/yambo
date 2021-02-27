@@ -62,7 +62,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  type(bz_samp), intent(in) :: Xk
- integer :: dom_k
+ integer :: i_dom_k,dom_k
 !aim137: new input for double grid
  !
  real(SP)           ::reached_threshold
@@ -114,6 +114,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  ! Allocate Haydock vectors:
  !
+!aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
  if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
  allocate(V0(BS_nT_grps))
@@ -223,19 +224,21 @@ subroutine K_Haydock(iq,W,mode,Xk)
  end if
  !
  do i_g=1,BS_nT_grps
-!aim137: added fragment second index hardcoded to 1
-!aim137: add loop over fragment second index
+!aim137: loop over fine grid - same dip for all
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   if (trim(mode)=="abs")       V0(i_g)%fragment(:,1) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-   if (trim(mode)=="kerr")      V0(i_g)%fragment(:,1) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-   if (trim(mode)=="magnons")   V0(i_g)%fragment(:,1) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-   V0(i_g)%fragment(:,1) = V0(i_g)%fragment(:,1)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+   do i_dom_k=1,dom_k
+     if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+     V0(i_g)%fragment(:,i_dom_k) = V0(i_g)%fragment(:,i_dom_k)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+   enddo
+!aim137: question: what is f_RES
 !aim137: both $fragment and %E expand in the same way - no change needed
+!aim137: fragment(:,1) is temporary until I expand %E
    if(velocity_correction) V_tmp(i_g)%fragment(:,1) = V0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
  enddo
  !
-!aim137: question: what does PP_bcast accept. Not sure if %fragment is ok, or if it needs
-!aim137: loop over %fragment(:,i)
+!aim137: question: what does PP_bcast do. Does it need loop over fine grid
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
@@ -250,10 +253,12 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     if (trim(mode)=="kerr") W0(i_g)%fragment(:,1) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-     W0(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     do i_dom_k=1,dom_k
+       if (trim(mode)=="kerr") W0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+       W0(i_g)%fragment(:,i_dom_k) = W0(i_g)%fragment(:,i_dom_k)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
-     if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
+       if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps
@@ -286,7 +291,6 @@ subroutine K_Haydock(iq,W,mode,Xk)
      Cf= cZERO
      !
      call K_multiply_by_V(V0,Vnp1,-1)
-!aim137: I need to modify dot product as well, to add dimension and loop
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
      ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, -iu0*)
@@ -359,9 +363,12 @@ subroutine K_Haydock(iq,W,mode,Xk)
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,1),Vnp1(i_g)%fragment(:,1))
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,1),Vnp1(i_g)%fragment(:,1))
-!aim137: I need to modify that subroutine
+!aim137: critical: What is this subroutine
+!aim137: unsure about putting it inside i_dom loop
+       do i_dom_k=1,dom_k
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+       enddo
      end do
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
@@ -606,7 +613,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
    fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,1)
 !aim137: added dimension hard coded at 1
-!aim137: add loop over fine grid
+!aim137: critical. add loop over fine grid
  enddo
  !
  call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
@@ -646,6 +653,8 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size)
    istop_g  = istart_g + BS_T_grp(i_g)%size - 1
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
    V(i_g)%fragment(1:BS_T_grp(i_g)%size,1) = fullV(istart_g:istop_g)  
+!aim137: added dimension hard coded at 1
+!aim137: critical. add loop over fine grid
  enddo
  !
 end subroutine HAYVEC_scatter

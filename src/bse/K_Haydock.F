@@ -20,7 +20,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock(iq,W,mode)
+subroutine K_Haydock(iq,W,mode,Xk)
+!aim137: passing Xk to K_Haydock
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use functions,      ONLY:NAN
@@ -30,7 +31,7 @@ subroutine K_Haydock(iq,W,mode)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
-&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size
+&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
 &                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
  use LIVE_t,         ONLY:LIVE_message
@@ -42,6 +43,7 @@ subroutine K_Haydock(iq,W,mode)
                           PAR_COM_eh_INDEX
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
+ use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
@@ -59,6 +61,9 @@ subroutine K_Haydock(iq,W,mode)
  complex(SP), allocatable :: Cf(:) 
  !
  type(Haydock_vector),allocatable :: W0(:)
+ type(bz_samp), intent(in) :: Xk
+ integer :: dom_k
+!aim137: new input for double grid
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
@@ -109,17 +114,19 @@ subroutine K_Haydock(iq,W,mode)
  !
  ! Allocate Haydock vectors:
  !
+ if (.not.BSS_uses_DbGd) dom_k=1
+ if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
  allocate(V0(BS_nT_grps))
- call BS_HAYVEC_alloc(V0)
+ call BS_HAYVEC_alloc(V0,dom_k)
  !
  if(velocity_correction) then
    allocate(V_tmp(BS_nT_grps))
-   call BS_HAYVEC_alloc(V_tmp)
+   call BS_HAYVEC_alloc(V_tmp,dom_k)
  endif
  !
  if(use_left_and_right) then
    allocate(W0(BS_nT_grps))
-   call BS_HAYVEC_alloc(W0)
+   call BS_HAYVEC_alloc(W0,dom_k)
  endif
  !
  ItParity=1
@@ -134,9 +141,9 @@ subroutine K_Haydock(iq,W,mode)
  allocate(Vn(BS_nT_grps))
  allocate(Vnp1(BS_nT_grps))
  allocate(Vnm1(BS_nT_grps))
- call BS_HAYVEC_alloc(Vn)
- call BS_HAYVEC_alloc(Vnm1)
- call BS_HAYVEC_alloc(Vnp1)
+ call BS_HAYVEC_alloc(Vn,dom_k)
+ call BS_HAYVEC_alloc(Vnm1,dom_k)
+ call BS_HAYVEC_alloc(Vnp1,dom_k)
  !
  ! Haydock Coefficients and restart vector from disk
  !=================================================

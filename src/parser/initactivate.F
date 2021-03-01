@@ -26,6 +26,7 @@ subroutine initactivate(mode,names)
  use it_tools
  use it_m
  !
+ ! mode =  2 : force activate regardless of the verbosity
  ! mode =  1 : activate var names
  ! mode = -1 : deactivate var names
  !

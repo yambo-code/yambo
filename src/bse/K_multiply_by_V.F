@@ -67,33 +67,33 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
      ! Resonant part 
      !
-!aim137: loop over extra dimension of %fragment
-     do i_dom_k=1,dom_k
-      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-      &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
-     enddo
+!aim137: if there is no DG, sum is trivial
+!aim137: result of matrix * sum goes to column 1 of output vector
+!aim137: output columns get expanded at energy stage
+     call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+     &                       sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+     &                       Vo(i_Tk)%fragment(:,1),1)
      !
      ! Resonant part is hermitian
      !
-     if (i_Tk.ne.i_Tp) then
-      do i_dom_k=1,dom_k
-       call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-       &                     Vo(i_Tp)%fragment(:,i_dom_k),1)
-      enddo
-     end if
+     if (i_Tk.ne.i_Tp) &
+     &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+     &                       sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
+     &                       Vo(i_Tp)%fragment(:,1),1)
      !
      ! Add the energy diffs on the diagonal
      !
 !aim137: must add extra index to %E
 !aim137: get the correct energies of the transtions in the fine grid
-!aim137: I could get rid of all the (:,1) here... point by point multiplication
-     if (i_Tk.eq.i_Tp) then
-      do i_dom_k=1,dom_k
-       Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,i_dom_k)
-      enddo
-     end if
+     do i_dom_k=1,dom_k
+        Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
+        Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
+!aim137: este if lo puedo sacar del do y hacer point by point multiplication
+      if (i_Tk.eq.i_Tp) &
+      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,i_dom_k)
+     enddo
      !
    case("C")
      !
@@ -101,67 +101,70 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        !
        ! Coupling part
        !
-       do i_dom_k=1,dom_k
-        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
-        &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tp)%fragment(:,i_dom_k)),1,cONE,&
-        &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
-       enddo
+       call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                       conjg(sum(Vi(i_Tp)%fragment,dim=2)),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
        !
        ! Coupling part can be symmetric
        !
-       if ( i_Tk.ne.i_Tp ) then
-        do i_dom_k=1,dom_k
-          call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
-          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),conjg(Vi(i_Tk)%fragment(:,i_dom_k)),1,cONE,&
-          &                       Vo(i_Tp)%fragment(:,i_dom_k),1)
-        enddo
-       end if
+       if ( i_Tk.ne.i_Tp ) &
+       &  call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                       conjg(sum(Vi(i_Tk)%fragment,dim=2)),1,cONE,&
+       &                       Vo(i_Tp)%fragment(:,1),1)
+       !
+       !
        !
      else
        !
        ! Coupling part
        !
-       do i_dom_k=1,dom_k
-        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-        &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-        &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
-        !
-        ! Anti-coupling Q = -conjg(C)
-        ! 
-        call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-cONE,&
-        &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-        &                     Vo(i_Tp)%fragment(:,i_dom_k),1)
-        !
-       enddo
+       call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                       sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+       &                       Vo(i_Tk)%fragment(:,1),1)
+       !
+       ! Anti-coupling Q = -conjg(C)
+       ! 
+       call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-cONE,&
+       &                     BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                     sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
+       &                     Vo(i_Tp)%fragment(:,1),1)
+       !
      endif
+     !
+!aim137: Expand columns in Case("C")
+     do i_dom_k=1,dom_k
+      Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
+      Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
+     enddo
      !
    case("A")
      !
      ! Anti-Resonant part 
      !
-     do i_dom_k=1,dom_k
-      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-      &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
-     enddo
+     call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+     &                       sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+     &                       Vo(i_Tk)%fragment(:,1),1)
      !
      ! Anti-Resonant part is hermitian
      !
-     if (i_Tk.ne.i_Tp) then
-      do i_dom_k=1,dom_k
-        call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-        &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-        &                       Vo(i_Tp)%fragment(:,i_dom_k),1)
-      enddo
-     end if
+     if (i_Tk.ne.i_Tp) &
+     &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+     &                       sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
+     &                       Vo(i_Tp)%fragment(:,1),1)
      !
      ! Add the energy diffs on the diagonal
      !
-     if (i_Tk.eq.i_Tp) then
-      do i_dom_k=1,dom_k
-       Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,i_dom_k)
-      enddo
-     end if
+     do i_dom_k=1,dom_k
+        Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
+        Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
+      if (i_Tk.eq.i_Tp) &
+      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:)*Vi(i_Tk)%fragment(:,i_dom_k)
+     enddo
      !
    end select
    !

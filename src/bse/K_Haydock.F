@@ -117,6 +117,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
  if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
+ !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0,dom_k)
  !
@@ -258,6 +259,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
        W0(i_g)%fragment(:,i_dom_k) = W0(i_g)%fragment(:,i_dom_k)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
+!aim137: fragment(:,1) is temporary until I expand %E
        if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
    enddo
    !

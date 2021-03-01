@@ -1,0 +1,30 @@
+#                                                                     
+# ooooo   oooo ..     ooo        ooo ooooooooo.    .oooo.             
+#  `88.   .8" .88.    `88.       .88 `88"   `Y8b  dP"  `Yb            
+#   `88. .8" .8"88.    888b     d"88  88     888 88      88           
+#    `88.8" .8" `88.   8 Y88. .P  88  88oooo888" 88      88           
+#     `88" .88ooo888.  8  `888"   88  88    `88b 88      88           
+#      88 .8"     `88. 8    Y     88  88    .88P `8b    d8"           
+#     o88o88o      888o8          88 o88bood8P"   `Ybod8P"            
+#                                                                     
+#                                                                     
+#        Version 5.0.0 Revision 19485 Hash c55e33199                  
+#                     Branch is master                                
+#                  MPI+SLEPC+HDF5_IO Build                            
+#                 http://www.yambo-code.org                           
+#
+screen                           # [R] Inverse Dielectric Matrix
+em1s                             # [R][Xs] Statically Screened Interaction
+dipoles                          # [R] Oscillator strenghts (or dipoles)
+Chimod= "HARTREE"                # [X] IP/Hartree/ALDA/LRC/PF/BSfxc
+% BndsRnXs
+  1 | 12 |                           # [Xs] Polarization function bands
+%
+NGsBlkXs= 2                Ry    # [Xs] Response block size
+% LongDrXs
+ 1.000000 | 1.000000 | 1.000000 |        # [Xs] [cc] Electric Field
+%
+XTermKind= "none"                # [X] X terminator ("none","BG" Bruneval-Gonze)
+% XfnQP_E
+ 0.80000 | 1.000000 | 1.000000 |        # [EXTQP Xd] E parameters  (c/v) eV|adim|adim <><><> 
+%

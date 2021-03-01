@@ -236,7 +236,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
 !aim137: question: what is f_RES
 !aim137: both $fragment and %E expand in the same way - no change needed
 !aim137: fragment(:,1) is temporary until I expand %E
-   if(velocity_correction) V_tmp(i_g)%fragment(:,1) = V0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
+!aim137: temporary %E(:,1) until I populate those values
+   if(velocity_correction) V_tmp(i_g)%fragment(:,1) = V0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E(:,1)
  enddo
  !
 !aim137: question: what does PP_bcast do. Does it need loop over fine grid
@@ -260,7 +261,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
      enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
 !aim137: fragment(:,1) is temporary until I expand %E
-       if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E
+!aim137: temporary %E(:,1) until I populate those values
+       if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E(:,1)
    enddo
    !
    do i_g = 1,BS_nT_grps
@@ -354,10 +356,12 @@ subroutine K_Haydock(iq,W,mode,Xk)
      !
      !|Vn+1> = H |Vn>
      !
+print*, 'calling K_multiply_by_V'
      call  K_multiply_by_V(Vn,Vnp1,1)
      !
      ! A(n) = <Vn|Vn+1>
      !
+print*, 'calling K_dot_prod'
      call K_dot_product(v0_mod_,Vn,Vnp1,1)
      Af(it)=real(v0_mod_,SP)
      !

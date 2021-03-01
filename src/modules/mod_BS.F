@@ -129,8 +129,8 @@ module BS
    integer                       :: first_cv                   ! Position in the cv transitions @ k
    integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
-!aim137: must add extra index to %E
-   real(SP)   , allocatable      :: E(:)                     ! (/ i_Tr; k%FGbz%N_mapped(:)+1/)
+!aim137: added extra index to %E
+   real(SP)   , allocatable      :: E(:,:)                     ! (/ i_Tr; Xk%FGbz%N_mapped(:)+1/)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
    real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent
@@ -283,12 +283,13 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_Blocks_and_Transitions_alloc(E,iT)
+   subroutine BS_Blocks_and_Transitions_alloc(E,iT,dom_k)
      !
      use pars,       ONLY:IP,cZERO
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
-     integer,      intent(in) :: iT
+!aim137: added dom_k
+     integer,      intent(in) :: iT,dom_k
      type(levels), intent(in) :: E
      integer :: nT,nDIP
      !
@@ -304,8 +305,8 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
-!aim137: must add extra index to %E
-     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+!aim137: added extra index to %E
+     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT,dom_k))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(nT,2))

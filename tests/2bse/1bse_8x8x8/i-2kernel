@@ -1,0 +1,33 @@
+#                                                                     
+#  __  __   ________   ___ __ __    _______   ______                  
+# /_/\/_/\ /_______/\ /__//_//_/\ /_______/\ /_____/\                 
+# \ \ \ \ \\::: _  \ \\::\| \| \ \\::: _  \ \\:::_ \ \                
+#  \:\_\ \ \\::(_)  \ \\:.      \ \\::(_)  \/_\:\ \ \ \               
+#   \::::_\/ \:: __  \ \\:.\-/\  \ \\::  _  \ \\:\ \ \ \              
+#     \::\ \  \:.\ \  \ \\. \  \  \ \\::(_)  \ \\:\_\ \ \             
+#      \__\/   \__\/\__\/ \__\/ \__\/ \_______\/ \_____\/             
+#                                                                     
+#                                                                     
+#       Version 5.0.0 Revision 19485 Hash c55e33199                   
+#                    Branch is master                                 
+#                 MPI+SLEPC+HDF5_IO Build                             
+#                http://www.yambo-code.org                            
+#
+optics                           # [R] Linear Response optical properties
+bse                              # [R][BSE] Bethe Salpeter Equation.
+dipoles                          # [R] Oscillator strenghts (or dipoles)
+BSEmod= "retarded"               # [BSE] resonant/retarded/coupling
+BSKmod= "SEX"                    # [BSE] IP/Hartree/HF/ALDA/SEX/BSfxc
+BSENGexx= 2085             RL    # [BSK] Exchange components
+BSENGBlk=-1                RL    # [BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]
+#WehCpl                        # [BSK] eh interaction included also in coupling
+BSEprop= "abs"                   # [BSS] abs/kerr/magn/dichr trace
+% BSEQptR
+ 1 | 1 |                             # [BSK] Transferred momenta range
+%
+% BSEBands
+  1 | 8 |                           # [BSK] Bands range
+%
+% KfnQP_E
+ 0.80000 | 1.000000 | 1.000000 |        # [EXTQP Xd] E parameters  (c/v) eV|adim|adim <><><> 
+%

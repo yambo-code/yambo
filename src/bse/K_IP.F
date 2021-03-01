@@ -223,10 +223,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !=========
      !
 !aim137: must add extra index in both %E
+!aim137: temporary %E(:,1) until I populate those values
      if(allocated(BS_T_grp(i_T_g)%W)) then
-       E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
+       E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)-cI*BS_T_grp(i_T_g)%W(i_T)
      else
-       E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
+       E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)
      endif
      !
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0

@@ -209,6 +209,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      do i_block=1,n_BS_blks
        IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
        call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
+print*, 'loop iteration = ', i_block
+!aim137: it fails in instance i_block=85 (last iteration in loop)
+!aim137: program crashes evaluating function io_BS
        io_BS_err=io_BS(iq,X,ID)
        if(n_BS_blks>0) call live_timing(steps=1)
      enddo

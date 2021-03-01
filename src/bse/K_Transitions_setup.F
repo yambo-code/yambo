@@ -39,7 +39,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use com,          ONLY:isec
- use BS_solvers,   ONLY:BSS_mode
+!aim137: Added BSS_uses_DbGd
+ use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_res_ares_dim,&
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
@@ -69,7 +70,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
- &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares
+ &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares, &
+ &               dom_k
+!aim137: added input to pass to subroutine allocating Transitions
  !
  FORCE_EQ_trans=.true.
  !
@@ -101,6 +104,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
 !#if defined _RT
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
 !#endif
+ !
+!aim137: choice of DG or not
+ if (.not.BSS_uses_DbGd) dom_k=1
+ if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
  !
  do i_loop=1,n_loops
    !
@@ -168,7 +175,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                  !
                  if (i_loop==2) then
                    !
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
+!aim137: passing dom_k
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,dom_k)
                    !
                    BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
                    BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
@@ -192,9 +200,11 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
                endif
                !
-!aim137: must add extra index to E
-!aim137: will need to see how this works in the loop
-               BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
+!aim137: will need to include T_is_ok in FG loop
+!aim137: temporary: %E second dimension allocated to 1
+!aim137: temporary: E_eh assigned to 1st column of E
+!aim137: I need to undestand how energies are read in and 
+               BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
                !
                ! To be fixed

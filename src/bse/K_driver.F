@@ -275,6 +275,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
+print*, 'calling transitions_setup'
    call K_Transitions_setup(iq,Ken,Xk,Dip)
    !
    !... Blocks build-up
@@ -287,6 +288,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 1. The IP Part
    ! ===============
+print*, 'calling K_IP'
    call K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! 2. The KERNEL
@@ -295,6 +297,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 3. The SOLVER
    ! =================
+print*, 'calling K_solvers'
    if (l_bss.and..not.l_rpa_IP) call K_solvers(iq,Ken,Xk,q,X_static_pp,W_bss)
    !
    ! `TDDFT` SOLVER

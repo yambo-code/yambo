@@ -141,6 +141,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! from both the left and the right hand side to get from a single Haydock loop
 !aim137: passing Xk to K_Haydock subroutine
    !
+print*, 'calling K_Haydock'
    if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs",Xk)
    if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
    if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)

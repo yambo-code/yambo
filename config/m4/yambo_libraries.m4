@@ -45,6 +45,7 @@ if test -d "$srcdir/src/real_time_lifetimes/"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo
   else
     cd yambo
+    git checkout master
     git pull
     cd ../
   fi

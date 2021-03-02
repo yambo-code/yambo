@@ -47,9 +47,9 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ph_modes=3*n_atoms
  !
- if(STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
+ if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
- if(STRING_same(EkplusQ_mode,'interp')) then
+ if(.not.STRING_same(EkplusQ_mode,'interp')) then
     call warning("Only Fourier interpolation implemented for the E(k+q) energies, EkplusQmode switched to 'interp'")
     EkplusQ_mode='interp'
  endif

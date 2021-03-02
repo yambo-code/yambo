@@ -32,7 +32,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
  character(schlen), intent(in)   :: ph_freqs_file
  integer,      intent(inout)     :: n_q
  real(SP), optional, intent(out) :: q_pt(n_q,3)
- real(SP), optional, intent(out) :: ph_freqs(n_q,3*n_atoms)
+ real(SP), optional, intent(out) :: ph_freqs(3*n_atoms,n_q)
  !
  ! Work Space
  !
@@ -67,7 +67,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
    do i_q=1,n_q
      read(io_unit,*)  q_pt(i_q,:) ! read q-point
      do i1=1,ph_modes,6
-       read(io_unit,*)  ph_freqs(i_q,i1:min(i1+5,ph_modes))  ! frequencies
+       read(io_unit,*)  ph_freqs(i1:min(i1+5,ph_modes),i_q)  ! frequencies
      enddo
    enddo
    !

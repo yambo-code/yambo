@@ -71,7 +71,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  call msg('s',"Number of phonon q-points in the IBZ : ",q_matdyn%nibz)
  !
  YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
- YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
+ YAMBO_ALLOC(ph_freqs,(ph_modes,q_matdyn%nibz))
  !
  call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=q_matdyn%nibz,q_pt=q_matdyn%pt,ph_freqs=ph_freqs)
  !
@@ -153,13 +153,13 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
      !
      do i_l=1,ph_modes
        !
-       if(ph_freqs(i_q,i_l)<FAN_deltaE_treshold) cycle
+       if(ph_freqs(i_l,i_q)<FAN_deltaE_treshold) cycle
        !
-       Bose_F_ph=(1.0+bose_f(ph_freqs(i_q,i_l))/spin_occ)
+       Bose_F_ph=(1.0+bose_f(ph_freqs(i_l,i_q))/spin_occ)
        !
        do i_E=1,DOS_E_steps
           exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Boltz_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
-    &                     Lorentzian_func((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
+    &                     Lorentzian_func((BSE_interp_E(i_c,i_q)-ph_freqs(i_l,i_q)-dos_E(i_E)),DOS_broadening)    
        enddo
        !
      enddo

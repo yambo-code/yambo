@@ -26,20 +26,26 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
  use pars,      ONLY:SP
  use R_lattice, ONLY:bz_samp,k_the_nearest,bz_samp_reset
  use electrons, ONLY:levels,E_reset
+ use stderr,    ONLY:intc
+ use com,       ONLY:msg
+ !
+#include<memory.h>
  !
  integer,       intent(in)     :: n_FineGd_DBs 
  type(levels),  intent(inout)  :: FineGd_io_E(n_FineGd_DBs)
  type(levels),  intent(out)    :: FineGd_E
- type(bz_samp), intent(inout)  :: Xk,FineGd_io_k(n_FineGd_DBs)
+ type(bz_samp), intent(inout)  :: FineGd_io_k(n_FineGd_DBs)
+ type(bz_samp), intent(in)     :: Xk
  type(bz_samp), intent(out)    :: FineGd_k
  logical,       intent(in)     :: l_skip_border_pts
  !
  !
  ! Work Space
  !
- integer :: i_db,ik,i1,ik_near,i_fq
+ integer :: i_db,ik,i1,ik_near,i_fg
  logical :: l_I_am_border
  integer, allocatable :: I_am_border(:)
+ integer :: n_sp_pol_input
  !
  if(l_skip_border_pts) then
    !      
@@ -60,6 +66,8 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
    FineGd_E%nk=count(I_am_border==0)
    FineGd_k%nibz=count(I_am_border==0)
    !
+   call msg('sr','Removed '//trim(intc(count(I_am_border==1)))//' border points')
+   !
  else
    !
    FineGd_E%nk=sum(FineGd_io_E(:n_FineGd_DBs)%nk)
@@ -69,8 +77,10 @@ subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,Fi
  !
  ! ...merge of ALL FineGd_io_E(:) and FineGd_io_k(:) into FineGd_E and FineGd_k
  !
+ n_sp_pol_input=size(FineGd_io_E(1)%E(1,1,:))
+ !
  FineGd_E%nb=FineGd_io_E(1)%nb
- allocate(FineGd_E%E(FineGd_E%nb,FineGd_E%nk,n_sp_pol))
+ allocate(FineGd_E%E(FineGd_E%nb,FineGd_E%nk,n_sp_pol_input))
  allocate(FineGd_k%pt(FineGd_E%nk,3))
  !
  ik=0

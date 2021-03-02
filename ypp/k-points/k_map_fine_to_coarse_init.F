@@ -47,10 +47,9 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  ! Work Space
  !
  real(SP)     ::rand_k(BZ_FineGd_nkpts_to_use+1,3),a_save(3,3),alat_save(3),gap(2),tmp_zero(3)
- integer      ::i1,ik_ref,ib,ik,ik_near,i_fg
- logical      ::l_skip_check,l_skip_DbGd_border_points,l_I_am_border
+ integer      ::i1,ik_ref,ib,ik
+ logical      ::l_skip_check,l_skip_DbGd_border_points
  type(levels)          :: FineGd_E
- integer,  allocatable :: I_am_border(:)
  real(SP), allocatable :: rand_E(:,:,:)
  !
  ! BZ DB1 I/O
@@ -216,10 +215,6 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  enddo
  !
  call E_reset(FineGd_E)
- if (l_skip_DbGd_border_points) then
-   call msg('sr','Removed '//trim(intc(count(I_am_border==1)))//' border points')
-   deallocate(I_am_border)
- endif
  !
  ! Symmetry restoring
  !

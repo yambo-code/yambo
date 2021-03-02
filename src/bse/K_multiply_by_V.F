@@ -92,7 +92,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
         Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
 !aim137: este if lo puedo sacar del do y hacer point by point multiplication
       if (i_Tk.eq.i_Tp) &
-      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,1)*Vi(i_Tk)%fragment(:,i_dom_k)
+      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
      enddo
      !
    case("C")
@@ -163,7 +163,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
         Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
         Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
       if (i_Tk.eq.i_Tp) &
-      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,1)*Vi(i_Tk)%fragment(:,i_dom_k)
+      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
      enddo
      !
    end select

@@ -71,7 +71,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
  &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares, &
- &               dom_k
+ &               dom_k,i_dom_k,ikFGbz,ikFG
 !aim137: added input to pass to subroutine allocating Transitions
  !
  FORCE_EQ_trans=.true.
@@ -107,7 +107,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  !
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
- if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
+ if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
  !
  do i_loop=1,n_loops
    !
@@ -206,6 +206,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
 !aim137: I need to undestand how energies are read in and 
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+               if ( BSS_uses_DbGd .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
+                 do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
+                   ikFG = Xk%FGbz%E_map(ikFGbz)
+                   i_dom_k = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
+                   BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_dom_k) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
+                 enddo
+               end if
                !
                ! To be fixed
                if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL

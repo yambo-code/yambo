@@ -105,8 +105,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
          !
          BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
          !
-!aim137: must add extra index to E
 !aim137: temporary %E(:,1) until I populate those values
+!aim137: question: does this need a loop over FG? check
          BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr,1)*ares_fac
          BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*ares_fac
          if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*ares_fac

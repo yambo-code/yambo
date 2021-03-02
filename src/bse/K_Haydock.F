@@ -116,7 +116,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
- if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:)+1)
+ if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0,dom_k)
@@ -235,9 +235,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    enddo
 !aim137: question: what is f_RES
 !aim137: both $fragment and %E expand in the same way - no change needed
-!aim137: fragment(:,1) is temporary until I expand %E
-!aim137: temporary %E(:,1) until I populate those values
-   if(velocity_correction) V_tmp(i_g)%fragment(:,1) = V0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E(:,1)
+   if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  !
 !aim137: question: what does PP_bcast do. Does it need loop over fine grid
@@ -260,9 +258,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
        W0(i_g)%fragment(:,i_dom_k) = W0(i_g)%fragment(:,i_dom_k)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
-!aim137: fragment(:,1) is temporary until I expand %E
-!aim137: temporary %E(:,1) until I populate those values
-       if(velocity_correction) V_tmp(i_g)%fragment(:,1) = W0(i_g)%fragment(:,1)/BS_T_grp(i_g)%E(:,1)
+       if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
    enddo
    !
    do i_g = 1,BS_nT_grps
@@ -356,12 +352,10 @@ subroutine K_Haydock(iq,W,mode,Xk)
      !
      !|Vn+1> = H |Vn>
      !
-print*, 'calling K_multiply_by_V'
      call  K_multiply_by_V(Vn,Vnp1,1)
      !
      ! A(n) = <Vn|Vn+1>
      !
-print*, 'calling K_dot_prod'
      call K_dot_product(v0_mod_,Vn,Vnp1,1)
      Af(it)=real(v0_mod_,SP)
      !

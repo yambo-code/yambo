@@ -55,7 +55,6 @@ integer function io_BS(iq,X,ID)
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  type(IO_desc)       ::local_desc
  !
-print*, 'inside io_BS function'
  if (.not.io_BS_K.and.maxval(io_sec(ID,:))>1) then
    io_BS=IO_NOT_ALLOWED
    call io_disconnect(ID,FORCE=.TRUE.)
@@ -137,13 +136,7 @@ print*, 'inside io_BS function'
    nullify(tmp_link)
  endif
  !
-print*, 'about to chrash in call io_fragment_disconnect'
-!aim137: the call to this subroutine causes the crash
  call io_fragment_disconnect(ID,ID_frag)
-print*, 'did not crash'
-!aim137: this statement is printed in loops <85, but not in loop 85
-!aim137: the comment below could be related? however, running i3-haydock
-!aim137: with the original yambo binary over the same kernel works well
  !
 1 continue
  !

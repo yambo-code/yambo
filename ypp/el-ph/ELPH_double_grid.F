@@ -40,16 +40,10 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Work space
  !
- type(bz_samp)         :: q_io,q_fine
- type(levels)          :: Ph_E_io,Ph_E_fine
- integer               :: ph_modes,i_q
+ type(bz_samp)         :: q_fine
+ type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- logical               :: l_skip_DbGd_border_points
- !
- ph_modes=3*n_atoms
- !
- call parser('SkipBorderPts',l_skip_DbGd_border_points)
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
@@ -58,40 +52,7 @@ subroutine ELPH_double_grid(k,E,q)
     EkplusQ_mode='interp'
  endif
  !
- if(STRING_same(ph_freqs_file,'none'))            call error("Phonon frequencies file not specified!")
- !
- call bz_samp_reset(q_fine)
- call bz_samp_reset(q_io)
- ! 
- if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
- !
- call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
- call msg('s',"Number of phonon modes: ",ph_modes)
- !
- call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=q_io%nibz)
- !
- call msg('s',"Number of phonon q-points in the matdyn file: ",q_io%nibz)
- !
- YAMBO_ALLOC(q_io%pt,(q_io%nibz,3))
- !
- call E_reset(Ph_E_fine)
- call E_reset(Ph_E_io)
- !
- Ph_E_io%nb=ph_modes
- Ph_E_io%nk=q_io%nibz
- YAMBO_ALLOC(Ph_E_io%E,(Ph_E_io%nb,Ph_E_io%nk,1))
- !
- call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=q_io%nibz,q_pt=q_io%pt,ph_freqs=Ph_E_io%E(:,:,1))
- !
- ! q-points in matdyn output are alat units, convert to internal units
- ! ==================================
- q_io%pt=q_io%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
- !
- ! Converto to iku units
- !
- do i_q=1,q_io%nibz
-   call c2a(v_in=q_io%pt(i_q,:),mode="kc2i")
- enddo
+ call section('+','PH-Double Grid initialization')
  !
  ! Expand the Coarse Grid 
  !========================
@@ -100,12 +61,6 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Find border points and remove them if required
  ! ===============================================
- call k_find_border_and_merge(Ph_E_fine,q_fine,1,Ph_E_io,q_io,q,l_skip_DbGd_border_points)
- stop
- !
- !
- l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
- l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
- l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
+ !call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
  !
 end subroutine

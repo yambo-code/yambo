@@ -29,9 +29,12 @@ subroutine ELPH_double_grid(k,E,q)
  use D_lattice,           ONLY:n_atoms,alat
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode,ELPH_databases_IO_freqs
  use stderr,              ONLY:STRING_same
+ use ELPH,                ONLY:PH_freqs_sq,PH_qpt,elph_use_q_grid,ph_modes
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
+ use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP
+
  !
 #include<memory.h>
  !
@@ -44,6 +47,8 @@ subroutine ELPH_double_grid(k,E,q)
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
+ integer               :: ID,io_err,i_f
+ integer, external     :: io_ELPH
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
@@ -59,8 +64,24 @@ subroutine ELPH_double_grid(k,E,q)
  call k_build_up_BZ_tables(q)
  call k_ibz2bz(q,'i',.true.)
  !
+ ! Read phonon-frequencies in the ELPH-DB
+ ! ======================================
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID)
+ io_err=io_ELPH(ID,'no_matrix_elements')
+ call deliver_IO_error_message(io_err,"GKKP")
+ if (io_err/=0) call error('El-Ph database not found')
+ !
+ if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')
+ call E_reset(Ph_E)
+ Ph_E%nb=ph_modes
+ Ph_E%nk=q%nibz
+ YAMBO_ALLOC(Ph_E%E,(Ph_E%nb,Ph_E%nk,1))
+ do i_f=1,ph_modes
+   Ph_E%E(i_f,:,1)=sqrt(PH_freqs_sq(:,i_f))
+ enddo
+ !
  ! Find border points and remove them if required
  ! ===============================================
- !call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
+ call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
  !
 end subroutine

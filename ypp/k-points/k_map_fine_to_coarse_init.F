@@ -129,11 +129,11 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    if(STRING_same(ph_freqs_file,'none'))            call error("Phonon frequencies file not specified!")
    if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
    !
-   call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
-   call msg('s',"Number of phonon modes: ",ph_modes)
+   call msg('s',":: Phonon frequencies read from: "//trim(ph_freqs_file))
+   call msg('s',":: Number of phonon modes: ",ph_modes)
    !
    call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=FineGd_io_k(1)%nibz)
-   call msg('s',"Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)
+   call msg('s',":: Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)
    !
    YAMBO_ALLOC(FineGd_io_k(1)%pt,(FineGd_io_k(1)%nibz,3))
    !

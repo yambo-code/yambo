@@ -34,7 +34,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use vec_operate,  ONLY:iku_v_norm
  use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use R_lattice,    ONLY:G_m_G,g_vec,ng_in_shell,n_g_shells,E_of_shell,G_m_G_maxval
 #ifdef _CUDA
  use R_lattice,    ONLY:G_m_G_d
 #endif
@@ -50,6 +50,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  integer :: iG_shell,iGo_shell,iG_shell_0,iG_shell_max,iG_,iGo_,iG_alloc,iGo_alloc
  real(SP):: E_iG, E_iGo, E_max
  real(SP):: v1(3)
+ integer,  allocatable :: G_m_G_maxval_tmp(:)
  real(SP), allocatable :: E_G_m_G(:,:)
  type(PP_indexes) :: PAR_IND_G
  !
@@ -162,6 +163,9 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  !
  YAMBO_ALLOC(G_m_G,(iG_,iGo_))
  G_m_G=0
+ YAMBO_ALLOC(G_m_G_maxval_tmp,(iGo_))
+ G_m_G_maxval_tmp=0
+ G_m_G_maxval=0
  !
  !$omp parallel do default(shared), private(i2,i1,v1), schedule(dynamic)
  do i2=1,iGo_
@@ -175,11 +179,15 @@ integer function eval_G_minus_G(iG,iGo,COMM)
      !
      v1(:)=g_vec(i1,:)-g_vec(i2,:)
      G_m_G(i1,i2)=G_index(v1,.false.)
+     G_m_G_maxval_tmp(i2)=max(G_m_G_maxval_tmp(i2),G_m_G(i1,i2))
      !
    enddo
  enddo
  !$omp end parallel do
- ! 
+ !
+ G_m_G_maxval=maxval(G_m_G_maxval_tmp)
+ YAMBO_FREE(G_m_G_maxval_tmp)
+ !
  if (present(COMM)) call PP_redux_wait(G_m_G,COMM=COMM%COMM)
  !
  call PP_indexes_reset(PAR_IND_G)

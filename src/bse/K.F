@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,ng_closed
+ use R_lattice,    ONLY:G_m_G_maxval,qindx_B,bz_samp,qindx_X,ng_closed
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -165,12 +165,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
      call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
    endif
-   O_ng=maxval(G_m_G)
+   O_ng=G_m_G_maxval
    O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
  endif
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
-   O_ng=maxval(G_m_G)
+   O_ng=G_m_G_maxval
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
  endif

@@ -149,7 +149,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      ! Add the energy diffs on the diagonal
      !
      if (i_Tk.eq.i_Tp) &
-     & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
+     & Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,1)*Vi(i_Tk)%fragment(:,1)
      !
    end select
    !

@@ -75,6 +75,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Work Space ...
  !
  character(schlen) :: section_title
+ character(10)     :: ALDA_cut_scheme
  character(1)      :: mode_now
  !
  ! ... Kernel loop
@@ -160,19 +161,27 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
- if (BS_K_is_ALDA .and. BS_n_g_fxc/=ng_closed) then
-   if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
-     BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
-     call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
-   endif
-   O_ng=G_m_G_maxval
-   O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
- endif
- !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=G_m_G_maxval
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   ! Hybrid functional.
+   ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
+   if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
    if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
+ endif
+ !
+ if (BS_K_is_ALDA) then
+   O_ng=BS_n_g_fxc
+   ! This is manually set for now
+   ALDA_cut_scheme="lower_Gmax"
+   if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
+     if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+       BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
+       call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+     endif
+     O_ng=G_m_G_maxval
+     O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
+   endif
  endif
  !
  ! BS/FXC DB I/O
@@ -298,7 +307,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    if ( BS_n_g_fxc/=ng_closed) then
      FXC_n_g_corr=BS_n_g_fxc
-     call TDDFT_ALDA_lower_cutoff()
+     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
  endif
@@ -470,16 +479,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Exchange
          if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
-                                   &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+&                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
          !
          ! Correlations
          if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                 i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
-&                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
+&                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !         
        case ("C","Q")
          !

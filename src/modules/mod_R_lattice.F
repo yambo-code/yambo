@@ -29,6 +29,8 @@ module R_lattice
 #include<dev_defs.h>
 #include<memory.h>
  !
+ integer, parameter:: MAX_kpts_to_report=50
+ !
  ! K lattice
  !
  integer           :: k_grid(3)

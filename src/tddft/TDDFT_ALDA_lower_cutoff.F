@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine TDDFT_ALDA_lower_cutoff()
+subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
  use pars,          ONLY:DP,SP,cZERO
  use TDDFT,         ONLY:FXC_n_g_corr
@@ -34,15 +34,31 @@ subroutine TDDFT_ALDA_lower_cutoff()
  use interfaces,    ONLY:eval_G_minus_G
  !
  implicit none
+ !
+ character(10) :: ALDA_cut_scheme
  ! 
  ! Work Space
  !
  integer     :: i1,i2,ig_fxc,isp1,isp2,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
- logical     :: procedure1=.false., procedure2=.true.
+ logical     :: procedure1, procedure2, procedure3=.false.
  !
- BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))
- call PARSER_close_G(BS_n_g_fxc,'tRL')
+ procedure1=trim(ALDA_cut_scheme)=="lower_GmGp"
+ procedure2=trim(ALDA_cut_scheme)=="lower_Gmax"
+ !
+ ! DEBUG <
+ !procedure1=.false.
+ !procedure1=.false.
+ !procedure3=.true.
+ ! DEBUG >
+ !
+ if (procedure1) then
+   BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))
+   call PARSER_close_G(BS_n_g_fxc,'tRL')
+   call msg('s',"[TDDFT] lowering the cutoff of F_xc(G-G') for G and G' to ",FXC_n_G_corr)
+ endif
+ !
+ if (procedure2) call msg('s',"[TDDFT] lowering the cutoff of F_xc(G) to ",BS_n_g_fxc)
  !
  do isp1=1,n_spin
    do isp2=1,n_spin
@@ -97,9 +113,9 @@ subroutine TDDFT_ALDA_lower_cutoff()
      ! DEBUG <
      ! PROCEDURE 3: no lowering here
      ! In both previous procedures I can use up to ng_closed vectors max
-     ! However Fxc is not smooth and may need more, up to fft_size, in principle
+     ! However Fxc may need more G vecs, up to G-G' with both running till n_g_closed in principle.
      ! With this direct procedure all g-vectors are used
-     !F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
+     if (procedure3) F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
      ! DEBUG >
      !
      ! FFT call: FORWARD (G->R)
@@ -117,7 +133,7 @@ subroutine TDDFT_ALDA_lower_cutoff()
    enddo
  enddo
  !
- call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
+ if (procedure1) call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
  !
  ! DEBUG <
  ! write(*,*) "F_xc= ",F_xc(1:10,1,1)

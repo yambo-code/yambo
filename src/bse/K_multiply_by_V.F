@@ -85,15 +85,24 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
      ! Add the energy diffs on the diagonal
      !
-!aim137: must add extra index to %E
-!aim137: get the correct energies of the transtions in the fine grid
-     do i_dom_k=1,dom_k
-        Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
-        Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
-!aim137: este if lo puedo sacar del do y hacer point by point multiplication
-      if (i_Tk.eq.i_Tp) &
-      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
+!aim137: copy the result of col 1 (coarse grid) to all cols (FG)
+     do i_dom_k=2,dom_k
+       Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + Vo(i_Tk)%fragment(:,1)
+       if (i_Tk.ne.i_Tp) &
+       & Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,i_dom_k) + Vo(i_Tp)%fragment(:,1)
      enddo
+     if (i_Tk.eq.i_Tp) &
+     & Vo(i_Tk)%fragment = Vo(i_Tk)%fragment + BS_T_grp(i_Tk)%E*Vi(i_Tk)%fragment
+!aim137: pruebo con esto
+!if (i_B == n_BS_blks) then
+! do i_g=1,BS_nT_grps
+!  do i_dom_k=2,dom_k
+!   Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1)
+!  enddo
+!  Vo(i_g)%fragment = Vo(i_g)%fragment + BS_T_grp(i_g)%E*Vi(i_g)%fragment
+! enddo
+!endif
+
      !
    case("C")
      !

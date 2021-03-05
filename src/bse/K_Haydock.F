@@ -117,6 +117,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
  if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
+ HAYVEC_size = HAYVEC_size * dom_k
+!aim137: change HAYVEC_size to consider FG
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0,dom_k)
@@ -177,9 +179,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
      call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
-   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size)
-   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size)
-   if (scheme=="pseudo-herm") call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size)
+   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size,dom_k)
+   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size,dom_k)
+   if (scheme=="pseudo-herm") call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size,dom_k)
    !
    YAMBO_FREE_P(Vnm1_f)
    YAMBO_FREE_P(Vn_f)
@@ -421,12 +423,14 @@ subroutine K_Haydock(iq,W,mode,Xk)
      if (l_BS_ares_asymm) then
        do i_g = 1,BS_nT_grps
          if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+!aim137: put inside loop over FG?
          call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        enddo
      endif
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+!aim137: put inside loop over FG?
        call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
@@ -506,7 +510,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    !
    ! DEBUG<
-   !write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
+    write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
    ! DEBUG>
    !
    tmp_converged=(reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)
@@ -527,10 +531,10 @@ subroutine K_Haydock(iq,W,mode,Xk)
        YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
      endif
      !
-     call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size)
-     call HAYVEC_gather(Vn,Vn_f,HAYVEC_size)
+     call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size,dom_k)
+     call HAYVEC_gather(Vn,Vn_f,HAYVEC_size,dom_k)
      if (trim(scheme)=="pseudo-herm") then
-       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size) 
+       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size,dom_k) 
      endif
      !
      call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
@@ -581,7 +585,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
 end subroutine
 !
 !
-subroutine HAYVEC_gather(V,fullV,fullV_size)
+subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
  !
  ! Gather the Haydock vector fragments into one 
  ! large vector of full dimension  
@@ -601,6 +605,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
  complex(SP),intent(out) :: fullV(fullV_size)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
+ integer                 :: i_dom_k,dom_k
  !
  fullV = cZERO
  istop_g = 0
@@ -608,12 +613,13 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
  ! In this loop I need T_groups indexes since I do not want duplicates 
  !
  do i_g=1,BS_nT_grps
-   istart_g = istop_g + 1 
-   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-   if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
-   fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,1)
-!aim137: added dimension hard coded at 1
-!aim137: critical. add loop over fine grid
+!aim137: added loop over FG
+   do i_dom_k=1,dom_k
+     istart_g = istop_g + 1 
+     istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+     if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
+     fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_dom_k)
+   enddo
  enddo
  !
  call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
@@ -622,7 +628,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
 end subroutine HAYVEC_gather  
 !
 !
-subroutine HAYVEC_scatter(V,fullV,fullV_size)
+subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
  !
  ! Scatter the full dimension vector on the master (read from disk/restart)
  ! into Haydock vector fragments 
@@ -641,6 +647,7 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size)
  type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
+ integer                 :: i_dom_k,dom_k
  !
  ! In this loop I need T_groups Haydock since I do need duplicates 
  !
@@ -649,12 +656,13 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size)
  istop_g = 0
  !
  do i_g=1,BS_nT_grps
-   istart_g = istop_g + 1 
-   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-   V(i_g)%fragment(1:BS_T_grp(i_g)%size,1) = fullV(istart_g:istop_g)  
-!aim137: added dimension hard coded at 1
-!aim137: critical. add loop over fine grid
+!aim137: added loop over FG
+   do i_dom_k=1,dom_k
+     istart_g = istop_g + 1 
+     istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+     if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+     V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_dom_k) = fullV(istart_g:istop_g)  
+   enddo
  enddo
  !
 end subroutine HAYVEC_scatter

@@ -293,7 +293,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
  enddo
  !
-print*, Epsilon_ij
  if (use_Cf) deallocate(X_i)
  !
  contains

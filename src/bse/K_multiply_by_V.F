@@ -85,24 +85,9 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
      ! Add the energy diffs on the diagonal
      !
-!aim137: copy the result of col 1 (coarse grid) to all cols (FG)
-     do i_dom_k=2,dom_k
-       Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + Vo(i_Tk)%fragment(:,1)
-       if (i_Tk.ne.i_Tp) &
-       & Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,i_dom_k) + Vo(i_Tp)%fragment(:,1)
-     enddo
+!aim137: I do this only for the first col here (Coarse Gd)
      if (i_Tk.eq.i_Tp) &
-     & Vo(i_Tk)%fragment = Vo(i_Tk)%fragment + BS_T_grp(i_Tk)%E*Vi(i_Tk)%fragment
-!aim137: pruebo con esto
-!if (i_B == n_BS_blks) then
-! do i_g=1,BS_nT_grps
-!  do i_dom_k=2,dom_k
-!   Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1)
-!  enddo
-!  Vo(i_g)%fragment = Vo(i_g)%fragment + BS_T_grp(i_g)%E*Vi(i_g)%fragment
-! enddo
-!endif
-
+     & Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,1)*Vi(i_Tk)%fragment(:,1)
      !
    case("C")
      !
@@ -143,11 +128,6 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        !
      endif
      !
-!aim137: Expand columns in Case("C")
-     do i_dom_k=1,dom_k
-      Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
-      Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
-     enddo
      !
    case("A")
      !
@@ -168,12 +148,8 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
      ! Add the energy diffs on the diagonal
      !
-     do i_dom_k=1,dom_k
-        Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,1)
-        Vo(i_Tp)%fragment(:,i_dom_k) = Vo(i_Tp)%fragment(:,1)
-      if (i_Tk.eq.i_Tp) &
-      & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
-     enddo
+     if (i_Tk.eq.i_Tp) &
+     & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
      !
    end select
    !
@@ -185,6 +161,18 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
    call PP_redux_wait(Vo(i_g)%fragment,COMM=PAR_COM_T_Haydock(i_g)%COMM)
  enddo
 #endif
+ !
+!aim137: Expand Col 1 to all other columns (FG)
+!aim137: Before copying it, I substract the Energies from Vo(col1)
+ if ( dom_k > 1 ) then
+   do i_g=1,BS_nT_grps
+     do i_dom_k=2,dom_k
+       Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1) &
+       & - BS_T_grp(i_g)%E(:,1)*Vi(i_g)%fragment(:,1) &
+       & + BS_T_grp(i_g)%E(:,i_dom_k)*Vi(i_g)%fragment(:,i_dom_k)
+     enddo
+   enddo
+ endif
  !
 end subroutine
 !

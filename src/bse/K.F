@@ -34,7 +34,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free,&
+&                       qindx_B_init,qindx_B_close,qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -99,7 +100,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
  integer, external ::io_BS,io_BS_PAR_init,io_BS_header
- integer, external ::io_QINDX,qindx_B_init,qindx_B_close,qindx_B_load
+ integer, external ::io_QINDX
  !
  ! Timing and restart
  !

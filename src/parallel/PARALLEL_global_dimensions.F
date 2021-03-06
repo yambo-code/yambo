@@ -117,6 +117,10 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! EH-range
  !----------
+ if (ENVIRONMENT=="Response_T_space") then
+   ! Set this value just to properly define a parallel range
+   PAR_EH_range=(PAR_n_c_bands(2)-PAR_n_c_bands(1)+1)*PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+ endif
  if (ENVIRONMENT=="Response_T_space_transitions") then
    PAR_EH_range=maxval( BS_nT_at_k )
    do i_k=1,Xk%nibz*BS_res_ares_dim

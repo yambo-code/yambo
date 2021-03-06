@@ -25,7 +25,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nXkibz
+ use R_lattice,      ONLY:bz_samp,nXkibz,MAX_kpts_to_report
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
@@ -44,7 +44,6 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  real(SP)          :: k_cc(3),k_al(3)
  integer           :: ik,is_pol,ib,i1,nb_to_print
- integer, parameter:: MAX_K_to_print=50
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
@@ -61,8 +60,8 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  K_LOOP: do ik=k_range(1),k_range(2)
    !
-   if (.not.fat_log.and.ik>MAX_K_to_print) then
-     dumb_ch1=trim(intc(k%nibz-MAX_K_to_print))
+   if (.not.fat_log.and.ik>MAX_kpts_to_report) then
+     dumb_ch1=trim(intc(k%nibz-MAX_kpts_to_report))
      call msg('nrn','Remaining '//trim(dumb_ch1)//' points informations can be written running with -fatlog')
      exit K_LOOP
    endif

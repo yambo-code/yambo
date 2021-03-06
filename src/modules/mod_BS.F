@@ -409,7 +409,8 @@ module BS
          if (l_BS_ares_asymm) cycle
          ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_asymm=.true.
          do i_r=1,BS_blk(i_B)%size(1)
-           BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
+           !This gives fails with test-suite test Benzene 06_tddft_cpl
+           !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
            do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
            enddo

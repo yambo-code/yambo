@@ -64,8 +64,8 @@ subroutine K_blocks(iq)
  !
  ! Count the blocks
  n_BS_blks=0
- do i_T=1,BS_nT_grps
-   do j_T=1,BS_nT_grps
+ do j_T=1,BS_nT_grps
+   do i_T=1,BS_nT_grps
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares

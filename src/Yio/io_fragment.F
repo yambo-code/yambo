@@ -49,15 +49,10 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! Work Space
  !
  integer           :: ierr_,i_frag,ACT_NOW
- logical           :: disconnect,par_IO
+ logical           :: par_IO
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
- !
- disconnect=.true.
-#if defined _PAR_IO
- if (present(cpu_id)) disconnect=(cpu_id==0).or.read_is_on(ID)
-#endif
  !
  par_IO=.false.
 #if defined _PAR_IO

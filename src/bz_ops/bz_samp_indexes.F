@@ -113,18 +113,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if (bse_scattering)  X_scattering    =.TRUE.
  if (coll_scattering) sigma_scattering=.TRUE.
  !
-#if defined _PAR_IO
- !
- ! Parallelization with Memory distribution
- !==========================================
- !
- if(bse_scattering) then
-   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
-   call PARALLEL_SETUP_K_scheme("BZINDX")
- endif
- !
-#endif
- !
  q%description='q'
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
@@ -253,6 +241,18 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if (sigma_scattering) string(2)='Sigma'
  if ( bse_scattering)  string(1)=trim(string(1))//' + BSE'
  if (coll_scattering)  string(2)=trim(string(2))//' + COLL'
+ !
+#if defined _PAR_IO
+ !
+ ! Parallelization with Memory distribution
+ !==========================================
+ !
+ if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) then
+   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
+   call PARALLEL_SETUP_K_scheme("BZINDX")
+ endif
+ !
+#endif
  !
  if (X_scattering.and.Xk_grid_is_uniform) then
    !
@@ -496,9 +496,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call PP_redux_wait()
  !
- do_qindx_B=master_cpu
+ do_qindx_B=master_cpu.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
 #if defined _PAR_IO
- do_qindx_B=PAR_K_scheme%COM_ibz_A2A%CPU_id==0
+ do_qindx_B=PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
 #endif
  !
  if (do_qindx_B) then
@@ -518,6 +518,10 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  call PP_redux_wait()
  call PP_indexes_reset(PAR_IND_Xk)
  call PP_indexes_reset(PAR_IND_k)
+ !
+#if defined _PAR_IO
+ if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) call PARALLEL_global_indexes(en,Xk,q," ",RESET=.TRUE.)
+#endif
  !
  call timing('bz_samp_indexes',OPR='stop')
  !

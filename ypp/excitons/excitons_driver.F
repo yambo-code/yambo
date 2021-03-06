@@ -91,7 +91,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
    return
  endif
  !
- if(.not.l_sort) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
+ if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
  ! 
  ! Exciton's spin
  !=====================

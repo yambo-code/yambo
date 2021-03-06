@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occupations_driver(k,en)
+subroutine RT_occupations_driver(k,q,en)
  !
  use drivers,        ONLY:l_rt_carriers_in_use
  use R_lattice,      ONLY:bz_samp
@@ -31,11 +31,12 @@ subroutine RT_occupations_driver(k,en)
  use YPP_interfaces, ONLY:PROJECTION_setup
  use RT_control,     ONLY:RT_apply,CARR_RT_IO_t
  use real_time,      ONLY:RT_bands
+ use YPPm,           ONLY:DIPs_mask,l_dipoles,DIPs,DIPs_V_bands
  use YPP_real_time,  ONLY:l_RT_time,l_RT_energy,l_RT_bands,l_RT_dos,RT_conf
  !
- implicit none
+#include<memory.h>
  !
- type(bz_samp) :: k
+ type(bz_samp) :: k,q
  type(levels)  :: en
  !
  call section('+','Real-Time components (Occupations, Lifetimes,...)')
@@ -46,6 +47,13 @@ subroutine RT_occupations_driver(k,en)
  call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
+ !
+ if (l_dipoles) then
+   call section('=',"The Dipoles `Mask`")
+   !=====================================
+   DIPs_V_bands=RT_bands
+   call DIPOLES_driver(k,en,q)
+ endif
  !
  ! Setups
  !========
@@ -73,6 +81,9 @@ subroutine RT_occupations_driver(k,en)
  !
  ! Occupations bands fit 
  !=======================
- if (l_RT_bands) call RT_occ_bands_interpolation(en,k,RT_conf%T_n_steps)
+ if (l_RT_bands) call RT_occ_bands_interpolation(en,k,q,RT_conf%T_n_steps)
+ !
+ ! Clean..
+ YAMBO_FREE(DIPs_mask)
  !
 end subroutine RT_occupations_driver

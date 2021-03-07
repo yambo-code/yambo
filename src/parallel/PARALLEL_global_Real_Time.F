@@ -26,7 +26,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use drivers,       ONLY:l_eval_collisions
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_RT,OPENMP_set_threads
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute

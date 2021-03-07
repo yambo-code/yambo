@@ -26,7 +26,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use R_lattice,     ONLY:bz_samp,nXkibz
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_m,    ONLY:PP_indexes_reset,n_groups,master_cpu
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved

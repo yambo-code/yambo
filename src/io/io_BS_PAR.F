@@ -33,8 +33,8 @@ integer function io_BS_header(iq,X,ID,mode)
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
- use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,get_name,io_mode,&
-&                        io_connect,io_disconnect,io_elemental,io_header,io_BS_K,DUMP
+ use IO_m,          ONLY:frag_BS_K,write_is_on,read_is_on,io_mode,io_BS_K,DUMP
+ use IO_int,        ONLY:get_name,io_connect,io_disconnect,io_elemental,io_header
  use descriptors,   ONLY:IO_desc,IO_desc_duplicate
  !
  implicit none
@@ -138,7 +138,8 @@ integer function io_BS_PAR_init(iq,ID,mode)
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
 &                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff,     &
 &                        BS_mat_res_ares_dim,l_BS_ares_asymm,BS_res_ares_dim
- use IO_m,          ONLY:io_connect,def_variable_bulk,io_BS_K,io_file,write_is_on,read_is_on
+ use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
+ use IO_int,        ONLY:io_connect,def_variable_bulk
  !
  implicit none
  !
@@ -288,7 +289,8 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  use parallel_m,    ONLY:master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded,BS_K_cutoff
- use IO_m,          ONLY:io_disconnect,read_is_on,write_is_on,io_BS_K
+ use IO_m,          ONLY:read_is_on,write_is_on,io_BS_K
+ use IO_int,        ONLY:io_disconnect
  !
  implicit none
  !
@@ -334,8 +336,9 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  use pars,          ONLY:IP,IPL,SP,schlen
  use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size,n_BS_blks_min
  use timing_m,      ONLY:timing
- use IO_m,          ONLY:io_variable_bulk,io_unit,netcdf_call,nf90_sync,&
+ use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,&
 &                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL
+ use IO_int,        ONLY:io_variable_bulk
  !
  implicit none
  !

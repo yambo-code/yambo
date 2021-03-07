@@ -26,9 +26,9 @@ integer function io_Double_Grid(E,Xk,ID)
  use electrons,      ONLY:levels,FineGd_E_components_alloc
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
- use IO_m,           ONLY:io_connect,io_disconnect,read_is_on,&
-&                         io_header,ver_is_gt_or_eq,write_is_on,&
-&                         IO_OUTDATED_DB,variable_exist,&
+ use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist
+ use IO_int,         ONLY:io_connect,io_disconnect,&
+&                         io_header,ver_is_gt_or_eq,&
 &                         def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing

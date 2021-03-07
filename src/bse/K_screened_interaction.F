@@ -32,7 +32,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
- use IO_m,         ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,&
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
  use cuda_m,       ONLY:have_cuda

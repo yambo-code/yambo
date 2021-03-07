@@ -28,7 +28,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
 &                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
  use it_m,           ONLY:infile
- use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&

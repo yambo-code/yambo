@@ -26,11 +26,12 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! This routine opens the fragment.
  !
  use pars,        ONLY:schlen
- use IO_m,        ONLY:close_is_on,io_connect,io_file,io_mode,io_com,&
+ use IO_int,      ONLY:io_connect,io_control
+ use IO_m,        ONLY:close_is_on,io_file,io_mode,io_com,&
 &                      io_sec,io_extension,read_is_on,write_is_on,&
 &                      OP_RD_CL,OP_APP_CL,io_type,io_folder,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,io_control
+                       frag_SC,frag_RT,frag_ELPH,frag_BS_K
  use stderr,      ONLY:intc,write_fragments_IO_log,logfile
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
  use parallel_m,  ONLY:ncpu
@@ -138,9 +139,9 @@ subroutine io_fragment_disconnect(ID,ID_frag)
  !
  ! This routine closes the fragment. 
  !
- use IO_m,        ONLY:io_disconnect,io_raw_extension
+ use IO_int,      ONLY:io_disconnect
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                       frag_SC,frag_RT,frag_ELPH
+                       frag_SC,frag_RT,frag_ELPH,io_raw_extension
  !
  implicit none
  !

@@ -195,47 +195,18 @@ module R_lattice
      logical, optional :: ROTATE_k_ref,border_point
      integer, optional :: k_symm
      integer, optional :: i_err
-   end function 
+   end function
+   ! 
+   function qindx_B_load(ikbz,ikp_bz,ID)
+     !
+     integer, dimension(2) :: qindx_B_load
+     integer, intent(in) :: ID,ikbz,ikp_bz
+     !
+   end function qindx_B_load
    !
  end interface
  !
  contains
-   !
-   integer function qindx_B_init(ID)
-     !
-     use pars,       ONLY:IP
-     use IO_m,       ONLY:io_control,io_connect,def_variable_bulk,OP_RD,RD
-     integer  :: ID
-     !
-     call io_control(ACTION=OP_RD,ID=ID)
-     qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
-     call def_variable_bulk(ID,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
-     call io_control(ACTION=RD,ID=ID)
-     !
-   end function qindx_B_init
-   !
-   integer function qindx_B_close(ID)
-     !
-     use IO_m,  ONLY:io_control,io_disconnect,RD_CL
-     integer :: ID
-     !
-     call io_control(ACTION=RD_CL,ID=ID)
-     call io_disconnect(ID=ID)
-     qindx_B_close=0
-     !
-   end function qindx_B_close
-   !
-   function qindx_B_load(ikbz,ikp_bz,ID)
-     !
-     use IO_m,  ONLY:io_variable_bulk
-     integer, dimension(2) :: qindx_B_load
-     integer, intent(in) :: ID,ikbz,ikp_bz
-     integer :: IO_var(1,1,2)
-     !
-     call io_variable_bulk(ID,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
-     qindx_B_load=IO_var(1,1,:)
-     !
-   end function qindx_B_load
    !
    subroutine qindx_alloc(what)
      !

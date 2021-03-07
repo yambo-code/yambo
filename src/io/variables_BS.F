@@ -33,8 +33,8 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
- use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
-&                        def_variable_elemental,io_variable_elemental
+ use IO_m,          ONLY:io_status,variable_exist,write_is_on
+ use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use parallel_m,    ONLY:master_cpu
  use IO_m,        ONLY:io_code_revision
@@ -223,9 +223,10 @@ integer function variables_BS_more(ID,mode)
  use pars,       ONLY:IP,SP,LP,schlen
  use parallel_m, ONLY:master_cpu
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
- use IO_m,       ONLY:def_variable_elemental,io_variable_elemental,&
-&                     def_variable_bulk,io_variable_bulk,nf90_sync,io_unit,&
-&                     write_is_on,read_is_on,variable_exist,NF90_unlimited,netcdf_dim_size
+ use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
+&                     variable_exist,NF90_unlimited,netcdf_dim_size
+ use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
+&                     def_variable_bulk,io_variable_bulk
  !
  implicit none
  !

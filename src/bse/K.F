@@ -35,7 +35,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free,&
-&                       qindx_B_init,qindx_B_close,qindx_B_load
+&                       qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -50,7 +50,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BS_res_ares_dim
  use collision_el, ONLY:elemental_collision_free
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
@@ -100,7 +101,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
  integer, external ::io_BS,io_BS_PAR_init,io_BS_header
- integer, external ::io_QINDX
+ integer, external ::io_QINDX,qindx_B_init,qindx_B_close
  !
  ! Timing and restart
  !

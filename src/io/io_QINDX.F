@@ -28,10 +28,11 @@ integer function io_QINDX(Xk,q,io_db)
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
 &                         sigma_scattering,X_scattering,k_GRIDS_string
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,&
-&                         io_variable_elemental,def_variable_elemental,io_status,read_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB,        &
-&                         def_variable_bulk,io_variable_bulk,write_is_on
+ use IO_m,           ONLY:io_sec,frag_QINDX,io_status,read_is_on,IO_OUTDATED_DB, &
+&                         write_is_on,io_extension
+ use IO_int,         ONLY:io_connect,io_disconnect,&
+&                         io_variable_elemental,def_variable_elemental,io_header,&
+&                         ver_is_gt_or_eq,io_fragment,def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
  use parallel_m,     ONLY:PAR_K_scheme
  !
@@ -217,3 +218,54 @@ integer function io_QINDX(Xk,q,io_db)
  call timing('io_QINDX',OPR='stop')
  !
 end function io_QINDX
+!
+!
+integer function qindx_B_init(ID)
+ !
+ use pars,       ONLY:IP
+ use R_lattice,  ONLY:nXkbz
+ use IO_m,       ONLY:OP_RD,RD
+ use IO_int,     ONLY:io_control,io_connect,def_variable_bulk
+ !
+ implicit none
+ !
+ integer  :: ID
+ !
+ call io_control(ACTION=OP_RD,ID=ID)
+ qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
+ call def_variable_bulk(ID,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+ call io_control(ACTION=RD,ID=ID)
+ !
+end function qindx_B_init
+!
+!
+integer function qindx_B_close(ID)
+ !
+ use IO_m,    ONLY:RD_CL
+ use IO_int,  ONLY:io_control,io_disconnect
+ !
+ implicit none
+ !
+ integer :: ID
+ !
+ call io_control(ACTION=RD_CL,ID=ID)
+ call io_disconnect(ID=ID)
+ qindx_B_close=0
+ !
+end function qindx_B_close
+!
+!
+function qindx_B_load(ikbz,ikp_bz,ID)
+ !
+ use IO_int,  ONLY:io_variable_bulk
+ !
+ implicit none
+ !
+ integer, dimension(2) :: qindx_B_load
+ integer, intent(in) :: ID,ikbz,ikp_bz
+ integer :: IO_var(1,1,2)
+ !
+ call io_variable_bulk(ID,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
+ qindx_B_load=IO_var(1,1,:)
+ !
+end function qindx_B_load

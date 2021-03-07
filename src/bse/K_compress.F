@@ -26,7 +26,8 @@ subroutine K_compress(iq,ID_compr)
  use pars,         ONLY:cZERO
  use com,          ONLY:msg
  use LIVE_t,       ONLY:live_timing
- use IO_m,         ONLY:io_control,OP_WR,WR
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_WR,WR
  use BS,           ONLY:BS_blk,BS_T_grp,BS_max_val,BS_K_cutoff,n_BS_blks
  !
  implicit none
@@ -95,7 +96,8 @@ subroutine K_compressed_IO(iq,io_BS_err,mode)
  !
  use pars,         ONLY:IPL
  use LIVE_t,       ONLY:live_timing
- use IO_m,         ONLY:io_control,OP_APP,OP_RD,RD,WR
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_APP,OP_RD,RD,WR
  use BS,           ONLY:BS_lin_size_compressed,BS_blk,BS_nT_grps,n_BS_blks
  use parallel_m,   ONLY:ncpu,myid,PAR_IND_T_ordered
  use parallel_int, ONLY:PP_redux_wait

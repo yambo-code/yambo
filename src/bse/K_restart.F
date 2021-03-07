@@ -30,7 +30,8 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  use drivers,      ONLY:l_bs_fxc,l_bss
  use BS,           ONLY:l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_K_cutoff,BS_K_cutoff_done,n_BS_blks
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
 &                       manage_action
  !

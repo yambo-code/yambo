@@ -58,7 +58,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
 &                         Xk_grid_new_mapping,k_GRIDS_string,X_scattering,sigma_scattering
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
  use parallel_int,   ONLY:PARALLEL_global_indexes

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -47,6 +47,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  use com,         ONLY:msg
  use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
+ !
 #include<memory.h>
  !
  character(*),intent(in) :: title
@@ -191,7 +192,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  YAMBO_FREE(i_vec)
  !
  if(.not.trim(title)=='COLL') then
-   write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  :'
+   write (ch,'(3a)') '[',title,'-CG] R(p) Tot o/o(of R)  '
    call msg('rs',trim(ch),(/coarse_grid_N,npts,int(real(coarse_grid_N)/real(dncg)*100._SP)/))
  endif
  !

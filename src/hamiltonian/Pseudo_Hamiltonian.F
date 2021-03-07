@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,19 +28,24 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use wrapper,       ONLY:V_dot_V
  use X_m,           ONLY:X_t
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim
+ use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:n_atoms
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_ref_bands,Hzero
+ use parallel_int,  ONLY:PP_redux_wait
+ use interfaces,    ONLY:WF_load,WF_free
+ use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,io_control,manage_action
+ use timing_m,      ONLY:timing
+#if defined _SC
+ use parallel_m,    ONLY:PAR_IND_WF_linear,myid
+#endif
 #if defined _RT
+ use parallel_m,    ONLY:PAR_G_k_range
  use real_time,     ONLY:Ho_plus_sigma,H_pseudo_eq
 #endif
- use interfaces,    ONLY:WF_load,WF_free
- use io_m,          ONLY:OP_RD_CL,OP_RD,RD,RD_CL,io_control
- use timing_m,      ONLY:timing
  !
 #include<memory.h>
  !
@@ -55,20 +60,20 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:),kbv_gauged(:,:),gauge_factor(:,:)
  complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
 &                           H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
- integer                 :: kbv_real_space_table(pp_kbv_dim)
+ integer                 :: kbv_real_space_table(pp_kbv_dim_yambo),n_par_el
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spin,i_spinor,i_sp_pol,iwf,i_atom,ifrag
+ integer                 :: i1,ib,ibp,ik,i_spinor,i_sp_pol,iwf,i_atom,ifrag
  !
  ! I / O
  integer                 :: ID,io_KB_real_space_err,ACT
  integer, external       :: io_KB_real_space
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) call fft_setup(0,1,.true.)  ! fft_size
 #endif
  !
- YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim))
+ YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim_yambo))
  !
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
  io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
@@ -80,14 +85,21 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
    return
  endif
  !
+ call PP_redux_wait()
+ !
  YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2)))
  YAMBO_ALLOC(kbv_gauged,(fft_size,n_spinor))
  YAMBO_ALLOC(gauge_factor,(fft_size,n_atoms))
  !
  H_pseudo=cZERO
  !
-#if defined _MAGNETIC
- if(l_sc_magnetic) call live_timing('MAG-pseudo',Xk%nibz*n_sp_pol)
+#if defined _SC
+ if(l_sc_magnetic) then
+   !
+   n_par_el=count(PAR_IND_WF_linear%element_2D(:,:))
+   if (n_par_el>0) call live_timing('MAG-pseudo',n_par_el*n_sp_pol)
+   !      
+ endif
 #endif
  !
  do i_sp_pol=1,n_sp_pol
@@ -96,24 +108,24 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      !
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
      !
-#if defined _MAGNETIC
-     if(l_sc_magnetic) then
-       call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
-       ACT=OP_RD_CL
-     endif
-#endif
-     !
 #if defined _RT
-     if(l_real_time) then
-       call timing('Pseudo kbv I/O',OPR='start')
-       if (ifrag==1               ) ACT=OP_RD
-       if (ifrag< n_sp_pol*Xk%nibz) ACT=RD
-       if (ifrag==n_sp_pol*Xk%nibz) ACT=RD_CL
-      endif
+     if(l_real_time) call timing('Pseudo kbv I/O',OPR='start')
 #endif
      !
+     ACT=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
      call io_control(ACTION=ACT,SEC=(/ifrag+1/),ID=ID)
      io_KB_real_space_err=io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
+     !
+#if defined _SC
+     if(l_sc_magnetic) then
+       if (any(PAR_IND_WF_linear%element_2D(:,ik)) ) then
+          call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),&
+                       sp_pol_to_load=(/i_sp_pol,i_sp_pol/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
+       else
+          cycle
+       endif
+     endif
+#endif
      !
 #if defined _RT
      if(l_real_time) then
@@ -124,8 +136,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      !
      if(.not.l_equilibrium) call Pseudo_KB_gauge_factor(gauge_factor)
      !
-     do i1=1,pp_kbv_dim
-       !     
+     do i1=1,pp_kbv_dim_yambo
+       !
        kbv_ks_space=cZERO
        !
        i_atom=kbv_real_space_table(i1)
@@ -135,11 +147,19 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          if(     l_equilibrium) kbv_gauged(:,i_spinor)=kbv_real_space(:,i_spinor,i1)
        enddo
        !
+       H_pseudo_ik=cZERO
+       !
        do ib=H_ref_bands(1),H_ref_bands(2)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
          kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
+         !
+#if defined _SC
+         if (l_sc_magnetic) then
+           if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+         endif
+#endif
          !
          do ibp=H_ref_bands(1),ib
            !
@@ -156,8 +176,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
 #if defined _RT
      if(l_real_time) call timing('Pseudo correction',OPR='stop')
 #endif
-   !
-#if defined _MAGNETIC
+     !
+#if defined _SC
    if(l_sc_magnetic) then
      call live_timing(steps=1)
      call WF_free(WF)
@@ -168,18 +188,22 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
    !
  enddo  ! i_sp_pol
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) then
-   call live_timing()
-   if(.not.l_equilibrium) Hzero=Hzero+H_pseudo
-   if(     l_equilibrium) Hzero=Hzero-H_pseudo
+   if (n_par_el>0) call live_timing()
+   if (.not.l_equilibrium) Hzero=Hzero+H_pseudo
+   if (     l_equilibrium) Hzero=Hzero-H_pseudo
  endif
 #endif
  !
 #if defined _RT
  if(l_real_time) then
-   if(.not.l_equilibrium) Ho_plus_sigma=Ho_plus_sigma+(H_pseudo-H_pseudo_eq)
-   if(     l_equilibrium) H_pseudo_eq  =H_pseudo
+   if (l_equilibrium) then
+     H_pseudo_eq  =H_pseudo
+   else
+     Ho_plus_sigma=Ho_plus_sigma+(H_pseudo(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1)-&
+&                                 H_pseudo_eq(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1))
+   endif
  endif
 #endif
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -89,7 +89,7 @@ subroutine Berry_polarization(P_Berry,S_det,en,Xk,k_map)
  !
  ! The polarization is periodic  (for n_sp_pol/=1 the periodicity is different)
  !
- P_Berry_red=P_Berry_red-2._SP*NINT(P_Berry_red/2._SP)
+ P_Berry_red=P_Berry_red-NINT(P_Berry_red)
  !
  ! Transform in cartesian coordinates
  !

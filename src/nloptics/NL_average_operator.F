@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -26,14 +26,14 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  !
  use pars,           ONLY:SP,cZERO,cONE
  use nl_optics,      ONLY:NL_bands,NL_nbands
- use com,            ONLY:error
  use R_lattice,      ONLY:bz_samp 
  use QP_m,           ONLY:QP_nk
  use electrons,      ONLY:n_sp_pol,n_spin,levels,spin_occ
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use H_interfaces,   ONLY:V_real_space_to_H
  !
  implicit none

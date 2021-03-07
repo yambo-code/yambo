@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,7 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  use pars,           ONLY:SP
  use electrons,      ONLY:n_spinor
  use R_lattice,      ONLY:bz_samp
- use interpolate,    ONLY:INTERPOLATION_driver
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
  implicit none
  !
@@ -45,18 +45,16 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  !------
  if (index(what,"S") > 0) then
    call electrons_spin_factors((/1,SEED_k%nibz/),BANDS_range,spin_fac)
-   call INTERPOLATION_driver(bands=BANDS_range,SEED_k=SEED_k,SEED_R3=spin_fac,operation="spin",&
-&                            ID_op=ID_spin,NEAREST=.TRUE.)
-   call INTERPOLATION_driver(OUT_k=OUT_k,operation="spin")
+   call INTERPOLATION_driver_seed("spin",ID_spin,BANDS_range,SEED_k,SEED_R3=spin_fac)
+   call INTERPOLATION_driver_do("spin",ID_spin,OUT_k)
  endif
  !
  ! MAGNETIZATION
  !---------------
  if (index(what,"M") > 0) then
    call electrons_magn_factors((/1,SEED_k%nibz/),BANDS_range,magn_fac)
-   call INTERPOLATION_driver(bands=BANDS_range,SEED_k=SEED_k,SEED_R3=magn_fac,operation="magnetization",&
-&                            ID_op=ID_magn,NEAREST=.TRUE.)
-   call INTERPOLATION_driver(OUT_k=OUT_k,operation="magnetization")
+   call INTERPOLATION_driver_seed("magnetization",ID_magn,BANDS_range,SEED_k,SEED_R3=magn_fac)
+   call INTERPOLATION_driver_do("magnetization",ID_magn,OUT_k)
  endif
  !
 end subroutine electrons_spin_and_magn_interpolate

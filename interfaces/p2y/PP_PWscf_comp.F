@@ -1,7 +1,7 @@
 ! Self-energies and eXcitations (SaX)
 ! Copyright (C) 2006 SaX developers team
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,8 +28,7 @@ subroutine PP_PWscf_comp(basis,atoms)
   use num_interpolation_module
   use pw_pseudo_module
   !
-  use pars,                  ONLY:SP,DP
-  use electrons,     ONLY:n_spinor
+  use pars,          ONLY:SP
   use pseudo,        ONLY:pp_kb,pp_kbd,pp_kbs
   !
   implicit none

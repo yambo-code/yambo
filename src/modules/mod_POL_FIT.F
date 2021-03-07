@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,7 +55,8 @@ module POL_FIT_m
    !
    subroutine POL_LK_fit(N,X,Y,order,Tt,EPS,t_zero)
     !
-    use pars, ONLY:SP
+    use pars,       ONLY:SP
+    use functions,  ONLY:NAN
     !
     implicit none
     !
@@ -66,7 +67,7 @@ module POL_FIT_m
     ! 
     ! Work Space
     !
-    integer  :: NDEG,IERR
+    integer  :: NDEG,IERR,I,I_l
     real(SP) :: W(N),R(N),wk(3*N+3*order+3)
     !
     W(:)=1._SP/sum(Y(:)**2)
@@ -88,13 +89,28 @@ module POL_FIT_m
     !
     Tt = 0._SP
     EPS=-1._SP
+    I_l= 0
 #if defined _DOUBLE
     call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
-    order=NDEG 
-    call DPCOEF (order,t_zero,Tt(:order+1),wk)
 #else
     call POLFIT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#endif
+    do I=1,3*N+3*order+3
+      if (NAN(wk(I))) I_l=1
+    enddo
+    if (I_l==1) then
+      order=max(order-1,0)
+#if defined _DOUBLE
+      call DPOLFT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#else
+      call POLFIT (N,X,Y,W,order,NDEG,EPS,R,IERR,wk)
+#endif
+    endif
     order=NDEG 
+    !
+#if defined _DOUBLE
+    call DPCOEF (order,t_zero,Tt(:order+1),wk)
+#else
     call PCOEF (order,t_zero,Tt(:order+1),wk)
 #endif
     !

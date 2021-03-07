@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -162,7 +162,8 @@ subroutine QP_state_table_setup(en)
  Mixing=.FALSE.
 #if defined _SC || defined _RT
  Mixing=l_sc_run.or.l_real_time.or.l_eval_collisions.or.l_nl_optics
- if (l_eval_collisions) Mixing=l_elel_scatt.or.trim(H_potential)=="HARTREE+FOCK".or.trim(H_potential)=="COHSEX"
+ if (l_eval_collisions) Mixing=l_elel_scatt.or.(index(H_potential,"FOCK")>0.and.index(H_potential,"HARTREE")>0)&
+&                                          .or.trim(H_potential)=="COHSEX"
 #endif
  !
  if (Mixing) then

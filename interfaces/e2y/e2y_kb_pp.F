@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH
@@ -43,10 +43,9 @@ subroutine e2y_kb_pp( ikibz, ncid )
   use etsf_io
   use etsf_io_low_level
   use etsf_data
-  use D_lattice,            only : n_atomic_species,n_atoms_species_max
-  use pseudo,               only : pp_n_l_times_proj_max,pp_n_l_comp,&
+  use D_lattice,            only : n_atomic_species
+  use pseudo,               only : pp_n_l_times_proj_max,&
 &                                  pp_kbs,pp_kb,pp_kbd
-  use wave_func,            only : wf_ncx,wf_nc_k
   use mod_com2y,            only : ng_vec_abinit
   !
   implicit none
@@ -63,7 +62,7 @@ subroutine e2y_kb_pp( ikibz, ncid )
 !ETSF library stuff
   logical                       :: lstat      ! to get informed on error
   type(etsf_io_low_error)       :: error_data ! to store informations about errors
-  integer                       :: start(5), count(5), ncvarid ! must be size of netcdf array!
+  integer                       :: start(5), count(5) ! must be size of netcdf array!
 
   !
   ! Initialize the mapping: read for one k point (and one projector)

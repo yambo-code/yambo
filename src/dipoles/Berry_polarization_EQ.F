@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -31,7 +31,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  ! R.D. King-Smith and D. Vanderbilt, "Theory of polarization of          
  ! crystaline solids", Phys Rev B 47, 1651 (1993).      
  !
- use pars,           ONLY:DP,SP,cI,cZERO,pi,cONE
+ use pars,           ONLY:DP,SP,cZERO,pi,cONE
  use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
  use R_lattice,      ONLY:bz_samp,bz_map
  use D_lattice,      ONLY:a
@@ -47,7 +47,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  !
  ! Work Space
  !
- integer       :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id,id_red
+ integer       :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id
  complex(DP)   :: zeta
  real(DP)      :: imag_zeta
  !

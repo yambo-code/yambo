@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
+subroutine MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV, COMM, COMM_name)
  !
  ! General, multi-purpose M <-> M transfer
  !
- use parallel_m,     ONLY:MPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
+ use parallel_m,     ONLY:yMPI_comm,PAR_COM_WORLD,COMM_copy,COMM_reset,l_par_X_G,l_par_X_G_finite_q
  use interfaces,     ONLY:MATRIX_duplicate
  use pars,           ONLY:SP
  use BS,             ONLY:BS_block
@@ -43,7 +43,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  complex(SP),      optional :: M(:,:)
  logical,          optional :: SND
  logical,          optional :: RCV
- type(MPI_comm),   optional :: COMM
+ type(yMPI_comm),   optional :: COMM
  character(*),     optional :: COMM_name
  !
  ! Work Space
@@ -89,7 +89,7 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  if (present(COMM_name)) then 
    if (l_par_X_G_finite_q) PAR_to_PAR_comm_NAME="X_G_finite_q_"//trim(COMM_name)
-   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_all_q_"//trim(COMM_name)
+   if (l_par_X_G)          PAR_to_PAR_comm_NAME="X_G_"//trim(COMM_name)
  else
    PAR_to_PAR_comm_NAME="NONE"
  endif
@@ -146,4 +146,4 @@ SUBROUTINE MATRIX_transfer( M_in, M_bse, M, M_out, INDEX_in, INDEX_out, SND, RCV
  !
  call timing('MATRIX transfer ('//trim(PAR_to_PAR_comm_NAME)//')',OPR='stop')
  !
-end SUBROUTINE
+end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -33,9 +33,9 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  ! perform the diagonalization by using scalapack
  !
  use pars,           ONLY:SP
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
- use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_clean_up,LALGEBRA_WS
+ use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing
 #include<memory.h>
@@ -46,8 +46,8 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  character(64)     :: subname="PARALLEL_HERMITIAN_diagonalization"
  integer           :: lwork,lrwork
- real(SP)          :: rvar
- complex(SP)       :: cvar
+ real(SP)          :: rvar(1)
+ complex(SP)       :: cvar(1)
  type(LALGEBRA_WS) :: WS
  !
  E=0.0_SP
@@ -85,7 +85,7 @@ subroutine PARALLEL_HERMITIAN_diagonalization(M, V, N, E)
  !
  call PP_redux_wait(E,COMM=SLK_POOL%INTRA_comm)
  !
- call LINEAR_ALGEBRA_WS_clean_up(WS) 
+ call LINEAR_ALGEBRA_WS_reset(WS) 
  !
  call timing('PARALLEL_HERMITIAN_diagonalization',OPR='stop')
  !

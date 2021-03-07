@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,8 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  integer         ::i_ACTION,bands(2)
  !
  ! Work Space
- integer :: i_spin
+ integer :: i_spin,ik,ib
+ logical :: FIT_me
  !
  ! Allocations
  !
@@ -58,9 +59,27 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  ! Interpolation
  !
- call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
+ if (.not.QP_action(i_ACTION)%plan(7)) call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
- ! FIT
+ ! FIT?
+ !
+ FIT_me=.FALSE.
+ !
+ do ib=bands(1),bands(2)
+   do ik=1,en%nk
+     do i_spin=1,n_sp_pol
+       if (allocated(QP_action(i_ACTION)%STATES_done)) then
+         if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
+       endif
+       FIT_me=.TRUE.
+     enddo
+   enddo
+ enddo
+ if (.not.FIT_me) return
+ !
+ call section('p',"FIT on"//trim(QP_action(i_ACTION)%what) )
+ !
+ ! YES!
  !
  if (QP_action(i_ACTION)%plan(1)) call QP_fit_energies(i_ACTION,bands,en,qp)
  if (QP_action(i_ACTION)%plan(2)) call QP_fit_widths(i_ACTION,bands,en,k,qp)

@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, AF
+! Authors (see AUTHORS file for details): AM, AF, DV
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module P2Y
+module P2Ym
  !
  use pw_export_module
  use qexml_module
@@ -31,13 +31,14 @@ module P2Y
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
- use parallel_m,            ONLY : myid,PP_bcast   
+ use parallel_m,            ONLY : myid
+ use parallel_int,          ONLY : PP_bcast   
  ! 
 #include<memory.h>
- 
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
+ character(lchlen) :: dftdata_dir
  !
  integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -53,32 +54,32 @@ contains
  !    Select and open XML files                                        *
  !---------------------------------------------------------------------*
  !
- subroutine pw_init(instr,inf)
+ subroutine pw_init(instr,indir)
    !
    use pars,  ONLY:lchlen
    use com,   ONLY:msg
-   character(*)  :: instr,inf
+   character(*)  :: instr,indir
    !
    ! Work Space
    !
    integer           :: rhounit_ 
    character(lchlen) :: lch
    logical           :: lexist
-
    !
    ! data fmt detection
    !
-   call p2y_get_dftdata_fmt(dftdata_fmt)
+   call p2y_get_dftdata_fmt(dftdata_fmt,indir)
+   dftdata_dir=trim(indir)
    !
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
       !
-      call msg('s','detected QE data format: ',trim(dftdata_fmt))
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
       !
    case default
-      call errore("p2y_init"," Unable to find valid QE DFT data",1)
+      call msg('s','detected QE data format ',trim(dftdata_fmt))
+      call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
-      
    !
    ! settings
    !
@@ -88,17 +89,17 @@ contains
    select case (trim(dftdata_fmt))
    case("pw_export")
       !
-      index_filename = 'index.xml'
+      index_filename = indir//'/index.xml'
       write(lch,'(a)') '== pw_export generated data =='
       !
    case("qexml")   
       !
-      index_filename = 'data-file.xml'
+      index_filename = indir//'/data-file.xml'
       write(lch,'(a)') '== PWscf > v5.x generated data (QEXML fmt) =='
       !
    case("qexsd-hdf5")   
       !
-      index_filename = 'data-file-schema.xml'
+      index_filename = indir//'/data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
       !
 #if !defined _P2Y_QEXSD_HDF5
@@ -106,7 +107,7 @@ contains
 #endif
    case ("qexsd")
       !
-      index_filename = 'data-file-schema.xml'
+      index_filename = indir//'/data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
       !
    case default
@@ -116,25 +117,24 @@ contains
    call msg('s',lch)
    !
    ! check again for file existence ?
-
    !
    ! file opening
    !
    select case (trim(dftdata_fmt))
    case("pw_export")
       ! 
-      call pw_openindex(pw_unit,index_filename,ierr=ierr) 
+      call pw_openindex(pw_unit,index_filename,ierr=ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexml")
       !
-      call qexml_init(pw_unit) 
+      call qexml_init(pw_unit,dir=indir)
       call qexml_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexsd","qexsd-hdf5")
       !
-      call qexsd_init(pw_unit) 
+      call qexsd_init(pw_unit,dir=indir)
       call qexsd_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
@@ -187,7 +187,7 @@ contains
    use R_lattice,             ONLY : ng_vec
    use D_lattice,             ONLY : input_GS_Tel, n_atomic_species
    use wave_func,             ONLY : wf_ncx 
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    use LIVE_t,                ONLY : live_timing_is_on
    use units,                 ONLY : HA2KEL
    type(levels),     intent(out)  :: en     ! Energies
@@ -240,7 +240,7 @@ contains
      call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
      call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem I',ABS(ierr))
      call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
 &                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
 &                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
@@ -388,6 +388,12 @@ contains
    !
    ! init
    !
+   if (len_trim(dftdata_dir)>0) then
+     do i1=1,n_atomic_species
+        psfile(i1)=trim(dftdata_dir)//"/"//trim(psfile(i1))
+     enddo
+   endif
+   !
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
@@ -461,7 +467,6 @@ contains
  subroutine get_symmetries
    use pars
    use mod_com2y,  ONLY : symmetries_check_and_load,force_noWFs
-   use com,        ONLY : warning,error
    use vec_operate,ONLY : v_is_zero
    use D_lattice,  ONLY : a
    use R_lattice,  ONLY : b
@@ -489,7 +494,7 @@ contains
       !
       call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
 &                              s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem II',ABS(ierr))
       !
       ! convert to integers
       !
@@ -549,13 +554,14 @@ contains
    ! 
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
-   use vec_operate, ONLY:v_is_zero
-   use com,         ONLY:warning
-#include<memory.h>
+   use vec_operate, ONLY:v_is_zero 
+   !
+#include<memory.h> 
+   !
    type(bz_samp) :: k
    !
    YAMBO_ALLOC(xk_,(3,k%nibz))
-
+   !
    select case (trim(dftdata_fmt))
    case ("pw_export")
       !
@@ -644,7 +650,6 @@ contains
    case default
      call errore("get_R_vectors"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
    end select
-   
    !
    ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
    ! b(:,:) is in a.u.
@@ -676,7 +681,7 @@ contains
    use wave_func,             ONLY : wf_nc_k, wf_ncx, wf_igk, wf_ng
    use R_lattice,             ONLY : bz_samp, ng_vec
    use mod_com2y,             ONLY : force_noWFs
-   use com,                   ONLY : msg, error
+   use com,                   ONLY : msg
    character(lchlen) :: lch
    type(bz_samp) :: k
    integer i1,ik,nfft_tmp(3)
@@ -839,11 +844,10 @@ contains
  !---------------------------------------------------------------------*
  !
  subroutine get_xc
-   use com,            ONLY: warning,error
-   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING      
+   use xc_functionals, ONLY: GS_xc_FUNCTIONAL, GS_xc_KIND, GS_exx_FRACTION, GS_exx_SCREENING,&
+&                            XC_FACTOR,XC_HYB_GGA_XC_GAUPBE,XC_HYB_GGA_XC_PBEH,XC_HYB_GGA_XC_B3LYP      
    use mod_xc2y,       ONLY: XC_yamboID,  XC_yamboID2kind
    implicit none
-
    select case (trim(dftdata_fmt))
    case ("pw_export")
       !
@@ -854,17 +858,36 @@ contains
       call qexml_read_xc(dft=pw_dft, lda_plus_u=pw_lda_plus_u, ierr=ierr)
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
       !
+        GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       call qexml_read_exx(exx_fraction=pw_exx_fraction, &
 &                         screening_parameter=pw_screening_parameter, & 
-&                         exx_is_active=pw_exx_is_active, ierr=ierr)
+&                         exx_is_active=pw_exx_is_active, exxdiv_treatment=pw_exxdiv_treatment,ierr=ierr)
       if (ierr==0) then
-         if (pw_exx_is_active) then 
-            GS_exx_FRACTION = pw_exx_fraction
-            GS_exx_SCREENING= pw_screening_parameter
+         if (pw_exx_is_active) then
+           if (GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+           &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.& 
+           &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_B3LYP*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+             GS_exx_FRACTION = pw_exx_fraction
+             GS_exx_SCREENING= pw_screening_parameter
+             if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+                if (pw_exxdiv_treatment/='none')  call error('GAUPBE divergence treatment should be set to "none"')
+                GS_exx_SCREENING=0.15
+             else 
+                if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call warning('For Hybrids and HF the vcut_ws/spherical divergence treatment & 
+                &  are recommended, Gigy-Baldereschi treatment can lead to a loss of precision')   
+             endif
+           else
+             call error('Hybrid functional: Only HF,PBE0, B3LYP and GAUPBE allowed')
+           endif
          endif
       endif
       !
@@ -874,18 +897,37 @@ contains
 &                        dft_is_hybrid=pw_exx_is_active, ierr=ierr)
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
-      GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+        GS_xc_KIND = 3
+      else
+        GS_xc_KIND       = XC_yamboID2kind(GS_xc_FUNCTIONAL)
+      endif
       !
       if (pw_exx_is_active) then
          !
-         call qexsd_read_exx(exx_fraction=pw_exx_fraction, &
-&                            screening_parameter=pw_screening_parameter, ierr=ierr)
-         if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
-         GS_exx_FRACTION = pw_exx_fraction
-         GS_exx_SCREENING= pw_screening_parameter
+         if(GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.or.&
+         &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_PBEH*XC_FACTOR.or.&
+         &  GS_xc_FUNCTIONAL==XC_HYB_GGA_XC_B3LYP*XC_FACTOR.or.GS_xc_FUNCTIONAL==0) then
+           call qexsd_read_exx(exx_fraction=pw_exx_fraction,screening_parameter=pw_screening_parameter,&
+           &                   exxdiv_treatment=pw_exxdiv_treatment, ierr=ierr)
+           if (ierr/=0) call errore('qexsd_read_exx','fmt error',abs(ierr))
+           GS_exx_FRACTION = pw_exx_fraction
+           GS_exx_SCREENING= pw_screening_parameter
+           if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
+             if (pw_exxdiv_treatment/='none')  call error('GAUPBE divergence treatment should be set to "none"')
+             GS_exx_SCREENING=0.15
+           else
+             if(pw_exxdiv_treatment/='vcut_ws'.and.pw_exxdiv_treatment/='vcut_spherical') &
+                &  call warning('For Hybrids and HF the vcut_ws/spherical divergence treatment &
+                & are recommended, Gigy-Baldereschi treatment can lead to a loss of precision')  
+           endif
          !
+         else
+           call error('Hybrid functional: Only HF,PBE0,B3LYP and GAUPBE allowed')
+         endif
       endif
       !
    case default
@@ -894,27 +936,28 @@ contains
 
  end subroutine get_xc
  !
- subroutine p2y_get_dftdata_fmt(dftdata_fmt)
+ subroutine p2y_get_dftdata_fmt(dftdata_fmt,indir)
+    !
     implicit none
-    character(len=*) :: dftdata_fmt
-
+    character(len=*) :: dftdata_fmt,indir
+    !
     dftdata_fmt="unknown"
     !
     if (myid==0) then
       !
-      if ( fmt_is_qexml(dirname="./") ) then
+      if ( fmt_is_qexml(dirname=indir) ) then
         !
         dftdata_fmt="qexml"
         !
-      elseif ( fmt_is_qexsd(dirname="./") ) then
+      elseif ( fmt_is_qexsd(dirname=indir) ) then
         !
         dftdata_fmt="qexsd"
         !
-      elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
+      elseif ( fmt_is_qexsd_hdf5(dirname=indir) ) then
         !
         dftdata_fmt="qexsd-hdf5"
         !
-      elseif ( fmt_is_pwexport(dirname="./") ) then
+      elseif ( fmt_is_pwexport(dirname=indir) ) then
         !
         dftdata_fmt="pw_export"
         !
@@ -926,4 +969,4 @@ contains
     !
  end subroutine p2y_get_dftdata_fmt
  !
-end module p2y
+end module P2Ym

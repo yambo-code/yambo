@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -38,7 +38,8 @@ subroutine el_magnetization(en,Xk,magn)
  use wave_func,      ONLY:WF
  use electrons,      ONLY:Spin_magn
  use matrix_operate, ONLY:m3det
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use parallel_m,     ONLY:PAR_IND_WF_linear,PAR_COM_density
+ use parallel_int,   ONLY:PP_redux_wait
 #if defined _RT
  use drivers,       ONLY:l_real_time
  use timing_m,       ONLY:timing

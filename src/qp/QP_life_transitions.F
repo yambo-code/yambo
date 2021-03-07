@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,8 +26,6 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  use pars,          ONLY:SP
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_n_states,QP_table,&
 &                        QP_cg_percent,h2ht,e2et
- use functions,     ONLY:bose_f
- use com,           ONLY:error
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index
  use electrons,     ONLY:levels,spin
  use R_lattice,     ONLY:qindx_S,bz_samp
@@ -112,16 +110,14 @@ integer function QP_life_transitions(iqibz_in,E,k,q,X_life_W)
  ! Here I reduce the frequencies
  !
  call FREQUENCIES_coarse_grid('Life',X_freqs(iqibz_in,:n_of_transitions(iqibz_in)),&
-&                 n_of_transitions(iqibz_in),QP_cg_percent,(/0.0_SP/),.FALSE.)
+&                             n_of_transitions(iqibz_in),QP_cg_percent,(/0.0_SP/),.FALSE.)
  X_life_W%n_freqs=coarse_grid_N
  !
  X_life_W%er=(/minval(coarse_grid_Pt),maxval(coarse_grid_Pt)/)
  !
  YAMBO_ALLOC(X_life_W%p,(coarse_grid_N))
  do i1=1,coarse_grid_N
-   ! 
    X_life_W%p(i1)=coarse_grid_Pt(i1)+FREQUENCIES_damping(X_life_W,coarse_grid_Pt(i1))*cmplx(0.,1.,SP)
-   !
  enddo
  !
  ! Clean

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,8 +28,14 @@ subroutine fft_free()
 #if defined _FFTW
  use FFT_m,    ONLY:fftw_plan
 #endif
+#if defined _CUDA
+ use FFT_m,    ONLY:cufft_plan,fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
+ use cufft
+#endif
  !
 #include<memory.h>
+ !
+ integer :: ierr
  !
  fft_size=0
  fft_dim=0
@@ -41,6 +47,13 @@ subroutine fft_free()
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
  fftw_plan=0
+#endif
+#if defined _CUDA
+ if(allocated(fft_g_table_d))   deallocate(fft_g_table_d)
+ if(allocated(fft_rot_r_d))     deallocate(fft_rot_r_d)
+ if(allocated(fft_rot_r_inv_d)) deallocate(fft_rot_r_inv_d)
+ ierr=cufftDestroy(cufft_plan) 
+ cufft_plan=0
 #endif
  !
 end subroutine fft_free

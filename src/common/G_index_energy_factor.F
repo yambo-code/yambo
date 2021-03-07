@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,6 @@ integer function G_index_energy_factor(ig_in,factor)
  use pars,         ONLY:SP
  use vec_operate,  ONLY:iku_v_norm
  use R_lattice,    ONLY:g_vec,ng_in_shell,n_g_shells,E_of_shell
- use com,          ONLY:error
  !
  implicit none
  !

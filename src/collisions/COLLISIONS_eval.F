@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,25 +38,25 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
- use com,           ONLY:error
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:i_time_rev
- use wave_func,     ONLY:WF
- use hamiltonian,   ONLY:H_potential,H_kind
- use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
- use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
+ use drivers,        ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
+&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use wave_func,      ONLY:WF
+ use hamiltonian,    ONLY:H_potential,H_kind
+ use global_XC,      ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
+ use collision_ext,  ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
- use X_m,           ONLY:X_t
- use plasma,        ONLY:EH_gas
- use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
+ use X_m,            ONLY:X_t
+ use plasma,         ONLY:EH_gas
+ use frequency,      ONLY:w_samp
+ use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
  use COLL_interfaces,ONLY:io_COLLISIONS
- use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
- use timing_m,      ONLY:timing
+ use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:WF_free
+ use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -79,17 +79,16 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  l_use_collisions=.TRUE.
  !
- call XC_potentials(H_potential,"COLLISIONS")
+ ! XC Potentials 
+ !===============
+ !
+ call XC_potentials(H_potential)
  !
  ! Check for the Time Reversal Symmetry
  !
  if ( (l_use_Hxc_collisions.or.l_elel_scatt) .and. (i_time_rev==1) ) then
    call error(" COLLISIONS not compatible with Time Reversal Symmetry! ")
  endif
- !
- ! Switch 
- !========
- call XC_switch()
  !
  ! Naming 
  !========
@@ -100,12 +99,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  !
- ! GPL_EXCLUDE_START
- !
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
  if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
- !
- ! GPL_EXCLUDE_END
  !
  ! PARALLEL Setup
  !================
@@ -157,8 +152,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    endif
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _QED
  !
@@ -214,8 +207,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! CLEAN
  !=======
  !
@@ -234,12 +225,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call COLLISIONS_basic_operations( "clean",    HXC_collisions )
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
      !
-     ! GPL_EXCLUDE_START
-     !
      call COLLISIONS_basic_operations( "clean",      P_collisions )
      call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -252,12 +239,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
- !
- ! GPL_EXCLUDE_END
  !
  call timing('COLLISIONS_eval',OPR='stop')
  !
@@ -288,16 +271,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
-       ! GPL_EXCLUDE_START
        if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
        else
-       ! GPL_EXCLUDE_END
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)
          call COLLISIONS_alloc_and_free(trim(COLL%name),"table","alloc",0)
-       ! GPL_EXCLUDE_START
        endif
-       ! GPL_EXCLUDE_END
      endif
      !
    end subroutine

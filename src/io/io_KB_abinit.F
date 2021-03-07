@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 integer function io_KB_abinit(ID)
  !
- use pars,             ONLY:schlen,SP
+ use pars,             ONLY:SP
  use stderr,           ONLY:intc
  use D_lattice,        ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species,&
 &                           atom_pos
@@ -33,8 +33,7 @@ integer function io_KB_abinit(ID)
 &                           PP_alloc_abinit
  use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
 &                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,write_is_on,ver_is_gt_or_eq,frag_WF
- use electrons,        ONLY:n_sp_pol
+&                           read_is_on,ver_is_gt_or_eq,frag_WF
  use timing_m,         ONLY:timing
 #include<memory.h>
  !
@@ -42,10 +41,11 @@ integer function io_KB_abinit(ID)
  !
  ! Workspace
  !
- integer :: ik,ifrag,i1,i_sp_pol,var_size
+ integer :: ik,ifrag,i1,i_sp_pol,var_size,ID_frag
  !
  call timing('io_KB_abinit',OPR='start')
  !
+ ID_frag=0
  ifrag=maxval(io_sec(ID,:))-1
  if(ifrag<=nkibz) then
    ik=ifrag
@@ -131,18 +131,20 @@ integer function io_KB_abinit(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- call io_fragment(ID,i_fragment=ifrag)
+ call io_fragment(ID,ID_frag,i_fragment=ifrag)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    pp_kbd=0._SP
  endif
  ! 
- call io_bulk(ID,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
- call io_bulk(ID,R3=pp_kb(:,:,:,i_sp_pol))
+ call io_bulk(ID_frag,VAR='PP_KB_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kb(:,:,:,i_sp_pol)))
+ call io_bulk(ID_frag,R3=pp_kb(:,:,:,i_sp_pol))
  ! 
- call io_bulk(ID,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
- call io_bulk(ID,R3=pp_kbd(:,:,:,i_sp_pol))
+ call io_bulk(ID_frag,VAR='PP_KBD_IK'//trim(intc(ik))//'_SP_POL'//trim(intc(i_sp_pol)),VAR_SZ=shape(pp_kbd(:,:,:,i_sp_pol)))
+ call io_bulk(ID_frag,R3=pp_kbd(:,:,:,i_sp_pol))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

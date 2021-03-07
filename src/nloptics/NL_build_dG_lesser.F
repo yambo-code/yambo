@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -26,14 +26,15 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  ! Construct dG = G_lesser(t) - G_lesser(t=0) 
  ! from the time-dependent valence bands
  !
- use pars,        ONLY:SP,cI,cZERO
- use electrons,   ONLY:levels,spin_occ,n_sp_pol
- use nl_optics,   ONLY:NL_bands
- use wrapper_omp, ONLY:Vstar_dot_V_omp
- use QP_m,        ONLY:QP_nk
- use parallel_m,  ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use pars,           ONLY:SP,cI,cZERO
+ use electrons,      ONLY:levels,spin_occ,n_sp_pol
+ use nl_optics,      ONLY:NL_bands
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp
+ use QP_m,           ONLY:QP_nk
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
 #if defined _TIMING
- use timing_m,         ONLY:timing
+ use timing_m,       ONLY:timing
 #endif
  !
  implicit none
@@ -56,10 +57,12 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  do ik=1,QP_nk
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    do i1=NL_bands(1),NL_bands(2)             
+!$omp parallel do default(shared), private(i2)
      do i2=i1,NL_bands(2)
        dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf,V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
        dG(i2,i1,ik)=conjg(dG(i1,i2,ik))
      enddo
+!$omp end parallel do
    enddo
  enddo
  !

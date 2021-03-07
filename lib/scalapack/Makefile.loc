@@ -25,7 +25,7 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat $(prefix)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
+	cat $(compdir)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
 	cp  $(srcdir)/lib/scalapack/Makefile.lib  Makefile );  \
 	fi
 	touch configure-stamp
@@ -46,13 +46,13 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-install
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@if test -d $(PACKAGE)  && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompress-stamp
-	
+
 define install
  cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; chmod +x $(LIBPATH)/lib/*scalapack*.a 
 endef    

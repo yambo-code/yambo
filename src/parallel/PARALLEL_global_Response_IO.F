@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -30,8 +30,7 @@ subroutine PARALLEL_global_Response_IO( )
  !  
  use IO_m,          ONLY:io_RESPONSE
  use parallel_m,    ONLY:n_CPU_str_max,CPU_structure,PARALLEL_CPU_role,PARALLEL_CPU_used,&
-&                       PARALLEL_n_structures_active
- use com,           ONLY:warning
+&                        PARALLEL_n_structures_active,i_PAR_structure
  !
  implicit none
  !
@@ -41,16 +40,24 @@ subroutine PARALLEL_global_Response_IO( )
  !
  call PARALLEL_get_user_structure("Self_Energy",.FALSE.)
  !
+ if (len_trim( CPU_structure(i_PAR_structure)%ROLE(1) ) ==0) then
+   call warning('Response function I/O forced in the default mode for the Self-Energy PARALLEL environment')
+   io_RESPONSE=.TRUE.
+   return
+ endif
+ !
  do i=1,n_CPU_str_max
    if (trim(CPU_structure(i)%Long_Description)=="Self_Energy") then
      i_s_se=i
    endif
  enddo
  !
+ N_q_SE=1
  do i=1,CPU_structure(i_s_se)%N_chains
    if (trim(CPU_structure(i_s_se)%ROLE(i))=="q") N_q_SE=CPU_structure(i_s_se)%CPU(i)
  enddo
  !
+ N_q_current=1
  do i=1,PARALLEL_n_structures_active
    if (trim(PARALLEL_CPU_role(i))=="q") N_q_current=PARALLEL_CPU_used(i)
  enddo

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -27,10 +27,10 @@ subroutine XC_nlcc_setup()
  ! in reciprocal space from DB (if present), and sets
  ! all the quantities needed to evaluate E_xc and V_xc 
  !
- use pars,          ONLY:SP,DP
- use com,           ONLY:error
+ use pars,          ONLY:DP
  use D_lattice,     ONLY:DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+ use com,           ONLY:msg
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
@@ -57,10 +57,9 @@ subroutine XC_nlcc_setup()
  pp_has_nlcc=(io_err==0)
  if (.not.use_nlcc) pp_has_nlcc=.false.
  !
- if (.not.pp_has_nlcc) then
-   call PP_nlcc_free()
-   return
- endif
+ if (.not.pp_has_nlcc) return
+ !
+ call msg('s','[xc] Including NLCC, core corrections density loaded from pseudo')
  !
  if (all(pp_has_nlcc_atom(:)==0)) call error(' [xc] Unexpected zero NLCC')
  !
@@ -84,6 +83,5 @@ subroutine XC_nlcc_setup()
 #endif  
  !
  pp_rho_nlcc=pp_rho_nlcc*DL_vol/real(fft_size,DP)
- return
  !
 end subroutine XC_nlcc_setup

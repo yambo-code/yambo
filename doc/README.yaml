@@ -1,0 +1,26 @@
+! use yaml_output,     ONLY:yaml_new_document,yaml_release_document,yaml_comment,&
+!&                          yaml_map,yaml_mapping_open
+
+
+   ! This starts a sequence of info which can be printed without a character in front
+   !write(*,*) 'mapping yaml, new stream'
+   !call yaml_sequence_open()
+   !call yaml_map(advance=no)
+   !call yaml_map(advance=no)
+   !call yaml_map(advance=no)
+   !call yaml_map(advance=no)
+   !call yaml_sequence_close()
+   
+   ! This starts a new section
+   !write(*,*) 'mapping yaml, new section'
+   !call yaml_mapping_open("Test")
+   !call yaml_map("Short sentence",.true.)
+
+
+
+
+   ! More things to do
+   !call yaml_new_document()
+   !call yaml_comment('Yaml Output Module Test',hfill='~')
+   !
+

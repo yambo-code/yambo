@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -77,8 +77,6 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  if (iq<0) return
  !
- ! GPL_EXCLUDE_START
- !
  ! Fxc DB
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
@@ -118,9 +116,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  X%ordering="R"
  if (.not.FXC_is_retarded) X%ordering="r"
  !
- YAMBO_ALLOC(X_poles,(BS_K_dim))
+ YAMBO_ALLOC(X_poles,(BS_K_dim(1)))
  X_poles=FXC_K_diagonal
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

@@ -4,10 +4,41 @@
 include ./package.list
 WGETFLAGS=--no-check-certificate
 #
-all: $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) \
-     $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe)
+all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
+     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver)
+
 
 #
+# Alias
+#
+tarball_driver:    $(tarball_driver)
+tarball_yaml:      $(tarball_yaml)
+tarball_futile:    $(tarball_futile)
+tarball_iotk:      $(tarball_iotk)
+tarball_hdf5:      $(tarball_hdf5)
+tarball_netcdf :   $(tarball_netcdf)
+tarball_netcdff:   $(tarball_netcdff)
+tarball_pnetcdf:   $(tarball_pnetcdf)
+tarball_etsf_io:   $(tarball_etsf_io)
+tarball_libxc:     $(tarball_libxc)
+tarball_lapack:    $(tarball_lapack)
+tarball_blacs:     $(tarball_blacs)
+tarball_scalapack: $(tarball_scalapack)
+tarball_petsc:     $(tarball_petsc)
+tarball_slepc:     $(tarball_slepc)
+tarball_fttw:      $(tarball_fftw)
+tarball_fftqe:     $(tarball_fftqe)
+
+
+#
+# Libraries
+#
+$(tarball_driver):
+	@+TARBALL="$(tarball_driver)"   ; URL="$(url_driver)"   ; LIB="DRIVER"; $(getsrc)
+$(tarball_yaml):
+	@+TARBALL="$(tarball_yaml)"     ; URL="$(url_yaml)"     ; LIB="YAML"; $(getsrc)
+$(tarball_futile):
+	@+TARBALL="$(tarball_futile)"   ; URL="$(url_futile)"   ; LIB="FUTILE"; $(getsrc)
 $(tarball_iotk): 
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
 $(tarball_hdf5):
@@ -16,6 +47,8 @@ $(tarball_netcdf):
 	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
 $(tarball_netcdff):
 	@+TARBALL="$(tarball_netcdff)"  ; URL="$(url_netcdff)"  ; LIB="NETCDFF"; $(getsrc)
+$(tarball_pnetcdf):
+	@+TARBALL="$(tarball_pnetcdf)"  ; URL="$(url_pnetcdf)"  ; LIB="PNETCDF"; $(getsrc)
 $(tarball_etsf_io):
 	@+TARBALL="$(tarball_etsf_io)"  ; URL="$(url_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
 $(tarball_libxc):
@@ -34,6 +67,8 @@ $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
 $(tarball_fftqe):
 	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
+
+
 #
 # cleaning
 #
@@ -41,10 +76,12 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
+          if test -s $(tarball_driver)   && test "$(keep_driver)"    != "yes" ;  then rm $(tarball_driver)    ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
           if test -s $(tarball_netcdff)  && test "$(keep_netcdff)"   != "yes" ;  then rm $(tarball_netcdff)   ; fi ; \
+          if test -s $(tarball_pnetcdf)  && test "$(keep_pnetcdf)"   != "yes" ;  then rm $(tarball_pnetcdf)   ; fi ; \
           if test -s $(tarball_hdf5)     && test "$(keep_hdf5)"      != "yes" ;  then rm $(tarball_hdf5)      ; fi ; \
           if test -s $(tarball_etsf_io)  && test "$(keep_etsf_io)"   != "yes" ;  then rm $(tarball_etsf_io)   ; fi ; \
           if test -s $(tarball_lapack)   && test "$(keep_lapack)"    != "yes" ;  then rm $(tarball_lapack)    ; fi ; \

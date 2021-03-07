@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -28,7 +28,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  use electrons,     ONLY:levels
  use frequency,     ONLY:ordered_grid_index,coarse_grid_index,bare_grid_N,Coarse_grid_N,coarse_grid_Pt
  use plasma,        ONLY:EH_gas
- use parallel_m,    ONLY:PAR_nQ,PAR_Q_index,PAR_IND_Q
+ use parallel_m,    ONLY:PAR_nQ_bz,PAR_Q_bz_index,PAR_IND_Q_bz
  use collision_ext, ONLY:GW_NEQ_collisions
  !
 #include<memory.h>
@@ -50,7 +50,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  !
  i_pmq_G0=0
  n_poles=0
- i_q_mem=PAR_Q_index(iabs(iqbz))
+ i_q_mem=PAR_Q_bz_index(iabs(iqbz))
  !
  i_q   = q%sstar(iabs(iqbz),1)
  i_q_s = q%sstar(iabs(iqbz),2)
@@ -96,7 +96,7 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
  if (iqbz>0 ) then
    !
    if (i_q_mem==1) then
-     YAMBO_ALLOC(EH_gas%grid,(Coarse_grid_N,PAR_nQ,2))
+     YAMBO_ALLOC(EH_gas%grid,(Coarse_grid_N,PAR_nQ_bz,2))
      EH_gas%grid=-1
      EH_gas%N_poles=0
      l_reallocate=.false.
@@ -111,8 +111,8 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
      !
      YAMBO_ALLOC(local_grid,(EH_gas%max_N_poles,iqbz-1,2))
      do iqbz_local=1,iqbz-1
-       if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
-       i_q_mem_local=PAR_Q_index(iqbz_local)
+       if (.not.PAR_IND_Q_bz%element_1D(iqbz_local)) cycle
+       i_q_mem_local=PAR_Q_bz_index(iqbz_local)
        local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
      YAMBO_FREE(EH_gas%grid)
@@ -120,8 +120,8 @@ integer function PLASMA_tables_and_dimensions(iqbz,E,k,q,poles,N)
      YAMBO_ALLOC(EH_gas%grid,(EH_gas%max_N_poles,q%nbz,2))
      EH_gas%grid=-1
      do iqbz_local=1,iqbz-1
-       if (.not.PAR_IND_Q%element_1D(iqbz_local)) cycle
-       i_q_mem_local=PAR_Q_index(iqbz_local)
+       if (.not.PAR_IND_Q_bz%element_1D(iqbz_local)) cycle
+       i_q_mem_local=PAR_Q_bz_index(iqbz_local)
        EH_gas%grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)=local_grid(1:EH_gas%N_poles(iqbz_local),i_q_mem_local,:)
      enddo
      YAMBO_FREE(local_grid)

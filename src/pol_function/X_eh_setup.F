@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -135,12 +135,6 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ! when the terminator  is off 
          !                                                              
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
-         !
-         ! Skip these poles because dipoles are not defined in this case
-         if (abs(E_eh)<1.E-5 .and. abs(iq)==1) then
-           if(any((/ic/=Xen%bf,iv/=Xen%bf,ikp/=Xen%kf,ik/=Xen%kf,i_sp/=Xen%sf/)) ) cycle
-           if(real(X%Wd)==0..and.aimag(X%Wd)==0.) cycle
-         endif
          !
          X_eh_setup=X_eh_setup+1
          poles(X_eh_setup)=E_eh

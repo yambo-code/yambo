@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -23,17 +23,16 @@
 !
 integer function io_NL(ID)
  !
- use pars,          ONLY:SP,schlen,lchlen
+ use pars,          ONLY:schlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
- use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t,NL_damping,l_use_DIPOLES, &
-&                        NL_er,n_frequencies
- use real_time,     ONLY:Integrator_name,NE_steps,RT_step
+ use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
+&                        n_frequencies
+ use real_time,     ONLY:NE_steps
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
- use electrons,     ONLY:levels
  use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
 &                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
-&                        RD_CL_IF_END,RD_CL,io_action,io_fragment,io_elemental,io_status
+&                        io_fragment,io_elemental
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -47,8 +46,7 @@ integer function io_NL(ID)
  !
  ! Work Space
  !
- integer              :: i_fragment,io_err
- character(lchlen)    :: local_description(100)
+ integer              :: i_fragment,io_err,ID_frag
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
  !
@@ -58,7 +56,9 @@ integer function io_NL(ID)
  !
  io_extension(ID)='Nonlinear'
  !
- io_NL=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ ID_frag=0
+ !
+ io_NL=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))) )
  if (io_NL/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -66,7 +66,7 @@ integer function io_NL(ID)
    io_NL=io_header(ID,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,GAUGE=.true.)
    if (io_NL/=0) goto 1
    !
-   io_NL=variables_NL(ID,local_description)
+   io_NL=variables_NL(ID)
    !
    if (io_NL/=0) goto 1
    !
@@ -94,8 +94,8 @@ integer function io_NL(ID)
  !
  if (i_fragment==0) goto 1
  !
- if(read_is_on(ID)) then
-   !  
+ if(read_is_on(ID).and..not.allocated(NL_P_t)) then
+   !
    YAMBO_ALLOC(NL_P_t,(NE_steps,3))
    !
    YAMBO_ALLOC(E_tot_t,(NE_steps,3))
@@ -106,62 +106,63 @@ integer function io_NL(ID)
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=i_fragment,ierr=io_err)
- !
- if(io_err/=0) then
-   io_NL=io_err
-   goto 1
- endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.i_fragment==n_frequencies) io_action(ID)=RD_CL
+ call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_NL)
+ if(io_NL/=0) goto 1
  !
  ! Efield 
  !
- call io_elemental(ID,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           :',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ call io_elemental(ID_frag,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
+ call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
  !
- call io_elemental(ID,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
- call io_elemental(ID,VAR="[FIELDs] Versor                :",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
- call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2]:",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID,VAR="[FIELDs] Field width       [fs]:",R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV]:",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
- call io_elemental(ID,VAR="[FIELDs] Frequency steps       :",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV]:",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
- call io_elemental(ID,VAR='[FIELDs] Initial time      [fs]:',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ call io_elemental(ID_frag,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
+ call io_elemental(ID_frag,VAR="[FIELDs] Versor                 ",&
+         &                 R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
+ call io_elemental(ID_frag,VAR="[FIELDs] Intensity     [kWCMm2] ",&
+         &                 R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
+ call io_elemental(ID_frag,VAR="[FIELDs] Field width       [fs] ",&
+         &                 R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID_frag,VAR="[FIELDs] Frequency range   [eV] ",&
+         &                 R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
+ call io_elemental(ID_frag,VAR="[FIELDs] Frequency steps        ",&
+         &                 I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID_frag,VAR="[FIELDs] Frequency step    [eV] ",&
+         &                 R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
+ call io_elemental(ID_frag,VAR='[FIELDs] Initial time      [fs] ',&
+         &                 R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
+ call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
  !
- call io_elemental(ID,VAR="FIELD_POL",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID,CH0=Efield(i_Prb)%ef_pol,VAR="[FIELDs] Polarization :",CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+ call io_elemental(ID_frag,VAR="FIELD_POL",CH0="",VAR_SZ=1,MENU=0)
+ call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_pol,VAR="[FIELDs] Polarization  ",CHECK=.true.,OP=(/"=="/))
+ call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Polarization
  !  
  write (VAR_name,'(a,i4.4)') 'NL_P_freq_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(NL_P_t))
- call io_bulk(ID,R2=NL_P_t)
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(NL_P_t))
+ call io_bulk(ID_frag,R2=NL_P_t)
  !
  ! E_ext
  ! 
  write (VAR_name,'(a,i4.4)') 'E_ext_freq_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
- call io_bulk(ID,C2=E_ext_t)
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
+ call io_bulk(ID_frag,C2=E_ext_t)
  !
  ! E_tot
  ! 
  write (VAR_name,'(a,i4.4)') 'E_tot_freq_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
- call io_bulk(ID,C2=E_tot_t)
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
+ call io_bulk(ID_frag,C2=E_tot_t)
  !
  ! E_ks
  ! 
  write (VAR_name,'(a,i4.4)') 'E_ks_freq_',i_fragment
- call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
- call io_bulk(ID,C2=E_ks_t)
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=(/2,NE_steps,3/))
+ call io_bulk(ID_frag,C2=E_ks_t)
  !
-1 call io_disconnect(ID=ID)
+1 call io_fragment_disconnect(ID,ID_frag)
+ !
+ call io_disconnect(ID=ID)
  !
 #if defined _TIMING
  call timing('io_NL',OPR='stop')

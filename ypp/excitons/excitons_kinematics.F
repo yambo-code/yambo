@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine excitons_kinematics(Xk,eh,i_s)
  !
  use electrons,     ONLY:spin
  use R_lattice,     ONLY:bz_samp
- use YPP,           ONLY:EXCITON_kin
+ use YPPm,          ONLY:EXCITON_kin
  use BS_solvers,    ONLY:BSS_eh_table
  !
  implicit none

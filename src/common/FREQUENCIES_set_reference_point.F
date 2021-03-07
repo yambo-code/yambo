@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -29,7 +29,6 @@ subroutine FREQUENCIES_set_reference_point(omega,n_freq,iw_ref)
  use pars,          ONLY:SP
  use X_m,           ONLY:global_gauge,skip_cond_sum_rule
  use parser_m,      ONLY:parser
- use com,           ONLY:warning
  !
  implicit none
  !

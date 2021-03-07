@@ -7,12 +7,14 @@ Quick installation instructions for the impatient:
    ./configure [options]
    make all
 ("make" alone prints a list of acceptable targets). Binaries go in bin/.
-For more information, see the general documentation on the web site
-http://www.yambo-code.org/
 
-Compiling:  http://www.yambo-code.org/download/compiling.php
-Installing: http://www.yambo-code.org/download/installing.php
-Getting started: http://www.yambo-code.org/doc/getting_started.php
+For more information, see the specific documentation on the educational web-site
+http://www.yambo-code.org/wiki/ and general informations about the code on the
+main web-site http://www.yambo-code.org/
+
+Download:  http://www.yambo-code.org/wiki/index.php?title=Download
+Install:a  http://www.yambo-code.org/wiki/index.php?title=Installation
+Getting started: http://www.yambo-code.org/wiki/index.php?title=Tutorials
 
 All the material included in this distribution is free software;
 you can redistribute it and/or modify it under the terms of the GNU

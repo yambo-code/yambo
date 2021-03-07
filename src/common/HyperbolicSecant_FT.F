@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,7 +30,6 @@ real(SP) function HyperbolicSecant_FT(E_center,Gamma_HS,alpha)
  ! evaluated at E_center
  !
  use pars,        ONLY:SP,pi,zero_dfl
- use com,         ONLY:error
  !
  implicit none
  !

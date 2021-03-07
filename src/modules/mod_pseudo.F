@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, AF
@@ -41,8 +41,9 @@ module pseudo
  ! max number of angular momentum channel times number of projectors
 
  integer :: pp_kbv_dim
-
- integer,  allocatable:: pp_table(:,:,:)  
+ integer :: pp_kbv_dim_yambo
+ integer,  allocatable:: pp_kbv_table(:)
+ integer,  allocatable:: pp_table(:,:,:)
  ! (3,n_atomic_species,pp_n_l_times_proj_max)
  ! the first dimension contains (angular_momentum,nprojectors,spin)
 
@@ -131,7 +132,6 @@ module pseudo
    !
    subroutine PP_nlcc_alloc()
      use R_lattice,  ONLY:ng_vec
-     use FFT_m,      ONLY:fft_size
      implicit none
      YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
      YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,7 +33,7 @@ integer function io_Vnl(Dip,Xen,ID)
 &                        read_is_on,write_is_on,io_header,io_extension,&
 &                        io_fragment,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
- use com,           ONLY:warning
+ !
 #include<memory.h>
  !
  type(DIPOLE_t)::Dip
@@ -42,7 +42,7 @@ integer function io_Vnl(Dip,Xen,ID)
  !
  ! Work Space
  !
- integer :: i1,ixyz,sec_size,i_spin
+ integer :: i1,ixyz,sec_size,i_spin,ID_frag
  integer :: db_nbm,db_nbf,db_nb(2)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: Vnl_disk(:,:,:) ! complex, ic, iv
@@ -60,13 +60,13 @@ integer function io_Vnl(Dip,Xen,ID)
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,DB_I1=db_nb,&
-&       VAR=" Dip band range         :",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
+&       VAR=" Dip band range          ",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
    call io_elemental(ID,DB_I0=db_nbm,&
-&       VAR=" Metallic bands         :",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
+&       VAR=" Metallic bands          ",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
    call io_elemental(ID,DB_I0=db_nbf,&
-&       VAR=" Filled bands           :",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
+&       VAR=" Filled bands            ",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
    call io_elemental(ID,&
-&       VAR=" RL vectors in the sum  :",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
+&       VAR=" RL vectors in the sum   ",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
@@ -74,7 +74,7 @@ integer function io_Vnl(Dip,Xen,ID)
    !
    call io_elemental(ID,VAR='WAVE_FUNC_XC',CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,&
-&       VAR=' Wavefunctions          :',CHECK=.true.,OP=(/"=="/))
+&       VAR=' Wavefunctions          ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0)
    !
    io_Vnl=io_status(ID)
@@ -103,7 +103,7 @@ integer function io_Vnl(Dip,Xen,ID)
      ! Fragmentation
      !
      io_extension(ID)='Vnl'
-     call io_fragment(ID,i_fragment=i1)
+     call io_fragment(ID,ID_frag,i_fragment=i1)
      !
      do ixyz=1,3
        !
@@ -112,14 +112,16 @@ integer function io_Vnl(Dip,Xen,ID)
          if (write_is_on(ID)) call mat_c2r(Vnl(ixyz,:,:,i1,i_spin),Vnl_disk)
          !
          write (VAR_name,'(3(a,i4.4))') 'Vnl_k_',i1,'_xyz_',ixyz,'_spin_',i_spin
-         call io_bulk(ID,VAR=trim(VAR_name),VAR_SZ=shape(Vnl_disk))
-         call io_bulk(ID,R3=Vnl_disk)
+         call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(Vnl_disk))
+         call io_bulk(ID_frag,R3=Vnl_disk)
          !
          if (read_is_on(ID)) call mat_r2c(Vnl_disk,Vnl(ixyz,:,:,i1,i_spin))
          !
        enddo
        !
      enddo
+     !
+     call io_fragment_disconnect(ID,ID_frag)
      !
    enddo
    !

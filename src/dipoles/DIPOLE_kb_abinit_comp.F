@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -33,13 +33,13 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  use vec_operate,   ONLY:v_norm,c2a
  use wave_func,     ONLY:wf_ng,wf_nc_k,wf_igk
  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
- use pseudo,        ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_kbs,&
-&                        pp_kb,pp_kbd,pp_table,pp_n_l_max
+ use pseudo,        ONLY:pp_kbv_dim,pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_kbs,&
+&                        pp_kb,pp_kbd,pp_table,pp_kbv_table,pp_n_l_max
  !
  implicit none
  !
  type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,pp_kbv_dim,4,n_spinor)
+ complex(SP)   :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
  integer       :: ik,i_sp_pol
  ! 
  ! Work Space
@@ -48,7 +48,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  complex(SP) :: kb_Ylm(4)
  real(SP)    :: Ygrad(2,3)
  !
- integer     :: ic,ig,i1,is,ia,pp_spin
+ integer     :: ic,ig,i1,i2,is,ia,pp_spin
  integer     :: im,il,i_pp
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
@@ -85,8 +85,12 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)
            !
            i1=i1+1
-           kbv(ig,i1,1  ,1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ic,is,i_pp,i_sp_pol)*e_iGR*sf
-           kbv(ig,i1,2:4,1)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,i_sp_pol)+ &
+           i2=pp_kbv_table(i1)
+           !
+           if(i2==0) cycle
+           !
+           kbv(ig,1,1  ,i2)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ic,is,i_pp,i_sp_pol)*e_iGR*sf
+           kbv(ig,1,2:4,i2)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,i_sp_pol)+ &
 &                                 kb_Ylm(2:4)*pp_kb(ic,is,i_pp,i_sp_pol))*e_iGR*sf
            !
          enddo
@@ -95,7 +99,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
    enddo
  enddo
  !
- if (n_spinor==2) kbv(:,:,:,2)=kbv(:,:,:,1)
+ if (n_spinor==2) kbv(:,2,:,:)=kbv(:,1,:,:)
  !
  !kbv=conjg(kbv)      ! To be checked if I need this for Kerr
  !

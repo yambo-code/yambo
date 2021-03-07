@@ -1,7 +1,7 @@
 ! Self-energies and eXcitations (SaX)
 ! Copyright (C) 2006 SaX developers team
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -30,7 +30,7 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   !
   use pars,          ONLY:SP,DP
   use pseudo,        ONLY:pp_rhog_nlcc,pp_has_nlcc_atom
-  use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
+  use D_lattice,     ONLY:atom_pos,n_atoms_species
   !
   implicit none
   !
@@ -42,8 +42,8 @@ subroutine PP_PWscf_comp_nlcc(basis,atoms)
   !
   real(SP) :: b(3,3),G(3)
   real(SP) :: G_norm(basis%npw)
-  real(DP) :: rhoG(basis%npw), V_m1
   real(DP) :: G_dot_R
+  real(DP) :: rhog(basis%npw),V_m1
   complex(DP) :: e_iGR,sf
   real(SP), allocatable :: G_cc(:,:)
   real(SP), allocatable :: pp_rhog_nlcc_atom(:,:)

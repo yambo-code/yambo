@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,14 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
+subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
  !
  use pars,           ONLY:SP
  use QP_m,           ONLY:QP_t,QP_copy
  use com,            ONLY:msg
- use stderr,         ONLY:intc
- use LIVE_t,         ONLY:what_is_running
+ use stderr,         ONLY:intc,real2ch
+ use C_driver,       ONLY:code_bin
  use vec_operate,    ONLY:v_is_zero
+ use descriptors,    ONLY:IO_desc_duplicate
  !
 #include<memory.h>
  !
@@ -38,7 +39,7 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  type(QP_t),  optional:: qp(n_GROUNDS)
  character(*),optional:: OP(n_dbs)
  real(SP)    ,optional:: PRE_FAC(n_dbs)
- integer     ,optional:: MAP(n_dbs)
+ character(*),optional:: FILES(n_dbs)
  !
  ! Work Space
  !
@@ -48,7 +49,6 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
  !
  ! Affinity check
  !================
- !
  just_COUNT=n_GROUNDS < 0
  MERGED    =.FALSE.
  GROUND    =0
@@ -62,24 +62,16 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    !
    n_GROUNDS=n_GROUNDS+1
    GROUND(i_db)=n_GROUNDS
-   if (present(MAP)) then
-     MAP(i_db)=n_GROUNDS
-   endif
+   !
    if (.not.just_COUNT) then
-     WHAT=" "
-     if (plan_EWZG(i_db,1)) WHAT=trim(WHAT)//"E"
-     if (plan_EWZG(i_db,2)) WHAT=trim(WHAT)//"W"
-     if (plan_EWZG(i_db,3)) WHAT=trim(WHAT)//"Z"
-     if (plan_EWZG(i_db,4)) WHAT=trim(WHAT)//"G"
-     !
+     call WHAT_update(i_db)
      call QP_copy(qp2merge(i_db), qp( n_GROUNDS ), WHAT, trim(OP(i_db)),PRE_FAC(i_db) )
-     !
-     qp( n_GROUNDS )%n_descs=qp2merge(i_db)%n_descs+1
-     qp( n_GROUNDS )%description( 1 )="--- DB#"//trim(intc(i_db))//" descriptions ---"
-     do i_d=1,qp2merge(i_db)%n_descs
-       qp( n_GROUNDS )%description( i_d+1 )= qp2merge(i_db)%description(i_d)
-     enddo
-     !
+     call ADD_the_DB_desc( N_GROUNDS, i_db,"[DB #"//trim(intc(i_db))//"]")
+     if(i_db == 1) then
+       call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="")
+     else
+       call IO_desc_duplicate(qp2merge(i_db)%desc,qp( n_GROUNDS )%desc,offset=2,PREPEND="[DB #"//trim(intc(i_db))//"]")
+     endif
    endif
    !
    do i_db_p=i_db+1,n_dbs
@@ -111,18 +103,12 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
      endif
      !
      if (CONDITION) then
-       if (present(MAP)) then
-         MAP(i_db_p)=GROUND(i_db)
-       endif
        MERGED(i_db_p)=.TRUE.
        GROUND(i_db_p)=GROUND(i_db)
        if (.not.just_COUNT) then
-         !
-         if (.not.SAME_desc) then
-           qp( GROUND(i_db_p) )%n_descs=qp( GROUND(i_db_p) )%n_descs+1
-           qp( GROUND(i_db_p) )%description( qp( GROUND(i_db_p) )%n_descs )="--- DB#"//trim(intc(i_db_p))//" descriptions ---"
-         endif
-         !
+         call WHAT_update( i_db_p)
+         call ADD_the_DB_desc( GROUND(i_db_p), i_db_p,"[DB #"//trim(intc(i_db_p))//"]")
+         call PREAPPEND_the_DB_desc( qp2merge(i_db_p), i_db_p )
          call QP_DBs_add_me(qp( GROUND(i_db_p) ),qp2merge(i_db_p) ,plan_EWZG(i_db_p,:), &
 &                           SAME_states, SAME_desc,trim(OP(i_db_p)),PRE_FAC(i_db_p))
        endif
@@ -131,13 +117,44 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    MERGED(i_db)=.TRUE.
  enddo
  !
- if (index(what_is_running,"YPP")>0.and.just_COUNT) then
+ if (index(code_bin,"ypp")>0.and.just_COUNT) then
    !
    call msg('l','detected '//trim(intc(n_GROUNDS))//' family(ies) of QP databases...')
    !
  endif
  !
  contains 
+   !
+   subroutine WHAT_update( j_db )
+     integer :: j_db
+     WHAT=" "
+     if (plan_EWZG(j_db,1)) WHAT=trim(WHAT)//"E"
+     if (plan_EWZG(j_db,2)) WHAT=trim(WHAT)//"W"
+     if (plan_EWZG(j_db,3)) WHAT=trim(WHAT)//"Z"
+     if (plan_EWZG(j_db,4)) WHAT=trim(WHAT)//"G"
+   end subroutine
+   !
+   subroutine PREAPPEND_the_DB_desc( qp_in, current_db )
+     type(QP_t)::qp_in
+     integer   ::i_desc,current_db
+     do i_desc=1,qp_in%desc%n
+       qp_in%desc%str(i_desc)="[DB #"//trim(intc(current_db))//"] "//trim(qp_in%desc%str(i_desc))
+     enddo
+   end subroutine
+   !
+   subroutine ADD_the_DB_desc( j_db,  current_db, PREPEND )
+     integer      :: j_db,current_db
+     character(*) :: PREPEND
+     qp( j_db )%desc%str ( qp( j_db)%desc%n+1)=PREPEND//"Database"
+     qp( j_db )%desc%sval( qp( j_db)%desc%n+1)=trim(FILES(current_db))
+     qp( j_db )%desc%size( qp( j_db)%desc%n+1)= 1
+     qp( j_db )%desc%kind( qp( j_db)%desc%n+1)="s"
+     qp( j_db )%desc%str ( qp( j_db)%desc%n+2)=PREPEND//"Database Operation"
+     qp( j_db )%desc%sval( qp( j_db)%desc%n+2)=trim(OP(current_db))//trim(real2ch(PRE_FAC(current_db)))//"x"//WHAT
+     qp( j_db )%desc%size( qp( j_db)%desc%n+2)= 1
+     qp( j_db )%desc%kind( qp( j_db)%desc%n+2)="s"
+     qp( j_db )%desc%n=qp( j_db )%desc%n+2
+   end subroutine
    !
    logical function have_same_k(qp1,qp2)
      type(QP_t)::qp1,qp2
@@ -174,15 +191,40 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,MAP)
    end function
    !
    logical function have_same_desc(qp1,qp2)
+     !      
      type(QP_t)::qp1,qp2
-     integer i_d
+     integer i_d1,i_d2,wrong_i_d
+     !
      have_same_desc=.TRUE.
-     if (qp1%n_descs/=qp2%n_descs) have_same_desc=.FALSE.
-     do i_d=1,qp1%n_descs
-       if (index(qp2%description(i_d),"QP @ K")==0) then
-         if ( trim(qp2%description(i_d)) /= trim(qp1%description(i_d)) )  have_same_desc=.FALSE.
-       endif
+     wrong_i_d=0
+     !
+     if (qp1%desc%n/=qp2%desc%n) call warning('Differenent number of descriptions in the QP DBs '//NEW_LINE('A'))
+     do i_d1=1,qp1%desc%n
+       if (index(qp1%desc%str(i_d1),"QP @ state")/=0) cycle  ! Skip the QP range
+       do i_d2=1,qp2%desc%n
+         if (index(qp2%desc%str(i_d2),"QP @ state")/=0) cycle  ! Skip the QP range
+         !
+         if(trim(qp1%desc%str(i_d1))==trim(qp2%desc%str(i_d2)).and. &
+&           trim(qp1%desc%term(i_d1))==trim(qp2%desc%term(i_d2))) then  ! Compare all other descriptors
+           !      
+           if ( trim(qp2%desc%sval(i_d2)) /= trim(qp1%desc%sval(i_d1)) )   wrong_i_d=i_d1 
+           if ( trim(qp2%desc%str(i_d2)) /= trim(qp1%desc%str(i_d1)) )     wrong_i_d=i_d1
+           if ( qp2%desc%size(i_d2)/= qp1%desc%size(i_d1) )                wrong_i_d=i_d1
+           if ( qp2%desc%dval(i_d2)/= qp1%desc%dval(i_d1) )                wrong_i_d=i_d1
+           if ( qp2%desc%cval(i_d2)/= qp1%desc%cval(i_d1) )                wrong_i_d=i_d1
+           if ( qp2%desc%lval(i_d2) .and. .not. qp1%desc%lval(i_d1) )      wrong_i_d=i_d1
+           if ( qp2%desc%size(i_d2)/= qp1%desc%size(i_d1) )                wrong_i_d=i_d1
+           if ( any(qp2%desc%ival(:,i_d2) /= qp1%desc%ival(:,i_d1)) )      wrong_i_d=i_d1
+           if ( any(qp2%desc%rval(:,i_d2) /= qp1%desc%rval(:,i_d1)) )      wrong_i_d=i_d1
+           !
+         endif
+       enddo
      enddo
+     !
+     if(wrong_i_d/=0) then
+       have_same_desc=.false.
+       call msg('s','QP DBs with different  "'//trim(qp1%desc%str(wrong_i_d))//'" cannot be merged ')
+     endif
    end function
    !
 end subroutine

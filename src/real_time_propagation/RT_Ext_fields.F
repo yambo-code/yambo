@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -46,7 +46,6 @@ subroutine RT_Ext_fields(A,time)
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use fields,         ONLY:n_ext_fields,Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
- use com,            ONLY:error
  !
  implicit none
  !

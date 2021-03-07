@@ -1,5 +1,5 @@
 #if defined _DOUBLE
-objs = 	davint.o  xermsg.o  fdump.o   j4save.o  xercnt.o  xerhlt.o \
+objs =  davint.o  xermsg.o  fdump.o   j4save.o  xercnt.o  xerhlt.o \
         xerprn.o  xersve.o  i1mach.o  xgetua.o \
         dpolft.o  dpcoef.o  dp1vlu.o \
         dbesj0.o  dbesj1.o  dbesk0.o  dbesk1.o  dcsevl.o  initds.o  \
@@ -9,7 +9,7 @@ objs = 	davint.o  xermsg.o  fdump.o   j4save.o  xercnt.o  xerhlt.o \
         dqc25f.o  dqelg.o   dqcheb.o  dqwgtf.o  dqk15w.o  dqwgtf.o \
         dgtsl.o   d9b0mp.o  d9b1mp.o
 #else
-objs = 	avint.o  xermsg.o fdump.o  j4save.o xercnt.o xerhlt.o \
+objs =  avint.o  xermsg.o fdump.o  j4save.o xercnt.o xerhlt.o \
         xerprn.o xersve.o i1mach.o xgetua.o \
         polfit.o  pcoef.o  pvalue.o \
         besj0.o  besj1.o  besk0.o  besk1.o  csevl.o  inits.o  \

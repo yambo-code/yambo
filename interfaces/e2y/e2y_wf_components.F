@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,7 +31,6 @@ subroutine e2y_wf_components(ncid)
   use etsf_io_low_level
   use etsf_data,             only : dims
   use pars,                  only : SP,DP
-  use com,                   only : msg, error
   use mod_com2y,             only : ng_vec_abinit
   use R_lattice,             only : nkibz
   use wave_func,             only : wf_ncx,wf_nc_k,wf_igk,wf_ng

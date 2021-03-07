@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -929,10 +929,13 @@ CONTAINS
       !
       CALL iotk_scan_begin( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
+      !
       CALL qexsd_scan_logical( iunit, "noncolin", noncolin, IERR=ierr)
       IF (ierr/=0) RETURN
-      CALL qexsd_scan_logical( iunit, "do_magnetization", domag, IERR=ierr)
+      CALL qexsd_scan_logical( iunit, "do_magnetization", domag, LFOUND=lfound, IERR=ierr)
       IF (ierr/=0) RETURN
+      IF (.not.lfound) domag=.false.
+      !
       CALL iotk_scan_end( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
       !
@@ -976,8 +979,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: iunit_aux
-      CHARACTER(256) :: filename
-      
+      CHARACTER(256) :: str_tmp
       ierr = 0
       !
       call iotk_scan_begin( iunit, "basis_set", IERR=ierr )
@@ -1001,8 +1003,13 @@ CONTAINS
       !
       if (present(nr1).or.present(nr2).or.present(nr3)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_grid", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+           call iotk_scan_dat( iunit, "fft_grid", str_tmp, ATTR=attr, IERR=ierr )
+           if (ierr/=0) return
+         endif
          !
          if (present(nr1)) then
             call iotk_scan_attr( attr, "nr1", nr1, IERR=ierr )
@@ -1021,8 +1028,13 @@ CONTAINS
       !
       if (present(nr1s).or.present(nr2s).or.present(nr3s)) then 
          !
+         attr=""
          call iotk_scan_empty( iunit, "fft_smooth", ATTR=attr, IERR=ierr )
-         if (ierr/=0) return
+         !if (ierr/=0) return
+         if (ierr/=0) then
+            call iotk_scan_dat( iunit, "fft_smooth",str_tmp, ATTR=attr, IERR=ierr )
+            if (ierr/=0) return
+         endif 
          !
          if (present(nr1s)) then
             call iotk_scan_attr( attr, "nr1", nr1s, IERR=ierr )
@@ -1322,33 +1334,39 @@ CONTAINS
       endiF
       !
       if (present(ecutfock)) then
-         call iotk_scan_dat(iunit, "ecutfock", ecutfock, IERR=ierr )
+         call iotk_scan_dat(iunit, "ecutfock", ecutfock, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) ecutfock=-1.0
       endif
       !
       if (present(exx_fraction)) then
-         call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, IERR=ierr )
+         call iotk_scan_dat(iunit, "exx_fraction", exx_fraction, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) exx_fraction=-1.0
       endif
       !
       if (present(screening_parameter)) then
-         call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, IERR=ierr )
+         call iotk_scan_dat(iunit, "screening_parameter", screening_parameter, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) screening_parameter=-1.0
       endif
       !
       if (present(exxdiv_treatment)) then
-         call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, IERR=ierr )
+         call iotk_scan_dat(iunit, "exxdiv_treatment", exxdiv_treatment, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) exxdiv_treatment="NOT_FOUND"
       endif
       !
       if (present(x_gamma_extrapolation)) then
-         call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, IERR=ierr )
+         call iotk_scan_dat(iunit, "x_gamma_extrapolation", x_gamma_extrapolation, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) x_gamma_extrapolation=.false.
       endif
       !
       if (present(ecutvcut)) then
-         call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, IERR=ierr )
+         call iotk_scan_dat(iunit, "ecutvcut", ecutvcut, FOUND=lfound, IERR=ierr )
          if ( ierr/=0 ) return
+         if ( .not.lfound ) ecutvcut=-1.0
       endif
       !
       if (lfound) then
@@ -1439,7 +1457,6 @@ CONTAINS
       !
     end subroutine qexsd_read_bands_info
     !
-    !
     !------------------------------------------------------------------------
     SUBROUTINE qexsd_read_band_structure( nspin, lsda, noncolin, spinorbit, nbnd, nbnd_up, nbnd_dw, &
                                           nelec, natomwfc, fermi_energy, homo_energy, fermi_energy_updw, &
@@ -1457,11 +1474,12 @@ CONTAINS
       integer,                intent(out) :: ierr
       !
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
+      integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
       character(256) :: chval
- 
+      !
       ierr = 0
       !
       call iotk_scan_begin( iunit, "band_structure", IERR=ierr )
@@ -1488,9 +1506,20 @@ CONTAINS
          if (ierr/=0) return
       endif
       !
-      call iotk_scan_dat( iunit, "nbnd", nbnd_, IERR=ierr)
+      call iotk_scan_dat( iunit, "nbnd", nbnd_, FOUND=lfound, IERR=ierr)
       if (ierr/=0) return
-      if (nspin_==2) nbnd_=nbnd_/2
+      !
+      if (lfound.and.nspin_==2) nbnd_=nbnd_/2
+      !
+      if (.not. lfound) then
+         call iotk_scan_dat( iunit, "nbnd_up", nbnd_up_, IERR=ierr)
+         if (ierr/=0) return
+         call iotk_scan_dat( iunit, "nbnd_dw", nbnd_dw_, IERR=ierr)
+         if (ierr/=0) return
+         if (nbnd_up_==nbnd_dw_) nbnd_=(nbnd_up_+nbnd_dw_)/2
+         if (nbnd_up_/=nbnd_dw_) CALL errore( 'qexsd_read_band_structure', 'different number of up and down bands', 1 )
+      endif
+      !
       if (present(nbnd)) nbnd=nbnd_
       !
       if (present(nbnd_up)) then
@@ -1882,7 +1911,6 @@ CONTAINS
       type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
       character(len=8)   :: char_buf 
 #endif  
-
       !
       ! defs
       !
@@ -1896,7 +1924,6 @@ CONTAINS
          ierr=71
          return
       endif
-
       !
       ! set filename
       !
@@ -1915,8 +1942,8 @@ CONTAINS
       if (file_is_hdf5) then 
          ierr=42; return
       endif
-#endif
-
+#endif 
+      !
 #if defined(_QE_HDF5)
       if (file_is_hdf5) then
          call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)

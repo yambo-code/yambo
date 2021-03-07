@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -128,15 +128,15 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
    !
  enddo loop
  call live_timing()
- call msg('r','Points outside the Sphere  :',N_out)
+ call msg('r','Points outside the Sphere  ',N_out)
  !  
  !Integrated Sphere VOLUME 
  !
  box_vol   =(2.*radius*1.2)**3.
  sphere_vol=4./3.*pi*radius**3.
  !
- call msg('r', 'Sphere volume       [au]:',sphere_vol)
- call msg('rn','Integrated volume   [au]:',box_vol*real(RIM_n_rand_pts)/real(N_out))
+ call msg('r', 'Sphere volume       [au]',sphere_vol)
+ call msg('rn','Integrated volume   [au]',box_vol*real(RIM_n_rand_pts)/real(N_out))
  !
  call live_timing('Integrals',Np)
  !

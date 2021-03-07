@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
  use stderr,       ONLY:STRING_split
- use com,          ONLY:warning
  !
  implicit none
  !

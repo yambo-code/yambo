@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,9 +45,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  ! Same procedure for the current
  !
  use pars,          ONLY:SP,DP
- use com,           ONLY:warning,error,msg
+ use com,           ONLY:msg
  use stderr,        ONLY:real2ch
- use vec_operate,   ONLY:c2a
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
@@ -55,8 +54,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use wave_func,     ONLY:WF,wf_nc_k,wf_igk,wf_ncx
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear,PAR_COM_density
+ use wave_func,     ONLY:WF
+ use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
+ use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
@@ -64,7 +64,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use timing_m,      ONLY:timing
 #endif
 #if defined _YPP_RT
- use real_time,     ONLY:RT_delta_occupations,RT_ibz_coo,RT_Nk_ibz
+ use RT_occupations,ONLY:RT_el_occ
+ use real_time,     ONLY:RTibz
 #endif
  !
 #include<memory.h>
@@ -82,12 +83,10 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  integer    :: ik_RT
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
- integer    :: npwk,ig,igs
+ integer    :: ig
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
- real(SP)   :: xk(3),raux
- complex(SP):: WF_der(fft_size,n_spinor,3)
+ real(SP)   :: raux
  complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
- complex(SP), allocatable :: wf_SP(:,:)
  logical    :: warn_done,l_si,l_rho !,l_J
  !
 #if defined _RT
@@ -141,17 +140,14 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _RT
        if(l_real_time.and.allocated(E%fo)) f_occ=E%fo(ib,ik,i_sp_pol) 
 #endif
-!GPL_EXCLUDE_START
 #if defined _YPP_RT
        if(present(bands)) then
          f_occ=0._SP
-         do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
-           f_occ=f_occ+RT_delta_occupations(ib,ik_RT)
+         do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+           f_occ=f_occ+RT_el_occ%dN(ib,ik_RT)*RTibz%weights(ik_RT)
          enddo
-         f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
        endif
 #endif
-!GPL_EXCLUDE_END
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
        !
@@ -235,7 +231,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  endif
  !
  if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
+ ! DEBUG>
  !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
+ !DEBUG<
  !
  ! Symmetrization
  !
@@ -247,9 +245,10 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    do i_symm=1,rho_syms
      rho(:)=rho(:)+rho_no_sym(fft_rot_r(:,i_symm))/real(nsym,SP)
    enddo
-   if (mag_syms)      return
-   if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
-   if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
+   if (.not.mag_syms) then
+     if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
+     if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
+   endif
  endif
  !
  !if (l_J) then

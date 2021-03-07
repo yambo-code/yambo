@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  !
  implicit none
  integer  :: iq,N_out,N_out_G
- real(SP) :: qr(RIM_n_rand_pts,3),em1_anis(3),G_sph_radii
+ real(SP) :: qr(3,RIM_n_rand_pts),em1_anis(3),G_sph_radii
  ! 
  ! Work Space
  !
@@ -56,8 +56,8 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
    do i2=i1,i2max
      RIM_acc(1)=0._DP
      do i3=1,RIM_n_rand_pts
-       v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(i3,:)
-       v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(i3,:)
+       v1(:)=g_vec(i1,:)+q_pt(iq,:)+qr(:,i3)
+       v2(:)=g_vec(i2,:)+q_pt(iq,:)+qr(:,i3)
        r1=iku_v_norm(v1)*iku_v_norm(v2)
        RIM_acc(1)=RIM_acc(1)+2._DP*rfac/r1
      enddo
@@ -71,32 +71,31 @@ subroutine rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
  !
  RIM_acc=0._DP
  !
- G_sph_radii=(3.*.2/(4.*pi)*k_grid_uc_vol)**(1./3.)
- RIM_acc(1)  =2._DP*4._DP*pi*G_sph_radii/(2._DP*pi)**3._DP
- RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_sph_radii/(2._DP*pi)**3._DP*sum(em1_anis)
+ G_sph_radii=(3._DP*.2/(4._DP*pi)*k_grid_uc_vol)**(1._DP/3._DP)
+ RIM_acc(1)  =2._DP*4._DP*pi*G_sph_radii/(2._DP*pi)**3
+ RIM_acc_anis=2._DP*4._DP*pi/3._DP*G_sph_radii/(2._DP*pi)**3*sum(em1_anis)
  !
  N_out_G=0
  i2max=RIM_ng 
  if (RIM_is_diagonal) i2max=1
- RIM_acc_anis=0._DP
  do i1=1,RIM_n_rand_pts
-   r1=iku_v_norm(qr(i1,:))
-   v1=4.*pi**2.*(/qr(i1,1)**2.,qr(i1,2)**2,qr(i1,3)**2/)
-   v1(:)=v1(:)/alat(:)**2./r1**4.
+   r1=iku_v_norm(qr(:,i1))
+   v1=4._DP*pi**2*(/qr(1,i1)**2,qr(2,i1)**2,qr(3,i1)**2/)
+   v1(:)=v1(:)/alat(:)**2/r1**4
    !
    if(r1>=G_sph_radii) then
      !
      ! Integrate the 1/|q|^2 term outside the sphere of radius G_sph_radii
      !
      N_out_G=N_out_G+1
-     RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2._DP)
+     RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2)
      RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
      !
      ! Integrate the 1/|q||q+Go| term outside the sphere of radius G_sph_radii as well
      ! because the intergral in the sphere gose to zero as NQ->\infty
      !
      do i2=2,i2max,1
-       r1=r1*iku_v_norm(g_vec(i2,:)+qr(i1,:))
+       r1=r1*iku_v_norm(g_vec(i2,:)+qr(:,i1))
        RIM_acc(i2)=RIM_acc(i2)+rfac/r1
      enddo
      !

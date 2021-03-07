@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CH DS
@@ -29,7 +29,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  use pars,                ONLY: SP,cZERO,lchlen,schlen
  use drivers,             ONLY: l_sc_run
- use com,                 ONLY: warning,msg,core_io_path,error,grid_paths
+ use com,                 ONLY: msg,core_io_path,grid_paths
  use stderr,              ONLY: intc,STRING_split
  use LIVE_t,              ONLY: live_timing
  use electrons,           ONLY: levels,n_spinor,n_sp_pol
@@ -48,6 +48,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 #if defined _RT
  use real_time,           ONLY: RT_bands
 #endif
+#include<dev_defs.h>
  !
  implicit none
  !
@@ -75,7 +76,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  integer                      :: ik,ik_mem,ic_wf,iv_wf,ic,iv,iq,n_LT_steps,&
 &                                i_spin,i_spinor,i_sp_pol,ir,grid_order(3),ic_min
  complex(SP)                  :: rho
- real(SP)                     :: Ev_m_Ec,q_mod(3)
+ real(SP)                     :: Ev_m_Ec_KS,q_mod(3)
  !
  !ioDB1 shifted grids
  !
@@ -128,7 +129,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
  enddo
  !
- call msg('r','Shifted grids found: '//trim(intc(num_shifted_grids)))
+ call msg('r','Shifted grids found '//trim(intc(num_shifted_grids)))
  !
  if(num_shifted_grids<3) call warning(' Shifted grids are '//trim(intc(num_shifted_grids))//'. Assuming non periodic system.')
  !
@@ -136,7 +137,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)*num_shifted_grids
  !
- call live_timing('Dipoles shifted grids   :',n_LT_steps)
+ call live_timing('Dipoles shifted grids   ',n_LT_steps)
  !
  do i_sp_pol = 1,n_sp_pol
    !
@@ -148,8 +149,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
      !
      ! Load WFs first at k and then at k+q_iq
      ! 
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',title='-Oscillators/G space',&
-&           force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+&           title='-Oscillators/G space/Shifted',force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      do iq = 1, num_shifted_grids
        !
@@ -175,10 +176,10 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            rho=cZERO
            !
-           Ev_m_Ec   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
-           if (allocated(Xen%Eo)) Ev_m_Ec   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
+           Ev_m_Ec_KS   =Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Ev_m_Ec_KS   =Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            !
-           if (abs(Ev_m_Ec)<=Dip%Energy_treshold .or. iv==ic) then
+           if (abs(Ev_m_Ec_KS)<=Dip%Energy_treshold .or. iv==ic) then
              call live_timing(steps=1)
              cycle
            endif
@@ -193,8 +194,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            do i_spinor=1,n_spinor
              !
-             rho = rho + Vstar_dot_V(wf_ng_eff,WF_shifted%c(1:wf_ng_eff,i_spinor,iv_wf), &
-&                                                  WF%c(1:wf_ng_eff,i_spinor,ic_wf))
+             rho = rho + Vstar_dot_V(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf), &
+&                                              DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !
@@ -206,11 +207,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !=====
            ! <v>
            !=====
-           if(.not.Dip%force_v_g_space) then
-             ! This is directly p_eff, see Dipole transverse and PRB 48, 11789 (1993)
-             Dip%v_eff=.true.
-             DIP_v(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec
-           endif
+           if(.not.Dip%force_v_g_space) DIP_v(ir,ic,iv,ik_mem,i_sp_pol)=rho/q0_shift_norm*Ev_m_Ec_KS
            !
            call live_timing(steps=1)
            !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -24,20 +24,19 @@
 subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  use pars,           ONLY:SP,schlen
- use electrons,      ONLY:levels,n_sp_pol,BZ_DbGd_tot_nk_levels,BZ_DbGd_kpts,BZ_DbGd_nbands
- use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use electrons,      ONLY:levels,n_sp_pol
+ use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
  use com,            ONLY:msg
- use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver,l_integral_respect,NN_n_of_nearest
- use RT_control,     ONLY:RT_carriers_to_RT_k
+ use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
  !
 #include<memory.h>
  !
  integer,       intent(in)    :: bands(2),NN
  type(levels),  intent(inout) :: E
- type(bz_samp), intent(in)    :: K
+ type(bz_samp), intent(inout) :: K
  character(3),  intent(in)    :: what ! X,K,G,R
  character(*),  intent(in)    :: mode ! NN,BOLTZ
  real(SP),      intent(in)    :: Time
@@ -45,19 +44,17 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  ! Work space
  !
- integer               :: nb(2),ID
+ integer               :: nb(2)
  real(SP)              :: df_Max,dE_Max,N_carriers(2)
  integer,parameter     :: n_pieces=10
  character(schlen)     :: title
  logical               :: l_DbGd
- type(bz_samp)         :: RT_k,DbGd_k
  !
  ! Setup
  !-------
- l_DbGd=BZ_DbGd_tot_nk_levels>0 .and. .not.l_RT_abs_yambo
+ l_DbGd=K%FGibz%N>0     .and. .not.l_RT_abs_yambo
  l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
  NN_n_of_nearest=NN
- ID=0
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))
  nb(2)=min(bands(2),RT_carriers%nb(2))
@@ -75,26 +72,17 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
    !
    YAMBO_ALLOC(E%df,(E%nb,E%nk,n_sp_pol))
    E%df=0._SP
-   call bz_samp_reset(RT_k)
-   call RT_carriers_to_RT_k(RT_k)
-   !
-   call Interpolate_and_transfer("df",K,.FALSE.)
-   E%f=E%fo+E%df
-   !
-   if (l_DbGd) then
-     !
-     call bz_samp_reset(DbGd_k)
-     DbGd_k%nibz=BZ_DbGd_tot_nk_levels
-     YAMBO_ALLOC(DbGd_k%pt,(BZ_DbGd_tot_nk_levels,3))
-     YAMBO_ALLOC(DbGd_k%weights,(BZ_DbGd_tot_nk_levels))
-     DbGd_k%pt=BZ_DbGd_kpts
-     DbGd_k%weights=1._SP/real(BZ_DbGd_tot_nk_levels,SP)
-     YAMBO_ALLOC(E%df_DbGd,(E%nb,BZ_DbGd_tot_nk_levels,n_sp_pol))
-     E%df_DbGd=0._SP
-     call Interpolate_and_transfer("df",DbGd_k,.TRUE.)
-     E%f_DbGd=E%f_DbGd+E%df_DbGd
-     !
+   if (l_DbGd.and..not.allocated(E%FG%df)) then
+     if (.not.allocated(E%FG%df)) then
+       YAMBO_ALLOC(E%FG%df,(E%FG%nb,E%FG%nk,n_sp_pol))
+     endif
+     E%FG%df=0._SP
    endif
+   !
+   call Interpolate_and_transfer("df",K,E,nb,l_B,N_carriers,df_Max,dE_Max)
+   !
+   E%f=E%fo+E%df
+   if (l_DbGd) E%FG%f=E%FG%f+E%FG%df
    !
  endif
  !
@@ -109,9 +97,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
      E%Eo=E%E
    endif
    !
-   call Interpolate_and_transfer("dE",K,.FALSE.)
-   !
-   if (l_DbGd) call Interpolate_and_transfer("dE",DbGd_k,.TRUE.)
+   call Interpolate_and_transfer("dE",K,E,nb,l_B,N_carriers,df_Max,dE_Max)
    !
  endif
  !
@@ -130,74 +116,97 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  call msg('nr',   'Updated Carrier components')
  call msg('rn',   '==========================')
- call msg('r',    '['//trim(title)//'] Reference Time           [fs]: ',Time*AUT2FS)
- call msg('r',    '['//trim(title)//'] Bands range                  : ', (/nb(1),nb(2)/)) 
+ call msg('r',    '['//trim(title)//'] Reference Time                ',Time*AUT2FS,"[fs]")
+ call msg('r',    '['//trim(title)//'] Bands range                   ', (/nb(1),nb(2)/)) 
  !
  if (l_f) then
-   call msg('r',  '['//trim(title)//'] Maximum occupations change   : ',df_Max)
-   call msg('r',  '['//trim(title)//'] N of carriers                : ',N_carriers(1))
-   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid): ',N_carriers(2))
+   call msg('r',  '['//trim(title)//'] Maximum occupations change    ',df_Max)
+   call msg('r',  '['//trim(title)//'] N of carriers                 ',N_carriers(1))
+   if (l_DbGd) call msg('r',  '['//trim(title)//']                 (Double Grid) ',N_carriers(2))
  endif
  !
  if (l_E) then
-   call msg('r',  '['//trim(title)//'] Max energy levels change [ev]: ',dE_Max*HA2EV)
+   call msg('r',  '['//trim(title)//'] Max energy levels change      ',dE_Max*HA2EV,"[eV]")
  endif
  !
- call msg('rn',  '['//trim(title)//'] Full and metallic bands       : ', (/E%nbf,E%nbm/)) 
+ call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
- call INTERPOLATION_driver(operation="END",ID_op=ID)
+end subroutine RT_interpolation
+!
+!
+subroutine Interpolate_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,dE_Max)
  !
- contains
-  !
-  subroutine Interpolate_and_transfer(OBJ,K,IS_DBGD)
+ use pars,           ONLY:SP
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp,bz_samp_reset
+ use real_time,      ONLY:RT_carriers
+ use RT_control,     ONLY:RT_carriers_to_RT_k
+ use interpolate,    ONLY:INTERP_obj,INTERPOLATION_driver_seed,INTERPOLATION_driver_do
+ !
+ implicit none
+ !
+ character(*)  :: OBJ
+ type(levels),  intent(inout) :: E
+ type(bz_samp), intent(inout) :: K
+ logical,       intent(in)    :: l_B
+ integer       :: nb(2)
+ real(SP)      :: df_Max,dE_Max,N_carriers(2)
+ !
+ ! Work Space
+ !
+ logical       :: HAS_DBGD
+ integer       :: ik,i_carr,nb_max,nb_max_FineGd,ID
+ type(bz_samp) :: RT_k
     !
-    character(*) :: OBJ
-    type(bz_samp):: K
-    logical      :: IS_DBGD
-    !
-    ! Work Space
-    integer      :: ik,i_carr,nb_max
-    ! 
-    call INTERPOLATION_driver(bands=nb,SEED_k=RT_k,SEED_RT=RT_carriers,&
-&                             operation=OBJ//"_from_DB",ID_op=ID,NEAREST=.not.l_B)
-    call INTERPOLATION_driver(OUT_k=K,operation=OBJ//"_from_DB")
+    ID=0
+    HAS_DBGD=allocated(K%FGibz%pt)
     !
     nb_max=    nb(2)
-    if (IS_DBGD) nb_max=min(nb(2),BZ_DbGd_nbands)
+    if (HAS_DBGD) nb_max_FineGd=min(nb(2),E%FG%nb)
+    !
+    call bz_samp_reset(RT_k)
+    call RT_carriers_to_RT_k(RT_k)
+    !
+    call INTERPOLATION_driver_seed(OBJ//"_from_DB",ID,nb,RT_k,SEED_RT=RT_carriers,NEAREST=.not.l_B)
+    !
+    call INTERPOLATION_driver_do(OBJ//"_from_DB",ID,K)
     !
     if (OBJ=="df") then
       !
       ! Metallic and Insulating bands update
       !
+      E%nbc=nb
       E%nbf=nb(1)-1
       E%nbm=nb(2)
       !
-      if (IS_DBGD) then
-        E%df_DbGd( nb(1):nb_max,:,:)=INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
-        i_carr=2
-      else
-        E%df( nb(1):nb(2),:,:)=INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
-        df_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
-        i_carr=1
-      endif
+      E%df( nb(1):nb(2),:,:)=INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+      df_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
       !
       do ik=1,K%nibz
-        N_carriers(i_carr)=N_carriers(i_carr)+sum(abs(INTERP_obj(ID)%INTERP(nb(1):nb_max,ik,:)))*K%weights(ik)/2._SP
+        N_carriers(1)=N_carriers(1)+sum(abs(INTERP_obj(ID)%INTERP(nb(1):nb_max,ik,:)))*K%weights(ik)/2._SP
       enddo
+      !
+      if (HAS_DBGD) then
+        E%FG%df( nb(1):nb_max_FineGd,:,:)=INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
+        do ik=1,K%FGbare%N
+          N_carriers(2)=N_carriers(2)+sum(abs(INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,ik,:)))*K%FGbare%weights(ik)/2._SP
+        enddo
+      endif
       !
     else if (OBJ=="dE") then
       !
-      if (IS_DBGD) then
-        E%E_DbGd( nb(1):nb_max,:,:)=E%E_DbGd(nb(1):nb_max,:,:)+INTERP_obj(ID)%INTERP(nb(1):nb_max,:,:)
-      else
-        E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
-        dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
+      E%E( nb(1):nb(2),:,:)=E%E(nb(1):nb(2),:,:)+INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
+      dE_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))
+      !
+      if (HAS_DBGD) then
+        E%FG%E(nb(1):nb_max_FineGd,:,:)=E%FG%E(nb(1):nb_max_FineGd,:,:)+&
+&                                       INTERP_obj(ID)%INTERP_FineGd(nb(1):nb_max_FineGd,:,:)
       endif
       !
     endif
     !
-  end subroutine Interpolate_and_transfer
-  !
-end subroutine
+    call INTERPOLATION_driver_end(ID)
+    !
+end subroutine Interpolate_and_transfer

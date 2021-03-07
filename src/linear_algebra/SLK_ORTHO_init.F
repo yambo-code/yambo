@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -10,7 +10,7 @@
 ! in the root directory of the present distribution,
 ! or http://www.gnu.org/copyleft/gpl.txt .
 !
-SUBROUTINE SLK_ORTHO_init( ORTHO, POOL, n_CPU_in )
+subroutine SLK_ORTHO_init( ORTHO, POOL, n_CPU_in )
  !
  ! ... Ortho group initialization
  !
@@ -50,4 +50,4 @@ SUBROUTINE SLK_ORTHO_init( ORTHO, POOL, n_CPU_in )
  !  
  RETURN
  !
-END SUBROUTINE SLK_ORTHO_init
+end subroutine SLK_ORTHO_init

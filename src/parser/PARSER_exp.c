@@ -17,13 +17,13 @@
  02111-1307, USA.
 */
 
-#include <c_defs.h>
 #include <ctype.h>
 #include <gsl_complex.h>
 #include <gsl_complex_math.h>
-
-#include "parser.h"
-#include "symbols.h"
+#include <parser.h>
+#include <symbols.h>
+#include <stdlib.h>
+#include <string.h>
 
 static char *par_string;
 static int par_pos;

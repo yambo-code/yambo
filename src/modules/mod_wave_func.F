@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,6 +24,8 @@
 module wave_func
  !
  use pars,           ONLY:SP
+ !
+#include <dev_defs.h>
 #include <memory.h>
  !
  type WAVEs 
@@ -36,6 +38,7 @@ module wave_func
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
+   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
  !
  ! Buffered WFs
@@ -45,7 +48,7 @@ module wave_func
  !
  ! Actual WFs
  !
- type (WAVEs), save :: WF
+ type (WAVEs), save, target :: WF
  !
  ! Real components ?
  !
@@ -57,15 +60,17 @@ module wave_func
  integer                :: wf_nb_io_groups
  !
  integer                :: wf_nb_to_load
- integer, allocatable   :: wf_b_indx(:)            ! given ib_to_load=1,wf_nb_to_load returns the band index
+ integer, allocatable   :: wf_b_indx(:)   ! given ib_to_load=1,wf_nb_to_load returns the band index
  !
  ! Max Num. of COMPONENTS
  !
  integer                :: wf_ncx
  !
- ! Max Num. of G-VECTORS (>= wf_ncx)
+ ! Max Num. of G-VECTORS for the WFs maxval(wf_igk) > wf_ncx
  !
- integer                :: wf_ng
+ integer                :: wf_ng          ! For WFs in the    IBZ
+ integer                :: wf_ng_1st_BZ   ! For WFs in the 1st BZ
+ integer                :: wf_ng_overlaps ! For WFs shifted used by the overlaps
  !
  ! Wave function derivatives
  !
@@ -75,21 +80,17 @@ module wave_func
  !
  ! Parallel wave-function distribution
  !
- logical    ,allocatable:: states_to_load(:,:,:) 
+ logical,    allocatable:: states_to_load(:,:,:) 
  !
  ! Num. of COMPONENTS at each k
  !
- integer    ,allocatable:: wf_nc_k(:)
+ integer,    allocatable:: wf_nc_k(:)
  !
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
- integer    ,allocatable:: wf_igk(:,:)
+ integer,    allocatable:: wf_igk(:,:)
+ integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
- !
- ! Allocation/deallocation messaging verbosity
- !
- logical                :: QUIET_free
- logical                :: QUIET_alloc
  !
  interface
    !
@@ -99,10 +100,11 @@ module wave_func
      real(SP), optional :: wf_old(:,:,:,:)
    end function
    !
-   integer function io_WF(ID,wf)
+   integer function io_WF(ID,wf,wf_d)
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
+     complex(SP), optional DEV_ATTR :: wf_d(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)
@@ -112,13 +114,21 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
+#if defined _CUDA
+   function WF_symm_gpu(ifft,isc)
+     use pars,        ONLY: SP
+     use electrons,   ONLY: n_spinor
+     integer             :: ifft,isc(4)
+     complex(SP),dimension(n_spinor) DEV_ATTR :: WF_symm_gpu
+   end function
+#endif
+   !
  end interface 
  !
  contains
    !
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
-     use FFT_m,      ONLY: fft_size
      type(WAVEs):: WF_in,WF_out
      YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
@@ -130,6 +140,10 @@ module wave_func
      WF_out%to_load= WF_in%to_load
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
+     !
+     if (allocated(WF_in%c_d)) then
+        YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+     endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

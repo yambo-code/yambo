@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH
@@ -469,8 +469,7 @@ contains
 
     return
   end subroutine pw_kpoints
-
-
+  !
   logical function fmt_is_pwexport(dirname)
      implicit none
      character(len=*)  :: dirname

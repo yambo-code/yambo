@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,8 +45,6 @@ module mod_wf2y
      wf_nb_io=n_bands
      if (wf_nb_io_user>0) then
        !
-       !if (wf_nb_io_user>=n_bands) return
-       !
        wf_nb_io=wf_nb_io_user
        wf_nb_io_groups=ceiling(real(n_bands,SP)/real(wf_nb_io,SP))
        !
@@ -70,7 +68,7 @@ module mod_wf2y
      !
      array_sz = real(2*wf_nb_io*wf_ncx*n_spin*SP,SP)/Megabyte
      !
-     call msg('s',':: WF splitter Blocks/bands/block size(Mb):',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
+     call msg('s',' WF splitter Blocks/bands/block size(Mb)',(/real(wf_nb_io_groups,SP),real(wf_nb_io,SP),array_sz/))
      !
    end subroutine
    !
@@ -78,7 +76,6 @@ module mod_wf2y
      !
      use pars,      ONLY:SP
      use stderr,    ONLY:intc
-     use com,       ONLY:warning
      integer     :: ib,ik,nc
      real (SP)   :: wf_(2,nc)
      !

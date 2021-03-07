@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -31,7 +31,7 @@ subroutine RT_X_response(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use fields,         ONLY:Efield
- use com,            ONLY:jobstr,error
+ use com,            ONLY:jobstr
  use parser_m,       ONLY:parser
  !
 #include<memory.h>

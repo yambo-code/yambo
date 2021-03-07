@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 subroutine electrons_dos_setup( E, dos_E , bands )
  !
  use pars,           ONLY:SP
- use YPP,            ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
+ use YPPm,           ONLY:DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
  use electrons,      ONLY:levels
  !
  implicit none

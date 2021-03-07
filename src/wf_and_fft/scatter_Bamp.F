@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine scatter_Bamp(isc)
+subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! rhotw(G)=<ib ik_is i_sp| e^[I(RsG-G0).r] | ob ok_os o_sp>   
  !
@@ -39,32 +39,48 @@ subroutine scatter_Bamp(isc)
  use electrons,      ONLY:n_spinor
  use collision_el,   ONLY:elemental_collision
  use D_lattice,      ONLY:idt_index
- use R_lattice,      ONLY:g_rot
- use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table
+ use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
-#if defined _FFTW
- use FFT_m,          ONLY:fftw_plan
-#endif
+ use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
+ use FFT_m,          ONLY:fftw_plan,cufft_plan
+ use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
  !
- type(elemental_collision)::isc
+ type(elemental_collision), target::isc
+ 
+ integer :: qs,iGo
+ integer :: ig,ir,isc_ngrho,ib,ibp
+ complex(SP), pointer DEV_ATTR :: WF_symm_i_p(:,:), WF_symm_o_p(:,:)
+ complex(SP), pointer DEV_ATTR :: rhotw_p(:)
+ complex(DP), pointer DEV_ATTR :: rho_tw_rs_p(:)
+ logical :: have_cuda_loc
+
  !
- integer     :: qs,iGo
- integer     :: ib,ibp
-#if defined _FFTQE && !defined _USE_3D_FFT || defined _OPENMP
- integer     :: ig, ir
+ ! define pointers to enable CUF kernels
+ ! when compiling using CUDA-Fortran
+ !
+ WF_symm_i_p => DEV_VAR(isc%WF_symm_i)
+ WF_symm_o_p => DEV_VAR(isc%WF_symm_o)
+ rho_tw_rs_p => DEV_VAR(isc%rho_tw_rs)
+ rhotw_p     => DEV_VAR(isc%rhotw)
+ !
+ have_cuda_loc=.false.
+#ifdef _CUDA_LOC
+ have_cuda_loc=.true.
 #endif
+
  !
  ! |ib ik_is i_sp>
- call WF_apply_symm(isc%is,isc%WF_symm_i)
+ call WF_apply_symm(isc%is,WF_symm_i_p)
  !
  ! | ob ok_os o_sp>   
- call WF_apply_symm(isc%os,isc%WF_symm_o)
+ call WF_apply_symm(isc%os,WF_symm_o_p)
+
  !
  ! \tilde{\rho} in Real Space
  !
-#if defined _FFTQE && !defined _USE_3D_FFT
+#if defined _FFTQE && !defined _USE_3D_FFT && !defined _CUDA_LOC
  ! 
  ! add one extra conjg since FFTQE cannot account for the conjg in one go
  ! 
@@ -73,49 +89,60 @@ subroutine scatter_Bamp(isc)
  do ir = 1, fft_size
    isc%rho_tw_rs(ir) = cmplx(isc%WF_symm_i(ir,1)*conjg(isc%WF_symm_o(ir,1)),kind=DP)
  enddo
- !$omp end do
  !
  if (n_spinor==2) then
- !$omp do
+   !$omp do
    do ir = 1, fft_size
      isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+cmplx(isc%WF_symm_i(ir,2)*conjg(isc%WF_symm_o(ir,2)),kind=DP)
    enddo
- !$omp end do
  endif
  !$omp end parallel
  !
 #else
-!
-#if defined _OPENMP
+ !
+ ! ordinary implementation
+ !
+#ifdef _CUDA_LOC
+ !$cuf kernel do(1) <<<*,*>>>
+#else
  !$omp parallel default(shared), private(ir)
  !$omp do
+#endif
  do ir = 1, fft_size
-   isc%rho_tw_rs(ir) = cmplx(conjg(isc%WF_symm_i(ir,1))*isc%WF_symm_o(ir,1),kind=DP)
+   rho_tw_rs_p(ir) = cmplx(conjg(WF_symm_i_p(ir,1))*WF_symm_o_p(ir,1),kind=DP)
  enddo
- !$omp end do
  !
  if (n_spinor==2) then
- !$omp do
-   do ir = 1, fft_size
-     isc%rho_tw_rs(ir) = isc%rho_tw_rs(ir)+cmplx(conjg(isc%WF_symm_i(ir,2))*isc%WF_symm_o(ir,2),kind=DP)
-   enddo
- !$omp end do
- endif
- !$omp end parallel
+#ifdef _CUDA_LOC
+   !$cuf kernel do(1) <<<*,*>>>
 #else
- isc%rho_tw_rs(:)=cmplx(conjg(isc%WF_symm_i(:,1))*isc%WF_symm_o(:,1),kind=DP)
- if (n_spinor==2) isc%rho_tw_rs(:)=isc%rho_tw_rs(:)+cmplx(conjg(isc%WF_symm_i(:,2))*isc%WF_symm_o(:,2),kind=DP)
+   !$omp do
+#endif
+   do ir = 1, fft_size
+     rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
+   enddo
+ endif
+#if !defined _CUDA_LOC
+ !$omp end parallel
 #endif
  !
 #endif
+
+
  !
  ! perform the actual FFT
  !
-#if defined _FFTW
+#if defined _CUDA_LOC
+ !
+ call fft_3d_cuda(rho_tw_rs_p,fft_dim,+1,cufft_plan)
+ !
+#else 
+ !
+#  if defined _FFTW
  call fft_3d(isc%rho_tw_rs,fft_dim,+1,fftw_plan)
-#elif defined _FFTSG || (defined _USE_3D_FFT && defined _FFTQE)
+#  elif defined _FFTSG || (defined _USE_3D_FFT && defined _FFTQE)
  call fft_3d(isc%rho_tw_rs,fft_dim,+1)
-#elif defined _FFTQE
+#  elif defined _FFTQE
  !
  ! the QE fft must be performed in the right
  ! direction. conjg is taken care separately
@@ -124,55 +151,69 @@ subroutine scatter_Bamp(isc)
  !
  call fft_3d(isc%rho_tw_rs,fft_dim,-1)
  !
-#else
-#error "[CPP] Inconsistent FFT environment"
+#  else
+#    error "[CPP] Inconsistent FFT environment"
+#  endif
+ !
 #endif
+ !
  !
  ! e^[I(Rs(G-G0)).r]
  !
  iGo=isc%qs(1)
  qs =isc%qs(3)
+ isc_ngrho=isc%ngrho
  !
-#if defined _FFTQE && !defined _USE_3D_FFT
+#if defined _FFTQE && !defined _USE_3D_FFT && !defined _CUDA_LOC
  !
  ! one extra conjg is performed on rho_tw_rs
+ !
  if (qs==idt_index) then 
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
      isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(ig,iGo))),kind=SP)
    enddo
-   !$omp end parallel do
  else
    !$omp parallel do default(shared), private(ig)
    do ig = 1, isc%ngrho
      isc%rhotw(ig)= cmplx(conjg(isc%rho_tw_rs(fft_g_table(g_rot(ig,qs),iGo))),kind=SP)
    enddo
-   !$omp end parallel do
  endif
+ !
 #else
-#  if defined _OPENMP
+ !
  if (qs==idt_index) then 
+   !
+#ifdef _CUDA_LOC
+   !$cuf kernel do(1) <<<*,*>>>
+#else
    !$omp parallel do default(shared), private(ig)
-   do ig = 1, isc%ngrho
-     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(ig,iGo)),kind=SP)
-   enddo
-   !$omp end parallel do
- else
-   !$omp parallel do default(shared), private(ig)
-   do ig = 1, isc%ngrho
-     isc%rhotw(ig)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(ig,qs),iGo)),kind=SP)
-   enddo
-   !$omp end parallel do
- endif
-#  else
- if (qs==idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(1:isc%ngrho,iGo)),kind=SP)
- if (qs/=idt_index) isc%rhotw(1:isc%ngrho)= cmplx(isc%rho_tw_rs(fft_g_table(g_rot(1:isc%ngrho,qs),iGo)),kind=SP)
-#  endif
 #endif
+   do ig = 1, isc_ngrho
+     rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(ig,iGo)),kind=SP)
+   enddo
+   !
+ else
+   !
+#ifdef _CUDA_LOC
+   !$cuf kernel do(1) <<<*,*>>>
+#else
+   !$omp parallel do default(shared), private(ig)
+#endif
+   do ig = 1, isc_ngrho
+     rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(DEV_VAR(g_rot)(ig,qs),iGo)),kind=SP)
+   enddo
+   !
+ endif
+ !
+#endif
+
  !
  ! add USPP augmentation
  !
  if (pp_is_uspp) then
+   !
+   if (have_cuda_loc) call error("[USPP] CUDA and USPP not implemented")
    !
    ib=isc%is(1)
    ibp=isc%os(1)
@@ -181,11 +222,12 @@ subroutine scatter_Bamp(isc)
    call PP_addus_rhotw_aug(isc)
    !
  endif
+
  !
  ! q=0, G=0 case
  !
- if (all((/isc%qs(2)==1,isc%is(1)==isc%os(1)/))) isc%rhotw(1)=cONE
- if (all((/isc%qs(2)==1,isc%is(1)/=isc%os(1)/))) isc%rhotw(1)=cZERO
- !
-end subroutine
+ if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_p(1)=cONE
+ if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_p(1)=cZERO
+
+end subroutine DEV_SUB(scatter_Bamp)
 

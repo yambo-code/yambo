@@ -131,7 +131,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    ! Remove Inv specific descriptors
    !
-   if (run_inversion) BSS_desc%n=BSS_desc%n-3
+   if (run_inversion.and.master_cpu) BSS_desc%n=BSS_desc%n-3
    !
    ! Note: for developers (DS 2021/01/03)
    ! The jdos (l_BS_jdos) cannot be computed easely via the Haydock solver.

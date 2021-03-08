@@ -24,8 +24,8 @@
 subroutine ELPH_double_grid(k,E,q)
  !
  use pars,                ONLY:SP,pi
- use electrons,           ONLY:levels,E_reset
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode
+ use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
  use D_lattice,           ONLY:n_atoms,alat
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode,ELPH_databases_IO_freqs
  use stderr,              ONLY:STRING_same,intc
@@ -33,7 +33,7 @@ subroutine ELPH_double_grid(k,E,q)
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
- use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP
+ use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
  !
 #include<memory.h>
  !
@@ -46,8 +46,8 @@ subroutine ELPH_double_grid(k,E,q)
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f
- integer, external     :: io_ELPH
+ integer               :: ID,io_err,i_f,i_fg
+ integer, external     :: io_ELPH,io_Double_Grid
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
@@ -112,5 +112,64 @@ subroutine ELPH_double_grid(k,E,q)
    q%FGbz%FG_mode ="BZ"
    !
  endif
+ !
+ if (l_expand) then
+   !
+   ! BZ->IBZ
+   !
+   YAMBO_FREE(q_fine%pt)
+   YAMBO_ALLOC(q_fine%pt,(q_fine%nibz,3))
+   q_fine%nibz=q_fine%nbz
+   q_fine%pt  =q_fine%ptbz
+   q%FGibz%FG_mode="BZ"
+   !
+ endif
+ !
+ if (l_unexpand) then
+   !
+   ! IBZ->BZ
+   !
+   q_fine%nbz=q_fine%nibz
+   YAMBO_ALLOC(q_fine%ptbz,(q_fine%nbz,3))
+   YAMBO_ALLOC(q_fine%weights,(q_fine%nibz))
+   YAMBO_ALLOC(q_fine%sstar,(q_fine%nibz,2))
+   q_fine%ptbz=q_fine%pt
+   q_fine%weights=1./real(q_fine%nibz,SP)
+   do i_fg=1,q_fine%nibz
+     q_fine%sstar(i_fg,:)=(/i_fg,1/)
+   enddo
+   !
+   q%FGibz%FG_mode="IBZ"
+   q%FGbz%FG_mode="IBZ"
+   !
+ endif
+ !
+ ! IBZ FG_mode to IBZ map
+ !========================
+ call section('=','Double Grid '//trim(q%FGibz%FG_mode)//'-IBZ mapping')
+ call k_map_fine_to_coarse(trim(q%FGibz%FG_mode)//'-IBZ',q,q%FGibz,q_fine,PH_E)
+ !
+ ! BZ FG_mode to BZ map
+ !======================
+ call section('=','Double Grid '//trim(q%FGbz%FG_mode)//'-BZ mapping')
+ call k_map_fine_to_coarse(trim(q%FGbz%FG_mode)//'-BZ',q,q%FGbz,q_fine,PH_E)
+ !
+ ! Final I/O
+ !===========
+ call section('=','Double Grid Database I/O')
+ ! .. restoring of built-in value of nkibz to be used in io_header 
+ nkibz=q%nibz
+ !
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
+ io_err=io_Double_Grid(PH_E,q,ID)
+ !
+ ! CLEAN
+ !========
+ !
+ call bz_samp_reset(q_fine)
+ call k_ibz2bz(q,'d',.true.)
+ call FineGd_E_components_reset(PH_E,.TRUE.)
+ call bz_samp_FineGd_reset(q%FGbz)
+ call bz_samp_FineGd_reset(q%FGibz)
  !
 end subroutine

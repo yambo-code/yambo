@@ -30,7 +30,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_BZINDXk_ibz_INDEX
+ use parallel_m,    ONLY:PAR_COM_BZINDXk_ibz_A2A,PAR_COM_BZINDXk_ibz_INDEX
  ! IND
  use parallel_m,    ONLY:PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_bz
  ! INDEX
@@ -50,7 +50,8 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  !
  call PARALLEL_structure(1,(/"k"/))
  !
- call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX)
+ call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX,&
+&                                         COMM_A2A_1=PAR_COM_BZINDXk_ibz_A2A)
  !
  ! K-points (IBZ)
  !
@@ -72,12 +73,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  !
  ! I/O privileges (for now just one structur exists)
  !
- call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
- !if (PARALLEL_n_structures_active>1) then
- !  call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_BZINDXk_ibz_A2A%CPU_id==0)
- !else
- !  call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
- !endif
+ call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_BZINDXk_ibz_A2A%CPU_id==0)
  !
  call OPENMP_set_threads(n_threads_in=n_threads_BZINDX)
  !

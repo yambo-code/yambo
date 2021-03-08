@@ -41,7 +41,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_SLK_INDEX_global,PAR_COM_SLK,&
 &                        PAR_COM_QP_INDEX,PAR_COM_PLASMA_INDEX,PAR_COM_freqs_INDEX,PAR_COM_freqs,&
-&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
+&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,PAR_COM_BZINDXk_ibz_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPk_bz_A2A,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local
@@ -170,6 +170,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_DIPk_ibz_A2A)
  call COMM_reset(PAR_COM_BZINDXk_bz_INDEX)
  call COMM_reset(PAR_COM_BZINDXk_ibz_INDEX)
+ call COMM_reset(PAR_COM_BZINDXk_ibz_A2A)
  call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
  call COMM_reset(PAR_COM_X_WORLD)
  call COMM_reset(PAR_COM_density)

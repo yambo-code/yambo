@@ -417,6 +417,7 @@ module parallel_m
  !
  ! ... BZINDX
  type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_A2A
  type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_bz_INDEX
  !
  ! ... DIPOLES

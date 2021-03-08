@@ -29,7 +29,7 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  &                     PAR_DIPk_ibz_index,PAR_DIPk_bz_index,PAR_DIPk_nibz,PAR_DIPk_nbz,             &
  &                     PAR_COM_BZINDXk_ibz_INDEX,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_bz,            &
  &                     PAR_BZINDXk_ibz_index,PAR_BZINDXk_bz_index,PAR_BZINDXk_nibz,PAR_BZINDXk_nbz, &
- &                     mpi_comm_world
+ &                     PAR_COM_BZINDXk_ibz_A2A,mpi_comm_world
  ! X
  use parallel_m,  ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
  &                     PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_Xk_nibz,PAR_Xk_nbz,             &
@@ -49,7 +49,7 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  select case(trim(PAR_K_scheme_kind))
  case ("BZINDX")
    call COMM_copy(PAR_COM_BZINDXk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
-   !call COMM_copy(PAR_COM_DIPk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
+   call COMM_copy(PAR_COM_BZINDXk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
    call PAR_INDEX_copy(PAR_IND_BZINDXk_ibz,PAR_K_scheme%IND_ibz)
    call PAR_INDEX_copy(PAR_IND_BZINDXk_bz, PAR_K_scheme%IND_bz )
    PAR_K_scheme%nibz=PAR_BZINDXk_nibz

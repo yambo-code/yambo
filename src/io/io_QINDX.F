@@ -189,6 +189,7 @@ integer function io_QINDX(Xk,q,io_db)
            ! the next loop is removed
            do i2=i2_dn,i2_up
              if (.not.PAR_K_scheme%IND_bz%element_1D(i2)) cycle
+             if (write_is_on(id_frag).and..not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) cycle
              i2_mem=PAR_K_scheme%bz_index(i2)
              call io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_mem:i2_mem,i3:i3),IPOS=(/1,i2,i3/))
            enddo

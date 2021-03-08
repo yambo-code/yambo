@@ -55,7 +55,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !
+#if defined _PAR_IO
  if (write_is_on(ID).and..not.master_cpu) return
+#endif
  !
  call IO_desc_reset(desc)
  !

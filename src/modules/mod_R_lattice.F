@@ -214,6 +214,8 @@ module R_lattice
      !
      character(*), intent(in) :: what
      !
+     integer :: nK_qindx_B
+     !
      if(  (index(what,"X")/=0 .or. index(what,"ALL")/=0) .and. X_scattering) then
        YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
        qindx_X=0
@@ -226,10 +228,12 @@ module R_lattice
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
 #if defined _PAR_IO
-       YAMBO_ALLOC(qindx_B,(nXkbz,PAR_K_scheme%nbz,2))
+       nK_qindx_B=PAR_K_scheme%nbz
 #else
-       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+       if(PAR_K_scheme%nbz> 0) nK_qindx_B=PAR_K_scheme%nbz  ! read mode
+       if(PAR_K_scheme%nbz==0) nK_qindx_B=nXkbz             ! write mode
 #endif
+       YAMBO_ALLOC(qindx_B,(nXkbz,nK_qindx_B,2))
        qindx_B=0
      endif
      !

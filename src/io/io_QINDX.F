@@ -181,17 +181,21 @@ integer function io_QINDX(Xk,q,io_db)
      do i3=1,2
        do i2_dn=1,IO_size,i2_step
          i2_up=min(i2_dn-1+i2_step,IO_size)
-#if defined _PAR_IO
-         ! due to the following loop, the previous loop is not needed
-         ! however I keep also the previous one in case, for future changes,
-         ! the next loop is removed
-         do i2=i2_dn,i2_up
-           if (.not.PAR_K_scheme%IND_bz%element_1D(i2)) cycle
-           i2_mem=PAR_K_scheme%bz_index(i2)
-           call io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_mem:i2_mem,i3:i3),IPOS=(/1,i2,i3/))
-         enddo
-#else
-         call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_dn:i2_up,i3:i3),IPOS=(/1,i2_dn,i3/))
+#if !defined _PAR_IO
+         if (read_is_on(id_frag)) then
+#endif
+           ! due to the following loop, the previous loop is not needed
+           ! however I keep also the previous one in case, for future changes,
+           ! the next loop is removed
+           do i2=i2_dn,i2_up
+             if (.not.PAR_K_scheme%IND_bz%element_1D(i2)) cycle
+             i2_mem=PAR_K_scheme%bz_index(i2)
+             call io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_mem:i2_mem,i3:i3),IPOS=(/1,i2,i3/))
+           enddo
+#if !defined _PAR_IO
+         else
+           call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_dn:i2_up,i3:i3),IPOS=(/1,i2_dn,i3/))
+         endif
 #endif
        enddo
      enddo

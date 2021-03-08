@@ -160,6 +160,10 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
 #else
  !
+ ID_head=0
+ ID_compr=0
+ l_partial_kernel_loaded=.false.
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
  !
@@ -168,7 +172,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
    call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
    do i_block=1,n_BS_blks
-     IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
+     IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)
      call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
      io_BS_err=io_BS(iq,X,ID)
      if(n_BS_blks>0) call live_timing(steps=1)

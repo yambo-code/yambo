@@ -51,7 +51,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BS_res_ares_dim
  use collision_el, ONLY:elemental_collision_free
  use IO_int,       ONLY:io_control
- use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
+ use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,OP_WR,&
 &                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc

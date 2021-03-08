@@ -62,6 +62,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  call timing("DIPOLE_buil_covariants",OPR="start")
  !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
+ !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !
  call parser('EvPolarization'  ,l_eval_polarization)

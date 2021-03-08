@@ -110,7 +110,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  call msg("sr","[PROJECT]                         [___]:",PROJECT_N_par)
  call msg("sr","[PROJECT]                         [_|_]:",PROJECT_N_perp)
  if (nK_out_of_BZ(1)>0) then
-   call msg("sr","[PROJECT] Points out of BZ             :",real(nK_out_of_BZ(1))/real(GRID_k%nbz)*100._SP,"[o/o]")
+   call msg("sr","[PROJECT] Points ouside the BZ         :",real(nK_out_of_BZ(1))/real(GRID_k%nbz)*100._SP,"[o/o]")
  endif
  !
 end subroutine

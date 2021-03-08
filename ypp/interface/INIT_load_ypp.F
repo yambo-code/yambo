@@ -39,9 +39,9 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,BSiq_via_command_line,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
-&                        DIPOLES_direction,DIPOLES_E_range,DIPOLES_bands
+&                        DIPs_direction,DIPs_E_range,DIPs_C_bands,DIPs_V_bands,DIPs_kind
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -89,6 +89,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'interpolate',  '[R] Interpolate')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
+ call it('r',defs,'ph_ass_dos',   '[R] Phonon-assisted DOS')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
@@ -243,9 +244,11 @@ subroutine INIT_ypp_load(defs)
  !
  ! DIPOLES
  !
- call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPOLES_E_range,E_unit)
- call it(defs,'DIP_direction', 'Field direction versor',DIPOLES_direction)
- call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPOLES_bands)
+ call it(defs,'DIP_kind',      'Kind of DIPOLES use (IP, EXCITONIC, MASK)',DIPs_kind,protect=.FALSE.)
+ call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPs_E_range,E_unit)
+ call it(defs,'DIP_direction', 'Field direction versor',DIPs_direction)
+ call it(defs,'DIP_C_bands',     'E/h pairs conduction bands selection',DIPs_C_bands,verb_level=V_general)
+ call it(defs,'DIP_V_bands',     'E/h pairs valence bands selection',DIPs_V_bands,verb_level=V_general)
  !
  ! Excitons
  !
@@ -259,6 +262,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'EHdensity', 'Calculate (h)ole/(e)lectron density from BSE wave-function',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
+ call it('f',defs,'PrtDOS', 'Print Exciton Density of States') 
  !
  ! WFs
  !
@@ -268,7 +272,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
- call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq)
+ call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq,protect=.not.BSiq_via_command_line)
  !
 #if defined _YPP_SC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')

@@ -59,7 +59,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ! Work space
  !
  type(DIPOLE_t)        :: Dip
- !
  character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
  integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err

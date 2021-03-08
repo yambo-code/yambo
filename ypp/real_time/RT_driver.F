@@ -61,11 +61,9 @@ subroutine RT_driver(en,k,q)
  !
  call RT_output_INIT( )
  !
- !
- !
  ! Real-Time occupations and lifetimes
  !=====================================
- if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,en)
+ if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,q,en)
  !
  ! Plotting 
  !===========

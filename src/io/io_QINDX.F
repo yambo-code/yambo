@@ -191,7 +191,7 @@ integer function io_QINDX(Xk,q,io_db)
            call io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_mem:i2_mem,i3:i3),IPOS=(/1,i2,i3/))
          enddo
 #else
-         call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_dn:i2_up,i3:i3),IPOS=(/1,i2,i3/))
+         call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_dn:i2_up,i3:i3),IPOS=(/1,i2_dn,i3/))
 #endif
        enddo
      enddo

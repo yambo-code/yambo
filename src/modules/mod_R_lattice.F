@@ -225,7 +225,11 @@ module R_lattice
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
+#if defined _PAR_IO
        YAMBO_ALLOC(qindx_B,(nXkbz,PAR_K_scheme%nbz,2))
+#else
+       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+#endif
        qindx_B=0
      endif
      !

@@ -417,6 +417,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  call RT_1D_Fourier_Transform('T2W',GreenF_T_and_W,RT_conf,1)
  !
+ YAMBO_FREE(GreenF_T_and_W%F_T)
+ !
  ! Print G(w) integrated over k
  !
  file_name="G_w_integrated"

@@ -28,13 +28,12 @@ subroutine ELPH_double_grid(k,E,q)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode
  use D_lattice,           ONLY:n_atoms,alat
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode,ELPH_databases_IO_freqs
- use stderr,              ONLY:STRING_same
+ use stderr,              ONLY:STRING_same,intc
  use ELPH,                ONLY:PH_freqs_sq,PH_qpt,elph_use_q_grid,ph_modes
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP
-
  !
 #include<memory.h>
  !
@@ -83,5 +82,35 @@ subroutine ELPH_double_grid(k,E,q)
  ! Find border points and remove them if required
  ! ===============================================
  call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
+ !
+ l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
+ l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
+ l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
+ !
+ ! FineGd E to IBZ map
+ !=======================
+ call section('=','Double Grid Energies-IBZ mapping and Fine Grid re-ordering')
+ call k_map_fine_to_coarse('Phonon Energies-IBZ',q,q%FGbare,q_fine,PH_E)
+ !
+ ! Expand the Fine Grid 
+ !========================
+ !
+ if (l_mix.or.l_expand) then
+   !
+   if (.not.FineGd_is_expanded) then
+     !
+     ! k_DbGd (IBZ->BZ)
+     !
+     call section('=','Double Grid K-points expansion ...')
+     call k_ibz2bz(q_fine,'i',.true.)
+     call k_map_fine_to_coarse_reduce(q_fine)
+     call msg('lr','found '//trim(intc(q_fine%nbz))//' ('//trim(intc(q_fine%nibz))//') points in the BZ (IBZ)')
+     !
+   endif
+   !
+   q%FGibz%FG_mode="IBZ"
+   q%FGbz%FG_mode ="BZ"
+   !
+ endif
  !
 end subroutine

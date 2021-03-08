@@ -27,6 +27,7 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  use pars,                ONLY:SP
  use vec_operate,         ONLY:c2a,rlu_v_is_zero
  use R_lattice,           ONLY:bz_samp
+ use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
  !
@@ -39,7 +40,10 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
  !
  unique=1
  !
+ call live_timing('Map Fine Grid to Reduced Coarse one',FineGd_k%nbz)
+ !
  do ik=1,FineGd_k%nbz
+   call live_timing(steps=1)
    if (unique(ik)==0) cycle
    do ip=ik+1,FineGd_k%nbz
      if (unique(ip)==0) cycle
@@ -49,6 +53,8 @@ logical function k_map_fine_to_coarse_reduce(FineGd_k)
    enddo
  enddo
  ! 
+ call live_timing( )
+ !
  k_map_fine_to_coarse_reduce=count(unique==1)==FineGd_k%nbz
  ! 
 end function

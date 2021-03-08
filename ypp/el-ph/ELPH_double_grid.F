@@ -26,14 +26,14 @@ subroutine ELPH_double_grid(k,E,q)
  use pars,                ONLY:SP,pi
  use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
- use D_lattice,           ONLY:n_atoms,alat
- use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode,ELPH_databases_IO_freqs
+ use YPP_ELPH,            ONLY:ph_modes_file,EkplusQ_mode,ELPH_databases_IO_freqs
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,PH_qpt,elph_use_q_grid,ph_modes
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
+ use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
  !
 #include<memory.h>
  !
@@ -42,12 +42,14 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Work space
  !
- type(bz_samp)         :: q_fine
+ type(bz_samp)         :: q_fine,k_plus_q
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg
+ integer               :: ID,io_err,i_f,i_fg,iq,ik
  integer, external     :: io_ELPH,io_Double_Grid
+ real(SP), allocatable :: E_k_plus_q(:,:,:),E_1D_array(:,:)
+ integer               :: ID_E_kpq=1
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
@@ -153,6 +155,42 @@ subroutine ELPH_double_grid(k,E,q)
  !======================
  call section('=','Double Grid '//trim(q%FGbz%FG_mode)//'-BZ mapping')
  call k_map_fine_to_coarse(trim(q%FGbz%FG_mode)//'-BZ',q,q%FGbz,q_fine,PH_E)
+ !
+ ! Interpolation E(k+q)
+ ! ============================
+ ! E(k+q) is constructed with k in the IBZ and q in the BZ
+ !
+ YAMBO_ALLOC(E_k_plus_q,(k%nibz,q_fine%nbz,E%nb))
+ if(.not.STRING_same(EkplusQ_mode,'interp')) then
+   !
+   ! Setup interpolation
+   !   
+   call INTERPOLATION_BZ_setup(k)
+   INTERP_obj(ID_E_kpq)%what="E(k+q)"
+   call INTERPOLATION_coefficients(E=E,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq)
+   !
+   ! Generate k'=k+q 
+   k_plus_q%nibz=k%nibz*q_fine%nbz
+   YAMBO_ALLOC(k_plus_q%pt,(q_fine%nibz,3))
+   !
+   do ik=1,k%nibz
+     do iq=1,q_fine%nbz
+       k_plus_q%pt(iq+(ik-1)*q_fine%nbz,:)=k%pt(ik,:)+q_fine%ptbz(iq,:) 
+     enddo
+   enddo
+   !
+   ! Interpolate Energies
+   YAMBO_ALLOC(E_1D_array,(E%nb,k_plus_q%nibz))
+   call INTERPOLATION_BZ(K=k_plus_q,NK=k_plus_q%nibz,R1D=E_1D_array,ID=ID_E_kpq)
+   !
+   do ik=1,k%nibz
+     do iq=1,q_fine%nbz
+       E_k_plus_q(ik, iq,:)=E_1D_array(:,iq+(ik-1)*q_fine%nbz)
+     enddo
+   enddo
+   YAMBO_FREE(E_1D_array)
+   ! 
+ endif
  !
  ! Final I/O
  !===========

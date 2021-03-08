@@ -171,7 +171,7 @@ integer function io_QINDX(Xk,q,io_db)
      call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
 #else
      call io_fragment(io_db,id_frag,i_fragment=3)
-     call def_variable_bulk(id_frag,"Bindx",3,shape(qindx_B),IP+100)
+     call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100)
 #endif
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz

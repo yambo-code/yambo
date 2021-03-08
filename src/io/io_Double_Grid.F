@@ -21,8 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_Double_Grid(E,Xk,ID)
+integer function io_Double_Grid(E,Xk,ID,what)
  !
+ use pars,           ONLY:schlen
  use electrons,      ONLY:levels,FineGd_E_components_alloc
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
@@ -39,19 +40,30 @@ integer function io_Double_Grid(E,Xk,ID)
  type(levels) :: E
  type(bz_samp):: Xk
  integer      :: ID 
+ character(*) ::what 
+ character(schlen)      ::db_name 
  !
  ! Work Space
  !
  logical :: l_R_LATT
  integer :: VAR_SZ
+ logical :: l_PH_DG=.FALSE.
  !
  call timing('io_Double_Grid',OPR='start')
  !
  call IO_desc_reset(FineGd_desc)
  !
+ if (index(what,'electrons')>0) then
+   db_name='Double_Grid'
+ else if (index(what,'phonons')>0) then
+   db_name='PH_Double_Grid'
+   l_PH_DG=.TRUE.
+ endif
+
+ !
  io_Double_Grid=-1
  !
- io_Double_Grid=io_connect(desc='Double_Grid',type=2,ID=ID)
+ io_Double_Grid=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
  if (io_Double_Grid/=0) goto 1
  !

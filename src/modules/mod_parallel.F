@@ -442,8 +442,8 @@ module parallel_m
  type(yMPI_comm),SAVE :: PAR_COM_freqs_INDEX
  !
  ! ... SE
- type(MPI_comm),SAVE :: PAR_COM_SE_WORLD_RL_resolved
- type(MPI_comm),SAVE :: PAR_COM_SE_WORLD
+ type(yMPI_comm),SAVE :: PAR_COM_SE_WORLD_RL_resolved
+ type(yMPI_comm),SAVE :: PAR_COM_SE_WORLD
  !
  ! ... and dimensions (used for automatic cpu distribution)
  !=========================================================

@@ -203,7 +203,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      tmp_k(:,1)=LOCAL_k%pt(ik_local,:)
      !
      if (len_trim(CIRCUIT_k_label(ik_local))>0) then
-       k_name="  # ["//trim(CIRCUIT_k_label(ik_local))//"]"
+       k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
        l_print_k_name=.true.
      endif
      !

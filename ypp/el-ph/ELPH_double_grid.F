@@ -33,7 +33,6 @@ subroutine ELPH_double_grid(k,E,q)
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
- use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
  !
 #include<memory.h>
  !
@@ -46,10 +45,9 @@ subroutine ELPH_double_grid(k,E,q)
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg,iq,ik
+ integer               :: ID,io_err,i_f,i_fg
  integer, external     :: io_ELPH,io_Double_Grid
- real(SP), allocatable :: E_k_plus_q(:,:,:),E_1D_array(:,:)
- integer               :: ID_E_kpq=1
+ real(SP), allocatable :: E_k_plus_q(:,:,:)
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
  !
@@ -161,36 +159,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! E(k+q) is constructed with k in the IBZ and q in the BZ
  !
  YAMBO_ALLOC(E_k_plus_q,(k%nibz,q_fine%nbz,E%nb))
- if(.not.STRING_same(EkplusQ_mode,'interp')) then
-   !
-   ! Setup interpolation
-   !   
-   call INTERPOLATION_BZ_setup(k)
-   INTERP_obj(ID_E_kpq)%what="E(k+q)"
-   call INTERPOLATION_coefficients(E=E,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq)
-   !
-   ! Generate k'=k+q 
-   k_plus_q%nibz=k%nibz*q_fine%nbz
-   YAMBO_ALLOC(k_plus_q%pt,(q_fine%nibz,3))
-   !
-   do ik=1,k%nibz
-     do iq=1,q_fine%nbz
-       k_plus_q%pt(iq+(ik-1)*q_fine%nbz,:)=k%pt(ik,:)+q_fine%ptbz(iq,:) 
-     enddo
-   enddo
-   !
-   ! Interpolate Energies
-   YAMBO_ALLOC(E_1D_array,(E%nb,k_plus_q%nibz))
-   call INTERPOLATION_BZ(K=k_plus_q,NK=k_plus_q%nibz,R1D=E_1D_array,ID=ID_E_kpq)
-   !
-   do ik=1,k%nibz
-     do iq=1,q_fine%nbz
-       E_k_plus_q(ik, iq,:)=E_1D_array(:,iq+(ik-1)*q_fine%nbz)
-     enddo
-   enddo
-   YAMBO_FREE(E_1D_array)
-   ! 
- endif
+ if(.not.STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q_fine,E,E_k_plus_q)
  !
  ! Final I/O
  !===========
@@ -204,6 +173,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! CLEAN
  !========
  !
+ YAMBO_FREE(E_k_plus_q)
  call bz_samp_reset(q_fine)
  call k_ibz2bz(q,'d',.true.)
  call FineGd_E_components_reset(PH_E,.TRUE.)

@@ -24,11 +24,11 @@
 subroutine ELPH_double_grid(k,E,q)
  !
  use pars,                ONLY:SP,pi
- use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset
+ use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
  use YPP_ELPH,            ONLY:ph_modes_file,EkplusQ_mode,ELPH_databases_IO_freqs
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes, GKKP
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
@@ -41,11 +41,11 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Work space
  !
- type(bz_samp)         :: q_fine,k_plus_q
+ type(bz_samp)         :: q_fine
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg
+ integer               :: ID,io_err,i_f,i_fg,iq
  integer, external     :: io_ELPH,io_Double_Grid
  real(SP), allocatable :: E_k_plus_q(:,:,:)
  !
@@ -154,12 +154,19 @@ subroutine ELPH_double_grid(k,E,q)
  call section('=','Double Grid '//trim(q%FGbz%FG_mode)//'-BZ mapping')
  call k_map_fine_to_coarse(trim(q%FGbz%FG_mode)//'-BZ',q,q%FGbz,q_fine,PH_E)
  !
- ! Interpolation E(k+q)
- ! ============================
- ! E(k+q) is constructed with k in the IBZ and q in the BZ
+ ! Allocation of the Double Grids for each k+q points
+ ! =====================================================
+ do iq=1,q%nibz
+   GKKP%E_kpq(iq)%FG%nb=GKKP%E_kpq(iq)%nb
+   GKKP%E_kpq(iq)%FG%nk=q_fine%nbz
+   call FineGd_E_components_alloc(GKKP%E_kpq(iq))
+ enddo
  !
+ ! Interpolation E(k+q) and fill the GKKP%E_kpq
+ ! ============================================
+ ! E(k+q) is constructed with k in the IBZ and q in the BZ
  YAMBO_ALLOC(E_k_plus_q,(k%nibz,q_fine%nbz,E%nb))
- if(.not.STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q_fine,E,E_k_plus_q)
+ if(.not.STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q_fine,E,GKKP)
  !
  ! Final I/O
  !===========

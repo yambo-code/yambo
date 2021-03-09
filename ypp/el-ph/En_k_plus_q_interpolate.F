@@ -21,18 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine En_k_plus_q_interpolate(k,q_fine,E,E_k_plus_q)
+subroutine En_k_plus_q_interpolate(k,q_fine,E,GKKP)
  !
  use pars,                ONLY:SP,pi
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
+ use ELPH,                ONLY:GKKP_me
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)  :: k,q_fine
  type(levels) , intent(in)  :: E
- real(SP),      intent(out) :: E_k_plus_q(k%nibz,q_fine%nbz,E%nb)
+ type(GKKP_me), intent(out) :: GKKP
  !
  ! Work space
  !
@@ -65,7 +66,7 @@ subroutine En_k_plus_q_interpolate(k,q_fine,E,E_k_plus_q)
  !
  do ik=1,k%nibz
    do iq=1,q_fine%nbz
-     E_k_plus_q(ik, iq,:)=E_1D_array(:,iq+(ik-1)*q_fine%nbz)
+!     E_k_plus_q(ik, iq,:)=E_1D_array(:,iq+(ik-1)*q_fine%nbz)
    enddo
  enddo
  !

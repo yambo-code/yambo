@@ -31,7 +31,8 @@ subroutine COLLISIONS_compose_nl(G_in)
 &                           HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,       ONLY:HEAD_QP_cpu,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,     ONLY:PP_redux_wait
  use real_time,        ONLY:RT_Vnl_xc,RT_bands
 #if defined _TIMING
  use timing_m,         ONLY:timing

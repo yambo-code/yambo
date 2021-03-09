@@ -32,11 +32,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use parser_m,      ONLY:parser
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,myid,&
-&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,PAR_nQ_ibz,PAR_COM_SE_WORLD,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,PAR_COM_SE_WORLD_RL_resolved
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,&
+&                        PAR_COM_SE_WORLD,PAR_COM_SE_WORLD_RL_resolved
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
  use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
@@ -49,8 +51,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V,V_dot_V
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print,MATRIX_transpose,MATRIX_duplicate
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose,MATRIX_duplicate
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_G_b_INDEX
@@ -145,7 +146,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
    if (l_ppa) then
-     call msg('r', '[GW/PPA] G damping   [ev]',QP_G_damp*HA2EV)
+     call msg('r', '[GW/PPA] G damping       ',QP_G_damp*HA2EV,"[eV]")
      call msg('r','')
    endif
    ch=trim(SECTION_name)
@@ -272,7 +273,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz)
+       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz,PAR_INDEX=PAR_IND_Q_ibz)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !

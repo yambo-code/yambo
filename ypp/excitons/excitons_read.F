@@ -32,7 +32,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts,BSE_mode
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
  !
 #include<memory.h>
@@ -60,16 +60,12 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  if(l_check) then
    !
-   ! GPL_EXCLUDE_START
-   !
    ! E SOC perturbative
    ! 
    if(n_spin==1) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
      io_err=io_E_SOC_map(en,k,io_ID)
    endif
-   !
-   ! GPL_EXCLUDE_END
    !
    YAMBO_ALLOC(BSqpts,(3,iq))
    !
@@ -80,7 +76,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    ! Here I read information from the BSS_diago database
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk)
    !
    if (io_err/=0) call error(' ndb.BS_diago not found')
    !
@@ -92,8 +88,8 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    if (BS_cpl_K_corr)                       BS_cpl_mode='c'
    if (BS_cpl_K_exchange.and.BS_cpl_K_corr) BS_cpl_mode='xc'
    !
-   BS_H_dim=BS_K_dim
-   if (BS_K_coupling) BS_H_dim=2*BS_K_dim
+   BS_H_dim=BS_K_dim(1)
+   if (BS_K_coupling) BS_H_dim=2*BS_K_dim(1)
    !
  endif
  !
@@ -101,17 +97,16 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    !
    ! Allocation of energies and residuals, then also eigenvector
    !
-   YAMBO_ALLOC(BS_R_right,(BSS_n_eig))
-   YAMBO_ALLOC(BS_R_left,(BSS_n_eig))
+   YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
+   YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
    YAMBO_ALLOC(BS_E,(BSS_n_eig))
    if(en%nb_SOC/=0) then
      YAMBO_ALLOC_P(BS_E_SOC_corr,(2/n_sp_pol,BSS_n_eig))
    endif
    !
-   !
    do i_sec=1,2
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
-     io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+     io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
      if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
    enddo
    !
@@ -133,20 +128,20 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/3/),ID=io_ID)
-   io_err=io_BSS_diago(iq,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,BS_R_kerr,BS_R_PL)
+   io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
    if (io_err/=0) call error(' ndb.BSS_diago, SEC 3, not compatible with ypp input')
    !
    ! Create the anti-resonant part of the eh_table
    !
    if (BS_K_coupling) then
-     do neh=BS_K_dim+1,BS_H_dim
+     do neh=BS_K_dim(1)+1,BS_H_dim
        !
-       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim,:)
+       BSS_eh_table(neh,:)=BSS_eh_table(neh-BS_K_dim(1),:)
        !
        ! invert conduction <-> valence order
        !
-       BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim,3)
-       BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim,2)
+       BSS_eh_table(neh,2)=BSS_eh_table(neh-BS_K_dim(1),3)
+       BSS_eh_table(neh,3)=BSS_eh_table(neh-BS_K_dim(1),2)
        !
      enddo
    endif
@@ -154,11 +149,11 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  endif
  !
  if(l_clean) then
-   !         
-   ! ! CLEAN
-   ! !
-   YAMBO_FREE(BS_R_left)
-   YAMBO_FREE(BS_R_right)
+   !
+   ! CLEAN
+   !
+   YAMBO_FREE_P(BS_R_left)
+   YAMBO_FREE_P(BS_R_right)
    YAMBO_FREE(BS_E)
    YAMBO_FREE(BSS_eh_table)
    YAMBO_FREE(BS_mat)

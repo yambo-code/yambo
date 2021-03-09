@@ -43,7 +43,7 @@ integer function io_KB_pwscf(ID)
  ! Work Space
  !
  logical :: force_io_mode
- integer :: ifrag,ik,i_sp_pol
+ integer :: ifrag,ik,i_sp_pol,ID_frag
  !
  call timing('io_KB_pwscf',OPR='start')
  !
@@ -121,18 +121,20 @@ integer function io_KB_pwscf(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    pp_kbd=0._SP
  endif
  !
- call io_bulk(ID,VAR="PP_KB_K"//trim(intc(ik)),VAR_SZ=shape(pp_kb(:,:,:,1)))
- call io_bulk(ID,R3=pp_kb(:,:,:,1))
+ call io_bulk(ID_frag,VAR="PP_KB_K"//trim(intc(ik)),VAR_SZ=shape(pp_kb(:,:,:,1)))
+ call io_bulk(ID_frag,R3=pp_kb(:,:,:,1))
  !
- call io_bulk(ID,VAR="PP_KBD_K"//trim(intc(ik)),VAR_SZ=shape(pp_kbd(:,:,:,1)))
- call io_bulk(ID,R3=pp_kbd(:,:,:,1))
+ call io_bulk(ID_frag,VAR="PP_KBD_K"//trim(intc(ik)),VAR_SZ=shape(pp_kbd(:,:,:,1)))
+ call io_bulk(ID_frag,R3=pp_kbd(:,:,:,1))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

@@ -35,7 +35,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use D_lattice,     ONLY:DL_vol,sop_inv
  use xc_functionals,ONLY:F_xc,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_bz,MPI_COMM_NULL,&
+ use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
 &                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc

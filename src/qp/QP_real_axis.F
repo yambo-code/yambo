@@ -35,18 +35,19 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use frequency,     ONLY:w_samp,coarse_grid_index,coarse_grid_N,W_reset
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_index,WF_load,WF_free,&
-&                        PARALLEL_WF_distribute,QP_state_print
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+&                        PARALLEL_WF_distribute
+ use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
  use DIPOLES,       ONLY:DIPOLE_t
  use IO_m,          ONLY:io_control,manage_action,REP,VERIFY,DUMP,NONE,io_RESPONSE,io_SCREEN,&
-&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD,OP_RD_CL
+&                        OP_WR_CL,OP_APP_CL,RD_CL_IF_END,OP_RD,OP_RD_CL,RD,RD_CL
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
@@ -139,7 +140,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
  !
  if (.not.l_life) call msg('r', '[GW] Bands range     ',QP_n_G_bands)
- call msg('r', '[GW] G damping   [ev]',QP_G_damp*HA2EV)
+ call msg('r', '[GW] G damping       ',QP_G_damp*HA2EV,"[eV]")
  !
  call QP_state_print( )
  !
@@ -333,8 +334,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(RD_CL_IF_END,iqbz,i_q_to_start,nqibz)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
+       call io_control(ACTION=RD,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=X_id)
        !
        if (l_life) then
          !
@@ -536,6 +536,11 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    endif
    !
  enddo 
+ !
+ if (io_RESPONSE) then
+   call io_control(ACTION=RD_CL,COM=NONE,SEC=(/1/),ID=X_id)
+   io_err=io_X(X,Xw,X_id)
+ endif
  !
  call live_timing()
  call PP_redux_wait()

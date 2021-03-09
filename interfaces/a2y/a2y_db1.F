@@ -28,6 +28,7 @@ subroutine a2y_db1(en,k,ncid)
  use pars,                 only : SP,pi
  use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
+ use pseudo,               only : pp_n_l_times_proj_max
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
  use D_lattice,            only : nsym, n_atoms, n_atomic_species
@@ -87,7 +88,7 @@ subroutine a2y_db1(en,k,ncid)
  call msg('s','Pseudopotential...')
  if(trim(NETCDF_kind)=='KSS') call import_gwdata_group_kss
  if(trim(NETCDF_kind)=='WFK') call import_gwdata_group_wfk
- call msg('l','done')
+ if ( pp_n_l_times_proj_max /= -1) call msg('l','done')
  !
  ! G-vectors grids and indices
  !
@@ -650,6 +651,11 @@ contains
     ! Get kb related dimensions
     !
     lmnmax                = netcdf_get_dimension(ncid,"lmnmax")
+    if (lmnmax==-1) then
+      call warning(" abinit WFK file was generated without prtkbff 1 variable in input")
+      pp_n_l_times_proj_max = -1
+      return
+    endif
     pp_n_l_times_proj_max = lmnmax
     !
     ! read abinit indlmn

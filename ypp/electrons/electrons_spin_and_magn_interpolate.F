@@ -26,7 +26,7 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  use pars,           ONLY:SP
  use electrons,      ONLY:n_spinor
  use R_lattice,      ONLY:bz_samp
- use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,INTERP_mode
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  !
  implicit none
  !
@@ -40,8 +40,6 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  !
  real(SP) :: spin_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,n_spinor),&
 &            magn_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,3)
- !
- INTERP_mode='NN'
  !
  ! SPIN
  !------

@@ -54,13 +54,19 @@ module parallel_m
  !    - return the maximum and the location 
  !
  use pars,       ONLY:SP,DP,schlen,lchlen,max_n_of_cpus,MAX_N_GROUPS,MAX_N_OF_CHAINS,n_CPU_str_max
+#if defined _MPI
+ use mpi
+#endif
  !
 #if !defined _io_lib
 #include<memory.h>
 #endif
  !
 #if defined _MPI
- include 'mpif.h'
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
 #else
  integer            :: mpi_comm_world=0
  integer, parameter :: mpi_comm_null =0
@@ -84,7 +90,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_SE,l_par_RT,l_par_SC,l_par_NL
+ logical            :: l_par_X_G,l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -102,19 +108,19 @@ module parallel_m
  !
  ! MPI intra-groups Communicators
  !
- type MPI_comm 
+ type yMPI_comm 
    integer  :: COMM      
    integer  :: CPU_id    
    integer  :: my_CHAIN    ! equivalent to CPU_id+1 in INTER_CHAIN
    integer  :: chain_order ! this corresponds to the order in the local hierarchy
    integer  :: n_CPU     
- end type MPI_comm
+ end type yMPI_comm
  ! 
  ! CHAINS 
  !========
- type(MPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
- type(MPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
- type(MPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
+ type(yMPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
+ type(yMPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
+ type(yMPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
                                                        ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
@@ -135,6 +141,7 @@ module parallel_m
  character(schlen)   :: ROLE_string_save(n_CPU_str_max)
  !
  type(CPU_stru),SAVE :: CPU_structure(n_CPU_str_max)
+ integer             :: i_PAR_structure
  !
  !... Running values ...
  !
@@ -173,9 +180,44 @@ module parallel_m
    integer, allocatable :: last_of_1D(:)
  end type PP_indexes
  !
+ ! SCHEMEs ...
+ !========================
+ type PAR_scheme
+   type(yMPI_comm)      :: COMM_i
+   type(yMPI_comm)      :: COMM_a2a
+   type(PP_indexes)    :: IND
+   integer             :: ID
+   integer             :: D(2)
+   integer             :: N_ser
+   integer             :: N_par
+   logical             :: consecutive
+   integer,allocatable :: table(:)
+ end type
+ !
+ ! ... GENERAL 
+ !-------------
+ !type(PAR_scheme),SAVE :: PARs_K_ibz
+ !type(PAR_scheme),SAVE :: PARs_G_b
+ !type(PAR_scheme),SAVE :: PARs_Q_bz
+ !
+ ! ... DIPOLES 
+ !-------------
+ !type(PAR_scheme),SAVE :: PARs_DIP_K_ibz
+ !type(PAR_scheme),SAVE :: PARs_DIP_K_bz
+ !
+ ! ... PH Self Energy
+ !--------------------
+ type(PAR_scheme),SAVE :: PARs_PH_Q_ibz
+ type(PAR_scheme),SAVE :: PARs_PH_K_bz
+ type(PAR_scheme),SAVE :: PARs_PH_eh_bands
+ !
+ ! ... RT 
+ !--------
+ !type(PAR_scheme),SAVE :: PARs_RT_plasma
+ !
  type PARk_str
-   type(MPI_comm)      :: COM_ibz_INDEX
-   type(MPI_comm)      :: COM_ibz_A2A
+   type(yMPI_comm)      :: COM_ibz_INDEX
+   type(yMPI_comm)      :: COM_ibz_A2A
    type(PP_indexes)    :: IND_ibz
    type(PP_indexes)    :: IND_bz
    integer,allocatable :: ibz_index(:)
@@ -188,7 +230,7 @@ module parallel_m
  type(PARk_str),SAVE   :: PAR_K_scheme
  !
  ! SND & RCV plan
- !
+ !=================
  type SND_RCV_geometry
    integer,allocatable :: SND_to_id(:)
    integer,allocatable :: RCV_from_id(:)
@@ -217,7 +259,7 @@ module parallel_m
  ! ... linear algebra
  type(PP_indexes),SAVE :: PAR_IND_SLK
  !
- ! ... BZ sampling
+ ! ... BZ sampling (Electrons)
  type(PP_indexes),SAVE :: PAR_IND_Q_ibz
  type(PP_indexes),SAVE :: PAR_IND_Q_bz
  type(PP_indexes),SAVE :: PAR_IND_Kk_ibz
@@ -267,12 +309,11 @@ module parallel_m
  type(PP_indexes)            ,SAVE :: PAR_IND_T_Haydock
  type(PP_indexes)            ,SAVE :: PAR_IND_T_ordered
  !
- ! .... Frequencies non-linear optics
+ ! .... Frequencies 
  type(PP_indexes),SAVE :: PAR_IND_freqs
  !
  ! Specific MPI ID's ...
  !======================
- !
  ! ... QP
  integer            :: PAR_IND_QP_ID
  !
@@ -286,7 +327,7 @@ module parallel_m
  integer            :: PAR_IND_WF_b_ID
  integer            :: PAR_IND_WF_k_ID
  !
- ! ... BZ
+ ! ... BZ (Electrons)
  integer            :: PAR_IND_Q_ibz_ID
  integer            :: PAR_IND_Q_bz_ID
  integer            :: PAR_IND_Kk_ibz_ID
@@ -309,10 +350,6 @@ module parallel_m
  integer            :: PAR_IND_VAL_BANDS_X_ID(n_parallel_X_types)
  integer            :: PAR_IND_CON_BANDS_X_ID(n_parallel_X_types)
  !
- ! ... RT
- integer            :: PAR_IND_B_mat_ID
- integer            :: PAR_IND_Bp_mat_ID
- !
  ! ... BSK
  integer            :: PAR_IND_eh_ID
  !
@@ -331,78 +368,78 @@ module parallel_m
  ! PAR_COM_*_A2A   is the intrachain comunicator
  !
  ! ... World
- type(MPI_comm),SAVE :: PAR_COM_WORLD
+ type(yMPI_comm),SAVE :: PAR_COM_WORLD
  ! ... Serial
- type(MPI_comm),SAVE :: PAR_COM_NULL
+ type(yMPI_comm),SAVE :: PAR_COM_NULL
  ! ... HOST
- type(MPI_comm),SAVE :: PAR_COM_HOST
+ type(yMPI_comm),SAVE :: PAR_COM_HOST
  !
  ! ... linear algebra
- type(MPI_comm),SAVE :: PAR_COM_SLK
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
- type(MPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
+ type(yMPI_comm),SAVE :: PAR_COM_SLK
+ type(yMPI_comm),SAVE :: PAR_COM_SLK_INDEX_global
+ type(yMPI_comm),SAVE :: PAR_COM_SLK_INDEX_local
  !
  ! ... RL vectors
- type(MPI_comm),SAVE :: PAR_COM_RL_INDEX
- type(MPI_comm),SAVE :: PAR_COM_RL_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_RL_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_RL_A2A
  !
  ! ... QP
- type(MPI_comm),SAVE :: PAR_COM_QP_INDEX
- type(MPI_comm),SAVE :: PAR_COM_QP_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_QP_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_QP_A2A
  !
  ! ... Plasma
- type(MPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_PLASMA_INDEX
  !
  ! ... G bands
- type(MPI_comm),SAVE :: PAR_COM_G_b_INDEX
- type(MPI_comm),SAVE :: PAR_COM_G_b_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_A2A
  !
  ! ... WF
- type(MPI_comm),SAVE :: PAR_COM_WF_k_A2A
- type(MPI_comm),SAVE :: PAR_COM_WF_k_INDEX
- type(MPI_comm),SAVE :: PAR_COM_WF_b_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_WF_k_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_WF_k_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_WF_b_INDEX
  !
- ! ... BZ
- type(MPI_comm),SAVE :: PAR_COM_Q_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Q_A2A
- type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
- type(MPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
+ ! ... BZ (Electrons)
+ type(yMPI_comm),SAVE :: PAR_COM_Q_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Q_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_ibz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
  ! ... DIPOLES
- type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
- type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
- type(MPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_bz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_DIPk_bz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_DIP
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_DIP
  !
  ! ... Overlaps
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_OVLP
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_OVLP
  !
  ! ... linear response & BSK
- type(MPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
- type(MPI_comm),SAVE :: PAR_COM_X_WORLD
+ type(yMPI_comm),SAVE :: PAR_COM_VAL_INDEX_X(n_parallel_X_types)
+ type(yMPI_comm),SAVE :: PAR_COM_CON_INDEX_X(n_parallel_X_types)
+ type(yMPI_comm),SAVE :: PAR_COM_X_WORLD_RL_resolved
+ type(yMPI_comm),SAVE :: PAR_COM_X_WORLD
  !
  ! ... BSK
- type(MPI_comm),SAVE :: PAR_COM_eh_INDEX
- type(MPI_comm),SAVE :: PAR_COM_eh_A2A
- type(MPI_comm),SAVE :: PAR_COM_T_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_eh_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_eh_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_T_INDEX
  !
  ! ... Haydock solver
- type(MPI_comm),allocatable,SAVE :: PAR_COM_T_Haydock(:)
+ type(yMPI_comm),allocatable,SAVE :: PAR_COM_T_Haydock(:)
  !
  ! ... density
- type(MPI_comm),SAVE :: PAR_COM_density
+ type(yMPI_comm),SAVE :: PAR_COM_density
  !
  ! ... Frequencies 
- type(MPI_comm),SAVE :: PAR_COM_freqs
- type(MPI_comm),SAVE :: PAR_COM_freqs_A2A
- type(MPI_comm),SAVE :: PAR_COM_freqs_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_freqs
+ type(yMPI_comm),SAVE :: PAR_COM_freqs_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_freqs_INDEX
  !
  ! ... SE
  type(MPI_comm),SAVE :: PAR_COM_SE_WORLD_RL_resolved
@@ -433,12 +470,10 @@ module parallel_m
  integer,allocatable:: PAR_PLASMA_index(:)
  integer            :: PAR_nQP
  integer,allocatable:: PAR_QP_index(:)
- integer            :: PAR_n_B_mat_elements
- integer,allocatable:: PAR_B_mat_index(:,:)
- integer            :: PAR_n_Bp_mat_elements
- integer,allocatable:: PAR_Bp_mat_index(:,:)
  integer            :: PAR_nQ_ibz
  integer,allocatable:: PAR_Q_ibz_index(:)
+ !integer            :: PAR_PH_nQ_ibz
+ !integer,allocatable:: PAR_PH_Q_ibz_index(:)
  integer            :: PAR_nQ_bz
  integer,allocatable:: PAR_Q_bz_index(:)
  integer            :: PAR_Kk_nibz
@@ -456,64 +491,15 @@ module parallel_m
  integer,allocatable:: PAR_G_bands_index(:)
  integer            :: PAR_n_freqs 
  integer,allocatable:: PAR_FREQS_index(:)
- !
- ! WorkSpace
- !
- integer            :: i_PAR_structure
- integer            :: i_err
- integer, private   :: local_type
- !
- interface PP_redux_wait
-   module procedure l1share,                                           &
-&                   i1share, i2share, i3share,                         &
-&                   i81share,                                          &
-&                   r0share, r1share, r2share,r3share,                 &
-&                   c0share, c1share, c2share,c3share,c4share,c5share, &
-#if ! defined _DOUBLE
-&                   d0share, d1share, d2share,d3share,                 &
-&                   dc0share,dc1share,dc2share,                        &
-#endif
-&                   PARALLEL_wait
- end interface PP_redux_wait
- !
- interface PP_bcast
-   module procedure r1bcast,c0bcast,c1bcast,c2bcast,c3bcast,i0bcast,i1bcast,ch0bcast
-#if ! defined _DOUBLE
-   module procedure                                 z3bcast
-#endif
- end interface PP_bcast
- !
- interface PP_send_and_receive
-   module procedure PP_snd_rcv_c2,PP_snd_rcv_c1,PP_snd_rcv_r2
- end interface PP_send_and_receive
- !
- !interface
- !  subroutine c_chsort(base, nmemb, elemsize, compar) bind(C,name='qsort')
- !    use iso_c_binding
- !    implicit none
- !    type(C_PTR), value :: base
- !    integer(C_SIZE_T), value :: nmemb, elemsize
- !    type(C_FUNPTR), value :: compar
- !  end subroutine c_chsort
- !  !
- !  pure function c_strcmp(a,b) result(strcmp_out) bind(C,name='strcmp')
- !    use iso_c_binding
- !    implicit none
- !    integer(C_int) :: strcmp_out
- !    !pgi$ ignore_tkr a,b
- !    type(C_PTR), value :: a, b
- !  end function c_strcmp
- !end interface
+ integer            :: PAR_n_Bp_mat_elements 
  !
  contains
    !
    subroutine PAR_build_index(PAR_ind,N_elements,V_ind,n_V_ind)
-     !
      type(PP_indexes), intent(in)   :: PAR_ind
      integer,          intent(in)   :: N_elements
      integer,          intent(out)  :: n_V_ind,V_ind(N_elements)
      integer                        :: i_p
-     !
      V_ind  =0
      n_V_ind=0
      if (N_elements==size(PAR_IND%element_1D)) then
@@ -536,7 +522,7 @@ module parallel_m
    !
    subroutine CREATE_the_COMM(WORLD, COMM, ID )
      integer       :: WORLD,ID,i_err
-     type(MPI_comm):: COMM
+     type(yMPI_comm):: COMM
      if (ncpu==1) return
 #if defined _MPI
      call MPI_COMM_SPLIT(WORLD,COMM%my_CHAIN,ID,COMM%COMM,i_err)
@@ -618,10 +604,25 @@ module parallel_m
      CPU_structure(7)%Short_Description="SLK"
      CPU_structure(8)%Long_Description="Non_Linear"
      CPU_structure(8)%Short_Description="NL"
+     CPU_structure(9)%Long_Description="Phonon_Self_Energy"
+     CPU_structure(9)%Short_Description="PH_SE"
+   end subroutine
+   !
+   subroutine PAR_scheme_reset(PARs)
+     type(PAR_scheme):: PARs
+     call COMM_reset(PARs%COMM_i)
+     call COMM_reset(PARs%COMM_a2a)
+     call PP_indexes_reset(PARs%IND)
+     YAMBO_FREE(PARs%table)
+     PARs%D    = 0
+     PARs%N_ser= 0
+     PARs%N_par= 0
+     PARs%ID   = -1
+     PARs%consecutive= .FALSE.
    end subroutine
    !
    subroutine COMM_reset(COMM)
-     type(MPI_comm):: COMM
+     type(yMPI_comm):: COMM
      COMM%n_CPU      =1
      COMM%COMM       =comm_default_value
      COMM%my_CHAIN   =1
@@ -630,7 +631,7 @@ module parallel_m
    end subroutine
    !
    subroutine COMM_copy(COMM_in,COMM_out)
-     type(MPI_comm):: COMM_in,COMM_out
+     type(yMPI_comm):: COMM_in,COMM_out
      COMM_out%n_CPU      =COMM_in%n_CPU
      COMM_out%my_CHAIN   =COMM_in%my_CHAIN
      COMM_out%chain_order=COMM_in%chain_order
@@ -680,997 +681,11 @@ module parallel_m
    end subroutine
 #endif
    !
-   subroutine PARALLEL_wait(COMM)
-     integer, optional :: COMM
-#if defined _MPI
-     integer :: local_COMM
-     if (ncpu==1) return
-     !
-     local_COMM=mpi_comm_world
-     if (present(COMM)) local_COMM=COMM
-     if (local_COMM==comm_default_value) return
-     call mpi_barrier(local_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine l1share(array,imode,COMM)
-     logical   :: array(:)
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer ::omode,LOCAL_COMM
-     integer ::dimensions(1),dimension ! Work Space
-     logical,allocatable::larray(:)    ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=MPI_LOR
-       if (imode==2) omode=MPI_LAND
-       if (imode==3) omode=mpi_lor
-       if (imode==4) omode=mpi_land
-     else
-       omode=MPI_LOR
-     endif
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=.FALSE.
-     call mpi_allreduce(array(1),larray,dimension,mpi_logical,omode,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i1share(array,imode,COMM)
-     integer:: array(:)
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer ::omode,LOCAL_COMM
-     integer ::dimensions(1),dimension ! Work Space
-     integer,allocatable::larray(:)    ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0
-     call mpi_allreduce(array(1),larray,dimension,mpi_integer,omode,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i81share(array,imode,COMM)
-     integer(8)        :: array(:)
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer :: omode,LOCAL_COMM
-     integer::dimensions(1),dimension  !Work Space
-     integer(8),allocatable::larray(:) !Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0
-     call mpi_allreduce(array(1),larray,dimension,mpi_integer8,omode,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i2share(array,COMM)
-     integer :: array(:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
-     integer,allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0
-     call mpi_allreduce(array(1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i3share(array,COMM)
-     integer:: array(:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
-     integer,allocatable::larray(:) ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0
-     call mpi_allreduce(array(1,1,1),larray,dimension,mpi_integer,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine r0share(rval,imode,COMM)
-     real(SP)          :: rval
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer :: omode,LOCAL_COMM  ! Work Space
-     real(SP):: local_rval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     local_rval=0.
-     call mpi_allreduce(rval,local_rval,1,local_type,omode,LOCAL_COMM,i_err)
-     rval=local_rval
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine r1share(array,COMM)
-     real(SP) :: array(:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(1),dimension,LOCAL_COMM ! Work Space
-     real(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine r2share(array,COMM)
-     real(SP) :: array(:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
-     real(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine r3share(array,COMM)
-     real(SP):: array(:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
-     real(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine d0share(rval,imode,COMM)
-     real(DP)          :: rval
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer :: omode,LOCAL_COMM  ! Work Space
-     real(DP):: local_rval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     local_rval=0.
-     call mpi_allreduce(rval,local_rval,1,local_type,omode,LOCAL_COMM,i_err)
-     rval=local_rval
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine d1share(array,COMM)
-     real(DP) :: array(:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(1),dimension,LOCAL_COMM ! Work Space
-     real(DP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine d2share(array,COMM)
-     real(DP) :: array(:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
-     real(DP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine d3share(array,COMM)
-     real(DP):: array(:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
-     real(DP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c0share(cval,imode,COMM)
-     complex(SP)       :: cval
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer :: omode,LOCAL_COMM  ! Work Space
-     complex(SP):: local_cval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     local_cval=0.
-     call mpi_allreduce(cval,local_cval,1,local_type,omode,LOCAL_COMM,i_err)
-     cval=local_cval
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c1share(array,COMM)
-     complex(SP):: array(:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
-     complex(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=(0.,0.)
-     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=larray
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c2share(array,COMM)
-     complex(SP):: array(:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
-     complex(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=(0.,0.)
-     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c3share(array,COMM)
-     complex(SP):: array(:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(3),dimension,LOCAL_COMM  ! Work Space
-     complex(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c4share(array,COMM)
-     complex(SP):: array(:,:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(4),dimension,LOCAL_COMM  ! Work Space
-     complex(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c5share(array,COMM)
-     complex(SP):: array(:,:,:,:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(5),dimension,LOCAL_COMM  ! Work Space
-     complex(SP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=0.
-     call mpi_allreduce(array(1,1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine dc0share(cval,imode,COMM)
-     complex(DP)       :: cval
-     integer, optional :: imode,COMM
-#if defined _MPI
-     integer :: omode,LOCAL_COMM  ! Work Space
-     complex(DP):: local_cval  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     if (present(imode)) then
-       if (imode==1) omode=mpi_sum
-       if (imode==2) omode=mpi_prod
-     else
-       omode=mpi_sum
-     endif
-     local_cval=0.
-     call mpi_allreduce(cval,local_cval,1,local_type,omode,LOCAL_COMM,i_err)
-     cval=local_cval
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine dc1share(array,COMM)
-     complex(DP):: array(:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(1),dimension,LOCAL_COMM  ! Work Space
-     complex(DP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=(0.,0.)
-     call mpi_allreduce(array(1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=larray
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine dc2share(array,COMM)
-     complex(DP):: array(:,:)
-     integer, optional :: COMM
-#if defined _MPI
-     integer::dimensions(2),dimension,LOCAL_COMM  ! Work Space
-     complex(DP),allocatable::larray(:)  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_barrier(LOCAL_COMM,i_err)
-     dimensions=shape(array)
-     if( any(dimensions<1) ) return
-     dimension=product(dimensions)
-     allocate(larray(dimension))
-     larray=(0.,0.)
-     call mpi_allreduce(array(1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
-     array=reshape(larray,dimensions)
-     deallocate(larray)
-     call mpi_barrier(LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i0bcast(ival,node,COMM)
-     integer  :: ival
-     integer, intent(in) :: node
-     integer, optional   :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     call mpi_bcast(ival,1,mpi_integer,node,LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine i1bcast(ival,node,COMM)
-     integer  :: ival(:)
-     integer, intent(in) :: node
-     integer, optional   :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     call mpi_bcast(ival(1),size(ival),mpi_integer,node,LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c0bcast(cval,node,COMM)
-     complex(SP):: cval
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(cval,1,local_type,node,LOCAL_COMM,i_err)
-#endif
-   end subroutine
-   !
-   subroutine c1bcast(array,node,COMM)
-     complex(SP):: array(:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
-#endif
-   end subroutine
-   !
-   subroutine r1bcast(array,node,COMM)
-     real(SP):: array(:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     call mpi_bcast(array(1),size(array),local_type, node,LOCAL_COMM, i_err)
-#endif
-   end subroutine
-   !
-   subroutine ch0bcast(chval,node,COMM)
-     character(len=*):: chval
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::imsg(len(chval)), i
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     do i = 1, len(chval)
-       imsg(i) = ichar(chval(i:i))
-     enddo
-     !
-     call i1bcast(imsg,node,LOCAL_COMM)
-     !
-     do i = 1, len(chval)
-       chval(i:i) = char(imsg(i))
-     enddo
-#endif
-   end subroutine
-   !
-   subroutine c2bcast(array,node,COMM)
-     implicit none
-     complex(SP):: array(:,:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
-#endif
-   end subroutine c2bcast
-   !
-   subroutine c3bcast(array,node,COMM)
-     implicit none
-     complex(SP):: array(:,:,:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
-#endif
-   end subroutine c3bcast
-   !
-#if ! defined _DOUBLE
-   !
-   subroutine z3bcast(array,node,COMM)
-     implicit none
-     complex(DP):: array(:,:,:)
-     integer, intent(in) :: node
-     integer, optional :: COMM
-#if defined _MPI
-     integer::LOCAL_COMM  ! Work Space
-     integer::local_type
-     !
-     if (ncpu==1) return
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     local_type=MPI_DOUBLE_COMPLEX
-     !
-     call mpi_bcast(array,size(array),local_type, node, LOCAL_COMM, i_err)
-#endif
-   end subroutine z3bcast
-   !
-#endif
-   !
-   subroutine PP_snd_rcv_r2(mode,array,node,COMM)
-     character(*):: mode
-     real(SP)    :: array(:,:)
-     integer, intent(in) :: node
-     integer, optional   :: COMM
-#if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
-     if (ncpu==1) return
-     !
-     local_type=MPI_REAL
-     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
-     !
-#endif
-   end subroutine
-   !
-   subroutine PP_snd_rcv_c2(mode,array,node,COMM)
-     character(*):: mode
-     complex(SP) :: array(:,:)
-     integer, intent(in) :: node
-     integer, optional   :: COMM
-#if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
-     if (ncpu==1) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
-     !
-#endif
-   end subroutine
-   !   
-   subroutine PP_snd_rcv_c1(mode,array,node,COMM)
-     character(*):: mode
-     complex(SP) :: array(:)
-     integer, intent(in) :: node
-     integer, optional   :: COMM
-#if defined _MPI
-     integer, dimension(MPI_STATUS_SIZE) :: MPI_status
-     integer::LOCAL_COMM,i_err! Work Space
-     if (ncpu==1) return
-     !
-     local_type=MPI_COMPLEX
-     if (SP==DP) local_type=MPI_DOUBLE_COMPLEX
-     !
-     if (present(COMM)) then
-       LOCAL_COMM=COMM
-     else
-       LOCAL_COMM=mpi_comm_world
-     endif
-     if (LOCAL_COMM==comm_default_value) return
-     !
-     if (mode=="send"   ) call MPI_SEND(array,size(array),local_type,node ,1, LOCAL_COMM,i_err)
-     if (mode=="receive") call MPI_RECV(array,size(array),local_type,node ,1, LOCAL_COMM, MPI_status, i_err)
-     !
-#endif
-   end subroutine
-   !
    subroutine CREATE_hosts_COMM( )
 #if defined _MPI
-     !use pars,  ONLY:IPL
-     !use iso_c_binding
      use LexicalSort,  ONLY:ch_sort
      character (MPI_MAX_PROCESSOR_NAME), pointer :: tmp_hosts(:)
      integer :: i_err,i_cpu
-     !type(C_PTR) :: ptr_hosts
 #endif
      !
      if (ncpu==1) then
@@ -1689,8 +704,6 @@ module parallel_m
        call MPI_BCAST(tmp_hosts(i_cpu),MPI_MAX_PROCESSOR_NAME,MPI_CHARACTER,i_cpu,MPI_COMM_WORLD,i_err)
      end do
      !
-     !call c_f_pointer(ptr_hosts,tmp_hosts,[ncpu])
-     !call c_chsort(ptr_hosts,int(ncpu,IPL),int(MPI_MAX_PROCESSOR_NAME,IPL),c_strcmp)
      call ch_sort(tmp_hosts)
      !
      ! assign the same color to the same node

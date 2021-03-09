@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_shell_matrix(slepc_mat)
+subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
@@ -30,7 +30,8 @@ subroutine K_shell_matrix(slepc_mat)
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
+ use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_mat_res_ares_dim, &
+ &                        BS_Blocks_symmetrize_K,BS_K_coupling
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
 #include <petsc/finclude/petscsys.h>
@@ -47,21 +48,28 @@ subroutine K_shell_matrix(slepc_mat)
  !
 #include <memory.h>
  !
- integer          :: i_B, i_r, i_c, i_Tk, i_Tp
+ integer, intent(in)  :: i_BS_mat
+ Mat,     intent(out) :: slepc_mat
+ !
+ integer          :: i_B, i_r, i_c, i_Tk, i_Tp, grp_fac
  PetscFortranInt  :: SL_H_dim,SL_K_dim
- Mat              :: slepc_mat
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ external K_multiply_by_V_transpose_slepc
+ !
+ if (BS_mat_res_ares_dim==2) call error(" Slepc with shells and multiple BS_mat not coded")
+ !if (BS_K_coupling)          call error(" Slepc with shells and coupling not coded")
  !
  SL_H_dim=BS_H_dim
  !
  ! Allocate haydock vectors
  ! 
  call PARALLEL_Haydock_VEC_COMMs('assign')
+ Slepc_v%it=1
  allocate(Slepc_v%Vi(BS_nT_grps))
  allocate(Slepc_v%Vo(BS_nT_grps))
  call BS_HAYVEC_alloc(Slepc_v%Vi)
- call BS_HAYVEC_alloc(Slepc_v%Vo) 
+ call BS_HAYVEC_alloc(Slepc_v%Vo)
  !
  ! Allocate slepc shell matrix
  !
@@ -70,31 +78,21 @@ subroutine K_shell_matrix(slepc_mat)
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
- call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !! Are the following twe needed ??
+ !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
- call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ if(BS_K_coupling) then
+   call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_FALSE,ierr)
+ else
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ endif
  call MatSetUp(slepc_mat,ierr)
  !
- ! Allocate BS stuff
+ ! Symmetrize BS_blk%mat to be used in K_multiply_by_V
  !
- do i_B=1,n_BS_blks
-   !
-   i_Tk  =BS_blk(i_B)%iT_k
-   i_Tp  =BS_blk(i_B)%iT_p
-   !
-   if (i_Tk==i_Tp) then
-     do i_r=1,BS_blk(i_B)%size(1)
-       ! make the diagonal of the matrix real
-       BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
-       ! make the matrix hermitian
-       do i_c=i_r,BS_blk(i_B)%size(2)
-         BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-       enddo
-     enddo
-     !
-   endif
-   !
- enddo
+ call BS_Blocks_symmetrize_K()
  !
 end subroutine K_shell_matrix

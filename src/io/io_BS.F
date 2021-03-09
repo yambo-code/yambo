@@ -118,8 +118,8 @@ integer function io_BS(iq,X,ID)
  !
  if(frag_BS_K) then
    ch=trim(ch)//"_BLOCK_"//trim(intc(i_block))
-   call def_variable_bulk(ID,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
-   call io_variable_bulk(ID,1,C2=BS_blk(i_block)%mat)
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
+   call io_variable_bulk(ID_frag,1,C2=BS_blk(i_block)%mat)
  else
    if (BS_blk(i_block)%mode=="R") VAR_ID=1
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
@@ -132,7 +132,7 @@ integer function io_BS(iq,X,ID)
      block_pos=block_pos+BS_blk(j_block)%size(1)*BS_blk(j_block)%size(2)
    enddo
    call C_F_POINTER(C_LOC(BS_blk(i_block)%mat),tmp_link,(/n1*n2/))
-   call io_variable_bulk(ID,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
+   call io_variable_bulk(ID_frag,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif
  !

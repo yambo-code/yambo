@@ -183,8 +183,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  !
  QUIET_wf = .false.
- if (kpts_to_load(1)==kpts_to_load(2)) QUIET_wf = .true.
- if (present(quiet))                   QUIET_wf = quiet
+ if (kpts_to_load(1)==kpts_to_load(2).and.kpts_to_load(2)>1) QUIET_wf = .true.
+ if (present(quiet))                                         QUIET_wf = quiet
  if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
  !
  ! First WF_free then fft_setup.

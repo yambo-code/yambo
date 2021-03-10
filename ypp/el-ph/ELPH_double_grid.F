@@ -168,6 +168,13 @@ subroutine ELPH_double_grid(k,E,q)
  YAMBO_ALLOC(E_k_plus_q,(k%nibz,q_fine%nbz,E%nb))
  if(.not.STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q_fine,E,GKKP)
  !
+ ! DEBUG DEBUG
+ !
+ do iq=1,k%nbz
+  write(*,*) q%FGbz%k_range(iq,1)
+ enddo
+ !
+ !
  ! Final I/O
  !===========
  call section('=','Double Grid Database I/O')

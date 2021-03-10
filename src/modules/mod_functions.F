@@ -59,7 +59,7 @@ module functions
    end function infinity
    !
    logical function NAN(E)
-#if defined(_XLF) || defined(_PGI)
+#if defined(_XLF) || defined(_PGI) || defined(_NV)
      use ieee_arithmetic
      real(SP) :: E
      NAN= ieee_is_nan(E)

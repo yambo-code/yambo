@@ -175,7 +175,7 @@ subroutine ELPH_double_grid(k,E,q)
  nkibz=q%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
- io_err=io_Double_Grid(PH_E,q,ID)
+ io_err=io_Double_Grid(PH_E,q,ID,'phonons')
  !
  ! CLEAN
  !========

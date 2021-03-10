@@ -21,17 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine En_k_plus_q_interpolate(k,q_fine,E,GKKP)
+subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  use pars,                ONLY:SP,pi
- use electrons,           ONLY:levels
+ use electrons,           ONLY:levels,FineGd_E_components_alloc
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
- use ELPH,                ONLY:GKKP_me
+ use ELPH,                ONLY:GKKP_me,elph_nb
  !
 #include<memory.h>
  !
- type(bz_samp), intent(in)  :: k,q_fine
+ type(bz_samp), intent(in)  :: k,q,q_fine
  type(levels) , intent(in)  :: E
  type(GKKP_me), intent(out) :: GKKP
  !
@@ -39,8 +39,8 @@ subroutine En_k_plus_q_interpolate(k,q_fine,E,GKKP)
  !
  integer               :: iq,ik
  real(SP), allocatable :: E_1D_array(:,:)
- integer  :: ID_E_kpq=1
  type(bz_samp) :: k_plus_q
+ integer  :: ID_E_kpq=1
  !
  ! Setup interpolation
  ! ========================= 
@@ -63,6 +63,14 @@ subroutine En_k_plus_q_interpolate(k,q_fine,E,GKKP)
  ! Interpolate Energies
  YAMBO_ALLOC(E_1D_array,(E%nb,k_plus_q%nibz))
  call INTERPOLATION_BZ(K=k_plus_q,NK=k_plus_q%nibz,R1D=E_1D_array,ID=ID_E_kpq)
+ !
+ ! Allocation of the Double Grids for each k+q points
+ ! =====================================================
+  do iq=1,q%nibz
+   GKKP%E_kpq(iq)%FG%nb=elph_nb
+   GKKP%E_kpq(iq)%FG%nk=q_fine%nbz
+   call FineGd_E_components_alloc(GKKP%E_kpq(iq))
+ enddo
  !
  do ik=1,k%nibz
    do iq=1,q_fine%nbz

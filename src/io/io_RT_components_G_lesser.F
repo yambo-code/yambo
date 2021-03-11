@@ -74,7 +74,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
    l_H_sig= G_IO_steps==1 .and. SAVE_G_history
  else
-   l_H_sig= variable_exist(ID,"Delta_Sigma")
+   l_H_sig= variable_exist(ID,"Delta_Sigma") .and. allocated(Ho_plus_sigma)
  endif
  !
  l_H_rot=( l_RT_rotate_DM .and. (variable_exist(ID,"H_rotation").or.write_is_on(ID)) )
@@ -92,7 +92,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  if ( NE_i_time==1 .and. write_is_on(ID)) then
    l_H_EQ= G_IO_steps==1 .and. SAVE_G_history
  else
-   l_H_EQ= variable_exist(ID,"H_equilibrium")
+   l_H_EQ= variable_exist(ID,"H_equilibrium") .and. allocated(H_EQ)
  endif
  !
  if((NE_i_time==1.or..not.l_real_time) .and. l_H_EQ) then
@@ -160,7 +160,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) then
    l_H_sig= G_IO_steps==1 .and. SAVE_G_history
  else
-   l_H_sig= variable_exist(ID,trim(var_name))
+   l_H_sig= variable_exist(ID,trim(var_name)) .and. allocated(Ho_plus_sigma)
  endif
  !
  if ( l_H_sig ) then
@@ -187,7 +187,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  if ( NE_i_time==1 .and. write_is_on(ID)) then
    l_H_EQ = l_H_sig
  else
-   l_H_EQ= variable_exist(ID,trim(var_name))
+   l_H_EQ= variable_exist(ID,trim(var_name)) .and. allocated(H_EQ)
  endif
  !
  if(l_H_EQ) then

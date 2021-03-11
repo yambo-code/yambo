@@ -158,13 +158,18 @@ subroutine ELPH_double_grid(k,E,q)
  ! Interpolation E(k+q) and fill the GKKP%E_kpq
  ! ============================================
  ! E(k+q) is constructed with k in the IBZ and q in the BZ
- if(.not.STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
+ if(STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! DEBUG DEBUG
  !
- do iq=1,k%nbz
-  write(*,*) q%FGbz%k_range(iq,1)
- enddo
+! write(*,*) GKKP%E_kpq(1)%nk,k%nibz,k%nbz,' in the BZ '
+! do iq=1,k%nbz
+!  write(*,*) q%FGbz%k_range(iq,1)
+! enddo
+! do iq=1,k%nibz
+!  write(*,*) iq,q%k_table(iq,q%star(iq,1)),q%nstar(iq)
+!!  write(*,*) q%FGibz%k_range(iq,1)
+! enddo
  !
  !
  ! Final I/O

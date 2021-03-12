@@ -93,14 +93,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    !
  enddo
  !
- if (ENVIRONMENT=="Response_T_space") then
-   !
-   if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
-     call warning(' n_eh_CPU > 1 in a system with symmetries and k-points is not efficient. Try distributing first "k" and "t" ')
-   endif
-   !
- endif
- !
  if (.not.RUNNING_ENVIRONMENT) return
  !
  call PARALLEL_set_the_active_structures( n_structures )

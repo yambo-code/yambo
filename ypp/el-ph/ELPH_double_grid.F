@@ -84,9 +84,16 @@ subroutine ELPH_double_grid(k,E,q)
  ! ===============================================
  call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
  !
- l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
- l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
- l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
+ ! Expansion mode
+ ! =======================
+ ! Since phonon in the ELPH_Sigma_c are in the BZ, I force
+ ! this expantion for the PH-Double-Grid, it can be extended to the other cases
+ !
+ if(.not.STRING_same(BZ_FineGd_mode,"expanded")) &
+&   call warning("Phonon double-grid works only in 'expanded' mode, forced mode='expanded'")
+ l_mix     =.false.
+ l_expand  =.true.
+ l_unexpand=.false.
  !
  ! FineGd E to IBZ map
  !=======================

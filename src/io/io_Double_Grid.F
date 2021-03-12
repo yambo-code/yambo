@@ -33,6 +33,10 @@ integer function io_Double_Grid(E,Xk,ID,what)
 &                         def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ use stderr,         ONLY:intc
+#if defined _ELPH
+ use ELPH,           ONLY:GKKP,elph_nb
+#endif
  use pars,           ONLY:IP,SP
  !
 #include<memory.h>
@@ -41,13 +45,15 @@ integer function io_Double_Grid(E,Xk,ID,what)
  type(bz_samp):: Xk
  integer      :: ID 
  character(*) ::what 
- character(schlen)      ::db_name 
+ character(schlen)  ::db_name 
+ character(schlen)  ::VAR_name
  !
  ! Work Space
  !
  logical :: l_R_LATT
  integer :: VAR_SZ
  logical :: l_PH_DG=.FALSE.
+ integer :: iq
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -148,6 +154,25 @@ integer function io_Double_Grid(E,Xk,ID,what)
  call elemental_IO(Xk%FGibz,"K_RANGE","IBZ")
  call elemental_IO(Xk%FGbz,"K_RANGE","BZ")
  !
+#if defined _ELPH
+ if(l_PH_DG) then
+   !      
+   call def_variable_bulk(ID, trim(VAR_NAME),8, VAR_SZ=(/Xk%nibz/),VAR_KIND=IP)
+   call io_variable_bulk(ID,2, I1=GKKP%E_kpq(:)%FG%nk)
+   !
+   do iq=1,Xk%nibz
+     if (read_is_on(ID)) then
+       GKKP%E_kpq(iq)%FG%nb=elph_nb
+       call FineGd_E_components_alloc(GKKP%E_kpq(iq))
+      endif
+      call def_variable_bulk(ID,"E_KPQ_"//intc(iq),8+iq,VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
+      call io_variable_bulk(ID,1,R3=GKKP%E_kpq(iq)%FG%E)
+   enddo
+   !
+ endif
+#endif
+ !
+ !
 1 call io_disconnect(ID=ID)
  !
  call timing('io_Double_Grid',OPR='stop')
@@ -156,11 +181,9 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    subroutine elemental_IO(FG,what,kind)
      !
-     use pars,       ONLY:schlen
      use R_lattice,  ONLY:bz_fine_grid
      !
      character(*)       ::what,kind
-     character(schlen)  ::VAR_name
      type(bz_fine_grid) ::FG
      !
      VAR_NAME=kind//"_"//what

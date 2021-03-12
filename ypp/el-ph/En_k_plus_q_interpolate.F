@@ -31,15 +31,14 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
 #include<memory.h>
  !
- type(bz_samp), intent(in)  :: k,q,q_fine
- type(levels) , intent(in)  :: E
- type(GKKP_me), intent(out) :: GKKP
+ type(bz_samp), intent(in)   :: k,q,q_fine
+ type(levels) , intent(in)   :: E
+ type(GKKP_me), intent(out)  :: GKKP
  !
  ! Work space
  !
- integer               :: iq,iq_bz,ik,n_k_plus_q,ic,ik_idx,iq_fine
+ integer               :: iq,ik,n_k_plus_q,ic,ik_idx,iq_fine
  integer               :: nq_around
- real(SP), allocatable :: E_1D_array(:,:)
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
  integer  :: ID_E_kpq=1
@@ -57,14 +56,16 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! number of q_fine points in the BZ around a give iq point in the IBZ
  !
+ if(.not.allocated(GKKP%E_kpq)) allocate(GKKP%E_kpq(q%nibz))
+ !
  do iq=1,q%nibz
-   nq_around=q%FGibz%k_range(iq,2)-q%FGibz%k_range(iq,1)
+   nq_around=q%FGibz%k_range(iq,2)-q%FGibz%k_range(iq,1)+1
    GKKP%E_kpq(iq)%FG%nb=elph_nb
    GKKP%E_kpq(iq)%FG%nk=nq_around*k%nibz                         
    call FineGd_E_components_alloc(GKKP%E_kpq(iq))
  enddo
  !
- n_k_plus_q=k%nibz*(sum(q%FGibz%k_range(:,2))-sum(q%FGibz%k_range(:,1)))
+ n_k_plus_q=k%nibz*(sum(q%FGibz%k_range(:,2)+1)-sum(q%FGibz%k_range(:,1)))
  !
  ! Generate k'=k+q  vectors
  ! ============================================
@@ -72,7 +73,6 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  k_plus_q%nibz=n_k_plus_q
  YAMBO_ALLOC(k_plus_q%pt,(k_plus_q%nibz,3))
  !
- stop
  ic=1
  do ik=1,k%nibz
    do iq=1,q%nibz
@@ -94,10 +94,10 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  ic=1
  do ik=1,k%nibz
    do iq=1,q%nibz
-     nq_around=q%FGibz%k_range(iq,2)-q%FGbz%k_range(iq,1)
+     nq_around=q%FGibz%k_range(iq,2)-q%FGbz%k_range(iq,1)+1
      ik_idx=(ik-1)*nq_around
      do iq_fine=1,nq_around
-       GKKP%E_kpq(iq)%E(:elph_nb,ik_idx+iq_fine,:)=E_kpq%E(:elph_nb,ic,:)
+       GKKP%E_kpq(iq)%FG%E(:elph_nb,ik_idx+iq_fine,:)=E_kpq%E(:elph_nb,ic,:)
        ic=ic+1
      enddo
    enddo

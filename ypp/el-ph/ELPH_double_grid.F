@@ -45,7 +45,7 @@ subroutine ELPH_double_grid(k,E,q)
  type(levels)          :: Ph_E
  logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg,iq
+ integer               :: ID,io_err,i_f,i_fg
  integer, external     :: io_ELPH,io_Double_Grid
  !
  if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
@@ -112,7 +112,7 @@ subroutine ELPH_double_grid(k,E,q)
      call section('=','Double Grid K-points expansion ...')
      call k_ibz2bz(q_fine,'i',.true.)
      call k_map_fine_to_coarse_reduce(q_fine)
-     call msg('lr','found '//trim(intc(q_fine%nbz))//' ('//trim(intc(q_fine%nibz))//') points in the BZ (IBZ)')
+     call msg('nsr','Found '//trim(intc(q_fine%nbz))//' ('//trim(intc(q_fine%nibz))//') points in the BZ (IBZ)')
      !
    endif
    !

@@ -94,7 +94,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  call io_variable_elemental(ID,CH0=Xk%FGibz%FG_mode,VAR=' [FineGd] Fine Grid IBZ mapped mode'&
 &                             ,DESCRIPTOR=FineGd_desc)
  !
- call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP,MENU=0) 
+ call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
  call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
  call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
 &                             ,DESCRIPTOR=FineGd_desc)
@@ -157,17 +157,17 @@ integer function io_Double_Grid(E,Xk,ID,what)
 #if defined _ELPH
  if(l_PH_DG) then
    !      
-   call def_variable_bulk(ID, trim(VAR_NAME),8, VAR_SZ=(/Xk%nibz/),VAR_KIND=IP)
-   call io_variable_bulk(ID,2, I1=GKKP%E_kpq(:)%FG%nk)
+!   call def_variable_bulk(ID, "E_kpq_n_fine",8, VAR_SZ=(/Xk%nibz/),VAR_KIND=IP)
+!   call io_variable_bulk(ID,2, I1=GKKP%E_kpq(:)%FG%nk)
    !
-   do iq=1,Xk%nibz
-     if (read_is_on(ID)) then
-       GKKP%E_kpq(iq)%FG%nb=elph_nb
-       call FineGd_E_components_alloc(GKKP%E_kpq(iq))
-      endif
-      call def_variable_bulk(ID,"E_KPQ_"//intc(iq),8+iq,VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
-      call io_variable_bulk(ID,1,R3=GKKP%E_kpq(iq)%FG%E)
-   enddo
+!   do iq=1,Xk%nibz
+!     if (read_is_on(ID)) then
+!       GKKP%E_kpq(iq)%FG%nb=elph_nb
+!       call FineGd_E_components_alloc(GKKP%E_kpq(iq))
+!      endif
+!      call def_variable_bulk(ID,"E_KPQ_"//intc(iq),8+iq,VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
+!      call io_variable_bulk(ID,1,R3=GKKP%E_kpq(iq)%FG%E)
+!   enddo
    !
  endif
 #endif
@@ -189,15 +189,15 @@ integer function io_Double_Grid(E,Xk,ID,what)
      VAR_NAME=kind//"_"//what
      !
      if (what=="N_MAPPED") then
-       call def_variable_bulk(ID, trim(VAR_NAME),2, VAR_SZ=shape(FG%N_mapped),VAR_KIND=IP,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),2, VAR_SZ=shape(FG%N_mapped),VAR_KIND=IP+100,silent=.TRUE. )
        call io_variable_bulk(ID,2, I1=FG%N_mapped )
      endif
      if (what=="K_RANGE") then
-       call def_variable_bulk(ID, trim(VAR_NAME),3, VAR_SZ=shape(FG%k_range),VAR_KIND=IP,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),3, VAR_SZ=shape(FG%k_range),VAR_KIND=IP+100,silent=.TRUE. )
        call io_variable_bulk(ID,3, I2=FG%k_range )
      endif
      if (what=="K_MAP") then
-       call def_variable_bulk(ID, trim(VAR_NAME),4, VAR_SZ=shape(FG%k_map),VAR_KIND=IP,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),4, VAR_SZ=shape(FG%k_map),VAR_KIND=IP+100,silent=.TRUE. )
        call io_variable_bulk(ID,4, I1=FG%k_map )
      endif
      if (what=="WEIGHTS") then
@@ -209,7 +209,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
        call io_variable_bulk(ID,6, R2=FG%pt )
      endif
      if (what=="E_MAP") then
-       call def_variable_bulk(ID, trim(VAR_NAME),7, VAR_SZ=shape(FG%E_map),VAR_KIND=IP,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),7, VAR_SZ=shape(FG%E_map),VAR_KIND=IP+100,silent=.TRUE. )
        call io_variable_bulk(ID,7, I1=FG%E_map )
      endif
    end subroutine

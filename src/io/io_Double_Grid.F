@@ -24,7 +24,7 @@
 integer function io_Double_Grid(E,Xk,ID,what)
  !
  use pars,           ONLY:schlen
- use electrons,      ONLY:levels,FineGd_E_components_alloc
+ use electrons,      ONLY:levels,FineGd_E_components_alloc,n_sp_pol
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
  use IO_m,           ONLY:io_connect,io_disconnect,read_is_on,&
@@ -157,17 +157,19 @@ integer function io_Double_Grid(E,Xk,ID,what)
 #if defined _ELPH
  if(l_PH_DG) then
    !      
-!   call def_variable_bulk(ID, "E_kpq_n_fine",8, VAR_SZ=(/Xk%nibz/),VAR_KIND=IP)
-!   call io_variable_bulk(ID,2, I1=GKKP%E_kpq(:)%FG%nk)
+   call def_variable_bulk(ID, "E_kpq_n_fine",8, VAR_SZ=(/Xk%nibz/),VAR_KIND=IP)
+   call io_variable_bulk(ID,2, I1=GKKP%E_kpq(:)%FG%nk)
    !
-!   do iq=1,Xk%nibz
-!     if (read_is_on(ID)) then
-!       GKKP%E_kpq(iq)%FG%nb=elph_nb
-!       call FineGd_E_components_alloc(GKKP%E_kpq(iq))
-!      endif
-!      call def_variable_bulk(ID,"E_KPQ_"//intc(iq),8+iq,VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
-!      call io_variable_bulk(ID,1,R3=GKKP%E_kpq(iq)%FG%E)
-!   enddo
+   do iq=1,Xk%nibz
+     if (read_is_on(ID)) then
+       GKKP%E_kpq(iq)%FG%nb=elph_nb
+       call FineGd_E_components_alloc(GKKP%E_kpq(iq))
+     endif
+      write(*,*) "E_KPQ_",shape(GKKP%E_kpq(iq)%FG%E)
+      call def_variable_bulk(ID,"E_KPQ_"//intc(iq),8+iq,VAR_SZ=(/elph_nb,GKKP%E_kpq(iq)%FG%nk,n_sp_pol/),VAR_KIND=SP) 
+      write(*,*) "E_KPQ_"//intc(iq)
+      call io_variable_bulk(ID,1,R3=GKKP%E_kpq(iq)%FG%E)
+   enddo
    !
  endif
 #endif

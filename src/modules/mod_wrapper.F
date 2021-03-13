@@ -310,11 +310,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
-     complex(SP)::zdotc
-     Vstar_dot_V_c1_cpu=ZDOTC(N,CX,1,CY,1)
+     call ZDOTC(Vstar_dot_V_c1_cpu,N,CX,1,CY,1)
 #else
-     complex(SP)::cdotc
-     Vstar_dot_V_c1_cpu=CDOTC(N,CX,1,CY,1)
+     call CDOTC(Vstar_dot_V_c1_cpu,N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_c1_cpu
    !
@@ -323,11 +321,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
-     complex(SP)::zdotc
-     Vstar_dot_V_c2_cpu=ZDOTC(N,CX,1,CY,1)
+     call ZDOTC(Vstar_dot_V_c2_cpu,N,CX,1,CY,1)
 #else
-     complex(SP)::cdotc
-     Vstar_dot_V_c2_cpu=CDOTC(N,CX,1,CY,1)
+     call CDOTC(Vstar_dot_V_c2_cpu,N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_c2_cpu
    !
@@ -367,11 +363,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(N),CY(N),CZ(N)
 #if defined _DOUBLE
-     complex(SP)::zdotc
-     Vstar_dot_VV_c1_cpu=ZDOTC(N,CX,1,CY*CZ,1)
+     call ZDOTC(Vstar_dot_VV_c1_cpu,N,CX,1,CY*CZ,1)
 #else
-     complex(SP)::cdotc
-     Vstar_dot_VV_c1_cpu=CDOTC(N,CX,1,CY*CZ,1)
+     call CDOTC(Vstar_dot_VV_c1_cpu,N,CX,1,CY*CZ,1)
 #endif
    end function Vstar_dot_VV_c1_cpu
    !
@@ -412,11 +406,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(*),CY(*)
 #if defined _DOUBLE
-     complex(SP)::zdotu
-     V_dot_V_c1_cpu=ZDOTU(N,CX,1,CY,1)
+     call ZDOTU(V_dot_V_c1_cpu,N,CX,1,CY,1)
 #else
-     complex(SP)::cdotu
-     V_dot_V_c1_cpu=CDOTU(N,CX,1,CY,1)
+     call CDOTU(V_dot_V_c1_cpu,N,CX,1,CY,1)
 #endif
    end function V_dot_V_c1_cpu
    !
@@ -425,11 +417,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
-     complex(SP)::zdotu
-     V_dot_V_c2_cpu=ZDOTU(N,CX,1,CY,1)
+     call ZDOTU(V_dot_V_c2_cpu,N,CX,1,CY,1)
 #else
-     complex(SP)::cdotu
-     V_dot_V_c2_cpu=CDOTU(N,CX,1,CY,1)
+     call CDOTU(V_dot_V_c2_cpu,N,CX,1,CY,1)
 #endif
    end function V_dot_V_c2_cpu
    !
@@ -457,11 +447,9 @@ module wrapper
      integer,    intent(in) :: N
      complex(SP),intent(in) :: CX(N),CY(N),CZ(N)
 #if defined _DOUBLE
-     complex(SP)::zdotu
-     V_dot_VV_c1_cpu=ZDOTU(N,CX,1,CY*CZ,1)
+     call ZDOTU(V_dot_VV_c1_cpu,N,CX,1,CY*CZ,1)
 #else
-     complex(SP)::cdotu
-     V_dot_VV_c1_cpu=CDOTU(N,CX,1,CY*CZ,1)
+     call CDOTU(V_dot_VV_c1_cpu,N,CX,1,CY*CZ,1)
 #endif
    end function V_dot_VV_c1_cpu
    !

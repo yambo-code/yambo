@@ -108,14 +108,14 @@ subroutine DIPOLES_driver(k,E,q)
        if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
-         if (DIPs_E_range(1)>0. .and. delta_E<DIPs_E_range(1)) cycle
-         if (DIPs_E_range(2)>0. .and. delta_E>DIPs_E_range(2)) cycle
+         if (DIPs_E_range(1)>0._SP .and. delta_E<DIPs_E_range(1)) cycle
+         if (DIPs_E_range(2)>0._SP .and. delta_E>DIPs_E_range(2)) cycle
          DIP_projected=dot_product(DIPs_direction,DIP_iR(:,ic,iv,ik_mem,is))
          if (trim(DIPs_kind)=="IP") then
-           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2
          endif
          if (trim(DIPs_kind)=="MASK") then
-           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2._SP
+           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2
          endif
          if (BANDS_done(ic)==0) BANDS_str=trim(BANDS_str)//" "//trim(intc(ic))
          BANDS_done(ic)=1

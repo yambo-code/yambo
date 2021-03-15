@@ -115,6 +115,9 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  !
+ if ( .not.all(PAR_IND_VAL_BANDS_DIP%element_1D(Dip%ib(1):Dip%ib_lim(1))) ) &
+&  call error(' DIPOLES Parallelization over v bands not accepted')
+ !
  idir_not_done=.true.
  !
  do iq =1,num_shifted_grids
@@ -164,7 +167,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
        !
        core_io_path = trim(grid_paths_vector(iq))
        !
-       call WF_load(WF_shifted,0,1,Dip%ib,(/ik,ik/),space='G',&
+       call WF_load(WF_shifted,0,1,(/Dip%ib(1),Dip%ib_lim(1)/),(/ik,ik/),space='G',&
 &      title='-Oscillators/G space (shifted grid)',keep_states_to_load=.TRUE.)
        !
        wf_ng_eff = min(wf_ng_save,wf_ng_shifted)

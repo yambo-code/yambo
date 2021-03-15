@@ -51,18 +51,21 @@ subroutine INTERPOLATION_fourier(K,VALUES,engre,nvalues,NK,ID)
  real(SP)           :: star_vec(3,nsym),v(3)
  complex(SP)        :: F_star(nshells)
  type(PP_indexes)   :: px
+ integer            :: n_of_elements
  !
  call timing('INTERPOLATE Fourier',OPR='start')
  !
  ! Parallel setup and distribution
  !---------------------------------
+ n_of_elements=Nk
  if (.not.INTERPOLATE_is_serial) then
    call PP_indexes_reset(px)
    call PARALLEL_index(px,(/Nk/))
+   n_of_elements=px%n_of_elements(myid+1)
  endif
  VALUES=rZERO
  !
- if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",px%n_of_elements(myid+1))
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolate@"//trim(INTERP_obj(ID)%what)//" Fourier",n_of_elements)
  !
  do ik=1,Nk
    F_star=cZERO

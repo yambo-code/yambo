@@ -30,9 +30,11 @@
      if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_k_bz_mem==0) then NEWLINE \
+         !$omp critical NEWLINE \
          qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) NEWLINE \
          iq_W_bz=qindx_tmp(1) NEWLINE \
          ig_W   =qindx_tmp(2) NEWLINE \
+         !$omp end critical NEWLINE \
        else NEWLINE \
          iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) NEWLINE \
          ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) NEWLINE \
@@ -45,9 +47,11 @@
      if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_kmq_bz_mem==0) then NEWLINE \
+         !$omp critical NEWLINE \
          qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) NEWLINE \
          iq_W_bz_mq=qindx_tmp(1) NEWLINE \
          ig_W_mq   =qindx_tmp(2) NEWLINE \
+         !$omp end critical NEWLINE \
        else NEWLINE \
          iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) NEWLINE \
          ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) NEWLINE \

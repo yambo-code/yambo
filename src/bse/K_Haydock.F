@@ -343,7 +343,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  endif
  !
  ! DEBUG <
- ! write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
+   write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
  ! DEBUG >
  !
  ! [***] Loop ...
@@ -490,7 +490,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    if (it>2) then
      !
-     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold)
+     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold,dom_k)
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it

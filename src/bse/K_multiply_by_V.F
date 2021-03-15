@@ -72,7 +72,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
 !aim137: output columns get expanded at energy stage
      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-     &                       sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+     &                       Vi(i_Tp)%fragment(:,1),1,cONE,&
      &                       Vo(i_Tk)%fragment(:,1),1)
      !
      ! Resonant part is hermitian
@@ -80,7 +80,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      if (i_Tk.ne.i_Tp) &
      &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-     &                       sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
+     &                       Vi(i_Tk)%fragment(:,1),1,cONE,&
      &                       Vo(i_Tp)%fragment(:,1),1)
      !
      ! Add the energy diffs on the diagonal
@@ -170,6 +170,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1) &
        & - BS_T_grp(i_g)%E(:,1)*Vi(i_g)%fragment(:,1) &
        & + BS_T_grp(i_g)%E(:,i_dom_k)*Vi(i_g)%fragment(:,i_dom_k)
+
      enddo
    enddo
  endif

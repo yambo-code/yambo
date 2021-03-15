@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
+subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold,dom_k)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
@@ -36,7 +36,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
  implicit none
  !
  type(w_samp),intent(in) :: W
- integer,     intent(in) :: iq,it,Cf_size
+!aim137: added dom_k for Double Grid factor on Epsilon
+ integer,     intent(in) :: iq,it,Cf_size,dom_k
  character(*),intent(in) :: scheme
  character(*),intent(in) :: mode
  real(SP),    intent(in) :: Bf(it+1),Af(it)
@@ -249,7 +250,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
-   if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
+!aim137: added Double grid factor = 1/dom_k
+   if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor/dom_k
    if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
    if (trim(mode)=="abs") then
      if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP

@@ -37,7 +37,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use electrons,           ONLY:levels,default_nel,n_bands,n_sp_pol,E_reset,FineGd_E_components_alloc
  use IO_m,                ONLY:REP
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode,ELPH_databases_IO_freqs
+ use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
  use stderr,              ONLY:STRING_same
  use vec_operate,         ONLY:c2a
 #endif
@@ -60,16 +60,16 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  character(1)          :: K_or_Q
  !
 #if defined _YPP_ELPH
- logical, external  :: file_exists
  integer            :: i_q,ph_modes
 #endif
  !
  ! BZ DB1 I/O
  !
- type(levels)         :: FineGd_io_E(MAX_FineGd_DBs)
- type(bz_samp)        :: FineGd_io_k(MAX_FineGd_DBs)
- integer              :: i_err(MAX_FineGd_DBs),nsym_save,i_time_rev_save,i_db
- real(SP)             :: dl_sop_save(3,3,48)
+ type(levels)              :: FineGd_io_E(MAX_FineGd_DBs)
+ type(bz_samp)             :: FineGd_io_k(MAX_FineGd_DBs)
+ integer                   :: i_err(MAX_FineGd_DBs),nsym_save,i_time_rev_save,i_db
+ real(SP)                  :: dl_sop_save(3,3,48)
+ complex(SP), allocatable  :: ph_pol(:,:,:,:)
  !
  ! Functions
  !
@@ -126,15 +126,20 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    ph_modes=3*n_atoms
    n_FineGd_DBs=1
    !
-   if(STRING_same(ph_freqs_file,'none'))            call error("Phonon frequencies file not specified!")
-   if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
-   !
-   call msg('s',":: Phonon frequencies read from: "//trim(ph_freqs_file))
+   if(.not.STRING_same(ph_freqs_file,'none')) then
+     !
+     call msg('s',":: Phonon frequencies read from: "//trim(ph_freqs_file))
+     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_k(1)%nibz)
+     !
+   elseif(.not.STRING_same(ph_modes_file,'none')) then
+     !      
+     call msg('s',":: Phonon frequencies read from: "//trim(ph_modes_file))
+     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_k(1)%nibz)
+     !
+   endif
+   !   
    call msg('s',":: Number of phonon modes: ",ph_modes)
-   !
-   call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=FineGd_io_k(1)%nibz)
    call msg('s',":: Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)
-   !
    YAMBO_ALLOC(FineGd_io_k(1)%pt,(FineGd_io_k(1)%nibz,3))
    !
    FineGd_io_E(1)%nb=ph_modes
@@ -142,8 +147,21 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    !
    YAMBO_ALLOC(FineGd_io_E(1)%E,(FineGd_io_E(1)%nb,FineGd_io_E(1)%nk,1))
    !
-   call ELPH_databases_IO_freqs(ph_freqs_file=ph_freqs_file,n_q=FineGd_io_E(1)%nk, &
+   if(.not.STRING_same(ph_freqs_file,'none')) then
+     !      
+     call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=FineGd_io_E(1)%nk, &
 &           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1))
+     !
+   elseif(.not.STRING_same(ph_modes_file,'none')) then
+     !       
+     YAMBO_ALLOC(ph_pol,(FineGd_io_E(1)%nk,FineGd_io_E(1)%nb,n_atoms,3))
+     !
+     call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_E(1)%nk, &
+&           q_pt=FineGd_io_k(1)%pt,ph_freqs=FineGd_io_E(1)%E(:,:,1),ph_pol=ph_pol)
+     !
+     YAMBO_FREE(ph_pol) ! Polarization vectors not used in the Double-grid
+     !
+   endif
    !
    ! q-points in matdyn output are alat units, convert to internal units
    ! ==================================

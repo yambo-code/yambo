@@ -21,21 +21,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_modes(ph_pol_file,n_q,q_pt,ph_pol,ph_freqs)
+subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
  use units,          ONLY:HA2THZ
  use vec_operate,    ONLY:v_is_zero
  use stderr,         ONLY:intc
+ use com,            ONLY:msg
  !
  implicit none
  !
- character(schlen), intent(in)   :: ph_pol_file
+ character(schlen), intent(in)   :: ph_file
  integer,     intent(inout)  :: n_q
  real(SP),    optional,   intent(out) :: q_pt(n_q,3)
- complex(SP), optional,   intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
  real(SP),    optional,   intent(out) :: ph_freqs(3*n_atoms,n_q)
+ complex(SP), optional,   intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
  !
  ! Work Space
  !
@@ -49,10 +50,10 @@ subroutine ELPH_databases_IO_modes(ph_pol_file,n_q,q_pt,ph_pol,ph_freqs)
  !
  ! Read polarization vectors
  !
- if(file_exists(trim(ph_pol_file))) then
-   open(unit=io_unit,file=trim(ph_pol_file))
+ if(file_exists(trim(ph_file))) then
+   open(unit=io_unit,file=trim(ph_file))
  else
-   call error('File '//trim(ph_pol_file)//' not found ')
+   call error('File '//trim(ph_file)//' not found ')
  endif
  !
  if(.not.present(q_pt)) then

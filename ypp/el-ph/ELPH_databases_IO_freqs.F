@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
+subroutine ELPH_databases_IO_freqs(ph_file,n_q,q_pt,ph_freqs)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
@@ -29,7 +29,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
  !
  implicit none
  !
- character(schlen), intent(in)   :: ph_freqs_file
+ character(schlen), intent(in)   :: ph_file
  integer,      intent(inout)     :: n_q
  real(SP), optional, intent(out) :: q_pt(n_q,3)
  real(SP), optional, intent(out) :: ph_freqs(3*n_atoms,n_q)
@@ -45,7 +45,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
    !
    ! Return the number of q-points
    !
-   open(unit=io_unit,file=trim(ph_freqs_file))
+   open(unit=io_unit,file=trim(ph_file))
    read(io_unit,*,end=100)
    n_q=0
    do 
@@ -62,7 +62,7 @@ subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
    !
    ! Fill q_pt and ph_freq without any conversion or check
    !
-   open(unit=io_unit,file=trim(ph_freqs_file))
+   open(unit=io_unit,file=trim(ph_file))
    read(io_unit,*)
    do i_q=1,n_q
      read(io_unit,*)  q_pt(i_q,:) ! read q-point

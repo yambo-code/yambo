@@ -85,36 +85,35 @@ module YPP_ELPH
      integer, optional  :: n_lambda
    end subroutine
    !
-   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freqs)
+   subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      !
      use pars,           ONLY:schlen,SP 
      use D_lattice,      ONLY:n_atoms
      !
      implicit none
      !
-     character(schlen), intent(in)   :: ph_freqs_file
-     integer,      intent(inout)     :: n_q
-     real(SP), optional, intent(out) :: q_pt(n_q,3)
-     real(SP), optional, intent(out) :: ph_freqs(n_q,3*n_atoms)
+     character(schlen), intent(in)   :: ph_file
+     integer,     intent(inout)  :: n_q
+     real(SP),    optional,   intent(out) :: q_pt(n_q,3)
+     real(SP),    optional,   intent(out) :: ph_freqs(3*n_atoms,n_q)
+     complex(SP), optional,   intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
      !
    end subroutine
-     !
-   subroutine ELPH_databases_IO_modes(ph_freqs_file,n_q,q_pt,ph_freqs,ph_pol)
+   !
+   subroutine ELPH_databases_IO_freqs(ph_file,n_q,q_pt,ph_freqs)
      !
      use pars,           ONLY:schlen,SP 
      use D_lattice,      ONLY:n_atoms
      !
      implicit none
      !
-     character(schlen), intent(in)   :: ph_freqs_file
+     character(schlen), intent(in)   :: ph_file
      integer,      intent(inout)     :: n_q
      real(SP), optional, intent(out) :: q_pt(n_q,3)
-     real(SP), optional, intent(out) :: ph_freqs(n_q,3*n_atoms)
-     real(SP), optional, intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
+     real(SP), optional, intent(out) :: ph_freqs(3*n_atoms,n_q)
      !
    end subroutine
-   !
-   !
+     !
  end interface
  !
  contains

@@ -26,7 +26,7 @@ subroutine ELPH_double_grid(k,E,q)
  use pars,                ONLY:SP,pi
  use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
- use YPP_ELPH,            ONLY:ph_modes_file,EkplusQ_mode,ELPH_databases_IO_freqs
+ use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode
  use stderr,              ONLY:STRING_same,intc
  use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb
  use com,                 ONLY:msg
@@ -43,12 +43,23 @@ subroutine ELPH_double_grid(k,E,q)
  !
  type(bz_samp)         :: q_fine
  type(levels)          :: Ph_E
- logical, external     :: file_exists
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
  integer               :: ID,io_err,i_f,i_fg
  integer, external     :: io_ELPH,io_Double_Grid
+ logical, external     :: file_exists 
  !
- if(.not.STRING_same(ph_modes_file,'none')) call warning("Double-grid for polarization vectors not implemented yet!")
+ ! Check input files from matdyn.x
+ !
+ if(.not.STRING_same(ph_modes_file,'none').and..not.STRING_same(ph_freqs_file,'none')) &
+    call error("Please specify the Frequency file or the Matdyn Mode file, not both of them!")
+ !
+ if(.not.STRING_same(ph_freqs_file,'none')) then
+   if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
+ endif
+ !
+ if(.not.STRING_same(ph_modes_file,'none')) then
+    if(.not.file_exists(trim(ph_modes_file))) call error("Phonon modes file not found!")
+ endif
  !
  if(.not.STRING_same(EkplusQ_mode,'interp')) then
     call warning("Only Fourier interpolation implemented for the E(k+q) energies, EkplusQmode switched to 'interp'")

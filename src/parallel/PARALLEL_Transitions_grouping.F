@@ -57,9 +57,13 @@ subroutine PARALLEL_Transitions_grouping()
  !
  BS_T_grp_1st_el=0
  PAR_BS_nT_col_grps =0
- i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
+ !
+ i_counter=0
+ it_ref=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
  do i_res_ares=1,BS_res_ares_dim
+ if(i_res_ares==1) i_counter=it_ref
+ if(i_res_ares==2) i_counter=it_ref+nXkibz*PAR_COM_eh_INDEX%n_CPU
  do i_k=1,nXkibz
    i_k_s=1+(i_res_ares-1)*nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz

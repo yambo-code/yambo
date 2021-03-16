@@ -27,12 +27,11 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use LIVE_t,        ONLY:live_timing
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use interpolate,   ONLY:INTERPOLATION_BZ
- use electrons,     ONLY:levels,n_sp_pol
+ use electrons,     ONLY:levels
  use functions,     ONLY:Fermi_fnc_derivative
  use units,         ONLY:HA2EV
- use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_in,coo_out, &
-&                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step,DOS_E_range, &
-&                        DOS_E_steps,DOS_broadening,USER_k
+ use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,BANDS_steps, &
+&                        INTERP_grid,K_transform,CIRCUIT_k,DOS_E_steps,DOS_broadening,USER_k
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
@@ -49,10 +48,10 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP_EXC,ik,ib,i_E
+ integer :: iq,i_c,i_l,ID_INTERP_EXC,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
  type(bz_samp)            :: GRID_q
- character(schlen)        :: coo_out_,file_name
+ character(schlen)        :: file_name
  character(schlen), allocatable :: headings(:)
  logical                  :: GRID_interpolate,l_prt_dos
  real(SP)                 :: tmp_q(3)

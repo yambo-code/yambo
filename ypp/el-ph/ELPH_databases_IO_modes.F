@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_pol(ph_pol_file,n_q,q_pt,ph_pol)
+subroutine ELPH_databases_IO_modes(ph_pol_file,n_q,q_pt,ph_freqs,ph_pol)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
@@ -32,8 +32,9 @@ subroutine ELPH_databases_IO_pol(ph_pol_file,n_q,q_pt,ph_pol)
  !
  character(schlen), intent(in)   :: ph_pol_file
  integer,       intent(in)  :: n_q
- real(SP),      intent(in) :: q_pt(n_q,3)
- real(SP),      intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
+ real(SP), optional,  intent(in)  :: q_pt(n_q,3)
+ real(SP), optional,  intent(out) :: ph_freqs(n_q,3*n_atoms)
+ real(SP), optional,  intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
  !
  ! Work Space
  !

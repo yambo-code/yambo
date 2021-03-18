@@ -114,7 +114,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gFsq')
  !
- if (io_err/=0) call error(' gFsq databases not found!')
+ if (io_err/=0) call error(' Error reading the gFsq databases!')
  !
  YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
  !

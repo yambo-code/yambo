@@ -44,7 +44,7 @@ subroutine ELPH_double_grid(k,E,q)
  type(bz_samp)         :: q_fine
  type(levels)          :: Ph_E
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg
+ integer               :: ID,io_err,i_f,i_fg,iq
  integer, external     :: io_ELPH,io_Double_Grid
  logical, external     :: file_exists 
  !
@@ -178,18 +178,6 @@ subroutine ELPH_double_grid(k,E,q)
  ! E(k+q) is constructed with k in the IBZ and q in the BZ
  if(STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
- ! DEBUG DEBUG
- !
-! write(*,*) GKKP%E_kpq(1)%nk,k%nibz,k%nbz,' in the BZ '
-! do iq=1,k%nbz
-!  write(*,*) q%FGbz%k_range(iq,1)
-! enddo
-! do iq=1,k%nibz
-!  write(*,*) iq,q%k_table(iq,q%star(iq,1)),q%nstar(iq)
-!!  write(*,*) q%FGibz%k_range(iq,1)
-! enddo
- !
- !
  ! Final I/O
  !===========
  call section('=','Double Grid Database I/O')
@@ -198,6 +186,11 @@ subroutine ELPH_double_grid(k,E,q)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+ !
+ do iq=1,q%nibz
+   call io_control(ACTION=OP_WR_CL,SEC=(/1+iq/),COM=REP,ID=ID)
+   io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+ enddo
  !
  ! CLEAN
  !========

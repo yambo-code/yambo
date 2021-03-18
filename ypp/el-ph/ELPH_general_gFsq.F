@@ -37,7 +37,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,PH_freqs_sq
  use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
- use BS_solvers,          ONLY:BS_mat,BSS_eh_table
+ use BS_solvers,          ONLY:BS_mat,BSS_eh_table,BSS_n_eig
+
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
@@ -49,7 +50,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
- integer,  optional      ::BS_E_degs(:)
+ integer,  optional      ::BS_E_degs(BSS_n_eig)
  !
  ! Work Space (electrons)
  !
@@ -89,6 +90,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    QP_nb=BS_bands(2)
    QP_nk=Xk%nibz
+   YAMBO_FREE(QP_state)
    YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
    QP_state=.FALSE.
    forall( i1=BS_bands(1):BS_bands(2) ) QP_state(i1,:)=.TRUE.

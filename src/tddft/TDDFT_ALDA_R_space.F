@@ -55,7 +55,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  ! 
  ! Work Space
  !
- integer     :: i_sp_fxc(2),i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw
  complex(SP) :: rhotwr1(fft_size*n_spinor*n_spinor)
  complex(SP) :: rhotwr2(fft_size*n_spinor*n_spinor)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
@@ -69,7 +69,6 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  TDDFT_ALDA_R_space=cZERO
  !
- i_sp_fxc(1)=is(4)
  call WF_apply_symm(is,WF_symm1) 
  call WF_apply_symm(os,WF_symm2)
  !

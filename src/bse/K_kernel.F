@@ -166,12 +166,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=G_m_G_maxval
-   ! call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
-   ! Hybrid functional.
    ! < WARNIGN: 2021/03/19
    ! The following can be safely removed with the new implementation 
    ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
    ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   ! Hybrid functional.
    if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
    ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
@@ -187,16 +187,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      endif
      O_ng_exch=max(BS_n_g_fxc,O_ng_exch)
    endif
- endif
- !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
-   O_ng=G_m_G_maxval
-   ! < WARNIGN: 2021/03/19
-   ! The following can be safely removed with the new implementation 
-   ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
-   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
-   ! WARNING >
-   if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
  call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)

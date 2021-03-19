@@ -26,7 +26,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! K = <2V-W> for n_spin=1
  !
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
- use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_bss,l_tddft
  use frequency,    ONLY:w_samp
@@ -83,7 +82,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,&
+ integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
  complex(SP):: Co,H_x,H_c,BS_mat_tmp
@@ -169,8 +168,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    O_ng=G_m_G_maxval
    ! call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    ! Hybrid functional.
+   ! < WARNIGN: 2021/03/19
+   ! The following can be safely removed with the new implementation 
+   ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
    ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
-   ! if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+   if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+   ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
@@ -186,9 +189,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=G_m_G_maxval
-   ! call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   ! < WARNIGN: 2021/03/19
+   ! The following can be safely removed with the new implementation 
+   ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
+   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
@@ -196,7 +203,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_init(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_init(qindx_ID)
  !
  ! Screened interaction
  !======================
@@ -240,9 +247,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  bands_to_load=BS_bands
  if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
  !
- section_title='-BSK'
- if (l_bs_fxc) section_title='-BSK->Fxc'
- !
  ! DB identifier 
  !===============
  BS_identifier=pickup_a_random(10000._SP)
@@ -276,8 +280,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do iHxc=1,2
  !
- if (iHxc==1) call WF_load(WF,max(BS_n_g_exch,BS_n_g_fxc),O_ng_exch,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
- if (iHxc==2) call WF_load(WF,              O_ng,        O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
+ section_title='-BSK-'//trim(intc(iHxc))
+ if (l_bs_fxc) section_title='-BSK->Fxc-'//trim(intc(iHxc))
+ !
+ if (iHxc==1) NG=(/max(BS_n_g_exch,BS_n_g_fxc),O_ng_exch/)
+ ! < WARNIGN: 2021/03/19
+ ! The following can be safely changed to the commente line 
+ ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
+ !if (iHxc==2) NG=(/              O_ng,        O_ng_shift/)
+ if (iHxc==2) NG(2)=O_ng_shift
+ ! WARNING >
+ call WF_load(WF,NG(1),NG(2),bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
  ! Wave Functions Phases
  !=======================
@@ -572,7 +585,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(WF_phase)
    endif
    !
-   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_close(qindx_ID)
+   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID)
    YAMBO_FREE(BS_W)
    !
  endif

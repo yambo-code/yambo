@@ -36,10 +36,10 @@ integer function io_BS(iq,X,ID)
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
 &                        l_BS_ares_asymm,BS_IO_dim,n_BS_blks,BS_K_dim
  use BS_solvers,    ONLY:BSS_desc,variables_BS
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
-&                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
-&                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+ use IO_m,          ONLY:io_sec,frag_BS_K,io_BS_K,&
+&                        write_is_on,io_mode,VERIFY,IO_NOT_ALLOWED
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,&
+&                        def_variable_bulk,io_variable_bulk,io_header,io_fragment
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !

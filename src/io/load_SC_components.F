@@ -30,7 +30,8 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  use hamiltonian, ONLY:H_nl_sc,H_rotation
  use electrons,   ONLY:levels,E_reset,n_sp_pol
  use R_lattice,   ONLY:nkibz
- use IO_m,        ONLY:io_control,manage_action,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
+ use IO_int,      ONLY:io_control
+ use IO_m,        ONLY:manage_action,OP_RD_CL,RD_CL_IF_END,OP_RD,RD_CL,&
 &                      DUMP,OP_RD_CL,NONE,IO_NO_DATABASE
 #include<memory.h>
  !

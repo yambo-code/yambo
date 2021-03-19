@@ -25,8 +25,8 @@ integer function io_E_SOC_map(En,kpt,ID)
  !
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_bulk,io_header,file_is_present,write_is_on
+ use IO_m,           ONLY:read_is_on,write_is_on,file_is_present
+ use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  !
 #include<memory.h>
  !

@@ -32,7 +32,8 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use R_lattice,     ONLY:bz_samp
  use LIVE_t,        ONLY:live_timing
- use IO_m,          ONLY:io_control,manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
  use timing_m,      ONLY:timing
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:master_cpu,myid,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz

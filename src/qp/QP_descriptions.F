@@ -37,7 +37,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use interfaces,    ONLY:QP_state_print
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:ver_is_gt_or_eq
+ use IO_int,        ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nQ_used,&

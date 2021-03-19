@@ -31,8 +31,8 @@ subroutine RT_density(en,kpt,qpt)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
-&                         manage_action
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps

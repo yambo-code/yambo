@@ -22,12 +22,111 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
+#if defined _OPENMP && !defined _CUDA && defined _testing_check
+
+#define OMP_LAST_DEF
+
+#define OMP_LAST1 \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+       i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
+       if (i_k_bz_mem==0) then NEWLINE \
+         !$omp critical NEWLINE \
+         qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) NEWLINE \
+         iq_W_bz=qindx_tmp(1) NEWLINE \
+         ig_W   =qindx_tmp(2) NEWLINE \
+         !$omp end critical NEWLINE \
+       else NEWLINE \
+         iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) NEWLINE \
+         ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) NEWLINE \
+       endif NEWLINE \
+       iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
+       iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
+     endif NEWLINE
+
+#define OMP_LAST2 \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+       i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
+       if (i_kmq_bz_mem==0) then NEWLINE \
+         !$omp critical NEWLINE \
+         qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) NEWLINE \
+         iq_W_bz_mq=qindx_tmp(1) NEWLINE \
+         ig_W_mq   =qindx_tmp(2) NEWLINE \
+         !$omp end critical NEWLINE \
+       else NEWLINE \
+         iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) NEWLINE \
+         ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) NEWLINE \
+       endif NEWLINE \
+       iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
+       iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
+     endif NEWLINE
+
+#else
+
+#define OMP_LAST_DEF \
+integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last NEWLINE
+
+#define OMP_LAST1 \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+       i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
+       if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then NEWLINE \
+         i_p_bz_last=i_p_bz NEWLINE \
+         i_k_bz_last=i_k_bz NEWLINE \
+         if (i_k_bz_mem==0) then NEWLINE \
+           !$omp critical NEWLINE \
+           qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) NEWLINE \
+           iq_W_bz=qindx_tmp(1) NEWLINE \
+           ig_W   =qindx_tmp(2) NEWLINE \
+           !$omp end critical NEWLINE \
+         else NEWLINE \
+           iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) NEWLINE \
+           ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) NEWLINE \
+         endif NEWLINE \
+         iq_W_bz_last=iq_W_bz NEWLINE \
+         ig_W_last   =ig_W    NEWLINE \
+       else NEWLINE \
+         iq_W_bz=iq_W_bz_last NEWLINE \
+         ig_W   =ig_W_last    NEWLINE \
+       endif NEWLINE \
+       iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
+       iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
+     endif NEWLINE
+
+#define OMP_LAST2 \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+       i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
+       if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then NEWLINE \
+         i_pmq_bz_last=i_pmq_bz NEWLINE \
+         i_kmq_bz_last=i_kmq_bz NEWLINE \
+         if (i_kmq_bz_mem==0) then NEWLINE \
+           !$omp critical NEWLINE \
+           qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) NEWLINE \
+           iq_W_bz_mq=qindx_tmp(1) NEWLINE \
+           ig_W_mq   =qindx_tmp(2) NEWLINE \
+           !$omp end critical NEWLINE \
+         else NEWLINE \
+           iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) NEWLINE \
+           ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) NEWLINE \
+         endif NEWLINE \
+         iq_W_bz_mq_last=iq_W_bz_mq NEWLINE \
+         ig_W_mq_last   =ig_W_mq    NEWLINE \
+       else NEWLINE \
+         iq_W_bz_mq=iq_W_bz_mq_last NEWLINE \
+         ig_W_mq   =ig_W_mq_last    NEWLINE \
+       endif NEWLINE \
+       iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
+       iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
+     endif NEWLINE
+
+#endif
+
 #define DEFINE_BSK_COMMON_INDEXES \
 integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
 &               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& NEWLINE \
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& NEWLINE \
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& NEWLINE \
-&               i_kmq_t,i_pmq_t
+&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) NEWLINE \
+                OMP_LAST_DEF
 
 #define FILL_BSK_COMMON_INDEXES \
      NEWLINE \
@@ -63,12 +162,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      i_kmq_s_m1 = sop_inv(i_kmq_s) NEWLINE \
      i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) NEWLINE \
      NEWLINE \
-     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
-       iq_W_bz=qindx_B(i_k_bz,i_p_bz,1) NEWLINE \
-       ig_W   =qindx_B(i_k_bz,i_p_bz,2) NEWLINE \
-       iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
-       iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
-     endif NEWLINE \
+     OMP_LAST1 \
      NEWLINE \
      i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) NEWLINE \
      i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) NEWLINE \
@@ -86,12 +180,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      ig_kmq    = qindx_X(iq,i_k_bz,2) NEWLINE \
      ig_pmq    = qindx_X(iq,i_p_bz,2) NEWLINE \
      NEWLINE \
-     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
-       iq_W_bz_mq=qindx_B(i_kmq_bz,i_pmq_bz,1) NEWLINE \
-       ig_W_mq   =qindx_B(i_kmq_bz,i_pmq_bz,2) NEWLINE \
-       iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
-       iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
-     endif NEWLINE \
+     OMP_LAST2 \
      NEWLINE \
      if (BS_K_is_ALDA) then NEWLINE \
        is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) NEWLINE \

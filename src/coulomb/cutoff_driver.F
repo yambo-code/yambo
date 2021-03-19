@@ -48,7 +48,8 @@ subroutine cutoff_driver(q)
  use com,           ONLY:msg
  use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
  use stderr,        ONLY:STRING_split,STRING_pack
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_col_cut
  use timing_m,      ONLY:timing

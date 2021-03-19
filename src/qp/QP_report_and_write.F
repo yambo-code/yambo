@@ -37,7 +37,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 #endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  implicit none
  !

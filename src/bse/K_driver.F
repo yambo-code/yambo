@@ -308,7 +308,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 2. The KERNEL
    ! ================
-   if (.not.l_rpa_IP) call K(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
+   if (.not.l_rpa_IP) call K_kernel(iq,Ken,Xk,q,X_static_pp,Xw,W_bss)
    !
    ! 3. The SOLVER
    ! =================

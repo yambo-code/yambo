@@ -62,13 +62,15 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  ! Work Space
  !
  DEFINE_BSK_COMMON_INDEXES
- integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
+ integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq,iHxc
  character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  integer, external    :: qindx_B_init,qindx_B_close
  !
- if (.not.BS_res_K_corr) return 
+ if (.not.BS_res_K_corr) return
+ !
+ iHxc=2
  !
  call timing('T_space CORR Osc.',OPR='start')
  !

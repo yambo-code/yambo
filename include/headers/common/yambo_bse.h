@@ -27,7 +27,7 @@
 #define OMP_LAST_DEF
 
 #define OMP_LAST1 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA.and.iHxc==2) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_k_bz_mem==0) then NEWLINE \
          !$omp critical NEWLINE \
@@ -44,7 +44,7 @@
      endif NEWLINE
 
 #define OMP_LAST2 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA.and.iHxc==2) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_kmq_bz_mem==0) then NEWLINE \
          !$omp critical NEWLINE \
@@ -67,7 +67,7 @@ integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last NEWLINE
 
 #define OMP_LAST1 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA.and.iHxc==2) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then NEWLINE \
          i_p_bz_last=i_p_bz NEWLINE \
@@ -93,7 +93,7 @@ integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
      endif NEWLINE
 
 #define OMP_LAST2 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA.and.iHxc==2) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then NEWLINE \
          i_pmq_bz_last=i_pmq_bz NEWLINE \
@@ -154,7 +154,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      i_kmq_s =Xk%sstar(i_kmq_bz,2) NEWLINE \
      i_pmq_s =Xk%sstar(i_pmq_bz,2) NEWLINE \
      NEWLINE \
-     if (BS_res_K_corr) then NEWLINE \
+     if (BS_res_K_corr.and.iHxc==2) then NEWLINE \
        i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) NEWLINE \
        i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) NEWLINE \
      endif NEWLINE \
@@ -182,7 +182,7 @@ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \
      NEWLINE \
      OMP_LAST2 \
      NEWLINE \
-     if (BS_K_is_ALDA) then NEWLINE \
+     if (BS_K_is_ALDA.and.iHxc==1) then NEWLINE \
        is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) NEWLINE \
        os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) NEWLINE \
        is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) NEWLINE \

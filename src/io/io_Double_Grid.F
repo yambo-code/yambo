@@ -166,6 +166,8 @@ integer function io_Double_Grid(E,Xk,ID,what)
 #if defined _ELPH
  if(l_PH_DG.and.iq>0) then
    !
+   i_fragment=iq
+   !
    call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_Double_Grid)
    if(io_Double_Grid/=0) goto 1
    !
@@ -175,8 +177,8 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call def_variable_elemental(ID_frag,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
    !
    if(read_is_on(ID)) call FineGd_E_components_alloc(GKKP%E_kpq(iq))
-   write (VAR_name,'(a,i4.4)') 'E_KPQ_',iq
-   call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_kpq(iq)%E))
+   write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
+   call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E))
    !
  endif
 #endif

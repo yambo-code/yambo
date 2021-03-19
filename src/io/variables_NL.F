@@ -30,7 +30,8 @@ integer function variables_NL(ID)
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:Efield
- use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_status
+ use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc_reset
  !
  implicit none

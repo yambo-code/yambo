@@ -45,7 +45,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -276,15 +277,14 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_wavefunction   =STRING_match(rstr_piece(i1+1),'w')
        l_sort           =STRING_match(rstr_piece(i1+1),'s').and..not.STRING_match(rstr_piece(i1+1),'sp')
        l_amplitude      =STRING_match(rstr_piece(i1+1),'a')
-#if defined _YPP_ELPH
-       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
-#endif
        !
        l_spin  =STRING_match(rstr_piece(i1+1),'sp').and.n_spin>1
        l_mag   =STRING_match(rstr_piece(i1+1),'m').and.n_spin>1
        !
 #if defined _YPP_ELPH
-       l_eliashberg      =STRING_match(rstr_piece(i1+1),'e')
+       l_gkkp           =STRING_match(rstr_piece(i1+1),'g')
+       l_eliashberg     =STRING_match(rstr_piece(i1+1),'e')
+       l_ph_ass_dos     =STRING_match(rstr_piece(i1+1),'p')
 #endif
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
@@ -383,6 +383,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_eliashberg)       call initactivate(1,'eliashberg')
  if (l_gkkp)             call initactivate(1,'gkkp')
+ if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
  !
 #endif
 #if defined _YPP_SC
@@ -436,6 +437,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+ l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
  !
@@ -481,7 +483,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_average_eh=runlevel_is_on('avehole')
  l_amplitude=runlevel_is_on('amplitude')
  l_exc_wf   =runlevel_is_on('wavefunction').and.runlevel_is_on('excitons')
- l_interp   =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
+ l_interp    =runlevel_is_on('interpolate').and.runlevel_is_on('excitons')
  l_sp_wf    =runlevel_is_on('wavefunction').and.runlevel_is_on('electrons')
  l_density  =runlevel_is_on('density').and.runlevel_is_on('electrons')
  l_current  =runlevel_is_on('current').and.runlevel_is_on('electrons')
@@ -670,6 +672,18 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_spin) call initactivate(1,"Degen_Step")
 #if defined _YPP_ELPH
    if (l_eliashberg)  call initactivate(1,"Degen_Step") 
+#endif
+   if (l_interp) then
+     call initactivate(-1,"BSQindex")
+     call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
+     call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
+   endif
+#if defined _YPP_ELPH
+   if (l_ph_ass_dos) then
+     call initactivate(-1,"BSQindex")
+     call initactivate(1,"PHfreqF DOSERange DOSESteps DOS_broad")
+     call initactivate(2,"BoseTemp")
+   endif
 #endif
  endif
  !

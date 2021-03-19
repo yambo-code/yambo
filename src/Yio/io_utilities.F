@@ -138,7 +138,7 @@ end function get_name
 function all_locations(desc,subfolder)
  !
  use pars,            ONLY:lchlen,num_of_alternative_locations
- use IO_m,            ONLY:get_name
+ use IO_int,          ONLY:get_name
  use com,             ONLY:n_alt_jobstr,alt_jobdir,alt_jobstr,n_max_jobstr
  !
  implicit none

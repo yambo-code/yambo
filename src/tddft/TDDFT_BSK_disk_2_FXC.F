@@ -37,7 +37,8 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF
  use X_m,           ONLY:X_t
- use IO_m,          ONLY:io_control,OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD,RD,NONE,RD_CL,VERIFY,OP_RD_CL,REP
  use TDDFT,         ONLY:F_xc_gspace,FXC_n_g_corr,FXC_K_diagonal,io_BS_Fxc
 #include<memory.h>
  type(bz_samp) ::Xk

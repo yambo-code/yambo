@@ -36,7 +36,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,&
  &                       BS_blks_free,l_BS_jdos,l_BS_abs,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
  use BS,             ONLY:l_BS_photolum,l_BS_kerr,l_BS_magnons
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -131,7 +131,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    ! Remove Inv specific descriptors
    !
-   if (run_inversion) BSS_desc%n=BSS_desc%n-3
+   if (run_inversion.and.master_cpu) BSS_desc%n=BSS_desc%n-3
    !
    ! Note: for developers (DS 2021/01/03)
    ! The jdos (l_BS_jdos) cannot be computed easely via the Haydock solver.

@@ -27,7 +27,7 @@ module P2Ym
  use qexml_module
  use qexsd_module
  use pw_data
- use pars,                  ONLY : lchlen,SP,DP
+ use pars,                  ONLY : lchlen,SP,DP,rZERO
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
@@ -323,19 +323,22 @@ contains
  !
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                        atom_pos, Z_species,atomic_number
+&                        atom_pos, Z_species,atomic_number,atom_mass
    ! 
 #include<memory.h>
    !
    ! Work Space
    !
    real(DP)                       :: tau_units
+   real(DP), allocatable          :: amass_(:)
    real(SP)                       :: z
    integer                        :: i1,i2,u
    !
    YAMBO_ALLOC(ityp_,(nat_))
    YAMBO_ALLOC(tau_,(3,nat_))
-
+   YAMBO_ALLOC(amass_,(n_atomic_species))
+   amass_=rZERO
+   !
    select case(trim(dftdata_fmt))
    case("pw_export")
       !
@@ -368,7 +371,7 @@ contains
       YAMBO_ALLOC(nmesh,(n_atomic_species))
       YAMBO_ALLOC(nbeta,(n_atomic_species))
       !
-      call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, amass=amass_, ierr=ierr)
       if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
       !
    case("qexsd","qexsd-hdf5")
@@ -379,7 +382,7 @@ contains
       YAMBO_ALLOC(nmesh,(n_atomic_species))
       YAMBO_ALLOC(nbeta,(n_atomic_species))
       !
-      call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, amass=amass_, ierr=ierr)
       if (ierr/=0) call errore('qexsd_read_ions','fmt problem II',ABS(ierr))
       !
    case default
@@ -394,6 +397,7 @@ contains
      enddo
    endif
    !
+   YAMBO_ALLOC(atom_mass,(n_atomic_species))
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
@@ -410,6 +414,7 @@ contains
    YAMBO_ALLOC(Z_species,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
+     atom_mass(i1) = real(amass_(i1),SP)
    enddo
    !
    return

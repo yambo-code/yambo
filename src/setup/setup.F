@@ -29,7 +29,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -37,7 +37,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg,MAX_kpts_to_report
  use com,            ONLY:msg,fat_log
- use stderr,         ONLY:intc
+ use stderr,         ONLY:intc,real2ch
  use units,          ONLY:HA2EV
  use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
@@ -94,7 +94,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
    do is=1,n_atomic_species
      atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
-     call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
+     if (allocated(atom_mass)) then
+       call msg('r','number of '//PT_elements(Z_species(is))//' atoms  '// &
+&              intc(n_atoms_species(is))// ' with mass '//real2ch(atom_mass(is)))
+     else
+       call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
+     endif
    enddo
  endif
  !

@@ -49,7 +49,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        X_setup_headers
  use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !

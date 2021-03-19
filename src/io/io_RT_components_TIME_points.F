@@ -31,8 +31,8 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_rest_info,unlim,l_G,TYP)
  use netcdf,         ONLY:NF90_UNLIMITED
  use real_time,      ONLY:MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
-&                         write_is_on,read_is_on
+ use IO_m,           ONLY:write_is_on,read_is_on
+ use IO_int,         ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  !
 #include<memory.h>
  !

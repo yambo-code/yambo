@@ -26,7 +26,8 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  use YPP_real_time,  ONLY:RT_conf,Pol,Curr
  use pars,           ONLY:DP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
- use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,CACHE_OBS_steps,CACHE_OBS_steps_now
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step

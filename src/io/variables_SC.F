@@ -31,7 +31,8 @@ integer function variables_SC(ID,what)
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_desc
  use hamiltonian,    ONLY:l_sc_V_is_local,H_ref_bands
- use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR,read_is_on
+ use IO_int,         ONLY:io_elemental
+ use IO_m,           ONLY:io_status,IO_INCOMPATIBLE_VAR,read_is_on
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use drivers,        ONLY:l_sc_electric

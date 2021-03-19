@@ -37,7 +37,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  use global_XC,       ONLY:H_SE_FOCK,H_SE_COH,H_SE_SEX,QP_SE_GW_NEQ,H_SE_HARTREE
  use collision_ext,   ONLY:HXC_COLL_element,COH_COLL_element,COLLISIONS_have_HARTREE,&
 &                          COH_collisions,HXC_collisions,COLLISIONS_group,COLLISIONS_naming
- use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,io_control,VERIFY,REP,NONE
+ use IO_int,          ONLY:io_control
+ use IO_m,            ONLY:OP_RD,RD_CL,OP_RD_CL,VERIFY,REP,NONE
  use parallel_m,      ONLY:PAR_IND_Plasma,PAR_IND_Q_bz,PAR_Q_bz_index,PAR_PLASMA_index
  use COLL_interfaces, ONLY:io_COLLISIONS
  use timing_m,        ONLY:timing

@@ -39,7 +39,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
- use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:REP,DUMP,NONE,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi,DESC_write

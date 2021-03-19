@@ -29,7 +29,8 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use BS,                  ONLY:BS_K_dim,BS_nT_at_k
  use interfaces,          ONLY:ELPH_alloc
  use R_lattice,           ONLY:bz_samp
- use IO_m,                ONLY:io_control,manage_action,OP_RD,DUMP,RD_CL_IF_END
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,OP_RD,DUMP,RD_CL_IF_END
  use ELPH,                ONLY:elph_nQ,ph_modes,&
 &                              elph_use_q_grid,PH_freqs_sq,GKKP
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid

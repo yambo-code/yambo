@@ -29,7 +29,7 @@ subroutine PARALLEL_Transitions_grouping()
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
-&                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_Haydock
+&                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_Haydock,PP_indexes_reset
  use R_lattice,     ONLY:nXkibz
  use vec_operate,   ONLY:sort
  !
@@ -115,6 +115,7 @@ subroutine PARALLEL_Transitions_grouping()
  YAMBO_ALLOC(PAR_BS_T_grps_index,(BS_nT_grps))
  !
  if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+   call PP_indexes_reset(PAR_IND_T_Haydock)
    YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
    PAR_IND_T_Haydock%element_1D=.FALSE.
  endif

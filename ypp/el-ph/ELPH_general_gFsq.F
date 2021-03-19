@@ -36,9 +36,9 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use ELPH,                ONLY:PH_W_debye,elph_nQ_used,ph_modes,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,PH_freqs_sq
- use IO_m,                ONLY:io_control,OP_RD,RD,DUMP,RD_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD,RD,DUMP,RD_CL
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table,BSS_n_eig
-
  use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing

@@ -33,8 +33,8 @@ subroutine RT_databases_IO(E,DO_IT)
 #endif
  use real_time,      ONLY:NE_i_time,NE_steps,RT_nk,RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,&
 &                         l_NE_with_fields,RT_step,RT_dyn_step,NE_time,RT_carriers,G_MEM_steps
- use IO_m,           ONLY:io_control,manage_action,NONE, &
-&                         io_GF,io_CARRIERs,io_OBSERVABLES,IO_and_Messaging_switch,&
+ use IO_int,         ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,           ONLY:manage_action,NONE,io_GF,io_CARRIERs,io_OBSERVABLES,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,OP_APP_CL,OP_WR_CL
  use parallel_m,     ONLY:HEAD_k_cpu,PAR_G_k_range
  use parallel_int,   ONLY:PP_redux_wait,PP_bcast

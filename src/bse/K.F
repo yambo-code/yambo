@@ -34,7 +34,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,ng_closed
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
+&                       qindx_X,qindx_B_max,qindx_free,qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -49,8 +50,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BS_res_ares_dim
  use collision_el, ONLY:elemental_collision_free
- use IO_m,         ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_WR,OP_APP_CL,DUMP,&
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,OP_WR,&
+&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
 &                       deliver_IO_error_message,manage_action
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
@@ -58,7 +60,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -81,7 +83,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! ... Kernel loop
  !
  DEFINE_BSK_COMMON_INDEXES
- integer    :: i_block,O_ng_shift,IO_ACT,&
+ integer    :: i_block,O_ng_shift,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
  complex(SP):: Co,H_x,H_c
@@ -98,12 +100,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,ID
- integer, external ::io_BS
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
+ integer, external ::io_BS,io_BS_PAR_init,io_BS_header
+ integer, external ::io_QINDX,qindx_B_init,qindx_B_close
  !
  ! Timing and restart
  !
- logical :: BS_blk_done(n_BS_blks)
+ logical :: BS_blk_done(n_BS_blks),l_partial_kernel_loaded
  integer :: n_steps,m_steps,i_steps
  !
  ! Constants & Setup
@@ -161,13 +164,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
    O_ng=maxval(G_m_G)
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    ! Hybrid functional.
    ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
    if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
-   if(iq/=1) O_ng_shift=max(maxval(qindx_B(:,:,2)),O_ng_shift)
+   if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
  if (BS_K_is_ALDA) then
@@ -184,60 +187,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
  endif
  !
- ! BS/FXC DB I/O
- !===============
+ call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
- if (l_bs_fxc) then
-   !
-   !call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   !
-   !io_BS_Fxc_err=io_BS_Fxc(iq,W_bss,ID,X=X)
-   !
- else
-   !
-#if defined _PAR_IO
-   !
-   call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,ID=ID)
-   call io_BS_PAR_init(iq,X,ID)
-   !
-   if(l_BSE_kernel_complete.and.l_bss) then
-     if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
-     do i_block=1,n_BS_blks
-       call io_control(ACTION=RD,ID=ID)
-       call io_BS_PAR_block(iq,i_block,ID)
-       if(n_BS_blks>0) call live_timing(steps=1)
-     enddo
-     if(n_BS_blks>0) call live_timing()
-   endif
-   !
-   call io_control(ACTION=RD_CL,COM=REP,ID=ID)
-   call io_BS_PAR_free(ID,l_BSE_kernel_complete)
-   !
-   if(l_BSE_kernel_complete) return
-   !
-#else
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
-   !
-   if (io_BS_err==0.and.l_bss) then
-     if(n_BS_blks>0) call live_timing("Loading BSE kernel",n_BS_blks)
-     call io_control(ACTION=OP_RD,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
-     io_BS_err=io_BS(iq,X,ID)
-     do i_block=1,n_BS_blks
-       IO_ACT=manage_action(RD_CL_IF_END,i_block,FIRST=1,LAST=n_BS_blks)       
-       call io_control(ACTION=IO_ACT,COM=NONE,MODE=DUMP,SEC=(/i_block+1/),ID=ID)
-       io_BS_err=io_BS(iq,X,ID)
-       if(n_BS_blks>0) call live_timing(steps=1)
-     enddo
-     if(n_BS_blks>0) call live_timing()
-   endif
-   !
-#endif
-   !
-   if (io_BS_err==0) return
-   !
- endif
+ if( l_BSE_kernel_complete ) return
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_init(qindx_ID)
  !
  ! Screened interaction
  !======================
@@ -327,8 +281,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
 #if defined _PAR_IO
- call io_control(ACTION=OP_APP_CL,COM=REP,ID=ID)
- call io_BS_PAR_init(iq,X,ID)
+ !
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
+ io_BS_err=io_BS_header(iq,X,ID_head,"full")
+ !
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID)
+ io_BS_err=io_BS_PAR_INIT(iq,ID,"full")
+ !
 #else
  call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
@@ -356,8 +315,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      !
      ! Read BS_blk to check if the transition was already computed
      !
-     call io_control(ACTION=RD,ID=ID)
-     call io_BS_PAR_block(iq,i_block,ID)
+     if (.not.l_partial_kernel_loaded) then
+       call io_control(ACTION=RD,ID=ID)
+       call io_BS_PAR_block(iq,i_block,ID,"full")
+     endif
      !
      if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
      if (BS_LiveTiming_steps==-1) i_steps=1
@@ -371,7 +332,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      BS_blk_done(i_block)=.true.
      skip_check: do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
-         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+         if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t") cycle
          BS_blk_done(i_block)=.false.
          exit skip_check
        enddo
@@ -402,7 +363,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
-   if (BS_blk_done(i_block)) cycle
+   if (BS_blk_done(i_block)) then
+#if defined _PAR_IO
+     if(l_partial_kernel_loaded) then
+       call io_control(ACTION=WR,ID=ID)
+       call io_BS_PAR_block(iq,i_block,ID,"full")
+     endif
+#endif
+     cycle
+   endif
    !
    ! Read BS_blk to check if the transition was already computed
    !
@@ -426,10 +395,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(iq,i_block,Xk,q)
+   call K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
    !
    ! Transition Loops
    !------------------
+   !
+   i_p_bz_last=0   ; i_k_bz_last=0
+   i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
 #if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &
@@ -438,7 +410,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
    !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
-   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c)
+   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
+   !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
+   !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
+   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp )
 #endif
    !
    call OPENMP_update(master_thread)   
@@ -451,7 +426,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        ! skip this block if already done
        !
-       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".or.BS_blk(i_block)%done(i_Tk,i_Tp)=="n") cycle
+       if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
        FILL_BSK_COMMON_INDEXES
        FILL_BSK_KERNEL_INDEXES
@@ -542,7 +517,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
 #if defined _PAR_IO
    call io_control(ACTION=WR,ID=ID)
-   call io_BS_PAR_block(iq,i_block,ID)
+   call io_BS_PAR_block(iq,i_block,ID,"full")
 #else
    call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
    io_BS_err=io_BS(iq,X,ID)
@@ -556,11 +531,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if(BS_K_cutoff>0._SP) then
    call PP_redux_wait(BS_max_val_CPU)
    BS_max_val=maxval(BS_max_val_CPU)
-   call K_compress(iq,i_steps,n_steps,ID)
+   call K_compress(iq,ID_compr)
+   call K_compressed_IO(iq,io_BS_err,"write")
  endif
  !
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
  call io_control(ACTION=WR_CL,COM=REP,ID=ID)
- call io_BS_PAR_free(ID,.true.)
+ call io_BS_PAR_free(ID_head,ID,"full",.true.)
 #else
  call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
  io_BS_err=io_BS(iq,X,ID)
@@ -585,6 +562,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)
  endif
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_close(qindx_ID)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

@@ -38,7 +38,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
- use IO_m,           ONLY:OP_WR_CL,NONE,io_control
+ use IO_int,         ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,           ONLY:OP_WR_CL,NONE,io_COLLs
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
@@ -57,7 +58,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  use QP_CTL_m,        ONLY:QP_apply
  use parallel_int,    ONLY:PP_bcast,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
- use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !

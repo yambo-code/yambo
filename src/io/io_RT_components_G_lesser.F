@@ -26,8 +26,8 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_real_time
  use stderr,         ONLY:intc
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,&
-&                         variable_exist,write_is_on,io_sec
+ use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
+ use IO_m,           ONLY:variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
  use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,NE_i_start_time
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_nbands,RT_nk,l_RT_rotate_DM,&

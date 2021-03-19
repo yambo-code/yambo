@@ -41,7 +41,8 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  use YPP_ELPH,       ONLY:DB_kind,DB_ph_modes,DB_nk,DB_nb,DB_ph_kpt,DB_PH_qpt,&
 &                         DB_ph_pol_vec,DB_ph_freq_sq,DB_alat,DB_E_k,DB_E_k_plus_q,&
 &                         DB_grad_at_gamma,DB_gkkp,elph_dbs_path,DB_K_map
- use IO_m,           ONLY:io_control,OP_RD,RD_CL,io_connect,io_unit,io_disconnect
+ use IO_int,         ONLY:io_control,io_connect,io_disconnect
+ use IO_m,           ONLY:OP_RD,RD_CL,io_unit
  use D_lattice,      ONLY:alat
  !
  implicit none

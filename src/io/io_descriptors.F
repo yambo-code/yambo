@@ -25,9 +25,9 @@ function io_descriptors(desc,name,ID,QUIET)
  !
  use pars,           ONLY:schlen,SP,DP,IP,LP
  use descriptors,    ONLY:IO_desc
- use IO_m,           ONLY:def_variable_elemental,io_variable_elemental,&
-&                         def_variable_bulk,io_variable_bulk,io_status,&
-&                         variable_exist,read_is_on,io_com,NONE
+ use IO_m,           ONLY:io_status,variable_exist,read_is_on,io_com,NONE
+ use IO_int,         ONLY:def_variable_elemental,io_variable_elemental,&
+&                         def_variable_bulk,io_variable_bulk
  use stderr,         ONLY:intc
  use netcdf,         ONLY:NF90_UNLIMITED
  !

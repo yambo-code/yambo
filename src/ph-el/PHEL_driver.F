@@ -35,7 +35,8 @@ subroutine PHEL_driver(E,k,q)
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
  use com,                 ONLY:fat_log
- use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
  !
 #include<memory.h>
  !

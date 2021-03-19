@@ -47,7 +47,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS,&
 &                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index

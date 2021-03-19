@@ -36,7 +36,8 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:g_rot_d,minus_G_d
 #endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 

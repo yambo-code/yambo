@@ -38,7 +38,9 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  real(SP):: one_over_magn,mod_mag
  !
  if (n_spin==1) then
-   forall(ifft=1:fft_size) F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v2rho2(1,ifft),SP)
+   do ifft=1,fft_size
+     F_xc(ifft,1,1) = real(v2rho2(1,ifft),SP)
+   enddo
  endif
  !
  if (n_sp_pol==2) then

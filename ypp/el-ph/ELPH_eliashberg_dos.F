@@ -61,6 +61,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  integer           ::io_err,ID,IO_ACT
  integer, external ::io_ELPH
  integer, external ::io_Double_Grid
+ logical           ::l_PH_DGrid
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
  if (l_dos)        l_dos       =ph_broad>1.E-8
@@ -135,8 +136,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  if(l_dos) then
     call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID)
     io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+    l_PH_DGrid=.FALSE.
     if(io_err/=0) then
       call msg('srl',' Phonon-Dos calculated using PH-double-grid ')
+      l_PH_DGrid=.TRUE.
     endif
     stop
  endif

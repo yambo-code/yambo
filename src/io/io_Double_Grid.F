@@ -43,7 +43,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  type(levels) :: E
  type(bz_samp):: Xk
- integer      :: ID,ID_frag,i_fragment 
+ integer      :: ID,ID_frag=0
  character(*) ::what 
  character(schlen)  ::db_name 
  character(schlen)  ::VAR_name
@@ -67,11 +67,8 @@ integer function io_Double_Grid(E,Xk,ID,what)
  else
    call error(' Unknown DB-grid database')
  endif
-
  !
- io_Double_Grid=-1
- !
- io_Double_Grid=io_connect(desc=trim(db_name),type=2,ID=ID)
+ io_Double_Grid=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
  !
  if (io_Double_Grid/=0) goto 1
  !
@@ -166,9 +163,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
 #if defined _ELPH
  if(l_PH_DG.and.iq>0) then
    !
-   i_fragment=iq
-   !
-   call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_Double_Grid)
+   call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_Double_Grid)
    if(io_Double_Grid/=0) goto 1
    !
    call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=2,VAR_KIND=IP+100,MENU=0) 

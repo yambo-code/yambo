@@ -70,24 +70,26 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
 !aim137: if there is no DG, sum is trivial
 !aim137: result of matrix * sum goes to column 1 of output vector
 !aim137: output columns get expanded at energy stage
+do i_dom_k=1,dom_k
      call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-     &                       Vi(i_Tp)%fragment(:,1),1,cONE,&
-     &                       Vo(i_Tk)%fragment(:,1),1)
+     &                       Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
+     &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
      !
      ! Resonant part is hermitian
      !
      if (i_Tk.ne.i_Tp) &
      &  call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
      &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-     &                       Vi(i_Tk)%fragment(:,1),1,cONE,&
-     &                       Vo(i_Tp)%fragment(:,1),1)
+     &                       Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
+     &                       Vo(i_Tp)%fragment(:,i_dom_k),1)
      !
      ! Add the energy diffs on the diagonal
      !
 !aim137: I do this only for the first col here (Coarse Gd)
      if (i_Tk.eq.i_Tp) &
-     & Vo(i_Tk)%fragment(:,1) = Vo(i_Tk)%fragment(:,1) + BS_T_grp(i_Tk)%E(:,1)*Vi(i_Tk)%fragment(:,1)
+     & Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
+enddo
      !
    case("C")
      !
@@ -164,16 +166,16 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  !
 !aim137: Expand Col 1 to all other columns (FG)
 !aim137: Before copying it, I substract the Energies from Vo(col1)
- if ( dom_k > 1 ) then
-   do i_g=1,BS_nT_grps
-     do i_dom_k=2,dom_k
-       Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1) &
-       & - BS_T_grp(i_g)%E(:,1)*Vi(i_g)%fragment(:,1) &
-       & + BS_T_grp(i_g)%E(:,i_dom_k)*Vi(i_g)%fragment(:,i_dom_k)
+!if ( dom_k > 1 ) then
+!  do i_g=1,BS_nT_grps
+!    do i_dom_k=2,dom_k
+!      Vo(i_g)%fragment(:,i_dom_k) = Vo(i_g)%fragment(:,1) &
+!      & - BS_T_grp(i_g)%E(:,1)*Vi(i_g)%fragment(:,1) &
+!      & + BS_T_grp(i_g)%E(:,i_dom_k)*Vi(i_g)%fragment(:,i_dom_k)
 
-     enddo
-   enddo
- endif
+!    enddo
+!  enddo
+!endif
  !
 end subroutine
 !

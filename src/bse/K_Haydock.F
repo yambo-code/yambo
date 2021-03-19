@@ -358,7 +358,17 @@ subroutine K_Haydock(iq,W,mode,Xk)
      !
      ! A(n) = <Vn|Vn+1>
      !
+!aim137: print
+do i_g=1,BS_nT_grps
+if (size(  Vn(i_g)%fragment,2) .ne. size(Vnp1(i_g)%fragment,2)) then
+print*, 'in Transitions group ',i_g,', |Vn> has ',  size(  Vn(i_g)%fragment,1),' rows and ',size(  Vn(i_g)%fragment,2),' columns'
+print*, 'in Transitions group ',i_g,', |Vn+1> has ',size(Vnp1(i_g)%fragment,1),' rows and ',size(Vnp1(i_g)%fragment,2),' columns'
+endif
+enddo
+!aim137: end print
      call K_dot_product(v0_mod_,Vn,Vnp1,1)
+!aim137: print
+!print*, 'v0_mod_ = ',v0_mod_,' A(n) = <Vn|Vn+1> = ',real(v0_mod_,SP)
      Af(it)=real(v0_mod_,SP)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
@@ -510,7 +520,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    !
    ! DEBUG<
-    write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
+   !write(*,*) it,"Af= ",Af(it)," ; Bf= ",Bf(it)," ; Cf= ",real(Cf(Cf_size-1)),aimag(Cf(Cf_size-1)),reached_threshold
    ! DEBUG>
    !
    tmp_converged=(reached_threshold<abs(Haydock_threshold)) .or. STOP_now(.FALSE.)

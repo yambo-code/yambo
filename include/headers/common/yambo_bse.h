@@ -27,7 +27,7 @@
 #define OMP_LAST_DEF
 
 #define OMP_LAST1 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_k_bz_mem==0) then NEWLINE \
          !$omp critical NEWLINE \
@@ -44,7 +44,7 @@
      endif NEWLINE
 
 #define OMP_LAST2 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_kmq_bz_mem==0) then NEWLINE \
          !$omp critical NEWLINE \
@@ -67,7 +67,7 @@ integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last NEWLINE
 
 #define OMP_LAST1 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
        if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then NEWLINE \
          i_p_bz_last=i_p_bz NEWLINE \
@@ -93,7 +93,7 @@ integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
      endif NEWLINE
 
 #define OMP_LAST2 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
+     if (BS_res_K_corr.or.BS_cpl_K_corr) then NEWLINE \
        i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
        if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then NEWLINE \
          i_pmq_bz_last=i_pmq_bz NEWLINE \

@@ -58,16 +58,13 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
  !
  if(.not.present(q_pt)) then
    !
-   n_q=1   
+   n_q=0   
    !
    do
      !
      read(io_unit,*,end=100)
      read(io_unit,*,end=100)
      read(io_unit,*,end=100) ws_ch(1),ws_ch(2),ph_q(:)
-     !
-     ! Q-points should be the same of the frequency file
-     !
      read(io_unit,*,end=100)
      !
      do i1=1,ph_modes
@@ -89,7 +86,7 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      !
      read(io_unit,*)
      read(io_unit,*)
-     read(io_unit, *) ws_ch(1),ws_ch(2),q_pt(iq,:)
+     read(io_unit,*) ws_ch(1),ws_ch(2),q_pt(iq,:)
      read(io_unit,*)
      !
      do i1=1,ph_modes

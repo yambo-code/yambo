@@ -137,6 +137,8 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
      call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=FineGd_io_k(1)%nibz)
      !
    endif
+   !
+   if(FineGd_io_k(1)%nibz==0) call error(' Error reading phonon frequencies')
    !   
    call msg('s',":: Number of phonon modes: ",ph_modes)
    call msg('s',":: Number of phonon q-points in the matdyn file: ",FineGd_io_k(1)%nibz)

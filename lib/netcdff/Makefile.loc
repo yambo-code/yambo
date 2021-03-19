@@ -7,7 +7,7 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libnetcdff.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${hdf5_ver}
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${io_lib_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_netcdff)
@@ -45,8 +45,8 @@ configure-stamp: uncompress-stamp
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(inetcdf)" \
-	      LIBS="$(lnetcdf) $(lhdf5)" \
+	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf) $(inetcdf)" \
+	      LIBS="$(lnetcdf) $(lpnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi
 	touch configure-stamp

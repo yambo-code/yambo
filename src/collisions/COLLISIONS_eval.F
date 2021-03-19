@@ -51,7 +51,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use X_m,            ONLY:X_t
  use plasma,         ONLY:EH_gas
  use frequency,      ONLY:w_samp
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,io_COLLs
  use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index

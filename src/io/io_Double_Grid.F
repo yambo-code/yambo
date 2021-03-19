@@ -27,11 +27,9 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use electrons,      ONLY:levels,FineGd_E_components_alloc,n_sp_pol
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
- use IO_m,           ONLY:io_connect,io_disconnect,read_is_on,io_fragment,&
-&                         io_header,ver_is_gt_or_eq,write_is_on,io_bulk,&
-&                         IO_OUTDATED_DB,variable_exist,io_sec,&
-&                         def_variable_elemental,io_variable_elemental,&
-&                         def_variable_bulk,io_variable_bulk
+ use IO_int,         ONLY:io_connect,io_disconnect,io_bulk,io_variable_elemental,def_variable_bulk,&
+&                         io_header,ver_is_gt_or_eq,io_variable_bulk,def_variable_elemental
+ use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec                         
  use timing_m,       ONLY:timing
  use stderr,         ONLY:intc
 #if defined _ELPH
@@ -94,9 +92,9 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call io_variable_elemental(ID,CH0=Xk%FGibz%FG_mode,VAR=' [FineGd] Fine Grid IBZ mapped mode'&
 &                             ,DESCRIPTOR=FineGd_desc)
  !
-   call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
-   call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
-   call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
+ call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
+ call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
+ call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
 &                             ,DESCRIPTOR=FineGd_desc)
    call io_variable_elemental(ID,I0=Xk%FGbare%N)
    call io_variable_elemental(ID,I0=Xk%FGibz%N,VAR=' [FineGd] Number of pts (fine+coarse, IBZ-map)'&

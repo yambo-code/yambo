@@ -40,7 +40,8 @@ subroutine ELPH_databases(k,E,q)
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
 &                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk
  use LIVE_t,              ONLY:live_timing 
- use IO_m,                ONLY:io_control,OP_APP_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_APP_CL
  !
 #include<memory.h>
  !

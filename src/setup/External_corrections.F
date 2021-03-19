@@ -34,7 +34,8 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use RT_control,    ONLY:RT_apply
 #endif
 #if defined _ELPH
- use IO_m,          ONLY:io_control,OP_IF_START_RD_CL_IF_END,manage_action,NONE
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_IF_START_RD_CL_IF_END,manage_action,NONE
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:GKKP,elph_nQ,elph_branches,QP_PH_n_G_bands
 #endif

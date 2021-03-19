@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine bz_samp_indexes(k,Xk,q)
+subroutine bz_samp_indexes(en,k,Xk,q)
  !
  ! ikbz=(ik,is) --<--:--<-- okbz=(ok,os) = (IK-Q)
  !                   :
@@ -33,8 +33,8 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(ikbz,okbz,1)=iqbz
- ! qindx_B(ikbz,okbz,2)=iGo
+ ! qindx_B(okbz,ikbz,1)=iqbz
+ ! qindx_B(okbz,ikbz,2)=iGo
  !
  ! qindx_S(ik,iqbz,1)=okbz
  ! qindx_S(ik,iqbz,2)=iGo
@@ -45,37 +45,40 @@ subroutine bz_samp_indexes(k,Xk,q)
  use pars,           ONLY:SP,lchlen,zero_dfl
  use drivers,        ONLY:l_bse,l_elel_scatt
  use com,            ONLY:msg
- use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
- use electrons,      ONLY:n_sp_pol
+ use electrons,      ONLY:n_sp_pol,levels
  use vec_operate,    ONLY:v_is_zero,c2a
  use BS,             ONLY:BS_res_mode,BS_cpl_mode
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
-&                         qindx_X,qindx_B,qindx_S,qindx_C,&
+&                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
 &                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
 &                         Xk_grid_new_mapping,k_GRIDS_string,X_scattering,sigma_scattering
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
+ use parallel_int,   ONLY:PARALLEL_global_indexes
  use openmp,         ONLY:n_threads,master_thread,OPENMP_update
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
 #include<memory.h>
  !
+ type(levels) ::en
  type(bz_samp)::k,Xk,q
  !
  ! Work Space
  !
  integer :: io_db,io_err
- integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,iqs,iks,id
+ integer :: i1,i2,i3,i4,iv1(3),iqibz,iqbz,ikibz,ikbz,ikbz_p,ikbz_mem,iqs,iks,id
  real(SP):: v1(3),k_b_m1(3,3),local_zero(3),q_step(3)
  real(SP):: E_empty(1,q%nibz,n_sp_pol)
- logical :: connected_grids,user_defined_qpts,user_grids
+ logical :: connected_grids,user_defined_qpts,user_grids,do_qindx_B,do_qindx_X,do_qindx_X_ik
 #if defined _ELPH
  logical :: bse_setup_scatt
 #endif
@@ -113,7 +116,7 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3/),MODE=VERIFY,ID=io_db)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
@@ -128,6 +131,14 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! First I map the Xk grid in a simple cubic Net
  !
  call k_ibz2bz(Xk,'a',.false.)  
+ !
+ ! Parallelization without Memory distribution
+ !=============================================
+ !
+ call PP_indexes_reset(PAR_IND_Xk)
+ call PARALLEL_index(PAR_IND_Xk,(/Xk%nbz/))
+ call PP_indexes_reset(PAR_IND_k)
+ call PARALLEL_index(PAR_IND_k,(/k%nbz/))
  !
  YAMBO_ALLOC(q_map,(k_grid(1),k_grid(2),k_grid(3)))
  YAMBO_ALLOC(q_iptbz,(Xk%nbz,3))
@@ -224,19 +235,25 @@ subroutine bz_samp_indexes(k,Xk,q)
  ! qindx_X(iq,ikbz,1)=okbz
  ! qindx_X(iq,ikbz,2)=iGo
  !
- ! qindx_B(ikbz,okbz,1)=iqbz
- ! qindx_B(ikbz,okbz,2)=iGo
+ ! qindx_B(okbz,ikbz,1)=iqbz
+ ! qindx_B(okbz,ikbz,2)=iGo
  !
  if (X_scattering)     string(1)='X'
  if (sigma_scattering) string(2)='Sigma'
  if ( bse_scattering)  string(1)=trim(string(1))//' + BSE'
  if (coll_scattering)  string(2)=trim(string(2))//' + COLL'
  !
- ! ... PARALLEL (Xk) 
- call PP_indexes_reset(PAR_IND_Xk)
- call PARALLEL_index(PAR_IND_Xk,(/Xk%nbz/))
- call PP_indexes_reset(PAR_IND_k)
- call PARALLEL_index(PAR_IND_k,(/k%nbz/))
+#if defined _PAR_IO
+ !
+ ! Parallelization with Memory distribution
+ !==========================================
+ !
+ if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) then
+   call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
+   call PARALLEL_SETUP_K_scheme("BZINDX")
+ endif
+ !
+#endif
  !
  if (X_scattering.and.Xk_grid_is_uniform) then
    !
@@ -253,13 +270,24 @@ subroutine bz_samp_indexes(k,Xk,q)
    !
    if (Xk_grid_new_mapping) call k_find_smallest_q(Xk%ptbz,q_step,Xk%nbz)
    !
-   !$omp parallel default(shared), private(ikbz,ikbz_p,v1,iv1,iqbz,iqibz,iqs)
+   !$omp parallel default(shared), private(ikbz,ikbz_mem,ikbz_p,v1,iv1,iqbz,iqibz,iqs,do_qindx_B,do_qindx_X,do_qindx_X_ik)
    call OPENMP_update(master_thread)
    !
    !$omp do
    do ikbz=1,Xk%nbz
      !
-     if (.not.PAR_IND_Xk%element_1D(ikbz)) cycle 
+     do_qindx_X_ik=PAR_IND_Xk%element_1D(ikbz)
+     do_qindx_B   =PAR_IND_Xk%element_1D(ikbz).and.bse_scattering
+     ikbz_mem=ikbz
+     !
+#if defined _PAR_IO
+     if(bse_scattering) then
+       do_qindx_B=PAR_K_scheme%IND_bz%element_1D(ikbz)
+       ikbz_mem=PAR_K_scheme%bz_index(ikbz)
+     endif
+#endif
+     !
+     if ((.not.do_qindx_X_ik).and.(.not.do_qindx_B)) cycle
      !
      do ikbz_p=1,Xk%nbz
        !
@@ -289,16 +317,21 @@ subroutine bz_samp_indexes(k,Xk,q)
        iqbz =q_map(iv1(1),iv1(2),iv1(3))
        iqibz=q%sstar(iqbz,1)
        iqs  =q%sstar(iqbz,2)
-       if (iqs/=1.and..not.bse_scattering) cycle
-       if (iqs==1) qindx_X(iqibz,ikbz,1)=ikbz_p
-       if (bse_scattering) qindx_B(ikbz,ikbz_p,1)=iqbz
+       !
+       do_qindx_X=do_qindx_X_ik .and. iqs==1
+       !
+       if ((.not.do_qindx_X).and.(.not.do_qindx_B)) cycle
+       !
+       if (do_qindx_X) qindx_X(iqibz,ikbz,1)=ikbz_p
+       if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,1)=iqbz
+       !
        v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
        call c2a(v_in=v1,mode='ka2i')
        !
-       if (iqs==1)         qindx_X(iqibz,ikbz  ,2)=G_index(v1,.true.)
-       if (bse_scattering) qindx_B(ikbz ,ikbz_p,2)=G_index(v1,.false.)
+       if (do_qindx_X) qindx_X(iqibz, ikbz    ,2)=G_index(v1,.true.)
+       if (do_qindx_B) qindx_B(ikbz_p,ikbz_mem,2)=G_index(v1,.false.)
        !
-       if ( iqs==1 .and. qindx_X(iqibz,ikbz,2)==0 ) exit
+       if ( do_qindx_X .and. qindx_X(iqibz,ikbz,2)==0 ) exit
        !
      enddo
      !
@@ -315,10 +348,12 @@ subroutine bz_samp_indexes(k,Xk,q)
    do ikbz=1,Xk%nbz
      call PP_redux_wait(qindx_X(:,ikbz,1))
      call PP_redux_wait(qindx_X(:,ikbz,2))
+#if !defined _PAR_IO
      if (bse_scattering) then
        call PP_redux_wait(qindx_B(:,ikbz,1))
        call PP_redux_wait(qindx_B(:,ikbz,2))
      endif
+#endif
      call live_timing(steps=1)
    enddo
    call live_timing()
@@ -336,12 +371,10 @@ subroutine bz_samp_indexes(k,Xk,q)
    call section('+',trim(string(2))//' indexes')
    !============================================
    !
-   if(coll_scattering) then
-     call live_timing(trim(string(2))//' [eval]',max(1,Xk%nbz/n_threads))
-   else
-     i1=QP_states_k(2)-QP_states_k(1)+1
-     call live_timing(trim(string(2))//' [eval]',max(1,i1/n_threads))
-   endif
+   if(     coll_scattering) i1=Xk%nbz
+   if(.not.coll_scattering) i1=QP_states_k(2)-QP_states_k(1)+1
+   !
+   call live_timing(trim(string(2))//' [eval]',max(1,i1/n_threads))
    !
    call k_ibz2bz(k,'a',.false.)
    !
@@ -421,6 +454,7 @@ subroutine bz_samp_indexes(k,Xk,q)
    call live_timing()
    !
    ! ... PARALLEL redux
+   !
    call live_timing(trim(string(2))//'[REDUX]',nqbz)
    do iqbz=1,nqbz
      call PP_redux_wait(qindx_S(:,iqbz,1))
@@ -453,8 +487,25 @@ subroutine bz_samp_indexes(k,Xk,q)
  !
  call PP_redux_wait()
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=io_db)
- io_err=io_QINDX(Xk,q,io_db)
+ if(master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db)
+   io_err=io_QINDX(Xk,q,io_db)
+ endif
+ !
+ ! Before writing section 5 (qindx_B) I need to wait that the master is done
+ ! with writing all other sections
+ !
+ call PP_redux_wait()
+ !
+ do_qindx_B=master_cpu.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
+#if defined _PAR_IO
+ do_qindx_B=PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
+#endif
+ !
+ if (do_qindx_B) then
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
+   io_err=io_QINDX(Xk,q,io_db)
+ endif
  !
  !CLEAN
  !
@@ -464,9 +515,14 @@ subroutine bz_samp_indexes(k,Xk,q)
  if (Xk_grid_is_uniform) then
    YAMBO_FREE(q%ptbz)
  endif
+ call qindx_free('B')
  call PP_redux_wait()
  call PP_indexes_reset(PAR_IND_Xk)
  call PP_indexes_reset(PAR_IND_k)
+ !
+#if defined _PAR_IO
+ if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) call PARALLEL_global_indexes(en,Xk,q," ",RESET=.TRUE.)
+#endif
  !
  call timing('bz_samp_indexes',OPR='stop')
  !
@@ -649,7 +705,6 @@ subroutine bz_samp_indexes(k,Xk,q)
    end subroutine q_shadows
    !
    subroutine bz_X_only_exit(message)
-     use R_lattice,      ONLY:qindx_free
      character(*), intent(in) :: message
      call qindx_free('ALL')
      nqibz=1

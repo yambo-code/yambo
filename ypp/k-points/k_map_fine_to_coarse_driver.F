@@ -29,7 +29,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
  use electrons,           ONLY:levels,FineGd_E_components_reset
- use IO_m,                ONLY:io_control,REP,OP_WR_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:REP,OP_WR_CL
  !
 #include<memory.h>
  !

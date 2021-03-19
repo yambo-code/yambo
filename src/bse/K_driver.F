@@ -31,19 +31,21 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
 &                         BSS_uses_DbGd,BSS_q0,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,l_BS_anomalous_Hall,&
 &                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC,l_BSK_IO_triangular,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
+&                         BS_perturbative_SOC,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
 &                         l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
  use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PARALLEL_default_mode
+ use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PARALLEL_default_mode,PAR_K_scheme
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
@@ -63,11 +65,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  integer           :: iq,Max_G_m_G,iG_BSE,iGo_BSE
  type(w_samp)      :: W_bss 
  !
+ ! I/O
+ !
+ integer, allocatable :: qindx_B_max_CPU(:)
+ integer           :: io_err,ID
+ integer, external :: io_QINDX
+ !
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
- !
- call parser('BSKTriangIO',l_BSK_IO_triangular)
  !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================
@@ -183,25 +189,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
  !
- ! W RL size setup looking at the max index of G-G' 
- ! ==================================================
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   !
-   if(BS_n_g_W<0) then
-     BS_n_g_W=X_static_pp%ng
-     call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
-   endif
-   !
-   Max_G_m_G=eval_G_minus_G(BS_n_g_W,maxval(qindx_B(:,:,2)))
-   if (BS_n_g_W> Max_G_m_G ) then
-     call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '//trim(intc(Max_G_m_G))//' due to symmetry constraints')
-     BS_n_g_W= Max_G_m_G
-     call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
-   endif
-   !
- endif
- !
- !
  ! PARALLEL SETUP
  !================
  call X_duplicate(X_static_pp,X_oscillators) 
@@ -209,16 +196,45 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  X_oscillators%ib(1:2)=BS_bands(1:2)
  X_oscillators%q0=BSS_q0
  !
+ if ((BS_res_K_corr.or.BS_cpl_K_corr).and.BS_n_g_W<0) then
+   BS_n_g_W=X_static_pp%ng
+   call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
+ endif
+ !
+ ! ... EH space (no parallelization)
+ !call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
+ !
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+ !
+ ! Compute qindx_B_max
+ ! =====================
+ !
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+   !
+   ! Here I need the distribution over k
+   call PARALLEL_SETUP_K_scheme("K")
+   !
+   ! here qindx_B is allocated
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+   io_err=io_QINDX(Xk,q,ID)
+   !
+   YAMBO_ALLOC(qindx_B_max_CPU,(PAR_K_scheme%COM_ibz_INDEX%n_CPU))
+   qindx_B_max_CPU=0
+   qindx_B_max_CPU(PAR_K_scheme%COM_ibz_INDEX%CPU_id+1)=maxval(qindx_B(:,:,2))
+   call PP_redux_wait(qindx_B_max_CPU,COMM=PAR_K_scheme%COM_ibz_INDEX%COMM)
+   qindx_B_max=maxval(qindx_B_max_CPU)
+   YAMBO_FREE(qindx_B_max_CPU)
+   !
+ endif
+ !
  ! Tranferred momentum
  !======================
- !
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
+ !
  do iq=BS_q(1),BS_q(2)
+   !
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
- enddo
- !
- do iq=BS_q(1),BS_q(2)
    !
    call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
@@ -234,15 +250,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !===================
    call K_observables("ALLOC",W_bss)
    !
-   if (BS_res_K_corr.or.BS_cpl_K_corr) then
+   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
      !
      ! W/X RL size setup looking at the max index of G-G' 
      ! =========
      !
-     iGo_BSE=maxval(qindx_B(:,:,2))
+     iGo_BSE=qindx_B_max
      iG_BSE =BS_n_g_W
      if (.not.iq==1) then
-       iGo_BSE=maxval((/4*qindx_B(:,:,2),qindx_X(iq,:,2)/))
+       iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
        iG_BSE =max(BS_n_g_exch,BS_n_g_W)
      endif
      !
@@ -250,15 +266,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      !
      if (.not.iq==1) then
        if (BS_n_g_exch> Max_G_m_G ) then
+         call warning (' Exch size reduced from '//trim(intc(BS_n_g_exch))//' to '&
+         &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
          BS_n_g_exch= Max_G_m_G
-         call warning (' Exch size reduced due to symmetry constraints')
          call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
        endif
      endif
      !
      if (BS_n_g_W> Max_G_m_G ) then
+       call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '&
+       &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
        BS_n_g_W= Max_G_m_G
-       call warning (' W size reduced due to symmetry constraints')
        call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
      endif
      !
@@ -270,7 +288,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
+   call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
    call K_Transitions_setup(iq,Ken,Xk,Dip)
@@ -326,11 +344,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call BS_Blocks_and_Transitions_free( )
    !
-   !... Parallel distribution reset
-   call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
-   !
  enddo
  !
+ !... Parallel distribution reset
+ call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators,RESET=.TRUE.)
+ !
  YAMBO_FREE(BSqpts)
+ call qindx_free('B')
  !
 end subroutine

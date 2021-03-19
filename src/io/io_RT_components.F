@@ -67,8 +67,9 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,read_is_on,io_fragment,write_is_on,&
-&                         def_variable_bulk,io_variable_bulk,io_file
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
+&                         def_variable_bulk,io_variable_bulk
+ use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&

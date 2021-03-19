@@ -29,7 +29,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile

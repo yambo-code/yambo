@@ -37,8 +37,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
-&                        DUMP,IO_and_Messaging_switch
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands

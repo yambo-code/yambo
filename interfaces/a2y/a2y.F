@@ -36,8 +36,8 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use pseudo,              ONLY: PP_free,pp_n_l_times_proj_max
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,&
-&                               IO_and_Messaging_switch
+ use IO_int,              ONLY: io_control,IO_and_Messaging_switch
+ use IO_m,                ONLY: OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !

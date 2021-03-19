@@ -168,11 +168,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    O_ng=G_m_G_maxval
    ! < WARNIGN: 2021/03/19
    ! The following can be safely removed with the new implementation 
-   ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
-   ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
-   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
-   ! Hybrid functional.
-   if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+   ! However it maybe needed for internal consistency. Otherwise the output of many BSE tests could change
+   !! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
+   !call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   !! Hybrid functional.
+   !if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
    ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
@@ -275,10 +275,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (iHxc==1) NG=(/max(BS_n_g_exch,BS_n_g_fxc),O_ng_exch/)
  ! < WARNIGN: 2021/03/19
- ! The following can be safely changed to the commente line 
- ! However it is kept for internal consistency. Otherwise the output of many BSE tests could change
- !if (iHxc==2) NG=(/              O_ng,        O_ng_shift/)
- if (iHxc==2) NG(2)=O_ng_shift
+ ! The following has been changed to the commente line 
+ ! However the commented line maybe needed for internal consistency. Otherwise the output of many BSE tests could change
+ if (iHxc==2) NG=(/              O_ng,        O_ng_shift/)
+ !if (iHxc==2) NG(2)=O_ng_shift
  ! WARNING >
  call WF_load(WF,NG(1),NG(2),bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !

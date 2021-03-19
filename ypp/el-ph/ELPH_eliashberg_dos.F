@@ -34,7 +34,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels
- use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,OP_RD_CL
  use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
@@ -54,11 +54,13 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  character(schlen) ::o_file_name,ch
  type(PP_indexes)  ::px
  real(SP), allocatable :: gamma(:,:)
+ type(levels)      :: PH_E
  !
  !I/O
  !
  integer           ::io_err,ID,IO_ACT
  integer, external ::io_ELPH
+ integer, external ::io_Double_Grid
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
  if (l_dos)        l_dos       =ph_broad>1.E-8
@@ -127,6 +129,17 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
  if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
  if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
+ !
+ ! Load double-grid if present
+ !
+ if(l_dos) then
+    call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID)
+    io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+    if(io_err/=0) then
+      call msg('srl',' Phonon-Dos calculated using PH-double-grid ')
+    endif
+    stop
+ endif
  !
  ! calculate q%weights
  !

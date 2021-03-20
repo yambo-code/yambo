@@ -108,8 +108,8 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
              if(.not.idir_todo(idir)) cycle
              !
              DIP_tmp(idir,ic,iv) = DIP_tmp(idir,ic,iv) + &
-&                       Vstar_dot_V_omp(fft_size,WF%c(1:fft_size,i_spinor,iv_wf), &
-&                             x_cc(1:fft_size,idir,1)*WF%c(1:fft_size,i_spinor,ic_wf) )
+&                       Vstar_dot_V_omp(fft_size,WF%r(1:fft_size,i_spinor,iv_wf), &
+&                             x_cc(1:fft_size,idir,1)*WF%r(1:fft_size,i_spinor,ic_wf) )
              !
            enddo
          enddo

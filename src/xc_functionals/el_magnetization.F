@@ -47,6 +47,8 @@ subroutine el_magnetization(en,Xk,magn)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  type(levels), intent(in ) ::en
  type(bz_samp),intent(in ) ::Xk
  real(SP),     intent(out) ::magn(fft_size,3)
@@ -92,7 +94,7 @@ subroutine el_magnetization(en,Xk,magn)
          !
          ! mz
          !
-         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))
+         cv(:,3)=cv(:,3)+Xk%weights(ik)*(-1)**(i_sp_pol-1)*f_occ*real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))
          !
        else if(n_spinor==2) then
          !
@@ -100,20 +102,20 @@ subroutine el_magnetization(en,Xk,magn)
          ! mx
          !
          cv(:,1)=cv(:,1)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
-&                   +real(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+&                   +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+&                   +real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
          !
          ! my
          !
          cv(:,2)=cv(:,2)+Xk%weights(ik)*f_occ*(&
-&                   +aimag(conjg(WF%c(:,1,i_wf))*WF%c(:,2,i_wf))&
-&                   -aimag(conjg(WF%c(:,2,i_wf))*WF%c(:,1,i_wf)) )
+&                   +wfaimag(wfconjg(WF%r(:,1,i_wf))*WF%r(:,2,i_wf))&
+&                   -wfaimag(wfconjg(WF%r(:,2,i_wf))*WF%r(:,1,i_wf)) )
          !
          ! mz
          !
          cv(:,3)=cv(:,3)+Xk%weights(ik)*f_occ*(&
-&                   +real(conjg(WF%c(:,1,i_wf))*WF%c(:,1,i_wf))&
-&                   -real(conjg(WF%c(:,2,i_wf))*WF%c(:,2,i_wf)) )
+&                   +real(wfconjg(WF%r(:,1,i_wf))*WF%r(:,1,i_wf))&
+&                   -real(wfconjg(WF%r(:,2,i_wf))*WF%r(:,2,i_wf)) )
          !
        endif
        !

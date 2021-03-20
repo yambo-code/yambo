@@ -160,7 +160,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
        !
        if (l_rho) then
          do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
+           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
          enddo
          !
          ! uspp becsum
@@ -175,12 +175,12 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
        !DEBUG>
        !if (l_J) then
        !  !
-       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
-       !  !
+       !  call eval_Gradient(WF%r(:,:,i_wf),WF_der,n_spinor,"wave")
+       !  ! 
        !  do i_dir=1,3
        !    do i_spinor=1,n_spinor
        !      do i_r=1,fft_size
-       !        J_no_sym(i_r,i_dir)=J_no_sym(i_r,i_dir)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(i_r,i_spinor,i_dir))
+       !        J_no_sym(i_r,i_dir)=J_no_sym(i_r,i_dir)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%r(i_r,i_spinor,i_wf)*WF_der(i_r,i_spinor,i_dir))
        !      enddo
        !    enddo
        !  enddo

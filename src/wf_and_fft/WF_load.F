@@ -25,7 +25,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
- use pars,          ONLY:SP,DP,schlen
+ use pars,          ONLY:SP,DP,schlen,cZERO
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
@@ -69,7 +69,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  character(schlen)::wf_title
  integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2),wf_grid_size,&
-&                   npwk
+&                   npwk,N
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
@@ -79,7 +79,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
+#if defined _MOL
+ real(SP),    pointer     DEV_ATTR :: wfr_d(:,:,:)
+#else
+ complex(SP), pointer     DEV_ATTR :: wfr_d(:,:,:)
+#endif
  integer :: WFN
  !
  ! I/O
@@ -268,7 +272,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (have_cuda) then
    YAMBO_ALLOC(wf_DP_d,(wf_grid_size))
-   wfc_d => WF%c_d
+   wfr_d => WF%r_d
    WFN = WF%N
  endif
  !
@@ -405,7 +409,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WFN = WF%N
               !$cuf kernel do(1)
               do ic=1,wf_grid_size
-                wfc_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+#if defined _MOL
+                wfr_d(ic,i_spinor,WFN)= real(wf_DP_d(ic),kind=SP)*fft_norm
+#else
+                wfr_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
+#endif
               enddo
               !
             enddo  ! i_spinor
@@ -442,7 +450,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
-              WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+#if defined _MOL
+              WF%r(:,i_spinor,WF%N)=real(wf_DP(:),kind=SP)*fft_norm
+#else
+              WF%r(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+#endif
               !
             enddo  ! i_spinor
 #ifdef _CUDA
@@ -464,7 +476,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then
-     WF%c = WF%c_d
+     WF%r = WF%r_d
    else
      WF%c_d = WF%c
    endif
@@ -565,7 +577,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     c=cZERO
+     N=size(WF%r(:,:,WF%index(1,1,1)))
+     if (WF%space=='R') c=Vstar_dot_V( N, (/WF%r(:,:,WF%index(ib1,1,1) )/) , (/WF%r(:,:,WF%index(ib2,1,1))/) )
+     if (WF%space/='R') c=Vstar_dot_V( N, (/WF%c(:,:,WF%index(ib1,1,1) )/) , (/WF%c(:,:,WF%index(ib2,1,1))/) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

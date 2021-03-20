@@ -71,6 +71,15 @@ AC_SUBST(def_dp)
 AC_SUBST(build_precision)
 #
 # ============================================================================
+# VERSION for molecules
+AC_ARG_ENABLE(mol, AC_HELP_STRING([--enable-mol], [Molecules build. Default is no.]))
+def_mol=""
+if test x"$enable_mol" = "x";    then enable_mol="no";   fi
+if test x"$enable_mol" = "xyes"; then def_mol="-D_MOL";  fi
+AC_SUBST(enable_mol)
+AC_SUBST(def_mol)
+#
+# ============================================================================
 #
 # Time Profiling (mod_timing)
 #

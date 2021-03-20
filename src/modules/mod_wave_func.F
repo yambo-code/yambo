@@ -34,10 +34,20 @@ module wave_func
    integer              :: sp_pol(2) ! sp_pol_range
    integer              :: N         ! states 
    character(1)         :: space
+#if defined _MOL
+   real(SP),    allocatable :: r(:,:,:)
+#else
+   complex(SP), allocatable :: r(:,:,:)
+#endif
    complex(SP), allocatable :: c(:,:,:)
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
+#if defined _MOL
+   real(SP),    allocatable DEV_ATTR :: r_d(:,:,:)
+#else
+   complex(SP), allocatable DEV_ATTR :: r_d(:,:,:)
+#endif
    complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
  !
@@ -130,7 +140,6 @@ module wave_func
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
      type(WAVEs):: WF_in,WF_out
-     YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
      WF_out%b      = WF_in%b
      WF_out%k      = WF_in%k
@@ -138,11 +147,21 @@ module wave_func
      WF_out%N      = WF_in%N
      WF_out%space  = WF_in%space
      WF_out%to_load= WF_in%to_load
-     WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
      !
+     if (allocated(WF_in%c)) then
+       YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
+       WF_out%c    = WF_in%c
+     endif
      if (allocated(WF_in%c_d)) then
-        YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+       YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+     endif
+     if (allocated(WF_in%r)) then
+       YAMBO_ALLOC(WF_out%r,(size(WF_in%r(:,1,1)),n_spinor,WF_in%N))
+       WF_out%r    = WF_in%r
+     endif
+     if (allocated(WF_in%r_d)) then
+       YAMBO_ALLOC_SOURCE(WF_out%r_d,WF_in%r)
      endif
    end subroutine
    !

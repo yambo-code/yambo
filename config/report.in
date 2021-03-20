@@ -14,6 +14,7 @@
 # [EDITOR] @editor@
 # [ MAKE ] @MAKE@
 #
+# [@MOL_check@] Version for isolated systems
 # [@DP_check@] Double precision
 # [@KEEP_OBJS_check@] Keep object files
 # [@TIME_profile_check@] Run-Time timing profile 

@@ -39,7 +39,11 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  integer,     intent(in)  :: isc(4)
  complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
  !
+#if defined _MOL
+ real(SP),    pointer     DEV_ATTR :: WF_p(:,:,:)
+#else
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
+#endif
  integer  :: i_wf
  integer  :: ifft,isymm
 
@@ -51,12 +55,12 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
 &                         ' ID'//trim(intc(myid)))
 #endif
  !
- WF_p => DEV_VAR(WF%c)
+ WF_p => DEV_VAR(WF%r)
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
    !
-   call dev_memcpy(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
+   call dev_memcpy(WF_symm,cmplx(DEV_VAR(WF%r)(:,:,i_wf),kind=SP))
    !
  endif
  !
@@ -68,7 +72,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
    !$omp parallel do default(shared), private(ifft)
 #endif
    do ifft = 1, fft_size
-     WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
+     WF_symm(ifft,1)=cmplx(WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf),kind=SP)
    enddo
    !
  endif

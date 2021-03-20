@@ -154,7 +154,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
-         kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
+         kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,(/WF%r(:,:,iwf)/),(/kbv_gauged(:,:)/))
          !
 #if defined _SC
          if (l_sc_magnetic) then

@@ -158,7 +158,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      !
    else
      !
-     rho(i1)=Vstar_dot_V_omp(wf_ng*n_spinor,wf_grad(:,:),WF%c(:,:,ic_wf))
+     rho(i1)=Vstar_dot_V_omp(wf_ng*n_spinor,(/wf_grad(:,:)/),(/WF%c(:,:,ic_wf)/))
      !
    endif
    !
@@ -176,7 +176,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
        enddo
      enddo
      !$omp end parallel do
-     P2=Vstar_dot_V_omp(wf_ng*n_spinor,wf_der_sq(:,:),WF%c(:,:,ic_wf))
+     P2=Vstar_dot_V_omp(wf_ng*n_spinor,(/wf_der_sq(:,:)/),(/WF%c(:,:,ic_wf)/))
    endif
 #endif
    !

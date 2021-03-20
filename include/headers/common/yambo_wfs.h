@@ -22,17 +22,27 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
+#ifdef _MOL
+#  define WF_RSPACE   real
+#else
+#  define WF_RSPACE   complex
+#endif
+
 
 #ifdef _MOL
-#  define wfconjg(x)   x 
+#  define wfconjg(x)   x
 #else
 #  define wfconjg(x)   conjg(x)
 #endif
 
-
 #ifdef _MOL
-#  define wfaimag(x)   x 
+#  define wfaimag(x)   x
 #else
 #  define wfaimag(x)   aimag(x)
 #endif
 
+#ifdef _MOL
+#  define wfcmplx(x,y)  real(x,y)
+#else
+#  define wfcmplx(x,y)  cmplx(x,y)
+#endif

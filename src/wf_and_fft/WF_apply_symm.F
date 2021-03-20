@@ -39,11 +39,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  integer,     intent(in)  :: isc(4)
  complex(SP), intent(out) DEV_ATTR :: WF_symm(fft_size,n_spinor)
  !
-#if defined _MOL
- real(SP),    pointer     DEV_ATTR :: WF_p(:,:,:)
-#else
- complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
-#endif
+ WF_RSPACE(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
  integer  :: i_wf
  integer  :: ifft,isymm
 

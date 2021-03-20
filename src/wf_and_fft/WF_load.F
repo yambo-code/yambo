@@ -52,6 +52,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #include<dev_defs.h>
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF
@@ -79,11 +80,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
-#if defined _MOL
- real(SP),    pointer     DEV_ATTR :: wfr_d(:,:,:)
-#else
- complex(SP), pointer     DEV_ATTR :: wfr_d(:,:,:)
-#endif
+ WF_RSPACE(SP),   pointer DEV_ATTR :: wfr_d(:,:,:)
+ !
  integer :: WFN
  !
  ! I/O
@@ -409,11 +407,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WFN = WF%N
               !$cuf kernel do(1)
               do ic=1,wf_grid_size
-#if defined _MOL
-                wfr_d(ic,i_spinor,WFN)= real(wf_DP_d(ic),kind=SP)*fft_norm
-#else
-                wfr_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
-#endif
+                wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(ic),kind=SP)*fft_norm
               enddo
               !
             enddo  ! i_spinor
@@ -450,11 +444,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
-#if defined _MOL
-              WF%r(:,i_spinor,WF%N)=real(wf_DP(:),kind=SP)*fft_norm
-#else
-              WF%r(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
-#endif
+              WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:),kind=SP)*fft_norm
               !
             enddo  ! i_spinor
 #ifdef _CUDA

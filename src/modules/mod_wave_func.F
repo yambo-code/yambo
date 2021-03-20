@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,6 +27,7 @@ module wave_func
  !
 #include <dev_defs.h>
 #include <memory.h>
+#include <yambo_wfs.h>
  !
  type WAVEs 
    integer              :: b(2)      ! band range 
@@ -34,21 +35,13 @@ module wave_func
    integer              :: sp_pol(2) ! sp_pol_range
    integer              :: N         ! states 
    character(1)         :: space
-#if defined _MOL
-   real(SP),    allocatable :: r(:,:,:)
-#else
-   complex(SP), allocatable :: r(:,:,:)
-#endif
-   complex(SP), allocatable :: c(:,:,:)
-   integer    , allocatable :: index(:,:,:)
-   logical    , allocatable :: state(:,:,:)
-   logical                  :: to_load = .TRUE.
-#if defined _MOL
-   real(SP),    allocatable DEV_ATTR :: r_d(:,:,:)
-#else
-   complex(SP), allocatable DEV_ATTR :: r_d(:,:,:)
-#endif
-   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
+   WF_RSPACE(SP), allocatable :: r(:,:,:)
+   complex(SP),   allocatable :: c(:,:,:)
+   integer    ,   allocatable :: index(:,:,:)
+   logical    ,   allocatable :: state(:,:,:)
+   logical                    :: to_load = .TRUE.
+   WF_RSPACE(SP), allocatable DEV_ATTR :: r_d(:,:,:)
+   complex(SP),   allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
  !
  ! Buffered WFs

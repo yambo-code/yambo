@@ -54,7 +54,8 @@ subroutine RT_start_and_restart(E,k,q)
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
  use descriptors,    ONLY:IO_desc_reset,IO_desc_add
  use wave_func,      ONLY:WF

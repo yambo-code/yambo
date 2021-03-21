@@ -41,7 +41,8 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  use real_time,      ONLY:RT_t,RTibz,RT_nk,RT_bands,RT_obj_alloc,RT_obj_free,&
 &                         RT_levels,RT_is_dynamically_dephased
  use hamiltonian,    ONLY:E_reference
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,NF90_unlimited
+ use IO_m,           ONLY:NF90_unlimited
+ use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  !
  implicit none
  !

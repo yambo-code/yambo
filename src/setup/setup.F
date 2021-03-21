@@ -35,11 +35,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
 &                         symmetry_group_table,mag_syms,idt_index,symmetry_equiv_atoms
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,&
-&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg
+&                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg,MAX_kpts_to_report
  use com,            ONLY:msg,fat_log
  use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
- use IO_m,           ONLY:REP,DUMP,NONE,io_control,OP_RD_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:REP,DUMP,NONE,OP_RD_CL
  use vec_operate,    ONLY:c2a,define_b_and_DL_vol
  use zeros,          ONLY:k_iku_zero,k_rlu_zero,G_iku_zero,define_zeros
  use interfaces,     ONLY:OCCUPATIONS_Fermi,DESC_write
@@ -358,10 +359,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Energies report
  !
  if (l_setup.or.fat_log.or.index(code_bin,'ypp')>0) then
-   do ik=1,k%nibz
+   K_LOOP: do ik=1,k%nibz
      call REPORT_Energies(en%E,k,Xk,en%nb,(/ik,ik/),'E',.FALSE.,.TRUE.)
      call REPORT_Energies(en%f/HA2EV,k,Xk,en%nb,(/ik,ik/),'occ',.FALSE.,.TRUE.)
-   enddo
+     if (ik==MAX_kpts_to_report.and..not.fat_log) exit K_LOOP
+   enddo K_LOOP
  endif
  !
  ! Once the occupations have been evaluated I dump Xen in Ken

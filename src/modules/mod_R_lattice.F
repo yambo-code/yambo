@@ -29,6 +29,8 @@ module R_lattice
 #include<dev_defs.h>
 #include<memory.h>
  !
+ integer, parameter:: MAX_kpts_to_report=50
+ !
  ! K lattice
  !
  integer           :: k_grid(3)
@@ -122,6 +124,7 @@ module R_lattice
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
+ integer  :: qindx_B_max
  !
  ! SYMs
  !
@@ -192,7 +195,14 @@ module R_lattice
      logical, optional :: ROTATE_k_ref,border_point
      integer, optional :: k_symm
      integer, optional :: i_err
-   end function 
+   end function
+   ! 
+   function qindx_B_load(ikbz,ikp_bz,ID)
+     !
+     integer, dimension(2) :: qindx_B_load
+     integer, intent(in) :: ID,ikbz,ikp_bz
+     !
+   end function qindx_B_load
    !
  end interface
  !
@@ -200,7 +210,11 @@ module R_lattice
    !
    subroutine qindx_alloc(what)
      !
+     use parallel_m,   ONLY:PAR_K_scheme
+     !
      character(*), intent(in) :: what
+     !
+     integer :: nK_qindx_B
      !
      if(  (index(what,"X")/=0 .or. index(what,"ALL")/=0) .and. X_scattering) then
        YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
@@ -213,7 +227,13 @@ module R_lattice
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
-       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+#if defined _PAR_IO
+       nK_qindx_B=PAR_K_scheme%nbz
+#else
+       if(PAR_K_scheme%nbz> 0) nK_qindx_B=PAR_K_scheme%nbz  ! read mode
+       if(PAR_K_scheme%nbz==0) nK_qindx_B=nXkbz             ! write mode
+#endif
+       YAMBO_ALLOC(qindx_B,(nXkbz,nK_qindx_B,2))
        qindx_B=0
      endif
      !
@@ -232,13 +252,13 @@ module R_lattice
        YAMBO_FREE(qindx_X)
      endif
      if(  index(what,"B")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_B)
+       YAMBO_FREE(qindx_B)
      endif
      if(  index(what,"S")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_S)
+       YAMBO_FREE(qindx_S)
      endif
      if(  index(what,"C")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_C)
+       YAMBO_FREE(qindx_C)
      endif
    end subroutine qindx_free
    !

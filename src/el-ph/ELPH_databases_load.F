@@ -30,7 +30,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  use pars,           ONLY:SP,rZERO,schlen
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:io_control,OP_RD_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL
  use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,&
 &                         l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nQ,GKKP_bare
  use interfaces,     ONLY:ELPH_alloc

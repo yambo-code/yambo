@@ -39,7 +39,7 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  !
  ! Work Space
  ! 
- integer               :: ik,ib,i_wf(2)
+ integer               :: ik,ib,i_wf
  type(PP_indexes)      :: px
  !
  call PP_indexes_reset(px)

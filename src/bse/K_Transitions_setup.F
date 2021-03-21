@@ -188,8 +188,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                !
                BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp2,isp1/)
                !
-               PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
-               PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(ib2,ik )=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(ib1,ikp)=.TRUE.
                !
                if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.

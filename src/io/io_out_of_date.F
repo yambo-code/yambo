@@ -23,7 +23,8 @@
 !
 integer function io_out_of_date(ID)
  !
- use IO_m,          ONLY:IO_OUTDATED_DB,io_file,ver_is_gt_or_eq
+ use IO_m,          ONLY:IO_OUTDATED_DB,io_file
+ use IO_int,        ONLY:ver_is_gt_or_eq
  !
  implicit none
  integer               :: ID

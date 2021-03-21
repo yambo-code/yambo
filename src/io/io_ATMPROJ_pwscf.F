@@ -28,9 +28,10 @@ integer function io_ATMPROJ_pwscf(ID)
  use electrons,        ONLY:n_sp_pol
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
+ use IO_m,             ONLY:io_sec,read_is_on,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect, &
 &                           io_elemental,io_variable_bulk,def_variable_bulk, &
-&                           io_header,read_is_on,io_fragment,frag_WF
+&                           io_header,io_fragment
  use timing_m,       ONLY:timing
  !
 #include<memory.h>

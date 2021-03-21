@@ -24,8 +24,8 @@
 subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
  !
  use pars,        ONLY:SP,schlen
- use IO_m,        ONLY:io_variable_bulk,def_variable_bulk,&
-&                      read_is_on,write_is_on
+ use IO_int,      ONLY:io_variable_bulk,def_variable_bulk
+ use IO_m,        ONLY:read_is_on,write_is_on
  use electrons,   ONLY:n_spin
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
  use netcdf,         ONLY:NF90_UNLIMITED

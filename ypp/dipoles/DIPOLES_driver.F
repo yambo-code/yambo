@@ -21,14 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLES_driver(k,E,q,Dip)
+subroutine DIPOLES_driver(k,E,q)
  !
- use pars,           ONLY:SP,rZERO
+ use pars,           ONLY:SP,rZERO,schlen
+ use com,            ONLY:msg
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin
- use YPPm,           ONLY:DIPOLES_bands,DIPOLES_E_range,DIPOLES_direction,K_transform,coo_out,INTERP_grid,&
-&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par
- use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
+ use YPPm,           ONLY:DIPs_C_bands,DIPs_V_bands,DIPs_E_range,DIPs_direction,K_transform,coo_out,INTERP_grid,&
+&                         l_PROJECT_plane,l_PROJECT_line,PROJECT_N_par,DIPs,DIPs_mask,DIPs_kind
+ use DIPOLES,        ONLY:DIPOLES_reset,DIP_alloc,DIP_iR,DIP_desc
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
  use QP_CTL_m,       ONLY:QP_apply
@@ -42,64 +44,96 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  !
  type(bz_samp)  :: k,q
  type(levels)   :: E
- type(DIPOLE_t) :: Dip
  !
  ! Work Space
  !
- integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem
+ integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,BANDS_done(DIPs_C_bands(2))
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
+ character(schlen)     :: BANDS_str
  real(SP), allocatable :: DIP_plane(:,:,:)
  integer,  external    :: PROJECTION_k_on_the_path_or_plane
  !
- call section('*','Dipole Properties')
- !====================================
- ! ... Apply QP corrections
- call QP_apply(DIPOLES_bands,E,k,'G',msg_fmt='rs')
+ if (trim(DIPs_kind)=="IP") then
+   !
+   call section('*','IP Dipole Properties')
+   !=======================================================
+   !
+   ! ... Apply QP corrections
+   call QP_apply((/DIPs_V_bands(1),DIPs_C_bands(2)/),E,k,'G',msg_fmt='rs')
+   !
+   !... PROJECTION setup
+   call PROJECTION_setup("setup")
+   if (l_PROJECT_line) then
+     call warning("Line Projection not possible in DIPOLES mode. Switched off")
+     l_PROJECT_line=.FALSE.
+   endif
+   if (l_PROJECT_plane.and.all((/INTERP_grid>0/))) then
+     call warning("Plane Projection and Interpolation not simultaneously possible. Interpolation Switched off")
+     INTERP_grid=-1
+   endif
+   call PROJECTION_setup("DIPOLES",(/1,1/))
+   !
+ endif
  !
- !... PROJECTION setup
- call PROJECTION_setup("setup")
- if (l_PROJECT_line) then
-   call warning("Line Projection not possible in DIPOLES mode. Switched off")
-   l_PROJECT_line=.FALSE.
- endif
- if (l_PROJECT_plane.and.all((/INTERP_grid>0/))) then
-   call warning("Plane Projection and Interpolation not simultaneously possible. Interpolation Switched off")
-   INTERP_grid=-1
- endif
- call PROJECTION_setup("DIPOLES",(/1,1/))
+ ! ... Dimensions
+ DIPs%ib    =(/DIPs_V_bands(1),DIPs_C_bands(2)/)
+ DIPs%ib_lim=(/DIPs_V_bands(2),DIPs_C_bands(1)/)
  !
  ! ... PARALLEL setup
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=Dip)
+ call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs)
  !
  ! ... IO
- call DIPOLE_dimensions(E,Dip,DIPOLES_bands,(/0._SP,0._SP,0._SP/))
- call DIPOLE_IO(k,e,Dip,'read ',io_err,'DIP')
+ call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
  !
- DIPOLES_direction=DIPOLES_direction/v_norm(DIPOLES_direction)
+ DIPs_direction=DIPs_direction/v_norm(DIPs_direction)
+ !
+ ! ... Alloc
+ if (trim(DIPs_kind)=="MASK") then
+   YAMBO_ALLOC(DIPs_mask,(DIPs_V_bands(1):DIPs_V_bands(2),k%nibz,n_spin))
+   DIPs_mask=rZERO
+   BANDS_str=" "
+   BANDS_done=0
+ endif
+ if (trim(DIPs_kind)=="IP") DIP_accumulated=rZERO
  !
  ! ... Loop
- DIP_accumulated=rZERO
  do ik=1,k%nibz
    if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
    ik_mem=PAR_DIPk_ibz_index(ik)
-   do iv=DIPOLES_bands(1),E%nbm
-     if (.not.PAR_IND_CON_BANDS_DIP%element_1D(iv)) cycle
-     do ic=E%nbf+1,DIPOLES_bands(2)
-       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(ic)) cycle
+   do iv=DIPs_V_bands(1),DIPs_V_bands(2)
+     if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+     do ic=DIPs_C_bands(1),DIPs_C_bands(2)
+       if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
-         if (DIPOLES_E_range(1)>0. .and. delta_E<DIPOLES_E_range(1)) cycle
-         if (DIPOLES_E_range(2)>0. .and. delta_E>DIPOLES_E_range(2)) cycle
-         DIP_projected=dot_product(DIPOLES_direction,DIP_iR(:,ic,iv,ik_mem,is))
-         DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+         if (DIPs_E_range(1)>0._SP .and. delta_E<DIPs_E_range(1)) cycle
+         if (DIPs_E_range(2)>0._SP .and. delta_E>DIPs_E_range(2)) cycle
+         DIP_projected=dot_product(DIPs_direction,DIP_iR(:,ic,iv,ik_mem,is))
+         if (trim(DIPs_kind)=="IP") then
+           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2
+         endif
+         if (trim(DIPs_kind)=="MASK") then
+           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2
+         endif
+         if (BANDS_done(ic)==0) BANDS_str=trim(BANDS_str)//" "//trim(intc(ic))
+         BANDS_done(ic)=1
        enddo
      enddo
    enddo
  enddo
  !
- call PP_redux_wait( DIP_accumulated(1,:,1))
+ call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
+ !
+ if (trim(DIPs_kind)=="MASK") then
+   call PP_redux_wait( DIPs_mask )
+ endif
+ if (trim(DIPs_kind)=="IP") call PP_redux_wait( DIP_accumulated(1,:,1))
+ if (.not.trim(DIPs_kind)=="IP") then
+   call LOCAL_clean()
+   return
+ endif
  !
  !... Normalization
  DIP_accumulated=DIP_accumulated/maxval( DIP_accumulated )
@@ -159,11 +193,17 @@ subroutine DIPOLES_driver(k,E,q,Dip)
  endif
  !
  !... Clean
- call DIP_alloc('DIP_iR')
- call DIP_alloc('DIP_P')
- call DIP_alloc('DIP_v')
- call DIPOLES_reset(Dip)
+ call LOCAL_clean( )
  YAMBO_FREE(DIP_plane)
  if (all(INTERP_grid>0)) call INTERPOLATION_driver_end(0)
  !
+ contains 
+   !
+   subroutine LOCAL_clean
+    call DIP_alloc('DIP_iR')
+    call DIP_alloc('DIP_P')
+    call DIP_alloc('DIP_v')
+    call DIPOLES_reset(DIPs)
+   end subroutine
+   !
 end subroutine

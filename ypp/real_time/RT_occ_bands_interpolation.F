@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
+subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  !
  use pars,           ONLY:SP,schlen,rZERO
  use parser_m,       ONLY:parser
@@ -29,8 +29,8 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
  use R_lattice,      ONLY:bz_samp
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
-&                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,&
-&                         l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par
+&                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,l_dipoles,&
+&                         l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par,DIPs_mask
  use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special
  use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
@@ -43,7 +43,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
 #include<memory.h>
  !
  integer,       intent(in)    :: n_T_steps
- type(bz_samp), intent(in)    :: k
+ type(bz_samp), intent(in)    :: k,q
  type(levels),  intent(inout) :: en
  !
  ! Work space
@@ -56,7 +56,7 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
  logical               :: WARN_neg_elecs_df,WARN_pos_holes_df,is_PROJECTED,is_INTERPOLATED,QUIET_interp,&
  &                        plot_STD_style,plot_RT_style,l_update_E
  integer               :: ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,IDs(6)
- integer               :: ib,ik,ik_path,i_RT,i_T,nfiles(5),nqnt
+ integer               :: ib,ik,ik_path,ik_RT,i_RT,i_spin,i_T,nfiles(5),nqnt
  logical, external     :: file_exists
  integer, external     :: PROJECTION_k_on_the_path_or_plane
  !
@@ -197,13 +197,19 @@ subroutine RT_occ_bands_interpolation(en,k,n_T_steps)
    !
    do i_RT=1,RT_carriers%nstates
      ib      =RT_carriers%table(i_RT,1)
-     ik      =RT_carriers%table(i_RT,3)
-     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
-     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik)
+     ik      =RT_carriers%table(i_RT,2)
+     ik_RT   =RT_carriers%table(i_RT,3)
+     i_spin  =RT_carriers%table(i_RT,4)
+     ! ... Apply the DIPOLES Mask
+     if (l_dipoles) RT_carriers%OCC_el%dN(i_RT)=RT_carriers%OCC_el%dN(i_RT)*DIPs_mask(ib,ik,i_spin)
+     !
+     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
+     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
    enddo
    Max_occ=maxval(abs(RT_carriers%OCC_el%dN))
    !
    if (is_PROJECTED) then
+     !
      do ik=1,GRID_k%nbz
        ik_path=PROJECTION_k_on_the_path_or_plane(ik)
        if (ik_path==0) cycle

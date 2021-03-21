@@ -39,7 +39,7 @@ subroutine RT_time_step_update( E )
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use interfaces,     ONLY:DESC_write
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  !
  implicit none
  !

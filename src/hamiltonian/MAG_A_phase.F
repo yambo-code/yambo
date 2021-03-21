@@ -58,7 +58,7 @@ subroutine MAG_A_phase()
  !
  iwf=WF%index(ib_ref,ik_ref,is_ref)
  wf_r2(:)=r2_cyl(:)*WF%r(:,1,iwf)
- r2_ref=real(Vstar_dot_V(fft_size,WF%r(:,1,iwf),wf_r2))
+ r2_ref=real(Vstar_dot_V(fft_size,cmplx(WF%r(:,1,iwf),kind=SP),wf_r2))
  !
  n_loops=int(r2_ref*Bz/(2*SPEED_OF_LIGHT)+0.5)
  !

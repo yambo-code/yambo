@@ -167,7 +167,7 @@ subroutine XCo_local(E,Xk)
      enddo
 !$omp end parallel do
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,(/cmplx(WF%r(:,:,iwf),kind=SP)/),(/c_ws(:,:)/))
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
      !
      if (pp_is_uspp) then
        call PP_vloc_augment(QP_Vxc(i1),V_xc,ik,ib,ibp)
@@ -220,7 +220,7 @@ subroutine XCo_local(E,Xk)
        !
        c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%r(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,(/cmplx(WF%r(:,:,iwf),kind=SP)/),(/c_ws(:,:)/))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor=1 not implemented')
@@ -234,7 +234,7 @@ subroutine XCo_local(E,Xk)
        c_ws(:,1)=V_xc_mat(:,1,1)*WF%r(:,1,iwfp)+V_xc_mat(:,1,2)*WF%r(:,2,iwfp)
        c_ws(:,2)=V_xc_mat(:,2,1)*WF%r(:,2,iwfp)+V_xc_mat(:,2,2)*WF%r(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,(/cmplx(WF%r(:,:,iwf),kind=SP)/),(/c_ws(:,:)/))
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor>1 not implemented')

@@ -42,6 +42,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use interfaces,          ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En
@@ -261,7 +262,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            !
            if (n_sp_pol==2 .and. i_spinor/=i_sp_pol) cycle
            !
-           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_spinor),WF%c(:,1,i_wf )))**2
+           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_spinor),WF%r(:,1,i_wf )))**2
            !
          enddo
          !

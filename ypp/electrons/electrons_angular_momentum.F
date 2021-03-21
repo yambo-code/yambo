@@ -170,17 +170,17 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
          ! Mi = [r x (p + 1/c*A)]_i = Li +1/c*(r x A)_i for i=x,y,z
          ! These are the mechanicals momenta and are gauge independent
          if(angular_dir(1)) M_tmp(1,:)=L_tmp(1,:)+1./SPEED_OF_LIGHT*(x_cc(:,2,1)*A_magn_z(:)- &
-&                             x_cc(:,3,1)*A_magn_y(:))*WF%c(:,1,ifft)
+&                             x_cc(:,3,1)*A_magn_y(:))*WF%r(:,1,ifft)
          if(angular_dir(2)) M_tmp(2,:)=L_tmp(2,:)+1./SPEED_OF_LIGHT*(x_cc(:,3,1)*A_magn_x(:)- &
-&                             x_cc(:,1,1)*A_magn_z(:))*WF%c(:,1,ifft)
+&                             x_cc(:,1,1)*A_magn_z(:))*WF%r(:,1,ifft)
          if(angular_dir(3)) M_tmp(3,:)=L_tmp(3,:)+1./SPEED_OF_LIGHT*(x_cc(:,1,1)*A_magn_y(:)- &
-&                             x_cc(:,2,1)*A_magn_x(:))*WF%c(:,1,ifft)
+&                             x_cc(:,2,1)*A_magn_x(:))*WF%r(:,1,ifft)
        endif
        !
        do i1=1,3
          if(.not.angular_dir(i1)) cycle
-         L(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),L_tmp(i1,:))
-         if(MAG_landau) M(i1) = Vstar_dot_V(fft_size,WF%c(:,1,ifft),M_tmp(i1,:))
+         L(i1) = Vstar_dot_V(fft_size,cmplx(WF%r(:,1,ifft),kind=SP),L_tmp(i1,:))
+         if(MAG_landau) M(i1) = Vstar_dot_V(fft_size,cmplx(WF%r(:,1,ifft),kind=SP),M_tmp(i1,:))
          L_tot(i1,ik)=L_tot(i1,ik)+L(i1)
          if(MAG_landau) M_tot(i1,ik)=M_tot(i1,ik)+M(i1)
        enddo

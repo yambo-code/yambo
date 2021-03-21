@@ -29,7 +29,8 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP,cI
+ use pars,          ONLY:SP,cI
+ use iso_c_binding, ONLY:C_LOC,C_F_POINTER
 #ifdef _CUDA
  use cublas
 #endif
@@ -66,9 +67,9 @@ module wrapper
  end interface
  !
  interface Vstar_dot_V
-   module procedure Vstar_dot_V_c1_cpu,V_dot_V_r1_cpu
+   module procedure Vstar_dot_V_c1_cpu,Vstar_dot_V_c2_cpu,V_dot_V_r1_cpu,V_dot_V_r2_cpu
 #ifdef _CUDA
-   module procedure Vstar_dot_V_c1_gpu,V_dot_V_r1_gpu
+   module procedure Vstar_dot_V_c1_gpu,Vstar_dot_V_c2_gpu,V_dot_V_r1_gpu,V_dot_V_r2_gpu
 #endif
  end interface
  !
@@ -80,9 +81,9 @@ module wrapper
  end interface
  !
  interface V_dot_V
-   module procedure V_dot_V_r1_cpu, V_dot_V_c1_cpu
+   module procedure V_dot_V_r1_cpu,V_dot_V_r2_cpu,V_dot_V_c1_cpu,V_dot_V_c2_cpu
 #ifdef _CUDA
-   module procedure V_dot_V_r1_gpu, V_dot_V_c1_gpu
+   module procedure V_dot_V_r1_gpu,V_dot_V_r2_gpu,V_dot_V_c1_gpu,V_dot_V_c2_gpu
 #endif
  end interface
  !
@@ -308,7 +309,7 @@ module wrapper
    complex(SP) function Vstar_dot_V_c1_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
+     complex(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      complex(SP)::zdotc
      Vstar_dot_V_c1_cpu=ZDOTC(N,CX,1,CY,1)
@@ -318,11 +319,30 @@ module wrapper
 #endif
    end function Vstar_dot_V_c1_cpu
    !
+   complex(SP) function Vstar_dot_V_c2_cpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     complex(SP),target,intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotc
+#else
+     complex(SP)::cdotc
+#endif
+     real(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     Vstar_dot_V_c2_cpu=ZDOTC(N,CX1D,1,CY1D,1)
+#else
+     Vstar_dot_V_c2_cpu=CDOTC(N,CX1D,1,CY1D,1)
+#endif
+   end function Vstar_dot_V_c2_cpu
+   !
 #ifdef _CUDA
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,             intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*),CY(*)
+     complex(SP), device, intent(in) :: CX(:),CY(:)
      !
 #if defined _DOUBLE
      Vstar_dot_V_c1_gpu=cublasZdotc(N,CX,1,CY,1)
@@ -331,6 +351,20 @@ module wrapper
 #endif
    end function Vstar_dot_V_c1_gpu
    !
+   complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
+     implicit none
+     integer,             intent(in) :: N
+     complex(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+     !
+     real(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     Vstar_dot_V_c2_gpu=cublasZdotc(N,CX1D,1,CY1D,1)
+#else
+     Vstar_dot_V_c2_gpu=cublasCdotc(N,CX1D,1,CY1D,1)
+#endif
+   end function Vstar_dot_V_c2_gpu
 #endif
    !
    !==============
@@ -372,7 +406,7 @@ module wrapper
    real(SP) function V_dot_V_r1_cpu(N,CX,CY)
      implicit none
      integer, intent(in) :: N
-     real(SP),intent(in) :: CX(*),CY(*)
+     real(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      real(SP)::ddot
      V_dot_V_r1_cpu=DDOT(N,CX,1,CY,1)
@@ -382,11 +416,30 @@ module wrapper
 #endif
    end function V_dot_V_r1_cpu
    !
+   real(SP) function V_dot_V_r2_cpu(N,CX,CY)
+     implicit none
+     integer, intent(in) :: N
+     real(SP),target,intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     real(SP)::ddot
+#else
+     real(SP)::sdot
+#endif
+     real(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_r2_cpu=DDOT(N,CX1D,1,CY1D,1)
+#else
+     V_dot_V_r2_cpu=SDOT(N,CX1D,1,CY1D,1)
+#endif
+   end function V_dot_V_r2_cpu
+   !
 #ifdef _CUDA
-   complex(SP) function V_dot_V_r1_gpu(N,CX,CY)
+   real(SP) function V_dot_V_r1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     real(SP), device, intent(in) :: CX(*),CY(*)
+     real(SP), device, intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      real(SP)::ddot
      V_dot_V_r1_gpu=cublasDDOT(N,CX,1,CY,1)
@@ -394,13 +447,32 @@ module wrapper
      real(SP)::sdot
      V_dot_V_r1_gpu=cublasSDOT(N,CX,1,CY,1)
 #endif
-   end function V_dot_V_c1_gpu
+   end function V_dot_V_r1_gpu
+   !
+   real(SP) function V_dot_V_r2_gpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     real(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     real(SP)::ddot
+#else
+     real(SP)::sdot
+#endif
+     real(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_r2_gpu=cublasDDOT(N,CX1D,1,CY1D,1)
+#else
+     V_dot_V_r2_gpu=cublasSDOT(N,CX1D,1,CY1D,1)
+#endif
+   end function V_dot_V_r2_gpu
 #endif
    !
    complex(SP) function V_dot_V_c1_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
+     complex(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      complex(SP)::zdotu
      V_dot_V_c1_cpu=ZDOTU(N,CX,1,CY,1)
@@ -410,11 +482,30 @@ module wrapper
 #endif
    end function V_dot_V_c1_cpu
    !
+   complex(SP) function V_dot_V_c2_cpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     complex(SP),target,intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotu
+#else
+     complex(SP)::cdotu
+#endif
+     complex(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_c2_cpu=ZDOTU(N,CX1D,1,CY1D,1)
+#else
+     V_dot_V_c2_cpu=CDOTU(N,CX1D,1,CY1D,1)
+#endif
+   end function V_dot_V_c2_cpu
+   !
 #ifdef _CUDA
    complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*),CY(*)
+     complex(SP), device, intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      complex(SP)::zdotu
      V_dot_V_c1_gpu=cublasZDOTU(N,CX,1,CY,1)
@@ -423,6 +514,25 @@ module wrapper
      V_dot_V_c1_gpu=cublasCDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V_c1_gpu
+   !
+   complex(SP) function V_dot_V_c2_gpu(N,CX,CY)
+     implicit none
+     integer,    intent(in) :: N
+     complex(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+#if defined _DOUBLE
+     complex(SP)::zdotu
+#else
+     complex(SP)::cdotu
+#endif
+     complex(SP),pointer    :: CX1D(:),CY1D(:)
+     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+#if defined _DOUBLE
+     V_dot_V_c2_gpu=cublasZDOTU(N,CX1D,1,CY1D,1)
+#else
+     V_dot_V_c2_gpu=cublasCDOTU(N,CX1D,1,CY1D,1)
+#endif
+   end function V_dot_V_c2_gpu
 #endif
    !
    !==============

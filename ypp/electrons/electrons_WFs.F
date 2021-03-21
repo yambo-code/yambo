@@ -52,6 +52,7 @@ subroutine electrons_WFs(Xen)
 #endif
  !
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  type(levels)  ::Xen
  !
@@ -172,7 +173,7 @@ subroutine electrons_WFs(Xen)
            !
            i_wf=WF%index(ib,ik,1)
            !
-           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%c(ir,1,i_wf)
+           forall(ir=1:fft_size) v2plot_c(ir)=v2plot_c(ir)+WF%r(ir,1,i_wf)
            !
          else
            !
@@ -284,8 +285,8 @@ subroutine electrons_WFs(Xen)
 #if defined _YPP_SC
      if (.not.l_mean_potential) then 
 #endif
-       forall(ir=1:fft_size) v2plot(ir)=real( WF%c(ir,1,i_wf)*conjg( WF%c(ir,1,i_wf) ) )
-       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%c(ir,2,i_wf)*conjg( WF%c(ir,2,i_wf) ) )
+       forall(ir=1:fft_size) v2plot(ir)=real( WF%r(ir,1,i_wf)*wfconjg( WF%r(ir,1,i_wf) ), kind=SP )
+       if (n_spinor==2) forall(ir=1:fft_size) v2plot(ir)=v2plot(ir) + real( WF%r(ir,2,i_wf)*wfconjg( WF%r(ir,2,i_wf) ),kind=SP )
 #if defined _YPP_SC
      endif
 #endif

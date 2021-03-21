@@ -34,6 +34,8 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  use D_lattice,     ONLY:nsym,DEV_VAR(spin_sop),i_time_rev,idt_index
  use deviceXlib_m
  !
+#include<yambo_wfs.h>
+ !
  implicit none
  !
  integer,     intent(in)  :: isc(4)

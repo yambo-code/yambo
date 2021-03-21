@@ -132,7 +132,7 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
      enddo
    enddo
    !
-   H(ib,ibp) = H(ib,ibp)+Vstar_dot_V_omp(fft_size*n_spinor,(/cmplx(WF%r(:,:,i_wf),kind=SP)/),c_ws(:,:))
+   H(ib,ibp) = H(ib,ibp)+Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,i_wf),kind=SP),c_ws(:,:))
    !
    if(ib==ibp) H(ib,ib) =real(H(ib,ib),SP)
    if(ib/=ibp) H(ibp,ib)=conjg(H(ib,ibp))

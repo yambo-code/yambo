@@ -124,6 +124,7 @@ module R_lattice
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
+ integer  :: qindx_B_max
  !
  ! SYMs
  !
@@ -209,6 +210,8 @@ module R_lattice
    !
    subroutine qindx_alloc(what)
      !
+     use parallel_m,   ONLY:PAR_K_scheme
+     !
      character(*), intent(in) :: what
      !
      integer :: nK_qindx_B
@@ -249,13 +252,13 @@ module R_lattice
        YAMBO_FREE(qindx_X)
      endif
      if(  index(what,"B")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_B)
+       YAMBO_FREE(qindx_B)
      endif
      if(  index(what,"S")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_S)
+       YAMBO_FREE(qindx_S)
      endif
      if(  index(what,"C")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_C)
+       YAMBO_FREE(qindx_C)
      endif
    end subroutine qindx_free
    !

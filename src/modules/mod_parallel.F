@@ -267,6 +267,10 @@ module parallel_m
  type(PP_indexes),SAVE :: PAR_IND_Xk_bz
  type(PP_indexes),SAVE :: PAR_IND_G_k
  !
+ ! ... BZINDX
+ type(PP_indexes),SAVE :: PAR_IND_BZINDXk_ibz
+ type(PP_indexes),SAVE :: PAR_IND_BZINDXk_bz
+ !
  ! ... DIPOLES
  type(PP_indexes),SAVE :: PAR_IND_DIPk_ibz
  type(PP_indexes),SAVE :: PAR_IND_DIPk_bz
@@ -334,6 +338,10 @@ module parallel_m
  integer            :: PAR_IND_Xk_ibz_ID
  integer            :: PAR_IND_Xk_bz_ID
  integer            :: PAR_IND_G_k_ID
+ !
+ ! ... BZINDX
+ integer            :: PAR_IND_BZINDXk_bz_ID
+ integer            :: PAR_IND_BZINDXk_ibz_ID
  !
  ! ... DIPOLES
  integer            :: PAR_IND_DIPk_bz_ID
@@ -482,6 +490,10 @@ module parallel_m
  integer,allocatable:: PAR_Xk_ibz_index(:)
  integer            :: PAR_Xk_nbz
  integer,allocatable:: PAR_Xk_bz_index(:)
+ integer            :: PAR_BZINDXk_nibz
+ integer,allocatable:: PAR_BZINDXk_ibz_index(:)
+ integer            :: PAR_BZINDXk_nbz
+ integer,allocatable:: PAR_BZINDXk_bz_index(:)
  integer            :: PAR_DIPk_nibz
  integer,allocatable:: PAR_DIPk_ibz_index(:)
  integer            :: PAR_DIPk_nbz
@@ -542,7 +554,7 @@ module parallel_m
    character(lchlen) function PARALLEL_message(i_s)
      use stderr, ONLY:intc
      use openmp, ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K, &
-&                     n_threads_NL,n_threads
+&                     n_threads_NL,n_threads_BZINDX,n_threads
      integer :: i_s
      !
      PARALLEL_message=" "
@@ -556,13 +568,14 @@ module parallel_m
      !
      if (i_s==0) then
        PARALLEL_message=trim(intc(ncpu))//"(CPU)"
-       if (n_threads    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
-       if (n_threads_X  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
-       if (n_threads_DIP>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
-       if (n_threads_SE >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
-       if (n_threads_RT >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
-       if (n_threads_K  >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
-       if (n_threads_NL >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
+       if (n_threads       >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads))//"(threads)"
+       if (n_threads_X     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_X))//"(threads@X)"
+       if (n_threads_BZINDX>0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_BZINDX))//"(threads@BZINDX)"
+       if (n_threads_DIP   >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_DIP))//"(threads@DIP)"
+       if (n_threads_SE    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_SE))//"(threads@SE)"
+       if (n_threads_RT    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_RT))//"(threads@RT)"
+       if (n_threads_K     >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_K))//"(threads@K)"
+       if (n_threads_NL    >0) PARALLEL_message=trim(PARALLEL_message)//"-"//trim(intc(n_threads_NL))//"(threads@NL)"
      else
        PARALLEL_message=trim(CPU_structure(i_s)%Short_Description)//"(environment)-"//&
 &                       trim(CPU_structure(i_s)%CPU_string)//"(CPUs)-"//&

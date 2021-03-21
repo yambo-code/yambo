@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -34,10 +34,13 @@ integer function io_QINDX(Xk,q,io_db)
 &                         io_variable_elemental,def_variable_elemental,io_header,&
 &                         ver_is_gt_or_eq,io_fragment,def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_K_scheme
  !
 #include<memory.h>
+ !
  type(bz_samp)::q,Xk
- integer      ::io_db,i3,i2,i2_up,i2_step
+ integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
+ logical      ::PAR_IO
  !
  ! Work Space
  !
@@ -158,6 +161,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  if (any((/io_sec(io_db,:)==5/))) then 
    if (bse_scattering) then
+     if (read_is_on(io_db)) call qindx_alloc('B')
      !
      ! Fragmentation (3): BSE indx
      !
@@ -172,7 +176,8 @@ integer function io_QINDX(Xk,q,io_db)
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz
      ! NETCDF has problems in reading when this number overcomes 2147483647
-     i2_step=nXkbz/(nXkbz/46341+1)
+     IO_size=nXkbz !size(qindx_B(1,1,:))
+     i2_step=IO_size/(IO_size/46341+1)
      do i3=1,2
        do i2_dn=1,IO_size,i2_step
          i2_up=min(i2_dn-1+i2_step,IO_size)
@@ -197,7 +202,11 @@ integer function io_QINDX(Xk,q,io_db)
      enddo
      call io_fragment_disconnect(io_db,id_frag)
    endif
+ endif
+ !
+ if (any((/io_sec(io_db,:)==6/))) then 
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
+     if (read_is_on(io_db)) call qindx_alloc('C')
      !
      ! Fragmentation (4): COLL indx
      !

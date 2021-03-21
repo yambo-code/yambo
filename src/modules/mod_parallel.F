@@ -90,7 +90,7 @@ module parallel_m
  !
  ! Logicals
  !
- logical            :: l_par_X_G,l_par_X_G_finite_q,l_par_SE,l_par_RT,l_par_SC,l_par_NL
+ logical            :: l_par_X_T,l_par_X_G,l_par_X_G_finite_q,l_par_DIP,l_par_BZINDX,l_par_SE,l_par_RT,l_par_SC,l_par_NL
  !
  ! In a parallel runs, when some loops not involving all CPU's are parallelized it is usefull to keep 
  ! the operations local in the cpu world
@@ -407,6 +407,11 @@ module parallel_m
  type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_INDEX
  type(yMPI_comm),SAVE :: PAR_COM_Xk_bz_A2A
  !
+ ! ... BZINDX
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_INDEX
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_ibz_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_BZINDXk_bz_INDEX
+ !
  ! ... DIPOLES
  type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_INDEX
  type(yMPI_comm),SAVE :: PAR_COM_DIPk_ibz_A2A
@@ -600,8 +605,10 @@ module parallel_m
      CPU_structure(7)%Short_Description="SLK"
      CPU_structure(8)%Long_Description="Non_Linear"
      CPU_structure(8)%Short_Description="NL"
-     CPU_structure(9)%Long_Description="Phonon_Self_Energy"
-     CPU_structure(9)%Short_Description="PH_SE"
+     CPU_structure(9)%Long_Description="BZ_Indexes"
+     CPU_structure(9)%Short_Description="BZINDX"
+     CPU_structure(10)%Long_Description="Phonon_Self_Energy"
+     CPU_structure(10)%Short_Description="PH_SE"
    end subroutine
    !
    subroutine PAR_scheme_reset(PARs)

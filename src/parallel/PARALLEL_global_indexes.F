@@ -24,7 +24,8 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  ! LOGICALS
- use parallel_m,    ONLY:l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_NL
+ use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
+&                        l_par_DIP,l_par_BZINDX,l_par_NL
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -60,6 +61,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! Work Space
  !
  integer              :: X_type
+ character(8)         :: MORE
  !
  !========================
  ! Response function kind
@@ -69,6 +71,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
    X_type=X%whoami
  endif
  if (ENVIRONMENT=="Response_T_space") X_type=5
+ !
+ MORE=""
  !========
  ! Resets
  !========
@@ -90,6 +94,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !==========
  ! Logicals
  !==========
+ !
+ l_par_BZINDX       =ENVIRONMENT=="BZ_Indexes"
+ l_par_DIP          =ENVIRONMENT=="DIPOLES"
+ l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
@@ -129,6 +137,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
    endif
    PAR_Dip_ib=Dip%ib
    PAR_Dip_ib_lim=Dip%ib_lim
+   if (trim(Dip%approach)=="Shifted grids") MORE="_SHIFTED"
  endif
  !
  call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
@@ -137,7 +146,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! DEFAULTS
  !==========
  !
- CALL PARALLEL_global_defaults(ENVIRONMENT)
+ CALL PARALLEL_global_defaults(ENVIRONMENT//trim(MORE))
  !
  !==============================
  ! ENVIRONMENT DEPENDENT SCHEMES
@@ -149,7 +158,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  !
  if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q)
  !
- if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(Xk,X_type)
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T_base(Xk)
  !
 #if defined _RT
  if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,X_type)

@@ -29,9 +29,8 @@ integer function io_Vnl(Dip,Xen,ID)
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_extension,&
-&                        io_fragment,frag_WF
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,io_fragment
+ use IO_m,          ONLY:io_sec,io_status,read_is_on,write_is_on,io_extension,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
 #include<memory.h>

@@ -45,7 +45,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands

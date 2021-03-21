@@ -255,7 +255,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -546,10 +546,6 @@ subroutine INIT_activate()
    call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
    if (MAG_landau) call initactivate(1,'B_radius')
  endif
- !
-#endif
- !
-#if defined _ELECTRIC
  !
  ! Electric
  !

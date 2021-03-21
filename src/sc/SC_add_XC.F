@@ -42,7 +42,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,SC_nbands,       &
 &                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu
  use FFT_m,          ONLY:fft_size
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  !
  implicit none
  !

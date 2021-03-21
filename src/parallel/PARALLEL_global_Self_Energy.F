@@ -28,7 +28,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use drivers,       ONLY:l_eval_collisions,l_sc_electric
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
- use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_COLLs
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&

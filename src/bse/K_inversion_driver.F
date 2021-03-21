@@ -37,7 +37,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
  use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
 &                         PAR_COM_SLK_INDEX_local
- use IO_m,           ONLY:io_control,REP,NONE,OP_WR_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
  use timing_m,       ONLY:timing
 #if defined _SCALAPACK

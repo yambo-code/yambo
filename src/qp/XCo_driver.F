@@ -27,7 +27,8 @@ subroutine XCo_driver(E,k,Xk,q)
  use pars,          ONLY:schlen,rZERO,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
 &                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free

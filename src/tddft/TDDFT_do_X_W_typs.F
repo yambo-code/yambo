@@ -34,7 +34,8 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,VERIFY,REP
 #include<memory.h>
  type(X_t)   :: X
  type(w_samp):: wv

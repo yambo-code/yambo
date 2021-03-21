@@ -26,7 +26,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  use R_lattice,     ONLY:bz_samp,nXkibz
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
- use parallel_m,    ONLY:PP_indexes_reset,n_groups
+ use IO_int,        ONLY:IO_and_Messaging_switch
+ use parallel_m,    ONLY:PP_indexes_reset,n_groups,master_cpu
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
@@ -40,7 +41,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_SLK_INDEX_global,PAR_COM_SLK,&
 &                        PAR_COM_QP_INDEX,PAR_COM_PLASMA_INDEX,PAR_COM_freqs_INDEX,PAR_COM_freqs,&
-&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,&
+&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,PAR_COM_BZINDXk_ibz_A2A,&
 &                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPk_bz_A2A,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local
@@ -108,14 +109,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PP_indexes_reset(PAR_IND_T_Haydock)
  call PP_indexes_reset(PAR_IND_freqs)
  !
- if (ENVIRONMENT=="Response_T_space") then
-   if (allocated(PAR_IND_eh)) deallocate(PAR_IND_eh)
-   allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
-   do i_k=1,nXkibz*BS_res_ares_dim
-     call PP_indexes_reset(PAR_IND_eh(i_k))
-   enddo
- endif
- !
  YAMBO_FREE(PAR_QP_index)
  YAMBO_FREE(PAR_G_bands_index)
  YAMBO_FREE(PAR_PLASMA_index)
@@ -173,6 +166,9 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_DIPk_bz_A2A)
  call COMM_reset(PAR_COM_DIPk_ibz_INDEX)
  call COMM_reset(PAR_COM_DIPk_ibz_A2A)
+ call COMM_reset(PAR_COM_BZINDXk_bz_INDEX)
+ call COMM_reset(PAR_COM_BZINDXk_ibz_INDEX)
+ call COMM_reset(PAR_COM_BZINDXk_ibz_A2A)
  call COMM_reset(PAR_COM_X_WORLD_RL_resolved)
  call COMM_reset(PAR_COM_X_WORLD)
  call COMM_reset(PAR_COM_density)
@@ -203,6 +199,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call PAR_scheme_reset(PARs_PH_Q_ibz)
  call PAR_scheme_reset(PARs_PH_K_bz)
  call PAR_scheme_reset(PARs_PH_eh_bands)
+ !
+ call IO_and_Messaging_switch("RESET")
  !
  n_groups=0
  !

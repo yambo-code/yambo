@@ -33,7 +33,7 @@ subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCRE
  use libxc_funcs_m,  ONLY:XC_LDA_X, XC_LDA_C_PW
  use xc_functionals, ONLY:XC_EXCHANGE_CORRELATION,xc_string,XC_libxc_driver,&
 &                         XC_NOT_AVAILABLE,XC_FACTOR,current_xc_string,LIBXC_message_done,XC_HYB_GGA_XC_GAUPBE
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
 #if defined _SC
  use drivers,        ONLY:l_sc_run
 #endif

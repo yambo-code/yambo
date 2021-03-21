@@ -32,10 +32,10 @@ integer function io_SC_components(what,E_sc,ID)
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
 &                         l_NSC_shot,SC_fft_size,V_mean
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,H_rotation,H_rotation_ref
- use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         variable_exist,io_SC,IO_NOT_ALLOWED,&
-&                         io_fragment,ver_is_gt_or_eq
+ use IO_m,           ONLY:io_status,io_sec,read_is_on,write_is_on,frag_SC,&
+&                         variable_exist,io_SC,IO_NOT_ALLOWED
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,&
+&                         io_bulk,io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use timing_m,      ONLY:timing

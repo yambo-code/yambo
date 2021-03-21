@@ -32,7 +32,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use stderr,         ONLY:intc,real2ch
  use wrapper,        ONLY:M_by_M
  use com,            ONLY:msg,of_open_close
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz

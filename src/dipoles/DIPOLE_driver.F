@@ -27,7 +27,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
  !
  ! DIP_iR=i<r>
- ! DIP_P = <v>   (should be called DIP_V ... )
+ ! DIP_P = <P>
+ ! DIP_v = <v> = <P-[x,Vnl]>
  !
  ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)

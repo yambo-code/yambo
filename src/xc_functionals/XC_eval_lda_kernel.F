@@ -39,7 +39,7 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  !
  if (n_spin==1) then
    do ifft=1,fft_size
-     F_xc(ifft,1,1) = real(v2rho2(1,ifft),SP)
+     F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v2rho2(1,ifft),SP)
    enddo
  endif
  !

@@ -273,11 +273,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  section_title='-BSK-'//trim(intc(iHxc))
  if (l_bs_fxc) section_title='-BSK->Fxc-'//trim(intc(iHxc))
  !
- if (iHxc==1) NG=(/max(BS_n_g_exch,BS_n_g_fxc),O_ng_exch/)
+ if (iHxc==1) NG=(/BS_n_g_exch,O_ng_exch/)
  ! < WARNIGN: 2021/03/19
  ! The following has been changed to the commente line 
  ! However the commented line maybe needed for internal consistency. Otherwise the output of many BSE tests could change
- if (iHxc==2) NG=(/              O_ng,        O_ng_shift/)
+ if (iHxc==2) NG=(/O_ng,O_ng_shift/)
  !if (iHxc==2) NG(2)=O_ng_shift
  ! WARNING >
  call WF_load(WF,NG(1),NG(2),bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))

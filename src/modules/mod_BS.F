@@ -319,6 +319,8 @@ module BS
      if (allocated(E%E_SOC)) then
        YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
+!aim137: set Energies to zero
+     BS_T_grp(iT)%E(:,:) = 0._SP
      !
    end subroutine
    !

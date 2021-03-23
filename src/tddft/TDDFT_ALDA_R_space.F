@@ -106,7 +106,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
          do jp_spinor=1,n_spinor
            do irho=1,rho_map_size
              ifft=rho_map(irho)
-             irhotw=irho+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
+             irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
              rhotwr2(irhotw)=rhotwr2(irhotw)+&
              &  F_xc_mat(ifft,i_spinor,j_spinor,ip_spinor,jp_spinor)*WF_symm1(irho,ip_spinor)*conjg(WF_symm2(irho,jp_spinor))
            enddo

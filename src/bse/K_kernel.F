@@ -288,7 +288,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
    !
    rho_map_size=0
-   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="TDDFT")
+   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
    YAMBO_ALLOC(rho,(fft_size))
    call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
    YAMBO_FREE(rho)

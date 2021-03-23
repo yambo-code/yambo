@@ -405,10 +405,17 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
               !
               WFN = WF%N
-              !$cuf kernel do(1)
-              do ic=1,wf_grid_size
-                wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(ic),kind=SP)*fft_norm
-              enddo
+              if(allocated(rho_map)) then
+                !$cuf kernel do(1)
+                do ic=1,rho_map_size
+                  wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(rho_map(ic)),kind=SP)*fft_norm
+                enddo
+              else
+                !$cuf kernel do(1)
+                do ic=1,fft_size
+                  wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(ic),kind=SP)*fft_norm
+                enddo
+              endif
               !
             enddo  ! i_spinor
             !

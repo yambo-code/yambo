@@ -23,13 +23,14 @@
 !
 subroutine WF_alloc(WF)
  !
- use pars,          ONLY:cZERO
+ use pars,          ONLY:cZERO,SP
  use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,rho_map_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  type(WAVEs)           :: WF
  !
@@ -68,10 +69,10 @@ subroutine WF_alloc(WF)
  !
  if (WF%space=='R')  then
    YAMBO_ALLOC(WF%r,(wf_grid_size,n_spinor,WF%N))
-   WF%r=cZERO
+   WF%r=wfcmplx(cZERO,kind=SP)
    if (have_cuda) then
      YAMBO_ALLOC_MOLD(WF%r_d,WF%r)
-     WF%r_d=cZERO
+     WF%r_d=wfcmplx(cZERO,kind=SP)
    endif
  else
    YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))

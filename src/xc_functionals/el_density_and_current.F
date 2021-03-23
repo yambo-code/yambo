@@ -162,7 +162,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion,comput
        !
        !
        if (l_rho) then
-         if (allocated(rho_map)) then
+         if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
            do i_spinor=1,n_spinor
              rho_no_sym(rho_map(:))=rho_no_sym(rho_map(:))+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
            enddo

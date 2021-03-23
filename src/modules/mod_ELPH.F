@@ -54,6 +54,8 @@ module ELPH
  real(SP),    allocatable :: PH_acoustic_speed(:,:)
  logical,     allocatable :: PH_acoustic_branch(:)
  !
+ logical              :: use_PH_DbGd
+ !
  ! GKKP Matrix Elements and derived quantities
  type GKKP_me
    !

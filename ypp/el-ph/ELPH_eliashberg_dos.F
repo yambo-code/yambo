@@ -33,7 +33,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              ph_broad,l_eliashberg
  use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
-&                              GKKP,setup_k_plus_q_levels
+&                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,OP_RD_CL
  use interfaces,          ONLY:ELPH_alloc
@@ -41,6 +41,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
+ use stderr,              ONLY:intc
  !
 #include<memory.h>
  type(levels) ::en
@@ -59,10 +60,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  !I/O
  !
- integer           ::io_err,ID,IO_ACT
- integer, external ::io_ELPH
- integer, external ::io_Double_Grid
- logical           ::l_PH_DGrid
+ integer           :: io_err,ID,ID_DG,IO_ACT
+ integer, external :: io_ELPH
+ integer, external :: io_Double_Grid
+ real(SP), external :: Eliashberg_Dos_Func
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
  if (l_dos)        l_dos       =ph_broad>1.E-8
@@ -132,17 +133,20 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
  if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
  !
+ ! Fill the PH_E array
+ !
+ PH_E%nk=nq_todo
+ PH_E%nb=ph_modes
+ YAMBO_ALLOC(PH_E%E,(nq_todo,ph_modes,1))
+ !
  ! Load double-grid if present
  !
- if(l_dos) then
-    call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID)
-    io_err=io_Double_Grid(PH_E,q,ID,'phonons')
-    l_PH_DGrid=.FALSE.
-    if(io_err/=0) then
-      call msg('srl',' Phonon-Dos calculated using PH-double-grid ')
-      l_PH_DGrid=.TRUE.
-    endif
-    stop
+ call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID_DG)
+ io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
+ !
+ if(io_err/=0.and.elph_use_q_grid.and..not.l_eliashberg) then
+    call msg('srl',' Phonon DOS calculated using PH-double-grid ')
+    use_PH_DbGd=.TRUE.
  endif
  !
  ! calculate q%weights
@@ -155,8 +159,16 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_todo)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
-   if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
+   if (l_dos) io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
+   !
+   PH_E%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
+   !
+   if (use_PH_DbGd) then
+      call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID_DG)
+      io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
+      if(io_err/=0) call error('Error reading PH-double grid for q-points '//intc(iq))
+   endif
    !
    if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(iq,en%E_Fermi)
    !
@@ -188,7 +200,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
      !
      do i2=1,elph_steps
        !
-       d_elias_dos=q_weight*Fermi_fnc_derivative(ph_energy(i2)-omega,ph_broad)
+       d_elias_dos=q_weight*Eliashberg_Dos_Func(iq, im, ph_energy(i2) ,ph_broad, PH_E, q)
        !
        if (l_eliashberg) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
        if (l_dos)     ph_dos(i2)=ph_dos(i2)+d_elias_dos

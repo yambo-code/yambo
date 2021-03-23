@@ -34,7 +34,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
 &                        fftw_plan,cufft_plan,fft_g_table_d
- use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
+ use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,rho_map,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -444,7 +444,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
-              WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:),kind=SP)*fft_norm
+              if(     allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(rho_map(:)),kind=SP)*fft_norm
+              if(.not.allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:)         ,kind=SP)*fft_norm
               !
             enddo  ! i_spinor
 #ifdef _CUDA

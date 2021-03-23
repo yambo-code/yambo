@@ -39,6 +39,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
+ use interfaces,   ONLY:el_density_and_current
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
@@ -56,10 +57,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map_size,rho_map
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -84,10 +85,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  DEFINE_BSK_COMMON_INDEXES
  integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
-&              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
+&              is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
  complex(SP):: Co,H_x,H_c,BS_mat_tmp
  complex(SP):: sqrt_f_itk,sqrt_f_itp
- real(SP), allocatable :: BS_max_val_CPU(:)
+ real(SP), allocatable :: BS_max_val_CPU(:),rho(:)
  !
  complex(SP),   external ::TDDFT_ALDA_R_space
  complex(SP),   external ::K_correlation_kernel
@@ -232,11 +233,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! Wave Functions
- !================
- bands_to_load=BS_bands
- if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
- !
  ! DB identifier 
  !===============
  BS_identifier=pickup_a_random(10000._SP)
@@ -284,19 +280,18 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==3) NG=(/O_ng,O_ng_shift/)
  !if (iHxc==3) NG(2)=O_ng_shift
  ! WARNING >
- call WF_load(WF,NG(1),NG(2),bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
- !
- ! Wave Functions Phases
- !=======================
- if (iHxc==3) call K_WF_phases(Xk)
- ! 
- ! Spatial Inversion Test
- !========================
- if (iHxc==1) call WF_spatial_inversion(Ken,Xk)
  !
  ! ALDA
  !======
  if (iHxc==2) then
+   !
+   ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
+   !
+   rho_map_size=0
+   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="TDDFT")
+   YAMBO_ALLOC(rho,(fft_size))
+   call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
+   YAMBO_FREE(rho)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
@@ -305,12 +300,23 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
-   if ( BS_n_g_fxc/=ng_closed) then
-     FXC_n_g_corr=BS_n_g_fxc
-     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   endif
+   call WF_free(WF)
+   !if ( BS_n_g_fxc/=ng_closed) then
+   !  FXC_n_g_corr=BS_n_g_fxc
+   !  call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+   !  call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
+   !endif
  endif
+ !
+ call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title))
+ !
+ ! Wave Functions Phases
+ !=======================
+ if (iHxc==3) call K_WF_phases(Xk)
+ ! 
+ ! Spatial Inversion Test
+ !========================
+ if (iHxc==1) call WF_spatial_inversion(Ken,Xk)
  !
  ! Timing
  !========
@@ -323,7 +329,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! First load previously computed matrix elements.
  !=================================================
  !
- BS_blk_done=.false.
+ if(iHxc==1) BS_blk_done=.false.
  !
 #ifdef _PAR_IO
  if (l_BSE_restart.and.iHxc==1) then
@@ -565,6 +571,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if(iHxc==2) then
    !
+   deallocate(rho_map)
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)
      YAMBO_FREE(FXC_K_diagonal)

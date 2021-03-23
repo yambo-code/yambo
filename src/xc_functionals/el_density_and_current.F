@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion,compute_rho_map)
  !
  ! Electronic density (and current).
  !
@@ -46,15 +46,15 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  use pars,          ONLY:SP,DP
  use com,           ONLY:msg
- use stderr,        ONLY:real2ch
+ use stderr,        ONLY:real2ch,intc
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b
- use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
  use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
@@ -76,18 +76,19 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  real(SP), optional             ::rho(fft_size)
  integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
+ logical,  optional, intent(in) ::compute_rho_map
  !
  ! Work Space 
  !
 #if defined _YPP_RT
  integer    :: ik_RT
 #endif
- integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
- integer    :: ig
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2),ifft !,i_r,i_dir
+ integer    :: ig,rho_map_tmp(fft_size)
  real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
  real(SP)   :: raux
  complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
- logical    :: warn_done,l_si,l_rho !,l_J
+ logical    :: warn_done,l_si,l_rho,l_rho_map !,l_J
  !
 #if defined _RT
  call timing('el_density',OPR='start')
@@ -98,7 +99,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  l_rho     =present(rho)
  !l_J       =present(J)
  l_si      =.false.
- if (present(force_spatial_inversion)) l_si=force_spatial_inversion
+ l_rho_map =.false.
+ if (present(force_spatial_inversion)) l_si     =force_spatial_inversion
+ if (present(compute_rho_map)        ) l_rho_map=compute_rho_map
  !
  if (l_rho) then
    rho       =0._SP
@@ -159,9 +162,15 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
        !
        !
        if (l_rho) then
-         do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
-         enddo
+         if (allocated(rho_map)) then
+           do i_spinor=1,n_spinor
+             rho_no_sym(rho_map(:))=rho_no_sym(rho_map(:))+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
+           enddo
+         else
+           do i_spinor=1,n_spinor
+             rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
+           enddo
+         endif
          !
          ! uspp becsum
          !
@@ -249,6 +258,22 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
      if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
      if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
    endif
+ endif
+ !
+ if(l_rho_map) then
+   !
+   rho_map_thresh=1.E-6_SP
+   rho_map_size=0
+   do ifft=1,fft_size
+     if(rho(ifft)*real(fft_size,SP)/real(DL_vol,SP)<rho_map_thresh) cycle
+     rho_map_size=rho_map_size+1
+     rho_map_tmp(rho_map_size)=ifft
+   enddo
+   !
+   call msg('s','[FFT] Instead of full fft_size  '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
+   allocate(rho_map(rho_map_size))
+   rho_map=rho_map_tmp(:rho_map_size)
+   !
  endif
  !
  !if (l_J) then

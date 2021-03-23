@@ -89,6 +89,12 @@ module wave_func
  !
  integer,    allocatable:: wf_nc_k(:)
  !
+ ! Tho map to reduce fft_size
+ !
+ real(SP)               :: rho_map_thresh
+ integer                :: rho_map_size
+ integer,    allocatable:: rho_map(:)
+ !
  ! Table correspondance G-vec <-> Components: G_ic = wf_igk(ic,ik)
  !
  integer,    allocatable:: wf_igk(:,:)

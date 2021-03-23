@@ -24,8 +24,7 @@
 subroutine WF_alloc(WF)
  !
  use pars,          ONLY:cZERO
- use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx
- use FFT_m,         ONLY:fft_size
+ use wave_func,     ONLY:WAVEs,states_to_load,wf_ng,wf_ncx,rho_map_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m,        ONLY:have_cuda
@@ -62,7 +61,7 @@ subroutine WF_alloc(WF)
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
  !
- if (WF%space=='R')  wf_grid_size=fft_size
+ if (WF%space=='R')  wf_grid_size=rho_map_size
  if (WF%space=='G')  wf_grid_size=wf_ng
  if (WF%space=='C')  wf_grid_size=wf_ncx
  if (WF%space=='B')  wf_grid_size=wf_ncx

@@ -37,7 +37,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use R_lattice,      ONLY:RL_vol,b,n_g_shells,ng_in_shell,Xk_grid_new_mapping,FineGd_desc,&
 &                         rl_sop,bz_samp,g_vec,E_of_shell,ng_closed,bz_samp_duplicate_Fg,MAX_kpts_to_report
  use com,            ONLY:msg,fat_log
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc
  use units,          ONLY:HA2EV
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,DUMP,NONE,OP_RD_CL
@@ -95,12 +95,13 @@ subroutine setup(en,Xen,Ken,k,Xk)
    do is=1,n_atomic_species
      atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
-     if (allocated(atom_mass)) then
-       call msg('r','number of '//PT_elements(Z_species(is))//' atoms  '// &
-&              intc(n_atoms_species(is))// ' with mass '//real2ch(atom_mass(is)))
-     else
-       call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
-     endif
+     call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
+   enddo
+ endif
+ !
+ if (allocated(atom_mass)) then
+   do is=1,n_atomic_species
+       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is))
    enddo
  endif
  !

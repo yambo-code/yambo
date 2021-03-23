@@ -32,7 +32,8 @@ subroutine ELPH_double_grid(k,E,q)
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
- use IO_m,                ONLY:io_control,OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
  !
 #include<memory.h>
  !

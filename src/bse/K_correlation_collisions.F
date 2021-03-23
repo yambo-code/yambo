@@ -70,7 +70,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  !
  if (.not.BS_res_K_corr) return
  !
- iHxc=2
+ iHxc=3
  !
  call timing('T_space CORR Osc.',OPR='start')
  !

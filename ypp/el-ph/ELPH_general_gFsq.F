@@ -39,7 +39,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD,RD,DUMP,RD_CL
  use BS_solvers,          ONLY:BS_mat,BSS_eh_table
- use BS,                  ONLY:BS_K_dim,BS_bands
+ use BS,                  ONLY:BS_K_dim,BS_bands,BS_H_dim
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
@@ -254,10 +254,10 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    call msg('s',' Building the correspondance map')
    !
    YAMBO_FREE(QP_table_map)
-   YAMBO_ALLOC(QP_table_map,(BS_K_dim(1),2))
+   YAMBO_ALLOC(QP_table_map,(BS_H_dim,2))
    QP_table_map=-1
    !
-   do neh = 1,BS_K_dim(1)
+   do neh = 1,BS_H_dim
      !
      ikibz = Xk%sstar(BSS_eh_table(neh,1),1) 
      iv    = BSS_eh_table(neh,2)
@@ -272,7 +272,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
-   call PARALLEL_index(px,(/BS_K_dim(1)/))
+   call PARALLEL_index(px,(/BS_H_dim/))
    call PP_redux_wait
    !
    do i_lambda=1,EXCITONS_n_user_states
@@ -289,7 +289,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      call live_timing('gF^2 [exc] @ state '//trim(intc(lambda)),px%n_of_elements(myid+1))
      !
-     do neh = 1,BS_K_dim(1)
+     do neh = 1,BS_H_dim
        !
        if (.not.px%element_1D(neh)) cycle
        !

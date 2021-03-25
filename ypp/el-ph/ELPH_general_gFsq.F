@@ -278,7 +278,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    do i_lambda=1,EXCITONS_n_user_states
      !
-     g_sq_F_exciton=0.
+     g_sq_F_exciton=0._SP
      !
      lambda=EXCITONS_user_indexes(i_lambda)
      !
@@ -299,8 +299,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
          ic    = QP_table_map(neh,1)
          iv    = QP_table_map(neh,2)
          !
-         g_sq_F_exciton(:)=g_sq_F_exciton(:)+abs(BS_mat(neh,i_l))**2.*& 
-&                         (g_sq_F(ic,:,1)+g_sq_F(ic,:,2)+g_sq_F(ic,:,3)&
+         g_sq_F_exciton(:)=g_sq_F_exciton(:)+abs(BS_mat(neh,i_l))**2*     & 
+&                         (g_sq_F(ic,:,1)+g_sq_F(ic,:,2)+g_sq_F(ic,:,3)   &
 &                         -g_sq_F(iv,:,1)-g_sq_F(iv,:,2)-g_sq_F(iv,:,3) )
        enddo
        !
@@ -309,6 +309,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      enddo
      !
      call live_timing()
+     !
+     call PP_redux_wait(g_sq_F_exciton)
      !
      ch='g_sq_F_exc_state_'//trim(intc(lambda))
      call of_open_close(trim(ch),'ot')

@@ -38,8 +38,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
 &                              gsqF_life_f ,elph_use_q_grid,PH_freqs_sq
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD,RD,DUMP,RD_CL
- use BS_solvers,          ONLY:BS_mat,BSS_eh_table
- use BS,                  ONLY:BS_K_dim,BS_bands,BS_H_dim
+ use BS_solvers,          ONLY:BS_mat,BSS_eh_table,BSS_n_eig
+ use BS,                  ONLY:BS_K_dim,BS_bands
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
@@ -50,7 +50,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !
  type(levels) ::en,Xen
  type(bz_samp)::k,Xk,q
- integer,  optional      ::BS_E_degs(:)
+ integer,  optional      ::BS_E_degs(BSS_n_eig)
  !
  ! Work Space (electrons)
  !
@@ -90,6 +90,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    QP_nb=BS_bands(2)
    QP_nk=Xk%nibz
+   YAMBO_FREE(QP_state)
    YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
    QP_state=.FALSE.
    forall( i1=BS_bands(1):BS_bands(2) ) QP_state(i1,:)=.TRUE.
@@ -113,7 +114,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
  io_err=io_ELPH(ID,'gFsq')
  !
- if (io_err/=0) return
+ if (io_err/=0) call error(' Error reading the gFsq databases!')
  !
  YAMBO_ALLOC(QP_table,(QP_n_states,3+n_sp_pol-1)) ! Read from the gFsq DB 
  !
@@ -254,10 +255,10 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    call msg('s',' Building the correspondance map')
    !
    YAMBO_FREE(QP_table_map)
-   YAMBO_ALLOC(QP_table_map,(BS_H_dim,2))
+   YAMBO_ALLOC(QP_table_map,(BS_K_dim(1),2))
    QP_table_map=-1
    !
-   do neh = 1,BS_H_dim
+   do neh = 1,BS_K_dim(1)
      !
      ikibz = Xk%sstar(BSS_eh_table(neh,1),1) 
      iv    = BSS_eh_table(neh,2)
@@ -272,12 +273,12 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    !
    call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
-   call PARALLEL_index(px,(/BS_H_dim/))
+   call PARALLEL_index(px,(/BS_K_dim(1)/))
    call PP_redux_wait
    !
    do i_lambda=1,EXCITONS_n_user_states
      !
-     g_sq_F_exciton=0.
+     g_sq_F_exciton=0._SP
      !
      lambda=EXCITONS_user_indexes(i_lambda)
      !
@@ -289,7 +290,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      call live_timing('gF^2 [exc] @ state '//trim(intc(lambda)),px%n_of_elements(myid+1))
      !
-     do neh = 1,BS_H_dim
+     do neh = 1,BS_K_dim(1)
        !
        if (.not.px%element_1D(neh)) cycle
        !
@@ -298,8 +299,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
          ic    = QP_table_map(neh,1)
          iv    = QP_table_map(neh,2)
          !
-         g_sq_F_exciton(:)=g_sq_F_exciton(:)+abs(BS_mat(neh,i_l))**2.*& 
-&                         (g_sq_F(ic,:,1)+g_sq_F(ic,:,2)+g_sq_F(ic,:,3)&
+         g_sq_F_exciton(:)=g_sq_F_exciton(:)+abs(BS_mat(neh,i_l))**2*     & 
+&                         (g_sq_F(ic,:,1)+g_sq_F(ic,:,2)+g_sq_F(ic,:,3)   &
 &                         -g_sq_F(iv,:,1)-g_sq_F(iv,:,2)-g_sq_F(iv,:,3) )
        enddo
        !
@@ -308,6 +309,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      enddo
      !
      call live_timing()
+     !
+     call PP_redux_wait(g_sq_F_exciton)
      !
      ch='g_sq_F_exc_state_'//trim(intc(lambda))
      call of_open_close(trim(ch),'ot')

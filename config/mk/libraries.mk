@@ -77,6 +77,6 @@ YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setu
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function el-ph qp bse hamiltonian collisions
 YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse collisions hamiltonian nloptics 
+                     dipoles pol_function el-ph qp bse collisions hamiltonian nloptics 
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function qp bse hamiltonian collisions nloptics 
+                     dipoles pol_function el-ph qp bse hamiltonian collisions nloptics 

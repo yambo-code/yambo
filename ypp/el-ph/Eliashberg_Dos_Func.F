@@ -55,9 +55,9 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
     !
     write(*,*) 'passo qui ',q%FGibz%k_range(iq,:)
     !
-    do iq_fg=q%FGibz%k_range(iq,1),q%FGibz%k_range(iq,2)
-      iE_fg =q%FGibz%E_map(iq_fg)
-      write(*,*) 'inside loop ',iE_fg,iq_fg,q%FGibz%weights(iq_fg)
+    do iq_fg=q%FGbz%k_range(iq,1),q%FGbz%k_range(iq,2)
+      iE_fg =q%FGbz%E_map(iq_fg)
+      write(*,*) 'inside loop ',iE_fg,iq_fg,q%FGbz%weights(iq_fg)
       omega=PH_E%FG%E(im,iE_fg,1)
       Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)*q%FGibz%weights(iq_fg)
     enddo

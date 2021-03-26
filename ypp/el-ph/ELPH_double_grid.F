@@ -101,16 +101,16 @@ subroutine ELPH_double_grid(k,E,q)
  ! Since phonon in the ELPH_Sigma_c are in the BZ, I force
  ! this expantion for the PH-Double-Grid, it can be extended to the other cases
  !
- if(.not.STRING_same(BZ_FineGd_mode,"expanded")) &
-&   call warning("Phonon double-grid works only in 'expanded' mode, forced mode='expanded'")
- l_mix     =.false.
- l_expand  =.true.
- l_unexpand=.false.
+ if(.not.STRING_same(BZ_FineGd_mode,"mixed")) &
+&   call warning("Phonon double-grid tested only in 'mixed' mode")
+ l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
+ l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
+ l_unexpand=STRING_same(BZ_FineGd_mode,"unexpanded")
  !
  ! FineGd E to IBZ map
  !=======================
  call section('=','Double Grid Energies-IBZ mapping and Fine Grid re-ordering')
- call k_map_fine_to_coarse('Phonon Energies-IBZ',q,q%FGbare,q_fine,PH_E)
+ call k_map_fine_to_coarse('Energies-IBZ',q,q%FGbare,q_fine,PH_E)
  !
  ! Expand the Fine Grid 
  !========================

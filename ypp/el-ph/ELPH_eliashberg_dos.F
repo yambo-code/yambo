@@ -128,11 +128,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    gamma=0.
  endif
  !
- call PARALLEL_index(px,(/nq_todo/))
- if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
- if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
- if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
- !
  ! Fill the PH_E array
  !
  PH_E%nk=nq_todo
@@ -144,10 +139,16 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID_DG)
  io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
  !
- if(io_err/=0.and.elph_use_q_grid.and..not.l_eliashberg) then
-    call msg('srl',' Phonon DOS calculated using PH-double-grid ')
+ if(io_err==0.and.elph_use_q_grid.and..not.l_eliashberg) then
+    call msg('sr','Phonon DOS calculated using PH-double-grid ')
     use_PH_DbGd=.TRUE.
  endif
+ use_PH_DbGd=.FALSE.
+ !
+ call PARALLEL_index(px,(/nq_todo/))
+ if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
+ if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
+ if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
  !
  ! calculate q%weights
  !

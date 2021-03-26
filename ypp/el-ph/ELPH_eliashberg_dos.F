@@ -143,7 +143,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
     call msg('sr','Phonon DOS calculated using PH-double-grid ')
     use_PH_DbGd=.TRUE.
  endif
- use_PH_DbGd=.FALSE.
  !
  call PARALLEL_index(px,(/nq_todo/))
  if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))

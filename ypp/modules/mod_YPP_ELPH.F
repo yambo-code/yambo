@@ -74,15 +74,14 @@ module YPP_ELPH
  !
  interface
    !
-   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
+   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
+     use BS_solvers,    ONLY:BSS_n_eig
      implicit none
      type(bz_samp)      :: k,q,Xk
      type(levels)       :: en,Xen
-     integer, optional  :: BS_E_degs(:)
-     integer, optional  :: lambda_s(:)
-     integer, optional  :: n_lambda
+     integer, optional  :: BS_E_degs(BSS_n_eig)
    end subroutine
    !
    subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)

@@ -149,9 +149,15 @@ subroutine PHEL_driver(E,k,q)
  call PH_Grid_Check_Transitions(k,q,QP_PH_n_G_bands,k_FG,E_FG)
  !
  ! Calculation of the lifetimes
+ !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
+ !  - Out of eq.  (yambo_rt): scatt. rates with lesser/greater S^< and S^>
  !==============================
- l_initial_equilibrium=.TRUE. 
+ l_initial_equilibrium=.TRUE.
+#if defined _RT 
  call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
+#else
+ call PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
+#endif
  !
  ! Redux
  !=======
@@ -163,6 +169,9 @@ subroutine PHEL_driver(E,k,q)
  if (l_extended_output) then
    call PP_redux_wait(RT_PE_extra%interband)
    call PP_redux_wait(RT_PE_extra%intraband)
+   if (l_initial_equilibrium) then
+     call PP_redux_wait(RT_PE_extra%approx)
+   endif
  endif
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

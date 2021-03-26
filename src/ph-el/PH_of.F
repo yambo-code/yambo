@@ -60,12 +60,13 @@ subroutine PH_of(q)
      if (l_extended_output) then
        call OUTPUT_add_column("ph",TITLES=(/"Width(interb)"/),R_VALUES=(/RT_PE_extra%interband(il,iq)/),UNIT="meV")
        call OUTPUT_add_column("ph",TITLES=(/"Width(intrab)"/),R_VALUES=(/RT_PE_extra%intraband(il,iq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width(approx)"/),R_VALUES=(/RT_PE_extra%approx(il,iq)/),UNIT="meV")
      endif
      !
      call OUTPUT_add_column("ph",ORDER=(/"Q-point","Branch ","Energy "/))
      call OUTPUT_add_column("ph",ORDER=(/"Width(emit)  ","Width(abs)   ","Width(eq)    "/))
      if (l_extended_output) then
-       call OUTPUT_add_column("ph",ORDER=(/"Width(interb)","Width(intrab)"/))
+       call OUTPUT_add_column("ph",ORDER=(/"Width(interb)","Width(intrab)","Width(approx)"/))
      endif
      call OUTPUT_add_column("ph",action="write")
    enddo

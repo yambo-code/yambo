@@ -50,6 +50,7 @@ module RT_lifetimes
    integer                  :: D2=0
    real(SP),    allocatable :: interband(:,:)
    real(SP),    allocatable :: intraband(:,:)
+   real(SP),    allocatable :: approx(:,:)
  end type RT_extra_lifetime
  !
  type RT_obj_lifetime
@@ -200,10 +201,12 @@ module RT_lifetimes
      LIFE%D2=D2
      YAMBO_ALLOC(LIFE%interband,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%intraband,(D1(1):D1(2),D2))
+     YAMBO_ALLOC(LIFE%approx,(D1(1):D1(2),D2))
      LIFE%KIND=KIND
      LIFE%active=.true.
      LIFE%interband=rZERO
      LIFE%intraband=rZERO
+     LIFE%approx=rZERO
    end subroutine
    !
    subroutine RT_extra_lifetime_free(LIFE)
@@ -212,6 +215,7 @@ module RT_lifetimes
      LIFE%active=.FALSE.
      YAMBO_FREE(LIFE%interband)
      YAMBO_FREE(LIFE%intraband)
+     YAMBO_FREE(LIFE%approx)
    end subroutine
    !
    subroutine RT_obj_lifetime_alloc(KIND,LIFE,Ns)

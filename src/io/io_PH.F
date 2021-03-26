@@ -93,13 +93,16 @@ integer function io_PH(ID)
    call def_variable_bulk(ID,"PH_LIFE_EQ",4,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
    call io_variable_bulk(ID,4,R2=RT_PE_life%linewidth_eq(:,:))
    !
-   if (l_extended_output) then
+   if (l_extended_output) then  
      !
      call def_variable_bulk(ID,"PH_LIFE_INTERBAND",5,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
      call io_variable_bulk(ID,5,R2=RT_PE_extra%interband(:,:))
      !
      call def_variable_bulk(ID,"PH_LIFE_INTRABAND",6,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
      call io_variable_bulk(ID,6,R2=RT_PE_extra%intraband(:,:))
+     !
+     call def_variable_bulk(ID,"PH_LIFE_EQ_APPROX",7,(/elph_branches(2)-elph_branches(1)+1,nqibz/),SP)
+     call io_variable_bulk(ID,7,R2=RT_PE_extra%approx(:,:))    
      !
    endif
    !

@@ -28,4 +28,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  !
 #include<memory.h>
  !
+ type(levels),  intent(in) :: E
+ type(bz_samp), intent(in) :: k,q
+ !
 end subroutine

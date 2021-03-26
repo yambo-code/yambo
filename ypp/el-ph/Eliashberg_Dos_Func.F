@@ -38,30 +38,23 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
  !
  ! work space
  !
- real(SP) :: omega
+ real(SP) :: omega,weight
  integer  :: iq_fg,iE_fg
+ !     
+ omega = sqrt( MAX( PH_freqs_sq(iq,im),0. ) )
  !
- if(.not.use_PH_DbGd) then
-    !     
-    omega = sqrt( MAX( PH_freqs_sq(iq,im),0. ) )
-    !
-    Eliashberg_Dos_Func=Fermi_fnc_derivative(ph_en-omega,ph_broad)
-    !
-    return
-    !
- else
-    !
-    Eliashberg_Dos_Func=0._SP
-    !
-    write(*,*) 'passo qui ',q%FGibz%k_range(iq,:)
-    !
-    do iq_fg=q%FGbz%k_range(iq,1),q%FGbz%k_range(iq,2)
-      iE_fg =q%FGbz%E_map(iq_fg)
-      write(*,*) 'inside loop ',iE_fg,iq_fg,q%FGbz%weights(iq_fg)
-      omega=PH_E%FG%E(im,iE_fg,1)
-      Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)*q%FGibz%weights(iq_fg)
-    enddo
-    !
- endif
+ Eliashberg_Dos_Func=Fermi_fnc_derivative(ph_en-omega,ph_broad)
+ !
+ if(.not.use_PH_DbGd) return
+ !
+ weight=q%FGbz%k_range(iq,2)-q%FGbz%k_range(iq,1)+1
+ !
+ do iq_fg=q%FGbz%k_range(iq,1)+1,q%FGbz%k_range(iq,2),1
+   iE_fg =q%FGbz%E_map(iq_fg)
+   omega=PH_E%FG%E(im,iE_fg,1)
+   Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)*q%FGibz%weights(iq_fg)
+ enddo
+ !
+ Eliashberg_Dos_Func=Eliashberg_Dos_Func/weight
  !
 end function

@@ -44,7 +44,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq,l_gkkp_dg
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
+&                              l_gkkp_dg,l_gkkp_plot
 #endif
  !
  implicit none
@@ -254,6 +255,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
    if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
+   if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
  endif
  !
  !

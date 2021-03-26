@@ -39,11 +39,13 @@ module YPP_ELPH
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  real(SP):: elph_residual_treshold = 0.
+ integer :: ik_gkkp,ib_gkkp
  !
  ! ...GKKP I/O
  logical :: l_gkkp
  logical :: l_gkkp_db
  logical :: l_gkkp_dg
+ logical :: l_gkkp_plot
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path

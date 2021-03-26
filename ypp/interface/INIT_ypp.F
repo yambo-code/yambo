@@ -291,8 +291,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      endif
 #if defined _YPP_ELPH
      if ( trim(rstr_piece(i1)) == 'gkkp') then
-       l_gkkp_db =STRING_match(rstr_piece(i1+1),'g')
-       l_gkkp_dg =STRING_match(rstr_piece(i1+1),'d')
+       l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
+       l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
+       l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
      endif
 #endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
@@ -391,7 +392,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
  if (l_gkkp_db)           call initactivate(1,'gkkp_db')
  if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
- if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
+ if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')
+ if (l_ph_ass_dos)        call initactivate(1,'ph_ass_dos')
  !
 #endif
 #if defined _YPP_SC
@@ -447,6 +449,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_gkkp      =runlevel_is_on('gkkp')
  l_gkkp_db   =runlevel_is_on('gkkp_db')
  l_gkkp_dg   =runlevel_is_on('gkkp_dg')
+ l_gkkp_plot =runlevel_is_on('gkkp_plot')
  l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
@@ -701,6 +704,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
  if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode")
+ if (l_gkkp_plot)              call initactivate(1,"States Degen_Step GKKPkpt")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

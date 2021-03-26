@@ -87,7 +87,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
      call section('=','Double Grid K-points expansion ...')
      call k_ibz2bz(FineGd_k,'i',.true.)
      call k_map_fine_to_coarse_reduce(FineGd_k)
-     call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+     call msg('nsr',':: Found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
      !
    endif
    !

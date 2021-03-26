@@ -124,7 +124,7 @@ subroutine ELPH_double_grid(k,E,q)
      call section('=','Double Grid K-points expansion ...')
      call k_ibz2bz(q_fine,'i',.true.)
      call k_map_fine_to_coarse_reduce(q_fine)
-     call msg('nsr','Found '//trim(intc(q_fine%nbz))//' ('//trim(intc(q_fine%nibz))//') points in the BZ (IBZ)')
+     call msg('nsr',':: Found '//trim(intc(q_fine%nbz))//' ('//trim(intc(q_fine%nibz))//') points in the BZ (IBZ)')
      !
    endif
    !

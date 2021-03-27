@@ -704,7 +704,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
  if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode")
- if (l_gkkp_plot)              call initactivate(1,"States Degen_Step GKKPkpt")
+ if (l_gkkp_plot)              call initactivate(1,"Degen_Step ")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
@@ -728,6 +728,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
+ if (.not.l_init_QP) l_init_QP=l_gkkp_plot
 #endif
 #if defined _YPP_SC
  if (.not.l_init_QP) l_init_QP=(l_electrons.and.l_mean_potential).or.l_angular_momentum.or.l_position

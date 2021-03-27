@@ -23,12 +23,33 @@
 !
 subroutine ELPH_plot_gkkp(k,E,q)
  !
+ use pars,                ONLY:SP,pi
  use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb
+ use com,                 ONLY:msg
+ use vec_operate,         ONLY:c2a
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
  !
 #include<memory.h>
  !
- type(levels),  intent(in) :: E
- type(bz_samp), intent(in) :: k,q
+ type(bz_samp) ::k,q
+ type(levels)  ::E
+ !
+ ! Work space
+ !
+ integer               :: ID,io_err
+ integer, external     :: io_ELPH
+ !
+ call section('+','Plot GKKP functions')
+ !
+ ! Read phonon-frequencies in the ELPH-DB
+ ! ======================================
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_err=io_ELPH(ID,'gkkp')
+ call deliver_IO_error_message(io_err,"GKKP")
+ !
+ if (io_err/=0) call error('El-Ph database not found')
  !
 end subroutine

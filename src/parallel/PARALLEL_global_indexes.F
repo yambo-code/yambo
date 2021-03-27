@@ -61,6 +61,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! Work Space
  !
  integer              :: X_type
+ character(8)         :: MORE
  !
  !========================
  ! Response function kind
@@ -69,6 +70,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  if (present(X))                      X_type=X%whoami
  if (ENVIRONMENT=="Response_T_space") X_type=5
  !
+ MORE=""
  !========
  ! Resets
  !========
@@ -133,6 +135,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
    endif
    PAR_Dip_ib=Dip%ib
    PAR_Dip_ib_lim=Dip%ib_lim
+   if (trim(Dip%approach)=="Shifted grids") MORE="_SHIFTED"
  endif
  !
  call PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
@@ -141,7 +144,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  ! DEFAULTS
  !==========
  !
- CALL PARALLEL_global_defaults(ENVIRONMENT)
+ CALL PARALLEL_global_defaults(ENVIRONMENT//trim(MORE))
  !
  !==============================
  ! ENVIRONMENT DEPENDENT SCHEMES

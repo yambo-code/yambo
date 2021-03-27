@@ -7,7 +7,7 @@ endif
 INTERFCS = a2y c2y $(p2y) $(e2y)
 CORE     = yambo ypp $(INTERFCS)
 GPL      = yambo_rt_gpl
-UTILS    = changelog
+UTILS    = help changelog
 CLEANS   = clean_fast clean clean_all distclean
 PH_PROJ  = yambo_ph ypp_ph 
 SC_PROJ  = yambo_sc ypp_sc

@@ -704,7 +704,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
  if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
  if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode")
- if (l_gkkp_plot)              call initactivate(1,"Degen_Step ")
+ if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif

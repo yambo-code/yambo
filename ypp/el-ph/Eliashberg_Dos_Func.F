@@ -47,12 +47,12 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
  !
  if(.not.use_PH_DbGd) return
  !
- weight=q%FGbz%k_range(iq,2)-q%FGbz%k_range(iq,1)+1
+ weight=1.0/(q%FGbz%k_range(iq,2)-q%FGbz%k_range(iq,1)+1._SP)
  !
  do iq_fg=q%FGbz%k_range(iq,1)+1,q%FGbz%k_range(iq,2),1
    iE_fg =q%FGbz%E_map(iq_fg)
    omega=PH_E%FG%E(im,iE_fg,1)
-   Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)*q%FGibz%weights(iq_fg)
+   Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)
  enddo
  !
  Eliashberg_Dos_Func=Eliashberg_Dos_Func/weight

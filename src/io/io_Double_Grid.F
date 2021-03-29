@@ -60,7 +60,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  if (index(what,'electrons')>0) then
    db_name='Double_Grid'
  else if (index(what,'phonons')>0) then
-   db_name=''
+   db_name='PH_Double_Grid'
    l_PH_DG=.TRUE.
  else
    call error(' Unknown DB-grid database')

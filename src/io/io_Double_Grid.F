@@ -29,7 +29,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
  use IO_int,         ONLY:io_connect,io_disconnect,io_bulk,io_variable_elemental,def_variable_bulk,&
 &                         io_header,ver_is_gt_or_eq,io_variable_bulk,def_variable_elemental,io_fragment
- use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec                         
+ use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG 
  use timing_m,       ONLY:timing
  use stderr,         ONLY:intc
 #if defined _ELPH
@@ -60,13 +60,13 @@ integer function io_Double_Grid(E,Xk,ID,what)
  if (index(what,'electrons')>0) then
    db_name='Double_Grid'
  else if (index(what,'phonons')>0) then
-   db_name='PH_Double_Grid'
+   db_name=''
    l_PH_DG=.TRUE.
  else
    call error(' Unknown DB-grid database')
  endif
  !
- io_Double_Grid=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
+ io_Double_Grid=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/)).and.l_PH_DG.and.frag_DG))
  !
  if (io_Double_Grid/=0) goto 1
  !
@@ -74,7 +74,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
+   io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.,FRAG=frag_DG)
    !
    if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
    !
@@ -162,6 +162,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  if(l_PH_DG.and.iq>0) then
    !
    call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_Double_Grid)
+   write(*,*) ' passo qui ',io_Double_Grid,iq
    if(io_Double_Grid/=0) goto 1
    !
    call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=2,VAR_KIND=IP+100,MENU=0) 
@@ -171,7 +172,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    if(read_is_on(ID)) call FineGd_E_components_alloc(GKKP%E_kpq(iq))
    write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
-   call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E))
+   call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%FG%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_kpq(iq)%FG%E))
    !
  endif
 #endif

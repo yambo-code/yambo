@@ -114,8 +114,11 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ph_energy(i2)=(i2-1)*e_step
  enddo
  !
- nq_todo=elph_nQ
- if (elph_use_q_grid) nq_todo=q%nibz
+ if (elph_use_q_grid) then
+   nq_todo=q%nibz
+ else
+   nq_todo=elph_nQ
+ endif
  !
  ! Eliashberg Function & DOS function
  !====================================
@@ -139,14 +142,18 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID_DG)
  io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
  !
- if(io_err==0.and.elph_use_q_grid.and..not.l_eliashberg) then
-    call msg('sr','Phonon DOS calculated using PH-double-grid ')
-    use_PH_DbGd=.TRUE.
+ if(io_err==0) then
+   if(elph_use_q_grid.and..not.l_eliashberg) then
+     call msg('sr','Phonon DOS calculated using PH-double-grid ')
+     use_PH_DbGd=.TRUE.
+   else
+     call msg('sr','PH-double-grid not compatible with Random q-grids and Eliashberg functions!')
+   endif
  endif
  !
  call PARALLEL_index(px,(/nq_todo/))
  if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
- if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
+ if (.not.l_eliashberg.and.l_dos) call live_timing('ph-DOS',px%n_of_elements(myid+1))
  if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
  !
  ! calculate q%weights
@@ -165,7 +172,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    PH_E%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
    !
    if (use_PH_DbGd) then
-      call io_control(ACTION=OP_RD_CL,SEC=(/iq+1/),ID=ID_DG)
+      call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID_DG)
       io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
       if(io_err/=0) call error('Error reading PH-double grid for q-points '//intc(iq))
    endif

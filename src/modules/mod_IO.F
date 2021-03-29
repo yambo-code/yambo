@@ -59,6 +59,7 @@ module IO_m
  !
  character(lchlen) :: DBs_FRAG_control_string = "none"
  logical           :: frag_DIP
+ logical           :: frag_DG
  logical           :: frag_RESPONSE
  logical           :: frag_WF
  logical           :: frag_QINDX

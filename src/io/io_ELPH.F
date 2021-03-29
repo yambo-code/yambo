@@ -157,7 +157,6 @@ integer function io_ELPH(ID,what)
  !
  ! Fragmentation
  !
- write(*,*) ' reading fragment ',iq
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_ELPH)
  if (ierr<0.and.read_is_on(ID)) goto 1
  !

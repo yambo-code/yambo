@@ -35,7 +35,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,OP_RD_CL
+ use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,OP_RD_CL,REP
  use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
@@ -139,7 +139,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  ! Load double-grid if present
  !
- call io_control(ACTION=OP_RD_CL,SEC=(/1/),MODE=DUMP,ID=ID_DG)
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
  io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
  !
  if(io_err==0) then
@@ -166,7 +166,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    !
    IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_todo)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
-   if (l_dos) io_err=io_ELPH(ID,'no_matrix_elements')
+   if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
    PH_E%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )

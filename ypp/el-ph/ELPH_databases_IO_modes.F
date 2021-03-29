@@ -43,7 +43,7 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
  integer :: io_unit=99
  integer :: i1,iq,ic,ia,ph_modes
  character(1)      :: ws_ch(2)
- real(SP)          :: w_vec_pot(6),ph_q(3),ph_freq
+ real(SP)          :: w_vec_pot(6),ph_q(3)
  logical, external  ::file_exists
  !
  ph_modes=3*n_atoms
@@ -68,7 +68,7 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      read(io_unit,*,end=100)
      !
      do i1=1,ph_modes
-       read(io_unit, '(25x,f10.6)',end=100) ph_freq    ! Reads the eigenfreq in THz using format     
+       read(io_unit,*,end=100)
        do ia=1,n_atoms
          read(io_unit,*,end=100) ws_ch(1),w_vec_pot
        enddo
@@ -102,7 +102,7 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      !
    enddo
    !
-   ph_freq = ph_freq/HA2THZ
+   ph_freqs = ph_freqs/HA2THZ
    !
  endif
  !

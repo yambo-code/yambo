@@ -53,7 +53,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  type(PP_indexes)  :: px
  real(DP)          :: R2_min,R2
- real(SP)          :: v(3),star_vec(3,nsym),pre_factor
+ real(SP)          :: v(3),pre_factor
  integer           :: ik,ikp,iv,i_shell,i_star,nstar,Nkm1,info,&
 &                     PAR_nshells,i_par_shell
  integer           :: nsym_interp
@@ -68,6 +68,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
  complex(DP), allocatable :: BZ_star(:,:),PAR_engre(:,:)
  integer,     allocatable :: ipiv(:),SHELL_index(:)
+ real(SP),    allocatable :: star_vec(:,:)
  !
  ! External
  !
@@ -82,6 +83,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  nsym_interp=nsym
  if(.not.INTERPOLATE_use_symm) nsym_interp=1
+ YAMBO_ALLOC(star_vec,(3,nsym_interp))
  !
  do ik=1,Nkm1
    delta(ik,:)=VALUEs(:,ik)-VALUEs(:,Nk)
@@ -226,6 +228,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  YAMBO_FREE(rho)
  YAMBO_FREE(SHELL_index)
  YAMBO_FREE(PAR_engre)
+ YAMBO_FREE(star_vec)
  !
  call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
  !

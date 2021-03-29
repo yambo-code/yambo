@@ -172,7 +172,6 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  YAMBO_FREE(all_vec)
  YAMBO_FREE(all_vec_mod)
  YAMBO_FREE(indx)
- YAMBO_FREE(int_sop)
  YAMBO_FREE(star_vec)
  !
 end subroutine INTERPOLATION_BZ_setup

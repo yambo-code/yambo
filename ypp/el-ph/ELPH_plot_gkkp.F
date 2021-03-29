@@ -33,8 +33,9 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use IO_int,              ONLY:io_control
  use YPPm,                ONLY:coo_out,K_transform
  use com,                 ONLY:msg,of_open_close
- use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,manage_action,RD_CL_IF_END
+ use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,manage_action,RD_CL_IF_END,OP_RD
  use stderr,              ONLY:intc
+ use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
  !
@@ -44,7 +45,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  ! Work space
  !
  integer               :: ID,IO_ACT,io_err
- integer               :: iq,i_phm,i_qp,i_sp_pol,ik,ib
+ integer               :: iq,i_phm,i_qp,i_sp_pol,ik,ib,nq_to_read
  integer, external     :: io_ELPH
  !
  real(SP)  :: q_pt(3)
@@ -55,7 +56,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  !
  ! Read phonon-frequencies in the ELPH-DB
  ! ======================================
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID)
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'gkkp')
  call deliver_IO_error_message(io_err,"GKKP")
  !
@@ -83,30 +84,43 @@ subroutine ELPH_plot_gkkp(k,E,q)
    !
  enddo
  !
- do iq=1,elph_nQ_used
+ if(elph_use_q_grid) then
+   nq_to_read=q%nibz
+ else
+   nq_to_read=elph_nQ_used
+ endif
+ !
+ call live_timing('Writing GKKP factors',nq_to_read)
+ !
+ do iq=1,nq_to_read
+   !
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_to_read)
+   call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
+   io_err=io_ELPH(ID,'gkkp')
+   if (io_err<0) call error('Missing Q-database')
+   !
+   q_pt=q%pt(iq,:)
+   call K_transform(q_pt,'iku')
+   !
+   values(1:3)=q_pt(1:3)
+   !
+   do i_qp=1,QP_n_states
      !
-     IO_ACT=manage_action(RD_CL_IF_END,iq,1,elph_nQ_used)
-     call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
-     io_err=io_ELPH(ID,'gkkp')
+     ib    =QP_table(i_qp,1)
+     ik    =QP_table(i_qp,3)
+     i_sp_pol=spin(QP_table(i_qp,:))
      !
-     q_pt=q%pt(iq,:)
-     call K_transform(q_pt,'iku')
+     values(4:)=abs(GKKP%dVc(:,ib,ib,ik,1))**2
      !
-     values(1:3)=q_pt(1:3)
+     call msg('o '//gkkp_fname(i_qp),'  ',values,INDENT=0,USE_TABS=.TRUE.)
      !
-     do i_qp=1,QP_n_states
-       !
-       ib    =QP_table(i_qp,1)
-       ik    =QP_table(i_qp,3)
-       i_sp_pol=spin(QP_table(i_qp,:))
-       !
-       values(4:)=abs(GKKP%dVc(:,ib,ib,ik,1))**2
-       !
-       call msg('o '//gkkp_fname(i_qp),'  ',values,INDENT=0,USE_TABS=.TRUE.)
-       !
-     enddo
-     !
+   enddo
+   !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
  !
  do i_qp=1,QP_n_states
    call of_open_close(gkkp_fname(i_qp))

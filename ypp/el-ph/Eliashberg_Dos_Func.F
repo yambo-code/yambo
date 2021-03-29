@@ -55,6 +55,7 @@ real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q)
    Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)
  enddo
  !
- Eliashberg_Dos_Func=Eliashberg_Dos_Func/weight
+ write(*,*) iq,1.0/weight
+ Eliashberg_Dos_Func=Eliashberg_Dos_Func*weight
  !
 end function

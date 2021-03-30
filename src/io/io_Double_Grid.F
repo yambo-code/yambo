@@ -74,7 +74,11 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.,FRAG=frag_DG)
+   if(l_PH_DG) then
+     io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.,FRAG=frag_DG)
+   else
+     io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.)
+   endif
    !
    if (.not.ver_is_gt_or_eq(ID,revision=3560)) io_Double_Grid=IO_OUTDATED_DB
    !

@@ -350,13 +350,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
              delta_E         =Sc_W(i_qp)%p(iw)-en%E(ob,ok,1)
              delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
              f_occ=en%f(ob,ok,1)/spin_occ
-             one_minus_2f_occ=(1._SP-2._SP*f_occ)
            else
              delta_E         =Sc_W(i_qp)%p(iw)-GKKP%E_kpq(iq_db)%E(ob,ik_bz,1)
              delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
              f_occ=GKKP%E_kpq(iq_db)%f(ob,ik_bz,1)/spin_occ
-             one_minus_2f_occ=(1._SP-2._SP*f_occ)
            endif
+           !
+           one_minus_2f_occ=(1._SP-2._SP*f_occ)
            !
            gsqF_damping=aimag( Sc_W(i_qp)%p(iw) )
            !

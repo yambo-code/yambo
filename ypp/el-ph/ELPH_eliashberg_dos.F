@@ -146,6 +146,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    if(elph_use_q_grid.and..not.l_eliashberg) then
      call msg('sr','Phonon DOS calculated using PH-double-grid ')
      use_PH_DbGd=.TRUE.
+     call k_build_up_BZ_tables(q)
    else
      call msg('sr','PH-double-grid not compatible with Random q-grids and Eliashberg functions!')
    endif

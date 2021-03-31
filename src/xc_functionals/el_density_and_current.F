@@ -270,7 +270,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion,comput
      rho_map_tmp(rho_map_size)=ifft
    enddo
    !
-   call msg('s','[FFT] Instead of full fft_size  '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
+   call msg('s','[FFT] Instead of full fft_size '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
    allocate(rho_map(rho_map_size))
    rho_map=rho_map_tmp(:rho_map_size)
    !

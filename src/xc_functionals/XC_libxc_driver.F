@@ -28,7 +28,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
- use pars,           ONLY:SP,DP,pi,RZERO
+ use pars,           ONLY:SP,DP,IPL,pi,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
@@ -39,11 +39,13 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc_mat,F_xc,V_xc,xc_setup_hyb,&
-&                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,    &
+&                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,xc_f03_func_end, &
 &                         xc_spin,xc_spin_map1, &
-&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
- use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
- use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
+&                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,&
+&                         XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA,&
+&                         XC_GGA_X_PBE, XC_GGA_C_PBE
+ use xc_f03_lib_m,   ONLY:xc_f03_lda_exc,xc_f03_lda_vxc,xc_f03_lda_fxc, &
+&                         xc_f03_gga_exc,xc_f03_gga_vxc,xc_f03_gga_fxc
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
  !
@@ -57,6 +59,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Work Space
  !
  integer  :: i1,i2,is_xc,ic,is1,is2,ixc,ifft
+ integer(IPL) :: size_IPL
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
  real(DP) :: exsr
@@ -95,18 +98,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    FUNCTIONALTMP=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
    FUNCTIONAL=XC_GGA_X_PBE*XC_FACTOR+XC_GGA_C_PBE  !101130   This is semi-local PBE  
  endif
-   call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
-   if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) FUNCTIONAL=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
  !
-   local_exx_fraction = RZERO
-   if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
-     call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
-     local_exx_fraction = fnctl(1)%exx_fraction
-   end if
-   if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) local_exx_fraction=EXX_FRACTION
+ call xc_setup_fnctl(fnctl,FUNCTIONAL,n_spin)
+ if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) FUNCTIONAL=XC_HYB_GGA_XC_GAUPBE*XC_FACTOR
  !
-   EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
+ local_exx_fraction = RZERO
+ if (present(EXX_FRACTION).and.fnctl(1)%family==XC_FAMILY_HYB_GGA) then 
+   call xc_setup_hyb(fnctl,EXX_FRACTION,EXX_SCREENING)
+   local_exx_fraction = fnctl(1)%exx_fraction
+ end if
+ if (FUNCTIONALTMP==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) local_exx_fraction=EXX_FRACTION
  !
+ EvaluateDGradient = any((fnctl(:)%family==XC_FAMILY_GGA).or.any(fnctl(:)%family==XC_FAMILY_HYB_GGA))
  !
  !==========================
  ! Electronic/spin density 
@@ -238,19 +241,21 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    return
  end if
  !
+ size_IPL=int(fft_size,kind=IPL)
+ !
  do ixc = 1,2
    if (fnctl(ixc)%id == 0) cycle
    if (fnctl(ixc)%family==XC_FAMILY_LDA) then 
      select case(ORDER)
        case(0)
-         call xc_f90_lda_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), tmp_exc(1))
+         call xc_f03_lda_exc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
-         call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v1rho(1,1))
+         call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
        case(2)
-         call xc_f90_lda_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v1rho(1,1))
-         call xc_f90_lda_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), v2rho2(1,1))
+         call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
+         call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
          ! Yambo internal for Kxc
          call XC_eval_lda_kernel(v1rho,v2rho2)
      end select
@@ -259,10 +264,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
         if(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
      select case(ORDER)
        case(0)
-         call xc_f90_gga_exc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
+         call xc_f03_gga_exc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
-         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
+         call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR.and.ixc==1) then
            !GAUPBE short energy part of the x potential,factor 2 in vx2 for
            !consistency qith QE
@@ -273,17 +278,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          call XC_eval_gga_potential(v1rho,v1sigma,drho)
        case(2)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
-         call xc_f90_gga_vxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
-         call xc_f90_gga_fxc(fnctl(ixc)%conf, fft_size, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
+         call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
+         call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
          ! Yambo internal for Kxc
          call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
      end select
    end if
+   call xc_f03_func_end(fnctl(ixc)%conf)
  enddo
  !
  if (order==0) then 
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
-   if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*exsr
+   if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*real(exsr,SP)
  endif
  !
  if (ORDER==2) then

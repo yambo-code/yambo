@@ -1,0 +1,13 @@
+KNOWN ISSUES with the Yambo code
+
+*) NetCDF/HDF5 in Ubuntu 20.4
+   ==========================
+   Internal NetCDF and HDF5 libraries in LinuxMint 20.1/Ubuntu 20.4 have problems with Yambo
+   please use internal Yambo libraries
+
+*) Quantum-Espresso at GAMMA point
+   ===============================
+   In Quantum-Espresso if you perform a SCF calculation using the option "KPOINTS gamma"
+   you should use the same option for the NSCF otherwise Yambo gets confused with the g-vectors
+   If you need more k-points in the NSCF just re-run the SCF with "KPOINTS automatic /1 1 1 0 0 0" 
+   and the run NSCF with a finite k-grid

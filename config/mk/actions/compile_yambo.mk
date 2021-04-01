@@ -24,5 +24,5 @@ yambo_nl: ext-libs
 yambo_ph: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_ph_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_ELPH -D_yambo -D_PHEL"; $(mk_external_yambo_lib)
-	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH -D_PHEL"; $(mk_src)
-	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_ELPH -D_PHEL"; $(mk_yambo)
+	@+LIBS2DO="$(PJ_PHLIBS)"; XPATH="src"; VPATH="$(topdir)/src"; ADF="-D_ELPH -D_PHEL"; $(mk_src)
+	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(PJ_PHLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_ELPH -D_PHEL"; $(mk_yambo)

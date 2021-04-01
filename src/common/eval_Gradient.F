@@ -42,8 +42,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #include<memory.h>
  !
  integer,          intent(in) ::spinor_size
- complex(SP),      intent(in) ::f(fft_size,spinor_size)
- complex(SP),      intent(out)::f_gradient(fft_size,spinor_size,3)
+ complex(DP),      intent(in) ::f(fft_size,spinor_size)
+ complex(DP),      intent(out)::f_gradient(fft_size,spinor_size,3)
  character(len=*), intent(in) ::f_type       ! "wave", "density" or "potential"
  !
  ! Work Space 
@@ -66,7 +66,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  YAMBO_ALLOC(V3g,(ng_,3))
  V3g(:,:) = cZERO_DP
  !
- f_gradient = cZERO
+ f_gradient = cZERO_DP
  !
  do i_spinor=1,spinor_size
    !
@@ -80,7 +80,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  call fft_3d(Vr,fft_dim,-1)
 #endif
    !
-   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
+   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*real(g_vec(ig,ic),DP)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
    !
    do ic = 1,3
      Vr = cZERO_DP
@@ -92,7 +92,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #else
    call fft_3d(Vr,fft_dim,1)
 #endif
-     f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=SP)
+     f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=DP)
    enddo
    !
  enddo

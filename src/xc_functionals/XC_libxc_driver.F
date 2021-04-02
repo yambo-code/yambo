@@ -28,7 +28,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
  ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
  !
- use pars,           ONLY:SP,DP,IPL,pi_DP,RZERO
+ use pars,           ONLY:SP,DP,IPL,pi,pi_DP,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
 #if defined _RT
@@ -70,10 +70,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
  real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
- real(DP),allocatable:: drho(:,:,:)
+ real(SP),allocatable:: drho(:,:,:),drho_tmp(:,:)
  real(DP),allocatable:: sigma(:,:)
- complex(DP), allocatable:: drho_cmplx(:,:)
- complex(DP), allocatable:: spin_rho_DP_cmplx(:)
+ complex(SP), allocatable:: drho_cmplx(:,:)
+ complex(SP), allocatable:: spin_rho_SP_cmplx(:)
  !
  ! note that multidimensional fxc & vxc is allowed only in xcspol
  !
@@ -178,8 +178,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    !
    YAMBO_ALLOC(drho,(fft_size,n_spin,3))
    YAMBO_ALLOC(sigma,(xc_spin(1),fft_size))
-   YAMBO_ALLOC(drho_cmplx,(fft_size,3))
-   YAMBO_ALLOC(spin_rho_DP_cmplx,(fft_size))
    if (ORDER==1.or.ORDER==2) then
      YAMBO_ALLOC(v1sigma,(xc_spin(1),fft_size))
      v1sigma=0._DP
@@ -197,14 +195,26 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      vx2=0._DP
    endif 
    !
-   do is1 = 1,n_spin
-     spin_rho_DP_cmplx(:)=cmplx(spin_rho_DP(is1,:),0.0_DP,kind=DP)
-     !
-     call eval_Gradient(spin_rho_DP_cmplx,drho_cmplx,1,"density")
-     !
-     drho(:,is1,:)=real(drho_cmplx)
-     forall (i1=1:fft_size) drho(i1,is1,:) = drho(i1,is1,:)*2._DP*pi_DP/real(alat(:),DP)
-   end do
+   if (n_spin>1 .or. order<2) then
+     YAMBO_ALLOC(drho_cmplx,(fft_size,3))
+     YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
+     do is1 = 1,n_spin
+       spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
+       !
+       call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,1,"density")
+       !
+       drho(:,is1,:)=real(drho_cmplx)
+     end do
+     YAMBO_FREE(drho_cmplx)
+     YAMBO_FREE(spin_rho_SP_cmplx)
+   else
+     YAMBO_ALLOC(drho_tmp,(fft_size,3))
+     call el_density_and_current(en,Xk,drho=drho_tmp)
+     drho(:,1,:) = drho_tmp(:,:)
+     YAMBO_FREE(drho_tmp)
+   endif
+   !
+   forall (is1=1:n_spin,i1=1:fft_size) drho(i1,is1,:) = drho(i1,is1,:)*fft_size/DL_vol*2._SP*pi/alat(:)
    !
    do i1 = 1,fft_size
      do is1 = 1,n_spin
@@ -216,8 +226,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      end do
    end do
    !
-   YAMBO_FREE(spin_rho_DP_cmplx)
-   YAMBO_FREE(drho_cmplx)
    !
  endif
  !
@@ -232,7 +240,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
    select case(ORDER)
      case(0)
-       forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi_DP/spin_rho_SP(i1,1)/DL_vol)**(1._DP/3._DP)
+       forall (i1=1:fft_size) rspts(i1)=(3._DP/4._DP/pi_DP/real(spin_rho_SP(i1,1)/DL_vol,DP))**(1._DP/3._DP)
        call xc_rpa_kp(rspts,v1rho)
        E_xc = real(tmp_exc,SP) 
        E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
@@ -306,6 +314,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      write(*,*) ir3,spin_rho_DP(1,ifft),drho(ifft,1,:),sigma(1,ifft),v2rho2(1,ifft)
     enddo
  endif
+
+
          ! Yambo internal for Kxc
          call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
      end select
@@ -315,7 +325,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  call PP_redux_wait()
  !
-stop
+ !stop
  !
  if (order==0) then 
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))

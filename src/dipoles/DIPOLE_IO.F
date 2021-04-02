@@ -30,7 +30,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels,n_sp_pol
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+ use IO_int,      ONLY:io_control
+ use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
@@ -60,7 +61,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
- call DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
+ call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  ID=0
  ID_S=0

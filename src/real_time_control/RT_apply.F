@@ -29,7 +29,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,nkibz
- use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,io_control,DB_path
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh

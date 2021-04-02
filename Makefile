@@ -24,7 +24,15 @@
 ifeq ($(wildcard config/mk/defs.mk),config/mk/defs.mk)
  include config/mk/defs.mk
 else
- $(error Run ./configure first)
+ $(info )
+ $(info * * *  Yambo Makefile * * *)
+ $(info )
+ $(info for help on Yambo configure and makefile)
+ $(info please  refer    to    the   wiki   page:)
+ $(info )
+ $(info http://www.yambo-code.org/wiki/index.php?title=Installation)
+ $(info )
+ $(error Run ./configure before makefile!)
 endif
 #
 # STAMPS and CFGFILES
@@ -95,6 +103,9 @@ include config/mk/actions/compile_ypp.mk
 #
 # Cleans
 include config/mk/actions/clean.mk
+#
+# Utils
+include config/mk/actions/help.mk
 #
 #===========
 # Functions

@@ -27,9 +27,9 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
-&                        io_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_fragment,frag_DIP
+ use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,&
+&                        IO_NOT_ALLOWED,frag_DIP
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,io_fragment
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
 &                        compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor

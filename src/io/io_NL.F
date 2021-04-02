@@ -30,8 +30,8 @@ integer function io_NL(ID)
  use real_time,     ONLY:NE_steps
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+ use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
 &                        io_fragment,io_elemental
  !
 #if defined _TIMING

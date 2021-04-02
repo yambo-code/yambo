@@ -27,9 +27,10 @@ integer function io_QP_and_GF(what,qp,ID)
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
+&                         ver_is_gt_or_eq
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,&
+&                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&

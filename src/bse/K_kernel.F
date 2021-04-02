@@ -178,17 +178,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
- if (BS_K_is_ALDA) then
-   ! This is manually set for now
-   ALDA_cut_scheme="lower_Gmax"
-   if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
-     if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
-       BS_n_g_fxc   = G_m_G_maxval
-       call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
-     endif
-     O_ng_exch=max(BS_n_g_fxc,O_ng_exch)
-   endif
- endif
+ ! DEBUG <
+ !if (BS_K_is_ALDA) then
+ !  ! This is manually set for now
+ !  ALDA_cut_scheme="lower_Gmax"
+ !  if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
+ !    if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+ !      BS_n_g_fxc   = G_m_G_maxval
+ !      call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+ !    endif
+ !    O_ng_exch=max(BS_n_g_fxc,O_ng_exch)
+ !  endif
+ !endif
+ ! DEBUG >
  !
  call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !

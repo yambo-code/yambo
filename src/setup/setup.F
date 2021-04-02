@@ -29,7 +29,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_pos,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -67,7 +67,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -97,14 +97,20 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
+   !
+   call msg('nr','List of atomic coordinates    ','[cc]')
+   do is = 1,n_atomic_species
+     do ia = 1,n_atoms_species(is)
+       call msg('r',trim(PT_elements(Z_species(is)))//trim(intc(ia))//'       ',atom_pos(:,ia,is))
+     enddo
+   enddo
  endif
  !
  ! DL vol / RL
  !
  call define_b_and_DL_vol()
- call msg('r','Alat factors          ',alat,'[a.u.]')
- !
- call msg('nr','Direct lattice volume ',DL_vol,'[a.u.]') !
+ call msg('nr','Alat factors          ',alat,'[a.u.]')
+ call msg('r','Direct lattice volume ',DL_vol,'[a.u.]') !
  call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
  tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')

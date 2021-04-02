@@ -1,4 +1,8 @@
-KNOWN ISSUES with the Yambo code
+
+				KNOWN ISSUES with the Yambo code
+
+
+
 
 *) NetCDF/HDF5 in Ubuntu 20.4
    ==========================
@@ -12,7 +16,7 @@ KNOWN ISSUES with the Yambo code
    If you need more k-points in the NSCF just re-run the SCF with "KPOINTS automatic /1 1 1 0 0 0" 
    and the run NSCF with a finite k-grid
 
-*) Yambo and Internal MAC-OSX libraries
+*) Internal MAC-OSX libraries
    ===================================
    At present it is no possible to compile Yambo with internal macos libraries
    Indeed, no include/system/netcdf.mod file is present in the system. 
@@ -21,7 +25,7 @@ KNOWN ISSUES with the Yambo code
    Then, it would compile the internal hdf5, then find an external netcdf, 
    then try to compile netcdf-fortran creating various conflicts. 
 
-*) Yambo and gfortran compiler on MAC-OSX
+*) gfortran compiler on MAC-OSX
    =======================================
    There are different problems compiling Yambo wiht "gfortran" 
    variant of the compiler/libraries with MacPorts, 

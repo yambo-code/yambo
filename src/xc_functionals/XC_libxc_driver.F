@@ -36,7 +36,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
- use FFT_m,          ONLY:fft_size,fft_dim
+ use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
  use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc_mat,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,xc_f03_func_end, &
@@ -48,8 +48,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         xc_f03_gga_exc,xc_f03_gga_vxc,xc_f03_gga_fxc
  use interfaces,     ONLY:el_density_and_current
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
- use parallel_m,     ONLY:master_cpu
- use parallel_int,   ONLY:PP_redux_wait
  !
 #include<memory.h>
  !
@@ -60,7 +58,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,is_xc,ic,is1,is2,ixc,ifft,ir1,ir2,ir3
+ integer  :: i1,i2,is_xc,is1,is2,ixc,ifft
  integer(IPL) :: size_IPL
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
@@ -221,7 +219,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
          sigma(is_xc,i1) = drho(i1,is1,1)**2+drho(i1,is2,2)**2+drho(i1,is2,3)**2
-         if(sigma(is_xc,i1)<1.E-6_DP) sigma(is_xc,i1)=0._SP
        end do
      end do
    end do
@@ -291,41 +288,12 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
          call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
- if(master_cpu) then
-   ir1=fft_dim(1)/2
-   ir2=fft_dim(2)/2
-   ir3=fft_dim(3)/2
-   do ir1 = 0, fft_dim(1)-1         ! x 
-     ifft = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
-     write(*,*) ir1,spin_rho_DP(1,ifft),drho(ifft,1,:),sigma(1,ifft),v2rho2(1,ifft)
-    enddo
-   ir1=fft_dim(1)/2
-   ir2=fft_dim(2)/2
-   ir3=fft_dim(3)/2
-   do ir2 = 0, fft_dim(2)-1         ! x 
-     ifft = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
-     write(*,*) ir2,spin_rho_DP(1,ifft),drho(ifft,1,:),sigma(1,ifft),v2rho2(1,ifft)
-    enddo
-   ir1=fft_dim(1)/2
-   ir2=fft_dim(2)/2
-   ir3=fft_dim(3)/2
-   do ir3 = 0, fft_dim(3)-1         ! x 
-     ifft = 1 + ir1 + ir2*fft_dim(1) + ir3*fft_dim(1)*fft_dim(2)
-     write(*,*) ir3,spin_rho_DP(1,ifft),drho(ifft,1,:),sigma(1,ifft),v2rho2(1,ifft)
-    enddo
- endif
-
-
          ! Yambo internal for Kxc
          call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
      end select
    end if
    call xc_f03_func_end(fnctl(ixc)%conf)
  enddo
- !
- call PP_redux_wait()
- !
- !stop
  !
  if (order==0) then 
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))

@@ -428,7 +428,7 @@ subroutine INIT_activate()
    !
  endif
  !
- if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
+ if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc RhoMapThresh')
  if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
  ! El-Ph: Frohlich Hamiltonian

@@ -42,7 +42,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,GW_iterations,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,rho_map_thresh
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
@@ -293,6 +293,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
+ call it(defs,'RhoMapThresh','[BSK] Density cutoff for <Fxc> integrals region',rho_map_thresh,verb_level=V_resp)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
  call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_standard")',BSK_IO_mode,verb_level=V_resp)

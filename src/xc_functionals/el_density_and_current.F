@@ -293,7 +293,6 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  !
  if(l_rho_map) then
    !
-   rho_map_thresh=1.E-6_SP
    rho_map_size=0
    do ifft=1,fft_size
      if(rho(ifft)*real(fft_size,SP)/real(DL_vol,SP)<rho_map_thresh) cycle

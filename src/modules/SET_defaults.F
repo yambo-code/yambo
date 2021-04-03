@@ -62,7 +62,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
  use stderr,     ONLY:win_size,tty_size,logfile,set_real_printed_length,log_as_a_file
  use LIVE_t,     ONLY:log_line_to_dump,log_line,nhash,ct
- use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO
+ use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO,rho_map_thresh
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
@@ -331,6 +331,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  wf_norm_test=.TRUE.
  wf_nb_io=0
  wf_nb_io_groups=1
+ rho_map_thresh=1.E-7
  !
  !FFT
  !

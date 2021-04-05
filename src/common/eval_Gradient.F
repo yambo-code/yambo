@@ -94,7 +94,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    call fft_3d(Vr,fft_dim,1)
 #endif
      if(rho_map_size< fft_size) f_gradient(:,i_spinor,ic) = cmplx(Vr(rho_map(:)),kind=SP)
-     if(rho_map_size< fft_size) f_gradient(:,i_spinor,ic) = cmplx(Vr(        : ),kind=SP)
+     if(rho_map_size==fft_size) f_gradient(:,i_spinor,ic) = cmplx(Vr(        : ),kind=SP)
    enddo
    !
  enddo

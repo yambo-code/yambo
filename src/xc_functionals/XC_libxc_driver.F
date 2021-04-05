@@ -228,7 +228,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      end do
    end do
    !
-   !
  endif
  !
  !===========================

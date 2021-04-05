@@ -331,7 +331,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  wf_norm_test=.TRUE.
  wf_nb_io=0
  wf_nb_io_groups=1
- rho_map_thresh=1.E-7
+#if defined _MOL
+ rho_map_thresh=1.E-7_SP
+#else
+ rho_map_thresh=0._SP
+#endif
  !
  !FFT
  !

@@ -57,7 +57,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
- use wave_func,     ONLY:WF,rho_map_size,rho_map
+ use wave_func,     ONLY:WF,rho_map,rho_map_thresh
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,master_cpu
@@ -289,11 +289,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
    !
-   rho_map_size=0
+   if(rho_map_thresh>0._SP) then
+     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
+     YAMBO_ALLOC(rho,(fft_size))
+     call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
+     YAMBO_FREE(rho)
+     call WF_free(WF)
+   endif
+   !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
-   YAMBO_ALLOC(rho,(fft_size))
-   call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
-   YAMBO_FREE(rho)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
@@ -573,7 +577,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if(iHxc==2) then
    !
-   deallocate(rho_map)
+   if(rho_map_thresh>0._SP) deallocate(rho_map)
+   !
    if (l_bs_fxc) then
      YAMBO_FREE(F_xc_gspace)
      YAMBO_FREE(FXC_K_diagonal)

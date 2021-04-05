@@ -57,7 +57,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
  use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,  ONLY:PP_redux_wait
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
  use drivers,       ONLY:l_real_time
@@ -112,14 +112,15 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  endif
  !
  if (l_drho) then
-   call warning(" USPP corrections to rho gradient not implemented")
-   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   if(pp_is_uspp)  call warning(" USPP corrections to rho gradient not implemented")
+   if(pp_has_nlcc) call warning(" NLCC corrections to rho gradient not implemented")
+   YAMBO_ALLOC(WF_der,(rho_map_size,n_spinor,3))
    rho       =0._SP
    rho_no_sym=0._SP
  endif
  !
  if (l_J) then
-   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   YAMBO_ALLOC(WF_der,(rho_map_size,n_spinor,3))
    call error(" Calculation of current is implemented but not tested")
    J         =0._SP
    J_no_sym  =0._SP
@@ -174,36 +175,40 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
        !
        !
        if (l_rho) then
-         if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
-           do i_spinor=1,n_spinor
+         !
+         do i_spinor=1,n_spinor
+           if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
              rho_no_sym(rho_map(:))=rho_no_sym(rho_map(:))+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
-           enddo
-         else
-           do i_spinor=1,n_spinor
+           else
              rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
-           enddo
-         endif
+           endif
+         enddo
          !
          ! uspp becsum
          !
          if (pp_is_uspp) then
-           !
            call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/), becp(ik,i_sp_pol) )
-           !
          endif
          !
        endif
        !
        if (l_drho) then
          !
-         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         call eval_Gradient(WF%r(:,:,i_wf),WF_der,n_spinor,"wave")
          !
          do i_dir=1,3
            do i_spinor=1,n_spinor
-             do ifft=1,fft_size
-               drho_no_sym(ifft,i_dir)=drho_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
-               &  k%weights(ik)*2._SP*real(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
-             enddo
+             if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
+               do ifft=1,rho_map_size
+                 drho_no_sym(rho_map(ifft),i_dir)=drho_no_sym(rho_map(ifft),i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &  k%weights(ik)*2._SP*real(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             else
+               do ifft=1,fft_size
+                 drho_no_sym(ifft,i_dir)=drho_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &  k%weights(ik)*2._SP*real(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             endif
            enddo
          enddo
          !
@@ -211,14 +216,21 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
        !
        if (l_J) then
          !
-         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         call eval_Gradient(WF%r(:,:,i_wf),WF_der,n_spinor,"wave")
          !
          do i_dir=1,3
            do i_spinor=1,n_spinor
-             do ifft=1,fft_size
-               J_no_sym(ifft,i_dir)=J_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
-               &   k%weights(ik)*aimag(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
-             enddo
+             if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
+               do ifft=1,rho_map_size
+                 J_no_sym(rho_map(ifft),i_dir)=J_no_sym(rho_map(ifft),i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &   k%weights(ik)*aimag(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             else
+               do ifft=1,fft_size
+                 J_no_sym(ifft,i_dir)=J_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &   k%weights(ik)*aimag(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             endif
            enddo
          enddo
          !

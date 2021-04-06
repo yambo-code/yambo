@@ -2,8 +2,6 @@
 				KNOWN ISSUES with the Yambo code
 
 
-
-
 *) NetCDF/HDF5 in Ubuntu 20.4
    ==========================
    Internal NetCDF and HDF5 libraries in LinuxMint 20.1/Ubuntu 20.4 have problems with Yambo
@@ -31,3 +29,10 @@
    variant of the compiler/libraries with MacPorts, 
    a possible solution it is to install the "gcc8" variant of these libraries and compilters
    More details here: http://www.yambo-code.org/forum/viewtopic.php?t=1767
+
+*) Input file generation on MacOSX
+   =======================================
+   There are two issues on input file generation: 1) when you generate an input file on MacOSX 
+   Yambo is not able to read values already present in the input file, and reset them to the default value; 
+   2) if yambo and ypp have the same option to generate an input file the code get confused. 
+   Please use long input strings, for example "yambo -optics" instead of "yambo -o".

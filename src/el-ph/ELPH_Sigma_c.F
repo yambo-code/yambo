@@ -41,15 +41,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,&
-&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
+&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL,DUMP
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,&
-&                        QP_PH_n_G_bands,PH_W_debye,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,&
+&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,&
 &                        elph_nQ,GKKP,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
@@ -70,8 +70,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
- integer          ::io_err,ID,IO_ACT
- integer, external::io_ELPH
+ integer          ::io_err,ID,IO_ACT,ID_DG
+ integer, external::io_ELPH,io_Double_Grid
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   elph_gkkp_sq,gsqF_damping,E_random_shift
@@ -79,6 +79,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  logical          ::l_WRgFsq,l_GF_from_CA
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
+ type(levels)          :: PH_En
  ! 
  call timing('GW(e-p)',OPR='start')
  !
@@ -199,6 +200,28 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    nq_to_sum=elph_nQ_used
    YAMBO_ALLOC(q_weight,(nq_to_sum))
    call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
+ endif
+ !
+ ! Check double-grid
+ !-------------------
+ !
+ ! Fill the PH_E array
+ !
+ PH_En%nk=nq_to_sum
+ PH_En%nb=ph_modes
+ YAMBO_ALLOC(PH_En%E,(nq_to_sum,ph_modes,1))
+ ! 
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
+ io_err=io_Double_Grid(PH_En,q,ID_DG,'phonons')
+ !
+ if(io_err==0) then
+   if(elph_use_q_grid) then
+     call msg('sr','Using PH-double-grid ')
+     use_PH_DbGd=.TRUE.
+   else
+     call msg('sr','PH-double-grid not compatible with Random q-grids and Eliashberg functions!')
+     use_PH_DbGd=.FALSE.
+   endif
  endif
  !
  ! Timing steps

@@ -187,7 +187,9 @@ subroutine ELPH_double_grid(k,E,q)
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_err=io_Double_Grid(PH_E,q,ID,'phonons')
  !
- do iq=1,q%nibz
+ ! For each k-point in the IBZ store all k+q energies with q in the BZ
+ !
+ do iq=1,q%nbz
    call io_control(ACTION=OP_WR_CL,SEC=(/1+iq/),COM=REP,ID=ID)
    io_err=io_Double_Grid(PH_E,q,ID,'phonons')
  enddo

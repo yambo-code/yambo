@@ -68,6 +68,9 @@ module ELPH
    ! Phonon assisted energy/occupation levels
    type(levels),allocatable :: E_kpq(:)
    !
+   ! Phonon assisted double-grid energy/occupation levels (in the q-BZ)
+   type(levels),allocatable :: E_dg_kpq(:)
+   !
    integer                  :: Nq_mem=0
    integer                  :: Nk_mem=0
    integer                  :: Nb(2)=0

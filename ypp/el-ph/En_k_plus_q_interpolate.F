@@ -39,7 +39,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! Work space
  !
- integer               :: iq,ik,n_k_plus_q,ic,ik_idx,iq_fine
+ integer               :: iq,ik,n_k_plus_q,ic,iq_fine
  integer               :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
@@ -58,13 +58,13 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! number of q_fine points in the BZ around a give iq point in the IBZ
  !
- if(.not.allocated(GKKP%E_kpq)) allocate(GKKP%E_kpq(q%nibz))
+ call ELPH_alloc('DGRID',GKKP)
  !
  call live_timing('E(k+q) energy interpolation ',q%nibz)
  !
  INTERPOLATE_is_quiet=.TRUE.
  !
- do iq=1,q%nibz
+ do iq=1,q%nbz
    !
    ! Number of q-fine points around each q-point
    ! ============================================
@@ -101,10 +101,10 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
-   GKKP%E_kpq(iq)%FG%nb=elph_nb
-   GKKP%E_kpq(iq)%FG%nk=n_k_plus_q                         
-   call FineGd_E_components_alloc(GKKP%E_kpq(iq))
-   GKKP%E_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
+   GKKP%E_dg_kpq(iq)%FG%nb=elph_nb
+   GKKP%E_dg_kpq(iq)%FG%nk=n_k_plus_q                         
+   call FineGd_E_components_alloc(GKKP%E_dg_kpq(iq))
+   GKKP%E_dg_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
    !
    call live_timing(steps =1)
    !

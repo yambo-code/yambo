@@ -211,7 +211,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
        d_elias_dos=q_weight*Eliashberg_Dos_Func(iq, im, ph_energy(i2) ,ph_broad, PH_E, q)
        !
        if (l_eliashberg) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
-       if (l_dos)     ph_dos(i2)=ph_dos(i2)+d_elias_dos
+       if (l_dos)     ph_dos(i2)=ph_dos(i2)+real(d_elias_dos,SP)
        !
      enddo
    enddo

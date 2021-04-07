@@ -51,16 +51,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !... I/0
  integer              :: iq
  !
- if(.not.l_interp) then
-    call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
- else
-    call section('*','Excitonic Properties')
- endif
- !
- iq = BSiq
- !
- call excitons_read(k,Xk,en,Xen,BSiq,"check")
- !
  l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp .or. l_dipoles
 #if defined _YPP_ELPH
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp .or. l_ph_ass_dos
@@ -70,6 +60,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #endif
  !
  if(.not.l_flag) return
+ !
+ if(.not.l_interp) call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
+ if(     l_interp) call section('*','Excitonic Properties')
+ !
+ iq = BSiq
+ !
+ call excitons_read(k,Xk,en,Xen,BSiq,"check")
  !
  call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues")
  !

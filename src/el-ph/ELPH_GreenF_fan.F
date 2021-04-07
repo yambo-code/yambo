@@ -21,6 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-complex function GSqF_life_bose()
+subroutine ELPH_GreenF_fan(GreenF_life_bose,GreenF_life_f,GreenF_ca_corr,GreenF_fan)
  !
-end function
+ use pars,          ONLY:SP
+ !
+#include<memory.h>
+ !
+ real(SP) :: GreenF_life_bose
+ real(SP) :: GreenF_life_f
+ real(SP) :: GreenF_ca_corr
+ real(SP) :: GreenF_fan
+ !
+end subroutine

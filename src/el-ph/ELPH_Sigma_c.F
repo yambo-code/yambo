@@ -218,8 +218,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if(elph_use_q_grid) then
      call msg('sr','Using PH-double-grid ')
      use_PH_DbGd=.TRUE.
+     call ELPH_alloc('DGRID')
    else
-     call msg('sr','PH-double-grid not compatible with Random q-grids and Eliashberg functions!')
+     call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
      use_PH_DbGd=.FALSE.
    endif
  endif
@@ -231,12 +232,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                  PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
  !
  call PP_redux_wait
- !
- ! If use q-grid I store E_kpt energies in the E_kpt arrays
- ! in order to simplify the code
- !
- if (elph_use_q_grid) then
- endif
  !
  ! g^2F(w) residuals Allocation
  !
@@ -293,6 +288,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    endif
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
+   !
+   if(use_PH_DbGd) then
+     IO_ACT=manage_action(RD_CL_IF_END,iq_loop,1,nq_to_sum)
+     call io_control(ACTION=IO_ACT,COM=REP,MODE=DUMP,SEC=(/1+iq_loop/),ID=ID_DG)
+     io_err=io_Double_Grid(PH_En,q,ID_DG,'phonons')
+   endif
    !
    do i_qp=1,QP_n_states
      !

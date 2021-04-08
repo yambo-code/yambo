@@ -26,8 +26,9 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License  for more details (
 ## Known Issues
 ###### NetCDF/HDF5 in Ubuntu 20.4
 Internal NetCDF and HDF5 libraries in LinuxMint 20.1/Ubuntu 20.4 have problems with Yambo please use internal Yambo libraries
-###### gfortran 5.x and earlier versions 
-Unfortunatelly gfortran 5.x and earlier version do not support the construct allocate(x, source=y) and 
+
+###### gfortran 4.4 and earlier versions 
+Unfortunatelly gfortran 4.4 and earlier version do not support the construct allocate(x, source=y) and 
 allocate(x, mold=y), please update to a newer version in order to compile Yambo
 
 ###### Quantum-Espresso at GAMMA point

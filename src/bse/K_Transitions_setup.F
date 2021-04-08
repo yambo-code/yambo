@@ -201,13 +201,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
                if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
-               &                                           Ken%Z(ic,ik,i_sp_c)*Ken%Z(iv,ikp,i_sp_v)
+               &                                           Ken%Z(ib2,ik,isp2)*Ken%Z(ib1,ikp,isp1)
                !
                ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
                ! Presently there is the abs value here and a minus in K_IP.F
                !
                if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)= &
-               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ic,ik,i_sp_c))+abs(Ken%W(iv,ikp,i_sp_c)))
+               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ib2,ik,isp2))+abs(Ken%W(ib1,ikp,isp1)))
                !
                if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
                !

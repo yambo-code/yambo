@@ -26,10 +26,13 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License  for more details (
 ## Known Issues
 ###### NetCDF/HDF5 in Ubuntu 20.4
 Internal NetCDF and HDF5 libraries in LinuxMint 20.1/Ubuntu 20.4 have problems with Yambo please use internal Yambo libraries
+###### gfortran 5.x and earlier versions 
+Unfortunatelly gfortran 5.x and earlier version do not support the construct allocate(x, source=y) and 
+allocate(x, mold=y), please update to a newer version in order to compile Yambo
 
 ###### Quantum-Espresso at GAMMA point
 In Quantum-Espresso if you perform a SCF calculation using the option "KPOINTS gamma" you should use the same option for the NSCF otherwise Yambo gets confused
-with the g-vectors If you need more k-points in the NSCF just re-run the SCF with "KPOINTS automatic /1 1 1 0 0 0"  and the run NSCF with a finite k-grid
+with the g-vectors If you need more k-points in the NSCF just re-run the SCF with "KPOINTS automatic /1 1 1 0 0 0"  and then run NSCF with a finite k-grid
 
 ###### Internal MAC-OSX libraries
 At present it is no possible to compile Yambo with internal macos libraries. Indeed, no include/system/netcdf.mod file is present in the system.  The problem is

@@ -75,6 +75,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
+ call section('*','Bethe Salpeter Equation driver')
+ !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================
  ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1

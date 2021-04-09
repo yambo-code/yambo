@@ -292,6 +292,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
      integer :: iB_ref, iB_p
      iB_ref=-1
      do iB_p=iB,1,-1
+       if(BS_blk(iB_p)%ira_k/=BS_blk(iB)%ira_k .or. BS_blk(iB_p)%ira_p/=BS_blk(iB)%ira_p) exit
        if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
        if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
        if(BS_blk(iB_p)%O_table(1,i_s_collision,iki,iko,ibi,ibo,i_sp_pol)==0) cycle

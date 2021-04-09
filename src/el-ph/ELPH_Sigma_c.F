@@ -361,81 +361,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! with q_YAMBO = - q_PW
          !
-         elph_gkkp_sq=conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
-&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E
+         elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
+&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
-         ! Frequency Loop
+         ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
          !
-         do iw=1,gsqF_energy_steps
-           !
-           ! Define gsqF denominators
-           !
-           if (elph_use_q_grid) then
-             delta_E         =Sc_W(i_qp)%p(iw)-en%E(ob,ok,1)
-             delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
-             f_occ=en%f(ob,ok,1)/spin_occ
-           else
-             delta_E         =Sc_W(i_qp)%p(iw)-GKKP%E_kpq(iq_db)%E(ob,ik_bz,1)
-             delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
-             f_occ=GKKP%E_kpq(iq_db)%f(ob,ik_bz,1)/spin_occ
-           endif
-           !
-           one_minus_2f_occ=(1._SP-2._SP*f_occ)
-           !
-           gsqF_damping=aimag( Sc_W(i_qp)%p(iw) )
-           !
-           ! Lifetimes
-           !-----------
-           !
-           ! "Bose" Term
-           !
-           gsqF_life_bose(i_qp,iq_mem,il,iw)= &
-&              gsqF_life_bose(i_qp,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
-&              ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
-&              QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
-           !
-           ! "f" Term
-           !
-           gsqF_life_f(i_qp,iq_mem,il,iw)= &
-&               gsqF_life_f(i_qp,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
-&               ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
-&               QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
-&               Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
-           !
-           if (eval_G_using_KK) cycle
-           !
-           ! QP's energies
-           !--------------
-           !
-           ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
-           ! important for metals).
-           !
-           gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+elph_gkkp_sq*&
-&                                              ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)*q_weight(iq_loop)
-           !
-           ! Cardona-Allen formulation
-           !
-           ! (a) Fan Term                                          this 2 is to be consistent with AC definition
-           !                                                       |
-           !                                                      \/
-           gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2._SP*elph_gkkp_sq*&
-&                                      delta_E/(delta_E**2-ph_E**2)*q_weight(iq_loop)
-           !
-         enddo
+         call ELPH_GreenF(i_qp,ob,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W(i_qp),q_weight(iq_bz))
          !
-         ! The DW term comes from a perturbation theory expansion
-         ! which does not allow zero-energy transitions between the
-         ! perturbed stated and itself
-         !
-         if (abs(delta_E_at_gamma)<DW_deltaE_treshold) cycle
-         !
-         ! (b) Debye Waller Term
-         !
-         gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
-&                                    2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
-         !                          /\
-         !                           |
-         !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
        enddo
        !
        call live_timing(steps=1)

@@ -138,6 +138,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          ib =QP_table(i_qp,1)
          ibp=QP_table(i_qp,2)
          PAR_IND_local(ib,ibp)=.TRUE.
+         PAR_IND_local(ibp,ib)=.TRUE.
        enddo 
        !
        call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),&
@@ -172,9 +173,11 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
+         if (iwf==0) cycle
+         !
          kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
          !
-         do ibp=ib,H_ref_bands(2)
+         do ibp=H_ref_bands(1),ib
            !
            if (.not.PAR_ind_local(ib,ibp) ) cycle
            !

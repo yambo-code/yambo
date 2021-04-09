@@ -25,9 +25,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  use pars,          ONLY:SP,cZERO
  use drivers,       ONLY:l_sc_magnetic,l_real_time
- use electrons,     ONLY:levels,n_spinor,n_sp_pol
+ use electrons,     ONLY:levels,n_spinor,n_sp_pol,spin
  use wrapper,       ONLY:V_dot_V
- use X_m,           ONLY:X_t
  use wave_func,     ONLY:WF
  use FFT_m,         ONLY:fft_size
  use pseudo,        ONLY:pp_kbv_dim_yambo
@@ -40,7 +39,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,io_control,manage_action
  use timing_m,      ONLY:timing
 #if defined _SC
- use parallel_m,    ONLY:PAR_IND_WF_linear,myid
+ use parallel_m,    ONLY:PAR_IND_QP,HEAD_QP_cpu
+ use QP_m,          ONLY:QP_table,QP_n_states
 #endif
 #if defined _RT
  use parallel_m,    ONLY:PAR_G_k_range
@@ -55,15 +55,14 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  !
  ! Work Space
  !
- type(X_t)     :: X
- !
  complex(SP),allocatable :: kbv_real_space(:,:,:),kbv_ks_space(:),kbv_gauged(:,:),gauge_factor(:,:)
  complex(SP)             :: H_pseudo_ik(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2)), &
 &                           H_pseudo(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),Xk%nibz,n_sp_pol)
  integer                 :: kbv_real_space_table(pp_kbv_dim_yambo),n_par_el
  !
  ! Dummies
- integer                 :: i1,ib,ibp,ik,i_spinor,i_sp_pol,iwf,i_atom,ifrag
+ integer                 :: i1,ib,ibp,ik,i_spinor,i_sp_pol,iwf,i_atom,ifrag,i_qp
+ logical                 :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! I / O
  integer                 :: ID,io_KB_real_space_err,ACT
@@ -96,11 +95,21 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
 #if defined _SC
  if(l_sc_magnetic) then
    !
-   n_par_el=count(PAR_IND_WF_linear%element_2D(:,:))
-   if (n_par_el>0) call live_timing('MAG-pseudo',n_par_el*n_sp_pol)
+   PAR_IND_local=.false.
+   do i_qp=1,QP_n_states
+     if (.not.HEAD_QP_cpu)                 cycle
+     if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+     ib =QP_table(i_qp,1)
+     ibp=QP_table(i_qp,2)
+     PAR_IND_local(ib,ibp)=.TRUE.
+   enddo 
+   n_par_el=n_sp_pol*Xk%nibz*(count(PAR_IND_LOCAL))
+   if (n_par_el>0) call live_timing('MAG-pseudo',n_par_el)
    !      
  endif
 #endif
+ !
+ PAR_IND_local=.true.
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -118,12 +127,22 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
      !
 #if defined _SC
      if(l_sc_magnetic) then
-       if (any(PAR_IND_WF_linear%element_2D(:,ik)) ) then
-          call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),&
-                       sp_pol_to_load=(/i_sp_pol,i_sp_pol/),title='-Pseudo',impose_free_and_alloc=.TRUE.)
-       else
-          cycle
-       endif
+       !
+       PAR_IND_local=.false.
+       do i_qp=1,QP_n_states
+         if (.not.HEAD_QP_cpu)                 cycle
+         if (     QP_table(i_qp,3) /=ik      ) cycle
+         if (spin(QP_table(i_qp,:))/=i_sp_pol) cycle
+         if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+         ib =QP_table(i_qp,1)
+         ibp=QP_table(i_qp,2)
+         PAR_IND_local(ib,ibp)=.TRUE.
+         PAR_IND_local(ibp,ib)=.TRUE.
+       enddo 
+       !
+       call WF_load(WF,0,1,(/H_ref_bands(1),H_ref_bands(2)/),(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),&
+       &  title='-Pseudo',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
+       !
      endif
 #endif
      !
@@ -153,15 +172,13 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          !
          iwf=WF%index(ib,ik,i_sp_pol)
          !
+         if (iwf==0) cycle
+         !
          kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
          !
-#if defined _SC
-         if (l_sc_magnetic) then
-           if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-         endif
-#endif
-         !
          do ibp=H_ref_bands(1),ib
+           !
+           if (.not.PAR_ind_local(ib,ibp) ) cycle
            !
            H_pseudo_ik(ibp,ib)=conjg(kbv_ks_space(ibp))*kbv_ks_space(ib)
            if(ib/=ibp) H_pseudo_ik(ib,ibp)=conjg(H_pseudo_ik(ibp,ib))

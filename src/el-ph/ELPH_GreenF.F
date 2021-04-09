@@ -39,7 +39,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
 &                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,&
-&                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq
+&                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd
  use QP_m,          ONLY:QP_table,QP_time_order_sign
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:Fermi_fnc_derivative
@@ -87,11 +87,9 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
     !
     if (elph_use_q_grid) then
       delta_E         =Sc_W%p(iw)-en%E(ob,ok,1)
-      delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
       f_occ=en%f(ob,ok,1)/spin_occ
     else
       delta_E         =Sc_W%p(iw)-GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
-      delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
       f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
     endif
     !
@@ -141,6 +139,12 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  ! The DW term comes from a perturbation theory expansion
  ! which does not allow zero-energy transitions between the
  ! perturbed stated and itself
+ !
+ if (elph_use_q_grid) then
+   delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
+ else
+   delta_E_at_gamma=en%E(ib,ik,1)  -GKKP%E_kpq(1)%E(ob,ik_bz,1)
+ endif
  !
  if (abs(delta_E_at_gamma)<DW_deltaE_treshold) return
  !

@@ -56,6 +56,8 @@ module ELPH
  !
  logical              :: use_PH_DbGd
  !
+ type(levels)         :: PH_freqs
+ !
  ! GKKP Matrix Elements and derived quantities
  type GKKP_me
    !

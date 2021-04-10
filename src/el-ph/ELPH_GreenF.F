@@ -32,13 +32,13 @@
 !! @param[in]       elph_gkkp_sq        electron-phonon matrix elements squares <ib,k | \partial V /\partial u_il | ob, k-q>
 !!
 !
-subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,q_weight)
+subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
-&                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,&
+&                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,PH_freqs,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd
  use QP_m,          ONLY:QP_table,QP_time_order_sign
  use R_lattice,     ONLY:bz_samp
@@ -53,7 +53,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  integer,      intent(in) :: il
  real(SP),     intent(in) :: elph_gkkp_sq,q_weight
  type(levels), intent(in) :: en
- type(bz_samp),intent(in) :: k
+ type(bz_samp),intent(in) :: k,q
  type(w_samp), intent(in) :: Sc_W
  !
  ! Work Space
@@ -62,9 +62,9 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- integer  :: ik,ik_bz,ib
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg
  real(SP) :: gsqF_life_bose_res,gsqF_life_bose_den
- real(SP) :: GreenF_RES,GreenF_DEN
+ real(SP) :: GreenF_RES,GreenF_DEN,weight_dbg,ph_E_dbg
  !
  ! Indexes
  !
@@ -110,6 +110,21 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
     GreenF_RES=2._SP*pi*elph_gkkp_sq*q_weight
     GreenF_DEN=                 (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
  &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
+    !
+    if(use_PH_DbGd) then
+      !      
+      weight_dbg=1.0/(q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1._SP)
+      !
+      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
+        iE_fg =q%FGbz%E_map(iq_fg)
+        ph_E_dbg=PH_freqs%FG%E(il,iE_fg,1)
+        delta_E=Sc_W%p(iw)-E_kpq
+        GreenF_DEN=GreenF_DEN  +(Fermi_fnc_derivative(real(delta_E)+ph_E_dbg,gsqF_damping)&
+ &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E_dbg,gsqF_damping))
+      enddo
+      GreenF_DEN=GreenF_DEN/weight_dbg
+      !
+    endif
     !
     gsqF_life_bose(i_qp,iq_mem,il,iw)=gsqF_life_bose(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
     !

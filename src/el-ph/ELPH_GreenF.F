@@ -63,6 +63,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
  integer  :: ik,ik_bz,ib
+ real(SP) :: gsqF_life_bose_res,gsqF_life_bose_den
+ real(SP) :: GreenF_RES,GreenF_DEN
  !
  ! Indexes
  !
@@ -105,18 +107,20 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
     !
     ! "Bose" Term
     !
-    gsqF_life_bose(i_qp,iq_mem,il,iw)= &
-&       gsqF_life_bose(i_qp,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight*&
-&       ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
-&       QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
+    GreenF_RES=2._SP*pi*elph_gkkp_sq*q_weight
+    GreenF_DEN=                 (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
+ &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
+    !
+    gsqF_life_bose(i_qp,iq_mem,il,iw)=gsqF_life_bose(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
     !
     ! "f" Term
     !
-    gsqF_life_f(i_qp,iq_mem,il,iw)= &
-&       gsqF_life_f(i_qp,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight*&
-&       ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
-&       QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
-&       Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
+    GreenF_RES=pi*elph_gkkp_sq*q_weight
+    GreenF_DEN=           ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+&       QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))*f_occ-&
+&                           Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping))
+    !
+    gsqF_life_f(i_qp,iq_mem,il,iw)=gsqF_life_f(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
     !
     if (eval_G_using_KK) cycle
     !
@@ -126,16 +130,19 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
     ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
     ! important for metals).
     !
-    gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+elph_gkkp_sq* &
-&                                ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)*q_weight
+    GreenF_RES=elph_gkkp_sq*q_weight
+    GreenF_DEN=ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)
+    !
+    gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
     !
     ! Cardona-Allen formulation
     !
     ! (a) Fan Term                                          this 2 is to be consistent with AC definition
     !                                                       |
-    !                                                      \/
-    gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2._SP*elph_gkkp_sq*&
-&                                      delta_E/(delta_E**2-ph_E**2)*q_weight
+    GreenF_RES=2._SP*elph_gkkp_sq*q_weight
+    GreenF_DEN=delta_E/(delta_E**2-ph_E**2)
+    !
+    gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
     !
  enddo
  !
@@ -153,9 +160,12 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  !
  ! (b) Debye Waller Term
  !
- gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
-&                         2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)/delta_E_at_gamma*q_weight/2._SP/ph_E
+ GreenF_RES=-1._SP/2._SP*2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)*q_weight/2._SP
  !                          /\
  !                           |
  !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
+ GreenF_DEN=1._SP/delta_E_at_gamma*q_weight/ph_E
+ !
+ gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)+GreenF_RES*GreenF_DEN
+ !
 end subroutine

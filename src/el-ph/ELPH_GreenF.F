@@ -60,7 +60,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  !
  integer  :: iw
  complex(SP) :: delta_E
- real(SP) :: delta_E_at_gamma,f_occ
+ real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
  integer  :: ik,ik_bz,ib
  !
@@ -79,22 +79,25 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,Sc_W,
  !
  if (abs(ph_E)<FAN_deltaE_treshold) return
  !
+ ! Define outgoing energies and occupations
+ !
+ if (elph_use_q_grid) then
+   E_kpq=en%E(ob,ok,1)
+   f_occ=en%f(ob,ok,1)/spin_occ
+ else
+   E_kpq=GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
+   f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
+ endif
+ !
  ! Frequency Loop
  !
  do iw=1,gsqF_energy_steps
     !
     ! Define gsqF denominators
     !
-    if (elph_use_q_grid) then
-      delta_E         =Sc_W%p(iw)-en%E(ob,ok,1)
-      f_occ=en%f(ob,ok,1)/spin_occ
-    else
-      delta_E         =Sc_W%p(iw)-GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
-      f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
-    endif
+    delta_E=Sc_W%p(iw)-E_kpq
     !
     one_minus_2f_occ=(1._SP-2._SP*f_occ)
-    !
     gsqF_damping=aimag(Sc_W%p(iw))
     !
     ! Lifetimes

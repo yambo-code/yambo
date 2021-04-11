@@ -65,7 +65,6 @@ subroutine PARALLEL_Transitions_grouping()
  if(i_res_ares==1) i_counter=it_ref
  if(i_res_ares==2) i_counter=it_ref+nXkibz*PAR_COM_eh_INDEX%n_CPU
  do i_k=1,nXkibz
-   i_k_s=1+(i_res_ares-1)*nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz
    ! 
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k) ) cycle
@@ -127,7 +126,6 @@ subroutine PARALLEL_Transitions_grouping()
  !
  do i_res_ares=1,BS_res_ares_dim
  do i_k=1,nXkibz
-   i_k_s=1+(i_res_ares-1)*nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz
    !
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle

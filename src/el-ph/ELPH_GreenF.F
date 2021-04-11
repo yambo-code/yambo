@@ -67,8 +67,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic
- real(SP) :: weight_dbg,ph_E_dbg
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around
+ real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight
  !
  logical  :: eval_DW
  !
@@ -182,44 +182,66 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    !
  endif
  !
- ! IF double-grid is present aveages all denominators
+ ! IF double-grid is present aveages all denominators on the q-points 
+ ! of the fine grid around iq_bz
  !
  if(use_PH_DbGd) then
-!    if(use_PH_DbGd) then
-!      !      
-!      weight_dbg=1.0/(q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1._SP)
-!      !
-!      ic=1
-!      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
-!        !
-!        iE_fg       =q%FGbz%E_map(iq_fg)                             ! Max w(q) from BZ to IBZ
-!        ph_E_dbg    =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-!        !
-!        ik_plus_q_dg=(ic-1)*k%nibz+ik
-!        E_kpq       =GKKP%E_dg_kpq(iq_bz)%FG%E(il,ik_plus_q_dg,1)    ! E(k+q_dg)  q_db in the D-Grid
-!        delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
-!        !
-!        GreenF_DEN=GreenF_DEN  +(Fermi_fnc_derivative(real(delta_E)+ph_E_dbg,gsqF_damping)&
-! &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E_dbg,gsqF_damping))
-!        ! 
-!        ic=ic+1
-!      enddo
-      !
-!      GreenF_DEN=GreenF_DEN/weight_dbg
-!      !
-!    endif
+   !      
+   nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)   ! Number of fine q-points around iq_bz
+   weight_dbg=1.0/(nq_around+1._SP)                             ! Total weight of the Db-grid points including the iq_bz
+   !
+   ic=1
+   do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
+     !
+     iE_fg       =q%FGbz%E_map(iq_fg)                             ! Max w(q) from BZ to IBZ
+     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     !
+     ik_plus_q_dg=(ik-1)*nq_around+ic                             ! k+q_dg index
+     E_kpq       =GKKP%E_dg_kpq(iq_bz)%FG%E(ob,ik_plus_q_dg,1)    ! E(k+q_dg)  q_db in the D-Grid
+     f_occ       =GKKP%E_dg_kpq(iq_bz)%f(ob,ik_plus_q_dg,1)/spin_occ
+     !
+     do iw=1,gsqF_energy_steps
+       ! 
+       delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
+
+       gsqF_DEN_life_B(iw)=gsqF_DEN_life_B(iw)+     (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
+ &                               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
+       gsqF_DEN_life_f(iw)=gsqF_DEN_life_f(iw)+  ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+&                              QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))*f_occ-&
+&                                                  Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping))
+       !
+       one_minus_2f_occ=(1._SP-2._SP*f_occ)
+       !
+       if (.not.eval_G_using_KK) then 
+         gsqF_DEN_ca_corr(iw)=gsqF_DEN_ca_corr(iw)+ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)
+         gsqF_DEN_fan(iw)    =gsqF_DEN_fan(iw)+delta_E/(delta_E**2-ph_E**2)
+       endif
+       !
+     enddo
+     !
+     if (eval_DW) then
+       delta_E_at_gamma=en%E(ib,ik,1)  -E_kpq
+       gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E
+     endif
+     !
+     ic=ic+1
+     !
+    enddo
+   !
+ else
+   weight_dbg=1._SP
  endif
  !
  ! Store results
  !
- gsqF_life_bose(i_qp,iq_mem,il,:)=gsqF_life_bose(i_qp,iq_mem,il,:)+gsqF_RES_life_B*gsqF_DEN_life_B(:)
- gsqF_life_f(i_qp,iq_mem,il,:)   =gsqF_life_f(i_qp,iq_mem,il,:)   +gsqF_RES_life_f*gsqF_DEN_life_f(:)
+ gsqF_life_bose(i_qp,iq_mem,il,:)=gsqF_life_bose(i_qp,iq_mem,il,:)+gsqF_RES_life_B*gsqF_DEN_life_B(:)*weight_dbg
+ gsqF_life_f(i_qp,iq_mem,il,:)   =gsqF_life_f(i_qp,iq_mem,il,:)   +gsqF_RES_life_f*gsqF_DEN_life_f(:)*weight_dbg
  !
  if (.not.eval_G_using_KK) then
-    gsqF_fan(i_qp,iq_mem,il,:)    =gsqF_fan(i_qp,iq_mem,il,:) +gsqF_RES_fan*gsqF_DEN_fan(:)
-    gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)
+    gsqF_fan(i_qp,iq_mem,il,:)    =gsqF_fan(i_qp,iq_mem,il,:) +gsqF_RES_fan*gsqF_DEN_fan(:)*weight_dbg
+    gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)*weight_dbg
  endif
  !
- if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW
+ if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW*weight_dbg
  !
 end subroutine

@@ -176,11 +176,12 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! (b) Debye Waller Term
  !
  GreenF_RES=-1._SP/2._SP*2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)*q_weight/2._SP
- !                          /\
- !                           |
- !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
- GreenF_DEN=1._SP/delta_E_at_gamma*q_weight/ph_E
+ !                       /\
+ !                        |
+ !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
+ GreenF_DEN=1._SP/delta_E_at_gamma/ph_E
  !
  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)+GreenF_RES*GreenF_DEN
+
  !
 end subroutine

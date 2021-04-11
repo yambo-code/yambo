@@ -80,12 +80,18 @@ i?86*linux*)
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
+    FCMFLAG="-nofor_main"
     case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* | *15* | *16* )
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *17* | *18* | *19*)
+      *2021* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        ;;
@@ -98,7 +104,6 @@ i?86*linux*)
     esac
     SYSFLAGS="-assume bscc -O3 -g -ip $CPU_FLAG"
     FUFLAGS="-assume bscc -O0 $CPU_FLAG"
-    FCMFLAG="-nofor_main"
     DEBUG_FLAGS="-check all -CB -traceback -check bound"
   ;;
   *pathf9*)
@@ -271,12 +276,18 @@ ia64*linux* )
   *ifort*)
     OMPFLAGS="-openmp"
     CPU_FLAG=""
+    FCMFLAG="-nofor_main"
     case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *17* | *18* | *19*)
+      *2021* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        ;;
@@ -289,7 +300,6 @@ ia64*linux* )
     esac
     SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
-    FCMFLAG="-nofor_main"
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-CB -traceback"
     ;;

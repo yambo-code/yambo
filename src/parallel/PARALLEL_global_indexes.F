@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
+subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
  !
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
@@ -54,12 +54,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  type(levels)               ::E
  type(bz_samp)              ::Xk,q
  character(*)               ::ENVIRONMENT
- type(X_t), optional        ::X
+ type(X_t),     optional    ::X
  type(DIPOLE_t),optional    ::Dip
- logical,   optional        ::RESET
+ logical,       optional    ::RESET,Dip_limits_pre_defined
  !
  ! Work Space
  !
+ logical              :: Do_dip_limits
  integer              :: X_type
  character(8)         :: MORE
  !
@@ -125,13 +126,19 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
  if (present(X)) PAR_X_iq=X%iq
  !
  if (present(Dip)) then
-   if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
-     Dip%ib_lim(1)=E%nbm
-     Dip%ib_lim(2)=E%nbf+1
-     if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
-   else
-     Dip%ib_lim(1)=Dip%ib(2)
-     Dip%ib_lim(2)=Dip%ib(1)
+   Do_dip_limits=.TRUE.
+   if (present( Dip_limits_pre_defined )) then
+     Do_dip_limits=.not.Dip_limits_pre_defined
+   endif
+   if (Do_dip_limits) then
+     if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
+       Dip%ib_lim(1)=E%nbm
+       Dip%ib_lim(2)=E%nbf+1
+       if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
+     else
+       Dip%ib_lim(1)=Dip%ib(2)
+       Dip%ib_lim(2)=Dip%ib(1)
+     endif
    endif
    PAR_Dip_ib=Dip%ib
    PAR_Dip_ib_lim=Dip%ib_lim

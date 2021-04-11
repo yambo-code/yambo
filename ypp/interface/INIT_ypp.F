@@ -553,7 +553,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_SOC_map)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  ! Projections
- l_flag=l_dipoles.or.(l_electrons.and.l_dos)
+ l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos)
  if (l_flag) then
    call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")  
  endif
@@ -563,7 +563,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
  ! Interpolation
- l_flag=l_dipoles.or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
+ l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
 #if defined _YPP_RT
  l_flag=l_flag.or.(l_RealTime.and.l_RT_bands).or.(l_RealTime.and.l_RT_dos)
 #endif
@@ -588,16 +588,21 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  ! Dipoles
  if (l_dipoles) then
-   call INIT_QP_ctl_switch('G')
-   call initactivate(1,"DIP_kind DIP_E_range DIP_C_bands DIP_direction cooOut")
+   call initactivate(1,"DIP_kind cooOut")
+   if (trim(DIPs_kind)=="EXCITONIC") then
+     call initactivate(1,"States BSQindex Degen_Step Weight_treshold En_treshold Res_treshold")
+   else
+     call INIT_QP_ctl_switch('G')
+     call initactivate(1,"DIP_E_range DIP_C_bands DIP_direction")
 #if !defined _YPP_RT
-   call initactivate(1,"DIP_V_bands")
+     call initactivate(1,"DIP_V_bands")
 #endif
+   endif
  endif
  !
  ! Electrons
  if (l_electrons) then
-   if (l_dos.or.l_bands.or.l_dipoles) call INIT_QP_ctl_switch('G')
+   if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -674,11 +679,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States En_treshold Res_treshold BSQindex")
-   if (l_amplitude.or.l_dipoles) then
-     call INIT_QP_ctl_switch('G')
-     call initactivate(1,"DipWeight")
-   endif
-   if (l_exc_wf.or.l_amplitude.or.l_dipoles) call initactivate(1,"Degen_Step Weight_treshold")
+   if (l_amplitude) call INIT_QP_ctl_switch('G')
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
    if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_exc_wf.and.l_average_eh) call initactivate(1,"EHdensity")

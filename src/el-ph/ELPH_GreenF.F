@@ -31,6 +31,11 @@
 !! @param[in]       Sc_W                energy where self-energy is calculated
 !! @param[in]       elph_gkkp_sq        electron-phonon matrix elements squares <ib,k | \partial V /\partial u_il | ob, k-q>
 !!
+!! @param[out]      gsqF_fan            Fan self-energy, real-part
+!! @param[out]      gsqF_dw             Debye-Waller sefl-energy
+!! @param[out]      gsqF_ca_corr        Additional term in Fan self-energy for metals [A. Marini]
+!! @param[out]      gsqF_life_bose      Imaginary part Fan self-energy Bose part
+!! @param[out]      gsqF_life_f         Imaginary part Fan self-energy Fermi part
 !
 subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
@@ -62,9 +67,22 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg
- real(SP) :: gsqF_life_bose_res,gsqF_life_bose_den
- real(SP) :: GreenF_RES,GreenF_DEN,weight_dbg,ph_E_dbg
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic
+ real(SP) :: weight_dbg,ph_E_dbg
+ !
+ logical  :: eval_DW
+ !
+ ! Residues
+ !
+ real(SP) ::gsqF_RES_life_B,gsqF_RES_life_f,gsqf_RES_ca_corr,gsqF_RES_fan,gsqF_RES_DW 
+ !
+ ! Denominators
+ !
+ real(SP) :: gsqF_DEN_life_B(gsqF_energy_steps)
+ real(SP) :: gsqF_DEN_life_f(gsqF_energy_steps)
+ real(SP) :: gsqf_DEN_ca_corr(gsqF_energy_steps)
+ real(SP) :: gsqF_DEN_fan(gsqF_energy_steps)
+ real(SP) :: gsqF_DEN_DW 
  !
  ! Indexes
  !
@@ -107,57 +125,36 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
     !
     ! "Bose" Term
     !
-    GreenF_RES=2._SP*pi*elph_gkkp_sq*q_weight
-    GreenF_DEN=                 (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
- &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
-    !
-    if(use_PH_DbGd) then
-      !      
-      weight_dbg=1.0/(q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1._SP)
-      !
-      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
-        iE_fg =q%FGbz%E_map(iq_fg)
-        ph_E_dbg=PH_freqs%FG%E(il,iE_fg,1)
-        delta_E=Sc_W%p(iw)-E_kpq
-        GreenF_DEN=GreenF_DEN  +(Fermi_fnc_derivative(real(delta_E)+ph_E_dbg,gsqF_damping)&
- &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E_dbg,gsqF_damping))
-      enddo
-      GreenF_DEN=GreenF_DEN/weight_dbg
-      !
-    endif
-    !
-    gsqF_life_bose(i_qp,iq_mem,il,iw)=gsqF_life_bose(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
+    gsqF_RES_life_B    =2._SP*pi*elph_gkkp_sq*q_weight
+    gsqF_DEN_life_B(iw)=            (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
+ &               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
     !
     ! "f" Term
     !
-    GreenF_RES=pi*elph_gkkp_sq*q_weight
-    GreenF_DEN=           ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+    gsqF_RES_life_f    =pi*elph_gkkp_sq*q_weight
+    gsqF_DEN_life_f(iw)=  ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &       QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))*f_occ-&
 &                           Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping))
     !
-    gsqF_life_f(i_qp,iq_mem,il,iw)=gsqF_life_f(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
-    !
-    if (eval_G_using_KK) cycle
-    !
-    ! QP's energies
-    !--------------
-    !
-    ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
-    ! important for metals).
-    !
-    GreenF_RES=elph_gkkp_sq*q_weight
-    GreenF_DEN=ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)
-    !
-    gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
-    !
-    ! Cardona-Allen formulation
-    !
-    ! (a) Fan Term                                          this 2 is to be consistent with AC definition
-    !                                                       |
-    GreenF_RES=2._SP*elph_gkkp_sq*q_weight
-    GreenF_DEN=delta_E/(delta_E**2-ph_E**2)
-    !
-    gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+GreenF_RES*GreenF_DEN
+    if (.not.eval_G_using_KK) then 
+      !
+      ! QP's energies
+      !--------------
+      !
+      ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
+      ! important for metals).
+      !
+      gsqF_RES_ca_corr    =elph_gkkp_sq*q_weight
+      gsqF_DEN_ca_corr(iw)=ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)
+      !
+      ! Cardona-Allen formulation
+      !
+      ! (a) Fan Term                                          this 2 is to be consistent with AC definition
+      !                                                       |
+      gsqF_RES_fan    =2._SP*elph_gkkp_sq*q_weight
+      gsqF_DEN_fan(iw)=delta_E/(delta_E**2-ph_E**2)
+      !
+    endif
     !
  enddo
  !
@@ -171,17 +168,58 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    delta_E_at_gamma=en%E(ib,ik,1)  -GKKP%E_kpq(1)%E(ob,ik_bz,1)
  endif
  !
- if (abs(delta_E_at_gamma)<DW_deltaE_treshold) return
+ eval_DW=(.not.abs(delta_E_at_gamma)<DW_deltaE_treshold)
  !
- ! (b) Debye Waller Term
+ if (eval_DW) then 
+   !
+   ! (b) Debye Waller Term
+   !
+   gsqF_RES_DW=-1._SP/2._SP*2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)*q_weight/2._SP
+   !                       /\
+   !                        |
+   !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
+   gsqF_DEN_DW=1._SP/delta_E_at_gamma/ph_E
+   !
+ endif
  !
- GreenF_RES=-1._SP/2._SP*2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)*q_weight/2._SP
- !                       /\
- !                        |
- !                        this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
- GreenF_DEN=1._SP/delta_E_at_gamma/ph_E
+ ! IF double-grid is present aveages all denominators
  !
- gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)+GreenF_RES*GreenF_DEN
-
+ if(use_PH_DbGd) then
+!    if(use_PH_DbGd) then
+!      !      
+!      weight_dbg=1.0/(q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1._SP)
+!      !
+!      ic=1
+!      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
+!        !
+!        iE_fg       =q%FGbz%E_map(iq_fg)                             ! Max w(q) from BZ to IBZ
+!        ph_E_dbg    =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+!        !
+!        ik_plus_q_dg=(ic-1)*k%nibz+ik
+!        E_kpq       =GKKP%E_dg_kpq(iq_bz)%FG%E(il,ik_plus_q_dg,1)    ! E(k+q_dg)  q_db in the D-Grid
+!        delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
+!        !
+!        GreenF_DEN=GreenF_DEN  +(Fermi_fnc_derivative(real(delta_E)+ph_E_dbg,gsqF_damping)&
+! &           +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E_dbg,gsqF_damping))
+!        ! 
+!        ic=ic+1
+!      enddo
+      !
+!      GreenF_DEN=GreenF_DEN/weight_dbg
+!      !
+!    endif
+ endif
+ !
+ ! Store results
+ !
+ gsqF_life_bose(i_qp,iq_mem,il,:)=gsqF_life_bose(i_qp,iq_mem,il,:)+gsqF_RES_life_B*gsqF_DEN_life_B(:)
+ gsqF_life_f(i_qp,iq_mem,il,:)   =gsqF_life_f(i_qp,iq_mem,il,:)   +gsqF_RES_life_f*gsqF_DEN_life_f(:)
+ !
+ if (.not.eval_G_using_KK) then
+    gsqF_fan(i_qp,iq_mem,il,:)    =gsqF_fan(i_qp,iq_mem,il,:) +gsqF_RES_fan*gsqF_DEN_fan(:)
+    gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)
+ endif
+ !
+ if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW
  !
 end subroutine

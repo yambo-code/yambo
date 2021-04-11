@@ -84,8 +84,8 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(k_plus_q%pt,(k_plus_q%nibz,3))
    !
    ic=1
-   do ik=1,k%nibz
-     do iq_fine=q%FGbz%k_range(iq,1),q%FGbz%k_range(iq,1)
+   do iq_fine=q%FGbz%k_range(iq,1),q%FGbz%k_range(iq,1)
+     do ik=1,k%nibz
        k_plus_q%pt(ic,:)=k%pt(ik,:)+q_fine%ptbz(iq_fine,:) 
        ic=ic+1
      enddo

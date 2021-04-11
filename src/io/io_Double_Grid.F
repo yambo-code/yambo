@@ -177,6 +177,8 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
    call io_bulk(ID_frag,R3=GKKP%E_dg_kpq(iq)%FG%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%E))
+   write (VAR_name,'(a,i4.4)') 'f_K_Plus_Q_',iq
+   call io_bulk(ID_frag,R3=GKKP%E_dg_kpq(iq)%FG%f,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%f))
    !
  endif
 #endif

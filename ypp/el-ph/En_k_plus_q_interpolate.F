@@ -106,6 +106,10 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    call FineGd_E_components_alloc(GKKP%E_dg_kpq(iq))
    GKKP%E_dg_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
    !
+   ! Occupations
+   ! ===========
+   call OCCUPATIONS_Extend(E,GKKP%E_dg_kpq(iq)%FG%E)
+   !
    call live_timing(steps =1)
    !
  enddo

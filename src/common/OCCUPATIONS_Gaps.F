@@ -34,7 +34,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  integer , optional ::Nbf(n_sp_pol)
  integer , optional ::Nbm(n_sp_pol)
  integer , optional ::I_dir(2)
- integer , optional ::E_k_dir(n_sp_pol)
+ integer , optional ::E_k_dir(1+(n_sp_pol-1)*2)
  integer , optional ::E_k_ind(n_sp_pol,2)
  ! 
  ! Work Space
@@ -52,7 +52,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  real(SP) ::E_g_dir_(1+(n_sp_pol-1)*2,2)
  real(SP) ::E_g_ind_(1+(n_sp_pol-1)*2,3) 
  integer  ::Nbf_(n_sp_pol),I_dir_(2),Nbm_(n_sp_pol)
- integer  ::E_k_dir_(n_sp_pol),E_k_ind_(n_sp_pol,2)
+ integer  ::E_k_dir_(1+(n_sp_pol-1)*2),E_k_ind_(n_sp_pol,2)
  !
  if(sum(E%f(:,:,:))<1._SP-filled_tresh) call error('The system contains less than 1 electron')
  !
@@ -174,7 +174,7 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
      do ik=1,E%nk
        if(E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol)<E_g_dir_(i_sp_pol+1,1)) then
           E_g_dir_(i_sp_pol+1,1)= E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) 
-          E_k_dir_(i_sp_pol)    = ik
+          E_k_dir_(i_sp_pol+1)  = ik
        endif
        E_g_dir_(i_sp_pol+1,2)=max(E_g_dir_(i_sp_pol+1,2),&
 &                      E%E(Nbf_(i_sp_pol)+1,ik,i_sp_pol)-E%E(Nbf_(i_sp_pol),ik,i_sp_pol) )

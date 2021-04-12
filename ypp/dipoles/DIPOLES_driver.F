@@ -38,6 +38,7 @@ subroutine DIPOLES_driver(k,E,q)
  use interfaces,     ONLY:DESC_write
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
+ use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  !
 #include<memory.h>
@@ -50,9 +51,12 @@ subroutine DIPOLES_driver(k,E,q)
  integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,BANDS_done(DIPs_C_bands(2))
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
+ logical     :: BAND_fields_controls(2)
  character(schlen)     :: BANDS_str
  real(SP), allocatable :: DIP_plane(:,:,:)
  integer,  external    :: PROJECTION_k_on_the_path_or_plane
+ !
+ BAND_fields_controls=.FALSE.
  !
  if (trim(DIPs_kind)=="IP") then
    !
@@ -72,17 +76,26 @@ subroutine DIPOLES_driver(k,E,q)
      call warning("Plane Projection and Interpolation not simultaneously possible. Interpolation Switched off")
      INTERP_grid=-1
    endif
+   !
    call PROJECTION_setup("DIPOLES",(/1,1/))
+   !
+   call parser('DIP_C_bands', BAND_fields_controls(1))
+   call parser('DIP_V_bands', BAND_fields_controls(2))
    !
  endif
  !
  ! ... Dimensions
- DIPs%ib    =(/DIPs_V_bands(1),DIPs_C_bands(2)/)
- DIPs%ib_lim=(/DIPs_V_bands(2),DIPs_C_bands(1)/)
+ if (all(BAND_fields_controls)) then
+   DIPs%ib    =(/DIPs_V_bands(1),DIPs_C_bands(2)/)
+   DIPs%ib_lim=(/DIPs_V_bands(2),DIPs_C_bands(1)/)
+ else
+   DIPs_V_bands=(/DIPs%ib(1),DIPs%ib_lim(1)/)
+   DIPs_C_bands=(/DIPs%ib_lim(2),DIPs%ib(2)/)
+ endif
  !
  ! ... PARALLEL setup
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs)
+ call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=all(BAND_fields_controls))
  !
  ! ... IO
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
@@ -124,9 +137,8 @@ subroutine DIPOLES_driver(k,E,q)
    enddo
  enddo
  !
- call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
- !
  if (trim(DIPs_kind)=="MASK") then
+   call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
    call PP_redux_wait( DIPs_mask )
  endif
  if (trim(DIPs_kind)=="IP") call PP_redux_wait( DIP_accumulated(1,:,1))

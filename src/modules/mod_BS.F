@@ -130,7 +130,7 @@ module BS
    integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
 !aim137: added extra index to %E
-   real(SP)   , allocatable      :: E(:,:)                     ! (/ i_Tr; Xk%FGbz%N_mapped(:)+1/)
+   real(SP)   , allocatable      :: E(:,:)                     ! (/ i_Tr; Xk%FGbz%N_mapped(:)/)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
    real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent

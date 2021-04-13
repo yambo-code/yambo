@@ -62,7 +62,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  type(bz_samp), intent(in) :: Xk
- integer :: i_dom_k,dom_k
+ integer :: i_dom_k,dom_k,i_T,i_k_bz
 !aim137: new input for double grid
  !
  real(SP)           ::reached_threshold
@@ -119,6 +119,16 @@ subroutine K_Haydock(iq,W,mode,Xk)
  if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
  HAYVEC_size = HAYVEC_size * dom_k
 !aim137: change HAYVEC_size to consider FG
+!aim137: print statement
+!print*, 'total number of groups BS_nT_grps = ',BS_nT_grps
+!do i_g=1,BS_nT_grps
+! print*, 'transition group number ',i_g,' has ',BS_T_grp(i_g)%size,&
+!& 'transitions at bz kpts ',BS_T_grp(i_g)%table(:,1)
+!enddo 
+!print*, Xk%nbz
+!print*, Xk%nibz
+!print*, size(Xk%FGbz%N_mapped(:))
+!aim137: end print statement
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0,dom_k)
@@ -235,7 +245,18 @@ subroutine K_Haydock(iq,W,mode,Xk)
      if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
      V0(i_g)%fragment(:,i_dom_k) = V0(i_g)%fragment(:,i_dom_k)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
    enddo
-!aim137: question: what is f_RES
+!aim137: setting some elements to 0 as dom_k is not the same for every k
+   do i_T=1,BS_T_grp(i_g)%size
+     do i_dom_k=1,dom_k
+       i_k_bz=BS_T_grp(i_g)%table(i_T,1)
+       if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
+         V0(i_g)%fragment(i_T,i_dom_k)=cZERO
+         !DEBUG
+         !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
+         !DEBUG
+       end if
+     enddo
+   enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
@@ -343,7 +364,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  endif
  !
  ! DEBUG <
-   write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
+ ! write(*,*) "Haydock_v0_mod= ", Haydock_v0_mod
  ! DEBUG >
  !
  ! [***] Loop ...
@@ -359,12 +380,12 @@ subroutine K_Haydock(iq,W,mode,Xk)
      ! A(n) = <Vn|Vn+1>
      !
 !aim137: print
-do i_g=1,BS_nT_grps
-if (size(  Vn(i_g)%fragment,2) .ne. size(Vnp1(i_g)%fragment,2)) then
-print*, 'in Transitions group ',i_g,', |Vn> has ',  size(  Vn(i_g)%fragment,1),' rows and ',size(  Vn(i_g)%fragment,2),' columns'
-print*, 'in Transitions group ',i_g,', |Vn+1> has ',size(Vnp1(i_g)%fragment,1),' rows and ',size(Vnp1(i_g)%fragment,2),' columns'
-endif
-enddo
+!do i_g=1,BS_nT_grps
+!if (size(  Vn(i_g)%fragment,2) .ne. size(Vnp1(i_g)%fragment,2)) then
+!print*, 'in Transitions group ',i_g,', |Vn> has ',  size(  Vn(i_g)%fragment,1),' rows and ',size(  Vn(i_g)%fragment,2),' columns'
+!print*, 'in Transitions group ',i_g,', |Vn+1> has ',size(Vnp1(i_g)%fragment,1),' rows and ',size(Vnp1(i_g)%fragment,2),' columns'
+!endif
+!enddo
 !aim137: end print
      call K_dot_product(v0_mod_,Vn,Vnp1,1)
 !aim137: print

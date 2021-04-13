@@ -58,7 +58,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
 !aim137: unsure. loop over fine grid
    do i_dom_k=1,dom_k
 !aim137: print
-print*, 'in iteration ',i_dom_k,' dot = ',dot
+!print*, 'in iteration ',i_dom_k,' dot = ',dot
      dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,i_dom_k),W(i_T_g)%fragment(:,i_dom_k))
    enddo
  enddo

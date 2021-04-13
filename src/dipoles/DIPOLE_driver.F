@@ -216,19 +216,22 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  ! Warn about missing [Sigma,r] commutator
  !
  if (      Dip%Vnl_included .and.l_warning.and.(use_g_space_approach.or.Dip%force_v_g_space)) then
-   msg=' Only commutator with non-local pseudopotential contribution included in'
-   if (.not.use_g_space_approach) msg=trim(msg)//' velocity dipoles'
-   if (     use_g_space_approach) msg=trim(msg)//' position and velocity dipoles'
+   msg=' [r,Vnl^pseudo] included in'
+   if (.not.use_g_space_approach) msg=trim(msg)//' velocity dipoles.'
+   if (     use_g_space_approach) msg=trim(msg)//' position and velocity dipoles.'
    call warning(trim(msg))
+   call warning(' In case H contains other non local terms, these are neglected ')
+   Vnl_commutator_warning=.TRUE.
  endif
  !
  ! Warn about missing [Vnl,r] commutator
  !
  if ((.not.Dip%Vnl_included).and.l_warning) then
-   msg=' Missing commutator with non-local pseudopotential contribution in'
+   msg=' [r,Vnl^pseudo] not included in'
    if (.not.use_g_space_approach) msg=trim(msg)//' velocity dipoles'
    if (     use_g_space_approach) msg=trim(msg)//' position and velocity dipoles'
    call warning(trim(msg))
+   call warning(' In case H contains other non local terms, also these are neglected ')
    Vnl_commutator_warning=.TRUE.
  endif
  !

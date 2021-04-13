@@ -669,7 +669,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%intensity=1000._SP*kWCMm22AU
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
- NL_verb_name='low'
+ NL_verb_name='high'
  !
  call IO_desc_reset(NL_desc)
  !

@@ -262,11 +262,11 @@ contains
        !
        call of_open_close(trim(X_file_name),'ot')
        !
-       call DESC_write('o '//trim(X_file_name),'#',NL_desc)
+       call DESC_write('o probe','#',NL_desc)
        !
-       call msg('o '//trim(X_file_name),'#')
-       call msg('o '//trim(X_file_name),'#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o '//trim(X_file_name),'#')
+       call msg('o probe','#')
+       call msg('o probe','#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o probe','#')
        !
        do i_fp=1,n_frequencies
          !
@@ -287,7 +287,7 @@ contains
 &                      aimag(Susceptibility(i_order,i_f,3)*Unit_of_Measure),&
 &                       real(Susceptibility(i_order,i_f,3)*Unit_of_Measure)/)
          !
-        call msg('o '//trim(X_file_name),'',VALUEs(1:n_headings),USE_TABS=.TRUE.)
+         call msg('o probe','',VALUEs(1:n_headings),USE_TABS=.TRUE.)
          !
        enddo 
        !

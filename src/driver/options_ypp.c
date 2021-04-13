@@ -113,7 +113,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Plots";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Electronic properties";
- /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="<string>=(h)artree,(f)ock,(coh),(sex),(cohsex),(exx),(exxc),(srpa),(d)ef,(ip)";
 #if defined _ELPH  
  options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent,(e)lias";
@@ -122,10 +121,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
 #else
  options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands,(c)urrent";
 #endif
- /* GPL_EXCLUDE_END */
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="<string>=(w)ave,(d)ensity,(m)ag,do(s),(b)ands";
-    GPL_INCLUDE_END */
  options[*i_opt].long_opt="electron";
  options[*i_opt].short_opt='s';
  options[*i_opt].bin="ypp"; 
@@ -137,17 +132,12 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_opt="exciton";
  options[*i_opt].short_opt='e';
  options[*i_opt].bin="ypp ypp_ph";
- /* GPL_EXCLUDE_START */
 #if defined _ELPH  
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate,";
  options[*i_opt].long_desc[1]="         (e)lias,(g)kkp,(p)h-assisted dos";
 #else
  options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave,(i)nterpolate";
 #endif
- /* GPL_EXCLUDE_END */
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="<string>=(s)ort,(sp)in,(a)mplitude,(w)ave";
-    GPL_INCLUDE_END */
  options[*i_opt].yambo_string="excitons";
  options[*i_opt].section="Plots";
  options[*i_opt].char_var=1;
@@ -188,7 +178,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
 /*
   Real-Time
 */
- /* GPL_EXCLUDE_START */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Non-linear response analysis";
  options[*i_opt].long_opt="nl";
@@ -205,7 +194,6 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="RTDBs";
  options[*i_opt].section="Real-Time";
  options[*i_opt].char_var=1;
- /* GPL_EXCLUDE_END */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD observables plot";
  options[*i_opt].long_opt="rtplot";
@@ -214,12 +202,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs,(o)ccupations,(l)ifetimes,(d)ensity,(g)reenfunction";
- /* GPL_EXCLUDE_END */
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs";
-    GPL_INCLUDE_END */
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD plot control";
  options[*i_opt].char_var=1;
@@ -228,13 +211,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplotmode"; /* TDpol */
  options[*i_opt].section="Real-Time";
- /* GPL_INCLUDE_START 
- options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
-    GPL_INCLUDE_END */
- /* GPL_EXCLUDE_START */
  options[*i_opt].long_desc[0]="rtplot=X/a => <string>=(t)ime";
  options[*i_opt].long_desc[1]="rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os";
  options[*i_opt].long_desc[2]="rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy";
  options[*i_opt].long_desc[3]="rtplot=d   => <string>=(t)ime";
- /* GPL_EXCLUDE_END */
 };

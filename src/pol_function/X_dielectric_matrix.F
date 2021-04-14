@@ -178,9 +178,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (io_RESPONSE) then
      allocate(X_par(1))
-#if !defined _PAR_IO
-     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
-#endif
+!#if !defined _PAR_IO
+!     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+!#endif
    else
      allocate(X_par(PAR_nQ_ibz))
      call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
@@ -273,6 +273,13 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
+   ! allocation of X_mat
+   if (io_RESPONSE.and..not.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
+   endif
+   !
 ! XXX
 write(*,*) "upto before io_RESPONSE"
 ! XXX
@@ -318,6 +325,14 @@ write(*,*) "after PP_redux_wait", iw
    !
    call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
+   !
+   ! X_mat (and other few quantities) deallocate
+   !
+   if (io_RESPONSE.and.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_alloc('X')
+#endif
+   endif
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d

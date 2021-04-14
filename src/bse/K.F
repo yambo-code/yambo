@@ -66,7 +66,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
 #include<memory.h>
-#include<yambo_bse.h>
  !
  type(levels)  ::Ken 
  type(bz_samp) ::Xk,q
@@ -81,7 +80,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! ... Kernel loop
  !
- DEFINE_BSK_COMMON_INDEXES
+ ! DEFINE BSK COMMON INDEXES
+ !
+ integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
+&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
+&               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
+&               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
+&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) 
+ ! OMP LAST DEF
+ integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
+ !
  integer    :: i_block,O_ng_shift,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4),i_andrea
@@ -405,8 +414,109 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        if (BS_blk(i_block)%done(i_Tk,i_Tp)=="t".and.l_BSE_restart) cycle
        !
-       FILL_BSK_COMMON_INDEXES
-       FILL_BSK_KERNEL_INDEXES
+       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
+       &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
+       H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
+       &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       if (H_pos(1)>H_pos(2)) cycle 
+       !
+       i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
+       i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
+       !
+       i_k_s =Xk%sstar(i_k_bz,2) 
+       i_p_s =Xk%sstar(i_p_bz,2) 
+       !
+       i_k_s_m1= sop_inv(i_k_s) 
+       i_kp_s  = sop_tab(i_k_s_m1,i_p_s) 
+       !
+       i_kmq_bz=qindx_X(iq,i_k_bz,1) 
+       i_pmq_bz=qindx_X(iq,i_p_bz,1) 
+       !
+       i_kmq   =Xk%sstar(i_kmq_bz,1) 
+       i_pmq   =Xk%sstar(i_pmq_bz,1) 
+       !
+       i_kmq_s =Xk%sstar(i_kmq_bz,2) 
+       i_pmq_s =Xk%sstar(i_pmq_bz,2) 
+       !
+       if (BS_res_K_corr) then 
+         i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
+         i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
+       endif 
+       !
+       i_kmq_s_m1 = sop_inv(i_kmq_s) 
+       i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
+       !
+       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+         i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
+         if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
+           i_p_bz_last=i_p_bz 
+           i_k_bz_last=i_k_bz 
+           if (i_k_bz_mem==0) then 
+             !$omp critical 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             iq_W_bz=qindx_tmp(1) 
+             ig_W   =qindx_tmp(2) 
+             !$omp end critical 
+           else 
+             iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
+             ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
+           endif 
+           iq_W_bz_last=iq_W_bz 
+           ig_W_last   =ig_W    
+         else 
+           iq_W_bz=iq_W_bz_last 
+           ig_W   =ig_W_last    
+         endif 
+         iq_W   =q%sstar( iq_W_bz ,1) 
+         iq_W_s =q%sstar( iq_W_bz ,2) 
+       endif 
+       !
+       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
+       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
+       !
+       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
+       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
+       !
+       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
+       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
+       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
+       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
+       !
+       ! 
+       ig_kmq    = qindx_X(iq,i_k_bz,2) 
+       ig_pmq    = qindx_X(iq,i_p_bz,2) 
+       !        
+       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+         i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
+         if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
+           i_pmq_bz_last=i_pmq_bz 
+           i_kmq_bz_last=i_kmq_bz 
+           if (i_kmq_bz_mem==0) then 
+             !$omp critical 
+             qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) 
+             iq_W_bz_mq=qindx_tmp(1) 
+             ig_W_mq   =qindx_tmp(2) 
+             !$omp end critical 
+           else 
+             iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) 
+             ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) 
+           endif 
+           iq_W_bz_mq_last=iq_W_bz_mq 
+           ig_W_mq_last   =ig_W_mq    
+         else 
+           iq_W_bz_mq=iq_W_bz_mq_last 
+           ig_W_mq   =ig_W_mq_last    
+         endif 
+         iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
+         iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
+       endif 
+       ! 
+       if (BS_K_is_ALDA) then 
+         is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) 
+         os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) 
+         is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) 
+         os_p = (/i_v_p,i_pmq,i_pmq_s,i_p_sp_pol_v/) 
+       endif 
        !
        if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          !

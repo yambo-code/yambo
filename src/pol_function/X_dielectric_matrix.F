@@ -273,6 +273,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
+! XXX
+write(*,*) "upto before io_RESPONSE"
+! XXX
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
 #endif
@@ -286,14 +289,21 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        if (     io_RESPONSE) iw_X_mat=iw
        if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
        !
+! XXX
+write(*,*) "before zeroing X_mat",iw
        X_mat(:,:,iw_X_mat)=cZERO
        !
+write(*,*) "before if PAR_COM_X_WORLD",iw
        if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
+write(*,*) "inside if PAR_COM_X_WORLD",iw
          X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
 &              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
        endif
        !
-       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+write(*,*) "before PP_redux_wait", iw
+!!!       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
+       call PP_redux_wait(X_mat(:,:,iw_X_mat),IN_PLACE=.true.,COMM=PAR_COM_X_WORLD%COMM)
+write(*,*) "after PP_redux_wait", iw
        !
      enddo
      !

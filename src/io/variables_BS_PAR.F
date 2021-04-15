@@ -55,6 +55,8 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !
+ variables_BS=0
+ !
 #if defined _PAR_IO
  if (write_is_on(ID).and..not.master_cpu) return
 #endif
@@ -229,6 +231,7 @@ integer function variables_BS_more(ID,mode)
 &                     variable_exist,NF90_unlimited,netcdf_dim_size
  use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
 &                     def_variable_bulk,io_variable_bulk
+ use IO_m,       ONLY:io_status
  !
  implicit none
  !
@@ -239,6 +242,8 @@ integer function variables_BS_more(ID,mode)
  logical           :: io_var
  real(SP)          :: BS_K_cutoff_IO(1)
  character(schlen) :: kernel_dim_name(1)
+ !
+ variables_BS_more=0
  !
  if (write_is_on(ID).and..not.master_cpu) return
  !
@@ -272,6 +277,8 @@ integer function variables_BS_more(ID,mode)
  endif
  !
  if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
+ !
+ variables_BS_more=io_status(ID)
  !
 end function
 !

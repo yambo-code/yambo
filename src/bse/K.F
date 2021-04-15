@@ -386,9 +386,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
-   i_p_bz_last=0   ; i_k_bz_last=0
-   i_pmq_bz_last=0 ; i_kmq_bz_last=0
-   !
 #if defined _OPENMP && ! defined _CUDA
    !$omp parallel default(shared), &
    !$omp private(i_Tk,i_Tp, &
@@ -403,6 +400,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #endif
    !
    call OPENMP_update(master_thread)   
+   !
+   i_p_bz_last=0   ; i_k_bz_last=0
+   i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
 #if defined _OPENMP && ! defined _CUDA
    !$omp do collapse(2), schedule(dynamic)

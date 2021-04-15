@@ -92,7 +92,8 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
    endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)
-   delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(:,1))
+   !   delta_f=C*Vstar_dot_V_omp(n,D(1:n),R_x_D_n(1:n,1))  Temporary substitute with dot_product
+   delta_f=C*dot_product(D,R_x_D_n(:,1))
    if (n_loop==2) then 
      R_x_D_n(:,2)=Lo(:,2)*R_x_D_n(:,2)
      delta_f=delta_f+C*Vstar_dot_V_omp(n,conjg(D),R_x_D_n(:,2))

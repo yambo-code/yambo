@@ -35,13 +35,14 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,bord
  !
  implicit none
  !
- integer :: n_k
- real(SP):: k_ref(3)
- real(SP):: k(n_k,3)
- real(SP),optional :: k_dist(n_k)
- logical, optional :: ROTATE_k_ref,border_point
- integer, optional :: k_symm
- integer, optional :: i_err
+ integer,  intent(in) :: n_k
+ real(SP), intent(in) :: k_ref(3)
+ real(SP), intent(in) :: k(n_k,3)
+ real(SP), intent(out),  optional :: k_dist(n_k)
+ logical,  intent(out),  optional :: border_point
+ logical,  intent(in) ,  optional :: ROTATE_k_ref
+ integer,  intent(out),  optional :: k_symm
+ integer,  intent(out),  optional :: i_err
  !
  ! Work Space
  !

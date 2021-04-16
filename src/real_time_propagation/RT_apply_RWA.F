@@ -26,7 +26,8 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RTibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
+ use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RT_deph_range,RTibz,&
+&                         l_RT_EXP,RT_is_statically_dephased,RT_bands,NE_time
  !
  implicit none
  !
@@ -52,6 +53,9 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
      sumGAMMA=0._SP
      !
      if (RT_is_statically_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
+     !
+     if (NE_time<RT_deph_range(1).and.RT_deph_range(1)>0._SP) sumGAMMA=0._SP
+     if (NE_time>RT_deph_range(2).and.RT_deph_range(2)>0._SP) sumGAMMA=0._SP
      !
      deltaE=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik,1)
      !

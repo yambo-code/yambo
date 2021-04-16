@@ -107,7 +107,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use RT_lifetimes,ONLY:RT_life_extrap_times
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,&
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
 &                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
@@ -609,6 +609,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Phase_LifeTime = 0._SP
  RT_deph_deg_thresh = 1.E-5_SP
  RT_deph_cv_only =.FALSE.
+ RT_deph_range=-1._SP
  !
  NE_MEM_treshold=0._SP
  RT_nk=0

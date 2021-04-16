@@ -24,7 +24,8 @@
 subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RTibz,l_RT_EXP,RT_bands
+ use real_time,      ONLY:RT_is_statically_dephased,RT_Deph_Matrix,RT_deph_range,&
+&                         RTibz,l_RT_EXP,RT_bands,NE_time
  !
  implicit none
  !
@@ -37,6 +38,9 @@ subroutine RT_Dephasing_step(dG_out,dG_in,ik,deltaT)
  ! to dG_out if we are not using the EXP integrator. This is done here or in RT_apply_RWA
  !
  dG_out(:,:)=dG_out(:,:)+dG_in(:,:)
+ !
+ if (NE_time<RT_deph_range(1).and.RT_deph_range(1)>0._SP) return
+ if (NE_time>RT_deph_range(2).and.RT_deph_range(2)>0._SP) return
  !
  if (.not.RT_is_statically_dephased) return
  !

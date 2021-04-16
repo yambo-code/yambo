@@ -513,7 +513,7 @@ subroutine INIT_activate()
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
    call initactivate(1,'RTBands Integrator GrKind TwoAlph RTehEny ScattTresh')
-   call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh')
+   call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh DephTRange')
    call initactivate(1,'RTstep NEsteps NETime DipoleEtresh SPINprojected')
    call initactivate(1,'IOtime IOCachetime')
    !

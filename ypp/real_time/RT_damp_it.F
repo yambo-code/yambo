@@ -40,9 +40,9 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")  
-     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs(RT_time(i_t)*damp_factor))
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs((RT_time(i_t)-RT_time(1))*damp_factor))
    case("GAUSSIAN") 
-     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-RT_time(i_t)**2*damp_factor**2)
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-(RT_time(i_t)-RT_time(1))**2*damp_factor**2)
    case("NONE") 
      forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = 1._SP
    case default

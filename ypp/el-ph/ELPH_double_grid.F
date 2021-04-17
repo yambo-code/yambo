@@ -80,6 +80,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! ======================================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID)
  io_err=io_ELPH(ID,'no_matrix_elements')
+ write(*,*) 'io_err ',io_err
  if (io_err/=0) call error('El-Ph database not found')
  !
  if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')

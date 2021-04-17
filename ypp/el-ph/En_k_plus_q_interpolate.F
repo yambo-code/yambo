@@ -29,6 +29,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients,INTERPOLATE_is_quiet, &
          &                     INTERPOLATE_is_serial
  use ELPH,                ONLY:GKKP_me,elph_nb
+ use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  !
 #include<memory.h>
@@ -58,7 +59,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! number of q_fine points in the BZ around a give iq point in the IBZ
  !
- call ELPH_alloc('DGRID',GKKP)
+ call ELPH_alloc("DGRID",GKKP)
  !
  call live_timing('E(k+q) energy interpolation ',q%nibz)
  !

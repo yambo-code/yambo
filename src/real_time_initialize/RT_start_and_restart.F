@@ -180,7 +180,6 @@ subroutine RT_start_and_restart(E,k,q)
      io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
    enddo
    !
-   call PP_redux_wait()
    !
    NE_i_start_time=NE_i_time
    NE_steps=NE_steps+1

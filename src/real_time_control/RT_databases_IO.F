@@ -74,6 +74,7 @@ subroutine RT_databases_IO(E,DO_IT)
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      CACHE_OBS_last_point=OBS_RT_IO_t%last_point
+     if (NE_i_time>1) OBS_RT_IO_t%N=OBS_RT_IO_t%N-1
    endif
    !
    write_OBS=RT_do_it('OBS').or.DO_IT
@@ -121,6 +122,7 @@ subroutine RT_databases_IO(E,DO_IT)
    if(NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
+     if (NE_i_time>1) CARR_RT_IO_t%N=CARR_RT_IO_t%N-1
    endif
    !
    write_CARR=RT_do_it('CARR').or.DO_IT

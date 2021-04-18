@@ -374,7 +374,7 @@ module vec_operate
      !
    end subroutine get_id_perpendicular
    !
-   subroutine r_sort(arrin,arrout,indx,indx_m1)                             
+   subroutine r_sort(arrin,arrout,indx,indx_m1,r_zero)                             
      !
      ! Sort real(dt) values from arrin into array 
      ! arrout and give permutations in indx, indx_m1.
@@ -386,13 +386,17 @@ module vec_operate
      real(SP), optional::  arrout(:)
      integer,  optional::  indx(:)
      integer,  optional::  indx_m1(:)
+     real(SP), optional :: r_zero
      !
      ! local variables
      !
      integer  :: j, i,n, ir, l, indxt
-     real(SP) :: q
+     real(SP) :: q,r_zero_
      integer, allocatable:: l_indx(:)
      real(SP),allocatable:: l_arrout(:)
+     !
+     r_zero_=0._SP
+     if(present(r_zero)) r_zero_=r_zero
      !
      n=size(arrin)
      allocate(l_indx(n),l_arrout(n))
@@ -430,9 +434,9 @@ module vec_operate
      j=l+l
   2  if (j.le.ir)then
       if (j.lt.ir) then
-        if (arrin(l_indx(j)).lt.arrin(l_indx(j+1)))j=j+1
+        if (arrin(l_indx(j))<arrin(l_indx(j+1))-r_zero_) j=j+1
       endif
-      if (q.lt.arrin(l_indx(j))) then
+      if (q<arrin(l_indx(j))-r_zero_) then
         l_indx(i)=l_indx(j)
         i=j
         j=j+j

@@ -170,12 +170,14 @@ subroutine RT_start_and_restart(E,k,q)
    !
    do i_db=4,8
      call RT_RESTART_database_copy( trim(db_name(i_db)) )
-     if (i_db==6.or.i_db==7) cycle
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
-     io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
    enddo
    !
    call PP_redux_wait()
+   !
+   do i_db=4,5
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
+     io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
+   enddo
    !
    NE_i_start_time=NE_i_time
    NE_steps=NE_steps+1

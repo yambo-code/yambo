@@ -102,7 +102,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
    !
    if (abs(delta_f)/abs(fo)<abs(K_INV_EPS%treshold)) return
    !
-   if (abs(delta_f)>40._SP) exit
+   if (abs(delta_f)>K_INV_EPS%max_treshold) exit
    !
    R_x_D_nm1=R_x_D_n
    !

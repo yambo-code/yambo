@@ -28,6 +28,7 @@ subroutine RT_RESTART_database_copy(db)
  use RT_control,     ONLY:RT_DB_file_name
  use stderr,         ONLY:n_max_jobstr,STRING_split
  use com,            ONLY:jobdir,jobstr
+ use parallel_m,     ONLY:master_cpu
  !
  implicit none
  !
@@ -40,6 +41,8 @@ subroutine RT_RESTART_database_copy(db)
  character(schlen) :: components(20)
  !
  logical, external :: file_exists
+ !
+ if(.not.master_cpu) return
  !
  db_to_cp=" "
  !

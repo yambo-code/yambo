@@ -74,7 +74,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use QP_m,          ONLY:SC_band_mixing
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
-&                        SC_bands,SC_preconditioning,OEP_approx
+&                        SC_bands,SC_preconditioning,OEP_approx,&
+&                        SC_neq_kind,SC_mu,SC_last_coh_it
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
@@ -623,7 +624,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
-#if defined _NL
+#if defined _NL || defined _ELECTRIC
  call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
 #endif
 #if defined _RT
@@ -664,6 +665,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ !
+ ! SC [NEQ]
+ !
+ call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
+ call it(defs,'SCmu',       '[SC] Reference / holes / electrons chem potential',SC_mu,unit=E_unit,verb_level=V_sc)
+ call it(defs,'SCcohIt',    '[SC] Impose off-diagonal rho in the initial basis set for N iterations',SC_last_coh_it,verb_level=V_sc)
  ! 
  ! SC [common with RT]
  !

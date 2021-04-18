@@ -45,6 +45,10 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
+#if defined _SC
+ use SC,            ONLY:SC_neq_kind,SC_mu,SC_occ
+#endif 
+ !
 #include<memory.h>
  !
  type(levels)  ::E
@@ -60,6 +64,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd,nel_diff_zero,n_elecs,n_holes,balance
  logical :: Fermi_is_converged,impose_balance_
  real(SP),parameter :: Tel_step=0.1_SP/HA2KEL
+ real(SP) :: n_carr(2),mu_zero,mu_hole,mu_el
  !
  !     n_spin n_sp_pol n_spinor  spin_occ 
  !       1        1        1         2      
@@ -266,15 +271,49 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
    YAMBO_ALLOC(E%f,(nb_here,E%nk,n_sp_pol))
  endif
  !
+ mu_zero=E%E_fermi
+ mu_el  =E%E_fermi
+ mu_hole=E%E_fermi
+#if defined _SC
+ n_carr=0.
+ if (trim(SC_neq_kind)=="constrained-mu") then
+   write(*,*) "Ef= ",E%E_fermi*27.2116
+   mu_zero= SC_mu(1)
+   mu_hole= SC_mu(2)
+   mu_el  = SC_mu(3)
+ endif
+#endif
+ !
  do i1=1,n_total_states
    ib=index( index_E_sorted(i1) , 1)
    ik=index( index_E_sorted(i1) , 2)
    is=index( index_E_sorted(i1) , 3)
    !
-   if(E_sorted(i1)<=E%E_Fermi) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,T_holes)
-   if(E_sorted(i1)> E%E_Fermi) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-E%E_Fermi,T_elecs)
+   if(E_sorted(i1)<=mu_zero) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_hole,T_holes)
+   if(E_sorted(i1)> mu_zero) E%f(ib,ik,is)=spin_occ*Fermi_fnc(E_sorted(i1)-mu_el,  T_elecs)
+   !
+#if defined _SC
+   if((E%E(ib,ik,is)-mu_zero)<=0._SP) n_carr(1)=n_carr(1)+(spin_occ-E%f(ib,ik,is))*K%weights(ik)
+   if((E%E(ib,ik,is)-mu_zero)> 0._SP) n_carr(2)=n_carr(2)+          E%f(ib,ik,is) *K%weights(ik)
+#endif
    !
  enddo
+ !
+#if defined _SC
+ !
+ if (trim(SC_neq_kind)=="constrained-occ") then
+   write(*,*) n_carr
+   do is=1,n_sp_pol
+     do ik=1,E%nk
+       do ib=1,nb_here
+         if( SC_occ(ib,ik,is)==-99._SP ) cycle
+         E%f(ib,ik,is)=SC_occ(ib,ik,is)*spin_occ
+       enddo
+     enddo
+   enddo
+ endif
+ !
+#endif
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !

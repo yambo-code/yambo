@@ -83,7 +83,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
    is=k%sstar(ik_bz,2)
    !
    do ok_bz=1,k%nbz
-     if (qindx_B(ik_bz,ok_bz,1)==iq) then
+     if (qindx_B(ok_bz,ik_bz,1)==iq) then
        ok=k%sstar(ok_bz,1)
        os=k%sstar(ok_bz,2)
        exit

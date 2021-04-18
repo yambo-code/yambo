@@ -32,6 +32,12 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  use stderr,         ONLY:intc
  use YPPm,           ONLY:coo_out,K_transform,CIRCUIT_E_db,CIRCUIT_k_label
  use interpolate,    ONLY:INTERP_obj
+#if defined _YPP_SC
+ use SC,             ONLY:SC_neq_kind
+#endif
+#if defined _YPP_RT
+ use YPP_real_time,  ONLY:GreenF_T_and_W
+#endif
  !
 #include<memory.h>
  !
@@ -45,11 +51,14 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
 &                         ndims,nval,n_points,n_points_max
- logical               :: PLOT_BANDS,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
+ logical               :: PLOT_BANDS,PLOT_G2,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
-&                         file_name(sum(nfiles)),k_name
- real(SP)              :: value_k,        values(dims(2)-dims(1)+1+4), &
+&                         file_name(sum(nfiles)),k_file_name,k_name
+ real(SP)              :: value_k(4),     values(dims(2)-dims(1)+1+4), &
 &                         tmp_var(dims(1):dims(2),maxval(nfiles),nquantities),tmp_dist(3)
+#if defined _YPP_SC
+ logical               :: proj_wfc
+#endif
  !
  ! Allocs
  !
@@ -62,12 +71,17 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  PLOT_from_DB      = index(trim(basename),"from_DB")>0
  !
  PLOT_BANDS       = trim(int_kind)=="bands"
+ PLOT_G2          = trim(int_kind)=="G_k_w"
  !
  call msg("s","Generating output for "//trim(basename)//" "//trim(int_kind))
  !
  ndims=dims(2)-dims(1)+1
  n_points=1
  n_points_max=1
+ !
+#if defined _YPP_SC
+ proj_wfc=(trim(SC_neq_kind)=="matsubara")
+#endif
  !
  ! Define a map between k-points in grid and nearest k-point in circuit
  !
@@ -119,6 +133,9 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  ! Define filenames
  !
+ k_file_name= " "
+ if(PLOT_G2   ) k_file_name="k-points_"//trim(basename)
+ !
  file_name= " "
  !
  ifile=0
@@ -128,6 +145,13 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      ifile=ifile+1
      if (n_sp_pol>1.and.i_sp_pol==1) file_name(ifile)=trim(file_name(ifile))//"_spin-up"
      if (n_sp_pol>1.and.i_sp_pol==2) file_name(ifile)=trim(file_name(ifile))//"_spin-dn"
+   enddo
+ endif
+ if(PLOT_G2) then
+   do iqnt=1,2
+     ifile=ifile+1
+     if(ifile==1) file_name(ifile)=trim(file_name(ifile))//"_Re"
+     if(ifile==2) file_name(ifile)=trim(file_name(ifile))//"_Im"
    enddo
  endif
  !
@@ -149,6 +173,14 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    ifile=ifile+5
  endif
  !
+#if defined _YPP_SC
+ if(PLOT_interpolated.and.PLOT_BANDS.and.proj_wfc) then
+   ifile=ifile+5
+   file_name(ifile+1)="proj_val_"//trim(basename)
+   file_name(ifile+2)="proj_con_"//trim(basename)
+   ifile=ifile+2
+ endif
+#endif
  !
  if(ifile /= sum(nfiles)) call error(" something went wrong")
  !
@@ -163,9 +195,16 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    headings(ndims+2:ndims+4)=headings_k(2:4)
    nval=ndims+4
  endif
+ if(PLOT_G2   ) then
+   values(1)=0._SP
+   nval=ndims+1
+ endif
  !
  do i_dim=dims(1),dims(2)
    if(PLOT_BANDS) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
+#if defined _YPP_RT
+   if(PLOT_G2   ) values(1+i_dim-dims(1)+1)=real(GreenF_T_and_W%W(i_dim),SP)*HA2EV
+#endif
  enddo
  !
  ! Open files and print headers
@@ -176,7 +215,20 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      call msg('o '//trim(file_name(ifile)),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name(ifile)),"#")
    endif
+   if(PLOT_G2) then
+     call msg('o '//trim(file_name(ifile))," ",values(:nval),INDENT=0)
+   endif
  enddo
+ !
+ ! File with KPTs
+ !
+ if(PLOT_G2   ) then
+   !
+   call of_open_close(trim(k_file_name),'ot')
+   call msg('o '//trim(k_file_name),"#",headings_k,INDENT=0,USE_TABS=.true.)
+   call msg('o '//trim(k_file_name),"#")
+   !
+ endif
  !
  ! print values
  !
@@ -189,6 +241,8 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    k_name=""
    !
    if (PLOT_built_in) then
+     !
+     if( all((/Grid_to_path_map(ik_local,:)==-1/)) ) cycle
      !
      n_points=0
      do ik_bz_grid=1,Xk%nbz
@@ -212,7 +266,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
      tmp_k(:,1)=LOCAL_k%pt(ik_local,:)
      !
-     if (len_trim(CIRCUIT_k_label(ik_local))>0) then
+     if (len_trim(CIRCUIT_k_label(ik_local))>0 .and. .not.PLOT_G2) then
        k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
        l_print_k_name=.true.
      endif
@@ -243,15 +297,16 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
    endif
    !
-   if (ik_local>1) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
+   if (ik_local>1) value_k(1)=value_k(1)+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
    !
    do i_point=1,n_points
      !
-     !
      call K_transform(tmp_k(:,i_point),'iku')
      !
-     values(1)=value_k+iku_v_norm(tmp_k_dist(:,i_point))
-     values(ndims+2:ndims+4)=tmp_k(1:3,i_point)
+     values(1)=value_k(1)+iku_v_norm(tmp_k_dist(:,i_point))
+     value_k(2:4)=tmp_k(1:3,i_point)
+     !
+     values(ndims+2:ndims+4)=value_k(2:4)
      !
      ivalue=0
      do iqnt=1,nquantities
@@ -260,10 +315,13 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
          if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
-         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,after_msg=k_name)
+         call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2,after_msg=k_name)
        enddo
        !
      enddo
+     !
+     if(PLOT_G2) call msg('o '//trim(k_file_name),' ',value_k,INDENT=0)
+     !
    enddo
    !
  enddo
@@ -273,6 +331,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  do ifile=1,sum(nfiles)
    call of_open_close(trim(file_name(ifile)))
  enddo
+ if(PLOT_G2) call of_open_close(trim(k_file_name))
  !
  if(n_points_max>1) then
    YAMBO_FREE(auxiliary_var)

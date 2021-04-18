@@ -31,8 +31,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use pars,           ONLY:SP,DP,pi,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
-#if defined _RT
- use drivers,        ONLY:l_real_time,l_nl_optics
+ use drivers,        ONLY:l_sc_run,l_real_time,l_nl_optics
+#if defined _SC || defined _RT
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
  use electrons,      ONLY:levels,n_spin,n_spinor
@@ -44,7 +44,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use xc_f90_lib_m,   ONLY:XC_FAMILY_LDA,XC_FAMILY_GGA,XC_FAMILY_HYB_GGA
  use libxc_funcs_m,  ONLY:XC_GGA_X_PBE, XC_GGA_C_PBE
- use interfaces,     ONLY:el_density_and_current
+ use interfaces,     ONLY:el_density_and_current,el_magnetization
  use pseudo,         ONLY:pp_rho_nlcc,pp_has_nlcc,PP_nlcc_free
  !
 #include<memory.h>
@@ -112,17 +112,17 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Electronic/spin density 
  !==========================
  !
-#if defined _RT
- if (l_real_time.or.l_nl_optics) then
+#if defined _SC || defined _RT
+ if (l_real_time.or.l_nl_optics) then !.or.l_sc_run) then
    rho=rho_n
    if(n_spin> 1) magn=magn_n
- else
-#endif
-   call el_density_and_current(en,Xk,rho=rho)
-   if (n_spin> 1) call el_magnetization(en,Xk,magn)
-#if defined _RT
  endif
 #endif
+ !
+ if (.not.(l_real_time.or.l_nl_optics)) then !.or.l_sc_run)) then
+   call el_density_and_current(en,Xk,rho=rho)
+   if (n_spin> 1) call el_magnetization(en,Xk,magn)
+ endif
  !
  ! non-linear core corrections (NLCC)
  ! to be improved for yambo_rt, otherwise this is done at each time step

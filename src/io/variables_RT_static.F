@@ -51,7 +51,7 @@ integer function variables_RT_static(ID,what,l_carriers)
  character(*)       :: what
  logical            :: l_carriers
  !
- integer, external :: io_descriptors
+ integer, external  ::io_descriptors
  !
  integer               :: i1,MENU_
  logical               :: l_OBS,l_G,l_carriers_,l_NE_with_fields_disk,l_RT_diamagnetic

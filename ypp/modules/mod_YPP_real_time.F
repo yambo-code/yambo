@@ -43,6 +43,7 @@ module YPP_real_time
  logical  :: l_RT_occupations
  logical  :: l_RT_lifetimes
  logical  :: l_RT_density
+ logical  :: l_RT_G_two_times
  logical  :: l_RT_X
  logical  :: l_NL_X
  logical  :: l_NL_exc
@@ -113,6 +114,10 @@ module YPP_real_time
  !
  real(SP),allocatable     :: RT_time(:)
  !
+ ! (RT) G<(t,t')
+ !
+ real(SP)                 :: Rho_deph
+ !
  type RT_ctl
    real(SP) :: delta_W             =0._SP   ! delta W
    real(SP) :: X_W_range(2)        =0._SP   ! Response energy range 
@@ -140,6 +145,7 @@ module YPP_real_time
  type(OBS_el) :: Pol 
  type(OBS_el) :: Curr 
  type(OBS_el) :: ElField 
+ type(OBS_el) :: GreenF_T_and_W
  !
  interface
    !

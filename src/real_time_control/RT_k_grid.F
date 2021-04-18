@@ -51,7 +51,7 @@ subroutine RT_k_grid(E,k,q)
  !==============================
  if (.not.l_RT_uses_E_FineGd) then
    !
-   RTibz%N = 0
+   RTibz%N = k%nibz
    RT_nk   = k%nibz
    !
    call bz_samp_FineGd_alloc(RTibz,k%nibz)

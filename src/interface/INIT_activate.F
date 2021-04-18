@@ -30,7 +30,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -490,6 +490,8 @@ subroutine INIT_activate()
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
    call initactivate(1,'SCdiag Mean_Potential')
    !
+   call initactivate(1,'SCneqKIND SCmu SCocc SCcohIt')
+   !
  endif
  !
 #endif
@@ -544,6 +546,12 @@ subroutine INIT_activate()
  if (l_sc_magnetic) then
    call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
    if (MAG_landau) call initactivate(1,'B_radius')
+ endif
+ !
+ ! Electric
+ !
+ if (l_sc_electric) then
+   call initactivate(1,'EvPolarization ExtF_Dir ExtF_Int FrSndOrd')
  endif
  !
 #endif

@@ -124,6 +124,18 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
+   subroutine el_magnetization(en,Xk,magn,bands)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(levels), intent(in ) ::en
+     type(bz_samp),intent(in ) ::Xk
+     real(SP),     intent(out) ::magn(fft_size,3)
+     integer,  optional, intent(in) ::bands(2)
+   end subroutine el_magnetization
+   !
    subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
 &                                  USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
      use pars,           ONLY:SP

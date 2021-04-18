@@ -26,7 +26,7 @@ subroutine INIT_ypp_load(defs)
  use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
-&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
+&                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io,V_sc
  use wave_func,     ONLY:wf_ng
  use LIVE_t,        ONLY:nhash
  use D_lattice,     ONLY:Tel,Bose_Temp
@@ -45,13 +45,14 @@ subroutine INIT_ypp_load(defs)
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
- use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
+ use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _YPP_SC
  use YPPm,          ONLY:V_value
+ use SC,            ONLY:SC_neq_kind
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
@@ -118,6 +119,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
+ call it('r',defs,'RTGtwotimes',  '[R] Construct G</G>/G(r)/G(a)/A(t,tp) from rho within GKBA')
  !
  call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')
  call it('r',defs,'RTtime',       '[R] Post-Processing kind: function of time')
@@ -212,6 +214,9 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'INTERP_NofNN',    'Number of Nearest sites in the NN method',NN_n_of_nearest)
  call it(defs,'INTERP_Grid',     'Interpolation BZ Grid',INTERP_grid)
  call it(defs,'INTERP_Shell_Fac','The bigger it is a higher number of shells is used',INTERP_shell_factor)
+#if defined _YPP_SC
+ call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
+#endif
  !
 #if defined _YPP_RT
  call it('f',defs,'NormN','Nel on the bands is renormalized to Nel in the IBZ')
@@ -350,6 +355,8 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TimeStep','Time step',RT_conf%delta_T,unit=Time_unit(1))
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
+ call it(defs,'RhoDeph','Dephasing parameter for G_GKBA',Rho_deph,unit=E_unit) 
+! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')
  !

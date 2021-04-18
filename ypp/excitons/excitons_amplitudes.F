@@ -121,7 +121,10 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    !
    ! Sort the weights
    !
-   call sort(arrin=A_weight,indx=S_indx)
+   !call sort(arrin=A_weight,indx=S_indx)
+   do neh=1,BS_H_dim
+     S_indx(neh)=neh
+   enddo
    !
    ! report on file the weights and the amplitude
    ! of the excitonic state...
@@ -165,7 +168,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    !
    do neh = BS_H_dim,1,-1
      !
-     if (A_weight(neh)/maxval(A_weight)<EXCITON_weight_treshold) cycle
+     !if (A_weight(neh)/maxval(A_weight)<EXCITON_weight_treshold) cycle
      !
      ikbz = BSS_eh_table(S_indx(neh),1)
      iv = BSS_eh_table(S_indx(neh),2)

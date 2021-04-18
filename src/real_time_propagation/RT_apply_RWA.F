@@ -23,7 +23,7 @@
 !
 subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cONE
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RT_deph_range,RTibz,&
@@ -46,6 +46,9 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  complex(SP) :: phase
  !
  ik_ibz=RTibz%k_map(ik)
+ !
+ phase  =cONE
+ dec_exp=1._SP
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n,RT_bands(2)

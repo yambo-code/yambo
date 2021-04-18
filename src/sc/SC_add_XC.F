@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
+subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  !
  ! The definition of the XC part is the same in the two approches. The only
  ! difference is that in _XC the operator is written in the SC basis, while
@@ -33,13 +33,14 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_t,QP_reset
  use parallel_m,     ONLY:master_cpu
- use electrons,      ONLY:levels,n_spin
+ use electrons,      ONLY:levels,n_spin,spin_occ
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
  use xc_functionals, ONLY:V_xc,XC_potential_driver
- use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation
+ use hamiltonian,    ONLY:l_sc_V_is_local,l_sc_XC_is_local,V_xc_sc,H_rotation,&
+&                         H_rotation_ref,E_reference
  use SC,             ONLY:SC_kind,SC_xc_functional,SC_cycle_mixing,SC_nbands,       &
-&                         SC_bands,l_oep_iterative
+&                         SC_bands,l_oep_iterative,SC_neq_kind,SC_last_coh_it,SC_mu
  use FFT_m,          ONLY:fft_size
  use IO_int,         ONLY:IO_and_Messaging_switch
  !
@@ -55,9 +56,14 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
  !
  ! Work Space
  !
- integer      :: ib,ik
+ integer      :: ib,ibp,ik
  complex(SP)  :: G_sex(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
  complex(SP)  :: G_coh(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk)
+ complex(SP)  :: G_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ !
+ ! tests for excitons
+ !
+ real(SP)                 :: n_exc,ELEC,HOLE,DELTA
  !
  type(QP_t)   :: qp_dummy
  !
@@ -78,6 +84,40 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1)
      call OBS_rotate(H_rotation(:,:,ik,1),G_sex(:,:,ik),SC_nbands,-1)
      call OBS_rotate(H_rotation(:,:,ik,1),G_coh(:,:,ik),SC_nbands,-1)
    enddo
+   !
+   if (trim(SC_neq_kind)=="matsubara") then
+     !
+     ELEC=0._SP
+     HOLE=0._SP
+     DELTA=0._SP
+     do ik=1,E%nk
+       !
+       ! Compute number of electrons and holes
+       !
+       G_tmp=G_sex(:,:,ik)
+       call OBS_rotate(H_rotation_ref(:,:,ik,1),G_tmp,SC_nbands,1)
+       do ib=SC_bands(1),SC_bands(2)
+         if(E_reference%E(ib,ik,1)> SC_mu(1)) ELEC=ELEC          -real(cI*G_tmp(ib,ib),SP) *Xk%weights(ik)
+         if(E_reference%E(ib,ik,1)<=SC_mu(1)) HOLE=HOLE+(spin_occ+real(cI*G_tmp(ib,ib),SP))*Xk%weights(ik)
+         do ibp=SC_bands(1),SC_bands(2)
+           if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
+           DELTA=DELTA-G_tmp(ib,ibp)**2*Xk%weights(ik)
+         enddo
+       enddo
+       !
+       ! Impose starting off diagonal elements
+       !
+       if(iteration>SC_last_coh_it) cycle
+       do ib=SC_bands(1),SC_bands(2)
+         do ibp=SC_bands(1),SC_bands(2)
+           if( .not.( E_reference%E(ib,ik,1)>SC_mu(1) .and. E_reference%E(ibp,ik,1)<=SC_mu(1) ) ) cycle
+           G_sex(ib,ibp,ik) = cI*real(ib*ibp,SP)*0.2
+           G_sex(ibp,ib,ik) = cI*real(ib*ibp,SP)*0.2
+         enddo
+       enddo
+     enddo
+     !
+   endif
    !
    call COLLISIONS_compose_sc(G_sex,G_coh)
    !

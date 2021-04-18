@@ -134,6 +134,7 @@ subroutine RT_start_and_restart(E,k,q)
  !=====================================================
  !
  RESTART=.FALSE.
+ db_name=""
  db_name(4)='OBSERVABLES'
  db_name(5)='G'
  db_name(6)='carriers'

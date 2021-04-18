@@ -53,7 +53,8 @@ subroutine RT_RESTART_database_copy(db)
  !
  call STRING_split(trim(db_to_cp),components,"/",n_non_empty_strings=n_s)
  !
- destination=trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)>0)  destination=trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)==0) destination=                   trim(jobstr)//"/"//trim(components(n_s))
  !
  if (.not.file_exists(trim(destination))) then
    call mk_dir(trim(jobdir)//"/"//trim(jobstr))

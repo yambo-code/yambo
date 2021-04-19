@@ -105,8 +105,14 @@ subroutine K_components_folded_in_serial_arrays(iq)
          !
          BSS_eh_table(H_pos,:)=(/i_k_bz,i_v,i_c,i_sp_c,i_sp_v/)
          !
-!aim137: temporary %E(:,1) until I populate those values
-!aim137: question: does this need a loop over FG? check
+!aim137: temporary %E(:) --> %E(:,1) for the code to compile
+!aim137: this subroutine is called by bse/K_diago_driver
+!aim137: I understand that for the case of diago,only %E(:,1) 
+!aim137: is needed as DbGd is not implemented for this solver
+!aim137: this subroutine is also called by bse/K_inversion_driver
+!aim137: Question: It seems inversion has its own way of using
+!aim137: the energies in the fine grid, which is not adding an extra
+!aim137: dimension to %E - check this does not break inversion DbGd
          BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr,1)*ares_fac
          BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*ares_fac
          if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*ares_fac

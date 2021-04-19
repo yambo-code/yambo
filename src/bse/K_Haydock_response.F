@@ -251,6 +251,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
 !aim137: added Double grid factor = 1/dom_k
+!aim137: critical: need to revise this factor for 
+!aim137: cases where dom_k is not the same for all kpts
    if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor/dom_k
    if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
    if (trim(mode)=="abs") then

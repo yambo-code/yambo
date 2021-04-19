@@ -139,6 +139,7 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! with random intial vectors. See https://doi.org/10.1002/nla.2170
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
+   !
 !aim137: passing Xk to K_Haydock subroutine
    !
    if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs",Xk)

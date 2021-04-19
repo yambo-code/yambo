@@ -71,8 +71,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
  &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares, &
- &               dom_k,i_dom_k,ikFGbz,ikFG
-!aim137: added input to pass to subroutine allocating Transitions
+ &               dom_k_T_group,i_dom_k,ikFGbz,ikFG
  !
  FORCE_EQ_trans=.true.
  !
@@ -105,9 +104,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
 ! if(all(Ken%nbc/=0)) nb=Ken%nbc
 !#endif
  !
-!aim137: choice of DG or not
- if (.not.BSS_uses_DbGd) dom_k=1
- if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
  !
  do i_loop=1,n_loops
    !
@@ -130,6 +126,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
        !
        ! Moreover I cannot move iv,ic loops insiede i_sp_pol and i_star loops
        ! Otherwise runs with parallelization over eh fail
+       !
+!aim137: dom_k for each tr group as max within
+!aim137: transitions in that group
+       if (.not.BSS_uses_DbGd) dom_k_T_group=1
+       if (     BSS_uses_DbGd) dom_k_T_group=&
+       & maxval(Xk%FGbz%N_mapped(&
+       &        Xk%k_table(ik,Xk%star(&
+       &                   ik,:Xk%nstar(ik)))))
        !
        do iv=BS_bands(1),nb(2)
          do ic=nb(1),BS_bands(2)
@@ -176,7 +180,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                  if (i_loop==2) then
                    !
 !aim137: passing dom_k
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,dom_k)
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,dom_k_T_group)
                    !
                    BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
                    BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
@@ -200,12 +204,10 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
                endif
                !
-!aim137: will need to include T_is_ok in FG loop
-!aim137: temporary: %E second dimension allocated to 1
-!aim137: temporary: E_eh assigned to 1st column of E
-!aim137: I need to undestand how energies are read in and 
+!aim137: E_eh assigned to 1st column of E
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+!aim137: calculating energies of transitions in the fine grid
                if ( BSS_uses_DbGd .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
                  do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
                    ikFG = Xk%FGbz%E_map(ikFGbz)
@@ -213,6 +215,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                    BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_dom_k) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
                  enddo
                end if
+!aim137: end calculating energies of transitions in fine grid
                !
                ! To be fixed
                if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL

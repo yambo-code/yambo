@@ -62,7 +62,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  type(bz_samp), intent(in) :: Xk
- integer :: i_dom_k,dom_k,i_T,i_k_bz
+ integer :: i_dom_k,dom_k(BS_nT_grps),i_T,i_k_bz
 !aim137: new input for double grid
  !
  real(SP)           ::reached_threshold
@@ -116,19 +116,16 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
- if (     BSS_uses_DbGd) dom_k=maxval(Xk%FGbz%N_mapped(:))
- HAYVEC_size = HAYVEC_size * dom_k
+ if (     BSS_uses_DbGd) then
+   do i_g=1,BS_nT_grps
+!aim137: segmentation fault occurs in one of the last groups..
+!aim137: but I am not sure the fault actually occurs here,
+!aim137: as many other things are being computed in parallel.
+     dom_k(i_g)=maxval(Xk%FGbz%N_mapped(BS_T_grp(i_g)%table(:,1)))
+     HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (dom_k(i_g)-1)
 !aim137: change HAYVEC_size to consider FG
-!aim137: print statement
-!print*, 'total number of groups BS_nT_grps = ',BS_nT_grps
-!do i_g=1,BS_nT_grps
-! print*, 'transition group number ',i_g,' has ',BS_T_grp(i_g)%size,&
-!& 'transitions at bz kpts ',BS_T_grp(i_g)%table(:,1)
-!enddo 
-!print*, Xk%nbz
-!print*, Xk%nibz
-!print*, size(Xk%FGbz%N_mapped(:))
-!aim137: end print statement
+   enddo
+ end if
  !
  allocate(V0(BS_nT_grps))
  call BS_HAYVEC_alloc(V0,dom_k)
@@ -239,29 +236,34 @@ subroutine K_Haydock(iq,W,mode,Xk)
  do i_g=1,BS_nT_grps
 !aim137: loop over fine grid - same dip for all
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-   do i_dom_k=1,dom_k
-     if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-     if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-     if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-     V0(i_g)%fragment(:,i_dom_k) = V0(i_g)%fragment(:,i_dom_k)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
-   enddo
-!aim137: setting some elements to 0 as dom_k is not the same for every k
-   do i_T=1,BS_T_grp(i_g)%size
-     do i_dom_k=1,dom_k
-       i_k_bz=BS_T_grp(i_g)%table(i_T,1)
-       if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
-         V0(i_g)%fragment(i_T,i_dom_k)=cZERO
-         !DEBUG
-         !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
-         !DEBUG
-       end if
+     do i_dom_k=1,dom_k(i_g)
+       if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+       if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+       if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+       V0(i_g)%fragment(:,i_dom_k) = V0(i_g)%fragment(:,i_dom_k)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
      enddo
-   enddo
+!aim137: setting some elements to 0 as dom_k is not the same for every k
+!aim137: hence, inside a transition gr, there are transitions with, 
+!aim137: e.g., 128 or 129 mapped points
+     do i_T=1,BS_T_grp(i_g)%size
+       i_k_bz=BS_T_grp(i_g)%table(i_T,1)
+       do i_dom_k=1,dom_k(i_g)
+         if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
+           V0(i_g)%fragment(i_T,i_dom_k)=cZERO
+           !aim137: DEBUG
+           !aim137: when 4th col < 5th col
+           !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
+           !aim137: DEBUG
+         end if
+       enddo
+     enddo
+!aim137: end setting elements as zero
 !aim137: both $fragment and %E expand in the same way - no change needed
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  !
-!aim137: question: what does PP_bcast do. Does it need loop over fine grid
+!aim137: Question: I believe PP_bcast does not care if it is a matrix or a
+!aim137: vector. hence, it would not need loop over dom_k. is that ok?
  do i_g = 1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
@@ -276,7 +278,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     do i_dom_k=1,dom_k
+     do i_dom_k=1,dom_k(i_g)
        if (trim(mode)=="kerr") W0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
        W0(i_g)%fragment(:,i_dom_k) = W0(i_g)%fragment(:,i_dom_k)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
@@ -287,7 +289,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    do i_g = 1,BS_nT_grps
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 #if defined _MPI
-!aim137: question: PP_bcast see above
+!aim137: Question: PP_bcast see above
      if(     velocity_correction) call PP_bcast(V_tmp(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
      if(.not.velocity_correction) call PP_bcast(   W0(i_g)%fragment,0,COMM=PAR_COM_T_Haydock(i_g)%COMM)
 #endif
@@ -379,26 +381,15 @@ subroutine K_Haydock(iq,W,mode,Xk)
      !
      ! A(n) = <Vn|Vn+1>
      !
-!aim137: print
-!do i_g=1,BS_nT_grps
-!if (size(  Vn(i_g)%fragment,2) .ne. size(Vnp1(i_g)%fragment,2)) then
-!print*, 'in Transitions group ',i_g,', |Vn> has ',  size(  Vn(i_g)%fragment,1),' rows and ',size(  Vn(i_g)%fragment,2),' columns'
-!print*, 'in Transitions group ',i_g,', |Vn+1> has ',size(Vnp1(i_g)%fragment,1),' rows and ',size(Vnp1(i_g)%fragment,2),' columns'
-!endif
-!enddo
-!aim137: end print
      call K_dot_product(v0_mod_,Vn,Vnp1,1)
-!aim137: print
-!print*, 'v0_mod_ = ',v0_mod_,' A(n) = <Vn|Vn+1> = ',real(v0_mod_,SP)
      Af(it)=real(v0_mod_,SP)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-!aim137: critical: What is this subroutine
-!aim137: unsure about putting it inside i_dom loop
-       do i_dom_k=1,dom_k
+!aim137: Question: is it correct to put this inside dom_k loop?
+       do i_dom_k=1,dom_k(i_g)
          call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
          call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
        enddo
@@ -454,15 +445,19 @@ subroutine K_Haydock(iq,W,mode,Xk)
      if (l_BS_ares_asymm) then
        do i_g = 1,BS_nT_grps
          if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-!aim137: put inside loop over FG?
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+!aim137: Question: is it correct to put this inside dom_k loop?
+         do i_dom_k=1,dom_k(i_g)
+           call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+         enddo 
        enddo
      endif
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-!aim137: put inside loop over FG?
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
+!aim137: Question: is it correct to put this inside dom_k loop?
+       do i_dom_k=1,dom_k(i_g)
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+       enddo
      end do
      !
      ! |Vn-1> = |Vn>
@@ -521,7 +516,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    if (it>2) then
      !
-     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold,dom_k)
+!aim137: I pass maxval(dom_k), but this needs to be looked at, for the cases
+!aim137: where dom_k is not the same for every transition.
+     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold,maxval(dom_k(:)))
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it
@@ -636,7 +633,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
  complex(SP),intent(out) :: fullV(fullV_size)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
- integer                 :: i_dom_k,dom_k
+ integer                 :: i_dom_k,dom_k(BS_nT_grps)
  !
  fullV = cZERO
  istop_g = 0
@@ -645,7 +642,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
  !
  do i_g=1,BS_nT_grps
 !aim137: added loop over FG
-   do i_dom_k=1,dom_k
+   do i_dom_k=1,dom_k(i_g)
      istart_g = istop_g + 1 
      istop_g  = istart_g + BS_T_grp(i_g)%size - 1
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
@@ -678,7 +675,7 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
  type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
- integer                 :: i_dom_k,dom_k
+ integer                 :: i_dom_k,dom_k(BS_nT_grps)
  !
  ! In this loop I need T_groups Haydock since I do need duplicates 
  !
@@ -688,7 +685,7 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
  !
  do i_g=1,BS_nT_grps
 !aim137: added loop over FG
-   do i_dom_k=1,dom_k
+   do i_dom_k=1,dom_k(i_g)
      istart_g = istop_g + 1 
      istop_g  = istart_g + BS_T_grp(i_g)%size - 1
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle

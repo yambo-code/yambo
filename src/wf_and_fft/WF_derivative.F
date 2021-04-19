@@ -36,7 +36,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
- use parallel_m,     ONLY:PAR_IND_WF_linear
+ !use parallel_m,     ONLY:PAR_IND_WF_linear
 #if defined _SC
  use drivers,        ONLY:l_sc_magnetic
  use SC,             ONLY:SC_bands,found_SC_DB
@@ -63,7 +63,7 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  ! Wavefunctions in G space 
  !==========================
  call WF_load(WF,0,1,bands_to_load,derivative_kpt,sp_pol_to_load=derivative_sppol,&
-         &    space='G',title='-DERIV',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
+         &    space='G',title='-DERIV',impose_free_and_alloc=.true.,keep_states_to_load=.true.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
@@ -90,15 +90,11 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
    do ik=derivative_kpt(1),derivative_kpt(2)
      do ib=bands_to_load(1),bands_to_load(2)
        !
-#if defined _SC
-       if (.not.l_sc_magnetic) then
-         if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-       endif
-#else
-       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-#endif
+       !if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
+       !
+       if (i_wf==0) cycle
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

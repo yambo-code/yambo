@@ -22,46 +22,6 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
-#if defined _OPENMP && !defined _CUDA && defined _testing_check
-
-#define OMP_LAST_DEF
-
-#define OMP_LAST1 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
-       i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) NEWLINE \
-       if (i_k_bz_mem==0) then NEWLINE \
-         !$omp critical NEWLINE \
-         qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) NEWLINE \
-         iq_W_bz=qindx_tmp(1) NEWLINE \
-         ig_W   =qindx_tmp(2) NEWLINE \
-         !$omp end critical NEWLINE \
-       else NEWLINE \
-         iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) NEWLINE \
-         ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) NEWLINE \
-       endif NEWLINE \
-       iq_W   =q%sstar( iq_W_bz ,1) NEWLINE \
-       iq_W_s =q%sstar( iq_W_bz ,2) NEWLINE \
-     endif NEWLINE
-
-#define OMP_LAST2 \
-     if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then NEWLINE \
-       i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) NEWLINE \
-       if (i_kmq_bz_mem==0) then NEWLINE \
-         !$omp critical NEWLINE \
-         qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) NEWLINE \
-         iq_W_bz_mq=qindx_tmp(1) NEWLINE \
-         ig_W_mq   =qindx_tmp(2) NEWLINE \
-         !$omp end critical NEWLINE \
-       else NEWLINE \
-         iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) NEWLINE \
-         ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) NEWLINE \
-       endif NEWLINE \
-       iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
-       iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
-     endif NEWLINE
-
-#else
-
 #define OMP_LAST_DEF \
 integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last NEWLINE
@@ -117,8 +77,6 @@ integer ::      i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & NEWLINE \
        iq_W_mq   =q%sstar( iq_W_bz_mq,1) NEWLINE \
        iq_W_s_mq =q%sstar( iq_W_bz_mq,2) NEWLINE \
      endif NEWLINE
-
-#endif
 
 #define DEFINE_BSK_COMMON_INDEXES \
 integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& NEWLINE \

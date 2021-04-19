@@ -24,8 +24,9 @@
 subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  use YPP_real_time,  ONLY:RT_time,RT_conf
- use pars,           ONLY:SP,DP
- use fields,         ONLY:Efield
+ use stderr,         ONLY:STRING_split
+ use pars,           ONLY:SP,DP,schlen,pi
+ use fields,         ONLY:Efield,field_frequency
  !
  implicit none
  !
@@ -37,10 +38,32 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  ! Work Space 
  !
  integer  :: i_t,i_Probe
- real(SP) :: damp_function(RT_conf%T_n_steps),T_ref
+ real(SP) :: damp_function(RT_conf%T_n_steps),T_ref,T_0,sigma,W_0
+ character(schlen)        :: field_defs(3)
  !
  i_Probe=1
- T_ref=(Efield(i_Probe)%t_initial-Efield(i_Probe)%t_final)/2._SP
+ call STRING_split(Efield(i_Probe)%ef_name,field_defs)
+ !
+ sigma=Efield(i_Probe)%width
+ !
+ select case( trim(field_defs(1)) )
+   case('STATIC','SIN','ANTIRES','RES','SOFTSIN','THETA')
+     ! Fields which do not need T_0
+     T_0=0._SP
+   case('DELTA')
+     ! Special case DELTA T_0
+     T_0=2*(RT_time(2)-RT_time(1))
+   case('GAUSS','QSSIN','QSFIELD','PULSE','SPULSE')
+     ! Fields which need T_0
+     W_0=field_frequency(Efield(i_Probe),1)
+     T_0=pi/W_0*(real(nint(W_0/pi*3._SP*sigma),SP))
+     if(trim(field_defs(2))=="2SIGMA" .or. trim(field_defs(3))=="2SIGMA") T_0=2._SP*sigma
+     if(trim(field_defs(2))=="3SIGMA" .or. trim(field_defs(3))=="3SIGMA") T_0=3._SP*sigma
+     if(trim(field_defs(2))=="4SIGMA" .or. trim(field_defs(3))=="4SIGMA") T_0=4._SP*sigma
+     if(trim(field_defs(2))=="5SIGMA" .or. trim(field_defs(3))=="5SIGMA") T_0=5._SP*sigma
+ end select
+ !
+ T_ref=Efield(i_Probe)%t_initial+T_0/2._SP
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")  

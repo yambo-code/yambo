@@ -6,8 +6,6 @@ WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
      $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver)
-
-
 #
 # Alias
 #
@@ -28,8 +26,6 @@ tarball_petsc:     $(tarball_petsc)
 tarball_slepc:     $(tarball_slepc)
 tarball_fttw:      $(tarball_fftw)
 tarball_fftqe:     $(tarball_fftqe)
-
-
 #
 # Libraries
 #
@@ -67,8 +63,6 @@ $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
 $(tarball_fftqe):
 	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
-
-
 #
 # cleaning
 #

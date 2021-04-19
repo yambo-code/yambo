@@ -4,7 +4,6 @@ download-all:
 download:  
 	@for target in $(EXT_LIBS) ; do $(MAKE) "$$target"-dl ; done
 #
-#
 libxc-dl: 
 	@LIB2DO="libxc"; $(download_external_libraries)
 lapack-dl: 

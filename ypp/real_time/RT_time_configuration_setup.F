@@ -101,6 +101,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif
  !
+ RT_conf%T_n_range=i_ref
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?

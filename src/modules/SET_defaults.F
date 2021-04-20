@@ -469,6 +469,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !

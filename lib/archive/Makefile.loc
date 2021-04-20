@@ -4,64 +4,43 @@
 include ./package.list
 WGETFLAGS=--no-check-certificate
 #
-all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_Ydriver)
-#
-# Alias
-#
-tarball_Ydriver:   $(tarball_Ydriver)
-tarball_yaml:      $(tarball_yaml)
-tarball_futile:    $(tarball_futile)
-tarball_iotk:      $(tarball_iotk)
-tarball_hdf5:      $(tarball_hdf5)
-tarball_netcdf :   $(tarball_netcdf)
-tarball_netcdff:   $(tarball_netcdff)
-tarball_pnetcdf:   $(tarball_pnetcdf)
-tarball_etsf_io:   $(tarball_etsf_io)
-tarball_libxc:     $(tarball_libxc)
-tarball_lapack:    $(tarball_lapack)
-tarball_blacs:     $(tarball_blacs)
-tarball_scalapack: $(tarball_scalapack)
-tarball_petsc:     $(tarball_petsc)
-tarball_slepc:     $(tarball_slepc)
-tarball_fttw:      $(tarball_fftw)
-tarball_fftqe:     $(tarball_fftqe)
+all: $(EXT_LIBS)
 #
 # Libraries
 #
-$(tarball_Ydriver):
+Ydriver:
 	@+TARBALL="$(tarball_Ydriver)"  ; LIB="YDRIVER"; $(getsrc)
-$(tarball_yaml):
+yaml:
 	@+TARBALL="$(tarball_yaml)"     ; LIB="YAML"; $(getsrc)
-$(tarball_futile):
+futile:
 	@+TARBALL="$(tarball_futile)"   ; LIB="FUTILE"; $(getsrc)
-$(tarball_iotk): 
+iotk: 
 	@+TARBALL="$(tarball_iotk)"     ; LIB="IOTK"; $(getsrc)
-$(tarball_hdf5):
+hdf5:
 	@+TARBALL="$(tarball_hdf5)"     ; LIB="HDF5"; $(getsrc)
-$(tarball_netcdf):
+netcdf:
 	@+TARBALL="$(tarball_netcdf)"   ; LIB="NETCDF"; $(getsrc)
-$(tarball_netcdff):
+netcdff:
 	@+TARBALL="$(tarball_netcdff)"  ; LIB="NETCDFF"; $(getsrc)
-$(tarball_pnetcdf):
+pnetcdf:
 	@+TARBALL="$(tarball_pnetcdf)"  ; LIB="PNETCDF"; $(getsrc)
-$(tarball_etsf_io):
+etsf_io:
 	@+TARBALL="$(tarball_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
-$(tarball_libxc):
+libxc:
 	@+TARBALL="$(tarball_libxc)"    ; LIB="LIBXC"; $(getsrc)
-$(tarball_lapack):
+lapack:
 	@+TARBALL="$(tarball_lapack)"   ; LIB="LAPACK"; $(getsrc)
-$(tarball_blacs):
+blacs:
 	@+TARBALL="$(tarball_blacs)"    ; LIB="BLACS"; $(getsrc)
-$(tarball_scalapack):
+scalapack:
 	@+TARBALL="$(tarball_scalapack)"; LIB="SCALAPACK"; $(getsrc)
-$(tarball_petsc):
+petsc:
 	@+TARBALL="$(tarball_petsc)"    ; LIB="PETSC"; $(getsrc)
-$(tarball_slepc):
+slepc:
 	@+TARBALL="$(tarball_slepc)"    ; LIB="SLEPC"; $(getsrc)
-$(tarball_fftw):
+fftw:
 	@+TARBALL="$(tarball_fftw)"     ; LIB="FFTW"; $(getsrc)
-$(tarball_fftqe):
+fftqe:
 	@+TARBALL="$(tarball_fftqe)"    ; LIB="FFTW"; $(getsrc)
 #
 # cleaning

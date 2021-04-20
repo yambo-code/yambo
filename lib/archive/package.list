@@ -1,4 +1,8 @@
 #
+# Libs list
+#
+EXT_LIBS= futile iotk netcdf netcdff pnetcdf hdf5 etsf_io libxc lapack blacs scalapack petsc fftw fftqe yaml Ydriver
+#
 # storing options
 #
 keep_Ydriver=yes
@@ -17,6 +21,7 @@ keep_fftw=no
 keep_fftqe=no
 keep_yaml=no
 keep_futile=no
+keep_hdf5=no
 #
 # tarball names
 #

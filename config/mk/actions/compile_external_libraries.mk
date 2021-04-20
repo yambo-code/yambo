@@ -50,4 +50,3 @@ petsc:
 slepc: 
 	@if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
-

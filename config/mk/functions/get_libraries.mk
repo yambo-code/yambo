@@ -1,5 +1,5 @@
 # Download external libs #
-define download_external_libraries
+define get_external_libraries
  mkdir -p lib/archive; \
  if [ $(topdir) != $(prefix) ] ; then \
  cp $(topdir)/lib/archive/* lib/archive; \

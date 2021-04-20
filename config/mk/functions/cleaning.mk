@@ -42,11 +42,6 @@ define lib_ext_clean
    if [ "$(topdir)" != "$(prefix)" ] ; then rm -r $(libdir)/$$libtoclean ; fi ; \
   fi ; \
  done
- @if test -d $(libdir)/archive ; then \
-  cd $(libdir)/archive; \
-  $(MAKE) -s -f Makefile.loc clean_all > /dev/null ; rm -f Makefile *stamp ; \
-  cd ../.. ; \
- fi
  @if test -d $(libbindir); then \
   cd $(libbindir) ; rm -f * ; cd .. ; \
  fi

@@ -100,16 +100,19 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
    call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
    !
+   ! Calculate the new occupations
+   ! ==============================
+   E_kpq%E=E_kpq%E+E%E_Fermi
+   call OCCUPATIONS_Extend(E,E_kpq)
+   !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
    GKKP%E_dg_kpq(iq)%FG%nb=elph_nb
    GKKP%E_dg_kpq(iq)%FG%nk=n_k_plus_q                         
    call FineGd_E_components_alloc(GKKP%E_dg_kpq(iq))
-   GKKP%E_dg_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
    !
-   ! Occupations
-   ! ===========
-   call OCCUPATIONS_Extend(E,GKKP%E_dg_kpq(iq)%FG%E)
+   GKKP%E_dg_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
+   GKKP%E_dg_kpq(iq)%FG%f(:elph_nb,:,:)=E_kpq%f(:elph_nb,:,:)
    !
    call live_timing(steps =1)
    !

@@ -32,7 +32,7 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
 
-if test -f ".gita"; then
+if test -f ".git"; then
   #
   # git procedure
   #
@@ -57,7 +57,7 @@ else
   #
   # direct download procedure
   #
-  #make download
+  make download
   TARBALL=`find lib/archive -name 'Ydriver*'`
   AC_MSG_NOTICE([Extracting yambo internal librar(ies)])
   if ! test -d "lib/yambo/driver/src"; then

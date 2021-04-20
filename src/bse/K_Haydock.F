@@ -62,7 +62,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  type(bz_samp), intent(in) :: Xk
- integer :: i_dom_k,dom_k(BS_nT_grps),i_T,i_k_bz
+ integer    :: i_dom_k,dom_k(BS_nT_grps),i_T,i_k_bz,ik
+ real(SP)   :: FG_factor
 !aim137: new input for double grid
  !
  real(SP)           ::reached_threshold
@@ -116,15 +117,34 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
 !aim137: choice of DG or not
  if (.not.BSS_uses_DbGd) dom_k=1
+ if (.not.BSS_uses_DbGd) FG_factor=1._SP
  if (     BSS_uses_DbGd) then
    do i_g=1,BS_nT_grps
-!aim137: segmentation fault occurs in one of the last groups..
-!aim137: but I am not sure the fault actually occurs here,
-!aim137: as many other things are being computed in parallel.
-     dom_k(i_g)=maxval(Xk%FGbz%N_mapped(BS_T_grp(i_g)%table(:,1)))
-     HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (dom_k(i_g)-1)
-!aim137: change HAYVEC_size to consider FG
+     dom_k(i_g)=maxval(Xk%FGbz%N_mapped(&
+               & Xk%k_table(&
+               & BS_T_grp(i_g)%ik,&
+               & Xk%star(BS_T_grp(i_g)%ik,&
+               & :Xk%nstar(BS_T_grp(i_g)%ik)))))
+!     HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (dom_k(i_g)-1)
    enddo
+!aim137: BUG: 
+!aim137: the above definition of HAYVEC_size intends to expand it
+!aim137: to consider the FG. but, it results in a segmentation
+!aim137: fault when ran in parallel (serial is fine).
+!aim137: the following variables will be printed once per core.
+!aim137: print*, BS_T_grp(:)%size
+!aim137: print*, dom_k(:)
+!aim137: one can see that some elements of the arrays dom_k(:) or 
+!aim137: BS_T_grp(:)%size appear as non-initialised values
+!aim137: moreover, it does not happen every time. E.g., maybe
+!aim137: dom_k(1)=117 the first time it is printed, but the next
+!aim137: time it is a random value (e.g. -2147483648), 
+!aim137: and next time, 117 again.
+!aim137: hence, I do something simpler, as defined below.
+!aim137: in this way, HAYVEC_size is larger than it needs to be.
+!aim137: END BUG: 
+   HAYVEC_size = HAYVEC_size  * maxval(dom_k(:))
+   FG_factor=real(Xk%nbz)/real(Xk%FGbz%N)
  end if
  !
  allocate(V0(BS_nT_grps))
@@ -245,18 +265,20 @@ subroutine K_Haydock(iq,W,mode,Xk)
 !aim137: setting some elements to 0 as dom_k is not the same for every k
 !aim137: hence, inside a transition gr, there are transitions with, 
 !aim137: e.g., 128 or 129 mapped points
-     do i_T=1,BS_T_grp(i_g)%size
-       i_k_bz=BS_T_grp(i_g)%table(i_T,1)
-       do i_dom_k=1,dom_k(i_g)
-         if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
-           V0(i_g)%fragment(i_T,i_dom_k)=cZERO
-           !aim137: DEBUG
-           !aim137: when 4th col < 5th col
-           !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
-           !aim137: DEBUG
-         end if
+     if (BSS_uses_DbGd) then
+       do i_T=1,BS_T_grp(i_g)%size
+         i_k_bz=BS_T_grp(i_g)%table(i_T,1)
+         do i_dom_k=1,dom_k(i_g)
+           if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
+             V0(i_g)%fragment(i_T,i_dom_k)=cZERO
+             !aim137: DEBUG
+             !aim137: when 4th col < 5th col
+             !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
+             !aim137: DEBUG
+           end if
+         enddo
        enddo
-     enddo
+     end if
 !aim137: end setting elements as zero
 !aim137: both $fragment and %E expand in the same way - no change needed
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
@@ -516,9 +538,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    if (it>2) then
      !
-!aim137: I pass maxval(dom_k), but this needs to be looked at, for the cases
-!aim137: where dom_k is not the same for every transition.
-     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold,maxval(dom_k(:)))
+!aim137: Passing FG_factor to Haydock_response
+     call K_Haydock_response(iq,it,Cf_size-1,mode,scheme,W,Af(:it),Bf(:it+1),Cf(:Cf_size-1),reached_threshold,FG_factor)
      !
      BSS_desc%rval(1,i_desc_acc) =reached_threshold
      BSS_desc%ival(1,i_desc_iter)=it

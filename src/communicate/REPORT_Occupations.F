@@ -43,7 +43,7 @@ subroutine REPORT_Occupations(what,E)
  real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
  real(SP)          ::E_g_ind(1+(n_sp_pol-1)*2,3) ! min - val. band width - cond. band width
- integer           ::E_k_dir(n_sp_pol), E_k_ind(n_sp_pol,2),I_dir(2)
+ integer           ::E_k_dir(1+(n_sp_pol-1)*2), E_k_ind(n_sp_pol,2),I_dir(2)
  !
  ! Title
  !
@@ -92,19 +92,32 @@ subroutine REPORT_Occupations(what,E)
    endif
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
-     call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_dir(i_sp_pol,1)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_msg('Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol))
+     call msg('r',COMPOSE_msg('Direct Gap',i_sp_pol),E_g_dir(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
+     call msg('r',COMPOSE_msg('Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
      if (E%nk>1) then
-       call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol,1)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
        call msg('r',COMPOSE_msg('Indirect Gap between k-points ',i_sp_pol),E_k_ind(i_sp_pol,:))
-       call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol,2)*HA2EV,'[eV]')
-       call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol,3)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Last valence band width',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),2)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('1st conduction band width',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),3)*HA2EV,'[eV]')
      endif
    endif
    !
    call msg('r',' ')
    !
  enddo
+ !
+ if (n_sp_pol==2) then
+   if (all(Nbf==Nbm).and.all(Nbf>0)) then
+     call msg('r',title(1:title_len)//"=== Overall gap ===")
+     call msg('r',COMPOSE_msg('Direct Gap',3),E_g_dir(1,1)*HA2EV,'[eV]')
+     call msg('r',COMPOSE_msg('Direct Gap localized at k-point',3),E_k_dir(1))
+     if (E%nk>1) then
+       call msg('r',COMPOSE_msg('Indirect Gap',3),E_g_ind(1,1)*HA2EV,'[eV]')
+       call msg('r',COMPOSE_msg('Indirect Gap between k-points',3),(/E_k_ind(1,1),E_k_ind(2,2)/))
+     endif
+   endif
+ endif
+ !
  ! Report if the system is treated as a metal
  !
  if (.not.all(Nbf==Nbm)) then

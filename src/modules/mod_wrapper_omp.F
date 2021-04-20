@@ -299,8 +299,8 @@ module wrapper_omp
      integer     :: i
      complex(SP) :: ctmp
      if (n_threads_now>1) then
-       ctmp=cZERO
        !$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       ctmp=cZERO
        do i=1,N
          ctmp=ctmp +conjg(CX(i))*CY(i)
        enddo 
@@ -323,8 +323,8 @@ module wrapper_omp
      integer  :: i
      real(SP) :: rtmp
      if (n_threads_now>1) then
-       rtmp=0.0_SP
        !$omp parallel do default(shared), private(i), reduction(+:rtmp)
+       rtmp=0.0_SP
        do i=1,N
          rtmp=rtmp +CX(i)*CY(i)
        enddo 
@@ -346,8 +346,8 @@ module wrapper_omp
      integer     :: i
      complex(SP) :: ctmp
      if (n_threads_now>1) then
-       ctmp=0.0_SP
        !$omp parallel do default(shared), private(i), reduction(+:ctmp)
+       ctmp=0.0_SP
        do i=1,N
          ctmp=ctmp +CX(i)*CY(i)
        enddo 
@@ -370,8 +370,8 @@ module wrapper_omp
      integer     :: i,j
      complex(SP) :: ctmp
      if (n_threads_now>1) then
-       ctmp=0.0_SP
        !$omp parallel do default(shared), private(i), reduction(+:ctmp), collapse(2)
+       ctmp=0.0_SP
        do j=1,N/size(CX,1)
        do i=1,size(CX,1)
          ctmp=ctmp +CX(i,j)*CY(i,j)

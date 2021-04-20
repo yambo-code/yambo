@@ -28,6 +28,7 @@ subroutine RT_RESTART_database_copy(db)
  use RT_control,     ONLY:RT_DB_file_name
  use stderr,         ONLY:n_max_jobstr,STRING_split
  use com,            ONLY:jobdir,jobstr
+ use parallel_m,     ONLY:master_cpu
  !
  implicit none
  !
@@ -41,6 +42,8 @@ subroutine RT_RESTART_database_copy(db)
  !
  logical, external :: file_exists
  !
+ if(.not.master_cpu) return
+ !
  db_to_cp=" "
  !
  do i_db=1,size(RT_DB_file_name)
@@ -53,7 +56,8 @@ subroutine RT_RESTART_database_copy(db)
  !
  call STRING_split(trim(db_to_cp),components,"/",n_non_empty_strings=n_s)
  !
- destination=trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)>0)  destination=trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)==0) destination=                   trim(jobstr)//"/"//trim(components(n_s))
  !
  if (.not.file_exists(trim(destination))) then
    call mk_dir(trim(jobdir)//"/"//trim(jobstr))

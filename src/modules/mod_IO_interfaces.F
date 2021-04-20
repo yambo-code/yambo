@@ -196,8 +196,9 @@ module IO_int
    end subroutine
 #endif
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
+   function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      use pars,       ONLY:lchlen
+     character(lchlen)      ::get_name
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,COM_IO

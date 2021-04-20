@@ -130,6 +130,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
  !
  if (l_skip_DbGd_border_points) then
    allocate(I_am_border( sum(FineGd_io_E(:n_FineGd_DBs)%nk) ))
+   I_am_border=0
    ik=0
    do i_db=1,n_FineGd_DBs
      do i1=1,FineGd_io_E(i_db)%nk

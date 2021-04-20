@@ -70,7 +70,7 @@ clean_all:
 #
 define getsrc
 if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
- wget $(WGETFLAGS) -O $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL ; \
+ wget $(WGETFLAGS) -c -O $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL ; \
 elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
  curl -L --progress-bar -o $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL ; \
 fi ; \

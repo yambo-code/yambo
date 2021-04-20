@@ -17,7 +17,6 @@ define make_message
   echo -n " [libs]           int-libs ext-libs download";echo;\
   echo -n " [int-libs]      "; for target in $(INT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [ext-libs]      "; for target in $(EXT_LIBS); do echo -n " $$target" ; done;echo;\
-  echo -n " [download]       Download all Yambo libraries";echo;\
   echo -n " [yambo-int-libs]"; for target in $(YAMBO_INT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [yambo-ext-libs]"; for target in $(YAMBO_EXT_LIBS); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Utils & Cleans ***";\

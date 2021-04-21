@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -34,7 +34,7 @@ subroutine XC_nlcc_setup()
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use pseudo,        ONLY:PP_nlcc_free,pp_rho_nlcc,pp_rhog_nlcc,&
+ use pseudo,        ONLY:pp_rho_nlcc,pp_rhog_nlcc,&
 &                        use_nlcc,pp_has_nlcc,pp_has_nlcc_atom
  use parser_m,      ONLY:parser
  use IO_int,        ONLY:io_control

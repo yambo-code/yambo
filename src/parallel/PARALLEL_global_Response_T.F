@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -103,7 +103,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  use parallel_m,    ONLY:PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_eh,  &
 &                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
  !

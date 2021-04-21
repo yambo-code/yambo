@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -37,8 +37,8 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  use X_m,            ONLY:global_gauge
  use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig,&
 &                         BSS_add_antiresonant
- use BS,             ONLY:BS_K_dim,BS_K_coupling,BS_res_ares_dim,l_BS_ares_asymm,&
-&                         BS_K_coupling,BS_res_ares_dim,BS_K_coupling,BS_res_ares_dim
+ use BS,             ONLY:BS_K_dim,&
+&                         BS_res_ares_dim
  !
  implicit none
  !

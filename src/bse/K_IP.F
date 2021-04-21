@@ -91,7 +91,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)                 :: field_dir(3,BS_dip_size)
  type(elemental_collision):: BSE_scatt
  !
- !
  call section('=','Independent Particles properties @q'//trim(intc(iq)))
  !
  if (l_bs_fxc) return
@@ -309,27 +308,27 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if(l_BS_optics) then
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
-       &  BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
+&          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
      endif
      !
      ! Dichroism
      if(l_BS_dichroism) then
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
-       & BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
+&          BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      !
      ! Magnons
      if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
-                                                                 !      or the right R residual associated to (eps_c\dn-eps_v\up)
-                                                                 ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
-                                                                 ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-         if (BS_K_coupling.and..not.BS_res_ares_dim==2) then     ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-           BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-           BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
-         endif
+       BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
+       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
+                                                               !      or the right R residual associated to (eps_c\dn-eps_v\up)
+                                                               ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
+                                                               ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
+       if (BS_K_coupling.and..not.BS_res_ares_dim==2) then     ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
+         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
+       endif
      endif
      !
      ! c.3 Residuals from "Dipoles"
@@ -420,13 +419,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
-         &  Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+&           Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if (l_BS_abs) then
          Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
-         &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+&           Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
@@ -503,7 +502,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(l_BS_esort) then
    call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_eh_INDEX%COMM )
-   YAMBO_ALLOC(vtmpR,(EDIM)); YAMBO_ALLOC(sort_indx,(EDIM))
+   YAMBO_ALLOC(vtmpR,(EDIM)) 
+   YAMBO_ALLOC(sort_indx,(EDIM))
    vtmpR=real(BS_E_sorted_tmp(:,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
    EDIM=min(BS_K_dim(1),10000)
@@ -570,8 +570,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! DOS
  !
  if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
- !                                                          ! However it is commented for now since all test-suite
- !                                                          ! references needs to be updated before insterting it
+ !                                                      ! However it is commented for now since all test-suite
+ !                                                      ! references needs to be updated before insterting it
  !
  if (l_BS_abs) then
    !

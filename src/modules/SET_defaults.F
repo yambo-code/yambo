@@ -467,6 +467,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
  !
 #if defined _SLEPC && !defined _SLEPC_OFF

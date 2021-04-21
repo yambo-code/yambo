@@ -151,12 +151,42 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  BS_dip_size=1
  !
+ ! What...
+ !--------
  l_BS_abs       = (index(BSE_prop,'abs')/=0)
  l_BS_jdos      = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
  l_BS_esort     = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
  l_BS_dichroism = (index(BSE_prop,'dich')/=0)
  l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
  l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
+ l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ !
+ ! How to treat dipoles...
+ !------------------------
+ l_BS_trace     = (index(BSE_prop,'trace')/=0)
+ !
+ if (l_BS_magnons.and.n_sp_pol==2) then
+   l_BS_abs    = .false.
+   l_BS_kerr   = .false.
+   l_BS_trace  = .false.
+   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
+ endif
+ if (l_BS_kerr) then
+   call parser('AnHall',l_BS_anomalous_Hall)
+   BS_dip_size=2
+ endif
+ if (l_BS_photolum) l_BS_trace  = .false.
+ if (l_BS_trace   ) BS_dip_size = 3
+ !
+ l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
+ !
+ ! Energy points
+ !===============
+ W_bss%n_freqs=BSS_n_freqs
+ W_bss%er=BSS_er
+ W_bss%dr=BSS_dr
+ W_bss%damp_reference=BSS_damp_reference
+ !
  l_BS_trace     = (index(BSE_prop,'trace')/=0)
  l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
  !
@@ -171,7 +201,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    BS_dip_size=2
  endif
  if (l_BS_photolum) l_BS_trace  = .false.
- if (l_BS_trace) BS_dip_size=3
+ if (l_BS_trace   ) BS_dip_size = 3
+ !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !
  ! Energy points

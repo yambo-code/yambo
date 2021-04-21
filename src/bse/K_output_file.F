@@ -28,7 +28,7 @@ subroutine K_output_file(iq,mode)
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
- use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,&
+ use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,l_BS_esort,&
  &                   l_BS_jdos,BS_K_coupling
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
@@ -42,7 +42,7 @@ subroutine K_output_file(iq,mode)
  use electrons, ONLY:spin_occ,n_spinor
  use R_lattice, ONLY:nkbz
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
- use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,BS_field_direction,BS_dip_size
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
  &                   magp_file_name,magm_file_name
@@ -59,7 +59,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
- integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
+ integer           :: iw,i1,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
  complex(SP)       :: beta(BSS_n_freqs,3)
@@ -153,7 +153,8 @@ subroutine K_output_file(iq,mode)
  if(l_esrt_out) call of_open_close(e_ip_file_name,title_mode)
  if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name,title_mode)
  !
- call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
+ if (BS_dip_size==1) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
+ if (BS_dip_size==2) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(2,:))
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  call msg('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#')
@@ -169,14 +170,15 @@ subroutine K_output_file(iq,mode)
  !
  if(eval_alpha_loc) then
    ! Alpha units
-   call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o alpha','#',' Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o alpha','#')
  endif
  !
  ! Diamagnetic term
  !
- if(l_abs_out) then
-   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
+ if (l_abs_out) then
+   call msg('o eps','#',' Diamagnetic term',INDENT=0)
+   call msg('o eps','#')
    n_output_data=2
    if(l_IP) n_output_data=1
    headers(:2)=(/'A [nel]','A0[nel]'/)
@@ -192,7 +194,7 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out .and. eval_beta) then
    ! Alpha units
-   call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o beta','#',' Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o beta','#')
  endif
  !
@@ -200,7 +202,8 @@ subroutine K_output_file(iq,mode)
    !
    ! Hanomalous Hall term
    !
-   call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
+   call msg('o off','# ','Anomalous Hall effect',INDENT=0)
+   call msg('o off','#')
    !
    n_output_data=6
    if(l_IP) n_output_data=3

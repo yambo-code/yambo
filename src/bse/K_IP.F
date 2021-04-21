@@ -43,16 +43,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
- &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,l_BS_optics,&
- &                       BS_mat_res_ares_dim
+&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,&
+&                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
+&                        BSE_dipole_geometry,BS_field_direction
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_COM_Xk_ibz_INDEX,myid
+&                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
- use vec_operate,   ONLY:rot_v_xy_plane
+ use vec_operate,   ONLY:v_rotate
  use BS,            ONLY:l_BS_anomalous_Hall
  use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
@@ -70,42 +70,33 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Work space
  !
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
- &                   n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort
- real(SP)          ::f_
+&                    n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort,&
+&                    i_VAR,i_grp,i_cv,nVAR,EDIM,n_deg_grp,i_dip
+ real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used,Z_,E_
+&                    para_term_w0,diam_term_used,Z_eh,E_eh
+ complex(SP)       ::DIP_Splus,DIP_Smins,P_weighted(3),res_kerr,res_magn(2),res_dich,&
+&                    DIP_projected_dich(BS_dip_size),DIP_projected(BS_dip_size),DIP_expanded(3)
+ character(6)      ::DIP_kind
  !
- integer  :: i_VAR,i_grp,i_cv,nVAR,EDIM,n_deg_grp
- real(SP), allocatable     :: vtmpR(:)
- complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
- integer, allocatable      :: sort_indx(:),first_el(:),n_of_el(:)
- !
- real(SP)          ::f_PL,res_PL
- complex(SP)       ::DIP_Splus,DIP_Smins,P_weighted(3)
- complex(SP)       ::res_kerr,res_magn(2),res_dich
- complex(SP)       ::DIP_projected_dich(BS_dip_size)
- !
- character(6)             :: DIP_kind
- complex(SP)              :: DIP_projected(BS_dip_size),DIP_expanded(3)
- real(SP)                 :: field_dir(3,BS_dip_size)
+ real(SP),    allocatable :: vtmpR(:)
+ complex(SP), allocatable :: BS_E_sorted_tmp(:,:)
+ integer,     allocatable :: sort_indx(:),first_el(:),n_of_el(:)
  type(elemental_collision):: BSE_scatt
- !
- call section('=','Independent Particles properties @q'//trim(intc(iq)))
  !
  if (l_bs_fxc) return
  !
- !===================================================
- !
+ call section('=','Independent Particles properties @q'//trim(intc(iq)))
+ !======================================================================
  call timing('T_space IP',OPR='start')
  !
  ! Polarizability ?
- !==================
+ !------------------
  if (trim(alpha_dim)/='adim') then
    call msg('r', 'Optical renormalization       ',eps_2_alpha,"[a.u.]")
    call msg('rn','Polarizability dimension      ',trim(alpha_dim))
  endif
- !
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
  !...Drude
@@ -113,13 +104,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Oscillators I/O & Eps0
  !========================
- !
  if((.not.BS_perturbative_SOC).or.n_sp_pol==2) then
    n_SOC=1
    Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
- !
- !
  if( BS_perturbative_SOC.and.n_sp_pol==1) then
    n_SOC=2
    Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
@@ -147,14 +135,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! Directions for the external field
    !
-   field_dir(:,1)=Dip%q0/v_norm(Dip%q0)
-   !
-   if(l_BS_kerr) call rot_v_xy_plane(-pi/2._SP,field_dir(:,1),v_out=field_dir(:,2))
+   BS_field_direction(:,1)=Dip%q0/v_norm(Dip%q0)
    !
    if (l_BS_trace) then
-     field_dir(:,1)=(/1._SP,0._SP,0._SP/)
-     field_dir(:,2)=(/0._SP,1._SP,0._SP/)
-     field_dir(:,3)=(/0._SP,0._SP,1._SP/)
+     BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
+     BS_field_direction(:,2)=(/0._SP,1._SP,0._SP/)
+     BS_field_direction(:,3)=(/0._SP,0._SP,1._SP/)
+   else if (trim(BSE_dipole_geometry)/='none'.and.l_BS_kerr) then
+     call v_rotate(trim(BSE_dipole_geometry),-pi/2._SP,BS_field_direction(:,1),v_out=BS_field_direction(:,2))
    endif
    !
  endif
@@ -163,7 +151,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    DIP_kind ="DIP_iR"
    dip_r=.true.
    dip_v=.false.
-   field_dir=field_dir*q0_def_norm
+   BS_field_direction=BS_field_direction*q0_def_norm
  endif
  if (trim(global_gauge)=='velocity') then
    DIP_kind ="DIP_v"
@@ -244,14 +232,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
      !              see definition of conjg_fac few lines before for the -1
      !
-     ! Absorption, PL & KERR
-     !
-     if(l_BS_optics) then
+     ! Absorption, KERR, PL, Dichroism
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
        if(iq==1) then
          DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
-         DIP_projected(1)=dot_product(field_dir(:,1),DIP_expanded)
-         if(BS_dip_size>1) DIP_projected(2)=dot_product(field_dir(:,2),DIP_expanded)
-         if(BS_dip_size>2) DIP_projected(3)=dot_product(field_dir(:,3),DIP_expanded)
+         do i_dip=1,BS_dip_size
+           DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
+         enddo
        else
          if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
          if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
@@ -259,12 +246,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
      endif
      !
+     ! Dichroism
      if (l_BS_dichroism) then
        if(iq==1) then   ! EM: "iq==1":  kpt=Gamma (molecules)
          DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
-         DIP_projected_dich(1)=dot_product(field_dir(:,1),DIP_expanded)
-         if(BS_dip_size>1) DIP_projected_dich(2)=dot_product(field_dir(:,2),DIP_expanded)
-         if(BS_dip_size>2) DIP_projected_dich(3)=dot_product(field_dir(:,3),DIP_expanded)
+         do i_dip=1,BS_dip_size
+           DIP_projected_dich(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
+         enddo
          if (trim(global_gauge)=='length'  ) DIP_projected_dich=DIP_projected_dich/q0_def_norm
        else
          call error(' finite q not implemented for dichroism')
@@ -272,7 +260,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
      !
      ! Magnons
-     !
      if (l_BS_magnons) then
        !
        ! notice:
@@ -304,8 +291,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! c.2 Store Dipoles
      !====================
      !
-     ! Absorption, KERR, Dichroism, PL
-     if(l_BS_optics) then
+     ! Absorption, KERR, PL, Dichroism
+     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
        if (BS_K_coupling.and..not.BS_res_ares_dim==2) &
 &          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
@@ -319,7 +306,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
      !
      ! Magnons
-     if (l_BS_magnons) then                                      ! This is the right R residual associated to (eps_c\dn-eps_v\up)
+     if (l_BS_magnons) then                                    ! This is the right R residual associated to (eps_c\dn-eps_v\up)
        BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
        BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
                                                                !      or the right R residual associated to (eps_c\dn-eps_v\up)
@@ -334,22 +321,24 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! c.3 Residuals from "Dipoles"
      !==============================
      !
-     Z_=cONE
-     E_=cONE
-     f_=BS_T_grp(i_T_g)%f_RES(i_T)
-     if (allocated(BS_T_grp(i_T_g)%Z))                                      Z_=BS_T_grp(i_T_g)%Z(i_T)
-     if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") E_=E_plus_W0/conjg(E_plus_W0)
+     Z_eh=cONE
+     E_eh=cONE
+     f_eh=BS_T_grp(i_T_g)%f_RES(i_T)
+     if (allocated(BS_T_grp(i_T_g)%Z))                                      Z_eh=BS_T_grp(i_T_g)%Z(i_T)
+     if (allocated(BS_T_grp(i_T_g)%W) .and. trim(global_gauge)=="velocity") E_eh=E_plus_W0/conjg(E_plus_W0)
      !
      ! Residuals DIP_cv * DIP_vc
      !
      if(l_BS_abs) then
-       res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       res_abs=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2
        if(l_BS_trace) then
-         res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
-         res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1))
-         res_abs=res_abs/3._SP
+         do i_dip=2,BS_dip_size
+           res_abs=res_abs+abs(BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1))**2
+         enddo
+         res_abs=res_abs/real(BS_dip_size,SP)
        endif
-       res_abs=res_abs*f_*Z_*E_
+       !
+       res_abs=res_abs*f_eh*Z_eh*E_eh
        if(l_BS_esort.and.i_res_ares==1) then
          BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
@@ -358,7 +347,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
-       res_kerr=res_kerr*Z_*E_*f_
+       res_kerr=res_kerr*Z_eh*E_eh*f_eh
        if(l_BS_esort.and.i_res_ares==1) then
          BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
@@ -367,23 +356,27 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (l_BS_photolum) then
        !
-       ! Note that res_PL is always positive as f_PL>0
+       ! Note that res_PL is always positive as f_eh_PL>0
        !
-       f_PL=BS_T_grp(i_T_g)%f_PL(i_T,1)
+       f_eh_PL=BS_T_grp(i_T_g)%f_PL(i_T,1)
        P_weighted(:)=BS_T_grp(i_T_g)%dipoles_opt(:,i_T,1)*PL_weights(:)
-       res_PL=real(dot_product(P_weighted,P_weighted)*f_PL*Z_*E_)
+       res_PL=real(dot_product(P_weighted,P_weighted)*f_eh_PL*Z_eh*E_eh)
      endif
      !
      ! Dichroism
      !
      if(l_BS_dichroism) then
-       res_dich=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1)) ! EM:  x*L = DIP_x*DIP_orbital;
+       res_dich=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*&
+&               conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))
        if(l_BS_trace) then
-         res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1))
-         res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1))
-         res_dich=res_dich/3._SP
+         do i_dip=2,BS_dip_size
+           ! x*L = DIP_x*DIP_orbital;
+           res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*&
+&                   conjg(BS_T_grp(i_T_g)%dipoles_dic(i_dip,i_T,1))
+         enddo
+         res_dich=res_dich/real(BS_dip_size,SP)
        endif
-       res_dich=res_dich*f_*Z_/(q0_def_norm)                    !       f_ = occupations
+       res_dich=res_dich*f_eh*Z_eh/(q0_def_norm)
        if(l_BS_esort.and.i_res_ares==1) then
          BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1
@@ -397,7 +390,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
-       res_magn=res_magn*f_*Z_
+       res_magn=res_magn*f_eh*Z_eh
        if(l_BS_esort.and.i_res_ares==1) then
          BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+2)=res_magn
          nVAR=nVAR+2

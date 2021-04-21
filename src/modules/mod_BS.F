@@ -25,6 +25,7 @@ module BS
  !
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY:elemental_collision
+ !
 #include<memory.h>
  !
  ! Modes and logicals
@@ -45,6 +46,7 @@ module BS
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
+ character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  character(schlen) :: BS_res_mode
@@ -81,6 +83,7 @@ module BS
  integer :: BS_identifier
  integer(IPL) :: BS_lin_size_compressed
  integer :: BS_dip_size
+ real(SP):: BS_field_direction(3,3)
  real(SP):: BS_max_val
  real(SP):: BS_K_cutoff
  real(SP),allocatable :: BS_K_cutoff_done(:)

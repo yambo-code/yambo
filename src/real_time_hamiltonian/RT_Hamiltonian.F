@@ -130,7 +130,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      deallocate(delta_magn)
    endif
    !
-   !
    ! The Vxc term
    !--------------
    if (eval_DFT) then
@@ -204,7 +203,6 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! The External Field
  !====================
- !if (l_NE_with_fields.and.any((/Efield(:n_ext_fields)%t_final>=NE_time/))) then
  if (l_NE_with_fields) then
    !
    call timing('RT Apply Field',OPR='start')

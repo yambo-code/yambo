@@ -30,7 +30,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use DIPOLES,         ONLY:DIP_rotated
- use vec_operate,     ONLY:v_norm,rot_v_xy_plane
+ use vec_operate,     ONLY:v_norm,v_rotate
  use BS,              ONLY:l_BS_kerr
  use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
@@ -89,7 +89,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'YPP')
  if (trim(global_gauge)=='length'  ) field_dir=DIPs%q0/v_norm(DIPs%q0)*q0_def_norm
  if (trim(global_gauge)=='velocity') field_dir=DIPs%q0/v_norm(DIPs%q0)
- call rot_v_xy_plane(-pi/2._SP,field_dir,kerr_dir)
+ call v_rotate('xy',-pi/2._SP,field_dir,v_out=kerr_dir)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
  if(l_TR_reflec) then

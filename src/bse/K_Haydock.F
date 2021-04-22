@@ -116,6 +116,14 @@ subroutine K_Haydock(iq,W,mode,Xk)
  ! Allocate Haydock vectors:
  !
 !aim137: choice of DG or not
+ if (     BSS_uses_DbGd) then
+   call msg('r','Using Double Grid method') 
+   call msg('r','Number of Coarse grid BZ kpts : '//trim(intc(Xk%nbz))) 
+   call msg('r','Number of Fine grid BZ kpts   : '//trim(intc(Xk%FGbz%N))) 
+   call LIVE_message('[Haydock] Using Double Grid method') 
+   call LIVE_message('[Haydock] Number of Coarse grid BZ kpts : '//trim(intc(Xk%nbz))) 
+   call LIVE_message('[Haydock] Number of Fine grid BZ kpts   : '//trim(intc(Xk%FGbz%N))) 
+ end if
  if (.not.BSS_uses_DbGd) dom_k=1
  if (.not.BSS_uses_DbGd) FG_factor=1._SP
  if (     BSS_uses_DbGd) then

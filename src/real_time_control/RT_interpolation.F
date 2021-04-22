@@ -129,7 +129,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
    call msg('r',  '['//trim(title)//'] Max energy levels change      ',dE_Max*HA2EV,"[eV]")
  endif
  !
- call msg('rn',  '['//trim(title)//'] Full and metallic bands        ', (/E%nbf,E%nbm/)) 
+ call msg('rn',   '['//trim(title)//'] Full and metallic bands       ', (/E%nbf,E%nbm/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !
@@ -157,7 +157,7 @@ subroutine Interpolate_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,dE_Max)
  ! Work Space
  !
  logical       :: HAS_DBGD
- integer       :: ik,i_carr,nb_max,nb_max_FineGd,ID
+ integer       :: ik,nb_max,nb_max_FineGd,ID
  type(bz_samp) :: RT_k
     !
     ID=0

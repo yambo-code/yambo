@@ -174,6 +174,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if (l_BS_kerr) then
    call parser('AnHall',l_BS_anomalous_Hall)
    BS_dip_size=2
+   l_BS_abs=.TRUE.
  endif
  if (l_BS_photolum) l_BS_trace  = .false.
  if (l_BS_trace   ) BS_dip_size = 3

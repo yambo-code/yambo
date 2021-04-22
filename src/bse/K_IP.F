@@ -38,7 +38,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,BS_E_sorted,   &
-&                        skip_cond_sum_rule,l_drude
+&                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
 &                        Co_factor,diam_term_exact,BSS_Wd
@@ -56,7 +56,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use BS,            ONLY:l_BS_anomalous_Hall
  use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
- use X_m,           ONLY:X_magnons,Epsilon_ij,X_dichroism
  use units,         ONLY:SPEED_OF_LIGHT
  !
 #include<memory.h>
@@ -162,7 +161,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(l_BS_esort) then
    EDIM=BS_K_dim(1)
    nVAR=2
-   if(l_BS_abs) nVAR=nVAR+1
+   if(l_BS_abs)       nVAR=nVAR+1
    if(l_BS_kerr)      nVAR=nVAR+1
    if(l_BS_dichroism) nVAR=nVAR+1
    if(l_BS_magnons)   nVAR=nVAR+2
@@ -248,7 +247,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! Dichroism
      if (l_BS_dichroism) then
-       if(iq==1) then   ! EM: "iq==1":  kpt=Gamma (molecules)
+       if(iq==1) then  
          DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
          do i_dip=1,BS_dip_size
            DIP_projected_dich(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
@@ -451,9 +450,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_dichroism) then
-         X_dichroism(:,3)=X_dichroism(:,3)-res_dich/(W_bss%p(:)-E_plus_W(i_pert_SOC))  ! EM: w(:) = omega;  
+         X_dichroism(:,3)=X_dichroism(:,3)-res_dich/(W_bss%p(:)-E_plus_W(i_pert_SOC)) 
          if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) then
-           X_dichroism(:,3)=X_dichroism(:,3)+res_dich/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))) ! DS to check congj factor
+           X_dichroism(:,3)=X_dichroism(:,3)+res_dich/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))) ! DS to check conjg factor
          endif
        endif
        !
@@ -500,7 +499,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    vtmpR=real(BS_E_sorted_tmp(:,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
    EDIM=min(BS_K_dim(1),10000)
-   allocate(first_el(EDIM)); allocate(n_of_el(EDIM))
+   allocate(first_el(EDIM)) 
+   allocate(n_of_el(EDIM))
    ! Threshold is 1meV
    call degeneration_finder(vtmpR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
    EDIM=min(BS_K_dim(1),1000)
@@ -518,8 +518,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
      enddo
    enddo
-   deallocate(first_el);   deallocate(n_of_el)
-   YAMBO_FREE(vtmpR);      YAMBO_FREE(sort_indx)
+   deallocate(first_el) 
+   deallocate(n_of_el)
+   YAMBO_FREE(vtmpR)
+   YAMBO_FREE(sort_indx)
    YAMBO_FREE(BS_E_sorted_tmp)
  endif
  !

@@ -56,16 +56,15 @@ subroutine K_output_file(iq,mode)
  !
  ! Work Space
  !
- character(2)      :: ordering
- character(2)      :: title_mode
+ character(2)      :: ordering,title_mode
  character(10)     :: name_
  integer           :: iw,i1,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
- complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
- complex(SP)       :: beta(BSS_n_freqs,3)
- logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
- logical           :: eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
- &                    l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
+ complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor,&
+&                     beta(BSS_n_freqs,3)
+ logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out,eval_moke,&
+&                     eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
+&                     l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
  l_INIT      = index(mode,"open")/=0
  l_FINALIZE  = index(mode,"final")/=0
@@ -111,7 +110,6 @@ subroutine K_output_file(iq,mode)
  if (l_abs_out) then
    call parser('Reflectivity',eval_reflectivity)
    eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
-   !
    if (eval_eels) eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
@@ -121,7 +119,8 @@ subroutine K_output_file(iq,mode)
    eval_reflectivity=.false.
  endif
  !
- eval_beta = eval_alpha .and. l_kerr_out
+ eval_beta =      eval_alpha .and. l_kerr_out
+ eval_moke = .not.eval_alpha .and. l_kerr_out
  if ( l_kerr_out.and.l_Haydock ) then
    eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
  endif
@@ -140,8 +139,8 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
-   if (.not.eval_beta) call of_open_close(moke_file_name,title_mode)
-   if (     eval_beta) call of_open_close(beta_file_name,title_mode)
+   if (eval_moke) call of_open_close(moke_file_name,title_mode)
+   if (eval_beta) call of_open_close(beta_file_name,title_mode)
  endif
  if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
  if(l_phot_out) call of_open_close(pl_file_name,title_mode)
@@ -154,7 +153,7 @@ subroutine K_output_file(iq,mode)
  if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name,title_mode)
  !
  if (BS_dip_size==1) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
- if (BS_dip_size==2) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(2,:))
+ if (BS_dip_size==2) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(:,2))
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  call msg('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#')
@@ -259,7 +258,7 @@ subroutine K_output_file(iq,mode)
    call msg("o beta",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
-   if (.not.eval_beta)  then
+   if (eval_moke)  then
      call X_setup_headers('moke')
      call msg("o moke",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
@@ -438,7 +437,6 @@ subroutine K_output_file(iq,mode)
      !
    enddo
    !
-   !
    if(eval_beta) then
      !
      ! beta=alpha_xy
@@ -468,11 +466,12 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   if(l_abs_out.and..not.eval_alpha_loc) then
+   if(eval_moke) then
      !
      ! Kerr parameters
      !
      do iw=1,BSS_n_freqs 
+       !
        output_data(1)= w(iw)
        output_data(2)=-aimag(Epsilon_ij(iw,2)/( Epsilon_ii(iw,2)*sqrt(Epsilon_ii(iw,2)+1._SP) ) /DEG2RAD)
        output_data(3)= -real(Epsilon_ij(iw,2)/( Epsilon_ii(iw,2)*sqrt(Epsilon_ii(iw,2)+1._SP) ) /DEG2RAD)
@@ -496,7 +495,10 @@ subroutine K_output_file(iq,mode)
          output_data(6)=-aimag(Epsilon_ij(iw,4)/( Epsilon_ii(iw,4)*sqrt(Epsilon_ii(iw,4)+1._SP) ) /DEG2RAD)
          output_data(7)= -real(Epsilon_ij(iw,4)/( Epsilon_ii(iw,4)*sqrt(Epsilon_ii(iw,4)+1._SP) ) /DEG2RAD)
        endif
-       if (l_IP) then ; n_output_data=3 ; output_data(2:3)=output_data(4:5) ; endif
+       if (l_IP) then  
+         n_output_data=3  
+         output_data(2:3)=output_data(4:5)  
+       endif
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      enddo
      !

@@ -41,7 +41,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
-&                        Co_factor,diam_term_exact,BSS_Wd
+&                        Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd
+!aim137: adding BSS_mode 
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,l_BS_optics,&
@@ -90,6 +91,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)              :: DIP_projected(BS_dip_size),DIP_expanded(3)
  real(SP)                 :: field_dir(3,BS_dip_size)
  type(elemental_collision):: BSE_scatt
+ !
+!aim137: adding variables for DbGd
+ real(SP)      :: FG_factor
+ integer       :: dom_k_T,i_dom_k
+ complex(SP), allocatable :: E_DbGd(:)
  !
  !
  call section('=','Independent Particles properties @q'//trim(intc(iq)))
@@ -183,6 +189,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    BS_E_sorted_tmp=cZERO
  endif
  !
+ if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
+   FG_factor = real(Xk%nbz)/real(Xk%FGbz%N)
+ else
+   FG_factor = 1._SP
+ end if
+ !
  if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
  !
  do i_T_g=1,BS_nT_grps
@@ -219,11 +231,18 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
      endif
      !
+!aim137: support for DbGd method
+!aim137: added Haydock condition, to leave Inversion untouched.
+     if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
+       dom_k_T = Xk%FGbz%N_mapped(ik_bz)
+     else
+       dom_k_T = 1
+     end if
+     !
      ! b.Energy
      !=========
      !
-!aim137: must add extra index in both %E
-!aim137: temporary %E(:,1) until I populate those values
+!aim137: hard coded %E(:,1) - revise later
      if(allocated(BS_T_grp(i_T_g)%W)) then
        E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)-cI*BS_T_grp(i_T_g)%W(i_T)
      else
@@ -239,6 +258,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        BS_E_sorted_tmp(i_E_sort,1)=E_plus_W0
        nVAR=2
      endif
+     !
+!aim137: energies for DbGd as delta wrt coarse grid
+     allocate(E_DbGd(dom_k_T))
+     E_DbGd = cZERO
+     do i_dom_k=1,dom_k_T
+       E_DbGd(i_dom_k) = BS_T_grp(i_T_g)%E(i_T,i_dom_k)-BS_T_grp(i_T_g)%E(i_T,1)
+     enddo
      !
      ! c1.Compute "dipoles"
      !=====================
@@ -426,9 +452,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_abs) then
-         Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
-         &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+!aim137: added loop and variable - must generalise to all responses later
+         do i_dom_k=1,dom_k_T
+           Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_dom_k))
+           if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
+           &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_dom_k)))
+         enddo
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
@@ -478,11 +507,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
      enddo
      !
+     deallocate(E_DbGd)
    enddo
    !
    if (l_rpa_IP.or.iq>1) call live_timing(steps=1)
    !
  enddo
+ !
+!aim137: FG factor
+ Epsilon_ii(:,3) = Epsilon_ii(:,3) * FG_factor
  !
  if (l_rpa_IP.or.iq>1) call live_timing()
  !

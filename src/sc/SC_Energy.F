@@ -49,6 +49,7 @@ subroutine SC_Energy(E_total,E_eigen,E_zero,E_Hartree,E_xc_,E_Fermi,E,k,rho)
  real(SP)     :: E_Vxc_rho
  complex(SP)  :: H_tmp(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
+ E_Vxc_rho=0._SP
  E_eigen  =0._SP
  E_zero   =0._SP
  E_total  =0._SP

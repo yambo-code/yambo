@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -56,7 +56,6 @@ subroutine K_blocks(iq)
  !
  integer      :: i_T,j_T,i_T_start,j_T_start,i_block,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
- logical      :: test_full
  real(SP)     :: N_Ts_total,N_Ts_local
  !
  if (.not.BS_K_coupling) n_new_blocks=1

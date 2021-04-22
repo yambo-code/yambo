@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -24,7 +24,7 @@
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  use pars,          ONLY:SP,pi,rZERO,schlen
- use units,         ONLY:HA2EV,HA2CMm1
+ use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:c2a
@@ -36,7 +36,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use YPP_ELPH,      ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,  ONLY:PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  use stderr,        ONLY:STRING_same

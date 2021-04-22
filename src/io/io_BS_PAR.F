@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM, DS
@@ -25,11 +25,11 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:MPI_COMM_WORLD,master_cpu
+ use parallel_m,    ONLY:master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use com,           ONLY:msg
- use pars,          ONLY:SP,schlen,lchlen
- use stderr,        ONLY:intc,real2ch
+ use pars,          ONLY:schlen,lchlen
+ use stderr,        ONLY:intc
  use X_m,           ONLY:X_t
  use BS,            ONLY:BS_K_cutoff_done,l_BSE_restart,l_BSE_kernel_complete
  use BS_solvers,    ONLY:variables_BS,BSS_desc
@@ -135,7 +135,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  use parallel_m,    ONLY:MPI_COMM_WORLD
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
- use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_restart,l_BSE_kernel_complete,&
+ use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
 &                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff,     &
 &                        BS_mat_res_ares_dim,l_BS_ares_asymm,BS_res_ares_dim
  use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
@@ -334,7 +334,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
  use pars,          ONLY:IP,IPL,SP,schlen
- use BS,            ONLY:BS_blk,BSK_IO_mode,BS_K_cutoff,BS_IO_dim,MAX_BSK_LIN_size,n_BS_blks_min
+ use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,&
 &                        write_is_on,read_is_on,io_BS_K,YAMBO_CMPLX_NO_FILL

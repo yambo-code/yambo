@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -23,15 +23,16 @@
 !
 subroutine excitons_bands(k,Xk,en,Xen,q)
  !
- use pars,          ONLY:SP,DP,schlen,pi,cZERO,cONE,rZERO
+ use pars,          ONLY:SP,schlen,rZERO
  use LIVE_t,        ONLY:live_timing
- use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use R_lattice,     ONLY:bz_samp
  use interpolate,   ONLY:INTERPOLATION_BZ
  use electrons,     ONLY:levels
  use functions,     ONLY:Fermi_fnc_derivative
  use units,         ONLY:HA2EV
- use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,BANDS_steps, &
-&                        INTERP_grid,K_transform,CIRCUIT_k,DOS_E_steps,DOS_broadening,USER_k
+ use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out, &
+&                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step, &
+&                        DOS_E_steps,DOS_broadening,USER_k
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc

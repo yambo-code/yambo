@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -53,7 +53,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        QP_n_W_freqs_redux,e2et,h2ht
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use functions,     ONLY:bose_decay
- use R_lattice,     ONLY:qindx_S,bz_samp,nqibz
+ use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
  use stderr,        ONLY:intc
  use wrapper,       ONLY:Vstar_dot_V,V_dot_V

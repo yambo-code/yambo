@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -31,7 +31,6 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  !
- use electrons,      ONLY:n_sp_pol
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&

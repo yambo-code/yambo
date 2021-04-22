@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS AF
@@ -28,13 +28,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_bss
+ use drivers,      ONLY:l_bs_fxc
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,qindx_free,&
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,qindx_X,qindx_B_max,&
 &                       qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
@@ -48,12 +48,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_nT_grps,BS_blks_free,l_BS_ares_asymm,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BS_res_ares_dim
+&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
  use IO_int,       ONLY:io_control
- use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,OP_WR,&
-&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
-&                       deliver_IO_error_message,manage_action
+ use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,FXC,FXC_n_g_corr,io_BS_Fxc
  use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
@@ -108,7 +106,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,io_qindx_err,qindx_ID,ID,ID_head,ID_compr
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr
  integer, external ::io_BS,io_BS_PAR_init,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
@@ -246,7 +244,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
-   call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif

@@ -199,11 +199,11 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
      character(lchlen) :: wrong_val
      !
      have_same_desc=.TRUE.
-     wrong_i_d=0
      !
      if (qp1%desc%n/=qp2%desc%n) call warning('Differenent number of descriptions in the QP DBs '//NEW_LINE('A'))
      !
      do i_d1=1,qp1%desc%n
+       wrong_i_d=0
        if (index(qp1%desc%str(i_d1),"QP @ state")/=0) cycle  ! Skip the QP range
        do i_d2=1,qp2%desc%n
          if (index(qp2%desc%str(i_d2),"QP @ state")/=0) cycle  ! Skip the QP range

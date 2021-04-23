@@ -567,7 +567,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
  !                                                      ! However it is commented for now since all test-suite
  !                                                      ! references needs to be updated before insterting it
- !
  if (l_BS_abs) then
    !
    if (trim(global_gauge)=='velocity') then
@@ -605,16 +604,19 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
+   !
    if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
    !
  endif
  !
  if (l_BS_dichroism) then
-  !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
-  !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
-  !  N = molecular density = ??
-  !  SPEED_OF_LIGHT =  c in a.u.
-  X_dichroism(:,3)=X_dichroism(:,3)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !!  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
+   !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
+   !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
+   !  N = molecular density = ??
+   !  SPEED_OF_LIGHT =  c in a.u.
+   !
+   X_dichroism(:,3)=X_dichroism(:,3)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
+   !
  endif
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)

@@ -252,8 +252,8 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
            !
            if(wrong_i_d/=0) then
              have_same_desc=.false.
-             call msg('s','QP DBs with different  "'//trim(qp1%desc%str(wrong_i_d))//'" cannot be merged ')
-             call msg('s','Different values: "'//wrong_val)
+             call msg('s','QP DBs with different  "'//trim(qp1%desc%str(wrong_i_d))//'"')
+             call msg('s','Different values: '//wrong_val)
              call msg('s','') 
             endif
             !

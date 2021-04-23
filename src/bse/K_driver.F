@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -155,11 +155,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !--------
  l_BS_abs       = (index(BSE_prop,'abs')/=0)
  l_BS_jdos      = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
- l_BS_esort     = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
  l_BS_dichroism = (index(BSE_prop,'dich')/=0)
  l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
  l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
  l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ !
+ ! How ...
+ !---------
+ l_BS_esort     = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
  !
  ! How to treat dipoles...
  !------------------------

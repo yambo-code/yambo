@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM
@@ -51,7 +51,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
  !
- integer          :: i_B, i_r, i_c, i_Tk, i_Tp, grp_fac
+ integer          :: i_B,grp_fac
  PetscFortranInt  :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc

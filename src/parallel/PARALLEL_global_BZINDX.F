@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  use IO_int,        ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_BZINDX,OPENMP_set_threads
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
- use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index
+ use parallel_m,    ONLY:PAR_build_index
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_BZINDXk_ibz_A2A,PAR_COM_BZINDXk_ibz_INDEX
  ! IND

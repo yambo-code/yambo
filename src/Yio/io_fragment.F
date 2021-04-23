@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  !
  use pars,        ONLY:schlen
  use IO_int,      ONLY:io_connect,io_control
- use IO_m,        ONLY:close_is_on,io_file,io_mode,io_com,&
+ use IO_m,        ONLY:io_file,io_mode,io_com,&
 &                      io_sec,io_extension,read_is_on,write_is_on,&
 &                      OP_RD_CL,OP_APP_CL,io_type,io_folder,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&

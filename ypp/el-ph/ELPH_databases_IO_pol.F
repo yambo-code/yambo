@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, AM, FP
@@ -25,7 +25,6 @@ subroutine ELPH_databases_IO_pol(ph_pol_file,n_q,q_pt,ph_pol)
  !
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
- use units,          ONLY:HA2CMm1
  use vec_operate,    ONLY:v_is_zero
  !
  implicit none

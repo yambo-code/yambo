@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,7 @@ subroutine K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
  ! BS_R_right_kerr(i)=<q0_kerr|j><j|i_R>
  !                   =conjg(BSS_dipoles(j))*BS_V_right(j,i)
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:V_dot_V_omp
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 

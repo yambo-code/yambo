@@ -61,7 +61,7 @@ subroutine QP_DBs_manipulate( E )
        call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
        i_err=io_QP_and_GF(trim(QP_db_input_control(i_qp,4)),QP_db(n_QP_dbs),ID)
        if (i_err/=0) then
-         call warning("QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
+         call warning(" Error in reading QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
          call QP_reset(QP_db(n_QP_dbs))
          n_QP_dbs=n_QP_dbs-1
        endif

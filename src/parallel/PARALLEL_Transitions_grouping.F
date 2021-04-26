@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,7 +38,7 @@ subroutine PARALLEL_Transitions_grouping()
  ! Work Space
  !
  logical              :: l_check
- integer              :: i_k,i_k_r,i_k_s,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter,i_res_ares
+ integer              :: i_k,i_k_r,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter,i_res_ares
  integer, allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
  !

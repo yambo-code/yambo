@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  !
  ! This routine returns <sigma>
  !
- use pars,                ONLY:cI,SP
+ use pars,                ONLY:cI
  use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
@@ -48,7 +48,7 @@ subroutine Dipole_spin_magnetization(Xen,Xk,dip)
  ! Work Space
  !
  integer                      :: ik,ic_wf(n_sp_pol),iv_wf(n_sp_pol),ic,iv,n_LT_steps,ik_mem,&
-&                                j_sp_pol,i_sp_pol,i_sp_wf(2)
+&                                i_sp_wf(2)
  !
  if(n_spin==1) return
  !

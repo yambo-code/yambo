@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -102,7 +102,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
    !
    if (abs(delta_f)/abs(fo)<abs(K_INV_EPS%treshold)) return
    !
-   if (abs(delta_f)>40._SP) exit
+   if (abs(delta_f)>K_INV_EPS%max_treshold) exit
    !
    R_x_D_nm1=R_x_D_n
    !

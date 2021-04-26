@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, HM
@@ -43,14 +43,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  use D_lattice,     ONLY:nsym,sop_inv,sop_tab
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_load
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
-&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,l_BS_magnons,&
+&                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
 &                        BS_K_dim,l_BS_ares_asymm,BS_K_is_ALDA
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use deviceXlib_m,  ONLY:dev_memcpy
- use parallel_m,    ONLY:PAR_K_scheme,myid
+ use parallel_m,    ONLY:PAR_K_scheme
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -66,7 +66,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
 &               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
-&               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) 
+&               i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp(2) 
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
@@ -75,7 +75,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
- integer, external    :: qindx_B_init,qindx_B_close
  !
  if (.not.BS_res_K_corr) return 
  !

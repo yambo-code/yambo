@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -39,7 +39,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
 #endif
- use BS,            ONLY:l_BS_magnons,l_BS_dichroism
+ use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !

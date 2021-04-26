@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -34,8 +34,8 @@ subroutine K_diago_herm_magnons_residual(i_BS_mat,BS_R_left,BS_R_right)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS_solvers,     ONLY:BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig,BSS_add_antiresonant
- use BS,             ONLY:BS_K_dim,BS_K_coupling,BS_res_ares_dim,l_BS_ares_asymm
+ use BS_solvers,     ONLY:BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig
+ use BS,             ONLY:BS_K_dim
  use MAGNONS,        ONLY:BSS_dipoles_magn
  !
  implicit none
@@ -90,13 +90,13 @@ end subroutine K_diago_herm_magnons_residual
 !
 subroutine K_diago_non_herm_magnons_residual(BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap) 
  !
- use pars,           ONLY:SP,cZERO,cI
+ use pars,           ONLY:SP,cZERO
  use wrapper_omp,    ONLY:V_dot_V_omp,Vstar_dot_V_omp
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
  use BS_solvers,     ONLY:BSS_eh_Z,BSS_eh_f,BSS_n_eig
- use BS,             ONLY:BS_K_dim,BS_H_dim
+ use BS,             ONLY:BS_H_dim
  use MAGNONS,        ONLY:BSS_dipoles_magn
  !
  implicit none

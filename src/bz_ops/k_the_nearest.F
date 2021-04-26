@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -81,7 +81,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,bord
      v=k_rotated(:,is)-k(ik,:)
      call k2bz(v)
      k_dist_(ik)=iku_v_norm(v)
-     if ( k_dist_(ik) < MAX_dist) then
+     if ( k_dist_(ik) < MAX_dist-zero_dfl) then
        k_the_nearest=ik
        MAX_dist=k_dist_(ik)
        if (present(k_symm)) then

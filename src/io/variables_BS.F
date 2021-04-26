@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -36,7 +36,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
  use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
- use IO_m,        ONLY:io_code_revision
  !
  implicit none
  !

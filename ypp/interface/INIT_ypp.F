@@ -569,7 +569,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
  !
- l_flag=l_electrons.and.l_dos
+ l_flag=l_electrons.and.(l_dos.or.l_bands)
 #if defined _YPP_RT
  l_flag=l_flag.or.(l_RealTime.and.l_RT_dos)
 #endif

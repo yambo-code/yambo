@@ -104,6 +104,8 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    ! ==============================
    E_kpq%E=E_kpq%E+E%E_Fermi
    call OCCUPATIONS_Extend(E,E_kpq)
+   write(*,*) ' passo qui ' ,iq
+   stop
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================

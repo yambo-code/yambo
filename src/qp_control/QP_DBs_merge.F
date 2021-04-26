@@ -192,39 +192,75 @@ subroutine QP_DBs_merge(n_dbs,qp2merge,plan_EWZG,n_GROUNDS,qp,OP,PRE_FAC,FILES)
    !
    logical function have_same_desc(qp1,qp2)
      !      
+     use pars,           ONLY:lchlen
+     !
      type(QP_t)::qp1,qp2
      integer i_d1,i_d2,wrong_i_d
+     character(lchlen) :: wrong_val
      !
      have_same_desc=.TRUE.
-     wrong_i_d=0
      !
      if (qp1%desc%n/=qp2%desc%n) call warning('Differenent number of descriptions in the QP DBs '//NEW_LINE('A'))
+     !
      do i_d1=1,qp1%desc%n
+       wrong_i_d=0
        if (index(qp1%desc%str(i_d1),"QP @ state")/=0) cycle  ! Skip the QP range
        do i_d2=1,qp2%desc%n
          if (index(qp2%desc%str(i_d2),"QP @ state")/=0) cycle  ! Skip the QP range
          !
          if(trim(qp1%desc%str(i_d1))==trim(qp2%desc%str(i_d2)).and. &
 &           trim(qp1%desc%term(i_d1))==trim(qp2%desc%term(i_d2))) then  ! Compare all other descriptors
-           !      
-           if ( trim(qp2%desc%sval(i_d2)) /= trim(qp1%desc%sval(i_d1)) )   wrong_i_d=i_d1 
-           if ( trim(qp2%desc%str(i_d2)) /= trim(qp1%desc%str(i_d1)) )     wrong_i_d=i_d1
-           if ( qp2%desc%size(i_d2)/= qp1%desc%size(i_d1) )                wrong_i_d=i_d1
-           if ( qp2%desc%dval(i_d2)/= qp1%desc%dval(i_d1) )                wrong_i_d=i_d1
-           if ( qp2%desc%cval(i_d2)/= qp1%desc%cval(i_d1) )                wrong_i_d=i_d1
-           if ( qp2%desc%lval(i_d2) .and. .not. qp1%desc%lval(i_d1) )      wrong_i_d=i_d1
-           if ( qp2%desc%size(i_d2)/= qp1%desc%size(i_d1) )                wrong_i_d=i_d1
-           if ( any(qp2%desc%ival(:,i_d2) /= qp1%desc%ival(:,i_d1)) )      wrong_i_d=i_d1
-           if ( any(qp2%desc%rval(:,i_d2) /= qp1%desc%rval(:,i_d1)) )      wrong_i_d=i_d1
            !
+           if(qp2%desc%kind(i_d2)/=qp1%desc%kind(i_d1)) call error('Internal error in types in DBs merging ')     
+           !
+           if(qp1%desc%kind(i_d1)=='s'.and.(trim(qp2%desc%sval(i_d2)) /= trim(qp1%desc%sval(i_d1))) ) then
+              write(wrong_Val,*) trim(qp2%desc%sval(i_d2))//'  != '//trim(qp1%desc%sval(i_d1))
+              wrong_i_d=i_d1 
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='l'.and.(qp2%desc%lval(i_d2).neqv.qp1%desc%lval(i_d1)))   then
+              write(wrong_val,*) qp2%desc%lval(i_d2),' != ',qp2%desc%lval(i_d1)
+              wrong_i_d=i_d1 
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='c'.and.(qp2%desc%cval(i_d2)/= qp1%desc%cval(i_d1)) )  then
+             write(wrong_val,*) qp2%desc%cval(i_d2),' != ',qp2%desc%cval(i_d1)
+             wrong_i_d=i_d1 
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='d'.and.(qp2%desc%dval(i_d2)/= qp1%desc%dval(i_d1)) )  then
+             write(wrong_val,*) qp2%desc%dval(i_d2),' != ',qp2%desc%dval(i_d1)
+             wrong_i_d=i_d1 
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='r'.or.qp1%desc%kind(i_d1)=='i') then
+             if ( qp2%desc%size(i_d2)/= qp1%desc%size(i_d1) ) then
+                wrong_i_d=i_d1 
+                write(wrong_val,*) 'size -> ',qp2%desc%size(i_d2),' != ',qp2%desc%size(i_d1)
+             endif
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='r'.and.(any(qp2%desc%rval(:,i_d2) /= qp1%desc%rval(:,i_d1)))) then
+              wrong_i_d=i_d1
+              write(wrong_val,*) qp2%desc%rval(:3,i_d2),'... != ',qp2%desc%rval(:3,i_d1),'...'
+           endif
+           !
+           if(qp1%desc%kind(i_d1)=='i'.and.(any(qp2%desc%ival(:,i_d2) /= qp1%desc%ival(:,i_d1)))) then
+              wrong_i_d=i_d1
+              write(wrong_val,*) qp2%desc%ival(:3,i_d2),'... != ',qp2%desc%ival(:3,i_d1),'...'
+           endif
+           !
+           if(wrong_i_d/=0) then
+             have_same_desc=.false.
+             call msg('s','QP DBs with different  "'//trim(qp1%desc%str(wrong_i_d))//'"')
+             call msg('s','Different values: '//wrong_val)
+             call msg('s','') 
+            endif
+            !
          endif
        enddo
      enddo
      !
-     if(wrong_i_d/=0) then
-       have_same_desc=.false.
-       call msg('s','QP DBs with different  "'//trim(qp1%desc%str(wrong_i_d))//'" cannot be merged ')
-     endif
    end function
    !
 end subroutine

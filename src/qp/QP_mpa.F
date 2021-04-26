@@ -35,6 +35,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use drivers,       ONLY:l_sc_run
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
+use parser_m,       ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
@@ -180,6 +181,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  ! MPA workspace
  !
  if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
+ call parser('mpERdb',io_MULTIPOLE)
  !
  call PP_redux_wait
  !

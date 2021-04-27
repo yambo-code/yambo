@@ -86,7 +86,7 @@ module YPP_real_time
  real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
  real(SP) :: h_mu_autotune_thr   ! threshold for matching number of pumped holes / electrons
  !
- ! (RT) optics
+ ! (RT) X
  !
  logical  :: Use_FFT
  logical  :: l_skip_OBS_IO
@@ -102,6 +102,16 @@ module YPP_real_time
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  character(3) :: RT_p_format   
+ !
+ ! (RT) TRabs
+ !
+ real(SP)          :: TRabsDIP_dir(3)=0.
+ character(schlen) :: TRabsWHAT="A"
+ character(schlen) :: TRabsDIP_plane="none"
+ character(schlen) :: TRabsMODE="eq cc vv"
+ real(SP),    allocatable :: TRabs_E(:)
+ complex(SP), allocatable :: TRabs_RES_left(:)
+ complex(SP), allocatable :: TRabs_RES_right(:)
  !
  ! (RT) carriers
  !

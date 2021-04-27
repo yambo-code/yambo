@@ -28,7 +28,7 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  use R_lattice,      ONLY:bz_samp
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_real_time
- use real_time,      ONLY:RT_carriers,l_RT_abs_yambo
+ use real_time,      ONLY:RT_carriers,l_TRabs_YPP
  use com,            ONLY:msg
  use interpolate,    ONLY:l_integral_respect,NN_n_of_nearest
  !
@@ -52,8 +52,8 @@ subroutine RT_interpolation(bands,E,K,what,mode,Time,l_f,l_E,l_W,l_B,NN)
  !
  ! Setup
  !-------
- l_DbGd=K%FGibz%N>0     .and. .not.l_RT_abs_yambo
- l_integral_respect=.not.l_real_time.and..not.l_RT_abs_yambo
+ l_DbGd=K%FGibz%N>0     .and. .not.l_TRabs_YPP
+ l_integral_respect=.not.l_real_time.and..not.l_TRabs_YPP
  NN_n_of_nearest=NN
  !
  nb(1)=max(bands(1),RT_carriers%nb(1))

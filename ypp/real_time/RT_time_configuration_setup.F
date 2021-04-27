@@ -70,7 +70,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
    !
    i_ref      = 0
-   REF_diff   = STEP
+   REF_diff   = 100.*STEP
    !
    do i_t=1,GENERAL_RT_IO_t%N
      !

@@ -47,7 +47,8 @@ subroutine INIT_ypp_load(defs)
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
+&                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
+&                        TRabsMODE,TRabsDIP_dir
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _YPP_SC
@@ -188,10 +189,11 @@ subroutine INIT_ypp_load(defs)
  !
  ! TRANSIENT ABSORPTION
  !
- call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
- call it('f',defs,'Transmission','Compute the transient transmissions')
- call it('f',defs,'Reflectivity','Compute the transient reflectivity')
- call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
+ call it(defs,'TRabsOBS',&
+&             '[RT] RT observable. It can be a combination of (A)bsorption, (T)ransmission, (R)eflectivity, (K)err',TRabsWHAT)
+ call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
+ call it(defs,'TRabsDIPdir',   '[RT] Dipole direction',TRabsDIP_dir)
+ call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of eq,vv,cc',TRabsMODE)
  !
 #endif
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_read(k,Xk,en,Xen,iq,what)
+subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  !
  use pars,          ONLY:pi
  use R_lattice,     ONLY:bz_samp
@@ -41,6 +41,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  type(bz_samp) ::Xk,k
  type(levels)  ::Xen,en
  integer, intent(in) :: iq
+ integer, intent(out):: io_err
  character(*)        :: what
  !
  ! Work Space
@@ -48,7 +49,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  !
  !... I/0
  !
- integer           ::io_err,io_ID,i_sec
+ integer           ::io_ID,i_sec
  integer, external ::io_BS,io_E_SOC_map
  !
  integer                  :: neh
@@ -79,7 +80,10 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
    io_err=io_BSS_diago(iq,1,io_ID,Xbsk)
    !
-   if (io_err/=0) call error(' ndb.BS_diago not found')
+   if (io_err/=0) then
+     call warning('ndb.BS_diago not found')
+     return
+   endif
    !
    ! Apply quasi-particle correction if presents
    ! 
@@ -108,7 +112,10 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
    do i_sec=1,2
      call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/i_sec/),ID=io_ID)
      io_err=io_BSS_diago(iq,1,io_ID,Xbsk,BS_E,BS_R_left,BS_R_right,BsE_corr=BS_E_SOC_corr,bsR_kerr=BS_R_kerr,bsR_pl=BS_R_PL)
-     if (io_err/=0) call error(' ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
+     if (io_err/=0) then
+       call warning('ndb.BSS_diago, SEC '//trim(intc(i_sec))//', not compatible with ypp input')
+       return
+     endif
    enddo
    !
    call io_disconnect(ID=io_ID)

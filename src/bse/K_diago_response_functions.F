@@ -176,7 +176,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if(l_BS_esort.and.i_BS_mat==1) then
    call PP_redux_wait(BS_E_sorted_tmp )
-   allocate(vtmpR(EDIM)); allocate(sort_indx(EDIM))
+   allocate(vtmpR(EDIM)) 
+   allocate(sort_indx(EDIM))
    vtmpR=real(BS_E_sorted_tmp(:,1),SP)
    call sort(arrin=vtmpR,indx=sort_indx)
    do i1=1,EDIM
@@ -184,7 +185,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    enddo
    i1=max(1,i1-100)
    EDIM=min(BSS_n_eig-i1+1,10000)
-   allocate(first_exc(EDIM));   allocate(n_of_exc(EDIM))
+   allocate(first_exc(EDIM)) 
+   allocate(n_of_exc(EDIM))
    ! Threshold is 1meV
    call degeneration_finder(vtmpR(i1:i1-1+EDIM),EDIM,first_exc,n_of_exc,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
    EDIM=min(BSS_n_eig-i1+1,1000)

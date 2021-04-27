@@ -36,7 +36,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #endif
 #if defined _YPP_RT
  use YPP_real_time, ONLY:l_RT_abs
- use BS,            ONLY:BS_H_dim
 #endif
  !
 #include<memory.h>
@@ -49,7 +48,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  logical              :: l_flag
  integer ,allocatable :: BS_E_degs(:)
  !... I/0
- integer              :: iq
+ integer              :: iq,io_err
  !
  l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp .or. l_dipoles
 #if defined _YPP_ELPH
@@ -66,9 +65,19 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  iq = BSiq
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"check")
+ call                excitons_read(k,Xk,en,Xen,BSiq,"check",io_err)
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues")
+ if (io_err==0) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues",io_err)
+ !
+ if (io_err/=0) then
+#if defined _YPP_RT
+   call warning("BSE databases not found. Switching to IP")
+   call RT_transient_absorption(Xen,Xk,q)
+   return
+#else
+   call error("BSE databases not found. Switching to IP")
+#endif
+ endif
  !
  ! Sort energies and write to output
  !===================================
@@ -127,7 +136,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Transient absorption 
  !======================
- if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q)
  !
 #endif
  !

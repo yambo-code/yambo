@@ -99,7 +99,11 @@ subroutine electrons_bands(Xk,Xen)
  ! Define the circuit
  !====================
  call k_special( )
- call k_circuit_driver( BANDS_path, BANDS_steps )
+ if(.not.GRID_interpolate) then
+    call k_circuit_driver( BANDS_path, BANDS_steps )
+ else
+     BANDS_steps=-1
+ endif
  !
  if (BANDS_interpolated.or.l_PROJECT_plane) then
    !
@@ -153,6 +157,7 @@ subroutine electrons_bands(Xk,Xen)
  nfiles(1)=n_sp_pol
  IDs(1)=ID_bands(2)
  if(allocated(Xen%Eo).and.BANDS_from_db) IDs(1)=ID_bands(3)
+ if(GRID_interpolate) IDs(1)=ID_bands(1)
  if(n_spinor==2) then
    nqnt=nqnt+2
    nfiles(nqnt-1:nqnt)=(/2,3/)
@@ -165,8 +170,11 @@ subroutine electrons_bands(Xk,Xen)
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands")
  !
- if(BANDS_interpolated                   )  call plot_interpolated_values &
+ if(BANDS_interpolated.and..not.GRID_interpolate)         call plot_interpolated_values &
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
+ !
+ if(BANDS_interpolated.and.GRID_interpolate)              call plot_interpolated_values &
+&   (Xk,Xen,dEf,GRID_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","grid")
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

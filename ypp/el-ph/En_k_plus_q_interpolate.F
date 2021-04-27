@@ -108,6 +108,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    ! the fact the the Fermi energy can change due to the presence of E(k+q) states
    ! For the moment I set all valence occupations to 1(or 2 without spin)
    !
+   YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
    E_kpq%f(1:E%nbf,:,1)=spin_occ
    E_kpq%f(E%nbf+1,:,1)=rZERO
    !

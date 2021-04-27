@@ -287,7 +287,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind,verb_level=V_resp)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
- call it('f',defs,'mpREdb',  '[Xm] Write to disk MPA poles and residues')
+ call it('f',defs,'mpERdb',  '[Xm] Write to disk MPA poles and residues')
  !
  ! BSE/BSK
  !

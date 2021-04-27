@@ -61,11 +61,11 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  call ELPH_alloc("DGRID",GKKP)
  !
- call live_timing('E(k+q) energy interpolation ',q%nibz)
+ if(E%nbm/=E%nbf) call error("This code for the moment works only for semiconductors/insulators")
+ !
+ call live_timing('E(k+q) energy interpolation ',q%nbz)
  !
  INTERPOLATE_is_quiet=.TRUE.
- !
- if(E%nbm/=E%nbf) call error("This code for the moment works only for semiconductors/insulators")
  !
  do iq=1,q%nbz
    !

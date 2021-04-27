@@ -183,6 +183,7 @@ subroutine ELPH_double_grid(k,E,q)
  call section('=','Double Grid Database I/O')
  ! .. restoring of built-in value of nkibz to be used in io_header 
  nkibz=q%nibz
+ stop
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_err=io_Double_Grid(PH_E,q,ID,'phonons')

@@ -44,8 +44,8 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  ! Local variables
  !
  integer               :: ik_local,ik_ibz_grid,ik_bz_grid,iqnt,i_dim,ifile,i_point,i_sp_pol,ivalue,&
-&                         ndims,nval,n_points,n_points_max,ik_interp
- logical               :: PLOT_BANDS,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name,PLOT_GRID
+&                         ndims,nval,n_points,n_points_max
+ logical               :: PLOT_BANDS,PLOT_from_DB,PLOT_interpolated,PLOT_built_in,l_print_k_name
  character(schlen)     :: headings_k(4),headings(dims(2)-dims(1)+1+4), &
 &                         file_name(sum(nfiles)),k_name
  real(SP)              :: value_k,        values(dims(2)-dims(1)+1+4), &
@@ -62,7 +62,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  PLOT_from_DB      = trim(basename)=="from_DB"
  !
  PLOT_BANDS       = trim(int_kind)=="bands"
- PLOT_GRID        = trim(int_kind)=="grid"
  !
  call msg("s","Generating output for "//trim(basename)//" "//trim(int_kind))
  !
@@ -124,7 +123,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  ifile=0
  file_name(1:nfiles(1))=trim(int_kind)//"_"//trim(basename)
- if(PLOT_BANDS.or.PLOT_GRID) then
+ if(PLOT_BANDS) then
    do i_sp_pol=1,n_sp_pol
      ifile=ifile+1
      if (n_sp_pol>1.and.i_sp_pol==1) file_name(ifile)=trim(file_name(ifile))//"_spin-up"
@@ -132,7 +131,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if((PLOT_interpolated.or.PLOT_built_in).and.(PLOT_BANDS.or.PLOT_GRID).and.n_spinor==2) then
+ if((PLOT_interpolated.or.PLOT_built_in).and.PLOT_BANDS.and.n_spinor==2) then
    file_name(ifile+1)="spin_factors_UP_"//trim(basename)
    file_name(ifile+2)="spin_factors_DN_"//trim(basename)
    file_name(ifile+3)="magnetization_x_"//trim(basename)
@@ -147,25 +146,23 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
  !
  headings_k(1)=" |k| (a.u.) "
  headings_k(2:4)=(/"k_x ("//trim(coo_out)//")","k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/)
- if(PLOT_GRID) headings_k(1)=' ik '
- !
  !
  nval=0
- if(PLOT_BANDS.or.PLOT_GRID) then
+ if(PLOT_BANDS) then
    headings(1)=headings_k(1)
    headings(ndims+2:ndims+4)=headings_k(2:4)
    nval=ndims+4
  endif
  !
  do i_dim=dims(1),dims(2)
-   if(PLOT_BANDS.or.PLOT_GRID) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
+   if(PLOT_BANDS) headings(1+i_dim-dims(1)+1)=' b'//intc(i_dim)
  enddo
  !
  ! Open files and print headers
  !
  do ifile=1,sum(nfiles)
    call of_open_close(trim(file_name(ifile)),'ot')
-   if(PLOT_BANDS.or.PLOT_GRID) then
+   if(PLOT_BANDS) then
      call msg('o '//trim(file_name(ifile)),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name(ifile)),"#")
    endif
@@ -203,33 +200,24 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    !
    if (PLOT_interpolated.or.PLOT_from_DB) then
      !
-     if(PLOT_GRID) then
-        ik_interp = LOCAL_k%sstar(ik_local,1)
-        tmp_k(:,1)= LOCAL_k%ptbz(ik_local,:)
-     else
-        ik_interp = ik_local
-        tmp_k(:,1)= LOCAL_k%pt(ik_local,:)
-     endif
+     tmp_k(:,1)=LOCAL_k%pt(ik_local,:)
      !
-     if(allocated(CIRCUIT_k_label)) then
-        if (len_trim(CIRCUIT_k_label(ik_local))>0) then
-          k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
-          l_print_k_name=.true.
-        endif
+     if (len_trim(CIRCUIT_k_label(ik_local))>0) then
+       k_name="  ["//trim(CIRCUIT_k_label(ik_local))//"]"
+       l_print_k_name=.true.
      endif
      !
    endif
    !
    if (PLOT_interpolated) then
      !
-     
      do iqnt=1,nquantities
-       tmp_var(:,1:nfiles(iqnt),iqnt)=INTERP_obj(IDs(iqnt))%INTERP(dims(1):dims(2),ik_interp,:)
+       tmp_var(:,1:nfiles(iqnt),iqnt)=INTERP_obj(IDs(iqnt))%INTERP(dims(1):dims(2),ik_local,:)
      enddo
      !
      if( PLOT_BANDS) then
        if(allocated(Xen%Eo).and.allocated(CIRCUIT_E_db%E) ) then
-         tmp_var(:,1:nfiles(1),1)=tmp_var(:,1:nfiles(1),1)+CIRCUIT_E_db%E(dims(1):dims(2),ik_interp,:)
+         tmp_var(:,1:nfiles(1),1)=tmp_var(:,1:nfiles(1),1)+CIRCUIT_E_db%E(dims(1):dims(2),ik_local,:)
        endif
        tmp_var(:,1:nfiles(1),1)=tmp_var(:,1:nfiles(1),1)+Ef
      endif
@@ -245,19 +233,14 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
      !
    endif
    !
-   if (ik_local>1.and..not.PLOT_GRID) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
-   if(PLOT_GRID) value_k=real(ik_local)
+   if (ik_local>1) value_k=value_k+iku_v_norm(LOCAL_k%pt(ik_local,:)-LOCAL_k%pt(ik_local-1,:))
    !
    do i_point=1,n_points
      !
      !
      call K_transform(tmp_k(:,i_point),'iku')
      !
-     if(PLOT_GRID) then
-       values(1)=real(ik_local)
-     else
-       values(1)=value_k+iku_v_norm(tmp_k_dist(:,i_point))
-     endif
+     values(1)=value_k+iku_v_norm(tmp_k_dist(:,i_point))
      values(ndims+2:ndims+4)=tmp_k(1:3,i_point)
      !
      ivalue=0
@@ -266,7 +249,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          ivalue=ivalue+1
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
-         if((PLOT_BANDS.or.PLOT_GRID).and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
+         if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
          call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.true.,after_msg=k_name)
        enddo
        !

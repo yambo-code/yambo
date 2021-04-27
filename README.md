@@ -9,8 +9,8 @@ Quick installation instructions for the impatient:
 "make" alone prints a list of acceptable targets. Binaries go in bin/.
 
 ## Want to know more?
-For more information, see the specific documentation on the educational web-site http://www.yambo-code.org/wiki/ and general informations about the code on the
-main web-site http://www.yambo-code.org/
+For more information, see the specific documentation on the [educational web-site](http://www.yambo-code.org/wiki/) and general informations about the code on the
+[main web-site](http://www.yambo-code.org/)
 
 * [Getting started](http://www.yambo-code.org/wiki/index.php?title=Tutorials)
 * [Download](http://www.yambo-code.org/wiki/index.php?title=Download)

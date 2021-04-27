@@ -59,7 +59,6 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E_CBm =Xe%E_CBm
  call f_build(Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
- write(*,*) ' gaps '
  !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted

@@ -90,8 +90,11 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
  ! IP residuals
  ! -------------
  if (index(what,"IP")>0) then
+   !
    if (index(what,"vv")>0) bands=(/RT_bands(1),Xen%nbf/)
+   !
    if (index(what,"cc")>0) bands=(/Xen%nbf+1,RT_bands(2)/)
+   !
    do i_kbz=1,Xk%nbz
      i_kibz=Xk%sstar(i_kbz,1)
      do i_spin=1,n_sp_pol
@@ -108,6 +111,9 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
        enddo
      enddo
    enddo
+   !
+   return
+   !
  endif
  !
  contains

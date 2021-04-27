@@ -72,7 +72,10 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
  !
+ write(*,*) .not.any((/io_sec(ID,:)==1/)),l_PH_DG,frag_DG
+ write(*,*) ' passo qui ',io_sec(ID,:)
  if (any((/io_sec(ID,:)==1/))) then
+   write(*,*) ' dentro ',io_sec(ID,:)
    !
    if(l_PH_DG) then
      io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.,FRAG=frag_DG)
@@ -95,10 +98,10 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call def_variable_elemental(ID,VAR="IBZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
    call io_variable_elemental(ID,CH0=Xk%FGibz%FG_mode,VAR=' [FineGd] Fine Grid IBZ mapped mode'&
 &                             ,DESCRIPTOR=FineGd_desc)
- !
- call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
- call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
- call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
+   !
+   call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
+   call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
+   call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
 &                             ,DESCRIPTOR=FineGd_desc)
    call io_variable_elemental(ID,I0=Xk%FGbare%N)
    call io_variable_elemental(ID,I0=Xk%FGibz%N,VAR=' [FineGd] Number of pts (fine+coarse, IBZ-map)'&
@@ -176,9 +179,11 @@ integer function io_Double_Grid(E,Xk,ID,what)
    if(read_is_on(ID)) call FineGd_E_components_alloc(GKKP%E_dg_kpq(iq))
    !
    write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
-   call io_bulk(ID_frag,R3=GKKP%E_dg_kpq(iq)%FG%E,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%E))
+   call def_variable_bulk(ID_frag, trim(VAR_NAME),1, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%E),VAR_KIND=SP)
+   call  io_variable_bulk(ID_frag,1, R3=GKKP%E_dg_kpq(iq)%FG%E)
    write (VAR_name,'(a,i4.4)') 'f_K_Plus_Q_',iq
-   call io_bulk(ID_frag,R3=GKKP%E_dg_kpq(iq)%FG%f,VAR=trim(VAR_name),VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%f))
+   call def_variable_bulk(ID_frag, trim(VAR_NAME),2, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%FG%f),VAR_KIND=SP)
+   call  io_variable_bulk(ID_frag,2, R3=GKKP%E_dg_kpq(iq)%FG%f)
    !  
    call io_fragment_disconnect(ID,ID_frag)
    !

@@ -23,8 +23,8 @@
 !
 subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
- use pars,                ONLY:SP,pi
- use electrons,           ONLY:levels,FineGd_E_components_alloc,n_sp_pol,E_reset
+ use pars,                ONLY:SP,pi,rZERO
+ use electrons,           ONLY:levels,FineGd_E_components_alloc,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients,INTERPOLATE_is_quiet, &
          &                     INTERPOLATE_is_serial
@@ -61,7 +61,9 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  call ELPH_alloc("DGRID",GKKP)
  !
- call live_timing('E(k+q) energy interpolation ',q%nibz)
+ if(E%nbm/=E%nbf) call error("This code for the moment works only for semiconductors/insulators")
+ !
+ call live_timing('E(k+q) energy interpolation ',q%nbz)
  !
  INTERPOLATE_is_quiet=.TRUE.
  !
@@ -100,12 +102,15 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
    call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
    !
-   ! Calculate the new occupations
+   ! Calculate the new occupations (only for semiconductors) 
    ! ==============================
-   E_kpq%E=E_kpq%E+E%E_Fermi
-   call OCCUPATIONS_Extend(E,E_kpq)
-   write(*,*) ' passo qui ' ,iq
-   stop
+   ! This part has to be generilized to metals, taking into account 
+   ! the fact the the Fermi energy can change due to the presence of E(k+q) states
+   ! For the moment I set all valence occupations to 1(or 2 without spin)
+   !
+   YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
+   E_kpq%f(1:E%nbf,:,1)=spin_occ
+   E_kpq%f(E%nbf+1,:,1)=rZERO
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================

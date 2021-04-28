@@ -105,7 +105,8 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
            if  (index(what,"cc")>0) f_eh= Xen%df(i_np,i_kibz,i_spin)*(spin_occ-Xen%f(i_n,i_kibz,i_spin))/spin_occ/spin_occ
            N_trans=N_trans+1
            dipole=elemental_dipole(i_np,i_n,i_kbz,i_spin)
-           TRabs_RES_right(N_trans)=-conjg(dipole)*sqrt(f_eh)
+           TRabs_RES_left(N_trans) =-dipole*sqrt(f_eh)
+           TRabs_RES_right(N_trans)= TRabs_RES_left(N_trans)
            TRabs_E(N_trans)=Xen%E(i_np,i_kibz,i_spin)-Xen%E(i_n,i_kibz,i_spin)
          enddo
        enddo

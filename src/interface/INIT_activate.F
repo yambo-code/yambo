@@ -258,7 +258,7 @@ subroutine INIT_activate()
    call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
    !
 #if defined _RT
-   call initactivate(1,'ForceEqTrans')
+   call initactivate(1,'RTOccMode ForceEqTrans')
 #endif
    !
  endif                    

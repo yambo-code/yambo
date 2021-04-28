@@ -33,7 +33,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,DB_path
  use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
- use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
+ use RT_control,     ONLY:CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
  !
  implicit none
@@ -41,7 +41,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  integer,intent(in)    :: bands(2)
  type(levels), intent(inout) :: E
  type(bz_samp), intent(in)   :: K
- character(*),optional,intent(in) :: what ! X,K,G,R
+ character(*),optional,intent(in) :: what ! X,K,G
  integer,     optional,intent(in) :: IO_COM
  logical ,    optional,intent(in) :: VERBOSE
  real(SP),    optional,intent(in) :: Time
@@ -89,7 +89,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    if (what=="X")  I_id=1
    if (what=="K")  I_id=2
    if (what=="G")  I_id=3
-   if (what=="R")  I_id=4
    !
    call parser(what//'fnRTdb',is_def)
    !
@@ -141,9 +140,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    elseif (trim(T_unit)=='ps') then
      local_Time=local_Time*PS2AUT
    endif
-   !
-   if (l_f .and. I_id==2) NEQ_Kernel   =.true.
-   if (l_f .and. I_id==4) NEQ_Residuals=.true.
    !
  else
    !

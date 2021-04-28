@@ -610,6 +610,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if (l_BS_dichroism) then
+   !
    !  beta_ij=-((i*hbar*me)/(omega*qe^2))*G_ij;
    !  DeltaN=((8*pi*N*omega/(3*c))*Tr(beta_ij);
    !  N = molecular density = ??

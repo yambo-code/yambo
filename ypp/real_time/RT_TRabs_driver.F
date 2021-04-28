@@ -29,7 +29,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use LIVE_t,          ONLY:live_timing
  use vec_operate,     ONLY:v_norm,v_rotate
  use BS,              ONLY:l_BS_kerr
- use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
+ use RT_control,      ONLY:RT_apply,CARR_RT_IO_t
  use YPP_real_time,   ONLY:RT_conf,RT_time,TRabsDIP_dir,TRabsWHAT,TRabsDIP_plane,&
 &                          TRabs_RES_left,TRabs_RES_right,TRabsMODE,TRabs_E
  use YPPm,            ONLY:DIPs
@@ -52,8 +52,6 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  type(w_samp)            :: W_bss
  integer                 :: N_eq_trans,N_cc_neq_trans,N_vv_neq_trans,N_trans,N_trans_done,i_T,io_err
  real(SP)                :: DIP_kerr_dir(3),Co
- real(SP),   allocatable :: X_absorption_coeff(:,:)
- complex(SP),allocatable :: X_reflectance(:,:)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
@@ -109,12 +107,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! OBS alloc
  !
- YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
- if(STRING_match(TRabsWHAT,"r")) then
-   YAMBO_ALLOC(X_reflectance,(RT_conf%W_n_steps,2))
- endif
- if(STRING_match(TRabsWHAT,"t")) then
-   YAMBO_ALLOC(X_absorption_coeff,(RT_conf%W_n_steps,2))
+ if(STRING_match(TRabsWHAT,"k")) then
+   YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,3)) ! Eps0 Eps Kerr
+ else
+   YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2)) ! Eps0 Eps
  endif
  !
  ! Frequency setup
@@ -128,9 +124,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! Output
  !
- call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
- if (STRING_match(TRabsWHAT,"r")) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
- if (STRING_match(TRabsWHAT,"t")) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
+ !call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
+ !if (STRING_match(TRabsWHAT,"r")) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
+ !if (STRING_match(TRabsWHAT,"t")) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
  !
  call live_timing('Transient Absorption',RT_conf%T_n_steps)
  !
@@ -142,7 +138,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    N_trans_done=0
    !
    if (STRING_match(TRabsMODE,"eq")) then
-     if (BS_H_dim>0) call RT_TRabs_residuals("BSE ABS",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
+     if (BS_H_dim>0 ) call RT_TRabs_residuals("BSE ABS",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
      if (BS_H_dim==0) call RT_TRabs_residuals("IP ABS",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
    endif
    if (STRING_match(TRabsMODE,"vv")) then
@@ -152,8 +148,21 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      call RT_TRabs_residuals("IP ABS cc",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
    endif
    !
+!   Epsilon_ii(:,2)=Epsilon_ii(:,2)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
+!   Epsilon_ii(:,2)=Epsilon_ii(:,2)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
+   !
 !   Epsilon_ii(:,1)=1._SP+Epsilon_ii(:,1)*Co
 !   Epsilon_ii(:,2)=      Epsilon_ii(:,2)*Co
+!     Epsilon_ii(:,1)=Epsilon_ii(:,1)-BS_R0(i_l)*conjg(BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
+!     Epsilon_ii(:,2)=Epsilon_ii(:,2)-(BS_R_var +conjg(BS_R_var) )/(W_bss%p(:)-BS_E(i_l))
+!     !
+!     Epsilon_ii(:,1)=Epsilon_ii(:,1)-BS_R0(i_l)*conjg(BS_R0(i_l))/(W_bss%p(:)+BS_E(i_l))
+!     Epsilon_ii(:,2)=Epsilon_ii(:,2)-(BS_R_var +conjg(BS_R_var) )/(W_bss%p(:)+BS_E(i_l))
+!     !
+!     BS_R_tmp=-real(BS_R_var+conjg(BS_R_var),SP)
+     !
+!     if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) &
+!&       call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
    !
    call live_timing(steps=1)
    !
@@ -166,8 +175,6 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
 !   endif
  !
  YAMBO_FREE(Epsilon_ii)
- YAMBO_FREE(X_reflectance)
- YAMBO_FREE(X_absorption_coeff)
  !
  call live_timing()
  !

@@ -71,10 +71,13 @@ module RT_control
  !
  ! TD-ABS and RT-BSE [yambo]
  !
- logical                 :: NEQ_Kernel
- logical                 :: NEQ_Residuals
- character(schlen)       :: RT_ctl_db(4)
- integer                 :: RT_ctl_interp_neigh(4)=1
+ logical                 :: NEQ_Kernel=.FALSE.
+ logical                 :: NEQ_Residuals=.FALSE.
+ logical                 :: EQ_Transitions=.TRUE.
+ integer,      parameter :: N_RT_ctl_controls=3
+ character(schlen)       :: RT_BSE_Occ_Mode="K"
+ character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)
+ integer                 :: RT_ctl_interp_neigh(N_RT_ctl_controls)=1
  ! 
  interface
    !

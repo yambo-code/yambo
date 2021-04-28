@@ -26,7 +26,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
- use stderr,         ONLY:STRING_remove,intc
+ use stderr,         ONLY:STRING_remove,intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
@@ -49,6 +49,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use D_lattice,      ONLY:l_0D,l_1D,l_2D
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
+ use RT_control,     ONLY:NEQ_Kernel,EQ_Transitions,NEQ_Residuals,RT_BSE_Occ_Mode
 #endif
  !
 #include<memory.h>
@@ -72,7 +73,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  integer, external :: io_QINDX
  !
 #if defined _RT 
- if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
+ if(l_rt_carriers_in_use .and. STRING_match(BSS_mode,'t')) call error('RT occupations and BSE via f_xc not compatible')
 #endif
  !
  call section('*','Bethe Salpeter Equation driver')
@@ -87,14 +88,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Copatibility with old inputs
  !==============================
- if (index(BSE_mode,'causal')/=0) BSE_mode='retarded'
+ if (STRING_match(BSE_mode,'causal')) BSE_mode='retarded'
  !
  l_BSE_minimize_memory=((Xk%nbz==1).or.trim(PARALLEL_default_mode)=="memory")
  if(l_BSE_minimize_memory) call warning(" BSE calculation with minimal memory utilization")
  !
  ! TDDFT setup and Resets
  !========================
- !
  call X_reset(X_tddft)
  call W_reset(W_bss)
  !
@@ -123,12 +123,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    BS_n_g_exch=FXC_n_g_corr
    !
-   if (index(BSS_mode,'t')/=0) then
+   if (STRING_match(BSS_mode,'t')) then
      !
      ! Remove the exchange from the BS_mode
      ! if TDDFT Fxc is obtained from K
      !
-     if (index(BSS_mode,'t')==0) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
+     if (.not.STRING_match(BSS_mode,'t')) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
      BSE_mode='retarded'
      call parser('FxcRetarded',FXC_is_retarded)
      !
@@ -138,35 +138,35 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Logicals (Drivers)
  !====================
- if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='retarded'
+ if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
  !
- BS_res_K_corr=index(BS_res_mode,'c')/=0
- BS_res_K_exchange=index(BS_res_mode,'x')/=0
- BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
- BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
+ BS_res_K_corr=STRING_match(BS_res_mode,'c')
+ BS_res_K_exchange=STRING_match(BS_res_mode,'x')
+ BS_cpl_K_corr=STRING_match(BS_cpl_mode,'c')
+ BS_cpl_K_exchange=STRING_match(BS_cpl_mode,'x')
  BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
- BS_W_is_diagonal=index(BS_res_mode,'d')/=0
+ BSS_add_antiresonant=STRING_match(BSE_mode,'retarded')
+ BS_W_is_diagonal=STRING_match(BS_res_mode,'d')
  BS_K_is_ALDA=l_alda_fxc
  !
  BS_dip_size=1
  !
  ! What...
  !--------
- l_BS_abs       = (index(BSE_prop,'abs')/=0)
- l_BS_jdos      = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
- l_BS_dichroism = (index(BSE_prop,'dich')/=0)
- l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
- l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
- l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ l_BS_abs       = STRING_match(BSE_prop,'abs')
+ l_BS_jdos      = STRING_match(BSE_prop,'jdos').or.STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP
+ l_BS_dichroism = STRING_match(BSE_prop,'dich')
+ l_BS_kerr      = STRING_match(BSE_prop,'kerr')
+ l_BS_photolum  = STRING_match(BSE_prop,'photolum')
+ l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
  !
  ! How ...
  !---------
- l_BS_esort     = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
+ l_BS_esort     = STRING_match(BSE_prop,'esrt').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
  !
  ! How to treat dipoles...
  !------------------------
- l_BS_trace     = (index(BSE_prop,'trace')/=0)
+ l_BS_trace     = STRING_match(BSE_prop,'trace')
  !
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
@@ -184,6 +184,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !
+ ! TR-ABS logicals
+ !-----------------
+#if defined _RT
+ NEQ_Kernel   =STRING_match(RT_BSE_Occ_Mode,"k").and.allocated(Ken%fo)
+ NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
+ call parser('ForceEqTrans',EQ_Transitions)
+#endif
+ !
  ! Energy points
  !===============
  W_bss%n_freqs=BSS_n_freqs
@@ -191,8 +199,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%dr=BSS_dr
  W_bss%damp_reference=BSS_damp_reference
  !
- l_BS_trace     = (index(BSE_prop,'trace')/=0)
- l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
+ l_BS_trace     = STRING_match(BSE_prop,'trace')
+ l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
  !
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
@@ -218,7 +226,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Double Grid support
  !=====================
- BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)
+ BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)).and.STRING_match(BSS_mode,'i')
  !
  ! Frequencies 
  !=============
@@ -237,9 +245,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    BS_n_g_W=X_static_pp%ng
    call msg('s','[BSE-W] Use all G-vectors of W ',BS_n_g_W)
  endif
- !
- ! ... EH space (no parallelization)
- !call K_compute_transitions_at_ik(1,Ken,Xk,Dip)
  !
  call PARALLEL_global_indexes(Ken,Xk,q,"Response_T_space",X=X_oscillators)
  !
@@ -322,7 +327,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
+   call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
@@ -352,7 +357,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! `TDDFT` SOLVER
    !
-   if (index(BSS_mode,'t')/=0) then
+   if (STRING_match(BSS_mode,'t')) then
      !
      call X_duplicate(X_static_pp,X_tddft) ! initialize X_tddft to X_static_pp
      !

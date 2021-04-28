@@ -78,7 +78,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
-&                        CACHE_OBS_INTERVAL_time_INPUT
+&                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode
  use stderr,        ONLY:intc
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
@@ -360,6 +360,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE: Real-Time
  !
+ call it(defs,'RTOccMode','[RT-BSE] (K)ernel/(R)esiduals. BSE components to be corrected with the TD occupations',&
+&             RT_BSE_Occ_Mode,verb_level=V_real_time)
  call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
  !
 #endif
@@ -578,7 +580,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_RT_ctl_load(defs,1)
  call INIT_RT_ctl_load(defs,2)
  call INIT_RT_ctl_load(defs,3)
- call INIT_RT_ctl_load(defs,4)
  !
 #endif
  !

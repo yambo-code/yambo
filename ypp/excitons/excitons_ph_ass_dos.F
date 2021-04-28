@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -24,19 +24,19 @@
 subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  use pars,          ONLY:SP,pi,rZERO,schlen
- use units,         ONLY:HA2EV,HA2CMm1
+ use units,         ONLY:HA2EV
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use electrons,     ONLY:levels,spin_occ
  use vec_operate,   ONLY:c2a
  use com,           ONLY:msg
- use D_lattice,     ONLY:n_atoms,alat,Bose_Temp
+ use D_lattice,     ONLY:n_atoms,alat
  use interpolate,   ONLY:INTERPOLATION_BZ
  use YPPm,          ONLY:EXCITONS_n_user_states,DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
  use stderr,        ONLY:real2ch
  use YPP_ELPH,      ONLY:ph_freqs_file,ELPH_databases_IO_freqs
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,  ONLY:PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
  !
@@ -120,7 +120,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  enddo
  call live_timing( )
  !
- call msg('sr',"Number of filled q-points "//trim(real2ch(real(n_full_q)/real(q_matdyn%nibz)*100.0))//"% ")
+ call msg('sr',"Number of filled q-points "//trim(real2ch(real(n_full_q,SP)/real(q_matdyn%nibz,SP)*100))//"% ")
  if(n_full_q==0) call error("Zero excitons, decrease the chemical potential! ")
  !
  exc_OCC   =rZERO

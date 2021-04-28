@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -34,10 +34,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
- use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
+ use IO_int,        ONLY:def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use parallel_m,    ONLY:master_cpu
- use IO_m,        ONLY:io_code_revision
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif
@@ -51,9 +50,10 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  ! Work Space
  !
- integer             ::var_size
  logical             ::res_corr_disk,res_exch_disk,cpl_disk,&
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
+ !
+ variables_BS=0
  !
 #if defined _PAR_IO
  if (write_is_on(ID).and..not.master_cpu) return
@@ -229,6 +229,7 @@ integer function variables_BS_more(ID,mode)
 &                     variable_exist,NF90_unlimited,netcdf_dim_size
  use IO_int,     ONLY:def_variable_elemental,io_variable_elemental,&
 &                     def_variable_bulk,io_variable_bulk
+ use IO_m,       ONLY:io_status
  !
  implicit none
  !
@@ -239,6 +240,8 @@ integer function variables_BS_more(ID,mode)
  logical           :: io_var
  real(SP)          :: BS_K_cutoff_IO(1)
  character(schlen) :: kernel_dim_name(1)
+ !
+ variables_BS_more=0
  !
  if (write_is_on(ID).and..not.master_cpu) return
  !
@@ -272,6 +275,8 @@ integer function variables_BS_more(ID,mode)
  endif
  !
  if(write_is_on(ID)) stat = nf90_sync(io_unit(ID))
+ !
+ variables_BS_more=io_status(ID)
  !
 end function
 !

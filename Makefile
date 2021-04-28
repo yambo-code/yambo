@@ -28,7 +28,7 @@ else
  $(info * * *  Yambo Makefile * * *)
  $(info )
  $(info for help on Yambo configure and makefile)
- $(info please  refer    to    the   wiki   page:)
+ $(info please refer to the wiki webpage:)
  $(info )
  $(info http://www.yambo-code.org/wiki/index.php?title=Installation)
  $(info )

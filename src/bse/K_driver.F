@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -74,6 +74,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 #if defined _RT 
  if(l_rt_carriers_in_use .and. index(BSS_mode,'t')/=0) call error('RT occupations and BSE via f_xc not compatible')
 #endif
+ !
+ call section('*','Bethe Salpeter Equation driver')
  !
  ! Need to convert eels to epsilon ? (part A)
  !===========================================

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -29,7 +29,8 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:bare_qpg
- use wrapper,        ONLY:Vstar_dot_V,M_by_V
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp,V_dot_V_omp
  use BS,             ONLY:BS_H_dim,l_BS_photolum
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
@@ -156,18 +157,18 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
          call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,BSS_dipoles_opt(1,:),V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,BSS_dipoles_opt(1,:),V)
+         call M_by_V_omp('n',BS_H_dim,Mm1,BSS_dipoles_opt(1,:),V)
        endif
-       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V(BS_H_dim,BSS_dipoles_opt(1,:),V)
+       Epsilon_ii(iw,2)=gauge_factor*Vstar_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
      else if(i_L_==2) then
        if (K_slk%kind=="SLK") then
 #if defined _SCALAPACK
          call PARALLEL_M_by_V('n',BS_H_dim,K_inv_slk,conjg(BSS_dipoles_opt(1,:)),V)
 #endif
        else
-         call M_by_V('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt(1,:)),V)
+         call M_by_V_omp('n',BS_H_dim,Mm1,conjg(BSS_dipoles_opt(1,:)),V)
        endif
-       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*Vstar_dot_V(BS_H_dim,conjg(BSS_dipoles_opt(1,:)),V)
+       Epsilon_ii(iw,2)=Epsilon_ii(iw,2)+gauge_factor*V_dot_V_omp(BS_H_dim,BSS_dipoles_opt(1,:),V)
      endif
    end subroutine
    !

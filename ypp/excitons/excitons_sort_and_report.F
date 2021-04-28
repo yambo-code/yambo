@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -23,13 +23,13 @@
 !
 subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
- use pars,          ONLY:SP,schlen,pi
+ use pars,          ONLY:SP,schlen,pi,zero_dfl
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,spin,n_sp_pol,n_spinor
  use stderr,        ONLY:intc
  use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
- use R_lattice,     ONLY:d3k_factor,q0_def_norm
+ use R_lattice,     ONLY:d3k_factor,bare_qpg
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
  use vec_operate,   ONLY:sort
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITON_spin
@@ -124,7 +124,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    Residuals(:) = real(BS_R(:)*conjg(BS_R(:)),SP)
    if (write_widths)  Residuals(:) = abs(BS_R(:))
-   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2*HA2EV
+   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(iq,1)**2*HA2EV
    !
    if (trim(R_normalize)=='yes') then
      Rmax = maxval(Residuals)
@@ -134,7 +134,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    if (trim(R_normalize)=='yes_deg') then
       v2sort=Residuals
-      call sort(arrin=v2sort,indx=S_indx)
+      call sort(arrin=v2sort,indx=S_indx,r_zero=zero_dfl)
       Rmax=0._SP
       do j1=BSS_n_eig,1,-1
         j2=S_indx(j1)

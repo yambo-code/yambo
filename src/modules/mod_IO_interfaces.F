@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -196,8 +196,9 @@ module IO_int
    end subroutine
 #endif
    !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
+   function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
      use pars,       ONLY:lchlen
+     character(lchlen)      ::get_name
      character(*)           ::desc
      integer                ::type
      logical                ::CORE_IO,MORE_IO,COM_IO

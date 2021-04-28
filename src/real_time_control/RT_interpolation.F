@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -157,7 +157,7 @@ subroutine Interpolate_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,dE_Max)
  ! Work Space
  !
  logical       :: HAS_DBGD
- integer       :: ik,i_carr,nb_max,nb_max_FineGd,ID
+ integer       :: ik,nb_max,nb_max_FineGd,ID
  type(bz_samp) :: RT_k
     !
     ID=0

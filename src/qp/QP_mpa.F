@@ -352,7 +352,7 @@ use parser_m,       ONLY:parser
      iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
-     dc=cZERO
+     !dc=cZERO !DALV: is duplicated in below
      forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp ! DALV: here the grid is center in E0
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)

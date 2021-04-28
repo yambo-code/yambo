@@ -39,7 +39,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
-&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations,QP_G_damp !dario
+&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations,QP_G_damp
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -368,12 +368,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (trim(QP_solver)=='g') then
    !
-   ! DALV: GF for ppa and mpa
-   !
    if (l_elel_corr.and.(.not.l_ppa.and..not.l_mpa.and..not.l_cohsex)) &
 &                               call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+   !
+   ! DALV: GF for ppa and mpa
+   !
    if (l_elel_corr.and.l_ppa) then ! AF, DALV
      !
+     QP_dSc_steps=30
      W(1)=QP_G_er(1)
      forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
      !
@@ -382,6 +384,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if (l_elel_corr.and.l_mpa) then ! AF, DALV
      !
+     QP_dSc_steps=30
      W(1)=QP_G_er(1)
      forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
      !
@@ -449,15 +452,13 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
      ! the full Green`s function is requested.
      !
-     if (.not.l_life)                 QP_dSc_steps=2
+     if (.not.l_life.and.trim(QP_solver)/='n')                 QP_dSc_steps=2
      if (.not.l_life.and.QP_dSc_test) QP_dSc_steps=3
      !
      ! Cohsex is static
      !
      if (l_cohsex)                    QP_dSc_steps=1
      !
-     ! Dario: GF for ppa and mpa
-     if (trim(QP_solver)/='g' .and.(l_ppa.or.l_mpa)) QP_dSc_steps=100
      !
      if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !

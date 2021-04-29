@@ -42,7 +42,7 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CXX="$(cc)" \
+	      CXX="$(cxx)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(inetcdf)" \

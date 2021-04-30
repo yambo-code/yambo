@@ -89,7 +89,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    ic=1
    do iq_fine=q%FGbz%k_range(iqbz,1),q%FGbz%k_range(iqbz,2),1
      do ik=1,k%nibz
-       k_plus_q%pt(ic,:)=k%pt(ik,:)+q_fine%ptbz(iq_fine,:) 
+       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(iq_fine,:) 
        ic=ic+1
      enddo
    enddo

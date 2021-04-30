@@ -72,10 +72,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  !
  l_R_LATT=(write_is_on(ID).or.variable_exist(ID,"HEAD_R_LATT"))
  !
- write(*,*) .not.any((/io_sec(ID,:)==1/)),l_PH_DG,frag_DG
- write(*,*) ' passo qui ',io_sec(ID,:)
  if (any((/io_sec(ID,:)==1/))) then
-   write(*,*) ' dentro ',io_sec(ID,:)
    !
    if(l_PH_DG) then
      io_Double_Grid=io_header(ID,R_LATT=l_R_LATT,IMPOSE=l_R_LATT,NOWARN_SER=.true.,FRAG=frag_DG)

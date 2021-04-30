@@ -34,6 +34,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use stderr,         ONLY:intc
 #if defined _ELPH
  use ELPH,           ONLY:GKKP,elph_nb
+ use interfaces,     ONLY:ELPH_alloc
 #endif
  use pars,           ONLY:IP,SP
  !

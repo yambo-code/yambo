@@ -40,7 +40,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! Work space
  !
- integer               :: iq,ik,n_k_plus_q,ic,iq_fine
+ integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine
  integer               :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
@@ -67,12 +67,12 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  INTERPOLATE_is_quiet=.TRUE.
  !
- do iq=1,q%nbz
+ do iqbz=1,q%nbz
    !
    ! Number of q-fine points around each q-point
    ! ============================================
    !
-   nq_around=q%FGbz%k_range(iq,2)-q%FGbz%k_range(iq,1)+1
+   nq_around=q%FGbz%k_range(iqbz,2)-q%FGbz%k_range(iqbz,1)+1
    n_k_plus_q=nq_around*k%nibz
    !
    ! Generate k'=k+q  vectors
@@ -87,7 +87,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(k_plus_q%pt,(k_plus_q%nibz,3))
    !
    ic=1
-   do iq_fine=q%FGbz%k_range(iq,1),q%FGbz%k_range(iq,1)
+   do iq_fine=q%FGbz%k_range(iqbz,1),q%FGbz%k_range(iqbz,2),1
      do ik=1,k%nibz
        k_plus_q%pt(ic,:)=k%pt(ik,:)+q_fine%ptbz(iq_fine,:) 
        ic=ic+1
@@ -114,12 +114,12 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
-   GKKP%E_dg_kpq(iq)%FG%nb=elph_nb
-   GKKP%E_dg_kpq(iq)%FG%nk=n_k_plus_q                         
-   call FineGd_E_components_alloc(GKKP%E_dg_kpq(iq))
+   GKKP%E_dg_kpq(iqbz)%FG%nb=elph_nb
+   GKKP%E_dg_kpq(iqbz)%FG%nk=n_k_plus_q                         
+   call FineGd_E_components_alloc(GKKP%E_dg_kpq(iqbz))
    !
-   GKKP%E_dg_kpq(iq)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
-   GKKP%E_dg_kpq(iq)%FG%f(:elph_nb,:,:)=E_kpq%f(:elph_nb,:,:)
+   GKKP%E_dg_kpq(iqbz)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
+   GKKP%E_dg_kpq(iqbz)%FG%f(:elph_nb,:,:)=E_kpq%f(:elph_nb,:,:)
    !
    call live_timing(steps =1)
    !

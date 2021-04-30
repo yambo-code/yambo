@@ -229,7 +229,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      ! *length*   : DIP_projected(c,v,k) is     q*<v|r|c> while I need     q*<c|r|v> = conjg(    q*<v|r|c>)
      ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
-     !              see definition of conjg_fac few lines before for the -1
      !
      ! Absorption, KERR, PL, Dichroism
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
@@ -560,7 +559,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  ! Factors and more
- !====================
+ !==================
  !
  ! DOS
  !
@@ -574,12 +573,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
    endif
    !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                / bare_qpg(iq,1)**2
+   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                /bare_qpg(iq,1)**2
    if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
    !
    ! Drude term
    !
-   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/ bare_qpg(iq,1)**2
+   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/bare_qpg(iq,1)**2
    if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
    !
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)

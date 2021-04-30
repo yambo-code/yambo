@@ -21,36 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
+subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
  !
- use pars,            ONLY:SP,pi,cZERO,cI
+ use pars,            ONLY:SP,pi,cI
  use R_lattice,       ONLY:bz_samp
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use DIPOLES,         ONLY:DIP_rotated
- use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E
- use YPPm,            ONLY:BS_E
+ use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E,TRabsMODE
+ use stderr,          ONLY:STRING_match
  use BS,              ONLY:BS_H_dim
- use BS_solvers,      ONLY:BSS_eh_table,BS_mat
+ use BS_solvers,      ONLY:BSS_eh_table,BS_E,BS_mat
  use real_time,       ONLY:RT_bands
  !
 #include<memory.h>
  !
  character(*)      :: what
- integer           :: N_trans
+ integer           :: N_trans,nbf_eq,i_dir
  type(levels)      :: Xen
  type(bz_samp)     :: Xk
- real(SP)          :: DIP_dir(3),DIP_kerr_dir(3)
+ real(SP)          :: DIP_dir(3)
  !
  ! Work space
  !
- ! Old...
+ integer              :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
+ complex(SP)          :: dipole_rotated(3),f_eh(2)
+ logical              :: l_EQ
  !
- integer              :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2),i_n,i_np
- real(SP)             :: f_eh,delta_f_eh
- complex(SP)          :: dipole
  !
- TRabs_RES_right =cZERO
- TRabs_RES_left =cZERO
+ l_EQ = STRING_match(TRabsMODE,"eq")
  !
  ! BSE residuals
  ! -------------
@@ -68,14 +66,15 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
        !
        if (i_v<RT_bands(1) .or. i_c>RT_bands(2) ) cycle
        !
-       f_eh=      (Xen%fo(i_v,i_kibz,i_spin)-Xen%fo(i_c,i_kibz,i_spin))/spin_occ
-       delta_f_eh=(Xen%df(i_v,i_kibz,i_spin)-Xen%df(i_c,i_kibz,i_spin))/spin_occ
+       f_eh=gimme_f_and_delta_f(i_v,i_c,i_kibz,i_spin)
+       dipole_rotated=conjg(-cI*DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk))
        !
-       dipole=elemental_dipole(i_c,i_v,i_kbz,i_spin)
+       TRabs_RES_right(i_l,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*BS_mat(i_lp,i_l)*sqrt(f_eh(1))
+       TRabs_RES_right(i_l,i_dir,2)= conjg(dot_product(DIP_dir,dipole_rotated))*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
+       TRabs_RES_left(i_l,i_dir,1)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
+       TRabs_RES_left(i_l,i_dir,2)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
        !
-       TRabs_RES_right(i_l)= TRabs_RES_right(i_l)-dipole*BS_mat(i_lp,i_l)*sqrt(cmplx(f_eh,0.))
-       TRabs_RES_left(i_l) = TRabs_RES_left(i_l)-dipole*BS_mat(i_lp,i_l)*delta_f_eh/sqrt(cmplx(f_eh,0.))
-       TRabs_E(i_l)        = BS_E(i_l)
+       TRabs_E(i_l)     = real(BS_E(i_l),SP)
        !
      enddo
      !
@@ -91,23 +90,36 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
  ! -------------
  if (index(what,"IP")>0) then
    !
-   if (index(what,"vv")>0) bands=(/RT_bands(1),Xen%nbf/)
-   !
-   if (index(what,"cc")>0) bands=(/Xen%nbf+1,RT_bands(2)/)
+   if (index(what,"cv")>0) then
+     bands(1,:)=(/nbf_eq+1,RT_bands(2)/)
+     bands(2,:)=(/RT_bands(1),nbf_eq/)
+   else if (index(what,"vv")>0) then
+     bands(1,:)=(/RT_bands(1),nbf_eq/)
+     bands(2,:)=bands(1,:)
+   else if (index(what,"cc")>0) then
+     bands(1,:)=(/nbf_eq+1,RT_bands(2)/)
+     bands(2,:)=bands(1,:)
+   endif
    !
    do i_kbz=1,Xk%nbz
      i_kibz=Xk%sstar(i_kbz,1)
      do i_spin=1,n_sp_pol
-       do i_n=bands(1),bands(2)
-         do i_np=bands(1),bands(2)
+       do i_n=bands(1,1),bands(1,2)
+         do i_np=bands(2,1),bands(2,2)
+           !
            if (i_n==i_np) cycle
-           if  (index(what,"vv")>0) f_eh=-Xen%f(i_n,i_kibz,i_spin)*(Xen%df(i_np,i_kibz,i_spin))/spin_occ/spin_occ
-           if  (index(what,"cc")>0) f_eh= Xen%df(i_np,i_kibz,i_spin)*(spin_occ-Xen%f(i_n,i_kibz,i_spin))/spin_occ/spin_occ
+           !
            N_trans=N_trans+1
-           dipole=elemental_dipole(i_np,i_n,i_kbz,i_spin)
-           TRabs_RES_left(N_trans) =-dipole*sqrt(f_eh)
-           TRabs_RES_right(N_trans)= TRabs_RES_left(N_trans)
-           TRabs_E(N_trans)=Xen%E(i_np,i_kibz,i_spin)-Xen%E(i_n,i_kibz,i_spin)
+           !
+           TRabs_E(N_trans)=Xen%E(i_n,i_kibz,i_spin)-Xen%E(i_np,i_kibz,i_spin)
+           !
+           f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
+           if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
+           !
+           dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
+           TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
+           TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated)*sqrt(f_eh(2))
+           !
          enddo
        enddo
      enddo
@@ -119,16 +131,11 @@ subroutine RT_TRabs_residuals(what,N_trans,DIP_kerr_dir,DIP_dir,Xen,Xk)
  !
  contains
    !
-   function elemental_dipole(ib,ibp,ik,i_spin)
-     real(SP) :: elemental_dipole,dip(3)
-     integer  :: ib,ibp,i_spin,ik
-     dip=DIP_rotated(ib,ibp,i_kbz,i_spin,"DIP_iR",Xk)
-     if (index(what,"KERR")>0) then
-       elemental_dipole=sqrt(0.5_SP)*(dot_product(DIP_dir,dip)+cI*dot_product(DIP_kerr_dir,dip))
-     endif
-     if (index(what,"ABS")>0) then
-       elemental_dipole=dot_product(DIP_dir,dip)
-     endif
-   end function
+   function gimme_f_and_delta_f(ib,ibp,ik,i_sp)
+     complex(SP) :: gimme_f_and_delta_f(2)
+     integer     :: ib,ibp,i_sp,ik
+     gimme_f_and_delta_f(1)=(Xen%fo(ib,ik,i_sp)-Xen%fo(ibp,ik,i_sp))/spin_occ
+     gimme_f_and_delta_f(2)=(Xen%df(ib,ik,i_sp)-Xen%df(ibp,ik,i_sp))/spin_occ
+   end function 
    !
 end subroutine RT_TRabs_residuals

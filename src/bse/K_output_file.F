@@ -337,7 +337,6 @@ subroutine K_output_file(iq,mode)
    ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
    ! R=|r|^2
    !
-   !
    refl=(sqrt(eps)-1._SP)/(sqrt(eps)+1._SP)
    !
    do iw=1,BSS_n_freqs

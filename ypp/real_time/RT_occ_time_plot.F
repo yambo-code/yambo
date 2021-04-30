@@ -166,7 +166,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    io_Time=RT_time(i_T)
    !
-   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    l_OCCgroup_k_and_b=l_OCCgroup.and.RT_carriers%nk>kpt%nibz.and.CIRCUIT_k%nbz==0
    !

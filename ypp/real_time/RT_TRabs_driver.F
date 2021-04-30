@@ -28,7 +28,6 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use electrons,       ONLY:levels,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
  use vec_operate,     ONLY:v_norm,v_rotate
- use BS,              ONLY:l_BS_kerr
  use RT_control,      ONLY:RT_apply,CARR_RT_IO_t
  use YPP_real_time,   ONLY:RT_conf,RT_time,TRabsDIP_dir,TRabsWHAT,TRabsDIP_plane,&
 &                          TRabs_RES_left,TRabs_RES_right,TRabsMODE,TRabs_E
@@ -50,8 +49,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! Work space
  !
  type(w_samp)            :: W_bss
- integer                 :: N_eq_trans,N_cc_neq_trans,N_vv_neq_trans,N_trans,N_trans_done,i_T,io_err
- real(SP)                :: DIP_kerr_dir(3),Co
+ integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
+&                           N_col,nbf_eq,N_dirs,i_dir
+ real(SP)                :: DIP_dir(4,3),Co
+ complex(SP)             :: RES
+ logical                 :: l_IP,l_BS,l_OFF,l_cv,l_cc,l_vv
+ !
+ l_TRabs_YPP=.TRUE.
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
@@ -63,55 +67,70 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! Dimensions, Constant, Logicals and allocs
  !
- l_TRabs_YPP=.TRUE.
- l_BS_kerr  =.TRUE.
- DIPs%q0=TRabsDIP_dir
- if (BS_H_dim> 0) then
+ l_BS      = BS_H_dim> 0.and.STRING_match(TRabsWHAT,"abs")
+ l_IP      = (STRING_match(TRabsMODE,"ip").or..not.l_BS).and.STRING_match(TRabsWHAT,"abs")
+ l_OFF     = STRING_match(TRabsWHAT,"kerr").and..not.STRING_same(TRabsDIP_plane,"none")
+ l_cv      = STRING_match(TRabsMODE,"cv")
+ l_cc      = STRING_match(TRabsMODE,"cc")
+ l_vv      = STRING_match(TRabsMODE,"vv")
+ if (l_BS) then
    DIPs%ib   =BS_bands
-   N_eq_trans=BS_H_dim
+   N_cv_trans=BS_H_dim
  else
    DIPs%ib   =RT_bands
-   N_eq_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
+   N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
  endif
- N_cc_neq_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
- N_vv_neq_trans=(RT_bands(2)-Xen%nbf)*(RT_bands(2)-Xen%nbf)*Xk%nbz
+ N_cc_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
+ N_vv_trans=(RT_bands(2)-Xen%nbf)*(RT_bands(2)-Xen%nbf)*Xk%nbz
  N_trans=0
- if (STRING_match(TRabsMODE,"eq")) N_trans=N_eq_trans
- if (STRING_match(TRabsMODE,"vv")) N_trans=N_trans+N_vv_neq_trans
- if (STRING_match(TRabsMODE,"cc")) N_trans=N_trans+N_cc_neq_trans
+ nbf_eq=Xen%nbf
  !
- call msg('s','[TR-ABS] EQ transitions     :',N_eq_trans)
- call msg('s','[TR-ABS] NEQ cc transitions :',N_cc_neq_trans)
- call msg('s','[TR-ABS] NEQ vv transitions :',N_vv_neq_trans)
+ if (l_cv) N_trans=N_cv_trans
+ if (l_vv) N_trans=N_trans+N_vv_trans
+ if (l_cc) N_trans=N_trans+N_cc_trans
  !
- Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2
+ call msg('s','[TR-ABS] cv (EQ)  transitions :',N_cv_trans)
+ call msg('s','[TR-ABS] cc (NEQ)             :',N_cc_trans)
+ call msg('s','[TR-ABS] vv (NQE)             :',N_vv_trans)
  !
- YAMBO_ALLOC(TRabs_E,(N_eq_trans))
- YAMBO_ALLOC(TRabs_RES_right,(N_eq_trans))
- YAMBO_ALLOC(TRabs_RES_left, (N_eq_trans))
+ Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2 
  !
  ! Par Setup
  !
  call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
  call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=DIPs)
  !
- ! Dipoles
+ ! Dipoles...
+ !------------
+ ! ... q->0
+ DIP_dir=rZERO
+ TRabsDIP_dir=TRabsDIP_dir/v_norm( TRabsDIP_dir )
+ if (trim(global_gauge)=='length'  ) TRabsDIP_dir=TRabsDIP_dir*q0_def_norm
+ DIPs%q0=TRabsDIP_dir
+ DIP_dir(1,:)=TRabsDIP_dir
  !
+ ! ... I/O
  call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'DIP')
- if (trim(global_gauge)=='length'  ) DIPs%q0=DIPs%q0/v_norm(DIPs%q0)*q0_def_norm
- if (trim(global_gauge)=='velocity') DIPs%q0=DIPs%q0/v_norm(DIPs%q0)
- DIP_kerr_dir=rZERO
- if (.not.STRING_same(TRabsDIP_plane,"none").and.STRING_match(TRabsWHAT,"k")) then
-   call v_rotate(trim(TRabsDIP_plane),-pi/2._SP,DIPs%q0,v_out=DIP_kerr_dir)
+ !
+ ! ... rotation
+ if (l_OFF) then
+   N_dirs=2
+   call v_rotate(trim(TRabsDIP_plane),-pi/2._SP,DIPs%q0,v_out=DIP_dir(2,:))
  endif
  !
  ! OBS alloc
  !
- if(STRING_match(TRabsWHAT,"k")) then
-   YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,3)) ! Eps0 Eps Kerr
- else
-   YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2)) ! Eps0 Eps
- endif
+ YAMBO_ALLOC(TRabs_E,(N_trans))
+ N_col=0 
+ if (l_BS)  N_col=N_col+1 ! eps
+ if (l_IP)  N_col=N_col+1 ! eps0
+ if (l_OFF) N_col=N_col+1 ! kerr
+ YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,N_col)) 
+ N_dirs=0
+ if (l_BS.or.l_IP) N_dirs=1
+ if (l_OFF) N_dirs=N_dirs+1
+ YAMBO_ALLOC(TRabs_RES_left ,(N_trans,N_dirs,2))
+ YAMBO_ALLOC(TRabs_RES_right,(N_trans,N_dirs,2))
  !
  ! Frequency setup
  !
@@ -122,59 +141,62 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  call FREQUENCIES_setup(W_bss)
  !
- ! Output
- !
- !call RT_output("open trans_eps_real trans_eps_imag eps_eq trans_residual")
- !if (STRING_match(TRabsWHAT,"r")) call RT_output("open trans_refl_rel trans_refl_abs refl_eq")
- !if (STRING_match(TRabsWHAT,"t")) call RT_output("open trans_transm_rel trans_transm_abs transm_eq")
- !
- call live_timing('Transient Absorption',RT_conf%T_n_steps)
+ ! Output (init)
+ call RT_Trabs_output("open",W_bss,0._SP,l_BS,l_IP,l_OFF)
  !
  do i_T=1,RT_conf%T_n_steps
    !
    call RT_apply(DIPs%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
+   if (i_T==1)  call live_timing('Transient Absorption',RT_conf%T_n_steps)
+   !
+   TRabs_RES_left =cZERO
+   TRabs_RES_right=cZERO
+   !
+   do i_dir=1,N_dirs
+     N_trans_done=0
+     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+     if (l_IP) then
+       if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+       if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+       if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+     endif
+   enddo
+   !
+   N_col=0 
    Epsilon_ii=cZERO
-   N_trans_done=0
    !
-   if (STRING_match(TRabsMODE,"eq")) then
-     if (BS_H_dim>0 ) call RT_TRabs_residuals("BSE ABS",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
-     if (BS_H_dim==0) call RT_TRabs_residuals("IP ABS",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
+   if (l_BS) then
+!     N_col=N_col+1
+!     do i_trans=1,BS_H_dim
+!       RES=Co*( TRabs_iRES(i_trans,2)*conjg(TRabs_iRES(i_trans,1)) +&
+!&               TRabs_iRES(i_trans,1)*conjg(TRabs_iRES(i_trans,2)) )
+!       Epsilon_ii(:,N_col)=Epsilon_ii(:,N_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+!     enddo
    endif
-   if (STRING_match(TRabsMODE,"vv")) then
-     call RT_TRabs_residuals("IP ABS vv",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
-   endif
-   if (STRING_match(TRabsMODE,"cc")) then
-     call RT_TRabs_residuals("IP ABS cc",N_trans_done,DIP_kerr_dir,DIPs%q0,Xen,Xk)
+   if (l_IP) then
+     N_col=N_col+1
+     do i_trans=BS_H_dim+1,N_trans
+       RES=Co*TRabs_RES_right(i_trans,1,1)*TRabs_RES_left(i_trans,1,1)
+       Epsilon_ii(:,N_col)=Epsilon_ii(:,N_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+     enddo
    endif
    !
-!   Epsilon_ii(:,2)=Epsilon_ii(:,2)-IP_R*conjg(IP_R)/(W_bss%p(:)-IP_E)
-!   Epsilon_ii(:,2)=Epsilon_ii(:,2)+IP_R*conjg(IP_R)/(W_bss%p(:)+IP_E)
-   !
-!   Epsilon_ii(:,1)=1._SP+Epsilon_ii(:,1)*Co
-!   Epsilon_ii(:,2)=      Epsilon_ii(:,2)*Co
-!     Epsilon_ii(:,1)=Epsilon_ii(:,1)-BS_R0(i_l)*conjg(BS_R0(i_l))/(W_bss%p(:)-BS_E(i_l))
-!     Epsilon_ii(:,2)=Epsilon_ii(:,2)-(BS_R_var +conjg(BS_R_var) )/(W_bss%p(:)-BS_E(i_l))
-!     !
-!     Epsilon_ii(:,1)=Epsilon_ii(:,1)-BS_R0(i_l)*conjg(BS_R0(i_l))/(W_bss%p(:)+BS_E(i_l))
-!     Epsilon_ii(:,2)=Epsilon_ii(:,2)-(BS_R_var +conjg(BS_R_var) )/(W_bss%p(:)+BS_E(i_l))
-!     !
-!     BS_R_tmp=-real(BS_R_var+conjg(BS_R_var),SP)
-     !
-!     if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) &
-!&       call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+   ! Output (write)
+   call RT_Trabs_output("write",W_bss,RT_time(i_T),l_BS,l_IP,l_OFF)
    !
    call live_timing(steps=1)
    !
  enddo
-
-!     !
-!     BS_R_tmp=-real(RES_total+conjg(RES_total),SP)
-!   if( RT_conf%X_W_range(1)<real(BS_E(i_l)) .and. real(BS_E(i_l))<RT_conf%X_W_range(2) ) then
-!     call RT_output("trans_residual",VALUEs=(/BS_R_tmp/),E=real(BS_E(i_l))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-!   endif
  !
+ ! Output (close)
+ call RT_Trabs_output("close",W_bss,0._SP,l_BS,l_IP,l_OFF)
+ !
+ ! Free...
  YAMBO_FREE(Epsilon_ii)
+ YAMBO_FREE(TRabs_E)
+ YAMBO_FREE(TRabs_RES_left)
+ YAMBO_FREE(TRabs_RES_right)
  !
  call live_timing()
  !

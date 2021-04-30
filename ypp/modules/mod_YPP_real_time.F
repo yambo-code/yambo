@@ -106,12 +106,12 @@ module YPP_real_time
  ! (RT) TRabs
  !
  real(SP)          :: TRabsDIP_dir(3)=0.
- character(schlen) :: TRabsWHAT="A"
+ character(schlen) :: TRabsWHAT="abs"
  character(schlen) :: TRabsDIP_plane="none"
- character(schlen) :: TRabsMODE="eq cc vv"
+ character(schlen) :: TRabsMODE="cv"
  real(SP),    allocatable :: TRabs_E(:)
- complex(SP), allocatable :: TRabs_RES_left(:)
- complex(SP), allocatable :: TRabs_RES_right(:)
+ complex(SP), allocatable :: TRabs_RES_left(:,:,:)  ! I_trans, DIP_dir, 1 ( RES_0 ) - 2 ( dRES)
+ complex(SP), allocatable :: TRabs_RES_right(:,:,:)
  !
  ! (RT) carriers
  !

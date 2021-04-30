@@ -23,7 +23,6 @@
 !
 subroutine INIT_ypp_load(defs)
  !
- use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
@@ -190,10 +189,10 @@ subroutine INIT_ypp_load(defs)
  ! TRANSIENT ABSORPTION
  !
  call it(defs,'TRabsOBS',&
-&             '[RT] RT observable. It can be a combination of (A)bsorption, (T)ransmission, (R)eflectivity, (K)err',TRabsWHAT)
+&             '[RT] RT observable. It can be a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
  call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
  call it(defs,'TRabsDIPdir',   '[RT] Dipole direction',TRabsDIP_dir)
- call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of eq,vv,cc',TRabsMODE)
+ call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)
  !
 #endif
  !

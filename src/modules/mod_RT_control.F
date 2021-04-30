@@ -89,7 +89,7 @@ module RT_control
      real(SP), optional, intent(in) :: E
    end subroutine
    !
-   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
+   subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY,skip_interpolation)
     use pars,           ONLY:SP
     use electrons,      ONLY:levels
     use R_lattice,      ONLY:bz_samp
@@ -103,6 +103,7 @@ module RT_control
     real(SP),    optional, intent(in) :: Time
     logical ,    optional, intent(in) :: keep_RT_carriers
     logical ,    optional, intent(in) :: TIMES_ONLY
+    logical ,    optional, intent(in) :: skip_interpolation
    end subroutine
    !
    subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)

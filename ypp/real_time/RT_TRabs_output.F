@@ -21,88 +21,84 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_output(Xen,Xk,Xq)
+subroutine RT_TRabs_output(what,W,TIME,l_BS,l_IP,l_OFF)
  !
- use pars,            ONLY:SP,pi
- use units,           ONLY:AUT2FS,HA2EV,SPEED_OF_LIGHT
- use R_lattice,       ONLY:bz_samp
- use D_lattice,       ONLY:alat
- use electrons,       ONLY:levels
- use RT_control,      ONLY:RT_output
- use YPP_real_time,   ONLY:RT_time,TRabsWHAT
- use X_m,             ONLY:Epsilon_ii
- use frequency,       ONLY:w_samp
- use stderr,          ONLY:STRING_match
+ use pars,           ONLY:SP
+ use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
+ use interfaces,     ONLY:DESC_write
+ use YPP_real_time,  ONLY:TRabsWHAT
+ use X_m,            ONLY:Epsilon_ii
+ use frequency,      ONLY:w_samp
+ use stderr,         ONLY:STRING_match
  !
 #include<memory.h>
  !
- type(levels)      :: Xen
- type(bz_samp)     :: Xk,Xq
+ character(*) :: what
+ type(w_samp) :: W
+ real(SP)     :: TIME
+ logical      :: l_BS,l_IP,l_OFF
  !
- ! Work space
+ ! Work Space
  !
- type(w_samp)      :: W_bss
+ logical     :: l_TRANS,l_REFL
+ integer     :: i_freq,N_col
+ real(SP)    :: output(2)
  !
- ! Old...
+ l_TRANS=STRING_match(TRabsWHAT,"trans")
+ l_REFL =STRING_match(TRabsWHAT,"refl")
  !
- integer              :: i_T,i_freq
- real(SP)             :: output(4)
- !
- real(SP),   allocatable :: X_absorption_coeff(:,:)
- complex(SP),allocatable :: X_reflectance(:,:)
- !
- if(STRING_match(TRabsWHAT,"r")) then
-   ! Reflectance is assumed for a 3D system
-   ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
-   X_reflectance(:,1)=(sqrt(Epsilon_ii(:,1))-1._SP)/(sqrt(Epsilon_ii(:,1))+1._SP)
-   ! der r/der eps = 1/(sqrt(eps)+1)**2/ sqrt(eps)
-   X_reflectance(:,2)=Epsilon_ii(:,2)/(sqrt(Epsilon_ii(:,1))+1._SP)**2._SP/sqrt(Epsilon_ii(:,1)) 
- endif
- !
- if(STRING_match(TRabsWHAT,"t")) then
-   ! 3D systems
-   ! alpha= 2/c aimag(sqrt(eps))
-   !X_absorption_coeff(:,1)=1._SP-exp(-real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(sqrt(Epsilon_ii(:,1)))*thickness)
-   !X_absorption_coeff(:,2)=
-   ! MAU Nano-letters: 2D systems
-   X_absorption_coeff(:,1)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(Epsilon_ii(:,1))*alat(3)
-   X_absorption_coeff(:,2)=real(W_bss%p(:))/SPEED_OF_LIGHT*aimag(Epsilon_ii(:,2))*alat(3)
- endif
- !
- do i_freq=1,W_bss%n_freqs
-   output(4)=real(Epsilon_ii(i_freq,1))
-   output(3)=aimag(Epsilon_ii(i_freq,1))
-   output(2)=aimag(Epsilon_ii(i_freq,2))
-   output(1)=real(Epsilon_ii(i_freq,2))
-   call RT_output("trans_eps_real",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-   call RT_output("trans_eps_imag",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-   if(i_T==1) call RT_output("eps_eq",VALUEs=(/output(3:4)/),E=real(W_bss%p(i_freq))*HA2EV)
-   if(STRING_match(TRabsWHAT,"r")) then
-     !  R=|r|^2
-     output(3)=X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,1))
-     !output(2)=X_reflectance(i_freq,2)*conjg(X_reflectance(i_freq,2))-output(3)
-     output(2)=X_reflectance(i_freq,2)*conjg(X_reflectance(i_freq,1))+X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,2))
-     output(1)=output(2)/output(3)
-     call RT_output("trans_refl_rel",VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-     call RT_output("trans_refl_abs",VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-     if(i_T==1) call RT_output("refl_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV)
+ if (what=="open".or.what=="close") then
+   !
+   if (l_BS) call OUTPUT_add_column("YPP-TR_delta_eps_BS",action=what)
+   if (l_IP) call OUTPUT_add_column("YPP-TR_delta_eps_IP",action=what)
+   if (l_OFF) then
+     if (l_BS) call OUTPUT_add_column("YPP-TR_delta_off_BS",action=what)
+     if (l_IP) call OUTPUT_add_column("YPP-TR_delta_off_IP",action=what)
    endif
-   ! I need to check some factor
-   if(STRING_match(TRabsWHAT,"t")) then
-     ! 3D systems
-     !output(3)=1._SP-X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,1))-X_absorption_coeff(i_freq,1)
-     !output(2)=-X_reflectance(i_freq,1)*conjg(X_reflectance(i_freq,2))-conjg(X_reflectance(i_freq,1))*X_reflectance(i_freq,2) &
-     !         -X_absorption_coeff(i_freq,2)
-     ! 2D systems (reflectance is assumed to be zero)
-     output(3)=1._SP-X_absorption_coeff(i_freq,1)
-     output(2)=-X_absorption_coeff(i_freq,2)
-     output(1)=output(2)/output(3)
-     call RT_output("trans_transm_rel",    VALUEs=(/output(1)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-     call RT_output("trans_transm_abs",    VALUEs=(/output(2)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
-     if(i_T==1) call RT_output("transm_eq",VALUEs=(/output(3)/),E=real(W_bss%p(i_freq))*HA2EV,TIME=RT_time(i_T)*AUT2FS)
+   !
+   !if (l_TRANS) call RT_output(what//" TRtransmission")
+   !if (l_REFL ) call RT_output(what//" TRreflectivity")
+   !
+   if (what=="open") then
+     call elemental_desc_write('delta_eps_BS')
+     call elemental_desc_write('delta_eps_IP')
+     call elemental_desc_write('delta_off_BS')
+     call elemental_desc_write('delta_off_IP')
+   endif
+   !
+   return
+   !
+ endif
+ !
+ do i_freq=1,W%n_freqs
+   N_col=0
+   if (l_BS) then
+     N_col=1
+     call elemental_TIME_E_write("delta_eps_BS",(/aimag(Epsilon_ii(i_freq,1)),real(Epsilon_ii(i_freq,1))/))
+   endif
+   if (l_IP) then
+     N_col=N_col+1
+     call elemental_TIME_E_write("delta_eps_IP",(/aimag(Epsilon_ii(i_freq,N_col)),real(Epsilon_ii(i_freq,N_col))/))
    endif
  enddo
  !
- call RT_output("space trans")
- !
+ contains
+   !
+   subroutine elemental_TIME_E_write(file,data)
+     character(*) :: file
+     real(SP)     :: data(2)
+     call OUTPUT_add_column(file,TITLES=(/"Time"/),R_VALUES=(/TIME/),UNIT="fs",KIND="Time")
+     call OUTPUT_add_column(file,TITLES=(/"Energy"/),R_VALUES=(/real(W%p(i_freq))/),UNIT="eV")
+     call OUTPUT_add_column(file,TITLES=(/"Eps-Im","Eps-Re"/),R_VALUES=data)
+     call OUTPUT_add_column(file,action="write")
+   end subroutine
+   !
+   subroutine elemental_desc_write(file)
+     character(*) :: file
+     call DESC_write('o '//file,'#',RT_desc)     
+     call DESC_write('o '//file,'#',Gr_desc)     
+     call DESC_write('o '//file,'#',TIME_STEP_desc)     
+   end subroutine
+   !
 end subroutine RT_TRabs_output

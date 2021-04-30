@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY)
+subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ONLY,skip_interpolation)
  !
  use drivers,        ONLY:l_elel_corr,l_rt_carriers_in_use
  use pars,           ONLY:schlen,SP,lchlen
@@ -47,17 +47,19 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  real(SP),    optional,intent(in) :: Time
  logical ,    optional,intent(in) :: keep_RT_carriers
  logical ,    optional,intent(in) :: TIMES_ONLY
+ logical ,    optional,intent(in) :: skip_interpolation
  !
  ! Work space
  !
- integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j
+ integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j,NN
  real(SP)              :: local_Time,TIME_diff,REF_diff
  integer,parameter     :: n_pieces=10
  integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),T_unit,ch
  character(lchlen)     :: db_name
  character(3)          :: what_
- logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ,load_times_only
+ logical               :: l_E,l_f,l_W,l_elel_corr_save,is_def,l_verbose,l_keep_carriers,l_BOLTZ,&
+&                         load_times_only,do_not_interp
  !
  logical, external     :: file_exists
  !
@@ -66,6 +68,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  ! 
  if (     present(IO_COM)) COM_=IO_COM
  if (.not.present(IO_COM)) COM_=NONE
+ !
+ do_not_interp=.false.
+ if (present(skip_interpolation)) do_not_interp=skip_interpolation
  !
  l_verbose=.false.
  if (present(VERBOSE)) l_verbose=VERBOSE
@@ -141,6 +146,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
      local_Time=local_Time*PS2AUT
    endif
    !
+   NN=RT_ctl_interp_neigh(I_id)
+   !
  else
    !
    ! YPP
@@ -165,6 +172,12 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
      if (     file_exists(trim(db_name))) call msg('l','found')
      if (.not.file_exists(trim(db_name))) call msg('l','not found')
    endif
+   !
+   l_E=.FALSE.
+   l_f=.TRUE.
+   l_W=.FALSE.
+   l_BOLTZ=.FALSE.
+   NN=1
    !
  endif
  !
@@ -241,13 +254,9 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  if (l_verbose) call msg('s','[RT] Loaded Carrier components @'//trim(real2ch(local_Time*AUT2FS))//' fs')
  !
- ! Interpolatle the RT_carriers object inside the En levels object (energy, occupations and lifetimes)
- ! Only yambo enters here. YPP fills the RT_carriers object and directly uses it instead
- !
- ! Yambo
- !=======
- if (present(what))        call RT_interpolation(bands,E,K,what_,"NN",local_Time,&
-&                                                l_f,l_E,l_W,l_BOLTZ,RT_ctl_interp_neigh(I_id))
+ ! Interpolation
+ !==============
+ if (.not.do_not_interp) call RT_interpolation_driver(bands,E,K,what_,local_Time,l_f,l_E,l_W,l_BOLTZ,NN)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !

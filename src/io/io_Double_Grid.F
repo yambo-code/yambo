@@ -168,6 +168,8 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_Double_Grid)
    if(io_Double_Grid/=0) goto 1
    !
+   if(read_is_on(ID)) call  ELPH_alloc("DGRID",GKKP) 
+   !
    call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=2,VAR_KIND=IP+100,MENU=0) 
    call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%FG%nk,VAR=' [E_dg_kpq] Nk',DESCRIPTOR=FineGd_desc)
    call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%FG%nb,VAR=' [E_dg_kpq] Nbands',DESCRIPTOR=FineGd_desc)

@@ -768,7 +768,6 @@ FCLIBS
 OPENMPLIBS
 def_openmp
 def_compiler
-HDF5_MODE
 DEBUG_FLAGS
 NETCDFFLAGS
 OMPFLAGS
@@ -6672,8 +6671,6 @@ fi
 
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
-HDF5_MODE="production";
-#
 def_compiler=
 #
 case "${host}" in
@@ -7044,7 +7041,6 @@ fi
 if test x"$enable_debug_flags" = "xyes"; then
  FCFLAGS="$DEBUG_FLAGS"
  FCUFLAGS="$DEBUG_FLAGS"
- HDF5_MODE="debug";
 fi
 #
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for specific NETCDF flags" >&5
@@ -7052,7 +7048,6 @@ $as_echo_n "checking for specific NETCDF flags... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NETCDFFLAGS" >&5
 $as_echo "$NETCDFFLAGS" >&6; }
 #
-
 
 
 

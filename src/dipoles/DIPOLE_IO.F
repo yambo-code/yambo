@@ -77,7 +77,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
 #if defined _PAR_IO
  write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
+ read_header   =       reading.or.check
 #else
  write_header  =(      master_cpu.and.writing )
  read_header   =.not.writing.and.(reading.or.check)
@@ -98,12 +98,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Master node bcast matrix dimensions for the other cores
  !
- if(writing) then
-   call PP_bcast(Dip%ib,0)
-   call PP_bcast(Dip%db_ib,0)
-   call PP_bcast(Dip%ib_lim,0)
-   call PP_bcast(Dip%db_ib_lim,0) 
- endif
+ if(writing) call PP_bcast_writing_info()
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -196,6 +191,17 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 #endif
  !
  contains
+   !
+   subroutine PP_bcast_writing_info()
+     !
+     ! BCAST all information need by the other processors to write dipoles
+     !
+     call PP_bcast(Dip%ib,0)
+     call PP_bcast(Dip%db_ib,0)
+     call PP_bcast(Dip%ib_lim,0)
+     call PP_bcast(Dip%db_ib_lim,0) 
+     !
+   end subroutine PP_bcast_writing_info
    !
    subroutine fix_velocity(Dip,dir)
      !

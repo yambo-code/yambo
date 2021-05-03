@@ -26,7 +26,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use pars,                ONLY:SP,pi,schlen
  use electrons,           ONLY:levels,spin
  use R_lattice,           ONLY:bz_samp
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,elph_nQ
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,elph_nQ,PH_qpt
  use com,                 ONLY:msg
  use QP_m,                ONLY:QP_table,QP_n_states
  use vec_operate,         ONLY:c2a
@@ -99,7 +99,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
    io_err=io_ELPH(ID,'gkkp')
    if (io_err<0) call error('Missing Q-database')
    !
-   q_pt=q%pt(iq,:)
+   q_pt=PH_qpt(iq,:)
    call K_transform(q_pt,'iku')
    !
    values(1:3)=q_pt(1:3)

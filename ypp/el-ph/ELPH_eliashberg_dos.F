@@ -31,7 +31,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
+ use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,PH_freqs,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
@@ -56,7 +56,6 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  character(schlen) ::o_file_name,ch
  type(PP_indexes)  ::px
  real(SP), allocatable :: gamma(:,:)
- type(levels)      :: PH_E
  !
  !I/O
  !
@@ -131,16 +130,16 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    gamma=0.
  endif
  !
- ! Fill the PH_E array
+ ! Fill the PH_freqs array
  !
- PH_E%nk=nq_todo
- PH_E%nb=ph_modes
- YAMBO_ALLOC(PH_E%E,(nq_todo,ph_modes,1))
+ PH_freqs%nk=nq_todo
+ PH_freqs%nb=ph_modes
+ YAMBO_ALLOC(PH_freqs%E,(nq_todo,ph_modes,1))
  !
  ! Load double-grid if present
  !
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
- io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
  !
  if(io_err==0) then
    if(elph_use_q_grid.and..not.l_eliashberg) then
@@ -170,11 +169,11 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
    !
-   PH_E%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
+   PH_freqs%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
    !
    if (use_PH_DbGd) then
       call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID_DG)
-      io_err=io_Double_Grid(PH_E,q,ID_DG,'phonons')
+      io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
       if(io_err/=0) call error('Error reading PH-double grid for q-points '//intc(iq))
    endif
    !
@@ -208,7 +207,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
      !
      do i2=1,elph_steps
        !
-       d_elias_dos=q_weight*Eliashberg_Dos_Func(iq, im, ph_energy(i2) ,ph_broad, PH_E, q)
+       d_elias_dos=q_weight*Eliashberg_Dos_Func(iq, im, ph_energy(i2) ,ph_broad, PH_freqs, q)
        !
        if (l_eliashberg) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
        if (l_dos)     ph_dos(i2)=ph_dos(i2)+real(d_elias_dos,SP)

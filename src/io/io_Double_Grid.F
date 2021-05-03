@@ -116,11 +116,13 @@ integer function io_Double_Grid(E,Xk,ID,what)
      call bz_samp_FineGd_alloc(Xk%FGbare,Xk%nibz)
      call bz_samp_FineGd_alloc(Xk%FGibz,Xk%nibz)
      call bz_samp_FineGd_alloc(Xk%FGbz,Xk%nbz)
+     write(*,*) ' allocation components DB-grid energy ',E%FG%nk,E%FG%nb
    endif
    !
    call def_variable_bulk(ID,"EIGENVALUES",1,VAR_SZ=shape(E%FG%E),VAR_KIND=SP,silent=.TRUE. ) 
    call io_variable_bulk(ID,1,R3=E%FG%E)
    !
+   write(*,*) ' read value ',E%FG%E(1:3,1,1)
    ! K map
    !
    call elemental_IO(Xk%FGbare,"K_MAP","BARE")

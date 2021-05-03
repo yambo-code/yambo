@@ -48,7 +48,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,&
 &                        elph_nQ,GKKP,elph_use_q_grid,&
 &                        setup_k_plus_q_levels,elph_nQ_used,&
@@ -79,7 +79,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  logical          ::l_WRgFsq,l_GF_from_CA
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
- type(levels)          :: PH_En
  ! 
  call timing('GW(e-p)',OPR='start')
  !
@@ -207,12 +206,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Fill the PH_E array
  !
- PH_En%nk=nq_to_sum
- PH_En%nb=ph_modes
- YAMBO_ALLOC(PH_En%E,(nq_to_sum,ph_modes,1))
+ PH_freqs%nk=nq_to_sum
+ PH_freqs%nb=ph_modes
+ YAMBO_ALLOC(PH_freqs%E,(nq_to_sum,ph_modes,1))
  ! 
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
- io_err=io_Double_Grid(PH_En,q,ID_DG,'phonons')
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
  !
  if(io_err==0) then
    if(elph_use_q_grid) then
@@ -291,7 +290,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if(use_PH_DbGd) then
      IO_ACT=manage_action(RD_CL_IF_END,iq_loop,1,nq_to_sum)
      call io_control(ACTION=IO_ACT,COM=REP,MODE=DUMP,SEC=(/1+iq_loop/),ID=ID_DG)
-     io_err=io_Double_Grid(PH_En,q,ID_DG,'phonons')
+     io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
    endif
    !
    do i_qp=1,QP_n_states

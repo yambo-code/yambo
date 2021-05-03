@@ -26,7 +26,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use pars,                ONLY:SP,pi,schlen
  use electrons,           ONLY:levels,spin
  use R_lattice,           ONLY:bz_samp
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,elph_nQ_used
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,elph_nQ
  use com,                 ONLY:msg
  use QP_m,                ONLY:QP_table,QP_n_states
  use vec_operate,         ONLY:c2a
@@ -45,7 +45,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  ! Work space
  !
  integer               :: ID,IO_ACT,io_err
- integer               :: iq,i_phm,i_qp,i_sp_pol,ik,ib,nq_to_read
+ integer               :: iq,i_phm,i_qp,i_sp_pol,ik,ib,nq
  integer, external     :: io_ELPH
  !
  real(SP)  :: q_pt(3)
@@ -85,16 +85,16 @@ subroutine ELPH_plot_gkkp(k,E,q)
  enddo
  !
  if(elph_use_q_grid) then
-   nq_to_read=q%nibz
+   nq=q%nibz
  else
-   nq_to_read=elph_nQ_used
+   nq=elph_nQ
  endif
  !
- call live_timing('Writing GKKP factors',nq_to_read)
+ call live_timing('Writing GKKP factors',nq)
  !
- do iq=1,nq_to_read
+ do iq=1,nq
    !
-   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq_to_read)
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nq)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    io_err=io_ELPH(ID,'gkkp')
    if (io_err<0) call error('Missing Q-database')

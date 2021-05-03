@@ -218,7 +218,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if(elph_use_q_grid) then
      call msg('sr','Using PH-double-grid ')
      use_PH_DbGd=.TRUE.
-     call ELPH_alloc('DGRID')
    else
      call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
      use_PH_DbGd=.FALSE.

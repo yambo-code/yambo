@@ -58,6 +58,13 @@ module ELPH
  !
  type(levels)         :: PH_freqs
  !
+ type E_fine_k_plus_q
+   integer         :: nk
+   integer         :: nq_fine
+   real(SP),   allocatable :: E(:,:,:,:)
+   real(SP),   allocatable :: f(:,:,:,:)
+ end type
+ !
  ! GKKP Matrix Elements and derived quantities
  type GKKP_me
    !
@@ -71,7 +78,7 @@ module ELPH
    type(levels),allocatable :: E_kpq(:)
    !
    ! Phonon assisted double-grid energy/occupation levels (in the q-BZ)
-   type(levels),allocatable :: E_dg_kpq(:)
+   type(E_fine_k_plus_q),   allocatable :: E_dg_kpq(:)
    !
    integer                  :: Nq_mem=0
    integer                  :: Nk_mem=0

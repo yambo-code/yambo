@@ -103,6 +103,9 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    E_kpq%nk=n_k_plus_q
    YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
    call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
+   if(iqbz==2) then
+     write(*,*) ' generation ',E_kpq%E(4,(2-1)*nq_around+1:(2-1)*nq_around+1,1)*HA2EV
+   endif
    !
    ! Calculate the new occupations (only for semiconductors) 
    ! ==============================
@@ -116,12 +119,20 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
-   GKKP%E_dg_kpq(iqbz)%FG%nb=elph_nb
-   GKKP%E_dg_kpq(iqbz)%FG%nk=n_k_plus_q                         
-   call FineGd_E_components_alloc(GKKP%E_dg_kpq(iqbz))
+   GKKP%E_dg_kpq(iqbz)%nb=elph_nb
+   GKKP%E_dg_kpq(iqbz)%nk=k%nibz
+   GKKP%E_dg_kpt(iqbz)%nq_fine=nq_around
+   YAMBO_ALLOC(GKKP%E_dg_kpt%E(elph_nb,k%nibz,n_sp_pol,nq_around)
    !
-   GKKP%E_dg_kpq(iqbz)%FG%E(:elph_nb,:,:)=E_kpq%E(:elph_nb,:,:)
-   GKKP%E_dg_kpq(iqbz)%FG%f(:elph_nb,:,:)=E_kpq%f(:elph_nb,:,:)
+   ic=1
+   do ik=1,k%nibz
+    do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
+      iq_idx=iq_fine-q%FGbz%k_range(iqbz,1)
+      GKKP%E_dg_kpq(iqbz)%E(:elph_nb,ik,:,iq_idx)=E_kpq%E(:elph_nb,ic,:)
+      GKKP%E_dg_kpq(iqbz)%f(:elph_nb,ik,:,iq_idx)=E_kpq%f(:elph_nb,ic,:)
+      ic=ic+1
+    enddo
+  enddo
    !
    call live_timing(steps =1)
    !

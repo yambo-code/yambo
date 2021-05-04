@@ -24,6 +24,7 @@
 subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  use pars,                ONLY:SP,pi,rZERO
+ use units,               ONLY:HA2EV
  use electrons,           ONLY:levels,FineGd_E_components_alloc,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients,INTERPOLATE_is_quiet, &
@@ -87,9 +88,10 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(k_plus_q%pt,(k_plus_q%nibz,3))
    !
    ic=1
-   do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
-     do ik=1,k%nibz
-       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(q%FGbz%k_range(iqbz,1),:) 
+   do ik=1,k%nibz
+    do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
+!       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(q%FGbz%k_range(iqbz,1),:) 
+       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%ptbz(iqbz,:) 
        ic=ic+1
      enddo
    enddo

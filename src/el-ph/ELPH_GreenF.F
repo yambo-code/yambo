@@ -40,6 +40,7 @@
 subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi
+ use units,         ONLY:HA2THZ,HA2EV
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
@@ -116,6 +117,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
     ! Define gsqF denominators
     !
     delta_E=Sc_W%p(iw)-E_kpq
+    write(*,*) ' delta_E ',iw,real(delta_E*HA2EV)
     !
     one_minus_2f_occ=(1._SP-2._SP*f_occ)
     gsqF_damping=aimag(Sc_W%p(iw))
@@ -193,8 +195,9 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    ic=1
    do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
      !
-     iE_fg       =q%FGbz%E_map(iq_fg)                             ! Max w(q) from BZ to IBZ
-     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     iE_fg       =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+!     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
      !
      ik_plus_q_dg=(ik-1)*nq_around+ic                             ! k+q_dg index
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%FG%E(ob,ik_plus_q_dg,1)    ! E(k+q_dg)  q_db in the D-Grid
@@ -203,6 +206,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
      do iw=1,gsqF_energy_steps
        ! 
        delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
+       write(*,*) ' delta_E DB-GRID ',iw,iq_fg,real(delta_E*HA2EV)
 
        gsqF_DEN_life_B(iw)=gsqF_DEN_life_B(iw)+     (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
  &                               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
@@ -224,7 +228,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
        gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E
      endif
      !
-     ic=ic+1
+     ic=ic+1 ! Index of the q-point in the E(k+q)
      !
     enddo
    !

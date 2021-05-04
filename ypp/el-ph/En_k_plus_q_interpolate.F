@@ -72,7 +72,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    ! Number of q-fine points around each q-point
    ! ============================================
    !
-   nq_around=q%FGbz%k_range(iqbz,2)-q%FGbz%k_range(iqbz,1)+1
+   nq_around=q%FGbz%k_range(iqbz,2)-q%FGbz%k_range(iqbz,1)
    n_k_plus_q=nq_around*k%nibz
    !
    ! Generate k'=k+q  vectors
@@ -87,9 +87,9 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    YAMBO_ALLOC(k_plus_q%pt,(k_plus_q%nibz,3))
    !
    ic=1
-   do iq_fine=q%FGbz%k_range(iqbz,1),q%FGbz%k_range(iqbz,2),1
+   do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
      do ik=1,k%nibz
-       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(iq_fine,:) 
+       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(q%FGbz%k_range(iqbz,1),:) 
        ic=ic+1
      enddo
    enddo

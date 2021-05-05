@@ -195,8 +195,9 @@ subroutine RT_output(what,VALUES,TIME,E)
      case('external_field')
        data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
-       data_to_dump(8)=A_ext%intensity*AU2KWCMm2
-       data_to_dump(9)=A_ext%fluence*AU2KWCMm2/real(PS2AUT,SP)
+       data_to_dump(8)   =A_ext%envelop  *AU2VMm1
+       data_to_dump(9)   =A_ext%intensity*AU2KWCMm2
+       data_to_dump(10)  =A_ext%fluence  *AU2KWCMm2/real(PS2AUT,SP)
      case('induced_field')
        data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1

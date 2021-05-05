@@ -162,10 +162,9 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  ! F(t) = \int I(t) dt
  !
  if(Integrator_step==Integrator_nsteps) then
-   A_new%intensity=(abs(A_new%vecpot_vel(1))**2+abs(A_new%vecpot_vel(2))**2+abs(A_new%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
-   A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
-   A_ext%intensity=(abs(A_ext%vecpot_vel(1))**2+abs(A_ext%vecpot_vel(2))**2+abs(A_ext%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   if (l_RT_induced_field) A_ind%fluence=A_ind%fluence+A_ind%intensity*RT_dyn_step
    A_ext%fluence=A_ext%fluence+A_ext%intensity*RT_dyn_step
+   A_new%fluence=A_new%fluence+A_new%intensity*RT_dyn_step
  endif
  !
 end subroutine RT_propagate_fields

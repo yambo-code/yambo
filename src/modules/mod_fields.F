@@ -61,8 +61,9 @@ module fields
    complex(SP) :: vecpot(3)
    complex(SP) :: vecpot_vel(3)
    complex(SP) :: vecpot_acc(3)
-   real(SP)    :: fluence
+   real(SP)    :: envelop
    real(SP)    :: intensity
+   real(SP)    :: fluence
  end type gauge_field
  !
  type(gauge_field) :: A_tot    ! This is either the total or the externa field
@@ -381,6 +382,9 @@ module fields
      A%vecpot_acc=0._SP
      A%vecpot_vel=0._SP
      A%vecpot    =0._SP
+     A%envelop   =0._SP
+     A%fluence   =0._SP
+     A%intensity =0._SP
    end subroutine
    !
    complex(SP) function Rabi_Factor(Field,P,R)

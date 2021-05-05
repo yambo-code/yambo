@@ -57,15 +57,13 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add(name='polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
  !
- call RT_FILE_add('total_field',TITLES=(/"Time[fs]"/))
- call RT_FILE_add(TITLES=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
- !
- do i_fp=1,2
+ do i_fp=1,3
    if (i_fp==1) dumb_ch="external_field"
    if (i_fp==2) dumb_ch="induced_field"
+   if (i_fp==3) dumb_ch="total_field"
    call RT_FILE_add(trim(dumb_ch),&
 &                 TITLES=(/"Time[fs]   ","E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
-   if (i_fp==1) call RT_FILE_add(TITLES=(/"Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
+   if (i_fp==1) call RT_FILE_add(TITLES=(/"Profile  [V/m]  ","Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
  enddo
  !
  call RT_FILE_add('energy',TITLES=(/"Time[fs]  ","dE_kin[eV]","dE_ion[eV]"/))

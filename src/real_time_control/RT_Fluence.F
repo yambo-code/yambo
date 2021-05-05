@@ -85,21 +85,11 @@ subroutine RT_Fluence_and_pikind(En,i_field)
    !
    NE_i_time=it
    !
-   ! Full field for fluence
+   call RT_Ext_fields(A,T(it),i_field)
    !
-   call RT_Ext_fields(A,T(it),i_field,.false.)
+   I(it)    =A%intensity
    !
-   E=A%vecpot_vel(:)
-   !
-   I(it)=(abs(E(1))**2+abs(E(2))**2+abs(E(3))**2)
-   !
-   ! Envelop only for pi_factor
-   !
-   call RT_Ext_fields(A,T(it),i_field,.true.)
-   !
-   E=A%vecpot_vel(:)
-   !
-   Omega(it)=sqrt(abs(E(1))**2+abs(E(2))**2+abs(E(3))**2)
+   Omega(it)=A%envelop
    !
    last_it_evaluated=it
    !
@@ -107,17 +97,11 @@ subroutine RT_Fluence_and_pikind(En,i_field)
  !
  NE_i_time=NE_i_time_save
  !
- ! I(t) = \frac{c}{8\pi} E^2(t)    From au to kW/cm^2
- ! Moreover there is a 1/c^2 factor from the definition of A%vecpot
- !
- I(:)=I(:)/SPEED_OF_LIGHT/4._SP/pi*AU2KWCMm2
- !
  ! Omega(t)
- ! There is a 1/c factor from the definition of A%vecpot and
  ! I divide for |E| which is already accounted for in Raby frequency
  ! Rabi_frequency is in THz  
  !
- Omega(:)=Omega(:)*Rabi_frequency(En,i_field,l_print_rabi)/SPEED_OF_LIGHT/Efield(i_field)%amplitude
+ Omega(:)=Omega(:)*Rabi_frequency(En,i_field,l_print_rabi)/Efield(i_field)%amplitude
  ! 
  ! To get the fluence in kJ/cm^2 I should translate T in sec.
  ! Then I would have a factor 10^-12 ( 1 nJ/cm^2 = 10^-12 kJ/cm^2 )

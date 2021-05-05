@@ -197,8 +197,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
      !
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
      iE_fg       =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-!     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
+     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+!     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))   for testing porpouse
      !
      ik_plus_q_dg=(ik-1)*nq_around+ic                             ! k+q_dg index
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik_plus_q_dg,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
@@ -219,10 +219,6 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
        !
        if (.not.eval_G_using_KK) then 
          gsqF_DEN_ca_corr(iw)=gsqF_DEN_ca_corr(iw)+ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)
-         if(iq_bz==2.and.iw==1) then
-           write(100,*) 'dgrid ',ik_plus_q_dg,ok,E_kpq*HA2EV,en%E(ob,ok,1)*HA2EV
-           write(100,*) iq_fg,real(delta_E),real(ph_E),real(delta_E/(delta_E**2-ph_E**2))
-         endif
          gsqF_DEN_fan(iw)    =gsqF_DEN_fan(iw)+delta_E/(delta_E**2-ph_E**2)
        endif
        !
@@ -245,7 +241,6 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  gsqF_life_f(i_qp,iq_mem,il,:)   =gsqF_life_f(i_qp,iq_mem,il,:)   +gsqF_RES_life_f*gsqF_DEN_life_f(:)*weight_dbg
  !
  if (.not.eval_G_using_KK) then
-    write(*,*) ' g_fan ',iq_mem,il,gsqF_RES_fan,gsqF_DEN_fan(1)*weight_dbg
     gsqF_fan(i_qp,iq_mem,il,:)    =gsqF_fan(i_qp,iq_mem,il,:) +gsqF_RES_fan*gsqF_DEN_fan(:)*weight_dbg
     gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)*weight_dbg
  endif

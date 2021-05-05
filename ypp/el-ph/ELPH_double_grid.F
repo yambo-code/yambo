@@ -24,16 +24,17 @@
 subroutine ELPH_double_grid(k,E,q)
  !
  use pars,                ONLY:SP,pi
- use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
+ use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc,n_sp_pol
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset,qindx_S
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs
  use com,                 ONLY:msg
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
+ use parser_m,            ONLY:parser
  !
 #include<memory.h>
  !
@@ -43,11 +44,12 @@ subroutine ELPH_double_grid(k,E,q)
  ! Work space
  !
  type(bz_samp)         :: q_fine
- type(levels)          :: Ph_E
- logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded
- integer               :: ID,io_err,i_f,i_fg,iq
+ logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded,l_test_PHDGrid
+ integer               :: ID,io_err,i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz
  integer, external     :: io_ELPH,io_Double_Grid
  logical, external     :: file_exists 
+ !
+ call parser('TestPHDGrid',l_test_PHDGrid)
  !
  ! Check input files from matdyn.x
  !
@@ -83,17 +85,17 @@ subroutine ELPH_double_grid(k,E,q)
  if (io_err/=0) call error('El-Ph database not found')
  !
  if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')
- call E_reset(Ph_E)
- Ph_E%nb=ph_modes
- Ph_E%nk=q%nibz
- YAMBO_ALLOC(Ph_E%E,(Ph_E%nb,Ph_E%nk,1))
+ call E_reset(PH_freqs)
+ PH_freqs%nb=ph_modes
+ PH_freqs%nk=q%nibz
+ YAMBO_ALLOC(PH_freqs%E,(PH_freqs%nb,PH_freqs%nk,1))
  do i_f=1,ph_modes
-   Ph_E%E(i_f,:,1)=sqrt(PH_freqs_sq(:,i_f))
+   PH_freqs%E(i_f,:,1)=sqrt(PH_freqs_sq(:,i_f))
  enddo
  !
  ! Find border points and remove them if required
  ! ===============================================
- call k_map_fine_to_coarse_init(q,PH_E,q_fine,FineGd_is_expanded,.TRUE.)
+ call k_map_fine_to_coarse_init(q,PH_freqs,q_fine,FineGd_is_expanded,.TRUE.)
  !
  ! Expansion mode
  ! =======================
@@ -109,7 +111,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! FineGd E to IBZ map
  !=======================
  call section('=','Double Grid Energies-IBZ mapping and Fine Grid re-ordering')
- call k_map_fine_to_coarse('Energies-IBZ',q,q%FGbare,q_fine,PH_E)
+ call k_map_fine_to_coarse('Energies-IBZ',q,q%FGbare,q_fine,PH_freqs)
  !
  ! Expand the Fine Grid 
  !========================
@@ -166,17 +168,46 @@ subroutine ELPH_double_grid(k,E,q)
  ! IBZ FG_mode to IBZ map
  !========================
  call section('=','Double Grid '//trim(q%FGibz%FG_mode)//'-IBZ mapping')
- call k_map_fine_to_coarse(trim(q%FGibz%FG_mode)//'-IBZ',q,q%FGibz,q_fine,PH_E)
+ call k_map_fine_to_coarse(trim(q%FGibz%FG_mode)//'-IBZ',q,q%FGibz,q_fine,PH_freqs)
  !
  ! BZ FG_mode to BZ map
  !======================
  call section('=','Double Grid '//trim(q%FGbz%FG_mode)//'-BZ mapping')
- call k_map_fine_to_coarse(trim(q%FGbz%FG_mode)//'-BZ',q,q%FGbz,q_fine,PH_E)
+ call k_map_fine_to_coarse(trim(q%FGbz%FG_mode)//'-BZ',q,q%FGbz,q_fine,PH_freqs)
  !
  ! Interpolation E(k+q) and fill the GKKP%E_kpq
  ! ============================================
  ! E(k+q) is constructed with k in the IBZ and q in the BZ
  if(STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
+ !
+ !
+ ! Set all fine grid to the course one (ONLY FOR TESTING PURPOSE)
+ ! ===================================
+ if(l_test_PHDGrid) then
+   !      
+   ! Set all PH energies equal to the couse one
+   !   
+   do iq_bz=1,q%nbz        
+     !
+     iq_ibz =q%sstar(iq_bz,1)
+     !     
+     do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
+       iE_fg=q%FGbz%E_map(iq_fg)  
+       PH_freqs%FG%E(:,iE_fg,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:))) 
+     enddo
+     !
+     okbz=qindx_S(ik,iq_bz,1)
+     ok=k%sstar(okbz,1)
+     !
+     do is=1,n_sp_pol
+       do ib=1,elph_nb
+         GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,:)=E%E(ib,ok,is)
+       enddo
+     enddo
+     !
+   enddo
+   !
+ endif
  !
  ! Final I/O
  !===========
@@ -185,13 +216,13 @@ subroutine ELPH_double_grid(k,E,q)
  nkibz=q%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
- io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+ io_err=io_Double_Grid(PH_freqs,q,ID,'phonons')
  !
  ! For each k-point in the IBZ store all k+q energies with q in the BZ
  !
  do iq=1,q%nbz
    call io_control(ACTION=OP_WR_CL,SEC=(/1+iq/),COM=REP,ID=ID)
-   io_err=io_Double_Grid(PH_E,q,ID,'phonons')
+   io_err=io_Double_Grid(PH_freqs,q,ID,'phonons')
  enddo
  !
  ! CLEAN
@@ -199,7 +230,7 @@ subroutine ELPH_double_grid(k,E,q)
  !
  call bz_samp_reset(q_fine)
  call k_ibz2bz(q,'d',.true.)
- call FineGd_E_components_reset(PH_E,.TRUE.)
+ call FineGd_E_components_reset(PH_freqs,.TRUE.)
  call bz_samp_FineGd_reset(q%FGbz)
  call bz_samp_FineGd_reset(q%FGibz)
  !

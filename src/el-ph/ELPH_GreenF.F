@@ -65,10 +65,10 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! Work Space
  !
  integer  :: iw
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
  real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight
  !
  logical  :: eval_DW
@@ -206,8 +206,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
      do iw=1,gsqF_energy_steps
        ! 
        delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
-!       write(*,*) ' delta_E DB-GRID ',iw,iq_fg,real(delta_E*HA2EV)
-
+       !
        gsqF_DEN_life_B(iw)=gsqF_DEN_life_B(iw)+     (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
  &                               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
        gsqF_DEN_life_f(iw)=gsqF_DEN_life_f(iw)+  ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &

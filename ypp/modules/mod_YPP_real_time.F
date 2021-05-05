@@ -35,7 +35,6 @@ module YPP_real_time
  ! RT DBs (what)
  !
  logical  :: l_RTpump_energy
- logical  :: l_RTpump_kspace
  logical  :: l_RTpump_Fermi
  !
  ! RT Post-processing (what)

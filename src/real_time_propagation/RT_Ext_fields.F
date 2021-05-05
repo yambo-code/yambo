@@ -96,8 +96,8 @@ subroutine RT_Ext_fields(A,time,i_f)
      call error("Unknown external field polarization! ")
    end select
    !
-   if(ikind==1) A%envelop  =    (abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
-   if(ikind==2) A%intensity=sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   if(ikind==1) A%envelop  =sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
+   if(ikind==2) A%intensity=    (abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
    !
  enddo
  !

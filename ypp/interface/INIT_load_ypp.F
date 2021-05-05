@@ -111,7 +111,6 @@ subroutine INIT_ypp_load(defs)
  !
 #if defined _YPP_RT
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
- call it('r',defs,'Select_kspace','[R] NEQ DBs from input energy and kspace')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
  call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
  !
@@ -166,15 +165,15 @@ subroutine INIT_ypp_load(defs)
  !
  ! RT DBs create
  !
- call it(defs,'RTpumpNel',  '[RT] Number of electrons excited by hand per unit cell',Eh_pumped_Nel)
  call it(defs,'RTBands',    '[RT] Bands range',RT_bands)
+ call it(defs,'RTpumpNel',  '[RT] Number of electrons excited by hand per unit cell',Eh_pumped_Nel)
+ call it(defs,'RTpumpBZWd', '[RT][iku] K region size',Eh_pumped_pair_BZ_width)
  call it(defs,'RTpumpEhWd', '[RT] Max Energy window used in the levels pick-up',Eh_pumped_pair_width,unit=E_unit)
  ! Method 1
  call it(defs,'RTpumpEhEn', '[RT] Energy (relative to VBM/CBM) of the levels to be inverted by hand',&
 &                            Eh_pumped_pair_energy,unit=E_unit)
  ! Method 2
  call it(defs,'RTpumpDE',   '[RT] Energy difference to be matched',Eh_pumped_pair_deltaE,unit=E_unit)
- call it(defs,'RTpumpBZWd', '[RT][iku] K region size',Eh_pumped_pair_BZ_width)
  !
  ! The idea for Fermi occupations is to start from the 'end' of a carrier relaxation run
  call it(defs,'RTmuEh', '[RT] Chemical potentials hole | electron',Eh_mu,unit=E_unit)

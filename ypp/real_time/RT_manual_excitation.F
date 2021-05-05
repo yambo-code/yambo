@@ -26,12 +26,13 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  use pars,           ONLY:SP
  use units,          ONLY:BO2ANG,HA2EV
  use D_lattice,      ONLY:DL_vol
+ use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:bz_samp,k_the_nearest
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ,E_reset,E_duplicate,n_sp_pol
  use com,            ONLY:msg
  use real_time,      ONLY:RT_carriers,RT_bands,RTibz
- use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label
+ use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label,coo_in
  use YPP_interfaces, ONLY:k_special
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
@@ -96,6 +97,9 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
    do i_region=1,Eh_pumped_pair_n_BZ_regions
      local_k=Eh_pumped_pair_BZ_regions(i_region,:)
+     !
+     if (trim(coo_in)=="cc")  call c2a(v_in=local_k,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=local_k,mode="ka2i")
      !
      i_k_near=k_the_nearest(local_k,RT_carriers%kpt,RT_carriers%nk,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
      !

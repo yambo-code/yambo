@@ -103,9 +103,6 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    E_kpq%nk=n_k_plus_q
    YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
    call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
-   if(iqbz==2) then
-     write(*,*) ' generation ',E_kpq%E(4,(2-1)*nq_around+1:(2-1)*nq_around+1,1)*HA2EV
-   endif
    !
    ! Calculate the new occupations (only for semiconductors) 
    ! ==============================

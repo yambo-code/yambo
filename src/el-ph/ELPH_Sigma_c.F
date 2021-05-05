@@ -50,7 +50,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,&
-&                        elph_nQ,GKKP,elph_use_q_grid,&
+&                        elph_nQ,GKKP,elph_use_q_grid,FineGd_E_kpq_components_reset,&
 &                        setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
 &                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,&
@@ -374,7 +374,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
    enddo  ! i_qp loop
    !
-   if(use_PH_DbGd) call FineGd_E_kpq_free(GKKP%E_dg_kpq(iq_loop))
+   if(use_PH_DbGd) call FineGd_E_kpq_components_reset(GKKP%E_dg_kpq(iq_loop))
    !
  enddo ! iq_bz loop
  !

@@ -31,7 +31,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
-&                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid
+&                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
  !
@@ -176,7 +176,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          if (allocated(GKKP%E_dg_kpq)) then
            nq_BZ=size(GKKP%E_dg_kpq)
            do iq=1,nq_BZ
-             call E_reset( GKKP%E_dg_kpq(iq) )
+             call FineGd_E_kpq_components_reset( GKKP%E_dg_kpq(iq) )
            enddo
            deallocate(GKKP%E_dg_kpq)
          endif

@@ -21,66 +21,65 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_output(what,W,TIME,l_BS,l_IP,l_OFF)
+subroutine RT_TRabs_output(what,N_col,W,TIME,l_BS,l_IP,l_OFF,l_ABS)
  !
- use pars,           ONLY:SP
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
- use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
- use interfaces,     ONLY:DESC_write
- use YPP_real_time,  ONLY:TRabsWHAT
- use X_m,            ONLY:Epsilon_ii
- use frequency,      ONLY:w_samp
- use stderr,         ONLY:STRING_match
+ use pars,            ONLY:SP,schlen
+ use OUTPUT_simple,   ONLY:OUTPUT_add_column
+ use RT_output_m,     ONLY:RT_desc,Gr_desc,TIME_STEP_desc
+ use interfaces,      ONLY:DESC_write
+ use YPP_real_time,   ONLY:TRabsWHAT
+ use X_m,             ONLY:Epsilon_ii
+ use frequency,       ONLY:w_samp
+ use BS,              ONLY:BS_K_dim
+ use BS_solvers,      ONLY:BSS_desc
+ use stderr,          ONLY:STRING_match
  !
 #include<memory.h>
  !
  character(*) :: what
+ integer      :: N_col
  type(w_samp) :: W
  real(SP)     :: TIME
- logical      :: l_BS,l_IP,l_OFF
+ logical      :: l_BS,l_IP,l_OFF,l_ABS
  !
  ! Work Space
  !
- logical     :: l_TRANS,l_REFL
- integer     :: i_freq,N_col
- real(SP)    :: output(2)
+ logical           :: l_TRANS,l_REFL
+ integer           :: i_freq,i_f,n_files
+ character(schlen) :: ofile(10)
  !
  l_TRANS=STRING_match(TRabsWHAT,"trans")
  l_REFL =STRING_match(TRabsWHAT,"refl")
  !
- if (what=="open".or.what=="close") then
-   !
-   if (l_BS) call OUTPUT_add_column("YPP-TR_delta_eps_BS",action=what)
-   if (l_IP) call OUTPUT_add_column("YPP-TR_delta_eps_IP",action=what)
-   if (l_OFF) then
-     if (l_BS) call OUTPUT_add_column("YPP-TR_delta_off_BS",action=what)
-     if (l_IP) call OUTPUT_add_column("YPP-TR_delta_off_IP",action=what)
-   endif
-   !
-   !if (l_TRANS) call RT_output(what//" TRtransmission")
-   !if (l_REFL ) call RT_output(what//" TRreflectivity")
-   !
-   if (what=="open") then
-     call elemental_desc_write('delta_eps_BS')
-     call elemental_desc_write('delta_eps_IP')
-     call elemental_desc_write('delta_off_BS')
-     call elemental_desc_write('delta_off_IP')
-   endif
-   !
-   return
-   !
+ n_files=0
+ if (l_ABS) then
+   if (l_BS)  n_files=n_files+1
+   if (l_BS)  ofile(n_files)="YPP-TR_delta_eps_BS"
+   if (l_IP)  n_files=n_files+1
+   if (l_IP)  ofile(n_files)="YPP-TR_delta_eps_IP"
+ endif
+ if (l_OFF) then
+   if (l_BS)  n_files=n_files+1
+   if (l_BS)  ofile(n_files)="YPP-TR_delta_off_BS"
+   if (l_IP)  n_files=n_files+1
+   if (l_IP)  ofile(n_files)="YPP-TR_delta_off_IP"
  endif
  !
- do i_freq=1,W%n_freqs
-   N_col=0
-   if (l_BS) then
-     N_col=1
-     call elemental_TIME_E_write("delta_eps_BS",(/aimag(Epsilon_ii(i_freq,1)),real(Epsilon_ii(i_freq,1))/))
-   endif
-   if (l_IP) then
-     N_col=N_col+1
-     call elemental_TIME_E_write("delta_eps_IP",(/aimag(Epsilon_ii(i_freq,N_col)),real(Epsilon_ii(i_freq,N_col))/))
-   endif
+ if (what=="open".or.what=="close") then
+   do i_f=1,n_files
+    call OUTPUT_add_column(trim(ofile(i_f)),action=what)
+    if (what=="open") then
+      call elemental_desc_write(trim(ofile(i_f)))
+      
+    endif
+   enddo
+   return
+ endif
+ !
+ do i_f=1,n_files
+   do i_freq=1,W%n_freqs
+     call elemental_TIME_E_write(trim(ofile(i_f)),(/aimag(Epsilon_ii(i_freq,i_f)),real(Epsilon_ii(i_freq,i_f))/))
+   enddo
  enddo
  !
  contains
@@ -99,6 +98,7 @@ subroutine RT_TRabs_output(what,W,TIME,l_BS,l_IP,l_OFF)
      call DESC_write('o '//file,'#',RT_desc)     
      call DESC_write('o '//file,'#',Gr_desc)     
      call DESC_write('o '//file,'#',TIME_STEP_desc)     
+     if (BS_K_dim(1)>0) call DESC_write('o '//file,'#',BSS_desc)
    end subroutine
    !
 end subroutine RT_TRabs_output

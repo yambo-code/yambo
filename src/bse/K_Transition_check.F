@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
-&                                                 E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
+logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
+&                                   E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)
  !
  use pars,         ONLY:SP 
  use X_m,          ONLY:global_gauge
@@ -46,7 +46,7 @@ logical function K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c
  integer :: i_sp_v,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),pert_range(2/n_sp_pol,2)
  real(SP):: Eo_eh,E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh_REF,f_e,f_h,f_check
  !
- K_Transitions_single_trans_is_ok=.TRUE.
+ K_Transition_check=.TRUE.
  !
  i_sp_v=i_sp_c
  if(l_BS_magnons) i_sp_v=mod(i_sp_c,n_sp_pol)+1
@@ -57,7 +57,7 @@ logical function K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
  if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and.&
-&     iq==1 .and..not.l_BS_magnons) K_Transitions_single_trans_is_ok=.FALSE.
+&     iq==1 .and..not.l_BS_magnons) K_Transition_check=.FALSE.
  !
  if( BS_perturbative_SOC ) then
    if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -108,14 +108,15 @@ logical function K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c
  !
  ! f_eh<0 transitions are included in the anti-resonant part
  ! f_eh=0 transitions give no contribution to absorption and are not considered
- if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transitions_single_trans_is_ok=.FALSE.
+ if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<filled_tresh ) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !
  ! In case of population inversion, it may be problematic if f_eh>0. and f_eh_RES<0.
- if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) &
-&      call error(' I cannot split the R and K BSE contribution.'//&
-&                 ' ACTION: Use the same occupations in K and R.')
+ if ( f_eh_REF*f_eh<0._SP .or. f_eh_REF*f_eh_RES<0._SP ) then
+    call error(' I cannot split the R and K BSE contribution.'//&
+&              ' ACTION: Use the same occupations in K and R.')
+ endif
  !
 #endif
  !
@@ -126,13 +127,13 @@ logical function K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c
    ! If I've included in valence states that are almost empty
    ! or in conduction states that are almost full, those are neglected
    !
-   if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) K_Transitions_single_trans_is_ok=.FALSE.
+   if ( (f_e<=filled_tresh) .or. (f_h<=filled_tresh) ) K_Transition_check=.FALSE.
    !
 #if defined _RT
  endif
 #endif
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
-&              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transitions_single_trans_is_ok=.FALSE.
+&              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.
  !
 end function

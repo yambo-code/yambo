@@ -49,8 +49,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  use com,          ONLY:msg
  use R_lattice,    ONLY:qindx_X,bz_samp
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
-#if defined _RT
-#endif
  !
 #include<memory.h>
  !
@@ -59,7 +57,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  type(DIPOLE_t) :: Dip
  integer        :: iq
  !
- logical, external :: K_Transitions_single_trans_is_ok
+ logical, external :: K_Transition_check
  !
  ! Work Space
  !
@@ -135,8 +133,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
                if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
                !
-               if (.not.K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
-&                                                        E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+               if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
+&                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
                !
                i_T_now=i_T_now+1
                i_T_group_now=T_group(i_T_now)
@@ -190,13 +188,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
                if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
-               &                                           Ken%Z(ib2,ik,isp2)*Ken%Z(ib1,ikp,isp1)
+&                                                            Ken%Z(ib2,ik,isp2)*Ken%Z(ib1,ikp,isp1)
                !
                ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
                ! Presently there is the abs value here and a minus in K_IP.F
                !
                if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)= &
-               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ib2,ik,isp2))+abs(Ken%W(ib1,ikp,isp1)))
+&                                             (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ib2,ik,isp2))+abs(Ken%W(ib1,ikp,isp1)))
                !
                if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
                !

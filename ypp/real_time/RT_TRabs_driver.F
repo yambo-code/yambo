@@ -34,7 +34,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use YPPm,            ONLY:DIPs
  use X_m,             ONLY:Epsilon_ii,global_gauge
  use IO_m,            ONLY:LOG
- use BS,              ONLY:BS_bands,BS_H_dim
+ use BS,              ONLY:BS_bands,BS_K_dim,BS_H_dim
  use frequency,       ONLY:w_samp
  use parallel_int,    ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_TRabs_YPP
@@ -52,8 +52,14 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
 &                           N_col,nbf_eq,N_dirs,i_dir
  real(SP)                :: DIP_dir(4,3),Co
- complex(SP)             :: RES
- logical                 :: l_IP,l_BS,l_OFF,l_cv,l_cc,l_vv
+ logical                 :: l_IP,l_BS,l_OFF,l_cv,l_cc,l_vv,l_ABS
+ !
+ call section("+","Transient Optical Properties")
+ !
+ if (BS_K_dim(1)>0 .and. BS_H_dim/=BS_K_dim(1)) then
+   call warning("TR-optical properties implemented only for TDA BSE")
+   return
+ endif
  !
  l_TRabs_YPP=.TRUE.
  !
@@ -67,15 +73,16 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! Dimensions, Constant, Logicals and allocs
  !
- l_BS      = BS_H_dim> 0.and.STRING_match(TRabsWHAT,"abs")
- l_IP      = (STRING_match(TRabsMODE,"ip").or..not.l_BS).and.STRING_match(TRabsWHAT,"abs")
+ l_BS      = BS_K_dim(1)> 0
+ l_IP      = STRING_match(TRabsMODE,"ip").or..not.l_BS
+ l_ABS     = STRING_match(TRabsWHAT,"abs")
  l_OFF     = STRING_match(TRabsWHAT,"kerr").and..not.STRING_same(TRabsDIP_plane,"none")
  l_cv      = STRING_match(TRabsMODE,"cv")
  l_cc      = STRING_match(TRabsMODE,"cc")
  l_vv      = STRING_match(TRabsMODE,"vv")
  if (l_BS) then
    DIPs%ib   =BS_bands
-   N_cv_trans=BS_H_dim
+   N_cv_trans=BS_K_dim(1)
  else
    DIPs%ib   =RT_bands
    N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
@@ -91,9 +98,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  call msg('s','[TR-ABS] cv (EQ)  transitions :',N_cv_trans)
  call msg('s','[TR-ABS] cc (NEQ)             :',N_cc_trans)
- call msg('s','[TR-ABS] vv (NQE)             :',N_vv_trans)
+ call msg('s','[TR-ABS] vv (NEQ)             :',N_vv_trans)
  !
  Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2 
+
+ write (*,*) N_trans
  !
  ! Par Setup
  !
@@ -122,9 +131,14 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  YAMBO_ALLOC(TRabs_E,(N_trans))
  N_col=0 
- if (l_BS)  N_col=N_col+1 ! eps
- if (l_IP)  N_col=N_col+1 ! eps0
- if (l_OFF) N_col=N_col+1 ! kerr
+ if (l_ABS) then
+   if (l_BS)  N_col=N_col+1 
+   if (l_IP)  N_col=N_col+1 
+ endif
+ if (l_OFF) then
+   if (l_BS)  N_col=N_col+1 
+   if (l_IP)  N_col=N_col+1 
+ endif
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,N_col)) 
  N_dirs=0
  if (l_BS.or.l_IP) N_dirs=1
@@ -142,7 +156,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  call FREQUENCIES_setup(W_bss)
  !
  ! Output (init)
- call RT_Trabs_output("open",W_bss,0._SP,l_BS,l_IP,l_OFF)
+ call RT_Trabs_output("open",N_col,W_bss,0._SP,l_BS,l_IP,l_OFF,l_ABS)
  !
  do i_T=1,RT_conf%T_n_steps
    !
@@ -164,33 +178,28 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    enddo
    !
    N_col=0 
-   Epsilon_ii=cZERO
-   !
-   if (l_BS) then
-!     N_col=N_col+1
-!     do i_trans=1,BS_H_dim
-!       RES=Co*( TRabs_iRES(i_trans,2)*conjg(TRabs_iRES(i_trans,1)) +&
-!&               TRabs_iRES(i_trans,1)*conjg(TRabs_iRES(i_trans,2)) )
-!       Epsilon_ii(:,N_col)=Epsilon_ii(:,N_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
-!     enddo
+   if (l_ABS) then
+     if (l_BS)  N_col=N_col+1 
+     if (l_BS)  call build_up_eps_ij("BS",N_col,1,1)
+     if (l_IP)  N_col=N_col+1 
+     if (l_IP)  call build_up_eps_ij("IP",N_col,1,1)
    endif
-   if (l_IP) then
-     N_col=N_col+1
-     do i_trans=BS_H_dim+1,N_trans
-       RES=Co*TRabs_RES_right(i_trans,1,1)*TRabs_RES_left(i_trans,1,1)
-       Epsilon_ii(:,N_col)=Epsilon_ii(:,N_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
-     enddo
+   if (l_OFF) then
+     if (l_BS)  N_col=N_col+1 
+     if (l_BS)  call build_up_eps_ij("BS",N_col,1,2)
+     if (l_IP)  N_col=N_col+1 
+     if (l_IP)  call build_up_eps_ij("IP",N_col,1,2)
    endif
    !
    ! Output (write)
-   call RT_Trabs_output("write",W_bss,RT_time(i_T),l_BS,l_IP,l_OFF)
+   call RT_Trabs_output("write",N_col,W_bss,RT_time(i_T),l_BS,l_IP,l_OFF,l_ABS)
    !
    call live_timing(steps=1)
    !
  enddo
  !
  ! Output (close)
- call RT_Trabs_output("close",W_bss,0._SP,l_BS,l_IP,l_OFF)
+ call RT_Trabs_output("close",N_col,W_bss,0._SP,l_BS,l_IP,l_OFF,l_ABS)
  !
  ! Free...
  YAMBO_FREE(Epsilon_ii)
@@ -200,4 +209,26 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  call live_timing()
  !
+ contains
+   !
+   subroutine build_up_eps_ij(what,i_col,I,J)
+     character(*) :: what
+     integer      :: i_col,I,J
+     complex(SP)  :: RES
+     Epsilon_ii(:,i_col)=cZERO
+     if (what=="BS") then
+       do i_trans=1,BS_K_dim(1)
+         RES=Co*( TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,2) +&
+&                 TRabs_RES_right(i_trans,I,2)*TRabs_RES_left(i_trans,J,1) )
+         Epsilon_ii(:,i_col)=Epsilon_ii(:,i_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+       enddo
+     endif
+     if (what=="IP") then
+       do i_trans=BS_K_dim(1)+1,N_trans
+         RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
+         Epsilon_ii(:,i_col)=Epsilon_ii(:,i_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+       enddo
+     endif
+   end subroutine
+   !
 end subroutine RT_transient_absorption

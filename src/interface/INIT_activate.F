@@ -28,7 +28,7 @@ subroutine INIT_activate()
  use stderr,         ONLY:intc,STRING_match
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
-&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
+&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _SC || defined _RT
@@ -221,8 +221,8 @@ subroutine INIT_activate()
    !                     
    call initactivate(1,'BSENGexx ALLGexx')
    !
-   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
-   if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
+   if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
+   if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.

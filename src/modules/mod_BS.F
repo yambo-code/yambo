@@ -33,24 +33,22 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
- logical :: BS_W_is_diagonal
- logical :: BS_K_coupling
- logical :: BS_res_K_exchange
- logical :: BS_res_K_corr
- logical :: BS_cpl_K_exchange
- logical :: BS_cpl_K_corr
- logical :: BS_K_is_ALDA
- logical :: BS_not_const_eh_f
- logical :: BS_perturbative_SOC
- logical :: BS_K_has_been_calculated_loaded
+ logical :: BS_W_is_diagonal=.FALSE.
+ logical :: BS_K_coupling=.FALSE.
+ logical :: BS_res_K_exchange=.FALSE.
+ logical :: BS_res_K_corr=.FALSE.
+ logical :: BS_cpl_K_exchange=.FALSE.
+ logical :: BS_cpl_K_corr=.FALSE.
+ logical :: BS_K_is_ALDA=.FALSE.
+ logical :: BS_not_const_eh_f=.FALSE.
+ logical :: BS_perturbative_SOC=.FALSE.
+ logical :: BS_K_has_been_calculated_loaded=.FALSE.
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
  character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
- character(schlen) :: BS_res_mode
- character(schlen) :: BS_cpl_mode
  !
  ! Kind of response function
  !===========================
@@ -64,18 +62,11 @@ module BS
  logical :: l_BS_optics
  logical :: l_BS_esort
  logical :: l_BS_anomalous_hall
- logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
-                            ! - n_sp_pol==2 finite Q or magnons, Res and Ares are independent: --> no coupling = diag 2 BSE matricies
-                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
-                            ! - n_spinor==2, finite Q only,      Res and Ares are independent: --> no coupling = diag 2 BSE matricies
-                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
  !
  ! Dimensions
  !=============
  integer :: BS_K_dim(2)
  integer :: BS_H_dim
- integer :: BS_mat_res_ares_dim ! If resonant and non-resonant part are not related
- integer :: BS_res_ares_dim     ! If resonant and non-resonant part are not related
  integer :: BS_IO_dim(2,4)
  integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
@@ -88,6 +79,18 @@ module BS
  real(SP):: BS_K_cutoff
  real(SP),allocatable :: BS_K_cutoff_done(:)
  real(SP),allocatable :: BSqpts(:,:)
+ !
+ ! Resonant/Antiresonant handling
+ !================================
+ ! -> l_BS_ares_not_from_res
+ logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
+                            ! - n_sp_pol==2 finite Q or magnons, Res and Ares are independent: --> no coupling = diag 2 BSE matrices
+                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
+                            ! - n_spinor==2, finite Q only,      Res and Ares are independent: --> no coupling = diag 2 BSE matrices
+                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
+ !
+ integer :: BS_mat_res_ares_dim  ! -> BS_res_ares_n_eh_spaces ! If 1 only res eh subspace is considered
+ integer :: BS_res_ares_dim      ! -> BS_res_ares_n_matrices  ! If 1 only res mat is stored
  !
  ! Live Timing
  !=============

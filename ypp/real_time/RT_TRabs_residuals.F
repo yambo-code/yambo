@@ -29,7 +29,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
  use DIPOLES,         ONLY:DIP_rotated
  use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E,TRabsMODE
  use stderr,          ONLY:STRING_match
- use BS,              ONLY:BS_H_dim
+ use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_eh_table,BS_E,BS_mat
  use real_time,       ONLY:RT_bands
  !
@@ -43,10 +43,9 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
  !
  ! Work space
  !
- integer              :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
- complex(SP)          :: dipole_rotated(3),f_eh(2)
- logical              :: l_EQ
- !
+ integer           :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
+ complex(SP)       :: dipole_rotated(3),f_eh(2)
+ logical           :: l_EQ
  !
  l_EQ = STRING_match(TRabsMODE,"eq")
  !
@@ -54,9 +53,9 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
  ! -------------
  if (index(what,"BSE")>0) then
    !
-   do i_l=1,BS_H_dim
+   do i_l=1,BS_K_dim(1)
      !
-     do i_lp = 1,BS_H_dim
+     do i_lp = 1,BS_K_dim(1)
        !
        i_kbz   = BSS_eh_table(i_lp,1)
        i_kibz  = Xk%sstar(i_kbz,1)
@@ -80,7 +79,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
      !
    enddo
    !
-   N_trans=BS_H_dim
+   N_trans=BS_K_dim(1)
    !
    return
    !
@@ -118,7 +117,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
            !
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
-           TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated)*sqrt(f_eh(2))
+           TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated) *sqrt(f_eh(2))
            !
          enddo
        enddo

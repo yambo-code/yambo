@@ -26,17 +26,17 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use pars,           ONLY:IP
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
- use stderr,         ONLY:STRING_remove,intc,STRING_match
+ use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_antires_from_resonant,BSS_damp_reference,&
 &                         BSS_uses_DbGd,BSS_q0,BSS_eels_to_eps
- use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,l_BS_anomalous_Hall,&
-&                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_res_K_exchange,l_BS_anomalous_Hall,&
+&                         BS_n_g_W,BS_K_is_ALDA,BS_cpl_K_corr,BS_cpl_K_exchange,&
 &                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
 &                         BS_perturbative_SOC,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
 &                         l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics
@@ -125,10 +125,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    if (STRING_match(BSS_mode,'t')) then
      !
-     ! Remove the exchange from the BS_mode
-     ! if TDDFT Fxc is obtained from K
+     ! Remove the exchange if TDDFT Fxc is obtained from K
      !
-     if (.not.STRING_match(BSS_mode,'t')) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
+     BS_res_K_exchange=.FALSE.
+     BS_cpl_K_exchange=.FALSE.
+     !
      BSE_mode='retarded'
      call parser('FxcRetarded',FXC_is_retarded)
      !
@@ -140,13 +141,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !====================
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
  !
- BS_res_K_corr=STRING_match(BS_res_mode,'c')
- BS_res_K_exchange=STRING_match(BS_res_mode,'x')
- BS_cpl_K_corr=STRING_match(BS_cpl_mode,'c')
- BS_cpl_K_exchange=STRING_match(BS_cpl_mode,'x')
- BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BSS_add_antiresonant=STRING_match(BSE_mode,'retarded')
- BS_W_is_diagonal=STRING_match(BS_res_mode,'d')
+ BSS_antires_from_resonant=STRING_match(BSE_mode,'retarded')
  BS_K_is_ALDA=l_alda_fxc
  !
  BS_dip_size=1
@@ -309,7 +304,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      if (.not.iq==1) then
        if (BS_n_g_exch> Max_G_m_G ) then
          call warning (' Exch size reduced from '//trim(intc(BS_n_g_exch))//' to '&
-         &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
+&                        //trim(intc(Max_G_m_G))//' due to symmetry constraints')
          BS_n_g_exch= Max_G_m_G
          call msg('s','[BSE-exch] Exch size forced by symmetry to be ',BS_n_g_exch)
        endif
@@ -317,7 +312,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      !
      if (BS_n_g_W> Max_G_m_G ) then
        call warning (' W size reduced from '//trim(intc(BS_n_g_W))//' to '&
-       &             //trim(intc(Max_G_m_G))//' due to symmetry constraints')
+&                    //trim(intc(Max_G_m_G))//' due to symmetry constraints')
        BS_n_g_W= Max_G_m_G
        call msg('s','[BSE-W] W size forced by symmetry to be ',BS_n_g_W)
      endif

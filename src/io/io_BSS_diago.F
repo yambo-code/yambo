@@ -77,7 +77,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
    call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="[BSS] Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Number of BSE matrices   ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return

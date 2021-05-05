@@ -47,7 +47,7 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
  type(DIPOLE_t) :: Dip
  integer        :: iq
  !
- logical, external :: K_Transitions_single_trans_is_ok
+ logical, external :: K_Transition_check
  !
  ! Work Space
  !
@@ -120,8 +120,8 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
              if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_c ; endif
              if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_v ; endif
              !
-             if (.not.K_Transitions_single_trans_is_ok(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
-&                                                      E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
+             if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp1,i_res_ares,&
+&                                        E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
              !
              BS_K_dim(i_res_ares)=BS_K_dim(i_res_ares)+1
              !

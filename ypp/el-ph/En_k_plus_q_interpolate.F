@@ -29,7 +29,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use interpolate,         ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients,INTERPOLATE_is_quiet, &
          &                     INTERPOLATE_is_serial
- use ELPH,                ONLY:GKKP_me,elph_nb
+ use ELPH,                ONLY:GKKP_me,elph_nb,FineGd_E_kpq_alloc
  use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  !
@@ -41,7 +41,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  ! Work space
  !
- integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine
+ integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
  integer               :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
@@ -119,17 +119,16 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
-   GKKP%E_dg_kpq(iqbz)%nb=elph_nb
    GKKP%E_dg_kpq(iqbz)%nk=k%nibz
-   GKKP%E_dg_kpt(iqbz)%nq_fine=nq_around
-   YAMBO_ALLOC(GKKP%E_dg_kpt%E(elph_nb,k%nibz,n_sp_pol,nq_around)
+   GKKP%E_dg_kpq(iqbz)%nq_fine=nq_around
+   call FineGd_E_kpq_alloc(GKKP%E_dg_kpq(iqbz))
    !
    ic=1
    do ik=1,k%nibz
     do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
       iq_idx=iq_fine-q%FGbz%k_range(iqbz,1)
-      GKKP%E_dg_kpq(iqbz)%E(:elph_nb,ik,:,iq_idx)=E_kpq%E(:elph_nb,ic,:)
-      GKKP%E_dg_kpq(iqbz)%f(:elph_nb,ik,:,iq_idx)=E_kpq%f(:elph_nb,ic,:)
+      GKKP%E_dg_kpq(iqbz)%E_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%E(:elph_nb,ic,:)
+      GKKP%E_dg_kpq(iqbz)%f_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%f(:elph_nb,ic,:)
       ic=ic+1
     enddo
   enddo

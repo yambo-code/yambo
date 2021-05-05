@@ -201,8 +201,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
      ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
      !
      ik_plus_q_dg=(ik-1)*nq_around+ic                             ! k+q_dg index
-     E_kpq       =GKKP%E_dg_kpq(iq_bz)%E(ob,ik_plus_q_dg,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
-     f_occ       =GKKP%E_dg_kpq(iq_bz)%f(ob,ik_plus_q_dg,1,iq_idx)/spin_occ
+     E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik_plus_q_dg,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
+     f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik_plus_q_dg,1,iq_idx)/spin_occ
      !
      do iw=1,gsqF_energy_steps
        ! 

@@ -33,7 +33,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use timing_m,       ONLY:timing
  use stderr,         ONLY:intc
 #if defined _ELPH
- use ELPH,           ONLY:GKKP,elph_nb
+ use ELPH,           ONLY:GKKP,elph_nb,FineGd_E_kpq_alloc
  use interfaces,     ONLY:ELPH_alloc
 #endif
  use pars,           ONLY:IP,SP
@@ -173,21 +173,17 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=3,VAR_KIND=IP+100,MENU=0) 
    call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nk,VAR=' [E_dg_kpq] Nk',DESCRIPTOR=FineGd_desc)
-   call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nb,VAR=' [E_dg_kpq] Nbands',DESCRIPTOR=FineGd_desc)
    call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nq_fine,VAR=' [E_dg_kpq] NQ-fine',DESCRIPTOR=FineGd_desc)
    call def_variable_elemental(ID_frag,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
    !
-   if(read_is_on(ID)) then
-     YAMBO_ALLOC(GKKP%E_dg_kpq(iq)%E,())
-     YAMBO_ALLOC(GKKP%E_dg_kpq(iq)%F,())
-   endif
+   if(read_is_on(ID)) call FineGd_E_kpq_alloc(GKKP%E_dg_kpq(iq)) 
    !
    write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
-   call def_variable_bulk(ID_frag, trim(VAR_NAME),1, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%E),VAR_KIND=SP)
-   call  io_variable_bulk(ID_frag,1, R4=GKKP%E_dg_kpq(iq)%E)
+   call def_variable_bulk(ID_frag, trim(VAR_NAME),1, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%E_kpq),VAR_KIND=SP)
+   call  io_variable_bulk(ID_frag,1, R4=GKKP%E_dg_kpq(iq)%E_kpq)
    write (VAR_name,'(a,i4.4)') 'f_K_Plus_Q_',iq
-   call def_variable_bulk(ID_frag, trim(VAR_NAME),2, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%f),VAR_KIND=SP)
-   call  io_variable_bulk(ID_frag,2, R4=GKKP%E_dg_kpq(iq)%f)
+   call def_variable_bulk(ID_frag, trim(VAR_NAME),2, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%f_kpq),VAR_KIND=SP)
+   call  io_variable_bulk(ID_frag,2, R4=GKKP%E_dg_kpq(iq)%f_kpq)
    !  
    call io_fragment_disconnect(ID,ID_frag)
    !

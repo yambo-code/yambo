@@ -372,8 +372,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
      enddo
      !
-   enddo
- enddo
+   enddo  ! i_qp loop
+   !
+   if(use_PH_DbGd) call FineGd_E_kpq_free(GKKP%E_dg_kpq(iq_loop))
+   !
+ enddo ! iq_bz loop
  !
  call live_timing()
  !

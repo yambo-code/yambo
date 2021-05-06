@@ -33,12 +33,9 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
  use R_lattice,    ONLY:qindx_X,bz_samp
  use electrons,    ONLY:levels,n_sp_pol
  use DIPOLES,      ONLY:DIPOLE_t
- use BS_solvers,   ONLY:BSS_mode,BSS_slepc_double_grp,BSS_slepc_matrix
- use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BSE_mode,    &
-&                       BS_K_coupling,BS_bands,BS_K_coupling,  &
-&                       l_BS_ares_asymm,BS_res_ares_dim,BS_mat_res_ares_dim
- use parser_m,     ONLY:parser
- use BS,           ONLY:l_BS_magnons,l_BS_photolum
+ use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,BS_bands,BS_K_coupling,  &
+&                       l_BS_ares_from_res,BS_n_eh_spaces,BS_res_ares_n_mat
+ use BS,           ONLY:l_BS_magnons
  !
 #include<memory.h>
  !
@@ -52,42 +49,8 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
  ! Work Space
  !
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
- logical      :: l_BS_ares_symm,l_slepc_special
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,ib1,ib2,isp1,&
 &                i_star,nb(2),BS_nT_at_k_tmp(Xk%nibz*2),i_res_ares
- !
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
- !
- ! Developer options. Without the code works in default mode
- ! With the user can switch to experimental coding
- call parser('ImposeAsym',l_BS_ares_asymm)
- call parser('ImposeSymm',l_BS_ares_symm)
- !
- l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
- l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
- !
-#if defined _SLEPC && !defined _SLEPC_OFF
- !
- ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
- !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
- l_BS_ares_asymm=l_BS_ares_asymm .or. (l_slepc_special.and..not.l_BS_ares_symm)
- BSS_slepc_double_grp=(.not.l_BS_ares_asymm).and.l_slepc_special
- !
-#endif
- !
- l_BS_ares_asymm=l_BS_ares_asymm.and.trim(BSE_mode)/="resonant"
- !
- BS_res_ares_dim=1
- BS_mat_res_ares_dim=1
- if (l_BS_ares_asymm) then
-   BS_res_ares_dim=2
-   if (.not.BS_K_coupling) BS_mat_res_ares_dim=2
- endif
  !
  BS_K_dim=0
  BS_nT_at_k_tmp=0
@@ -97,7 +60,7 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
  nb(1)=Ken%nbf+1
  nb(2)=Ken%nbm
  !
- do i_res_ares=1,BS_res_ares_dim
+ do i_res_ares=1,BS_n_eh_spaces
    do i_sp_c=1,n_sp_pol
      i_sp_v=i_sp_c
      !
@@ -135,17 +98,17 @@ subroutine K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    enddo ! spin
  enddo ! i_res_ares
  !
- YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz*BS_res_ares_dim))
- BS_nT_at_k=BS_nT_at_k_tmp(:Xk%nibz*BS_res_ares_dim)
+ YAMBO_ALLOC(BS_nT_at_k,(Xk%nibz*BS_n_eh_spaces))
+ BS_nT_at_k=BS_nT_at_k_tmp(:Xk%nibz*BS_n_eh_spaces)
  !
  if (any(BS_nT_at_k==0)) call warning(' Null BSE kernel block dimension(s) found.')
  if (sum(BS_nT_at_k)==0) call   error(' The whole BSE has zero dimension !')
  !
  BS_H_dim=BS_K_dim(1)
- if (l_BS_ares_asymm) then
-   if (BS_mat_res_ares_dim==2.or.BS_K_coupling) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
- else
+ if (l_BS_ares_from_res) then
    if (BS_K_coupling) BS_H_dim=2*BS_K_dim(1)
+ else
+   if (BS_res_ares_n_mat==2.or.BS_K_coupling) BS_H_dim=BS_K_dim(1)+BS_K_dim(2)
  endif
  !
 end subroutine

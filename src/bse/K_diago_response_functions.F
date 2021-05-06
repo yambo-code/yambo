@@ -33,7 +33,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
  use parallel_m,     ONLY:myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_perturbative_SOC,BS_mat_res_ares_dim,l_BS_abs,l_BS_jdos,l_BS_esort
+ use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort
  use BS_solvers,     ONLY:BSS_n_eig,BSS_antires_from_resonant,Co_factor,diam_term_exact,BSS_eels_to_eps
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
@@ -115,7 +115,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      !
      if(l_BS_jdos) then
        Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_antires_from_resonant.and.BS_mat_res_ares_dim==1) then
+       if (BSS_antires_from_resonant.and.BS_res_ares_n_mat==1) then
          Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
@@ -127,7 +127,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
          nVAR=nVAR+1
        endif
        Epsilon_ii(:,2)=Epsilon_ii(:,2)-res_abs/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_antires_from_resonant.and.BS_mat_res_ares_dim==1) then
+       if (BSS_antires_from_resonant.and.BS_res_ares_n_mat==1) then
          Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
        !
@@ -142,7 +142,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
          nVAR=nVAR+1
        endif
        Epsilon_ij(:,2)=Epsilon_ij(:,2)-res_kerr/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_antires_from_resonant.and.BS_mat_res_ares_dim==1) then
+       if (BSS_antires_from_resonant.and.BS_res_ares_n_mat==1) then
          Epsilon_ij(:,2)=Epsilon_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
@@ -154,14 +154,14 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))
        X_magnons(:,2,2)=X_magnons(:,2,2)-res_magn(2)/(W%p(:)-EXC_E(i_pert_SOC))
-       if (BSS_antires_from_resonant.and.BS_mat_res_ares_dim==1) then
+       if (BSS_antires_from_resonant.and.BS_res_ares_n_mat==1) then
          X_magnons(:,1,2)=X_magnons(:,1,2)+conjg(res_magn(2))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
          X_magnons(:,2,2)=X_magnons(:,2,2)+conjg(res_magn(1))/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
      if(l_BS_photolum) then
        PL(:,2)=PL(:,2)+PL_prefactor*ares_fac*BS_R_PL(1,i1)*aimag(-1._SP/(W%p(:)-EXC_E(i_pert_SOC)))/pi
-       if (BSS_antires_from_resonant.and.BS_mat_res_ares_dim==1) then
+       if (BSS_antires_from_resonant.and.BS_res_ares_n_mat==1) then
          PL(:,2)=PL(:,2)+PL_prefactor*BS_R_PL(2,i1)*aimag(-1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC))))/pi
        endif
      endif
@@ -207,7 +207,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    deallocate(BS_E_sorted_tmp)
  endif
  !
- if (BS_mat_res_ares_dim/=i_BS_mat) return
+ if (BS_res_ares_n_mat/=i_BS_mat) return
  !
  if(l_BS_jdos)  call PP_redux_wait(Joint_DOS(:,2) )
  !

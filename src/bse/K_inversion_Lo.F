@@ -33,7 +33,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
 &                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
 &                         BSS_eh_W,&
 &                         BSS_antires_from_resonant,K_diago_in_BS_mat,BS_diagonal
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_res_ares_dim
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_n_eh_spaces
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -116,12 +116,12 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call W_duplicate(W,W_mins)
    call W_duplicate(W,W_plus)
    !
-   do i_res_ares=1,BS_res_ares_dim
+   do i_res_ares=1,BS_n_eh_spaces
      do i_bsk=1,BS_K_dim(i_res_ares)
        !
        i_res=i_bsk
        i_cpl=i_res+BS_K_dim(1)
-       if(BS_res_ares_dim==2) i_res=i_res+BS_K_dim(1)*(i_res_ares-1)
+       if(BS_n_eh_spaces==2) i_res=i_res+BS_K_dim(1)*(i_res_ares-1)
        !
        ik_bz =BSS_eh_table(i_res,1)
        iv    =BSS_eh_table(i_res,2)
@@ -137,7 +137,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        i_Lo      =1
        transition=(/ik_bz,iv,ic,i_sp_c/)
        !
-       if (BS_res_ares_dim==2) then
+       if (BS_n_eh_spaces==2) then
          if ( i_res_ares==1) i_Lo      =1
          if ( i_res_ares==2) i_Lo      =2
        else
@@ -195,7 +195,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
        endif     
        !
-       if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
+       if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_n_eh_spaces==1) then
          residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
          if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
          Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
@@ -204,7 +204,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if (l_BS_photolum.and.i_loop==1) then
          residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
          PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
+         if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_n_eh_spaces==1) then
            PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
          endif
        endif

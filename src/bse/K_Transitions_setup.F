@@ -40,7 +40,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  use stderr,       ONLY:intc
  use com,          ONLY:isec
  use BS_solvers,   ONLY:BSS_mode
- use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_res_ares_dim,&
+ use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
@@ -98,7 +98,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
    ! DS: WARNING
    ! I cannot revert ik and i_sp_pol loop here ...
    !
-   do i_res_ares=1,BS_res_ares_dim
+   do i_res_ares=1,BS_n_eh_spaces
      !
      i_T_group_start=i_T_group_now+1
      !

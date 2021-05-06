@@ -23,21 +23,16 @@
 !
 subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
- ! Given
+ ! Given K distributed on the processors, and Vi distributed on the processors
+ ! multiply Tranpose(K) by Vi.
  !
- !      |   (K_r)     (cI*K_c)  |  
- !  K = |                       |
- !      | -(cI*K_c)^*  (-K_r)^* |
- !
- ! distibuted on the processors, and Vi distributed on the processors
- !
- ! Multiply K by Vi
+ ! See mod_BS for details on the K structure
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
  use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp
- use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_asymm
+ use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res
  use wrapper,        ONLY:M_by_V
  !
  implicit none
@@ -50,7 +45,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  integer         ::i_B,i_Tk,i_Tp,i_g
  complex(SP)     ::alpha
  !
- ! The factor cI is needed for the coupling when l_BS_ares_asymm=.false.
+ ! The factor cI is needed for the coupling when l_BS_ares_from_res=.TRUE.
  !
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
@@ -94,7 +89,7 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
      !
    case("C")
      !
-     if (.not.l_BS_ares_asymm) then
+     if (l_BS_ares_from_res) then
        !
        ! Coupling part
        !

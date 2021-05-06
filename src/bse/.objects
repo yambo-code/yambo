@@ -8,8 +8,9 @@ PARIO_objects = K_compress.o
 #if defined _SCALAPACK
 SLK_objects = K_inversion_do_it_SLK.o
 #endif
-objs =	K_blocks.o K_driver.o K_IP.o \
+objs =	K_blocks.o K_driver_init.o K_IP.o \
         K_Transitions_setup.o K_Transitions_k_resolved.o K_Transition_check.o \
+        K_driver.o \
         K_WF_phases.o \
         K.o $(PARIO_objects) K_correlation_collisions.o K_exchange_collisions.o K_correlation_kernel.o K_exchange_kernel.o \
         K_restart.o K_solvers.o K_Haydock.o K_Haydock_response.o K_screened_interaction.o \

@@ -46,7 +46,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,l_BS_ares_asymm,&
+&                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
@@ -528,7 +528,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_c=cZERO
        !
        mode_now=BS_blk(i_block)%mode
-       if(l_BS_ares_asymm) mode_now="F"
+       if (.not.l_BS_ares_from_res) mode_now="F"
        !
        select case (mode_now)
        !

@@ -35,6 +35,7 @@ module BS
  logical :: l_BSE_restart
  logical :: BS_W_is_diagonal=.FALSE.
  logical :: BS_K_coupling=.FALSE.
+ logical :: BS_K_anti_resonant=.FALSE.
  logical :: BS_res_K_exchange=.FALSE.
  logical :: BS_res_K_corr=.FALSE.
  logical :: BS_cpl_K_exchange=.FALSE.
@@ -82,15 +83,55 @@ module BS
  !
  ! Resonant/Antiresonant handling
  !================================
- ! -> l_BS_ares_not_from_res
- logical :: l_BS_ares_asymm ! For cases where the ares block is not -R*:
-                            ! - n_sp_pol==2 finite Q or magnons, Res and Ares are independent: --> no coupling = diag 2 BSE matrices
-                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
-                            ! - n_spinor==2, finite Q only,      Res and Ares are independent: --> no coupling = diag 2 BSE matrices
-                            !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
  !
- integer :: BS_mat_res_ares_dim  ! -> BS_res_ares_n_eh_spaces=1 ! 1 if only res eh subspace is considered
- integer :: BS_res_ares_dim      ! -> BS_res_ares_n_matrices =1 ! 1 if only res mat is evaluated
+ ! The BS kernel, in general, is composed of two resonant (K_r,R and K_c,R) and two anti-resonant (K_r,A and K_c,A) 
+ ! blocks.
+ !
+ !      |  K_r,R(q)          cI*K_c,R(q)  |  
+ !  K = |                                 | (1)
+ !      | cI*K_c,A(q)        K_r,A^*(q)   |
+ !
+ ! In general we have
+ !
+ !  K_c,A(q) = - (K_c,R(-q))^*   (2)
+ !  K_r,A(q) = - (K_r,R(-q))^*   (3)
+ !
+ ! But in some cases (2) and (3) do not hold
+ !
+ !  - n_sp_pol==2 and q/=1
+ !  - n_spinor==2 and q/=1
+ !  - magnons
+ !
+ ! ONLY in these cases and when we need the entire matrix (l_BS_anti_resonant=.TRUE.) we have
+ !
+ !  l_BS_ares_from_res=.FALSE.
+ !
+ ! and
+ !
+ !  BS_n_eh_spaces=2  (RES + ANTI-RES eh spaces)
+ !
+ ! In addition
+ !
+ ! --> no coupling = 2 BSE matrices (K_r,R(q) and K_r,A^*(q)) --> BS_res_ares_n_mat=2
+ ! -->    coupling = 1 BSE matrix with all 4 blocks  in (1)   --> BS_res_ares_n_mat=1
+ !
+ ! Summary
+ !=========
+ !                                  BS_res_ares_n_mat  BS_n_eh_spaces
+ !
+ !  l_BS_anti_resonant=.FALSE.      1                  1
+ !
+ !  l_BS_anti_resonant=.TRUE.
+ !  |_ l_BS_K_coupling=.TRUE.                           
+ !     |_l_BS_ares_from_res=.TRUE.  1                  1 
+ !     |_l_BS_ares_from_res=.FALSE. 1                  2
+ !  |_ l_BS_K_coupling=.FALSE.                          
+ !     |_l_BS_ares_from_res=.TRUE.  1                  1 
+ !     |_l_BS_ares_from_res=.FALSE. 2                  2
+ !
+ logical :: l_BS_ares_from_res=.TRUE. 
+ integer :: BS_res_ares_n_mat=1
+ integer :: BS_n_eh_spaces=1 
  !
  ! Live Timing
  !=============
@@ -302,7 +343,7 @@ module BS
      integer :: nT,nDIP
      !
      nT=BS_T_grp(iT)%size
-     nDIP=2/BS_res_ares_dim
+     nDIP=2/BS_n_eh_spaces
      !
      YAMBO_ALLOC(BS_T_grp(iT)%dipoles_opt,(BS_dip_size,nT,nDIP))
      BS_T_grp(iT)%dipoles_opt=cZERO
@@ -412,8 +453,8 @@ module BS
            enddo
          enddo
        case("C","Q")
-         if (l_BS_ares_asymm) cycle
-         ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_asymm=.true.
+         if (.not.l_BS_ares_from_res) cycle
+         ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_from_res=.TRUE.
          do i_r=1,BS_blk(i_B)%size(1)
            !This gives fails with test-suite test Benzene 06_tddft_cpl
            !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))

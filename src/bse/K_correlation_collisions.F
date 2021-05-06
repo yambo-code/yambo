@@ -44,7 +44,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_load
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
-&                        BS_K_dim,l_BS_ares_asymm,BS_K_is_ALDA
+&                        BS_K_dim,l_BS_ares_from_res,BS_K_is_ALDA
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -68,8 +68,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp(2) 
  ! OMP LAST DEF
- integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
+ integer ::     i_k_bz_last,i_p_bz_last, & 
+&               iq_W_bz_last,ig_W_last
  !
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  character(1):: mode_now
@@ -137,8 +137,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  i_p_bz_last=0  ; i_k_bz_last=0
  !
  mode_now=BS_blk(i_block)%mode
- if(l_BS_ares_asymm) mode_now="F"
- !
+ if (.not.l_BS_ares_from_res) mode_now="F"
  !
  select case (mode_now)
  case("R","A","F")

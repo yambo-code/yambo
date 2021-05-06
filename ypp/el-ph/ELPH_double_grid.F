@@ -203,7 +203,7 @@ subroutine ELPH_double_grid(k,E,q)
      !     
      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
        iE_fg=q%FGbz%E_map(iq_fg)  
-       PH_freqs%FG%E(:,iE_fg,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:))) 
+       PH_freqs%FG%E(:,iE_fg,1)=PH_freqs%E(:,iq_ibz,1) 
      enddo
      !
      do ik=1,k%nibz

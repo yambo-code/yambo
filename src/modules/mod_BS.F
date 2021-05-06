@@ -89,8 +89,8 @@ module BS
                             ! - n_spinor==2, finite Q only,      Res and Ares are independent: --> no coupling = diag 2 BSE matrices
                             !                                                                  -->    coupling = 1 BSE matrix with 4 blocks, no symmetrization
  !
- integer :: BS_mat_res_ares_dim  ! -> BS_res_ares_n_eh_spaces ! If 1 only res eh subspace is considered
- integer :: BS_res_ares_dim      ! -> BS_res_ares_n_matrices  ! If 1 only res mat is stored
+ integer :: BS_mat_res_ares_dim  ! -> BS_res_ares_n_eh_spaces=1 ! 1 if only res eh subspace is considered
+ integer :: BS_res_ares_dim      ! -> BS_res_ares_n_matrices =1 ! 1 if only res mat is evaluated
  !
  ! Live Timing
  !=============

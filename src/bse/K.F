@@ -107,7 +107,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! I/O
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr
- integer, external ::io_BS,io_BS_PAR_init,io_BS_header
+ integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
  ! Timing and restart
@@ -573,12 +573,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-       if (l_BS_ares_asymm) then
-         BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       else
-         if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-         if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       endif
+       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*BS_blk(i_block)%mat(i_Tk,i_Tp)
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !

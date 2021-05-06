@@ -41,15 +41,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_tools,       ONLY:it,infile_dump,ofiles_append,&
-&                         switch_off_runlevel,check_verbosity,runlevel_is_on
+ use it_tools,       ONLY:it,infile_dump,ofiles_append,switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_int,   ONLY:PP_redux_wait
  use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
- use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
-&                         QP_table,COHSEX_use_empties
+ use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_same
@@ -394,8 +392,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_pf_fxc     = STRING_same(Chi_mode,'PF')
      l_bs_fxc     = STRING_same(trim(Chi_mode),"BSFXC").or.STRING_same(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
-     l_td_hf      = trim(BSK_mode)=="HF"
-     l_td_sex     = trim(BSK_mode)=="SEX"
+     l_td_hf      = STRING_same(trim(BSK_mode),"HF")
+     l_td_sex     = STRING_same(trim(BSK_mode),"SEX")
      !
    end subroutine logicalson
    !
@@ -511,15 +509,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex
        BS_W_is_diagonal =l_td_hf
        BS_K_coupling    =index(BSE_mode,'coupling')>0
+       if (BS_K_coupling) then
+         BS_cpl_K_exchange=BS_res_K_exchange  
+         BS_cpl_K_corr    =BS_res_K_corr      
+       endif
        if(l_td_sex) then
          call parser('WehDiag',dummy_logical)
          if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
          call parser('WehCpl' ,dummy_logical )
-         if (.not.dummy_logical) BS_K_coupling=.FALSE.
-       endif
-       if (BS_K_coupling) then
-         BS_cpl_K_exchange=BS_res_K_exchange  
-         BS_cpl_K_corr    =BS_res_K_corr      
+         if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
        endif
      endif
      !

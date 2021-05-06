@@ -213,7 +213,7 @@ subroutine ELPH_double_grid(k,E,q)
        !
        do is=1,n_sp_pol
          do ib=1,elph_nb
-           GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,:)=E%E(ib,ok,is)
+           GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,1:GKKP%E_dg_kpq(iq_bz)%nq_around)=E%E(ib,ok,is)
          enddo
        enddo
        !

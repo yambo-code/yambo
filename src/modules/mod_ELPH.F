@@ -60,7 +60,7 @@ module ELPH
  !
  type E_kpq_fine_grid
    integer         :: nk
-   integer         :: nq_fine
+   integer         :: nq_around
    real(SP),   allocatable :: E_kpq(:,:,:,:)
    real(SP),   allocatable :: f_kpq(:,:,:,:)
  end type
@@ -146,7 +146,7 @@ module ELPH
      type(E_kpq_fine_grid):: E
      !
      E%nk     =0
-     E%nq_fine=0
+     E%nq_around=0
      !
      YAMBO_FREE(E%E_kpq)
      YAMBO_FREE(E%f_kpq)
@@ -159,8 +159,8 @@ module ELPH
      !
      type(E_kpq_fine_grid):: E
      !
-     YAMBO_ALLOC(E%E_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_fine))
-     YAMBO_ALLOC(E%f_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_fine))
+     YAMBO_ALLOC(E%E_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
+     YAMBO_ALLOC(E%f_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
      !
    end subroutine
    !

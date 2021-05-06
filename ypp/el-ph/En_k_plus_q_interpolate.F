@@ -90,8 +90,7 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    ic=1
    do ik=1,k%nibz
     do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
-!       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(q%FGbz%k_range(iqbz,1),:) 
-       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%ptbz(iqbz,:) 
+       k_plus_q%pt(ic,:)=k%pt(ik,:)+q%FGbz%pt(iq_fine,:)
        ic=ic+1
      enddo
    enddo
@@ -116,8 +115,8 @@ subroutine En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
    !
    ! Store E(k+q) energies in the GKKP
    ! ==========================================
-   GKKP%E_dg_kpq(iqbz)%nk=k%nibz
-   GKKP%E_dg_kpq(iqbz)%nq_fine=nq_around
+   GKKP%E_dg_kpq(iqbz)%nk       =k%nibz
+   GKKP%E_dg_kpq(iqbz)%nq_around=nq_around
    call FineGd_E_kpq_alloc(GKKP%E_dg_kpq(iqbz))
    !
    ic=1

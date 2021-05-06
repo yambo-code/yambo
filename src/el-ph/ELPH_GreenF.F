@@ -169,7 +169,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    delta_E_at_gamma=en%E(ib,ik,1)  -GKKP%E_kpq(1)%E(ob,ik_bz,1)
  endif
  !
- eval_DW=.FALSE. !(.not.abs(delta_E_at_gamma)<DW_deltaE_treshold)
+ eval_DW=(.not.abs(delta_E_at_gamma)<DW_deltaE_treshold)
  !
  gsqF_RES_DW=cZERO
  !
@@ -196,10 +196,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
      !
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
-     iE_fg       =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-     ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-     write(*,*) ' inside ',PH_freqs%FG%E(il,iE_fg,1),sqrt(abs(PH_freqs_sq(iq_ibz,il)))
-!     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))   for testing porpouse
+     iE_fg =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+     ph_E  =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
      f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik,1,iq_idx)/spin_occ

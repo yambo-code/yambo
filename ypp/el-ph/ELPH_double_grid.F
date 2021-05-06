@@ -203,17 +203,20 @@ subroutine ELPH_double_grid(k,E,q)
      !     
      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
        iE_fg=q%FGbz%E_map(iq_fg)  
-!       write(*,*) ' passo qui ',iq_fg,iE_fg,PH_freqs%FG%E(4,iE_fg,1),PH_freqs%E(4,iq_ibz,1)
        PH_freqs%FG%E(:,iE_fg,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:))) 
      enddo
      !
-     okbz=qindx_S(ik,iq_bz,1)
-     ok=k%sstar(okbz,1)
-     !
-     do is=1,n_sp_pol
-       do ib=1,elph_nb
-         GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,:)=E%E(ib,ok,is)
+     do ik=1,k%nibz
+       !
+       okbz=qindx_S(ik,iq_bz,1)
+       ok=k%sstar(okbz,1)
+       !
+       do is=1,n_sp_pol
+         do ib=1,elph_nb
+           GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,:)=E%E(ib,ok,is)
+         enddo
        enddo
+       !
      enddo
      !
    enddo

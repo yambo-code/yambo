@@ -225,13 +225,21 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    enddo
    !
    if (eval_DW) then  
-     do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around
+     !      
+     do iq_fg=q%FGbz%k_range(1,1)+1,q%FGbz%k_range(1,2),1
+       !
+       iq_idx=iq_fg-q%FGbz%k_range(1,1)
        delta_E_at_gamma=en%E(ib,ik,1) - GKKP%E_dg_kpq(1)%E_kpq(ob,ik,1,iq_idx)
-       if(abs(delta_E_at_gamma)>DW_deltaE_treshold) then
+       iE_fg =q%FGbz%E_map(iq_fg)           
+       ph_E  =PH_freqs%FG%E(il,iE_fg,1)    
+       !
+       if(abs(delta_E_at_gamma)>DW_deltaE_treshold.and.abs(ph_E)>FAN_deltaE_treshold) then
          gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E
          DW_weight=DW_weight+1._SP
        endif
+       !
      enddo
+     !
    endif
    !
  else
@@ -248,6 +256,6 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
     gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)*weight_dbg
  endif
  !
- if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW*DW_weight
+ if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW/DW_weight
  !
 end subroutine

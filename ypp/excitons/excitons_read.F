@@ -32,8 +32,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  use IO_int,        ONLY:io_control,io_disconnect
  use IO_m,          ONLY:OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
- use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,&
-&                        BSqpts
+ use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BSqpts
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
  !
 #include<memory.h>
@@ -120,11 +119,10 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
  !
  if(l_eigenvec) then
    ! 
-   if(.not.BSS_write_eig_2_db) &
-&    call error(' Diagonalization database does not contain excitonic eigenstates.'//&
+   if(.not.BSS_write_eig_2_db) then
+     call error(' Diagonalization database does not contain excitonic eigenstates.'//&
 &               ' Re-run yambo using the WRbsWF flag in the input file.')
-   !
-   ! Adjust the user provided indexes to the average ones.
+   endif
    !
    ! Loading tables and eigenvectors
    !

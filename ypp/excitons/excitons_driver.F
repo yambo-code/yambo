@@ -108,7 +108,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  endif
 #endif
  !
- if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
+ if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors",io_err)
  ! 
  ! Exciton's spin
  !=====================
@@ -142,7 +142,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! CLEAN
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"clean")
+ call excitons_read(k,Xk,en,Xen,BSiq,"clean",io_err)
  !
  YAMBO_FREE(EXCITONS_user_indexes)
  !

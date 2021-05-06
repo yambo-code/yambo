@@ -193,7 +193,7 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out .and. eval_beta) then
    ! Alpha units
-   call msg('o beta','#',' Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
+   call msg('o beta','#',' Beta is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o beta','#')
  endif
  !

@@ -266,7 +266,7 @@ module X_output
      else
        !
        suffix(1:2) = (/'-Im[2]',  '-Re[3]'/)
-       suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
+       suffix(3:4) = (/'_o-Im[4]','_o-Re[5]'/)
        suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
        !
        n_s = 6

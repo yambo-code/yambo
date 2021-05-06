@@ -48,7 +48,7 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
  use real_time,      ONLY:RT_ind_J_prev,RT_ind_J,RT_P_prev,RT_P,RT_dyn_step,   &
 &                         l_RT_induced_field,Integrator_step,Integrator_nsteps,&
 &                         RT_bands
- use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset
+ use fields,         ONLY:gauge_field,A_ind,A_ext,A_vecpot_reset,compute_intensity,compute_envelop
  !
  implicit none
  !
@@ -141,17 +141,26 @@ subroutine RT_propagate_fields(E,k,A_old,A_new,G_inp,T,T_step)
      A_ind_new%vecpot_acc =                    real(RT_ind_J) *4._SP*pi*SPEED_OF_LIGHT 
    endif
    !
+   call compute_intensity(A_ind_new)
+   call compute_envelop(A_ind_new)
+   !
    A_ind=A_ind_new
    !
    A_new%vecpot    =A_ext%vecpot    +A_ind%vecpot
    A_new%vecpot_vel=A_ext%vecpot_vel+A_ind%vecpot_vel
    A_new%vecpot_acc=A_ext%vecpot_acc+A_ind%vecpot_acc
    !
+   A_new%envelop  = A_ext%envelop  +A_ind%envelop
+   A_new%intensity= A_ext%intensity+A_ind%intensity
+   !
  else
    !
    A_new%vecpot    =A_ext%vecpot    
    A_new%vecpot_vel=A_ext%vecpot_vel
    A_new%vecpot_acc=A_ext%vecpot_acc
+   !
+   A_new%envelop  = A_ext%envelop
+   A_new%intensity= A_ext%intensity
    !
  endif
  !

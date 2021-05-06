@@ -387,6 +387,20 @@ module fields
      A%intensity =0._SP
    end subroutine
    !
+   subroutine compute_intensity(A)
+     use pars,   ONLY:SP
+     use units,  ONLY:SPEED_OF_LIGHT
+     type(gauge_field) :: A
+     A%intensity= (abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   end subroutine compute_intensity
+   !
+   subroutine compute_envelop(A)
+     use pars,   ONLY:SP
+     use units,  ONLY:SPEED_OF_LIGHT
+     type(gauge_field) :: A
+     A%envelop= sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
+   end subroutine compute_envelop
+   !
    complex(SP) function Rabi_Factor(Field,P,R)
      use X_m,       ONLY:global_gauge
      !

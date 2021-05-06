@@ -41,11 +41,11 @@ subroutine RT_Ext_fields(A,time,i_f)
  ! b. uses A" (the ext current) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
- use pars,           ONLY:SP,cZERO,pi
+ use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_dyn_step,NE_i_time
- use fields,         ONLY:Efield,small_a,gauge_field
  use functions,      ONLY:theta_function
+ use fields,         ONLY:Efield,small_a,gauge_field,compute_intensity,compute_envelop
  !
  implicit none
  !
@@ -96,8 +96,8 @@ subroutine RT_Ext_fields(A,time,i_f)
      call error("Unknown external field polarization! ")
    end select
    !
-   if(ikind==1) A%envelop  =sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
-   if(ikind==2) A%intensity=    (abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT/4._SP/pi
+   if(ikind==1) call compute_envelop(A)
+   if(ikind==2) call compute_intensity(A)
    !
  enddo
  !

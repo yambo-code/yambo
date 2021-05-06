@@ -173,7 +173,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=3,VAR_KIND=IP+100,MENU=0) 
    call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nk,VAR=' [E_dg_kpq] Nk',DESCRIPTOR=FineGd_desc)
-   call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nq_fine,VAR=' [E_dg_kpq] NQ-fine',DESCRIPTOR=FineGd_desc)
+   call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nq_around,VAR=' [E_dg_kpq] NQ-fine',DESCRIPTOR=FineGd_desc)
    call def_variable_elemental(ID_frag,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
    !
    if(read_is_on(ID)) call FineGd_E_kpq_alloc(GKKP%E_dg_kpq(iq)) 

@@ -69,7 +69,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight
+ real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight,DW_weight
  !
  logical  :: eval_DW
  !
@@ -188,11 +188,12 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! IF double-grid is present aveages all denominators on the q-points 
  ! of the fine grid around iq_bz
  !
+ DW_weight=1._SP
+ !
  if(use_PH_DbGd) then
    !      
    nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)   ! Number of fine q-points around iq_bz
-   weight_dbg=1.0/(nq_around+1._SP)                             ! Total weight of the Db-grid points including the iq_bz
-   !
+   weight_dbg=1._SP/(real(nq_around,SP)+1._SP)                             ! Total weight of the Db-grid points including the iq_bz
    do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
      !
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
@@ -221,12 +222,17 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
        !
      enddo
      !
-     if (eval_DW) then
-       delta_E_at_gamma=en%E(ib,ik,1)  -E_kpq
-       gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E
-     endif
-     !
-    enddo
+   enddo
+   !
+   if (eval_DW) then  
+     do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around
+       delta_E_at_gamma=en%E(ib,ik,1) - GKKP%E_dg_kpq(1)%E_kpq(ob,ik,1,iq_idx)
+       if(abs(delta_E_at_gamma)>DW_deltaE_treshold) then
+         gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E
+         DW_weight=DW_weight+1._SP
+       endif
+     enddo
+   endif
    !
  else
    weight_dbg=1._SP
@@ -242,6 +248,6 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
     gsqF_ca_corr(i_qp,iq_mem,il,:)=gsqF_ca_corr(i_qp,iq_mem,il,:) +gsqF_RES_ca_corr*gsqF_DEN_ca_corr(:)*weight_dbg
  endif
  !
- if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW*weight_dbg
+ if (eval_DW)  gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)    +gsqF_RES_DW *gsqF_DEN_DW*DW_weight
  !
 end subroutine

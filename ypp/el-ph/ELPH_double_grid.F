@@ -211,11 +211,13 @@ subroutine ELPH_double_grid(k,E,q)
        okbz=qindx_S(ik,iq_bz,1)
        ok=k%sstar(okbz,1)
        !
-       do is=1,n_sp_pol
-         do ib=1,elph_nb
-           GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,1:GKKP%E_dg_kpq(iq_bz)%nq_around)=E%E(ib,ok,is)
+       if(GKKP%E_dg_kpq(iq_bz)%nq_around>0) then
+         do is=1,n_sp_pol
+           do ib=1,elph_nb
+             GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,1:GKKP%E_dg_kpq(iq_bz)%nq_around)=E%E(ib,ok,is)
+           enddo
          enddo
-       enddo
+       endif
        !
      enddo
      !

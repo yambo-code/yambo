@@ -210,7 +210,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  PH_freqs%nb=ph_modes
  YAMBO_ALLOC(PH_freqs%E,(nq_to_sum,ph_modes,1))
  ! 
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
  io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
  !
  if(io_err==0) then
@@ -287,7 +287,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
    !
-   if(use_PH_DbGd) then
+   if(use_PH_DbGd.and.iq_loop>1) then  ! all processor load iq_loop=1 for the DW
      IO_ACT=manage_action(RD_CL_IF_END,iq_loop,1,nq_to_sum)
      call io_control(ACTION=IO_ACT,COM=REP,MODE=DUMP,SEC=(/1+iq_loop/),ID=ID_DG)
      io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
@@ -374,7 +374,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
    enddo  ! i_qp loop
    !
-   if(use_PH_DbGd) call FineGd_E_kpq_components_reset(GKKP%E_dg_kpq(iq_loop))
+   if(use_PH_DbGd.and.iq_loop/=1) call FineGd_E_kpq_components_reset(GKKP%E_dg_kpq(iq_loop))
    !
  enddo ! iq_bz loop
  !

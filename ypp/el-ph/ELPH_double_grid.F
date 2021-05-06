@@ -28,8 +28,9 @@ subroutine ELPH_double_grid(k,E,q)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset,qindx_S
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ
  use com,                 ONLY:msg
+ use units,               ONLY:HA2CMm1,HA2EV
  use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_int,              ONLY:io_control
@@ -80,17 +81,21 @@ subroutine ELPH_double_grid(k,E,q)
  !
  ! Read phonon-frequencies in the ELPH-DB
  ! ======================================
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
  io_err=io_ELPH(ID,'no_matrix_elements')
  if (io_err/=0) call error('El-Ph database not found')
  !
  if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')
+ !
  call E_reset(PH_freqs)
  PH_freqs%nb=ph_modes
- PH_freqs%nk=q%nibz
+ PH_freqs%nk=elph_nQ
  YAMBO_ALLOC(PH_freqs%E,(PH_freqs%nb,PH_freqs%nk,1))
- do i_f=1,ph_modes
-   PH_freqs%E(i_f,:,1)=sqrt(PH_freqs_sq(:,i_f))
+ !
+ do iq_ibz=1,elph_nQ
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1+iq_ibz/),ID=ID)
+   io_err=io_ELPH(ID,'no_matrix_elements')
+   PH_freqs%E(:,iq_ibz,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:)))
  enddo
  !
  ! Find border points and remove them if required
@@ -198,6 +203,7 @@ subroutine ELPH_double_grid(k,E,q)
      !     
      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
        iE_fg=q%FGbz%E_map(iq_fg)  
+!       write(*,*) ' passo qui ',iq_fg,iE_fg,PH_freqs%FG%E(4,iE_fg,1),PH_freqs%E(4,iq_ibz,1)
        PH_freqs%FG%E(:,iE_fg,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:))) 
      enddo
      !

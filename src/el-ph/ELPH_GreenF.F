@@ -198,6 +198,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
      iE_fg       =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
      ph_E        =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     write(*,*) ' inside ',PH_freqs%FG%E(il,iE_fg,1),sqrt(abs(PH_freqs_sq(iq_ibz,il)))
 !     ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))   for testing porpouse
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid

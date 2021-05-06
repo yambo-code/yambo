@@ -26,7 +26,8 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling
+ use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
+&                         BS_Blocks_symmetrize_K
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
 #include <petsc/finclude/petscsys.h>

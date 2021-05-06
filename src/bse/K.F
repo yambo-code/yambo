@@ -107,7 +107,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! I/O
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr
- integer, external ::io_BS,io_BS_header
+ integer, external ::io_BS,io_BS_PAR_init,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
  ! Timing and restart

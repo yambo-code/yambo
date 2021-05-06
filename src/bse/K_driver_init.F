@@ -28,7 +28,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_antires_from_resonant,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd
+ use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_antires_from_resonant,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
+&                       BSS_slepc_double_grp
  use BS,           ONLY:L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics,&
@@ -51,7 +52,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Work Space
  !
- logical :: l_flag
+ logical :: l_flag,l_slepc_special
  !
  ! RES/ANTI-RES (q-dependent)
  !==============

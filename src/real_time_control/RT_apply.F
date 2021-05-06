@@ -31,7 +31,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  use R_lattice,      ONLY:bz_samp,nkibz
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,NONE,DUMP,DB_path
- use units,          ONLY:FS2AUT,AUT2FS,PS2AUT
+ use units,          ONLY:FS2AUT,AUT2FS,PS2AUT,HA2EV
  use real_time,      ONLY:RT_carriers,NE_i_time,RT_step,RT_obj_free
  use RT_control,     ONLY:NEQ_Residuals,NEQ_Kernel,CARR_RT_IO_t,RT_ctl_db,RT_ctl_interp_neigh
  use com,            ONLY:msg,jobstr,alt_jobstr,n_alt_jobstr,depth,alt_jobdir,jobdir
@@ -252,6 +252,8 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !=======
  if (present(what))        call RT_interpolation(bands,E,K,what_,"NN",local_Time,&
 &                                                l_f,l_E,l_W,l_BOLTZ,RT_ctl_interp_neigh(I_id))
+ !
+ call REPORT_Energies(E%f/HA2EV,K,K,E%nb,(/1,K%nibz/),'OCCrt',.FALSE.,.TRUE.)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !

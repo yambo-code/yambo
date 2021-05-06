@@ -46,7 +46,7 @@ subroutine ELPH_double_grid(k,E,q)
  type(bz_samp)         :: q_fine
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded,l_test_PHDGrid
  integer               :: ID,io_err,i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz
- integer, external     :: io_ELPH,io_Double_Grid
+ integer, external     :: io_ELPH,io_Double_Grid,io_QINDX
  logical, external     :: file_exists 
  !
  call parser('TestPHDGrid',l_test_PHDGrid)
@@ -186,6 +186,11 @@ subroutine ELPH_double_grid(k,E,q)
  if(l_test_PHDGrid) then
    !      
    ! Set all PH energies equal to the couse one
+   !
+   call warning(" THIS IS FICTITIOUS DOUBLE-GRID: results should be equal to the course one ")
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
+   io_err=io_QINDX(k,q,ID)
    !   
    do iq_bz=1,q%nbz        
      !

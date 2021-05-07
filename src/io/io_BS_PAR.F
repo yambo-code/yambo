@@ -193,18 +193,13 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  dim_names(1,:)  =  'complex'
  !
- if (.not.BS_K_coupling    ) then
-   n_vars=1
-   ch(n_vars,:)="BSE_RESONANT"
- endif
- if (     BS_K_coupling    ) then
-   n_vars=2
-   ch(n_vars,:)="BSE_COUPLING"
- endif
- if (.not.l_BS_ares_from_res) then
-   n_vars=n_vars+1
-   ch(n_vars,:)="BSE_ANTI-RESONANT"
- endif
+ ch(1,:)="BSE_RESONANT"
+ ch(2,:)="BSE_COUPLING"
+ ch(3,:)="BSE_ANTI-RESONANT"
+ !
+ if (.not.BS_K_coupling     ) n_vars=1
+ if (     BS_K_coupling     ) n_vars=2
+ if (.not.l_BS_ares_from_res) n_vars=n_vars+1
  !
  BSK_IO_local=trim(BSK_IO_mode)
  if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)

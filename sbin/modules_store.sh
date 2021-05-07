@@ -1,4 +1,4 @@
-#! @SHELL@
+#! /bin/bash
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
@@ -24,35 +24,34 @@
 #
 if [ $# = 0 ] ; then exit 0; fi
 target=$1
+dir=$2
 #
-# SAVE the objects relative to the current project (if any)
+# SAVE the modules relative to the current project (if any)
 #
 if test `find . -maxdepth 1 -name '__*' | wc -l` -ge 1 ; then
  for file in __*
  do
   if test `find . -maxdepth 1 -name '*.o' | wc -l` -ge 1 ; then
-   echo "Saving objects in .$file";
-   if test ! -d .$file; then mkdir .$file; fi
-   for obj in *.o
+   echo "Saving modules in .modules$file";
+   if test ! -d .modules$file; then mkdir .modules$file; fi
+   for mod in *.o
    do
-#     if test `grep $obj project.dep | wc -l` -ge 1; then
-       mv $obj ."$file"/
-#     fi
+     if test `grep $mod project.dep | wc -l` -ge 1; then
+       mv $mod .modules"$file"/
+     fi
    done
   fi
   rm -f $file
  done
 fi
 #
-# In any case I will now compile the TARGET objects
-#
 touch "$target"
 #
-# If the TARGET objects dir exists just copy the objects from there
+# If the TARGET modules dir exists just copy the modules from there
 #
-if test -d .$target; then
- if test `find .$target/ -name '*.o' | wc -l` -ge 1 ; then
-  echo "Loading objects from $target";
-  mv .$target/*.o .
+if test -d .modules$target; then
+ if test `find .modules$target/ -name '*.mod' | wc -l` -ge 1 ; then
+  echo "Loading modules from $target";
+  mv .modules$target/*.mod $modir
  fi
 fi

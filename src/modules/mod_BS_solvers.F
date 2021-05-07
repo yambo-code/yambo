@@ -80,7 +80,6 @@ module BS_solvers
  logical  :: BSS_perturbative_width
  logical  :: BSS_eels_to_eps
  logical  :: BSS_uses_pert_SOC=.FALSE.
- logical  :: BSS_antires_from_resonant = .FALSE. ! The antires part is derived (when possible) from the resonant
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.

@@ -30,10 +30,9 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
-&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
-&                         BSS_eh_W,&
-&                         BSS_antires_from_resonant,K_diago_in_BS_mat,BS_diagonal
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_n_eh_spaces
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,K_diago_in_BS_mat,BS_diagonal
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BSE_mode,BS_q,BS_n_eh_spaces,&
+&                         BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -164,13 +163,13 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          !================
          if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r" ,"eh",.FALSE.,.FALSE.)
          if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
-         if (BSS_antires_from_resonant.or.BS_K_coupling) then
+         if (BS_K_anti_resonant) then
            call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
          endif
          if (l_BS_photolum) then
            if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r" ,"eh",.TRUE.,.FALSE.)
            if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
-           if (BSS_antires_from_resonant.or.BS_K_coupling) then
+           if (BS_K_anti_resonant) then
              call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
            endif
            Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
@@ -182,7 +181,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          !================
          if(i_res_ares==1) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:, 1  ),"r" )
          if(i_res_ares==2) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra")
-         if (BSS_antires_from_resonant.or.BS_K_coupling) then
+         if (BS_K_anti_resonant) then
            call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
          endif
          !
@@ -195,7 +194,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
          Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
        endif     
        !
-       if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_n_eh_spaces==1) then
+       if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
          residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
          if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
          Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
@@ -204,7 +203,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if (l_BS_photolum.and.i_loop==1) then
          residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
          PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and.BS_n_eh_spaces==1) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
          endif
        endif

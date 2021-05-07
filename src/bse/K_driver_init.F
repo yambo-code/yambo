@@ -28,13 +28,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_antires_from_resonant,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
+ use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp
  use BS,           ONLY:L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
-&                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands
+&                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
  use D_lattice,    ONLY:l_0D
@@ -54,19 +54,36 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  logical :: l_flag,l_slepc_special
  !
+ ! Defaults
+ !==========
+ BS_n_eh_spaces=1
+ BS_res_ares_n_mat=1
+ !
  ! RES/ANTI-RES (q-dependent)
  !==============
+ !
+ ! Do I need the anti-res part?
+ if (BS_K_coupling) BS_K_anti_resonant=.TRUE.
+ if (STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded')) BS_K_anti_resonant=.TRUE.
+#if defined _RT 
+ if(l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
+#endif
+ !
+ ! Is ARES derivable from RES?
+ !-----------------------------
  ! Developer options. Without the code works in default mode
  ! With the user can switch to experimental coding
  call parser('ImposeAsym',l_flag)
- if (l_flag) l_BS_ares_from_res=.FALSE.
- if (iq/=1)  l_BS_ares_from_res=.FALSE.
+ if (l_flag)        l_BS_ares_from_res=.FALSE.
+ !
+ if (iq/=1 )        l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum) l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2) l_BS_ares_from_res=.FALSE.
- if (trim(BSE_mode)=="resonant") l_BS_ares_from_res=.TRUE.
- BS_n_eh_spaces=1
- BS_res_ares_n_mat=1
- if (.not.l_BS_ares_from_res) then
+ if (trim(BSE_mode)=="resonant")   l_BS_ares_from_res=.TRUE.
+ !
+ ! I need ARES and I cannot get it from RES
+ ! 
+ if (BS_K_anti_resonant.and..not.l_BS_ares_from_res) then
    BS_n_eh_spaces=2
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
@@ -127,7 +144,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
  !
- BSS_antires_from_resonant=STRING_match(BSE_mode,'retarded')
  BS_K_is_ALDA=l_alda_fxc
  !
  BS_dip_size=1
@@ -186,6 +202,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! The doubling is activated unless explicily imposed by input since slepc
  ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
  ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
+ !
  call parser('ImposeSymm',l_flag)
  if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
  BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special

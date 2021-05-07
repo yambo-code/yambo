@@ -40,12 +40,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        X_drude_term,global_gauge,BS_E_sorted,   &
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
- use BS_solvers,    ONLY:BSS_Vnl_included,BSS_antires_from_resonant,&
-&                        Co_factor,diam_term_exact,BSS_Wd
+ use BS_solvers,    ONLY:BSS_Vnl_included,Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
 &                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_n_eh_spaces,BS_K_dim,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BSE_dipole_geometry,BS_field_direction
+&                        BSE_dipole_geometry,BS_field_direction,BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
@@ -292,14 +291,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Absorption, KERR, PL, Dichroism
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
-       if (BS_K_coupling.and..not.BS_n_eh_spaces==2) &
+       if (BS_K_coupling.and.l_BS_ares_from_res) &
 &          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
      endif
      !
      ! Dichroism
      if(l_BS_dichroism) then
        BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
-       if (BS_K_coupling.and..not.BS_n_eh_spaces==2) &
+       if (BS_K_coupling.and.l_BS_ares_from_res) &
 &          BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
      endif
      !
@@ -310,7 +309,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
                                                                !      or the right R residual associated to (eps_c\dn-eps_v\up)
                                                                ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
                                                                ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       if (BS_K_coupling.and..not.BS_n_eh_spaces==2) then      ! This is the right A residual associated to (eps_v\up-eps_c\dn)
+       if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
          BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
          BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
        endif
@@ -409,20 +408,20 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) &
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) &
 &           Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if (l_BS_abs) then
          Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) &
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) &
 &           Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
          if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*E_plus_W(i_pert_SOC)/bare_qpg(iq,1)**2
          if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/E_plus_W(i_pert_SOC)
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+conjg(res_abs*E_plus_W(i_pert_SOC))/bare_qpg(iq,1)**2
            if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+conjg(res_abs/E_plus_W(i_pert_SOC))
          endif
@@ -431,7 +430,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_kerr) then
          !
          Epsilon_ij(:,3)=Epsilon_ij(:,3)-  res_kerr/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            Epsilon_ij(:,3)=Epsilon_ij(:,3)+conjg(res_kerr)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
@@ -443,14 +442,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_photolum) then
          PL(:,3)=PL(:,3) +PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC)))/pi
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            PL(:,3)=PL(:,3)-PL_prefactor*res_PL*aimag(-1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))))/pi
          endif
        endif
        !
        if (l_BS_dichroism) then
          X_dichroism(:,3)=X_dichroism(:,3)-res_dich/(W_bss%p(:)-E_plus_W(i_pert_SOC)) 
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            X_dichroism(:,3)=X_dichroism(:,3)+res_dich/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC))) ! DS to check conjg factor
          endif
        endif
@@ -458,7 +457,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        if (l_BS_magnons) then
          X_magnons(:,1,3)=X_magnons(:,1,3)-res_magn(1)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          X_magnons(:,2,3)=X_magnons(:,2,3)-res_magn(2)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if ((BSS_antires_from_resonant.or.BS_K_coupling).and..not.BS_n_eh_spaces==2) then
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            X_magnons(:,1,3)=X_magnons(:,1,3)+conjg(res_magn(2))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
            X_magnons(:,2,3)=X_magnons(:,2,3)+conjg(res_magn(1))/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
@@ -596,7 +595,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_kerr) then
    !
    B_Hall(1)=B_Hall(1)*Co_factor
-   if (BSS_antires_from_resonant.or.BS_K_coupling) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+   if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
    !
    if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,1)**2
    if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/ W_bss%p(:)   **2

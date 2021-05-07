@@ -108,7 +108,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
  ! f_eh<0 transitions are included in the anti-resonant part
  ! f_eh=0 transitions give no contribution to absorption and are not considered
- if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<filled_tresh ) K_Transition_check=.FALSE.
+ if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !

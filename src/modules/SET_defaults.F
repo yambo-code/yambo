@@ -68,7 +68,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_antires_from_resonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -442,7 +442,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSK_IO_mode='2D_standard'
  l_BSE_kernel_complete=.false.
  TDDFT_mode=' '
- BSS_antires_from_resonant=.FALSE.
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0

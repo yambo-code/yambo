@@ -24,34 +24,27 @@
 subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cONE,cI
- use IO_m,          ONLY:io_DIP
  use frequency,     ONLY:w_samp
  use LIVE_t,        ONLY:live_timing
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc
  use com,           ONLY:msg
- use units,         ONLY:HA2EV
- use vec_operate,   ONLY:v_norm,sort,degeneration_finder
- use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm,qindx_X
+ use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm
+ use DIPOLES,       ONLY:DIPOLE_t
  use stderr,        ONLY:intc
- use wave_func,     ONLY:WF
- use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
-&                        X_drude_term,global_gauge,BS_E_sorted,   &
+&                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
- use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
- use BS_solvers,    ONLY:BSS_Vnl_included,Co_factor,diam_term_exact,BSS_Wd
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
-&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_n_eh_spaces,BS_K_dim,&
+ use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd
+ use BS,            ONLY:BS_T_grp,BS_nT_grps,BS_perturbative_SOC,&
+&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BSE_dipole_geometry,BS_field_direction,BS_K_anti_resonant,l_BS_ares_from_res
+&                        BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
- use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
- use vec_operate,   ONLY:v_rotate
  use BS,            ONLY:l_BS_anomalous_Hall
  use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
@@ -59,29 +52,21 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
 #include<memory.h>
  !
- type(levels) ::Ken
- type(bz_samp)::Xk
+ integer       ::iq
+ type(levels)  ::Ken
+ type(bz_samp) ::Xk
+ type(w_samp)  ::W_bss
  type(DIPOLE_t)::Dip
- type(w_samp) ::W_bss
- integer      ::iq
  !
  ! Work space
  !
- integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
-&                    n_SOC,i_pert_SOC,io_err,i_res_ares,i_E_sort,&
-&                    i_VAR,i_grp,i_cv,nVAR,EDIM,n_deg_grp,i_dip
+ integer           ::iv,ic,i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR(2),i_dip
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used,Z_eh,E_eh
- complex(SP)       ::DIP_Splus,DIP_Smins,P_weighted(3),res_kerr,res_magn(2),res_dich,&
-&                    DIP_projected_dich(BS_dip_size),DIP_projected(BS_dip_size),DIP_expanded(3)
- character(6)      ::DIP_kind
- !
- real(SP),    allocatable :: vtmpR(:)
- complex(SP), allocatable :: BS_E_sorted_tmp(:,:)
- integer,     allocatable :: sort_indx(:),first_el(:),n_of_el(:)
- type(elemental_collision):: BSE_scatt
+ complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich
+ complex(SP),    allocatable :: vtmpC(:,:)
  !
  if (l_bs_fxc) return
  !
@@ -100,8 +85,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !...Drude
  call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
  !
- ! Oscillators I/O & Eps0
- !========================
+ ! Prefactors
+ !------------
  if((.not.BS_perturbative_SOC).or.n_sp_pol==2) then
    n_SOC=1
    Co_factor=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi
@@ -111,64 +96,30 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    Co_factor=    1._SP     /(2._SP*pi)**3*d3k_factor*4._SP*pi
  endif
  !
+ ! Setup
+ !-------
  diam_term_exact=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
- !
  para_term_w0=cZERO
- !
- ! The residuals of the BSE are <wf_k|e^{iqr}|wf_k+q>
- ! These are trivial to compute at finite q, instead they are 
- ! obtained via the dipoles in the q->0 limit and stored to disk
- !
- if (iq==1) then
-   call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
- else
-   call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
-   call elemental_collision_free(BSE_scatt)
-   call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
- endif
- !
- BSS_Vnl_included=Dip%Vnl_included
- !
- if (iq==1) then
-   !
-   ! Directions for the external field
-   !
-   BS_field_direction(:,1)=Dip%q0/v_norm(Dip%q0)
-   !
-   if (l_BS_trace) then
-     BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
-     BS_field_direction(:,2)=(/0._SP,1._SP,0._SP/)
-     BS_field_direction(:,3)=(/0._SP,0._SP,1._SP/)
-   else if (trim(BSE_dipole_geometry)/='none'.and.l_BS_kerr) then
-     call v_rotate(trim(BSE_dipole_geometry),-pi/2._SP,BS_field_direction(:,1),v_out=BS_field_direction(:,2))
-   endif
-   !
- endif
- !
- if (trim(global_gauge)=='length'  ) then
-   DIP_kind ="DIP_iR"
-   dip_r=.true.
-   dip_v=.false.
-   BS_field_direction=BS_field_direction*q0_def_norm
- endif
+ dip_r=.true.
+ dip_v=.false.
  if (trim(global_gauge)=='velocity') then
-   DIP_kind ="DIP_v"
    dip_r=.false.
    dip_v=.true.
  endif
  !
+ ! Sorting pre-setup
+ !-------------------
  if(l_BS_esort) then
-   EDIM=BS_K_dim(1)
-   nVAR=2
-   if(l_BS_abs)       nVAR=nVAR+1
-   if(l_BS_kerr)      nVAR=nVAR+1
-   if(l_BS_dichroism) nVAR=nVAR+1
-   if(l_BS_magnons)   nVAR=nVAR+2
-   YAMBO_ALLOC(BS_E_sorted_tmp,(EDIM,nVAR))
-   BS_E_sorted_tmp=cZERO
+   nVAR(1)=2 ! Energies (IP + degeneracy)
+   if(l_BS_abs)       nVAR(1)=nVAR(1)+1
+   if(l_BS_kerr)      nVAR(1)=nVAR(1)+1
+   if(l_BS_dichroism) nVAR(1)=nVAR(1)+1
+   if(l_BS_magnons)   nVAR(1)=nVAR(1)+2
+   YAMBO_ALLOC(vtmpC,(BS_K_dim(1),nVAR(1)))
+   vtmpC=cZERO
  endif
  !
- if (l_rpa_IP.or.iq>1) call live_timing('IP properties',PAR_BS_nT_col_grps)
+ call live_timing('IP properties',PAR_BS_nT_col_grps)
  !
  do i_T_g=1,BS_nT_grps
    !
@@ -178,145 +129,27 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    do i_T=1,BS_T_grp(i_T_g)%size
      !
-     ! a.Indexes
-     !==========
+     i_sort    =sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T 
+     nVAR(2)   =0
      !
-     ik_bz = BS_T_grp(i_T_g)%table(i_T,1)
-     iv    = BS_T_grp(i_T_g)%table(i_T,2)
-     ic    = BS_T_grp(i_T_g)%table(i_T,3)
-     i_sp_pol_c = BS_T_grp(i_T_g)%table(i_T,4)
-     i_sp_pol_v = BS_T_grp(i_T_g)%table(i_T,5)
+     ! Energy
+     !========
      !
-     if(iq/=1) then
-       !
-       ok_bz=qindx_X(iq,ik_bz,1)
-       iGo  =qindx_X(iq,ik_bz,2)
-       !
-       ik   =Xk%sstar(ik_bz,1) 
-       isymm=Xk%sstar(ik_bz,2) 
-       !
-       ok   =Xk%sstar(ok_bz,1)
-       osymm=Xk%sstar(ok_bz,2)
-       !
-       BSE_scatt%is=(/ic,ik,isymm,i_sp_pol_c/)
-       BSE_scatt%os=(/iv,ok,osymm,i_sp_pol_v/)
-       BSE_scatt%qs=(/iGo,iq,1/)
-       !
-     endif
-     !
-     ! b.Energy
-     !=========
-     !
+     E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
      if(allocated(BS_T_grp(i_T_g)%W)) then
        E_plus_W0=BS_T_grp(i_T_g)%E(i_T)-cI*BS_T_grp(i_T_g)%W(i_T)
-     else
-       E_plus_W0=BS_T_grp(i_T_g)%E(i_T)
      endif
      !
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
-     !
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     if(l_BS_esort.and.i_res_ares==1) then
-       i_E_sort=sum(BS_T_grp(BS_T_grp(i_T_g)%i_T_ref:i_T_g-1)%size)+i_T !+(i_res_ares-1)*BS_K_dim(1)
-       BS_E_sorted_tmp(i_E_sort,1)=E_plus_W0
-       nVAR=2
+     if (l_BS_esort.and.i_res_ares==1) then
+        call K_IP_sort("add",i_sort,nVAR,E_plus_W0,vtmpC)
+        nVAR(2)=nVAR(2)+1
      endif
      !
-     ! c1.Compute "dipoles"
-     !=====================
-     !
-     ! *length*   : DIP_projected(c,v,k) is     q*<v|r|c> while I need     q*<c|r|v> = conjg(    q*<v|r|c>)
-     ! *velocity* : DIP_projected(c,v,k) is q_ver*<v|p|c> while I need q_ver*<c|r|v> = conjg(q_ver*<v|r|c>)
-     !
-     ! Absorption, KERR, PL, Dichroism
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
-       if(iq==1) then
-         DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
-         do i_dip=1,BS_dip_size
-           DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
-         enddo
-       else
-         if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
-         if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
-         DIP_projected(1)=-conjg(BSE_scatt%rhotw(1))
-       endif
-     endif
-     !
-     ! Dichroism
-     if (l_BS_dichroism) then
-       if(iq==1) then  
-         DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
-         do i_dip=1,BS_dip_size
-           DIP_projected_dich(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
-         enddo
-         if (trim(global_gauge)=='length'  ) DIP_projected_dich=DIP_projected_dich/q0_def_norm
-       else
-         call error(' finite q not implemented for dichroism')
-       endif
-     endif
-     !
-     ! Magnons
-     if (l_BS_magnons) then
-       !
-       ! notice:
-       ! In optics q=0 requires a special treatment due to the non analytic behaviour
-       ! This is not needed for magnons.
-       ! However to follow the same structure in K_IP.F fow WFs load / DIPOLE_IO here I keep it
-       ! The implementation with scatter can be used to double check the spin dipoles
-       !
-       if(iq==1) then
-         DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk)
-       else
-         call scatter_Bamp_spin(BSE_scatt,'x')
-         DIP_expanded(1)=-conjg(BSE_scatt%rhotw(1))
-         call scatter_Bamp_spin(BSE_scatt,'y')
-         DIP_expanded(2)=-conjg(BSE_scatt%rhotw(1))
-         !The following is not used at present
-         call scatter_Bamp_spin(BSE_scatt,'z')
-         DIP_expanded(3)=-conjg(BSE_scatt%rhotw(1))
-       endif
-       !
-       ! DIP_Smins(c,v,k) is  <v|S-|c>(i_sp_pol_c), to get <c|S-|v>(i_sp_pol_v) = conjg(<v|S+|c>(i_sp_pol_c))
-       ! DIP_Splus(c,v,k) is  <v|S+|c>(i_sp_pol_c), to get <c|S+|v>(i_sp_pol_v) = conjg(<v|S-|c>(i_sp_pol_c))
-       !
-       DIP_Splus = 0.5_SP*(DIP_expanded(1)+cI*DIP_expanded(2))  ! S+ for c\dn> transitions: <v\up|c\dn>
-       DIP_Smins = 0.5_SP*(DIP_expanded(1)-cI*DIP_expanded(2))  ! S- for c\up> transitions: <v\dn|c\up>
-       !
-     endif
-     !
-     ! c.2 Store Dipoles
-     !====================
-     !
-     ! Absorption, KERR, PL, Dichroism
-     if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
-       BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
-       if (BS_K_coupling.and.l_BS_ares_from_res) &
-&          BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,2)=DIP_projected(:BS_dip_size)
-     endif
-     !
-     ! Dichroism
-     if(l_BS_dichroism) then
-       BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,1)=conjg(DIP_projected_dich(:BS_dip_size))
-       if (BS_K_coupling.and.l_BS_ares_from_res) &
-&          BS_T_grp(i_T_g)%dipoles_dic(:BS_dip_size,i_T,2)=DIP_projected_dich(:BS_dip_size)
-     endif
-     !
-     ! Magnons
-     if (l_BS_magnons) then                                    ! This is the right R residual associated to (eps_c\dn-eps_v\up)
-       BS_T_grp(i_T_g)%dipoles_mag(1,i_T,1)=conjg(DIP_Splus)   ! S- for |c\dn> trans: <c\dn|S-|v\up>(i_sp_pol_v) = conjg(<v\up|S+|c\dn>(i_sp_pol_c))
-       BS_T_grp(i_T_g)%dipoles_mag(2,i_T,1)=conjg(DIP_Smins)   ! S+ for |c\up> trans: <c\dn|S+|v\up>(i_sp_pol_v) = conjg(<v\dn|S-|c\up>(i_sp_pol_c))
-                                                               !      or the right R residual associated to (eps_c\dn-eps_v\up)
-                                                               ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c) = conjg(<c\up|S+|v\dn>(i_sp_pol_v))
-                                                               ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c) = conjg(<c\dn|S-|v\up>(i_sp_pol_v))
-       if (BS_K_coupling.and.l_BS_ares_from_res) then          ! This is the right A residual associated to (eps_v\up-eps_c\dn)
-         BS_T_grp(i_T_g)%dipoles_mag(1,i_T,2)=DIP_Smins        ! S- for |v\dn> trans: <v\dn|S-|c\up>(i_sp_pol_c)
-         BS_T_grp(i_T_g)%dipoles_mag(2,i_T,2)=DIP_Splus        ! S+ for |v\up> trans: <v\up|S+|c\dn>(i_sp_pol_c)
-       endif
-     endif
-     !
-     ! c.3 Residuals from "Dipoles"
-     !==============================
+     ! Residuals from "Dipoles"
+     !==========================
      !
      Z_eh=cONE
      E_eh=cONE
@@ -334,21 +167,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          enddo
          res_abs=res_abs/real(BS_dip_size,SP)
        endif
-       !
        res_abs=res_abs*f_eh*Z_eh*E_eh
-       if(l_BS_esort.and.i_res_ares==1) then
-         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_abs
-         nVAR=nVAR+1
-       endif
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_abs,vtmpC)
      endif
      !
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
        res_kerr=res_kerr*Z_eh*E_eh*f_eh
-       if(l_BS_esort.and.i_res_ares==1) then
-         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_kerr
-         nVAR=nVAR+1
-       endif
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_kerr,vtmpC)
      endif
      !
      if (l_BS_photolum) then
@@ -363,21 +189,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Dichroism
      !
      if(l_BS_dichroism) then
-       res_dich=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*&
-&               conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))
+       res_dich=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))
        if(l_BS_trace) then
          do i_dip=2,BS_dip_size
            ! x*L = DIP_x*DIP_orbital;
-           res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*&
-&                   conjg(BS_T_grp(i_T_g)%dipoles_dic(i_dip,i_T,1))
+           res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(i_dip,i_T,1))
          enddo
          res_dich=res_dich/real(BS_dip_size,SP)
        endif
        res_dich=res_dich*f_eh*Z_eh/(q0_def_norm)
-       if(l_BS_esort.and.i_res_ares==1) then
-         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+1)=res_dich
-         nVAR=nVAR+1
-       endif
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_dich,vtmpC)
      endif
      !
      ! Magnons
@@ -388,10 +209,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_eh*Z_eh
-       if(l_BS_esort.and.i_res_ares==1) then
-         BS_E_sorted_tmp(i_E_sort,nVAR+1:nVAR+2)=res_magn
-         nVAR=nVAR+2
-       endif
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_magn,vtmpC)
      endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 .and. dip_r ) then
@@ -401,21 +219,23 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_dich=0._SP
      endif
      !
-     ! d.Response functions and pert SOC loop     
-     !=========================================
+     ! Response functions and pert SOC loop     
+     !=======================================
      !
      do i_pert_SOC=1,n_SOC
        !
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if (BS_K_anti_resonant.and.l_BS_ares_from_res) &
-&           Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+           Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+         endif
        endif
        !
        if (l_BS_abs) then
          Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC))
-         if (BS_K_anti_resonant.and.l_BS_ares_from_res) &
-&           Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+            Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+         endif
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
@@ -467,11 +287,16 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
    enddo
    !
-   if (l_rpa_IP.or.iq>1) call live_timing(steps=1)
+   call live_timing(steps=1)
    !
  enddo
  !
- if (l_rpa_IP.or.iq>1) call live_timing()
+ call live_timing()
+ !
+ ! Sorting procedure
+ !===================
+ !
+ if (l_BS_esort) call K_IP_sort("sort",0,nVAR,0._SP,vtmpC)
  !
  ! ALL 2 ALL
  !==============
@@ -487,40 +312,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) then
    call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Joint_DOS(:,3),COMM=PAR_COM_eh_INDEX%COMM )
- endif
- !
- if(l_BS_esort) then
-   call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( BS_E_sorted_tmp ,COMM=PAR_COM_eh_INDEX%COMM )
-   YAMBO_ALLOC(vtmpR,(EDIM)) 
-   YAMBO_ALLOC(sort_indx,(EDIM))
-   vtmpR=real(BS_E_sorted_tmp(:,1),SP)
-   call sort(arrin=vtmpR,indx=sort_indx)
-   EDIM=min(BS_K_dim(1),10000)
-   allocate(first_el(EDIM)) 
-   allocate(n_of_el(EDIM))
-   ! Threshold is 1meV
-   call degeneration_finder(vtmpR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
-   EDIM=min(BS_K_dim(1),1000)
-   do i_VAR=1,nVAR
-     BS_E_sorted(:,i_VAR,1)=cZERO
-     do i_grp=1,n_deg_grp
-       if(i_grp>EDIM) cycle
-       if(i_VAR==2) then
-         BS_E_sorted(i_grp,i_VAR,1)=real(n_of_el(i_grp),SP)
-         cycle
-       endif
-       do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
-         BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+BS_E_sorted_tmp(sort_indx(i_cv),i_VAR)
-       enddo
-       BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
-     enddo
-   enddo
-   deallocate(first_el) 
-   deallocate(n_of_el)
-   YAMBO_FREE(vtmpR)
-   YAMBO_FREE(sort_indx)
-   YAMBO_FREE(BS_E_sorted_tmp)
  endif
  !
  if(l_BS_kerr) then
@@ -544,17 +335,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(l_BS_magnons) then
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( X_magnons(:,:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
- endif
- !
- if (trim(L_kind)=="full") then
-   do i_T_g=1,BS_nT_grps
-     if (.not.allocated(BS_T_grp(i_T_g)%dipoles_opt) ) then
-       YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,2/BS_n_eh_spaces))
-       BS_T_grp(i_T_g)%dipoles_opt=cZERO
-     endif
-     call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_opt, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-     call PP_redux_wait(BS_T_grp(i_T_g)%dipoles_opt, COMM=PAR_COM_eh_INDEX%COMM )
-   enddo
  endif
  !
  ! Factors and more
@@ -620,24 +400,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- ! CLEAN
- !
- if (iq==1.and.io_DIP) then
-   call DIP_alloc('DIP_iR')
-   call DIP_alloc('DIP_P')
-   call DIP_alloc('DIP_v')
-   call DIP_alloc('DIP_S')
-   call DIP_alloc('DIP_spin')
-   call DIP_alloc('DIP_orbital')
-   call DIP_alloc('P_square') 
-   call DIP_alloc('DIP_P_spinor')
- endif
- !
- if(iq>1) then
-   call elemental_collision_free(BSE_scatt)
-   call WF_free(WF)
- endif
- !
  if (l_rpa_IP) then
    !
    ! Initialize & write the output file
@@ -646,6 +408,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    call K_output_file(iq,"IP")
    !
  endif
+ !
+ ! Clean
+ ! 
+ YAMBO_FREE(vtmpC)
  !
  call timing('T_space IP',OPR='stop')
  !

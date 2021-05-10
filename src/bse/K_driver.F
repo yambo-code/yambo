@@ -205,6 +205,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
    call PARALLEL_WF_index( )
    !
+   ! 0. The Dipoles 
+   ! ===============
+   call K_dipoles(iq,Ken,Xk,Dip,W_bss)
+   !
    ! 1. The IP Part
    ! ===============
    call K_IP(iq,Ken,Xk,Dip,W_bss)

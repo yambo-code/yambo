@@ -66,7 +66,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (BS_K_coupling) BS_K_anti_resonant=.TRUE.
  if (STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded')) BS_K_anti_resonant=.TRUE.
 #if defined _RT 
- if(l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
+ if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
 #endif
  !
  ! Is ARES derivable from RES?

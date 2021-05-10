@@ -70,7 +70,6 @@ subroutine RT_TRabs_output(what,N_col,W,TIME,l_BS,l_IP,l_OFF,l_ABS)
     call OUTPUT_add_column(trim(ofile(i_f)),action=what)
     if (what=="open") then
       call elemental_desc_write(trim(ofile(i_f)))
-      
     endif
    enddo
    return

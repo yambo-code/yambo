@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
+subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
  !
  use pars,            ONLY:SP,pi,cI
  use R_lattice,       ONLY:bz_samp
@@ -36,7 +36,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
 #include<memory.h>
  !
  character(*)      :: what
- integer           :: N_trans,nbf_eq,i_dir
+ integer           :: N_trans,nb(2),i_dir
  type(levels)      :: Xen
  type(bz_samp)     :: Xk
  real(SP)          :: DIP_dir(3)
@@ -90,13 +90,13 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
  if (index(what,"IP")>0) then
    !
    if (index(what,"cv")>0) then
-     bands(1,:)=(/nbf_eq+1,RT_bands(2)/)
-     bands(2,:)=(/RT_bands(1),nbf_eq/)
+     bands(1,:)=(/nb(1)+1,RT_bands(2)/)
+     bands(2,:)=(/RT_bands(1),nb(2)/)
    else if (index(what,"vv")>0) then
-     bands(1,:)=(/RT_bands(1),nbf_eq/)
+     bands(1,:)=(/RT_bands(1),nb(1)/)
      bands(2,:)=bands(1,:)
    else if (index(what,"cc")>0) then
-     bands(1,:)=(/nbf_eq+1,RT_bands(2)/)
+     bands(1,:)=(/nb(2)+1,RT_bands(2)/)
      bands(2,:)=bands(1,:)
    endif
    !
@@ -115,9 +115,14 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nbf_eq)
            f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
            if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
            !
+           ! Select just "resonant" (in the causal sense) transitions
+           !
+           if (real(f_eh(1)+f_eh(2))<0._SP) cycle
+           !
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
            TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated) *sqrt(f_eh(2))
+           !
            !
          enddo
        enddo

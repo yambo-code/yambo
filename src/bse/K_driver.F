@@ -188,13 +188,14 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call DIPOLE_dimensions(Ken,Dip,BS_bands,BSS_q0)
    !
    ! ... EH space (no parallelization)
-   call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
+   call K_Transitions_setup("K",iq,Ken,Xk,Dip)
+   !call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
    !
    ! ... EH space (with parallelization) and Transition groups build-up
-   call K_Transitions_setup(iq,Ken,Xk,Dip)
+   call K_Transitions_setup("T",iq,Ken,Xk,Dip)
    !
    !... Blocks build-up
    if (.not.l_rpa_IP) call K_blocks()

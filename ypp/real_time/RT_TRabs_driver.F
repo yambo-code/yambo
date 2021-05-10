@@ -50,7 +50,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  type(w_samp)            :: W_bss
  integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
-&                           N_col,nbf_eq,N_dirs,i_dir
+&                           N_col,nb(2),N_dirs,i_dir
  real(SP)                :: DIP_dir(4,3),Co
  logical                 :: l_IP,l_BS,l_OFF,l_cv,l_cc,l_vv,l_ABS
  !
@@ -80,29 +80,44 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  l_cv      = STRING_match(TRabsMODE,"cv")
  l_cc      = STRING_match(TRabsMODE,"cc")
  l_vv      = STRING_match(TRabsMODE,"vv")
+ !
+ !  |   | <- RT_bands(2)
+ !  |   |
+ !  |   |
+ !  |   |
+ !  |x  | <- nbm
+ !  |x  |
+ !  |xxx| <- nbf
+ !  |xxx|
+ !  |xxx|
+ !  |xxx| <- RT_bands(1)
+ !
+ ! cv ( RT_bands(1) - nbm ) -> ( nbf+1 - RT_bands(2) )
+ ! vv ( RT_bands(1) - nbf ) -> ( same )
+ ! cc ( nbm+1 - RT_bands(2) ) -> ( same )
+ !
  if (l_BS) then
    DIPs%ib   =BS_bands
    N_cv_trans=BS_K_dim(1)
  else
    DIPs%ib   =RT_bands
-   N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
+   N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbm-RT_bands(1)+1)*Xk%nbz
  endif
- N_cc_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
- N_vv_trans=(RT_bands(2)-Xen%nbf)*(RT_bands(2)-Xen%nbf)*Xk%nbz
+ N_vv_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
+ N_cc_trans=(RT_bands(2)-Xen%nbm)*(RT_bands(2)-Xen%nbm)*Xk%nbz
  N_trans=0
- nbf_eq=Xen%nbf
+ nb=(/Xen%nbf,Xen%nbm/)
  !
  if (l_cv) N_trans=N_cv_trans
  if (l_vv) N_trans=N_trans+N_vv_trans
  if (l_cc) N_trans=N_trans+N_cc_trans
  !
- call msg('s','[TR-ABS] cv (EQ)  transitions :',N_cv_trans)
- call msg('s','[TR-ABS] cc (NEQ)             :',N_cc_trans)
- call msg('s','[TR-ABS] vv (NEQ)             :',N_vv_trans)
+ if (l_cv) call msg('s','[TR-ABS] cv (EQ)  transitions :',N_cv_trans)
+ if (l_cc) call msg('s','[TR-ABS] cc (NEQ) transitions :',N_cc_trans)
+ if (l_vv) call msg('s','[TR-ABS] vv (NEQ) transitions :',N_vv_trans)
+ call msg('s','[TR-ABS] Total    transitions :',N_trans)
  !
  Co=real(spin_occ)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2 
-
- write (*,*) N_trans
  !
  ! Par Setup
  !
@@ -169,11 +184,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    !
    do i_dir=1,N_dirs
      N_trans_done=0
-     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
      if (l_IP) then
-       if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
-       if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
-       if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nbf_eq)
+       if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
+       if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
+       if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
      endif
    enddo
    !
@@ -217,6 +232,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      complex(SP)  :: RES
      Epsilon_ii(:,i_col)=cZERO
      if (what=="BS") then
+       ! ANTI-RES part to be coded
        do i_trans=1,BS_K_dim(1)
          RES=Co*( TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,2) +&
 &                 TRabs_RES_right(i_trans,I,2)*TRabs_RES_left(i_trans,J,1) )
@@ -226,7 +242,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      if (what=="IP") then
        do i_trans=BS_K_dim(1)+1,N_trans
          RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
-         Epsilon_ii(:,i_col)=Epsilon_ii(:,i_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+         Epsilon_ii(:,i_col)=Epsilon_ii(:,i_col)-RES/(W_bss%p(:)-TRabs_E(i_trans))+conjg(RES)/(W_bss%p(:)+TRabs_E(i_trans))
        enddo
      endif
    end subroutine

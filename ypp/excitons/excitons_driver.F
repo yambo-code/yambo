@@ -71,6 +71,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if (io_err/=0) then
    call warning("BSE databases not found.")
+#if defined _YPP_RT
+   if (l_RT_abs) call RT_transient_absorption(Xen,Xk,q)
+#endif
    return
  endif
  !

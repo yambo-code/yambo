@@ -32,6 +32,8 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
  use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_eh_table,BS_E,BS_mat
  use real_time,       ONLY:RT_bands
+ use parallel_m,      ONLY:PAR_IND_DIPk_ibz,&
+&                          PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  !
 #include<memory.h>
  !
@@ -65,6 +67,10 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
        !
        if (i_v<RT_bands(1) .or. i_c>RT_bands(2) ) cycle
        !
+       if (.not. PAR_IND_CON_BANDS_DIP%element_1D(i_c)) cycle
+       if (.not. PAR_IND_VAL_BANDS_DIP%element_1D(i_v)) cycle
+       if (.not. PAR_IND_DIPk_ibz%element_1D(i_kibz)) cycle
+       !
        f_eh=gimme_f_and_delta_f(i_v,i_c,i_kibz,i_spin)
        dipole_rotated=conjg(-cI*DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk))
        !
@@ -72,7 +78,6 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
        TRabs_RES_right(i_l,i_dir,2)= conjg(dot_product(DIP_dir,dipole_rotated))*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
        TRabs_RES_left(i_l,i_dir,1)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
        TRabs_RES_left(i_l,i_dir,2)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
-       !
        TRabs_E(i_l)     = real(BS_E(i_l),SP)
        !
      enddo
@@ -110,6 +115,10 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
            !
            N_trans=N_trans+1
            !
+           if (.not. PAR_IND_DIPk_ibz%element_1D(i_kibz)) cycle
+           if (.not. PAR_IND_CON_BANDS_DIP%element_1D(i_np)) cycle
+           if (.not. PAR_IND_VAL_BANDS_DIP%element_1D(i_n)) cycle
+           !
            TRabs_E(N_trans)=Xen%E(i_n,i_kibz,i_spin)-Xen%E(i_np,i_kibz,i_spin)
            !
            f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
@@ -122,7 +131,6 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
            TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated) *sqrt(f_eh(2))
-           !
            !
          enddo
        enddo

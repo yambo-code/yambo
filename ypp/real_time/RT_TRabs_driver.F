@@ -36,7 +36,8 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use IO_m,            ONLY:LOG
  use BS,              ONLY:BS_bands,BS_K_dim,BS_H_dim
  use frequency,       ONLY:w_samp
- use parallel_int,    ONLY:PARALLEL_global_indexes
+ use parallel_int,    ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
+ use parallel_m,      ONLY:PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PP_indexes,PP_indexes_reset
  use real_time,       ONLY:RT_bands,l_TRabs_YPP
  use stderr,          ONLY:STRING_match,STRING_same
  use com,             ONLY:msg
@@ -50,12 +51,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! Work space
  !
  type(w_samp)            :: W_bss
- integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
+ integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_cc_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
 &                           nb(2),N_dirs,i_dir,j_dir,N_res,i_cycle,n_cycles,N_files
  real(SP)                :: DIP_dir(3,3),Co
  logical                 :: l_BS,l_OFF,l_cv,l_cc,l_vv,l_ABS
  character(2)            :: label(2)
  character(schlen)       :: ofile(20)
+ type(PP_indexes)        :: PX_bs,PX_ip
  !
  call section("+","Transient Optical Properties")
  !
@@ -113,12 +115,22 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  endif
  N_vv_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
  N_cc_trans=(RT_bands(2)-Xen%nbm)*(RT_bands(2)-Xen%nbm)*Xk%nbz
- N_trans=0
  nb=(/Xen%nbf,Xen%nbm/)
  !
+ N_trans=0
+ N_cc_vv_trans=0
  if (l_cv) N_trans=N_cv_trans
- if (l_vv) N_trans=N_trans+N_vv_trans
- if (l_cc) N_trans=N_trans+N_cc_trans
+ if (l_vv) N_cc_vv_trans=N_cc_vv_trans+N_vv_trans
+ if (l_cc) N_cc_vv_trans=N_cc_vv_trans+N_cc_trans
+ N_trans=N_trans+N_cc_vv_trans
+ call PP_indexes_reset(PX_bs)
+ call PP_indexes_reset(PX_ip)
+ if (l_BS) then
+   call PARALLEL_index(PX_bs,(/N_cv_trans/))
+   call PARALLEL_index(PX_ip,(/N_cc_vv_trans/))
+ else
+   call PARALLEL_index(PX_ip,(/N_trans/))
+ endif
  !
  if (l_cv) call msg('s','[TR-ABS] cv (EQ)  transitions :',N_cv_trans)
  if (l_cc) call msg('s','[TR-ABS] cc (NEQ) transitions :',N_cc_trans)
@@ -218,6 +230,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
      if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb)
    enddo
+   ! 
+   call PP_redux_wait(TRabs_RES_right,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+   call PP_redux_wait(TRabs_RES_left,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+   call PP_redux_wait(TRabs_E,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
+   call PP_redux_wait(TRabs_RES_right,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+   call PP_redux_wait(TRabs_RES_left,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+   call PP_redux_wait(TRabs_E,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
    !
    do i_cycle=1,N_cycles
      do i_dir=1,N_dirs
@@ -227,6 +246,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
          if (l_OFF.and.i_dir <j_dir) call build_up_eps_ij("AH-"//label(i_cycle),i_dir,j_dir)
        enddo
      enddo
+     !
+     call PP_redux_wait(Epsilon_ij)
+     call PP_redux_wait(B_Hall)
+     !
      ! Output (write)
      call RT_Trabs_output("write",label(i_cycle),ofile,N_dirs,N_files,W_bss,RT_time(i_T),l_OFF,l_ABS)
    enddo
@@ -260,6 +283,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      complex(SP)  :: RES,GF(W_bss%n_freqs)
      if (what=="EPS-IP".or.what=="AH-IP") then
        do i_trans=BS_K_dim(1)+1,N_trans
+         if (.not.PX_ip%element_1D(i_trans-BS_K_dim(1))) cycle
          RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
          if (what=="EPS-IP") then
            Epsilon_ij(:,i,j,1)=Epsilon_ij(:,i,j,1)-RES/(W_bss%p(:)-TRabs_E(i_trans))+conjg(RES)/(W_bss%p(:)+TRabs_E(i_trans))
@@ -270,6 +294,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      if (what=="EPS-BS".or.what=="AH-BS") then
        ! ANTI-RES part to be coded
        do i_trans=1,BS_K_dim(1)
+         if (.not.PX_bs%element_1D(i_trans)) cycle
          RES=Co*( TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,2) +&
 &                 TRabs_RES_right(i_trans,I,2)*TRabs_RES_left(i_trans,J,1) )
          if (what=="EPS-BS") Epsilon_ij(:,i,j,2)=Epsilon_ij(:,i,j,2)-RES/(W_bss%p(:)-TRabs_E(i_trans))

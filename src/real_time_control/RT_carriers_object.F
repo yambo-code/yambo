@@ -55,7 +55,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
  character(*),  intent(in)   ,optional :: WHAT
  !
  integer  :: i_RT,i_b,i_k,iE_fg,i_k_RT,i_spin
- real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ
+ real(SP) :: Hole_lifetime,Elec_lifetime,df_occ,f_occ,f_hol
  !
  integer           :: VAR_SZ(2),IPOS(2),TMP_SIZE(2)
  real(SP), pointer :: TMP_VAR(:,:)
@@ -120,7 +120,7 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        !
      enddo
      !
-   case('fill','dump')
+   case('dump')
      !
      do i_RT=1,RT%nstates
        !
@@ -129,40 +129,40 @@ subroutine RT_carriers_object(RT,E,K,DB_id,WHAT)
        i_k_RT =RT%table(i_RT,3)
        i_spin =RT%table(i_RT,4)
        !
-       ! Occupations
+       ! Occupations & Energies
        !
-       if (WHAT=="fill") then
-         RT%OCC_el%dN(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
-       else if (WHAT=="dump".and.allocated(RT_el_occ%dN)) then
-         RT_el_occ%dN(i_b,i_k_RT)=RT%OCC_el%dN(i_RT)
-       endif
+       if (allocated(RT_el_occ%dN)) RT_el_occ%dN(i_b,i_k_RT)      =RT%OCC_el%dN(i_RT)
+       if (allocated(RT_levels%E) ) RT_levels%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
        !
-       ! Energies
+     enddo
+     !
+   case('fill')
+     !
+     do i_RT=1,RT%nstates
        !
-       if (WHAT=="fill") then
-         RT%delta_E(i_RT)=RT_levels%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
-       else if (WHAT=="dump".and.allocated(RT_levels%E)) then
-         RT_levels%E(i_b,i_k_RT,i_spin)=RT%delta_E(i_RT)+RT%E_bare(i_RT)
-       endif
+       i_b    =RT%table(i_RT,1)
+       i_k    =RT%table(i_RT,2)
+       i_k_RT =RT%table(i_RT,3)
+       i_spin =RT%table(i_RT,4)
        !
-       if (WHAT=="fill") then
-         !
-         f_occ =RT%OCC_el%N_ref(i_RT)/spin_occ
-         df_occ=RT%OCC_el%dN(i_RT)/spin_occ
-         if(any((/RT_EP_emit_life%active,RT_EE_life%active,RT_EH_life%active/))) then
-           Elec_lifetime=EMIT_RT_life_REF(i_b,i_k_RT)+EMIT_RT_life_dGAMMA(i_b,i_k_RT)
-           Hole_lifetime=ABS_RT_life_REF(i_b,i_k_RT) +ABS_RT_life_dGAMMA(i_b,i_k_RT)
-           RT%NEQ_Lifetime(i_RT)=  (Hole_lifetime+Elec_lifetime)
-           if(RT%E_bare(i_RT)> 0._SP) then
-             if ((      f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/       f_occ
-             if(  abs(df_occ)>0._SP)  RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(     df_occ)
-           else if(RT%E_bare(i_RT)<=0._SP) then
-             if((1._SP-f_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(1._SP-f_occ)
-             if(  abs(df_occ)>0._SP) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(    -df_occ)
-           endif
-           !
+       ! Occupations & Energies
+       !
+       RT%OCC_el%dN(i_RT)=RT_el_occ%dN(i_b,i_k_RT)
+       RT%delta_E(i_RT)  =RT_levels%E(i_b,i_k_RT,i_spin)-RT%E_bare(i_RT)
+       !
+       f_occ =RT%OCC_el%N_ref(i_RT)/spin_occ
+       f_hol =1._SP-f_occ
+       df_occ=RT%OCC_el%dN(i_RT)/spin_occ
+       if(any((/RT_EP_emit_life%active,RT_EE_life%active,RT_EH_life%active/))) then
+         Elec_lifetime=EMIT_RT_life_REF(i_b,i_k_RT)+EMIT_RT_life_dGAMMA(i_b,i_k_RT)
+         Hole_lifetime=ABS_RT_life_REF(i_b,i_k_RT) +ABS_RT_life_dGAMMA(i_b,i_k_RT)
+         if(RT%E_bare(i_RT)> 0._SP) then
+           RT%NEQ_Lifetime(i_RT)=  Elec_lifetime
+           if ( abs(f_occ+df_occ)>0._SP ) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Hole_lifetime/(f_occ+df_occ)+Hole_lifetime
+         else if(RT%E_bare(i_RT)<=0._SP) then
+           RT%NEQ_Lifetime(i_RT)=  Hole_lifetime
+           if ( abs(f_hol-df_occ)>0._SP ) RT%NEQ_Lifetime(i_RT)=RT%NEQ_Lifetime(i_RT)-Elec_lifetime/(f_hol-df_occ)+Elec_lifetime
          endif
-         !
        endif
        !
      enddo

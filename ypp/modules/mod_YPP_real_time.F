@@ -112,6 +112,8 @@ module YPP_real_time
  real(SP),    allocatable :: TRabs_E(:)
  complex(SP), allocatable :: TRabs_RES_left(:,:,:)  ! I_trans, DIP_dir, 1 ( RES_0 ) - 2 ( dRES)
  complex(SP), allocatable :: TRabs_RES_right(:,:,:)
+ complex(SP), allocatable :: Epsilon_ij(:,:,:,:)
+ complex(SP), allocatable :: B_Hall(:,:,:)
  !
  ! (RT) carriers
  !

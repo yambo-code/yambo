@@ -24,7 +24,6 @@
 subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
- use units,     ONLY:HA2EV
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
@@ -41,7 +40,7 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ,n_spinor
  use R_lattice, ONLY:nkbz
- use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
+ use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI,HA2EV
  use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,BS_field_direction,BS_dip_size
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
@@ -201,27 +200,34 @@ subroutine K_output_file(iq,mode)
    !
    ! Hanomalous Hall term
    !
-   call msg('o off','# ','Anomalous Hall effect',INDENT=0)
+   call msg('o off','# ','Anomalous Hall effect (B_Hall):',INDENT=0)
    call msg('o off','#')
    !
-   n_output_data=6
-   if(l_IP) n_output_data=3
-   headers(:6)=(/'sH ','   ','   ','sH0','   ','   '/)
-   call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-   headers(:6)=(/'  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] ','  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] '/)
-   call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-   !
+   ! [fs]^-1 -> 1: BS 2: IP
    B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
    output_data(1)=real(B_Hall(2))
-   output_data(4)=real(B_Hall(1))
+   output_data(2)=real(B_Hall(1))
+   !
+   ! [Ohm*cm]^-1 -> 3: BS 4: IP
    B_Hall(:)=B_Hall(:)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
-   output_data(2)=real(B_Hall(2))
-   output_data(5)=real(B_Hall(1))
-   B_Hall(:)=B_Hall(:)*1.E2_SP*HBAR_SI/e_SI**2
    output_data(3)=real(B_Hall(2))
+   output_data(4)=real(B_Hall(1))
+   !
+   ! [e^2/hbar] -> 5: BS 6: IP
+   B_Hall(:)=B_Hall(:)*1.E2_SP*HBAR_SI/e_SI**2
+   output_data(5)=real(B_Hall(2))
    output_data(6)=real(B_Hall(1))
-   if(l_IP) output_data(1:3)=output_data(4:6)
-   call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   !
+   if (l_IP) then
+     call msg('o off','# B_Hall (IP)',output_data(2),INDENT=0,after_msg="[fs]^-1")
+     call msg('o off','#            ',output_data(4),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg('o off','#            ',output_data(6),INDENT=0,after_msg="[e^2/hbar]")
+   else
+     call msg('o off','# B_Hall (BS,IP)',output_data(1:2),INDENT=0,after_msg="[fs]^-1")
+     call msg('o off','#               ',output_data(3:4),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg('o off','#               ',output_data(5:6),INDENT=0,after_msg="[e^2/hbar]")
+   endif
+   !
    call msg('o off','#')
    !
  endif

@@ -245,7 +245,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
    return
  endif
  !
- !
  if (present(what)) then
    ch='External RT corrections ('//what//')'
    if (depth>0 ) call section('=',trim(ch))
@@ -256,7 +255,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  ! Interpolation
  !==============
- if (.not.do_not_interp) call RT_interpolation_driver(bands,E,K,what_,local_Time,l_f,l_E,l_W,l_BOLTZ,NN)
+ if (.not.do_not_interp) call RT_interpolation_driver(bands,E,K,what_,local_Time,l_f,l_E,l_W,l_BOLTZ,NN,l_verbose)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !

@@ -21,67 +21,110 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_output(what,N_col,W,TIME,l_BS,l_IP,l_OFF,l_ABS)
+subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
  !
- use pars,            ONLY:SP,schlen
+ use pars,            ONLY:SP,schlen,pi,cI
+ use units,           ONLY:HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,HA2EV
  use OUTPUT_simple,   ONLY:OUTPUT_add_column
  use RT_output_m,     ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use interfaces,      ONLY:DESC_write
- use YPP_real_time,   ONLY:TRabsWHAT
- use X_m,             ONLY:Epsilon_ii
+ use YPP_real_time,   ONLY:TRabsWHAT,TRabsMODE,Epsilon_ij,B_Hall
  use frequency,       ONLY:w_samp
+ use com,             ONLY:msg
  use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_desc
- use stderr,          ONLY:STRING_match
+ use stderr,          ONLY:STRING_match,set_real_printed_length
  !
 #include<memory.h>
  !
- character(*) :: what
- integer      :: N_col
- type(w_samp) :: W
- real(SP)     :: TIME
- logical      :: l_BS,l_IP,l_OFF,l_ABS
+ character(*)      :: what,how
+ character(schlen) :: ofile(20)
+ integer           :: N_dirs,N_files
+ type(w_samp)      :: W
+ real(SP)          :: TIME
+ logical           :: l_OFF,l_ABS
  !
  ! Work Space
  !
  logical           :: l_TRANS,l_REFL
- integer           :: i_freq,i_f,n_files
- character(schlen) :: ofile(10)
+ integer           :: i_freq,i_f,i_dir,j_dir,i_kind
+ real(SP)          :: B_data(3)
  !
  l_TRANS=STRING_match(TRabsWHAT,"trans")
  l_REFL =STRING_match(TRabsWHAT,"refl")
  !
- n_files=0
- if (l_ABS) then
-   if (l_BS)  n_files=n_files+1
-   if (l_BS)  ofile(n_files)="YPP-TR_delta_eps_BS"
-   if (l_IP)  n_files=n_files+1
-   if (l_IP)  ofile(n_files)="YPP-TR_delta_eps_IP"
- endif
- if (l_OFF) then
-   if (l_BS)  n_files=n_files+1
-   if (l_BS)  ofile(n_files)="YPP-TR_delta_off_BS"
-   if (l_IP)  n_files=n_files+1
-   if (l_IP)  ofile(n_files)="YPP-TR_delta_off_IP"
+ i_kind=1
+ if (how=="BS") i_kind=2
+ !
+ if (what=="init") then
+   do i_dir=1,N_dirs
+     do j_dir=1,N_dirs
+       if (l_ABS.and.i_dir==j_dir) call gimme_a_name(i_dir,j_dir,how)
+       if (l_OFF.and.i_dir <j_dir) call gimme_a_name(i_dir,j_dir,how)
+     enddo
+   enddo
+   if (l_OFF) then
+     N_files=N_files+1
+     ofile(N_files)="YPP-TR_Anomalous_Hall_"//how
+   endif
+   return
  endif
  !
  if (what=="open".or.what=="close") then
-   do i_f=1,n_files
+   do i_f=1,N_files
     call OUTPUT_add_column(trim(ofile(i_f)),action=what)
     if (what=="open") then
       call elemental_desc_write(trim(ofile(i_f)))
     endif
    enddo
+   if (l_OFF) call msg("o Hall_"//how,'#',' Hall coefficient units is (Ohm*cm)^-1',INDENT=0)
    return
  endif
  !
- do i_f=1,n_files
-   do i_freq=1,W%n_freqs
-     call elemental_TIME_E_write(trim(ofile(i_f)),(/aimag(Epsilon_ii(i_freq,i_f)),real(Epsilon_ii(i_freq,i_f))/))
+ call set_real_printed_length(f_length=12,g_length=15)
+ !
+ ! Epsilon
+ do i_dir=1,N_dirs
+   do j_dir=1,N_dirs
+     if ((l_ABS.and.i_dir==j_dir).or.(l_OFF.and.i_dir <j_dir)) then 
+       do i_freq=1,W%n_freqs
+         call elemental_TIME_E_write("eps_"//label(i_dir,j_dir),&
+&                                   (/aimag(Epsilon_ij(i_freq,i_dir,j_dir,i_kind)),&
+&                                      real(Epsilon_ij(i_freq,i_dir,j_dir,i_kind))/))
+       enddo
+     endif
    enddo
  enddo
  !
+ ! Hall coefficient
+ if (l_OFF) then
+   call OUTPUT_add_column("Hall_"//how,TITLES=(/"Time"/),R_VALUES=(/TIME/),KIND="Time",UNIT="fs")
+   B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
+   if (N_dirs==2) then
+     B_data(1)=real(B_Hall(1,2,i_kind))
+     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy"/),R_VALUES=B_data(1:1))
+   endif
+   if (N_dirs==3) then
+     B_data=real((/B_Hall(1,2,i_kind),B_Hall(1,3,i_kind),B_Hall(2,3,i_kind)/))
+     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy","B_Hall_xz","B_Hall_yz"/),R_VALUES=B_Data)
+   endif
+   call OUTPUT_add_column("Hall_"//how,action="write")
+ endif
+ !
+ call set_real_printed_length( )
+ !
  contains
+   !
+   function label(i,j)
+     character(2) :: label
+     integer      :: i,j
+     if (i==1.and.j==1) label="xx" 
+     if (i==2.and.j==2) label="yy" 
+     if (i==3.and.j==3) label="zz" 
+     if (i==1.and.j==2) label="xy" 
+     if (i==1.and.j==3) label="xz" 
+     if (i==2.and.j==3) label="yz" 
+   end function
    !
    subroutine elemental_TIME_E_write(file,data)
      character(*) :: file
@@ -90,6 +133,16 @@ subroutine RT_TRabs_output(what,N_col,W,TIME,l_BS,l_IP,l_OFF,l_ABS)
      call OUTPUT_add_column(file,TITLES=(/"Energy"/),R_VALUES=(/real(W%p(i_freq))/),UNIT="eV")
      call OUTPUT_add_column(file,TITLES=(/"Eps-Im","Eps-Re"/),R_VALUES=data)
      call OUTPUT_add_column(file,action="write")
+   end subroutine
+   !
+   subroutine gimme_a_name(i,j,desc)
+     integer :: i,j
+     character(*) :: desc
+     character(10) :: base
+     N_files=N_files+1
+     base="delta_eps"
+     if (STRING_match(TRabsMODE,"eq")) base="eps"
+     ofile(N_files)="YPP-TR_"//trim(base)//"_"//label(i,j)//"_"//desc
    end subroutine
    !
    subroutine elemental_desc_write(file)

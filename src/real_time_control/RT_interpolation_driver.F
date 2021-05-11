@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN)
+subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
  !
  use pars,           ONLY:SP,schlen
  use electrons,      ONLY:levels,n_sp_pol
@@ -39,7 +39,7 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN)
  type(bz_samp), intent(inout) :: K
  character(3),  intent(in)    :: what ! X,K,G
  real(SP),      intent(in)    :: Time
- logical,       intent(in)    :: l_f,l_E,l_W,l_B
+ logical,       intent(in)    :: l_f,l_E,l_W,l_B,VERB
  !
  ! Work space
  !
@@ -106,6 +106,8 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN)
    return
    !
  endif
+ !
+ if (.not.VERB) return
  !
  title=" "
  if (l_f) title="f"

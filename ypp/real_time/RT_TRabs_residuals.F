@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
+subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
  !
  use pars,            ONLY:SP,pi,cI
  use R_lattice,       ONLY:bz_samp
@@ -30,10 +30,10 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
  use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E,TRabsMODE
  use stderr,          ONLY:STRING_match
  use BS,              ONLY:BS_K_dim
- use BS_solvers,      ONLY:BSS_eh_table,BS_E,BS_mat
+ use BS_solvers,      ONLY:BSS_eh_table,BS_mat
+ use YPPm,            ONLY:BS_E
  use real_time,       ONLY:RT_bands
- use parallel_m,      ONLY:PAR_IND_DIPk_ibz,&
-&                          PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
+ use parallel_m,      ONLY:PAR_IND_DIPk_ibz,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  !
 #include<memory.h>
  !
@@ -42,14 +42,12 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
  type(levels)      :: Xen
  type(bz_samp)     :: Xk
  real(SP)          :: DIP_dir(3)
+ logical           :: l_EQ
  !
  ! Work space
  !
  integer           :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
- complex(SP)       :: dipole_rotated(3),f_eh(2)
- logical           :: l_EQ
- !
- l_EQ = STRING_match(TRabsMODE,"eq")
+ complex(SP)       :: dipole_rotated(3),f_eh(2),DIP_dot
  !
  ! BSE residuals
  ! -------------
@@ -74,11 +72,17 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb)
        f_eh=gimme_f_and_delta_f(i_v,i_c,i_kibz,i_spin)
        dipole_rotated=conjg(-cI*DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk))
        !
-       TRabs_RES_right(i_l,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*BS_mat(i_lp,i_l)*sqrt(f_eh(1))
-       TRabs_RES_right(i_l,i_dir,2)= conjg(dot_product(DIP_dir,dipole_rotated))*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
-       TRabs_RES_left(i_l,i_dir,1)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
-       TRabs_RES_left(i_l,i_dir,2)= dot_product(DIP_dir,dipole_rotated)*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
-       TRabs_E(i_l)     = real(BS_E(i_l),SP)
+       DIP_dot=dot_product(DIP_dir,dipole_rotated)
+       !
+       TRabs_RES_right(i_l,i_dir,1)= TRabs_RES_right(i_l,i_dir,1)+&
+&                                    conjg(DIP_dot)*BS_mat(i_lp,i_l)*sqrt(f_eh(1))
+       TRabs_RES_right(i_l,i_dir,2)= TRabs_RES_right(i_l,i_dir,2)+&
+&                                    conjg(DIP_dot)*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
+       TRabs_RES_left(i_l,i_dir,1) = TRabs_RES_left(i_l,i_dir,1)+&
+&                                    DIP_dot*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
+       TRabs_RES_left(i_l,i_dir,2) = TRabs_RES_left(i_l,i_dir,2)+&
+&                                    DIP_dot*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
+       if (i_l==1) TRabs_E(i_lp)   = real(BS_E(i_lp),SP)
        !
      enddo
      !

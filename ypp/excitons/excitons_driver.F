@@ -70,27 +70,30 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  if (io_err==0) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues",io_err)
  !
  if (io_err/=0) then
-#if defined _YPP_RT
-   call warning("BSE databases not found. Switching to IP")
-   call RT_transient_absorption(Xen,Xk,q)
+   call warning("BSE databases not found.")
    return
-#else
-   call error("BSE databases not found. Switching to IP")
-#endif
  endif
  !
  ! Sort energies and write to output
  !===================================
  if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
- ! Sort energies to find degenerate states
- !========================================
- YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
- call excitons_find_degeneracies(BS_E,BS_E_degs)
- !
- ! Define the USER set of excitonic states
- !=========================================
- if(.not.l_sort) call get_user_excitonic_states( )
+#if defined _YPP_RT
+ if (.not.l_RT_abs) then
+#endif
+   !
+   ! Sort energies to find degenerate states
+   !========================================
+   YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
+   call excitons_find_degeneracies(BS_E,BS_E_degs)
+   !
+   ! Define the USER set of excitonic states
+   !=========================================
+   if(.not.l_sort) call get_user_excitonic_states( )
+   !
+#if defined _YPP_RT
+ endif
+#endif
  !
  ! Exciton dispersion interpolation
  ! =======================================
@@ -136,7 +139,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Transient absorption 
  !======================
- if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q)
+ if (l_RT_abs)     call RT_transient_absorption(Xen,Xk,q)
  !
 #endif
  !

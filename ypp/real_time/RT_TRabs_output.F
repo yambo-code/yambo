@@ -47,14 +47,11 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
  ! Work Space
  !
  logical           :: l_TRANS,l_REFL
- integer           :: i_freq,i_f,i_dir,j_dir,i_kind
+ integer           :: i_freq,i_f,i_dir,j_dir
  real(SP)          :: B_data(3)
  !
  l_TRANS=STRING_match(TRabsWHAT,"trans")
  l_REFL =STRING_match(TRabsWHAT,"refl")
- !
- i_kind=1
- if (how=="BS") i_kind=2
  !
  if (what=="init") then
    do i_dir=1,N_dirs
@@ -88,9 +85,9 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
    do j_dir=1,N_dirs
      if ((l_ABS.and.i_dir==j_dir).or.(l_OFF.and.i_dir <j_dir)) then 
        do i_freq=1,W%n_freqs
-         call elemental_TIME_E_write("eps_"//label(i_dir,j_dir),&
-&                                   (/aimag(Epsilon_ij(i_freq,i_dir,j_dir,i_kind)),&
-&                                      real(Epsilon_ij(i_freq,i_dir,j_dir,i_kind))/))
+         call elemental_TIME_E_write("eps_"//label(i_dir,j_dir)//"_"//how,&
+&                                   (/aimag(Epsilon_ij(i_freq,i_dir,j_dir)),&
+&                                      real(Epsilon_ij(i_freq,i_dir,j_dir))/))
        enddo
      endif
    enddo
@@ -101,11 +98,11 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
    call OUTPUT_add_column("Hall_"//how,TITLES=(/"Time"/),R_VALUES=(/TIME/),KIND="Time",UNIT="fs")
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    if (N_dirs==2) then
-     B_data(1)=real(B_Hall(1,2,i_kind))
+     B_data(1)=real(B_Hall(1,2))
      call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy"/),R_VALUES=B_data(1:1))
    endif
    if (N_dirs==3) then
-     B_data=real((/B_Hall(1,2,i_kind),B_Hall(1,3,i_kind),B_Hall(2,3,i_kind)/))
+     B_data=real((/B_Hall(1,2),B_Hall(1,3),B_Hall(2,3)/))
      call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy","B_Hall_xz","B_Hall_yz"/),R_VALUES=B_Data)
    endif
    call OUTPUT_add_column("Hall_"//how,action="write")

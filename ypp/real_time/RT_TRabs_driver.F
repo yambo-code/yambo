@@ -218,6 +218,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      INTERPOLATE_is_quiet=.TRUE.
    endif
    !
+   TRabs_E        =rZERO
    TRabs_RES_left =cZERO
    TRabs_RES_right=cZERO
    if (l_OFF) B_Hall =cZERO
@@ -248,7 +249,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      enddo
      !
      call PP_redux_wait(Epsilon_ij)
-     call PP_redux_wait(B_Hall)
+     if (l_OFF) call PP_redux_wait(B_Hall)
      !
      ! Output (write)
      call RT_Trabs_output("write",label(i_cycle),ofile,N_dirs,N_files,W_bss,RT_time(i_T),l_OFF,l_ABS)

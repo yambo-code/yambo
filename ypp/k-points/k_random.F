@@ -32,6 +32,7 @@ subroutine k_random(Xk,No_Weight)
  use stderr,              ONLY:intc
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
+ use parser_m,            ONLY:parser 
  !
 #include<memory.h>
  !
@@ -42,20 +43,24 @@ subroutine k_random(Xk,No_Weight)
  !
  real(SP), allocatable :: rand_k(:,:)
  integer,  allocatable :: MAP(:)
- integer               :: i_err,ik_near,i_count,i,j,k,ik_bz,i_cycle,N
+ integer               :: i_err,ik_near,i_count,i,j,k,ik_bz,i_cycle,N,ik_r,ic
  logical               :: bz_near_warning(1)
  character(lchlen)     :: k_rand_fname
  type(PP_indexes)      :: px
+ logical               :: l_no_distribute
  !
  ! Random Generator
  !
  character(12)      :: ch(3)
  integer            :: iseed(8)
+ real(DP), external :: dlaran
  !
  call date_and_time(ch(1),ch(2),ch(3),iseed)
  iseed=iabs(iseed)
  ! iseed(4) must be odd
  iseed(4)=2*(iseed(4)/2)+1
+ !
+ call parser('DoNotDistr',l_no_distribute)
  !
  call section('*',"== Random k-points generator ==")
  !
@@ -63,7 +68,7 @@ subroutine k_random(Xk,No_Weight)
  !
  ! ... Random points rounding & alloc
  N=int(real(BZ_random_nkpts)/real(Xk%nbz))*Xk%nbz
- if (N/=BZ_random_nkpts) then
+ if (N/=BZ_random_nkpts.and..not.l_no_distribute) then
    call warning("Random points adjusted to be BZ sampling compliant. New number of random points is "//trim(intc(N)))
    BZ_random_nkpts=N
  endif
@@ -77,19 +82,30 @@ subroutine k_random(Xk,No_Weight)
  !
  call live_timing('Points maker',BZ_random_nkpts)
  !------------------------------------------------
- do i_cycle=0,int(real(BZ_random_nkpts)/real(Xk%nbz))-1
-   !
-   do ik_bz=1,Xk%nbz
-     !
-     i_count=i_cycle*Xk%nbz+ik_bz
-     !
-     call build_3D_k( Xk%ptbz(ik_bz,:), rand_k(i_count,:) )
-     !
+ if(l_no_distribute) then
+   do ik_r=1,BZ_random_nkpts
+     do ic=1,3
+       rand_k(ik_r,ic)=(dlaran(iseed(4:))-1./2.)
+     enddo
+     call c2a(v_in=rand_k(ik_r,:),mode="ka2i")
+     call k2bz(v_in=rand_k(ik_r,:))
      call live_timing(steps=1)
+   enddo
+ else
+   do i_cycle=0,int(real(BZ_random_nkpts)/real(Xk%nbz))-1
+     !
+     do ik_bz=1,Xk%nbz
+       !
+       i_count=i_cycle*Xk%nbz+ik_bz
+       !
+       call build_3D_k( Xk%ptbz(ik_bz,:), rand_k(i_count,:) )
+       !
+       call live_timing(steps=1)
+       !
+     enddo
      !
    enddo
-   !
- enddo
+ endif
  !
  call live_timing( )
  !

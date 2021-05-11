@@ -516,7 +516,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
-   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
+   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius DoNotDistr")
    if (l_regular_grid)  call initactivate(1,"NoWeights cooOut Shift01 INTERP_Grid")
  endif
  !

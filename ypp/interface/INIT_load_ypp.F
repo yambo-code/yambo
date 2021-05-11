@@ -234,6 +234,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
+ call it('f',defs,'DoNotDistr',    ' Do not generate random points around the k-points of the BZ') 
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 

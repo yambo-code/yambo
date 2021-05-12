@@ -53,8 +53,13 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step
+ if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+ !
+ !  In the case of non-uniform T samplings the last time points can be imposed by the total time and, hence, the
+ !  STEP can appear even smaller than the effective step.
+ if (GENERAL_RT_IO_t%N> 2) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-2))
+ !
  if (GENERAL_RT_IO_t%N> 1) then
-   STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
    if (l_rho_G) then
     TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
     if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
@@ -170,7 +175,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !===========
  !
  call msg('s','['//what//'] Uniform grid       :',UNIFORM)
- call msg('s','['//what//'] Time range         :',RT_conf%T_range*AUT2FS,"[fs]")
+ call msg('s','['//what//'] Time range         :',(/minval(RT_time),maxval(RT_time)/)*AUT2FS,"[fs]")
  call msg('s','['//what//'] Time step          :',RT_conf%delta_T*AUT2FS,"[fs]")
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !

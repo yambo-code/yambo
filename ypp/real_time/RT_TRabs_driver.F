@@ -23,6 +23,7 @@
 !
 subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
+ use drivers,         ONLY:l_rt_carriers_in_use
  use pars,            ONLY:SP,pi,cZERO,rZERO,schlen
  use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor
  use electrons,       ONLY:levels,spin,spin_occ
@@ -71,6 +72,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! Pre-setup of carrier components and Time evolution parameters
  !
  call RT_apply(DIPs%ib,Xen,Xk,IO_COM=LOG,TIMES_ONLY=.TRUE.)
+ if (.not.l_rt_carriers_in_use) return
  !
  ! Setup of Time-range & Report
  !
@@ -155,6 +157,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! ... I/O
  call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'DIP')
+ if (io_err/=0) return
  !
  ! ... rotation
  N_dirs=1

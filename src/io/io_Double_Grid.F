@@ -32,11 +32,10 @@ integer function io_Double_Grid(E,Xk,ID,what)
  use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG 
  use timing_m,       ONLY:timing
  use stderr,         ONLY:intc
-#if defined _ELPH
- use ELPH,           ONLY:GKKP,elph_nb,FineGd_E_kpq_alloc
- use interfaces,     ONLY:ELPH_alloc
-#endif
  use pars,           ONLY:IP,SP
+#if defined _ELPH
+ use ELPH,           ONLY:EkplusQ_mode
+#endif
  !
 #include<memory.h>
  !
@@ -52,7 +51,6 @@ integer function io_Double_Grid(E,Xk,ID,what)
  logical :: l_R_LATT
  integer :: VAR_SZ
  logical :: l_PH_DG=.FALSE.
- integer :: iq
  !
  call timing('io_Double_Grid',OPR='start')
  !
@@ -109,6 +107,14 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
    !
+#if defined _ELPH
+   if(l_PH_DG) then
+     call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+     call io_variable_elemental(ID,CH0=EkplusQ_mode,VAR='[Ekpq_mode] E(k+q) energy mode'&
+&                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
+   endif
+#endif
+   !
    ! Eigenvalues
    !
    if (read_is_on(ID)) then
@@ -158,38 +164,6 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call elemental_IO(Xk%FGbz,"K_RANGE","BZ")
    !
  endif
- !
- iq=maxval(io_sec(ID,:))-1
- !
- if (iq==0) goto 1
- ! 
-#if defined _ELPH
- if(l_PH_DG.and.iq>0) then
-   !
-   call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_Double_Grid)
-   if(io_Double_Grid/=0) goto 1
-   !
-   if(read_is_on(ID)) call  ELPH_alloc("DGRID",GKKP) 
-   !
-   call def_variable_elemental(ID_frag,VAR="PARS_QPPT",VAR_SZ=3,VAR_KIND=IP+100,MENU=0) 
-   call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nk,VAR=' [E_dg_kpq] Nk',DESCRIPTOR=FineGd_desc)
-   call  io_variable_elemental(ID_frag,I0=GKKP%E_dg_kpq(iq)%nq_around,VAR=' [E_dg_kpq] NQ-fine',DESCRIPTOR=FineGd_desc)
-   call def_variable_elemental(ID_frag,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
-   !
-   if(read_is_on(ID)) call FineGd_E_kpq_alloc(GKKP%E_dg_kpq(iq)) 
-   !
-   write (VAR_name,'(a,i4.4)') 'E_K_Plus_Q_',iq
-   call def_variable_bulk(ID_frag, trim(VAR_NAME),1, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%E_kpq),VAR_KIND=SP)
-   call  io_variable_bulk(ID_frag,1, R4=GKKP%E_dg_kpq(iq)%E_kpq)
-   write (VAR_name,'(a,i4.4)') 'f_K_Plus_Q_',iq
-   call def_variable_bulk(ID_frag, trim(VAR_NAME),2, VAR_SZ=shape(GKKP%E_dg_kpq(iq)%f_kpq),VAR_KIND=SP)
-   call  io_variable_bulk(ID_frag,2, R4=GKKP%E_dg_kpq(iq)%f_kpq)
-   !  
-   call io_fragment_disconnect(ID,ID_frag)
-   !
- endif
-#endif
- !
  !
 1 call io_disconnect(ID=ID)
  !

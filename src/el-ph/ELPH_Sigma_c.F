@@ -48,14 +48,15 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,&
-&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,&
-&                        elph_nQ,GKKP,elph_use_q_grid,FineGd_E_kpq_components_reset,&
-&                        setup_k_plus_q_levels,elph_nQ_used,&
-&                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
+&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,&
+&                        elph_nQ,GKKP,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
+&                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,E_kpq_sh_fact, &
+&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
+ use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
+&                        INTERPOLATE_is_quiet    
  use functions,     ONLY:Fermi_fnc_derivative
  use timing_m,      ONLY:timing
  !
@@ -217,10 +218,26 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if(elph_use_q_grid) then
      call msg('sr','Using PH-double-grid ')
      use_PH_DbGd=.TRUE.
+     call ELPH_alloc("DGRID",GKKP)
    else
      call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
      use_PH_DbGd=.FALSE.
    endif
+ endif
+ !
+ ! Interpolate the E(k+q) energies for the double-grid
+ !
+ if(use_PH_DbGd.and.trim(EkplusQ_mode)=='interp') then
+   call msg('sr','E(k+q) calculated using a smooth Fourier interpolation')
+   INTERPOLATE_is_serial=.TRUE.
+   INTERPOLATE_is_quiet =.TRUE.
+   INTERP_shell_factor  =E_kpq_sh_fact
+   call INTERPOLATION_BZ_setup(k)
+   INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
+   call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+   call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
+   !
  endif
  !
  ! Timing steps
@@ -287,11 +304,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
    !
-   if(use_PH_DbGd.and.iq_loop>1) then  ! all processor load iq_loop=1 for the DW
-     IO_ACT=manage_action(RD_CL_IF_END,iq_loop,1,nq_to_sum)
-     call io_control(ACTION=IO_ACT,COM=REP,MODE=DUMP,SEC=(/1+iq_loop/),ID=ID_DG)
-     io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
-   endif
+   if(use_PH_DbGd.and.trim(EkplusQ_mode)=='interp'.and.iq_bz/=1) call En_k_plus_q_interpolate(k,q,en,iq_bz)
    !
    do i_qp=1,QP_n_states
      !

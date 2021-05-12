@@ -26,9 +26,9 @@ subroutine ELPH_double_grid(k,E,q)
  use pars,                ONLY:SP,pi
  use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc,n_sp_pol
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset,qindx_S
- use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,EkplusQ_mode
+ use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ,EkplusQ_mode
  use com,                 ONLY:msg
  use units,               ONLY:HA2CMm1,HA2EV
  use vec_operate,         ONLY:c2a
@@ -47,7 +47,7 @@ subroutine ELPH_double_grid(k,E,q)
  type(bz_samp)         :: q_fine
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded,l_test_PHDGrid
  integer               :: ID,io_err,i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz
- integer, external     :: io_ELPH,io_Double_Grid,io_QINDX
+ integer, external     :: io_ELPH,io_Double_Grid
  logical, external     :: file_exists 
  !
  call parser('TestPHDGrid',l_test_PHDGrid)
@@ -183,7 +183,7 @@ subroutine ELPH_double_grid(k,E,q)
  ! Interpolation E(k+q) and fill the GKKP%E_kpq
  ! ============================================
  ! E(k+q) is constructed with k in the IBZ and q in the BZ
- if(STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
+! if(STRING_same(EkplusQ_mode,'interp')) call En_k_plus_q_interpolate(k,q,q_fine,E,GKKP)
  !
  !
  ! Set all fine grid to the course one (ONLY FOR TESTING PURPOSE)
@@ -194,9 +194,6 @@ subroutine ELPH_double_grid(k,E,q)
    !
    call warning(" THIS IS FICTITIOUS DOUBLE-GRID: results should be equal to the course one ")
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
-   io_err=io_QINDX(k,q,ID)
-   !   
    do iq_bz=1,q%nbz        
      !
      iq_ibz =q%sstar(iq_bz,1)
@@ -204,26 +201,14 @@ subroutine ELPH_double_grid(k,E,q)
      do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
        iE_fg=q%FGbz%E_map(iq_fg)  
        PH_freqs%FG%E(:,iE_fg,1)=PH_freqs%E(:,iq_ibz,1) 
-     enddo
-     !
-     do ik=1,k%nibz
-       !
-       okbz=qindx_S(ik,iq_bz,1)
-       ok=k%sstar(okbz,1)
-       !
-       if(GKKP%E_dg_kpq(iq_bz)%nq_around>0) then
-         do is=1,n_sp_pol
-           do ib=1,elph_nb
-             GKKP%E_dg_kpq(iq_bz)%E_kpq(ib,ik,is,1:GKKP%E_dg_kpq(iq_bz)%nq_around)=E%E(ib,ok,is)
-           enddo
-         enddo
-       endif
-       !
+       q%FGbz%pt(iq_fg,:)=q%ptbz(iq_bz,:)
      enddo
      !
    enddo
    !
  endif
+ !
+ if(E%nbm/=E%nbf) call error("This code for the moment works only for semiconductors/insulators")
  !
  ! Final I/O
  !===========
@@ -233,13 +218,6 @@ subroutine ELPH_double_grid(k,E,q)
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
  io_err=io_Double_Grid(PH_freqs,q,ID,'phonons')
- !
- ! For each k-point in the IBZ store all k+q energies with q in the BZ
- !
- do iq=1,q%nbz
-   call io_control(ACTION=OP_WR_CL,SEC=(/1+iq/),COM=REP,ID=ID)
-   io_err=io_Double_Grid(PH_freqs,q,ID,'phonons')
- enddo
  !
  ! CLEAN
  !========

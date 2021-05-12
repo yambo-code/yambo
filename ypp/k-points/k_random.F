@@ -144,7 +144,8 @@ subroutine k_random(Xk,No_Weight)
  call PP_redux_wait(MAP)
  !
  call msg("s","Min-Max BZ grid filling",(/minval(MAP),maxval(MAP)/))
- if (bz_near_warning(1)) call warning("BZ grid and the Random grid are disaligned. (Eventually) try running again.")
+ if (bz_near_warning(1).and..not.l_no_distribute) &
+&      call warning("BZ grid and the Random grid are disaligned. (Eventually) try running again.")
  !
  ! ... Print
  call print_k( )

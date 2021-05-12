@@ -54,9 +54,16 @@ module ELPH
  real(SP),    allocatable :: PH_acoustic_speed(:,:)
  logical,     allocatable :: PH_acoustic_branch(:)
  !
+ ! Double grid
+ !
  logical              :: use_PH_DbGd
  !
  type(levels)         :: PH_freqs
+ !
+ character(schlen)    :: EkplusQ_mode
+ integer              :: ID_E_kpq=1
+ integer              :: ID_E_kpq_obj=1
+ real(SP)             :: E_kpq_sh_fact=20.0_SP
  !
  type E_kpq_fine_grid
    integer         :: nk

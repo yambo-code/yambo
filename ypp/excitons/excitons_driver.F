@@ -74,6 +74,11 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !===================================
  if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
+ l_flag=l_sort
+#if defined _YPP_RT
+ l_flag=l_flag .or. l_RT_abs
+#endif
+ !
  ! Sort energies to find degenerate states
  !========================================
  YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
@@ -81,7 +86,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Define the USER set of excitonic states
  !=========================================
- if(.not.l_sort) call get_user_excitonic_states( )
+ if(.not.l_flag) call get_user_excitonic_states( )
  !
  ! Exciton dispersion interpolation
  ! =======================================

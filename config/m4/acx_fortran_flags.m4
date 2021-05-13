@@ -35,6 +35,8 @@ AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
               [Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
+HDF5_MODE="production";
+#
 def_compiler=
 #
 case "${host}" in
@@ -395,6 +397,7 @@ fi
 if test x"$enable_debug_flags" = "xyes"; then 
  FCFLAGS="$DEBUG_FLAGS"  
  FCUFLAGS="$DEBUG_FLAGS"  
+ HDF5_MODE="debug";
 fi
 #
 AC_MSG_CHECKING([for specific NETCDF flags])
@@ -408,6 +411,7 @@ AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)
 AC_SUBST(NETCDFFLAGS)
 AC_SUBST(DEBUG_FLAGS)
+AC_SUBST(HDF5_MODE)
 AC_SUBST(def_compiler)
 ])
 #

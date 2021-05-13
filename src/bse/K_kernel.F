@@ -495,7 +495,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s =Xk%sstar(i_kmq_bz,2) 
        i_pmq_s =Xk%sstar(i_pmq_bz,2) 
        !
-       if (BS_res_K_corr) then 
+       if (BS_res_K_corr.and.iHxc==3) then 
          i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
          i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
        endif 
@@ -503,7 +503,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if ((BS_res_K_corr.or.BS_cpl_K_corr).and.iHxc==3) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -543,7 +543,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if ((BS_res_K_corr.or.BS_cpl_K_corr).and.iHxc==3) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
@@ -568,7 +568,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
        endif 
        ! 
-       if (BS_K_is_ALDA) then 
+       if (BS_K_is_ALDA.and.iHxc==2) then 
          is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) 
          os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) 
          is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) 

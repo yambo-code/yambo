@@ -38,6 +38,7 @@ configure-stamp: uncompress-stamp
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
+              --enable-build-mode=$(hdf5_mode) \
 	      CPPFLAGS="$(netcdf_aux)" ); \
 	fi
 	touch configure-stamp

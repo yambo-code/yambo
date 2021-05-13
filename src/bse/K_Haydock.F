@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -22,7 +22,7 @@
 !
 subroutine K_Haydock(iq,W,mode)
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
  use R_lattice,      ONLY:q0_def_norm
  use X_m,            ONLY:global_gauge

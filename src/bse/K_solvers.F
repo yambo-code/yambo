@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,8 +33,8 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers,     ONLY:run_Slepc
 #endif
- use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,&
- &                       BS_blks_free,l_BS_jdos,l_BS_abs,l_BS_dichroism
+ use BS,             ONLY:BS_K_has_been_calculated_loaded,&
+ &                       BS_blks_free,l_BS_abs,l_BS_dichroism
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -52,7 +52,6 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  ! Work Space
  !
- logical           ::stop_Haydock
  !
  ! Check first if the BS database has been calculated/loaded in K.F
  !

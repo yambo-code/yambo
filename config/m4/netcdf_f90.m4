@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -90,6 +90,7 @@ AC_ARG_ENABLE(hdf5_p2y_support, AC_HELP_STRING([--enable-hdf5-p2y-support],
 #
 enable_hdf5="yes" ;
 compile_netcdf="no"
+compile_pnetcdf="no"
 internal_netcdf="no"
 compile_hdf5="no"
 internal_hdf5="no"
@@ -481,6 +482,7 @@ if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = 
     enable_hdf5_compression="no";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
+    compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
@@ -502,6 +504,7 @@ AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)
 AC_SUBST(compile_netcdf)
+AC_SUBST(compile_pnetcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)

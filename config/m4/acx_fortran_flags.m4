@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -301,7 +301,7 @@ ia64*linux* )
     SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-CB -traceback"
+    DEBUG_FLAGS="-CB -traceback -debug full"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"

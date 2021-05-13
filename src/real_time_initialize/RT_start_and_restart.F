@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -151,13 +151,16 @@ subroutine RT_start_and_restart(E,k,q)
    !
    do i_db=4,8
      call RT_RESTART_database_copy( trim(db_name(i_db)) )
-     if (i_db==6.or.i_db==7) cycle
+   enddo
+   !
+   call PP_redux_wait()
+   !
+   do i_db=4,8
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
      io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
    enddo
    !
    NE_i_start_time=NE_i_time
-   NE_steps=NE_steps+1
    !
    call RT_control_free("all")
    call RT_control_alloc("all")

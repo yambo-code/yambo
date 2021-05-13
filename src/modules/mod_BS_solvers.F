@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -126,6 +126,7 @@ module BS_solvers
    integer                  :: n_freqs = 0
    integer                  :: n_full_inv_freqs = 0
    real(SP)                 :: treshold 
+   real(SP)                 :: max_treshold 
    real(SP)                 :: PERT_FULL_ratio = 1. 
    integer    , allocatable :: err(:)
    integer    , allocatable :: iw_full(:)

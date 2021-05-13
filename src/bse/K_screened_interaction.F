@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -159,7 +159,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
 #endif
        enddo
      else if (.not.BS_W_is_diagonal) then
-       !$cuf kernel do(2) <<<*,*>>>
+       !$cuf kernel do(1) <<<*,*>>>
        do i_g3=1,BS_n_g_W
          i_g3_mat=min(i_g3,X%ng)
          do i_g2=1,BS_n_g_W

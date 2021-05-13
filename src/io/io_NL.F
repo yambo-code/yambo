@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -46,7 +46,7 @@ integer function io_NL(ID)
  !
  ! Work Space
  !
- integer              :: i_fragment,io_err,ID_frag
+ integer              :: i_fragment,ID_frag
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
  !

@@ -74,7 +74,6 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
       call elemental_desc_write(trim(ofile(i_f)))
     endif
    enddo
-   if (l_OFF) call msg("o Hall_"//how,'#',' Hall coefficient units is (Ohm*cm)^-1',INDENT=0)
    return
  endif
  !
@@ -99,11 +98,11 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    if (N_dirs==2) then
      B_data(1)=real(B_Hall(1,2))
-     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy"/),R_VALUES=B_data(1:1))
+     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_xy"/),R_VALUES=B_data(1:1))
    endif
    if (N_dirs==3) then
      B_data=real((/B_Hall(1,2),B_Hall(1,3),B_Hall(2,3)/))
-     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_Hall_xy","B_Hall_xz","B_Hall_yz"/),R_VALUES=B_Data)
+     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_xy","B_xz","B_yz"/),R_VALUES=B_Data,UNIT="(Ohm*cm)^-1")
    endif
    call OUTPUT_add_column("Hall_"//how,action="write")
  endif

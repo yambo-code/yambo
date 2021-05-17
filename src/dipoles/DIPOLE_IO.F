@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -35,7 +35,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
 #if defined _RT
  use RT_control,  ONLY:l_project_spin_dipoles
 #endif
@@ -52,7 +52,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ! Work space
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
-&                     write_header_ovlp,read_header_ovlp
+&                     write_header_ovlp,read_header_ovlp,l_project_dipoles
  integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
@@ -67,6 +67,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
 #if defined _RT
  call parser("SPINprojected",l_project_spin_dipoles)
+ call parser("DIPprojected", l_project_dipoles)
 #endif
  !
  call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
@@ -77,7 +78,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
 #if defined _PAR_IO
  write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
+ !Comment this and uncomment next
  read_header   =       reading.or.check
+ !read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
 #else
  write_header  =(      master_cpu.and.writing )
  read_header   =.not.writing.and.(reading.or.check)
@@ -95,6 +98,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
+ !Comment this
  !
  ! Master node bcast matrix dimensions for the other cores
  !
@@ -187,7 +191,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call fix_velocity(Dip,1)
  !
 #if defined _RT
- if(reading.and.l_project_spin_dipoles) call project_dipoles(Dip)
+ if(reading.and.l_project_spin_dipoles) call project_spin_dipoles(Dip)
+ if(reading.and.l_project_dipoles)      call project_dipoles(Dip)
 #endif
  !
  contains
@@ -271,7 +276,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    end subroutine
    !
 #if defined _RT
-   subroutine project_dipoles(Dip)
+   subroutine project_spin_dipoles(Dip)
      use DIPOLES,   ONLY:DIP_spin
      type(DIPOLE_t),  intent(in) :: Dip
      !
@@ -285,6 +290,32 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
          endif
          if (ic> Xen%nbf .and. iv> Xen%nbf ) then
            DIP_spin(:,ic,iv,:,:,3)=DIP_spin(:,ic,iv,:,:,1)
+         endif
+         !
+       enddo
+     enddo
+     !
+   end subroutine project_spin_dipoles
+   !
+   subroutine project_dipoles(Dip)
+     use DIPOLES,   ONLY:DIP_iR,DIP_P,DIP_v
+     use pars,      ONLY:cZERO
+     type(DIPOLE_t),  intent(in) :: Dip
+     !
+     if(.not.allocated(DIP_iR)) return
+     !
+     do iv=Dip%ib(1),Dip%ib_lim(1) 
+       do ic=Dip%ib_lim(2),Dip%ib(2)
+         !
+         if (ic<=Xen%nbf .and. iv<=Xen%nbf) then
+           DIP_iR(:,ic,iv,:,:)=cZERO
+           DIP_P (:,ic,iv,:,:)=cZERO
+           DIP_v (:,ic,iv,:,:)=cZERO
+         endif
+         if (ic> Xen%nbf .and. iv> Xen%nbf ) then
+           DIP_iR(:,ic,iv,:,:)=cZERO
+           DIP_P (:,ic,iv,:,:)=cZERO
+           DIP_v (:,ic,iv,:,:)=cZERO
          endif
          !
        enddo

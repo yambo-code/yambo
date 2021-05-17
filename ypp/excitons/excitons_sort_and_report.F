@@ -27,11 +27,12 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,spin,n_sp_pol,n_spinor
  use stderr,        ONLY:intc
+ use BS,            ONLY:BSqpts
  use BS_solvers,    ONLY:BSS_desc,BSS_n_eig
  use com,           ONLY:msg,of_open_close
  use R_lattice,     ONLY:d3k_factor,q0_def_norm
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,atom_pos,Z_species
- use vec_operate,   ONLY:sort
+ use vec_operate,   ONLY:iku_v_norm,sort
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITON_spin
  use interfaces,    ONLY:DESC_write
  !
@@ -45,7 +46,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  ! Work Space
  !
  integer            :: j1,j2,ia,is,i_mod,n_elements,i_S,i_M,S_indx(BSS_n_eig)
- real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,ERmax,rv(20)
+ real(SP)           :: Residuals(BSS_n_eig),v2sort(BSS_n_eig),Rmax,ERmax,rv(20),q_norm
  character(schlen)  :: titles(20),ch_dummy,dump_ch
  logical            :: write_widths,write_soc_corr,write_spin,E_mode,I_mode
  !
@@ -124,7 +125,9 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    !
    Residuals(:) = real(BS_R(:)*conjg(BS_R(:)),SP)
    if (write_widths)  Residuals(:) = abs(BS_R(:))
-   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q0_def_norm**2*HA2EV
+   if(iq==1) q_norm=q0_def_norm**2
+   if(iq> 1) q_norm=iku_v_norm(BSqpts(:,iq))**2
+   Residuals(:) = Residuals(:)*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/q_norm*HA2EV
    !
    if (trim(R_normalize)=='yes') then
      Rmax = maxval(Residuals)

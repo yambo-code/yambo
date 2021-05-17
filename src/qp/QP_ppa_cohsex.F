@@ -266,7 +266,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! DV comment:
      ! When cutoff is used, here a careful check is needed.
-     ! Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! Because of qpg can be imaginary, also are some component of X_mat, I am not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
 #if defined _SC

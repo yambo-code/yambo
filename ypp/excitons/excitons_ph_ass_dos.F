@@ -135,7 +135,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  enddo
  call live_timing( )
  !
- call msg('sr',"Number of filled q-points "//trim(real2ch(real(n_full_q)/real(q_matdyn%nibz)*100.0))//"% ")
+ call msg('sr',"Number of filled q-points "//trim(real2ch(real(n_full_q,SP)/real(q_matdyn%nibz,SP)*100))//"% ")
  if(n_full_q==0) call error("Zero excitons, decrease the chemical potential! ")
  !
  exc_OCC   =rZERO

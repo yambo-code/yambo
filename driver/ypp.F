@@ -41,7 +41,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
@@ -169,6 +169,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=io_QINDX(k,q,ID)
+ if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts
  !
@@ -235,6 +236,9 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 #endif
  !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
+#if defined _YPP_RT
+ l_flag=l_flag .or. l_RT_abs
+#endif
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons

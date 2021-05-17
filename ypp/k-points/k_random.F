@@ -54,6 +54,7 @@ subroutine k_random(Xk,No_Weight)
  character(12)      :: ch(3)
  integer            :: iseed(8)
  real(DP), external :: dlaran
+ integer            :: n_cycle
  !
  call date_and_time(ch(1),ch(2),ch(3),iseed)
  iseed=iabs(iseed)
@@ -83,16 +84,25 @@ subroutine k_random(Xk,No_Weight)
  call live_timing('Points maker',BZ_random_nkpts)
  !------------------------------------------------
  if(l_no_distribute) then
+   !      
    do ik_r=1,BZ_random_nkpts
+     !
      do ic=1,3
        rand_k(ik_r,ic)=(dlaran(iseed(4:))-1./2.)
      enddo
+     !
      call c2a(v_in=rand_k(ik_r,:),mode="ka2i")
      call k2bz(v_in=rand_k(ik_r,:))
      call live_timing(steps=1)
+     !
    enddo
+   !
  else
-   do i_cycle=0,int(real(BZ_random_nkpts)/real(Xk%nbz))-1
+   !      
+   n_cycle=int(real(BZ_random_nkpts)/real(Xk%nbz))-1
+   if(n_cycle<=0) call error(' Error too few random points comparared to the k-points number, increase BZ_random_Nk')
+   !
+   do i_cycle=0,n_cycle
      !
      do ik_bz=1,Xk%nbz
        !
@@ -105,6 +115,7 @@ subroutine k_random(Xk,No_Weight)
      enddo
      !
    enddo
+   !
  endif
  !
  call live_timing( )

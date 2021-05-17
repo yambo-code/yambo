@@ -83,11 +83,7 @@ subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)
      endif
      call msg("s",'      ',trim(ch))
    else if (form=="PW") then
-     if(No_Weight) then
-       write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x))') v(:)
-     else
-       write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
-     endif
+     write(ch,'(3(f12.'//trim(intc(f_format_length))//',1x),i1)') v(:),1
      call msg("s",'      ',trim(ch))
    else if (form=="none") then
      Vo(:3)=v

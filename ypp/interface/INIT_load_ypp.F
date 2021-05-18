@@ -46,7 +46,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
-&                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
+&                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,X_kind,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
  use real_time,     ONLY:RT_bands
 #endif
@@ -347,6 +347,7 @@ subroutine INIT_ypp_load(defs)
  ! RT Post-Processing
  !
  call it(defs,'Xorder','Max order of the response/exc functions',X_order)
+ call it(defs,'XKind' ,  'Which response function (rhorho|jj)',X_kind,verb_level=V_real_time)
  call it(defs,'EnRngeRt','Energy range',RT_conf%X_W_range,unit=E_unit)
  call it(defs,'CarrEnRnge','Carriers Energy range',RT_conf%Carriers_W_range,unit=E_unit,verb_level=V_real_time)
  call it(defs,'ETStpsRt','Total Energy steps',RT_conf%W_n_steps)

@@ -164,7 +164,7 @@ subroutine NL_initialize(E,k,q)
    !
    if(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') then
      !  
-     ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
+     ! Run length is 6*Phase_lifeTime + 4 fs for response analysis
      !
      if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
      !

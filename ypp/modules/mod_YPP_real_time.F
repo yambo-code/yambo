@@ -96,6 +96,7 @@ module YPP_real_time
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
+ character(schlen) :: X_kind
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=500

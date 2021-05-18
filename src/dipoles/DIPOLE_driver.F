@@ -148,6 +148,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
  !
+ ! Parallelization
+ !==================
+ call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
+ !
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
@@ -161,10 +165,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !
-   ! Parallelization
-   !==================
-   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
    !
    ! WF distribution
    !=================

@@ -15,6 +15,6 @@
  $(info In case you are going to compile yambo on a machine that does not have access to the internet, )
  $(info you can first get all needed files by running)
  $(info )
- $(info >make download)
+ $(info > make download)
  $(info )
  $(error Stopping here)

@@ -306,7 +306,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
    !
-   if(use_PH_DbGd.and.trim(EkplusQ_mode)=='interp'.and.iq_bz/=1) call En_k_plus_q_interpolate(k,q,en,iq_bz)
+   if(use_PH_DbGd.and.STRING_same(EkplusQ_mode,'interp').and.iq_bz/=1) call En_k_plus_q_interpolate(k,q,en,iq_bz)
    !
    do i_qp=1,QP_n_states
      !

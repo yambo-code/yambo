@@ -525,7 +525,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  DW_deltaE_treshold=1.E-6_SP/HA2EV
  FAN_deltaE_treshold=1.E-6_SP/HA2EV
  use_PH_DbGd=.FALSE.
- EkplusQ_mode='INTERP' ! other possible choise DFT
+ EkplusQ_mode='interp' ! other possible choise DFT
  !
 #endif
  !

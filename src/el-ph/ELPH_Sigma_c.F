@@ -58,6 +58,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet    
  use functions,     ONLY:Fermi_fnc_derivative
+ use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -227,7 +228,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Interpolate the E(k+q) energies for the double-grid
  !
- if(use_PH_DbGd.and.trim(EkplusQ_mode)=='interp') then
+ if(use_PH_DbGd.and.STRING_same(EkplusQ_mode,'interp')) then
+   !      
    call msg('sr','E(k+q) calculated using a smooth Fourier interpolation')
    INTERPOLATE_is_serial=.TRUE.
    INTERPOLATE_is_quiet =.TRUE.

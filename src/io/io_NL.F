@@ -33,6 +33,7 @@ integer function io_NL(ID)
  use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
  use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
 &                        io_fragment,io_elemental
+ use stderr,        ONLY:intc
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -46,9 +47,8 @@ integer function io_NL(ID)
  !
  ! Work Space
  !
- integer              :: i_fragment,ID_frag
+ integer              :: i_fragment,ID_frag,i_Prb
  character(schlen)    :: VAR_name
- integer, parameter   :: i_Prb=1
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
@@ -111,30 +111,26 @@ integer function io_NL(ID)
  !
  ! Efield 
  !
- call io_elemental(ID_frag,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
- !
- call io_elemental(ID_frag,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
- call io_elemental(ID_frag,VAR="[FIELDs] Versor                 ",&
-         &                 R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Intensity     [kWCMm2] ",&
-         &                 R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID_frag,VAR="[FIELDs] Field width       [fs] ",&
-         &                 R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency range   [eV] ",&
-         &                 R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency steps        ",&
-         &                 I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency step    [eV] ",&
-         &                 R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
- call io_elemental(ID_frag,VAR='[FIELDs] Initial time      [fs] ',&
-         &                 R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
- !
- call io_elemental(ID_frag,VAR="FIELD_POL",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_pol,VAR="[FIELDs] Polarization  ",CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
+ do i_Prb=1,2
+   call io_elemental(ID,VAR="FIELD_NAME_"//trim(intc(i_Prb)),CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   call io_elemental(ID,VAR="EXTERNAL_FIELD_"//trim(intc(i_Prb)),VAR_SZ=10,MENU=0)
+   call io_elemental(ID,VAR="[FIELDs] Versor                 ",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
+   call io_elemental(ID,VAR="[FIELDs] Intensity     [kWCMm2] ",R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
+   call io_elemental(ID,VAR="[FIELDs] Field width       [fs] ",R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[FIELDs] Frequency range   [eV] ",R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
+   call io_elemental(ID,VAR="[FIELDs] Frequency steps        ",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[FIELDs] Frequency step    [eV] ",R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
+   call io_elemental(ID,VAR='[FIELDs] Initial time      [fs]',R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+   call io_elemental(ID,VAR="FIELD_POL_"//trim(intc(i_Prb)),CH0="",VAR_SZ=1,MENU=0)
+   call io_elemental(ID,CH0=Efield(i_Prb)%ef_pol,VAR="[FIELDs] Polarization  ",CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   !
+ enddo
  !
  ! Polarization
  !  

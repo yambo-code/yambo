@@ -42,6 +42,7 @@ subroutine NL_initialize(E,k,q)
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
+ use stderr,         ONLY:intc
  !
 #include<memory.h>
  !
@@ -117,28 +118,36 @@ subroutine NL_initialize(E,k,q)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=1
+ n_ext_fields=2
  !
  do i1=1,n_ext_fields
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
-   !
    if((Efield(i1)%ef_name=='none')) cycle
    !
-   if(Efield(i1)%intensity==0._SP) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
-     !
-   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
-     !
-     Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
-     Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
-     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
-     Efield(i1)%ef_pol        ="linear"
-     !
-     call Check_symmetries(Efield(i1)%versor,"electric")
-     !
+   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) then
+     call msg('rs'," External "//intc(i1)//" is zero.")
+     Efield(i1)%ef_name='none'
+     cycle
+   endif
+   !
+   if(Efield(i1)%intensity==0._SP) then
+     call msg('rs'," External field "//intc(i1)//" field has zero intensity.")
+     Efield(i1)%ef_name='none'
+     cycle
+   elseif(Efield(i1)%intensity<0._SP.and.i1>1) then
+     call msg('rs'," External field "//intc(i1)//" intensity set to External Field 1 insensity.")
+     Efield(i1)%intensity=Efield(1)%intensity
+   endif
+   !
+   Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
+   Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
+   Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+   Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
+   Efield(i1)%ef_pol        ="linear"
+   !
+   call Check_symmetries(Efield(i1)%versor)
+   !
  enddo
  !
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
@@ -315,10 +324,12 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Correlation                '//trim(NL_correlation))
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
  call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
- call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width               ',Efield(1)%width*AUT2FS,"[fs]")
+ do i1=1,n_ext_fields
+   call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
+   call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
+   call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
+ enddo
  call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
- call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
  call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          ',n_frequencies)
  call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)

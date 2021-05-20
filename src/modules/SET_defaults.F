@@ -662,10 +662,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
- call Efield_reset(Efield(1))
- Efield(1)%frequency=0.1_SP/HA2EV
+ !
+ do i1=1,n_ext_fields_max
+   call Efield_reset(Efield(i1))
+   Efield(i1)%frequency=0.1_SP/HA2EV
+   Efield(i1)%intensity=0.0_SP
+   Efield(i1)%FWHM=2._SP*FS2AUT
+   Efield(i1)%ef_name="none"
+   Efield(i1)%versor =(/0._SP,0._SP,0._SP/)
+ enddo
+ !
+ Efield(1)%versor =(/0._SP,0._SP,0._SP/)
  Efield(1)%intensity=1000._SP*kWCMm22AU
- Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='high'
  !

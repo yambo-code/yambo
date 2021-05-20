@@ -27,8 +27,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
  use R_lattice,       ONLY:bz_samp
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use DIPOLES,         ONLY:DIP_rotated
- use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E,TRabsMODE
- use stderr,          ONLY:STRING_match
+ use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E
  use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_eh_table,BS_mat
  use YPPm,            ONLY:BS_E
@@ -129,8 +128,10 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
            if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
            !
            ! Select just "resonant" (in the causal sense) transitions
+           if (real(f_eh(1)+f_eh(2))<0._SP.or.abs(f_eh(2))<1.E-6_SP) cycle
            !
-           if (real(f_eh(1)+f_eh(2))<0._SP) cycle
+           ! Skip too tiny df that cause numerical noise
+           if (abs(f_eh(2))<1.E-6_SP) cycle
            !
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))

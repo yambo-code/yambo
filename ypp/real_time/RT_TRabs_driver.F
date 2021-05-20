@@ -24,7 +24,7 @@
 subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  use drivers,         ONLY:l_rt_carriers_in_use
- use pars,            ONLY:SP,pi,cZERO,rZERO,schlen
+ use pars,            ONLY:SP,pi,cZERO,rZERO,schlen,DP,cI
  use R_lattice,       ONLY:bz_samp,q0_def_norm,d3k_factor
  use electrons,       ONLY:levels,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
@@ -276,15 +276,22 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      character(*) :: what
      integer      :: I,J
      complex(SP)  :: RES,GF(W_bss%n_freqs)
+     complex(DP)  :: ACC(W_bss%n_freqs)
+     ACC=0._DP
      if (what=="EPS-IP".or.what=="AH-IP") then
        do i_trans=BS_K_dim(1)+1,N_trans
          if (.not.PX_ip%element_1D(i_trans-BS_K_dim(1))) cycle
-         RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
          if (what=="EPS-IP") then
-           Epsilon_ij(:,i,j)=Epsilon_ij(:,i,j)-RES/(W_bss%p(:)-TRabs_E(i_trans))+conjg(RES)/(W_bss%p(:)+TRabs_E(i_trans))
+           RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
+           ACC(:)=ACC(:)-RES/(W_bss%p(:)-TRabs_E(i_trans))+conjg(RES)/(W_bss%p(:)+TRabs_E(i_trans))
          endif
-         if (what=="AH-IP")  B_Hall(i,j)=B_Hall(i,j)+RES-conjg(RES)
+         if (what=="AH-IP") then
+           RES=2.*Co*aimag(TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1))
+           ACC(1)=ACC(1)+RES
+         endif
        enddo
+       if (what=="EPS-IP")  Epsilon_ij(:,i,j)=Epsilon_ij(:,i,j)+ACC(:)
+       if (what=="AH-IP" )  B_Hall(i,j)=B_Hall(i,j)+cI*ACC(1)
      endif
      if (what=="EPS-BS".or.what=="AH-BS") then
        ! ANTI-RES part to be coded

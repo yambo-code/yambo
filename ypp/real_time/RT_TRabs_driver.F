@@ -52,7 +52,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! Work space
  !
  type(w_samp)            :: W_bss
- integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_cc_vv_trans,N_trans,N_trans_done,i_T,io_err,i_trans,&
+ integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_cc_vv_trans,N_trans,N_trans_real,i_T,io_err,i_trans,&
 &                           nb(2),N_dirs,i_dir,j_dir,N_res,N_files
  real(SP)                :: DIP_dir(3,3),Co
  logical                 :: l_BS,l_OFF,l_cv,l_cc,l_vv,l_ABS,l_EQ
@@ -223,11 +223,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    Epsilon_ij=cZERO
    !
    do i_dir=1,N_dirs
-     N_trans_done=0
-     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_done,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
+     N_trans_real=0
+     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
+     if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
+     if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
+     if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
    enddo
    ! 
    call PP_redux_wait(TRabs_RES_right,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
@@ -279,7 +279,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      complex(DP)  :: ACC(W_bss%n_freqs)
      ACC=0._DP
      if (what=="EPS-IP".or.what=="AH-IP") then
-       do i_trans=BS_K_dim(1)+1,N_trans
+       do i_trans=BS_K_dim(1)+1,N_trans_real
          if (.not.PX_ip%element_1D(i_trans-BS_K_dim(1))) cycle
          if (what=="EPS-IP") then
            RES=Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)

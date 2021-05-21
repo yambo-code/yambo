@@ -185,7 +185,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
                !
                l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
-  &                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
+&                            any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
                !
                if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
                !

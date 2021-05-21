@@ -23,6 +23,7 @@
 !
 module YPP_real_time
  !
+ use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
  !
 #include<memory.h>
@@ -106,6 +107,7 @@ module YPP_real_time
  ! (RT) TRabs
  !
  real(SP)          :: TRabsDIP_dir(3)=0.
+ real(SP)          :: TRabs_Eeh_treshold=1.E-5_SP/HA2EV
  character(schlen) :: TRabsWHAT="abs"
  character(schlen) :: TRabsDIP_plane="none"
  character(schlen) :: TRabsMODE="cv"

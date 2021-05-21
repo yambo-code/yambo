@@ -26,8 +26,9 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
  use pars,            ONLY:SP,pi,cI
  use R_lattice,       ONLY:bz_samp
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
+ use X_m,             ONLY:global_gauge
  use DIPOLES,         ONLY:DIP_rotated
- use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E
+ use YPP_real_time,   ONLY:TRabs_RES_left,TRabs_RES_right,TRabs_E,TRabs_Eeh_treshold
  use BS,              ONLY:BS_K_dim
  use BS_solvers,      ONLY:BSS_eh_table,BS_mat
  use YPPm,            ONLY:BS_E
@@ -46,6 +47,7 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
  ! Work space
  !
  integer           :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
+ real(SP)          :: E_eh
  complex(SP)       :: dipole_rotated(3),f_eh(2),DIP_dot
  !
  ! BSE residuals
@@ -114,25 +116,20 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
        do i_n=bands(1,1),bands(1,2)
          do i_np=bands(2,1),bands(2,2)
            !
-           if (i_n==i_np) cycle
+           E_eh=Xen%E(i_n,i_kibz,i_spin)-Xen%E(i_np,i_kibz,i_spin)
+           f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
+           if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
            !
-           N_trans=N_trans+1
-           !
+           if (abs(E_eh) < TRabs_Eeh_treshold.and. trim(global_gauge)=="length") cycle
            if (.not. PAR_IND_DIPk_ibz%element_1D(i_kibz)) cycle
            if (.not. PAR_IND_CON_BANDS_DIP%element_1D(i_np)) cycle
            if (.not. PAR_IND_VAL_BANDS_DIP%element_1D(i_n)) cycle
            !
-           TRabs_E(N_trans)=Xen%E(i_n,i_kibz,i_spin)-Xen%E(i_np,i_kibz,i_spin)
-           !
-           f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
-           if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
-           !
            ! Select just "resonant" (in the causal sense) transitions
-           if (real(f_eh(1)+f_eh(2))<0._SP.or.abs(f_eh(2))<1.E-6_SP) cycle
+           if (real(f_eh(1)+f_eh(2))<0._SP) cycle
            !
-           ! Skip too tiny df that cause numerical noise
-           if (abs(f_eh(2))<1.E-6_SP) cycle
-           !
+           N_trans=N_trans+1
+           TRabs_E(N_trans)=E_eh
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
            TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated) *sqrt(f_eh(2))

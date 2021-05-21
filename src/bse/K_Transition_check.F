@@ -56,8 +56,9 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  if (.not.allocated(Ken%Eo)) Eo_eh= E_eh
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
- if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length" .and.&
-&     iq==1 .and..not.l_BS_magnons) K_Transition_check=.FALSE.
+ if (.not.l_BS_magnons.and.iq==1) then
+   if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
+ endif
  !
  if( BS_perturbative_SOC ) then
    if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -84,6 +85,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !
 #if defined _RT
  if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
+   !
    if (     EQ_Transitions) f_eh_REF=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
    if (.not.EQ_Transitions) f_eh_REF=(Ken%f (iv,ikp,i_sp_v)-Ken%f (ic,ik ,i_sp_c))/spin_occ
    if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp_v)-Ken%f (ic,ik ,i_sp_c))/spin_occ
@@ -134,6 +136,6 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
 #endif
  !
  if (any((/abs(E_eh)<BS_eh_en(1).and.BS_eh_en(1)>0._SP,&
-&              abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.
+&          abs(E_eh)>BS_eh_en(2).and.BS_eh_en(2)>0._SP/))) K_Transition_check=.FALSE.
  !
 end function

@@ -28,7 +28,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
  use OUTPUT_simple,   ONLY:OUTPUT_add_column
  use RT_output_m,     ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use interfaces,      ONLY:DESC_write
- use YPP_real_time,   ONLY:TRabsWHAT,TRabsMODE,Epsilon_ij,B_Hall
+ use YPP_real_time,   ONLY:TRabsWHAT,TRabsMODE,Epsilon_ij,B_Hall,TRabsDIP_plane
  use frequency,       ONLY:w_samp
  use com,             ONLY:msg
  use BS,              ONLY:BS_K_dim
@@ -98,7 +98,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_dirs,N_files,W,TIME,l_OFF,l_ABS)
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    if (N_dirs==2) then
      B_data(1)=real(B_Hall(1,2))
-     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_xy"/),R_VALUES=B_data(1:1))
+     call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_"//trim(TRabsDIP_plane)/),R_VALUES=B_data(1:1),UNIT="(Ohm*cm)^-1")
    endif
    if (N_dirs==3) then
      B_data=real((/B_Hall(1,2),B_Hall(1,3),B_Hall(2,3)/))

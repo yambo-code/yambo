@@ -47,7 +47,7 @@ subroutine INIT_ypp_load(defs)
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
-&                        TRabsMODE,TRabsDIP_dir
+&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _YPP_SC
@@ -193,6 +193,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
  call it(defs,'TRabsDIPdir',   '[RT] Dipole direction',TRabsDIP_dir)
  call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)
+ call it(defs,'TRabsEtresh',   '[RT] Treshold imposed on the e/h pairs energy',TRabs_Eeh_treshold,unit=E_unit)
  !
 #endif
  !

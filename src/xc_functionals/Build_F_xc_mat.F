@@ -103,7 +103,6 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    !
    Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
    !
-   !
    F_xc_mat(:,1,1,1,1) = Fxc_rho2+Fxc_mag2(:)*magn_versor(:,3)+2*Fxc_rhom   !  (opt)
    F_xc_mat(:,1,1,2,2) = Fxc_rho2-Fxc_mag2(:)*magn_versor(:,3)              !  (opt)
    F_xc_mat(:,2,2,1,1) = Fxc_rho2-Fxc_mag2(:)*magn_versor(:,3)              !  (opt)

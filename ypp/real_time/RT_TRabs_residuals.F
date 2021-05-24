@@ -122,15 +122,16 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
            !
            E_eh=Xen%E(i_n,i_kibz,i_spin)-Xen%E(i_np,i_kibz,i_spin)
            f_eh=gimme_f_and_delta_f(i_np,i_n,i_kibz,i_spin)
+           !
+           ! Select just "resonant" (in the causal sense) transitions
+           if (real(f_eh(1)+f_eh(2))<0._SP) cycle
+           !
            if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
            !
            if (abs(E_eh) < TRabs_Eeh_treshold.and. trim(global_gauge)=="length") cycle
            if (.not. PAR_IND_DIPk_ibz%element_1D(i_kibz)) cycle
            if (.not. PAR_IND_CON_BANDS_DIP%element_1D(i_np)) cycle
            if (.not. PAR_IND_VAL_BANDS_DIP%element_1D(i_n)) cycle
-           !
-           ! Select just "resonant" (in the causal sense) transitions
-           if (real(f_eh(1)+f_eh(2))<0._SP) cycle
            !
            N_trans=N_trans+1
            TRabs_E(N_trans)=E_eh
@@ -154,9 +155,13 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
    !
    function gimme_f_and_delta_f(ib,ibp,ik,i_sp)
      complex(SP) :: gimme_f_and_delta_f(2)
+     real(SP)    :: Delta_f,Delta_df
      integer     :: ib,ibp,i_sp,ik
-     gimme_f_and_delta_f(1)=(Xen%fo(ib,ik,i_sp)-Xen%fo(ibp,ik,i_sp))/spin_occ
-     gimme_f_and_delta_f(2)=(Xen%df(ib,ik,i_sp)-Xen%df(ibp,ik,i_sp))/spin_occ
+     Delta_f=(Xen%fo(ib,ik,i_sp)-Xen%fo(ibp,ik,i_sp))/spin_occ
+     !Delta_df=(Xen%df(ib,ik,i_sp)-Xen%df(ibp,ik,i_sp))/spin_occ
+     Delta_df=(Xen%f(ib,ik,i_sp)-Xen%f(ibp,ik,i_sp))/spin_occ-Delta_f
+     gimme_f_and_delta_f(1)=Delta_f
+     gimme_f_and_delta_f(2)=Delta_df
    end function 
    !
 end subroutine RT_TRabs_residuals

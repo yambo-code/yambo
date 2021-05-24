@@ -170,7 +170,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! ... computing directions
  DIP_dir=rZERO
  call msg('s','Creating '//trim(TRabsDIP_plane)//' related dipole directions')
- call msg('s','Dipole direction seed (assumed // x)',TRabsDIP_dir)
+ call msg('s','Dipole direction seed (defines `x` axis)',TRabsDIP_dir)
  TRabsDIP_dir=TRabsDIP_dir/v_norm( TRabsDIP_dir )
  if (trim(global_gauge)=='length'  ) TRabsDIP_dir=TRabsDIP_dir*q0_def_norm
  do i_dir=1,N_DIP_dirs

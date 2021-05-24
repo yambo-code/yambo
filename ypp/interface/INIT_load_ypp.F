@@ -191,7 +191,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'TRabsOBS',&
 &             '[RT] RT observable. It can be a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
  call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
- call it(defs,'TRabsDIPdir',   '[RT] Dipole direction',TRabsDIP_dir)
+ call it(defs,'TRabsDIPdir',   '[RT] Dipole reference direction. Defines the internal `x` axis',TRabsDIP_dir)
  call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)
  call it(defs,'TRabsEtresh',   '[RT] Treshold imposed on the e/h pairs energy',TRabs_Eeh_treshold,unit=E_unit)
  !

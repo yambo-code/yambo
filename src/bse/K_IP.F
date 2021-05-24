@@ -144,8 +144,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
      if (l_BS_esort.and.i_res_ares==1) then
-        call K_IP_sort("add",i_sort,nVAR,E_plus_W0,vtmpC)
-        nVAR(2)=nVAR(2)+1
+       call K_IP_sort("add",i_sort,nVAR,E_plus_W0,vtmpC)
+       nVAR(2)=nVAR(2)+1
      endif
      !
      ! Residuals from "Dipoles"

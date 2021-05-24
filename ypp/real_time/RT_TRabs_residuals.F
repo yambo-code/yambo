@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
+subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
  !
  use pars,            ONLY:SP,pi,cI
  use R_lattice,       ONLY:bz_samp
@@ -38,15 +38,15 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
 #include<memory.h>
  !
  character(*)      :: what
- integer           :: N_trans,nb(2),i_dir
+ integer           :: N_trans,nb(2),N_dirs
  type(levels)      :: Xen
  type(bz_samp)     :: Xk
- real(SP)          :: DIP_dir(3)
+ real(SP)          :: DIP_dir(3,3)
  logical           :: l_EQ
  !
  ! Work space
  !
- integer           :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np
+ integer           :: i_lp,i_v,i_c,i_kbz,i_kibz,i_spin,i_l,bands(2,2),i_n,i_np,i_dir
  real(SP)          :: E_eh
  complex(SP)       :: dipole_rotated(3),f_eh(2),DIP_dot
  !
@@ -73,16 +73,20 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
        f_eh=gimme_f_and_delta_f(i_v,i_c,i_kibz,i_spin)
        dipole_rotated=conjg(-cI*DIP_rotated(i_c,i_v,i_kbz,i_spin,"DIP_iR",Xk))
        !
-       DIP_dot=dot_product(DIP_dir,dipole_rotated)
+       do i_dir=1,N_dirs
+         !
+         DIP_dot=dot_product(DIP_dir(i_dir,:),dipole_rotated)
+         !
+         TRabs_RES_right(i_l,i_dir,1)= TRabs_RES_right(i_l,i_dir,1)+&
+&                                      conjg(DIP_dot)*BS_mat(i_lp,i_l)*sqrt(f_eh(1))
+         TRabs_RES_right(i_l,i_dir,2)= TRabs_RES_right(i_l,i_dir,2)+&
+&                                      conjg(DIP_dot)*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
+         TRabs_RES_left(i_l,i_dir,1) = TRabs_RES_left(i_l,i_dir,1)+&
+&                                      DIP_dot*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
+         TRabs_RES_left(i_l,i_dir,2) = TRabs_RES_left(i_l,i_dir,2)+&
+&                                      DIP_dot*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
+       enddo
        !
-       TRabs_RES_right(i_l,i_dir,1)= TRabs_RES_right(i_l,i_dir,1)+&
-&                                    conjg(DIP_dot)*BS_mat(i_lp,i_l)*sqrt(f_eh(1))
-       TRabs_RES_right(i_l,i_dir,2)= TRabs_RES_right(i_l,i_dir,2)+&
-&                                    conjg(DIP_dot)*BS_mat(i_lp,i_l)*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
-       TRabs_RES_left(i_l,i_dir,1) = TRabs_RES_left(i_l,i_dir,1)+&
-&                                    DIP_dot*conjg(BS_mat(i_lp,i_l))*sqrt(f_eh(1))
-       TRabs_RES_left(i_l,i_dir,2) = TRabs_RES_left(i_l,i_dir,2)+&
-&                                    DIP_dot*conjg(BS_mat(i_lp,i_l))*f_eh(2)/sqrt(f_eh(1))/sqrt(2._SP)
        if (i_l==1) TRabs_E(i_lp)   = real(BS_E(i_lp),SP)
        !
      enddo
@@ -131,8 +135,11 @@ subroutine RT_TRabs_residuals(what,N_trans,i_dir,DIP_dir,Xen,Xk,nb,l_EQ)
            N_trans=N_trans+1
            TRabs_E(N_trans)=E_eh
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
-           TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir,dipole_rotated))*sqrt(f_eh(2))
-           TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir,dipole_rotated) *sqrt(f_eh(2))
+           !
+           do i_dir=1,N_dirs
+             TRabs_RES_right(N_trans,i_dir,1)= conjg(dot_product(DIP_dir(i_dir,:),dipole_rotated))*sqrt(f_eh(2))
+             TRabs_RES_left(N_trans,i_dir,1) =       dot_product(DIP_dir(i_dir,:),dipole_rotated) *sqrt(f_eh(2))
+           enddo
            !
          enddo
        enddo

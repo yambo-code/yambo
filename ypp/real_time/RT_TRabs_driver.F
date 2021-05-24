@@ -31,7 +31,8 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  use vec_operate,     ONLY:v_norm,v_rotate
  use RT_control,      ONLY:RT_apply,CARR_RT_IO_t
  use YPP_real_time,   ONLY:RT_conf,RT_time,TRabsDIP_dir,TRabsWHAT,TRabsDIP_plane,&
-&                          TRabs_RES_left,TRabs_RES_right,TRabsMODE,TRabs_E,Epsilon_ij,B_Hall
+&                          TRabs_RES_left,TRabs_RES_right,TRabsMODE,TRabs_E,Epsilon_ij,&
+&                          B_Hall,TRabs_lEPS,TRabs_EPS_label
  use YPPm,            ONLY:DIPs
  use X_m,             ONLY:global_gauge
  use IO_m,            ONLY:LOG
@@ -53,7 +54,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  type(w_samp)            :: W_bss
  integer                 :: N_cv_trans,N_cc_trans,N_vv_trans,N_cc_vv_trans,N_trans,N_trans_real,i_T,io_err,i_trans,&
-&                           nb(2),N_dirs,i_dir,j_dir,N_res,N_files
+&                           nb(2),N_DIP_dirs,i_dir,j_dir,N_res,N_files,DIP_dir_table(3),ic,jc
  real(SP)                :: DIP_dir(3,3),Co
  logical                 :: l_BS,l_OFF,l_cv,l_cc,l_vv,l_ABS,l_EQ
  character(2)            :: label
@@ -81,8 +82,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! Dimensions, Constant, Logicals and allocs
  !
  l_BS      = BS_K_dim(1)> 0
- l_ABS     = STRING_match(TRabsWHAT,"abs")
- l_OFF     = STRING_match(TRabsWHAT,"kerr").and..not.STRING_same(TRabsDIP_plane,"none")
+ l_ABS     = STRING_match(TRabsWHAT,"abs") ! To add more derived quantities: kerr, transmission, reflectivity...
  l_cv      = STRING_match(TRabsMODE,"cv")
  l_cc      = STRING_match(TRabsMODE,"cc")
  l_vv      = STRING_match(TRabsMODE,"vv")
@@ -111,9 +111,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbm-RT_bands(1)+1)*Xk%nbz
  endif
  label="IP"
- if (l_BS) then
-   label="BS"
- endif
+ if (l_BS) label="BS"
  N_vv_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
  N_cc_trans=(RT_bands(2)-Xen%nbm)*(RT_bands(2)-Xen%nbm)*Xk%nbz
  nb=(/Xen%nbf,Xen%nbm/)
@@ -147,30 +145,43 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! Dipoles...
  !------------
- ! ... q->0
+ !
+ ! ... EPS_ij components
+ l_OFF=.FALSE.
+ do i_dir=1,3
+   do j_dir=1,3
+     TRabs_lEPS(i_dir,j_dir)=STRING_match(TRabsDIP_plane,TRabs_EPS_label(i_dir,j_dir))
+     if (STRING_match(TRabsDIP_plane,"all"))  TRabs_lEPS(i_dir,j_dir)=.TRUE.
+     if (i_dir/=j_dir.and. TRabs_lEPS(i_dir,j_dir)) l_OFF = .TRUE.
+   enddo
+ enddo
+ if (STRING_same(TRabsDIP_plane,"none"))  TRabs_lEPS(1,1)=.TRUE.
+ !
+ ! ... # of DIPOLE directions to compute
+ N_DIP_dirs=0
+ DIP_dir_table=0
+ do i_dir=1,3
+   if (any(TRabs_lEPS(i_dir,:)).or.any(TRabs_lEPS(:,i_dir))) then
+     N_DIP_dirs=N_DIP_dirs+1
+     DIP_dir_table(N_DIP_dirs)=i_dir
+   endif
+ enddo
+ !
+ ! ... computing directions
  DIP_dir=rZERO
- if (STRING_same(TRabsDIP_plane,"all")) TRabsDIP_dir=(/1._SP,0._SP,0._SP/)
+ call msg('s','Creating '//trim(TRabsDIP_plane)//' related dipole directions')
+ call msg('s','Dipole direction seed (assumed // x)',TRabsDIP_dir)
  TRabsDIP_dir=TRabsDIP_dir/v_norm( TRabsDIP_dir )
  if (trim(global_gauge)=='length'  ) TRabsDIP_dir=TRabsDIP_dir*q0_def_norm
- DIPs%q0=TRabsDIP_dir
- DIP_dir(1,:)=TRabsDIP_dir
+ do i_dir=1,N_DIP_dirs
+   if (DIP_dir_table(i_dir)==1) DIP_dir(i_dir,:)=TRabsDIP_dir
+   if (DIP_dir_table(i_dir)==2) call v_rotate("xy",-pi/2._SP,TRabsDIP_dir,v_out=DIP_dir(i_dir,:))
+   if (DIP_dir_table(i_dir)==3) call v_rotate("xz",-pi/2._SP,TRabsDIP_dir,v_out=DIP_dir(i_dir,:))
+ enddo
  !
  ! ... I/O
  call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'DIP')
  if (io_err/=0) return
- !
- ! ... rotation
- N_dirs=1
- if (l_OFF) then
-   if (STRING_same(TRabsDIP_plane,"all")) then
-     N_dirs=3
-     call v_rotate("xy",-pi/2._SP,DIP_dir(1,:),v_out=DIP_dir(2,:))
-     call v_rotate("xz",-pi/2._SP,DIP_dir(1,:),v_out=DIP_dir(3,:))
-   else
-     N_dirs=2
-     call v_rotate(trim(TRabsDIP_plane),-pi/2._SP,DIP_dir(1,:),v_out=DIP_dir(2,:))
-   endif
- endif
  !
  ! Allocations
  !
@@ -180,13 +191,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  ! ... Residuals 
  N_res=N_res+1
  if (l_BS) N_res=N_res+1
- YAMBO_ALLOC(TRabs_RES_left ,(N_trans*N_res,N_dirs,2)) ! (ABS/IP, i_dir Res/delta_Res)
- YAMBO_ALLOC(TRabs_RES_right,(N_trans*N_res,N_dirs,2))
+ YAMBO_ALLOC(TRabs_RES_left ,(N_trans*N_res,N_DIP_dirs,2)) ! (ABS/IP, i_dir Res/delta_Res)
+ YAMBO_ALLOC(TRabs_RES_right,(N_trans*N_res,N_DIP_dirs,2))
  !
  ! ... Observables 
- YAMBO_ALLOC(Epsilon_ij,(RT_conf%W_n_steps,N_dirs,N_dirs)) 
+ YAMBO_ALLOC(Epsilon_ij,(RT_conf%W_n_steps,3,3)) 
  if (l_OFF) then
-   YAMBO_ALLOC(B_Hall,(N_dirs,N_dirs)) 
+   YAMBO_ALLOC(B_Hall,(3,3)) 
  endif
  !
  ! Frequency setup
@@ -200,10 +211,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  !
  ! Output (init)
  n_files=0
- call RT_Trabs_output("init",label,ofile,N_dirs,N_files,W_bss,0._SP,l_OFF,l_ABS)
+ call RT_Trabs_output("init",label,ofile,N_files,W_bss,0._SP)
  !
  ! Output (open)
- call RT_Trabs_output("open","all",ofile,N_dirs,N_files,W_bss,0._SP,l_OFF,l_ABS)
+ call RT_Trabs_output("open","all",ofile,N_files,W_bss,0._SP)
  !
  do i_T=1,RT_conf%T_n_steps
    !
@@ -220,15 +231,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    TRabs_RES_left =cZERO
    TRabs_RES_right=cZERO
    if (l_OFF) B_Hall =cZERO
-   Epsilon_ij=cZERO
+   Epsilon_ij     =cZERO
    !
-   do i_dir=1,N_dirs
-     N_trans_real=0
-     if (l_BS) call RT_TRabs_residuals("BSE",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-     if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_real,i_dir,DIP_dir(i_dir,:),Xen,Xk,nb,l_EQ)
-   enddo
+   N_trans_real=0
+   if (l_BS) call RT_TRabs_residuals("BSE",N_trans_real,N_DIP_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
+   if (l_cv.and..not.l_BS) call RT_TRabs_residuals("cv IP",N_trans_real,N_DIP_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
+   if (l_vv) call RT_TRabs_residuals("vv IP",N_trans_real,N_DIP_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
+   if (l_cc) call RT_TRabs_residuals("cc IP",N_trans_real,N_DIP_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
    ! 
    call PP_redux_wait(TRabs_RES_right,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
    call PP_redux_wait(TRabs_RES_left,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
@@ -237,11 +246,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    call PP_redux_wait(TRabs_E,COMM=PAR_COM_DIPk_ibz_INDEX%COMM)
    call PP_redux_wait(TRabs_E,COMM=PAR_COM_DIPk_ibz_A2A%COMM)
    !
-   do i_dir=1,N_dirs
-     do j_dir=1,N_dirs
-       if (l_ABS.and.i_dir==j_dir) call build_up_eps_ij("EPS-"//label,i_dir,j_dir)
-       if (l_OFF.and.i_dir <j_dir) call build_up_eps_ij("EPS-"//label,i_dir,j_dir)
-       if (l_OFF.and.i_dir <j_dir) call build_up_eps_ij("AH-"//label,i_dir,j_dir)
+   do ic=1,N_DIP_dirs
+     do jc=1,N_DIP_dirs
+       call build_up_eps_ij("EPS-"//label,ic,jc)
+       if (l_OFF.and.ic/=jc) call build_up_eps_ij("AH-"//label,ic,jc)
      enddo
    enddo
    !
@@ -249,7 +257,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    if (l_OFF) call PP_redux_wait(B_Hall)
    !
    ! Output (write)
-   call RT_Trabs_output("write",label,ofile,N_dirs,N_files,W_bss,RT_time(i_T),l_OFF,l_ABS)
+   call RT_Trabs_output("write",label,ofile,N_files,W_bss,RT_time(i_T))
    !
    call live_timing(steps=1)
    !
@@ -259,7 +267,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  INTERPOLATE_is_quiet=.FALSE.
  !
  ! Output (close)
- call RT_Trabs_output("close",label,ofile,N_dirs,N_files,W_bss,0._SP,l_OFF,l_ABS)
+ call RT_Trabs_output("close",label,ofile,N_files,W_bss,0._SP)
  !
  ! Free...
  YAMBO_FREE(Epsilon_ij)
@@ -278,6 +286,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      complex(SP)  :: RES,GF(W_bss%n_freqs)
      complex(DP)  :: ACC(W_bss%n_freqs)
      ACC=0._DP
+     i_dir=DIP_dir_table(I)
+     j_dir=DIP_dir_table(J)
+     if (.not.TRabs_lEPS(i_dir,j_dir)) return
      if (what=="EPS-IP".or.what=="AH-IP") then
        do i_trans=BS_K_dim(1)+1,N_trans_real
          if (.not.PX_ip%element_1D(i_trans-BS_K_dim(1))) cycle
@@ -290,18 +301,18 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
            ACC(1)=ACC(1)+RES
          endif
        enddo
-       if (what=="EPS-IP")  Epsilon_ij(:,i,j)=Epsilon_ij(:,i,j)+ACC(:)
-       if (what=="AH-IP" )  B_Hall(i,j)=B_Hall(i,j)+cI*ACC(1)
+       if (what=="EPS-IP")  Epsilon_ij(:,i_dir,j_dir)=Epsilon_ij(:,i_dir,j_dir)+ACC(:)
+       if (what=="AH-IP" )  B_Hall(i_dir,j_dir)=B_Hall(i_dir,j_dir)+cI*ACC(1)
      endif
      if (what=="EPS-BS".or.what=="AH-BS") then
-       ! ANTI-RES part to be coded
        do i_trans=1,BS_K_dim(1)
          if (.not.PX_bs%element_1D(i_trans)) cycle
          RES=Co*( TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,2) +&
 &                 TRabs_RES_right(i_trans,I,2)*TRabs_RES_left(i_trans,J,1) )
          if (l_EQ) RES=RES+Co*TRabs_RES_right(i_trans,I,1)*TRabs_RES_left(i_trans,J,1)
-         if (what=="EPS-BS") Epsilon_ij(:,i,j)=Epsilon_ij(:,i,j)-RES/(W_bss%p(:)-TRabs_E(i_trans))
-         if (what=="AH-BS")  B_Hall(i,j)=B_Hall(i,j)+RES-conjg(RES)
+         ! ANTI-RES part to be coded for EPS-BS.
+         if (what=="EPS-BS") Epsilon_ij(:,i_dir,j_dir)=Epsilon_ij(:,i_dir,j_dir)-RES/(W_bss%p(:)-TRabs_E(i_trans))
+         if (what=="AH-BS")  B_Hall(i_dir,j_dir)=B_Hall(i_dir,j_dir)+RES-conjg(RES)
        enddo
      endif
    end subroutine

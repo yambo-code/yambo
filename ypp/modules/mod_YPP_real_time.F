@@ -111,6 +111,7 @@ module YPP_real_time
  character(schlen) :: TRabsWHAT="abs"
  character(schlen) :: TRabsDIP_plane="none"
  character(schlen) :: TRabsMODE="cv"
+ logical           :: TRabs_lEPS(3,3)=.FALSE.
  real(SP),    allocatable :: TRabs_E(:)
  complex(SP), allocatable :: TRabs_RES_left(:,:,:)  ! I_trans, DIP_dir, 1 ( RES_0 ) - 2 ( dRES)
  complex(SP), allocatable :: TRabs_RES_right(:,:,:)
@@ -182,5 +183,16 @@ module YPP_real_time
      YAMBO_FREE(FT%F_t)
      YAMBO_FREE(FT%W)
    end subroutine
+   !
+   function TRabs_EPS_label(i,j)
+     character(2) :: TRabs_EPS_label
+     integer      :: i,j
+     if (i==1) TRabs_EPS_label="x" 
+     if (i==2) TRabs_EPS_label="y" 
+     if (i==3) TRabs_EPS_label="z" 
+     if (j==1) TRabs_EPS_label=TRabs_EPS_label(1:1)//"x" 
+     if (j==2) TRabs_EPS_label=TRabs_EPS_label(1:1)//"y" 
+     if (j==3) TRabs_EPS_label=TRabs_EPS_label(1:1)//"z" 
+   end function
    !
 end module YPP_real_time

@@ -95,7 +95,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    do i_dir=1,3
      do j_dir=1,3
-       if (.not.TRabs_lEPS(i_dir,j_dir)) cycle
+       if (.not.TRabs_lEPS(i_dir,j_dir).or.i_dir==j_dir) cycle
        B_data(1)=real(B_Hall(i_dir,j_dir))
        call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_"//TRabs_EPS_label(i_dir,j_dir)/),&
 &                             R_VALUES=(/real(B_Hall(i_dir,j_dir))/),UNIT="(Ohm*cm)^-1")

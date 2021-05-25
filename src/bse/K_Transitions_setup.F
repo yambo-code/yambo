@@ -239,6 +239,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  !
  use pars,         ONLY:SP
  use R_lattice,    ONLY:qindx_X,bz_samp
+ use D_lattice,    ONLY:i_time_rev,i_space_inv
  use electrons,    ONLY:levels,n_sp_pol
  use DIPOLES,      ONLY:DIPOLE_t
  use BS_solvers,   ONLY:BSS_add_antiresonant,BSS_mode,BSS_slepc_double_grp,BSS_slepc_matrix
@@ -278,7 +279,7 @@ subroutine K_compute_transitions_at_ik(iq,Ken,Xk,Dip)
  call parser('ImposeAsym',l_BS_ares_asymm)
  call parser('ImposeSymm',l_BS_ares_symm)
  !
- l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1)
+ l_BS_ares_asymm=l_BS_ares_asymm.or.(iq/=1.and.i_time_rev==0.and.i_space_inv==0)
  l_BS_ares_asymm=(l_BS_ares_asymm.or.l_BS_photolum.or.(l_BS_magnons.and.n_sp_pol==2))
  !
 #if defined _SLEPC && !defined _SLEPC_OFF

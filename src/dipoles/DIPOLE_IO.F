@@ -33,7 +33,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme
  !
  implicit none
  !
@@ -48,7 +48,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
 &                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,i_cpu
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
  !
@@ -66,13 +66,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ID_S=0
  io_err=0
  !
-#if defined _PAR_IO
- write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
-#else
- write_header  =(      master_cpu.and.writing )
- read_header   =.not.writing.and.(reading.or.check)
-#endif
+ write_header  =      (master_cpu.and.writing)
+ read_header   =.not.write_header
+ !
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
  !

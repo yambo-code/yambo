@@ -68,7 +68,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  io_err=0
  !
  write_header  =      (master_cpu.and.writing)
- read_header   =.not.write_header.and.(reading.or.check)
+ read_header   =.not.write_header
  !
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach

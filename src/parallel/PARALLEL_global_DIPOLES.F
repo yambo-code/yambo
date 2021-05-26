@@ -146,4 +146,3 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  endif
  !
 end subroutine PARALLEL_global_DIPOLES
-

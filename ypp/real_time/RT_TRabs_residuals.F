@@ -129,11 +129,13 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
            if (l_EQ) f_eh(2)=f_eh(2)+f_eh(1)
            !
            if (abs(E_eh) < TRabs_Eeh_treshold.and. trim(global_gauge)=="length") cycle
+           !
+           N_trans=N_trans+1
+           !
            if (.not. PAR_IND_DIPk_ibz%element_1D(i_kibz)) cycle
            if (.not. PAR_IND_CON_BANDS_DIP%element_1D(i_np)) cycle
            if (.not. PAR_IND_VAL_BANDS_DIP%element_1D(i_n)) cycle
            !
-           N_trans=N_trans+1
            TRabs_E(N_trans)=E_eh
            dipole_rotated=conjg(-cI*DIP_rotated(i_np,i_n,i_kbz,i_spin,"DIP_iR",Xk))
            !

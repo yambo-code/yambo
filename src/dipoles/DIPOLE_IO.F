@@ -32,7 +32,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END,NONE
+&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_redux_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme,myid
  !
@@ -106,7 +106,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
    do while(io_err/=0)
      if(i_count==0) call msg('s','[DIP] Checking dipoles header ')
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)
      if(read_header_ovlp) then
        if(i_count==0) call msg('s','[DIP] Checking overlaps header ')

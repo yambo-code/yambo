@@ -102,7 +102,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)
      if(read_header_ovlp) then
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
+       call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
        io_err=io_err+io_Overlaps(Dip,ID_S)
      endif
      if(io_err/=0) call sleep(1)

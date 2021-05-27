@@ -31,7 +31,7 @@ subroutine a2y_db1(en,k,ncid)
  use pseudo,               only : pp_n_l_times_proj_max
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
- use D_lattice,            only : nsym, n_atoms, n_atomic_species
+ use D_lattice,            only : nsym, n_atoms, n_atomic_species, atom_mass
  use mod_com2y,            only : print_interface_dimensions,  artificial_spin_pol
  !
 #include<memory.h>
@@ -195,6 +195,13 @@ contains
     YAMBO_ALLOC( Z_species, (n_atomic_species) )
     varid = netcdf_inquire_varid(ncid, "atomic_numbers")
     netcdf_error = nf90_get_var(ncid, varid, Z_species)
+    call netcdf_check(ncid,netcdf_error,varid)
+    !
+    ! Get atomic masses
+    !
+    YAMBO_ALLOC( atom_mass, (n_atomic_species) )
+    varid = netcdf_inquire_varid(ncid, "amu")
+    netcdf_error = nf90_get_var(ncid, varid, atom_mass)
     call netcdf_check(ncid,netcdf_error,varid)
 
     !

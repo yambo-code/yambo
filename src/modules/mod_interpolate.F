@@ -42,6 +42,7 @@ module interpolate
  logical           :: INTERPOLATE_initialized=.FALSE.
  logical           :: INTERPOLATE_is_quiet=.FALSE.
  logical           :: INTERPOLATE_is_serial=.FALSE.
+ logical           :: INTERPOLATE_use_symm=.TRUE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
  integer, parameter :: max_interpls=10

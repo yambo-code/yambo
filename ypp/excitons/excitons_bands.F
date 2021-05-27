@@ -49,7 +49,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP_EXC,ik,ib,i_E
+ integer :: iq,i_c,i_l,ID_INTERP_EXC,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: file_name
@@ -89,6 +89,23 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
    call print_BANDS()
+   !
+ endif
+ !
+ ! Interpolate exciton on a grid
+ !
+ if (GRID_interpolate.and..not.l_prt_dos.and.BANDS_steps<1) then
+   !      
+   call msg('s','Exciton Grid')
+   !
+   GRID_q%description="INTERP"
+   call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
+   !
+   YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))
+   !
+   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
+   !
+   call print_INTERP_GRID()
    !
  endif
  !
@@ -188,5 +205,36 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      call of_open_close(trim(file_name))
      !
    end subroutine print_BANDS
+   !
+   subroutine print_INTERP_GRID()
+     implicit none
+     !
+     headings(1)=" |q| (a.u.) "
+     do i_c=1,EXCITONS_n_user_states
+        i_l=EXCITONS_user_indexes(i_c)
+        headings(i_c+1)=' e'//intc(i_l)
+     enddo
+     headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
+&           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+     !
+     file_name="excitons_interpolated_IBZ"
+     call of_open_close(trim(file_name),'ot')
+     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+     call msg('o '//trim(file_name),"#")
+     !
+     do iq=1,GRID_q%nibz
+       !
+       if (iq>1) values(1)=iku_v_norm(GRID_q%pt(iq,:3))
+       !
+       tmp_q = GRID_q%pt(iq,:3)
+       !
+       call K_transform(tmp_q,'iku')
+       values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
+       values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
+       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+     enddo
+     call of_open_close(trim(file_name))
+     !
+   end subroutine print_INTERP_GRID
  !
 end subroutine

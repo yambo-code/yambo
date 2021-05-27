@@ -31,16 +31,17 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use YPPm,                ONLY:l_dos
  use YPP_ELPH,            ONLY:elph_steps,elph_Ef,elph_gamma_broad,&
 &                              ph_broad,l_eliashberg
- use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
+ use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,PH_freqs,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
-&                              GKKP,setup_k_plus_q_levels
+&                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,OP_RD_CL,REP
  use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
+ use stderr,              ONLY:intc
  !
 #include<memory.h>
  type(levels) ::en
@@ -58,8 +59,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  !
  !I/O
  !
- integer           ::io_err,ID,IO_ACT
- integer, external ::io_ELPH
+ integer           :: io_err,ID,ID_DG,IO_ACT
+ integer, external :: io_ELPH
+ integer, external :: io_Double_Grid
+ real(SP), external :: Eliashberg_Dos_Func
  !
  if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
  if (l_dos)        l_dos       =ph_broad>1.E-8
@@ -110,8 +113,11 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    ph_energy(i2)=(i2-1)*e_step
  enddo
  !
- nq_todo=elph_nQ
- if (elph_use_q_grid) nq_todo=q%nibz
+ if (elph_use_q_grid) then
+   nq_todo=q%nibz
+ else
+   nq_todo=elph_nQ
+ endif
  !
  ! Eliashberg Function & DOS function
  !====================================
@@ -124,9 +130,30 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    gamma=0.
  endif
  !
+ ! Fill the PH_freqs array
+ !
+ PH_freqs%nk=nq_todo
+ PH_freqs%nb=ph_modes
+ YAMBO_ALLOC(PH_freqs%E,(nq_todo,ph_modes,1))
+ !
+ ! Load double-grid if present
+ !
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_DG)
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+ !
+ if(io_err==0) then
+   if(elph_use_q_grid.and..not.l_eliashberg) then
+     call msg('sr','Phonon DOS calculated using PH-double-grid ')
+     use_PH_DbGd=.TRUE.
+     call k_build_up_BZ_tables(q)
+   else
+     call msg('sr','PH-double-grid not compatible with Random q-grids and Eliashberg functions!')
+   endif
+ endif
+ !
  call PARALLEL_index(px,(/nq_todo/))
  if (l_eliashberg.and..not.l_dos) call live_timing('Eliashberg',px%n_of_elements(myid+1))
- if (.not.l_eliashberg.and.l_dos) call live_timing('ph DOS',px%n_of_elements(myid+1))
+ if (.not.l_eliashberg.and.l_dos) call live_timing('ph-DOS',px%n_of_elements(myid+1))
  if (l_dos.and.l_eliashberg)      call live_timing('Eliashberg & DOS',px%n_of_elements(myid+1))
  !
  ! calculate q%weights
@@ -141,6 +168,14 @@ subroutine ELPH_eliashberg_dos(k,en,q)
    call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID)
    if (l_dos)        io_err=io_ELPH(ID,'no_matrix_elements')
    if (l_eliashberg) io_err=io_ELPH(ID,'gkkp')
+   !
+   PH_freqs%E(iq,:,1)= sqrt( MAX( PH_freqs_sq(iq,:),0. ) )
+   !
+   if (use_PH_DbGd) then
+      call io_control(ACTION=IO_ACT,SEC=(/iq+1/),ID=ID_DG)
+      io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+      if(io_err/=0) call error('Error reading PH-double grid for q-points '//intc(iq))
+   endif
    !
    if (.not.elph_use_q_grid.and.l_eliashberg) call setup_k_plus_q_levels(iq,en%E_Fermi)
    !
@@ -172,10 +207,10 @@ subroutine ELPH_eliashberg_dos(k,en,q)
      !
      do i2=1,elph_steps
        !
-       d_elias_dos=q_weight*Fermi_fnc_derivative(ph_energy(i2)-omega,ph_broad)
+       d_elias_dos=q_weight*Eliashberg_Dos_Func(iq, im, ph_energy(i2) ,ph_broad, PH_freqs, q)
        !
        if (l_eliashberg) aF(i2)=aF(i2)+gamma(iq,im)*d_elias_dos/omega/dos_ef
-       if (l_dos)     ph_dos(i2)=ph_dos(i2)+d_elias_dos
+       if (l_dos)     ph_dos(i2)=ph_dos(i2)+real(d_elias_dos,SP)
        !
      enddo
    enddo

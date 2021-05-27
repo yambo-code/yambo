@@ -90,6 +90,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
+ IO_MODE=VERIFY
+ !
  if(.not.write_header.and.writing) then
    io_err=-1
    i_count=1
@@ -99,6 +101,10 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do while(io_err/=0)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)
+     if(read_header_ovlp) then
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
+       io_err=io_err+io_Overlaps(Dip,ID_S)
+     endif
      if(io_err/=0) call sleep(1)
      i_count=i_count+1
      if(i_count==120) call error("Error in dipoles IO ")
@@ -107,7 +113,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! End fix for asynchronous I/O
  !
- IO_MODE=VERIFY
  if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
  !
  if(read_header) then

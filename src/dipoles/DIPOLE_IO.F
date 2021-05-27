@@ -93,6 +93,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if(.not.write_header.and.writing) then
    io_err=-1
    i_count=1
+   !
+   ! Wait until the ndb.dipoles file is available to all cores
+   !
    do while(io_err/=0)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)

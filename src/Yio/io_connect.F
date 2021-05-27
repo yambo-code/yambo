@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,11 +26,11 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  use pars,          ONLY:schlen,lchlen,num_of_alternative_locations
  use stderr,        ONLY:STRING_pack
  use parallel_m,    ONLY:ncpu
+ use IO_int,        ONLY:get_name,all_locations
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,io_type,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,netcdf_call,&
 &                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
-&                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL,          &
-&                        get_name,all_locations
+&                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL 
 #if defined _PAR_IO && defined _HDF5_IO
  use IO_m,          ONLY:PAR_IO_CREATE_MODE,PAR_IO_WRITE_MODE
  use parallel_m,    ONLY:MPI_INFO_NULL
@@ -89,25 +89,8 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  alternative_file=" "
  !
  if (len_trim(io_file(ID))==0) then
-   !
-   if (write_mode) then
-     !
-     ! NEW databases are always written respecting the "type" (see mod_com.F)
-     !
-     io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-     !
-   else if (read_mode) then
-     !
-     io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
-     !
-     if (type==1.or.type==2) then
-       !
-       alternative_file=all_locations(desc,subfolder_)
-       !
-     endif
-     !
-   endif
-   !
+   io_file(ID)=get_name(desc,subfolder_,type,CORE_IO=.FALSE.,MORE_IO=.TRUE.,COM_IO=.FALSE.)
+   if (read_mode .and. (type==1.or.type==2) ) alternative_file=all_locations(desc,subfolder_)
  endif
  !
  ! Keep the extension for the fragment-related procedures
@@ -130,9 +113,11 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
  endif
  !
- ! Open if to open and to write
+ if(.not.open_is_on(ID)) return
  !
- if (open_is_on(ID).and.write_mode) then
+ ! It to write
+ !
+ if (write_mode) then
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
@@ -162,9 +147,9 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    !
  endif
  !
- ! Open if to open and to read
+ ! If to read
  !
- if (open_is_on(ID).and.read_mode) then
+ if (read_mode) then
    !
    if (.not.file_exists(trim(io_file(ID)))) then
      !
@@ -194,6 +179,41 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    !
  endif
  !
- if (open_is_on(ID)) io_type(ID)=type
+ io_type(ID)=type
  !
 end function io_connect
+!
+!
+subroutine io_disconnect(ID,FORCE)
+  !
+  use IO_m,       ONLY:netcdf_call,PLAIN_file_is_open,NETCDF_file_is_open,io_unit,io_type,&
+&                      close_is_on,io_status,IO_file,nf90_close,io_resetable,io_reset
+  !
+  implicit none
+  !
+  integer           :: ID,NC_ERR
+  logical, optional :: FORCE
+  logical           :: I_OPEN
+  !
+  logical :: FORCE_
+  !
+  I_OPEN=.FALSE.
+  !
+  FORCE_=.FALSE.
+  if (present(FORCE)) FORCE_=FORCE
+  !
+  if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
+  !
+  if (io_type(ID)==-2) then
+    I_OPEN=PLAIN_file_is_open(IO_file(ID))
+    if (I_OPEN) close(unit=io_unit(ID))
+  else
+    I_OPEN=NETCDF_file_is_open(ID)
+    if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
+  endif
+  !
+  if (I_OPEN) io_unit(ID)=0
+  !
+  if (io_resetable(ID)) call io_reset(ID)
+  !
+end subroutine

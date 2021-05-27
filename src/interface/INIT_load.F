@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -48,7 +48,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
@@ -152,12 +152,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
-#if defined _PHEL
+#if defined _RT_SCATT
+ call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')
+#endif
+#if defined _RT_SCATT && _ELPH
+ call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
+#endif
+#if defined _RT_SCATT && _PHEL
  call it('r',defs,'ph_el_scatt','[R] Phonon-Electron Scattering')   
 #endif
 #if defined _RT_SCATT
- call it('r',defs,'el_el_scatt','[R] Electron-Electron Scattering')   
- call it('r',defs,'el_ph_scatt','[R] Electron-Phonon   Scattering')   
  call it('r',defs,'el_photon_scatt','[R] Electron-Photon   Scattering')   
 #endif
 #if defined _ELPH 
@@ -286,12 +290,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
  call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
- call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]', &
-&         BS_n_g_W,G_unit,verb_level=V_resp)
+ call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
- call it('f',defs,'BSKTriangIO' ,'[BSK] Write only the upper part of the BSE matrix with parallel I/O',verb_level=V_resp)
+ call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_standard")',BSK_IO_mode,verb_level=V_resp)
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.,case="A")
  call it(defs,'Gauge' ,  '[BSE/X] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
@@ -315,10 +318,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC && !defined _SLEPC_OFF
- call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',BSS_slepc_approach)
+ call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',&
+&                                                                          BSS_slepc_approach,verb_level=V_resp)
  call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
- call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit,verb_level=V_resp)
- call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit,verb_level=V_resp)
+ call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit)
+ call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit)
  call it(defs,'BSSSlepcPrecondition','[SLEPC] Precondition technique (none|preonly+jacobi|bcgs+jacobi)',&
  &                                                                              BSS_slepc_precondition,verb_level=V_resp)
  call it(defs,'BSSSlepcExtraction','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
@@ -348,7 +352,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE properties: kerr, magnons, absorption, ...
  !
- call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge')
+ call it('f',defs,'AnHall'  , '[BSE] Add the anomalous Hall effect to eps if using length gauge',verb_level=V_resp)
  call it(defs,'PL_weights','[PL] [cc] Weights of the carthesian components of the emitted radiation',PL_weights,verb_level=V_resp)
  !
 #if defined _RT
@@ -382,8 +386,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 ! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
- call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
- call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
+ call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
+ call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations,verb_level=V_qp)
  !
  ! S_xc
  !
@@ -755,7 +759,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
-       if (i_s==9) possible_fields='(q,k,b) '    ! PH_SE
+       if (i_s==9) possible_fields='(k) '        ! BZ
+       if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

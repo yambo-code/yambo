@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -31,13 +31,14 @@ subroutine K_components_folded_in_serial_arrays(iq)
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
  !
- use electrons,      ONLY:n_sp_pol
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
 &                         BS_res_ares_dim,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use timing_m,       ONLY:timing
+ use LIVE_t,         ONLY:live_timing
  use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
  use DICHROISM,      ONLY:BSS_dipoles_dich,BSS_DICH_alloc
  use PHOTOLUM,       ONLY:BSS_dipoles_PL,BSS_PL_alloc,BSS_PL_f,PL_weights
@@ -67,6 +68,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
    call BSS_MAGN_alloc( )
    call BSS_DICH_alloc( )
    call BSS_PL_alloc( )
+   !
+   if(BS_nT_grps>0) call live_timing("Folding BSE Kernel",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
    !
    BS_res_ares_dim_solver=1
    if(BS_res_ares_dim==1.and.BS_K_coupling) BS_res_ares_dim_solver=2
@@ -129,7 +132,11 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
      enddo
      !
+     call live_timing(steps=1)
+     !
    enddo
+   !
+   if(BS_nT_grps>0) call live_timing()
    !
    ! ALL 2 ALL
    !===========

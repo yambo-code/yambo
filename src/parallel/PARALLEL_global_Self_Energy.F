@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,8 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  use drivers,       ONLY:l_eval_collisions
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,&
 &                        PARALLEL_live_message,PARALLEL_MATRIX_distribute
- use IO_m,          ONLY:io_COLLs,IO_and_Messaging_switch
+ use IO_m,          ONLY:io_COLLs
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use QP_m,          ONLY:QP_n_states,QP_nk
  use openmp,        ONLY:n_threads_SE,OPENMP_set_threads
  use parallel_m,    ONLY:HEAD_QP_cpu,HEAD_b_cpu,master_cpu,n_WF_bands_to_load,COMM_copy,&
@@ -275,7 +276,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  !
  if (ncpu>1) then
    if (l_eval_collisions.and.io_COLLs) then
-   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_QP_A2A%CPU_id==0.and.PAR_COM_Q_INDEX%CPU_id==0)
    else 
      call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    endif

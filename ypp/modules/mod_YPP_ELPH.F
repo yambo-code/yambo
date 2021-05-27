@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,6 +32,7 @@ module YPP_ELPH
  logical :: l_phonons
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
+ logical :: l_ph_ass_dos
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -70,15 +71,28 @@ module YPP_ELPH
  !
  interface
    !
-   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs,lambda_s,n_lambda)
+   subroutine  ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      use R_lattice,     ONLY:bz_samp
      use electrons,     ONLY:levels
+     use BS_solvers,    ONLY:BSS_n_eig
      implicit none
      type(bz_samp)      :: k,q,Xk
      type(levels)       :: en,Xen
-     integer, optional  :: BS_E_degs(:)
-     integer, optional  :: lambda_s(:)
-     integer, optional  :: n_lambda
+     integer, optional  :: BS_E_degs(BSS_n_eig)
+   end subroutine
+   !
+   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+     !
+     use pars,           ONLY:schlen,SP 
+     use D_lattice,      ONLY:n_atoms
+     !
+     implicit none
+     !
+     character(schlen), intent(in)   :: ph_freqs_file
+     integer,      intent(inout)     :: n_q
+     real(SP), optional, intent(out) :: q_pt(n_q,3)
+     real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+     !
    end subroutine
    !
  end interface

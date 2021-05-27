@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,8 @@ subroutine RT_ELPH_initialize(E,k,q)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:io_control,OP_RD_CL,VERIFY,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,VERIFY,NONE
  use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists
  !
 #include<memory.h>

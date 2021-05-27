@@ -32,7 +32,10 @@ iotk:
 hdf5: 
 	@+if test "$(do_hdf5)" = yes ; then LIBS2DO="hdf5" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
-netcdf: 
+pnetcdf:
+	@+if test "$(do_pnetcdf)" = yes ; then LIBS2DO="pnetcdf" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
+netcdf:
 	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 etsf_io: 

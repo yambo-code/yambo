@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,29 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_relaxation(E,k,q,Time)
- !
- use pars,           ONLY:SP
- use electrons,      ONLY:levels
- use R_lattice,      ONLY:bz_samp
- !
- implicit none
- !
- type(levels),  intent(inout) :: E
- type(bz_samp), intent(in)    :: k,q
- real(SP),      intent(in)    :: Time
- !
- return
- !
-end subroutine RT_relaxation
-!
-!
 integer function RT_Lifetimes_evaluation_plan( )
  !
  return
  !
 end function RT_Lifetimes_evaluation_plan
-!
 !
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
@@ -55,13 +37,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
 end subroutine RT_ELPH_initialize
 !
-!
 subroutine RT_ELPH_zeroing()
  !
  return
  !
 end subroutine RT_ELPH_zeroing
-!
 !
 subroutine RT_relaxation_logicals( )
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -61,6 +61,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
  call timing("DIPOLE_buil_covariants",OPR="start")
+ !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  !
  if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
  !

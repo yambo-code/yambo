@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,10 +24,10 @@
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:SP,schlen,LP
- use IO_m,           ONLY:io_connect,io_sec,ver_is_gt_or_eq,&
-&                         io_variable_elemental,io_status,io_bulk,io_header,&
-&                         read_is_on,write_is_on,def_variable_elemental,&
-&                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR,IO_return
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,&
+&                         io_mode,DUMP,frag_ELPH,IO_INCOMPATIBLE_VAR
+ use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
+&                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,&
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
@@ -52,7 +52,7 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ierr,iq_mem
+ integer                ::iq,ierr,iq_mem,ID_frag
  real(SP)               ::v(3)
  character(schlen)      ::db_name
  logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
@@ -62,6 +62,8 @@ integer function io_ELPH(ID,what)
  l_no_matrix_elements=.FALSE.
  l_gFsq              =.FALSE.
  l_gkkp              =.FALSE.
+ !
+ ID_frag=0
  !
  ! DB name
  !
@@ -80,19 +82,15 @@ integer function io_ELPH(ID,what)
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
  if (io_ELPH/=0) then
-   call IO_return(ID,"io_ELPH")
-   if (elph_grids_are_expanded) elph_grids_are_expanded=.FALSE.
-   return
+   elph_grids_are_expanded=.FALSE.
+   goto 1
  endif
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    if (.not.elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
-   if (io_ELPH/=0) then
-     call IO_return(ID,"io_ELPH")
-     return
-   endif
+   if (io_ELPH/=0) goto 1
    !
    call IO_desc_reset(ELPH_desc)
    !
@@ -125,10 +123,7 @@ integer function io_ELPH(ID,what)
    endif
    !
    io_ELPH=io_status(ID)
-   if (io_ELPH/=0) then
-     call IO_return(ID,"io_ELPH")
-     return
-   endif
+   if (io_ELPH/=0) goto 1
    !
    call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
    call io_bulk(ID,R0=PH_W_debye)
@@ -143,8 +138,7 @@ integer function io_ELPH(ID,what)
        call c2a(v_in=q_pt(iq,:)+PH_qpt(iq,:),v_out=v,mode="ki2a")
        if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
          io_ELPH=IO_INCOMPATIBLE_VAR
-         call IO_return(ID,"io_ELPH")
-         return
+         goto 1
        endif
      enddo
    endif
@@ -159,57 +153,46 @@ integer function io_ELPH(ID,what)
  endif
  !
  iq=maxval(io_sec(ID,:))-1
- if (iq<=0) then
-   call IO_return(ID,"io_ELPH")
-   return
- endif
+ if (iq<=0) goto 1
  !
  ! Fragmentation
  !
- call io_fragment(ID,i_fragment=iq,ierr=ierr)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_ELPH)
+ if (ierr<0.and.read_is_on(ID)) goto 1
  !
  ! When the DB is fragmented I allow a partial reading checking
  ! if the fragment exists or not.
  ! If the fragment does not exist (ierr<0) I return an error code
  !
- if (ierr<0.and.read_is_on(ID)) then
-   io_ELPH=-1
-   call IO_return(ID,"io_ELPH")
-   return
- endif
- !
  if (l_gFsq) then
    !
    if (iq==1) then
-     call io_bulk(ID,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
-     call io_bulk(ID,I2=QP_table)
+     call io_bulk(ID_frag,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
+     call io_bulk(ID_frag,I2=QP_table)
    endif
    !
    iq_mem=iq
-   if (allocated(PAR_Q_bz_index)) then
-     iq_mem=PAR_Q_bz_index(iq)
-   endif
+   if (allocated(PAR_Q_bz_index)) iq_mem=PAR_Q_bz_index(iq)
    !
-   call io_bulk(ID,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID,R2=gsqF_fan(:,iq_mem,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_dw_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID,R2=gsqF_dw(:,iq_mem,:))
-   call io_bulk(ID,VAR="ELPH_GFSQ_ca_corr_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID,R2=gsqF_ca_corr(:,iq_mem,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_bose_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID,R2=gsqF_life_bose(:,iq_mem,:,1))
-   call io_bulk(ID,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID,R2=gsqF_life_f(:,iq_mem,:,1))
+   call io_bulk(ID_frag,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID_frag,R2=gsqF_fan(:,iq_mem,:,1))
+   call io_bulk(ID_frag,VAR="ELPH_GFSQ_dw_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID_frag,R2=gsqF_dw(:,iq_mem,:))
+   call io_bulk(ID_frag,VAR="ELPH_GFSQ_ca_corr_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID_frag,R2=gsqF_ca_corr(:,iq_mem,:,1))
+   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_bose_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID_frag,R2=gsqF_life_bose(:,iq_mem,:,1))
+   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
+   call io_bulk(ID_frag,R2=gsqF_life_f(:,iq_mem,:,1))
    !
    ! PH frequencies (again)
    !
    if (iq==1) then
-     call io_bulk(ID,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
-     call io_bulk(ID,R2=PH_freqs_sq)
+     call io_bulk(ID_frag,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
+     call io_bulk(ID_frag,R2=PH_freqs_sq)
    endif
    !
-   call IO_return(ID,"io_ELPH")
-   return
+   goto 1
    !
  endif
  !
@@ -226,41 +209,42 @@ integer function io_ELPH(ID,what)
  !
  ! PH frequencies
  !
- call io_bulk(ID,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
- call io_bulk(ID,R1=PH_freqs_sq(iq,:))
+ call io_bulk(ID_frag,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
+ call io_bulk(ID_frag,R1=PH_freqs_sq(iq,:))
  !
  ! Polarization vectors
  ! 
- call io_bulk(ID,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,n_atoms,3/))
- call io_bulk(ID,C3=PH_pol_vector(:,:,:,iq))
+ call io_bulk(ID_frag,VAR="POLARIZATION_VECTORS",VAR_SZ=(/2,ph_modes,n_atoms,3/))
+ call io_bulk(ID_frag,C3=PH_pol_vector(:,:,:,iq))
  ! 
- call io_bulk(ID,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
- call io_bulk(ID,R3=GKKP%E_kpq(iq)%E)
+ call io_bulk(ID_frag,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
+ call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E)
  ! 
- if (l_no_matrix_elements) then
-   call IO_return(ID,"io_ELPH")
-   return
- endif
+ if (l_no_matrix_elements) goto 1
  ! 
  ! ELPH_gkkp 
  !
- call io_bulk(ID,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
- call io_bulk(ID,C4=GKKP%dVc(:,:,:,:,1))
+ call io_bulk(ID_frag,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
+ call io_bulk(ID_frag,C4=GKKP%dVc(:,:,:,:,1))
  !
  if (l_GKKP_hosts_bare_dV) then
    ! 
    ! ELPH_gkkp_bare 
    !
-   call io_bulk(ID,VAR="ELPH_GKKP_BARE_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
-   call io_bulk(ID,C4=GKKP_bare%dVc(:,:,:,:,1))
+   call io_bulk(ID_frag,VAR="ELPH_GKKP_BARE_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
+   call io_bulk(ID_frag,C4=GKKP_bare%dVc(:,:,:,:,1))
    !
  endif
  !
  ! ELPH_DW 
  !
- call io_bulk(ID,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- call io_bulk(ID,R4=GKKP%dVr(:,:,:,:,1))
+ call io_bulk(ID_frag,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+ call io_bulk(ID_frag,R4=GKKP%dVr(:,:,:,:,1))
  !
- call IO_return(ID,"io_ELPH")
+1 call io_fragment_disconnect(ID,ID_frag)
+ !
+ call io_disconnect(ID)
+ !
+ call timing("io_ELPH",OPR="STOP")
  !
 end function

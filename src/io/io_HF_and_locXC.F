@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,9 +29,10 @@ integer function io_HF_and_locXC(ID)
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
 &                         QP_table,QP_state
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
-&                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
-&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+ use IO_m,           ONLY:io_sec,io_HF,frag_HF,io_status,read_is_on,IO_NOT_ALLOWED,&
+&                         write_is_on,io_mode,DUMP,IO_INCOMPATIBLE_VAR
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
+&                         ver_is_gt_or_eq
  use timing_m,       ONLY:timing
 #include<memory.h>
  integer :: ID

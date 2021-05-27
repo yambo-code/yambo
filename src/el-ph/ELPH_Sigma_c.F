@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
- use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,IO_and_Messaging_switch,&
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,&
 &                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&

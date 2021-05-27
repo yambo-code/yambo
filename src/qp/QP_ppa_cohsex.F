@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,7 +40,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
@@ -253,7 +254,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if (io_RESPONSE) then
        !
-       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz)
+       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,nqibz,PAR_INDEX=PAR_IND_Q_ibz)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
@@ -265,7 +266,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! DV comment:
      ! When cutoff is used, here a careful check is needed.
-     ! Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! Because of qpg can be imaginary, also are some component of X_mat, I am not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
 #if defined _SC

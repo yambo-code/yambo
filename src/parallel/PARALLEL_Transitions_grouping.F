@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ subroutine PARALLEL_Transitions_grouping()
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_BS_T_grps_index,&
-&                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_Haydock
+&                        PAR_COM_Xk_ibz_INDEX,PAR_IND_T_Haydock,PP_indexes_reset
  use R_lattice,     ONLY:nXkibz
  use vec_operate,   ONLY:sort
  !
@@ -38,7 +38,7 @@ subroutine PARALLEL_Transitions_grouping()
  ! Work Space
  !
  logical              :: l_check
- integer              :: i_k,i_k_r,i_k_s,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter,i_res_ares
+ integer              :: i_k,i_k_r,i_t_at_k,n_GRP,i_Tgrp,it_ref,i_counter,i_res_ares
  integer, allocatable :: GRP_data(:)
  integer, allocatable :: GRP_index(:)
  !
@@ -57,11 +57,14 @@ subroutine PARALLEL_Transitions_grouping()
  !
  BS_T_grp_1st_el=0
  PAR_BS_nT_col_grps =0
- i_counter=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
+ !
+ i_counter=0
+ it_ref=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
  do i_res_ares=1,BS_res_ares_dim
+ if(i_res_ares==1) i_counter=it_ref
+ if(i_res_ares==2) i_counter=it_ref+nXkibz*PAR_COM_eh_INDEX%n_CPU
  do i_k=1,nXkibz
-   i_k_s=1+(i_res_ares-1)*nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz
    ! 
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k) ) cycle
@@ -111,6 +114,7 @@ subroutine PARALLEL_Transitions_grouping()
  YAMBO_ALLOC(PAR_BS_T_grps_index,(BS_nT_grps))
  !
  if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
+   call PP_indexes_reset(PAR_IND_T_Haydock)
    YAMBO_ALLOC(PAR_IND_T_Haydock%element_1D,(BS_nT_grps))
    PAR_IND_T_Haydock%element_1D=.FALSE.
  endif
@@ -122,7 +126,6 @@ subroutine PARALLEL_Transitions_grouping()
  !
  do i_res_ares=1,BS_res_ares_dim
  do i_k=1,nXkibz
-   i_k_s=1+(i_res_ares-1)*nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz
    !
    if (.not.PAR_IND_Kk_ibz%element_1D(i_k)) cycle

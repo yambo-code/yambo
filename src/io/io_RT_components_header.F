@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,9 +25,9 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
  !
  use pars,           ONLY:IP,LP,SP,schlen
  use R_lattice,      ONLY:nqbz
- use IO_m,           ONLY:io_header,io_status,frag_RT,read_is_on,&
-&                         def_variable_elemental,io_variable_elemental,&
+ use IO_int,         ONLY:io_header,def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
+ use IO_m,           ONLY:io_status,frag_RT,read_is_on
  use RT_lifetimes,   ONLY:q_weight_RT
  use real_time,      ONLY:RT_carriers,RT_obj_alloc
  use RT_control,     ONLY:SAVE_G_history

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -91,11 +91,6 @@ module wave_func
  integer,    allocatable:: wf_igk(:,:)
  integer,    allocatable DEV_ATTR :: wf_igk_d(:,:)
  logical                :: wf_norm_test
- !
- ! Allocation/deallocation messaging verbosity
- !
- logical                :: QUIET_free
- logical                :: QUIET_alloc
  !
  interface
    !

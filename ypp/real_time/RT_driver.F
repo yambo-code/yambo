@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -61,17 +61,13 @@ subroutine RT_driver(en,k,q)
  !
  call RT_output_INIT( )
  !
- !
- !
  ! Real-Time occupations and lifetimes
  !=====================================
- if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,en)
+ if ( l_RT_occupations.or.l_RT_lifetimes ) call RT_occupations_driver(k,q,en)
  !
  ! Plotting 
  !===========
  if (l_RT_density)                         call RT_density(en,k,q)
- !
- !
  !
  ! Response Functions
  !====================

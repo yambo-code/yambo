@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -42,7 +42,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
 &                               INTERPOLATION_BZ,INTERPOLATION_nearest_k,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,INTERP_FineGd,&
 &                               l_integral_respect,OUT_k_nk
- use IO_m,                 ONLY:IO_and_Messaging_switch
+ use IO_int,               ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -112,10 +112,10 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
  !====================
  if (l_INTERP_f.and.l_integral_respect) then
    if (SWITCH_the_grid("COARSE")) then
-     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP       ,l_integral_respect,OUT_k%nibz)
+     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP       ,OUT_k%nibz)
    endif
    if (SWITCH_the_grid("FINE")) then
-     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,l_integral_respect,Nk_FineGd)
+     call INTERPOLATION_integral_respect(ID,OUT_k,INTERP_obj(ID)%INTERP_FineGd,Nk_FineGd)
    endif
  endif
  !
@@ -176,6 +176,7 @@ subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
        if (trim(INTERP_FineGd)=="BARE") Nk_FineGd=OUT_k%FGbare%N
        SWITCH_the_grid=Nk_FineGd>0
        OUT_k_nk=Nk_FineGd
+       return
      endif
      !
    end function

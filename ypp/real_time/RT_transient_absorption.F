@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -29,15 +29,16 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use D_lattice,       ONLY:alat
  use electrons,       ONLY:levels,n_sp_pol,spin,spin_occ
  use LIVE_t,          ONLY:live_timing
- use DIPOLES,         ONLY:DIPOLE_t,DIP_rotated
+ use DIPOLES,         ONLY:DIP_rotated
  use vec_operate,     ONLY:v_norm,rot_v_xy_plane
  use BS,              ONLY:l_BS_kerr
  use RT_control,      ONLY:RT_output,RT_apply,CARR_RT_IO_t
  use IO_m,            ONLY:io_DIP
  use YPP_real_time,   ONLY:RT_conf,RT_time
+ use YPPm,            ONLY:DIPs
  use X_m,             ONLY:Epsilon_ii,global_gauge
  use BS,              ONLY:BS_bands
- use BS_solvers,      ONLY:BSS_eh_table,BS_mat
+ use BS_solvers,      ONLY:BSS_eh_table,BS_mat,BSS_q0
  use frequency,       ONLY:w_samp
  use parallel_int,    ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
@@ -53,7 +54,6 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  ! Work space
  !
  type(w_samp)      :: W_bss
- type(DIPOLE_t)    :: Dip
  !
  integer              :: i_T,neh,i_v,i_c,i_kbz,i_kibz,i_spin,i_freq,i_l,i_vp,i_cp,io_err
  real(SP)             :: Co,f_cv,f_vpv,f_ccp,delta_f_cv,output(4),BS_R_tmp
@@ -66,11 +66,11 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  real(SP)                :: field_dir(3),kerr_dir(3)
  !
  l_RT_abs_YAMBO=.TRUE.
- l_BS_kerr=.TRUE.
+ l_BS_kerr=.FALSE.
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
- call RT_apply(Dip%ib,Xen,Xk,keep_RT_carriers=.TRUE.)
+ call RT_apply(DIPs%ib,Xen,Xk,keep_RT_carriers=.TRUE.)
  !
  ! Setup of Time-range & Report
  !
@@ -80,15 +80,16 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  call parser('Reflectivity',l_TR_reflec)
  call parser('IncludeIP'   ,l_include_IP)
  !
- Dip%ib=BS_bands
+ DIPs%ib=BS_bands
  !
  call PARALLEL_global_indexes(Xen,Xk,Xq," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
+ call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=DIPs)
  !
  io_DIP=.TRUE.
- call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,'YPP')
- if (trim(global_gauge)=='length'  ) field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
- if (trim(global_gauge)=='velocity') field_dir=Dip%q0/v_norm(Dip%q0)
+ call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'YPP')
+ DIPs%q0=BSS_q0
+ if (trim(global_gauge)=='length'  ) field_dir=DIPs%q0/v_norm(DIPs%q0)*q0_def_norm
+ if (trim(global_gauge)=='velocity') field_dir=DIPs%q0/v_norm(DIPs%q0)
  call rot_v_xy_plane(-pi/2._SP,field_dir,kerr_dir)
  !
  YAMBO_ALLOC(Epsilon_ii,(RT_conf%W_n_steps,2))
@@ -120,9 +121,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  do i_T=1,RT_conf%T_n_steps
    !
-   call RT_apply(Dip%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(DIPs%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
-   call RT_interpolation(Dip%ib,Xen,Xk," R ",RT_time(i_T),.true.,.false.,.false.)
+   call RT_interpolation(DIPs%ib,Xen,Xk," R ","NN",RT_time(i_T),.true.,.false.,.false.,.false.,1)
    !
    Epsilon_ii=cZERO
    !
@@ -288,6 +289,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    call live_timing(steps=1)
    !
  enddo
+ !
+ call RT_output("close trans_eps_real trans_eps_imag eps_eq trans_residual")
+ if (l_TR_reflec) call RT_output("close trans_refl_rel trans_refl_abs refl_eq")
+ if (l_TR_transm) call RT_output("close trans_transm_rel trans_transm_abs transm_eq")
  !
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(X_reflectance)

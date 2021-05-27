@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -51,6 +51,7 @@ subroutine k_random(Xk,No_Weight)
  !
  character(12)      :: ch(3)
  integer            :: iseed(8)
+ integer            :: n_cycle
  !
  call date_and_time(ch(1),ch(2),ch(3),iseed)
  iseed=iabs(iseed)
@@ -77,7 +78,10 @@ subroutine k_random(Xk,No_Weight)
  !
  call live_timing('Points maker',BZ_random_nkpts)
  !------------------------------------------------
- do i_cycle=0,int(real(BZ_random_nkpts)/real(Xk%nbz))-1
+ n_cycle=int(real(BZ_random_nkpts)/real(Xk%nbz))-1
+ if(n_cycle<=0) call error(' Error too few random points comparared to the k-points number, increase BZ_random_Nk')
+ !
+ do i_cycle=0,n_cycle
    !
    do ik_bz=1,Xk%nbz
      !

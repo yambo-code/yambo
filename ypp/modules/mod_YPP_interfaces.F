@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,12 +46,12 @@ module YPP_interfaces
    !
    subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
      use pars,          ONLY:SP
-     use BS,            ONLY:BS_H_dim
+     use BS_solvers,    ONLY:BSS_n_eig
      use YPPm,          ONLY:EXCITON_spin
      implicit none
      integer                      :: iq
-     complex(SP)                  :: BS_R(BS_H_dim),BS_E(BS_H_dim)
-     real(SP),   optional,pointer :: BS_E_SOC_corr(:,:)
+     complex(SP)                  :: BS_R(BSS_n_eig),BS_E(BSS_n_eig)
+     real(SP), optional, pointer  :: BS_E_SOC_corr(:,:)
      type(EXCITON_spin),optional  :: EXC_spin
    end subroutine
    !

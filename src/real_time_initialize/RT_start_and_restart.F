@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -54,7 +54,8 @@ subroutine RT_start_and_restart(E,k,q)
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
  use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
- use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,io_control,&
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
  use descriptors,    ONLY:IO_desc_reset,IO_desc_add
  use wave_func,      ONLY:WF
@@ -150,13 +151,16 @@ subroutine RT_start_and_restart(E,k,q)
    !
    do i_db=4,8
      call RT_RESTART_database_copy( trim(db_name(i_db)) )
-     if (i_db==6.or.i_db==7) cycle
+   enddo
+   !
+   call PP_redux_wait()
+   !
+   do i_db=4,8
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
      io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
    enddo
    !
    NE_i_start_time=NE_i_time
-   NE_steps=NE_steps+1
    !
    call RT_control_free("all")
    call RT_control_alloc("all")

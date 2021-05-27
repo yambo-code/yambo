@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -36,14 +36,14 @@ integer function variables_RT_static(ID,what,l_carriers)
 &                         Integrator_name,RT_bands,RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_impose_N_dN,l_RT_uses_E_FineGd,DbGd_EE_percent,l_RT_impose_E,RT_potential
- use IO_m,           ONLY:io_sec
+ use IO_m,           ONLY:io_sec,io_status,read_is_on
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
  !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
- use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status,read_is_on
+ use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  !
  implicit none
  !

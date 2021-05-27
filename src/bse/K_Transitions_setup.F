@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -185,8 +185,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                !
                BS_T_grp(i_T_group_now)%table(i_T_in_the_grp,:)=(/ikbz,ib1,ib2,isp2,isp1/)
                !
-               PAR_IND_WF_b_and_k%element_2D(ic,ik )=.TRUE.
-               PAR_IND_WF_b_and_k%element_2D(iv,ikp)=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(ib2,ik )=.TRUE.
+               PAR_IND_WF_b_and_k%element_2D(ib1,ikp)=.TRUE.
                !
                if ((index(BSS_mode,'h')/=0) .or. (index(BSS_mode,'s')/=0)) then
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
@@ -201,13 +201,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !
                if (allocated(Ken%Z)) BS_T_grp(i_T_group_now)%Z(i_T_in_the_grp)=&
-               &                                           Ken%Z(ic,ik,i_sp_c)*Ken%Z(iv,ikp,i_sp_v)
+               &                                           Ken%Z(ib2,ik,isp2)*Ken%Z(ib1,ikp,isp1)
                !
                ! Note that W is negative as the linewidth is negative(positive) above(below) the Fermi level.
                ! Presently there is the abs value here and a minus in K_IP.F
                !
                if (allocated(Ken%W)) BS_T_grp(i_T_group_now)%W(i_T_in_the_grp)= &
-               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ic,ik,i_sp_c))+abs(Ken%W(iv,ikp,i_sp_c)))
+               &                        (-1._SP)**(i_res_ares-1)*(abs(Ken%W(ib2,ik,isp2))+abs(Ken%W(ib1,ikp,isp1)))
                !
                if ( BS_perturbative_SOC ) BS_T_grp(i_T_group_now)%E_SOC_corr(:,i_T_in_the_grp)=E_eh_SOC_corr(:)
                !

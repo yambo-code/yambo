@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,10 +32,10 @@ integer function io_SC_components(what,E_sc,ID)
  use SC,             ONLY:SC_bands,rho_convergence,magn_convergence,E_convergence,&
 &                         l_NSC_shot,SC_fft_size,V_mean
  use hamiltonian,    ONLY:V_xc_sc,V_hartree_sc,H_nl_sc,l_sc_V_is_local,H_rotation
- use IO_m,           ONLY:io_connect,io_disconnect,io_header,io_elemental,io_status,&
-&                         io_sec,io_bulk,read_is_on,write_is_on,frag_SC,&
-&                         variable_exist,io_SC,IO_NOT_ALLOWED,&
-&                         io_fragment,ver_is_gt_or_eq
+ use IO_m,           ONLY:io_status,io_sec,read_is_on,write_is_on,frag_SC,&
+&                         variable_exist,io_SC,IO_NOT_ALLOWED
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,&
+&                         io_bulk,io_fragment,ver_is_gt_or_eq
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use timing_m,      ONLY:timing
@@ -48,7 +48,7 @@ integer function io_SC_components(what,E_sc,ID)
  ! Work Space
  !
  integer, external     :: variables_SC
- integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE
+ integer               :: ik,i_sp_pol,ib,i_sec,bands_to_load,VAR_SIZE,ID_frag
  logical               :: l_WF,l_V,l_E,l_IMPOSE_SN,CHECK_,l_MP,l_TEMP
  real(SP), allocatable :: E_tmp(:,:)
  !
@@ -64,6 +64,8 @@ integer function io_SC_components(what,E_sc,ID)
  l_MP=what=="MP"
  l_WF=what=="WF"
  l_V =what=="V"
+ !
+ ID_frag=0
  !
  ! When the db.scV is used for single non-SC shot the number
  ! of bands and SC_mixing can be not respected. 
@@ -185,25 +187,20 @@ integer function io_SC_components(what,E_sc,ID)
    !
  endif
  !
- if(any((/l_E,l_V,l_WF,l_MP/))) then
-   !
-   if (ik==0) goto 1
-   !
-   ! Fragmentation
-   !===============
-   !
-   call io_fragment(ID,i_fragment=ik)
-   !
- endif
+ if (ik==0) goto 1
+ !
+ ! Fragmentation
+ !===============
+ if(any((/l_E,l_V,l_WF,l_MP/))) call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  if (l_V.and..not.l_sc_V_is_local) then
    !
    ! H_sc
    !======
    !
-   call io_bulk(ID,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="H_nl_sc_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_nl_sc)
+   call io_bulk(ID_frag,C2=H_nl_sc)
    !
  endif
  !
@@ -212,9 +209,9 @@ integer function io_SC_components(what,E_sc,ID)
    ! Rotation matrix 
    !=================
    !
-   call io_bulk(ID,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Rotation_Matrix_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,SC_bands(2)-SC_bands(1)+1,SC_bands(2)-SC_bands(1)+1/))
-   call io_bulk(ID,C2=H_rotation(:,:,ik,i_sp_pol))
+   call io_bulk(ID_frag,C2=H_rotation(:,:,ik,i_sp_pol))
    !
  endif
  !
@@ -223,11 +220,13 @@ integer function io_SC_components(what,E_sc,ID)
    ! Mean Field Potential 
    !======================
    !
-   call io_bulk(ID,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
+   call io_bulk(ID_frag,VAR="Mean_Field_K"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol)),&
 &               VAR_SZ=(/2,fft_size,SC_bands(2)/))
-   call io_bulk(ID,C2=V_mean)
+   call io_bulk(ID_frag,C2=V_mean)
    !
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

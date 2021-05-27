@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -11,7 +11,7 @@
 ! either version 2, or (at your option) any later version.
 !
 ! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
+! be useful, but WITHOUT ANY WARRANTY; without even the ,BSS_desc
 ! implied warranty of MERCHANTABILITY or FITNESS FOR A 
 ! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
@@ -34,12 +34,12 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
-&                        l_BS_ares_asymm,BS_IO_dim,n_BS_blks,BS_K_dim
+&                        l_BS_ares_asymm,BS_IO_dim,n_BS_blks
  use BS_solvers,    ONLY:BSS_desc,variables_BS
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
-&                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
-&                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+ use IO_m,          ONLY:io_sec,frag_BS_K,io_BS_K,&
+&                        write_is_on,io_mode,VERIFY,IO_NOT_ALLOWED
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,&
+&                        def_variable_bulk,io_variable_bulk,io_header,io_fragment
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
@@ -51,7 +51,7 @@ integer function io_BS(iq,X,ID)
  ! Work Space
  !
  complex(SP),pointer ::tmp_link(:)
- integer             ::i_block,j_block,n1,n2,block_pos,VAR_ID
+ integer             ::i_block,j_block,n1,n2,block_pos,VAR_ID,ID_frag
  character(schlen)   ::ch,db_name,PARALLEL_STRUCTURE
  type(IO_desc)       ::local_desc
  !
@@ -110,7 +110,7 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==n_BS_blks+1.and..not.frag_BS_K) goto 1
  !
- call io_fragment(ID,i_fragment=i_block)
+ call io_fragment(ID,ID_frag,i_fragment=i_block)
  !
  if (BS_blk(i_block)%mode=="R") ch="BSE_RESONANT"
  if (BS_blk(i_block)%mode=="C") ch="BSE_COUPLING"
@@ -118,8 +118,8 @@ integer function io_BS(iq,X,ID)
  !
  if(frag_BS_K) then
    ch=trim(ch)//"_BLOCK_"//trim(intc(i_block))
-   call def_variable_bulk(ID,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
-   call io_variable_bulk(ID,1,C2=BS_blk(i_block)%mat)
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,BS_blk(i_block)%size(1),BS_blk(i_block)%size(2)/),SP)
+   call io_variable_bulk(ID_frag,1,C2=BS_blk(i_block)%mat)
  else
    if (BS_blk(i_block)%mode=="R") VAR_ID=1
    if (BS_blk(i_block)%mode=="C") VAR_ID=2
@@ -132,9 +132,11 @@ integer function io_BS(iq,X,ID)
      block_pos=block_pos+BS_blk(j_block)%size(1)*BS_blk(j_block)%size(2)
    enddo
    call C_F_POINTER(C_LOC(BS_blk(i_block)%mat),tmp_link,(/n1*n2/))
-   call io_variable_bulk(ID,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
+   call io_variable_bulk(ID_frag,VAR_ID,C1=tmp_link,IPOS=(/1,block_pos/))
    nullify(tmp_link)
  endif
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 continue
  !

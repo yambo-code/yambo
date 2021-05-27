@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,8 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  use ELPH,                ONLY:ph_modes,elph_nb,GKKP,PH_freqs_sq,&
 &                              PH_W_debye,elph_nQ,elph_use_q_grid,&
 &                              GKKP,setup_k_plus_q_levels
- use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid

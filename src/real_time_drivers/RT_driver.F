@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -31,14 +31,15 @@ subroutine RT_driver(E,X,k,q,Dip)
 #endif
  use stderr,         ONLY:real2ch
  use LIVE_t,         ONLY:live_timing
- use electrons,      ONLY:levels,n_spin,n_spinor
+ use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
- use IO_m,           ONLY:OP_WR_CL,NONE,io_control
+ use IO_int,         ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,           ONLY:OP_WR_CL,NONE,io_COLLs
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
@@ -57,7 +58,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  use QP_CTL_m,        ONLY:QP_apply
  use parallel_int,    ONLY:PP_bcast,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
- use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
@@ -158,9 +158,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,B_index=PAR_IND_WF_b,CLEAN_UP=.TRUE.)
    call PARALLEL_WF_index( )
    !
-   if(n_spinor==2.and.l_update_SOC) call WF_derivative((/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),(/.true.,.true.,.true./))
+   if(n_spinor==2.and.l_update_SOC) call WF_derivative(RT_bands,(/1,k%nibz/),(/1,n_sp_pol/),(/.true.,.true.,.true./),.true.)
    !
-   call WF_load(WF,WF_G_max,WF_Go_indx,(/RT_bands(1),RT_bands(2)/),(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
+   call WF_load(WF,WF_G_max,WF_Go_indx,RT_bands,(/1,k%nibz/),space='R',title='-RT',keep_states_to_load=.true.)
    !
    ! As explained in PARALLEL_global_indexes if a QP parallelization is used (k=b=1 cpu)
    ! this means that the WF's are distributed only among few cpu's. But, as a consequence, the fft_size

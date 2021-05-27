@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -70,8 +70,6 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  ! External
  !
- complex(DP) :: ZDOTC,ZDOTU
- !
  Nkm1=Nk-1           ! number of k-points minus 1
  !
  YAMBO_ALLOC(delta,(Nkm1,nvalues))
@@ -87,14 +85,17 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  PAR_nshells=nshells
  call PP_indexes_reset(px)
+ YAMBO_ALLOC(SHELL_index,(nshells))
  if (INTERPOLATE_is_serial) then
    YAMBO_ALLOC(px%element_1D,(nshells))
    YAMBO_ALLOC(px%n_of_elements,(ncpu))
    px%n_of_elements=nshells
    px%element_1D=.TRUE.
+   do i_shell=1,nshells
+     SHELL_index(i_shell)=i_shell
+   enddo
  else
    call PARALLEL_index(px,(/nshells/))
-   YAMBO_ALLOC(SHELL_index,(nshells))
    call PAR_build_index(px,nshells,SHELL_index,px%n_of_elements(myid+1))
    PAR_nshells=px%n_of_elements(myid+1)
  endif
@@ -158,9 +159,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  h_mat  =cZERO
  !
  do ik=1,Nkm1
-   h_mat(ik,ik)=real(ZDOTC(PAR_nshells,BZ_star(:,ik),1,BZ_star(:,ik),1),SP)
+   h_mat(ik,ik)=real(dot_product(BZ_star(:,ik),BZ_star(:,ik)),kind=SP)
    do ikp=ik+1,Nkm1
-     h_mat(ik,ikp)=cmplx(ZDOTC(PAR_nshells,BZ_star(:,ikp),1,BZ_star(:,ik),1),kind=SP)
+     h_mat(ik,ikp)=cmplx(dot_product(BZ_star(:,ikp),BZ_star(:,ik)),kind=SP)
      h_mat(ikp,ik)=conjg(h_mat(ik,ikp))
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
@@ -199,7 +200,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    if (.not.px%element_1D(i_shell)) cycle
    i_par_shell=SHELL_index(i_shell)
    do iv=1,nvalues
-     PAR_engre(i_par_shell,iv)= ZDOTC(Nkm1,BZ_star(i_par_shell,1:Nkm1)/rho(i_par_shell),1,cmplx(delta(1:Nkm1,iv),kind=DP),1)
+     PAR_engre(i_par_shell,iv)= dot_product(BZ_star(i_par_shell,1:Nkm1)/rho(i_par_shell),cmplx(delta(1:Nkm1,iv),kind=DP))
    enddo
    engre(i_shell,:)=PAR_engre(i_par_shell,:)
  enddo
@@ -207,7 +208,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  pre_factor=1._SP/real(ncpu,SP)
  if (INTERPOLATE_is_serial) pre_factor=1.
  do iv=1,nvalues
-   engre(1,iv)=VALUEs(iv,Nk)*pre_factor - ZDOTU(PAR_nshells,PAR_engre(:,iv),1,BZ_star(:,Nk),1)
+ engre(1,iv)=VALUEs(iv,Nk)*pre_factor - dot_product(conjg(PAR_engre(:,iv)),BZ_star(:,Nk))
  enddo
  !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait( engre )

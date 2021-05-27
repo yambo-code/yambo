@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -33,12 +33,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
- use IO_m,          ONLY:io_status,ver_is_gt_or_eq,variable_exist,write_is_on,&
-&                        def_variable_elemental,io_variable_elemental
+ use IO_m,          ONLY:io_status,variable_exist,write_is_on
+ use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
-#if defined _PAR_IO
- use BS,            ONLY:l_BSK_IO_triangular
-#endif
  !
  implicit none
  !
@@ -181,64 +178,9 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    !
  endif
  !
-#if defined _PAR_IO
- !
- ! Check if BSE kernel is written in triangular form
- !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_TRIANGULAR")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_TRIANGULAR",1,LP+100,0)
-   call  io_variable_elemental(ID,VAR="[IO] Kernel triangular",L0=l_BSK_IO_triangular)
- else
-   l_BSK_IO_triangular=.false.
- endif
- !
-#endif
- !
  if (     CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,1)
  if (.not.CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,0)
  !
  variables_BS=io_status(ID)
  !
 end function
-!
-!
-#if defined _PAR_IO
-!
-integer function variables_BS_more(ID,mode)
- !
- use pars,       ONLY:SP,LP
- use parallel_m, ONLY:master_cpu
- use BS,         ONLY:BS_K_cutoff,BS_max_val,l_BSE_kernel_complete
- use IO_m,       ONLY:def_variable_elemental,io_variable_elemental,&
-&                     write_is_on,variable_exist
- !
- implicit none
- !
- integer,      intent(in) :: ID
- character(*), intent(in) :: mode
- !
- logical :: def_var,io_var
- !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_CUTOFF")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_CUTOFF",1,SP,0)
-   call  io_variable_elemental(ID,VAR=" Kernel cutoff",R0=BS_K_cutoff)
- endif
- !
- if (write_is_on(ID).or.variable_exist(ID,"BSE_KERNEL_MAXVAL")) then
-   call def_variable_elemental(ID,"BSE_KERNEL_MAXVAL",1,SP,0)
-   call  io_variable_elemental(ID,VAR=" Kernel maxval",R0=BS_max_val)
- endif
- !
- ! Check if BSE kernel is complete in reading mode, set the variable to false in writing mode
- !
- if(trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete.and.write_is_on(ID))) then
-   def_var=                write_is_on(ID) .or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   io_var =(master_cpu.and.write_is_on(id)).or.variable_exist(ID,"BSE_KERNEL_COMPLETE")
-   if(def_var) call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0,par_io_kind="independent")
-   if(io_var)  call io_variable_elemental(ID,VAR=" Kernel complete",&
-               &                          DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
- endif
- !
-end function
-!
-#endif

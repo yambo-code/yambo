@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -54,8 +54,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,CPU_structure
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,io_control,manage_action,REP,VERIFY,io_COLLs,io_RESPONSE,&
-&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL,IO_and_Messaging_switch
+ use IO_int,         ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,manage_action,REP,VERIFY,io_COLLs,io_RESPONSE,&
+&                         OP_WR,WR_CL_IF_END,NONE,WR,OP_WR_CL,OP_RD_CL
  use vec_operate,    ONLY:degeneration_finder,v_norm
  use LIVE_t,         ONLY:live_timing
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
@@ -103,7 +104,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  ! SC_bands(2)
  !=============
- if (SC_bands(2)> E%nb) call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
+ if (SC_bands(2)> E%nb)  call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
+ if (SC_bands(2)< E%nbm) then
+   SC_bands(2)=E%nbm
+   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(E%nbm)))
+ endif
  !
  spread       =rZERO
  max_overlap  =rZERO
@@ -471,7 +476,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        ! Reload and rotate wave-functions if W is updated
        ! =======================================
        !
-       call WF_load(WF,WF_G_max,WF_Go_indx,(/1,max(SC_bands(2),E%nbm)/),(/1,nkibz/),title='-SC',force_WFo=.true.)
+       call WF_load(WF,WF_G_max,WF_Go_indx,SC_bands,(/1,nkibz/),title='-SC',force_WFo=.true.)
        !
        do ik=1,QP_nk
          call WF_rotate(ik,i_sp_pol,WFo,fft_size)

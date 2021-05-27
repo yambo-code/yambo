@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -74,9 +74,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
  &                    BSS_slepc_precondition,BSS_slepc_approach
 #endif
- use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,&
-&                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC
+ use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
+&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
+&                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -438,9 +438,11 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_res_mode='xc'
  BS_cpl_mode='none'
  L_kind='Lbar'
- BSE_mode='retarded'
+ BSE_mode='resonant'
  BSE_prop='abs'
  BSK_mode=' '
+ BSK_IO_mode='2D_standard'
+ l_BSE_kernel_complete=.false.
  TDDFT_mode=' '
  BSS_add_antiresonant=.FALSE.
  BSS_Wd=cZERO
@@ -467,7 +469,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
  K_INV_EPS%treshold=0.01_SP
+ K_INV_EPS%max_treshold=40._SP
  BSS_n_freqs=100
+ MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !
 #if defined _SLEPC && !defined _SLEPC_OFF
  BSS_slepc_approach='none'
@@ -663,7 +667,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%intensity=1000._SP*kWCMm22AU
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
- NL_verb_name='low'
+ NL_verb_name='high'
  !
  call IO_desc_reset(NL_desc)
  !

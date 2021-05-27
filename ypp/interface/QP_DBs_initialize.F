@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -27,7 +27,8 @@ subroutine QP_DBs_initialize()
  !
  use QP_m,      ONLY:QP_t,QP_reset
  use parser_m,  ONLY:PARSER_array
- use IO_m,      ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use IO_int,    ONLY:io_control
+ use IO_m,      ONLY:OP_RD_CL,DUMP,NONE
  use units,     ONLY:HA2EV
  use YPPm,      ONLY:l_QP_DBs_create_and_modify,n_QP_dbs,&
 &                    QP_user_corrections,QP_db_input_control,l_QP_DBs_manipulate

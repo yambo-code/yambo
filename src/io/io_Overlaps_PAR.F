@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA MG DS
@@ -27,9 +27,10 @@ integer function io_Overlaps(Dip,ID)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use R_lattice,     ONLY:nXkbz
  use electrons,     ONLY:n_sp_pol
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,def_variable_bulk,&
-&                        io_variable_bulk,read_is_on,io_header,io_extension,&
+ use IO_m,          ONLY:io_sec,frag_DIP,read_is_on,io_extension,&
 &                        IO_NOT_ALLOWED,io_DIP
+ use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
+&                        io_variable_bulk,io_header
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !

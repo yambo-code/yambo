@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -29,7 +29,14 @@ AC_SUBST(DRIVER_INCS)
 
 AC_MSG_CHECKING([driver lib])
 
-if test -d "src/real_time_lifetimes/"; then
+
+
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
+ if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
+fi
+
+if test -d "$srcdir/src/real_time_lifetimes/"; then
   #
   # develop procedure
   #
@@ -38,6 +45,7 @@ if test -d "src/real_time_lifetimes/"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo
   else
     cd yambo
+    git checkout master
     git pull
     cd ../
   fi
@@ -49,7 +57,7 @@ else
   #
   if ! test -d "lib/yambo/driver/src"; then
     cd lib/yambo/
-    VERSION="0.0.1"
+    VERSION="0.0.2"
     TARBALL="${VERSION}.tar.gz"
     URL="https://github.com/yambo-code/yambo-libraries/archive/${TARBALL}"
     rm -rf $TARBALL

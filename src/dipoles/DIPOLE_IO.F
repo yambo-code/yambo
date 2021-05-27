@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -24,15 +24,17 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,        ONLY:SP,cI,cZERO
+ use stderr,      ONLY:intc
  use com,         ONLY:msg
  use IO_m,        ONLY:io_DIP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels,n_sp_pol
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+ use IO_int,      ONLY:io_control
+ use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme
  !
  implicit none
  !
@@ -47,7 +49,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
 &                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,i_cpu
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
  !
@@ -59,7 +61,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
- call DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
+ call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  ID=0
  ID_S=0
@@ -67,7 +69,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
 #if defined _PAR_IO
  write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
+ read_header   =       reading.or.check
 #else
  write_header  =(      master_cpu.and.writing )
  read_header   =.not.writing.and.(reading.or.check)
@@ -88,12 +90,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! Master node bcast matrix dimensions for the other cores
  !
- if(writing) then
-   call PP_bcast(Dip%ib,0)
-   call PP_bcast(Dip%db_ib,0)
-   call PP_bcast(Dip%ib_lim,0)
-   call PP_bcast(Dip%db_ib_lim,0) 
- endif
+ if(writing) call PP_bcast_writing_info()
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -130,28 +127,19 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  io_err=io_DIPOLES(Dip,ID)
  IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
+ do i_sp_pol=1,n_sp_pol
+   do ik=1,Xk%nibz
+     i_fragment=ik+(i_sp_pol-1)*Xk%nibz
+     if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
+     if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
 #if !defined _PAR_IO
- do i_cpu=1,PAR_COM_X_WORLD%n_CPU
+     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
 #endif
-   do i_sp_pol=1,n_sp_pol
-#if !defined _PAR_IO
-     if (i_cpu/=PAR_COM_X_WORLD%CPU_id+1) cycle
-#endif
-     do ik=1,Xk%nibz
-       i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-       if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
-       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
-#if !defined _PAR_IO
-       IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
-#endif
-       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
-       io_err=io_DIPOLES(Dip,ID)
-     enddo
+     call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
+     io_err=io_DIPOLES(Dip,ID)
+     if (io_err/=0) call error(" Reading dipoles with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
    enddo
-#if !defined _PAR_IO
-   call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
  enddo
-#endif
 #if defined _PAR_IO
  IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
  call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID)
@@ -165,28 +153,20 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    io_err=io_Overlaps(Dip,ID_S)
    IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,Xk%nbz
+       i_fragment=ik+(i_sp_pol-1)*Xk%nbz
+       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) .and.writing) cycle
 #if !defined _PAR_IO
-  do i_cpu=1,PAR_COM_X_WORLD%n_CPU
+       if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)
+       if (reading) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol)
 #endif
-     do i_sp_pol=1,n_sp_pol
-#if !defined _PAR_IO
-       if (i_cpu/=PAR_COM_X_WORLD%CPU_id+1) cycle
-#endif
-       do ik=1,Xk%nbz
-         i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-         if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
-         if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing) cycle
-#if !defined _PAR_IO
-         IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_bz)
-#endif
-         call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
-         io_err=io_err+io_Overlaps(Dip,ID_S)
-       enddo
+       call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
+       io_err=io_Overlaps(Dip,ID_S)
+       if (io_err/=0) call error(" Reading overlaps with (i_sp_pol,ik)= ("//trim(intc(i_sp_pol))//","//trim(intc(ik))//")")
      enddo
-#if !defined _PAR_IO
-     call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
    enddo
-#endif
 #if defined _PAR_IO
    IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
    call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID_S)
@@ -199,6 +179,17 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call fix_velocity(Dip,1)
  !
  contains
+   !
+   subroutine PP_bcast_writing_info()
+     !
+     ! BCAST all information need by the other processors to write dipoles
+     !
+     call PP_bcast(Dip%ib,0)
+     call PP_bcast(Dip%db_ib,0)
+     call PP_bcast(Dip%ib_lim,0)
+     call PP_bcast(Dip%db_ib_lim,0) 
+     !
+   end subroutine PP_bcast_writing_info
    !
    subroutine fix_velocity(Dip,dir)
      !

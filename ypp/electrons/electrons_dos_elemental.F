@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -32,7 +32,7 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use parser_m,       ONLY:parser
  !
  implicit none

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,20 +26,20 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! This routine returns <iR> and <P^2>.
  !
  use pars,                ONLY:SP,schlen,cZERO
- use drivers,             ONLY:l_sc_run,l_nl_optics
+ use drivers,             ONLY:l_sc_run
  use interfaces,          ONLY:WF_load,WF_free
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
-&                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
 &                              compute_P2_dipoles,compute_Spin_dipoles
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,manage_action,RD_CL_IF_END,OP_RD
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
@@ -130,14 +130,21 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
- n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
-&                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
-&                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
- !
+ ! Live Timing steps
+ n_LT_steps=0
+ do iv=Dip%ib(1),Dip%ib_lim(1) 
+  if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+  ic_min=max(iv,Dip%ib_lim(2))
+  if (l_X_terminator) ic_min=iv
+  do ic=ic_min,Dip%ib(2)
+    if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
+    n_LT_steps=n_LT_steps+1
+  enddo
+ enddo
+ n_LT_steps=n_LT_steps*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !
  ! Main loop over k in IBZ
- !
  do i_sp_pol=1,n_sp_pol
    !
    if (n_LT_steps==0) cycle
@@ -220,8 +227,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #endif
          !
          if(.not.(l_eval_dip_V.or.l_eval_dip_iR)) then
-           cycle
            call live_timing(steps=1)
+           cycle
          endif
          !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
@@ -263,7 +270,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !             = - <v|-i grad|c>/(Ec-Ev) +i<v|[x,Vnl]|c>/(Ec-Ev) =
            !             =   <v|-i grad|c>/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec) = 
            !             =   P_vc/(Ev-Ec) -i<v|[x,Vnl]|c>/(Ev-Ec)
-           !
            !
            if (.not.allocated(Xen%Eo)) Ev_m_Ev_KS=Xen%E (iv,ik,i_sp_pol)-Xen%E (ic,ik,i_sp_pol)
            if (     allocated(Xen%Eo)) Ev_m_Ev_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)

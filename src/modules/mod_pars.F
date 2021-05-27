@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ module pars
  !
  !...I/O
  integer, parameter :: max_io_units=20
- integer, parameter :: max_io_vars_open=50
+ integer, parameter :: max_io_vars_open=500
  integer, parameter :: max_active_sections=10
  !
  !...QP_apply

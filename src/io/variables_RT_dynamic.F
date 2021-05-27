@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -30,7 +30,8 @@ integer function variables_RT_dynamic(ID)
  use real_time,      ONLY:RT_dyn_step,NE_initial_time_step_update,NE_time_step_update_jump,&
 &                         NE_time,NE_i_time,NE_time_step_update_jump_INPUT, &
 &                         l_Update_Time_Step,NE_step_update_treshold,RT_MAX_step
- use IO_m,           ONLY:io_variable_elemental,def_variable_elemental,io_status
+ use IO_m,           ONLY:io_status
+ use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  !
  implicit none
  !

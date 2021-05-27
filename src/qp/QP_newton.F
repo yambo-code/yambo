@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use stderr,        ONLY:intc
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif

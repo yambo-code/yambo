@@ -32,9 +32,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme
+&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END,NONE
+ use parallel_int,ONLY:PP_redux_wait
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme,myid
  !
  implicit none
  !
@@ -52,6 +52,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
+ integer  :: i_count
  !
  if (.not.IO_dip) return
  !
@@ -68,7 +69,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  io_err=0
  !
  write_header  =  (master_cpu.and.writing)
- read_header   =  reading.or.check
+ read_header   =  .not.write_header 
  !
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
@@ -78,17 +79,30 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
  endif
+ !
  if(write_header_ovlp) then
    call msg('s','[DIP] Writing overlaps header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !
- ! Master node bcast matrix dimensions for the other cores.
- ! This should not be needed and can likely be removed.
- if(writing) call PP_bcast_writing_info()
+ ! To fix problems with asynchronous I/O 
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ !
+ if(.not.write_header.and.writing) then
+   io_err=-1
+   i_count=1
+   do while(io_err/=0)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
+     io_err=io_DIPOLES(Dip,ID)
+     if(io_err/=0) call sleep(1)
+     i_count=i_count+1
+     if(i_count==120) call error("Error in dipoles IO ")
+   enddo
+ endif
+ !
+ ! End fix for asynchronous I/O
  !
  IO_MODE=VERIFY
  if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
@@ -179,17 +193,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call fix_velocity(Dip,1)
  !
  contains
-   !
-   subroutine PP_bcast_writing_info()
-     !
-     ! BCAST all information need by the other processors to write dipoles
-     !
-     call PP_bcast(Dip%ib,0)
-     call PP_bcast(Dip%db_ib,0)
-     call PP_bcast(Dip%ib_lim,0)
-     call PP_bcast(Dip%db_ib_lim,0) 
-     !
-   end subroutine PP_bcast_writing_info
    !
    subroutine fix_velocity(Dip,dir)
      !

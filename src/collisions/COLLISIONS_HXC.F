@@ -37,8 +37,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
+&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_Q_INDEX,&
+&                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
@@ -64,7 +64,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(2),&
+ integer                 :: i_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
@@ -213,6 +213,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    PAR_NC_local=0
    do i_coll=1,HXC_collisions%N
      if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+     last_coll=i_coll
      if (HXC_collisions%IO_status(i_coll)/=-1) cycle
      PAR_NC_local=PAR_NC_local+1
    enddo
@@ -220,6 +221,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    PAR_NC_local=0
    do i_coll=1,COH_collisions%N
      if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+     last_coll=i_coll
      if (COH_collisions%IO_status(i_coll)/=-1) cycle
      PAR_NC_local=PAR_NC_local+1
    enddo
@@ -234,15 +236,17 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (COLLISIONS_parallel_SC_structure) then
    LOCAL_COMM(1)=PAR_COM_QP_A2A%COMM
    LOCAL_COMM(2)=PAR_COM_Q_INDEX%COMM
+   LOCAL_COMM(3)=0 !  ?? PAR_COM_G_b_index%COMM
  else
    LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
    LOCAL_COMM(2)=MPI_COMM_NULL
+   LOCAL_COMM(3)=PAR_COM_G_b_INDEX_global%COMM
  endif
  !
  ! Write Database Header 
  !
- if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
- if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
+ if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,HXC_COLL_element,LOCAL_COMM(3))
+ if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,COH_COLL_element,LOCAL_COMM(3))
  !
  call live_timing("Collisions",n_steps)
  !
@@ -287,13 +291,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if(l_HXC_collisions) then
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
+     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,HXC_COLL_element,LOCAL_COMM(3))
    endif
    !
    if(l_use_COH_collisions) then
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("COH",i_coll,COH_collisions,COH_COLL_element)
+     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,COH_COLL_element,LOCAL_COMM(3))
    endif
    !
  enddo ! loop on i_coll

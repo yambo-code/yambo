@@ -43,7 +43,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
  type(COLLISIONS_element),optional ::COLL_element
- integer, intent(in)     ,optional ::i_coll_
+ integer, intent(in)     ,optional ::i_coll_,COMM
  !
  ! Work Space
  !

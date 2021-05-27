@@ -33,6 +33,7 @@ module collision_ext
  implicit none
  !
  integer :: COLL_bands(2)
+ integer :: COLL_ID
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none

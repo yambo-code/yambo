@@ -53,7 +53,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use frequency,      ONLY:w_samp
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,io_COLLs
- use COLL_interfaces,ONLY:io_COLLISIONS
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
@@ -249,6 +248,15 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    subroutine CHECK_and_ALLOC(COLL)
      !
+#include<collisions.h>
+     !
+#if !defined _PAR_IO
+     use COLL_interfaces,   ONLY:io_COLLISIONS
+#else
+     integer, external :: io_COLLISIONS_header
+#endif
+     ! Define io_COLLs_header to handle either serial or parallel I/O
+     !
      type(COLLISIONS_group) :: COLL
      !
      IO_err=-1
@@ -256,7 +264,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (io_COLLs) then
        COLL%IO_status=-1
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLISIONS(ID,COLL)
+       IO_err=io_COLLs_header(ID,COLL)
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !

@@ -76,21 +76,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ID_S=0
  io_err=0
  !
-<<<<<<< HEAD
-#if defined _PAR_IO
- write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- !Comment this and uncomment next
- read_header   =       reading.or.check
- !read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
-#else
- write_header  =(      master_cpu.and.writing )
- read_header   =.not.writing.and.(reading.or.check)
-#endif
-=======
  write_header  =      (master_cpu.and.writing)
  read_header   =.not.write_header.and.(reading.or.check)
  !
->>>>>>> bug-fixes
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
  !
@@ -104,7 +92,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
- !Comment this
  !
  ! Master node bcast matrix dimensions for the other cores.
  ! This should not be needed and can likely be removed.

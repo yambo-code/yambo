@@ -378,13 +378,13 @@ contains
       max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves(3,:,ik)))
     end do
     !write(*,*) max_nx, max_ny, max_nz
-    n1 = 4*max_nx
-    n2 = 4*max_ny
-    n3 = 4*max_nz
-   
+    n1 = 5*max_nx+10
+    n2 = 5*max_ny+10
+    n3 = 5*max_nz+10
+    !
     ! Calculate G-vectors inside the sphere
     b_transpose = transpose(b)
-    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
+    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1)  !max possible number of components
     YAMBO_ALLOC( g_vec_tmp, (max_size,3) )
     YAMBO_ALLOC( igk_tmp, (3,max_size) )
     npw = 0
@@ -396,20 +396,21 @@ contains
           norm_2 = g_vec_tmp1(1)**2 + &
                    g_vec_tmp1(2)**2 + &
                    g_vec_tmp1(3)**2
-          if (ecut .gt. 0.25_SP*norm_2) then
-              npw = npw+1
-              igk_tmp(:,npw) = igv
-              g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
-          end if
+          if (0.25_SP*norm_2 > ecut) cycle
+          npw = npw+1
+          igk_tmp(:,npw) = igv
+          g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
           !this check is not needed anymore in principle
-          if (npw > max_size) then
-              call error('an error has occurred: npw > max_size')
-          end if
+          if (npw > max_size) call error('an error has occurred: npw > max_size')
         end do
       end do
     end do
     ng_vec = npw
-   
+    !
+    n1=n1+1
+    n2=n2+1
+    n3=n3+1
+    !
     ! can sort the G vectors in whatever way here
     YAMBO_ALLOC(G_mod,(ng_vec))
     YAMBO_ALLOC(G_mod_indx,(ng_vec))
@@ -428,10 +429,10 @@ contains
    
     ! 2.
     allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-    open(2,file='gs.dat')
-    do ic=1,ng_vec
-      write(2,*) igk(:,ic)
-    end do
+    !open(2,file='gs.dat')
+    !do ic=1,ng_vec
+    !  write(2,*) igk(:,ic)
+    !end do
     call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
    
     ! 3.
@@ -445,11 +446,11 @@ contains
     wf_igk = -1
     do ik=1,k%nibz
       npw = wf_nc_k(ik)
-      write(2,*)
-      write(2,*)
-      do ic=1,npw
-        write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
-      end do
+      !write(2,*)
+      !write(2,*)
+      !do ic=1,npw
+      !  write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
+      !end do
       call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
       ! 4.
       ! Do the wf_igk mapping

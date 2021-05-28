@@ -29,11 +29,11 @@ module QP_m
 #include<memory.h>
  !
  ! Mixing for non perturbative calculations
- !
  integer           :: SC_bands_mixed
  real(SP)          :: SC_band_mixing
  real(SP)          :: SC_E_threshold
  !
+ ! Sigma_c
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
  integer           :: QP_n_W_freqs
@@ -83,6 +83,7 @@ module QP_m
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
+ integer,    allocatable:: QP_W_table(:,:)
  logical,    allocatable:: QP_state(:,:)
  ! 
  ! QED

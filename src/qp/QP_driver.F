@@ -360,7 +360,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (trim(QP_solver)=='g') then
    !
-   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+   if (l_elel_corr.and.(.not.l_ppa.and..not.l_cohsex)) call QP_ELEL_real_axis_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 # if defined _ELPH 
    !
@@ -382,7 +382,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    ! GW Lifetimes 
    !==============
-   if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+   if (l_elel_corr)     call QP_ELEL_real_axis_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !

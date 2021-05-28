@@ -23,18 +23,28 @@
 !
 module PHEL
  !
- use pars,           ONLY:SP,schlen
+ use frequency,           ONLY:w_samp,W_reset
+ use pars,                ONLY:SP,schlen,rZERO,cZERO
+ use QP_m,                ONLY:QP_Sc_steps
+ use ELPH,                ONLY:elph_branches
  !
 #include<memory.h>
  !
+ ! ... Kind
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"
+ !
+ ! ... # Q's
+ integer              :: PH_Q(2)=0
  !
  ! ... Double-grid
  integer              :: PH_DbGd_points=-1
  logical              :: l_PH_uses_E_FineGd=.FALSE.
  !
  ! ... Maps
- integer,     allocatable :: KpQ_io_map(:,:)
+ integer, allocatable :: KpQ_io_map(:,:)
+ !
+ ! ... GF
+ type(w_samp)         :: PH_SF_W
  !
  ! ... Scatterings
  !
@@ -48,11 +58,36 @@ module PHEL
  !
  type(phel_scatterings)  :: phel_info
  !
+ type PHEL_qp_kind
+   complex(SP), allocatable :: PI(:,:,:)
+   real(SP),    allocatable :: interband(:,:)
+   real(SP),    allocatable :: intraband(:,:)
+   real(SP),    allocatable :: approx(:,:)
+ end type PHEL_qp_kind
+ !
+ type(PHEL_qp_kind)  :: PHEL_qp
+ !
  contains
    !
+   subroutine PHEL_alloc( )
+     YAMBO_ALLOC(PHEL_qp%PI,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2),QP_Sc_steps))
+     PHEL_qp%PI=cZERO
+     YAMBO_ALLOC(PHEL_qp%interband,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
+     YAMBO_ALLOC(PHEL_qp%intraband,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
+     YAMBO_ALLOC(PHEL_qp%approx,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
+     PHEL_qp%interband=rZERO
+     PHEL_qp%intraband=rZERO
+     PHEL_qp%approx=rZERO
+   end subroutine
+   !
    subroutine PHEL_free( )
-      YAMBO_FREE(phel_info%table)
-      YAMBO_FREE(KpQ_io_map)
+     YAMBO_FREE(phel_info%table)
+     YAMBO_FREE(KpQ_io_map)
+     call W_reset(PH_SF_W)
+     YAMBO_FREE(PHEL_qp%PI)
+     YAMBO_FREE(PHEL_qp%interband)
+     YAMBO_FREE(PHEL_qp%intraband)
+     YAMBO_FREE(PHEL_qp%approx)
    end subroutine
    !
 end module

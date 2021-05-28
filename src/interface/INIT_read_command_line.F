@@ -241,7 +241,7 @@ subroutine INIT_read_command_line(rstr,init_)
        QP_solver=trim(rstr_piece(i1+1))
        if (.not.any((/trim(QP_solver)=='n',trim(QP_solver)=='s',trim(QP_solver)=='g',trim(QP_solver)=='r'/)))  QP_solver='n'
 #if !defined  _ELPH && !defined _QED
-         l_elel_corr=.true.
+       l_elel_corr=.true.
 #endif
        !
        if ( i_cycle == 2 .and. trim(Chi_mode)==' ') Chi_mode='HARTREE'

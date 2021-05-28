@@ -24,19 +24,20 @@
 subroutine PHEL_driver(E,k,q)
  !
  use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
- use R_lattice,           ONLY:bz_samp,nqibz,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
+ use R_lattice,           ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
-&                              l_GKKP_hosts_bare_dV,elph_nb,elph_nQ
- use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free
+&                              l_GKKP_hosts_bare_dV,elph_nb
+ use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W ,PHEL_alloc,PHEL_qp
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps,&
-&                              RT_PE_extra,l_initial_equilibrium,RT_ALL_lifetimes_free                        
+ use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,           ONLY:l_RT_uses_E_FineGd
  use parser_m,            ONLY:parser
- use QP_m,                ONLY:l_extended_output
- use IO_m,                ONLY:io_control,OP_RD_CL,VERIFY,REP,OP_WR_CL
+ use QP_m,                ONLY:l_extended_output,QP_Sc_steps,QP_solver,QP_G_er,QP_G_damp
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
+ use frequency,           ONLY:W_reset
  !
 #include<memory.h>
  !
@@ -45,7 +46,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,ID,nk_CG
+ integer             ::i_err,ID,nk_CG,nQ_W
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
@@ -128,11 +129,19 @@ subroutine PHEL_driver(E,k,q)
  !
  ! ... allocs
  Life_MEM_steps=1
- call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,elph_nQ)
- if (l_extended_output) call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,elph_branches,elph_nQ)
+ nQ_W=PH_Q(2)
+ if (trim(QP_solver)=="n") QP_Sc_steps=1
+ if (trim(QP_solver)=="g") nQ_W=PH_Q(2)*QP_Sc_steps
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nQ_W)
+ call PHEL_alloc( )
  !
+ ! ... occupations 
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
- call RT_PH_occupations_alloc(elph_branches,elph_nQ)
+#if defined _RT
+ call RT_PH_occupations_alloc(elph_branches,PH_Q(2))
+#endif
+ !
+ ! ... grids
  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
    YAMBO_ALLOC(E_FG%E,(elph_nb,k_FG%N,n_sp_pol))
    YAMBO_ALLOC(E_FG%W,(elph_nb,k_FG%N,n_sp_pol))
@@ -148,12 +157,22 @@ subroutine PHEL_driver(E,k,q)
  !===================================================
  call PH_Grid_Check_Transitions(k,q,QP_PH_n_G_bands,k_FG,E_FG)
  !
+ ! Spectral Function energy points
+ !=================================
+ if (trim(QP_solver)=="g") then
+   call W_reset(PH_SF_W)
+   PH_SF_W%n_freqs=QP_Sc_steps 
+   PH_SF_W%er=QP_G_er
+   PH_SF_W%dr=QP_G_damp
+   call FREQUENCIES_setup(PH_SF_W)
+ endif
+ !
  ! Calculation of the lifetimes
  !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
  !  - Out of eq.  (yambo_rt): scatt. rates with lesser/greater S^< and S^>
  !==============================
- l_initial_equilibrium=.TRUE.
 #if defined _RT 
+ l_initial_equilibrium=.TRUE.
  call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
 #else
  call PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
@@ -161,17 +180,15 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Redux
  !=======
+#if defined _RT 
  call PP_redux_wait(RT_PE_life%emit)
  call PP_redux_wait(RT_PE_life%abs)
- if (l_initial_equilibrium) then
-   call PP_redux_wait(RT_PE_life%linewidth_eq)
- endif
+#endif
+ if (l_initial_equilibrium) call PP_redux_wait(PHEL_qp%PI)
  if (l_extended_output) then
-   call PP_redux_wait(RT_PE_extra%interband)
-   call PP_redux_wait(RT_PE_extra%intraband)
-   if (l_initial_equilibrium) then
-     call PP_redux_wait(RT_PE_extra%approx)
-   endif
+   call PP_redux_wait(PHEL_qp%interband)
+   call PP_redux_wait(PHEL_qp%intraband)
+   if (l_initial_equilibrium) call PP_redux_wait(PHEL_qp%approx)
  endif
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

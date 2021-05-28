@@ -34,7 +34,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_PE_extra
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
@@ -201,7 +201,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor
    ! Linewidth at equilibrium
    if (l_initial_equilibrium) then
-     RT_PE_life%linewidth_eq(il,iq_life)=RT_PE_life%linewidth_eq(il,iq_life)+TMP_linewidth*pre_factor
+     RT_PE_life%eq(il,iq_life)=RT_PE_life%eq(il,iq_life)+TMP_linewidth*pre_factor
    endif
    !
    ! Interband and intraband (Drude) components of the lifetimes (eq or emit depending on calc.)

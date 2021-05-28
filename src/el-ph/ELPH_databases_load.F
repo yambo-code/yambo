@@ -186,12 +186,13 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  call ELPH_alloc("FREE",GKKP=GKKP_bare)
  !
  contains
-    ! Here we construct the asymmetric bare-dressed coupling expression (notes by FP 23_10_20)
-    function get_mixed_couplings(GKKP_dVc,GKKP_bare_dVc) result(GKKP_sq_eff)
-      complex(SP), intent(in) :: GKKP_dVc(ph_modes)
-      complex(SP), intent(in) :: GKKP_bare_dVc(ph_modes)
-      real(SP)                :: GKKP_sq_eff(ph_modes)
-      GKKP_sq_eff = REALPART(GKKP_dVc)*REALPART(GKKP_bare_dVc)+IMAGPART(GKKP_dVc)*IMAGPART(GKKP_bare_dVc)
-    end function
+   !
+   ! Here we construct the asymmetric bare-dressed coupling expression (notes by FP 23_10_20)
+   function get_mixed_couplings(GKKP_dVc,GKKP_bare_dVc) result(GKKP_sq_eff)
+     complex(SP), intent(in) :: GKKP_dVc(ph_modes)
+     complex(SP), intent(in) :: GKKP_bare_dVc(ph_modes)
+     real(SP)                :: GKKP_sq_eff(ph_modes)
+     GKKP_sq_eff = REALPART(GKKP_dVc)*REALPART(GKKP_bare_dVc)+IMAGPART(GKKP_dVc)*IMAGPART(GKKP_bare_dVc)
+   end function
    !
 end subroutine ELPH_databases_load

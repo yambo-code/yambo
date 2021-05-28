@@ -48,8 +48,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
- use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
-&                         QP_table,COHSEX_use_empties
+ use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties,QP_G_er
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_add,STRING_remove,STRING_same
@@ -57,6 +56,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,&
 &                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
+#if defined  _PHEL
+ use PHEL,           ONLY:PH_Q
+ use ELPH,           ONLY:PH_W_debye
+#endif
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nQ,elph_nQ_used
 #endif
@@ -432,6 +435,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined  _ELPH
      elph_nQ_used=elph_nQ
+#endif
+#if defined  _PHEL
+     PH_Q=(/1,q%nibz/)
+     QP_G_er=(/0.,PH_W_debye/)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !

@@ -28,8 +28,8 @@ subroutine PHEL_k_nearest_table(k)
  ! in the k grid.
  !
  use R_lattice,      ONLY:bz_samp,k_the_nearest
- use ELPH,           ONLY:elph_nQ,PH_qpt
- use PHEL,           ONLY:KpQ_IO_map
+ use ELPH,           ONLY:PH_qpt
+ use PHEL,           ONLY:KpQ_IO_map,PH_Q
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -46,7 +46,7 @@ subroutine PHEL_k_nearest_table(k)
  !
  KpQ_IO_map=0
  !
- do iq=1,elph_nQ
+ do iq=PH_Q(1),PH_Q(2)
    !
    if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
    !

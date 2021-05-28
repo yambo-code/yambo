@@ -38,9 +38,9 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,elph_nQ
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
- use QP_m,           ONLY:QP_G_damp
+ use QP_m,           ONLY:QP_G_damp,QP_solver
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map,PH_Q
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
@@ -90,7 +90,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
    ! 
    ! Main loop over iq in the ibz
    !==============================
-   do iq=1,elph_nQ
+   do iq=PH_Q(1),PH_Q(2)
      !
      if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
@@ -166,9 +166,13 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                  !
                  ! Select energy-allowed transitions
                  !=================================== 
-                 Delta_Broad = broad_factor*QP_G_damp+DELTA_W
-                 l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
-&                                 (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
+                 if (trim(QP_solver)=="n") then
+                   Delta_Broad = broad_factor*QP_G_damp+DELTA_W
+                   l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
+&                                   (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
+                 else
+                   l_phel_allowed=.TRUE.
+                 endif
                  !
                  if (l_phel_allowed) then
                    !
@@ -202,8 +206,8 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  enddo ! i_loop
  !
  ! Output info
- !===============
- do iq=1,elph_nQ
+ !=============
+ do iq=PH_Q(1),PH_Q(2)
    ratio = 0._SP
    if (N_tot(iq)>0) ratio = float(N_yes(iq))/float(N_tot(iq))*100._SP
    call msg('r','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))

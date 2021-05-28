@@ -28,18 +28,20 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  ! It uses a table of allowed phonon scattering transitions pre-determined 
  ! in PH_Grid_Check_Transitions.
  !
- use pars,           ONLY:SP,cI,pi,rZERO
- use units,          ONLY:HA2EV
- use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
- use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
- use RT_lifetimes,   ONLY:RT_PE_life,RT_PE_extra
+ ! [DEBUG] Emit and Abs lifetimes should eventually be removed (computed only 
+ !         out of eq.). We keep them here for future debugging of the RT part.
+ !
+ use pars,           ONLY:SP,cI,pi
+ use electrons,      ONLY:levels,spin_occ,E_fine_grid
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
+ use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
+ use RT_lifetimes,   ONLY:RT_PE_life
  use ELPH,           ONLY:PH_freqs_sq,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_Q_ibz
- use QP_m,           ONLY:QP_G_damp,l_extended_output
+ use QP_m,           ONLY:QP_G_damp,l_extended_output,QP_solver,QP_Sc_steps
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,PH_SF_W,PH_Q,PHEL_qp
  !
  implicit none
  !
@@ -52,9 +54,10 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  !
  real(SP)              :: ph_freq
  real(SP),   parameter :: cutoff= 5.E-3
- real(SP),   external  :: RT_G_retarded_convolution
  complex(SP),external  :: Lorentzian_FT
  !
+ ! ... frequencies ...
+ integer               :: iw,iw_mem
  ! ... transition index ...
  integer               :: it
  ! ... band/branch index ...
@@ -62,10 +65,8 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  ! ... BZ index ...
  integer               :: iq,ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
  ! ... lifetime related quantities ...
- real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
-&            TMP_Emit_lifetime,TMP_Abs_lifetime,N_q,f_mkq,f_nk,&
-&            Hole_f_mkq,Hole_f_nk
- real (SP) :: TMP_linewidth,TMP_Approx,E_Allen,Allen_factor
+ real(SP)    :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_mkq,f_nk,Hole_f_mkq,Hole_f_nk,E_Allen,Allen_factor
+ complex(SP) :: TMP_linewidth
  !
  call live_timing('Phonon Lifetimes [Equilibrium]',phel_info%N)
  !
@@ -93,7 +94,10 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
    if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
    !
-   if (iq==1 .and. PH_acoustic_branch(il)) cycle
+   if (iq==1 .and. PH_acoustic_branch(il)) then
+     call live_timing( steps=1 )
+     cycle
+   endif
    !
    ! Electron-phonon matrix elements
    !====================================
@@ -103,7 +107,10 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    ! Therefore:                GKKP_NOTES[i_np,i_n] = GKKP_YAMBO[i_n,i_np],
    ! which is what must go into the pre_factor of the lifetimes
    !
-   if (sqrt(GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem))<MAX_gkkp*cutoff) cycle
+   if (sqrt(GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem))<MAX_gkkp*cutoff) then
+     call live_timing( steps=1 )
+     cycle
+   endif
    !
    ! Prefactor
    !====================================
@@ -139,56 +146,42 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    !
    ! Lifetimes
    !============
-   ! 
-   ! Lorentzian broadening / spectral convolution 
-   D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
-   D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
-   Allen_factor = ph_freq*1./pi*aimag( Lorentzian_FT(E_Allen-cI*QP_G_damp,0._SP,"r" ) )
    !
    ! Electron and hole occupations
-   !
    f_mkq      =  RT_el_occ%N_ref(i_np,ip_rim)/spin_occ
    Hole_f_mkq =  RT_ho_occ%N_ref(i_np,ip_rim)/spin_occ
    f_nk       =  RT_el_occ%N_ref(i_n,ik_rim)/spin_occ
    Hole_f_nk  =  RT_ho_occ%N_ref(i_n,ik_rim)/spin_occ
    !
-   ! Accumulation of the lifetimes
-   ! [DEBUG] Emit and Abs lifetimes should eventually be removed (computed only 
-   !         out of eq.). We keep them here for future debugging of the RT part.
-   !
-   TMP_Emit_lifetime=rZERO
-   TMP_Abs_lifetime=rZERO
-   TMP_linewidth=rZERO
-   !
-   TMP_Emit_lifetime = f_mkq*Hole_f_nk*D_ares+Hole_f_mkq*f_nk*D_res
-   TMP_Abs_lifetime  = f_mkq*Hole_f_nk*D_res +Hole_f_mkq*f_nk*D_ares
-   ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   TMP_linewidth     = f_mkq*Hole_f_nk*D_res-Hole_f_mkq*f_nk*D_res
-   ! This is Eq. (23) of [PRB 71, 064501 (2005)], i.e., the Allen approximation to Eq. (4)
-   TMP_approx        = Allen_factor*D_res
-   !
-   ! Phonon emission (stimulated and spontaneous)
-   RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor
-   ! Phonon absorption
-   RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor
-   ! Linewidth at equilibrium
-   RT_PE_life%linewidth_eq(il,iq_life)=RT_PE_life%linewidth_eq(il,iq_life)+TMP_linewidth*pre_factor
-   !
-   ! Interband and intraband (Drude) components of the lifetimes
-   if (l_extended_output) then
-     ! Allen formula
-     RT_PE_extra%approx(il,iq_life)= RT_PE_extra%approx(il,iq_life) +TMP_approx*pre_factor
+   if (trim(QP_solver)=="n") then
      !
-     if (i_np == i_n) then
-       ! Intraband
-       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_linewidth*pre_factor
-       !
-     else
-       ! Interband
-       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_linewidth*pre_factor
-       !
-     endif
+     ! Allen Factor
+     Allen_factor = ph_freq*1./pi*aimag( Lorentzian_FT(E_Allen-cI*QP_G_damp,0._SP,"r" ) )
      !
+     ! Lorentzians
+     call LORENTZIANs_eval ( ph_freq+cI*QP_G_damp )
+     !
+     ! Accumulation of the lifetimes
+     call COMPOSE_emit_abs( )
+     !
+     ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
+     TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*D_res
+     !
+     ! Linewidth at equilibrium
+     PHEL_qp%PI(il,iq_life,1)=PHEL_qp%PI(il,iq_life,1)+cI*TMP_linewidth*pre_factor
+     !
+     ! Interband and intraband (Drude) components of the lifetimes
+     if (l_extended_output) call COMPOSE_extended( )
+     !
+   else
+     !
+     do iw=1,QP_Sc_steps
+       iw_mem=(iq_life-1)*PH_Q(2)+iw
+       call LORENTZIANs_eval ( PH_SF_W%p(iw) )
+       TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*D_res
+       TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*Lorentzian_FT(PH_SF_W%p(iw),DELTA_E+cI*DELTA_W,"r" )/pi
+       PHEL_qp%PI(il,iq_life,iw)=PHEL_qp%PI(il,iq_life,iw)+TMP_linewidth*pre_factor
+     enddo
    endif
    !   
    call live_timing( steps=1 )
@@ -197,4 +190,34 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  !
  call live_timing( )
  !
+ contains
+   !
+   subroutine COMPOSE_extended( )
+     ! This is Eq. (23) of [PRB 71, 064501 (2005)], i.e., the Allen approximation to Eq. (4)
+     PHEL_qp%approx(il,iq_life)= PHEL_qp%approx(il,iq_life) +Allen_factor*D_res*pre_factor
+     !
+     if (i_np == i_n) then
+       ! Intraband
+       PHEL_qp%intraband(il,iq_life)= PHEL_qp%intraband(il,iq_life) +TMP_linewidth*pre_factor
+       !
+     else
+       ! Interband
+       PHEL_qp%interband(il,iq_life)= PHEL_qp%interband(il,iq_life) +TMP_linewidth*pre_factor
+       !
+     endif
+   end subroutine 
+   !
+   subroutine COMPOSE_emit_abs( )
+     ! Phonon emission (stimulated and spontaneous)
+     RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+(f_mkq*Hole_f_nk*D_ares+Hole_f_mkq*f_nk*D_res)*pre_factor
+     ! Phonon absorption
+     RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+(f_mkq*Hole_f_nk*D_res +Hole_f_mkq*f_nk*D_ares)*pre_factor
+   end subroutine 
+   !
+   subroutine LORENTZIANs_eval( W )
+     complex(SP) :: W
+     D_ares=1./pi*aimag( Lorentzian_FT(W,DELTA_E+cI*DELTA_W,"Ta") )
+     D_res =1./pi*aimag( Lorentzian_FT(W,DELTA_E+cI*DELTA_W,"r" ) )
+   end subroutine 
+   !
 end subroutine PHEL_Lifetimes_equilibrium

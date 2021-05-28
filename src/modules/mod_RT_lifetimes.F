@@ -35,23 +35,13 @@ module RT_lifetimes
    integer                  :: D2=0
    real(SP),    allocatable :: abs(:,:)
    real(SP),    allocatable :: emit(:,:)
-   real(SP),    allocatable :: linewidth_eq(:,:)
+   real(SP),    allocatable :: eq(:,:)
    real(SP),    allocatable :: abs_save(:,:,:)
    real(SP),    allocatable :: emit_save(:,:,:)
    real(SP)                 :: prefactor(2)=rZERO ! 1=abs, 2=emit
    real(SP)                 :: mean(2)=rZERO      ! 
    real(SP)                 :: Tfit(2)=rZERO      ! 
  end type RT_lifetime
- !
- type RT_extra_lifetime
-   logical                  :: active=.FALSE.
-   character(schlen)        :: KIND="none"
-   integer                  :: D1(2)=0
-   integer                  :: D2=0
-   real(SP),    allocatable :: interband(:,:)
-   real(SP),    allocatable :: intraband(:,:)
-   real(SP),    allocatable :: approx(:,:)
- end type RT_extra_lifetime
  !
  type RT_obj_lifetime
    logical                  :: active=.FALSE.
@@ -65,9 +55,8 @@ module RT_lifetimes
  !
  ! Lifetimes (updated)
  !-----------
- type(RT_lifetime)     :: RT_EE_life,RT_EP_emit_life,RT_EH_life,RT_PE_life,RT_EP_abs_life
- type(RT_obj_lifetime) :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
- type(RT_extra_lifetime)   :: RT_PE_extra 
+ type(RT_lifetime)       :: RT_EE_life,RT_EP_emit_life,RT_EH_life,RT_PE_life,RT_EP_abs_life
+ type(RT_obj_lifetime)   :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
  !
  ! Lifetimes (REFERENCE)
  !-----------
@@ -141,7 +130,6 @@ module RT_lifetimes
      integer :: D1(2),D2
      if (l_phel_scatt) then
        call RT_lifetime_alloc("ph-el",RT_PE_life,D1,D2)
-       call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,D1,D2)
        call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,D1,D2)
      endif
    end subroutine
@@ -155,7 +143,6 @@ module RT_lifetimes
      if (l_elph_scatt)     call RT_lifetime_free(RT_EP_abs_REF_life)
      if (l_elel_scatt)     call RT_lifetime_free(RT_EE_REF_life)
      if (l_elphoton_scatt) call RT_lifetime_free(RT_EH_REF_life)
-     if (l_phel_scatt)     call RT_extra_lifetime_free(RT_PE_extra)
      YAMBO_FREE(SAVED_times)
    end subroutine
    !
@@ -167,14 +154,12 @@ module RT_lifetimes
      LIFE%D2=D2
      YAMBO_ALLOC(LIFE%emit,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%abs,(D1(1):D1(2),D2))
-     YAMBO_ALLOC(LIFE%linewidth_eq,(D1(1):D1(2),D2))
      YAMBO_ALLOC(LIFE%emit_save,(D1(1):D1(2),D2,Life_MEM_steps))
      YAMBO_ALLOC(LIFE%abs_save,(D1(1):D1(2),D2,Life_MEM_steps))
      LIFE%KIND=KIND
      LIFE%active=.true.
      LIFE%emit=rZERO
      LIFE%abs =rZERO
-     LIFE%linewidth_eq=rZERO
      LIFE%emit_save=rZERO
      LIFE%abs_save=rZERO
      LIFE%prefactor=rZERO
@@ -188,34 +173,8 @@ module RT_lifetimes
      LIFE%active=.FALSE.
      YAMBO_FREE(LIFE%emit)
      YAMBO_FREE(LIFE%abs)
-     YAMBO_FREE(LIFE%linewidth_eq)
      YAMBO_FREE(LIFE%abs_save)
      YAMBO_FREE(LIFE%emit_save)
-   end subroutine
-   !
-   subroutine RT_extra_lifetime_alloc(KIND,LIFE,D1,D2)
-     character(*)      :: KIND
-     type(RT_extra_lifetime) :: LIFE
-     integer :: D1(2),D2
-     LIFE%D1=D1
-     LIFE%D2=D2
-     YAMBO_ALLOC(LIFE%interband,(D1(1):D1(2),D2))
-     YAMBO_ALLOC(LIFE%intraband,(D1(1):D1(2),D2))
-     YAMBO_ALLOC(LIFE%approx,(D1(1):D1(2),D2))
-     LIFE%KIND=KIND
-     LIFE%active=.true.
-     LIFE%interband=rZERO
-     LIFE%intraband=rZERO
-     LIFE%approx=rZERO
-   end subroutine
-   !
-   subroutine RT_extra_lifetime_free(LIFE)
-     type(RT_extra_lifetime) :: LIFE
-     LIFE%KIND="none"
-     LIFE%active=.FALSE.
-     YAMBO_FREE(LIFE%interband)
-     YAMBO_FREE(LIFE%intraband)
-     YAMBO_FREE(LIFE%approx)
    end subroutine
    !
    subroutine RT_obj_lifetime_alloc(KIND,LIFE,Ns)

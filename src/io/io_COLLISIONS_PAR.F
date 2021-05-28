@@ -176,6 +176,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:master_cpu
+ !
 #include<memory.h>
  !
  integer, intent(inout)            ::ID
@@ -210,34 +212,46 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  if(io_COLLISIONS/=0) goto 1
  !
  def=any(io_sec(ID,:)==1)
+ io2=any(io_sec(ID,:)==2)
  io3=any(io_sec(ID,:)==3)
  !
- if(.not.(def.or.io3)) goto 1
- !
- ! This should be used for restart like in BSE ...
- if (io3.and.read_is_on(ID)) COLL_element%table='t'
- !
- if(io3.or.def) then
+ if (io2.or.def) then     
    !
-   if(def) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
+   if(def) call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,par_io_kind='independent')
+   !
+   if (write_is_on(ID)) then
+     COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
+     if (master_cpu) call io_variable_bulk(ID,1,I0=COLL_element%N)
+   else if(read_is_on(ID)) then
+     call io_variable_bulk(ID,1,I0=COLL_element%N)
+   endif
+   !
+ endif
+ !
+ if (io3.or.def) then
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     if(def) call def_variable_bulk(ID,'COLLISIONS_v',1,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(def) call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
      if(io3) then
        call C_F_POINTER(C_LOC(COLL_element%v_r),tmp_link_real,(/COLL_element%N,1/))
-       call  io_variable_bulk(ID,1,R2=tmp_link_real,IPOS=(/1,1,i_coll/))
+       call  io_variable_bulk(ID,2,R2=tmp_link_real,IPOS=(/1,1,i_coll/))
        nullify(tmp_link_real)
      endif
    else
      ! Complex collisions
-     if(def) call def_variable_bulk(ID,'COLLISIONS_v',1,(/2,COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(def) call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,par_io_kind='independent')
      if(io3) then
        call C_F_POINTER(C_LOC(COLL_element%v_c),tmp_link_complex,(/COLL_element%N,1/))
-       call  io_variable_bulk(ID,1,C2=tmp_link_complex,IPOS=(/1,1,i_coll/))
+       call  io_variable_bulk(ID,2,C2=tmp_link_complex,IPOS=(/1,1,i_coll/))
        nullify(tmp_link_complex)
      endif
    endif
+   !
+   ! This should be used for restart like in BSE ...
+   ! if(BS_blk(i_block)%mat(i1,i2)==YAMBO_CMPLX_NO_FILL) cycle
+   ! BS_blk(i_block)%done(i1,i2)='t'
+   if(io3.and.read_is_on(ID)) COLL_element%table='t' 
    !
  endif
  !

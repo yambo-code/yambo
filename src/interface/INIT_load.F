@@ -104,7 +104,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
-&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -208,6 +208,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_kpt) 
+ call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_kpt)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 

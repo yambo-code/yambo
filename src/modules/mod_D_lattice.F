@@ -77,6 +77,7 @@ module D_lattice
  real(SP) :: DL_vol
  real(SP) :: a(3,3)
  real(SP) :: alat(3)
+ real(SP), allocatable :: atom_mass(:)
  integer,  allocatable :: PW_atomic_kind(:)
  integer,  allocatable :: n_atoms_species(:)
  integer,  allocatable :: Z_species(:)

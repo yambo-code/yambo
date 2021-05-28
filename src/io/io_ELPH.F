@@ -219,6 +219,11 @@ integer function io_ELPH(ID,what)
  ! 
  call io_bulk(ID_frag,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
  call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E)
+ !
+ if(read_is_on(ID)) then
+   GKKP%E_kpq(iq)%nb=elph_nb
+   GKKP%E_kpq(iq)%nk=nkbz
+ endif
  ! 
  if (l_no_matrix_elements) goto 1
  ! 

@@ -39,9 +39,13 @@ module YPP_ELPH
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  real(SP):: elph_residual_treshold = 0.
+ integer :: ik_gkkp,ib_gkkp
  !
  ! ...GKKP I/O
  logical :: l_gkkp
+ logical :: l_gkkp_db
+ logical :: l_gkkp_dg
+ logical :: l_gkkp_plot
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path
@@ -81,20 +85,35 @@ module YPP_ELPH
      integer, optional  :: BS_E_degs(BSS_n_eig)
    end subroutine
    !
-   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+   subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      !
      use pars,           ONLY:schlen,SP 
      use D_lattice,      ONLY:n_atoms
      !
      implicit none
      !
-     character(schlen), intent(in)   :: ph_freqs_file
-     integer,      intent(inout)     :: n_q
-     real(SP), optional, intent(out) :: q_pt(n_q,3)
-     real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+     character(schlen), intent(in)   :: ph_file
+     integer,     intent(inout)  :: n_q
+     real(SP),    optional,   intent(out) :: q_pt(n_q,3)
+     real(SP),    optional,   intent(out) :: ph_freqs(3*n_atoms,n_q)
+     complex(SP), optional,   intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
      !
    end subroutine
    !
+   subroutine ELPH_databases_IO_freqs(ph_file,n_q,q_pt,ph_freqs)
+     !
+     use pars,           ONLY:schlen,SP 
+     use D_lattice,      ONLY:n_atoms
+     !
+     implicit none
+     !
+     character(schlen), intent(in)   :: ph_file
+     integer,      intent(inout)     :: n_q
+     real(SP), optional, intent(out) :: q_pt(n_q,3)
+     real(SP), optional, intent(out) :: ph_freqs(3*n_atoms,n_q)
+     !
+   end subroutine
+     !
  end interface
  !
  contains

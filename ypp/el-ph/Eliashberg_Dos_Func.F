@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM DS
+! Authors (see AUTHORS file for details): CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,40 +21,42 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function k_map_fine_to_coarse_reduce(FineGd_k)
+real(SP) function Eliashberg_Dos_Func(iq,im,ph_en, ph_broad, PH_E, q) 
  !
- use zeros,               ONLY:k_rlu_zero
  use pars,                ONLY:SP
- use vec_operate,         ONLY:c2a,rlu_v_is_zero
+ use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp
- use LIVE_t,              ONLY:live_timing
+ use functions,           ONLY:Fermi_fnc_derivative
+ use ELPH,                ONLY:PH_freqs_sq,use_PH_DbGd
  !
 #include<memory.h>
  !
- type(bz_samp), intent(inout)      :: FineGd_k
+ integer,      intent(in) :: iq,im
+ real(SP),     intent(in) :: ph_en,ph_broad
+ type(levels), intent(in) :: PH_E
+ type(bz_samp),intent(in) :: q
  !
- ! Work Space
+ ! work space
  !
- integer :: ik,ip,unique(FineGd_k%nbz)
- real(SP):: v(3)
+ real(SP) :: omega,weight
+ integer  :: iq_fg,iE_fg,iqbz
+ !     
+ omega = sqrt( MAX( PH_freqs_sq(iq,im),0. ) )
  !
- unique=1
+ Eliashberg_Dos_Func=Fermi_fnc_derivative(ph_en-omega,ph_broad)
  !
- call live_timing('Map Fine Grid to Reduced Coarse one',FineGd_k%nbz)
+ if(.not.use_PH_DbGd) return
  !
- do ik=1,FineGd_k%nbz
-   call live_timing(steps=1)
-   if (unique(ik)==0) cycle
-   do ip=ik+1,FineGd_k%nbz
-     if (unique(ip)==0) cycle
-     v=FineGd_k%ptbz(ik,:)-FineGd_k%ptbz(ip,:)
-     call c2a(v_in=v,mode='ki2a')
-     if (rlu_v_is_zero(v,zero_=k_rlu_zero)) unique(ip)=0
-   enddo
+ iqbz=q%k_table(iq,1)
+ !
+ weight=1.0/(q%FGbz%k_range(iqbz,2)-q%FGbz%k_range(iqbz,1)+1._SP)
+ !
+ do iq_fg=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
+   iE_fg =q%FGbz%E_map(iq_fg)
+   omega=PH_E%FG%E(im,iE_fg,1)
+   Eliashberg_Dos_Func=Eliashberg_Dos_Func+Fermi_fnc_derivative(ph_en-omega,ph_broad)
  enddo
- ! 
- call live_timing( )
  !
- k_map_fine_to_coarse_reduce=count(unique==1)==FineGd_k%nbz
- ! 
+ Eliashberg_Dos_Func=Eliashberg_Dos_Func*weight
+ !
 end function

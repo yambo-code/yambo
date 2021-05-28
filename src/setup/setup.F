@@ -29,7 +29,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -101,6 +101,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
      atoms_string=trim(atoms_string)//trim(intc(n_atoms_species(is)))//PT_elements(Z_species(is))
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
+   enddo
+ endif
+ !
+ if (allocated(atom_mass)) then
+   do is=1,n_atomic_species
+       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is))
    enddo
  endif
  !
@@ -277,7 +283,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! E_dbgd
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID)
- i_err=io_Double_Grid(en,k,ID)
+ i_err=io_Double_Grid(en,k,ID,'electrons')
  !
  call bz_samp_duplicate_Fg(k%FGibz,Xk%FGibz,k%nibz) 
  call bz_samp_duplicate_Fg(k%FGbz,Xk%FGbz,k%nbz) 

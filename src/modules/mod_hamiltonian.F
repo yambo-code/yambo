@@ -104,7 +104,6 @@ module hamiltonian
      use drivers,        ONLY:l_nl_optics,l_sc_run
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use xc_functionals, ONLY:magn,V_xc
      !
      implicit none
@@ -147,8 +146,6 @@ module hamiltonian
    end subroutine
    !
    subroutine H_free()
-     use drivers,        ONLY:l_real_time
-     use QP_m,           ONLY:QP_Sc
      use xc_functionals, ONLY:magn,V_xc
      use X_m,            ONLY:X_alloc
      !

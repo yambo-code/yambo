@@ -36,7 +36,8 @@ subroutine X_Double_Grid_setup(iq,k)
  use R_lattice,     ONLY:nXkbz,bz_samp
  use R_lattice,     ONLY:qindx_X,smallest_q_norm
  use vec_operate,   ONLY:v_norm,iku_v_norm
- use parallel_m,    ONLY:PAR_Xk_nbz,PP_redux_wait,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
+ use parallel_m,    ONLY:PAR_Xk_nbz,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
+ use parallel_int,  ONLY:PP_redux_wait
  use BS_solvers,    ONLY:BSS_uses_DbGd
  !
 #include<memory.h>

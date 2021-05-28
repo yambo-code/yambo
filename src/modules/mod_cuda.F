@@ -172,10 +172,16 @@ end module cuda_m
 
 !================
 module mpiDeviceUtil
+#if defined(_MPI)
+ use mpi
+#endif
   !================
   implicit none
 #if defined(_MPI)
-  INCLUDE 'mpif.h'
+! 2021/01/14 DS, commented.
+! It maybe needed for old libraries
+! To be uncommented but protected with precompiler flags on gfortran compiler
+! include 'mpif.h'
 #else
   integer, parameter ::MPI_MAX_PROCESSOR_NAME=20
   integer            :: mpi_comm_world=0,MPI_CHARACTER

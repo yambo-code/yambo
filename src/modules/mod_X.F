@@ -70,6 +70,7 @@ module X_m
  !
  ! Absorption & Polarizability
  !
+ complex(SP), allocatable :: BS_E_sorted(:,:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
  complex(SP), allocatable :: Joint_DOS(:,:) 
@@ -77,6 +78,8 @@ module X_m
  complex(SP), allocatable :: Alpha(:,:)
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
+ complex(SP), allocatable :: X_magnons(:,:,:)
+ complex(SP), allocatable :: X_dichroism(:,:)
  !
  ! Response function
  !
@@ -153,7 +156,6 @@ module X_m
    !
    subroutine X_alloc(what,d)
      !
-     use electrons, ONLY:n_sp_pol,n_spinor
      use pars,      ONLY:cZERO
      !
      character(*)      :: what
@@ -165,10 +167,8 @@ module X_m
          if (allocated(Epsilon_ii)) return
          YAMBO_ALLOC(Epsilon_ii,(d(1),d(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
          YAMBO_ALLOC(X_drude_term,(d(1)))
-         YAMBO_ALLOC(Joint_DOS,(d(1),d(2)))
          Epsilon_ii   = cZERO
          X_drude_term = cZERO
-         Joint_DOS    = cZERO
        case('X')
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
@@ -179,7 +179,6 @@ module X_m
        case('EPS')
          YAMBO_FREE(Epsilon_ii)
          YAMBO_FREE(X_drude_term)
-         YAMBO_FREE(Joint_DOS)
        case('X')
          !
          ! I clean the RL components mapping

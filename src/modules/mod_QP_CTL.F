@@ -196,7 +196,7 @@ module QP_CTL_m
    !
    subroutine QP_actions_reset
 #include<memory.h>
-     integer :: i_a,i_s
+     integer :: i_a
      n_QP_actions=0
      do i_a=1,n_QP_actions_MAX
        QP_action(i_a)%plan=.FALSE.

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#        Copyright (C) 2000-2017 the YAMBO team
+#        Copyright (C) 2000-2020 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): HM, DS
@@ -68,16 +68,18 @@ if [ -f .check_configure ]; then
   echo "Post MERGE hook: Checking if configure was correctly updated"
   rm .check_configure
   echo "Regenerating configure after merge"
-  cp configure configure_save
-  autoconf configure.ac > configure
-  rm -fr autom4te.cache
-  if [ ! \$(cmp -s configure configure_save) ]; then
-    echo "configure automatically updated after merge"
-    rm configure_save
-    git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
-  else
-    rm configure_save
-    echo "configure did not need update after merge"
+  if [ -e lib/yambo/driver/config/version.m4 ]; then
+    cp configure configure_save
+    autoconf configure.ac > configure
+    rm -fr autom4te.cache
+    if [ ! \$(cmp -s configure configure_save) ]; then
+      echo "configure automatically updated after merge"
+      rm configure_save
+      git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
+    else
+      rm configure_save
+      echo "configure did not need update after merge"
+    fi
   fi
 fi
 EOF

@@ -47,6 +47,7 @@ subroutine FREQUENCIES_coarse_grid(title,bg_pt,npts,cg_percentual,in_pt,lterm)
  use com,         ONLY:msg
  use frequency,   ONLY:bare_grid_N,coarse_grid_N,coarse_grid_Pt,ordered_grid_index,coarse_grid_index
  use vec_operate, ONLY:sort
+ !
 #include<memory.h>
  !
  character(*),intent(in) :: title

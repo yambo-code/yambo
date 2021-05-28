@@ -38,7 +38,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  use com,           ONLY:msg
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,PP_bcast,&
+ use parallel_int,  ONLY:PP_redux_wait,PP_bcast
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg, bare_qpg_d
  use frequency,     ONLY:w_samp
@@ -70,8 +71,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
- complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
-
+ complex(SP), pointer DEV_ATTR :: Xo_blc_d(:,:,:)
  !
  ! Setup 
  !
@@ -117,10 +117,10 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (compute_on_gpu) then
    YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
-   YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+   !AMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
    YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
    call dev_memset(KERNEL%blc_d,cZERO)
-   call dev_memset(BUFFER%blc_d,cZERO)
+   !call dev_memset(BUFFER%blc_d,cZERO)
    call dev_memset(Xo%blc_d,cZERO)   
  endif
  !
@@ -221,64 +221,70 @@ subroutine X_redux(iq,X_par,Xw,X)
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    if (compute_on_gpu) then
-      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
-      call dev_memcpy(Xo%blc_d,Xo%blc)
+     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
+     call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
    !
    ! X(g,gp)=Sum_gpp[KERNEL]^-1_(g,gpp)*Xo(gpp,gp)
    !
+   ! on input:  Xo irreducible polarizability
+   ! on output: Xo is overwritten
+   !
    if (X_use_lin_sys) then
      !
      ! Linear System
      !
-     if (compute_on_gpu) then
-       call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
-     else
-                       BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
-     endif
+     !if (compute_on_gpu) then
+     !  call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
+     !else
+     !                  BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
+     !endif
      !
-     call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
+     !call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
+     call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=Xo)
      !
    else
      !
      ! Matrix Inversion + Matmul
      !
+     if (compute_on_gpu) call error("[LA] inversion+matmul not available on GPUs")
+     !
      call LINEAR_ALGEBRA_driver(INV,M_slk=KERNEL)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
+     Xo%blc(:,:,1)=BUFFER%blc(:,:,BUFFER%I)
      !
    endif
-
    !
    ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
    !
    if (compute_on_gpu) then
       !
-!      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(iq,Xo_cols(1):),"R",scal=cmplx(4._SP*pi,kind=SP)) 
-      !
-      BUFFER_blc_d => BUFFER%blc_d
+      Xo_blc_d => Xo%blc_d
       !
       !$cuf kernel do(2)
       do ig2=Xo_cols(1),Xo_cols(2)
         do ig1=Xo_rows(1),Xo_rows(2)
-          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+          Xo_blc_d(ig1,ig2,1)=Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
         enddo
       enddo
       !
-      call dev_stream_sync(stream_default)
-      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+      !call dev_stream_sync(stream_default)
+      !call dev_memcpy_async(BUFFER%blc(:,:,iw_par),Xo%blc_d(:,:,1), stream_d2h)
+      call dev_memcpy(BUFFER%blc(:,:,iw_par),Xo%blc_d(:,:,1))
       !
    else
       !
       !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
       do ig2=Xo%cols(1),Xo%cols(2)
         do ig1=Xo%rows(1),Xo%rows(2)
-          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+          Xo%blc(ig1,ig2,1)=Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
         enddo
       enddo
       !$omp end parallel do
+      !
+      BUFFER%blc(:,:,iw_par)=Xo%blc(:,:,1)
       !
    endif
    !
@@ -286,7 +292,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    !
  enddo
  !
- call dev_stream_sync(stream_d2h)
+ !call dev_stream_sync(stream_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !
@@ -374,20 +380,20 @@ contains
        !
        !$cuf kernel do(2) <<<*,*>>>
        do ig2=Xo_cols(1),Xo_cols(2)
-       do ig1=Xo_rows(1),Xo_rows(2)
-         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
-         if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
-       enddo
+         do ig1=Xo_rows(1),Xo_rows(2)
+           KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
+           if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
+         enddo
        enddo
        !
      else
        !
        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
        do ig2=Xo%cols(1),Xo%cols(2)
-       do ig1=Xo%rows(1),Xo%rows(2)
-         KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-         if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-       enddo
+         do ig1=Xo%rows(1),Xo%rows(2)
+           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+           if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+         enddo
        enddo
        !$omp end parallel do
        !

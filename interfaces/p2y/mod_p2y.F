@@ -31,12 +31,14 @@ module P2Ym
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
- use parallel_m,            ONLY : myid,PP_bcast   
+ use parallel_m,            ONLY : myid
+ use parallel_int,          ONLY : PP_bcast   
  ! 
 #include<memory.h>
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
+ character(lchlen) :: dftdata_dir
  !
  integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -67,6 +69,7 @@ contains
    ! data fmt detection
    !
    call p2y_get_dftdata_fmt(dftdata_fmt,indir)
+   dftdata_dir=trim(indir)
    !
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
@@ -120,18 +123,18 @@ contains
    select case (trim(dftdata_fmt))
    case("pw_export")
       ! 
-      call pw_openindex(pw_unit,index_filename,ierr=ierr) 
+      call pw_openindex(pw_unit,index_filename,ierr=ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexml")
       !
-      call qexml_init(pw_unit) 
+      call qexml_init(pw_unit,dir=indir)
       call qexml_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexsd","qexsd-hdf5")
       !
-      call qexsd_init(pw_unit) 
+      call qexsd_init(pw_unit,dir=indir)
       call qexsd_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
@@ -384,6 +387,12 @@ contains
    end select
    !
    ! init
+   !
+   if (len_trim(dftdata_dir)>0) then
+     do i1=1,n_atomic_species
+        psfile(i1)=trim(dftdata_dir)//"/"//trim(psfile(i1))
+     enddo
+   endif
    !
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0

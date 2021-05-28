@@ -25,7 +25,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nXkibz
+ use R_lattice,      ONLY:bz_samp,nXkibz,MAX_kpts_to_report
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
@@ -50,11 +50,21 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  if(l_kpoints) then
    call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
    call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
+   if (trim(what)/="Q".and.Xk%nibz/=k%nibz) then
+     call msg('r','K-points grids:')
+     call msg('rn','X = response function; S = self-energy')
+   endif
    call msg('r','K/Q-points units:')
-   call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units ')
+   call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units')
  endif
  !
- do ik=k_range(1),k_range(2)
+ K_LOOP: do ik=k_range(1),k_range(2)
+   !
+   if (.not.fat_log.and.ik>MAX_kpts_to_report) then
+     dumb_ch1=trim(intc(k%nibz-MAX_kpts_to_report))
+     call msg('nrn','Remaining '//trim(dumb_ch1)//' points informations can be written running with -fatlog')
+     exit K_LOOP
+   endif
    !
    call c2a(v_in=k%pt(ik,:),v_out=k_al,mode='ki2a')
    call c2a(v_in=k%pt(ik,:),v_out=k_cc,mode='ki2c')
@@ -69,12 +79,13 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
    if(trim(what)/="Q") dumb_ch1='K ['//trim(dumb_ch1)
    !
    if (l_kpoints) then
-     if (ik<=nXkibz .or. trim(what)=="Q") call msg('r',trim(dumb_ch1)//' : weight       ',Xk%weights(ik) )
-     if(trim(what)=="K") call msg('r','      : wf components',wf_nc_k(ik) )
-     if (ik<=nXkibz .or. (trim(what)=="Q")) then
-       if (fat_log) call msg('r','      : point-iku    ',k%pt(ik,:),' [iku] ')
-       if (fat_log) call msg('r','      : point-cc     ',k_cc,' [cc] ')
-       call msg('r','      : point-rlu    ',k_al,' [rlu] ')
+     call msg('r',trim(dumb_ch1),k_al,'[rlu]')
+     if (fat_log) call msg('r','      :',k%pt(ik,:),'[iku]')
+     if (fat_log) call msg('r','      :',k_cc,'[cc]')
+     if (trim(what)/="Q") then
+       call msg('r','      : wf components',wf_nc_k(ik) )
+       if (ik<=nXkibz) call msg('r','      : BZ grid      ',"X S")
+       if (ik> nXkibz) call msg('r','      : BZ grid      ',"S")
      endif
    endif
    !
@@ -100,6 +111,6 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      enddo
    endif
    !
- enddo
+ enddo K_LOOP
  !
 end subroutine

@@ -31,7 +31,7 @@ subroutine PARALLEL_M_by_V(transa,N,A,X,Y)
  !
  use pars,           ONLY:SP,cONE,cZERO
  use wrapper_omp,    ONLY:M_by_V_omp
- use parallel_m,     ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_redux_wait
  use SLK_m,          ONLY:SLK_POOL,SLK_ORTHO
  use matrix,         ONLY:PAR_matrix
  use timing_m,       ONLY:timing

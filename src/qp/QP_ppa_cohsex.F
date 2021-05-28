@@ -293,7 +293,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_ppa) then
          !
-         !$omp parallel do default(shared), private(ig1,ig2)
+         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            if (real(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2))<=1._SP) then
@@ -314,7 +314,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          call DEV_SUB(scatter_Gamp)(isc,'c')
          if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
          !
-         !$omp parallel do default(shared), private(ig1,ig2)
+         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            X_par(iq_mem)%blc(ig1,ig2,X_range1)=X_par(iq_mem)%blc(ig1,ig2,X_range1)*isc%gamp(ig1,ig2)

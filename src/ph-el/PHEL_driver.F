@@ -28,7 +28,8 @@ subroutine PHEL_driver(E,k,q)
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
 &                              l_GKKP_hosts_bare_dV,elph_nb
- use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W ,PHEL_alloc,PHEL_qp
+ use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,&
+&                              PHEL_alloc,PHEL_qp,PH_DbGd_points
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
@@ -51,7 +52,8 @@ subroutine PHEL_driver(E,k,q)
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
  !
- call section('*',"Phonon Lifetimes")
+ call section('*',"Phonon-Electron Interaction and properties")
+ !==============================================================
  !
  ! Setup
  !=======
@@ -62,6 +64,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases check
  !=======================
+ call section('+',"Databases I/O")
  call ELPH_databases_check(elph_nb)
  !
  if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
@@ -119,6 +122,7 @@ subroutine PHEL_driver(E,k,q)
  if (.not.l_PH_uses_E_FineGd) then
    call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
    call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
+   PH_DbGd_points=0
  endif
  k_FG = k%FGbz
  nk_CG= k%nbz
@@ -130,7 +134,6 @@ subroutine PHEL_driver(E,k,q)
  ! ... allocs
  Life_MEM_steps=1
  nQ_W=PH_Q(2)
- if (trim(QP_solver)=="n") QP_Sc_steps=1
  if (trim(QP_solver)=="g") nQ_W=PH_Q(2)*QP_Sc_steps
  call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nQ_W)
  call PHEL_alloc( )
@@ -184,18 +187,20 @@ subroutine PHEL_driver(E,k,q)
  call PP_redux_wait(RT_PE_life%emit)
  call PP_redux_wait(RT_PE_life%abs)
 #endif
- if (l_initial_equilibrium) call PP_redux_wait(PHEL_qp%PI)
+ call PP_redux_wait(PHEL_qp%PI)
  if (l_extended_output) then
    call PP_redux_wait(PHEL_qp%interband)
    call PP_redux_wait(PHEL_qp%intraband)
-   if (l_initial_equilibrium) call PP_redux_wait(PHEL_qp%approx)
+   call PP_redux_wait(PHEL_qp%approx)
  endif
+ !
+ ! Output
+ !========
+ call section('=',"Output files and databases")
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_PH(ID)
  !
- ! Output
- !========
  call PH_of(q)
  !
  ! Clean

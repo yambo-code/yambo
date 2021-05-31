@@ -40,7 +40,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_G_damp,QP_solver
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map,PH_Q
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map,PH_Q,PHEL_broad_factor
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
@@ -54,8 +54,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  ! Work Space ...
  !
  logical               :: l_phel_allowed
- real(SP)              :: ph_freq,Delta_Broad,ratio
- real(SP)              :: broad_factor=3._SP
+ real(SP)              :: ph_freq,ratio
  integer               :: i_loop
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
@@ -64,7 +63,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  ! ... energy related quantities ...
  real(SP) :: DELTA_E,DELTA_W
  !
- call section("+","Phonon mediated scattering analysis")
+ call section("=","Phonon mediated scattering analysis")
  !
  ! Get nearest k-q table if using custom qpoints
  if (.not.elph_use_q_grid) then 
@@ -166,10 +165,9 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                  !
                  ! Select energy-allowed transitions
                  !=================================== 
-                 if (trim(QP_solver)=="n") then
-                   Delta_Broad = broad_factor*QP_G_damp+DELTA_W
-                   l_phel_allowed = (DELTA_E >  ph_freq - Delta_Broad .and. DELTA_E <  ph_freq + Delta_Broad ) .or. &
-&                                   (DELTA_E > -ph_freq - Delta_Broad .and. DELTA_E < -ph_freq + Delta_Broad )
+                 if (.not.trim(QP_solver)=="g") then
+                   l_phel_allowed = abs(DELTA_E-ph_freq)<PHEL_broad_factor*QP_G_damp.or.&
+&                                   abs(DELTA_E+ph_freq)<PHEL_broad_factor*QP_G_damp
                  else
                    l_phel_allowed=.TRUE.
                  endif
@@ -210,7 +208,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  do iq=PH_Q(1),PH_Q(2)
    ratio = 0._SP
    if (N_tot(iq)>0) ratio = float(N_yes(iq))/float(N_tot(iq))*100._SP
-   call msg('r','DbGd@q['//trim(intc(iq))//'] k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))
+   call msg('r','Transitions@q['//trim(intc(iq))//'] k->k-q (%, broad eV)]',(/ratio,PHEL_broad_factor*QP_G_damp*HA2EV/))
  enddo
  !
  N_yes=phel_info%N
@@ -219,6 +217,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  call PP_redux_wait(N_tot)
  ratio = 0._SP
  if (N_tot(1)>0) ratio = float(N_yes(1))/float(N_tot(1))*100._SP
- call msg('nrsn','Total DbGd k->k-q (trans %, broad eV)]',(/ratio,broad_factor*QP_G_damp*HA2EV/))
+ !
+ call msg('nrsn','Total Transistions k->k-q (%, broad eV)]',(/ratio,PHEL_broad_factor*QP_G_damp*HA2EV/))
  !
 end subroutine PH_Grid_Check_Transitions

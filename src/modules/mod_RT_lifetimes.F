@@ -35,7 +35,6 @@ module RT_lifetimes
    integer                  :: D2=0
    real(SP),    allocatable :: abs(:,:)
    real(SP),    allocatable :: emit(:,:)
-   real(SP),    allocatable :: eq(:,:)
    real(SP),    allocatable :: abs_save(:,:,:)
    real(SP),    allocatable :: emit_save(:,:,:)
    real(SP)                 :: prefactor(2)=rZERO ! 1=abs, 2=emit

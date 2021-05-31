@@ -25,7 +25,7 @@ integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
  use pars,                ONLY:SP
- use R_lattice,           ONLY:nqibz,nqbz
+ use R_lattice,           ONLY:nqbz
  use QP_m,                ONLY:QP_G_damp,l_extended_output,QP_solver
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_qp,&
 &                              PHEL_alloc,QP_Sc_steps,PH_Q
@@ -69,7 +69,7 @@ integer function io_PH(ID)
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd points",I0=PH_DbGd_points,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
    call io_variable_elemental(ID,VAR="[PHEL] X DbGd support",L0=l_PH_uses_E_FineGd,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
-   call io_variable_elemental(ID,VAR="[PHEL] Enrgy points",I0=QP_Sc_steps,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="[PHEL] Energy points",I0=QP_Sc_steps,DESCRIPTOR=PHEL_desc,CHECK=.TRUE.,OP=(/"=="/))
    call def_variable_elemental(ID,"",0,0,1)
    io_PH=io_status(ID)
    if (.not.DB_is_OK(ID)) then

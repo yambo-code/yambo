@@ -36,6 +36,9 @@ module PHEL
  ! ... # Q's
  integer              :: PH_Q(2)=0
  !
+ ! ... Transitions
+ real(SP)             :: PHEL_broad_factor=3
+ !
  ! ... Double-grid
  integer              :: PH_DbGd_points=-1
  logical              :: l_PH_uses_E_FineGd=.FALSE.

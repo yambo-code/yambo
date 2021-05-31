@@ -31,7 +31,7 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  ! [DEBUG] Emit and Abs lifetimes should eventually be removed (computed only 
  !         out of eq.). We keep them here for future debugging of the RT part.
  !
- use pars,           ONLY:SP,cI,pi
+ use pars,           ONLY:SP,cI,pi,schlen
  use electrons,      ONLY:levels,spin_occ,E_fine_grid
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
@@ -42,6 +42,7 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  use QP_m,           ONLY:QP_G_damp,l_extended_output,QP_solver,QP_Sc_steps
  use LIVE_t,         ONLY:live_timing
  use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,PH_SF_W,PH_Q,PHEL_qp
+ use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -65,10 +66,15 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  ! ... BZ index ...
  integer               :: iq,ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
  ! ... lifetime related quantities ...
- real(SP)    :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_mkq,f_nk,Hole_f_mkq,Hole_f_nk,E_Allen,Allen_factor
- complex(SP) :: TMP_linewidth
+ real(SP)          :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,f_mkq,f_nk,Hole_f_mkq,Hole_f_nk,E_Allen,Allen_factor
+ complex(SP)       :: TMP_linewidth
+ character(schlen) :: sec_name
  !
- call live_timing('Phonon Lifetimes [Equilibrium]',phel_info%N)
+ if (     trim(QP_solver)=="g") sec_name='Phonon Green`s functions'
+ if (.not.trim(QP_solver)=="g") sec_name='Phonon lifetimes'
+ call section("=",trim(sec_name))
+ call live_timing(trim(sec_name),phel_info%N)
+ call timing(trim(sec_name),OPR='start')
  !
  ! Main loop over allowed transitions
  !====================================
@@ -153,7 +159,7 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    f_nk       =  RT_el_occ%N_ref(i_n,ik_rim)/spin_occ
    Hole_f_nk  =  RT_ho_occ%N_ref(i_n,ik_rim)/spin_occ
    !
-   if (trim(QP_solver)=="n") then
+   if (.not.trim(QP_solver)=="g") then
      !
      ! Allen Factor
      Allen_factor = ph_freq*1./pi*aimag( Lorentzian_FT(E_Allen-cI*QP_G_damp,0._SP,"r" ) )
@@ -177,8 +183,6 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
      !
      do iw=1,QP_Sc_steps
        iw_mem=(iq_life-1)*PH_Q(2)+iw
-       call LORENTZIANs_eval ( PH_SF_W%p(iw) )
-       TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*D_res
        TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*Lorentzian_FT(PH_SF_W%p(iw),DELTA_E+cI*DELTA_W,"r" )/pi
        PHEL_qp%PI(il,iq_life,iw)=PHEL_qp%PI(il,iq_life,iw)+TMP_linewidth*pre_factor
      enddo
@@ -189,6 +193,7 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  enddo
  !
  call live_timing( )
+ call timing(trim(sec_name),OPR='stop')
  !
  contains
    !

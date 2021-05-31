@@ -411,7 +411,7 @@ subroutine INIT_activate()
        call initactivate(1,'DysSolver')
        if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
      else
-       call initactivate(1,'GDamping') 
+       call initactivate(1,'GDamping PHELTrans') 
      endif
    endif
    !

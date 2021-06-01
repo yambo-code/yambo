@@ -142,6 +142,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
      i_fragment=ik+(i_sp_pol-1)*Xk%nibz
+     if ( .not.allocated(PAR_K_scheme%IND_ibz%element_1D)      ) cycle
      if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)             ) cycle
      if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
 #if !defined _PAR_IO
@@ -170,7 +171,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+       if ( .not.allocated(PAR_K_scheme%IND_bz%element_1D)       ) cycle
+       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)) .and.writing) cycle
        if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) .and.writing) cycle
 #if !defined _PAR_IO
        if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)

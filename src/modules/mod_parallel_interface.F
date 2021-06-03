@@ -119,7 +119,7 @@ module parallel_int
      type(yMPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
      use X_m,           ONLY:X_t
      use DIPOLES,       ONLY:DIPOLE_t
      use electrons,     ONLY:levels
@@ -130,7 +130,7 @@ module parallel_int
      character(*)             ::ENVIRONMENT
      type(X_t),       optional::X
      type(DIPOLE_t),  optional::Dip
-     logical,         optional::RESET
+     logical,         optional::RESET,Dip_limits_pre_defined
    end subroutine
    !
    subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )

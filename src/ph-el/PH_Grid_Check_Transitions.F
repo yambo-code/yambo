@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): FP
+! Authors (see AUTHORS file for details): FP AM
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,24 +23,30 @@
 !
 subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
  !
- ! Select the indices of the transitions Delta_E_{n,np,k,k_m_q} = ph_E_{ql} +- 3*QP_G_damp
- ! which actually contribute to the scattering. 
- ! This change makes the code much faster as it avoids the use of all
+ ! This routine selects the indices of the PH mediated transitions. 
+ !
+ ! When lifetimes are calculated transitions are selected to satisfy
+ !
+ !   Delta_E_{n,np,k,k_m_q} = ph_E_{ql} +- PHEL_broad_factor*QP_G_damp
+ !
+ ! The table created here makes the code much faster as it avoids the use of all
  ! double-grid kpts in the two spheres (k and kp).
  !
+ use drivers,        ONLY:l_life
  use pars,           ONLY:SP
  use units,          ONLY:HA2EV
  use electrons,      ONLY:E_fine_grid
  use hamiltonian,    ONLY:B_mat_index
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
- use ELPH,           ONLY:PH_freqs_sq,elph_branches,PH_acoustic_branch,elph_use_q_grid,&
-&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,elph_nQ
+ use ELPH,           ONLY:elph_branches,PH_acoustic_branch,elph_use_q_grid,&
+&                         elph_nQ
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
- use QP_m,           ONLY:QP_G_damp,QP_solver
+ use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map,PH_Q,PHEL_broad_factor
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,KpQ_IO_map,PH_Q,PHEL_broad_factor,&
+&                         PHEL_gimme_Ks,PH_energy
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  !
@@ -79,7 +85,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
      call live_timing('Compatibility scan',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
    else
      if (phel_info%N==0) call error('No allowed scattering found')
-     YAMBO_ALLOC(phel_info%table,(phel_info%N,8) )
+     YAMBO_ALLOC(phel_info%table,(phel_info%N,6) )
      call live_timing('Compatibility fill',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
    endif
    !
@@ -99,27 +105,17 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
        !
        if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
        !
-       ! Obtain k-q in the full BZ from k in the bz and q in the ibz
-       if (elph_use_q_grid) then
-         ik_m_q = qindx_X(iq,ikbz,1)
-       else 
-         ik_m_q = KpQ_IO_map(iq,ikbz)
-       endif
-       ! Use k in the bz
-       ik = ikbz
-       !
-       ! If running RT: obtain k-q and k in the IBZ
 #if defined _RT
-       ik_m_q =k%sstar(ik_m_q,1)
-       ik     =k%sstar(ik,1)
-#endif       
+       call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.TRUE.)
+#else
+       call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.FALSE.)
+#endif
        !
        ! Loop over il, i.e., phonon branches
        !====================================    
        do il=elph_branches(1),elph_branches(2)
          !
-         if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
-         if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
+         ph_freq=PH_energy(q,il,iq)
          !
          if (iq==1 .and. PH_acoustic_branch(il)) cycle
          !
@@ -154,8 +150,8 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
                    ! 
 #if defined _RT
-                   if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
-                   if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
+                   if (E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
+                   if (E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
 #endif
                    !
                    DELTA_E=E_FG%E(i_n,ik_rim,1)-E_FG%E(i_np,ip_rim,1)
@@ -165,11 +161,10 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                  !
                  ! Select energy-allowed transitions
                  !=================================== 
-                 if (.not.trim(QP_solver)=="g") then
+                 l_phel_allowed=.TRUE.
+                 if (l_life) then
                    l_phel_allowed = abs(DELTA_E-ph_freq)<PHEL_broad_factor*QP_G_damp.or.&
 &                                   abs(DELTA_E+ph_freq)<PHEL_broad_factor*QP_G_damp
-                 else
-                   l_phel_allowed=.TRUE.
                  endif
                  !
                  if (l_phel_allowed) then
@@ -177,7 +172,7 @@ subroutine PH_Grid_Check_Transitions(k,q,bands,k_FG,E_FG)
                    phel_info%N  = phel_info%N+1
                    N_yes(iq)    = N_yes(iq)+1
                    !
-                   if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ikbz,ik_m_q,ik_rim,ip_rim,i_n,i_np/)
+                   if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ik_rim,ip_rim,i_n,i_np/)
                    !
                  endif
                  !

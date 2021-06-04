@@ -47,16 +47,18 @@ module PHEL
  integer, allocatable :: KpQ_io_map(:,:)
  !
  ! ... GF
- type(w_samp)         :: PH_SF_W
+ type(w_samp), allocatable :: PH_SF_W(:,:)
  !
  ! ... Scatterings
  !
  ! table:
- ! 1 -> il [ph mode], 2 -> iq [ph q ibz], 3 -> ikbz [k bz], 4 -> ik_m_q [k-q (i)bz],
- ! 5 -> ik_fg [k (i)bz DbGd], 6 -> ip_fg [k-q (i)bz DbGd], 7 -> i_n [bnd], 8 -> i_np [bnd]
+ ! 1 -> il [ph mode], 2 -> iq [ph q ibz], 3 -> ikbz/ik_rim [k bz]
+ ! 4 -> ip_fg [k-q (i)bz DbGd], 5 -> i_n [bnd], 6 -> i_np [bnd]
  type phel_scatterings
+   !
    integer               :: N=0        ! Number of accepted transitions
    integer, allocatable  :: table(:,:) ! Indices of accepted transitions: see above
+   !
  end type phel_scatterings             
  !
  type(phel_scatterings)  :: phel_info
@@ -72,6 +74,43 @@ module PHEL
  !
  contains
    !
+   function PH_energy(q,il,iq)
+     use ELPH,      ONLY:l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,PH_freqs_sq
+     use R_lattice, ONLY:bz_samp
+     implicit none
+     integer       :: iq,il
+     real(SP)      :: PH_energy
+     type(bz_samp) :: q
+     if (l_GKKP_expanded_DB_exists) PH_energy=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
+     if (l_GKKP_DB_exists         ) PH_energy=abs(sqrt(PH_freqs_sq(iq,il)))
+   end function
+   !
+   subroutine PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,l_RT)
+     !
+     use ELPH,      ONLY:elph_use_q_grid
+     use R_lattice, ONLY:bz_samp,qindx_X
+     !
+     implicit none
+     !
+     type(bz_samp) :: k
+     integer       :: iq,ikbz,ik,ik_m_q
+     logical       :: l_RT
+     !
+     ! Obtain k-q in the full BZ from k in the bz and q in the ibz
+     if (     elph_use_q_grid) ik_m_q = qindx_X(iq,ikbz,1)
+     if (.not.elph_use_q_grid) ik_m_q = KpQ_IO_map(iq,ikbz)
+     !
+     ! Use k in the bz
+     ik = ikbz
+     !
+     ! If running RT: obtain k-q and k in the IBZ
+     if (l_RT) then
+       ik_m_q =k%sstar(ik_m_q,1)
+       ik     =k%sstar(ik,1)
+     endif
+     !
+   end subroutine
+   !
    subroutine PHEL_alloc( )
      YAMBO_ALLOC(PHEL_qp%PI,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2),QP_Sc_steps))
      PHEL_qp%PI=cZERO
@@ -84,9 +123,16 @@ module PHEL
    end subroutine
    !
    subroutine PHEL_free( )
+     integer       :: iq,il
      YAMBO_FREE(phel_info%table)
      YAMBO_FREE(KpQ_io_map)
-     call W_reset(PH_SF_W)
+     if (allocated(PH_SF_W)) then
+       do iq=PH_Q(1),PH_Q(2)
+         do il=elph_branches(1),elph_branches(2)
+            call W_reset(PH_SF_W(il,iq))
+         enddo
+       enddo
+     endif
      YAMBO_FREE(PHEL_qp%PI)
      YAMBO_FREE(PHEL_qp%interband)
      YAMBO_FREE(PHEL_qp%intraband)

@@ -26,7 +26,7 @@ integer function io_PH(ID)
  use units,               ONLY:HA2EV
  use pars,                ONLY:SP
  use R_lattice,           ONLY:nqbz
- use QP_m,                ONLY:QP_G_damp,l_extended_output,QP_solver
+ use QP_m,                ONLY:QP_G_damp,l_extended_output,QP_solver,On_Mass_Shell_approx
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_qp,&
 &                              PHEL_alloc,QP_Sc_steps,PH_Q
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,PH_freqs_sq,ph_modes,PHEL_desc
@@ -57,8 +57,11 @@ integer function io_PH(ID)
    call def_variable_elemental(ID,"CH_PHEL_SOLVER",1,0,0)
    call io_variable_elemental(ID,VAR="[PHEL] Solver",CH0=QP_solver,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
-   call def_variable_elemental(ID,"PHEL_PARAMETERS",11,SP,0)
-   call io_variable_elemental(ID,VAR="[PH  ] Branches",I0=ph_modes,TERMINATOR="all",CHECK=.TRUE.,OP=(/"=="/))
+   call def_variable_elemental(ID,"PHEL_PARAMETERS",12,SP,0)
+   call io_variable_elemental(ID,VAR="[PH  ] On-the-Mass-Shell approximation",L0=On_Mass_Shell_approx,&
+&                                TERMINATOR="all",CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=PHEL_desc)
+   call io_variable_elemental(ID,VAR="[PH  ] Branches",I0=ph_modes,TERMINATOR="all",&
+&                                CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=PHEL_desc)
    call io_variable_elemental(ID,VAR="[PHEL] Q-points",I1=PH_Q,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] Branches",I1=elph_branches,DESCRIPTOR=PHEL_desc,&

@@ -408,7 +408,7 @@ subroutine INIT_activate()
      call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize GDamping')
      call initactivate(1,'ExtendOut')
      if (l_gw0) then
-       call initactivate(1,'DysSolver')
+       call initactivate(1,'DysSolver OnMassShell')
        if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
      else
        call initactivate(1,'GDamping PHELTrans') 

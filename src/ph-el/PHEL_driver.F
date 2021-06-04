@@ -23,22 +23,22 @@
 !
 subroutine PHEL_driver(E,k,q)
  !
- use electrons,           ONLY:levels,n_sp_pol,E_fine_grid
- use R_lattice,           ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
- use interfaces,          ONLY:ELPH_alloc
- use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,&
-&                              l_GKKP_hosts_bare_dV,elph_nb
- use PHEL,                ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,&
-&                              PHEL_alloc,PHEL_qp,PH_DbGd_points
- use parallel_int,        ONLY:PP_redux_wait,PARALLEL_global_indexes
- use RT_lifetimes,        ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
- use RT_occupations,      ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
- use real_time,           ONLY:l_RT_uses_E_FineGd
- use parser_m,            ONLY:parser
- use QP_m,                ONLY:l_extended_output,QP_Sc_steps,QP_solver,QP_G_er,QP_G_damp
- use IO_int,              ONLY:io_control
- use IO_m,                ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
- use frequency,           ONLY:W_reset
+ use pars,           ONLY:SP,cI
+ use drivers,        ONLY:l_life
+ use electrons,      ONLY:levels,n_sp_pol,E_fine_grid
+ use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
+ use interfaces,     ONLY:ELPH_alloc
+ use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nb
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&
+&                         PH_DbGd_points,PH_energy
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes
+ use RT_lifetimes,   ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
+ use RT_occupations, ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
+ use real_time,      ONLY:l_RT_uses_E_FineGd
+ use QP_m,           ONLY:l_extended_output,QP_Sc_steps,QP_G_er,QP_G_damp,On_Mass_Shell_approx,l_QP_eval_GF,l_QP_eval_Z
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
+ use frequency,      ONLY:W_reset
  !
 #include<memory.h>
  !
@@ -47,7 +47,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Work Space
  !
- integer             ::i_err,ID,nk_CG,nQ_W
+ integer             ::i_err,ID,nk_CG,iq,il
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
@@ -57,8 +57,8 @@ subroutine PHEL_driver(E,k,q)
  !
  ! Setup
  !=======
- if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
- call parser('ExtendOut',  l_extended_output)
+ ! ... logicals
+ call QP_logicals( )
  ! ... BZ Setup
  call k_build_up_BZ_tables(q)
  !
@@ -98,7 +98,7 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- call ELPH_databases_load(GKKP_pe_sq,E,k,q,(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
+ call ELPH_databases_load(GKKP_pe_sq,E,k,q,QP_PH_n_G_bands,PH_Q,"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
  !
@@ -128,15 +128,46 @@ subroutine PHEL_driver(E,k,q)
  nk_CG= k%nbz
 #endif
  !
+ ! Transitions and frequencies
+ !=============================
+ !
  ! ... select fine grid subset
  call PHEL_double_grid_subset(k,k_FG,nk_CG)
  !
+ ! ... Spectral Function energy points
+ if (.not.l_life) then
+   allocate(PH_SF_W(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
+   do iq=PH_Q(1),PH_Q(2)
+     do il=elph_branches(1),elph_branches(2)
+       call W_reset(PH_SF_W(il,iq))
+       PH_SF_W(il,iq)%dr=QP_G_damp
+       if (l_QP_eval_GF) then
+         PH_SF_W(il,iq)%n_freqs=QP_Sc_steps 
+         PH_SF_W(il,iq)%er=QP_G_er
+         call FREQUENCIES_setup(PH_SF_W(il,iq))
+       else if (l_QP_eval_Z) then
+         QP_Sc_steps=3
+         PH_SF_W(il,iq)%n_freqs=3 
+         PH_SF_W(il,iq)%er=(/0._SP,1._SP/)
+         call FREQUENCIES_setup(PH_SF_W(il,iq))
+         PH_SF_W(il,iq)%p=(/0._SP,PH_energy(q,il,iq),PH_energy(q,il,iq)+QP_G_damp/)+cI*QP_G_damp
+       else if (On_Mass_Shell_approx) then
+         QP_Sc_steps=2
+         PH_SF_W(il,iq)%n_freqs=2 
+         PH_SF_W(il,iq)%er=(/0._SP,PH_energy(q,il,iq)/)
+         call FREQUENCIES_setup(PH_SF_W(il,iq))
+       endif
+     enddo
+   enddo
+ endif
+ !
  ! ... allocs
+#if defined _RT
  Life_MEM_steps=1
- nQ_W=PH_Q(2)
- if (trim(QP_solver)=="g") nQ_W=PH_Q(2)*QP_Sc_steps
- call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,nQ_W)
+ call RT_lifetime_alloc("ph-el",RT_PE_life,elph_branches,PH_Q(2))
+#else
  call PHEL_alloc( )
+#endif
  !
  ! ... occupations 
  call RT_EL_occupations_alloc((/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/),k_FG%N)
@@ -160,16 +191,6 @@ subroutine PHEL_driver(E,k,q)
  !===================================================
  call PH_Grid_Check_Transitions(k,q,QP_PH_n_G_bands,k_FG,E_FG)
  !
- ! Spectral Function energy points
- !=================================
- if (trim(QP_solver)=="g") then
-   call W_reset(PH_SF_W)
-   PH_SF_W%n_freqs=QP_Sc_steps 
-   PH_SF_W%er=QP_G_er
-   PH_SF_W%dr=QP_G_damp
-   call FREQUENCIES_setup(PH_SF_W)
- endif
- !
  ! Calculation of the lifetimes
  !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
  !  - Out of eq.  (yambo_rt): scatt. rates with lesser/greater S^< and S^>
@@ -178,7 +199,7 @@ subroutine PHEL_driver(E,k,q)
  l_initial_equilibrium=.TRUE.
  call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
 #else
- call PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
+ call PHEL_Self_Energy(E,k,q,k_FG,E_FG)
 #endif
  !
  ! Redux

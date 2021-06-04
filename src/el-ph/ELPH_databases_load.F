@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
+subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
  ! 
  ! mode can be combination of
  !
@@ -42,7 +42,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
 #include<memory.h>
  ! 
- integer,      intent(in)    :: n_bands(2)
+ integer,      intent(in)    :: n_bands(2),q_range(2)
  type(levels), intent(in)    :: E
  type(bz_samp),intent(in)    :: k,q
  character(*), intent(in)    :: K_mode,SCATT_mode
@@ -80,7 +80,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  ! Allocation
  !============
- YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,elph_nQ))
+ YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,q_range(1):q_range(2)))
  YAMBO_ALLOC(GKKP_to_sym,(ph_modes,n_bands(2),n_bands(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
@@ -92,7 +92,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  call live_timing('El-Ph matrix-elements I/O ('//trim(SCATT_mode)//' and '//trim(K_mode)//')',NQ)
  !
- do iq=1,elph_nQ
+ do iq=q_range(1),q_range(2)
    !
    !...map
    idb=Q_io_map(iq)

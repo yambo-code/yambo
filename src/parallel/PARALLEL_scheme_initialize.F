@@ -60,7 +60,7 @@ subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARALL_PARs,N,TABLE,MATRI
    PARALL_PARs%N_ser=(PARALL_PARs%D(2)-PARALL_PARs%D(1)+1)**2
  else
    call PARALLEL_index(PARALL_PARs%IND,(/PARALL_PARs%D(2)/),COMM=PARALL_PARs%COMM_i,&
-   &                low_range=(/PARALL_PARs%D(1)/),CONSECUTIVE=PARALL_PARs%consecutive)
+&                      low_range=(/PARALL_PARs%D(1)/),CONSECUTIVE=PARALL_PARs%consecutive)
    PARALL_PARs%N_ser=PARALL_PARs%D(2)-PARALL_PARs%D(1)+1
  endif
  !
@@ -75,6 +75,6 @@ subroutine PARALLEL_scheme_initialize(WHAT,ENVIRONMENT,PARALL_PARs,N,TABLE,MATRI
  !
  ! ... Message
  call PARALLEL_live_message(WHAT,ENVIRONMENT=ENVIRONMENT,LOADED=PARALL_PARs%N_par,&
- &                            TOTAL=PARALL_PARs%N_ser,NCPU=PARALL_PARs%COMM_i%n_CPU)
+&                           TOTAL=PARALL_PARs%N_ser,NCPU=PARALL_PARs%COMM_i%n_CPU)
  !
 end subroutine

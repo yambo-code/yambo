@@ -97,6 +97,8 @@ module QP_m
  logical           :: report_Sc
  logical           :: report_dSc
  logical           :: l_extended_output
+ logical           :: l_QP_eval_GF=.FALSE.
+ logical           :: l_QP_eval_Z=.FALSE.
  character(schlen) :: Vnlxc_kind
  character(schlen) :: Vxc_kind
  !

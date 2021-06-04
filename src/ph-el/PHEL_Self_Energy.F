@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
+subroutine PHEL_Self_Energy(E,k,q,k_FG,E_FG)
  !
  ! This routine computes the phonon lifetimes in equilibrium (i.e., linewidths).
  ! 
@@ -31,17 +31,18 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  ! [DEBUG] Emit and Abs lifetimes should eventually be removed (computed only 
  !         out of eq.). We keep them here for future debugging of the RT part.
  !
+ use drivers,        ONLY:l_life
  use pars,           ONLY:SP,cI,pi,schlen
  use electrons,      ONLY:levels,spin_occ,E_fine_grid
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
  use RT_lifetimes,   ONLY:RT_PE_life
- use ELPH,           ONLY:PH_freqs_sq,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
-&                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+ use ELPH,           ONLY:MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
+&                         l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_Q_ibz
- use QP_m,           ONLY:QP_G_damp,l_extended_output,QP_solver,QP_Sc_steps
+ use QP_m,           ONLY:QP_G_damp,l_extended_output,l_QP_eval_GF,l_QP_eval_Z,On_Mass_Shell_approx
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,PH_SF_W,PH_Q,PHEL_qp
+ use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,PH_SF_W,PH_Q,PHEL_qp,PHEL_gimme_Ks,PH_energy
  use timing_m,       ONLY:timing
  !
  implicit none
@@ -70,8 +71,10 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
  complex(SP)       :: TMP_linewidth
  character(schlen) :: sec_name
  !
- if (     trim(QP_solver)=="g") sec_name='Phonon Green`s functions'
- if (.not.trim(QP_solver)=="g") sec_name='Phonon lifetimes'
+ if (l_QP_eval_GF)          sec_name='Phonon Green`s functions'
+ if (l_QP_eval_Z)           sec_name='Phonon Self-Energy'
+ if (On_Mass_Shell_approx)  sec_name='Adiabatic phonon Self-Energy'
+ if (l_life)                sec_name='phonon Lifetimes'
  call section("=",trim(sec_name))
  call live_timing(trim(sec_name),phel_info%N)
  call timing(trim(sec_name),OPR='start')
@@ -83,22 +86,23 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    ! Indices of allowed transition
    il     = phel_info%table(it,1) ! phonon branch
    iq     = phel_info%table(it,2) ! phonon momentum (ibz)
-   ikbz   = phel_info%table(it,3) ! electron momentum (bz)
-   ik_m_q = phel_info%table(it,4) ! scattered elec. momentum (_PH: bz / _RT: ibz) 
-   ik_rim = phel_info%table(it,5) ! fine grid elec. momentum
-   ip_rim = phel_info%table(it,6) ! fine grid scattered elec. momentum
-   i_n    = phel_info%table(it,7) ! electronic band
-   i_np   = phel_info%table(it,8) ! electronic band
+   ik_rim = phel_info%table(it,3) ! fine grid elec. momentum
+   ip_rim = phel_info%table(it,4) ! fine grid scattered elec. momentum
+   i_n    = phel_info%table(it,5) ! electronic band
+   i_np   = phel_info%table(it,6) ! electronic band
+   ikbz   = k_FG%k_map(ik_rim)
    !
-   ! Use k in the bz
-   ik = ikbz
+#if defined _RT
+   call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.TRUE.)
+#else
+   call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.FALSE.)
+#endif
    !
    ! Index for q-parallelised quantities
    iq_mem =PARs_PH_Q_ibz%table(iq)
    iq_life=iq 
    !
-   if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
-   if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
+   ph_freq=PH_energy(q,il,iq)
    !
    if (iq==1 .and. PH_acoustic_branch(il)) then
      call live_timing( steps=1 )
@@ -127,10 +131,12 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
    ! 2 since FWHM=2*Im{SE^R}, spin_occ=2 from ph-el self-energy (polarization bubble), pi from delta functions,
    ! 1/Nk from k-sum, (2*ph_freq)^-1 to correctly normalize Gkkp_sq.
    !
-   ! [NOTE]  Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
-   ! [NOTE2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k*N_FG_k_m_q) accounting for the double grid at each bz point.
+   ! [NOTE.1] Variable pre_factor below contains pi since it *shouldn't* come later from the hyperbolic secant FT.
+   ! [NOTE.2] Variable pre_factor below contains 1/(Nk_bz*N_FG_k*N_FG_k_m_q) accounting for the double grid at each bz point.
    !
-   pre_factor=spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
+   ! [NOTE.3] Variable pre_factor below contains a 2 due to the definition of the phonon displacement operator
+   !
+   pre_factor=2._SP*spin_occ*GKKP_pe_sq%dVr(il,i_n,i_np,ikbz,iq_mem)*pi/(k%nbz*k_FG%N_mapped(ik)*k_FG%N_mapped(ik_m_q)*ph_freq)
    !
    ! At equilibrium, only metals or band gaps < E_debye can give non-zero ph lifetimes
    !
@@ -150,16 +156,13 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
      !
    endif
    !
-   ! Lifetimes
-   !============
-   !
    ! Electron and hole occupations
    f_mkq      =  RT_el_occ%N_ref(i_np,ip_rim)/spin_occ
    Hole_f_mkq =  RT_ho_occ%N_ref(i_np,ip_rim)/spin_occ
    f_nk       =  RT_el_occ%N_ref(i_n,ik_rim)/spin_occ
    Hole_f_nk  =  RT_ho_occ%N_ref(i_n,ik_rim)/spin_occ
    !
-   if (.not.trim(QP_solver)=="g") then
+   if (l_life) then
      !
      ! Allen Factor
      Allen_factor = ph_freq*1./pi*aimag( Lorentzian_FT(E_Allen-cI*QP_G_damp,0._SP,"r" ) )
@@ -167,8 +170,10 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
      ! Lorentzians
      call LORENTZIANs_eval ( ph_freq+cI*QP_G_damp )
      !
+#if defined _RT
      ! Accumulation of the lifetimes
      call COMPOSE_emit_abs( )
+#endif
      !
      ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
      TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*D_res
@@ -181,9 +186,9 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
      !
    else
      !
-     do iw=1,QP_Sc_steps
+     do iw=1,PH_SF_W(il,iq)%n_freqs
        iw_mem=(iq_life-1)*PH_Q(2)+iw
-       TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*Lorentzian_FT(PH_SF_W%p(iw),DELTA_E+cI*DELTA_W,"r" )/pi
+       TMP_linewidth     = (f_mkq*Hole_f_nk-Hole_f_mkq*f_nk)*Lorentzian_FT(PH_SF_W(il,iq)%p(iw),DELTA_E+cI*DELTA_W,"r" )/pi
        PHEL_qp%PI(il,iq_life,iw)=PHEL_qp%PI(il,iq_life,iw)+TMP_linewidth*pre_factor
      enddo
    endif
@@ -225,4 +230,4 @@ subroutine PHEL_Lifetimes_equilibrium(E,k,q,k_FG,E_FG)
      D_res =1./pi*aimag( Lorentzian_FT(W,DELTA_E+cI*DELTA_W,"r" ) )
    end subroutine 
    !
-end subroutine PHEL_Lifetimes_equilibrium
+end subroutine PHEL_Self_Energy

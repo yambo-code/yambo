@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,i_err,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
+subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
  !
  use pars,           ONLY:SP,cI
  use units,          ONLY:HA2EV
@@ -30,13 +30,13 @@ subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,i_err,PI_ref,D,QPH_Z,OMS_f
  !
  implicit none
  !
- integer          :: il,iq,i_err
+ integer          :: il,iq
  real(SP)         :: ph_freq,PI_ref
  complex(SP)      :: D(QP_Sc_steps),QPH_Z,OMS_freq,QPH_freq
  !
  ! Work Space
  !
- integer          :: iw,ip
+ integer          :: iw,ip,i_err
  complex(SP)      :: sqrt_arg,W,beta,Poles(2)
  !
  ! Erroring

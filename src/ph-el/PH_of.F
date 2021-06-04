@@ -40,10 +40,9 @@ subroutine PH_of(q)
  ! Work Space
  !
  integer          :: iq,il,iw,ip,s(2)
- real(SP)         :: ph_freq
+ real(SP)         :: ph_freq,delta_ph_freq
  character(schlen):: Gfile
  ! SF's
- integer          :: i_err
  real(SP)         :: PI_ref
  complex(SP)      :: D(QP_Sc_steps),QPH_Z,OMS_freq,QPH_freq
  !
@@ -59,7 +58,7 @@ subroutine PH_of(q)
      ph_freq=PH_energy(q,il,iq)
      !
      ! PI -> quasiphonon props
-     call PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,i_err,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
+     call PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
      !
      ! GF 
      if (l_QP_eval_GF) then
@@ -94,10 +93,10 @@ subroutine PH_of(q)
      if (l_QP_eval_Z.or.l_QP_eval_GF) then
        call OUTPUT_add_column("ph",TITLES=(/"Re[Z]"/),R_VALUES=(/real(QPH_Z)/))
        call OUTPUT_add_column("ph",TITLES=(/"Im[Z]"/),R_VALUES=(/aimag(QPH_Z)/))
-       if (i_err==0) then
-         call OUTPUT_add_column("ph",TITLES=(/"Re[\Omega]"/),R_VALUES=(/real(QPH_freq)/),UNIT="meV")
-         call OUTPUT_add_column("ph",TITLES=(/"-Im[\Omega]"/),R_VALUES=(/-aimag(QPH_freq)/),UNIT="meV")
-       endif
+       delta_ph_freq=0._SP
+       if (real(QPH_freq)>0._SP) delta_ph_freq=real(QPH_freq)-ph_freq
+       call OUTPUT_add_column("ph",TITLES=(/"Re[\Delta\Omega]"/),R_VALUES=(/delta_ph_freq/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"-Im[\Omega]"/),R_VALUES=(/-aimag(QPH_freq)/),UNIT="meV")
      endif
      !
      call OUTPUT_add_column("ph",action="write")

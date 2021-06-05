@@ -78,7 +78,11 @@ integer function io_DIPOLES(Dip,ID)
  !
  io_extension(ID)='dipoles'
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ if (any((/io_sec(ID,:)==1/))) then
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ else
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ endif
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

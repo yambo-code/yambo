@@ -45,7 +45,7 @@ subroutine RT_Ext_fields(A,time,i_f)
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use functions,      ONLY:theta_function
- use fields,         ONLY:Efield,small_a,gauge_field,compute_intensity,compute_envelop
+ use fields,         ONLY:Efield,small_a,gauge_field,compute_intensity,compute_envelop,A_vecpot_reset
  !
  implicit none
  !
@@ -59,14 +59,12 @@ subroutine RT_Ext_fields(A,time,i_f)
  real(SP)    :: Field_time,A_coeff
  complex(SP) :: A_of_t(2),E_of_t(2),J_of_t(2),theta,delta,signf
  !
- if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) ) then
-   A%vecpot    =cZERO
-   A%vecpot_vel=cZERO
-   A%vecpot_acc=cZERO
+ Field_time=time-Efield(i_f)%t_initial
+ !
+ if (Efield(i_f)%ef_name=="none" .or. Field_time<=0._SP ) then
+   call A_vecpot_reset(A)
    return
  endif
- !
- Field_time=time-Efield(i_f)%t_initial
  !
  theta=theta_function(Field_time,RT_dyn_step,0)
  delta=theta_function(Field_time,RT_dyn_step,1)
@@ -111,8 +109,8 @@ subroutine RT_Ext_fields_sum(A,time)
  !
  implicit none
  !
- type(gauge_field),intent(inout) :: A
- real(SP),         intent(in)    :: time
+ type(gauge_field),intent(out)  :: A
+ real(SP),         intent(in)   :: time
  !
  ! Work space
  !

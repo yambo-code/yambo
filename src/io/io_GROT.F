@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,8 +28,9 @@ integer function io_GROT(io_db)
 #ifdef _CUDA
  use R_lattice,      ONLY:minus_G_d
 #endif
- use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
+ use IO_m,           ONLY:io_status,io_sec,read_is_on
+ use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
+&                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
 #include<memory.h>
  integer :: io_db,nsym_db

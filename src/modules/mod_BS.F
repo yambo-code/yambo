@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -23,7 +23,7 @@
 !
 module BS
  !
- use pars,          ONLY:IP,SP,schlen,lchlen
+ use pars,          ONLY:IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY:elemental_collision
 #include<memory.h>
  !
@@ -32,7 +32,6 @@ module BS
  logical :: l_BSE_minimize_memory
  logical :: l_BSE_kernel_complete
  logical :: l_BSE_restart
- logical :: l_BSK_IO_triangular
  logical :: BS_W_is_diagonal
  logical :: BS_K_coupling
  logical :: BS_res_K_exchange
@@ -47,6 +46,7 @@ module BS
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
  character(schlen) :: BSK_mode
+ character(schlen) :: BSK_IO_mode
  character(schlen) :: BS_res_mode
  character(schlen) :: BS_cpl_mode
  !
@@ -75,12 +75,15 @@ module BS
  integer :: BS_mat_res_ares_dim ! If resonant and non-resonant part are not related
  integer :: BS_res_ares_dim     ! If resonant and non-resonant part are not related
  integer :: BS_IO_dim(2,4)
+ integer :: MAX_BSK_LIN_size
  integer :: BS_bands(2)
  integer :: BS_q(2)
  integer :: BS_identifier
+ integer(IPL) :: BS_lin_size_compressed
  integer :: BS_dip_size
- real(SP):: BS_K_cutoff
  real(SP):: BS_max_val
+ real(SP):: BS_K_cutoff
+ real(SP),allocatable :: BS_K_cutoff_done(:)
  real(SP),allocatable :: BSqpts(:,:)
  !
  ! Live Timing
@@ -171,6 +174,8 @@ module BS
    integer                       :: size(2)       ! rows x columns
    integer                       :: coordinate(2) ! Position of the left-bottom corner in the whole matrix
    character(1)                  :: mode          ! "R"esonant/"A"ntiresonant
+   !
+   integer(IPL),allocatable      :: idx_compr(:)  ! Position in the compressed file
    !
    ! Matrix Block
    !--------------
@@ -367,7 +372,7 @@ module BS
      enddo
      !
      YAMBO_FREE(BS_T_grp)
-     YAMBO_FREE(BS_blk)
+     if(allocated(BS_blk)) deallocate(BS_blk)
      !
    end subroutine
    !
@@ -410,6 +415,8 @@ module BS
          if (l_BS_ares_asymm) cycle
          ! Coupling ("C") and anti-coupling ("Q") are symmetric if l_BS_ares_asymm=.true.
          do i_r=1,BS_blk(i_B)%size(1)
+           !This gives fails with test-suite test Benzene 06_tddft_cpl
+           !BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
            do i_c=i_r+1,BS_blk(i_B)%size(2)
              BS_blk(i_B)%mat(i_c,i_r) = BS_blk(i_B)%mat(i_r,i_c)
            enddo

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS, AM, MG
@@ -26,7 +26,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
- use pars,           ONLY:cZERO,cONE,SP,pi,rZERO
+ use pars,           ONLY:cZERO,cONE,SP,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
@@ -114,6 +114,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      !
      if(l_BS_jdos) then
+       ! DS. Note. Jdos with coupling seems to have the wrong ordering, i.e.
+       !           Re[Jdos(w)]=-Re[Jdos(-w)] while it should be Re[Jdos(w)]=Re[Jdos(-w)]
        Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
        if (BSS_add_antiresonant.and.BS_mat_res_ares_dim==1) then
          Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))

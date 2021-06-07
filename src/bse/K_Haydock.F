@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -23,7 +23,7 @@
 subroutine K_Haydock(iq,W,mode,Xk)
 !aim137: passing Xk to K_Haydock
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
+ use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
  use X_m,            ONLY:global_gauge
  use wrapper_omp,    ONLY:V_by_V_plus_V_omp
@@ -36,7 +36,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
 &                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
- use IO_m,           ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use parallel_int,   ONLY:PP_bcast
  use parallel_m,     ONLY:PAR_IND_T_groups,PAR_IND_T_Haydock,PAR_COM_T_Haydock,PAR_COM_Xk_ibz_INDEX, &

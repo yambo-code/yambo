@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -44,12 +44,12 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd
 !aim137: adding BSS_mode 
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
- &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,BS_H_dim,&
+ &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,l_BS_optics,&
  &                       BS_mat_res_ares_dim
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
-&                        PAR_COM_Xk_ibz_INDEX,myid
+&                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
@@ -446,7 +446,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      do i_pert_SOC=1,n_SOC
        !
        if (l_BS_jdos) then
-         Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         Joint_DOS(:,3) =Joint_DOS(:,3)+(-1._SP)**(i_res_ares)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
          &  Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
        endif

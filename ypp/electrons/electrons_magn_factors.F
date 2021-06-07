@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -39,7 +39,7 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  !
  ! Work Space
  ! 
- integer               :: ik,ib,i_wf(2)
+ integer               :: ik,ib,i_wf
  type(PP_indexes)      :: px
  !
  call PP_indexes_reset(px)

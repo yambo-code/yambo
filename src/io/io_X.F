@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,14 +28,12 @@ integer function io_X(X,Xw,ID)
  use R_lattice,     ONLY:g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
-&                        io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,&
-&                        ver_is_gt_or_eq,io_serial_number,serial_number,&
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
+&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
+&                        io_fragment,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
-&                        io_fragment,IO_OUTDATED_DB,frag_RESPONSE,&
-&                        IO_NO_DATABASE,io_mode,DUMP,&
-&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
+&                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_X_WORLD

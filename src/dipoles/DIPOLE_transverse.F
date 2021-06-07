@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -38,7 +38,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
 &                              compute_P2_dipoles,compute_Spin_dipoles
  use X_m,                 ONLY:l_X_terminator
- use IO_m,                ONLY:io_control,manage_action,RD_CL_IF_END,OP_RD
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,7 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use openmp,        ONLY:n_threads_DIP,OPENMP_set_threads
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:PARALLEL_n_structures_active,COMM_copy,PAR_build_index,&
@@ -146,4 +146,3 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  endif
  !
 end subroutine PARALLEL_global_DIPOLES
-

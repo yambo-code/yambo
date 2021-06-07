@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -140,7 +140,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! BZ sampling
  !==============
  !
- call bz_samp_indexes(k,Xk,q) 
+ call bz_samp_indexes(en,k,Xk,q) 
  !
  ! COLOUMB DRIVER
  !================

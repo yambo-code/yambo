@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -56,7 +56,6 @@ subroutine K_blocks(iq)
  !
  integer      :: i_T,j_T,i_T_start,j_T_start,i_block,iB,i_res_ares,j_res_ares,n_new_blocks,n_BS_blks_CPUs(ncpu)
  integer(IPL) :: local_steps
- logical      :: test_full
  real(SP)     :: N_Ts_total,N_Ts_local
  !
  if (.not.BS_K_coupling) n_new_blocks=1
@@ -64,8 +63,8 @@ subroutine K_blocks(iq)
  !
  ! Count the blocks
  n_BS_blks=0
- do i_T=1,BS_nT_grps
-   do j_T=1,BS_nT_grps
+ do j_T=1,BS_nT_grps
+   do i_T=1,BS_nT_grps
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares
@@ -81,14 +80,16 @@ subroutine K_blocks(iq)
  BS_blk(:)%size(1)=0
  BS_blk(:)%size(2)=0
  !
- ! Define blocks parameters
+ ! Allocate the blocks
+ ! Proceed by columns since we are in fortran
+ !
  n_BS_blks=0
  TMP_SIZE=0
  BS_IO_dim=0
  i_T_start=1
  j_T_start=1
- do i_T=1,BS_nT_grps
-   do j_T=1,BS_nT_grps
+ do j_T=1,BS_nT_grps
+   do i_T=1,BS_nT_grps
      !
      i_res_ares=BS_T_grp(i_T)%i_res_ares
      j_res_ares=BS_T_grp(j_T)%i_res_ares

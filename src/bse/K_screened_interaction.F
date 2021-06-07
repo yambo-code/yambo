@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -32,7 +32,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
- use IO_m,         ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,&
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
  use cuda_m,       ONLY:have_cuda
@@ -51,7 +52,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  real(SP)   :: rtmp
  integer    :: nibz
  !
- integer    :: BS_W_size2,i_g2,i_g3,iq_W
+ integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
  logical    :: W_is_em1s,W_is_pp
  !
  ! I/O
@@ -68,25 +69,17 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    call section('+','Screened interaction header I/O')
    !===================================================
    !
-   ! X%ng are the G's in the X DB while BS_n_g_W the G's I want to read.
-   ! Now to read only BS_n_g_W components I need to redefine X%ng
+   if (X%ng<BS_n_g_W) call warning(" Using screening with less G than Weh interaction")
    !
-   X%ng=BS_n_g_W
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
    !
    if(io_X_err<0) return
    !
-   ! X%ng is set to BS_n_g_W to VERIFY if there are enough bands.
-   ! From now on it is used to keep track of the actual sixe of W in the DB
-   !
-   X%ng=X%ng_db
-   !
  endif
  !
  call elemental_collision_free(isc)
  !
- X%ng=BS_n_g_W
  if (.not.l_td_hf) then
    !
    ! PP/Epsm1S DBs
@@ -94,8 +87,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    W_is_em1s=X%whoami==2
    W_is_pp  =X%whoami==4
    !
-   if (W_is_em1s) call X_alloc('X',(/BS_n_g_W,BS_n_g_W,1/))
-   if (W_is_pp)   call X_alloc('X',(/BS_n_g_W,BS_n_g_W,2/))
+   if (W_is_em1s) call X_alloc('X',(/X%ng,X%ng,1/))
+   if (W_is_pp)   call X_alloc('X',(/X%ng,X%ng,2/))
    !
  endif
  !
@@ -140,42 +133,43 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
        return
      endif
      !
-     forall(i_g2=1:BS_n_g_W) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
+     forall(i_g2=1:X%ng) X_mat(i_g2,i_g2,1)=X_mat(i_g2,i_g2,1)+1._SP
      !
-#ifdef _CUDA
+#if defined _CUDA
      ! device <- host transfer
      X_mat_d=X_mat
      !
      ! CUDA Fortran workarounds
      gamp_d => isc%gamp_d
      nibz=q%nibz
+#endif
      !
      if (BS_W_is_diagonal) then
        !$cuf kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
-          BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2,i_g2,1),SP)*gamp_d(i_g2,1)
-       enddo
-     else if (.not.BS_W_is_diagonal) then
-       !$cuf kernel do(2) <<<*,*>>>
-       do i_g3=1,BS_n_g_W
-         do i_g2=1,BS_n_g_W
-           BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2,i_g3,1)*gamp_d(i_g2,i_g3)
-           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,nibz+iq_W)=X_mat_d(i_g3,i_g2,1)*gamp_d(i_g2,i_g3)
-         enddo
-       enddo
-     endif
+          i_g2_mat=min(i_g2,X%ng)
+#if defined _CUDA
+          BS_W(i_g2,1,iq_W)=real(X_mat_d(i_g2_mat,i_g2_mat,1),SP)*gamp_d(i_g2,1)
 #else
-     if (BS_W_is_diagonal) then
-       forall(i_g2=1:BS_n_g_W) BS_W(i_g2,1,iq_W)=real(X_mat(i_g2,i_g2,1),SP)*isc%gamp(i_g2,1)
+          BS_W(i_g2,1,iq_W)=real(X_mat(i_g2_mat,i_g2_mat,1),SP)*isc%gamp(i_g2,1)
+#endif
+       enddo
      else if (.not.BS_W_is_diagonal) then
+       !$cuf kernel do(1) <<<*,*>>>
        do i_g3=1,BS_n_g_W
+         i_g3_mat=min(i_g3,X%ng)
          do i_g2=1,BS_n_g_W
-           BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2,i_g3,1)*isc%gamp(i_g2,i_g3)
-           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3,i_g2,1)*isc%gamp(i_g2,i_g3)
+           i_g2_mat=min(i_g2,X%ng)
+#if defined _CUDA
+           BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2_mat,i_g3_mat,1)*gamp_d(i_g2,i_g3)
+           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,nibz+iq_W)=X_mat_d(i_g3_mat,i_g2_mat,1)*gamp_d(i_g2,i_g3)
+#else
+           BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2_mat,i_g3_mat,1)*isc%gamp(i_g2,i_g3)
+           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3_mat,i_g2_mat,1)*isc%gamp(i_g2,i_g3)
+#endif
          enddo
        enddo
      endif
-#endif
      !
    else
      !
@@ -201,6 +195,5 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  call elemental_collision_free(isc)
  !
  if (.not.l_td_hf) call X_alloc('X')
- X%ng=X%ng_db
  !
 end subroutine

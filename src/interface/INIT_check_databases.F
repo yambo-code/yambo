@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -36,7 +36,8 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
  use COLL_interfaces,ONLY:io_COLLISIONS

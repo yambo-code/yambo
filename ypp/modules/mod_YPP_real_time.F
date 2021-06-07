@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -120,6 +120,7 @@ module YPP_real_time
    integer  :: W_n_steps           =0       ! number of steps in energy mesh
    real(SP) :: delta_T             =0._SP   ! delta T
    real(SP) :: T_range(2)          =0._SP   ! time windows for the transform
+   integer  :: T_n_range(2)        =0       ! lower and upper value of time range
    integer  :: T_n_steps           =0       ! number of steps in Time mesh
    real(SP) :: damp_factor         =0._SP   ! factor used in damping
    real(SP) :: Field_damp_factor   =0._SP   ! factor used deduced from the Field 

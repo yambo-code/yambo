@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -43,6 +43,7 @@ module openmp
  integer     :: n_threads_DIP   = 0  
  integer     :: n_threads_K     = 0  
  integer     :: n_threads_NL    = 0
+ integer     :: n_threads_BZINDX= 0
  integer     :: n_threads_now   = 0
  logical     :: master_thread   = .TRUE.
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -30,8 +30,8 @@ integer function io_NL(ID)
  use real_time,     ONLY:NE_steps
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_bulk,read_is_on,write_is_on,io_header,io_extension,&
+ use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
 &                        io_fragment,io_elemental
  !
 #if defined _TIMING
@@ -46,7 +46,7 @@ integer function io_NL(ID)
  !
  ! Work Space
  !
- integer              :: i_fragment,io_err,ID_frag
+ integer              :: i_fragment,ID_frag
  character(schlen)    :: VAR_name
  integer, parameter   :: i_Prb=1
  !

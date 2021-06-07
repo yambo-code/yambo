@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,8 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:bare_qpg,nXkbz,bz_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_RD,RD_CL,&
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_RD,RD_CL,&
 &                        NONE,OP_WR_CL,REP,VERIFY
  use frequency,     ONLY:w_samp
 #include<memory.h>

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -50,7 +50,8 @@ subroutine K_diago_driver(iq,W,X_static)
  use LIVE_t,         ONLY:live_timing
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:K_diago_response_functions,LINEAR_ALGEBRA_driver,PL_diago_residual
- use IO_m,           ONLY:io_control,REP,VERIFY,OP_WR_CL,OP_RD_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:REP,VERIFY,OP_WR_CL,OP_RD_CL
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
 #if defined _SLEPC && !defined _SLEPC_OFF
@@ -61,7 +62,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use slepcepsdef
  use petscmatdef
  !
- use BS_solvers,     ONLY:BSS_slepc_matrix,BSS_slepc_double_grp,Slepc_v,BS_HAYVEC_free
+ use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
 #endif
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
  use MAGNONS,        ONLY:BSS_MAGN_free

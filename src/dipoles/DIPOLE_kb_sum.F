@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, AF
@@ -51,7 +51,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i3,ig,i_spinor,j_spinor,dim_flat
+ integer     :: i1,i2,i_spinor,dim_flat
  !
  complex(SP) DEV_ATTR, target :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo),XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XXv_p(:,:),XXc_p(:,:)

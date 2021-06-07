@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,8 @@ subroutine K_inversion_restart(iq,W)
  use pars,           ONLY:SP,cZERO
  use X_m,            ONLY:Epsilon_ii
  use BS_solvers,     ONLY:BSS_dr,BSS_er,BSS_n_freqs,K_Inversion_data,K_INV_EPS
- use IO_m,           ONLY:io_control,NONE,OP_RD_CL,REP,VERIFY
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:NONE,OP_RD_CL,REP,VERIFY
  use parallel_m,     ONLY:PAR_COM_SLK_INDEX_local
  use com,            ONLY:msg
  use frequency,      ONLY:w_samp,W_reset

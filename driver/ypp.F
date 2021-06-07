@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
@@ -40,10 +41,11 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
+&                              l_gkkp_dg,l_gkkp_plot
 #endif
  !
  implicit none
@@ -167,11 +169,12 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=io_QINDX(k,q,ID)
+ if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,k,ID)
+ i_err_DbGd=io_Double_Grid(en,k,ID,'electrons')
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -199,7 +202,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Specific SECTIONS
  !===================
  !
- if (l_dipoles.and.trim(DIPs_kind)/="MASK") call DIPOLES_driver(Xk,Xen,q)
+ if (l_dipoles.and.trim(DIPs_kind)=="IP") call DIPOLES_driver(Xk,Xen,q)
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !
@@ -232,9 +235,9 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !   ======
 #endif
  !
- l_flag=l_excitons
+ l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_abs
+ l_flag=l_flag .or. l_RT_abs
 #endif
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
@@ -252,7 +255,10 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    if (l_gkkp)                call ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
+   if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
+   if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
  endif
+ !
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !

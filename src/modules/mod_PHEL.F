@@ -37,7 +37,7 @@ module PHEL
  integer              :: PH_Q(2)=0
  !
  ! ... Transitions
- real(SP)             :: PHEL_broad_factor=3
+ real(SP)             :: PHEL_broad_factor=3._SP
  !
  ! ... Double-grid
  integer              :: PH_DbGd_points=-1

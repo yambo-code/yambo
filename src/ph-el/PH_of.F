@@ -26,8 +26,7 @@ subroutine PH_of(q)
  use pars,           ONLY:SP,schlen
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use PHEL,           ONLY:PH_Q,PH_SF_W,PHEL_qp,PH_energy
- use ELPH,           ONLY:elph_branches,PHEL_desc,ELPH_desc,&
- &                        l_GKKP_DB_exists
+ use ELPH,           ONLY:elph_branches,PHEL_desc,ELPH_desc
  use R_lattice,      ONLY:bz_samp
  use interfaces,     ONLY:DESC_write
  use QP_m,           ONLY:l_extended_output,QP_Sc_steps,l_QP_eval_GF,l_QP_eval_Z
@@ -44,7 +43,7 @@ subroutine PH_of(q)
  character(schlen):: Gfile
  ! SF's
  real(SP)         :: PI_ref
- complex(SP)      :: D(QP_Sc_steps),QPH_Z,OMS_freq,QPH_freq
+ complex(SP)      :: D(QP_Sc_steps),QPH_Z,PI_OMS,QPH_freq
  !
  call OUTPUT_add_column("ph",action="reset")
  call OUTPUT_add_column("ph",action="open")
@@ -58,7 +57,7 @@ subroutine PH_of(q)
      ph_freq=PH_energy(q,il,iq)
      !
      ! PI -> quasiphonon props
-     call PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
+     call PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,PI_OMS,QPH_freq)
      !
      ! GF 
      if (l_QP_eval_GF) then
@@ -81,8 +80,8 @@ subroutine PH_of(q)
      !
      ! o.ph
      call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
-     call OUTPUT_add_column("ph",TITLES=(/"Energy"/),R_VALUES=(/ph_freq/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"Width(OMS)"/),R_VALUES=(/-aimag(OMS_freq)/2./),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"W^0_ph"/),R_VALUES=(/ph_freq/),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(OMS)"/),R_VALUES=(/-aimag(PI_OMS)/2./),UNIT="meV")
      !
      if (l_extended_output) then
        call OUTPUT_add_column("ph",TITLES=(/"Width(interb)"/),R_VALUES=(/-PHEL_qp%interband(il,iq)/),UNIT="meV")
@@ -95,8 +94,8 @@ subroutine PH_of(q)
        call OUTPUT_add_column("ph",TITLES=(/"Im[Z]"/),R_VALUES=(/aimag(QPH_Z)/))
        delta_ph_freq=0._SP
        if (real(QPH_freq)>0._SP) delta_ph_freq=real(QPH_freq)-ph_freq
-       call OUTPUT_add_column("ph",TITLES=(/"Re[\Delta\Omega]"/),R_VALUES=(/delta_ph_freq/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"-Im[\Omega]"/),R_VALUES=(/-aimag(QPH_freq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"W_ph-W^0_ph"/),R_VALUES=(/delta_ph_freq/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width"/),R_VALUES=(/-aimag(QPH_freq)/),UNIT="meV")
      endif
      !
      call OUTPUT_add_column("ph",action="write")

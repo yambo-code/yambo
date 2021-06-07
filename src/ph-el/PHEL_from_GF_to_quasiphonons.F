@@ -21,8 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QPH_freq)
+subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,PI_OMS,QPH_freq)
  !
+ use drivers,        ONLY:l_life
  use pars,           ONLY:SP,cI
  use units,          ONLY:HA2EV
  use PHEL,           ONLY:PH_SF_W,PHEL_qp
@@ -32,7 +33,7 @@ subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QP
  !
  integer          :: il,iq
  real(SP)         :: ph_freq,PI_ref
- complex(SP)      :: D(QP_Sc_steps),QPH_Z,OMS_freq,QPH_freq
+ complex(SP)      :: D(QP_Sc_steps),QPH_Z,PI_OMS,QPH_freq
  !
  ! Work Space
  !
@@ -43,18 +44,23 @@ subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,PI_ref,D,QPH_Z,OMS_freq,QP
  i_err=0
  !
  ! PI_ref
- PI_ref=real ( return_PI(0._SP) )
+ if (.not.l_life) PI_ref=real ( return_PI(0._SP) )
  !
  ! OMS
- OMS_freq=return_PI( ph_freq )
- QPH_Z=ph_freq/OMS_freq
+ if (l_life) then
+   PI_OMS=PHEL_qp%PI(il,iq,1)
+   return
+ else
+   PI_OMS=return_PI( ph_freq )
+ endif
+ QPH_Z=ph_freq/PI_OMS
  if (On_Mass_Shell_approx) return
  !
  ! Beta
- beta= (return_PI( ph_freq + QP_G_damp)-OMS_freq)/QP_G_damp
+ beta= (return_PI( ph_freq + QP_G_damp)-PI_OMS)/QP_G_damp
  !
  ! QuasiPhonon (QPH)
- sqrt_arg= (beta*ph_freq)**2-4.*ph_freq*(beta*ph_freq-OMS_freq+PI_ref-ph_freq)
+ sqrt_arg= (beta*ph_freq)**2-4.*ph_freq*(beta*ph_freq-PI_OMS+PI_ref-ph_freq)
  Poles(1)=(beta*ph_freq+sqrt( sqrt_arg))/2._SP
  Poles(2)=(beta*ph_freq-sqrt( sqrt_arg))/2._SP
  if (real(sqrt_arg)<0) then

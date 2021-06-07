@@ -119,7 +119,9 @@ subroutine PHEL_driver(E,k,q)
  ! ...DbGd in the full BZ
  l_PH_uses_E_FineGd=k%FGbz%N>0
  call k_ibz2bz(k,'i',.true.)
- if (.not.l_PH_uses_E_FineGd) then
+ if (l_PH_uses_E_FineGd) then
+   if (PH_DbGd_points<0) PH_DbGd_points=k%FGbz%N
+ else
    call bz_samp_FineGd_alloc(k%FGbz,k%nbz)
    call bz_samp_FineGd_default(k%FGbz,k,k%nbz)
    PH_DbGd_points=0
@@ -135,7 +137,9 @@ subroutine PHEL_driver(E,k,q)
  call PHEL_double_grid_subset(k,k_FG,nk_CG)
  !
  ! ... Spectral Function energy points
- if (.not.l_life) then
+ if (l_life) then
+   QP_Sc_steps=1
+ else
    allocate(PH_SF_W(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
    do iq=PH_Q(1),PH_Q(2)
      do il=elph_branches(1),elph_branches(2)

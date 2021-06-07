@@ -62,9 +62,9 @@ integer function io_PH(ID)
 &                                TERMINATOR="all",CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=PHEL_desc)
    call io_variable_elemental(ID,VAR="[PH  ] Branches",I0=ph_modes,TERMINATOR="all",&
 &                                CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=PHEL_desc)
-   call io_variable_elemental(ID,VAR="[PHEL] Q-points",I1=PH_Q,DESCRIPTOR=PHEL_desc,&
+   call io_variable_elemental(ID,VAR="[PHEL]",I1=elph_branches,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
-   call io_variable_elemental(ID,VAR="[PHEL] Branches",I1=elph_branches,DESCRIPTOR=PHEL_desc,&
+   call io_variable_elemental(ID,VAR="[PHEL] Q-points",I1=PH_Q,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="used",CHECK=.TRUE.,OP=(/"==","=="/))
    call io_variable_elemental(ID,VAR="[PHEL] G Damping",R0=QP_G_damp,DESCRIPTOR=PHEL_desc,&
 &                                TERMINATOR="eV",UNIT=HA2EV,CHECK=.TRUE.,OP=(/"=="/))

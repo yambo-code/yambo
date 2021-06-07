@@ -433,10 +433,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(2,'XfnQP_E')
      endif
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
-#if defined  _ELPH
+#if defined _ELPH
      elph_nQ_used=elph_nQ
 #endif
-#if defined  _PHEL
+#if defined _PHEL
      PH_Q=(/1,q%nibz/)
      QP_G_er=(/0.,PH_W_debye/)
 #endif

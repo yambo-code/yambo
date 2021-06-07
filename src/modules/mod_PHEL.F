@@ -24,7 +24,7 @@
 module PHEL
  !
  use frequency,           ONLY:w_samp,W_reset
- use pars,                ONLY:SP,schlen,rZERO,cZERO
+ use pars,                ONLY:SP,schlen,rZERO,cZERO,IPL
  use QP_m,                ONLY:QP_Sc_steps
  use ELPH,                ONLY:elph_branches
  !
@@ -56,7 +56,7 @@ module PHEL
  ! 4 -> ip_fg [k-q (i)bz DbGd], 5 -> i_n [bnd], 6 -> i_np [bnd]
  type phel_scatterings
    !
-   integer               :: N=0        ! Number of accepted transitions
+   integer(IPL)          :: N=0        ! Number of accepted transitions
    integer, allocatable  :: table(:,:) ! Indices of accepted transitions: see above
    !
  end type phel_scatterings             

@@ -405,7 +405,7 @@ subroutine INIT_activate()
 #if defined  _PHEL 
    !
    if (l_phel_corr) then
-     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize GDamping')
+     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
      call initactivate(1,'ExtendOut')
      if (l_gw0) then
        call initactivate(1,'DysSolver OnMassShell')

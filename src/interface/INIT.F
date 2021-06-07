@@ -437,7 +437,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      elph_nQ_used=elph_nQ
 #endif
 #if defined _PHEL
-     PH_Q=(/1,q%nibz/)
+     PH_Q=(/1,elph_nQ/)
      QP_G_er=(/0.,PH_W_debye/)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')

@@ -23,7 +23,7 @@
 !
 subroutine Build_V_xc_mat(V_xc,V_xc_mat)
  !
- use pars,           ONLY:SP,cZERO,cI,zero_dfl,rZERO
+ use pars,           ONLY:SP,cZERO,cI,rZERO,tiny_dfl
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
  use xc_functionals, ONLY:magn
@@ -62,8 +62,8 @@ subroutine Build_V_xc_mat(V_xc,V_xc_mat)
    magn_versor=rZERO
    do ifft=1,fft_size
      mod_mag=v_norm(magn(ifft,:))
-     if(mod_mag<zero_dfl) magn_versor(ifft,:)=rZERO
-     if(mod_mag>=zero_dfl) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
+     if(mod_mag<tiny_dfl) magn_versor(ifft,:)=rZERO
+     if(mod_mag>=tiny_dfl) magn_versor(ifft,:)=magn(ifft,:)/mod_mag
    enddo
    !
    ! Vxc^+=(Vxc_up+Vxc_down)/2

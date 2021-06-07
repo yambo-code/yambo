@@ -41,22 +41,24 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,&
-&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL
+&                        deliver_IO_error_message,OP_WR_CL,OP_APP_CL,DUMP
  use QP_ctl_m,      ONLY:QP_apply
  use QP_m,          ONLY:QP_t,QP_G_damp,QP_Sc,QP_n_states,QP_table,&
 &                        QP_dSc_steps,QP_dSc_delta,QP_solver,QP_Sc_steps,&
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,&
-&                        QP_PH_n_G_bands,PH_W_debye,&
-&                        elph_nQ,GKKP,elph_use_q_grid,&
-&                        setup_k_plus_q_levels,elph_nQ_used,&
-&                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,&
-&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,&
+ use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
+&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,&
+&                        elph_nQ,GKKP,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
+&                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,E_kpq_sh_fact, &
+&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
+ use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
+&                        INTERPOLATE_is_quiet    
  use functions,     ONLY:Fermi_fnc_derivative
+ use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
@@ -70,8 +72,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
- integer          ::io_err,ID,IO_ACT
- integer, external::io_ELPH
+ integer          ::io_err,ID,IO_ACT,ID_DG
+ integer, external::io_ELPH,io_Double_Grid
  character(schlen)::ch
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   elph_gkkp_sq,gsqF_damping,E_random_shift
@@ -201,6 +203,45 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
  !
+ ! Check double-grid
+ !-------------------
+ !
+ ! Fill the PH_E array
+ !
+ PH_freqs%nk=nq_to_sum
+ PH_freqs%nb=ph_modes
+ YAMBO_ALLOC(PH_freqs%E,(nq_to_sum,ph_modes,1))
+ ! 
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+ !
+ if(io_err==0) then
+   if(elph_use_q_grid) then
+     call msg('sr','Using PH-double-grid ')
+     use_PH_DbGd=.TRUE.
+     call ELPH_alloc("DGRID",GKKP)
+   else
+     call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
+     use_PH_DbGd=.FALSE.
+   endif
+ endif
+ !
+ ! Interpolate the E(k+q) energies for the double-grid
+ !
+ if(use_PH_DbGd.and.STRING_same(EkplusQ_mode,'interp')) then
+   !      
+   call msg('sr','E(k+q) calculated using a smooth Fourier interpolation')
+   INTERPOLATE_is_serial=.TRUE.
+   INTERPOLATE_is_quiet =.TRUE.
+   INTERP_shell_factor  =E_kpq_sh_fact
+   call INTERPOLATION_BZ_setup(k)
+   INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
+   call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+   call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
+   !
+ endif
+ !
  ! Timing steps
  !--------------
  live_timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
@@ -264,6 +305,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    endif
    !
    if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
+   !
+   if(use_PH_DbGd.and.STRING_same(EkplusQ_mode,'interp').and.iq_bz/=1) call En_k_plus_q_interpolate(k,q,en,iq_bz)
    !
    do i_qp=1,QP_n_states
      !
@@ -331,89 +374,24 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! with q_YAMBO = - q_PW
          !
-         elph_gkkp_sq=conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
-&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E
+         elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
+&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
-         ! Frequency Loop
+         ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
          !
-         do iw=1,gsqF_energy_steps
-           !
-           ! Define gsqF denominators
-           !
-           if (elph_use_q_grid) then
-             delta_E         =Sc_W(i_qp)%p(iw)-en%E(ob,ok,1)
-             delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
-             f_occ=en%f(ob,ok,1)/spin_occ
-             one_minus_2f_occ=(1._SP-2._SP*f_occ)
-           else
-             delta_E         =Sc_W(i_qp)%p(iw)-GKKP%E_kpq(iq_db)%E(ob,ik_bz,1)
-             delta_E_at_gamma=en%E(ib,ik,1)   -GKKP%E_kpq(1)%E(ob,ik_bz,1)
-             f_occ=GKKP%E_kpq(iq_db)%f(ob,ik_bz,1)/spin_occ
-             one_minus_2f_occ=(1._SP-2._SP*f_occ)
-           endif
-           !
-           gsqF_damping=aimag( Sc_W(i_qp)%p(iw) )
-           !
-           ! Lifetimes
-           !-----------
-           !
-           ! "Bose" Term
-           !
-           gsqF_life_bose(i_qp,iq_mem,il,iw)= &
-&              gsqF_life_bose(i_qp,iq_mem,il,iw)+2.*pi*elph_gkkp_sq*q_weight(iq_loop)*&
-&              ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) + &
-&              QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )
-           !
-           ! "f" Term
-           !
-           gsqF_life_f(i_qp,iq_mem,il,iw)= &
-&               gsqF_life_f(i_qp,iq_mem,il,iw)+pi*elph_gkkp_sq*q_weight(iq_loop)*&
-&               ( ( Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
-&               QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) )*f_occ-&
-&               Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) )
-           !
-           if (eval_G_using_KK) cycle
-           !
-           ! QP's energies
-           !--------------
-           !
-           ! Correction to the Fan-DW term (not in Cardona-Allen paper, possibly
-           ! important for metals).
-           !
-           gsqF_ca_corr(i_qp,iq_mem,il,iw)=gsqF_ca_corr(i_qp,iq_mem,il,iw)+elph_gkkp_sq*&
-&                                              ph_E*one_minus_2f_occ/(delta_E**2-ph_E**2)*q_weight(iq_loop)
-           !
-           ! Cardona-Allen formulation
-           !
-           ! (a) Fan Term                                          this 2 is to be consistent with AC definition
-           !                                                       |
-           !                                                      \/
-           gsqF_fan(i_qp,iq_mem,il,iw)=gsqF_fan(i_qp,iq_mem,il,iw)+2._SP*elph_gkkp_sq*&
-&                                      delta_E/(delta_E**2-ph_E**2)*q_weight(iq_loop)
-           !
-         enddo
+         call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
          !
-         ! The DW term comes from a perturbation theory expansion
-         ! which does not allow zero-energy transitions between the
-         ! perturbed stated and itself
-         !
-         if (abs(delta_E_at_gamma)<DW_deltaE_treshold) cycle
-         !
-         ! (b) Debye Waller Term
-         !
-         gsqF_dw(i_qp,iq_mem,il)=gsqF_dw(i_qp,iq_mem,il)-1._SP/2._SP*&
-&                                    2._SP*GKKP%dVr(il,ib,ob,ik_bz,1)/delta_E_at_gamma*q_weight(iq_loop)/2._SP/ph_E
-         !                          /\
-         !                           |
-         !                           this 2 is to be consistent with AC definition (see Eq. 5, PRB 31, 2163)
        enddo
        !
        call live_timing(steps=1)
        !
      enddo
      !
-   enddo
- enddo
+   enddo  ! i_qp loop
+   !
+   if(use_PH_DbGd.and.iq_loop/=1) call FineGd_E_kpq_components_reset(GKKP%E_dg_kpq(iq_loop))
+   !
+ enddo ! iq_bz loop
  !
  call live_timing()
  !

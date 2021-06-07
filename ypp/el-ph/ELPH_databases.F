@@ -166,6 +166,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! ... Q-grid is uniform?
  !------------------------
+ DB_Q_map=0
  do idb=1,DB_nq
    do iq=1,nqibz
      v=DB_PH_qpt(iabs(IDB),:)

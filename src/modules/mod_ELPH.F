@@ -27,7 +27,7 @@ module ELPH
  use electrons,      ONLY:levels,E_reset
  use descriptors,    ONLY:IO_desc
  !
- implicit none
+#include<memory.h>
  !
  ! Dumensions
  integer   :: ph_modes=0
@@ -54,6 +54,24 @@ module ELPH
  real(SP),    allocatable :: PH_acoustic_speed(:,:)
  logical,     allocatable :: PH_acoustic_branch(:)
  !
+ ! Double grid
+ !
+ logical              :: use_PH_DbGd
+ !
+ type(levels)         :: PH_freqs
+ !
+ character(schlen)    :: EkplusQ_mode
+ integer              :: ID_E_kpq=1
+ integer              :: ID_E_kpq_obj=1
+ real(SP)             :: E_kpq_sh_fact=20.0_SP
+ !
+ type E_kpq_fine_grid
+   integer         :: nk
+   integer         :: nq_around
+   real(SP),   allocatable :: E_kpq(:,:,:,:)
+   real(SP),   allocatable :: f_kpq(:,:,:,:)
+ end type
+ !
  ! GKKP Matrix Elements and derived quantities
  type GKKP_me
    !
@@ -65,6 +83,9 @@ module ELPH
    !
    ! Phonon assisted energy/occupation levels
    type(levels),allocatable :: E_kpq(:)
+   !
+   ! Phonon assisted double-grid energy/occupation levels (in the q-BZ)
+   type(E_kpq_fine_grid),   allocatable :: E_dg_kpq(:)
    !
    integer                  :: Nq_mem=0
    integer                  :: Nk_mem=0
@@ -125,6 +146,29 @@ module ELPH
          GKKP%E_kpq(iq)%f(ib,ik,1)=spin_occ*Fermi_fnc(GKKP%E_kpq(iq)%E(ib,ik,1),Tel)
        enddo
      enddo
+   end subroutine
+   !
+   subroutine FineGd_E_kpq_components_reset(E)
+     !      
+     type(E_kpq_fine_grid):: E
+     !
+     E%nk     =0
+     E%nq_around=0
+     !
+     YAMBO_FREE(E%E_kpq)
+     YAMBO_FREE(E%f_kpq)
+     !
+   end subroutine
+   !
+   subroutine FineGd_E_kpq_alloc(E)
+     !      
+     use electrons,      ONLY:n_sp_pol
+     !
+     type(E_kpq_fine_grid):: E
+     !
+     YAMBO_ALLOC(E%E_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
+     YAMBO_ALLOC(E%f_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
+     !
    end subroutine
    !
 end module ELPH

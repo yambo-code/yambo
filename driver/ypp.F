@@ -167,7 +167,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! BZ sampling index 
  !
  call section('*','K-point grid')
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3,5/),MODE=DUMP,ID=ID)
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=io_QINDX(k,q,ID)
  if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !

@@ -38,7 +38,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add,IO_desc_append
 #if _ELPH
- use ELPH,           ONLY:ELPH_desc
+ use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
  !
 #include<memory.h>
@@ -140,6 +140,9 @@ integer function io_QP_and_GF(what,qp,ID)
    if (QP_DB_kind==QP_SE_POLARON) then
      call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
      call IO_desc_append(ELPH_desc,qp%desc)
+     if (ver_is_gt_or_eq(ID,revision=19875)) then 
+       call IO_desc_add(qp%desc,kind="l",str='PH double-grid',L=use_PH_DbGd)
+     endif
    endif
 #endif
  endif

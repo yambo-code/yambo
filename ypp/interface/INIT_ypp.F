@@ -289,6 +289,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
      endif
+#if defined _YPP_ELPH
+     if ( trim(rstr_piece(i1)) == 'gkkp') then
+       l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
+       l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
+       l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
+     endif
+#endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
        if (STRING_match(rstr_piece(i1+1),'ip') ) DIPs_kind="IP"
        if (STRING_match(rstr_piece(i1+1),'exc')) DIPs_kind="EXCITONIC"
@@ -381,9 +388,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_ELPH
  !
- if (l_eliashberg)       call initactivate(1,'eliashberg')
- if (l_gkkp)             call initactivate(1,'gkkp')
- if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
+ if (l_eliashberg)        call initactivate(1,'eliashberg')
+ if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp_db)           call initactivate(1,'gkkp_db')
+ if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
+ if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')
+ if (l_ph_ass_dos)        call initactivate(1,'ph_ass_dos')
  !
 #endif
 #if defined _YPP_SC
@@ -437,6 +447,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+ l_gkkp_db   =runlevel_is_on('gkkp_db')
+ l_gkkp_dg   =runlevel_is_on('gkkp_dg')
+ l_gkkp_plot =runlevel_is_on('gkkp_plot')
  l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
@@ -503,7 +516,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
-   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
+   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius DoNotDistr")
    if (l_regular_grid)  call initactivate(1,"NoWeights cooOut Shift01 INTERP_Grid")
  endif
  !
@@ -683,14 +696,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
-     call initactivate(1,"PHfreqF DOSERange DOSESteps DOS_broad")
+     call initactivate(1,"PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
      call initactivate(2,"BoseTemp")
    endif
 #endif
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
+ if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode TestPHDGrid")
+ if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
@@ -714,6 +730,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
+ if (.not.l_init_QP) l_init_QP=l_gkkp_plot
 #endif
 #if defined _YPP_SC
  if (.not.l_init_QP) l_init_QP=(l_electrons.and.l_mean_potential).or.l_angular_momentum.or.l_position

@@ -40,7 +40,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call IO_desc_reset(DIP_desc)
  !
- call def_variable_elemental(ID,"PARS",11,SP,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"PARS",11,SP,0)
  !
  call io_variable_elemental(ID,DB_I1=Dip%db_ib,VAR="DIP band range",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/),&
 &                           DESCRIPTOR=DIP_desc)
@@ -59,11 +59,11 @@ integer function variables_DIPOLES(Dip,ID)
  !
  ! Character variables
  !
- call def_variable_elemental(ID,"APPROACH",1,0,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"APPROACH",1,0,0)
  call  io_variable_elemental(ID,VAR="Approach used",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
- call def_variable_elemental(ID,"KINDS",1,0,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"KINDS",1,0,0)
  call  io_variable_elemental(ID,VAR="Dipoles computed",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/),&
 &                           DESCRIPTOR=DIP_desc)
  !

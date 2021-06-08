@@ -56,6 +56,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
+ use ELPH,          ONLY:EkplusQ_mode
 #endif
  !
  implicit none
@@ -88,6 +89,9 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'interpolate',  '[R] Interpolate')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
+ call it('r',defs,'gkkp_db',   '[R] GKKP database')
+ call it('r',defs,'gkkp_dg',   '[R] GKKP double grid')
+ call it('r',defs,'gkkp_plot',   '[R] GKKP plot')
  call it('r',defs,'ph_ass_dos',   '[R] Phonon-assisted DOS')
 #endif
 #if defined _YPP_SC
@@ -231,6 +235,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
+ call it('f',defs,'DoNotDistr',    ' Do not generate random points around the k-points of the BZ') 
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
@@ -293,10 +298,12 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
+ call it(defs,'EkplusQmode',  'E(k+q) energies calculation mode (interp | dftp)',EkplusQ_mode)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'TestPHDGrid','Test double-grid: set all values of the fine grid equal to the couse ones')
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  !

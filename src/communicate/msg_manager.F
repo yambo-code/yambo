@@ -65,7 +65,8 @@ subroutine msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,NEW_lines)
      if (len_trim(ch_piece(i2))==0) cycle
      do i1=1,n_ofs_defined
        if (len_trim(of_name(i1))==0) cycle
-       stripped_file_name=STRING_remove(of_opened(i1),"-"//trim(jobstr))
+       stripped_file_name=of_opened(i1)
+       if(len_trim(jobstr)>0) stripped_file_name=STRING_remove(of_opened(i1),"-"//trim(jobstr))
        if (index( stripped_file_name,trim(ch_piece(i2)) )/=0) then
          if (len_trim(of_opened(i1))==0) call error(' Trying to write on closed file '//trim(of_name(i1)))
          of_unit(i1) =-of_unit(i1)

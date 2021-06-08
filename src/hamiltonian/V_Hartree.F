@@ -36,13 +36,13 @@ subroutine V_Hartree(rho,vhr)
  ! 
  implicit none
  !
- integer  :: ig
- real(SP) :: rho(fft_size)
- real(SP) :: vhr(fft_size,n_spin)
+ real(SP), intent(in)  :: rho(fft_size)
+ real(SP), intent(out) :: vhr(fft_size,n_spin)
  !
  ! Work Space
  !
  complex(DP) :: rhog(fft_size),vhtmp(fft_size),vhg(QP_ng_SH)
+ integer     :: ig
  !
  call timing('V_Hartree',OPR='start')
  !

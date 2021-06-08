@@ -65,7 +65,11 @@ integer function io_Overlaps(Dip,ID)
  !
  io_extension(ID)='Overlap'
  !
- io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ if (any((/io_sec(ID,:)==1/))) then
+   io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ else
+   io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ endif
  if (io_Overlaps/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -81,7 +85,7 @@ integer function io_Overlaps(Dip,ID)
  if(io_Overlaps/=0) goto 1
  !
  if (i_fragment==0)               goto 1
- if (i_fragment> n_sp_pol*nXkbz) goto 1
+ if (i_fragment> n_sp_pol*nXkbz)  goto 1
  !
  ! if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik_bz)
  !

@@ -182,7 +182,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  io_QINDX_err=0
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) io_QINDX_err=qindx_B_init(qindx_ID)
- if(io_QINDX_err/0) call error('Error reading qindx_B database ')
+ if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
  !======================

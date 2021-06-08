@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PHEL_Self_Energy(E,k,q,k_FG,E_FG)
+subroutine PHEL_Self_Energy(iq_eval,E,k,q,k_FG,E_FG)
  !
  ! This routine computes the phonon lifetimes in equilibrium (i.e., linewidths).
  ! 
@@ -37,16 +37,17 @@ subroutine PHEL_Self_Energy(E,k,q,k_FG,E_FG)
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use RT_occupations, ONLY:RT_el_occ,RT_ho_occ
  use RT_lifetimes,   ONLY:RT_PE_life
- use ELPH,           ONLY:MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
-&                         l_GKKP_DB_exists
+ use ELPH,           ONLY:MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq
  use parallel_m,     ONLY:PARs_PH_Q_ibz
  use QP_m,           ONLY:QP_G_damp,l_extended_output,l_QP_eval_GF,l_QP_eval_Z,On_Mass_Shell_approx
  use LIVE_t,         ONLY:live_timing
  use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info,PH_SF_W,PH_Q,PHEL_qp,PHEL_gimme_Ks,PH_energy
  use timing_m,       ONLY:timing
+ use stderr,         ONLY:intc
  !
  implicit none
  !
+ integer,           intent(in) :: iq_eval
  type(levels),      intent(in) :: E
  type(bz_samp),     intent(in) :: k,q
  type(bz_fine_grid),intent(in) :: k_FG
@@ -75,8 +76,9 @@ subroutine PHEL_Self_Energy(E,k,q,k_FG,E_FG)
  if (l_QP_eval_Z)           sec_name='Phonon Self-Energy'
  if (On_Mass_Shell_approx)  sec_name='Adiabatic phonon Self-Energy'
  if (l_life)                sec_name='phonon Lifetimes'
- call section("=",trim(sec_name))
- call live_timing(trim(sec_name),phel_info%N)
+ !
+ if (iq_eval>0) call live_timing(trim(sec_name)//"@ Q"//trim(intc(iq_eval)),int(phel_info%N))
+ if (iq_eval<0) call live_timing(trim(sec_name),int(phel_info%N))
  call timing(trim(sec_name),OPR='start')
  !
  ! Main loop over allowed transitions

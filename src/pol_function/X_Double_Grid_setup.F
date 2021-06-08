@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
+subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  !
  ! Define which kpts I will use in a consistent way between q=0 and q/=0
  ! For q/=0 this change makes the code much faster as it avoids the use of all
@@ -33,7 +33,7 @@ subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
  use X_m,           ONLY:use_X_DbGd,X_DbGd_nkpt_at_q,X_DbGd_percentual,X_DbGd_nkpt_at_q_table
  use com,           ONLY:msg
  use stderr,        ONLY:intc
- use R_lattice,     ONLY:nXkbz,bz_samp,qindx_X,smallest_q_norm
+ use R_lattice,     ONLY:nXkbz,bz_samp,qindx_X,smallest_q_norm,bz_fine_grid
  use vec_operate,   ONLY:v_norm,iku_v_norm
  use parallel_m,    ONLY:PAR_Xk_nbz,PAR_IND_Xk_bz,PAR_Xk_bz_index,PAR_COM_Xk_bz_INDEX
  use parallel_int,  ONLY:PP_redux_wait
@@ -47,9 +47,10 @@ subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
  !
 #include<memory.h>
  !
- integer            :: iq
- type(bz_samp)      :: k
- real(SP) ,optional :: nTrans_percent,Radius
+ integer                       :: iq
+ type(bz_samp)                 :: k
+ type(bz_fine_grid),intent(in) :: k_FGbz
+ real(SP),            optional :: nTrans_percent,Radius
  ! 
  ! Work Space
  !
@@ -97,8 +98,8 @@ subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
 #else
    ikpbz      =qindx_X(iq,ikbz,1) 
 #endif
-   N_all_pairs=N_all_pairs+ (k%FGbz%k_range(ikbz,2)-k%FGbz%k_range(ikbz,1)+1) &
-&                          *(k%FGbz%k_range(ikpbz,2)-k%FGbz%k_range(ikpbz,1)+1)
+   N_all_pairs=N_all_pairs+ (k_FGbz%k_range(ikbz,2)-k_FGbz%k_range(ikbz,1)+1) &
+&                          *(k_FGbz%k_range(ikpbz,2)-k_FGbz%k_range(ikpbz,1)+1)
  enddo
  !
  do while(PERC(1)<X_DbGd_percentual.or.FILL_it)
@@ -131,12 +132,15 @@ subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
      ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)
      ! Fine   grid points are included for ikbz_FineGd>k%bz_DbGd_map(1,ikbz)
      !
-     do ikbz_FineGd=k%FGbz%k_range(ikbz,1),  k%FGbz%k_range(ikbz,2)
-       if(ikbz_FineGd==k%FGbz%k_range(ikbz,1)) k_pt_loc=k%ptbz(ikbz,:)
-       if(ikbz_FineGd> k%FGbz%k_range(ikbz,1)) k_pt_loc=k%FGbz%pt(ikbz_FineGd,:)
-       do ikpbz_FineGd=k%FGbz%k_range(ikpbz,1),k%FGbz%k_range(ikpbz,2)
-         if(ikpbz_FineGd==k%FGbz%k_range(ikpbz,1)) kp_pt_loc=k%ptbz(ikpbz,:)
-         if(ikpbz_FineGd> k%FGbz%k_range(ikpbz,1)) kp_pt_loc=k%FGbz%pt(ikpbz_FineGd,:)
+     do ikbz_FineGd=k_FGbz%k_range(ikbz,1),  k_FGbz%k_range(ikbz,2)
+       !
+       if (ikbz_FineGd==k_FGbz%k_range(ikbz,1)) k_pt_loc=k%ptbz(ikbz,:)
+       if (ikbz_FineGd> k_FGbz%k_range(ikbz,1)) k_pt_loc=k_FGbz%pt(ikbz_FineGd,:)
+       !
+       do ikpbz_FineGd=k_FGbz%k_range(ikpbz,1),k_FGbz%k_range(ikpbz,2)
+         !
+         if (ikpbz_FineGd==k_FGbz%k_range(ikpbz,1)) kp_pt_loc=k%ptbz(ikpbz,:)
+         if (ikpbz_FineGd> k_FGbz%k_range(ikpbz,1)) kp_pt_loc=k_FGbz%pt(ikpbz_FineGd,:)
          !
          running_q(:)=(k_pt_loc-kp_pt_loc)
          !
@@ -165,7 +169,7 @@ subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
  enddo 
  !
  if (present(Radius)) then
-   Radius=q_radius/smallest_q_norm*100._SP
+   Radius=q_radius/smallest_q_norm
  endif
  if (present(nTrans_percent)) then
    nTrans_percent=PERC(1)

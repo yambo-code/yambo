@@ -81,7 +81,7 @@ subroutine PH_of(q)
      ! o.ph
      call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
      call OUTPUT_add_column("ph",TITLES=(/"W^0_ph"/),R_VALUES=(/ph_freq/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"Width(OMS)"/),R_VALUES=(/-aimag(PI_OMS)/2./),UNIT="meV")
+     call OUTPUT_add_column("ph",TITLES=(/"Width(OMS)"/),R_VALUES=(/aimag(PI_OMS)*(-.5_SP)/),UNIT="meV")
      !
      if (l_extended_output) then
        call OUTPUT_add_column("ph",TITLES=(/"Width(interb)"/),R_VALUES=(/-PHEL_qp%interband(il,iq)/),UNIT="meV")

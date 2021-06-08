@@ -33,6 +33,7 @@ subroutine PHEL_k_nearest_table(k)
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
+ use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -43,6 +44,8 @@ subroutine PHEL_k_nearest_table(k)
  integer :: iq,ikbz,i_err
  !
  call live_timing('Finding K-Q_custom indices',PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par)
+ !
+ call timing("K-Q indexing",OPR='start')
  !
  KpQ_IO_map=0
  !
@@ -68,5 +71,7 @@ subroutine PHEL_k_nearest_table(k)
  call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  !
  call live_timing( )
+ !
+ call timing("K-Q indexing",OPR='stop')
  !
 end subroutine PHEL_k_nearest_table

@@ -143,12 +143,13 @@ module X_m
  !
  interface
    !
-   subroutine X_Double_Grid_setup(iq,k,nTrans_percent,Radius)
-     use R_lattice,     ONLY:bz_samp
+   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
+     use R_lattice,     ONLY:bz_samp,bz_fine_grid
      use pars,          ONLY:SP
-     integer            :: iq
-     type(bz_samp)      :: k
-     real(SP) ,optional :: nTrans_percent,Radius
+     integer                       :: iq
+     type(bz_samp)                 :: k
+     type(bz_fine_grid),intent(in) :: k_FGbz
+     real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !
    logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)

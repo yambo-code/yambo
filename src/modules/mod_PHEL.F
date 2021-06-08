@@ -37,7 +37,11 @@ module PHEL
  integer              :: PH_Q(2)=0
  !
  ! ... Transitions
- real(SP)             :: PHEL_broad_factor=3._SP
+ real(SP)                 ::PHEL_broad_factor=3._SP
+ real(SP)    ,allocatable ::PHEL_nTrans_percent(:)
+ real(SP)    ,allocatable ::PHEL_Q_Radius(:)
+ integer(IPL),allocatable ::PHEL_N_trans_yes(:)
+ integer(IPL),allocatable ::PHEL_N_trans_tot(:)
  !
  ! ... Double-grid
  integer              :: PH_DbGd_points=-1
@@ -120,11 +124,18 @@ module PHEL
      PHEL_qp%interband=rZERO
      PHEL_qp%intraband=rZERO
      PHEL_qp%approx=rZERO
+     YAMBO_ALLOC(PHEL_nTrans_percent,(PH_Q(1):PH_Q(2)))
+     YAMBO_ALLOC(PHEL_Q_Radius,(PH_Q(1):PH_Q(2)))
+     allocate(PHEL_N_trans_yes(PH_Q(1):PH_Q(2)))
+     allocate(PHEL_N_trans_tot(PH_Q(1):PH_Q(2)))
+     PHEL_nTrans_percent=rZERO
+     PHEL_Q_Radius=rZERO
+     PHEL_N_trans_yes=0
+     PHEL_N_trans_tot=0
    end subroutine
    !
    subroutine PHEL_free( )
      integer       :: iq,il
-     YAMBO_FREE(phel_info%table)
      YAMBO_FREE(KpQ_io_map)
      if (allocated(PH_SF_W)) then
        do iq=PH_Q(1),PH_Q(2)
@@ -137,6 +148,10 @@ module PHEL
      YAMBO_FREE(PHEL_qp%interband)
      YAMBO_FREE(PHEL_qp%intraband)
      YAMBO_FREE(PHEL_qp%approx)
+     YAMBO_FREE(PHEL_nTrans_percent)
+     YAMBO_FREE(PHEL_Q_Radius)
+     deallocate(PHEL_N_trans_yes)
+     deallocate(PHEL_N_trans_tot)
    end subroutine
    !
 end module

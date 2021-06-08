@@ -28,9 +28,10 @@ subroutine PHEL_driver(E,k,q)
  use electrons,      ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,     ONLY:ELPH_alloc
- use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nb
+ use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,&
+&                         l_GKKP_expanded_DB_exists,elph_nb,elph_use_q_grid
  use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&
-&                         PH_DbGd_points,PH_energy
+&                         PH_DbGd_points,PH_energy,KpQ_IO_map,phel_info
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,   ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations, ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
@@ -39,6 +40,7 @@ subroutine PHEL_driver(E,k,q)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
  use frequency,      ONLY:W_reset
+ use parallel_m,     ONLY:PARs_PH_Q_ibz
  !
 #include<memory.h>
  !
@@ -191,41 +193,56 @@ subroutine PHEL_driver(E,k,q)
  ! ... occupations & levels
  call RT_occupations_and_levels_init(QP_PH_n_G_bands,E,k,q,k_FG,E_FG)
  !
- ! Select allowed transitions for phonon scatterings
- !===================================================
- call PH_Grid_Check_Transitions(k,q,QP_PH_n_G_bands,k_FG,E_FG)
- !
- ! Calculation of the lifetimes
- !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
- !  - Out of eq.  (yambo_rt): scatt. rates with lesser/greater S^< and S^>
- !==============================
-#if defined _RT 
- l_initial_equilibrium=.TRUE.
- call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
-#else
- call PHEL_Self_Energy(E,k,q,k_FG,E_FG)
-#endif
- !
- ! Redux
- !=======
-#if defined _RT 
- call PP_redux_wait(RT_PE_life%emit)
- call PP_redux_wait(RT_PE_life%abs)
-#endif
- call PP_redux_wait(PHEL_qp%PI)
- if (l_extended_output) then
-   call PP_redux_wait(PHEL_qp%interband)
-   call PP_redux_wait(PHEL_qp%intraband)
-   call PP_redux_wait(PHEL_qp%approx)
+ ! Get nearest k-q table if using custom qpoints
+ if (.not.elph_use_q_grid) then 
+   !
+   call section("=","K-Q table (non uniform Q-grid)")
+   !--------------------------------------------------
+   YAMBO_ALLOC(KpQ_IO_map,(PH_Q(1):PH_Q(2),k%nbz) )
+   call PHEL_k_nearest_table(k)
  endif
  !
- ! Output
- !========
- call section('=',"Output files and databases")
+ ! Q-loops
  !
+ do iq=PH_Q(1),PH_Q(2)
+   !
+   if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
+   !
+   ! Select allowed transitions for phonon scatterings
+   !===================================================
+   call PH_Grid_Check_Transitions((/iq,iq/),k,q,QP_PH_n_G_bands,k_FG,E_FG)
+   !
+   ! Calculation of the lifetimes
+   !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
+   !  - Out of eq.  (yambo_rt): scatt. rates with lesser/greater S^< and S^>
+   !==============================
+#if defined _RT 
+   l_initial_equilibrium=.TRUE.
+   call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
+#else
+   call PHEL_Self_Energy(iq,E,k,q,k_FG,E_FG)
+#endif
+   !
+   YAMBO_FREE(phel_info%table)
+   !
+ enddo
+ !
+ ! Redux
+ call REDUX(PARs_PH_Q_ibz%COMM_a2a%COMM)
+ call REDUX(PARs_PH_Q_ibz%COMM_i%COMM)
+ !
+ call section("=","Transitions Report")
+ !-------------------------------------
+ call PH_Transitions_Report( )
+ !
+ ! Output DB
+ !===========
+ call section('=',"Output databases")
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
  i_err=io_PH(ID)
  !
+ ! Output file
+ !=============
  call PH_of(q)
  !
  ! Clean
@@ -233,6 +250,20 @@ subroutine PHEL_driver(E,k,q)
  call CLEAN()
  !
  contains
+   !
+   subroutine REDUX(COMM)
+     integer :: COMM
+#if defined _RT 
+!     call PP_redux_wait(RT_PE_life%emit)
+!     call PP_redux_wait(RT_PE_life%abs)
+#endif
+     call PP_redux_wait(PHEL_qp%PI,COMM=COMM)
+     if (l_extended_output) then
+       call PP_redux_wait(PHEL_qp%interband,COMM=COMM)
+       call PP_redux_wait(PHEL_qp%intraband,COMM=COMM)
+       call PP_redux_wait(PHEL_qp%approx,COMM=COMM)
+     endif
+   end subroutine
    !
    subroutine CLEAN()
      call RT_ALL_lifetimes_free(  )

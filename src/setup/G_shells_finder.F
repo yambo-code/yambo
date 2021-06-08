@@ -47,7 +47,7 @@ subroutine G_shells_finder()
  !
  integer :: i_1,i_2,ig_1,ig_2,i_s,i_m,n_g_shells_no_holes
  integer :: G_mod_indx(ng_closed),ng_in_shell_TMP(ng_closed),first_G_in_shell(ng_closed)
- real(SP):: G_mod(ng_closed),g_rotated(3),E_of_shell_TMP(ng_closed)
+ real(SP):: G_mod(ng_closed),g_rotated(3),E_of_shell_TMP(ng_closed),G_thresh
  type(PP_indexes) :: px
  !
  ! I/O
@@ -106,8 +106,16 @@ subroutine G_shells_finder()
  ! Shells build-up by finding equal module G_vectors
  ! ==================================================
  !
+ ! The threshold is defined using the minimum of all directions in case of cells with
+ ! a direction much longer than the others
+ !
+ G_thresh=10._SP
+ G_thresh=min(G_thresh,iku_v_norm((/G_iku_zero(1),0._SP,0._SP/))/10._SP)
+ G_thresh=min(G_thresh,iku_v_norm((/0._SP,G_iku_zero(2),0._SP/))/10._SP)
+ G_thresh=min(G_thresh,iku_v_norm((/0._SP,0._SP,G_iku_zero(3)/))/10._SP)
+ !
  call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
-&                        1.E-5_SP,Include_single_values=.TRUE.)
+&                        G_thresh,Include_single_values=.TRUE.)
  !
  ! Init
  !

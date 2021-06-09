@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,qindx_B
+ use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
@@ -33,15 +33,18 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  implicit none
  !
  character(*)  ::mode
+ integer, intent(in) :: qindx_ID
  integer       ::iq,iq_s
  type(bz_samp) ::k
  type(GKKP_me) ::GKKP
  !
  ! Work Space 
  !
- integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym)
+ integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym),ok_bz_mem
  logical       ::local_K_found(k%nbz),l_bands_reverted
  type(GKKP_me) ::GKKP_expanded
+ integer, external ::qindx_B_init,qindx_B_close 
+ integer       :: qindx_tmp(2),iq_bz
  !
  ! "K" mode
  !==========
@@ -77,13 +80,19 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  !
  call ELPH_alloc("dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
+ qindx_tmp=qindx_B_init(qindx_ID) 
+ !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
    do ok_bz=1,k%nbz
-     if (qindx_B(ik_bz,ok_bz,1)==iq) then
+     !
+     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
+     iq_bz=qindx_tmp(1)
+     !
+     if (iq_bz==iq) then
        ok=k%sstar(ok_bz,1)
        os=k%sstar(ok_bz,2)
        exit
@@ -131,6 +140,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  enddo
  !
  GKKP%dVc=GKKP_expanded%dVc
+ !
+ qindx_tmp=qindx_B_close(qindx_ID)
  !
  call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !

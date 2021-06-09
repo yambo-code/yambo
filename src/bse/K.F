@@ -53,7 +53,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
- use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
+ use xc_functionals,ONLY:F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -107,7 +107,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr,io_QINDX_err
  integer, external ::io_BS,io_BS_PAR_init,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
@@ -198,7 +198,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_init(qindx_ID)
+ io_QINDX_err=0
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) io_QINDX_err=qindx_B_init(qindx_ID)
+ if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
  !======================
@@ -669,9 +671,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  else if (BS_K_is_ALDA) then
    YAMBO_FREE(F_xc)
+   YAMBO_FREE(F_xc_mat)
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_close(qindx_ID)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

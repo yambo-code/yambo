@@ -24,7 +24,7 @@
 subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,D)
  !
  use drivers,        ONLY:l_life
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,rZERO,cZERO
  use units,          ONLY:HA2EV
  use PHEL,           ONLY:PH_SF_W,PHEL_qp,QPH
  use QP_m,           ONLY:QP_Sc_steps,QP_G_damp,l_QP_eval_GF,On_Mass_Shell_approx
@@ -40,6 +40,15 @@ subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,D)
  integer          :: iw,ip,i_err
  complex(SP)      :: sqrt_arg,W,Poles(2)
  real(SP)         :: A(QP_Sc_steps),A_max
+ !
+ ! Zeroing
+ QPH%PI_ref = rZERO
+ QPH%PI_oms = cZERO
+ QPH%beta   = cZERO
+ QPH%Z      = cZERO
+ QPH%Pole   = cZERO
+ QPH%Half_Width_left  = rZERO
+ QPH%Half_Width_right = rZERO
  !
  ! Erroring
  i_err=0
@@ -88,19 +97,18 @@ subroutine PHEL_from_GF_to_quasiphonons(il,iq,ph_freq,D)
    W=real( PH_SF_W(il,iq)%p(iw) ) + cI*0.1_SP/1000._SP/HA2EV
    D(iw)=D_o(ph_freq,W)/(1._SP-D_o(ph_freq,W)*(PHEL_qp%PI(il,iq,iw)-QPH%PI_ref))
    A(iw)=-aimag(D(iw))
-   if (iw>1.and.iw<QP_Sc_steps) then
-     if ( A(iw-1)<A(iw).and.A(iw)>A(iw+1) ) then
-       QPH%Pole=real(W)
-       A_max=A(iw)
-     endif
-   endif
+ enddo
+ !
+ ! MaX
+ A_max=maxval(A)
+ do iw=1,QP_Sc_steps
+   if ( abs(A(iw)-A_max)<1.E-5_SP ) QPH%Pole=real(PH_SF_W(il,iq)%p(iw))
  enddo
  !
  ! +/- Widths
  do iw=1,QP_Sc_steps-1
-   W=real( PH_SF_W(il,iq)%p(iw) ) + cI*0.1_SP/1000._SP/HA2EV
-   if ( A(iw)<A_max/2..and.A(iw+1)>A_max/2. ) QPH%Half_Width_left =abs(real(W)-real(QPH%Pole))
-   if ( A(iw)>A_max/2..and.A(iw+1)<A_max/2. ) QPH%Half_Width_right=abs(real(W)-real(QPH%Pole))
+   if ( A(iw)<A_max/2..and.A(iw+1)>A_max/2. ) QPH%Half_Width_left =abs(real(PH_SF_W(il,iq)%p(iw))-real(QPH%Pole))
+   if ( A(iw)>A_max/2..and.A(iw+1)<A_max/2. ) QPH%Half_Width_right=abs(real(PH_SF_W(il,iq)%p(iw))-real(QPH%Pole))
  enddo
  !
  QPH%Pole  =FIX_the_sign(QPH%Pole)

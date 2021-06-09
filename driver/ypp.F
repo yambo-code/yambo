@@ -44,7 +44,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
+&                              l_gkkp_dg,l_gkkp_plot
 #endif
  !
  implicit none
@@ -168,11 +169,12 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call section('*','K-point grid')
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  i_err=io_QINDX(k,q,ID)
+ if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,k,ID)
+ i_err_DbGd=io_Double_Grid(en,k,ID,'electrons')
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -253,6 +255,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    if (l_gkkp)                call ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
+   if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
+   if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
  endif
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)

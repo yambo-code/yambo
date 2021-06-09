@@ -166,6 +166,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! ... Q-grid is uniform?
  !------------------------
+ DB_Q_map=0
  do idb=1,DB_nq
    do iq=1,nqibz
      v=DB_PH_qpt(iabs(IDB),:)
@@ -205,7 +206,13 @@ subroutine ELPH_databases(k,E,q)
  PH_kpt_bz=k%ptbz
  !
  do idb=1,DB_nq
-   iq=DB_Q_map(idb)
+   !
+   if(elph_use_q_grid) then
+     iq=DB_Q_map(idb)
+   else
+     iq=idb
+   endif
+   !
    if (l_gkkp_expand) then
      do i_star=1,q%nstar(iq)
        iq_bz=i_star
@@ -225,15 +232,21 @@ subroutine ELPH_databases(k,E,q)
  call live_timing('ELPH databases: transfer and I/O',DB_nq)
  do idb=1,DB_nq
    !
+   if(elph_use_q_grid) then
+     iq=DB_Q_map(idb)
+   else
+     iq=idb
+   endif
+   !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
-   call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP)
+   call ELPH_databases_IO_gkkp_expand("K",iq,1,k,GKKP)
    !
    if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
      call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
-     call ELPH_databases_IO_gkkp_expand("K",DB_Q_map(idb),1,k,GKKP_bare)
+     call ELPH_databases_IO_gkkp_expand("K",iq,1,k,GKKP_bare)
    endif
    !
    call live_timing(steps=1)
@@ -243,7 +256,6 @@ subroutine ELPH_databases(k,E,q)
      if (.not.allocated(GKKP_bare_save%dVc).and.l_GKKP_hosts_bare_dV) call ELPH_alloc("dV",GKKP=GKKP_bare_save,Nq_mem=1)
      GKKP_save%dVc=GKKP%dVc
      if (l_GKKP_hosts_bare_dV) GKKP_bare_save%dVc=GKKP_bare%dVc
-     iq=DB_Q_map(idb)
      do i_star=1,q%nstar(iq)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star

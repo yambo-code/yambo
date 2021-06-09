@@ -59,6 +59,7 @@ module IO_m
  !
  character(lchlen) :: DBs_FRAG_control_string = "none"
  logical           :: frag_DIP
+ logical           :: frag_DG
  logical           :: frag_RESPONSE
  logical           :: frag_WF
  logical           :: frag_QINDX
@@ -285,12 +286,12 @@ module IO_m
      if (len_trim(dirname)==0) return
      call STRING_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
      ch_tmp=dir(1)
+     if(dirname(1:1)=="/") ch_tmp="/"//trim(ch_tmp)
      call imkdir( cstr(trim(ch_tmp)) )
      do i_j=2,n_s
        ch_tmp=trim(ch_tmp)//"/"//trim(dir(i_j))
        call imkdir( cstr(trim(ch_tmp)) )
      enddo
-   
    end subroutine
    !
    character(lchlen) function DB_path(dir_,job_,db_)

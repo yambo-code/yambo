@@ -92,6 +92,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_ph";
  options[*i_opt].yambo_string="gkkp"  ;
  options[*i_opt].section="Convertions";
+ options[*i_opt].long_desc[0]="<string>=(g)kkp,(d)ouble grid,(p)lot gkkp";
+ options[*i_opt].char_var=1;
 #endif
  /* 
   Plots

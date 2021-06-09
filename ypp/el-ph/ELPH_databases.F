@@ -66,24 +66,28 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
  !
- ! Setup parallelization to load qindx_B
- ! ======================================
- !
- call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
- call PARALLEL_SETUP_K_scheme("BZINDX")
- !
- ! here qindx_B is allocated
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
- io_err(1)=io_QINDX(k,q,ID)
- if (l_gkkp_expand.and.io_err(1)/=0) then
-   call msg('s',"Missing k/q scattering database")
-   call error("Please run a setup with the BSEscatt flag activated")
+ if(l_gkkp_expand) then
+   !      
+   ! Setup parallelization to load qindx_B
+   ! ======================================
+   !
+   call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
+   call PARALLEL_SETUP_K_scheme("BZINDX")
+   !
+   ! here qindx_B is allocated
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+   io_err(1)=io_QINDX(k,q,ID)
+   if (io_err(1)/=0) then
+     call msg('s',"Missing k/q scattering database")
+     call error("Please run a setup with the BSEscatt flag activated")
+   endif
+   !
+   ! Initialize qindx_B IO
+   ! =============================
+   io_err(2)=qindx_B_init(qindx_ID) 
+   if(io_err(2)/=0) call error("Error reading qindx_B")
+   !
  endif
- !
- ! Initialize qindx_B IO
- ! =============================
- io_err(2)=qindx_B_init(qindx_ID) 
- if(io_err(2)/=0) call error("Error reading qindx_B")
  !
  ! Existence and dimensions 
  !==========================

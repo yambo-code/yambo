@@ -58,7 +58,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL
+ integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL,i_shift
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -114,13 +114,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
  YAMBO_ALLOC(PAR_IND_WF_b%element_1D,(RT_bands(2)))
- PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=RT_bands(1)-1
+ PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=0
  PAR_IND_WF_b%element_1D(:)=.FALSE.
- if (RT_bands(1)>1) PAR_IND_WF_b%element_1D(1:RT_bands(1)-1)=.TRUE.
- !
- ! Non evolved bands loaded by all
- !
- PAR_IND_WF_b%element_1D(:max(RT_bands(1)-1,1))=.TRUE.
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=ib1,RT_bands(2)
@@ -136,6 +131,23 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
      endif
    enddo
  enddo
+ !
+ ! Distribute non evolved bands
+ !
+ if (RT_bands(1)>1) then
+   i_shift=0
+   do ib1=1,RT_bands(1)-1
+     ib2=ib1+RT_bands(1)-1-i_shift*(RT_bands(2)-RT_bands(1)+1)
+     if(ib2>RT_bands(2)) then
+       i_shift=i_shift+1
+       ib2=ib2-(RT_bands(2)-RT_bands(1)+1)
+     endif
+     PAR_IND_WF_b%element_1D(ib1)=PAR_IND_WF_b%element_1D(ib2)
+     if (.not.PAR_IND_WF_b%element_1D(ib1)) cycle
+     PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
+   enddo
+ endif
+ !
  !.........................................................................
  ! Oscillators for external field interaction
  !

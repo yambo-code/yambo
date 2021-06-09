@@ -45,7 +45,8 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
 &                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,PH_freqs,&
-&                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd
+&                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd, &
+&                        elph_grids_are_expanded
  use QP_m,          ONLY:QP_table,QP_time_order_sign
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:Fermi_fnc_derivative
@@ -102,7 +103,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  !
  ! Define outgoing energies and occupations
  !
- if (elph_use_q_grid) then
+ if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
    E_kpq=en%E(ob,ok,1)
    f_occ=en%f(ob,ok,1)/spin_occ
  else
@@ -163,7 +164,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! which does not allow zero-energy transitions between the
  ! perturbed stated and itself
  !
- if (elph_use_q_grid) then
+ if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
    delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
  else
    delta_E_at_gamma=en%E(ib,ik,1)  -GKKP%E_kpq(1)%E(ob,ik_bz,1)

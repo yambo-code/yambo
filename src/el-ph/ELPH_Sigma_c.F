@@ -49,7 +49,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
-&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,&
+&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                        elph_nQ,GKKP,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,E_kpq_sh_fact, &
 &                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
@@ -78,7 +78,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
- logical          ::l_WRgFsq,l_GF_from_CA
+ logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB,l_gkkp_expanded
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
@@ -126,11 +126,28 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call QP_state_print( )
  !
  ! ELPH DB
+ ! =======================
+ select case(trim(gkkp_db)) 
+   case("gkkp")
+     load_gkkp_DB=.true.
+     l_gkkp_expanded=.false.
+   case("gkkp_expanded")
+     load_gkkp_DB=.true.
+     l_gkkp_expanded=.true.
+   case("genFroh")
+     load_gkkp_DB=.false.
+     l_gkkp_expanded=.false.
+     call error("Generalized Frohlich model not implemented yet ")
+ end select
  !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
- io_err=io_ELPH(ID,'gkkp')
- call deliver_IO_error_message(io_err,"GKKP")
- if (io_err/=0) call error('El-Ph database not found')
+ call msg('sr','GKKP database/model: '//gkkp_db)
+ !
+ if(load_gkkp_DB) then
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+   io_err=io_ELPH(ID,gkkp_db)
+   call deliver_IO_error_message(io_err,"GKKP")
+   if (io_err/=0) call error('El-Ph database not found')
+ endif
  !
  !Sc Energy points
  !
@@ -190,7 +207,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !              \ nqbz             elph_use_q_grid=T
  !
  factor=(3._SP*RL_vol/4._SP/pi)**(1._SP/3._SP)
- if (elph_use_q_grid) then
+ if (elph_use_q_grid.and..not.l_gkkp_expanded) then
    nq_to_sum=q%nbz
    call k_ibz2bz(q,'i',.TRUE.)
    YAMBO_ALLOC(q_weight,(nq_to_sum))
@@ -202,6 +219,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    YAMBO_ALLOC(q_weight,(nq_to_sum))
    call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
+ !
+ if(elph_nQ_used/=elph_nQ) call warning("Number of q-used different from total number of q-points")
  !
  ! Check double-grid
  !-------------------
@@ -259,7 +278,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  do iq_loop=1,nq_to_sum
    !
    iq_bz = iq_loop
-   if (elph_use_q_grid) then
+   if (elph_use_q_grid.and..not.l_gkkp_expanded) then
      iq_ibz =q%sstar(iq_bz,1)
      iq_s   =q%sstar(iq_bz,2)
      iq_db = iq_ibz
@@ -276,11 +295,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     if (     elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
-     if (.not.elph_use_q_grid) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
-     call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
-     io_err=io_ELPH(ID,'gkkp')
-     if (io_err<0) call error('Missing Q-database')
+     if(load_gkkp_DB) then
+       if (     elph_use_q_grid.and..not.l_gkkp_expanded) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
+       if (.not.elph_use_q_grid.or.l_gkkp_expanded)       IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
+       call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
+       io_err=io_ELPH(ID,gkkp_db)
+       if (io_err<0) call error('Missing Q-database')
+     endif
      !
      if (.not.elph_use_q_grid) then
        !
@@ -326,7 +347,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        ib_gkkp   =ib
        ob_gkkp   =ob
        !
-       if (elph_use_q_grid) then
+       if (elph_use_q_grid.and..not.l_gkkp_expanded) then
          okbz=qindx_S(ik,iq_bz,1)
          ok=k%sstar(okbz,1)
          os=k%sstar(okbz,2)

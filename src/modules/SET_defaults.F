@@ -526,7 +526,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  FAN_deltaE_treshold=1.E-6_SP/HA2EV
  use_PH_DbGd=.FALSE.
  EkplusQ_mode='interp' ! E(k+q) energies (interp | dftp )
- gkkp_db='gkkp'        ! gkkp_db ( gkkp | expanded | genFroh )
+ gkkp_db='gkkp'        ! gkkp_db ( gkkp | gkkp_expanded | genFroh )
  !
 #endif
  !

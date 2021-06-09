@@ -630,7 +630,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
- call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | expanded | genFroh )',gkkp_db,verb_level=V_ph)
+ call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
  !
  ! GPL_EXCLUDE_START
  !

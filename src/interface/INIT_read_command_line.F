@@ -35,7 +35,7 @@ subroutine INIT_read_command_line(rstr,init_)
  use stderr,         ONLY:STRING_split,STRING_match
  use it_tools,       ONLY:runlevel_is_on,switch_off_runlevel
  use it_m,           ONLY:V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,      &
-&                         V_real_time,V_nl_optics,V_all,V_parallel,        &
+&                         V_real_time,V_nl_optics,V_all,V_parallel,V_ph,   &
 &                         infile_verbosity,nrnlvls,rnlvls
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
@@ -122,6 +122,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! V_real_time=8
      ! V_parallel=9
      ! V_nl_optics=10
+     ! V_ph=10
      ! V_all=99
      !
      if ( trim(rstr_piece(i1)) == 'infver' ) then
@@ -144,6 +145,8 @@ subroutine INIT_read_command_line(rstr,init_)
            infile_verbosity=V_real_time
          case ('NL','nl')
            infile_verbosity=V_nl_optics
+         case ('PH','ph')
+           infile_verbosity=V_ph
          case ('PAR','par')
            infile_verbosity=V_parallel
          case ('all')

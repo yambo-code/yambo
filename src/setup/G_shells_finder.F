@@ -110,9 +110,12 @@ subroutine G_shells_finder()
  ! a direction much longer than the others
  !
  G_thresh=10._SP
- G_thresh=min(G_thresh,iku_v_norm((/G_iku_zero(1),0._SP,0._SP/))/10._SP)
- G_thresh=min(G_thresh,iku_v_norm((/0._SP,G_iku_zero(2),0._SP/))/10._SP)
- G_thresh=min(G_thresh,iku_v_norm((/0._SP,0._SP,G_iku_zero(3)/))/10._SP)
+ G_thresh=min(G_thresh,iku_v_norm((/G_iku_zero(1),0._SP,0._SP/))/100._SP)
+ G_thresh=min(G_thresh,iku_v_norm((/0._SP,G_iku_zero(2),0._SP/))/100._SP)
+ G_thresh=min(G_thresh,iku_v_norm((/0._SP,0._SP,G_iku_zero(3)/))/100._SP)
+ !
+ if(G_thresh<1.E-5) G_thresh=iku_v_norm(G_iku_zero)/100._SP
+ G_thresh=max(G_thresh,1.E-5)
  !
  call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
 &                        G_thresh,Include_single_values=.TRUE.)

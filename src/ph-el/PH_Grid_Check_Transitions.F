@@ -88,12 +88,12 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
  !
  do i_loop=1,2
    !
-   call live_timing(trim(sec_name(i_loop)),N_steps)
-   !
    if (i_loop==2) then
      if (phel_info%N==0) call error('No allowed scattering found')
      YAMBO_ALLOC(phel_info%table,(phel_info%N,6) )
    endif
+   !
+   call live_timing(trim(sec_name(i_loop)),N_steps)
    !
    phel_info%N    = 0
    ! 
@@ -184,36 +184,6 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
    call live_timing( )
    !
  enddo ! i_loop
- !
- ! Output info
- !=============
- !
-! call msg('r','Energy Window',PHEL_broad_factor*QP_G_damp*HA2EV,"[eV]")
-! !
-! if (iq_eval<0) then
-!   call PP_redux_wait(N_yes,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
-!   call PP_redux_wait(N_tot,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
-!   call PP_redux_wait(nTrans_percent,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
-!   call PP_redux_wait(Radius,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
-! endif
-! !
-! do iq=iq_range(1),iq_range(2)
-!   !
-!   call msg('r'," ")
-!   !
-!   ! Energy dictated
-!   if (N_tot(iq)>0) then
-!     ratio = float(N_yes(iq))/float(N_tot(iq))*100._SP
-!     call msg('r','[Q='//trim(intc(iq))//'] Transitions included [Energy Constrain]  ',ratio,"[o/o]")
-!   endif
-!   !
-!   ! Momentum dictated
-!   if (nTrans_percent(iq)>0) then
-!     call msg('r','[Q='//trim(intc(iq))//'] Transitions included [Momentum Constrain]',nTrans_percent(iq),"[o/o]")
-!     call msg('r','[Q='//trim(intc(iq))//'] Radius over smallest radius              ',Radius(iq))
-!   endif
-!   !
-! enddo
  !
  call timing("Compatibility scan and fill",OPR='stop')
  !

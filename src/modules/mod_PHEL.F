@@ -76,6 +76,18 @@ module PHEL
  !
  type(PHEL_qp_kind)  :: PHEL_qp
  !
+ type QPHt
+   real(SP)    :: PI_ref = rZERO
+   complex(SP) :: PI_oms = cZERO
+   complex(SP) :: beta   = cZERO
+   complex(SP) :: Z      = cZERO
+   complex(SP) :: Pole   = cZERO
+   real(SP)    :: Half_Width_left  = rZERO
+   real(SP)    :: Half_Width_right = rZERO
+ end type QPHt
+ !
+ type (QPHt) :: QPH
+ !
  contains
    !
    function PH_energy(q,il,iq)

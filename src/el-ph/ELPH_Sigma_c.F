@@ -49,7 +49,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
-&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
+&                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
 &                        elph_nQ,GKKP,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
 &                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,E_kpq_sh_fact, &
 &                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
@@ -78,7 +78,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
 &                   elph_gkkp_sq,gsqF_damping,E_random_shift
  complex(SP)      ::delta_E
- logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB,elph_grids_are_expanded
+ logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
@@ -217,7 +217,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call rim_spherical(nq_to_sum,PH_qpt(:nq_to_sum,:),q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
  endif
  !
- if(elph_nQ_used/=elph_nQ) call warning("Number of q-used different from total number of q-points")
+ if(elph_nQ_used/=elph_nQ) call warning(" Number of q-used different from total number of q-points")
  !
  ! Check double-grid
  !-------------------

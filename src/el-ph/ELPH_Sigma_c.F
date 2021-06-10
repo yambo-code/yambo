@@ -401,8 +401,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
          !
-         write(100,'(2i5,4f14.8)')  iq_bz,iq_ibz,elph_gkkp_sq,PH_qpt(iq_ibz,:)
-         !
          call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
          !
        enddo

@@ -308,12 +308,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
-       write(*,*) ' passo prima ',GKKP%E_kpq(iq_db)%E(8,1:3,1)*HA2EV
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
-       write(*,*) ' passo qui ',iq_db,E_random_shift*HA2EV
-       write(*,*) ' passo qua ',GKKP%E_kpq(iq_db)%E(8,1:3,1)*HA2EV
        !
      endif
      !

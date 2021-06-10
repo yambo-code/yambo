@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load
@@ -34,8 +34,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
  !
  character(*)  ::mode
  integer, intent(in) :: qindx_ID
- integer       ::iq,iq_s
- type(bz_samp) ::k
+ integer, intent(in) :: iq,iq_s,iq_ibz
+ type(bz_samp), intent(in) ::k
  type(GKKP_me) ::GKKP
  !
  ! Work Space 
@@ -78,7 +78,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
  !==========
  ! GKKP m.e. rotation. Procedure copied from ELPH_Sigma_c
  !
- call ELPH_alloc("dV",GKKP=GKKP_expanded,Nq_mem=1)
+ call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
  qindx_tmp=qindx_B_init(qindx_ID) 
  !
@@ -137,9 +137,11 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
        !
      enddo
    enddo
+   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq_ibz)%E(:,ik_bz_gkkp,1)
  enddo
  !
  GKKP%dVc=GKKP_expanded%dVc
+ GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
  !
  qindx_tmp=qindx_B_close(qindx_ID)
  !

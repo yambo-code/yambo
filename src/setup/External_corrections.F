@@ -108,7 +108,9 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #if defined _ELPH
+ !
  ! Green's Function (k+q levels loaded for the _ELPH)
+ !
  if (l_gw0.and.l_elph_corr) then
    elph_branches_save  =elph_branches
    QP_PH_n_G_bands_save=QP_PH_n_G_bands
@@ -127,15 +129,17 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
       db_name='gkkp_expanded'
    endif
    !
-   do iq=0,elph_nQ
-     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,0,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
+   do iq=1,elph_nQ
+     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,1,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
      io_err=io_ELPH(ID,db_name//' no_matrix_elements')
      if (iq>0.and.io_err==0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
    enddo
    !
    elph_branches  =elph_branches_save
    QP_PH_n_G_bands=QP_PH_n_G_bands_save
+   !
  endif
+ !
 #endif
  !
 #if defined _RT

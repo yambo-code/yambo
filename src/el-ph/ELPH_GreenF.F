@@ -106,13 +106,10 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
    E_kpq=en%E(ob,ok,1)
    f_occ=en%f(ob,ok,1)/spin_occ
-   write(100,'(4i5,2f14.8)') ib,ik,ob,ok,E_kpq*HA2EV,f_occ
  else
    E_kpq=GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
-   write(100,'(4i5,2f14.8)') ib,ik,ob,ik_bz,E_kpq*HA2EV,f_occ
  endif
- !
  !
  ! Frequency Loop
  !

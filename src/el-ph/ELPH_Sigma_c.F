@@ -300,7 +300,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        if (io_err<0) call error('Missing Q-database')
      endif
      !
-     if (.not.elph_use_q_grid) then
+     if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
        if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
@@ -396,6 +396,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
          ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
+         !
+         write(100,'(2i5,4f14.8)')  iq_bz,iq_ibz,elph_gkkp_sq,PH_qpt(iq_ibz,:)
          !
          call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
          !

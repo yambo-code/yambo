@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -199,8 +199,9 @@ subroutine G_shells_finder()
  enddo
  !
  if (n_g_shells_no_holes/=n_g_shells) then
-   call warning(' Found non closed shells. Max cutoff will be reduced. Set Gthresh>1.E-5 in input to avoid this ')
-   call msg('r','Full cutoff and reduced cutoff are  ',(/E_of_shell(n_g_shells_no_holes),E_of_shell(n_g_shells)/))
+   call warning(' Found non closed shells. Max cutoff will be reduced.')
+   call warning(' Set Gthresh>1.E-5 in input to avoid this. Too big Gthresh will pack shells together')
+   call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
  endif
  !
  n_g_shells=n_g_shells_no_holes

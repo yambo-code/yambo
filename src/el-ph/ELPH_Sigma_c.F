@@ -293,20 +293,27 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    if (iq_db/=iabs(iq_db_ref)) then
      !
      if(load_gkkp_DB) then
+       !      
        if (     elph_use_q_grid.and..not.elph_grids_are_expanded) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
        if (.not.elph_use_q_grid.or.elph_grids_are_expanded)       IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
+       !
        call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID)
        io_err=io_ELPH(ID,gkkp_db)
+       !
        if (io_err<0) call error('Missing Q-database')
+       !
      endif
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
        if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
        !
+       write(*,*) ' passo prima ',GKKP%E_kpq(iq_db)%E(8,1:3,1)*HA2EV
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
        call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+       write(*,*) ' passo qui ',iq_db,E_random_shift*HA2EV
+       write(*,*) ' passo qua ',GKKP%E_kpq(iq_db)%E(8,1:3,1)*HA2EV
        !
      endif
      !

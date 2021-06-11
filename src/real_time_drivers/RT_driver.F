@@ -106,10 +106,10 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  RT_perturbation =H_perturbation
  !
  call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title))
+ !############################################################################
  !
- !
- call section('+','Initialization')
- !#################################
+ call section('+','Pre-Initialization')
+ !######################################
  !
  ! Check if RT_bands respect levels degeneracy...
  call LEVELS_respect_degenerations(RT_bands,E,.FALSE.)
@@ -134,6 +134,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles
  !=========
+ call section('=','Dipoles')
+ !##########################
+ !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
@@ -143,8 +146,8 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
- ! Core initialization
- !
+ call section('=','Initialization')
+ !#################################
  call RT_initialize(E,k,q)
  !
  ! Dipoles & WF dimensions

@@ -277,6 +277,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    iq_bz = iq_loop
    if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
      iq_ibz =q%sstar(iq_bz,1)
+     write(*,*) iq_bz,' come from ',iq_ibz
      iq_s   =q%sstar(iq_bz,2)
      iq_db = iq_ibz
    else
@@ -352,7 +353,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          okbz=qindx_S(ik,iq_bz,1)
          ok=k%sstar(okbz,1)
          os=k%sstar(okbz,2)
-         ! 
+         !
          ! When using a uniform Q grid I cycle on the q symmetries 
          ! as well. To rotate the gkkp m.e. I use:
          ! 

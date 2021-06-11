@@ -111,6 +111,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
  endif
  !
+ !
  ! Frequency Loop
  !
  do iw=1,gsqF_energy_steps

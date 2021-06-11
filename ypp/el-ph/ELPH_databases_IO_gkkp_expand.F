@@ -24,6 +24,7 @@
 subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
+ use units,               ONLY:HA2EV
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
@@ -139,7 +140,37 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
        !
      enddo
    enddo
-   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq_ibz)%E(:,ik_bz_gkkp,1)
+ enddo
+ !
+ do ik_bz=1,k%nbz
+   ! 
+   ik=k%sstar(ik_bz,1)
+   is=k%sstar(ik_bz,2)
+   !
+   do ok_bz=1,k%nbz
+     !
+     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
+     iq_bz=qindx_tmp(1)
+     !
+     if (iq_bz==iq) then
+       ok=k%sstar(ok_bz,1)
+       os=k%sstar(ok_bz,2)
+       exit
+     endif
+     !
+   enddo
+   !
+   if (iq_s>nsym/(i_time_rev+1)) then
+     ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+   else
+     ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
+   endif
+   !
+   if(iq==8) write(*,*) ' scattering ',iq,' k k',ik,ok,ik_bz,ok_bz
+   if(iq==8.and.ik_bz==6) write(*,*) ' en ',GKKP%E_kpq(1)%E(2:4,ok_bz,1)*HA2EV
+   !
+   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
+   !
  enddo
  !
  GKKP%dVc=GKKP_expanded%dVc

@@ -40,8 +40,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        X_drude_term,global_gauge,BS_E_sorted,   &
 &                        skip_cond_sum_rule,l_drude
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
+!aim137: R2. adding BS_nkFGbz_in_Tgrp
  use BS_solvers,    ONLY:BSS_Vnl_included,BSS_add_antiresonant,&
-&                        Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd
+&                        Co_factor,diam_term_exact,BSS_Wd,BSS_mode,&
+&                        BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
 !aim137: adding BSS_mode 
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BS_perturbative_SOC,L_kind,BS_bands,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_res_ares_dim,BS_K_dim,&
@@ -94,7 +96,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
 !aim137: adding variables for DbGd
  real(SP)      :: FG_factor
- integer       :: dom_k_T,i_dom_k
+ integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
  !
@@ -231,14 +233,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
      endif
      !
-!aim137: support for DbGd method
-!aim137: added Haydock condition, to leave Inversion untouched.
-     if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
-       dom_k_T = Xk%FGbz%N_mapped(ik_bz)
-     else
-       dom_k_T = 1
-     end if
-     !
      ! b.Energy
      !=========
      !
@@ -260,10 +254,11 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      endif
      !
 !aim137: energies for DbGd as delta wrt coarse grid
-     allocate(E_DbGd(dom_k_T))
+!aim137: R2. BS_nkFGbz_in_Tgrp(i_T_g) > 1 only in Haydock+DbGd
+     allocate(E_DbGd(BS_nkFGbz_in_Tgrp(i_T_g)))
      E_DbGd = cZERO
-     do i_dom_k=1,dom_k_T
-       E_DbGd(i_dom_k) = BS_T_grp(i_T_g)%E(i_T,i_dom_k)-BS_T_grp(i_T_g)%E(i_T,1)
+     do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
+       E_DbGd(i_ColFG) = BS_T_grp(i_T_g)%E(i_T,i_ColFG)-BS_T_grp(i_T_g)%E(i_T,1)
      enddo
      !
      ! c1.Compute "dipoles"
@@ -453,10 +448,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_abs) then
 !aim137: added loop and variable - must generalise to all responses later
-         do i_dom_k=1,dom_k_T
-           Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_dom_k))
+         do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
+           Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
            if ((BSS_add_antiresonant.or.BS_K_coupling).and..not.BS_res_ares_dim==2) &
-           &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_dom_k)))
+           &  Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_ColFG)))
          enddo
        endif
        !

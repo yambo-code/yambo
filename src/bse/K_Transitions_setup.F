@@ -40,7 +40,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  use stderr,       ONLY:intc
  use com,          ONLY:isec
 !aim137: Added BSS_uses_DbGd
- use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
+!aim137: R2. added BS_nkFGbz_in_Tgrp
+ use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_res_ares_dim,&
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
  use DIPOLES,      ONLY:DIPOLE_t
@@ -71,7 +72,7 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
  logical      :: l_trans_in_group,l_grp_to_grp,FORCE_EQ_trans
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,nb(2),ib1,ib2,isp1,isp2,  &
  &               i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares, &
- &               dom_k_T_group,i_dom_k,ikFGbz,ikFG
+ &               nColFG_in_T_group_now,i_ColFG,ikFGbz,ikFG
  !
  FORCE_EQ_trans=.true.
  !
@@ -93,6 +94,9 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
    BS_T_grp(i_g)%size=0
  enddo
  n_loops=2
+ !
+!aim137: R2. allocating BS_nkFG_in_Tgrp
+ allocate(BS_nkFGbz_in_Tgrp(BS_nT_grps))
  !
  call PP_indexes_reset(PAR_IND_WF_b_and_k)
  YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
@@ -129,11 +133,14 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
        !
 !aim137: dom_k for each tr group as max within
 !aim137: transitions in that group
-       if (.not.BSS_uses_DbGd) dom_k_T_group=1
-       if (     BSS_uses_DbGd) dom_k_T_group=&
-       & maxval(Xk%FGbz%N_mapped(&
-       &        Xk%k_table(ik,Xk%star(&
-       &                   ik,:Xk%nstar(ik)))))
+!aim137: R2. nColFG_in_T_group_now is a temporary variable
+       if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
+         nColFG_in_T_group_now = maxval(Xk%FGbz%N_mapped(&
+         &                       Xk%k_table(ik,Xk%star(&
+         &                       ik,:Xk%nstar(ik)))))
+       else
+         nColFG_in_T_group_now=1
+       end if
        !
        do iv=BS_bands(1),nb(2)
          do ic=nb(1),BS_bands(2)
@@ -179,13 +186,16 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                  !
                  if (i_loop==2) then
                    !
-!aim137: passing dom_k
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,dom_k_T_group)
+!aim137: R2. passing nColFG_in_T_group_now
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,nColFG_in_T_group_now)
                    !
                    BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
                    BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
                    BS_T_grp(i_T_group_now)%ik        =ik
                    BS_T_grp(i_T_group_now)%first_cv  =i_T_now
+                   !
+!aim137: R2. adding value of current Transition to BS_nkFGbz_in_Tgrp
+                   BS_nkFGbz_in_Tgrp(i_T_group_now) = nColFG_in_T_group_now
                    !
                  endif
                  !
@@ -211,8 +221,8 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                if ( BSS_uses_DbGd .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
                  do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
                    ikFG = Xk%FGbz%E_map(ikFGbz)
-                   i_dom_k = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
-                   BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_dom_k) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
+                   i_ColFG = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
+                   BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_ColFG) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
                  enddo
                end if
 !aim137: end calculating energies of transitions in fine grid

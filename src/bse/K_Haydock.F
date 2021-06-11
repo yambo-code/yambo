@@ -31,7 +31,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
-&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd
+&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
 &                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
  use LIVE_t,         ONLY:LIVE_message
@@ -63,7 +63,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  type(bz_samp), intent(in) :: Xk
- integer    :: i_dom_k,dom_k(BS_nT_grps),i_T,i_k_bz,ik
+ integer    :: i_ColFG,i_T,i_k_bz,ik
  real(SP)   :: FG_factor
 !aim137: new input for double grid
  !
@@ -125,48 +125,28 @@ subroutine K_Haydock(iq,W,mode,Xk)
    call LIVE_message('[Haydock] Number of Coarse grid BZ kpts : '//trim(intc(Xk%nbz))) 
    call LIVE_message('[Haydock] Number of Fine grid BZ kpts   : '//trim(intc(Xk%FGbz%N))) 
  end if
- if (.not.BSS_uses_DbGd) dom_k=1
+ !
  if (.not.BSS_uses_DbGd) FG_factor=1._SP
  if (     BSS_uses_DbGd) then
+!aim137: R2. extending size to account for DbGd
    do i_g=1,BS_nT_grps
-     dom_k(i_g)=maxval(Xk%FGbz%N_mapped(&
-               & Xk%k_table(&
-               & BS_T_grp(i_g)%ik,&
-               & Xk%star(BS_T_grp(i_g)%ik,&
-               & :Xk%nstar(BS_T_grp(i_g)%ik)))))
-!     HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (dom_k(i_g)-1)
+   HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (BS_nkFGbz_in_Tgrp(i_g)-1)
    enddo
-!aim137: BUG: 
-!aim137: the above definition of HAYVEC_size intends to expand it
-!aim137: to consider the FG. but, it results in a segmentation
-!aim137: fault when ran in parallel (serial is fine).
-!aim137: the following variables will be printed once per core.
-!aim137: print*, BS_T_grp(:)%size
-!aim137: print*, dom_k(:)
-!aim137: one can see that some elements of the arrays dom_k(:) or 
-!aim137: BS_T_grp(:)%size appear as non-initialised values
-!aim137: moreover, it does not happen every time. E.g., maybe
-!aim137: dom_k(1)=117 the first time it is printed, but the next
-!aim137: time it is a random value (e.g. -2147483648), 
-!aim137: and next time, 117 again.
-!aim137: hence, I do something simpler, as defined below.
-!aim137: in this way, HAYVEC_size is larger than it needs to be.
-!aim137: END BUG: 
-   HAYVEC_size = HAYVEC_size  * maxval(dom_k(:))
    FG_factor=real(Xk%nbz)/real(Xk%FGbz%N)
+!  HAYVEC_size = HAYVEC_size/ FG_factor
  end if
  !
  allocate(V0(BS_nT_grps))
- call BS_HAYVEC_alloc(V0,dom_k)
+ call BS_HAYVEC_alloc(V0,BS_nkFGbz_in_Tgrp)
  !
  if(velocity_correction) then
    allocate(V_tmp(BS_nT_grps))
-   call BS_HAYVEC_alloc(V_tmp,dom_k)
+   call BS_HAYVEC_alloc(V_tmp,BS_nkFGbz_in_Tgrp)
  endif
  !
  if(use_left_and_right) then
    allocate(W0(BS_nT_grps))
-   call BS_HAYVEC_alloc(W0,dom_k)
+   call BS_HAYVEC_alloc(W0,BS_nkFGbz_in_Tgrp)
  endif
  !
  ItParity=1
@@ -181,9 +161,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
  allocate(Vn(BS_nT_grps))
  allocate(Vnp1(BS_nT_grps))
  allocate(Vnm1(BS_nT_grps))
- call BS_HAYVEC_alloc(Vn,dom_k)
- call BS_HAYVEC_alloc(Vnm1,dom_k)
- call BS_HAYVEC_alloc(Vnp1,dom_k)
+ call BS_HAYVEC_alloc(Vn,BS_nkFGbz_in_Tgrp)
+ call BS_HAYVEC_alloc(Vnm1,BS_nkFGbz_in_Tgrp)
+ call BS_HAYVEC_alloc(Vnp1,BS_nkFGbz_in_Tgrp)
  !
  ! Haydock Coefficients and restart vector from disk
  !=================================================
@@ -215,9 +195,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
      call PP_bcast(Cf,0,COMM=PAR_COM_eh_INDEX%COMM)
    endif
    !
-   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size,dom_k)
-   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size,dom_k)
-   if (scheme=="pseudo-herm") call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size,dom_k)
+   call HAYVEC_scatter(Vn,Vn_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
+   call HAYVEC_scatter(Vnm1,Vnm1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
+   if (scheme=="pseudo-herm") call HAYVEC_scatter(Vnp1,Vnp1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
    !
    YAMBO_FREE_P(Vnm1_f)
    YAMBO_FREE_P(Vn_f)
@@ -265,11 +245,11 @@ subroutine K_Haydock(iq,W,mode,Xk)
  do i_g=1,BS_nT_grps
 !aim137: loop over fine grid - same dip for all
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     do i_dom_k=1,dom_k(i_g)
-       if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-       if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-       if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-       V0(i_g)%fragment(:,i_dom_k) = V0(i_g)%fragment(:,i_dom_k)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+     do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+       if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+       if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+       if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+       V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
      enddo
 !aim137: setting some elements to 0 as dom_k is not the same for every k
 !aim137: hence, inside a transition gr, there are transitions with, 
@@ -277,12 +257,12 @@ subroutine K_Haydock(iq,W,mode,Xk)
      if (BSS_uses_DbGd) then
        do i_T=1,BS_T_grp(i_g)%size
          i_k_bz=BS_T_grp(i_g)%table(i_T,1)
-         do i_dom_k=1,dom_k(i_g)
-           if (i_dom_k .gt. Xk%FGbz%N_mapped(i_k_bz)) then
-             V0(i_g)%fragment(i_T,i_dom_k)=cZERO
+         do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+           if (i_ColFG .gt. Xk%FGbz%N_mapped(i_k_bz)) then
+             V0(i_g)%fragment(i_T,i_ColFG)=cZERO
              !aim137: DEBUG
              !aim137: when 4th col < 5th col
-             !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_dom_k
+             !write(*,*) i_g, i_T, i_k_bz, Xk%FGbz%N_mapped(i_k_bz), i_ColFG
              !aim137: DEBUG
            end if
          enddo
@@ -309,9 +289,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    do i_g=1,BS_nT_grps
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     do i_dom_k=1,dom_k(i_g)
-       if (trim(mode)=="kerr") W0(i_g)%fragment(:,i_dom_k) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-       W0(i_g)%fragment(:,i_dom_k) = W0(i_g)%fragment(:,i_dom_k)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
+     do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+       if (trim(mode)=="kerr") W0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+       W0(i_g)%fragment(:,i_ColFG) = W0(i_g)%fragment(:,i_ColFG)*(sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP)))
      enddo
 !aim137: both $fragment and %E expand in the same way - no change needed
        if(velocity_correction) V_tmp(i_g)%fragment = W0(i_g)%fragment/BS_T_grp(i_g)%E
@@ -420,9 +400,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 !aim137: Question: is it correct to put this inside dom_k loop?
-       do i_dom_k=1,dom_k(i_g)
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+       do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_ColFG),Vnp1(i_g)%fragment(:,i_ColFG))
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_ColFG),Vnp1(i_g)%fragment(:,i_ColFG))
        enddo
      end do
      !
@@ -477,8 +457,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
        do i_g = 1,BS_nT_grps
          if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 !aim137: Question: is it correct to put this inside dom_k loop?
-         do i_dom_k=1,dom_k(i_g)
-           call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+         do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+           call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment(:,i_ColFG),Vnp1(i_g)%fragment(:,i_ColFG))
          enddo 
        enddo
      endif
@@ -486,8 +466,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
 !aim137: Question: is it correct to put this inside dom_k loop?
-       do i_dom_k=1,dom_k(i_g)
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_dom_k),Vnp1(i_g)%fragment(:,i_dom_k))
+       do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment(:,i_ColFG),Vnp1(i_g)%fragment(:,i_ColFG))
        enddo
      end do
      !
@@ -578,7 +558,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output_file(iq,"Haydock "//trim(mode))
    !
-   if ( mod(it,Haydock_iterIO)==0 .or. Haydock_n_converged==Haydock_required_converged) then
+   if ( mod(it,Haydock_iterIO*100)==0 .or. Haydock_n_converged==Haydock_required_converged) then
      !
      ! Haydock Coefficients and restart vectors to disk
      !--------------------------------------------------
@@ -589,10 +569,11 @@ subroutine K_Haydock(iq,W,mode,Xk)
        YAMBO_ALLOC_P(Vnp1_f,(HAYVEC_size))
      endif
      !
-     call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size,dom_k)
-     call HAYVEC_gather(Vn,Vn_f,HAYVEC_size,dom_k)
+     call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
+print*, 'aca ya no llegue'
+     call HAYVEC_gather(Vn,Vn_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
      if (trim(scheme)=="pseudo-herm") then
-       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size,dom_k) 
+       call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp) 
      endif
      !
      call io_control(ACTION=OP_WR_CL,SEC=(/1,2/),ID=ID)
@@ -643,7 +624,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
 end subroutine
 !
 !
-subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
+subroutine HAYVEC_gather(V,fullV,fullV_size,n_ColsFG)
  !
  ! Gather the Haydock vector fragments into one 
  ! large vector of full dimension  
@@ -663,7 +644,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
  complex(SP),intent(out) :: fullV(fullV_size)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
- integer                 :: i_dom_k,dom_k(BS_nT_grps)
+ integer                 :: i_ColFG,n_ColsFG(BS_nT_grps)
  !
  fullV = cZERO
  istop_g = 0
@@ -672,11 +653,11 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
  !
  do i_g=1,BS_nT_grps
 !aim137: added loop over FG
-   do i_dom_k=1,dom_k(i_g)
+   do i_ColFG=1,n_ColsFG(i_g)
      istart_g = istop_g + 1 
      istop_g  = istart_g + BS_T_grp(i_g)%size - 1
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
-     fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_dom_k)
+     fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_ColFG)
    enddo
  enddo
  !
@@ -686,7 +667,7 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,dom_k)
 end subroutine HAYVEC_gather  
 !
 !
-subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
+subroutine HAYVEC_scatter(V,fullV,fullV_size,n_ColsFG)
  !
  ! Scatter the full dimension vector on the master (read from disk/restart)
  ! into Haydock vector fragments 
@@ -705,7 +686,7 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
  type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
- integer                 :: i_dom_k,dom_k(BS_nT_grps)
+ integer                 :: i_ColFG,n_ColsFG(BS_nT_grps)
  !
  ! In this loop I need T_groups Haydock since I do need duplicates 
  !
@@ -715,11 +696,11 @@ subroutine HAYVEC_scatter(V,fullV,fullV_size,dom_k)
  !
  do i_g=1,BS_nT_grps
 !aim137: added loop over FG
-   do i_dom_k=1,dom_k(i_g)
+   do i_ColFG=1,n_ColsFG(i_g)
      istart_g = istop_g + 1 
      istop_g  = istart_g + BS_T_grp(i_g)%size - 1
      if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-     V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_dom_k) = fullV(istart_g:istop_g)  
+     V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_ColFG) = fullV(istart_g:istop_g)  
    enddo
  enddo
  !

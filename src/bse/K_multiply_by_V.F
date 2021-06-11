@@ -47,7 +47,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  !
  ! Work Space
  !
- integer         ::i_B,i_Tk,i_Tp,i_g,i_dom_k,dom_k_Tk,dom_k_Tp
+ integer         ::i_B,i_Tk,i_Tp,i_g,i_ColFG,ColsFG_Tk,ColsFG_Tp
  complex(SP)     ::alpha
  ! 
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
@@ -59,39 +59,39 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
    !
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
-   dom_k_Tk = size(Vi(i_Tk)%fragment,2)
-   dom_k_Tp = size(Vi(i_Tp)%fragment,2)
+   ColsFG_Tk = size(Vi(i_Tk)%fragment,2)
+   ColsFG_Tp = size(Vi(i_Tp)%fragment,2)
    !
    select case(BS_blk(i_B)%mode)
    case("R")
      !
      ! Resonant part 
      !
-     do i_dom_k=1,dom_k_Tk
-       if ( i_dom_k .gt. dom_k_Tp ) cycle
+     do i_ColFG=1,ColsFG_Tk
+       if ( i_ColFG .gt. ColsFG_Tp ) cycle
        call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
        &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-       &                        Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-       &                        Vo(i_Tk)%fragment(:,i_dom_k),1)
+       &                        Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
+       &                        Vo(i_Tk)%fragment(:,i_ColFG),1)
      enddo
      !
      ! Resonant part is hermitian
      !
      if (i_Tk.ne.i_Tp) then
-       do i_dom_k=1,dom_k_Tp
-         if ( i_dom_k .gt. dom_k_Tk ) cycle
+       do i_ColFG=1,ColsFG_Tp
+         if ( i_ColFG .gt. ColsFG_Tk ) cycle
          call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
          &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                        Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-         &                        Vo(i_Tp)%fragment(:,i_dom_k),1)
+         &                        Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+         &                        Vo(i_Tp)%fragment(:,i_ColFG),1)
        enddo
      end if
      !
      ! Add the energy diffs on the diagonal
      !
      if (i_Tk.eq.i_Tp) then
-       do i_dom_k=1,dom_k_Tk
-         Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
+       do i_ColFG=1,ColsFG_Tk
+         Vo(i_Tk)%fragment(:,i_ColFG) = Vo(i_Tk)%fragment(:,i_ColFG) + BS_T_grp(i_Tk)%E(:,i_ColFG)*Vi(i_Tk)%fragment(:,i_ColFG)
        enddo
      end if
      !
@@ -101,23 +101,23 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        !
        ! Coupling part
        !
-       do i_dom_k=1,dom_k_Tk
-         if ( i_dom_k .gt. dom_k_Tp ) cycle
+       do i_ColFG=1,ColsFG_Tk
+         if ( i_ColFG .gt. ColsFG_Tp ) cycle
          call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       conjg(Vi(i_Tp)%fragment(:,i_dom_k)),1,cONE,&
-         &                             Vo(i_Tk)%fragment(:,i_dom_k),1)
+         &                       conjg(Vi(i_Tp)%fragment(:,i_ColFG)),1,cONE,&
+         &                             Vo(i_Tk)%fragment(:,i_ColFG),1)
        enddo
        !
        ! Coupling part can be symmetric
        !
        if ( i_Tk.ne.i_Tp ) then
-         do i_dom_k=1,dom_k_Tp
-           if ( i_dom_k .gt. dom_k_Tk ) cycle
+         do i_ColFG=1,ColsFG_Tp
+           if ( i_ColFG .gt. ColsFG_Tk ) cycle
            call M_by_V('t',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),alpha,&
            &                   BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-           &                   conjg(Vi(i_Tk)%fragment(:,i_dom_k)),1,cONE,&
-           &                         Vo(i_Tp)%fragment(:,i_dom_k),1)
+           &                   conjg(Vi(i_Tk)%fragment(:,i_ColFG)),1,cONE,&
+           &                         Vo(i_Tp)%fragment(:,i_ColFG),1)
          enddo
        end if
        !
@@ -127,22 +127,22 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
        !
        ! Coupling part
        !
-       do i_dom_k=1,dom_k_Tk
-         if ( i_dom_k .gt. dom_k_Tp ) cycle
+       do i_ColFG=1,ColsFG_Tk
+         if ( i_ColFG .gt. ColsFG_Tp ) cycle
          call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-         &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
+         &                       Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
+         &                       Vo(i_Tk)%fragment(:,i_ColFG),1)
        enddo
        !
        ! Anti-coupling Q = -conjg(C)
        ! 
-       do i_dom_k=1,dom_k_Tp
-         if ( i_dom_k .gt. dom_k_Tk ) cycle
+       do i_ColFG=1,ColsFG_Tp
+         if ( i_ColFG .gt. ColsFG_Tk ) cycle
          call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),-cONE,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-         &                       Vo(i_Tp)%fragment(:,i_dom_k),1)
+         &                       Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+         &                       Vo(i_Tp)%fragment(:,i_ColFG),1)
        enddo
        !
      endif
@@ -152,31 +152,31 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
      ! Anti-Resonant part 
      !
-     do i_dom_k=1,dom_k_Tk
-       if ( i_dom_k .gt. dom_k_Tp ) cycle
+     do i_ColFG=1,ColsFG_Tk
+       if ( i_ColFG .gt. ColsFG_Tp ) cycle
          call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tp)%fragment(:,i_dom_k),1,cONE,&
-         &                       Vo(i_Tk)%fragment(:,i_dom_k),1)
+         &                       Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
+         &                       Vo(i_Tk)%fragment(:,i_ColFG),1)
      enddo
      !
      ! Anti-Resonant part is hermitian
      !
      if (i_Tk.ne.i_Tp) then
-       do i_dom_k=1,dom_k_Tp
-         if ( i_dom_k .gt. dom_k_Tk ) cycle
+       do i_ColFG=1,ColsFG_Tp
+         if ( i_ColFG .gt. ColsFG_Tk ) cycle
          call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tk)%fragment(:,i_dom_k),1,cONE,&
-         &                       Vo(i_Tp)%fragment(:,i_dom_k),1)
+         &                       Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+         &                       Vo(i_Tp)%fragment(:,i_ColFG),1)
        enddo
      end if
      !
      ! Add the energy diffs on the diagonal
      !
      if (i_Tk.eq.i_Tp) then
-       do i_dom_k=1,dom_k_Tk
-         Vo(i_Tk)%fragment(:,i_dom_k) = Vo(i_Tk)%fragment(:,i_dom_k) + BS_T_grp(i_Tk)%E(:,i_dom_k)*Vi(i_Tk)%fragment(:,i_dom_k)
+       do i_ColFG=1,ColsFG_Tk
+         Vo(i_Tk)%fragment(:,i_ColFG) = Vo(i_Tk)%fragment(:,i_ColFG) + BS_T_grp(i_Tk)%E(:,i_ColFG)*Vi(i_Tk)%fragment(:,i_ColFG)
        enddo
      end if
      !

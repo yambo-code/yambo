@@ -102,6 +102,8 @@ module BS_solvers
  integer  :: Haydock_iterMAX
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
+!aim137: R2. adding BS_nkFG_in_Tgrp
+ integer, allocatable :: BS_nkFGbz_in_Tgrp(:)
  !
  ! Solvers (Slepc)
  !=========

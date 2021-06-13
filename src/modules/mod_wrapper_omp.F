@@ -51,7 +51,7 @@ module wrapper_omp
    module procedure vv_saxpy_omp,vv_caxpy_omp
  end interface
  !
- interface V_plus_alpha_V_omp
+ interface M_plus_alpha_M_omp
    module procedure MM_caxpy_omp
  end interface
  !

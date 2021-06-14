@@ -59,7 +59,7 @@ i?86*linux*)
     OMPFLAGS="-mp"
     #NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_NV"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -286,7 +286,7 @@ ia64*linux* )
     OMPFLAGS="-mp"
     def_compiler="-D_NV"
     #NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"

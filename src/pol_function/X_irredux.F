@@ -342,7 +342,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        X_rows2_l = min(ig_col,X_rows2)
        X_nrows_l = X_rows2_l-X_rows1_l+1 
        !
-       call CAXPY(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),1,X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw),1)
+       call MM_caxpy(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
        !
 #  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
@@ -409,13 +409,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          if (PAR_COM_RL_INDEX_n_CPU>1) then
-           call CAXPY(X_nrows_l,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1,&
-&                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw),1)
+           call MM_caxpy(X_nrows_l,GreenF(iw),&
+&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
+&                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          else
-           call CAXPY(X_nrows_l,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1,&
-&                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw),1)
+           call MM_caxpy(X_nrows_l,GreenF(iw),&
+&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
+&                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
          endif
          !
 #  if defined _OPENMP

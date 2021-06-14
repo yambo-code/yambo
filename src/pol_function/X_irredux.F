@@ -63,7 +63,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
- use X_m,           ONLY:rhotw_save_d
  use cuda_m,        ONLY:have_cuda
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
@@ -93,10 +92,12 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),allocatable  :: Xo_res(:,:)
  !
  complex(SP),allocatable DEV_ATTR :: Xo_res_d(:,:)
+ complex(SP),allocatable DEV_ATTR :: work(:)
  complex(SP),pointer     DEV_ATTR :: X_par_blc_d(:,:,:)
  complex(SP),pointer     DEV_ATTR :: X_par_lowtri_blc_d(:,:,:)
  complex(SP)              :: GreenF_iw
- integer                  :: PAR_COM_RL_INDEX_n_CPU
+ integer                  :: lwork,PAR_COM_RL_INDEX_n_CPU
+ !
  !
  integer,    external     :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
@@ -238,8 +239,15 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  if (have_cuda) then
    YAMBO_ALLOC(Xo_res_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
-   YAMBO_ALLOC(rhotw_save_d,(ngrho))
  endif
+ !
+ ! workspace used in X_irredux_residuals
+ ! (rhotw_save and rhotw_save2, the latter just used only with X_term)
+ !
+ lwork=ngrho
+ if (l_X_terminator) lwork=2*ngrho
+ YAMBO_ALLOC(work,(lwork))
+ !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
  !
@@ -256,7 +264,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt,work,lwork)
      ctmp = DEV_VAR(Xo_res)(1,1)
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
@@ -291,7 +299,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 1) First compute the residuals
    !================================
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt,work,lwork)
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -441,7 +449,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !=======
  YAMBO_FREE(Xo_res)
  YAMBO_FREE(Xo_res_d)
- YAMBO_FREE(rhotw_save_d)
+ YAMBO_FREE(work)
  call elemental_collision_free(Xo_scatt)
  !
 #if !defined _CUDA

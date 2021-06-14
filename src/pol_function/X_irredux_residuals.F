@@ -21,9 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 !> @callgraph
 !> @callergraph
-subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
+subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  ! This subroutine must be kept thread-safe, since it is used
  ! inside an external omp loop.
@@ -34,7 +36,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use wrapper,       ONLY:V_by_V_plus_V
  use DIPOLES,       ONLY:DIPOLE_t,DIP_rotated
  use X_m,           ONLY:X_t,X_poles_tab,l_X_terminator,X_cols,X_rows,drude_n_states
- use X_m,           ONLY:rhotw_save_d,rhotw_save2_d
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
@@ -45,8 +46,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
  !
-#include<dev_defs.h>
- !
  implicit none
  !
  type(elemental_collision), target :: Xo_scatt
@@ -56,18 +55,18 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  type(DIPOLE_t),intent(in):: Dip
  integer,      intent(in) :: i_cg,iq
  complex(SP),  intent(out) DEV_ATTR :: Xo_res(X_rows(1):X_rows(2),X_cols(1):X_cols(2))
+ complex(SP),       target DEV_ATTR :: work(lwork)
+ integer,      intent(in) :: lwork
  !
  ! Work sapce
  !
- ! AF: rhotw_save defined as automatic goes to stack and can harm 
- !     (stack overflow, causing random crashes of the code)
- !     it would be best to define it as allocatable (less efficient if too
- !     many calls are done, though)
+ ! AF: rhotw_save, rhotw_save2 are on GPU mem if _CUDA is active
+ !     pointing to work, allocated in the parent routine for performance
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
- complex(SP)        :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
+ complex(SP), pointer DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
+ complex(SP)        :: Z_,ctmp
  integer            :: sop_inv_l,X_ng
- complex(SP)        :: ctmp
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho
@@ -86,6 +85,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  Z_        = cONE
  !
  ngrho     = Xo_scatt%ngrho
+ !
+ rhotw_save => work(1:ngrho)
+ if (l_X_terminator) rhotw_save2 => work(ngrho+1:2*ngrho)
  !
  loop_bare_grid: do i_bg = 1,bare_grid_N(i_cg)
    !
@@ -146,7 +148,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
          call DEV_SUB(scatter_Bamp)(Xo_scatt)
          !
          ! rhotw_save=Xo_scatt%rhotw
-         call dev_memcpy(DEV_VAR(rhotw_save),DEV_VAR(Xo_scatt%rhotw))
+         call dev_memcpy(rhotw_save,DEV_VAR(Xo_scatt%rhotw))
          !
          isave=(/iv,ic,ik,i_spin/)
          !
@@ -161,7 +163,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #endif
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
-         Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
+         Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
        enddo
        !
        if (is>nsym/(i_time_rev+1)) then
@@ -220,7 +222,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
      !
-     call dev_memcpy(DEV_VAR(rhotw_save2),DEV_VAR(Xo_scatt%rhotw))
+     call dev_memcpy(rhotw_save2,DEV_VAR(Xo_scatt%rhotw))
      !
      if (X%ng==1) then
        DEV_VAR(Xo_scatt%rhotw)(1)=cONE 
@@ -230,7 +232,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !
      ! symm
      ! rhotw_save=Xo_scatt%rhotw
-     call dev_memcpy(DEV_VAR(rhotw_save),DEV_VAR(Xo_scatt%rhotw))
+     call dev_memcpy(rhotw_save,DEV_VAR(Xo_scatt%rhotw))
      !
      sop_inv_l=sop_inv(is)
      !
@@ -241,7 +243,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #endif
      do ig1=1,X_ng
        ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
-       Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
+       Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
      enddo
      !
      if (is>nsym/(i_time_rev+1)) then
@@ -265,7 +267,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
 #endif
      !
-     call dev_memcpy(DEV_VAR(Xo_scatt%rhotw),DEV_VAR(rhotw_save2))
+     call dev_memcpy(DEV_VAR(Xo_scatt%rhotw),rhotw_save2)
      !
    endif
    !

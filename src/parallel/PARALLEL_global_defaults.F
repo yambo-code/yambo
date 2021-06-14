@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
- use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used,&
+ use parallel_m,    ONLY:PARALLEL_n_structures_active,PARALLEL_CPU_used, &
 &                        ncpu,CPU_structure,i_PAR_structure,PARALLEL_ENV_uses_default,PARALLEL_CPU_role
  use parallel_int,  ONLY:PARALLEL_live_message
  use stderr,        ONLY:intc
@@ -33,8 +33,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  character(*)            :: ENVIRONMENT
  !
  ! Work Space
- ! 
- integer :: i_p,NC,BASIS,n_par_la
+ !
+ integer :: i_p,NC,BASIS,n_par_la,ncpu_now
  !
  ! Is there anything to do?
  !
@@ -61,8 +61,14 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    CPU_structure(i_PAR_structure)%nCPU_lin_algebra_DIAGO=n_par_la
  endif
  !
- if (.not.PARALLEL_ENV_uses_default(i_PAR_structure).and.&
-&    product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))==ncpu) return
+ ncpu_now=product(PARALLEL_CPU_used(:PARALLEL_n_structures_active))
+ if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now==ncpu) return
+ !
+ if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now/=ncpu.and.ENVIRONMENT=="BZ_Indexes") then
+   call warning("MPI for BZ indexes is "//trim(intc(ncpu_now))//&
+   &" while number of cores is"//trim(intc(ncpu))//". Assuming expert user.")
+   return
+ endif
  !
  call PARALLEL_live_message(trim(ENVIRONMENT)//' parallel ENVIRONMENT is incomplete. Switching to defaults')
  !
@@ -71,6 +77,8 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  select case(ENVIRONMENT)
    case("DIPOLES")
      call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
+   case("DIPOLES_SHIFTED")
+     call GIMME_a_parallel_proposal(2,(/"c","k"/))
    case("Response_G_space_and_IO","Response_G_space")
      call GIMME_a_parallel_proposal(5,(/"g","v","c","k","q"/))
    case("Real_Time") 
@@ -88,6 +96,9 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
       call GIMME_a_parallel_proposal(4,(/" b","qp"," g"," q"/))
    case("Response_T_space") 
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
+   case("BZ_Indexes")
+     CPU_structure(i_PAR_structure)%ROLE(1)="k"
+     CPU_structure(i_PAR_structure)%CPU(1)=ncpu
  end select
  !
  ! Reset the active structures

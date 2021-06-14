@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
 &                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
  use interfaces,    ONLY:eval_G_minus_G

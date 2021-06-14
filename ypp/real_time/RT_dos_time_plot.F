@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -35,7 +35,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
 &                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,6 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
+ use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
@@ -48,7 +49,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
@@ -104,7 +105,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
-&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -193,6 +194,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'Gthresh' ,'[INI] Accuracy for energy shell separation [-1. automatic]',G_mod_zero,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'MolPos',  '[X/BSS] Molecule coord in supercell, 0.5 is the middle',molecule_position,verb_level=V_resp)
@@ -208,6 +210,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_kpt) 
+ call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_kpt)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
@@ -294,7 +297,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
- call it('f',defs,'BSKTriangIO' ,'[BSK] Write only the upper part of the BSE matrix with parallel I/O',verb_level=V_resp)
+ call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_standard")',BSK_IO_mode,verb_level=V_resp)
  call it(defs,'BSKmod',  '[BSE] IP/Hartree/HF/ALDA/SEX/BSfxc',BSK_mode,protect=.FALSE.,case="A")
  call it(defs,'Gauge' ,  '[BSE/X] Gauge (length|velocity)',global_gauge,verb_level=V_resp)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
@@ -318,10 +321,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
 #if defined _SLEPC && !defined _SLEPC_OFF
- call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',BSS_slepc_approach)
+ call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',&
+&                                                                          BSS_slepc_approach,verb_level=V_resp)
  call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
- call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit,verb_level=V_resp)
- call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit,verb_level=V_resp)
+ call it(defs,'BSSEnTarget',   '[SLEPC] Target energy to find eigenvalues',BSS_slepc_target_E,E_unit)
+ call it(defs,'BSSSlepcMaxIt', '[SLEPC] Maximum number of iterations',BSS_slepc_maxit)
  call it(defs,'BSSSlepcPrecondition','[SLEPC] Precondition technique (none|preonly+jacobi|bcgs+jacobi)',&
  &                                                                              BSS_slepc_precondition,verb_level=V_resp)
  call it(defs,'BSSSlepcExtraction','[SLEPC] Extraction technique (ritz|harmonic)',BSS_slepc_extraction,verb_level=V_resp)
@@ -385,8 +389,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 ! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
- call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations)
- call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations)
+ call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
+ call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations,verb_level=V_qp)
  !
  ! S_xc
  !
@@ -758,7 +762,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
        if (i_s==6) possible_fields='(k,b,q,qp)'  ! RT
        if (i_s==7) possible_fields='(p,d) '      ! SLK
        if (i_s==8) possible_fields='(w,k) '      ! NL
-       if (i_s==9) possible_fields='(q,k,b) '    ! PH_SE
+       if (i_s==9) possible_fields='(k) '        ! BZ
+       if (i_s==10)possible_fields='(q,k,b) '    ! PH_SE
        !
        if (len_trim(CPU_structure(i_s)%Short_Description)==0) cycle
        name=trim(CPU_structure(i_s)%Short_Description)//"_CPU"

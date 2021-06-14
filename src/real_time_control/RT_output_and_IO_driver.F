@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:IO_and_Messaging_switch,io_control,io_disconnect,WR_CL
+ use IO_m,           ONLY:WR_CL
+ use IO_int,         ONLY:IO_and_Messaging_switch,io_control,io_disconnect
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &

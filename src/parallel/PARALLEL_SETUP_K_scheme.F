@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DS AM
+! Authors (see AUTHORS file for details): DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,17 +21,19 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
+subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  use parallel_m,   ONLY:COMM_copy,PAR_INDEX_copy,COMM_reset,PP_indexes_reset,PAR_K_scheme
  ! DIP
  use parallel_m,  ONLY:PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PAR_IND_DIPk_ibz,PAR_IND_DIPk_bz,&
-&                      PAR_DIPk_ibz_index,PAR_DIPk_bz_index,PAR_DIPk_nibz,PAR_DIPk_nbz,             &
-&                      mpi_comm_world
+ &                     PAR_DIPk_ibz_index,PAR_DIPk_bz_index,PAR_DIPk_nibz,PAR_DIPk_nbz,             &
+ &                     PAR_COM_BZINDXk_ibz_INDEX,PAR_IND_BZINDXk_ibz,PAR_IND_BZINDXk_bz,            &
+ &                     PAR_BZINDXk_ibz_index,PAR_BZINDXk_bz_index,PAR_BZINDXk_nibz,PAR_BZINDXk_nbz, &
+ &                     PAR_COM_BZINDXk_ibz_A2A,mpi_comm_world
  ! X
  use parallel_m,  ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
-&                      PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_Xk_nibz,PAR_Xk_nbz,             &
-&                      PAR_COM_X_WORLD
+ &                     PAR_Xk_ibz_index,PAR_Xk_bz_index,PAR_Xk_nibz,PAR_Xk_nbz,             &
+ &                     PAR_COM_X_WORLD
  !
  implicit none
  !
@@ -45,7 +47,23 @@ subroutine DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
  if (allocated(PAR_K_scheme%bz_index))  deallocate(PAR_K_scheme%bz_index)
  !
  select case(trim(PAR_K_scheme_kind))
- case ("DIP","RT","SC","QED")
+ case ("BZINDX")
+   call COMM_copy(PAR_COM_BZINDXk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
+   call COMM_copy(PAR_COM_BZINDXk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
+   call PAR_INDEX_copy(PAR_IND_BZINDXk_ibz,PAR_K_scheme%IND_ibz)
+   call PAR_INDEX_copy(PAR_IND_BZINDXk_bz, PAR_K_scheme%IND_bz )
+   PAR_K_scheme%nibz=PAR_BZINDXk_nibz
+   PAR_K_scheme%nbz =PAR_BZINDXk_nbz
+   if (allocated(PAR_BZINDXk_ibz_index)) then
+     allocate(PAR_K_scheme%ibz_index(size(PAR_BZINDXk_ibz_index)))
+     PAR_K_scheme%ibz_index=PAR_BZINDXk_ibz_index
+   endif
+   if (allocated(PAR_BZINDXk_bz_index)) then
+     allocate(PAR_K_scheme%bz_index(size(PAR_BZINDXk_bz_index)))
+     PAR_K_scheme%bz_index=PAR_BZINDXk_bz_index
+   endif
+   PAR_K_scheme%comm_world=mpi_comm_world
+ case ("DIP","RT","SC","QED","YPP")
    call COMM_copy(PAR_COM_DIPk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
    call COMM_copy(PAR_COM_DIPk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_K_scheme%IND_ibz)
@@ -95,4 +113,4 @@ subroutine DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
    PAR_K_scheme%comm_world=mpi_comm_world
  end select
  !
- end subroutine DIPOLE_setup_PAR_K_scheme
+end subroutine PARALLEL_SETUP_K_scheme

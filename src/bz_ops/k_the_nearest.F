@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,13 +35,14 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,bord
  !
  implicit none
  !
- integer :: n_k
- real(SP):: k_ref(3)
- real(SP):: k(n_k,3)
- real(SP),optional :: k_dist(n_k)
- logical, optional :: ROTATE_k_ref,border_point
- integer, optional :: k_symm
- integer, optional :: i_err
+ integer,  intent(in) :: n_k
+ real(SP), intent(in) :: k_ref(3)
+ real(SP), intent(in) :: k(n_k,3)
+ real(SP), intent(out),  optional :: k_dist(n_k)
+ logical,  intent(out),  optional :: border_point
+ logical,  intent(in) ,  optional :: ROTATE_k_ref
+ integer,  intent(out),  optional :: k_symm
+ integer,  intent(out),  optional :: i_err
  !
  ! Work Space
  !
@@ -80,7 +81,7 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,bord
      v=k_rotated(:,is)-k(ik,:)
      call k2bz(v)
      k_dist_(ik)=iku_v_norm(v)
-     if ( k_dist_(ik) < MAX_dist) then
+     if ( k_dist_(ik) < MAX_dist-zero_dfl) then
        k_the_nearest=ik
        MAX_dist=k_dist_(ik)
        if (present(k_symm)) then

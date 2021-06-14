@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -34,6 +34,8 @@ if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
               [Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
+#
+HDF5_MODE="production";
 #
 def_compiler=
 #
@@ -83,18 +85,24 @@ i?86*linux*)
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *ifort*)
     OMPFLAGS="-openmp"
     NETCDFFLAGS="-DpgiFortran"
     CPU_FLAG=""
+    FCMFLAG="-nofor_main"
     case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* | *15* | *16* )
        CPU_FLAG="-xHost"
        #CPU_FLAG=" "
        ;;
-      *17* | *18* | *19*)
+      *2021* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        ;;
@@ -107,7 +115,6 @@ i?86*linux*)
     esac
     SYSFLAGS="-assume bscc -O3 -g -ip $CPU_FLAG"
     FUFLAGS="-assume bscc -O0 $CPU_FLAG"
-    FCMFLAG="-nofor_main"
     DEBUG_FLAGS="-check all -CB -traceback -check bound"
   ;;
   *pathf9*)
@@ -207,7 +214,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-O3 -g -fbackslash -fno-second-underscore"
@@ -287,7 +294,7 @@ ia64*linux* )
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
-    DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
+    DEBUG_FLAGS="-Og -g -Wall -pedantic -fbounds-check -ffpe-trap=invalid,zero,overflow"
     ;;
   *g95*)
     SYSFLAGS="-O3 -g -fbackslash -fno-second-underscore"
@@ -307,12 +314,18 @@ ia64*linux* )
   *ifort*)
     OMPFLAGS="-openmp"
     CPU_FLAG=""
+    FCMFLAG="-nofor_main"
     case "${INTELVERSION}" in
       *11* | *12* | *13* |*14* |*15* | *16* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *17* | *18* | *19*)
+      *2021* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       FCMFLAG="-nofor-main"
+       ;;
+      *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        ;;
@@ -325,9 +338,8 @@ ia64*linux* )
     esac
     SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
-    FCMFLAG="-nofor_main"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-CB -traceback"
+    DEBUG_FLAGS="-CB -traceback -debug full"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -430,6 +442,7 @@ fi
 if test x"$enable_debug_flags" = "xyes"; then 
  FCFLAGS="$DEBUG_FLAGS"  
  FCUFLAGS="$DEBUG_FLAGS"  
+ HDF5_MODE="debug";
 fi
 #
 AC_MSG_CHECKING([for specific NETCDF flags])
@@ -443,6 +456,7 @@ AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)
 AC_SUBST(NETCDFFLAGS)
 AC_SUBST(DEBUG_FLAGS)
+AC_SUBST(HDF5_MODE)
 AC_SUBST(def_compiler)
 ])
 #

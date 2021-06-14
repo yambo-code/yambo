@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -29,10 +29,11 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what)
  use X_m,           ONLY:X_reset
  use QP_CTL_m,      ONLY:QP_apply
  use electrons,     ONLY:levels,n_spin,n_sp_pol,spin
- use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,NONE,REP,VERIFY,io_disconnect
+ use IO_int,        ONLY:io_control,io_disconnect
+ use IO_m,          ONLY:OP_RD_CL,DUMP,NONE,REP,VERIFY
  use BS_solvers,    ONLY:BSS_eh_table,BSS_write_eig_2_db,io_BSS_diago,BS_mat,BSS_n_eig
  use BS,            ONLY:BS_H_dim,BS_K_dim,BS_bands,BS_K_coupling,BS_cpl_mode,&
-&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts,BSE_mode
+&                        BS_cpl_K_exchange,BS_cpl_K_corr,BSqpts
  use YPPm,          ONLY:BS_R_left,BS_R_right,BS_E,BS_E_SOC_corr,BS_R_PL,BS_R_kerr,Xbsk   
  !
 #include<memory.h>

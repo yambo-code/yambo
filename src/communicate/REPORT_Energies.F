@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -49,11 +49,10 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  if(l_kpoints) then
    call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
-   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    if (trim(what)/="Q".and.Xk%nibz/=k%nibz) then
-     call msg('r','K-points grids:')
-     call msg('rn','X = response function; S = self-energy')
+     call msg('r', 'IBZ K-points for X ',nXkibz)
    endif
+   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    call msg('r','K/Q-points units:')
    call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units')
  endif
@@ -84,8 +83,6 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (fat_log) call msg('r','      :',k_cc,'[cc]')
      if (trim(what)/="Q") then
        call msg('r','      : wf components',wf_nc_k(ik) )
-       if (ik<=nXkibz) call msg('r','      : BZ grid      ',"X S")
-       if (ik> nXkibz) call msg('r','      : BZ grid      ',"S")
      endif
    endif
    !

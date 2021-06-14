@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -64,6 +64,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! K-pts
  !-------
  PAR_K_range=Xk%nibz
+ if (ENVIRONMENT=="BZ_Indexes"               ) PAR_K_range=Xk%nibz
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_K_range=Xk%nibz
  if (index(ENVIRONMENT, "Response_G_space")>0) PAR_K_range=Xk%nbz
  if (ENVIRONMENT=="Response_T_space"         ) PAR_K_range=Xk%nibz
@@ -86,7 +87,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 #else
  if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
 #endif
- if (ENVIRONMENT=="Response_T_space")                 PAR_n_v_bands= (/BS_bands(1),E%nbm/)
+ if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),E%nbm/)
  !
  ! # G vectors
  !-------------
@@ -117,7 +118,11 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !
  ! EH-range
  !----------
- if (ENVIRONMENT=="Response_T_space"                ) then
+ if (ENVIRONMENT=="Response_T_space") then
+   ! Set this value just to properly define a parallel range
+   PAR_EH_range=(PAR_n_c_bands(2)-PAR_n_c_bands(1)+1)*PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
+ endif
+ if (ENVIRONMENT=="Response_T_space_transitions") then
    PAR_EH_range=maxval( BS_nT_at_k )
    do i_k=1,Xk%nibz*BS_res_ares_dim
      if (BS_nT_at_k(i_k)<PAR_EH_range.and.BS_nT_at_k(i_k)>0) PAR_EH_range=BS_nT_at_k(i_k)

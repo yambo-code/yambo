@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,8 +30,9 @@ integer function io_PH(ID)
  use QP_m,                ONLY:QP_G_damp
  use PHEL,                ONLY:PH_DbGd_points,l_PH_uses_E_FineGd,PH_Self_Energy_mode
  use ELPH,                ONLY:QP_PH_n_G_bands,elph_branches,PH_freqs_sq,ph_modes,PHEL_desc
- use IO_m,                ONLY:io_connect,io_disconnect,io_sec,io_header,io_status,read_is_on,def_variable_elemental,&
-&                              DB_is_OK,io_variable_elemental,def_variable_bulk,io_variable_bulk
+ use IO_int,              ONLY:io_connect,io_disconnect,io_header,def_variable_elemental,&
+&                              io_variable_elemental,def_variable_bulk,io_variable_bulk
+ use IO_m,                ONLY:io_sec,io_status,read_is_on,DB_is_OK
  use RT_lifetimes,        ONLY:RT_PE_life,RT_PE_extra,RT_lifetime_alloc,RT_extra_lifetime_alloc,Life_MEM_steps
  use descriptors,         ONLY:IO_desc_reset
  !

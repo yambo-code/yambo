@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,9 +27,10 @@ integer function io_QP_and_GF(what,qp,ID)
  use electrons,      ONLY:n_sp_pol
  use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
 &                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on,&
-&                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,ver_is_gt_or_eq,&
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
+&                         ver_is_gt_or_eq
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,&
+&                         write_is_on,io_mode,DUMP,VERIFY,DB_is_OK,&
 &                         db_alat,variable_exist,IO_INCOMPATIBLE_VAR
  use global_XC,      ONLY:QP_DB_kind,QP_SE_GoWo,QP_SE_GWo,QP_SE_GoWo_PPA,QP_SE_GWo_PPA,QP_SE_COHSEX,QP_SE_NONE,&
 &                         QP_SE_POLARON,QP_SE_GW_QED,G_E_xc_string,X_E_xc_string,&
@@ -37,7 +38,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add,IO_desc_append
 #if _ELPH
- use ELPH,           ONLY:ELPH_desc
+ use ELPH,           ONLY:ELPH_desc,use_PH_DbGd
 #endif
  !
 #include<memory.h>
@@ -139,6 +140,9 @@ integer function io_QP_and_GF(what,qp,ID)
    if (QP_DB_kind==QP_SE_POLARON) then
      call IO_desc_add(qp%desc,kind="s",str=" ",S=" ")
      call IO_desc_append(ELPH_desc,qp%desc)
+     if (ver_is_gt_or_eq(ID,revision=19875)) then 
+       call IO_desc_add(qp%desc,kind="l",str='PH double-grid',L=use_PH_DbGd)
+     endif
    endif
 #endif
  endif

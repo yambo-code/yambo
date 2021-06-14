@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -50,7 +50,7 @@ subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEE
  use interpolate,          ONLY:INTERP_obj,INTERPOLATION_coefficients,max_interpls,&
 &                               l_INTERP_f,l_INTERP_E,l_INTERP_dE,l_INTERP_W,INTERPOLATE_is_serial,&
 &                               INTERPOLATE_initialized,l_INTERP_Z,INTERP_mode,INTERPOLATE_is_quiet
- use IO_m,                 ONLY:IO_and_Messaging_switch
+ use IO_int,               ONLY:IO_and_Messaging_switch
  !
  implicit none
  !

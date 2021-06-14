@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -102,8 +102,8 @@ subroutine INIT_q_points( )
    integer function get_e_p_q_point(i_q,q_in)
      !
      use D_lattice,   ONLY:alat
-     use IO_m,        ONLY:io_control,io_connect,io_unit,OP_RD_CL,&
-&                          io_disconnect
+     use IO_m,        ONLY:io_unit,OP_RD_CL
+     use IO_int,      ONLY:io_control,io_connect,io_disconnect
      !
      integer :: i_q
      real(DP):: q_in(3)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -56,7 +56,8 @@ subroutine col_driver(bare_NG,q)
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
 &                        bz_samp,q_norm,cutoff_presets,bare_qpg_d
  use wave_func,     ONLY:wf_ng
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,REP,VERIFY
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
  use cuda_m,        ONLY:have_cuda
 #include<memory.h>
  !

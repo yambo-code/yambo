@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -55,6 +55,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  STEP  = RT_step
  if (GENERAL_RT_IO_t%N> 1) then
    STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+   if (RT_conf%delta_T> 0._SP) STEP=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
    if (l_rho_G) then
     TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
     if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
@@ -101,6 +102,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif
  !
+ RT_conf%T_n_range=i_ref
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?

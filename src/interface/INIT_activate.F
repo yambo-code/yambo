@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -138,7 +138,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs K_grids IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -255,7 +255,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
    !
 #if defined _RT
    call initactivate(1,'ForceEqTrans')
@@ -546,6 +546,7 @@ subroutine INIT_activate()
  endif
  !
 #endif
+ !
  contains
    !
 #if defined _RT

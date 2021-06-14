@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -38,7 +38,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  use YPPm,            ONLY:DIPs
  use X_m,             ONLY:Epsilon_ii,global_gauge
  use BS,              ONLY:BS_bands
- use BS_solvers,      ONLY:BSS_eh_table,BS_mat
+ use BS_solvers,      ONLY:BSS_eh_table,BS_mat,BSS_q0
  use frequency,       ONLY:w_samp
  use parallel_int,    ONLY:PARALLEL_global_indexes
  use real_time,       ONLY:RT_bands,l_RT_abs_YAMBO
@@ -66,7 +66,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  real(SP)                :: field_dir(3),kerr_dir(3)
  !
  l_RT_abs_YAMBO=.TRUE.
- l_BS_kerr=.TRUE.
+ l_BS_kerr=.FALSE.
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !
@@ -87,6 +87,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
  !
  io_DIP=.TRUE.
  call DIPOLE_IO(Xk,Xen,DIPs,'read',io_err,'YPP')
+ DIPs%q0=BSS_q0
  if (trim(global_gauge)=='length'  ) field_dir=DIPs%q0/v_norm(DIPs%q0)*q0_def_norm
  if (trim(global_gauge)=='velocity') field_dir=DIPs%q0/v_norm(DIPs%q0)
  call rot_v_xy_plane(-pi/2._SP,field_dir,kerr_dir)
@@ -122,7 +123,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    !
    call RT_apply(DIPs%ib,Xen,Xk,TIME=RT_time(i_T),keep_RT_carriers=.TRUE.)
    !
-   call RT_interpolation(DIPs%ib,Xen,Xk," R ",RT_time(i_T),.true.,.false.,.false.)
+   call RT_interpolation(DIPs%ib,Xen,Xk," R ","NN",RT_time(i_T),.true.,.false.,.false.,.false.,1)
    !
    Epsilon_ii=cZERO
    !
@@ -288,6 +289,10 @@ subroutine RT_transient_absorption(Xen,Xk,Xq,BS_H_dim,BS_E,BS_R0)
    call live_timing(steps=1)
    !
  enddo
+ !
+ call RT_output("close trans_eps_real trans_eps_imag eps_eq trans_residual")
+ if (l_TR_reflec) call RT_output("close trans_refl_rel trans_refl_abs refl_eq")
+ if (l_TR_transm) call RT_output("close trans_transm_rel trans_transm_abs transm_eq")
  !
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(X_reflectance)

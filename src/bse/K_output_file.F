@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -28,7 +28,7 @@ subroutine K_output_file(iq,mode)
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
- use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,BS_dip_size,l_BS_esort,&
+ use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,l_BS_esort,&
  &                   l_BS_jdos,BS_K_coupling
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg,of_open_close
@@ -59,7 +59,7 @@ subroutine K_output_file(iq,mode)
  character(2)      :: ordering
  character(2)      :: title_mode
  character(10)     :: name_
- integer           :: iw,i1,i2,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
+ integer           :: iw,i1,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
  complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
  complex(SP)       :: beta(BSS_n_freqs,3)

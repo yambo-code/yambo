@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -64,6 +64,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  do ib = H_ref_bands(1),H_ref_bands(2)
    !
    i_wf = WFo%index(ib,ik,i_sp_pol)
+   if (i_wf==0) cycle
    !
    !$omp parallel do default(shared), private(i_c,i_spinor)
    do i_spinor=1,n_spinor

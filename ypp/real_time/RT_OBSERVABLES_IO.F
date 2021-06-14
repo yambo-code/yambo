@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -26,7 +26,8 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  use YPP_real_time,  ONLY:RT_conf,Pol,Curr
  use pars,           ONLY:DP,schlen,cZERO_DP
  use R_lattice,      ONLY:nkibz
- use IO_m,           ONLY:OP_RD,OP_RD_CL,io_control,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,CACHE_OBS_steps,CACHE_OBS_steps_now
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
@@ -41,7 +42,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! Work Space
  !
- integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir
+ integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -132,8 +133,8 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  Curr%N   =3
  !
  if (what=="JP".and..not.allocated(Curr%F_t)) then
-   CACHE_OBS_steps=RT_conf%T_n_steps
-   CACHE_OBS_steps_now=RT_conf%T_n_steps
+   CACHE_OBS_steps=RT_conf%T_n_steps+RT_conf%T_n_range(1)-1
+   CACHE_OBS_steps_now=RT_conf%T_n_steps+RT_conf%T_n_range(1)-1
    call RT_control_alloc("cache")
    NE_i_time=NE_steps
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID)
@@ -143,8 +144,11 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    Curr%F_t =cZERO_DP
    Pol%F_t =cZERO_DP
    do i_dir=1,3
-     Curr%F_t(:,i_dir)=J_cache(i_dir,:)
-     Pol%F_t(:,i_dir) =P_cache(i_dir,:)
+     do it=1,RT_conf%T_n_steps
+       it_now=it+RT_conf%T_n_range(1)-1
+       Curr%F_t(it,i_dir)=J_cache(i_dir,it_now)
+       Pol%F_t(it,i_dir) =P_cache(i_dir,it_now)
+     enddo
    enddo
    !
    call RT_control_free("cache")

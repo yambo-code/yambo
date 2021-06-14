@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -26,11 +26,10 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use pars,          ONLY:schlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_sec,io_connect,io_header,io_status,&
-&                        io_elemental, &
-&                        io_variable_bulk,def_variable_bulk,io_disconnect,&
-&                        ver_is_gt_or_eq,IO_OUTDATED_DB,read_is_on,io_fragment,IO_mode,&
+ use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
+ use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
+&                        io_variable_bulk,def_variable_bulk,io_disconnect
  use xc_functionals,ONLY:GS_xc_kind
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE

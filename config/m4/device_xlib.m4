@@ -24,8 +24,6 @@
 #
 AC_DEFUN([ACX_DEVXLIB], [
 
-acx_devxlib_ok=no
-compile_devxlib=yes
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
@@ -38,7 +36,7 @@ AC_ARG_WITH(devxlib_libdir, [AS_HELP_STRING([--with-devxlib-libdir=<path>],
 AC_ARG_WITH(devxlib_includedir, [AS_HELP_STRING([--with-devxlib-includedir=<path>], 
             [Path to the devxlib include directory],[32])])
 
-
+acx_devxlib_ok="no"
 internal_devxlib="no"
 compile_devxlib="no"
 
@@ -63,7 +61,7 @@ dnl The following program should work with all version of devxlib
 testprog="AC_LANG_PROGRAM([],[
     implicit none
 
-    integerxx :: ixx
+    integerxx :: i
 ])"
 
 FCFLAGS="$DEVXLIB_INCS $acx_devxlib_save_FCFLAGS"
@@ -125,11 +123,10 @@ if test x"$acx_devxlib_ok" = xyes; then
 fi
 
 if test x"$acx_devxlib_ok" = xno; then
-  have_configured="no"
   internal_devxlib="yes"
-  DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libdevXlib.a"
-  DEVXLIB_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/include"
-  if test -e "${extlibs_path}/${FCKIND}/${FC}/lib/libdevXlib.a"; then
+  DEVXLIB_LIBS="${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"
+  DEVXLIB_INCS="$IFLAG${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/include"
+  if test -e "${extlibs_path}/${FCKIND}/${FC}/${GPU_SUPPORT}/lib/libdevXlib.a"; then
     compile_devxlib="no"
     AC_MSG_RESULT([Compatible external DevXlib not found/specified. Found internal already compiled.])
   else
@@ -137,12 +134,13 @@ if test x"$acx_devxlib_ok" = xno; then
     AC_MSG_RESULT([Compatible external DevXlib not found/specified. Internal to be compiled.])
   fi
 fi 
+FCFLAGS="$acx_devxlib_save_FCFLAGS"
+LIBS="$acx_devxlib_save_LIBS"
 
 AC_SUBST(DEVXLIB_LIBS)
 AC_SUBST(DEVXLIB_INCS)
 AC_SUBST(compile_devxlib)
 AC_SUBST(internal_devxlib)
-FCFLAGS="$acx_devxlib_save_FCFLAGS"
-LIBS="$acx_devxlib_save_LIBS"
+
 
 ])

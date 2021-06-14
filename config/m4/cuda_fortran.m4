@@ -21,7 +21,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-AC_DEFUN([AC_HAVE_CUDA],[
+AC_DEFUN([AC_HAVE_CUDA_FORTRAN],[
 #
 AC_ARG_ENABLE(cuda,
         [AC_HELP_STRING([--enable-cuda=<opt>], [Enable CUDA support])],[],[])
@@ -32,7 +32,11 @@ if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
 #
 def_cuda=""
 CUDA_FLAGS=""
-CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
+CUDA_LIBS=""
+
+if test x"$LIBCUDA_LIBS" = "x" ; then
+  CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
+fi
 
 # Available cc options:
 #    cc20            Compile for compute capability 2.0
@@ -52,17 +56,24 @@ CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
 #
 
 if test x"$enable_cuda" = "xyes" ; then
-   def_cuda="-D_CUDA"
    CUDA_FLAGS="-Mcuda=cuda9.0,cc70,nollvm $CUDA_LIBS"
-elif ! test x"$enable_cuda" = "x" ; then
+   CUDA_LIBFLAGS="FCFLAGS=\`$CUDA_FLAGS\`"
+   GPU_SUPPORT="cudaf"
+   enable_cuda="yes"
    def_cuda="-D_CUDA"
+elif ! test x"$enable_cuda" = "x" ; then
    CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+   CUDA_LIBFLAGS="FCFLAGS=\`$CUDA_FLAGS\`"
+   GPU_SUPPORT="cudaf"
+   enable_cuda="yes"
+   def_cuda="-D_CUDA"
 fi
 #
 if test x"$enable_cuda" = "x" -o x"$enable_cuda" = "xno" ; then
   enable_nvtx=no
   def_cuda=""
   CUDA_FLAGS=""
+  CUDA_LIBFLAGS=""
 fi
 #
 if ! test x"$enable_nvtx" = "xno" ; then
@@ -76,7 +87,9 @@ if ! test x"$enable_nvtx" = "xno" ; then
   fi
 fi
 #
+AC_SUBST(enable_cuda)
 AC_SUBST(def_cuda)
 AC_SUBST(CUDA_FLAGS)
+AC_SUBST(CUDA_LIBFLAGS)
 #
 ])

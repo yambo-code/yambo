@@ -38,13 +38,18 @@ if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 MEM_profile_check="-"
 if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL CUDA SUPPORT -
 # 
 MPI_check="-"
 if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 #
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
+#
+GPU_check="-"
+if test "$enable_cuda"    = "yes" ; then GPU_check="X"; fi
+if test "$enable_openacc" = "yes" ; then GPU_check="X"; fi
+if test "$enable_openmp5" = "yes" ; then GPU_check="X"; fi
 
 #
 # - LIBRARIES -
@@ -185,6 +190,10 @@ if test "$internal_devxlib" = "yes" ; then
 fi
 
 #
+LIBCUDA_str=" - "
+if test "$use_libcuda" = "yes" ; then LIBCUDA_str="E"; fi
+
+#
 YDB_str="-";
 if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
 YPY_str="-";
@@ -209,6 +218,7 @@ AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
+AC_SUBST(GPU_check)
 #
 AC_SUBST(YAML_str)
 AC_SUBST(FUTILE_str)
@@ -232,6 +242,7 @@ AC_SUBST(YPY_str)
 #
 AC_SUBST(LIBXC_str)
 AC_SUBST(DEVXLIB_str)
+AC_SUBST(LIBCUDA_str)
 AC_SUBST(MPI_str)
 AC_SUBST(MPI_info)
 ])

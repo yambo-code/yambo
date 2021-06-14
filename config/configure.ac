@@ -54,8 +54,9 @@ m4_include([config/m4/acx_get_fc_kind.m4])
 m4_include([config/m4/acx_get_mpi_kind.m4])
 m4_include([config/m4/acx_fortran_flags.m4])
 m4_include([config/m4/acx_mpi.m4])
-m4_include([config/m4/cuda.m4])
 m4_include([config/m4/acx_branch.m4])
+#
+m4_include([config/m4/cuda_fortran.m4])
 # 
 #  Report
 #
@@ -176,6 +177,13 @@ AC_SUBST(OPENMPLIBS)
 #
 # ============================================================================
 #
+# GPUs suppport
+#
+GPU_SUPPORT="no_gpu"
+AC_SUBST(GPU_SUPPORT)
+#
+# ============================================================================
+#
 # Underscore options in subroutine naming
 #
 ACX_EXTUS
@@ -244,6 +252,7 @@ m4_include([config/m4/etsf_io.m4])
 m4_include([config/m4/scalapack.m4])
 m4_include([config/m4/petsc_slepc.m4])
 m4_include([config/m4/device_xlib.m4])
+m4_include([config/m4/libcuda.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
@@ -281,11 +290,14 @@ AC_HAVE_ETSF_IO
 # LIBXC
 ACX_LIBXC
 # ============================================================================
-# Device XLIB
-ACX_DEVXLIB
+# CUDA LIBRARY
+ACX_LIBCUDA
 # ============================================================================
 # CUDA
-AC_HAVE_CUDA
+AC_HAVE_CUDA_FORTRAN
+# ============================================================================
+# Device XLIB
+ACX_DEVXLIB
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

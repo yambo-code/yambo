@@ -64,10 +64,6 @@ module X_m
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
  !
- ! workspace for X_irredux_residuals on GPUs
- !
- complex(SP), allocatable DEV_ATTR :: rhotw_save_d(:), rhotw_save2_d(:)
- !
  ! Absorption & Polarizability
  !
  complex(SP), allocatable :: BS_E_sorted(:,:,:)

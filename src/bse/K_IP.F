@@ -225,7 +225,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      do i_pert_SOC=1,n_SOC
        !
        if (l_BS_jdos) then
-         Joint_DOS(:,3) =Joint_DOS(:,3) -1._SP/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         Joint_DOS(:,3) =Joint_DOS(:,3)+(-1._SP)**(i_res_ares)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
            Joint_DOS(:,3) =Joint_DOS(:,3) +    1._SP/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif

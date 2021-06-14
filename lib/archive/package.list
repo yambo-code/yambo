@@ -17,6 +17,7 @@ keep_fftw=no
 keep_fftqe=no
 keep_yaml=no
 keep_futile=no
+keep_devxlib=no
 #
 # tarball names
 #
@@ -37,6 +38,7 @@ tarball_fftw=fftw-3.3.6-pl1.tar.gz
 tarball_fftqe=fftqe.tar.gz
 tarball_yaml=yaml-0.2.2.tar.gz
 tarball_futile=futile-yambo.tar.gz
+tarball_devxlib=XXXXX.tar.gz
 #
 # package names
 #
@@ -57,6 +59,7 @@ pkgname_fftw=fftw-3.3.6-pl1
 pkgname_fftqe=fftqe
 pkgname_yaml=yaml-0.2.2
 pkgname_futile=futile-yambo
+pkgname_devxlib=devicexlib
 #
 # URL's
 #
@@ -77,3 +80,8 @@ url_fftw=https://github.com/yambo-code/yambo/files/838458/$(tarball_fftw)
 url_fftqe=https://github.com/yambo-code/yambo/files/844070/$(tarball_fftqe)
 url_yaml=https://github.com/yambo-code/yambo/files/3901837/$(tarball_yaml)
 url_futile=https://github.com/yambo-code/yambo/files/3900885/$(tarball_futile)
+url_devxlib=https://gitlab.com/max-centre/components/devicexlib/archive/$(tarball_devxlib)
+#
+# GIT's repositories and branches
+#
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git

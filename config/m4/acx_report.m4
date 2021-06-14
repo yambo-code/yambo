@@ -178,6 +178,13 @@ if test "$internal_libxc" = "yes" ; then
 fi
 
 #
+DEVXLIB_str=" E "
+if test "$internal_devxlib" = "yes" ; then
+  if test "$compile_devxlib" = "yes"; then DEVXLIB_str=" Ic"; fi
+  if test "$compile_devxlib" = "no" ; then DEVXLIB_str=" If"; fi
+fi
+
+#
 YDB_str="-";
 if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
 YPY_str="-";
@@ -224,6 +231,7 @@ AC_SUBST(YDB_str)
 AC_SUBST(YPY_str)
 #
 AC_SUBST(LIBXC_str)
+AC_SUBST(DEVXLIB_str)
 AC_SUBST(MPI_str)
 AC_SUBST(MPI_info)
 ])

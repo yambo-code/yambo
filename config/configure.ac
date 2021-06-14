@@ -243,6 +243,7 @@ m4_include([config/m4/iotk.m4])
 m4_include([config/m4/etsf_io.m4])
 m4_include([config/m4/scalapack.m4])
 m4_include([config/m4/petsc_slepc.m4])
+m4_include([config/m4/device_xlib.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
@@ -279,6 +280,9 @@ AC_HAVE_ETSF_IO
 # ============================================================================
 # LIBXC
 ACX_LIBXC
+# ============================================================================
+# Device XLIB
+ACX_DEVXLIB
 # ============================================================================
 # CUDA
 AC_HAVE_CUDA

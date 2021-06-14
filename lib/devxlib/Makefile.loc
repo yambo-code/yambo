@@ -1,0 +1,68 @@
+
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libdevxlib.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_devxlib)
+TARBALL=$(tarball_devxlib)
+
+
+AUXFLAGS="--enable-openmp"
+#AUXFLAGS="--enable-openmp \
+          --with-cuda=/usr/local/cuda-10.1/ \
+          --with-cuda-cc=70 \
+          --with-cuda-runtime=10.1"
+
+#
+# MAIN target
+#
+all: $(LIBRARY)
+
+uncompress-stamp:
+	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -d $(PACKAGE) ; then \
+	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(TARBALL) ; cd - ; fi )
+	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
+	if test -d ../archive/$(PACKAGE) ; then (mv ../archive/$(PACKAGE) ./); fi
+	touch uncompress-stamp
+
+configure-stamp: uncompress-stamp
+	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	      ./configure $(AUXFLAGS) \
+	      BLAS_LIBS="$(lblas)" LPACK_LIBS="$(llapack)" \
+	      CC="$(cc)" \
+	      FC="$(fc)" \
+	      F77="$(f77)" ); \
+	fi
+	touch configure-stamp
+
+package-ready-stamp: uncompress-stamp configure-stamp
+	if test -d $(PACKAGE) ; then \
+	( cd $(PACKAGE);  $(make) all) ; fi
+	touch package-ready-stamp
+
+package-installed: uncompress-stamp configure-stamp package-ready-stamp
+	if ! test -e package-installed ; then ($(install)); fi
+	touch package-installed
+
+$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+
+#
+# cleaning
+#
+clean:
+	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf package-ready-stamp configure-stamp package-installed
+
+clean_all: clean
+	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
+	@- rm -rf uncompress-stamp 
+	
+define install
+ cd $(PACKAGE);  cp src/libdevXlib.a $(LIBPATH)/lib/ ; chmod u+x $(LIBPATH)/lib/libdevXlib.a ; cp src/*.mod $(LIBPATH)/include/ ;
+endef
+
+# At present we are relying on the yambo headers. To check if we can also switch to the headers of the library
+# cp include/* $(LIBPATH)/include/ ;

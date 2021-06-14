@@ -23,6 +23,7 @@ do_etsf     = @compile_etsf@
 do_p2y      = @compile_p2y@
 do_e2y      = @compile_e2y@
 do_libxc    = @compile_libxc@
+do_devxlib  = @compile_devxlib@
 do_petsc    = @compile_petsc@
 do_slepc    = @compile_slepc@
 shell       = @SHELL@

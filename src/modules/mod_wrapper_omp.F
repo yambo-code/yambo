@@ -47,8 +47,12 @@ module wrapper_omp
    module procedure mv_cgemv_omp,mv_sgemv_omp,mv_c_omp,mv_r_omp
  end interface
  !
- interface V_by_V_plus_V_omp
-   module procedure vv_saxpy_omp,vv_caxpy_omp,MM_caxpy_omp
+ interface V_plus_alpha_V_omp
+   module procedure vv_saxpy_omp,vv_caxpy_omp
+ end interface
+ !
+ interface M_plus_alpha_M_omp
+   module procedure MM_caxpy_omp
  end interface
  !
  interface V_dot_V_omp
@@ -187,7 +191,7 @@ module wrapper_omp
    end subroutine mv_r_omp
    !
    !=========================
-   ! interface V_by_V_plus_V 
+   ! interface M_plus_alpha_M
    !=========================
    !
    subroutine MM_caxpy_omp(N, CA, CX,  CY )
@@ -214,6 +218,10 @@ module wrapper_omp
     call MM_caxpy(N, CA, CX,  CY )
 #endif
    end subroutine MM_caxpy_omp
+   !
+   !=========================
+   ! interface V_plus_alpha_V
+   !=========================
    !
    subroutine vv_caxpy_omp(N, CA, CX,  CY )
      complex(SP), intent(in) :: CA

@@ -115,6 +115,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
      endif
      !
      if(l_BS_jdos) then
+       ! DS. Note. Jdos with coupling seems to have the wrong ordering, i.e.
+       !           Re[Jdos(w)]=-Re[Jdos(-w)] while it should be Re[Jdos(w)]=Re[Jdos(-w)]
        Joint_DOS(:,2)=Joint_DOS(:,2)-ares_fac/(W%p(:)-EXC_E(i_pert_SOC))
        if (l_ADD_the_ARES_using_the_RES) then
          Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))

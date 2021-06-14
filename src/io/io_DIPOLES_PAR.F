@@ -78,7 +78,11 @@ integer function io_DIPOLES(Dip,ID)
  !
  io_extension(ID)='dipoles'
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ if (any((/io_sec(ID,:)==1/))) then
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ else
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ endif
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -92,7 +96,14 @@ integer function io_DIPOLES(Dip,ID)
  endif
  !
  if (i_fragment==0)               goto 1
- if (i_fragment> n_sp_pol*nXkibz) goto 1
+ if (i_fragment> n_sp_pol*nXkibz) then
+   if(write_is_on(ID)) then
+     stat = nf90_sync(io_unit(ID))
+     call netcdf_call(stat,ID)
+   endif
+   goto 1
+ endif
+ ! 
  !
  if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik)
  !
@@ -226,11 +237,6 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if(write_is_on(ID)) then
-   stat = nf90_sync(io_unit(ID))
-   call netcdf_call(stat,ID)
- endif
- ! 
 1 call io_disconnect(ID=ID)
  !
  if (io_DIP) call timing('io_DIPOLES',OPR='stop')

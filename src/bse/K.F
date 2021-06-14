@@ -106,8 +106,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr
- integer, external ::io_BS,io_BS_PAR_init,io_BS_header
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr,io_QINDX_err
+ integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
  ! Timing and restart
@@ -180,7 +180,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_init(qindx_ID)
+ io_QINDX_err=0
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) io_QINDX_err=qindx_B_init(qindx_ID)
+ if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
  !======================

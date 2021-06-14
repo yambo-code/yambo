@@ -52,7 +52,7 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  type(levels)         :: E
  type(bz_samp)        :: Xk,q
  character(*)         :: ENVIRONMENT
- integer              :: X_type
+ integer              :: X_type,n_cpu_la
  !
  ! Work space
  !
@@ -133,7 +133,9 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
  ! Inversion
  !
- call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,CPU_structure(3)%nCPU_lin_algebra_INV)
+ if(index(ENVIRONMENT,"IO")> 0) n_cpu_la=CPU_structure(2)%nCPU_lin_algebra_INV
+ if(index(ENVIRONMENT,"IO")==0) n_cpu_la=CPU_structure(3)%nCPU_lin_algebra_INV
+ call PARALLEL_assign_LA_COMMs(ENVIRONMENT,INV,n_cpu_la)
  !
  call PARALLEL_live_message("K(ibz)",ENVIRONMENT=ENVIRONMENT,LOADED=PAR_Xk_nibz,TOTAL=Xk%nibz,&
 &                           NCPU=PAR_COM_Xk_ibz_INDEX%n_CPU)

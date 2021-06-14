@@ -40,7 +40,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE,io_DIP
  use pars,          ONLY:SP,cZERO,schlen
- use wrapper,       ONLY:V_plus_alpha_V
+ use wrapper,       ONLY:V_plus_alpha_V,MM_caxpy
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix

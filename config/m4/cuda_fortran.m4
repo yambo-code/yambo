@@ -27,8 +27,8 @@ AC_ARG_ENABLE(cuda,
         [AC_HELP_STRING([--enable-cuda], [Enable CUDA support])],[],[])
 #
 AC_ARG_WITH([cuda-cc],
-   [AS_HELP_STRING([--with-cuda-cc=VAL],[GPU architecture (Kepler: 35, Pascal: 60, Volta: 70) @<:@default=60@:>@])],
-   [],[with_cuda_cc=60])
+   [AS_HELP_STRING([--with-cuda-cc=VAL],[GPU architecture (Kepler: 35, Pascal: 60, Volta: 70, Ampere: 80) @<:@default=70@:>@])],
+   [],[with_cuda_cc=70])
 #
 # Available cc options
 #    cc20            Compile for compute capability 2.0
@@ -37,6 +37,7 @@ AC_ARG_WITH([cuda-cc],
 #    cc50            Compile for compute capability 5.0
 #    cc60            Compile for compute capability 6.0
 #    cc70            Compile for compute capability 7.0
+#    cc80            Compile for compute capability 8.0
 #
 # check your card at https://en.wikipedia.org/wiki/CUDA#GPUs_supported
 #

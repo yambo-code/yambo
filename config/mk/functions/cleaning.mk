@@ -3,7 +3,7 @@ define makefiles_clean
         grep -v '.*yaml.*\/Makefile' |  \
         grep -v '.*futile.*\/Makefile' |  \
         grep -v '.*iotk.*\/Makefile' |  \
-        grep -v '.*etsf_io.*\/Makefile' | \
+        grep -v '.*etsf_io.*\/Makefile' | grep -v '.*devxlib.*\/Makefile' | \
         grep -v '.*hdf5.*\/Makefile' | grep -v '.*netcdf.*\/Makefile' | grep -v '.*libxc.*\/Makefile' | \
         grep -v '.*fftw.*\/Makefile' | grep -v '.*fftqe.*\/Makefile' | grep -v '.*driver\/Makefile'| xargs rm -f
  echo "[CLEAN] Makefiles ... done"
@@ -15,7 +15,7 @@ define objects_clean
         grep -v '.*yaml.*\/*f90' | \
         grep -v '.*futile.*\/*f90' | \
         grep -v '.*iotk.*\/*f90' | \
-        grep -v '.*etsf_io.*\/*f90' | \
+        grep -v '.*etsf_io.*\/*f90' | grep -v '.*devxlib.*\/*f90' | \
         grep -v '.*lapack*' | grep -v '.*blacs*' |  \
         grep -v '.*scalapack*' | grep -v '.*/lib/slepc*' | \
         grep -v '.*/lib/petsc*'  | xargs rm -f
@@ -33,7 +33,7 @@ define lib_ext_clean
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
  echo "[CLEAN] External Libraries ... " 
- @for libtoclean in "libxc" "yaml" "futile" "iotk" "netcdff" "pnetcdf" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "devxlib" "yaml" "futile" "iotk" "netcdff" "pnetcdf" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \

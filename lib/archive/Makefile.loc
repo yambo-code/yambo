@@ -5,7 +5,8 @@ include ./package.list
 WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver)
+     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver) \
+     $(tarball_devxlib)
 
 
 #
@@ -28,6 +29,7 @@ tarball_petsc:     $(tarball_petsc)
 tarball_slepc:     $(tarball_slepc)
 tarball_fttw:      $(tarball_fftw)
 tarball_fftqe:     $(tarball_fftqe)
+tarball_devxlib:   $(tarball_devxlib)
 
 
 #
@@ -67,6 +69,8 @@ $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
 $(tarball_fftqe):
 	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
+$(tarball_devxlib):
+	@+TARBALL="$(tarball_devxlib)"  ; URL="$(url_devxlib)"  ;  GBRANCH="$(branch_devxlib)"  ;  GIT="$(git_devxlib)"; LIBNAME="$(pkgname_devxlib)" ;  LIB="DEVXLIB"; $(getsrc_git)
 
 
 #
@@ -91,17 +95,48 @@ clean_all:
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \
           if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)      ; fi ; \
           if test -s $(tarball_fftqe)    && test "$(keep_fftqe)"     != "yes" ;  then rm $(tarball_fftqe)     ; fi ; \
+          if test -s $(tarball_devxlib)  && test "$(keep_devxlib)"   != "yes" ;  then rm $(tarball_devxlib)   ; fi ; \
 	fi
 #
 define getsrc
-if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
-wget $(WGETFLAGS) -O $$TARBALL $$URL ; \
-elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-curl -L --progress-bar -o $$TARBALL $$URL ; \
-fi ; \
-if test ! -s $$TARBALL ; then \
-echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
-echo "*** if you have direct access to the internet." ; \
-echo "*** If not, copy $$TARBALL into extlibs/archive/" ; \
-fi
+  if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+    wget $(WGETFLAGS) -O $$TARBALL $$URL ; \
+  elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+    curl -L --progress-bar -o $$TARBALL $$URL ; \
+  fi ; \
+  if test ! -s $$TARBALL ; then \
+    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
+    echo "*** if you have direct access to the internet." ; \
+    echo "*** If not, copy $$TARBALL into extlibs/archive/" ; \
+  fi
 endef
+#
+define getsrc_git
+  echo "getting the library "$$LIBNAME ; \
+  pwd ; \
+  if [ -e ../../src/real_time_lifetimes/ ] ; then \
+    echo "via git $$GIT" ; \
+    git clone $$GIT ; \
+    git checkout $$GBRANCH ; \
+  else \
+    echo "via wget" ; \
+    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+      wget $(WGETFLAGS) -O $$TARBALL $$URL ; \
+    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+      curl -L --progress-bar -o $$TARBALL $$URL ; \
+    fi \
+  fi
+endef
+
+  #  if test ! -s $$TARBALL ; then \
+  #    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
+  #    echo "*** if you have direct access to the internet." ; \
+  #    echo "*** If not, copy $$TARBALL into extlibs/archive/" ; \
+  #  else \
+  #    cp $$TARBALL ../$$LIBNAME ; \
+  #    cd ../$$LIBNAME ; \
+  #  	gunzip < $$TARBALL | ../../config/missing --run tar xf - ; \
+	#    touch uncompress-stamp ; \
+	#    cd ../archive ; \
+  #  fi \
+

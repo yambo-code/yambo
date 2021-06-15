@@ -24,10 +24,11 @@
 # [@YDB_str@] YDB: Yambo DataBase
 # [@YPY_str@] YAMBOpy: Yambo Python scripts
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL/CUDA SUPPORT -
 #
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
+# [@GPU_check@] GPU support (@GPU_SUPPORT@)
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
@@ -63,6 +64,10 @@
 #
 # [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
 #                   @LIBXC_INCS@
+# [@DEVXLIB_str@] DevXlib   : @DEVXLIB_LIBS@
+#                   @DEVXLIB_INCS@
+# [@LIBCUDA_str@] LibCUDA   : @LIBCUDA_LIBS@
+#                   @LIBCUDA_INCS@
 # [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
 #                   @MPI_INCS@
 # [ Ic] Ydriver   : @YDRI_VERSION@.@YDRI_SUBVERSION@.@YDRI_PATCHLEVEL@

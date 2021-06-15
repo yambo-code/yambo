@@ -54,6 +54,7 @@ lib/*/blacs*
 lib/*/scalapack-*
 lib/*/futile*
 lib/*/yaml*
+lib/*/devicexlib*
 lib/hdf5/hdf5*
 lib/external/*
 compile.sh

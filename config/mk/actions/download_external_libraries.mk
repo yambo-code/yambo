@@ -7,6 +7,8 @@ download:
 #
 libxc-dl: 
 	@LIB2DO="libxc"; $(download_external_libraries)
+devxlib-dl: 
+	@LIB2DO="devxlib"; $(download_external_libraries)
 lapack-dl: 
 	@LIB2DO="lapack"; $(download_external_libraries)
 fftw-dl: 

@@ -18,8 +18,6 @@
 ## $Id: libxc.m4 800 2013-10-09 11:18:39Z micael $
 
 AC_DEFUN([ACX_LIBXC], [
-acx_libxc_ok=no
-compile_libxc=yes
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
@@ -33,6 +31,7 @@ AC_ARG_WITH(libxc_includedir, [AS_HELP_STRING([--with-libxc-includedir=<path>],
             [Path to the libxc include directory],[32])])
 
 
+acx_libxc_ok="no"
 internal_libxc="no"
 compile_libxc="no"
 

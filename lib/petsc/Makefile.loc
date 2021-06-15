@@ -10,8 +10,8 @@ LIBNAME=libpetsc.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
-PACKAGE=$(pkgname_petsc)
 TARBALL=$(tarball_petsc)
+PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 
 #
 # redefinitions

@@ -10,8 +10,8 @@ LIBNAME=libscalapack.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
-PACKAGE=$(pkgname_scalapack)
 TARBALL=$(tarball_scalapack)
+PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 #
 # MAIN target
 #

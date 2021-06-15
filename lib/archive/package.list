@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= futile iotk netcdf netcdff pnetcdf hdf5 etsf_io libxc lapack blacs scalapack petsc fftw fftqe yaml Ydriver
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc fftw fftqe Ydriver
 #
 # storing options
 #

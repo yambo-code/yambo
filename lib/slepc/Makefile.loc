@@ -10,8 +10,8 @@ LIBNAME=libslepc.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
-PACKAGE=$(pkgname_slepc)
 TARBALL=$(tarball_slepc)
+PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 
 #
 # redefinitions

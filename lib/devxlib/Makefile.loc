@@ -12,11 +12,6 @@ TARBALL=$(tarball_devxlib)
 
 AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(cuda_flags)"
 
-#AUXFLAGS="--enable-openmp \
-#          --with-cuda=/usr/local/cuda-10.1/ \
-#          --with-cuda-cc=70 \
-#          --with-cuda-runtime=10.1"
-
 #
 # MAIN target
 #

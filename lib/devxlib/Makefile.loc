@@ -30,8 +30,10 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      BLAS_LIBS="$(lblas)" LAPACK_LIBS="$(llapack)" \
 	      CC="$(cc)" \
-	      FC="$(fc)" \
-	      F77="$(f77)" ); \
+	      F90="$(fc)" \
+	      F77="$(f77)" \
+	      MPICC="$(cc)" \
+	      MPIF90="$(fc)" ); \
 	fi
 	touch configure-stamp
 

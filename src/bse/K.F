@@ -75,6 +75,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  character(schlen) :: section_title
  character(1)      :: mode_now
+ integer, external :: io_BS_PAR_init
  !
  ! ... Kernel loop
  !

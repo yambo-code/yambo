@@ -65,11 +65,17 @@ CUDA_FLAGS=""
 CUDA_LIBS=""
 
 if test x"$LIBCUDA_LIBS" = "x" ; then
-  CUDA_LIBS="-cudalib=${with_cuda_libs}"
+  CUDA_LIBS="${with_cuda_libs}"
 fi
 
 if test x"$enable_cuda" != "xno" ; then
-   CUDA_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} $CUDA_LIBS"
+   case "${FCVERSION}" in
+    *nvfortran*)
+      CUDA_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} -cudalib=$CUDA_LIBS"
+      ;;
+    *)
+      CUDA_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime} -Mcudalib=$CUDA_LIBS"
+   esac
    CUDA_LIBFLAGS="--with-cuda --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_SUPPORT="cudaf"
    def_cuda="-D_CUDA"

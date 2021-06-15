@@ -51,11 +51,15 @@ module wrapper
 #endif
  end interface
  !
- interface V_by_V_plus_V
+ interface V_plus_alpha_V
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
 #ifdef _CUDA
    module procedure          vv_caxpy_gpu
 #endif
+ end interface
+ !
+ interface M_plus_alpha_M
+   module procedure MM_caxpy
  end interface
  !
  interface V_by_V_pwise
@@ -100,7 +104,7 @@ module wrapper
  public :: V_dot_V
  public :: V_dot_VV
  public :: M_by_V
- public :: V_by_V_plus_V
+ public :: V_plus_alpha_V
  public :: V_by_V_pwise
  public :: FADEVA
  !
@@ -233,7 +237,7 @@ module wrapper
    end subroutine mv_r
    !
    !=========================
-   ! interface V_by_V_plus_V 
+   ! interface M_plus_alpha_M
    !=========================
    !
    subroutine MM_caxpy(N, CA, CX,  CY )
@@ -247,6 +251,10 @@ module wrapper
      call CAXPY(N**2,CA,CX,1,CY,1)
 #endif
    end subroutine MM_caxpy
+   !
+   !=========================
+   ! interface V_plus_alpha_V
+   !=========================
    !
    subroutine vv_caxpy(N, CA, CX,  CY )
      complex(SP), intent(in) :: CA

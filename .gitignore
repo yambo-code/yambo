@@ -52,6 +52,8 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/petsc-*
+lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
 lib/*/devicexlib*

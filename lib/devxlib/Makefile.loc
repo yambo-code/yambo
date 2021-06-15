@@ -12,11 +12,6 @@ TARBALL=$(tarball_devxlib)
 
 AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(cuda_flags)"
 
-#AUXFLAGS="--enable-openmp \
-#          --with-cuda=/usr/local/cuda-10.1/ \
-#          --with-cuda-cc=70 \
-#          --with-cuda-runtime=10.1"
-
 #
 # MAIN target
 #
@@ -35,8 +30,10 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      BLAS_LIBS="$(lblas)" LAPACK_LIBS="$(llapack)" \
 	      CC="$(cc)" \
-	      FC="$(fc)" \
-	      F77="$(f77)" ); \
+	      F90="$(fc)" \
+	      F77="$(f77)" \
+	      MPICC="$(cc)" \
+	      MPIF90="$(fc)" ); \
 	fi
 	touch configure-stamp
 

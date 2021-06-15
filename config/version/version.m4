@@ -1,4 +1,3 @@
-AC_INIT(Yambo, 5.1.0 r.20008 h.e94c8bbf7, yambo@yambo-code.org)
 SVERSION="5"
 SSUBVERSION="1"
 SPATCHLEVEL="0"

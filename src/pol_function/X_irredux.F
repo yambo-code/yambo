@@ -228,7 +228,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #if !defined _CUDA
  !$omp parallel num_threads(n_out_threads) default(shared), &
  !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
- !$omp &        ig1,ig_row_transp,iw,mutexid,&
+ !$omp &        ig1,ig_row_transp,iw,mutexid,work,lwork,&
  !$omp &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
 #endif
  !
@@ -455,6 +455,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 #if !defined _CUDA
 !$omp end parallel
 #endif
+ !
  !
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')

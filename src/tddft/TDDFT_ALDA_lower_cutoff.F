@@ -25,12 +25,12 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
  use pars,          ONLY:DP,SP,cZERO
  use TDDFT,         ONLY:FXC_n_g_corr
- use BS,            ONLY:BS_n_g_fxc
+ use BS,            ONLY:BS_n_g_fxc,l_BS_magnons
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
- use electrons,     ONLY:levels,n_spin
+ use electrons,     ONLY:levels,n_spin,n_spinor
  use R_lattice,     ONLY:bz_samp,G_m_G
- use xc_functionals,ONLY:F_xc
+ use xc_functionals,ONLY:F_xc_mat
  use interfaces,    ONLY:eval_G_minus_G
  !
  implicit none
@@ -39,9 +39,11 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,ig_fxc,isp1,isp2,n_holes
+ integer     :: i1,i2,ig_fxc,isp1,isp2,isp3,isp4,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
  logical     :: procedure1, procedure2, procedure3=.false.
+ !
+ if(trim(ALDA_cut_scheme)=="none") return
  !
  procedure1=trim(ALDA_cut_scheme)=="lower_GmGp"
  procedure2=trim(ALDA_cut_scheme)=="lower_Gmax"
@@ -61,9 +63,21 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  if (procedure2) call msg('s',"[TDDFT] lowering the cutoff of F_xc(G) to ",BS_n_g_fxc)
  !
  do isp1=1,n_spin
-   do isp2=1,n_spin
+ do isp2=1,n_spin
+   do isp3=1,n_spin
+   do isp4=1,n_spin
      !
-     F_xc_DP=cmplx(F_xc(:,isp1,isp2),kind=DP)
+     if (n_spinor==1) then
+       if (l_BS_magnons) then
+         if(isp1==isp2) cycle
+         if(isp3==isp4) cycle
+       else
+         if(isp1/=isp2) cycle
+         if(isp3/=isp4) cycle
+       endif
+     endif
+     !
+     F_xc_DP=cmplx(F_xc_mat(:,isp1,isp2,isp3,isp4),kind=DP)
      !
      ! FFT call: BACKWARD (R->G)
      !
@@ -128,15 +142,17 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      call fft_3d(F_xc_DP_reduced,fft_dim,1)
 #endif
      !
-     F_xc(:,isp1,isp2) = real(F_xc_DP_reduced,SP)     
+     F_xc_mat(:,isp1,isp2,isp3,isp4) = real(F_xc_DP_reduced,SP)
      !
    enddo
+   enddo
+ enddo
  enddo
  !
  if (procedure1) call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
  !
  ! DEBUG <
- ! write(*,*) "F_xc= ",F_xc(1:10,1,1)
+ ! write(*,*) "F_xc= ",F_xc_matt(1:10,1,1,1,1)
  ! DEBUG >
  !
 end subroutine

@@ -111,8 +111,8 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  if (l_drho) then
    call warning(" USPP corrections to rho gradient not implemented")
    YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
-   rho       =0._SP
-   rho_no_sym=0._SP
+   drho       =0._SP
+   drho_no_sym=0._SP
  endif
  !
  if (l_J) then

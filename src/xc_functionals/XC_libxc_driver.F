@@ -23,10 +23,11 @@
 !
 subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
- ! After libxc is distributed together with Yambo (rev 1180)  
- ! this routine evaluates the xc functional in yambo 
- ! (03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
- ! (21/11/13: for HYB_GGA the GGA part calculated => TO TEST) 
+ ! This routine evaluates the xc functional in yambo 
+ !   - 03/05/12: LDA OK, GGA OK => EXTENSIVE TESTS NEEDED) 
+ !   - 21/11/13: for HYB_GGA the GGA part calculated => TO TEST
+ !   - 16/06/21: GGA part improved with more accurate calculation of drho for order=2 and n_spin=1
+ !        To do: compute a more precise drho also in the case n_spin>1 (see comment around line 200)
  !
  use pars,           ONLY:SP,DP,IPL,pi,pi_DP,RZERO
  use R_lattice,      ONLY:bz_samp
@@ -39,7 +40,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
  use BS,             ONLY:l_BS_magnons
- use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc_mat,F_xc,V_xc,xc_setup_hyb,&
+ use xc_functionals, ONLY:E_xc,E_xc_val,magn,F_xc,V_xc,xc_setup_hyb,&
 &                         XC_LDA_C_KP,xc_fnctl_t,xc_setup_fnctl,xc_f03_func_end, &
 &                         xc_spin,xc_spin_map1, &
 &                         XC_HYB_GGA_XC_GAUPBE,XC_FACTOR,&
@@ -194,14 +195,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      vx2=0._DP
    endif 
    !
+   ! DS. To do: compute a more precise drho also in the case n_spin>1
+   !     This is particularly important for the case order=2
+   !
    if (n_spin>1 .or. order<2) then
      YAMBO_ALLOC(drho_cmplx,(fft_size,3))
      YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
      do is1 = 1,n_spin
        spin_rho_SP_cmplx(:)=cmplx(spin_rho_SP(:,is1),0.0_SP,kind=SP)
-       !
        call eval_Gradient(spin_rho_SP_cmplx,drho_cmplx,1,"density")
-       !
        drho(:,is1,:)=real(drho_cmplx)
      end do
      YAMBO_FREE(drho_cmplx)
@@ -234,11 +236,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==0) E_xc=0._SP
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
- !
- if (order==2.and.l_BS_magnons) then
-   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
-   V_xc=0._SP
- endif
  !
  if (FUNCTIONAL == XC_LDA_C_KP) then ! Special case, XC_LDA_C_KP not available from libxc
    select case(ORDER)
@@ -298,7 +295,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          if( l_BS_magnons) then
            call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
            ! Yambo internal for V_xc
-           call XC_eval_gga_potential(v1rho,v1sigma,drho)
+           if(n_spinor==2) call XC_eval_gga_potential(v1rho,v1sigma,drho)
          endif
          call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
          ! Yambo internal for Kxc
@@ -311,14 +308,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==0) then
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
    if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*real(exsr,SP)
- endif
- !
- if (ORDER==2) then
-   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
-   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
-   if (l_BS_magnons.and.n_spinor==2) then
-     YAMBO_FREE(V_xc)
-   endif
  endif
  !
  if (EvaluateDGradient) then

@@ -41,7 +41,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_Block_size,&
+&                       BS_res_K_exchange,BS_Block_size,BS_q,&
 &                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
@@ -53,7 +53,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
- use xc_functionals,ONLY:F_xc,F_xc_mat,magn,XC_potential_driver
+ use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -145,13 +145,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    section_title=trim(section_title)//" @q"//trim(intc(iq))
    !
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//" (Resonant"
-   if (BS_res_K_corr.or.BS_K_is_ALDA)          section_title=trim(section_title)//" CORRRELATION"
+   if (BS_K_is_ALDA     )                      section_title=trim(section_title)//" ALDA"
+   if (BS_res_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
    if (BS_res_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//")"
    !
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//" (Coupling"
-   if (BS_cpl_K_corr.or.(BS_K_is_ALDA.and.BS_cpl_K_exchange))&
-&                                              section_title=trim(section_title)//" CORRRELATION"
+   if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
+   if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
    if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//")"
    !
@@ -171,6 +172,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
+ ! This is manually set for now
+ if (iq==BS_q(1)) then
+   ALDA_cut_scheme="none"
+   if (BS_n_g_fxc/=ng_closed) ALDA_cut_scheme="lower_Gmax"
+ endif
+ !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=maxval(G_m_G)
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
@@ -182,16 +189,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (BS_K_is_ALDA) then
    O_ng=BS_n_g_fxc
-   ! This is manually set for now
-   !ALDA_cut_scheme="lower_Gmax"
-   !if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
-   !  if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
-   !    BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
-   !    call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
-   !  endif
-   !  O_ng=maxval(G_m_G)
-   !  O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
-   !endif
+   if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
+     if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+       BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
+       call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
+     endif
+     O_ng=maxval(G_m_G)
+     O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
+   endif
  endif
  !
  call K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
@@ -199,7 +204,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) io_QINDX_err=qindx_B_init(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID)
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
@@ -261,10 +266,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !======
  if (BS_K_is_ALDA) then
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+   V_xc=0._SP
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
    call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
+   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
+   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
+   YAMBO_FREE(F_xc)
+   YAMBO_FREE(V_xc)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
@@ -469,7 +480,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -509,7 +520,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
@@ -674,7 +685,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(F_xc_mat)
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) qindx_tmp=qindx_B_close(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

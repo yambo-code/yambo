@@ -235,7 +235,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==1) V_xc=0._SP
  if (order==2) F_xc=0._SP
  !
- if (order==2.and.l_BS_magnons.and.n_spinor==2) then
+ if (order==2.and.l_BS_magnons) then
    YAMBO_ALLOC(V_xc,(fft_size,n_spin))
    V_xc=0._SP
  endif

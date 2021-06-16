@@ -28,7 +28,7 @@ tarball_pnetcdf=pnetcdf-1.12.1.tar.gz
 tarball_hdf5=hdf5-1.12.0.tar.gz
 tarball_etsf_io=etsf_io-1.0.4.tar.gz
 tarball_libxc=libxc-5.1.3.tar.gz
-tarball_lapack=lapack-3.9.0.tar.gz
+tarball_lapack=v3.9.1.tar.gz
 tarball_blacs=blacs.tar.gz
 tarball_scalapack=scalapack-2.1.0.tar.gz
 tarball_petsc=petsc-3.13.4.tar.gz
@@ -48,7 +48,7 @@ pkgname_pnetcdf=pnetcdf-1.12.1
 pkgname_hdf5=hdf5-1.12.0
 pkgname_etsf_io=etsf_io-1.0.4
 pkgname_libxc=libxc-5.1.3
-pkgname_lapack=lapack-3.9.0
+pkgname_lapack=lapack-3.9.1
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-2.1.0
 pkgname_petsc=petsc-3.13.4
@@ -58,18 +58,20 @@ pkgname_fftqe=fftqe
 pkgname_yaml=yaml-0.2.2
 pkgname_futile=futile-yambo
 #
-# URL's
+# External URL's
+#
+url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
+url_libxc=https://www.tddft.org/programs/libxc/down/5.1.3/$(tarball_libxc)
+#
+# Intenrnal URL's
 #
 url_driver=https://github.com/yambo-code/yambo-libraries/archive/$(tarball_driver)
 url_netcdf=https://github.com/yambo-code/yambo/files/4570415/$(tarball_netcdf)
 url_netcdff=https://github.com/yambo-code/yambo/files/5815675/$(tarball_netcdff)
 url_pnetcdf=https://github.com/yambo-code/yambo/files/4570465/$(tarball_pnetcdf)
 url_hdf5=https://github.com/yambo-code/yambo/files/4574415/$(tarball_hdf5)
-#url_libxc=https://github.com/yambo-code/yambo/files/783150/$(tarball_libxc)
-url_libxc=https://www.tddft.org/programs/libxc/down/5.1.3/$(tarball_libxc)
 url_iotk=https://github.com/yambo-code/yambo/files/962173/$(tarball_iotk)
 url_etsf_io=https://github.com/yambo-code/yambo/files/845218/$(tarball_etsf_io)
-url_lapack=https://github.com/yambo-code/yambo/files/5815600/$(tarball_lapack)
 url_blacs=https://github.com/yambo-code/yambo/files/783152/$(tarball_blacs)
 url_scalapack=https://github.com/yambo-code/yambo/files/5068134/$(tarball_scalapack)
 url_petsc=https://github.com/yambo-code/yambo/files/5069492/$(tarball_petsc)

@@ -73,6 +73,7 @@ ldevxlib    = @DEVXLIB_LIBS@
 idevxlib    = @DEVXLIB_INCS@
 lcudalib    = @LIBCUDA_LIBS@
 icudalib    = @LIBCUDA_INCS@
+dcudalib    = @LIBCUDA_PATH@
 cuda_flags  = @CUDA_LIBFLAGS@
 gpu_support = @GPU_SUPPORT@
 lfft        = @FFT_LIBS@

@@ -41,14 +41,22 @@ internal_libcuda="no"
 compile_libcuda="no"
 use_libcuda="no"
 
+dnl Heuristics to detect CUDA dir
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_PATH" ; fi
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_ROOT" ; fi
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_HOME" ; fi
+
 if test -d "$with_libcuda_path"; then
    libcuda_incdir="$with_libcuda_path/include"
    libcuda_libdir="$with_libcuda_path/lib"
+   if ! test -d "$libcuda_libdir" ; then libcuda_libdir="$with_libcuda_path/lib64" ; fi
 fi
 if test -d "$with_libcuda_includedir"; then libcuda_incdir="$with_libcuda_includedir" ; fi
 if test -d "$with_libcuda_libdir";     then libcuda_libdir="$with_libcuda_libdir"     ; fi
 
 LIBCUDA_INCS="$IFLAG$libcuda_incdir"
+LIBCUDA_PATH="$with_libcuda_path"
+
 
 dnl Backup LIBS and FCFLAGS
 acx_libcuda_save_LIBS="$LIBS"
@@ -84,7 +92,7 @@ fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcuda -lcudart -lcublas"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -108,7 +116,7 @@ fi
 
 # dynamic linkage, combined Fortran interface (libcuda pre-r10730)
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcuda -lcudart -lcublas"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -145,6 +153,7 @@ fi
 
 AC_SUBST(LIBCUDA_LIBS)
 AC_SUBST(LIBCUDA_INCS)
+AC_SUBST(LIBCUDA_PATH)
 AC_SUBST(use_libcuda)
 AC_SUBST(compile_libcuda)
 AC_SUBST(internal_libcuda)

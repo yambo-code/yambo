@@ -4,8 +4,9 @@
 include ./package.list
 WGETFLAGS=--no-check-certificate
 #
-all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver) \
+all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) \
+     $(tarball_etsf_io) $(tarball_libxc) $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) \
+     $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver) \
      $(tarball_devxlib)
 
 
@@ -117,7 +118,7 @@ define getsrc_git
   if [ -e ../../src/real_time_lifetimes/ ] ; then \
     echo "via git $$GIT" ; \
     git clone $$GIT ; \
-    git checkout $$GBRANCH ; \
+    cd $$LIBNAME ; git checkout $$GBRANCH ; cd ../ ; \
   else \
     echo "via wget" ; \
     if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \

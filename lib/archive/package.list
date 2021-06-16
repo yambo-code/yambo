@@ -88,3 +88,5 @@ url_devxlib=https://gitlab.com/max-centre/components/devicexlib/archive/$(tarbal
 # GIT's repositories and branches
 #
 git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
+branch_devxlib=devel-gpuhack21
+

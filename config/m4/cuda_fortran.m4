@@ -76,7 +76,9 @@ if test x"$enable_cuda" != "xno" ; then
     *)
       CUDA_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime} -Mcudalib=$CUDA_LIBS"
    esac
-   CUDA_LIBFLAGS="--with-cuda --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   CUDA_LIBFLAGS="--with-cuda"
+   if test "x$LIBCUDA_PATH" != "x" ; then CUDA_LIBFLAGS="--with-cuda=$LIBCUDA_PATH" ; fi
+   CUDA_LIBFLAGS="$CUDA_LIBFLAGS --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_SUPPORT="cudaf"
    def_cuda="-D_CUDA"
 else

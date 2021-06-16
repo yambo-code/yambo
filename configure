@@ -667,6 +667,7 @@ enable_cuda
 internal_libcuda
 compile_libcuda
 use_libcuda
+LIBCUDA_PATH
 LIBCUDA_INCS
 LIBCUDA_LIBS
 internal_libxc
@@ -870,7 +871,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -1049,7 +1049,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1302,15 +1301,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1448,7 +1438,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1601,7 +1591,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -14331,14 +14320,21 @@ internal_libcuda="no"
 compile_libcuda="no"
 use_libcuda="no"
 
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_PATH" ; fi
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_ROOT" ; fi
+if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_HOME" ; fi
+
 if test -d "$with_libcuda_path"; then
    libcuda_incdir="$with_libcuda_path/include"
    libcuda_libdir="$with_libcuda_path/lib"
+   if ! test -d "$libcuda_libdir" ; then libcuda_libdir="$with_libcuda_path/lib64" ; fi
 fi
 if test -d "$with_libcuda_includedir"; then libcuda_incdir="$with_libcuda_includedir" ; fi
 if test -d "$with_libcuda_libdir";     then libcuda_libdir="$with_libcuda_libdir"     ; fi
 
 LIBCUDA_INCS="$IFLAG$libcuda_incdir"
+LIBCUDA_PATH="$with_libcuda_path"
+
 
 acx_libcuda_save_LIBS="$LIBS"
 acx_libcuda_save_FCFLAGS="$FCFLAGS"
@@ -14386,7 +14382,7 @@ fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcuda -lcudart -lcublas"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
@@ -14428,7 +14424,7 @@ fi
 
 # dynamic linkage, combined Fortran interface (libcuda pre-r10730)
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcuda -lcudart -lcublas"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
   cat > conftest.$ac_ext <<_ACEOF
 $testprog
@@ -14471,6 +14467,7 @@ fi
 #    AC_MSG_RESULT([Compatible external DevXlib not found/specified. Internal to be compiled.])
 #  fi
 #fi
+
 
 
 
@@ -14554,13 +14551,15 @@ fi
 
 if test x"$enable_cuda" != "xno" ; then
    case "${FCVERSION}" in
-    *nvfoortran*)
+    *nvfortran*)
       CUDA_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} -cudalib=$CUDA_LIBS"
       ;;
     *)
       CUDA_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime} -Mcudalib=$CUDA_LIBS"
    esac
-   CUDA_LIBFLAGS="--with-cuda --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   CUDA_LIBFLAGS="--with-cuda"
+   if test "x$LIBCUDA_PATH" != "x" ; then CUDA_LIBFLAGS="--with-cuda=$LIBCUDA_PATH" ; fi
+   CUDA_LIBFLAGS="$CUDA_LIBFLAGS --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_SUPPORT="cudaf"
    def_cuda="-D_CUDA"
 else

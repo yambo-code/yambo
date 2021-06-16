@@ -276,7 +276,7 @@ ia64*linux* )
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash"
     ;;
   *nvfortran* )
     #SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash"
@@ -286,7 +286,7 @@ ia64*linux* )
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"

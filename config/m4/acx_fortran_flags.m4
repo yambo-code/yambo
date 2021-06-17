@@ -270,7 +270,8 @@ ia64*linux* )
 *x86*64* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash"
+    #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -279,8 +280,8 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash"
     ;;
   *nvfortran* )
-    #SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash"
-    SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash"
+    #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"

@@ -50,11 +50,20 @@
 #define DEV_ATTR            DEV_ATTRIBUTE
 #define DEV_PIN             DEV_PINNED
 
-!#ifdef CUDA
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$cuf kernel do(nloop) <<<*,*>>>
-!  #define YAMBO_CUDA_OR_OMP_END
-!#else 
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$omp parallel do default(shared), private(private_list), collapse(nloop)
-!  #define YAMBO_CUDA_OR_OMP_END               !$omp end parallel do
-!#endif
+#if defined _OPENACC
+#  define DEV_ACC $acc
+#else
+#  define DEV_ACC !!!!
+#endif
 
+#if defined _CUDA
+#  define DEV_CUF $cuf
+#else
+#  define DEV_CUF !!!!
+#endif
+
+#if defined _OPENMP && !defined (_CUDA)
+#  define DEV_OMP $omp
+#else
+#  define DEV_OMP !!!!
+#endif

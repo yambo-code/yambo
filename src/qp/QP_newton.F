@@ -88,7 +88,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
        !
      else 
        !
-       call QP_ELEL_real_axis_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip,iter)
+       call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,iter)
        !
      endif
    else

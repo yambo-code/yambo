@@ -84,7 +84,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  !I need to store on disk the <W> m. elemnts
  !
- call QP_ELEL_real_axis_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip,0)
+ call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0)
  !
  !I prepare the Sc energy type
  !

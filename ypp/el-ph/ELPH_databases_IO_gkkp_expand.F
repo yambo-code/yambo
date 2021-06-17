@@ -166,8 +166,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
      ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
    endif
    !
-   if(iq==8) write(*,*) ' scattering ',iq,' k k',ik,ok,ik_bz,ok_bz
-   if(iq==8.and.ik_bz==6) write(*,*) ' en ',GKKP%E_kpq(1)%E(2:4,ok_bz,1)*HA2EV
+   ! Notice that the ok_bz index referees to the k-points in the Yambo order
+   ! like in the q=0 case
    !
    GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
    !

@@ -284,6 +284,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      iq_ibz= iq_loop
      iq_s  = 0
      iq_db = iq_loop
+     write(*,*) iq_bz,' come from ',iq_ibz
    endif
    !
    ! DB I/O can be skipped except at the gamma point which is used to define E_k_plus_q_at_gamma array

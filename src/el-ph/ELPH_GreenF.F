@@ -106,9 +106,11 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
    E_kpq=en%E(ob,ok,1)
    f_occ=en%f(ob,ok,1)/spin_occ
+   write(*,*) ' iq ibz',iq_bz,ob,ok,elph_gkkp_sq
  else
    E_kpq=GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
+   write(*,*) ' iq bz',iq_bz,ob,ik,ik_bz,elph_gkkp_sq
  endif
  !
  !

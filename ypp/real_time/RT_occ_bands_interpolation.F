@@ -156,7 +156,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
  !
  do i_T=1,n_T_steps
    !
-   call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,en,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    ! RT_carriers -> RT_E (E components)
    !

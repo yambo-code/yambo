@@ -46,7 +46,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,l_BS_ares_asymm,&
+&                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
  use collision_el, ONLY:elemental_collision_free
@@ -75,6 +75,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  character(schlen) :: section_title
  character(1)      :: mode_now
+ integer, external :: io_BS_PAR_init
  !
  ! ... Kernel loop
  !
@@ -107,7 +108,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! I/O
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr,io_QINDX_err
- integer, external ::io_BS,io_BS_PAR_init,io_BS_header
+ integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
  ! Timing and restart
@@ -530,7 +531,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_c=cZERO
        !
        mode_now=BS_blk(i_block)%mode
-       if(l_BS_ares_asymm) mode_now="F"
+       if (.not.l_BS_ares_from_res) mode_now="F"
        !
        select case (mode_now)
        !
@@ -575,12 +576,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-       if (l_BS_ares_asymm) then
-         BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       else
-         if (BS_blk(i_block)%mode=="R") BS_blk(i_block)%mat(i_Tk,i_Tp)=    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-         if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       endif
+       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*BS_blk(i_block)%mat(i_Tk,i_Tp)
        !
        BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !

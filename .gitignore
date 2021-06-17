@@ -70,7 +70,7 @@ lib/bin/*
 src/external_c/.objects
 .check_configure
 config/mk/defs.mk
-*__lock*
+*_lock*
 Makefile.locks
 Makefile.archive
 *Makefile

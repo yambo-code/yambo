@@ -10,8 +10,8 @@ LIBNAME=libblacs.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
-PACKAGE=$(pkgname_blacs)
 TARBALL=$(tarball_blacs)
+PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 #
 # MAIN target
 #

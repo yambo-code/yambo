@@ -26,13 +26,9 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (cI*K_c)    |  
- !  K = |                       |
- !      | (-cI*K_c^*)  (-K_r^*) |
- !
  use pars,           ONLY:cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
- &                        BS_mat_res_ares_dim,l_BS_ares_asymm
+ &                        BS_res_ares_n_mat,l_BS_ares_from_res
  use BS_solvers,     ONLY:BSS_eh_E,BSS_eh_W,BSS_perturbative_width
  !
 #include <petsc/finclude/petscsys.h>
@@ -76,7 +72,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
    i_Tk  =BS_blk(i_B)%iT_k
    i_Tp  =BS_blk(i_B)%iT_p
    !
-   if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_mat_res_ares_dim==2) cycle
+   if (i_BS_mat/=BS_blk(i_B)%ira_k .and. BS_res_ares_n_mat==2) cycle
    !
    H_shift=0
    if(BS_blk(i_B)%mode=="C") H_shift(2)=BS_K_dim(1)
@@ -93,7 +89,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
        ! Then the upper triangle of each block and direct symmetrization
        !
        if (H_pos(1)+H_shift(1)>H_pos(2)+H_shift(2)) cycle
-       if (.not.l_BS_ares_asymm.and.H_pos(1)>H_pos(2)) cycle
+       if (l_BS_ares_from_res.and.H_pos(1)>H_pos(2)) cycle
        !
        Mij=BS_blk(i_B)%mat(i_r,i_c)
        !
@@ -111,7 +107,7 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2),       Mij , INSERT_VALUES, ierr )
            ! The resonant block is hermitial
            call MatSetValue( slepc_mat, H_pos(2), H_pos(1), conjg(Mij), INSERT_VALUES, ierr )
-         if ((.not.l_BS_ares_asymm).and.BS_K_coupling) then
+         if (l_BS_ares_from_res.and.BS_K_coupling) then
            ! The anti-resonant block is A=-R*
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),-conjg(Mij), INSERT_VALUES, ierr )
            ! The anti-resonant block is hermitian
@@ -121,14 +117,14 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
            call MatSetValue( slepc_mat, H_pos(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
            ! Anti-coupling from coupling: the whole BSE matrix is Pseudo-HErmitian
            call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1),-conjg(Mij), INSERT_VALUES, ierr )
-         if (.not.l_BS_ares_asymm) then
-           ! The coupling block and the anti-coupling block are symmetric
-           call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
-           call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),-conjg(Mij), INSERT_VALUES, ierr )
-         endif
+           if (l_BS_ares_from_res) then
+             ! The coupling block and the anti-coupling block are symmetric
+             call MatSetValue( slepc_mat, H_pos(2), H_pos(1)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
+             call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2),-conjg(Mij), INSERT_VALUES, ierr )
+           endif
        case("A")
          ! The anti-resonant block is hermitial
-         if(BS_mat_res_ares_dim==1) then
+         if(BS_res_ares_n_mat==1) then
            call MatSetValue( slepc_mat, H_pos(1)+SL_K_dim(1), H_pos(2)+SL_K_dim(1),       Mij , INSERT_VALUES, ierr )
            call MatSetValue( slepc_mat, H_pos(2)+SL_K_dim(1), H_pos(1)+SL_K_dim(1), conjg(Mij), INSERT_VALUES, ierr )
          else

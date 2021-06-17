@@ -51,7 +51,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use matrix_operate, ONLY:m3inv,m3det
  use electrons,      ONLY:n_sp_pol,levels
  use vec_operate,    ONLY:v_is_zero,c2a
- use BS,             ONLY:BS_res_mode,BS_cpl_mode
+ use BS,             ONLY:BS_res_K_corr,BS_cpl_K_corr
  use R_lattice,      ONLY:d3q_factor,RL_vol,nqibz,nqbz,QP_states_k,&
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
@@ -93,7 +93,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! .... which GRIDS?
  X_scattering    =index(k_GRIDS_string,"X")>0
  sigma_scattering=index(k_GRIDS_string,"S")>0
- bse_scattering  =l_bse .and. (index(BS_res_mode,'c')/=0.or.index(BS_cpl_mode,'c')/=0)
+ bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)

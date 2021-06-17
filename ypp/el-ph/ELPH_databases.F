@@ -52,7 +52,7 @@ subroutine ELPH_databases(k,E,q)
  ! Work Space...
  !
  logical            ::l_gkkp_expand
- integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_tmp(2)
+ integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID
  character(schlen)  ::what
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
  logical, external  ::file_exists

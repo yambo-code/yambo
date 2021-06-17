@@ -136,8 +136,8 @@ integer function io_BS_PAR_init(iq,ID,mode)
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
-&                        BSK_IO_mode,MAX_BSK_LIN_SIZE,BS_lin_size_compressed,BS_K_cutoff,     &
-&                        BS_mat_res_ares_dim,l_BS_ares_asymm,BS_res_ares_dim
+&                        BSK_IO_mode,MAX_BSK_LIN_size,BS_lin_size_compressed,BS_K_cutoff,     &
+&                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_n_eh_spaces
  use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
  use IO_int,        ONLY:io_connect,def_variable_bulk
  !
@@ -191,16 +191,15 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  ! Define vars
  !
- !
  dim_names(1,:)  =  'complex'
  !
  ch(1,:)="BSE_RESONANT"
  ch(2,:)="BSE_COUPLING"
  ch(3,:)="BSE_ANTI-RESONANT"
  !
- if (.not.BS_K_coupling) n_vars=1
- if (     BS_K_coupling) n_vars=2
- if ( l_BS_ares_asymm  ) n_vars=n_vars+1
+ if (.not.BS_K_coupling     ) n_vars=1
+ if (     BS_K_coupling     ) n_vars=2
+ if (.not.l_BS_ares_from_res) n_vars=n_vars+1
  !
  BSK_IO_local=trim(BSK_IO_mode)
  if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)
@@ -230,7 +229,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
      do i2=1,n_vars
        i1=i2+n_vars*(i_rep-1)
        i_var=i2
-       if(i2==2 .and. BS_mat_res_ares_dim==2) then; i_var=3; endif
+       if(i2==2 .and. BS_res_ares_n_mat==2) then; i_var=3; endif
        ch(i_var,i_rep)=trim(ch(i_var,i_rep))//trim(ch_tmp)//trim(intc(i_rep))
      enddo
    enddo
@@ -248,7 +247,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
    dim_names(2:3,1) = [character(schlen) :: 'BS_K_dim', 'BS_K_dim']
    BS_IO_dim(:,1) = (/BS_K_dim(1),BS_K_dim(1)/)
    !
-   if(BS_res_ares_dim==2) then
+   if(BS_n_eh_spaces==2) then
      dim_names(2:3,2) = [character(schlen) ::  'BS_K_dim', 'BS_K_dim_A']
      BS_IO_dim(:,2) = (/BS_K_dim(1),BS_K_dim(2)/)
      dim_names(2:3,3) = [character(schlen) :: 'BS_K_dim_A', 'BS_K_dim_A']
@@ -264,7 +263,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
    do i2=1,n_vars
      i1=i2+n_vars*(i_rep-1)
      i_var=i2
-     if(i2==2 .and. BS_mat_res_ares_dim==2) then; i_var=3; endif
+     if(i2==2 .and. BS_res_ares_n_mat==2) then; i_var=3; endif
      if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed_mat".or.trim(BSK_IO_local)=="compressed_head") &
      &   .and.i_rep==n_replica.and.i_rep>1) then
        dim_names(2,i_var)=dim_names(3,i_var)

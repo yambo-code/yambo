@@ -32,7 +32,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  use pars,              ONLY:SP,DP,pi,cI,cZERO
  use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,&
-&                            INTERPOLATE_is_serial,INTERP_FineGd
+&                            INTERPOLATE_is_serial,INTERP_FineGd,INTERPOLATE_use_symm
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
@@ -53,9 +53,10 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  type(PP_indexes)  :: px
  real(DP)          :: R2_min,R2
- real(SP)          :: v(3),star_vec(3,nsym),pre_factor
+ real(SP)          :: v(3),pre_factor
  integer           :: ik,ikp,iv,i_shell,i_star,nstar,Nkm1,info,&
 &                     PAR_nshells,i_par_shell
+ integer           :: nsym_interp
  !
  ! Parameters
  !
@@ -67,6 +68,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  complex(SP), allocatable :: h_mat(:,:),delta(:,:)
  complex(DP), allocatable :: BZ_star(:,:),PAR_engre(:,:)
  integer,     allocatable :: ipiv(:),SHELL_index(:)
+ real(SP),    allocatable :: star_vec(:,:)
  !
  ! External
  !
@@ -78,6 +80,10 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  ! Construct delta_epsilon eq. 10
  !
  delta=cZERO
+ !
+ nsym_interp=nsym
+ if(.not.INTERPOLATE_use_symm) nsym_interp=1
+ YAMBO_ALLOC(star_vec,(3,nsym_interp))
  !
  do ik=1,Nkm1
    delta(ik,:)=VALUEs(:,ik)-VALUEs(:,Nk)
@@ -129,7 +135,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    !
    if (.not.px%element_1D(i_shell)) cycle
    !
-   call make_star(lattice_vectors(:,i_shell),nsym,int_sop,nstar,star_vec) 
+   call make_star(lattice_vectors(:,i_shell),nsym_interp,int_sop,nstar,star_vec) 
    do ik=1,Nk
      if (trim(INTERP_FineGd)=="NONE") call c2a(v_in=Xk%pt(ik,:),v_out=v,mode='ki2a')
      if (trim(INTERP_FineGd)=="IBZ")  call c2a(v_in=Xk%FGibz%pt(ik,:),v_out=v,mode='ki2a')
@@ -222,6 +228,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  YAMBO_FREE(rho)
  YAMBO_FREE(SHELL_index)
  YAMBO_FREE(PAR_engre)
+ YAMBO_FREE(star_vec)
  !
  call k_compare(Xk,VALUEs,engre,nshells,nvalues,Nk)
  !

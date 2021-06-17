@@ -218,7 +218,7 @@ subroutine PHEL_driver(E,k,q)
    !==============================
 #if defined _RT 
    l_initial_equilibrium=.TRUE.
-   call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
+   !call PHEL_Lifetimes(E,k,q,k_FG,E_FG)
 #else
    call PHEL_Self_Energy(iq,E,k,q,k_FG,E_FG)
 #endif

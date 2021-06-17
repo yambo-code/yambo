@@ -92,6 +92,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_ph";
  options[*i_opt].yambo_string="gkkp"  ;
  options[*i_opt].section="Convertions";
+ options[*i_opt].long_desc[0]="<string>=(g)kkp,(d)ouble grid,(p)lot gkkp";
+ options[*i_opt].char_var=1;
 #endif
  /* 
   Plots
@@ -202,7 +204,9 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="<string1>=(X)response,Tr(a)bs,(o)ccupations,(l)ifetimes,(d)ensity";
+ options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity";
+ options[*i_opt].long_desc[1]=" ";
+ options[*i_opt].long_desc[2]="response uses the time-resolved polarization. absorption amends the Kubo expression with the time-dependent occupations";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD plot control";
  options[*i_opt].char_var=1;

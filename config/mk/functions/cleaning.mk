@@ -1,5 +1,5 @@
 define makefiles_clean
- find . \( -name 'Makefile' -o -name '*make.dep' \) -type f -print | grep -v '\.\/Makefile' | \
+ find . \( -name 'Makefile' -o -name '*module.dep' -o -name '*project.dep' \) -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*yaml.*\/Makefile' |  \
         grep -v '.*futile.*\/Makefile' |  \
         grep -v '.*iotk.*\/Makefile' |  \
@@ -22,7 +22,7 @@ define objects_clean
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  if test "$(keep_objs)" = yes ; then \
- find . -name '.objects__lock*' | xargs rm -fr ; \
+ find . -name '.objects__*' | xargs rm -fr ; \
  echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef
@@ -33,7 +33,7 @@ define lib_ext_clean
            -o -name 'fftw3*h' -o -name 'fftw3*f' -o -name 'fftw*f03' \) -type f -print | xargs rm -f
  find . -name 'xc*.h' -type f -print | xargs rm -f
  echo "[CLEAN] External Libraries ... " 
- @for libtoclean in "libxc" "yaml" "futile" "iotk" "netcdff" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
+ @for libtoclean in "libxc" "yaml" "futile" "iotk" "netcdff" "pnetcdf" "netcdf" "hdf5" "etsf_io" "lapack" "blacs" "scalapack" "petsc" "slepc" "fftw" "fftqe" ; do \
   if test -d $(libdir)/$$libtoclean ; then \
    echo "[CLEAN] ... $$libtoclean" ; \
    cd $(libdir)/$$libtoclean ; \

@@ -7,8 +7,8 @@ include ../../config/setup
 include ../archive/package.list
 
 LIBNAME=libfftqe.a
-PACKAGE=$(pkgname_fftqe)
 TARBALL=$(tarball_fftqe)
+PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 #
 # MAIN target
 #

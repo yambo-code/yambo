@@ -33,12 +33,13 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use interpolate,   ONLY:INTERPOLATION_BZ
  use YPPm,          ONLY:EXCITONS_n_user_states,DOS_E_step,DOS_E_range,DOS_E_steps,DOS_broadening
  use stderr,        ONLY:real2ch
- use YPP_ELPH,      ONLY:ph_freqs_file,ELPH_databases_IO_freqs
+ use YPP_ELPH,      ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
+ use stderr,        ONLY:STRING_same
  !
 #include<memory.h> 
  !
@@ -55,25 +56,39 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  real(SP)              :: dos_E(DOS_E_steps),exc_ph_DOS(DOS_E_steps),exc_OCC,Boltz_F_exc,Bose_F_ph,min_E 
  real(SP)              :: occ_threshold=1E-5
  type(PP_indexes)      :: px
+ complex(SP), allocatable  :: ph_pol(:,:,:,:)
  !
  ph_modes=3*n_atoms
  !
- if(trim(ph_freqs_file)=='none')            call error("Phonon frequencies file not specified!")      
+ ! Check input files from matdyn.x
  !
- call msg('s',"Alat in yambo                 : ",alat(1))
+ if(.not.STRING_same(ph_modes_file,'none').and..not.STRING_same(ph_freqs_file,'none')) &
+    call error("Please specify the Frequency file or the Matdyn Mode file, not both of them!")
  !
  call bz_samp_reset(q_matdyn)
  !
- if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")      
- !
- call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
- call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz)
+ if(.not.STRING_same(ph_freqs_file,'none')) then
+    if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
+    call msg('s',"Phonon frequencies read from: "//trim(ph_freqs_file))
+    call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=q_matdyn%nibz)
+ elseif(.not.STRING_same(ph_modes_file,'none')) then
+    if(.not.file_exists(trim(ph_freqs_file))) call error("Phonon frequencies file not found!")
+    call msg('s',"Phonon frequencies read from: "//trim(ph_modes_file))
+    call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=q_matdyn%nibz)
+ endif
  call msg('s',"Number of phonon q-points in the IBZ : ",q_matdyn%nibz)
+ call msg('s',"Alat in yambo                 : ",alat(1))
  !
  YAMBO_ALLOC(q_matdyn%pt,(q_matdyn%nibz,3))
- YAMBO_ALLOC(ph_freqs,(q_matdyn%nibz,ph_modes))
+ YAMBO_ALLOC(ph_freqs,(ph_modes,q_matdyn%nibz))
  !
- call ELPH_databases_IO_freqs(ph_freqs_file,q_matdyn%nibz,q_matdyn%pt,ph_freqs)
+ if(.not.STRING_same(ph_freqs_file,'none')) then
+   call ELPH_databases_IO_freqs(ph_file=ph_freqs_file,n_q=q_matdyn%nibz,q_pt=q_matdyn%pt,ph_freqs=ph_freqs)
+ elseif(.not.STRING_same(ph_modes_file,'none')) then
+   YAMBO_ALLOC(ph_pol,(q_matdyn%nibz,ph_modes,n_atoms,3))
+   call ELPH_databases_IO_modes(ph_file=ph_modes_file,n_q=q_matdyn%nibz,q_pt=q_matdyn%pt,ph_freqs=ph_freqs,ph_pol=ph_pol)
+   YAMBO_FREE(ph_pol)
+ endif
  !
  q_matdyn%pt=q_matdyn%pt*(2.*pi/alat(1))    ! From QuantumEspresso Alat to CC
  !
@@ -153,13 +168,13 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
      !
      do i_l=1,ph_modes
        !
-       if(ph_freqs(i_q,i_l)<FAN_deltaE_treshold) cycle
+       if(ph_freqs(i_l,i_q)<FAN_deltaE_treshold) cycle
        !
-       Bose_F_ph=(1.0+bose_f(ph_freqs(i_q,i_l))/spin_occ)
+       Bose_F_ph=(1.0+bose_f(ph_freqs(i_l,i_q))/spin_occ)
        !
        do i_E=1,DOS_E_steps
           exc_ph_DOS(i_E)=exc_ph_DOS(i_E)+Boltz_F_exc*Bose_F_ph*q_matdyn%weights(i_q)*  &
-    &                     Lorentzian_func((BSE_interp_E(i_c,i_q)-ph_freqs(i_q,i_l)-dos_E(i_E)),DOS_broadening)    
+    &                     Lorentzian_func((BSE_interp_E(i_c,i_q)-ph_freqs(i_l,i_q)-dos_E(i_E)),DOS_broadening)    
        enddo
        !
      enddo

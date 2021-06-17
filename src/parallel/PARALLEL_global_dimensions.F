@@ -28,7 +28,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
 &                        PAR_EH_range,PAR_Dip_ib,PAR_Dip_ib_lim,PAR_X_ib,PAR_X_iq,PAR_n_G_vectors,&
 &                        PAR_n_freqs,PAR_K_range,PAR_n_bands
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
- use BS,            ONLY:BS_bands,BS_nT_at_k,BS_res_ares_dim
+ use BS,            ONLY:BS_bands,BS_nT_at_k,BS_n_eh_spaces
  use X_m,           ONLY:X_ng
 #if defined _PHEL
  use PHEL,          ONLY:PH_Q
@@ -129,7 +129,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  endif
  if (ENVIRONMENT=="Response_T_space_transitions") then
    PAR_EH_range=maxval( BS_nT_at_k )
-   do i_k=1,Xk%nibz*BS_res_ares_dim
+   do i_k=1,Xk%nibz*BS_n_eh_spaces
      if (BS_nT_at_k(i_k)<PAR_EH_range.and.BS_nT_at_k(i_k)>0) PAR_EH_range=BS_nT_at_k(i_k)
    enddo
  endif

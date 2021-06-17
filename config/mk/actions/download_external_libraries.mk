@@ -1,35 +1,30 @@
-download-all:  
-	@LIB2DO="all"; $(download_external_libraries)
-
 download:  
-	@for target in $(EXT_LIBS) ; do $(MAKE) "$$target"-dl ; done
-#
-#
+	@LIB2DO="all"; $(get_external_libraries)
 libxc-dl: 
-	@LIB2DO="libxc"; $(download_external_libraries)
+	@LIB2DO="libxc"; $(get_external_libraries)
 lapack-dl: 
-	@LIB2DO="lapack"; $(download_external_libraries)
+	@LIB2DO="lapack"; $(get_external_libraries)
 fftw-dl: 
-	@LIB2DO="fftw"; $(download_external_libraries)
+	@LIB2DO="fftw"; $(get_external_libraries)
 fftqe-dl: 
-	@LIB2DO="fftqe"; $(download_external_libraries)
+	@LIB2DO="fftqe"; $(get_external_libraries)
 yaml-dl: 
-	@LIB2DO="fftqe"; $(download_external_libraries)
+	@LIB2DO="fftqe"; $(get_external_libraries)
 futile-dl: 
-	@LIB2DO="futile"; $(download_external_libraries)
+	@LIB2DO="futile"; $(get_external_libraries)
 iotk-dl: 
-	@LIB2DO="iotk"; $(download_external_libraries)
+	@LIB2DO="iotk"; $(get_external_libraries)
 hdf5-dl: 
-	@LIB2DO="hdf5"; $(download_external_libraries)
+	@LIB2DO="hdf5"; $(get_external_libraries)
 netcdf-dl: 
-	@LIB2DO="netcdf"; $(download_external_libraries)
+	@LIB2DO="netcdf"; $(get_external_libraries)
 etsf_io-dl: 
-	@LIB2DO="etsf_io"; $(download_external_libraries)
+	@LIB2DO="etsf_io"; $(get_external_libraries)
 blacs-dl: 
-	@LIB2DO="blacs"; $(download_external_libraries)
+	@LIB2DO="blacs"; $(get_external_libraries)
 scalapack-dl: 
-	@LIB2DO="scalapack"; $(download_external_libraries)
+	@LIB2DO="scalapack"; $(get_external_libraries)
 petsc-dl: 
-	@LIB2DO="petsc"; $(download_external_libraries)
+	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
-	@LIB2DO="slepc"; $(download_external_libraries)
+	@LIB2DO="slepc"; $(get_external_libraries)

@@ -492,6 +492,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    io_err=io_QINDX(Xk,q,io_db)
  endif
  !
+! if(l_setup.and.fat_log) call print_q_indirect( )
+ !
  ! Before writing section 5 (qindx_B) I need to wait that the master is done
  ! with writing all other sections
  !
@@ -722,5 +724,30 @@ subroutine bz_samp_indexes(en,k,Xk,q)
      sigma_scattering=.false.
      coll_scattering=.false.
    end subroutine bz_X_only_exit
+   !
+   subroutine print_q_indirect( )
+     !
+     use stderr,  ONLY:intc
+     !
+     integer :: E_k_ind(n_sp_pol,2)
+     integer :: okbz,ik,iqbz
+     logical :: q_found
+     !
+!     call OCCUPATIONS_Gaps(en,E_k_ind=E_k_ind)
+!     if(all(E_k_kind(:,1)==E_k_kind(:,2))) return  ! Direct band-gap
+     !
+!!     do i_sp_pol=1,n_sp_pol
+!       q_found=.false.
+!       do iqbz=1,q%nbz
+!         okbz=qindx_S(E_k_ind(i_sp_pol,1),iqbz,1)
+!         if(k%sstar(okbz,1)==E_k_ind(i_sp_pol,2)) then
+!           q_found=.true.
+!           exit
+!         endif
+!       enddo
+!       if(q_found) call msg('r','Q-point that connect indirect gap',i_sp_pol),q%sstar(iqbz,1))
+!     enddo
+     !
+   end subroutine print_q_indirect
    !
 end subroutine

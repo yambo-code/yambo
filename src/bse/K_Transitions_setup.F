@@ -172,10 +172,13 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                !
                if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
                !
+!aim137: R2. adding value of current Transition to BS_nkFGbz_in_Tgrp
+               if (i_loop==2) BS_nkFGbz_in_Tgrp(i_T_group_now) = nColFG_in_T_group_now
+               !
                l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
                !
                l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
-  &                          any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
+               &             any( PAR_IND_T_ordered%element_2D(:,i_T_group_now))
                !
                if ( .not. (l_trans_in_group .or. l_grp_to_grp) ) cycle
                !
@@ -193,9 +196,6 @@ subroutine K_Transitions_setup(iq,Ken,Xk,Dip)
                    BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
                    BS_T_grp(i_T_group_now)%ik        =ik
                    BS_T_grp(i_T_group_now)%first_cv  =i_T_now
-                   !
-!aim137: R2. adding value of current Transition to BS_nkFGbz_in_Tgrp
-                   BS_nkFGbz_in_Tgrp(i_T_group_now) = nColFG_in_T_group_now
                    !
                  endif
                  !

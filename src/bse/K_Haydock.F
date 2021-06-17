@@ -558,7 +558,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
    if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output_file(iq,"Haydock "//trim(mode))
    !
-   if ( mod(it,Haydock_iterIO*100)==0 .or. Haydock_n_converged==Haydock_required_converged) then
+   if ( mod(it,Haydock_iterIO)==0 .or. Haydock_n_converged==Haydock_required_converged) then
      !
      ! Haydock Coefficients and restart vectors to disk
      !--------------------------------------------------
@@ -570,7 +570,6 @@ subroutine K_Haydock(iq,W,mode,Xk)
      endif
      !
      call HAYVEC_gather(Vnm1,Vnm1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
-print*, 'aca ya no llegue'
      call HAYVEC_gather(Vn,Vn_f,HAYVEC_size,BS_nkFGbz_in_Tgrp)
      if (trim(scheme)=="pseudo-herm") then
        call HAYVEC_gather(Vnp1,Vnp1_f,HAYVEC_size,BS_nkFGbz_in_Tgrp) 
@@ -651,6 +650,10 @@ subroutine HAYVEC_gather(V,fullV,fullV_size,n_ColsFG)
  !
  ! In this loop I need T_groups indexes since I do not want duplicates 
  !
+!aim137: R2. In this subroutine, n_ColsFG(i_g) could be 
+!aim137: replaced by size(V(i_g)%fragment,dim=2)
+!aim137: and fullV_size obtained with a loop over i_g
+!aim137: adding size(V(i_g)%fragment,dim=1) x size(V(i_g)%fragment,dim=2)
  do i_g=1,BS_nT_grps
 !aim137: added loop over FG
    do i_ColFG=1,n_ColsFG(i_g)

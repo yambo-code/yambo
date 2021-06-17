@@ -97,20 +97,20 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
      if(mod_mag/=0._SP) magn_inv(ifft)     =1._SP/mod_mag
    enddo
    !
-   Fxc_rho2(:) =(F_xc(:,1,1)+F_xc(:,2,2)+F_xc(:,1,2)+F_xc(:,2,1))/4._SP
-   Fxc_mag2(:) =(F_xc(:,1,1)+F_xc(:,2,2)-F_xc(:,1,2)-F_xc(:,2,1))/4._SP
-   Fxc_rhom(:) =(F_xc(:,1,1)-F_xc(:,2,2))/4._SP
-   !
    Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
    !
-   F_xc_mat(:,1,1,1,1) = Fxc_rho2+Fxc_mag2(:)*magn_versor(:,3)+2*Fxc_rhom   !  (opt)
-   F_xc_mat(:,1,1,2,2) = Fxc_rho2-Fxc_mag2(:)*magn_versor(:,3)              !  (opt)
-   F_xc_mat(:,2,2,1,1) = Fxc_rho2-Fxc_mag2(:)*magn_versor(:,3)              !  (opt)
-   F_xc_mat(:,2,2,2,2) = Fxc_rho2+Fxc_mag2(:)*magn_versor(:,3)-2*Fxc_rhom   !  (opt)
+   Fxc_rho2(:) =(F_xc(:,1,1)+F_xc(:,2,2)+F_xc(:,1,2)+F_xc(:,2,1))/4._SP
+   Fxc_mag2(:) =(F_xc(:,1,1)+F_xc(:,2,2)-F_xc(:,1,2)-F_xc(:,2,1))/4._SP-Vxc_mag*magn_inv*2._SP  ! This also includes the term 2*Vxc_mag/mod_magn
+   Fxc_rhom(:) =(F_xc(:,1,1)-F_xc(:,2,2))/4._SP
+   !
+   F_xc_mat(:,1,1,1,1) = (Fxc_mag2+Vxc_mag*magn_inv)*magn_versor(:,3)**2+Vxc_mag*magn_inv+2*Fxc_rhom+Fxc_rho2   !  (opt)
+   F_xc_mat(:,1,1,2,2) =-(Fxc_mag2+Vxc_mag*magn_inv)*magn_versor(:,3)**2-Vxc_mag*magn_inv           +Fxc_rho2   !  (opt)
+   F_xc_mat(:,2,2,1,1) =-(Fxc_mag2+Vxc_mag*magn_inv)*magn_versor(:,3)**2-Vxc_mag*magn_inv           +Fxc_rho2   !  (opt)
+   F_xc_mat(:,2,2,2,2) = (Fxc_mag2+Vxc_mag*magn_inv)*magn_versor(:,3)**2+Vxc_mag*magn_inv-2*Fxc_rhom+Fxc_rho2   !  (opt)
    !
    F_xc_mat(:,1,2,1,2) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)-cI*magn_versor(:,2))**2                      !  (mag)
-   F_xc_mat(:,1,2,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+   magn_versor(:,2))**2+2*Vxc_mag*magn_inv   !  (mag)
-   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+   magn_versor(:,2))**2+2*Vxc_mag*magn_inv   !  (mag)
+   F_xc_mat(:,1,2,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
+   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
    F_xc_mat(:,2,2,1,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+cI*magn_versor(:,2))**2                      !  (mag)
    !
    ! TO DO !!

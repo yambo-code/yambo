@@ -118,7 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
- use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points,PH_Q,PHEL_broad_factor
 #endif
  !
  implicit none
@@ -260,7 +260,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif
@@ -573,7 +572,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,3)
  !
 #if defined _PHEL 
- call it(defs,'PH_SE_mode','[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
+ call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
+ call it(defs,'PHELQpts',   '[PHEL] Q-points considered',PH_Q)
+ call it(defs,'PHELTrans',  '[PHEL] Energy window around W_ph to select transitions (units of GDamping)',PHEL_broad_factor)
+ call it(defs,'PH_SE_mode', '[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
 #endif
  !
 #if defined _RT
@@ -631,7 +633,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
- call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
+ call it(defs,'ElPhModes', '[ELPH] Phonon modes considered',elph_branches)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_qp,unit=E_unit)
  !

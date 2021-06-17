@@ -92,11 +92,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  QP_DW=rZERO
  QP_OMS_Fan=rZERO
  !
- if (l_elel_corr) then
-   call section('+','Correlation: Phonon-mediated Self-energy')
- else
-   call section('=','Correlation: Phonon-mediated Self-energy')
- endif
+ if (     l_elel_corr) call section('+','Correlation: Phonon-mediated Self-energy')
+ if (.not.l_elel_corr) call section('=','Correlation: Phonon-mediated Self-energy')
  !
  ! gFsq coefficients 2 DB ?
  !

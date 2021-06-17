@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
+subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,W_DB_check)
  !
  ! This routine calculates 
  ! 
@@ -61,13 +61,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
- type(levels) ::en,Xen
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(QP_t)   ::qp
- type(w_samp) ::Xw
- type(DIPOLE_t)       :: Dip
- integer      ::GW_iter
+ !
+ type(levels)   ::en,Xen
+ type(bz_samp)  ::Xk,k,q
+ type(X_t)      ::X
+ type(QP_t)     ::qp
+ type(w_samp)   ::Xw
+ type(DIPOLE_t) :: Dip
+ logical        :: W_DB_check
  !
  ! WorkSpace
  !
@@ -79,208 +80,68 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  real(SP)            ::life_Fe,life_Fh
  integer, allocatable::life_W_table(:,:)
  integer, external   ::io_X,io_QP_and_GF,X_dielectric_matrix,QP_life_transitions
- character(schlen)   ::ch,Sc_name
+ character(schlen)   ::ch,SEC_name
  logical             ::X_is_TR_rotated
  !
- ! Presets
- !=========
- !
- call elemental_collision_free(scattering_main)
- call elemental_collision_free(scattering_prime)
- !
- if (l_life) then
-   do iqibz=1,q%nibz
-     call W_reset(X_life_W(iqibz))
-     X_life_W(iqibz)%dr=Xw%dr
-   enddo
- else
-   do i_qp=1,qp%n_states
-     call W_reset(Sc_W(i_qp))
-   enddo
- endif
- !
- call k_expand(k)
- !
- ! ALLOCATION 
- !============
- !
- ! W energy and damping ranges
- !-----------------------------
- YAMBO_ALLOC(QP_W_er,(q%nbz,2))
- YAMBO_ALLOC(QP_W_dr,(q%nbz,2))
- !
- ! Sc Energy points (1 type each QP state !)
- !-------------------------------------------
- if (trim(QP_solver)=='n') then
-   do i_qp=1,qp%n_states
-     Sc_W(i_qp)%n_freqs=QP_dSc_steps
-     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
-     forall (i2=1:QP_dSc_steps) Sc_W(i_qp)%p(i2)=qp%E_bare(i_qp)+(i2-1)*QP_dSc_delta
-   enddo
- else if (trim(QP_solver)=='g') then
-   !
-   ! I need to put to 0. the G damping embodied in QP_W2Sc
-   !
-   QP_G_damp=0._SP
-   !
-   do i_qp=1,qp%n_states
-     Sc_W(i_qp)%n_freqs =QP_Sc_steps
-     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),en%E,.FALSE.)
-     QP_Sc_steps=Sc_W(i_qp)%n_freqs
-   enddo
- endif
- !
- ! Messagging 
- !============
- !
- Sc_name="G"//trim(intc(GW_iter))
- !
- if (GW_iter==0) call section('+',trim(Sc_name)//"W0 on the real axis")
- if (GW_iter> 0) call section('=',trim(Sc_name)//"W0 on the real axis")
- !
- if (.not.l_life) call msg('r', '[GW] Bands range     ',QP_n_G_bands)
- call msg('r', '[GW] G damping       ',QP_G_damp*HA2EV,"[eV]")
- !
- call QP_state_print( )
- !
- if (.not.l_life) then
-   !
-   ! W DB (I/O)
-   !============
-   i_q_to_start= 1
-   io_err     =-1
-   if (io_SCREEN) then
-     call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
-     io_err=io_QP_and_GF('W',qp,WID)
-     if (io_err>0) i_q_to_start=io_err
-   endif
-   !
-   ! W => Sc after succesfull I/O
-   !==============================
-   !
-   if (io_err==0) then
-     !
-     ! ALLOCATION (W)
-     !==================
-     QP_n_W_freqs=Xw%n_freqs
-     QP_n_W_freqs_redux=Xw%n_freqs
-     YAMBO_ALLOC(QP_W,(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
-     !
-     if (QP_solver=="n".or.QP_solver=="g") then
-       QP_Sc=cZERO
-       call live_timing(trim(Sc_name)//'W0',q%nbz)
-       do iqbz=1,q%nbz
-         IO_ACT=manage_action(RD_CL_IF_END,iqbz,1,q%nbz)
-         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2+iqbz/),ID=WID)
-         io_err=io_QP_and_GF('W',qp,WID)
-         !
-         ! Xw%p is stored in ioX, not in ioW !
-         !
-         Xw%er=QP_W_er(iqbz,:)
-         Xw%dr=QP_W_dr(iqbz,:)
-         Xw%n_freqs=QP_n_W_freqs
-         call FREQUENCIES_setup(Xw)
-         ! 
-         call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
-         call live_timing(steps=1)
-       enddo
-       YAMBO_FREE(QP_W)
-       call live_timing()
-       !
-       return
-       !
-     endif
-     !
-     if (QP_solver=="s") return
-     !
-   endif
-   !
- endif
+! if (W_DB_check) then
+!   !
+!   ! W DB (I/O)
+!   !============
+!   i_q_to_start= 1
+!   io_err     =-1
+!   if (io_SCREEN) then
+!     call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=WID)
+!     io_err=io_QP_and_GF('W',qp,WID)
+!     if (io_err>0) i_q_to_start=io_err
+!   endif
+!   !
+!   ! W => Sc after succesfull I/O
+!   !==============================
+!   !
+!   if (io_err==0) then
+!     !
+!     ! ALLOCATION (W)
+!     !==================
+!     QP_n_W_freqs=Xw%n_freqs
+!     QP_n_W_freqs_redux=Xw%n_freqs
+!     AMBO_ALLOC(QP_W,(QP_n_states,1,QP_n_G_bands(2),QP_n_W_freqs))
+!     !
+!     if (QP_solver=="n".or.QP_solver=="g") then
+!       QP_Sc=cZERO
+!       call live_timing(trim(Sc_name)//'W0',q%nbz)
+!       do iqbz=1,q%nbz
+!         IO_ACT=manage_action(RD_CL_IF_END,iqbz,1,q%nbz)
+!         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2+iqbz/),ID=WID)
+!         io_err=io_QP_and_GF('W',qp,WID)
+!         !
+!         ! Xw%p is stored in ioX, not in ioW !
+!         !
+!         Xw%er=QP_W_er(iqbz,:)
+!         Xw%dr=QP_W_dr(iqbz,:)
+!         Xw%n_freqs=QP_n_W_freqs
+!         call FREQUENCIES_setup(Xw)
+!         ! 
+!         call QP_W2Sc(iqbz,k,en,Xw,Sc_W)
+!         call live_timing(steps=1)
+!       enddo
+!       AMBO_FREE(QP_W)
+!       call live_timing()
+!       !
+!       return
+!       !
+!     endif
+!     !
+!     if (QP_solver=="s") return
+!     !
+!   endif
+!   !
+! endif
  !
  !=========================
  ! Actual Calculation Body
  !=========================
  !
  call timing('GW(real-axis)',OPR='start')
- !
- ! Lifetimes Transitions 
- !=======================
- if (l_life) then
-   !
-   call section('+','Lifetimes Transitions Selector')
-   !
-   QP_n_W_freqs=QP_life_transitions(-1,en,k,q,X_life_W(1))
-   YAMBO_ALLOC(life_W_table,(q%nibz,QP_n_W_freqs))
-   life_W_table=0
-   QP_n_W_freqs_redux=-1
-   do iqibz=1,q%nibz
-     !
-     X_life_W(iqibz)%dr=Xw%dr
-     !
-     i1=QP_life_transitions(iqibz,en,k,q,X_life_W(iqibz))
-     life_W_table(iqibz,:size(coarse_grid_index))=coarse_grid_index(:)
-     !
-     QP_n_W_freqs_redux=max(QP_n_W_freqs_redux,coarse_grid_N)
-     YAMBO_FREE(coarse_grid_index)
-     !
-   enddo
-   !
-   do iqibz=1,q%nibz
-     X%iq=iqibz
-     i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
-   enddo
-   call PP_redux_wait()
-   !
- endif
- !
- ! Dynamical interaction DB I/O read to dump the first section variables.
- !
- if (io_RESPONSE) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=X_id)
-   if (l_life)      i_err=io_X(X,X_life_W(1),X_id)
-   if (.not.l_life) i_err=io_X(X,Xw,X_id)
- endif
- !
- ! WF distributed & load
- !=======================
- !
- call PARALLEL_global_indexes(Xen,Xk,q,"Self_Energy")
- call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_G_b,CLEAN_UP=.TRUE.)
- call PARALLEL_WF_distribute(QP_index=PAR_IND_QP)
- call PARALLEL_WF_index( )
- !
- ! Redefine i_q_to_start to be CPU-dependent
- !
- do iqbz=1,q%nbz
-   if (PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) then
-     i_q_to_start=iqbz
-     exit
-   endif
- enddo
- !
- ! WFs
- !
- call WF_load(WF,X%ng,maxval(qindx_S(:,:,2)),(/QP_n_G_bands(1),n_WF_bands_to_load/),(/1,k%nibz/),title='-Sc')
- !
- ! W
- !
- if (.not.l_life) then
-   QP_n_W_freqs=Xw%n_freqs
-   QP_n_W_freqs_redux=Xw%n_freqs
-   YAMBO_ALLOC(QP_W,(PAR_nQP,PAR_nQ_bz,PAR_nG_bands,QP_n_W_freqs))
-   QP_W=cZERO
- endif
- !
- ! Test the spatial Inversion
- !
- call WF_spatial_inversion(en,Xk)
- !
- ! ALLOCATION (scattering_main)
- !
- call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
- !
- call elemental_collision_alloc(scattering_main,NG=X%ng,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
- call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
  !
  QP_Sc=cZERO
  scattering_main%iqref=0
@@ -289,25 +150,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !===========
  !
  call PP_redux_wait()
- !
- ! ... Timing...
- !--------------
- timing_steps=0
- do iqbz=i_q_to_start,q%nbz
-   if (.not.PAR_IND_Q_ibz%element_1D( q%sstar(iqbz,1) )) cycle
-   timing_steps=timing_steps+1
- enddo
- !
- timing_steps=timing_steps*PAR_nQP*count( PAR_IND_G_b%element_1D(QP_n_G_bands(1):QP_n_G_bands(2)) )
- !
- if (.not.l_life) call live_timing(trim(Sc_name)//'W0',timing_steps)
- if (l_life)      call live_timing('Lifetimes',timing_steps)
- !
- if (io_RESPONSE) then
-   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=X_id)
-   io_err=io_X(X,Xw,X_id)
- endif
- !
+
  do iqbz=i_q_to_start,q%nbz
    !
    if (.not.l_life.and.io_SCREEN) QP_W=cZERO

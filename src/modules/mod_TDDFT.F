@@ -45,6 +45,8 @@ module TDDFT
  real(SP),    allocatable :: FXC_K_diagonal(:)
  complex(SP), allocatable :: F_xc_gspace(:,:,:)
  !
+ character(10)     :: ALDA_cut_scheme
+ !
  interface 
    !
    integer function io_BS_Fxc(iq,W,ID,X)

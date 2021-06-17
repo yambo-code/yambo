@@ -52,7 +52,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision_el, ONLY:elemental_collision_free
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
- use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc
+ use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc,ALDA_cut_scheme
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
@@ -74,7 +74,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Work Space ...
  !
  character(schlen) :: section_title
- character(10)     :: ALDA_cut_scheme
  character(1)      :: mode_now
  integer, external :: io_BS_PAR_init
  !
@@ -91,7 +90,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
  !
- integer    :: i_block,O_ng_shift,&
+ integer    :: i_block,O_ng_shift,NG,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c
@@ -173,12 +172,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng=1
  O_ng_shift=maxval(qindx_X(iq,:,2))
  !
- ! This is manually set for now
- if (iq==BS_q(1)) then
-   ALDA_cut_scheme="none"
-   if (BS_n_g_fxc/=ng_closed) ALDA_cut_scheme="lower_Gmax"
- endif
- !
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    O_ng=maxval(G_m_G)
    call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
@@ -188,15 +181,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
- if (BS_K_is_ALDA) then
-   O_ng=BS_n_g_fxc
-   if (BS_n_g_fxc/=ng_closed .and. trim(ALDA_cut_scheme)=="lower_GmGp") then
-     if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
-       BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
-       call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',FXC_n_g_corr)
-     endif
-     O_ng=maxval(G_m_G)
-     O_ng_shift=max(BS_n_g_fxc,O_ng_shift)
+ if (BS_K_is_ALDA.and.trim(ALDA_cut_scheme)=="lower_GmGp") then
+   FXC_n_g_corr=BS_n_g_fxc
+   if (BS_n_g_fxc/= eval_G_minus_G(BS_n_g_fxc,0) ) then
+     BS_n_g_fxc   = eval_G_minus_G(BS_n_g_fxc,0)
+     call msg('s','[TDDFT] ALDA Fxc cutoff is forced by symmetry to be ',BS_n_g_fxc)
    endif
  endif
  !
@@ -253,7 +242,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  section_title='-BSK'
  if (l_bs_fxc) section_title='-BSK->Fxc'
  !
- call WF_load(WF,max(O_ng,BS_n_g_exch),O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
+ NG=max(O_ng,BS_n_g_exch)
+ if (BS_K_is_ALDA) NG=max(NG,BS_n_g_fxc)
+ !
+ call WF_load(WF,NG,O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
  !
  ! Wave Functions Phases
  !=======================
@@ -280,8 +272,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
-   if ( BS_n_g_fxc/=ng_closed) then
-     FXC_n_g_corr=BS_n_g_fxc
+   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
      call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif

@@ -23,8 +23,9 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
+ use zeros,         ONLY:zero_dfl
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen,rZERO,cZERO
+ use pars,          ONLY:schlen,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use IO_int,        ONLY:io_control
@@ -79,12 +80,13 @@ subroutine XCo_driver(E,k,Xk,q)
  !
 #endif
  !
- !
  ! Logicals setup
  !
  l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
- l_screen_hyb=(WF_exx_screening > rZERO) 
+ !
+ ! AM, 22/4/2021: a tiny WF_exx_screening causes NaN in the call to scatter_ModScr
+ l_screen_hyb=(WF_exx_screening > zero_dfl) 
  !
 #if defined _SC
  WF_kind_no_H=WF_kind

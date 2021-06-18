@@ -24,7 +24,7 @@
 subroutine PARALLEL_Transitions_grouping()
  !
  use pars,          ONLY:SP
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el,BS_res_ares_dim
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_T_grp_1st_el,BS_n_eh_spaces
  use BS_solvers,    ONLY:BSS_mode
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_eh,PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,&
@@ -47,7 +47,7 @@ subroutine PARALLEL_Transitions_grouping()
  ! In this subroutine I distribute the eh transitions within each k. The COMM for this indexing is PAR_COM_eh_INDEX.
  ! Once the group of transitions are build-up the goal is to map them in the total world of transitions groups.
  !
- n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*BS_res_ares_dim
+ n_GRP=nXkibz*PAR_COM_eh_INDEX%n_CPU*BS_n_eh_spaces
  !
  YAMBO_ALLOC(BS_T_grp_1st_el,(n_GRP))
  allocate(GRP_data(n_GRP),GRP_index(n_GRP))
@@ -61,7 +61,7 @@ subroutine PARALLEL_Transitions_grouping()
  i_counter=0
  it_ref=PAR_COM_eh_INDEX%CPU_id+1+PAR_COM_Xk_ibz_INDEX%CPU_id*PAR_COM_eh_INDEX%n_CPU
  !
- do i_res_ares=1,BS_res_ares_dim
+ do i_res_ares=1,BS_n_eh_spaces
  if(i_res_ares==1) i_counter=it_ref
  if(i_res_ares==2) i_counter=it_ref+nXkibz*PAR_COM_eh_INDEX%n_CPU
  do i_k=1,nXkibz
@@ -124,7 +124,7 @@ subroutine PARALLEL_Transitions_grouping()
  PAR_BS_nT_col_grps = 0
  PAR_BS_T_grps_index = 0
  !
- do i_res_ares=1,BS_res_ares_dim
+ do i_res_ares=1,BS_n_eh_spaces
  do i_k=1,nXkibz
    i_k_r=i_k+(i_res_ares-1)*nXkibz
    !

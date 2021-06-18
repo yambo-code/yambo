@@ -21,18 +21,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+topdir = .
 ifeq ($(wildcard config/mk/defs.mk),config/mk/defs.mk)
  include config/mk/defs.mk
+else ifeq ($(MAKECMDGOALS), download)
 else
- $(info )
- $(info * * *  Yambo Makefile * * *)
- $(info )
- $(info for help on Yambo configure and makefile)
- $(info please refer to the wiki webpage:)
- $(info )
- $(info http://www.yambo-code.org/wiki/index.php?title=Installation)
- $(info )
- $(error Run ./configure before makefile!)
+ include config/mk/no_configure_help.mk
 endif
 #
 # STAMPS and CFGFILES
@@ -90,7 +84,7 @@ include config/mk/actions/compile_internal_libraries.mk
 include config/mk/actions/compile_yambo_libraries.mk
 #
 # All libs 
-libs:	ext-libs int-libs yambo-libs
+libs: ext-libs int-libs
 #
 # Yambo 
 include config/mk/actions/compile_yambo.mk

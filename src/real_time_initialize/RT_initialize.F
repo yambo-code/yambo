@@ -309,7 +309,6 @@ subroutine RT_initialize(E,k,q)
  !
  ! Checking extended COLLISIONS
  !==============================
- !
  if (l_elel_scatt.or.l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_is_libDFT) then
    !
    call section('=','Electronic Collisions loading and setup')

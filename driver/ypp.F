@@ -237,7 +237,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
 #if defined _YPP_RT
- l_flag=l_flag .or. l_RT_abs
+ l_flag=l_flag.or.l_RT_abs
 #endif
  if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
@@ -258,7 +258,6 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
    if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
  endif
- !
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)
  !

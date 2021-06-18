@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_blocks(iq)
+subroutine K_blocks( )
  !
  ! Create and Fill the BSK blocks
  !
@@ -40,12 +40,10 @@ subroutine K_blocks(iq)
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
-&                       BS_res_ares_dim,BS_mat_res_ares_dim,BS_IO_dim
+&                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res,BS_K_anti_resonant
  use com,          ONLY:msg
  !
 #include<memory.h>
- !
- integer, intent(in)  :: iq
  !
  ! YAMBO_PAR_ALLOC
  !
@@ -58,8 +56,12 @@ subroutine K_blocks(iq)
  integer(IPL) :: local_steps
  real(SP)     :: N_Ts_total,N_Ts_local
  !
- if (.not.BS_K_coupling) n_new_blocks=1
- if (     BS_K_coupling) n_new_blocks=2/BS_res_ares_dim
+ ! Each pair of transition corresponds to a new block unless coupling is on
+ ! and the anti-res block can be derived from the res. In this case
+ ! only the resonant transitions are included and we need for each pair 2 blocks
+ !
+ n_new_blocks=1
+ if (BS_K_coupling.and.l_BS_ares_from_res) n_new_blocks=2
  !
  ! Count the blocks
  n_BS_blks=0
@@ -104,7 +106,7 @@ subroutine K_blocks(iq)
        iB = n_BS_blks + i_block
        BS_blk(iB)%size=(/BS_T_grp(i_T)%size,BS_T_grp(j_T)%size/)
        TMP_SIZE=TMP_SIZE+int(BS_T_grp(i_T)%size*BS_T_grp(j_T)%size,IPL)
-       if (BS_res_ares_dim==1) then
+       if (l_BS_ares_from_res) then
          if (i_block==1) BS_blk(iB)%mode="R"
          if (i_block==2) BS_blk(iB)%mode="C"
        else
@@ -167,10 +169,11 @@ subroutine K_blocks(iq)
  ! REPORT
  !========
  !
- if(BS_res_ares_dim==1) call msg('rsn','[BSK] Size (resonant)',BS_K_dim(1))
- if(BS_res_ares_dim==2) call msg('rsn','[BSK] Size (res,ares)',BS_K_dim)
+ if(BS_n_eh_spaces==1) call msg('rsn','[BSK] Size (resonant)',BS_K_dim(1))
+ if(BS_n_eh_spaces==2) call msg('rsn','[BSK] Size (res,ares)',BS_K_dim)
+ !
  call msg('rsn','[BSK]         (total)',BS_H_dim)
- call msg('rsn','[BSK] Matricies      ',BS_mat_res_ares_dim)
+ call msg('rsn','[BSK] N. of matrices ',BS_res_ares_n_mat)
  !
  call PARALLEL_live_message("Kernel matrix elements",ENVIRONMENT="Response_T_space",LOADED_r=N_Ts_local,TOTAL_r=N_Ts_total)
  !

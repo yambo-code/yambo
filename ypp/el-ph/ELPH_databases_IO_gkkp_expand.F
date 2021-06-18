@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -35,7 +35,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
  !
  character(*)  ::mode
  integer, intent(in) :: qindx_ID
- integer, intent(in) :: iq,iq_s,iq_ibz
+ integer, intent(in) :: iq,iq_s
  type(bz_samp), intent(in) ::k
  type(GKKP_me) ::GKKP
  !
@@ -129,6 +129,13 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
      ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
      !
    endif
+   !
+!   if(ik==3.and.iq==8) then
+!     write(*,*)
+!     write(*,*) ik_bz,ik_bz_gkkp,is,2,abs(GKKP%dVc(6,3,2,ik_bz_gkkp,1))
+!     write(*,*) ik_bz,ik_bz_gkkp,is,3,abs(GKKP%dVc(6,3,3,ik_bz_gkkp,1))
+!     write(*,*) ik_bz,ik_bz_gkkp,is,4,abs(GKKP%dVc(6,3,4,ik_bz_gkkp,1))
+!   endif
    !
    do ib=1,elph_nb
      do ob=1,elph_nb

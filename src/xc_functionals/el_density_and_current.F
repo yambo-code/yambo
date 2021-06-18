@@ -183,6 +183,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
              DEV_VAR(rho_no_sym)(i_r)=DEV_VAR(rho_no_sym)(i_r)+f_occ*kw*abs(WF_p(i_r,i_spinor,i_wf))**2
            enddo
          enddo
+         !DEV_OMP end parallel do
          !
          ! uspp becsum
          !
@@ -268,13 +269,13 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  if (l_rho) then
    !
-   !$omp parallel do default(shared), private(i_symm,i_r), reduction(+:rho), collapse(2)
+   !#EV_OMP parallel do default(shared), private(i_symm,i_r), collapse(2), reduction(+:rho)
    do i_symm=1,rho_syms
      do i_r = 1, fft_size
        rho(i_r)=rho(i_r)+rho_no_sym(fft_rot_r(i_r,i_symm))/real(nsym,SP)
      enddo
    enddo
-   !$omp end parallel do
+   !#EV_OMP end parallel do
    !
    if (.not.mag_syms) then
      if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)

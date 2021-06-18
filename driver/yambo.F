@@ -36,6 +36,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
+ use drivers,       ONLY:l_gpu_test
+ use cuda_m,        ONLY:GPU_test_dim
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
@@ -301,6 +303,15 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if (driver_now) call mem_manager_report
  !
 #endif
+ !
+ ! GPU TESTER
+ !============
+ !
+ driver_now=l_gpu_test
+ !
+ if (driver_now) call GPU_test(GPU_test_dim)
+ if (driver_now) call mem_manager_report
+ !
  ! 
  ! CLOSING
  !=========

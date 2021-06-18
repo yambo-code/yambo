@@ -113,6 +113,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
 #endif
+ use cuda_m,        ONLY:GPU_test_dim
  use PHOTOLUM,      ONLY:PL_weights
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold
@@ -543,6 +544,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'SLKdim',  '[SLK] Matrix Dimension',SLK_test_H_dim)
 #endif
+ !
+ ! GPU test
+ !
+ call it(defs,'GPUdim',  '[GPU] Matrix Dimension',GPU_test_dim)
  !
 #if defined _SC
  call it(defs,'Hamiltonian',   '[MAG] Hamiltonian kind [pauli,landau,all]',MAG_hamiltonian_type,protect=.FALSE.)

@@ -32,6 +32,8 @@ module cuda_m
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   implicit none
   public
+  !
+  integer :: GPU_test_dim = 1000000
 
 #ifdef _CUDA
   logical, parameter:: have_cuda=.true.

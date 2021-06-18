@@ -37,6 +37,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use drivers,        ONLY:l_gpu_test
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,E_reset
@@ -320,6 +321,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
 #endif
+       l_gpu_test =runlevel_is_on('gputest')
 #if defined _RT
        !
        l_real_time=runlevel_is_on('negf')

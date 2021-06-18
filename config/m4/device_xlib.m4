@@ -61,7 +61,7 @@ dnl The following program should work with all version of devxlib
 testprog="AC_LANG_PROGRAM([],[
     implicit none
 
-    integerxx :: i
+    integer :: i
 ])"
 
 FCFLAGS="$DEVXLIB_INCS $acx_devxlib_save_FCFLAGS"

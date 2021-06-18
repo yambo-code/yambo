@@ -152,9 +152,9 @@ else
   use_libcuda=no
   compile_libcuda=no
   internal_libcuda=no
-  LIBCUDA_LIBS=""
-  LIBCUDA_INCS=""
-  LIBCUDA_PATH=""
+#  LIBCUDA_LIBS=""
+#  LIBCUDA_INCS=""
+#  LIBCUDA_PATH=""
 fi
 
 #

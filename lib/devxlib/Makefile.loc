@@ -31,9 +31,11 @@ configure-stamp: uncompress-stamp
 	      BLAS_LIBS="$(lblas)" LAPACK_LIBS="$(llapack)" \
 	      CC="$(cc)" \
 	      F90="$(fc)" \
+	      FC="$(fc)" \
 	      F77="$(f77)" \
 	      MPICC="$(cc)" \
-	      MPIF90="$(fc)" ); \
+	      MPIF90="$(fc)" \
+	      MPIFC="$(fc)" ); \
 	fi
 	touch configure-stamp
 

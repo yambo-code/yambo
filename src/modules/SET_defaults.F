@@ -362,11 +362,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  compute_Spin_dipoles       = .FALSE.
  compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
-#if defined _PHEL
- X_DbGd_percentual=100.
-#else
- X_DbGd_percentual=1.
-#endif
+ X_DbGd_percentual=-1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'

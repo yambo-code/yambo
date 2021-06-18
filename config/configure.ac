@@ -56,7 +56,7 @@ m4_include([config/m4/acx_fortran_flags.m4])
 m4_include([config/m4/acx_mpi.m4])
 m4_include([config/m4/acx_branch.m4])
 #
-m4_include([config/m4/cuda_fortran.m4])
+m4_include([config/m4/gpu.m4])
 # 
 #  Report
 #
@@ -180,6 +180,18 @@ AC_SUBST(OPENMPLIBS)
 # GPUs suppport
 #
 GPU_SUPPORT="no_gpu"
+#
+AC_ARG_ENABLE(cuda_fortran,[AC_HELP_STRING([--enable-cuda-fortran], [Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda_fortran="no"])
+AC_ARG_ENABLE(openacc,[AC_HELP_STRING([--enable-openacc], [Enable OPENACC support @<:@default=no@:>@])],[],[enable_openacc="no"])
+AC_ARG_ENABLE(openmp5,[AC_HELP_STRING([--enable-openmp5], [Enable OPENMP5 support @<:@default=no@:>@])],[],[enable_openmp5="no"])
+#
+if test x"$enable_cuda_fortran" != "xno" ; then GPU_SUPPORT="cudaf"   ; fi
+if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; fi
+if test x"$enable_openmp5" != "xno"      ; then GPU_SUPPORT="openmp5" ; fi
+#
+AC_SUBST(enable_cuda)
+AC_SUBST(enable_openacc)
+AC_SUBST(enable_openmp5)
 AC_SUBST(GPU_SUPPORT)
 #
 # ============================================================================
@@ -294,7 +306,7 @@ ACX_LIBXC
 ACX_LIBCUDA
 # ============================================================================
 # CUDA
-AC_HAVE_CUDA_FORTRAN
+AC_SET_GPU
 # ============================================================================
 # Device XLIB
 ACX_DEVXLIB

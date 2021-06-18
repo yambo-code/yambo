@@ -26,37 +26,44 @@ AC_DEFUN([ACX_LIBCUDA], [
 
 dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
-AC_ARG_WITH(libcuda_libs, [AS_HELP_STRING([--with-libcuda-libs=<libs>], 
+AC_ARG_WITH(cuda_libs, [AS_HELP_STRING([--with-cuda-libs=<libs>], 
             [Use libcuda libraries <libs>],[32])])
-AC_ARG_WITH(libcuda_path, [AS_HELP_STRING([--with-libcuda-path=<path>], 
-            [Path to libcuda install directory],[32])])
-AC_ARG_WITH(libcuda_libdir, [AS_HELP_STRING([--with-libcuda-libdir=<path>], 
+#
+AC_ARG_WITH(cuda_libdir, [AS_HELP_STRING([--with-cuda-libdir=<path>], 
             [Path to the libcuda lib directory],[32])])
-AC_ARG_WITH(libcuda_includedir, [AS_HELP_STRING([--with-libcuda-includedir=<path>], 
+AC_ARG_WITH(cuda_includedir, [AS_HELP_STRING([--with-cuda-includedir=<path>], 
             [Path to the libcuda include directory],[32])])
+#
+AC_ARG_WITH(cuda_path, [AS_HELP_STRING([--with-cuda-path=<path>], 
+            [Path to libcuda install directory],[32])])
 
 
-acx_cudalib_ok="no"
+acx_libcuda_ok="no"
 internal_libcuda="no"
 compile_libcuda="no"
 use_libcuda="no"
 
+# Cuda libraries are needed only in one of the three following cases
+
+if test x"$enable_cuda_fortran" != "xno" || test x"$enable_openacc" != "xno" || test x"$enable_openmp" != "xno" ; then
+
+#
 dnl Heuristics to detect CUDA dir
-if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_PATH" ; fi
-if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_ROOT" ; fi
-if test "x$with_libcuda_path" = "x" ; then with_libcuda_path="$CUDA_HOME" ; fi
+if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_PATH" ; fi
+if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_ROOT" ; fi
+if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_HOME" ; fi
 
-if test -d "$with_libcuda_path"; then
-   libcuda_incdir="$with_libcuda_path/include"
-   libcuda_libdir="$with_libcuda_path/lib"
-   if ! test -d "$libcuda_libdir" ; then libcuda_libdir="$with_libcuda_path/lib64" ; fi
+if test -d "$with_cuda_path"; then
+   libcuda_incdir="$with_cuda_path/include"
+   libcuda_libdir="$with_cuda_path/lib"
+   if ! test -d "$libcuda_libdir" ; then libcuda_libdir="$with_cuda_path/lib64" ; fi
 fi
-if test -d "$with_libcuda_includedir"; then libcuda_incdir="$with_libcuda_includedir" ; fi
-if test -d "$with_libcuda_libdir";     then libcuda_libdir="$with_libcuda_libdir"     ; fi
+if test -d "$with_cuda_includedir"; then libcuda_incdir="$with_cuda_includedir" ; fi
+if test -d "$with_cuda_libdir";     then libcuda_libdir="$with_cuda_libdir"     ; fi
 
-LIBCUDA_INCS="$IFLAG$libcuda_incdir"
-LIBCUDA_PATH="$with_libcuda_path"
-
+LIBCUDA_INCS=""
+if test x"$libcuda_incdir" != "x" ; then LIBCUDA_INCS="$IFLAG$libcuda_incdir" ; fi
+LIBCUDA_PATH="$with_cuda_path"
 
 dnl Backup LIBS and FCFLAGS
 acx_libcuda_save_LIBS="$LIBS"
@@ -82,9 +89,9 @@ dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
 fi
 
-# set from --with-libcuda-libs flag
-if test x"$acx_libcuda_ok" = xno && test ! -z "$with_libcuda_libs" ; then
-  LIBCUDA_LIBS="$with_libcuda_libs"
+# set from --with-cuda-libs flag
+if test x"$acx_libcuda_ok" = xno && test ! -z "$with_cuda_libs" ; then
+  LIBCUDA_LIBS="$with_cuda_libs"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -122,6 +129,15 @@ dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
 fi
 
+#enable_cuda_lib_check="yes"
+#if test "x$enable_cuda_lib_check" = "xyes"; then
+#   AC_CHECK_LIB([cuda], [cuInit], [], AC_MSG_FAILURE([Couldn't find libcuda]))
+#   AC_CHECK_LIB([cudart], [cudaMalloc], [], AC_MSG_FAILURE([Couldn't find libcudart]))
+#   AC_CHECK_LIB([cublas], [cublasInit], [], AC_MSG_FAILURE([Couldn't find libcublas]))
+#   AC_CHECK_LIB([cufft], [cufftPlanMany], [], AC_MSG_FAILURE([Couldn't find libcufft]))
+#fi
+
+
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libcuda_ok" = xyes; then
@@ -156,6 +172,8 @@ fi
 #    AC_MSG_RESULT([Compatible external DevXlib not found/specified. Internal to be compiled.])
 #  fi
 #fi 
+
+fi
 
 AC_SUBST(LIBCUDA_LIBS)
 AC_SUBST(LIBCUDA_INCS)

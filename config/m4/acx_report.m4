@@ -191,7 +191,7 @@ fi
 
 #
 LIBCUDA_str=" - "
-if test "$use_libcuda" = "yes" ; then LIBCUDA_str="E"; fi
+if test "$use_libcuda" = "yes" ; then LIBCUDA_str=" E "; fi
 
 #
 YDB_str="-";

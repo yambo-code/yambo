@@ -10,9 +10,9 @@ YLIBIO_LD     = $(YLIBIO)
 # Source code
 #
 BASIC_LIBS   = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
-               gpu_test xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
+               gpu_test_mod gpu_test xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
 BASIC_LIBS_LD= tools memory Yio communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing Yio io \
-               gpu_test xc_functionals interface stop_and_restart wf_and_fft coulomb
+               gpu_test_mod gpu_test xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse

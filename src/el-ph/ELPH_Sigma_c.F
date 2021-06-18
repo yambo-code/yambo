@@ -400,9 +400,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !
          ! with q_YAMBO = - q_PW
          !
-!         elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
-!&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
-         elph_gkkp_sq=abs(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))
+         elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
+&                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
          ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
          !

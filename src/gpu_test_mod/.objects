@@ -1,0 +1,2 @@
+objs =  mod_cublas_core.o  mod_data.o        mod_dev_memory.o  \
+        mod_cublas.o       mod_dev_linalg.o  mod_gpu.o

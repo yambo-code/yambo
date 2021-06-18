@@ -33,6 +33,7 @@ module YPP_ELPH
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
  logical :: l_ph_ass_dos
+ logical :: l_gkkp_expand
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad

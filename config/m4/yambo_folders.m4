@@ -146,6 +146,8 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  cp     $srcdir/Makefile $compdir/
  cp -r  $srcdir/config   $compdir/ 
  if test ! -d "$compdir/driver"     ; then mkdir "$compdir/driver"     ; fi
+ if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
+ cp     $srcdir/lib/archive/package.list   $compdir/lib/archive
 
  if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
  if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi

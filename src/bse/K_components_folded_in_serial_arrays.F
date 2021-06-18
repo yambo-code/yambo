@@ -26,17 +26,14 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! Here I fill the kernel (coupling included) in an entire BIG matrix to be
  ! used for diagonalization and/or invertion
  !
- !      | (K_r)     (cI*K_c)    |  
- !  K = |                       |
- !      | (-cI*K_c^*)  (-K_r^*) |
- !
+ ! See mod_BS on the K structure
  !
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
 &                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
-&                         BS_res_ares_dim,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+&                         BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use timing_m,       ONLY:timing
  use LIVE_t,         ONLY:live_timing
  use MAGNONS,        ONLY:BSS_dipoles_magn,BSS_MAGN_alloc
@@ -51,7 +48,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  ! Work Space
  !
  integer     :: i_Tr,H_pos,i_g,i_g_start,i_k_bz,i_v,i_c,i_sp_c,i_sp_v,&
- &              BS_res_ares_dim_solver,i_res_ares,i_res_ares_solver,ares_fac
+ &              BS_n_eh_spaces_solver,i_res_ares,i_res_ares_solver,ares_fac
  !
  !========================
  ! BSS COMPONENTS SECTION
@@ -71,8 +68,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
    !
    if(BS_nT_grps>0) call live_timing("Folding BSE Kernel",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
    !
-   BS_res_ares_dim_solver=1
-   if(BS_res_ares_dim==1.and.BS_K_coupling) BS_res_ares_dim_solver=2
+   BS_n_eh_spaces_solver=1
+   if(BS_n_eh_spaces==1.and.BS_K_coupling) BS_n_eh_spaces_solver=2
    !
    ! FILLING BSS_eh_* and BSS_dipoles
    !==================================
@@ -83,7 +80,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
      !
      if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
      !
-     if(BS_res_ares_dim==2) then
+     if(BS_n_eh_spaces==2) then
        i_res_ares=BS_T_grp(i_g)%i_res_ares
        i_g_start =BS_T_grp(i_g)%i_T_ref
      endif
@@ -101,7 +98,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !    S          CPL             BS_H_dim                 1              1                 BS_H_dim
        !  where the antiresonant transitions are not in the groups
        !
-       do i_res_ares_solver=1,BS_res_ares_dim_solver
+       do i_res_ares_solver=1,BS_n_eh_spaces_solver
          !
          H_pos=sum(BS_T_grp(i_g_start:I_g-1)%size)+i_Tr+(max(i_res_ares_solver,i_res_ares)-1)*BS_K_dim(1)
          ares_fac=(-1)**(i_res_ares_solver-1)
@@ -117,7 +114,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
          !
          if (l_BS_photolum) then
            BSS_PL_f(H_pos)=BS_T_grp(i_g)%f_PL(i_Tr,i_res_ares_solver)
-           if (BS_res_ares_dim==1.and.BS_res_ares_dim_solver==1) BSS_PL_f(H_pos+BS_K_dim(1))=BS_T_grp(i_g)%f_PL(i_Tr,2)
+           if (BS_n_eh_spaces==1.and.BS_n_eh_spaces_solver==1) BSS_PL_f(H_pos+BS_K_dim(1))=BS_T_grp(i_g)%f_PL(i_Tr,2)
          endif
          !
          if (l_BS_optics) BSS_dipoles_opt(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)

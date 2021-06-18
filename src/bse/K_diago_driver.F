@@ -40,7 +40,7 @@ subroutine K_diago_driver(iq,W,X_static)
  use pars,           ONLY:SP
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_coupling,BS_H_dim,BS_K_dim,BS_perturbative_SOC,&
-&                         BS_mat_res_ares_dim,l_BS_optics !,BS_Blocks_symmetrize_K,&
+&                         BS_res_ares_n_mat,l_BS_optics !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
  use X_m,            ONLY:X_t
@@ -145,7 +145,7 @@ subroutine K_diago_driver(iq,W,X_static)
  if (.not.BSS_write_eig_2_db) call parser('WRbsWF',BSS_write_eig_2_db)
  call parser('BSSPertWidth',BSS_perturbative_width)
  !
- do i_BS_mat=1,BS_mat_res_ares_dim
+ do i_BS_mat=1,BS_res_ares_n_mat
    !
    if(l_diago) then
      if(.not.BS_K_coupling) BSS_n_eig = BS_K_dim(i_BS_mat)

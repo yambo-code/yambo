@@ -36,7 +36,6 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
 #endif
 #if defined _YPP_RT
  use YPP_real_time, ONLY:l_RT_abs
- use BS,            ONLY:BS_H_dim
 #endif
  !
 #include<memory.h>
@@ -49,7 +48,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  logical              :: l_flag
  integer ,allocatable :: BS_E_degs(:)
  !... I/0
- integer              :: iq
+ integer              :: iq,io_err
  !
  l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp .or. l_dipoles
 #if defined _YPP_ELPH
@@ -66,27 +65,38 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  iq = BSiq
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"check")
+ call                excitons_read(k,Xk,en,Xen,BSiq,"check",io_err)
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues")
+ if (io_err==0) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues",io_err)
+ !
+ if (io_err/=0) then
+   call warning("BSE databases not found.")
+#if defined _YPP_RT
+   if (l_RT_abs) call RT_transient_absorption(Xen,Xk,q)
+#endif
+   return
+ endif
  !
  ! Sort energies and write to output
  !===================================
  if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
- l_flag=l_sort
 #if defined _YPP_RT
- l_flag=l_flag .or. l_RT_abs
+ if (.not.l_RT_abs) then
 #endif
- !
- ! Sort energies to find degenerate states
- !========================================
- YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
- call excitons_find_degeneracies(BS_E,BS_E_degs)
- !
- ! Define the USER set of excitonic states
- !=========================================
- if(.not.l_flag) call get_user_excitonic_states( )
+   !
+   ! Sort energies to find degenerate states
+   !========================================
+   YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
+   call excitons_find_degeneracies(BS_E,BS_E_degs)
+   !
+   ! Define the USER set of excitonic states
+   !=========================================
+   if(.not.l_sort) call get_user_excitonic_states( )
+   !
+#if defined _YPP_RT
+ endif
+#endif
  !
  ! Exciton dispersion interpolation
  ! =======================================
@@ -104,7 +114,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  endif
 #endif
  !
- if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
+ if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors",io_err)
  ! 
  ! Exciton's spin
  !=====================
@@ -132,13 +142,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Transient absorption 
  !======================
- if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ if (l_RT_abs)     call RT_transient_absorption(Xen,Xk,q)
  !
 #endif
  !
  ! CLEAN
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"clean")
+ call excitons_read(k,Xk,en,Xen,BSiq,"clean",io_err)
  !
  YAMBO_FREE(EXCITONS_user_indexes)
  !

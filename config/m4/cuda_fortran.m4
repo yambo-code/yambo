@@ -24,7 +24,7 @@
 AC_DEFUN([AC_HAVE_CUDA_FORTRAN],[
 #
 AC_ARG_ENABLE(cuda,
-        [AC_HELP_STRING([--enable-cuda], [Enable CUDA support])],[],[])
+        [AC_HELP_STRING([--enable-cuda], [Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda="no"])
 #
 AC_ARG_WITH([cuda-cc],
    [AS_HELP_STRING([--with-cuda-cc=VAL],[GPU architecture (Kepler: 35, Pascal: 60, Volta: 70, Ampere: 80) @<:@default=70@:>@])],
@@ -56,9 +56,7 @@ AC_ARG_WITH([cuda-libs],
    [],[with_cuda_libs=cufft,cublas,cusolver])
 #
 AC_ARG_ENABLE(nvtx,
-        [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support])],[],[])
-#
-if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
+        [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
 #
 def_cuda=""
 CUDA_FLAGS=""

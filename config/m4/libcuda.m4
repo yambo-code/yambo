@@ -125,7 +125,7 @@ fi
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libcuda_ok" = xyes; then
-  use_libcuda=no
+  use_libcuda=yes
   compile_libcuda=no
   internal_libcuda=no
   #
@@ -133,6 +133,12 @@ if test x"$acx_libcuda_ok" = xyes; then
   AC_MSG_RESULT([Using version specified from input.])
 else
   AC_MSG_RESULT([Not specified.])
+  use_libcuda=no
+  compile_libcuda=no
+  internal_libcuda=no
+  LIBCUDA_LIBS=""
+  LIBCUDA_INCS=""
+  LIBCUDA_PATH=""
 fi
 
 #

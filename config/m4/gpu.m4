@@ -76,7 +76,7 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    DEVXLIB_FLAGS="$DEVXLIB_FLAGS --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    #
    # If not set via the configure use the cuda libs internal to the pgi/nvidia compiler
-   if test x"$LIBCUDA_LIBS" = "x" ; then
+   if test x"$LIBCUDA_LIBS" = "x" -o x"$with_cuda_libs" = "x" ; then
      use_int_cuda_libs="yes" ;
    fi
    #

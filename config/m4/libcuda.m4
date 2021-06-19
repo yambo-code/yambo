@@ -37,7 +37,6 @@ AC_ARG_WITH(cuda_includedir, [AS_HELP_STRING([--with-cuda-includedir=<path>],
 AC_ARG_WITH(cuda_path, [AS_HELP_STRING([--with-cuda-path=<path>], 
             [Path to libcuda install directory],[32])])
 
-
 acx_libcuda_ok="no"
 internal_libcuda="no"
 compile_libcuda="no"
@@ -99,7 +98,7 @@ fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcufft -lcusolver -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -123,7 +122,7 @@ fi
 
 # dynamic linkage, combined Fortran interface (libcuda pre-r10730)
 if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcublas -lcudart -lcuda"
+  LIBCUDA_LIBS="-L$libcuda_libdir -lcufft -lcusolver -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])

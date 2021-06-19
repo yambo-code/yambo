@@ -62,6 +62,7 @@ module cuda_m
   integer(stream_kind) :: stream_default
   integer(stream_kind) :: stream_h2d
   integer(stream_kind) :: stream_d2h
+  integer(stream_kind) :: stream_d
 
   !
   ! public
@@ -81,6 +82,7 @@ module cuda_m
   public :: stream_default
   public :: stream_h2d
   public :: stream_d2h
+  public :: stream_d
 
 contains
 
@@ -122,6 +124,7 @@ contains
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
+    ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
     !
 #else
     have_cuda_devices=.false.

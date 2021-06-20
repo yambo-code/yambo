@@ -162,6 +162,25 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 # ============================================================================
 #
+# GPUs suppport
+#
+GPU_SUPPORT="no_gpu"
+#
+AC_ARG_ENABLE(cuda_fortran,[AC_HELP_STRING([--enable-cuda-fortran], [Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda_fortran="no"])
+AC_ARG_ENABLE(openacc,[AC_HELP_STRING([--enable-openacc], [Enable OPENACC support @<:@default=no@:>@])],[],[enable_openacc="no"])
+AC_ARG_ENABLE(openmp5,[AC_HELP_STRING([--enable-openmp5], [Enable OPENMP5 support @<:@default=no@:>@])],[],[enable_openmp5="no"])
+#
+if test x"$enable_cuda_fortran" != "xno" ; then GPU_SUPPORT="cudaf"   ; fi
+if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; enable_open_mp="no";  fi
+if test x"$enable_openmp5" != "xno"      ; then GPU_SUPPORT="openmp5" ; fi
+#
+AC_SUBST(enable_cuda)
+AC_SUBST(enable_openacc)
+AC_SUBST(enable_openmp5)
+AC_SUBST(GPU_SUPPORT)
+#
+# ============================================================================
+#
 # OpenMP
 #
 AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
@@ -174,25 +193,6 @@ if test x"$enable_open_mp" = "xyes"; then
 fi
 AC_SUBST(def_openmp)
 AC_SUBST(OPENMPLIBS)
-#
-# ============================================================================
-#
-# GPUs suppport
-#
-GPU_SUPPORT="no_gpu"
-#
-AC_ARG_ENABLE(cuda_fortran,[AC_HELP_STRING([--enable-cuda-fortran], [Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda_fortran="no"])
-AC_ARG_ENABLE(openacc,[AC_HELP_STRING([--enable-openacc], [Enable OPENACC support @<:@default=no@:>@])],[],[enable_openacc="no"])
-AC_ARG_ENABLE(openmp5,[AC_HELP_STRING([--enable-openmp5], [Enable OPENMP5 support @<:@default=no@:>@])],[],[enable_openmp5="no"])
-#
-if test x"$enable_cuda_fortran" != "xno" ; then GPU_SUPPORT="cudaf"   ; fi
-if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; fi
-if test x"$enable_openmp5" != "xno"      ; then GPU_SUPPORT="openmp5" ; fi
-#
-AC_SUBST(enable_cuda)
-AC_SUBST(enable_openacc)
-AC_SUBST(enable_openmp5)
-AC_SUBST(GPU_SUPPORT)
 #
 # ============================================================================
 #

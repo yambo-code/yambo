@@ -32,11 +32,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
-#if defined _SCALAPACK
- use drivers,       ONLY:l_slk_test
-#endif
- use drivers,       ONLY:l_gpu_test
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,&
+&                        l_slk_test,l_gpu_test
  use cuda_m,        ONLY:GPU_test_dim
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
@@ -106,7 +103,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! not resetted in INIT call
  !
- call bz_samp_reset(Xk)  
+ call bz_samp_reset(Xk) 
  call E_reset(Xen) 
  call E_reset(Ken) 
  call E_reset(DIPen) 
@@ -123,6 +120,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
    return
  endif
  !
+ driver_now= .not.(l_slk_test.or.l_gpu_test)
+ !
  ! PARALLEL and I/O Setup 
  !=======================
  !
@@ -133,26 +132,26 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Basical 
  !
- call setup(en,Xen,Ken,k,Xk)
+ if(driver_now) call setup(en,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !
- i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
+ if(driver_now) i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
  !
  ! BZ sampling
  !==============
  !
- call bz_samp_indexes(en,k,Xk,q) 
+ if(driver_now) call bz_samp_indexes(en,k,Xk,q) 
  !
  ! COLOUMB DRIVER
  !================
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(driver_now) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! MAGN and DEN
  !=============
  !
- !call eval_Mtot(en,k,q)
+ !if(driver_now) call eval_Mtot(en,k,q)
  !
  ! reset the section numbering
  !
@@ -161,7 +160,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! QP and RT CORRECTIONS
  !=======================
  !
- call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
+ if(driver_now) call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! Logicals for \eps^-1
  !======================

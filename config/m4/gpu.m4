@@ -114,7 +114,7 @@ if test x"$enable_openacc" != "xno" ; then
    #
    DEVXLIB_FLAGS="--with-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_CUDA -D__CUDA -D__OPENACC"
+   def_gpu="-D_OPENACC -D__CUDA -D__OPENACC"
    #
 fi
 #
@@ -125,8 +125,8 @@ if test x"$enable_openmp5" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--with-opemp5 --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
-   GPU_FLAGS="" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_CUDA -D__CUDA -D__OPENMP5"
+   GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+   def_gpu="-D_OPENMP5 -D__CUDA -D__OPENMP5"
    #
 fi
 #

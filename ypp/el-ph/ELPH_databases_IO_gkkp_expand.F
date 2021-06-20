@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -35,8 +35,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
  !
  character(*)  ::mode
  integer, intent(in) :: qindx_ID
- integer, intent(in) :: iq,iq_s,iq_ibz
- type(bz_samp), intent(in) ::k
+ integer, intent(in) :: iq,iq_s
+ type(bz_samp), intent(in) ::k,q
  type(GKKP_me) ::GKKP
  !
  ! Work Space 
@@ -190,13 +190,23 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,iq_ibz,k,qindx_ID,GKKP)
      use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
      use D_lattice,      ONLY:nsym
      use R_lattice,      ONLY:rl_sop
+     use YPP_ELPH,       ONLY:l_gkkp_expand
      use zeros,          ONLY:k_rlu_zero
+     !
      real(SP) :: r_v(3)
-     integer  :: is
+     integer  :: is,iq_db
+     !
      small=0
      nsmall=0
+     !
+     iq_db=iq
+     if(l_gkkp_expand) then
+       iq_db=iq
+       if(iq>1) iq_db=sum(q%nstar(:iq-1))+1
+     endif
+     !
      do is=1,nsym
-       r_v=matmul(rl_sop(:,:,is),PH_qpt(iq,:)) -PH_qpt(iq,:)
+       r_v=matmul(rl_sop(:,:,is),PH_qpt(iq_db,:)) -PH_qpt(iq_db,:)
        call k2bz(r_v)
        call c2a (v_in=r_v,mode='ki2a')
        if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then

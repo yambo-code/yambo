@@ -362,7 +362,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          !                <(R^-1 k)+q n'|dV_{SCF}/du^{q nu}|(R^-1 k) n>= 
          !                gkkp(ik_bz,nu,n',n)
          !
-         ik_bz_gkkp=k%k_table(ik,sop_inv(iq_s))
+         ik_bz_gkkp=k%k_table(ik,sop_inv(iq_s))  
+         !
+         ! COMMENT: I do not have sop_tab(:,is) because is=1 (identity)
          ! 
          ! gkkp_{I_need}= <k+IRq n'|dV_{SCF}/du^{IRq nu}|k n>=
          !                [<(R^-1 S p)+q n|dV_{SCF}/du^{q nu}|(R^-1 S p) n'>]^*= 

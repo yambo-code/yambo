@@ -277,14 +277,12 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    iq_bz = iq_loop
    if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
      iq_ibz =q%sstar(iq_bz,1)
-     write(*,*) iq_bz,' come from ',iq_ibz
      iq_s   =q%sstar(iq_bz,2)
      iq_db = iq_ibz
    else
      iq_ibz= iq_loop
      iq_s  = 0
      iq_db = iq_loop
-     write(*,*) iq_bz,' come from ',iq_ibz
    endif
    !
    ! DB I/O can be skipped except at the gamma point which is used to define E_k_plus_q_at_gamma array

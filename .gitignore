@@ -27,6 +27,7 @@ config.status
 config/report
 config/setup
 config/msg_ydb
+config/make.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
@@ -58,9 +59,6 @@ lib/hdf5/hdf5*
 lib/external/*
 compile.sh
 gfortran_*
-sbin/make_makefile.sh
-sbin/objects_store.sh
-sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
 lib/bin/*
@@ -70,7 +68,8 @@ lib/bin/*
 src/external_c/.objects
 .check_configure
 config/mk/defs.mk
-*_lock*
+*objects_lock*
+*modules_lock*
 Makefile.locks
 Makefile.archive
 *Makefile

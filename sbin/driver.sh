@@ -1,4 +1,4 @@
-#! @SHELL@
+#!/bin/bash
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
@@ -22,51 +22,44 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-os="@build_os@"
-cpp="@CPP@"
-fpp="@FPP@"
-cppflags="@CPPFLAGS_yambo@"
-ECHO_N="@ECHO_N@"
-PREFIX="@MKMF_PREFIX@"
-KEEPSRC="@enable_keep_src@"
-INCLUDEDIR="@compdir@/@includedir@"
+# DEFS (1): configure-based
+ARGS=$@;
+source ./config/driver.sh.inc
 #
-if [ $# = 0 ] ; then
- echo $0 "dir target objectfile mode(l/x) Dflag1 Dflag2 Dflag3 ..."
- exit 0
-fi
-cdir=$1
-target=$2
-ofile=$3
-mode=$4
-libs=$5
+# OPTIONS
+source ./sbin/driver_options.sh
+#
+# CHECK
 if [ ! -f $cdir/$ofile ]; then exit 0; fi
+#
+# CLEAN
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-llibs=""
-objects_lock="__objects_lock"
+# DEFS (2)
 pjdep_file="project.dep"
 moduledep_file="module.dep"
 modlist_file="modfiles.list"
-for arg in $@; do
- case $arg in
-  -D_MPI)
-   dmpi="yes" ;
-   dopts="$dopts $arg";
-   ;;
-  -D_64BIT_OFFSET|-D_SLEPC_OFF)
-   dopts="$dopts $arg";
-   ;;
-  -D_*) 
-   dopts="$dopts $arg"
-   a=`echo $arg  | sed "s/-D_/_/"`
-   objects_lock="$objects_lock$a"
-   ;;
-  -l*) 
-   llibs="$arg $llibs"
-   ;;
- esac
-done
+#
+# Projects
+source ./sbin/driver_projects.sh
+#
+# Lock files
+source ./sbin/driver_lock_files.sh
+#
+# Libraries
+source ./sbin/driver_libraries.sh
+#
+# Libraries
+source ./sbin/driver_includes.sh
+#
+#echo "driver.sh DIR: $cdir"
+#echo "driver.sh TARG: $target"
+#echo "driver.sh OFILE: $ofile"
+#echo "driver.sh mode: $mode"
+#echo "driver.sh LIBS: $libs"
+#echo "driver.sh PRECOMP: $precomp_flags"
+#echo "driver.sh M LOCKS: $modules_lock"
+#echo "driver.sh O LOCKS: $objects_lock"
 #
 # Project dependencies
 #if [ ! -f $cdir/project.dep ] ; then 
@@ -80,77 +73,13 @@ done
 # done
 #fi
 #
-# Locks
-modules_lock="$INCLUDEDIR//modules_" #"__modules_lock"
-for arg in $@; do
- case $arg in
-  -D_MPI|-D_OPENMP|-D_CUDA|-D_DOUBLE|-D_TIMING|-D_PAR_IO|-D_HDF5_IO|-D_64BIT_OFFSET|-D_NC_CLASSIC|-D_OPENMP_INT_LINALG|-D_SLEPC)
-   a=`echo $arg  | sed "s/-D_/_/"`
-   modules_lock="$modules_lock$a";
-   ;;
- esac
-done
-for arg in $@; do
- case $arg in
-  -D_SLEPC_OFF)
-   modules_lock=`echo $modules_lock  | sed "s/_SLEPC//"`;
-   objects_lock=`echo $objects_lock  | sed "s/_SLEPC//"`;
-   ;;
- esac
-done
-modules_lock=`echo $modules_lock | sed "s/_DOUBLE//2"`;
-objects_lock=`echo $objects_lock  | sed "s/_DOUBLE//2"`;
+# Makefile creation: (I) header
+source ./sbin/driver_make_makefile.sh HEADER
 #
-# Libraries & Includes
+# Makefile creation: (II) OBJECTS list
+source ./sbin/driver_make_makefile.sh OBJECTS
 #
-llibs="-L\$(libdir) $llibs"
-#
-idriver="@IFLAG@\$(libdir)/yambo/driver/include @IFLAG@\$(includedir)/driver"
-lf90include="@IFLAG@\$(includedir) @IFLAG@\$(modinclude) @IFLAG@\$(includedir)/headers/common @IFLAG@\$(includedir)/headers/parser \$(idriver)"
-#
-llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
-lPLA="\$(lscalapack) \$(lslepc) \$(lpetsc) \$(llapack) \$(lblacs) \$(lblas)"
-lIO="\$(liotk) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
-lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
-#
-lf90libinclude="\$(iiotk) \$(ipnetcdf) \$(inetcdff) \$(inetcdf) \$(ipetsc) \$(islepc) \$(ihdf5) \$(ilibxc) \$(ifft) \$(ifutile) \$(iyaml) \$(idriver)"
-#
-case $target in
-  yambo*)
-   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
-    ;;
-  a2y|elk2y|c2y)
-   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
-    ;;
-  p2y*)
-   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
-    ;;
-  e2y)
-   llibs="-lint_modules $llibs $llocal $lPLA $lIO $lextlibs -lm"
-    ;;
-  ypp*)
-   llibs="$llibs $llocal $lPLA $lIO $lextlibs -lm"
-    ;;
-  lib*)
-    ;;
-esac
 
-cat config/setup >>$cdir/Makefile
-echo "llibs=$llibs" >> $cdir/Makefile
-echo "linclude=$lf90include" >> $cdir/Makefile
-echo "lf90libinclude=$lf90libinclude" >> $cdir/Makefile
-echo "lf90include=$lf90include" >> $cdir/Makefile
-echo "modinclude=$modules_lock" >> $cdir/Makefile
-echo "mfiles=find . -maxdepth 1 -name '*.mod'" >> $cdir/Makefile
-echo "target=$target" >> $cdir/Makefile
-echo "dmpi=$dmpi" >> $cdir/Makefile
-echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
-echo "objects_lock=$objects_lock" >> $cdir/Makefile
-echo "moduledep_file=$moduledep_file" >> $cdir/Makefile
-echo "modlist_file=$modlist_file" >> $cdir/Makefile
-cp $cdir/$ofile $cdir/$ofile.c
-$cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
-rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
@@ -190,19 +119,19 @@ arcreate: \$(objs)
 # Functions
 #
 define driver
- ${PREFIX}( eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -L\$(libdir) -D_\$@ -c \$(libdir)/yambo/driver/src/driver/driver.c > /dev/null)
+ ${PREFIX}( eval \$(cc) \$(cflags) \$(precomp_flags) \$(linclude) -L\$(libdir) -D_\$@ -c \$(libdir)/yambo/driver/src/driver/driver.c > /dev/null)
  @echo
 endef
 define link
- ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
+ ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(libs) ) > /dev/null
 endef
 define modpath
- ${PREFIX}if test ! -d $modules_lock; then echo "creating folder $modules_lock" ; fi
- ${PREFIX}if test ! -d $modules_lock; then mkdir $modules_lock ; fi
+ ${PREFIX}if test ! -d \$(modinclude); then echo "creating folder \$(modinclude)" ; fi
+ ${PREFIX}if test ! -d \$(modinclude); then mkdir \$(modinclude) ; fi
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
- ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $modules_lock
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod \$(modinclude)
 endef
 define dircheck
  ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
@@ -230,7 +159,7 @@ FC_NOOPT_SRC= ${FC_NOOPT_SRC}
 #
 \$(FC_NOOPT_SRC):
 	${rm_command}
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	${PREFIX}(eval \$(fpp) \$(precomp_flags) \$(linclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
 	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
 	@mv \$*.tmp_source_space \$*\$(f90suffix)
 	${PREFIX}(eval \$(fc) -c \$(fcuflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
@@ -242,7 +171,7 @@ FC_NOOPT_SRC= ${FC_NOOPT_SRC}
 FC_LOCAL_SRC= sgfft.o
 \$(FC_LOCAL_SRC):
 	@rm -f \$*\$(f90suffix)
-	${PREFIX}(eval \$(fpp) \$(dopts) \$*.F > \$*\$(f90suffix)) > /dev/null
+	${PREFIX}(eval \$(fpp) \$(precomp_flags) \$*.F > \$*\$(f90suffix)) > /dev/null
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
 	@echo $ECHO_N \$*".F "
 
@@ -261,7 +190,7 @@ EOF
 cat << EOF >> $cdir/Makefile
 .F.o:
 	${rm_command}
-	${PREFIX}(eval \$(fpp) \$(dopts) \$(lf90include) \$(lf90libinclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
+	${PREFIX}(eval \$(fpp) \$(precomp_flags) \$(lf90include) \$(lf90libinclude) \$(srcdir)/$cdir/\$*.F > \$*.tmp_source)
 	@\$(srcdir)/sbin/replacer.sh \$*.tmp_source
 	@mv \$*.tmp_source_space \$*\$(f90suffix)
 	${PREFIX}(\$(fc) -c \$(fcflags) \$(lf90include) \$(lf90libinclude) \$*\$(f90suffix)) > /dev/null
@@ -273,6 +202,6 @@ cat << EOF >> $cdir/Makefile
 	${PREFIX}(eval \$(f77) -c \$(fflags) \$(srcdir)/$cdir/\$*.f)
 	@echo $ECHO_N \$*".f "
 .c.o:
-	${PREFIX}(eval \$(cc) \$(cflags) \$(dopts) \$(linclude) -c \$(srcdir)/$cdir/\$*.c) > /dev/null
+	${PREFIX}(eval \$(cc) \$(cflags) \$(precomp_flags) \$(linclude) -c \$(srcdir)/$cdir/\$*.c) > /dev/null
 	@echo $ECHO_N \$*".c"
 EOF

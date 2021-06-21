@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
@@ -22,36 +22,22 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-if [ $# = 0 ] ; then exit 0; fi
-target=$1
-dir=$2
-#
-# SAVE the modules relative to the current project (if any)
-#
-if test `find . -maxdepth 1 -name '_*' | wc -l` -ge 1 ; then
- for file in _*
- do
-  if test `find . -maxdepth 1 -name '*.o' | wc -l` -ge 1 ; then
-   echo "Saving modules in .modules$file";
-   if test ! -d .modules$file; then mkdir .modules$file; fi
-   for mod in *.o
-   do
-     if test `grep $mod project.dep | wc -l` -ge 1; then
-       mv $mod .modules"$file"/
-     fi
-   done
-  fi
-  rm -f $file
- done
-fi
-#
-touch "$target"
-#
-# If the TARGET modules dir exists just copy the modules from there
-#
-if test -d .modules$target; then
- if test `find .modules$target/ -name '*.mod' | wc -l` -ge 1 ; then
-  echo "Loading modules from $target";
-  mv .modules$target/*.mod $modir
- fi
-fi
+objects_lock="_objects_lock"
+modules_lock="_modules_lock"
+for arg in $ARGS 
+do
+ case $arg in
+  -D_yambo|-D_ypp)
+   a=`echo $arg  | sed "s/-D_/_/"`
+   objects_lock="$objects_lock$a"
+   ;;
+  -D_64BIT_OFFSET|-D_SLEPC_OFF|-D_DOUBLE|-D_yambo|-D_ypp)
+   ;;
+  -D_*) 
+   a=`echo $arg  | sed "s/-D_/_/"`
+   objects_lock="$objects_lock$a"
+   modules_lock="$modules_lock$a"
+   ;;
+ esac
+done
+

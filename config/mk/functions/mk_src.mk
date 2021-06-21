@@ -9,7 +9,7 @@ define mk_src
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$XPATH/$$ldir ; \
    fi ; \
-   ./sbin/make_makefile.sh $$XPATH/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+   ./sbin/driver.sh -d $$XPATH/$$ldir -t lib$$ldir.a  -o .objects -m l -- "$(xcpp) $$ADF" ; \
    cd $$XPATH/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../ ; \
   fi ; \
  done

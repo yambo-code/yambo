@@ -8,7 +8,7 @@ define mk_internal_lib
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
-   ./sbin/make_makefile.sh $$DIR2GO/$$ldir lib$$ldir.a .objects l $(xcpp) $$ADF ; \
+   ./sbin/driver.sh -d $$DIR2GO/$$ldir -t lib$$ldir.a -o .objects -m l -- "$(xcpp) $$ADF" ; \
    cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
   fi \
  done

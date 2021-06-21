@@ -22,7 +22,7 @@ define objects_clean
  echo "[CLEAN] Objects ... done"
  echo "[CLEAN] Broken files ... done"
  if test "$(keep_objs)" = yes ; then \
- find . -name '.objects__*' | xargs rm -fr ; \
+ find . -name '_objects_l*' -o -name '_modules_l*' | xargs rm -fr ; \
  echo "[CLEAN] Objects locks and directories ... done" ; \
  fi
 endef

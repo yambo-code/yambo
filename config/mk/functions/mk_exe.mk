@@ -9,7 +9,7 @@ define mk_yambo
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
-   ./sbin/make_makefile.sh $$XPATH $$exe .objects x "$$DLIBS $$LLIBS" $(xcpp) $$ADF ; \
+   ./sbin/driver.sh -d $$XPATH -t $$exe -o .objects -m x -- "$$DLIBS $$LLIBS $(xcpp) $$ADF"; \
    cd $$XPATH ; $(MAKE) VPATH=$$VPATH || exit "$$?" ; \
   fi ; \
   echo " " ; \
@@ -26,7 +26,7 @@ define mk_ypp
    if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
-   ./sbin/make_makefile.sh $$XPATH $$exe .objects x "$$DLIBS $$LLIBS" $(xcpp) $$ADF ; \
+   ./sbin/driver.sh -d $$XPATH -t $$exe -o .objects -m x -- "$$DLIBS $$LLIBS $(xcpp) $$ADF" ; \
    cd $$XPATH ; $(MAKE) VPATH=$$VPATH || exit "$$?" ; \
   fi ; \
   echo " " ; \

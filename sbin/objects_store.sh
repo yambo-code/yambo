@@ -1,4 +1,4 @@
-#! @SHELL@
+#! /bin/bash
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
@@ -27,8 +27,8 @@ target=$1
 #
 # SAVE the objects relative to the current project (if any)
 #
-if test `find . -maxdepth 1 -name '__*' | wc -l` -ge 1 ; then
- for file in __*
+if test `find . -maxdepth 1 -name '_*' | wc -l` -ge 1 ; then
+ for file in _*
  do
   if test `find . -maxdepth 1 -name '*.o' | wc -l` -ge 1 ; then
    echo "Saving objects in .$file";

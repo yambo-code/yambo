@@ -37,7 +37,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
  use cuda_m,         ONLY:have_cuda
- use deviceXlib_m,   ONLY:dev_memcpy,dev_memset
+ use deviceXlib_m,   ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_memset
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -165,7 +165,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #ifdef _CUDA
    if (i4>0.and..not.ONLY_SIZE) then
      ! fft_g_table <= fft_g_table_d
-     call dev_memcpy(fft_g_table,fft_g_table_d)
+     call dev_memcpy_d2h(fft_g_table,fft_g_table_d)
    endif
    ln(1) = ln_1
    ln(2) = ln_2
@@ -245,8 +245,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    i4=1
    !
    if (have_cuda) then
-     call dev_memcpy(fft_rot_r_d,fft_rot_r)
-     call dev_memcpy(fft_rot_r_inv_d,fft_rot_r_inv)
+     call dev_memcpy_h2d(fft_rot_r_d,fft_rot_r)
+     call dev_memcpy_h2d(fft_rot_r_inv_d,fft_rot_r_inv)
    endif
    !
  enddo

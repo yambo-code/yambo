@@ -25,15 +25,14 @@ subroutine scatter_ModScr(isc,mu)
  !
  ! multiply scatterGamp by exp((-|q+G|^2)/(4\mu^2))
  !
- use pars,          ONLY:SP,pi
- use collision_el,  ONLY:elemental_collision
- use drivers,       ONLY:l_col_cut
- use R_lattice,     ONLY:bare_qpg,d3q_factor
- use global_XC,     ONLY:WF_xc_functional
- use xc_functionals,ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
- use cuda_m,     ONLY:have_cuda
- use deviceXlib_m,   ONLY:dev_memcpy 
-
+ use pars,           ONLY:SP,pi
+ use collision_el,   ONLY:elemental_collision
+ use drivers,        ONLY:l_col_cut
+ use R_lattice,      ONLY:bare_qpg,d3q_factor
+ use global_XC,      ONLY:WF_xc_functional
+ use xc_functionals, ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
+ use cuda_m,         ONLY:have_cuda
+ use deviceXlib_m,   ONLY:dev_memcpy_h2d
  !
  implicit none
  !
@@ -79,7 +78,7 @@ subroutine scatter_ModScr(isc,mu)
    enddo
  enddo
  !
- if (have_cuda) call dev_memcpy(isc%gamp_d,isc%gamp)
+ if (have_cuda) call dev_memcpy_h2d(isc%gamp_d,isc%gamp)
  !
  contains
    !

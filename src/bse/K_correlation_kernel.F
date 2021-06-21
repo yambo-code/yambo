@@ -95,8 +95,8 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  !
 #endif
  !
- if (i_k_s  >nsym/(i_time_rev+1)) call dev_conjg(O1,(/1,BS_n_g_W/))
- if (i_kmq_s>nsym/(i_time_rev+1)) call dev_conjg(O2,(/1,BS_n_g_W/))
+ if (i_k_s  >nsym/(i_time_rev+1)) call dev_conjg(O1,range1=(/1,BS_n_g_W/))
+ if (i_kmq_s>nsym/(i_time_rev+1)) call dev_conjg(O2,range1=(/1,BS_n_g_W/))
  !
  if (     BS_W_is_diagonal) call V_by_V_pwise(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
  if (.not.BS_W_is_diagonal) call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)

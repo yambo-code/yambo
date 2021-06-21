@@ -52,6 +52,7 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
  i_b_ref=b_to_shift(1)
  !
  WF_tmp=cZERO
+ ! dev2dev
  call dev_memcpy(WF_tmp,WF_k_in, range1=(/1,wf_ng_1st_BZ/))
  !
  do id=1,3
@@ -62,9 +63,7 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
      !
      g0_idx_val=k_map%g0_idx(id,WF_shift(id))
      !
-#if defined _CUDA
-     !$cuf kernel do(4) <<<*,*>>>
-#endif
+     !DEV_CUF kernel do(4) <<<*,*>>>
      do i_sp_pol=1,n_sp_pol
      do i_b=b_to_shift(1),b_to_shift(2)
      do i_spinor=1,n_spinor
@@ -80,9 +79,10 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
      enddo
      !
    else
+     ! dev2dev
      call dev_memcpy(WF_k_out,WF_tmp)
    endif
-   !
+   ! dev2dev
    WF_tmp  =cZERO
    call dev_memcpy(WF_tmp,WF_k_out)
    !

@@ -56,6 +56,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
      do ib=b_to_load(1),b_to_load(2)
        !
        iwf=WF%index(ib,ik,i_sp_pol)
+       ! dev2dev
        call dev_memcpy(WF_k_out(:,:,ib,i_sp_pol),DEV_VAR(WF%c)(:,:,iwf))
        !
      enddo

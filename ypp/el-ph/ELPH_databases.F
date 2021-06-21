@@ -288,11 +288,8 @@ subroutine ELPH_databases(k,E,q)
        io_err(3)=io_ELPH(ID,'gkkp_expanded')
      enddo
    else
-     if (idb==1) then
-       call io_control(ACTION=OP_APP_CL,SEC=(/1/),ID=ID)
-       io_err(3)=io_ELPH(ID,'gkkp')
-     endif 
-     call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
+     if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
+     if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_err(3)=io_ELPH(ID,'gkkp')
    endif
    !

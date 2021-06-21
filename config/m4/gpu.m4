@@ -69,7 +69,7 @@ def_gpu=""
    use_int_cuda_libs="yes" ;
    DEVXLIB_CUDALIBS="";
  else
-   DEVXLIB_CUDALIBS="--with-cudalib-libs=$LIBCUDA_LIBS --with-cuda-incs=$LIBCUDA_INCS";
+   DEVXLIB_CUDALIBS="--with-cuda-libs=$LIBCUDA_LIBS --with-cuda-incs=$LIBCUDA_INCS";
  fi
 
 

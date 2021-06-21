@@ -72,7 +72,8 @@ if test -d "$with_cuda_libdir";     then libcuda_libdir="$with_cuda_libdir"     
 
 LIBCUDA_INCS=""
 if test x"$libcuda_incdir" != "x" ; then LIBCUDA_INCS="$IFLAG$libcuda_incdir" ; fi
-if test x"$libcuda_incs"   != "x" ; then LIBCUDA_INCS="$libcuda_incs"         ; fi
+
+if test x"$with_cuda_incs" != "x" ; then LIBCUDA_INCS="$with_cuda_incs"         ; fi
 
 dnl Backup LIBS and FCFLAGS
 acx_libcuda_save_LIBS="$LIBS"

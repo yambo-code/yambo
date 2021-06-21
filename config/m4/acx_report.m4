@@ -47,9 +47,9 @@ OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 #
 GPU_check="-"
-if test "$enable_cuda"    = "yes" ; then GPU_check="X"; fi
-if test "$enable_openacc" = "yes" ; then GPU_check="X"; fi
-if test "$enable_openmp5" = "yes" ; then GPU_check="X"; fi
+if test "$enable_cuda_fortran" = "yes" ; then GPU_check="X"; fi
+if test "$enable_openacc"      = "yes" ; then GPU_check="X"; fi
+if test "$enable_openmp5"      = "yes" ; then GPU_check="X"; fi
 
 #
 # - LIBRARIES -

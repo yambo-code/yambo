@@ -38,9 +38,9 @@ AC_ARG_WITH(cuda_path, [AS_HELP_STRING([--with-cuda-path=<path>],
             [Path to libcuda install directory],[32])])
             
 #
-AC_ARG_ENABLE([cuda-env-check],
-   [AS_HELP_STRING([--enable-cuda-env-check=yes],[The configure script will check CUDA installation and report problems @<:@default=yes@:>@])],
-   [],[enable_cuda_env_check=yes])
+AC_ARG_ENABLE([cuda-libs-check],
+   [AS_HELP_STRING([--enable-cuda-libs-check=yes],[The configure script will check CUDA installation and report problems @<:@default=yes@:>@])],
+   [],[enable_cuda_libs_check=yes])
 
 
 acx_libcuda_ok="no"
@@ -76,19 +76,21 @@ acx_libcuda_save_FCFLAGS="$FCFLAGS"
 
 #Test to be finalized, for now it is always going to succeed
 dnl The tests
-AC_MSG_CHECKING([for libcuda])
 
 dnl The following program should work with all version of libcuda
 testprog="AC_LANG_PROGRAM([],[
-    implicit none
-
-    integer :: ixx
+  integer ierr
+  ierr=cuInit
+  ierr=cudaMalloc
+  ierr=cublasInit
+  ierr=cufftPlanMany
 ])"
 
 FCFLAGS="$LIBCUDA_INCS $acx_libcuda_save_FCFLAGS"
 
 # set from environment variable, if not blank
 if test ! -z "$LIBCUDA_LIBS"; then
+  AC_MSG_CHECKING([for libcuda from environment])
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -96,6 +98,7 @@ fi
 
 # set from --with-cuda-libs flag
 if test x"$acx_libcuda_ok" = xno && test ! -z "$with_cuda_libs" ; then
+  AC_MSG_CHECKING([for libcuda from --with-cuda or CUDA_PATH/ROOM/HOME])
   LIBCUDA_LIBS="$with_cuda_libs"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
@@ -104,6 +107,7 @@ fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
+  AC_MSG_CHECKING([for libcuda from LD_LIBRARY_PATH, dynamic])
   LIBCUDA_LIBS="-L$libcuda_libdir -lcufft -lcusolver -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
@@ -112,35 +116,12 @@ fi
 
 # static linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
+  AC_MSG_CHECKING([static])
   LIBCUDA_LIBS="$libcuda_libdir/libcuda.a"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
 fi
-
-# static linkage, combined Fortran interface (libcuda pre-r10730)
-if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="$libcuda_libdir/libcuda.a"
-  LIBS="$LIBCUDA_LIBS"
-dnl $acx_libcuda_save_LIBS"
-  AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
-fi
-
-# dynamic linkage, combined Fortran interface (libcuda pre-r10730)
-if test x"$acx_libcuda_ok" = xno; then
-  LIBCUDA_LIBS="-L$libcuda_libdir -lcufft -lcusolver -lcublas -lcudart -lcuda"
-  LIBS="$LIBCUDA_LIBS"
-dnl $acx_libcuda_save_LIBS"
-  AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
-fi
-
-if test "x$enable_cuda_lib_check" = "xyes"; then
-  AC_CHECK_LIB([cuda], [cuInit], [], AC_MSG_FAILURE([Couldn't find libcuda]))
-  AC_CHECK_LIB([cudart], [cudaMalloc], [], AC_MSG_FAILURE([Couldn't find libcudart]))
-  AC_CHECK_LIB([cublas], [cublasInit], [], AC_MSG_FAILURE([Couldn't find libcublas]))
-  AC_CHECK_LIB([cufft], [cufftPlanMany], [], AC_MSG_FAILURE([Couldn't find libcufft]))
-fi
-
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
 if test x"$acx_libcuda_ok" = xyes; then
@@ -149,9 +130,9 @@ if test x"$acx_libcuda_ok" = xyes; then
   internal_libcuda=no
   #
   AC_DEFINE(HAVE_LIBCUDA, 1, [Defined if you have the LIBCUDA library.])
-  AC_MSG_RESULT([Using version specified from input.])
+  AC_MSG_RESULT([yes.])
 else
-  AC_MSG_RESULT([Not specified.])
+  AC_MSG_RESULT([not found.])
   use_libcuda=no
   compile_libcuda=no
   internal_libcuda=no

@@ -28,7 +28,7 @@ dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
 AC_ARG_WITH(cuda_libs, [AS_HELP_STRING([--with-cuda-libs=<libs>], 
             [Use libcuda libraries <libs>],[32])])
-AC_ARG_WITH(cuda_lincs, [AS_HELP_STRING([--with-cuda-incs=<incs>], 
+AC_ARG_WITH(cuda_incs, [AS_HELP_STRING([--with-cuda-incs=<incs>], 
             [Use libcuda include options <incs>],[32])])
 #
 AC_ARG_WITH(cuda_libdir, [AS_HELP_STRING([--with-cuda-libdir=<path>], 

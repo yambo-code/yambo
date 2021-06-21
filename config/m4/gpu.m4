@@ -112,9 +112,17 @@ if test x"$enable_openacc" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--with-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
-   GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_OPENACC -D__CUDA -D__OPENACC"
+   case "${FCVERSION}" in
+    *nvfortran* | *pgfortran*)
+      DEVXLIB_FLAGS="--with-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      def_gpu="-D_OPENACC -D__CUDA -D__OPENACC"
+      ;;
+    *GNU* | *gnu*)
+      DEVXLIB_FLAGS="--with-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+      GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      def_gpu="-D_OPENACC -D__CUDA -D__OPENACC"
+   esac
    #
 fi
 #

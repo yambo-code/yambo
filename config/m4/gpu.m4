@@ -69,7 +69,7 @@ def_gpu=""
    use_int_cuda_libs="yes" ;
    DEVXLIB_CUDALIBS="";
  else
-   DEVXLIB_CUDALIBS=`--with-cudalib-libs="$LIBCUDA_LIBS" --with-cuda-incs="$LIBCUDA_INCS"`;
+   DEVXLIB_CUDALIBS="--with-cudalib-libs=$LIBCUDA_LIBS --with-cuda-incs=$LIBCUDA_INCS";
  fi
 
 
@@ -88,13 +88,15 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    #
    case "${FCVERSION}" in
     *nvfortran*)
+      GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} -cudalib=${with_cuda_int_libs}"
+        GPU_FLAGS="$GPU_FLAGS -cudalib=${with_cuda_int_libs}"
       fi
       ;;
     *)
+      GPU_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime} $DEVXLIB_CUDALIBS -Mcudalib=${with_cuda_int_libs}"
+        GPU_FLAGS="-Mcuda=$GPU_FLAGS -Mcudalib=${with_cuda_int_libs}"
       fi
    esac
    #

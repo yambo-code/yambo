@@ -176,7 +176,7 @@ if test x"$enable_cuda_fortran" != "xno" ; then GPU_SUPPORT="cudaf"   ; fi
 if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; enable_open_mp="no";  fi
 if test x"$enable_openmp5" != "xno"      ; then GPU_SUPPORT="openmp5" ; fi
 #
-AC_SUBST(enable_cuda)
+AC_SUBST(enable_cuda_fortran)
 AC_SUBST(enable_openacc)
 AC_SUBST(enable_openmp5)
 AC_SUBST(GPU_SUPPORT)

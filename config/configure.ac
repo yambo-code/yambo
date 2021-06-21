@@ -49,12 +49,14 @@ m4_include([config/m4/acx_misc.m4])
 m4_include([config/m4/acx_gmake.m4])
 m4_include([config/m4/acx_cpp.m4])
 m4_include([config/m4/acx_fpp.m4])
-m4_include([config/m4/ax_f90_module_flag.m4])
 m4_include([config/m4/acx_get_fc_kind.m4])
 m4_include([config/m4/acx_get_mpi_kind.m4])
 m4_include([config/m4/acx_fortran_flags.m4])
 m4_include([config/m4/acx_mpi.m4])
 m4_include([config/m4/acx_branch.m4])
+#
+m4_include([config/m4/ax_f90_module_flag.m4])
+m4_include([config/m4/ax_check_compile_flag.m4])
 #
 m4_include([config/m4/gpu.m4])
 # 

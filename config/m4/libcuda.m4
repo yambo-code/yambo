@@ -28,6 +28,8 @@ dnl Check if the library was given in the command line
 dnl if not, use environment variables or defaults
 AC_ARG_WITH(cuda_libs, [AS_HELP_STRING([--with-cuda-libs=<libs>], 
             [Use libcuda libraries <libs>],[32])])
+AC_ARG_WITH(cuda_lincs, [AS_HELP_STRING([--with-cuda-incs=<incs>], 
+            [Use libcuda include options <incs>],[32])])
 #
 AC_ARG_WITH(cuda_libdir, [AS_HELP_STRING([--with-cuda-libdir=<path>], 
             [Path to the libcuda lib directory],[32])])
@@ -58,6 +60,8 @@ if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_PATH" ; fi
 if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_ROOT" ; fi
 if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_HOME" ; fi
 
+LIBCUDA_PATH="$with_cuda_path"
+
 if test -d "$with_cuda_path"; then
    libcuda_incdir="$with_cuda_path/include"
    libcuda_libdir="$with_cuda_path/lib"
@@ -68,7 +72,7 @@ if test -d "$with_cuda_libdir";     then libcuda_libdir="$with_cuda_libdir"     
 
 LIBCUDA_INCS=""
 if test x"$libcuda_incdir" != "x" ; then LIBCUDA_INCS="$IFLAG$libcuda_incdir" ; fi
-LIBCUDA_PATH="$with_cuda_path"
+if test x"$libcuda_incs"   != "x" ; then LIBCUDA_INCS="$libcuda_incs"         ; fi
 
 dnl Backup LIBS and FCFLAGS
 acx_libcuda_save_LIBS="$LIBS"
@@ -98,7 +102,7 @@ fi
 
 # set from --with-cuda-libs flag
 if test x"$acx_libcuda_ok" = xno && test ! -z "$with_cuda_libs" ; then
-  AC_MSG_CHECKING([for libcuda from --with-cuda or CUDA_PATH/ROOM/HOME])
+  AC_MSG_CHECKING([for libcuda from --with-cuda-libs])
   LIBCUDA_LIBS="$with_cuda_libs"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
@@ -107,7 +111,7 @@ fi
 
 # dynamic linkage, separate Fortran interface
 if test x"$acx_libcuda_ok" = xno; then
-  AC_MSG_CHECKING([for libcuda from LD_LIBRARY_PATH, dynamic])
+  AC_MSG_CHECKING([for libcuda from specified libcuda path, dynamic])
   LIBCUDA_LIBS="-L$libcuda_libdir -lcufft -lcusolver -lcublas -lcudart -lcuda"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"

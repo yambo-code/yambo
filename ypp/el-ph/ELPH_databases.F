@@ -88,11 +88,6 @@ subroutine ELPH_databases(k,E,q)
    !
  endif
  !
- ! Initialize qindx_B IO
- ! =============================
- io_err(2)=qindx_B_init(qindx_ID) 
- if(io_err(2)/=0) call error("Error reading qindx_B")
- !
  ! Existence and dimensions 
  !==========================
  call msg('s','Inspecting databases ...')

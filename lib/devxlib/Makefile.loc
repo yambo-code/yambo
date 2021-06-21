@@ -10,7 +10,7 @@ PACKAGE=$(pkgname_devxlib)
 TARBALL=$(tarball_devxlib)
 
 
-AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs)"
+AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs) $(devxlib_cuda)"
 
 #
 # MAIN target

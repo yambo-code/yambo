@@ -289,7 +289,7 @@ subroutine ELPH_databases(k,E,q)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
-     if (iq>=1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
+     if (iq>1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_err(3)=io_ELPH(ID,'gkkp')
    endif
    !

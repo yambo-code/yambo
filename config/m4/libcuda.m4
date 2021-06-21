@@ -36,6 +36,12 @@ AC_ARG_WITH(cuda_includedir, [AS_HELP_STRING([--with-cuda-includedir=<path>],
 #
 AC_ARG_WITH(cuda_path, [AS_HELP_STRING([--with-cuda-path=<path>], 
             [Path to libcuda install directory],[32])])
+            
+#
+AC_ARG_ENABLE([cuda-env-check],
+   [AS_HELP_STRING([--enable-cuda-env-check=yes],[The configure script will check CUDA installation and report problems @<:@default=yes@:>@])],
+   [],[enable_cuda_env_check=yes])
+
 
 acx_libcuda_ok="no"
 internal_libcuda="no"
@@ -128,14 +134,12 @@ dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
 fi
 
-#enable_cuda_lib_check="yes"
-#if test "x$enable_cuda_lib_check" = "xyes"; then
-#   AC_CHECK_LIB([cuda], [cuInit], [], AC_MSG_FAILURE([Couldn't find libcuda]))
-#   AC_CHECK_LIB([cudart], [cudaMalloc], [], AC_MSG_FAILURE([Couldn't find libcudart]))
-#   AC_CHECK_LIB([cublas], [cublasInit], [], AC_MSG_FAILURE([Couldn't find libcublas]))
-#   AC_CHECK_LIB([cufft], [cufftPlanMany], [], AC_MSG_FAILURE([Couldn't find libcufft]))
-#fi
-
+if test "x$enable_cuda_lib_check" = "xyes"; then
+  AC_CHECK_LIB([cuda], [cuInit], [], AC_MSG_FAILURE([Couldn't find libcuda]))
+  AC_CHECK_LIB([cudart], [cudaMalloc], [], AC_MSG_FAILURE([Couldn't find libcudart]))
+  AC_CHECK_LIB([cublas], [cublasInit], [], AC_MSG_FAILURE([Couldn't find libcublas]))
+  AC_CHECK_LIB([cufft], [cufftPlanMany], [], AC_MSG_FAILURE([Couldn't find libcufft]))
+fi
 
 
 dnl Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:

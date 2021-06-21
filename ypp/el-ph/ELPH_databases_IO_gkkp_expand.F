@@ -83,8 +83,6 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  qindx_tmp=qindx_B_init(qindx_ID) 
  !
- qindx_tmp=qindx_B_init(qindx_ID) 
- !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
@@ -175,8 +173,6 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  GKKP%dVc=GKKP_expanded%dVc
  GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
- !
- qindx_tmp=qindx_B_close(qindx_ID)
  !
  qindx_tmp=qindx_B_close(qindx_ID)
  !

@@ -39,6 +39,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  use parallel_int,  ONLY:PP_redux_wait
  use BS_solvers,    ONLY:BSS_uses_DbGd
 #if defined _PHEL
+ use drivers,       ONLY:l_phel_corr
  use PHEL,          ONLY:l_PH_uses_E_FineGd,PHEL_gimme_Ks
 #endif
 #if defined _RT
@@ -62,7 +63,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  if (.not.l_RT_uses_E_FineGd) return
 #elif defined _PHEL
  PAR_Xk_nbz=k%nbz
- if (.not.l_PH_uses_E_FineGd) then
+ if (.not.l_PH_uses_E_FineGd.and.l_phel_corr) then
    YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz))
    X_DbGd_nkpt_at_q=1
    YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
@@ -78,9 +79,8 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
    endif
    return
  endif
-#else
- if (.not.any((/use_X_DbGd,BSS_uses_DbGd/))) return
 #endif
+ if (.not.any((/use_X_DbGd,BSS_uses_DbGd/))) return
  !
  YAMBO_ALLOC(X_DbGd_nkpt_at_q,(PAR_Xk_nbz))
  !

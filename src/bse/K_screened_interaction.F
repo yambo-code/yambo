@@ -184,11 +184,11 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  if (RIM_anisotropy/=0.) then
 #ifdef _CUDA
-     rtmp=BS_W(1,1,1)
-     rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
-     BS_W(1,1,1)=rtmp
+   rtmp=BS_W(1,1,1)
+   rtmp=rtmp+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+   BS_W(1,1,1)=rtmp
 #else
-     BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
+   BS_W(1,1,1)=BS_W(1,1,1)+RIM_qpg(1,1,1)/2._SP-RIM_anisotropy/2._SP
 #endif
  endif
  !

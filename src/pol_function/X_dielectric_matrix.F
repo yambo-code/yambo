@@ -92,7 +92,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  X_dielectric_matrix=-1
  !
- if (X%whoami==2) then
+ if (X%whoami==1) then
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamica Response Function Matrix')
+   X_MEM_n_freqs =Xw%n_freqs
+ else if (X%whoami==2) then
    if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1

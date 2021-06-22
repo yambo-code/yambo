@@ -30,7 +30,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_Xo
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -52,6 +52,7 @@ subroutine INIT_activate()
 #if defined _RT
  integer          :: i1
 #endif
+ character(2)     :: X_kind
  !
  !Common
  !
@@ -59,7 +60,7 @@ subroutine INIT_activate()
  !
  !FFT
  !
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
+ if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,l_Xo,&
 &          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
@@ -71,9 +72,9 @@ subroutine INIT_activate()
  !
  ! CPU structure
  !
- if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+ if (any((/l_optics.and..not.l_bse,l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
    if (l_elel_corr) then
-     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+     if (any((/l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
        call CPU_activate("X_and_IO")
      else
        call CPU_activate("X")
@@ -186,13 +187,16 @@ subroutine INIT_activate()
    !
  endif
  !
- ! Optics(not bse) nor GW (no PP)
+ ! Optics(not bse) or GW (no PP)
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0).or.l_Xo) then
    !
-   if (.not.l_rpa_IP) call X_activate('Xd',(/'NGsBlk'/))
+   X_kind          ="Xd"
+   if (l_Xo) X_kind="Xx"
    !
-   call X_activate('Xd',(/'QpntsR','BndsRn',&
+   if (.not.l_rpa_IP) call X_activate(X_kind,(/'NGsBlk'/))
+   !
+   call X_activate(X_kind,(/'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    call initactivate(1,'DrClassic')

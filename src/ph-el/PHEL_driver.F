@@ -41,6 +41,10 @@ subroutine PHEL_driver(E,k,q)
  use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
  use frequency,      ONLY:W_reset
  use parallel_m,     ONLY:PARs_PH_Q_ibz
+ ! SCREENING TEST >
+ use stderr,         ONLY:STRING_same
+ use QP_m,           ONLY:QP_solver
+ ! SCREENING TEST <
  !
 #include<memory.h>
  !
@@ -56,6 +60,11 @@ subroutine PHEL_driver(E,k,q)
  !
  call section('*',"Phonon-Electron Interaction and properties")
  !==============================================================
+ !
+ if (STRING_same(QP_solver,"d")) then
+   call PHEL_screening(E,q)
+   return
+ endif
  !
  ! Setup
  !=======

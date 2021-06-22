@@ -150,6 +150,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
  call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
  call it('r',defs,'cohsex',  '[R][Xp] COlumb Hole Screened EXchange')
+ call it('r',defs,'Xo',      '[R][Xx] Dynamical IP Response Function')
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
@@ -823,7 +824,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      des(14)='Damping reference energy'
      !
      do i1=1,n_des
-       lch1=des(i1);lch2=nms(i1)
+       lch1=des(i1)
+       lch2=nms(i1)
        if (X%whoami==1) sfx='Xx'
        if (X%whoami==2) sfx='Xs'
        if (X%whoami==3) sfx='Xd'
@@ -835,7 +837,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      V_iq     =0
      V_DmRnge = 0
      !
-     if (.not.X%whoami==3) then
+     if (.not.X%whoami==3.and..not.X%whoami==1) then
        V_iq     = V_resp 
        V_DmRnge = V_resp
      endif

@@ -173,7 +173,7 @@ integer function io_X(X,Xw,ID)
      endif
      if (X%whoami/=4) then
        call io_variable_elemental(ID_frag,           VAR="Current Q-pt index      ",I0=iq)
-       call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X energy range",TERMINATOR="eV ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+       call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X energy range", TERMINATOR="eV ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X damping range",TERMINATOR="eV",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
        call io_variable_elemental(ID_frag,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
      endif

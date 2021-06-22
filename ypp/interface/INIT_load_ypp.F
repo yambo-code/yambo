@@ -308,6 +308,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'TestPHDGrid','Test double-grid: set all values of the fine grid equal to the couse ones')
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
+ call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
  !
 #endif
  !

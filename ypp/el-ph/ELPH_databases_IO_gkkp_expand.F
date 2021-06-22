@@ -29,7 +29,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
- use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found
+ use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
  !
  implicit none
  !
@@ -83,30 +83,38 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
-! qindx_tmp=qindx_B_init(qindx_ID) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID) 
  !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
-   ! Old code using qindx_B
-   !
-!  do ok_bz=1,k%nbz
-!     !
-!     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
-!     iq_bz=qindx_tmp(1)
-!     !
-!     if (iq_bz==iq) then
-!       ok=k%sstar(ok_bz,1)
-!       os=k%sstar(ok_bz,2)
-!       exit
-!     endif
-!   enddo
-!  !
-   ok_bz=qindx_S(ik,iq,1)
-   ok=k%sstar(ok_bz,1)
-   os=k%sstar(ok_bz,2)
+   if(l_use_qindxB) then
+     !
+     ! Use qindx_B to expand gkkp
+     !
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+     enddo
+     !
+   else
+     !
+     ! Use qindx_S     
+     !
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
    !
    l_bands_reverted=.FALSE.
    ! 
@@ -155,24 +163,32 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
-   ok_bz=qindx_S(ik,iq,1)
-   ok=k%sstar(ok_bz,1)
-   os=k%sstar(ok_bz,2)
-   !
-   ! Old code using qindx_B
-   !
-!   do ok_bz=1,k%nbz
-!     !
-!     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
-!     iq_bz=qindx_tmp(1)
-!     !
-!     if (iq_bz==iq) then
-!       ok=k%sstar(ok_bz,1)
-!       os=k%sstar(ok_bz,2)
-!       exit
-!     endif
-!     !
-!   enddo
+   if(l_use_qindxB) then
+     !       
+     ! Use qindx_B
+     !
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+       !
+     enddo
+     !
+   else
+     !      
+     ! Use qindx_S
+     !
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
    !
    if (iq_s>nsym/(i_time_rev+1)) then
      ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
@@ -190,7 +206,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  GKKP%dVc=GKKP_expanded%dVc
  GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
  !
-! qindx_tmp=qindx_B_close(qindx_ID)
+ if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID)
  !
  call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !

@@ -70,11 +70,6 @@ fi
 if test -d "$with_cuda_includedir"; then libcuda_incdir="$with_cuda_includedir" ; fi
 if test -d "$with_cuda_libdir";     then libcuda_libdir="$with_cuda_libdir"     ; fi
 
-LIBCUDA_INCS=""
-if test x"$libcuda_incdir" != "x" ; then LIBCUDA_INCS="$IFLAG$libcuda_incdir" ; fi
-
-if test x"$with_cuda_incs" != "x" ; then LIBCUDA_INCS="$with_cuda_incs"         ; fi
-
 dnl Backup LIBS and FCFLAGS
 acx_libcuda_save_LIBS="$LIBS"
 acx_libcuda_save_FCFLAGS="$FCFLAGS"
@@ -82,6 +77,8 @@ acx_libcuda_save_FCFLAGS="$FCFLAGS"
 #Test to be finalized, for now it is always going to succeed
 dnl The tests
 
+
+AC_LANG_PUSH(Fortran)
 dnl The following program should work with all version of libcuda
 testprog="AC_LANG_PROGRAM([],[
   integer ierr
@@ -91,11 +88,17 @@ testprog="AC_LANG_PROGRAM([],[
   ierr=cufftPlanMany
 ])"
 
+LIBCUDA_INCS=""
+if test x"$CUDA_INCS"      != "x" ; then LIBCUDA_INCS="$CUDA_INCS"            ; fi
+if test x"$libcuda_incdir" != "x" ; then LIBCUDA_INCS="$IFLAG$libcuda_incdir" ; fi
+if test x"$with_cuda_incs" != "x" ; then LIBCUDA_INCS="$with_cuda_incs"       ; fi
+
 FCFLAGS="$LIBCUDA_INCS $acx_libcuda_save_FCFLAGS"
 
 # set from environment variable, if not blank
-if test ! -z "$LIBCUDA_LIBS"; then
+if test ! -z "$CUDA_LIBS"; then
   AC_MSG_CHECKING([for libcuda from environment])
+  LIBCUDA_LIBS="$CUDA_LIBS"
   LIBS="$LIBCUDA_LIBS"
 dnl $acx_libcuda_save_LIBS"
   AC_LINK_IFELSE($testprog, [acx_libcuda_ok=yes], [])
@@ -145,6 +148,7 @@ else
   LIBCUDA_INCS=""
   LIBCUDA_PATH=""
 fi
+AC_LANG_POP(Fortran)
 
 #
 # Internal libcuda not available at the moment
@@ -163,6 +167,7 @@ fi
 #fi 
 
 fi
+
 
 AC_SUBST(LIBCUDA_LIBS)
 AC_SUBST(LIBCUDA_INCS)

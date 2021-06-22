@@ -49,8 +49,8 @@ AC_ARG_WITH([cuda-runtime],
    [],[with_cuda_runtime=10.1])
 # 
 AC_ARG_WITH([cuda-int-libs],
-   [AS_HELP_STRING([--with-cuda-int-libs=VAL],[CUDA internal libraries () @<:@default=cufft,cublas,cusolver@:>@])],
-   [],[with_cuda_int_libs=cufft,cublas,cusolver])
+   [AS_HELP_STRING([--with-cuda-int-libs=VAL],[CUDA internal libraries () @<:@default=cuda,cufft,cublas,cusolver,cudart@:>@])],
+   [],[with_cuda_int_libs=cuda,cufft,cublas,cusolver,cudart])
 #
 AC_ARG_ENABLE(nvtx,
         [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
@@ -65,11 +65,10 @@ def_gpu=""
 
  #
  # If not set via the configure use the cuda libs internal to the pgi/nvidia compiler
+ DEVXLIB_CUDALIBS="";
  if test x"$LIBCUDA_LIBS" = "x" -o x"$with_cuda_libs" = "x" ; then
    use_int_cuda_libs="yes" ;
-   DEVXLIB_CUDALIBS="";
- else
-   DEVXLIB_CUDALIBS="--with-cuda-libs=$LIBCUDA_LIBS --with-cuda-incs=$LIBCUDA_INCS";
+   DEVXLIB_CUDALIBS="${with_cuda_int_libs}";
  fi
 
 
@@ -90,15 +89,16 @@ if test x"$enable_cuda_fortran" != "xno" ; then
     *nvfortran*)
       GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS="$GPU_FLAGS -cudalib=${with_cuda_int_libs}"
+        GPU_FLAGS+="-cudalib=${with_cuda_int_libs}";
       fi
       ;;
     *)
       GPU_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS="-Mcuda=$GPU_FLAGS -Mcudalib=${with_cuda_int_libs}"
+        GPU_FLAGS+="-Mcudalib=${with_cuda_int_libs}"
       fi
    esac
+   GPU_FLAGS="$GPU_FLAGS $DEVXLIB_CUDALIBS"
    #
    # Check CUDA
    #

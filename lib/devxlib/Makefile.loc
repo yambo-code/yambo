@@ -10,8 +10,7 @@ PACKAGE=$(pkgname_devxlib)
 TARBALL=$(tarball_devxlib)
 
 
-#AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs) $(devxlib_cuda)"
-AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs) $(devxlib_cuda)"
+AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs)"
 
 #
 # MAIN target
@@ -28,8 +27,9 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	      ./configure $(AUXFLAGS) \
-	      BLAS_LIBS="$(lblas)" LAPACK_LIBS="$(llapack)" \
+	      ./configure $(AUXFLAGS) --with-cuda-int-libs="$(devxlib_clib)" \
+	      BLAS_LIBS="$(lblas)"    LAPACK_LIBS="$(llapack)" \
+	      CUDA_LIBS='"$(lcudalib)"' CUDA_INCS='"$(icudalib)"' \
 	      CC="$(cc)" \
 	      F90="$(fc)" \
 	      FC="$(fc)" \

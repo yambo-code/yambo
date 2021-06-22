@@ -161,6 +161,16 @@
   allocate(x, mold=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
   YAMBO_ALLOC_CHECK(x)
 
+#define YAMBO_ALLOC_GPU(x,SIZE) \
+  allocate(x SIZE,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
+#define YAMBO_ALLOC_GPU_SOURCE(x,y) \
+  allocate(x, source=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
+#define YAMBO_ALLOC_GPU_MOLD(x,y) \
+  allocate(x, mold=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
+  YAMBO_ALLOC_CHECK(x)
+
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
@@ -170,4 +180,8 @@
   if (     associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if (     associated(x)) &NEWLINE& deallocate(x);nullify(x)
 
+#define YAMBO_FREE_GPU(x) \
+  if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
+  if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
+  if (     allocated(x)) &NEWLINE& deallocate(x)
 

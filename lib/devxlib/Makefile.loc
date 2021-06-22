@@ -18,7 +18,7 @@ AUXFLAGS="--prefix=$(LIBPATH) --enable-openmp $(devxlib_flgs)"
 all: $(LIBRARY)
 
 uncompress-stamp:
-	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -d $(PACKAGE) ; then \
+	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -e $(PACKAGE) ; then \
 	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(TARBALL) ; cd - ; fi )
 	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
 	if test -d ../archive/$(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi

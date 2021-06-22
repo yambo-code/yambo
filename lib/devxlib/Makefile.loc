@@ -21,12 +21,12 @@ uncompress-stamp:
 	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -d $(PACKAGE) ; then \
 	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(TARBALL) ; cd - ; fi )
 	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
-	if test -d ../archive/$(PACKAGE) ; then (mv ../archive/$(PACKAGE) ./); fi
+	if test -d ../archive/$(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi
 	if test -f Makefile ; then (cp Makefile.loc Makefile); fi
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	if test -e $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      export CUDA_LIBS="$(lcudalib)"; \
 	      export CUDA_INCS="$(icudalib)"; \
 	      export BLAS_LIBS="$(lblas)"; \
@@ -43,7 +43,7 @@ configure-stamp: uncompress-stamp
 	touch configure-stamp
 
 package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
+	if test -e $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) all) ; fi
 	touch package-ready-stamp
 

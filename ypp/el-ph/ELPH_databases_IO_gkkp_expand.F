@@ -71,8 +71,6 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      enddo
    enddo
    !
-   if(iq==3) write(*,*) 'K SYM 4l-b1-k5', abs(GKKP%dVc(4,1,1,5,1))
-   !
  endif
  !
  if (.not.mode=="Q") return

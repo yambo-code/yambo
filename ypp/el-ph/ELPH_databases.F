@@ -216,6 +216,7 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
+ if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
  !
  !...alloc...
@@ -236,7 +237,6 @@ subroutine ELPH_databases(k,E,q)
    endif
    !
    if (l_gkkp_expand) then
-     write(*,*) ' NSTAR ',iq,q%nstar(iq)
      do i_star=1,q%nstar(iq)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star

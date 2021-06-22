@@ -37,7 +37,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
- use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
+ use R_lattice,     ONLY:DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
  use deviceXlib_m
  use timing_m
  !
@@ -54,7 +54,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  integer :: ng1, ng2
-#ifdef _CUDA_LOC
+#ifdef _GPU_LOC
  character(32) :: subname="scatter_Gamp_gpu"
 #else
  character(32) :: subname="scatter_Gamp"
@@ -95,12 +95,12 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
  !
-#ifdef _CUDA_LOC
+#ifdef _GPU_LOC
  if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
-   YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
  if (.not.allocated(bare_qpg_d)) then
-   YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
 #endif
  !
@@ -110,11 +110,10 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  gamp_p => DEV_VAR(isc%gamp)
  !
-#ifdef _CUDA_LOC
- !$cuf kernel do(2)
-#else
- !$omp parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
-#endif
+ !DEV_ACC data present(gamp_p,RIM_qpg,bare_qpg)
+ !DEV_ACC parallel loop colapse(2) async
+ !DEV_CUF kernel do(2)
+ !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !
  do i1=1,ng1
    do i2=1,ng2
@@ -184,11 +183,14 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
      !
    enddo
  enddo
+ !DEV_ACC end data
  !
  ! Anisotropy correction
  !
  if (.not.l_col_cut) then
+   !DEV_ACC data present(gamp_p)
    if (all((/iq==1,RIM_ng>0,mode=='c',RIM_anisotropy/=0._SP/))) gamp_p(1,1)=RIM_anisotropy/2._SP
+   !DEV_ACC end data
  endif
  !
  call timing(subname,opr="stop")

@@ -30,7 +30,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  use wave_func,     ONLY:WF,wf_ng,wf_ng_1st_BZ
  use R_lattice,     ONLY:bz_samp,DEV_VAR(g_rot)
  use D_lattice,     ONLY:idt_index,DEV_VAR(spin_sop),i_time_rev,nsym
- use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy
+ use deviceXlib_m,  ONLY:dev_conjg,dev_memcpy,dev_memset
  !
  implicit none
  !
@@ -47,7 +47,11 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  ik = Xk%sstar(ikbz,1)
  is = Xk%sstar(ikbz,2)
  !
+#if defined _GPU_LOC
+ call dev_memset(WF_k_out,cZERO)
+#else
  WF_k_out=cZERO
+#endif
  WF_p => DEV_VAR(WF%c)
  !
  if(is==idt_index) then
@@ -56,8 +60,13 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
      do ib=b_to_load(1),b_to_load(2)
        !
        iwf=WF%index(ib,ik,i_sp_pol)
+       !
+#if defined _GPU_LOC
        ! dev2dev
        call dev_memcpy(WF_k_out(:,:,ib,i_sp_pol),DEV_VAR(WF%c)(:,:,iwf))
+#else
+       WF_k_out(:,:,ib,i_sp_pol)=WF_p(:,:,iwf)
+#endif
        !
      enddo
    enddo
@@ -71,32 +80,38 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        !
        if (n_spinor==1) then
          !
-#ifdef _CUDA_LOC
-         !$cuf kernel do(2) <<<*,*>>>
-#endif
+         !DEV_ACC data present(WF_k_out,g_rot,WF_p)
+         !DEV_ACC parallel loop collapse(2) async
+         !DEV_CUF kernel do(2) <<<*,*>>>
          do i_spinor=1,n_spinor
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ib,i_sp_pol)=WF_p(i_g,i_spinor,iwf)
          enddo
          enddo
+         !DEV_ACC end data
          !
        else
          !
-#ifdef _CUDA_LOC
-         !$cuf kernel do(1) <<<*,*>>>
-#endif
+         !DEV_ACC data present(WF_k_out,g_rot,spin_sop,WF_p)
+         !DEV_ACC parallel loop collapse(2) async
+         !DEV_CUF kernel do(1) <<<*,*>>>
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)
            WF_k_out(DEV_VAR(g_rot)(i_g,is),2,ib,i_sp_pol)=DEV_VAR(spin_sop)(2,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(2,2,is)*WF_p(i_g,2,iwf)
          enddo
+         !DEV_ACC end data
        endif
        !
      enddo
    enddo
    !
+#ifdef _GPU_LOC
    if(is>nsym/(1+i_time_rev)) call dev_conjg(WF_k_out)
+#else
+   if(is>nsym/(1+i_time_rev)) WF_k_out=conjg(WF_k_out)
+#endif
    !
  endif
  !

@@ -27,6 +27,7 @@ subroutine WF_free(WF,keep_fft)
  use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
  use cuda_m,     ONLY:have_cuda
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(WAVEs)       :: WF
@@ -50,7 +51,7 @@ subroutine WF_free(WF,keep_fft)
  if (.not.allocated(WF%c)) return
  !
  YAMBO_FREE(WF%c)
- YAMBO_FREE(WF%c_d)
+ YAMBO_FREE_GPU(DEV_VAR(WF%c))
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)
  !

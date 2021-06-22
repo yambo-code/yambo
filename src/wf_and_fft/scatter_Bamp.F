@@ -54,7 +54,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  complex(SP), pointer DEV_ATTR :: WF_symm_i_p(:,:), WF_symm_o_p(:,:)
  complex(SP), pointer DEV_ATTR :: rhotw_p(:)
  complex(DP), pointer DEV_ATTR :: rho_tw_rs_p(:)
- logical :: have_cuda_loc
 
  !
  ! define pointers to enable CUF kernels
@@ -65,22 +64,18 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  rho_tw_rs_p => DEV_VAR(isc%rho_tw_rs)
  rhotw_p     => DEV_VAR(isc%rhotw)
  !
- have_cuda_loc=.false.
-#ifdef _CUDA_LOC
- have_cuda_loc=.true.
-#endif
 
  !
  ! |ib ik_is i_sp>
- call WF_apply_symm(isc%is,WF_symm_i_p)
+ call DEV_SUB(WF_apply_symm)(isc%is,WF_symm_i_p)
  !
  ! | ob ok_os o_sp>   
- call WF_apply_symm(isc%os,WF_symm_o_p)
+ call DEV_SUB(WF_apply_symm)(isc%os,WF_symm_o_p)
 
  !
  ! \tilde{\rho} in Real Space
  !
-#if defined _FFTQE && !defined _USE_3D_FFT && !defined _CUDA_LOC
+#if defined _FFTQE && !defined _USE_3D_FFT && !defined _GPU_LOC
  ! 
  ! add one extra conjg since FFTQE cannot account for the conjg in one go
  ! 
@@ -102,29 +97,25 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! ordinary implementation
  !
-#ifdef _CUDA_LOC
- !$cuf kernel do(1) <<<*,*>>>
-#else
- !$omp parallel default(shared), private(ir)
- !$omp do
-#endif
+ !DEV_ACC data present(rho_tw_rs_p,WF_symm_i_p,WF_symm_o_p)
+ !DEV_ACC parallel loop async
+ !DEV_CUF kernel do(1) <<<*,*>>>
+ !DEV_OMP parallel default(shared), private(ir)
+ !DEV_OMP do
  do ir = 1, fft_size
    rho_tw_rs_p(ir) = cmplx(conjg(WF_symm_i_p(ir,1))*WF_symm_o_p(ir,1),kind=DP)
  enddo
  !
  if (n_spinor==2) then
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp do
-#endif
+   !DEV_ACC parallel loop async
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP do
    do ir = 1, fft_size
      rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
    enddo
  endif
-#if !defined _CUDA_LOC
- !$omp end parallel
-#endif
+ !DEV_ACC end data
+ !DEV_OMP end parallel
  !
 #endif
 
@@ -132,7 +123,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! perform the actual FFT
  !
-#if defined _CUDA_LOC
+#if defined _GPU_LOC
  !
  call fft_3d_cuda(rho_tw_rs_p,fft_dim,+1,cufft_plan)
  !
@@ -164,7 +155,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  qs =isc%qs(3)
  isc_ngrho=isc%ngrho
  !
-#if defined _FFTQE && !defined _USE_3D_FFT && !defined _CUDA_LOC
+#if defined _FFTQE && !defined _USE_3D_FFT && !defined _GPU_LOC
  !
  ! one extra conjg is performed on rho_tw_rs
  !
@@ -184,25 +175,25 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  if (qs==idt_index) then 
    !
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ig)
-#endif
+   !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
+   !DEV_ACC paralllel loop async
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(ig,iGo)),kind=SP)
    enddo
+   !DEV_ACC end data
    !
  else
    !
-#ifdef _CUDA_LOC
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ig)
-#endif
+   !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
+   !DEV_ACC paralllel loop async
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
      rhotw_p(ig)= cmplx(rho_tw_rs_p(DEV_VAR(fft_g_table)(DEV_VAR(g_rot)(ig,qs),iGo)),kind=SP)
    enddo
+   !DEV_ACC end data
    !
  endif
  !
@@ -213,7 +204,9 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  if (pp_is_uspp) then
    !
-   if (have_cuda_loc) call error("[USPP] CUDA and USPP not implemented")
+#ifdef _GPU_LOC
+   call error("[USPP] GPU and USPP not implemented")
+#endif
    !
    ib=isc%is(1)
    ibp=isc%os(1)
@@ -226,8 +219,10 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! q=0, G=0 case
  !
+ !DEV_ACC data present(rhotw_p)
  if (isc%qs(2)==1 .and. isc%is(1)==isc%os(1)) rhotw_p(1)=cONE
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_p(1)=cZERO
+ !DEV_ACC end data
 
 end subroutine DEV_SUB(scatter_Bamp)
 

@@ -11,11 +11,11 @@ module dev_memory_m
 
 
   interface dev_memcpy
-#ifdef __CUDAF
+#ifdef _CUDAF
     module procedure :: dev_memcpy_h2d_cuf
     module procedure :: dev_memcpy_d2h_cuf
 #endif
-!#ifdef __OPENACC
+!#ifdef _OPENACC
 !    module procedure :: dev_memcpy_h2d_acc
 !    module procedure :: dev_memcpy_d2h_acc
 !#endif
@@ -23,11 +23,11 @@ module dev_memory_m
   end interface
   !
   interface dev_memcpy_h2d
-#if defined __CUDAF
+#if defined _CUDAF
     module procedure :: dev_memcpy_h2d_cuf
-#elif defined __OPENACC
+#elif defined _OPENACC
     module procedure :: dev_memcpy_h2d_acc
-#elif defined __OPENMP5
+#elif defined _OPENMP5
     module procedure :: dev_memcpy_h2d_omp5
 #else
     module procedure :: dev_memcpy_h2d_acc
@@ -36,11 +36,11 @@ module dev_memory_m
   end interface
   !
   interface dev_memcpy_d2h
-#if defined __CUDAF
+#if defined _CUDAF
     module procedure :: dev_memcpy_d2h_cuf
-#elif defined __OPENACC
+#elif defined _OPENACC
     module procedure :: dev_memcpy_d2h_acc
-#elif defined __OPENMP5
+#elif defined _OPENMP5
     module procedure :: dev_memcpy_d2h_omp5
 #else
     module procedure :: dev_memcpy_d2h_acc
@@ -74,7 +74,7 @@ contains
     integer      :: ierr
     !
     ierr=0
-#ifdef __CUDAF
+#ifdef _CUDAF
     if (.not.allocated(var)) allocate(var(N),stat=ierr)
 #endif
     !DEV_ACC enter data create(var(1:N))
@@ -91,7 +91,7 @@ contains
     !$acc exit data delete(var)
     !$omp target exit data map(delete:var)
     !
-#ifdef __CUDAF
+#ifdef _CUDAF
     if (allocated(var)) deallocate(var,stat=ierr)
 #endif
     return

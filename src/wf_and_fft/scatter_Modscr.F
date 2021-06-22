@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine scatter_ModScr(isc,mu)
  !
  ! multiply scatterGamp by exp((-|q+G|^2)/(4\mu^2))
@@ -78,7 +80,7 @@ subroutine scatter_ModScr(isc,mu)
    enddo
  enddo
  !
- if (have_cuda) call dev_memcpy_h2d(isc%gamp_d,isc%gamp)
+ if (have_cuda) call dev_memcpy_h2d(DEV_VAR(isc%gamp),isc%gamp)
  !
  contains
    !

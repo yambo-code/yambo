@@ -10,13 +10,13 @@ subroutine startup()
   endif
 
   write(*,*)
-#ifdef __PGI
+#ifdef _PGI
   write(*,*) "     compiler : PGI"
 #endif
-#ifdef __GNU
+#ifdef _GNU
   write(*,*) "     compiler : GNU"
 #endif
-#ifdef __NV
+#ifdef _NV
   write(*,*) "     compiler : NV-SDK"
 #endif
   !

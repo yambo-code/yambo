@@ -75,7 +75,7 @@ def_gpu=""
 # Cuda Fortran
 if test x"$enable_cuda_fortran" != "xno" ; then
    #
-   def_gpu="-D_CUDA -D__CUDA -D__CUDAF"
+   def_gpu="-D_GPU -D_CUDA -D_CUDAF"
    #
    # Flags to be passed to the devicexlib library
    #
@@ -124,7 +124,7 @@ if test x"$enable_openacc" != "xno" ; then
    # Flags to be passed to the devicexlib library
    #
    DEVXLIB_FLAGS="--enable-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
-   def_gpu="-D_OPENACC -D__CUDA -D__OPENACC"
+   def_gpu="-D_GPU -D_OPENACC"
    #
    case "${FCVERSION}" in
     *nvfortran* | *pgfortran*)
@@ -144,7 +144,7 @@ if test x"$enable_openmp5" != "xno" ; then
    #
    DEVXLIB_FLAGS="--enable-openmp5 --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    GPU_FLAGS="-fopenmp" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
-   def_gpu="-D_OPENMP5 -D__CUDA -D__OPENMP5"
+   def_gpu="-D_GPU -D_OPENMP5"
    #
 fi
 #

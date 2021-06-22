@@ -36,12 +36,14 @@
 #  define DEV_VARNAME(x)        CAT(x,_d)
 #  define DEV_ATTRIBUTE         , device
 #  define DEV_PINNED            , pinned
+
 #elif defined _OPENACC || defined _OPENMP5
 #  define DEV_SUBNAME(x)        CAT(x,_gpu)
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
 #  define DEV_VARNAME(x)        x
 #  define DEV_ATTRIBUTE
 #  define DEV_PINNED
+
 #else
 #  define DEV_SUBNAME(x)        x
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
@@ -72,7 +74,7 @@
 #  define DEV_CUF !!!!
 #endif
 
-#if defined _OPENMP && !defined (_CUDA)
+#if defined _OPENMP && !defined (_GPU)
 #  define DEV_OMP $omp
 #else
 #  define DEV_OMP !!!!

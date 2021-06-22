@@ -42,6 +42,11 @@
 #define DEV_ATTR            DEV_ATTRIBUTE
 #define DEV_PIN             DEV_PINNED
 
-!#define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$omp parallel do default(shared), private(priv_list), collapse(nloop)
-!#define YAMBO_CUDA_OR_OMP_END               !$omp end parallel do
+#define DEV_ACC !!!!
+#define DEV_CUF !!!!
 
+#if defined _OPENMP
+#  define DEV_OMP $omp
+#else
+#  define DEV_OMP !!!!
+#endif

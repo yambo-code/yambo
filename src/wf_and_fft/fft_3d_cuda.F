@@ -43,16 +43,20 @@
 !
 !=====================================================================
 !
+#include<dev_defs.h>
+!
 subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
- use cudafor
  use cufft
+#if defined _CUDA
+ use cudafor
+#endif
  !
  implicit none
  integer   :: fft_sign,n(3)
  integer   :: cufft_plan
- complex(DP), device :: c_d(n(1),n(2),n(3))
+ complex(DP) DEV_ATTR :: c_d(n(1),n(2),n(3))
  ! 
  ! Work Space
  !
@@ -67,6 +71,10 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
    !
  endif
  !
+ !DEV_ACC data present(c_d)
+ !DEV_ACC host_data use_device(c_d)
  istat = cufftExecZ2Z( cufft_plan, c_d, c_d, i_sign )
+ !DEV_ACC end host_data
+ !DEV_ACC end data
  !
 end subroutine fft_3d_cuda

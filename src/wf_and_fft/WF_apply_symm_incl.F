@@ -27,8 +27,8 @@
 ! WF_apply_symm_cpu
 !====================
 !
-#include<dev_defs_nocuda.h>
-#undef _CUDA_LOC
+#include<dev_defs_nogpu.h>
+#undef _GPU_LOC
 #include"WF_apply_symm.F"
 !
 #include<dev_undefs.h>
@@ -38,10 +38,10 @@
 ! WF_apply_symm_gpu 
 !====================
 !
-#if defined _CUDA
+#if defined _GPU
 
 #include<dev_defs.h>
-#define _CUDA_LOC
+#define _GPU_LOC
 #include"WF_apply_symm.F"
 
 #endif

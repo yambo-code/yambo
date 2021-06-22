@@ -10,17 +10,17 @@ module gpu_m
 
   logical :: cuda_linalg_init=.false.
 
-#if defined __CUDAF 
+#if defined _CUDAF 
   logical :: have_device=.true.
   logical :: have_cudaf=.true.
   logical :: have_openacc=.false.
   logical :: have_openmp5=.false.
-#elif defined __OPENACC
+#elif defined _OPENACC
   logical :: have_device=.true.
   logical :: have_cudaf=.false.
   logical :: have_openacc=.true.
   logical :: have_openmp5=.false.
-#elif defined __OPENMP5
+#elif defined _OPENMP5
   logical :: have_device=.true.
   logical :: have_cudaf=.false.
   logical :: have_openacc=.false.
@@ -46,7 +46,7 @@ contains
 
   subroutine cuda_linalg_setup()
     implicit none
-#ifdef __CUDA
+#ifdef _CUDA
     integer :: istat 
     istat = cublasInit()
     if(istat/=0) stop 'cublasInit failed'
@@ -56,9 +56,6 @@ contains
     !if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
     !
 #endif
-!#ifdef __OPENACC
-!    call acc_set_device_num(0,acc_device_nvidia)
-!#endif
     cuda_linalg_init=.true.
   end subroutine
 

@@ -27,7 +27,7 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
  !
  use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:n_spinor,n_sp_pol
- use R_lattice,     ONLY:G_m_G,G_m_G_d,k_map,bz_samp
+ use R_lattice,     ONLY:DEV_VAR(G_m_G),k_map,bz_samp
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
  use deviceXlib_m,  ONLY:dev_memcpy
  !
@@ -63,6 +63,8 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
      !
      g0_idx_val=k_map%g0_idx(id,WF_shift(id))
      !
+     !DEV_ACC data present(WF_tmp,G_m_G,WF_k_out)
+     !DEV_ACC parallel do async collapse(4)
      !DEV_CUF kernel do(4) <<<*,*>>>
      do i_sp_pol=1,n_sp_pol
      do i_b=b_to_shift(1),b_to_shift(2)
@@ -77,6 +79,7 @@ subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k
      enddo
      enddo
      enddo
+     !DEV_ACC end data
      !
    else
      ! dev2dev

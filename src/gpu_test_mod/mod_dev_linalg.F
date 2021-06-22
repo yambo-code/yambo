@@ -7,10 +7,10 @@ module dev_linalg_m
   use kinds,   ONLY : SP
   use gpu_m,   ONLY : cublas_h
   !
-#if defined __CUDAF
+#if defined _CUDAF
   use cublas
 #endif
-#if defined __OPENACC || defined __OPENMP5
+#if defined _OPENACC || defined _OPENMP5
   use cublas_m
   use cublas_m
 #endif
@@ -60,7 +60,7 @@ contains
     real(SP)  DEV_ATTR :: x(N), y(N)
     integer  :: istat
     !
-#if defined __CUDAF || defined __OPENACC || defined __OPENMP5
+#if defined _CUDAF || defined _OPENACC || defined _OPENMP5
     !DEV_OMP5 target data map(tofrom:x,y), use_device_ptr(x,y)
     !DEV_ACC data present(x,y)
     !DEV_ACC host_data use_device(x,y)

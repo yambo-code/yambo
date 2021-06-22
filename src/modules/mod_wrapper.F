@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 module wrapper
  !
  ! To remember:
@@ -30,8 +32,10 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,   ONLY:SP,cI
-#ifdef _CUDA
+#if defined _CUDA
  use cublas
+#elif defined _OPENACC || defined _OPENMP5
+ use cublas_m
 #endif
  !
  implicit none
@@ -78,9 +82,9 @@ module wrapper
  !
  interface Vstar_dot_VV
    module procedure Vstar_dot_VV_c1_cpu
-#ifdef _CUDA
+ end interface
+ interface Vstar_dot_VV_gpu
    module procedure Vstar_dot_VV_c1_gpu
-#endif
  end interface
  !
  interface V_dot_V
@@ -100,7 +104,7 @@ module wrapper
  public :: M_by_M
  public :: V_copy
  public :: Vstar_dot_V
- public :: Vstar_dot_VV
+ public :: Vstar_dot_VV, Vstar_dot_VV_gpu
  public :: V_dot_V
  public :: V_dot_VV
  public :: M_by_V
@@ -339,17 +343,21 @@ module wrapper
 #endif
    end function Vstar_dot_V_c2_cpu
    !
-#ifdef _CUDA
+#ifdef _GPU
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,             intent(in) :: N
      complex(SP), device, intent(in) :: CX(*),CY(*)
      !
+     !DEV_ACC data present(CX,CY)
+     !DEV_ACC host_data use_device(CX,CY)
 #if defined _DOUBLE
      Vstar_dot_V_c1_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
      Vstar_dot_V_c1_gpu=cublasCdotc(N,CX,1,CY,1)
 #endif
+     !DEV_ACC end host_data
+     !DEV_ACC end data
    end function Vstar_dot_V_c1_gpu
    !
    complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
@@ -357,11 +365,15 @@ module wrapper
      integer,             intent(in) :: N
      complex(SP), device, intent(in) :: CX(:,:),CY(:,:)
      !
+     !DEV_ACC data present(CX,CY)
+     !DEV_ACC host_data use_device(CX,CY
 #if defined _DOUBLE
      Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
      Vstar_dot_V_c2_gpu=cublasCdotc(N,CX,1,CY,1)
 #endif
+     !DEV_ACC end host_data
+     !DEV_ACC end data
    end function Vstar_dot_V_c2_gpu
    !
 #endif
@@ -383,20 +395,21 @@ module wrapper
 #endif
    end function Vstar_dot_VV_c1_cpu
    !
-#ifdef _CUDA
    complex(SP) function Vstar_dot_VV_c1_gpu(N,CX,CY,CZ)
      implicit none
-     integer,             intent(in) :: N
-     complex(SP), device, intent(in) :: CX(N),CY(N),CZ(N)
+     integer,              intent(in) :: N
+     complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N),CZ(N)
      integer :: i
      !
      Vstar_dot_VV_c1_gpu=0.0_SP
-     !$cuf kernel do(1) <<<*,*>>>
+     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
      do i = 1, N
        Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)
      enddo
+     !DEV_ACC end data
    end function Vstar_dot_VV_c1_gpu
-#endif
    !
    !==============
    ! DOT PRODUCTS: V_dot_V

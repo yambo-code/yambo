@@ -50,7 +50,7 @@ AC_ARG_WITH([cuda-runtime],
 # 
 AC_ARG_WITH([cuda-int-libs],
    [AS_HELP_STRING([--with-cuda-int-libs=VAL],[CUDA internal libraries () @<:@default=cuda,cufft,cublas,cusolver,cudart@:>@])],
-   [],[with_cuda_int_libs=cuda,cufft,cublas,cusolver,cudart])
+   [],[with_cuda_int_libs=cufft,cublas,cusolver])
 #
 AC_ARG_ENABLE(nvtx,
         [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
@@ -89,16 +89,15 @@ if test x"$enable_cuda_fortran" != "xno" ; then
     *nvfortran*)
       GPU_FLAGS="-cuda -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS+="-cudalib=${with_cuda_int_libs}";
+        GPU_FLAGS+=" -cudalib=${with_cuda_int_libs}";
       fi
       ;;
     *)
       GPU_FLAGS="-Mcuda=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       if test x"$use_int_cuda_libs" = "xyes" ; then
-        GPU_FLAGS+="-Mcudalib=${with_cuda_int_libs}"
+        GPU_FLAGS+=" -Mcudalib=${with_cuda_int_libs}"
       fi
    esac
-   GPU_FLAGS="$GPU_FLAGS $DEVXLIB_CUDALIBS"
    #
    # Check CUDA
    #

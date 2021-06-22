@@ -288,7 +288,7 @@ ACX_REPORT()
 # ============================================================================
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([
- config/setup config/mk/defs.mk config/report config/msg_ydb config/driver.sh.inc 
+ config/setup config/mk/defs.mk config/report config/msg_ydb config/compilation_helper.sh.inc 
  src/wf_and_fft/sgfft.F src/tools/.objects  
  include/branch.inc include/driver/editor.h include/driver/version.h 
 ])

@@ -22,27 +22,22 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-if [ "$1" = "HEADER" ] ; then
-cat config/setup >>$cdir/Makefile
-cat << EOF >> $cdir/Makefile
-libs=$libs
-linclude=$lf90include
-lf90libinclude=$lf90libinclude
-lf90include=$lf90include
-modinclude=$INCLUDEDIR//$modules_lock
-mfiles=find . -maxdepth 1 -name '*.mod'
-target=$target
-precomp_mpi=$precomp_mpi
-precomp_flags=$precomp_flags -D_\$(os)
-objects_lock=$objects_lock
-moduledep_file=$moduledep_file
-modlist_file=$modlist_file
-EOF
-fi
-
-if [ "$1" = "OBJECTS" ] ; then
-cp $cdir/$ofile $cdir/$ofile.c
-$cpp $cppflags $precomp_flags -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
-rm -f $cdir/$ofile.c
-fi
+objects_lock="_objects_lock"
+modules_lock="_modules_lock"
+for arg in $ARGS 
+do
+ case $arg in
+  -D_yambo|-D_ypp)
+   a=`echo $arg  | sed "s/-D_/_/"`
+   objects_lock="$objects_lock$a"
+   ;;
+  -D_64BIT_OFFSET|-D_SLEPC_OFF|-D_DOUBLE|-D_yambo|-D_ypp|-D_A2Y|-D_P2Y*)
+   ;;
+  -D_*) 
+   a=`echo $arg  | sed "s/-D_/_/"`
+   objects_lock="$objects_lock$a"
+   modules_lock="$modules_lock$a"
+   ;;
+ esac
+done
 

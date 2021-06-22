@@ -79,7 +79,7 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--with-cuda" #--enable-cuda-fortran"
+   DEVXLIB_FLAGS="--enable-cuda-fortran"
    if test "x$LIBCUDA_PATH" != "x" ; then
      DEVXLIB_FLAGS="--with-cuda=$LIBCUDA_PATH" ;
    fi

@@ -27,9 +27,11 @@ uncompress-stamp:
 
 configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	      export CUDA_LIBS="$(lcudalib)"; \
+	      export CUDA_INCS="$(icudalib)"; \
+	      export BLAS_LIBS="$(lblas)"; \
+	      export LAPACK_LIBS="$(llapack)"; \
 	      ./configure $(AUXFLAGS) --with-cuda-int-libs="$(devxlib_clib)" \
-	      BLAS_LIBS="$(lblas)"    LAPACK_LIBS="$(llapack)" \
-	      CUDA_LIBS='"$(lcudalib)"' CUDA_INCS='"$(icudalib)"' \
 	      CC="$(cc)" \
 	      F90="$(fc)" \
 	      FC="$(fc)" \

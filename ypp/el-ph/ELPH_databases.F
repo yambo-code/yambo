@@ -74,17 +74,17 @@ subroutine ELPH_databases(k,E,q)
    call PARALLEL_SETUP_K_scheme("BZINDX")
    !
    ! here qindx_B is allocated
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_err(1)=io_QINDX(k,q,ID)
-   if (io_err(1)/=0) then
-     call msg('s',"Missing k/q scattering database")
-     call error("Please run a setup with the BSEscatt flag activated")
-   endif
+ !  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+ !  io_err(1)=io_QINDX(k,q,ID)
+ !  if (io_err(1)/=0) then
+ !    call msg('s',"Missing k/q scattering database")
+ !    call error("Please run a setup with the BSEscatt flag activated")
+ !  endif
    !
    ! Initialize qindx_B IO
    ! =============================
-   io_err(2)=qindx_B_init(qindx_ID) 
-   if(io_err(2)/=0) call error("Error reading qindx_B")
+ !  io_err(2)=qindx_B_init(qindx_ID) 
+ !  if(io_err(2)/=0) call error("Error reading qindx_B")
    !
  endif
  !
@@ -232,6 +232,7 @@ subroutine ELPH_databases(k,E,q)
    endif
    !
    if (l_gkkp_expand) then
+     write(*,*) ' NSTAR ',iq,q%nstar(iq)
      do i_star=1,q%nstar(iq)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star

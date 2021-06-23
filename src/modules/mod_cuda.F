@@ -24,9 +24,15 @@
 !================
 module cuda_m
   !================
-#ifdef _CUDA
+  !
+#if defined _GPU
+# if defined _CUDA
   use cudafor
   use cublas
+# else
+  use cublas_core_m
+  use cublas_m
+# endif
   use cusolverdn_y
 #endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
@@ -35,7 +41,7 @@ module cuda_m
   !
   integer :: GPU_test_dim = 1000000
 
-#ifdef _CUDA
+#ifdef _GPU
   logical, parameter:: have_cuda=.true.
 #else
   logical, parameter:: have_cuda=.false.
@@ -46,7 +52,7 @@ module cuda_m
   integer:: cuda_gpu_subscription
 
   logical:: cuda_linalg_init=.false.
-#ifdef _CUDA
+#ifdef _GPU
   type(cusolverDnHandle)   :: cusolv_h
   public :: cusolv_h
 #endif
@@ -96,7 +102,7 @@ contains
     ! GPU assignment
     ! This needs to be done first
     !
-#if defined _CUDA && defined _MPI
+#if defined _GPU && defined _MPI
     !
     myid_host_loc=PAR_COM_HOST%CPU_id
     !
@@ -115,7 +121,7 @@ contains
     !
 #endif
     !
-#if defined _CUDA
+#if defined _GPU
     !
     have_cuda_devices=.false. 
     call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
@@ -134,7 +140,7 @@ contains
   !
   subroutine cuda_linalg_setup()
     implicit none
-#ifdef _CUDA
+#ifdef _GPU
     integer :: istat 
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
@@ -148,7 +154,7 @@ contains
     implicit none
     integer :: ierr
     ierr = 0
-#ifdef _CUDA
+#ifdef _GPU
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
     !<debug>
@@ -162,7 +168,7 @@ contains
     implicit none
     integer :: ierr
     ierr = 0 
-#ifdef _CUDA
+#ifdef _GPU
     ierr = CudaDeviceSynchronize()
 #endif
     return

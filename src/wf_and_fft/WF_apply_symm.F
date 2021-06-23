@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
+subroutine DEV_SUB(WF_apply_symm)(isc,WF_symm)
  !
  ! INCLUDED in: WF_apply_symm_incl.F 
  !
@@ -103,5 +103,5 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  if(isc(3)>nsym/(i_time_rev+1)) WF_symm=conjg(WF_symm)
 #endif
  !
-end subroutine DEV_SUB_ALT(WF_apply_symm)
+end subroutine DEV_SUB(WF_apply_symm)
 

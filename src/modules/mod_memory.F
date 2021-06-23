@@ -28,6 +28,8 @@ module memory
  use openmp,        ONLY:master_thread
  use iso_c_binding, ONLY:c_int
  !
+#include<dev_defs.h>
+ !
  implicit none
  !
  character(schlen)   :: MEM_msg
@@ -111,6 +113,16 @@ module memory
 &                             MEM_lp1,          MEM_lp3,                                    &
 &                             MEM_ch1,          MEM_ch3
  end interface MEM_count
+ !
+ interface MEM_count_d
+   module procedure &
+&                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
+&                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
+&                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
+#  ifndef _DOUBLE
+&                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d
+#  endif
+ end interface MEM_count_d
  !
  contains
    !
@@ -222,33 +234,35 @@ module memory
      integer     ::i(:,:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1,1,1,1)),HOST_)
    end subroutine
-#ifdef _CUDA
+   !
+   ! GPU routines
    subroutine MEM_i1_d(name,i)
      character(*)::name
-     integer, device ::i(:)
+     integer DEV_ATTR ::i(:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1)),DEV_)
    end subroutine
    subroutine MEM_i2_d(name,i)
      character(*)::name
-     integer, device ::i(:,:)
+     integer DEV_ATTR ::i(:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1)),DEV_)
    end subroutine
    subroutine MEM_i3_d(name,i)
      character(*)::name
-     integer, device ::i(:,:,:)
+     integer DEV_ATTR ::i(:,:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_i4_d(name,i)
      character(*)::name
-     integer, device ::i(:,:,:,:)
+     integer DEV_ATTR ::i(:,:,:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_i5_d(name,i)
      character(*)::name
-     integer, device ::i(:,:,:,:,:)
+     integer DEV_ATTR ::i(:,:,:,:,:)
      call MEM_manager_alloc(name,size(i,KIND=IPL),kind(i(1,1,1,1,1)),DEV_)
    end subroutine
-#endif
+   ! end of GPU subroutines
+   !
    subroutine MEM_r1(name,r)
      character(*)::name
      real(SP)    ::r(:)
@@ -291,33 +305,35 @@ module memory
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),HOST_)
    end subroutine
 #endif
-#ifdef _CUDA
+   !
+   ! more GPU subroutines
    subroutine MEM_r1_d(name,r)
      character(*)::name
-     real(SP), device ::r(:)
+     real(SP) DEV_ATTR ::r(:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r),DEV_)
    end subroutine
    subroutine MEM_r2_d(name,r)
      character(*)::name
-     real(SP), device ::r(:,:)
+     real(SP) DEV_ATTR ::r(:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1)),DEV_)
    end subroutine
    subroutine MEM_r3_d(name,r)
      character(*)::name
-     real(SP), device ::r(:,:,:)
+     real(SP) DEV_ATTR ::r(:,:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_r4_d(name,r)
      character(*)::name
-     real(SP), device ::r(:,:,:,:)
+     real(SP) DEV_ATTR ::r(:,:,:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_r5_d(name,r)
      character(*)::name
-     real(SP), device ::r(:,:,:,:,:)
+     real(SP) DEV_ATTR ::r(:,:,:,:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1,1)),DEV_)
    end subroutine
-#endif
+   ! end of GPU subroutines
+   !
    subroutine MEM_c1(name,c)
      character(*)::name
      complex(SP) ::c(:)
@@ -380,70 +396,72 @@ module memory
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),HOST_)
    end subroutine
 #endif
-#ifdef _CUDA
+   !
+   ! GPU subroutines
    subroutine MEM_c1_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:)
+     complex(SP) DEV_ATTR ::c(:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
    subroutine MEM_c2_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:,:)
+     complex(SP) DEV_ATTR ::c(:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),DEV_)
    end subroutine
    subroutine MEM_c3_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:,:,:)
+     complex(SP) DEV_ATTR ::c(:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c4_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:,:,:,:)
+     complex(SP) DEV_ATTR ::c(:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c5_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:,:,:,:,:)
+     complex(SP) DEV_ATTR ::c(:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_c6_d(name,c)
      character(*)::name
-     complex(SP), device ::c(:,:,:,:,:,:)
+     complex(SP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
 #  ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:)
+     complex(DP) DEV_ATTR ::c(:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1)),DEV_)
    end subroutine
    subroutine MEM_cd2_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:,:)
+     complex(DP) DEV_ATTR ::c(:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1)),DEV_)
    end subroutine
    subroutine MEM_cd3_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:,:,:)
+     complex(DP) DEV_ATTR ::c(:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd4_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:,:,:,:)
+     complex(DP) DEV_ATTR ::c(:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd5_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:,:,:,:,:)
+     complex(DP) DEV_ATTR ::c(:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1)),DEV_)
    end subroutine
    subroutine MEM_cd6_d(name,c)
      character(*)::name
-     complex(DP), device ::c(:,:,:,:,:,:)
+     complex(DP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
 #  endif
-#endif
+   ! end of GPU subroutines
+   !
    subroutine MEM_l1(name,l)
      character(*)::name
      logical     ::l(:)

@@ -96,12 +96,12 @@ module collision_el
      YAMBO_FREE(ggw%WF_symm_i)
      YAMBO_FREE(ggw%WF_symm_o)
      ! 
-     YAMBO_FREE(ggw%gamp_d)
-     YAMBO_FREE(ggw%rhotw_d)
+     YAMBO_FREE_GPU(DEV_VAR(ggw%gamp))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%rhotw))
      !
-     YAMBO_FREE(ggw%rho_tw_rs_d)
-     YAMBO_FREE(ggw%WF_symm_i_d)
-     YAMBO_FREE(ggw%WF_symm_o_d)
+     YAMBO_FREE_GPU(DEV_VAR(ggw%rho_tw_rs))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_i))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_o))
      !
      ! USPP workspace
      call deallocate_bec_type(ggw%ibec)
@@ -135,9 +135,9 @@ module collision_el
        YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
        !
        if (have_cuda) then
-         YAMBO_ALLOC(ggw%rho_tw_rs_d,(fft_size))
-         YAMBO_ALLOC(ggw%WF_symm_i_d,(fft_size,n_spinor))
-         YAMBO_ALLOC(ggw%WF_symm_o_d,(fft_size,n_spinor))
+         YAMBO_ALLOC_GPU(DEV_VAR(ggw%rho_tw_rs),(fft_size))
+         YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_i),(fft_size,n_spinor))
+         YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_o),(fft_size,n_spinor))
        endif
      endif
      !
@@ -148,7 +148,7 @@ module collision_el
          if (.not.present(GRADIENT)) RHOSIZE=1*NG
          YAMBO_ALLOC(ggw%rhotw,(RHOSIZE))
          if (have_cuda) then
-           YAMBO_ALLOC(ggw%rhotw_d,(RHOSIZE))
+           YAMBO_ALLOC_GPU(DEV_VAR(ggw%rhotw),(RHOSIZE))
          endif
          !
        endif
@@ -158,7 +158,7 @@ module collision_el
        if (all((/NG_GAMP>0/))) then
          YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
          if (have_cuda) then
-           YAMBO_ALLOC(ggw%gamp_d,(NG_GAMP(1),NG_GAMP(2)))
+           YAMBO_ALLOC_GPU(DEV_VAR(ggw%gamp),(NG_GAMP(1),NG_GAMP(2)))
          endif
        endif
      endif

@@ -35,6 +35,7 @@ module wrapper
 #if defined _CUDA
  use cublas
 #elif defined _OPENACC || defined _OPENMP5
+ use cublas_core_m
  use cublas_m
 #endif
  !

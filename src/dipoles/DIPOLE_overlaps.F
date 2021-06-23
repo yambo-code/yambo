@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt. 
 !      
+#include<dev_defs.h>
+!
 subroutine DIPOLE_overlaps(Xk,Dip)
  !    
  use pars,              ONLY:SP,cZERO,pi
@@ -36,10 +38,9 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
- use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G,WF_load,WF_free
+ use interfaces,        ONLY:WF_shift_kpoint,DEV_SUB(WF_symm_kpoint),eval_G_minus_G,WF_load,WF_free
  use timing_m,          ONLY:timing
  !
-#include<dev_defs.h>
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk 
@@ -51,10 +52,8 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  integer           :: iG0,ng_tmp,wf_ng_save,wf_ng_1st_BZ_save
  integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2)
  real(SP)          :: g0_length(3)
- complex(SP), allocatable :: WF_symm(:,:,:,:),WF_shifted(:,:,:,:),WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
-#ifdef _CUDA
- attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
-#endif
+ complex(SP), allocatable DEV_ATTR :: WF_symm(:,:,:,:),WF_shifted(:,:,:,:),&
+&                                     WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
  logical           :: USE_shifted_wf
  !
  call timing("DIPOLE_overlaps",OPR="start")
@@ -86,10 +85,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space/Overlaps')
  !
- YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC(WF_ikp,    (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  !
  DIP_S=cZERO
  !
@@ -106,7 +105,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
      ik = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
      !
-     call WF_symm_kpoint((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
+     call DEV_SUB(WF_symm_kpoint)((/1,Dip%ib(2)/),ikbz,Xk,WF_symm)
      !  
      call WF_shift_kpoint((/1,Dip%ib(2)/),ikbz,WF_shifts(ikbz,:),Xk,WF_symm,WF_ik)
      !
@@ -132,7 +131,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
          ikp = Xk%sstar(ikbzp,1)
          isp = Xk%sstar(ikbzp,2)
          !
-         call WF_symm_kpoint((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
+         call DEV_SUB(WF_symm_kpoint)((/1,Dip%ib(2)/),ikbzp,Xk,WF_symm)
          !
          ! Shift the wave-function by a G-vector if the neighbor is out of the BZ (USE_shifed_wf=.true.)
          shift=WF_shifts(ikbzp,:)
@@ -174,10 +173,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  wf_ng       =wf_ng_save
  wf_ng_1st_BZ=wf_ng_1st_BZ_save
  !
- YAMBO_FREE(WF_symm)
- YAMBO_FREE(WF_shifted)
- YAMBO_FREE(WF_ik)
- YAMBO_FREE(WF_ikp)
+ YAMBO_FREE_GPU(WF_symm)
+ YAMBO_FREE_GPU(WF_shifted)
+ YAMBO_FREE_GPU(WF_ik)
+ YAMBO_FREE_GPU(WF_ikp)
  !
  call WF_free(WF)
  !

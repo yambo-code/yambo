@@ -137,8 +137,8 @@ module D_lattice
      call msg(msg_where,'Group table correct   ',.true.)
      !
      if (have_cuda) then
-       YAMBO_FREE(sop_inv_d)
-       YAMBO_ALLOC_SOURCE(sop_inv_d,sop_inv)
+       YAMBO_FREE_GPU(DEV_VAR(sop_inv))
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(sop_inv),sop_inv)
      endif
      !
    end subroutine symmetry_group_table

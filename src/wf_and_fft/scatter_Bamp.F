@@ -43,7 +43,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use pseudo,         ONLY:pp_is_uspp
  use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
  use FFT_m,          ONLY:fftw_plan,cufft_plan
- use interfaces,     ONLY:WF_apply_symm
+ use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
  !
  implicit none
  !

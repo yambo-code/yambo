@@ -58,9 +58,6 @@
 #define DEV_ATTR            DEV_ATTRIBUTE
 #define DEV_PIN             DEV_PINNED
 
-#if defined _CUDA || defined _OPENACC || defined _OPENMP5
-#  define _GPU
-#endif
 
 #if defined _OPENACC
 #  define DEV_ACC $acc

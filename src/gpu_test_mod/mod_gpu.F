@@ -3,8 +3,12 @@
 module gpu_m
   !=================
   !
+#if defined _CUDAF
+  use cublas
+#else
   use cublas_m
   use cublas_core_m
+#endif
   implicit none
   private
 

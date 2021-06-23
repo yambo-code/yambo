@@ -131,8 +131,11 @@ module wave_func
    subroutine WF_copy(WF_in,WF_out)
      use electrons,  ONLY: n_spinor
      type(WAVEs):: WF_in,WF_out
-     YAMBO_ALLOC(WF_out%c,(size(WF_in%c(:,1,1)),n_spinor,WF_in%N))
+     logical :: lpres
+     !
+     YAMBO_ALLOC_MOLD(WF_out%c,WF_in%c)
      YAMBO_ALLOC(WF_out%index,(WF_in%b(1):WF_in%b(2),WF_in%k(1):WF_in%k(2),WF_in%sp_pol(1):WF_in%sp_pol(2)))
+     !
      WF_out%b      = WF_in%b
      WF_out%k      = WF_in%k
      WF_out%sp_pol = WF_in%sp_pol
@@ -143,15 +146,15 @@ module wave_func
      WF_out%index  = WF_in%index
      !
      ! AF to be cleanup
-#ifdef _GPU
-#ifdef _CUDAF
-     if (allocated(DEV_VAR(WF_in%c))) then
-#elif _OPENACC
-     if (acc_is_present(DEV_VAR(WF_in%c))) then
+     lpres=.false.
+#if defined _CUDAF
+     lpres=allocated(WF_in%c_d)
+#elif defined _OPENACC
+     lpres=acc_is_present(DEV_VAR(WF_in%c))
 #endif
+     if (lpres) then
         YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif
-#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

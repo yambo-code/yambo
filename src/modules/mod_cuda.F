@@ -28,11 +28,13 @@ module cuda_m
 # if defined _CUDAF
   use cudafor
   use cublas
+  use cufft
   use cusolverdn_y
 # elif defined _OPENACC
   use cudafor_m
   use cublas_core_m
   use cublas_m
+  use cufft_m
   use cusolverdn_y
   use openacc
 # endif

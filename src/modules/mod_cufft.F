@@ -1,5 +1,9 @@
+
+#include<dev_defs.h>
+!
 module cufft_m
   use iso_c_binding
+  implicit none
 
   integer(c_int), parameter :: CUFFT_FORWARD = -1
   integer(c_int), parameter :: CUFFT_INVERSE = 1
@@ -35,21 +39,32 @@ module cufft_m
   integer(c_int), parameter :: CUFFT_COMPATIBILITY_DEFAULT = CUFFT_COMPATIBILITY_FFTW_PADDING
 
   interface
-    integer(c_int) function cufftPlan3d( plan, nx, ny, nz, ffttype )
+
+    integer(c_int) function cufftPlan3d( plan, nx, ny, nz, ffttype ) &
+        bind(C, name="cufftPlan3d")
+      use iso_c_binding
+      implicit none
       integer(c_int) :: plan
       integer(c_int) :: nx, ny, nz
       integer(c_int) :: ffttype
     end function cufftPlan3d
   
-    integer(c_int) function cufftDestroy( plan )
+    integer(c_int) function cufftDestroy( plan ) &
+        bind(C, name="cufftDestroy")
+      use iso_c_binding
+      implicit none
       integer(c_int) :: plan
     end function cufftDestroy
     
-    integer(c_int) function cufftExecZ2Z( plan, idata, odata, direction )
+    integer(c_int) function cufftExecZ2Z( plan, idata, odata, direction ) &
+        bind(C, name="cufftExecZ2Z")
+      use iso_c_binding
+      implicit none
       integer(c_int) :: plan
-      complex(c_double), device, dimension(*) :: idata, odata
+      complex(c_double) DEV_ATTR, dimension(*) :: idata, odata
       integer(c_int) :: direction
     end function cufftExecZ2Z
+
   end interface
 
 end module cufft_m

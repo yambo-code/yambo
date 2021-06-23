@@ -22,7 +22,7 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
- use memory,       ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
+ use memory,       ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
 #if defined _OPENACC || defined _OPENMP5
  use deviceXlib_m, ONLY:dev_malloc,dev_free
 #endif

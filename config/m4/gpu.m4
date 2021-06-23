@@ -79,7 +79,7 @@ if test x"$enable_cuda_fortran" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-cuda-fortran --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   DEVXLIB_FLAGS="--enable-openmp --enable-cuda-fortran --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
    #
    case "${FCVERSION}" in
     *nvfortran*)
@@ -128,6 +128,7 @@ if test x"$enable_openacc" != "xno" ; then
    #
    case "${FCVERSION}" in
     *nvfortran* | *pgfortran*)
+      DEVXLIB_FLAGS+="--enable-openmp"
       GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       ;;
     *GNU* | *gnu*)

@@ -520,7 +520,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01_SP
- DW_deltaE_treshold=5.E-6_SP/HA2EV   ! This is a cutoff on electronic energy differences
+ DW_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on electronic energy differences
  FAN_deltaE_treshold=1.E-6_SP/HA2EV  ! This is a cutoff on phonon energies
  use_PH_DbGd=.FALSE.
  EkplusQ_mode='interp' ! E(k+q) energies (interp | dftp )

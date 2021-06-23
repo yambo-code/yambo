@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,E,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
+ use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
@@ -36,6 +37,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  character(*)  ::mode
  integer, intent(in) :: qindx_ID
  integer, intent(in) :: iq,iq_s
+ type(levels), intent(in)  ::E
  type(bz_samp), intent(in) ::k,q
  type(GKKP_me) ::GKKP
  !
@@ -196,8 +198,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
    !
    ! Notice that the ok_bz index referees to the k-points in the Yambo order
    ! like in the q=0 case
+   ! I use E instead of E_kpq to keep the same precision in the calculations
    !
-   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
+   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=E%E(:elph_nb,ok,1)
    !
  enddo
  !

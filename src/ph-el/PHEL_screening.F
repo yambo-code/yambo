@@ -44,6 +44,8 @@ subroutine PHEL_screening(E,q)
  ! Work Space
  !
  integer      ::Xo_ID,EM1D_ID,io_err(2),iq,SEC(2),IO_ACT,ig1,ig2,iw,ig3
+ complex(SP)  ::F_test_diff(nqibz,2),DIFF
+ real(SP)     ::F_test_diff_max(nqibz),F_test_diff_avg(nqibz)
  type(w_samp) ::Xow,EM1Dw
  type(X_t)    ::Xo,EM1D
  complex(SP), allocatable :: Xo_mat(:,:,:)
@@ -103,11 +105,24 @@ subroutine PHEL_screening(E,q)
  enddo
  !
  call PP_redux_wait(F_test)
+ !
+ call OUTPUT_add_column("phel_screening_diff",action="reset")
+ call OUTPUT_add_column("phel_screening_diff",action="open")
  do iq=1,nqibz
+   !
+   F_test_diff_max(iq)=0.
+   F_test_diff_avg(iq)=0.
+   !
    fname="phel_screening_q"//trim(intc(iq))
    call OUTPUT_add_column(trim(fname),action="reset")
    call OUTPUT_add_column(trim(fname),action="open")
    do iw=1,Xow%n_freqs
+     !
+     DIFF=aimag(F_test(iq,iw,1)-F_test(iq,iw,2))/aimag(F_test(iq,iw,1)) 
+     if (abs(DIFF)>abs(F_test_diff_max(iq))) F_test_diff_max(iq)=DIFF
+     !
+     F_test_diff_avg(iq)=F_test_diff_avg(iq)+DIFF/real(Xow%n_freqs)
+     !
      call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xow%p(iw))/),UNIT="eV")
      call OUTPUT_add_column(trim(fname),&
 &         TITLES=(/"Im[Xo x Em1D]","Re[Xo x Em1D]"/),R_VALUES=(/aimag(F_test(iq,iw,1)),real(F_test(iq,iw,1))/))
@@ -116,7 +131,14 @@ subroutine PHEL_screening(E,q)
      call OUTPUT_add_column(trim(fname),action="write")
    enddo
    call OUTPUT_add_column(trim(fname),action="close")
+   !
+   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Q-point"/),I_VALUES=(/iq/))
+   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Im[DYN-STAT](MAX)(%)","Im[DYN-STAT](AVG)(%)"/),&
+&                         R_VALUES=(/F_test_diff_max(iq),F_test_diff_avg(iq)/)*100.)
+   call OUTPUT_add_column("phel_screening_diff",action="write")
+   !
  enddo
+ call OUTPUT_add_column("phel_screening_diff",action="close")
  !
  call live_timing( )
  !

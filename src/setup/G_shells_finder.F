@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine G_shells_finder()
  !
  ! Output: g_rot(nsym,ng_closed)
@@ -33,15 +35,14 @@ subroutine G_shells_finder()
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
-#ifdef _CUDA
- use R_lattice,    ONLY:g_rot_d,minus_G_d
-#endif
+ use R_lattice,    ONLY:DEV_VAR(g_rot),DEV_VAR(minus_G)
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
+ use deviceXlib_m
  !
 #include<memory.h>
  !
@@ -74,11 +75,11 @@ subroutine G_shells_finder()
      !
    endif
    !
-#ifdef _CUDA
-   if (allocated(g_rot_d)) deallocate(g_rot_d)
-   allocate(g_rot_d,source=g_rot)
-   if (allocated(minus_G_d)) deallocate(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
+#ifdef _GPU
+   YAMBO_FREE_GPU(DEV_VAR(g_rot))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
+   YAMBO_FREE_GPU(DEV_VAR(g_rot))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
 #endif
    return
    !
@@ -87,12 +88,11 @@ subroutine G_shells_finder()
    if (allocated(g_rot)) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
+     !
+     YAMBO_FREE_GPU(DEV_VAR(g_rot))
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
-#ifdef _CUDA
-     if (allocated(g_rot_d))   deallocate(g_rot_d)
-     if (allocated(minus_G_d)) deallocate(minus_G_d)
-#endif
    endif
    !
  endif
@@ -174,8 +174,8 @@ subroutine G_shells_finder()
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
  !
-#ifdef _CUDA
- allocate(g_rot_d,source=g_rot)
+#ifdef _GPU
+ YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
 #endif
  !
  ! Redefine ng_in_shell_TMP witg actual position of the last element of the
@@ -230,10 +230,11 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
-#ifdef _CUDA
-   if (allocated(minus_G_d)) deallocate(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
+#ifdef _GPU
+   YAMBO_FREE_GPU(DEV_VAR(minus_G))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
 #endif
+   !
  endif
  !
  E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)

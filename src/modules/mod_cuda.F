@@ -106,7 +106,8 @@ module cuda_m
   public :: stream_d2h
   public :: stream_d
   !
-  public :: is_gpu_allocated
+  !public :: is_gpu_allocated
+  public :: cudaGetDevice
 
 contains
 

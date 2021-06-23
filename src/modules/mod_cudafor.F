@@ -110,6 +110,7 @@ public :: cudaStreamDestroy
 ! Added by Andrea Ferretti, Jun 2021
 public :: cudaDeviceSynchronize
 public :: cudaGetLastError
+public :: cudaGetDevice
 
 !Start types
 
@@ -266,6 +267,15 @@ end function cudaGetLastError
 end interface cudaGetLastError
 !End cudaGetLastError
 
+!Start cudaGetDevice
+interface cudaGetDevice
+integer(c_int) function cudaGetDevice(device) bind(c, name = "cudaGetDevice")
+import :: c_int
+implicit none
+integer(c_int) :: device
+end function cudaGetDevice
+end interface cudaGetDevice
+!End cudaGetDevice
 
 !End interfaces
 

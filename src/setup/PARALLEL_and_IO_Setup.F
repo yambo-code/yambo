@@ -41,6 +41,9 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use LIVE_t,         ONLY:USER_wall_time_string
  use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+#if defined _GPU
+ use cuda_m,         ONLY:cudaGetDevice
+#endif
  implicit none
  !
  type(levels)  :: en
@@ -51,9 +54,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
-#ifdef _CUDA
- integer, external :: cudaGetDevice
-#endif
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -120,7 +120,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Threads total       ',n_max_threads*ncpu)
  call msg('r', 'Nodes Computing     ',n_nodes(1))
  call msg('r', 'Nodes IO            ',n_IO_nodes)
-#ifdef _CUDA
+#ifdef _GPU
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
  call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))

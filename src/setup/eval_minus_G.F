@@ -40,7 +40,9 @@ subroutine eval_minus_G()
  !
  integer  :: ig
  !
+ YAMBO_FREE_GPU(DEV_VAR(minus_G))
  YAMBO_FREE(minus_G)
+ !
  YAMBO_ALLOC(minus_G,(ng_closed))
  !
  minus_G=0
@@ -55,7 +57,7 @@ subroutine eval_minus_G()
  endif
  !
  if (have_cuda) then
-   YAMBO_FREE_GPU(minus_G)
+   YAMBO_FREE_GPU(DEV_VAR(minus_G))
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
  endif
  !

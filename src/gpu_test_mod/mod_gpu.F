@@ -5,7 +5,7 @@ module gpu_m
   !
 #if defined _CUDAF
   use cublas
-#else
+#elif defined _GPU
   use cublas_m
   use cublas_core_m
 #endif
@@ -36,7 +36,10 @@ module gpu_m
   logical :: have_openmp5=.false.
 #endif
   !
+#if defined _GPU
   type(cuBlasHandle) :: cublas_h
+  public :: cublas_h
+#endif
 
   public :: have_device
   public :: have_cudaf
@@ -44,7 +47,6 @@ module gpu_m
   public :: have_openmp5
   public :: cuda_linalg_init
   public :: cuda_linalg_setup
-  public :: cublas_h
 
 contains
 

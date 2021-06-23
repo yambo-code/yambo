@@ -83,8 +83,12 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnSetStream(handle, stream) &
           bind(C,name='cusolverDnSetStream')
-       use iso_c_binding
+#ifdef _CUDAF
+       use cudafor
+#else
        use cudafor_m
+#endif
+       use iso_c_binding
        type(c_ptr), value :: handle
        integer(cuda_stream_kind), value :: stream
      end function cusolverDnSetStream

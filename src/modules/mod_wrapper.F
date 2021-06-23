@@ -70,47 +70,57 @@ module wrapper
  interface V_by_V_pwise
    module procedure V_by_V_pwise_cpu
  end interface
- interface V_by_V_pwise_gpu
-   module procedure V_by_V_pwise_gpu
- end interface
  !
  interface Vstar_dot_V
    module procedure Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
- end interface
- interface Vstar_dot_V_gpu
-   module procedure Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
  end interface
  !
  interface Vstar_dot_VV
    module procedure Vstar_dot_VV_c1_cpu
  end interface
- interface Vstar_dot_VV_gpu
-   module procedure Vstar_dot_VV_c1_gpu
- end interface
  !
  interface V_dot_V
    module procedure V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
- end interface
- interface V_dot_V_gpu
-   module procedure V_dot_V_c1_gpu
  end interface
  !
  interface V_dot_VV
    module procedure V_dot_VV_c1_cpu
  end interface
+ !
+#if defined _GPU
+ !
+ interface V_by_V_pwise_gpu
+   module procedure V_by_V_pwise_gpu
+ end interface
+ interface Vstar_dot_V_gpu
+   module procedure Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
+ end interface
+ interface Vstar_dot_VV_gpu
+   module procedure Vstar_dot_VV_c1_gpu
+ end interface
+ interface V_dot_V_gpu
+   module procedure V_dot_V_c1_gpu
+ end interface
  interface V_dot_VV_gpu
    module procedure V_dot_VV_c1_gpu
  end interface
  !
+ public :: V_by_V_pwise_gpu
+ public :: Vstar_dot_V_gpu
+ public :: Vstar_dot_VV_gpu
+ public :: V_dot_V_gpu
+ public :: V_dot_VV_gpu
+#endif
+ !
  public :: M_by_M
  public :: V_copy
- public :: Vstar_dot_V,  Vstar_dot_V_gpu
- public :: Vstar_dot_VV, Vstar_dot_VV_gpu
- public :: V_dot_V,      V_dot_V_gpu
- public :: V_dot_VV,     V_dot_VV_gpu
+ public :: Vstar_dot_V
+ public :: Vstar_dot_VV
+ public :: V_dot_V
+ public :: V_dot_VV
  public :: M_by_V
  public :: V_plus_alpha_V
- public :: V_by_V_pwise, V_by_V_pwise_gpu
+ public :: V_by_V_pwise
  public :: FADEVA
  !
  contains
@@ -344,6 +354,7 @@ module wrapper
 #endif
    end function Vstar_dot_V_c2_cpu
    !
+#if defined _GPU
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,              intent(in) :: N
@@ -375,6 +386,7 @@ module wrapper
      !DEV_ACC end host_data
      !DEV_ACC end data
    end function Vstar_dot_V_c2_gpu
+#endif
    !
    !==============
    ! DOT PRODUCTS: Vstar_dot_VV
@@ -452,6 +464,7 @@ module wrapper
 #endif
    end function V_dot_V_c2_cpu
    !
+#if defined _GPU
    complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
@@ -466,6 +479,7 @@ module wrapper
      !DEV_ACC end host_data
      !DEV_ACC end data
    end function V_dot_V_c1_gpu
+#endif
    !
    !==============
    ! DOT PRODUCTS: V_dot_VV

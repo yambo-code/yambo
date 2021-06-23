@@ -45,7 +45,7 @@ subroutine PHEL_screening(E,q)
  !
  integer      ::Xo_ID,EM1D_ID,io_err(2),iq,SEC(2),IO_ACT,ig1,ig2,iw,ig3
  complex(SP)  ::F_test_diff(nqibz,2),DIFF
- real(SP)     ::F_test_diff_max(nqibz),F_test_diff_avg(nqibz)
+ real(SP)     ::F_test_diff_max(nqibz),F_test_diff_avg(nqibz),MAX_val
  type(w_samp) ::Xow,EM1Dw
  type(X_t)    ::Xo,EM1D
  complex(SP), allocatable :: Xo_mat(:,:,:)
@@ -84,14 +84,16 @@ subroutine PHEL_screening(E,q)
    call io_control(ACTION=IO_ACT,COM=NONE,SEC=SEC,MODE=DUMP,ID=EM1D_ID)
    io_err(2)=io_X(EM1D,EM1Dw,EM1D_id)
    !
+   if (.not.any(px%element_2D(iq,:))) cycle
+   !
    if (any(io_err/=0)) then
      call live_timing(steps=Xow%n_freqs)
      cycle
    endif
    !
    do iw=1,Xow%n_freqs
+     if (.not.px%element_2D(iq,iw)) cycle 
      call live_timing(steps=1)
-     if (.not.px%element_2D(iq,iw)) cycle
      do ig1=1,Xo%ng
        do ig2=1,Xo%ng
          do ig3=1,Xo%ng
@@ -102,7 +104,7 @@ subroutine PHEL_screening(E,q)
      enddo 
    enddo
    !
- enddo
+ enddo 
  !
  call PP_redux_wait(F_test)
  !
@@ -112,15 +114,18 @@ subroutine PHEL_screening(E,q)
    !
    F_test_diff_max(iq)=0.
    F_test_diff_avg(iq)=0.
+   MAX_val=0.
+   do iw=1,Xow%n_freqs
+     if (abs(aimag(F_test(iq,iw,1)))>MAX_val) MAX_val=abs(aimag(F_test(iq,iw,2)))
+   enddo
    !
    fname="phel_screening_q"//trim(intc(iq))
    call OUTPUT_add_column(trim(fname),action="reset")
    call OUTPUT_add_column(trim(fname),action="open")
    do iw=1,Xow%n_freqs
      !
-     DIFF=aimag(F_test(iq,iw,1)-F_test(iq,iw,2))/aimag(F_test(iq,iw,1)) 
+     DIFF=aimag(F_test(iq,iw,1)-F_test(iq,iw,2))/MAX_val
      if (abs(DIFF)>abs(F_test_diff_max(iq))) F_test_diff_max(iq)=DIFF
-     !
      F_test_diff_avg(iq)=F_test_diff_avg(iq)+DIFF/real(Xow%n_freqs)
      !
      call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xow%p(iw))/),UNIT="eV")
@@ -133,8 +138,9 @@ subroutine PHEL_screening(E,q)
    call OUTPUT_add_column(trim(fname),action="close")
    !
    call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Q-point"/),I_VALUES=(/iq/))
-   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Im[DYN-STAT](MAX)(%)","Im[DYN-STAT](AVG)(%)"/),&
+   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Im[DYN-STAT]/MAX(MAX)(%)","Im[DYN-STAT]/MAX(AVG)(%)"/),&
 &                         R_VALUES=(/F_test_diff_max(iq),F_test_diff_avg(iq)/)*100.)
+   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"MAX(Im[DYN])"/),R_VALUES=(/MAX_val/))
    call OUTPUT_add_column("phel_screening_diff",action="write")
    !
  enddo

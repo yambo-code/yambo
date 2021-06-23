@@ -60,12 +60,12 @@ subroutine INIT_activate()
  !
  !FFT
  !
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,l_Xo,&
+ if (any((/l_optics.and.l_chi,l_optics.and.l_bse,l_em1d,l_Xo,&
 &          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
  !
- if (l_dipoles) then
+ if (l_dipoles.or.l_elphoton_corr) then
    call CPU_activate("DIP")
    call initactivate(1,'DIP_Threads')
  endif
@@ -73,18 +73,12 @@ subroutine INIT_activate()
  ! CPU structure
  !
  if (any((/l_optics.and..not.l_bse,l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
-   if (l_elel_corr) then
-     if (any((/l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
-       call CPU_activate("X_and_IO")
-     else
-       call CPU_activate("X")
-     endif
-     call initactivate(1,'X_Threads')
+   if (any((/l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
+     call CPU_activate("X_and_IO")
+   else
+     call CPU_activate("X")
    endif
-   if (l_elel_corr.or.l_elphoton_corr) then
-     call CPU_activate("DIP")
-     call initactivate(1,'X_Threads DIP_Threads')
-   endif
+   call initactivate(1,'X_Threads')
  endif
  !
  if(l_sc_run) then

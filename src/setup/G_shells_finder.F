@@ -42,6 +42,7 @@ subroutine G_shells_finder()
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
+ use cuda_m,       ONLY:have_cuda
  use deviceXlib_m
  !
 #include<memory.h>
@@ -65,9 +66,12 @@ subroutine G_shells_finder()
  io_err=io_GROT(ID)
  !
  if (io_err==0) then
+   !
    if(inv_index<0) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
+     YAMBO_FREE_GPU(DEV_VAR(g_rot))
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
@@ -75,12 +79,12 @@ subroutine G_shells_finder()
      !
    endif
    !
-#ifdef _GPU
-   YAMBO_FREE_GPU(DEV_VAR(g_rot))
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
-   YAMBO_FREE_GPU(DEV_VAR(g_rot))
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
-#endif
+   if (have_cuda) then
+     YAMBO_FREE_GPU(DEV_VAR(g_rot))
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
+   endif
    return
    !
  else
@@ -174,9 +178,9 @@ subroutine G_shells_finder()
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
  !
-#ifdef _GPU
- YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
-#endif
+ if (have_cuda) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
+ endif
  !
  ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group
@@ -222,6 +226,7 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
+   !
    YAMBO_ALLOC(minus_G,(ng_closed))
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
@@ -230,10 +235,11 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
-#ifdef _GPU
-   YAMBO_FREE_GPU(DEV_VAR(minus_G))
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
-#endif
+   !
+   if (have_cuda) then
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
+   endif
    !
  endif
  !

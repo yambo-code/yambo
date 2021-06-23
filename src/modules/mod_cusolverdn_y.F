@@ -67,6 +67,7 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnCreate(handle) &
           bind(C,name='cusolverDnCreate')
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle) :: handle
      end function cusolverDnCreate
@@ -75,6 +76,7 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnDestroy(handle) &
           bind(C,name='cusolverDnDestroy')
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle), value :: handle
      end function cusolverDnDestroy
@@ -83,7 +85,8 @@ module cusolverdn_y
   interface
      integer(c_int) function cusolverDnSetStream(handle, stream) &
           bind(C,name='cusolverDnSetStream')
-       use cudafor
+       use cudafor_m
+       use iso_c_binding
        import cusolverDnHandle
        type(cusolverDnHandle), value :: handle
        integer(cuda_stream_kind), value :: stream

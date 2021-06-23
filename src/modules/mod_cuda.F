@@ -25,16 +25,17 @@
 module cuda_m
   !================
   !
-#if defined _GPU
-# if defined _CUDA
+# if defined _CUDAF
   use cudafor
   use cublas
-# else
+  use cusolverdn_y
+# elif defined _OPENACC
+  use cudafor_m
   use cublas_core_m
   use cublas_m
-# endif
   use cusolverdn_y
-#endif
+  use openacc
+# endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   implicit none
   public
@@ -60,7 +61,7 @@ module cuda_m
   !
   ! streams
   !
-#ifdef _CUDA
+#ifdef _CUDAF
   integer, parameter :: stream_kind=Cuda_Stream_Kind
 #else
   integer, parameter :: stream_kind=kind(1)
@@ -121,19 +122,24 @@ contains
     !
 #endif
     !
-#if defined _GPU
-    !
     have_cuda_devices=.false. 
-    call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
-    if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
+    if (have_cuda) then
+      !
+      call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
+      if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
+      !
+    endif
     !
+#if defined _CUDAF
     stream_default=cudaforGetDefaultStream()
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
-    !
-#else
-    have_cuda_devices=.false.
+#elif defined _OPENACC
+    stream_default=acc_async_noval
+    stream_h2d=1001
+    stream_d2h=1002
+    stream_d=10
 #endif
     !
   end subroutine cuda_setup
@@ -179,138 +185,20 @@ end module cuda_m
 
 !=========================
 
-#if defined _CUDA
-
-!================
-module mpiDeviceUtil
-#if defined(_MPI)
- use mpi
-#endif
-  !================
-  implicit none
-#if defined(_MPI)
-! 2021/01/14 DS, commented.
-! It maybe needed for old libraries
-! To be uncommented but protected with precompiler flags on gfortran compiler
-! include 'mpif.h'
-#else
-  integer, parameter ::MPI_MAX_PROCESSOR_NAME=20
-  integer            :: mpi_comm_world=0,MPI_CHARACTER
-#endif
-    character (len=MPI_MAX_PROCESSOR_NAME) :: hostname
-    integer :: dev_id, node_id
-
-  interface
-     subroutine quicksort(base, nmemb, elemsize, compar) &
-          bind(C,name='qsort')
-       use iso_c_binding
-       implicit none
-       !pgi$ ignore_tkr base,nmemb,elemsize,compar
-       type(C_PTR), value :: base
-       integer(C_SIZE_T), value :: nmemb, elemsize
-       type(C_FUNPTR), value :: compar
-     end subroutine quicksort
-
-     integer function strcmp(a,b) bind(C,name='strcmp')
-       use iso_c_binding
-       implicit none
-       !pgi$ ignore_tkr a,b
-       type(C_PTR), value :: a, b
-     end function strcmp
-  end interface
-
-contains
-
-  subroutine assignDevice(dev)
-    use cudafor
-    implicit none
-    integer :: dev
-    character (len=MPI_MAX_PROCESSOR_NAME), allocatable :: hosts(:)
-    !character (len=MPI_MAX_PROCESSOR_NAME) :: hostname
-    integer :: namelength, color, i, j
-    integer :: nProcs, myrank, newComm, newRank, ierr
-
-#if !defined _MPI
-    return
-#else
-    call MPI_COMM_SIZE(MPI_COMM_WORLD, nProcs, ierr)
-    call MPI_COMM_RANK(MPI_COMM_WORLD, myrank, ierr)
-
-    ! allocate array of hostnames
-    allocate(hosts(0:nProcs-1))
-  
-    ! Every process collects the hostname of all the nodes
-    call MPI_GET_PROCESSOR_NAME(hostname, namelength, ierr)
-    hosts(myrank)=hostname(1:namelength)
-
-    do i=0,nProcs-1
-       call MPI_BCAST(hosts(i),MPI_MAX_PROCESSOR_NAME,MPI_CHARACTER,i, &
-            MPI_COMM_WORLD,ierr)
-    end do
-  
-    ! sort the list of names
-    call quicksort(hosts,nProcs,MPI_MAX_PROCESSOR_NAME,strcmp)
-
-    ! assign the same color to the same node
-    color=0
-    do i=0,nProcs-1
-       if (i > 0) then
-          if ( lne(hosts(i-1),hosts(i)) ) color=color+1
-       end if
-       if ( leq(hostname,hosts(i)) ) exit
-    end do
-  
-    call MPI_COMM_SPLIT(MPI_COMM_WORLD,color,0,newComm,ierr)
-    call MPI_COMM_RANK(newComm, newRank, ierr)
-
-    dev = newRank
-    dev_id = dev
-    node_id = color
-    ierr = cudaSetDevice(dev_id)
-    
-    ! DEBUG <
-    !do i=0,nProcs-1
-    !  if(myrank == i) then
-    !      write(6,"(A8,I4,A8,A12,A12,I2)") "Rank: ",myrank,"Host: ",hostname(1:namelength),"Using GPU: ",dev_id
-    !  endif
-    !  do j=0,1000
-    !    call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-    !  end do
-    !end do
-    !DEBUG >
-    
-    deallocate(hosts)
-#endif
-  end subroutine assignDevice
-
-  ! lexical .eq.
-  function leq(s1, s2) result(res)
-    implicit none
-    character (len=*) :: s1, s2
-    logical :: res    
-    res = .false.
-    if (lle(s1,s2) .and. lge(s1,s2)) res = .true.
-  end function leq
-
-  ! lexical .ne.
-  function lne(s1, s2) result(res)
-    implicit none
-    character (len=*) :: s1, s2
-    logical :: res    
-    res = .not. leq(s1, s2)
-  end function lne
-end module mpiDeviceUtil
-
 ! ----
 ! nvtx
 ! ----
 
 module nvtx
   use iso_c_binding
-#ifdef _CUDA
+#ifdef _CUDAF
   use cudafor
 #endif
+#if defined _OPENACC || defined _OPENMP5
+  use cudafor_m
+#endif
   implicit none
+
 #ifdef _NVTX
   integer,private :: col(7) = [ Z'0000ff00', Z'000000ff', Z'00ffff00',Z'00ff00ff',Z'0000ffff', &
                                 Z'00ff0000', Z'00ffffff']
@@ -357,7 +245,7 @@ contains
     integer, optional:: id
 #ifdef _NVTX
     type(nvtxEventAttributes):: event
-#ifdef _CUDA
+#ifdef _GPU
     integer :: istat
     istat = cudaDeviceSynchronize()
 #endif
@@ -395,7 +283,7 @@ contains
 
   subroutine nvtxEndRange
 #ifdef _NVTX
-#ifdef _CUDA
+#ifdef _GPU
     integer :: istat
     istat = cudaDeviceSynchronize()
 #endif
@@ -410,6 +298,4 @@ contains
   end subroutine nvtxEndRangeAsync
 
 end module nvtx
-
-#endif
 

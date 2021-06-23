@@ -22,7 +22,7 @@ WF_rot_object = WF_rotate.o
 #if defined _SC || defined _RT
 WF_der_objects = WF_derivative.o
 #endif
-#if defined _CUDA
+#if defined _GPU
 FFT_cuda = fft_3d_cuda.o
 #endif
 objs = fft_setup.o fft_free.o $(FFT_object) $(FFT_more) $(FFT_cuda) scatter_Bamp_using_the_gradient.o \

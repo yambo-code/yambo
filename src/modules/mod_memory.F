@@ -94,7 +94,7 @@ module memory
  !
  interface MEM_count
    module procedure &
-#ifdef _CUDA
+#ifdef _CUDAF
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &

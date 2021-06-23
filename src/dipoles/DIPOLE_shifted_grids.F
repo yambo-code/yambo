@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  !
  ! Using the wfc at the k,k-q points to construct <r>
@@ -42,7 +44,7 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
  use X_m,                 ONLY: l_X_terminator
  use DIPOLES,             ONLY: DIPOLE_t,DIP_iR,DIP_v,num_shifted_grids
  use vec_operate,         ONLY: degeneration_finder
- use wrapper,             ONLY: Vstar_dot_V
+ use wrapper,             ONLY: DEV_SUB(Vstar_dot_V)
  use wave_func,           ONLY: wf_ng,wf_igk,WF,wf_ncx,WAVEs
 #if defined _SC           
  use SC,                  ONLY: SC_bands
@@ -50,7 +52,6 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
 #if defined _RT
  use real_time,           ONLY: RT_bands
 #endif
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -201,8 +202,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            do i_spinor=1,n_spinor
              !
-             rho = Vstar_dot_V(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf_sh), &
-&                                        DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,iv_wf))
+             rho = DEV_SUB(Vstar_dot_V)(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf_sh), &
+&                                       DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,iv_wf))
              !
              if(abs(rho)>1.E-3) DIP_rotate(iv_sh,iv)=DIP_rotate(iv_sh,iv)+conjg(rho)
              !
@@ -239,8 +240,8 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
            !
            do i_spinor=1,n_spinor
              !
-             rho = rho + Vstar_dot_V(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf_sh), &
-&                                              DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
+             rho = rho + DEV_SUB(Vstar_dot_V)(wf_ng_eff,DEV_VAR(WF_shifted%c)(1:wf_ng_eff,i_spinor,iv_wf_sh), &
+&                                             DEV_VAR(WF%c)(1:wf_ng_eff,i_spinor,ic_wf))
              !
            enddo
            !

@@ -261,7 +261,7 @@ module interfaces
  end interface
  !
  interface WF_shift_kpoint
-   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
@@ -303,13 +303,13 @@ module interfaces
 #endif
  !
  interface
-   subroutine WF_apply_symm_cpu(isc,WF_symm)
+   subroutine WF_apply_symm(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
-   end subroutine WF_apply_symm_cpu
+   end subroutine WF_apply_symm
  end interface
  !
 #ifdef _GPU

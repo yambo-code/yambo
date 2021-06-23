@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Hartree-Fock
@@ -46,13 +48,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load,QP_state_print
- use wrapper,       ONLY:Vstar_dot_VV_gpu
+ use wrapper,       ONLY:DEV_SUB(Vstar_dot_VV)
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
  use deviceXlib_m,  ONLY:dev_memcpy
  !
-#include<dev_defs.h>
 #include<memory.h>
  !
  type(levels) ::E       
@@ -171,7 +172,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp do schedule(dynamic)
 #endif
    do iq=1,q%nbz
@@ -243,8 +244,8 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
          call dev_memcpy(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
-       DP_Sx_l=Vstar_dot_VV_gpu(isc%ngrho,DEV_VAR(iscp%rhotw),&
-&                               DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
+       DP_Sx_l=DEV_SUB(Vstar_dot_VV)(isc%ngrho,DEV_VAR(iscp%rhotw),&
+&                                    DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,isc%os(2),isc%os(4)) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
@@ -252,14 +253,14 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      enddo
      !
    enddo
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end do
 #endif
    !
    call elemental_collision_free(isc)
    call elemental_collision_free(iscp)
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end parallel
 #endif
    !

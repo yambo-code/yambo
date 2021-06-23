@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
+subroutine DEV_SUB(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  !
  ! INCLUDED in: WF_symm_kpoint_incl.F 
  !
@@ -93,7 +93,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        else
          !
          !DEV_ACC data present(WF_k_out,g_rot,spin_sop,WF_p)
-         !DEV_ACC parallel loop collapse(2) async
+         !DEV_ACC parallel loop async
          !DEV_CUF kernel do(1) <<<*,*>>>
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
@@ -115,5 +115,5 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
    !
  endif
  !
-end subroutine DEV_SUB_ALT(WF_symm_kpoint)
+end subroutine DEV_SUB(WF_symm_kpoint)
 

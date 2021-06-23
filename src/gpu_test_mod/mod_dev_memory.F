@@ -1,15 +1,21 @@
 
 #include <dev_defs.h>
+#define __USE_DEVXLIB__
 
 !====================
 module dev_memory_m
   !====================
   use iso_c_binding
+#if defined __USE_DEVXLIB__
+  use deviceXlib_m
+#endif
   use kinds,         only: SP
   implicit none
   private
 
 
+#if ! defined __USE_DEVXLIB__
+  !
   interface dev_memcpy
 #ifdef _CUDAF
     module procedure :: dev_memcpy_h2d_cuf
@@ -47,6 +53,8 @@ module dev_memory_m
 #endif
     module procedure dev_memcpy_dummy
   end interface
+  !
+#endif
   !
   interface dev_mem_alloc
     module procedure :: dev_mem_alloc_r1
@@ -97,6 +105,7 @@ contains
     return
   end subroutine dev_mem_free_r1
 
+#if ! defined __USE_DEVXLIB__
   !
   ! memcpy
   !
@@ -161,6 +170,7 @@ contains
   subroutine dev_memcpy_dummy()
      return
   end subroutine
+#endif
   !
 end module dev_memory_m
 

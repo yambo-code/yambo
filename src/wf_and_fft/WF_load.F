@@ -41,7 +41,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
- use wrapper,       ONLY:Vstar_dot_V
+ use wrapper,       ONLY:DEV_SUB(Vstar_dot_V)
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
  use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,&
@@ -388,18 +388,23 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !
             do i_spinor=1,n_spinor
               !
-              ! AF: The following is a workaround for CUDAF compilation
-              !     to be further investigated
-#ifdef _CUDA
-              DEV_VAR(wf_DP)=cZERO_DP
-#else
-              call dev_memset(DEV_VAR(wf_DP), cZERO_DP)
-#endif
+              ! AF: The following is a workaround for CUDAF/OPENACC compilation
+              !     to be further investigated and fixed
+!=====        !
+              !DEV_ACC data present(wf_DP)
+              !DEV_ACC parallel loop async
+              !DEV_CUF kernel do(1) <<<*,*>>>
+              do ic = 1, size(DEV_VAR(wf_DP))
+                 DEV_VAR(wf_DP)(ic)=cZERO_DP
+              enddo
+              !DEV_ACC end data
+!=====        !
+              !call dev_memset(DEV_VAR(wf_DP), cZERO_DP)
               !
               npwk=wf_nc_k(ikibz)
               !
               !DEV_ACC data present(wf_igk,fft_g_table,wf_DP,wf_disk)
-              !DEV_ACC parallel do async
+              !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1) <<<*,*>>>
               do ic=1,npwk
                 !
@@ -417,7 +422,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               WFN = WF%N
               !
               !DEV_ACC data present(wfc_p,wf_DP)
-              !DEV_ACC parallel do async
+              !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1)
               do ic=1,wf_grid_size
                 wfc_p(ic,i_spinor,WFN)=cmplx(DEV_VAR(wf_DP)(ic),kind=SP)*fft_norm
@@ -560,7 +565,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
    if (have_cuda) then
      call msg('rns', '[WF] Updating WF data on GPU device after SC load')
-     WF%c_d = WF%c
+     call dev_memcpy_h2d(DEV_VAR(WF%c), WF%c)
    endif
    !
    call load_SC_components('WF_clean')
@@ -583,7 +588,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     c=DEV_SUB(Vstar_dot_V)( size(WF%c(:,:,WF%index(1,1,1))), DEV_VAR(WF%c)(:,:,WF%index(ib1,1,1)), DEV_VAR(WF%c)(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

@@ -176,7 +176,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (qs==idt_index) then 
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table)
-   !DEV_ACC paralllel loop async
+   !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho
@@ -187,7 +187,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  else
    !
    !DEV_ACC data present(rhotw_p,rho_tw_rs_p,fft_g_table,g_rot)
-   !DEV_ACC paralllel loop async
+   !DEV_ACC parallel loop async
    !DEV_CUF kernel do(1) <<<*,*>>>
    !DEV_OMP parallel do default(shared), private(ig)
    do ig = 1, isc_ngrho

@@ -72,6 +72,19 @@ module cuda_m
   integer(stream_kind) :: stream_d
 
   !
+  ! interfaces
+  !
+  interface is_gpu_allocated
+#if defined _OPENACC
+     procedure :: acc_is_present
+#elif defined _CUDAF
+     procedure :: allocated
+#else
+     procedure :: allocated
+#endif
+  end interface
+
+  !
   ! public
   !
   public :: have_cuda
@@ -90,6 +103,8 @@ module cuda_m
   public :: stream_h2d
   public :: stream_d2h
   public :: stream_d
+  !
+  public :: is_gpu_allocated
 
 contains
 
@@ -179,7 +194,7 @@ contains
 #endif
     return
   end function
-
+  
 end module cuda_m
 
 

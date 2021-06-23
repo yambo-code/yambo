@@ -69,16 +69,16 @@ module wrapper
  !
  interface V_by_V_pwise
    module procedure V_by_V_pwise_cpu
-#ifdef _CUDA
+ end interface
+ interface V_by_V_pwise_gpu
    module procedure V_by_V_pwise_gpu
-#endif
  end interface
  !
  interface Vstar_dot_V
    module procedure Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
-#ifdef _CUDA
+ end interface
+ interface Vstar_dot_V_gpu
    module procedure Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
-#endif
  end interface
  !
  interface Vstar_dot_VV
@@ -90,27 +90,27 @@ module wrapper
  !
  interface V_dot_V
    module procedure V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
-#ifdef _CUDA
+ end interface
+ interface V_dot_V_gpu
    module procedure V_dot_V_c1_gpu
-#endif
  end interface
  !
  interface V_dot_VV
    module procedure V_dot_VV_c1_cpu
-#ifdef _CUDA
+ end interface
+ interface V_dot_VV_gpu
    module procedure V_dot_VV_c1_gpu
-#endif
  end interface
  !
  public :: M_by_M
  public :: V_copy
- public :: Vstar_dot_V
+ public :: Vstar_dot_V,  Vstar_dot_V_gpu
  public :: Vstar_dot_VV, Vstar_dot_VV_gpu
- public :: V_dot_V
- public :: V_dot_VV
+ public :: V_dot_V,      V_dot_V_gpu
+ public :: V_dot_VV,     V_dot_VV_gpu
  public :: M_by_V
  public :: V_plus_alpha_V
- public :: V_by_V_pwise
+ public :: V_by_V_pwise, V_by_V_pwise_gpu
  public :: FADEVA
  !
  contains
@@ -145,7 +145,7 @@ module wrapper
 #endif
    end subroutine mm_cgemm
    !
-#ifdef _CUDA
+#ifdef _CUDAF
    subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
      implicit none
      complex(SP), intent(in)  :: ALPHA,BETA
@@ -215,7 +215,7 @@ module wrapper
 #endif
    end subroutine mv_c
    !
-#ifdef _CUDA
+#ifdef _CUDAF
    subroutine mv_c_gpu(TRANS,msize,A,X,Y)
      integer,     intent(in) :: msize
      complex(SP), device, intent(in) :: A(msize,*),X(*)
@@ -273,7 +273,7 @@ module wrapper
 #endif
    end subroutine vv_caxpy
    !
-#ifdef _CUDA
+#ifdef _CUDAF
    subroutine vv_caxpy_gpu(N, CA, CX, CY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
@@ -344,11 +344,10 @@ module wrapper
 #endif
    end function Vstar_dot_V_c2_cpu
    !
-#ifdef _GPU
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
-     integer,             intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*),CY(*)
+     integer,              intent(in) :: N
+     complex(SP) DEV_ATTR, intent(in) :: CX(*),CY(*)
      !
      !DEV_ACC data present(CX,CY)
      !DEV_ACC host_data use_device(CX,CY)
@@ -363,11 +362,11 @@ module wrapper
    !
    complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
      implicit none
-     integer,             intent(in) :: N
-     complex(SP), device, intent(in) :: CX(:,:),CY(:,:)
+     integer,              intent(in) :: N
+     complex(SP) DEV_ATTR, intent(in) :: CX(:,:),CY(:,:)
      !
      !DEV_ACC data present(CX,CY)
-     !DEV_ACC host_data use_device(CX,CY
+     !DEV_ACC host_data use_device(CX,CY)
 #if defined _DOUBLE
      Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
@@ -376,8 +375,6 @@ module wrapper
      !DEV_ACC end host_data
      !DEV_ACC end data
    end function Vstar_dot_V_c2_gpu
-   !
-#endif
    !
    !==============
    ! DOT PRODUCTS: Vstar_dot_VV
@@ -455,20 +452,20 @@ module wrapper
 #endif
    end function V_dot_V_c2_cpu
    !
-#ifdef _CUDA
    complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*),CY(*)
+     complex(SP) DEV_ATTR, intent(in) :: CX(*),CY(*)
+     !DEV_ACC data present(CX,CY)
+     !DEV_ACC host_data use_device(CX,CY)
 #if defined _DOUBLE
-     complex(SP)::zdotu
      V_dot_V_c1_gpu=cublasZDOTU(N,CX,1,CY,1)
 #else
-     complex(SP)::cdotu
      V_dot_V_c1_gpu=cublasCDOTU(N,CX,1,CY,1)
 #endif
+     !DEV_ACC end host_data
+     !DEV_ACC end data
    end function V_dot_V_c1_gpu
-#endif
    !
    !==============
    ! DOT PRODUCTS: V_dot_VV
@@ -487,19 +484,21 @@ module wrapper
 #endif
    end function V_dot_VV_c1_cpu
    !
-#ifdef _CUDA
    complex(SP) function V_dot_VV_c1_gpu(N,CX,CY,CZ)
      integer,    intent(in) :: N
-     complex(SP), device, intent(in) :: CX(N),CY(N),CZ(N)
+     complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N),CZ(N)
      integer :: i
      !
      V_dot_VV_c1_gpu=0.0_SP
-     !$cuf kernel do(1) <<<*,*>>>
+     !
+     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
      do i = 1, N
        V_dot_VV_c1_gpu=V_dot_VV_c1_gpu+CX(i)*CY(i)*CZ(i)
      enddo
+     !DEV_ACC end data
    end function V_dot_VV_c1_gpu
-#endif
    !
    !=========
    ! MISC
@@ -537,18 +536,19 @@ module wrapper
      enddo
    end subroutine V_by_V_pwise_cpu
    !
-#ifdef _CUDA
    subroutine V_by_V_pwise_gpu(N,CZ,CX,CY)
      integer,    intent(in) :: N
-     complex(SP), device, intent(in) :: CX(N),CY(N)
-     complex(SP), device, intent(out):: CZ(N)
+     complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N)
+     complex(SP) DEV_ATTR, intent(out):: CZ(N)
      !
      integer :: i
-     !$cuf kernel do(1) <<<*,*>>> 
+     !DEV_ACC data present(CX,CY,CZ)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
      do i=1,N
         CZ(i)=CX(i)*CY(i)
      enddo
+     !DEV_ACC end data
    end subroutine V_by_V_pwise_gpu
-#endif
    !
 end module

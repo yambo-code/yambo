@@ -24,7 +24,7 @@
 
 !
 !====================
-! WF_symm_kpoint_cpu
+! WF_symm_kpoint
 !====================
 !
 #include<dev_defs_nogpu.h>

@@ -29,7 +29,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use X_m,            ONLY:Epsilon_ii,global_gauge
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:bare_qpg
- use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
+ use wrapper,        ONLY:Vstar_dot_V,M_by_V
  use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp,V_dot_V_omp
  use BS,             ONLY:BS_H_dim,l_BS_photolum
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL

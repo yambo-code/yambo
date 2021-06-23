@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 function K_correlation_kernel(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p,  &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_n,i_p_sp_pol_n,i_k_sp_pol_m,i_p_sp_pol_m, &
@@ -29,11 +31,8 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  use pars,         ONLY:SP,cZERO,pi
  use BS,           ONLY:BS_blk,BS_n_g_W,BS_W,BS_W_is_diagonal,WF_phase
  use D_lattice,    ONLY:nsym,i_time_rev
- use R_lattice,    ONLY:G_m_G,g_rot
-#ifdef _CUDA
- use R_lattice,    ONLY:G_m_G_d,g_rot_d
-#endif
- use wrapper,      ONLY:V_by_V_pwise,M_by_V,Vstar_dot_V
+ use R_lattice,    ONLY:DEV_VAR(G_m_G),DEV_VAR(g_rot)
+ use wrapper,      ONLY:DEV_SUB(V_by_V_pwise),M_by_V,DEV_SUB(Vstar_dot_V)
  use deviceXlib_m, ONLY:dev_conjg
  !
  implicit none
@@ -46,12 +45,10 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  complex(SP)  :: K_correlation_kernel
  !
  integer      :: iO1,i_block_1,iO2,i_block_2,i_g1,i_g2,i_g3
- complex(SP)  :: PHASE_1,PHASE_2,O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
-#ifdef _CUDA
- attributes(device)   :: O1,O2,O_times_W
- complex(SP), pointer, device :: O_c_d_iO1(:)
- complex(SP), pointer, device :: O_c_d_iO2(:)
-#endif
+ complex(SP)  :: PHASE_1,PHASE_2
+ complex(SP)          DEV_ATTR :: O1(BS_n_g_W),O2(BS_n_g_W),O_times_W(BS_n_g_W)
+ complex(SP), pointer DEV_ATTR :: O_c_d_iO1(:)
+ complex(SP), pointer DEV_ATTR :: O_c_d_iO2(:)
  !
  if (i_k_sp_pol_n/=i_p_sp_pol_n .or. i_k_sp_pol_m/=i_p_sp_pol_m) then
    K_correlation_kernel=cZERO
@@ -98,9 +95,9 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
  if (i_k_s  >nsym/(i_time_rev+1)) call dev_conjg(O1,range1=(/1,BS_n_g_W/))
  if (i_kmq_s>nsym/(i_time_rev+1)) call dev_conjg(O2,range1=(/1,BS_n_g_W/))
  !
- if (     BS_W_is_diagonal) call V_by_V_pwise(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
+ if (     BS_W_is_diagonal) call DEV_SUB(V_by_V_pwise)(BS_n_g_W,O_times_W,O1,BS_W(:,1,iq_W))
  if (.not.BS_W_is_diagonal) call M_by_V('T',BS_n_g_W,BS_W(:,:,iq_W),O1,O_times_W)
  !
- K_correlation_kernel=Vstar_dot_V(BS_n_g_W,O2,O_times_W)*4._SP*pi
+ K_correlation_kernel=DEV_SUB(Vstar_dot_V)(BS_n_g_W,O2,O_times_W)*4._SP*pi
  !
 end function K_correlation_kernel

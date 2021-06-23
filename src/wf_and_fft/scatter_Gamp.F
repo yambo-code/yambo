@@ -32,12 +32,16 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
  ! is incuded.
  !
+#ifdef _OPENACC
+ use openacc,       ONLY:acc_is_present     ! AF to clean
+#endif
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
  use R_lattice,     ONLY:DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
+ use cuda_m
  use deviceXlib_m
  use timing_m
  !
@@ -54,6 +58,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  !
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  integer :: ng1, ng2
+ logical :: lpres
 #ifdef _GPU_LOC
  character(32) :: subname="scatter_Gamp_gpu"
 #else
@@ -95,13 +100,25 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
  !
+! AF to clean
 #ifdef _GPU_LOC
- if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
+# if defined _CUDAF
+ if (allocated(RIM_qpg).and..not.allocated(DEV_VAR(RIM_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
- if (.not.allocated(bare_qpg_d)) then
+ if (.not.allocated(DEV_VAR(bare_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
+# elif defined _OPENACC
+ lpres=acc_is_present(DEV_VAR(RIM_qpg))
+ if (allocated(RIM_qpg).and..not.lpres) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
+ endif
+ lpres=acc_is_present(DEV_VAR(bare_qpg))
+ if (.not.lpres) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
+ endif
+# endif
 #endif
  !
  ng=shape(isc%gamp)
@@ -111,7 +128,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  gamp_p => DEV_VAR(isc%gamp)
  !
  !DEV_ACC data present(gamp_p,RIM_qpg,bare_qpg)
- !DEV_ACC parallel loop colapse(2) async
+ !DEV_ACC parallel loop collapse(2) async
  !DEV_CUF kernel do(2)
  !DEV_OMP parallel do default(shared), private(i1,i2,ig1,ig2,l_RIM), collapse(2)
  !

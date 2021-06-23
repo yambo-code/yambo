@@ -56,8 +56,7 @@ module cuda_m
 
   logical:: cuda_linalg_init=.false.
 #ifdef _GPU
-  type(cusolverDnHandle)   :: cusolv_h
-  public :: cusolv_h
+  type(c_ptr), public :: cusolv_h
 #endif
   
   !

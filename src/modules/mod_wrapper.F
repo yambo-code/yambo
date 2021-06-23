@@ -321,7 +321,7 @@ module wrapper
    complex(SP) function Vstar_dot_V_c1_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
+     complex(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      complex(SP)::zdotc
      Vstar_dot_V_c1_cpu=ZDOTC(N,CX,1,CY,1)
@@ -347,7 +347,7 @@ module wrapper
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,              intent(in) :: N
-     complex(SP) DEV_ATTR, intent(in) :: CX(*),CY(*)
+     complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
      !DEV_ACC data present(CX,CY)
      !DEV_ACC host_data use_device(CX,CY)
@@ -416,7 +416,7 @@ module wrapper
    real(SP) function V_dot_V_r1_cpu(N,CX,CY)
      implicit none
      integer, intent(in) :: N
-     real(SP),intent(in) :: CX(*),CY(*)
+     real(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      real(SP)::ddot
      V_dot_V_r1_cpu=DDOT(N,CX,1,CY,1)
@@ -429,7 +429,7 @@ module wrapper
    complex(SP) function V_dot_V_c1_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
+     complex(SP),intent(in) :: CX(:),CY(:)
 #if defined _DOUBLE
      complex(SP)::zdotu
      V_dot_V_c1_cpu=ZDOTU(N,CX,1,CY,1)
@@ -455,7 +455,7 @@ module wrapper
    complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP) DEV_ATTR, intent(in) :: CX(*),CY(*)
+     complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !DEV_ACC data present(CX,CY)
      !DEV_ACC host_data use_device(CX,CY)
 #if defined _DOUBLE
@@ -527,8 +527,8 @@ module wrapper
    !
    subroutine V_by_V_pwise_cpu(N,CZ,CX,CY)
      integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(*),CY(*)
-     complex(SP),intent(out):: CZ(*)
+     complex(SP),intent(in) :: CX(:),CY(:)
+     complex(SP),intent(out):: CZ(:)
      !
      integer :: i
      do i=1,N

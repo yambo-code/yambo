@@ -182,8 +182,8 @@
 #define YAMBO_ALLOC_GPU(x,SIZE) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC(x,SIZE) NEWLINE \
   endif NEWLINE \
-  !DEV_ACC enter data create( x SIZE ) NEWLINE \
-  !DEV_OMP5 target enter data map(alloc: x SIZE ) NEWLINE \
+  !DEV_ACC enter data create(CAT(x,SIZE)) NEWLINE \
+  !DEV_OMP5 target enter data map(alloc:CAT(x,SIZE)) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_SOURCE(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_SOURCE(x,y) NEWLINE \

@@ -85,10 +85,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space/Overlaps')
  !
- YAMBO_ALLOC_GPU(WF_symm,   (wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC_GPU(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC_GPU(WF_ik,     (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
- YAMBO_ALLOC_GPU(WF_ikp,    (wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_ik,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ YAMBO_ALLOC_GPU(WF_ikp,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  !
  DIP_S=cZERO
  !

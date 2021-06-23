@@ -24,6 +24,7 @@
 module wave_func
  !
  use pars,           ONLY:SP
+ use cuda_m
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -114,7 +115,7 @@ module wave_func
      complex(SP),dimension(n_spinor) :: WF_symm
    end function
    !
-#if defined _CUDA
+#if defined _GPU
    function WF_symm_gpu(ifft,isc)
      use pars,        ONLY: SP
      use electrons,   ONLY: n_spinor
@@ -141,9 +142,16 @@ module wave_func
      WF_out%c      = WF_in%c
      WF_out%index  = WF_in%index
      !
-     if (allocated(WF_in%c_d)) then
-        YAMBO_ALLOC_SOURCE(WF_out%c_d,WF_in%c)
+     ! AF to be cleanup
+#ifdef _GPU
+#ifdef _CUDAF
+     if (allocated(DEV_VAR(WF_in%c))) then
+#elif _OPENACC
+     if (acc_is_present(DEV_VAR(WF_in%c))) then
+#endif
+        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif
+#endif
    end subroutine
    !
    subroutine WF_derivative_alloc(cart_direction)

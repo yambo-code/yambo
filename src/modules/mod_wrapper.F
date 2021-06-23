@@ -32,7 +32,7 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,   ONLY:SP,cI
-#if defined _CUDA
+#if defined _CUDAF
  use cublas
 #elif defined _OPENACC || defined _OPENMP5
  use cublas_core_m
@@ -44,21 +44,21 @@ module wrapper
  interface M_by_M
    module procedure mm_cgemm
    module procedure mm_c 
-#ifdef _CUDA
+#ifdef _CUDAF
    module procedure mm_cgemm_gpu
 #endif
  end interface
  !
  interface M_by_V 
    module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
-#ifdef _CUDA
+#ifdef _CUDAF
    module procedure                   mv_c_gpu
 #endif
  end interface
  !
  interface V_plus_alpha_V
    module procedure vv_saxpy,vv_caxpy,MM_caxpy
-#ifdef _CUDA
+#ifdef _CUDAF
    module procedure          vv_caxpy_gpu
 #endif
  end interface

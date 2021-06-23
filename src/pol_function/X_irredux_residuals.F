@@ -40,8 +40,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
- use R_lattice,     ONLY:G_m_G_d,g_rot_d
+ use R_lattice,     ONLY:DEV_VAR(g_rot),qindx_X,bz_samp,DEV_VAR(G_m_G),q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
@@ -60,7 +59,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  ! Work sapce
  !
- ! AF: rhotw_save, rhotw_save2 are on GPU mem if _CUDA is active
+ ! AF: rhotw_save, rhotw_save2 are on GPU mem if _GPU is active
  !     pointing to work, allocated in the parent routine for performance
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
@@ -147,8 +146,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
          !
          call DEV_SUB(scatter_Bamp)(Xo_scatt)
          !
-         ! rhotw_save=Xo_scatt%rhotw
-         call dev_memcpy(rhotw_save,DEV_VAR(Xo_scatt%rhotw))
+         ! dev2dev, rhotw_save=Xo_scatt%rhotw
+         call dev_memcpy(rhotw_save,Xo_scatt_rhotw_p)
          !
          isave=(/iv,ic,ik,i_spin/)
          !
@@ -156,28 +155,31 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !
        sop_inv_l=sop_inv(is)
        !
-#ifdef _CUDA
-       !$cuf kernel do(1) <<<*,*>>>
-#else
-       !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+       !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
+       !DEV_ACC parallel loop async
+       !DEV_CUF kernel do(1) <<<*,*>>>
+       !DEV_OMP parallel do default(shared), private(ig1,ig2)
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
          Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
        enddo
+       !DEV_ACC end data
        !
        if (is>nsym/(i_time_rev+1)) then
-         call dev_conjg( DEV_VAR(Xo_scatt%rhotw) )
+         call dev_conjg( Xo_scatt_rhotw_p )
        endif
        !
      endif
      !
      ! iG=1 case
      DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
-     if(iv/=ic) DEV_VAR(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
-     if(iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected)
      !
-     if (l_X_term_vv.and.iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=0.0_SP
+     !DEV_ACC data present(Xo_scatt_rhotw_p)
+     if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)
+     if(iv==ic) Xo_scatt_rhotw_p(1)=cONE-conjg(DIP_projected)
+     !
+     if (l_X_term_vv.and.iv==ic) Xo_scatt_rhotw_p(1)=0.0_SP
+     !DEV_ACC end data
      !
    else
      !
@@ -193,8 +195,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    !
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
-#ifdef _CUDA
-   !$cuf kernel do(2) <<<*,*>>>
+#ifdef _GPU
+   !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p)
+   !DEV_ACC parallel loop async collapse(2)
+   !DEV_CUF kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      do ig1=X_rows(1),X_rows(2)
        if (ig1 <= ig2) then
@@ -203,6 +207,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        endif
      enddo
    enddo
+   !DEV_ACC end data
 #else
    !$omp parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
@@ -210,7 +215,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
-   !$omp end parallel do
 #endif
    !
    ! add terminator specific corrections
@@ -222,42 +226,48 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
      !
-     call dev_memcpy(rhotw_save2,DEV_VAR(Xo_scatt%rhotw))
+     ! dev2dev
+     call dev_memcpy(rhotw_save2,Xo_scatt_rhotw_p)
      !
      if (X%ng==1) then
-       DEV_VAR(Xo_scatt%rhotw)(1)=cONE 
+       !DEV_ACC data present(Xo_scatt_rhotw_p)
+       Xo_scatt_rhotw_p(1)=cONE 
+       !DEV_ACC end data
      else
        call DEV_SUB(scatter_Bamp)(Xo_scatt)
      endif
      !
      ! symm
-     ! rhotw_save=Xo_scatt%rhotw
-     call dev_memcpy(rhotw_save,DEV_VAR(Xo_scatt%rhotw))
+     ! dev2dev, rhotw_save=Xo_scatt%rhotw
+     call dev_memcpy(rhotw_save,Xo_scatt_rhotw_p)
      !
      sop_inv_l=sop_inv(is)
      !
-#ifdef _CUDA
-     !$cuf kernel do(1) <<<*,*>>>
-#else
-     !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+     !DEV_ACC data present(g_rot,rhotw_save,Xo_scatt_rhotw_p)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig1=1,X_ng
        ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
        Xo_scatt_rhotw_p(ig1)=rhotw_save(ig2)
      enddo
+     !DEV_ACC end data
      !
      if (is>nsym/(i_time_rev+1)) then
-       call dev_conjg(DEV_VAR(Xo_scatt%rhotw))
+       call dev_conjg(Xo_scatt_rhotw_p)
      endif
      !
-#ifdef _CUDA
-     !$cuf kernel do(2) <<<*,*>>>
+#ifdef _GPU
+     !DEV_ACC data present(Xo_res,Xo_scatt_rhotw_p,G_m_G)
+     !DEV_ACC parallel loop async collapse(2)
+     !DEV_CUF kernel do(2) <<<*,*>>>
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
          if (ig1 > ig2) cycle
-         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(G_m_G_d(ig2,ig1))
+         Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt_rhotw_p(DEV_VAR(G_m_G)(ig2,ig1))
        enddo
      enddo
+     !DEV_ACC end data
 #else
      !$omp parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
@@ -266,8 +276,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        enddo
      enddo
 #endif
-     !
-     call dev_memcpy(DEV_VAR(Xo_scatt%rhotw),rhotw_save2)
+     ! dev2dev
+     call dev_memcpy(Xo_scatt_rhotw_p,rhotw_save2)
      !
    endif
    !

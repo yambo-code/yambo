@@ -25,6 +25,7 @@ module wave_func
  !
  use pars,           ONLY:SP
  use cuda_m
+ use devicexlib_m
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -146,12 +147,7 @@ module wave_func
      WF_out%index  = WF_in%index
      !
      ! AF to be cleanup
-     lpres=.false.
-#if defined _CUDAF
-     lpres=allocated(WF_in%c_d)
-#elif defined _OPENACC
-     lpres=acc_is_present(DEV_VAR(WF_in%c))
-#endif
+     lpres=dev_allocated(DEV_VAR(WF_in%c))
      if (lpres) then
         YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(WF_out%c),WF_in%c)
      endif

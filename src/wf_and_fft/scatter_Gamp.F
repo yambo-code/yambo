@@ -32,9 +32,6 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
  ! is incuded.
  !
-#ifdef _OPENACC
- use openacc,       ONLY:acc_is_present     ! AF to clean
-#endif
  use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
@@ -100,25 +97,13 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
  !
-! AF to clean
 #ifdef _GPU_LOC
-# if defined _CUDAF
- if (allocated(RIM_qpg).and..not.allocated(DEV_VAR(RIM_qpg))) then
+ if (allocated(RIM_qpg).and..not.dev_allocated(DEV_VAR(RIM_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
- if (.not.allocated(DEV_VAR(bare_qpg))) then
+ if (.not.dev_allocated(DEV_VAR(bare_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
-# elif defined _OPENACC
- lpres=acc_is_present(DEV_VAR(RIM_qpg))
- if (allocated(RIM_qpg).and..not.lpres) then
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
- endif
- lpres=acc_is_present(DEV_VAR(bare_qpg))
- if (.not.lpres) then
-   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
- endif
-# endif
 #endif
  !
  ng=shape(isc%gamp)

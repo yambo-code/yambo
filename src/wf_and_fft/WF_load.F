@@ -50,7 +50,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda
+ use cuda_m,        ONLY:have_cuda, cuda_devsync, cuda_getstat
  use deviceXlib_m
  !
 #include<memory.h>
@@ -349,17 +349,32 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        !
        if (.not.buffer_is_ok) then
          !
+write(*,*) "before alloc wf_disk", wf_ncx,n_spinor,wf_nb_to_load
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
+write(*,*) "after alloc wf_disk H", shape(wf_disk)
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
          if (have_cuda) then
            YAMBO_ALLOC_GPU(DEV_VAR(wf_disk),(wf_ncx,n_spinor,wf_nb_to_load))
          endif
+write(*,*) "after alloc wf_disk D", shape(wf_disk)
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
+write(*,*) "before io_WF, shape(wf_disk)", npwk, shape(wf_disk)
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
          if (have_cuda) then
            io_err=io_WF(ID,wf_disk,DEV_VAR(wf_disk))
          else
            io_err=io_WF(ID,wf_disk)
          endif
+write(*,*) "after io_WF, shape(wf_disk)", npwk, shape(wf_disk)
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
          !
          if (pp_is_uspp) then
             call PP_compute_becp( becp(ikibz,i_sp_pol), wf_nc_k(ikibz), wf_nb_to_load, wf_disk, wf_b_indx)
@@ -403,6 +418,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               npwk=wf_nc_k(ikibz)
               !
+write(*,*) "upto here npwk, shape(wf_disk)", npwk, shape(wf_disk)
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
+
               !DEV_ACC data present(wf_igk,fft_g_table,wf_DP,wf_disk)
               !DEV_ACC parallel loop async
               !DEV_CUF kernel do(1) <<<*,*>>>
@@ -417,6 +436,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               enddo
               !DEV_ACC end data
               !
+write(*,*) "before fft"
+write(*,*) "stat", cuda_devsync()
+write(*,*) "stat", cuda_getstat()
+
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
               !
               WFN = WF%N

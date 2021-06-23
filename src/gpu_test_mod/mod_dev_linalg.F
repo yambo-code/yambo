@@ -5,7 +5,7 @@
 module dev_linalg_m
   !====================
   use kinds,   ONLY : SP
-  use gpu_m,   ONLY : cublas_h
+  use gpu_m
   !
 #if defined _CUDAF
   use cublas

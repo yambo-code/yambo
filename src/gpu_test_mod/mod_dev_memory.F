@@ -54,6 +54,15 @@ module dev_memory_m
     module procedure dev_memcpy_dummy
   end interface
   !
+#else
+  !
+  interface dev_memcpy_h2d
+    module procedure dev_memcpy_dummy
+  end interface
+  interface dev_memcpy_d2h
+    module procedure dev_memcpy_dummy
+  end interface
+  
 #endif
   !
   interface dev_mem_alloc
@@ -167,10 +176,11 @@ contains
     x=y_d
   end subroutine
   !
+#endif
+  !
   subroutine dev_memcpy_dummy()
      return
   end subroutine
-#endif
   !
 end module dev_memory_m
 

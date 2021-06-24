@@ -29,7 +29,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -152,7 +152,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  do is=1,n_atomic_species
  do ia=1,n_atoms_species(is)
-   call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] ')
+   if (allocated(atoms_map)) then
+     call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] order '//intc(atoms_map(ia,is)))
+   else
+     call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] ')
+   endif
  enddo
  enddo
  !
@@ -163,7 +167,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
    do is=1,n_atomic_species
    do ia=1,n_atoms_species(is)
      call c2a(v_out=tmp_V,v_in=atom_pos(:,ia,is),mode='rc2a')
-     call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu] ')
+     if (allocated(atoms_map)) then
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu]  order '//intc(atoms_map(ia,is)))
+     else
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu] ')
+     endif
    enddo
    enddo
    !

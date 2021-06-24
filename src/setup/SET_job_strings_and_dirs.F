@@ -67,10 +67,7 @@ subroutine SET_job_strings_and_dirs(JS)
    if (i_j==1) then
      jobstr=job
      jobdir=path
-     if (len_trim(path)>0) then
-       com_path=path
-       if (len_trim(more_io_path)>0) com_path=trim(more_io_path)//"/"//trim(path)
-     endif
+     if (len_trim(path)>0) com_path=path
    else
      alt_jobstr(i_j-1)=job
      alt_jobdir(i_j-1)=path

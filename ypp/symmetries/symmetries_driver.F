@@ -118,7 +118,7 @@ subroutine symmetries_driver(E,Xk)
    YAMBO_ALLOC(atom_mass,(n_atomic_species))
    YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
    atom_mass=0._SP
-   atoms_map=0
+   atoms_map=1  ! set to 1 to avoid segmentation faults
  endif
  !
  ! Energies and Wave-functions

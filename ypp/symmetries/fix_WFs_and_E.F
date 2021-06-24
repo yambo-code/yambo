@@ -94,8 +94,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  !
  call map_energies(E,E_new,k,kpoints_map)
  !
-
- !
  ! For some reason ioDB1 changes the value of ng_closed and of wf_nb_io
  ! This is a work-around to this problem
  ng_closed_save=ng_closed

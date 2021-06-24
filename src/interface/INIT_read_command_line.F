@@ -158,10 +158,10 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
      !
      if ( trim(rstr_piece(i1)) == 'screen') then
-       l_em1s= STRING_same(trim(rstr_piece(i1+1)),'s')
-       l_em1d= (STRING_same(trim(rstr_piece(i1+1)),'d') )
-       l_ppa = (STRING_same(trim(rstr_piece(i1+1)),'p') )
-       l_Xo  = (STRING_same(trim(rstr_piece(i1+1)),'X') )
+       l_em1s= STRING_match(trim(rstr_piece(i1+1)),'s')
+       l_em1d= (STRING_match(trim(rstr_piece(i1+1)),'d') )
+       l_ppa = (STRING_match(trim(rstr_piece(i1+1)),'p') )
+       l_Xo  = (STRING_match(trim(rstr_piece(i1+1)),'X') )
        if (l_Xo)   call initactivate(1,'Xo')
        if (l_em1s) call initactivate(1,'em1s')
        if (l_em1d) call initactivate(1,'em1d')

@@ -159,12 +159,12 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  enddo
  !
  do i_t=1,OUT_file(i_f)%N_columns_ordered
-   call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
    if (o_KINDS(i_t)=="I") call msg('string','',o_I_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
    if (o_KINDS(i_t)=="R") call msg('string','',o_R_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
-   call set_real_printed_length( )
  enddo
+ call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
  call msg('o '//OUT_file(i_f)%filename_short,' ',MSG_string(:OUT_file(i_f)%N_columns_ordered),INDENT=-2,USE_TABS=.TRUE.)
+ call set_real_printed_length( )
  !
  call OUTPUT_reset(i_f,"row")
  !

@@ -44,17 +44,16 @@ subroutine PHEL_screening(E,q)
  ! Work Space
  !
  integer      ::Xo_ID,EM1D_ID,io_err(2),iq,SEC(2),IO_ACT,ig1,ig2,iw,ig3
- complex(SP)  ::F_test_diff(nqibz,2),DIFF
- real(SP)     ::F_test_diff_max(nqibz),F_test_diff_avg(nqibz),MAX_val
+ real(SP)     ::INT_SF(nqibz,2)
  type(w_samp) ::Xow,EM1Dw
  type(X_t)    ::Xo,EM1D
  complex(SP), allocatable :: Xo_mat(:,:,:)
  complex(SP), allocatable :: F_test(:,:,:)
  type(PP_indexes)  ::px
- integer, external ::io_X
  character(schlen) ::fname
  !
- call section('+',"P-E interaction screening")
+ integer , external ::io_X
+ real(SP), external ::RIntegrate
  !
  Xo%whoami=1
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=Xo_ID)
@@ -110,23 +109,16 @@ subroutine PHEL_screening(E,q)
  !
  call OUTPUT_add_column("phel_screening_diff",action="reset")
  call OUTPUT_add_column("phel_screening_diff",action="open")
+ !
  do iq=1,nqibz
    !
-   F_test_diff_max(iq)=0.
-   F_test_diff_avg(iq)=0.
-   MAX_val=0.
-   do iw=1,Xow%n_freqs
-     if (abs(aimag(F_test(iq,iw,1)))>MAX_val) MAX_val=abs(aimag(F_test(iq,iw,2)))
-   enddo
+   INT_SF(iq,1)=RIntegrate(aimag(F_test(iq,:,1)),real(Xow%p),Xow%n_freqs)
+   INT_SF(iq,2)=RIntegrate(aimag(F_test(iq,:,2)),real(Xow%p),Xow%n_freqs)
    !
    fname="phel_screening_q"//trim(intc(iq))
    call OUTPUT_add_column(trim(fname),action="reset")
    call OUTPUT_add_column(trim(fname),action="open")
    do iw=1,Xow%n_freqs
-     !
-     DIFF=aimag(F_test(iq,iw,1)-F_test(iq,iw,2))/MAX_val
-     if (abs(DIFF)>abs(F_test_diff_max(iq))) F_test_diff_max(iq)=DIFF
-     F_test_diff_avg(iq)=F_test_diff_avg(iq)+DIFF/real(Xow%n_freqs)
      !
      call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xow%p(iw))/),UNIT="eV")
      call OUTPUT_add_column(trim(fname),&
@@ -138,9 +130,8 @@ subroutine PHEL_screening(E,q)
    call OUTPUT_add_column(trim(fname),action="close")
    !
    call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Q-point"/),I_VALUES=(/iq/))
-   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Im[DYN-STAT]/MAX(MAX)(%)","Im[DYN-STAT]/MAX(AVG)(%)"/),&
-&                         R_VALUES=(/F_test_diff_max(iq),F_test_diff_avg(iq)/)*100.)
-   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"MAX(Im[DYN])"/),R_VALUES=(/MAX_val/))
+   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"dInt[%]     ","Int(Im[DYN])"/),&
+&                         R_VALUES=(/(INT_SF(iq,1)-INT_SF(iq,2))/INT_SF(iq,1)*100.,INT_SF(iq,1)/))
    call OUTPUT_add_column("phel_screening_diff",action="write")
    !
  enddo

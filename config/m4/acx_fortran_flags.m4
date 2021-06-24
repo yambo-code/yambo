@@ -80,7 +80,7 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -209,7 +209,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -289,7 +289,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"

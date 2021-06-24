@@ -35,7 +35,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control
@@ -58,7 +58,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Work Space
  !
  integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
-&                        X_MEM_n_tot_freqs,whoami_save
+&                        X_MEM_n_tot_freqs,whoami_save,n_poles
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode

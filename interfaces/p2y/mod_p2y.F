@@ -323,7 +323,7 @@ contains
  !
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                        atom_pos, Z_species,atomic_number,atom_mass
+&                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
    ! 
 #include<memory.h>
    !
@@ -397,21 +397,23 @@ contains
      enddo
    endif
    !
-   YAMBO_ALLOC(atom_mass,(n_atomic_species))
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
    n_atoms_species_max = maxval(n_atoms_species)
+   YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
    YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
+     atoms_map( n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = i1
    enddo
    !
    YAMBO_ALLOC(Z_species,(n_atomic_species))
+   YAMBO_ALLOC(atom_mass,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
      atom_mass(i1) = real(amass_(i1),SP)

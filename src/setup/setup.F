@@ -29,7 +29,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -67,7 +67,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -98,6 +98,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
  endif
+ !
+ ! Atomic masses
  !
  if (allocated(atom_mass)) then
    do is=1,n_atomic_species
@@ -143,6 +145,29 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call define_zeros(vector_=g_vec,zero_=G_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ !
+ ! Atoms in the cell
+ !
+ call section('=','Atomic Positions') 
+ !
+ do is=1,n_atomic_species
+ do ia=1,n_atoms_species(is)
+   call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] ')
+ enddo
+ enddo
+ !
+ call msg('r',' ')
+ !
+ if(fat_log) then
+   !      
+   do is=1,n_atomic_species
+   do ia=1,n_atoms_species(is)
+     call c2a(v_out=tmp_V,v_in=atom_pos(:,ia,is),mode='rc2a')
+     call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu] ')
+   enddo
+   enddo
+   !
+ endif
  !
  ! Symmetries and moltiplication table:
  !

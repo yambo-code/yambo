@@ -69,7 +69,7 @@ subroutine WF_alloc(WF)
  !
  YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  if (have_cuda) then
-   YAMBO_ALLOC_GPU_MOLD(DEV_VAR(WF%c),WF%c)
+   YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
  endif
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)

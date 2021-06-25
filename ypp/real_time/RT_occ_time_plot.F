@@ -55,7 +55,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,Nk_path,last_ik,ibp
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),Ec,df,&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3),&
-&                         band_occupation(RT_bands(1):RT_bands(2))
+&                         band_occupation(RT_bands(1):RT_bands(2)),dipoles_Weight
  character(schlen)     :: titles(9),specs(9,2),dumb_ch(2)
  character(lchlen)     :: output_fname_short(2),output_fname(2,RT_carriers%nstates)
  character(3)          :: ch3_dummy
@@ -93,8 +93,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    do i_a=1,3
      call c2a(v_in=axis(i_a,:),mode='ki2c')
    enddo
-   last_ik=0
-   Nk_path=0
  endif
  !
  l_OCCgroup_path   =l_OCCgroup.and.CIRCUIT_k%nbz>0
@@ -168,7 +166,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    io_Time=RT_time(i_T)
    !
-   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=io_Time,keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    l_OCCgroup_k_and_b=l_OCCgroup.and.RT_carriers%nk>kpt%nibz.and.CIRCUIT_k%nbz==0
    !
@@ -180,6 +178,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    data_to_plot_cumulative(:,:,1)=io_TIME/FS2AUT
    if (l_OCCgroup_path) data_to_plot(2:7)=rZERO
    band_occupation=rZERO
+   dipoles_Weight =rZERO
+   last_ik=0
+   Nk_path=0
    !
    RT_loop: do i_RT=1,RT_carriers%nstates
      !
@@ -246,7 +247,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        Ec=RT_carriers%E_bare(i_RT)+RT_carriers%delta_E(i_RT)
        df=RT_carriers%OCC_el%dN(i_RT)*RT_carriers%k_weight(ik_RT)
        ! ... Apply the DIPOLES Mask
-       if (l_dipoles) df=df*DIPs_mask(ib,ik,i_spin)
+       if (l_dipoles) then
+         df=df*DIPs_mask(ib,ik,i_spin)
+         dipoles_Weight=dipoles_Weight+DIPs_mask(ib,ik,i_spin)
+       endif
        !
        if (ik_RT/=last_ik) then
          last_ik=ik_RT
@@ -314,7 +318,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      enddo
      call OUTPUT_add_column("bands_occupation",action="write")
      call open_file( output_fname(1,1),output_fname_short(1))
-     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1),data_to_plot(2:3),&
+     call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1:3),&
 &                                                    data_to_plot(4:7)*HA2EV/),INDENT=-2,USE_TABS=.true.)
      call of_open_close(output_fname(1,1))
    endif
@@ -352,7 +356,10 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
      call msg('o '//trim(fname_short),'#')
      !
      if (l_OCCgroup_path) then
-       call msg('o '//trim(fname_short),"#",trim(intc(Nk_path))//" K-points included",INDENT=0,USE_TABS=.TRUE.)
+       if (l_dipoles) then
+         call msg('o '//trim(fname_short),"# Average Dipoles Map",dipoles_Weight/real(Nk_path),INDENT=0)
+       endif
+       call msg('o '//trim(fname_short),  "# K-points included  ",Nk_path,INDENT=0)
        call msg('o '//trim(fname_short),'#')
      else
        !

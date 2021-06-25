@@ -66,7 +66,7 @@ subroutine K_observables(WHAT,W)
      PL(:,1) = W%p(:)  
    endif
    !
-   if(l_BS_abs) then
+   if(l_BS_abs.or.l_BS_kerr) then
      call X_alloc("EPS",(/BSS_n_freqs,4/))
      Epsilon_ii(:,1)=W%p(:)
    endif

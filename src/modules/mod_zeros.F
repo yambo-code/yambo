@@ -32,6 +32,7 @@ module zeros
  real(SP)            :: k_iku_zero(3)
  real(SP)            :: k_rlu_zero(3)
  real(SP)            :: G_iku_zero(3)
+ real(SP)            :: G_mod_zero
  !
  contains 
    !

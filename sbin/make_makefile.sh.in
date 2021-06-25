@@ -44,8 +44,9 @@ if [ ! -f $cdir/$ofile ]; then exit 0; fi
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
 llibs=""
-lock_file="__lock"
-dep_file="make.dep"
+objects_lock="__objects_lock"
+pjdep_file="project.dep"
+moduledep_file="module.dep"
 modlist_file="modfiles.list"
 for arg in $@; do
  case $arg in
@@ -59,7 +60,7 @@ for arg in $@; do
   -D_*) 
    dopts="$dopts $arg"
    a=`echo $arg  | sed "s/-D_/_/"`
-   lock_file="$lock_file$a"
+   objects_lock="$objects_lock$a"
    ;;
   -l*) 
    llibs="$arg $llibs"
@@ -67,25 +68,38 @@ for arg in $@; do
  esac
 done
 #
-comp_modules="$INCLUDEDIR//modules_"
+# Project dependencies
+#if [ ! -f $cdir/project.dep ] ; then 
+# for project in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _DOUBLE
+# do
+#   @compdir@/sbin/projectdep.sh $cdir $project
+# done
+# for exe in _a2y _c2y _p2y _yambo _ypp
+# do
+#   @compdir@/sbin/projectdep.sh $cdir $exe
+# done
+#fi
+#
+# Locks
+modules_lock="$INCLUDEDIR//modules_" #"__modules_lock"
 for arg in $@; do
  case $arg in
   -D_MPI|-D_OPENMP|-D_CUDA|-D_DOUBLE|-D_TIMING|-D_PAR_IO|-D_HDF5_IO|-D_64BIT_OFFSET|-D_NC_CLASSIC|-D_OPENMP_INT_LINALG|-D_SLEPC)
    a=`echo $arg  | sed "s/-D_/_/"`
-   comp_modules="$comp_modules$a";
+   modules_lock="$modules_lock$a";
    ;;
  esac
 done
 for arg in $@; do
  case $arg in
   -D_SLEPC_OFF)
-   comp_modules=`echo $comp_modules  | sed "s/_SLEPC//"`;
-   lock_file=`echo $lock_file  | sed "s/_SLEPC//"`;
+   modules_lock=`echo $modules_lock  | sed "s/_SLEPC//"`;
+   objects_lock=`echo $objects_lock  | sed "s/_SLEPC//"`;
    ;;
  esac
 done
-comp_modules=`echo $comp_modules | sed "s/_DOUBLE//2"`;
-lock_file=`echo $lock_file  | sed "s/_DOUBLE//2"`;
+modules_lock=`echo $modules_lock | sed "s/_DOUBLE//2"`;
+objects_lock=`echo $objects_lock  | sed "s/_DOUBLE//2"`;
 #
 # Libraries & Includes
 #
@@ -126,13 +140,13 @@ echo "llibs=$llibs" >> $cdir/Makefile
 echo "linclude=$lf90include" >> $cdir/Makefile
 echo "lf90libinclude=$lf90libinclude" >> $cdir/Makefile
 echo "lf90include=$lf90include" >> $cdir/Makefile
-echo "modinclude=$comp_modules" >> $cdir/Makefile
+echo "modinclude=$modules_lock" >> $cdir/Makefile
 echo "mfiles=find . -maxdepth 1 -name '*.mod'" >> $cdir/Makefile
 echo "target=$target" >> $cdir/Makefile
 echo "dmpi=$dmpi" >> $cdir/Makefile
 echo "dopts=$dopts -D_\$(os)" >> $cdir/Makefile
-echo "lock_file=$lock_file" >> $cdir/Makefile
-echo "dep_file=$dep_file" >> $cdir/Makefile
+echo "objects_lock=$objects_lock" >> $cdir/Makefile
+echo "moduledep_file=$moduledep_file" >> $cdir/Makefile
 echo "modlist_file=$modlist_file" >> $cdir/Makefile
 cp $cdir/$ofile $cdir/$ofile.c
 $cpp $cppflags $dopts -D_$os -D_$target $cdir/$ofile.c >> $cdir/Makefile
@@ -140,7 +154,7 @@ rm -f $cdir/$ofile.c
 
 if [ "$mode" = "x" ] ; then 
 cat << EOF >> $cdir/Makefile
-\$(target): \$(dep_file) \$(objs)
+\$(target): \$(moduledep_file) \$(objs)
 	\$(driver)
 	\$(link)
 	\$(modmove)
@@ -150,27 +164,28 @@ EOF
 else
 rm -f ./lib/$target
 cat << EOF >> $cdir/Makefile
-\$(target): \$(dep_file) arcreate
+\$(target): \$(moduledep_file) arcreate
 	\$(modmove) 
 EOF
 fi
 
 cat << EOF >> $cdir/Makefile
-\$(lock_file):
+\$(objects_lock):
 	\$(modpath)
-	${PREFIX}if test ! -f \$(lock_file) && test "\$(keep_objs)" = "no" ; then \
+	${PREFIX}if test ! -f \$(objects_lock) && test "\$(keep_objs)" = "no" ; then \
 	find . \( -name '*.o' -o -name '*.mod' -o -name '__*' \) | xargs rm -f ; \
-	touch \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
+	touch \$(objects_lock); rm -f \$(moduledep_file) \$(modlist_file); fi
 	${PREFIX}if test "\$(keep_objs)" = "yes"; \
-	then \$(compdir)/sbin/objects_store.sh \$(lock_file); rm -f \$(dep_file); rm -f \$(modlist_file); fi
-	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(dep_file); rm -f \$(modlist_file); fi
+	then \$(compdir)/sbin/objects_store.sh \$(objects_lock); rm -f \$(moduledep_file) \$(modlist_file); fi
+	${PREFIX}if test "\$(keep_objs)" = "no"; then rm -f \$(moduledep_file) \$(modlist_file); fi
 
-\$(dep_file): \$(lock_file)
-	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(compdir)/$cdir/\$(dep_file)
+\$(moduledep_file): \$(objects_lock)
+	cd \$(srcdir)/$cdir; \$(srcdir)/sbin/moduledep.sh \$(objs) > \$(compdir)/$cdir/\$(moduledep_file)
 
 arcreate: \$(objs)
 	${PREFIX}(eval \$(ar) \$(arflags) \$(target) \$(objs)) > /dev/null
-	${PREFIX}mv \$(target) \$(libdir) ; chmod u+x \$(libdir)/\$(target)
+	${PREFIX}mv \$(target) \$(libdir)  
+	chmod u+x \$(libdir)/\$(target)
 #
 # Functions
 #
@@ -182,12 +197,12 @@ define link
  ${PREFIX}(eval \$(fc) \$(fcflags) \$(lf90include) \$(lf90libinclude) -o \$@ driver.o \$(objs) \$(llibs) ) > /dev/null
 endef
 define modpath
- ${PREFIX}if test ! -d $comp_modules; then echo "creating folder $comp_modules" ; fi
- ${PREFIX}if test ! -d $comp_modules; then mkdir $comp_modules ; fi
+ ${PREFIX}if test ! -d $modules_lock; then echo "creating folder $modules_lock" ; fi
+ ${PREFIX}if test ! -d $modules_lock; then mkdir $modules_lock ; fi
 endef
 define modmove
  ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 || \$(mfiles) > \$(modlist_file)
- ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $comp_modules
+ ${PREFIX}test \`\$(mfiles) | wc -l\` -eq 0 ||  mv *.mod $modules_lock
 endef
 define dircheck
  ${PREFIX}if test ! -d \$(exec_prefix); then mkdir \$(exec_prefix);fi
@@ -238,7 +253,7 @@ FC_LOCAL_SRC= sgfft.o
 #
 # Includes
 #
--include \$(dep_file)
+-include \$(moduledep_file)
 #
 # Rules
 #

@@ -386,7 +386,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     !
    end subroutine DIPOLES_ppredux_and_symmetrize
    !
-   !
    subroutine DIPOLES_ppredux_and_symmetrize_orbt()
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
@@ -431,6 +430,5 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize_orbt
-   !
    !
 end subroutine

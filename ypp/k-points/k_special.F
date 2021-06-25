@@ -139,27 +139,33 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(ap,bp)
      !
-     call k_add((/0._SP,0._SP,0._SP/),'G' ) 
-     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )
+     call k_add((/0._SP,0._SP,0._SP/),'G' ) ! 1 
+     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )! 2
      !
-     call k_add((/fp,0._SP,0._SP/),'X' )
-     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' )
+     call k_add((/fp,0._SP,0._SP/),'X' ) ! 3
+     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' ) ! 4
      !
-     call k_add((/0._SP,bp,0._SP/),'Y' )
-     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' )
+     call k_add((/0._SP,bp,0._SP/),'Y' ) ! 5
+     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' ) ! 6
      !
-     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' )
-     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' )
+     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' ) ! 7
+     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' ) ! 8
      !
-     call k_add((/ep,bp,0._SP/),'X1' )
-     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' )
+     call k_add((/ep,bp,0._SP/),'X1' ) ! 9 
+     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' ) ! 10
      !
-     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' )
+     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' ) ! X+Y
      call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:),'A2' )
      call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:),'A3' )
      call k_add(SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:),'A4' )
      call k_add(SPECIAL_k%pt(13,:)+SPECIAL_k%pt(5,:),'A5' )
      call k_add(SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:),'A6' )
+     !
+     ! Y direction
+     !
+     call k_add(SPECIAL_k%pt(3,:)-SPECIAL_k%pt(5,:), 'X3' ) ! X-Y
+     call k_add(-SPECIAL_k%pt(3,:)-SPECIAL_k%pt(5,:),'X4' ) ! -X-Y
+     call k_add(-SPECIAL_k%pt(5,:),'Yp' ) ! -Y
      !
      ! X=+, Z=- quadrant
      !

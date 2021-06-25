@@ -47,7 +47,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
- use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use H_interfaces,   ONLY:V_real_space_to_H
 #if defined _TIMING
@@ -228,7 +228,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    endif                                                         
    !
    if(l_use_Hxc_collisions) then
-     call V_by_V_plus_V_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
+     call M_plus_alpha_M_omp(RT_nbands,cONE,RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),ik,i_sp_pol),&
 &                                            H_nl_sc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2)))
 
    endif

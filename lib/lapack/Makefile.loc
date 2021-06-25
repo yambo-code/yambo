@@ -32,7 +32,7 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE); $(make) ) ; fi
+	( cd $(PACKAGE); $(make) blaslib; $(make) lapacklib) ; fi
 	#
 	touch package-ready-stamp
 
@@ -53,8 +53,12 @@ clean_all:
 	if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	- rm -rf package-ready-stamp configure-stamp package-installed
 
+#This is not needed since "make blaslib" directly put libblas.a into $(LIBPATH)/lib
+#cp libblas.a $(LIBPATH)/lib ;
+
 define install
- cd $(PACKAGE);  cp *.a SRC/liblapack.a $(LIBPATH)/lib ; \
+ cd $(PACKAGE);  \
+ cp SRC/liblapack.a $(LIBPATH)/lib ; \
  chmod +x $(LIBPATH)/lib/*lapack*.a ; \
  chmod +x $(LIBPATH)/lib/*blas*.a   
 endef  

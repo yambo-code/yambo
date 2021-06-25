@@ -96,7 +96,7 @@ subroutine RT_density(en,kpt,qpt)
    call RT_time_configuration_setup("G-DENSITY",GF_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
-   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
    call RT_occupation_alloc("electrons",RT_el_occ,RT_bands,RT_nk)
    call msg('s',trim(ch_ws(1)))
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)

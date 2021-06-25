@@ -1,3 +1,16 @@
+new_clean: lib_clean o_clean setup_clean
+
+setup_clean:
+	@$(stamps_clean)
+	@$(dependencies_clean)
+
+o_clean:
+	@$(o_clean)
+
+lib_clean:
+	@$(o_int-lib_clean)
+	@$(a_int-lib_clean)
+
 clean_fast: 
 	@$(objects_clean)
 	@$(lib_mod_clean)

@@ -1,3 +1,39 @@
+#
+# NEW
+#
+define stamps_clean
+ echo  "\t[CLEAN] ... stamps" ; \
+ rm -f $(prefix)/config/stamps/*.stamp
+endef
+define dependencies_clean
+ echo  "\t[CLEAN] ... depependencies" ; \
+ find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' \) | xargs rm -f 
+endef
+define o_clean
+ echo  "\t[CLEAN] ... objects & modules " ; \
+ find src \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
+ find ypp \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
+ find interfaces \( -name '*.o' \) |  xargs rm -fr ; \
+ find driver \( -name '*.o' \) |  xargs rm -fr 
+endef
+define o_int-lib_clean
+ echo  "\t[CLEAN] ... internal libraries objects & modules" ; \
+ find lib/local \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
+ find lib/math77 \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
+ find lib/qe_pseudo \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
+ find lib/slatec \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr 
+endef
+define a_int-lib_clean
+ echo  "\t[CLEAN] ... internal libraries archives" ; \
+ for libtoclean in "local" "qe_pseudo" "math77" "slatec" ; do \
+   rm -f d $(libdir)/lib$$libtoclean.a ; \
+ done;
+endef
+
+
+#
+# OLD
+#
 define makefiles_clean
  find . \( -name 'Makefile' -o -name '*module.dep' -o -name '*project.dep' -o -name '*objects.mk' -o -name 'dyn_variables.mk' \) -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*yaml.*\/Makefile' |  \

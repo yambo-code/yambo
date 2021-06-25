@@ -108,6 +108,9 @@ include config/mk/actions/help.mk
 # Libraries download/clone/checkout
 include config/mk/functions/get_libraries.mk
 #
+# Libraries download/clone/checkout
+include config/mk/actions/dependencies.mk
+#
 # Messages
 include config/mk/functions/messaging.mk
 #

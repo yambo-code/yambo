@@ -92,6 +92,6 @@ define dircheck
  $(PREFIX)if test ! -d $(exec_prefix); then mkdir $(exec_prefix);fi
 endef
 define msg
- $(PREFIX)(echo "\t $*" )
+ $(PREFIX)(echo "\t [$(target)] $*" )
 endef
 

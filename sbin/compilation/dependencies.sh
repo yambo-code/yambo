@@ -23,88 +23,66 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 # dependencies.sh -- script that computes dependencies on Fortran 90 modules/projects
-# modified from the moduledep.sh distributed with Quantum ESPRESSO
+# modified from the moduledep.sh distributed with Quantum ESPRESSO and added the project part
 #
-# make sure there is no locale setting creating unneeded differences.
-#
-LC_ALL=C
-export LC_ALL
-#
-# Dir, project
-#==============
-PJ="NONE"
-while getopts ":d:p:" opt; do
-    case $opt in
-        d) CDIR=${OPTARG}
-        ;;
-        p) PJ=${OPTARG}
-        ;;
-    esac 
+# Directories to process
+#========================
+dot_files=`find . -name '.objects'`
+for file in $dot_files
+do
+ directories+=" "
+ directories+=`dirname $file`
 done
+#
+Nd=`echo $directories | wc -w`
+Nd=$((Nd-1))
+#
+BASE=$PWD
+idir=0
+for CDIR in $directories
+do
+ cd $CDIR
+ echo -en "\t[SETUP] Modules detection [ "
+ for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
+ for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
+ echo -n " ] $idir/$Nd " $'\r'
+ idir=$((idir+1))
 #
 # Sources to process
 #====================
 sources=" "
-if test `find $CDIR -maxdepth 1 -name '*.F' | wc -l` -ge 1 ; then
- sources+=`echo $CDIR/*.F`
+if test `find . -maxdepth 1 -name '*.F' | wc -l` -ge 1 ; then
+ sources+=`echo *.F`
 fi
 sources+=" " 
-if test `find $CDIR -maxdepth 1 -name '*.c' | wc -l` -ge 1 ; then
- sources+=`echo $CDIR/*.c`
+if test `find . -maxdepth 1 -name '*.c' | wc -l` -ge 1 ; then
+ sources+=`echo *.c`
+fi
+if [ ${#sources} -eq 2 ]; then 
+ cd $BASE
+ continue 
 fi
 #
 # Projects 
 #==========
-if ! test "$PJ" = "NONE" ; then 
+for PJ in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC
+do
+ sources_pj_dependent=" "
  for file in $sources
  do
   if test `grep $PJ $file | grep '#'| wc -l` -ge 1; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
-    sources_pj_dependent+=" ${obj} $PJ"
+    sources_pj_dependent+=" ${obj} $PJ\n"
   fi
  done
- echo $sources_pj_dependent >>  $CDIR/${PJ}_project.dep
-fi
-exit 0
-#
-# Modules
-#=========
-#
-# files whose dependencies must be computed
-sources=`echo *.F | 
-sed 's/\*\.F//g'|
-sed 's/\.F//g'`        # remove the "*.F" that remains
-
-objs=` echo $@ | 
-sed 's/\.o//g '`
-
-sources_new=" "
-#iterate over the list of objects
-for i in $objs
-do
-    # in the source is to be compiled i.e. it is in the objects list then we
-    # will keep it to the next step. Otherwise we disregard it
-    if [[ $sources =~ (^|[[:space:]])"$i"($|[[:space:]]) ]]; then
-        sources_new+=" ${i}.F"
-    fi
+ PREFIX=`echo $PJ | sed 's/_//g'`
+ if [ ${#sources_pj_dependent} -gt 1 ]; then
+  echo -e "$sources_pj_dependent" >>  ${PREFIX}_project.dep
+ fi
 done
-
-sources=`echo $sources_new`
-if test "$sources" = "" ; then exit ; fi
-
-# files that may contain modules
-# extra directories can be specified on the command line
-sources_all="$sources"
-for dir in $*
-do
-  sources_all="$sources_all `echo $dir/*.F`"
-done
-sources_all=`echo $sources_all |
-sed 's/[^ ]*\*\.F//g'`     # remove the "dir/*.F" that remain
-#                            # when there are no such files
-
-rm -f moduledep.tmp1 moduledep.tmp2 # destroy previous contents
-
+#
+# Modules. Step I: get the list of modules used and defined
+#===========================================================
 # create list of module dependencies
 # each line is of the form:
 # file_name.o : @module_name@
@@ -114,23 +92,45 @@ sed 's/F:/o /
      s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
 #                                         #   and remove trailing comma
 awk '{print $1 " : @" tolower($3) "@"}' | # create dependency entry
-sort | uniq > moduledep.tmp1              # remove duplicates
+sort | uniq > modules.list              # remove duplicates
 
 # create list of available modules
 # for each module, create a line of the form:
 # s/@module_name@/file_name/g
-egrep -H -i "^ *module " $sources_all |           # look for "MODULE name"
+egrep -H -i "^ *module " $sources |           # look for "MODULE name"
 sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes
 awk '{print "s/@" tolower($3) "@/" $1 "/" }' | # create substitution line
-sort | uniq > moduledep.tmp2                   # remove duplicates
-
+sort | uniq >> $compdir/config/modules.rules                    # remove duplicates
+#
+cd $BASE
+#
+done
+echo
+#
+idir=0
+for CDIR in $directories
+do
+ cd $CDIR
+ echo -en "\t[SETUP] Dependencies [ "
+ for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
+ for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
+ echo -n " ] $idir/$Nd " $'\r'
+ idir=$((idir+1))
+ if [ ! -e modules.list ]; then
+  cd $BASE
+  continue 
+ fi
+# Modules. Step II: create a local list of modules dependencies 
+#===============================================================
 # replace module names with file names
 # by applying the file of substitution patterns just created
-sed -f moduledep.tmp2 moduledep.tmp1 |
-awk '{if ($1 != $3) print}' |          # remove self dependencies
+sed -f $compdir/config/modules.rules modules.list |
+awk '{if ($1 != $3) print}' |         # remove self dependencies
 sort  | uniq |                        # remove duplicates
-sed 's/@.*@//'
+sed 's/@.*@//' > modules.dep
+cd $BASE
+done
+echo
 
-rm -f moduledep.tmp1 moduledep.tmp2 # remove temporary files

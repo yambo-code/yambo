@@ -22,7 +22,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-while getopts ":d:t:o:m:" opt; do
+while getopts ":d:t:o:m:D" opt; do
  case $opt in
   d) cdir=${OPTARG}
   ;;
@@ -31,6 +31,8 @@ while getopts ":d:t:o:m:" opt; do
   o) ofile=${OPTARG}
   ;;
   m) mode=${OPTARG}
+  ;;
+  D) dep="yes"
   ;;
   ?) shift
   ;;

@@ -22,11 +22,22 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+# make sure there is no locale setting creating unneeded differences.
+#
+LC_ALL=C
+export LC_ALL
+#
 ARGS=$@;
 source ./sbin/compilation/helper.inc.sh
 #
 # OPTIONS
 source ./sbin/compilation/options.sh
+#
+# Dependencies?
+if [ "$dep" == "yes" ]; then 
+ source ./sbin/compilation/dependencies.sh
+ exit 0
+fi
 #
 # CHECK
 if [ ! -f $cdir/$ofile ]; then exit 0; fi
@@ -36,7 +47,7 @@ if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
 # DEFS (2)
 pjdep_file="project.dep"
-moduledep_file="module.dep"
+moduledep_file="modules.dep"
 modlist_file="modfiles.list"
 #
 # Projects

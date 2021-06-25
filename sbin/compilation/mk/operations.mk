@@ -1,11 +1,12 @@
-exe: $(mk_moduledep_file) $(objs)
+exe: $(objs)
 	$(driver)
 	$(link)
 	$(modmove)
 	$(dircheck)
 	$(PREFIX)(mv $@ $(exec_prefix))
 #
-lib: moduledep  do_the_lib
+lib: $(objs)
+	$(mk_lib) 
 	$(modmove) 
 #
 objects_lock:
@@ -13,11 +14,6 @@ objects_lock:
 	$(o_and_mod_clean)
 	$(o_save)
 #
-moduledep:  objects_lock
-	$(PREFIX)(cd $(srcdir)/$(wdir); $(srcdir)/sbin/moduledep.sh $(objs) > $(compdir)/$(wdir)/$(moduledep_file))
-
-do_the_lib: $(objs)
-	$(mk_lib) 
 #
 # Sources that do not want optimization
 #

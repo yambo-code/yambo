@@ -1,3 +1,13 @@
+# SETUP #
+#########
+modules.list
+modules.rules
+dependencies.stamp
+
+# AUTO-generated #
+##################
+config/compilation_helper.sh.inc
+
 # Compiled source #
 ###################
 *.com
@@ -28,7 +38,6 @@ config/report
 config/setup
 config/msg_ydb
 config/make.inc
-config/compilation_helper.sh.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc

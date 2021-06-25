@@ -44,12 +44,13 @@ i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    #FUFLAGS="-O0 -g -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *nvfortran* )
     SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
@@ -269,23 +270,15 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
-  *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -g -Mbackslash"
+  *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"
+    FUFLAGS="-O0 -g -Mbackslash -cpp"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash"
-    ;;
-  *nvfortran* )
-    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -g -Mbackslash"
-    FCMFLAG="-Mnomain"
-    OMPFLAGS="-mp"
-    def_compiler="-D_NV"
-    NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash -cpp"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"

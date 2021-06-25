@@ -11,11 +11,11 @@ ext-libs:
 libxc: 
 	@+if test "$(do_libxc)" = yes ; then LIBS2DO="libxc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
-devxlib: 
-	@+if test "$(do_devxlib)" = yes ; then LIBS2DO="devxlib" ; \
-	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 lapack: 
 	@+if test "$(do_lapack)" = yes ; then LIBS2DO="lapack" ; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
+devxlib: 
+	@+if test "$(do_devxlib)" = yes ; then LIBS2DO="devxlib" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 fftw: 
 	@+if test "$(do_fftw)" = yes ; then LIBS2DO="fftw" ; \

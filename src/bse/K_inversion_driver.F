@@ -26,9 +26,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use pars,           ONLY:SP,pi
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
-&                         K_INV_EPS,BSS_add_antiresonant,K_Inversion_data,&
-&                         K_slk,K_inv_slk,BSS_eels_to_eps
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk
+&                         K_INV_EPS,K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,BS_K_anti_resonant
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
@@ -167,7 +166,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  ! IP-part Lo [also recompute Epsilon_xx(:,3) OR PL (needed in case of DbG)]
  !===========================================================================
  Lo_dim=1
- if (BSS_add_antiresonant) Lo_dim=2
+ if (BS_K_anti_resonant.and.l_BS_ares_from_res) Lo_dim=2
  Lo_n_loop=Lo_dim
  !
  ! In the PL case we need, in addition to the standard GF, also some additional L_k^(r)(w) A_k(w) L_k^(a)(w), where
@@ -175,7 +174,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (l_BS_photolum) then
    Lo_dim=2
-   if (BSS_add_antiresonant) Lo_dim=4
+   if (BS_K_anti_resonant.and.l_BS_ares_from_res) Lo_dim=4
  endif
  !
  YAMBO_ALLOC(Lo,(BS_H_dim,W%n_freqs,Lo_dim))

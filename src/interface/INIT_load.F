@@ -49,7 +49,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
+<<<<<<< HEAD
 &                        BS_n_g_W,BS_n_g_exch,BS_n_g_fxc,L_kind,BS_K_cutoff,BSK_IO_mode
+=======
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
+>>>>>>> develop
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
@@ -79,7 +83,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
-&                        CACHE_OBS_INTERVAL_time_INPUT
+&                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode
  use stderr,        ONLY:intc
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
@@ -304,7 +308,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSEprop',   '[BSS] abs/kerr/magn/dichr trace',BSE_prop)
+ call it(defs,'BSEprop',   '[BSS] Can be any among abs/jdos/kerr/magn/dich/photolum/esrt',BSE_prop)
+ call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -363,6 +368,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE: Real-Time
  !
+ call it(defs,'RTOccMode','[RT-BSE] (K)ernel/(R)esiduals. BSE components to be corrected with the TD occupations',&
+&             RT_BSE_Occ_Mode,verb_level=V_real_time)
  call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
  !
 #endif
@@ -581,7 +588,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_RT_ctl_load(defs,1)
  call INIT_RT_ctl_load(defs,2)
  call INIT_RT_ctl_load(defs,3)
- call INIT_RT_ctl_load(defs,4)
  !
 #endif
  !

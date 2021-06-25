@@ -140,7 +140,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    call IO_and_Messaging_switch("-log")
    !
-   call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    call RT_carriers_to_RT_E(En,RT_E,"E")
    !

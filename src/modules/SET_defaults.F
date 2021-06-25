@@ -68,14 +68,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_add_antiresonant,BSS_perturbative_width,K_INV_EPS,K_INV_PL
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _SLEPC_OFF
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
  &                    BSS_slepc_precondition,BSS_slepc_approach
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
-&                     BS_res_mode,BS_K_dim,BS_cpl_mode,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
+&                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
 &                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
@@ -436,8 +436,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
- BS_res_mode='xc'
- BS_cpl_mode='none'
  L_kind='Lbar'
  BSE_mode='resonant'
  BSE_prop='abs'
@@ -445,7 +443,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSK_IO_mode='2D_standard'
  l_BSE_kernel_complete=.false.
  TDDFT_mode=' '
- BSS_add_antiresonant=.FALSE.
  BSS_Wd=cZERO
  l_drude=.false.
  BS_K_dim=0

@@ -40,7 +40,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,qindx_ID,GKKP)
  !
  ! Work Space 
  !
- integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym),ok_bz_mem
+ integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym)
  logical       ::local_K_found(k%nbz),l_bands_reverted
  type(GKKP_me) ::GKKP_expanded
  integer, external ::qindx_B_init,qindx_B_close 

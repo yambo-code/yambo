@@ -43,33 +43,31 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,report)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l
+ integer :: iq,i_c,i_l,io_err
  real(SP), allocatable    :: BS_all_E(:,:)
  real(SP), allocatable    :: values(:)
  real(SP) :: tmp_q(3)
  character(schlen), allocatable :: headings(:)
-
  !
  ! Allocate arrays for all eigenvalues/eigenvectors
  ! 
  YAMBO_ALLOC(BS_all_E,(EXCITONS_n_user_states,q%nibz))
  !
- !
  call section('*','Excitons Interpolation')
  !
- call excitons_read(k,Xk,en,Xen,1,"clean")
+ call excitons_read(k,Xk,en,Xen,1,"clean",io_err)
  !
  ! Read all eigenvalues and eigenvectors
  !
  do iq=1,q%nibz
    call msg('s','Reading excitons at @ Q-index #',iq)
-   call excitons_read(k,Xk,en,Xen,iq,"check")
-   call excitons_read(k,Xk,en,Xen,iq,"eigenvalues")
+   call excitons_read(k,Xk,en,Xen,iq,"check",io_err)
+   call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)
    do i_c=1,EXCITONS_n_user_states
      i_l=EXCITONS_user_indexes(i_c)
      BS_all_E(i_c,iq)=BS_E(i_l)
    enddo
-   call excitons_read(k,Xk,en,Xen,iq,"clean")
+   call excitons_read(k,Xk,en,Xen,iq,"clean",io_err)
    !
  enddo
  !

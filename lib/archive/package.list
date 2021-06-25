@@ -33,7 +33,7 @@ tarball_pnetcdf=pnetcdf-1.12.1.tar.gz
 tarball_hdf5=hdf5-1.12.0.tar.gz
 tarball_etsf_io=etsf_io-1.0.4.tar.gz
 tarball_libxc=libxc-2.2.3.tar.gz
-tarball_lapack=lapack-3.9.0.tar.gz
+tarball_lapack=v3.9.1.tar.gz
 tarball_blacs=blacs.tar.gz
 tarball_scalapack=scalapack-2.1.0.tar.gz
 tarball_petsc=petsc-3.13.4.tar.gz
@@ -42,3 +42,48 @@ tarball_fftw=fftw-3.3.6-pl1.tar.gz
 tarball_fftqe=fftqe.tar.gz
 tarball_yaml=yaml-0.2.2.tar.gz
 tarball_futile=futile-yambo.tar.gz
+#
+# package names
+#
+package_name=yambo_driver
+pkgname_iotk=iotk
+pkgname_netcdf=netcdf-c-4.7.4
+pkgname_netcdff=netcdf-fortran-4.5.3
+pkgname_pnetcdf=pnetcdf-1.12.1
+pkgname_hdf5=hdf5-1.12.0
+pkgname_etsf_io=etsf_io-1.0.4
+pkgname_libxc=libxc-2.2.3
+pkgname_lapack=lapack-3.9.1
+pkgname_blacs=blacs
+pkgname_scalapack=scalapack-2.1.0
+pkgname_petsc=petsc-3.13.4
+pkgname_slepc=slepc-3.13.3
+pkgname_fftw=fftw-3.3.6-pl1
+pkgname_fftqe=fftqe
+pkgname_yaml=yaml-0.2.2
+pkgname_futile=futile-yambo
+#
+# External URL's
+#
+url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
+#
+# Intenrnal URL's
+#
+base_url=https://github.com/yambo-code/yambo-libraries/raw/master/external/
+#
+url_driver=$(base_url)/$(tarball_driver)
+url_netcdf=$(base_url)/$(tarball_netcdf)
+url_netcdff=$(base_url)/$(tarball_netcdff)
+url_pnetcdf=$(base_url)/$(tarball_pnetcdf)
+url_hdf5=$(base_url)/$(tarball_hdf5)
+url_iotk=$(base_url)/$(tarball_iotk)
+url_etsf_io=$(base_url)/$(tarball_etsf_io)
+url_blacs=$(base_url)/$(tarball_blacs)
+url_scalapack=$(base_url)/$(tarball_scalapack)
+url_petsc=$(base_url)/$(tarball_petsc)
+url_slepc=$(base_url)/$(tarball_slepc)
+url_fftw=$(base_url)/$(tarball_fftw)
+url_fftqe=$(base_url)/$(tarball_fftqe)
+url_yaml=$(base_url)/$(tarball_yaml)
+url_futile=$(base_url)/$(tarball_futile)
+url_libxc=$(base_url)/$(tarball_libxc)

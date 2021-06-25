@@ -10,8 +10,8 @@ LIBNAME=liblapack.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_lapack)
 TARBALL=$(tarball_lapack)
-PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 #
 # MAIN target
 #

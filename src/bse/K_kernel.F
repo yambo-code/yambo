@@ -90,11 +90,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
  !
-<<<<<<< HEAD:src/bse/K_kernel.F
  integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),&
-=======
- integer    :: i_block,O_ng_shift,NG,&
->>>>>>> devel-tddft:src/bse/K.F
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c,BS_mat_tmp
@@ -243,53 +239,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
-<<<<<<< HEAD:src/bse/K_kernel.F
-=======
- ! Wave Functions
- !================
- bands_to_load=BS_bands
- if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
- !
- section_title='-BSK'
- if (l_bs_fxc) section_title='-BSK->Fxc'
- !
- NG=max(O_ng,BS_n_g_exch)
- if (BS_K_is_ALDA) NG=max(NG,BS_n_g_fxc)
- !
- call WF_load(WF,NG,O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
- !
- ! Wave Functions Phases
- !=======================
- call K_WF_phases(Xk)
- ! 
- ! Spatial Inversion Test
- !========================
- call WF_spatial_inversion(Ken,Xk)
- !
- ! ALDA
- !======
- if (BS_K_is_ALDA) then
-   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
-   V_xc=0._SP
-   if(n_spin>1) then
-     YAMBO_ALLOC(magn,(fft_size,3))
-   endif
-   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
-   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
-   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
-   YAMBO_FREE(F_xc)
-   YAMBO_FREE(V_xc)
-   if(n_spin>1) then
-     YAMBO_FREE(magn)
-   endif
-   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
-     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   endif
- endif
- !
->>>>>>> devel-tddft:src/bse/K.F
  ! DB identifier 
  !===============
  BS_identifier=pickup_a_random(10000._SP)
@@ -353,20 +302,28 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    endif
    !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
+   !
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+   V_xc=0._SP
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
-   call XC_potential_driver(Ken,Xk,WF_KIND,WF_xc_functional,2)
+   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
+   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
+   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
+   YAMBO_FREE(F_xc)
+   YAMBO_FREE(V_xc)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
+   !
    call WF_free(WF)
-   !if ( BS_n_g_fxc/=ng_closed) then
-   !  FXC_n_g_corr=BS_n_g_fxc
-   !  call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-   !  call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   !endif
+   !
+   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
+     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
+   endif
  endif
  !
  call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title))
@@ -682,17 +639,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-<<<<<<< HEAD:src/bse/K_kernel.F
-       if (l_BS_ares_asymm) then
+       if (.not.l_BS_ares_from_res) then
          BS_mat_tmp = sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        else
          if (BS_blk(i_block)%mode=="R") BS_mat_tmp =    sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
          if (BS_blk(i_block)%mode=="C") BS_mat_tmp = cI*sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
        endif
-=======
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (BS_blk(i_block)%mode=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*BS_blk(i_block)%mat(i_Tk,i_Tp)
->>>>>>> devel-tddft:src/bse/K.F
        !
        if (iHxc==1) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_mat_tmp
        if (iHxc>=2) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_blk(i_block)%mat(i_Tk,i_Tp)+BS_mat_tmp

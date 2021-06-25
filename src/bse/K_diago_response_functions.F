@@ -34,7 +34,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
  use parallel_m,     ONLY:myid,PP_indexes,PP_indexes_reset
  use LIVE_t,         ONLY:live_timing
- use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort
+ use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
  use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact,BSS_eels_to_eps
  use R_lattice,      ONLY:bare_qpg,q0_def_norm

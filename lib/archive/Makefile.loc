@@ -5,7 +5,7 @@ include ./package.list
 WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_Ydriver)
+     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc)  $(tarball_slepc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_Ydriver)
 #
 # Alias
 #

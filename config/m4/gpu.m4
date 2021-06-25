@@ -132,7 +132,7 @@ if test x"$enable_openacc" != "xno" ; then
       GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       ;;
     *GNU* | *gnu*)
-      GPU_FLAGS="-fno-lto -fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
    esac
    #
 fi

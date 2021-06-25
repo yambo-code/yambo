@@ -57,8 +57,10 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  isymm = isc(3)
  !
  if(isc(3)==idt_index) then
+   !
    call dev_memcpy(WF_symm,cmplx(DEV_VAR(WF%r)(:,:,i_wf),kind=SP))
    return
+   !
  endif
  !
  if (allocated(rho_map)) call error(" rho map procedure not implemented with symmetries")

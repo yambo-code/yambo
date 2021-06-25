@@ -40,7 +40,7 @@ subroutine RT_output_INIT( )
  ! Work space
  !
  integer                  :: i_f,i_fp,i_c,i_order,il
- character(schlen)        :: dumb_ch,dumb_ch2
+ character(schlen)        :: dumb_ch
  character(2)             :: chart_string(3)
  !
  call msg('s','Output files definition ...')
@@ -157,37 +157,6 @@ subroutine RT_output_INIT( )
  if (n_spin>1) then
    call RT_FILE_add('magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
  endif
- !
- call RT_FILE_add('trans_residual',TITLES=(/'T [fs]','E [eV]'/))
- call RT_FILE_add(TITLES=(/'Residual'/))
- !
- do i_f=1,3
-   if (i_f==1) dumb_ch='trans_eps_real'
-   if (i_f==2) dumb_ch='trans_eps_imag'
-   if (i_f==3) dumb_ch='eps_eq'
-   if(i_f<3) then
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]','Eps   '/))
-   else
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]','EPS-Im','EPS-Re'/))
-   endif
- enddo
- !
- do i_fp=1,2
-   if (i_fp==1) dumb_ch2="refl"
-   if (i_fp==2) dumb_ch2="transm"
-   do i_f=1,3
-     if (i_f==1) dumb_ch='trans_'//trim(dumb_ch2)//'_rel'
-     if (i_f==2) dumb_ch='trans_'//trim(dumb_ch2)//'_abs'
-     if (i_f==3) dumb_ch=trim(dumb_ch2)//'_eq'
-     if(i_f<3) then
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]'/))
-     else
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]'/))
-     endif
-     if (i_fp==1) call RT_FILE_add(TITLES=(/'Reflectivity'/))
-     if (i_fp==2) call RT_FILE_add(TITLES=(/'Transmission'/))
-   enddo
- enddo
  !
  call msg('l','done')
  !

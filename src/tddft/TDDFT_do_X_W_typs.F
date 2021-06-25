@@ -92,7 +92,6 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
  !
- !
  ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
  ! Note that wv%n_freqs MUST respect the FXC_n_mem_freqs value.
  ! Tnis means that wv%n_freqs CANNOT assume generic values.

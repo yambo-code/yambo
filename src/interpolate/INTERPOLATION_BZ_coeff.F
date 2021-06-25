@@ -32,7 +32,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  use pars,              ONLY:SP,DP,pi,cI,cZERO
  use interpolate,       ONLY:nshells,lattice_vectors,metric,int_sop,INTERP_obj,INTERPOLATE_is_quiet,&
-&                            INTERPOLATE_is_serial,INTERP_FineGd,INTERPOLATE_use_symm
+&                            INTERPOLATE_is_serial,INTERP_FineGd,INTERPOLATE_use_symm,R_C1,R_C2
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym
  use R_lattice,         ONLY:bz_samp
@@ -52,8 +52,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  ! Work Space
  !
  type(PP_indexes)  :: px
- real(DP)          :: R2_min,R2
- real(SP)          :: v(3),pre_factor
+ real(DP)          :: R2_min,R2,pre_factor
+ real(SP)          :: v(3)
  integer           :: ik,ikp,iv,i_shell,i_star,nstar,Nkm1,info,&
 &                     PAR_nshells,i_par_shell
  integer           :: nsym_interp
@@ -146,7 +146,7 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
      enddo
    enddo
    !
-   BZ_star(i_par_shell,:)=BZ_star(i_par_shell,:)/real(nstar)
+   BZ_star(i_par_shell,:)=BZ_star(i_par_shell,:)/real(nstar,DP)
    !
    do ik=1,Nkm1
      BZ_star(i_par_shell,ik) = BZ_star(i_par_shell,ik) - BZ_star(i_par_shell,Nk)
@@ -211,8 +211,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    engre(i_shell,:)=PAR_engre(i_par_shell,:)
  enddo
  !
- pre_factor=1._SP/real(ncpu,SP)
- if (INTERPOLATE_is_serial) pre_factor=1.
+ pre_factor=1._DP/real(ncpu,DP)
+ if (INTERPOLATE_is_serial) pre_factor=1._DP
  do iv=1,nvalues
  engre(1,iv)=VALUEs(iv,Nk)*pre_factor - dot_product(conjg(PAR_engre(:,iv)),BZ_star(:,Nk))
  enddo
@@ -236,9 +236,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
   !
   pure real(DP) function roughness_func(R2,R2_min)
    real(DP),  intent(in) :: R2,R2_min
-   real(DP),  parameter  :: C1=0.75_DP,C2=0.75_DP
    !
-   roughness_func=(1._DP-C1*R2/R2_min)**2 + C2*(R2/R2_min)**3
+   roughness_func=(1._DP-R_C1*R2/R2_min)**2 + R_C2*(R2/R2_min)**3
    !
   end function roughness_func
   !

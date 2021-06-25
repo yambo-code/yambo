@@ -29,7 +29,7 @@ subroutine INIT_activate()
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
-&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh,&
+&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
 #if defined _SC || defined _RT
@@ -139,7 +139,7 @@ subroutine INIT_activate()
  !
  !Setup
  !
- if (l_setup) call initactivate(1,'MaxGvecs K_grids IkSigLim IkXLim NoDiagSC')
+ if (l_setup) call initactivate(1,'MaxGvecs Gthresh K_grids IkSigLim IkXLim NoDiagSC')
 #if defined  _ELPH 
  if (l_setup) call initactivate(1,'BSEscatt')
 #endif
@@ -167,10 +167,13 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod Lkind')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
- if (l_dipoles) call initactivate(1,'DipBands DipBandsALL DipQpt DipApproach DipComputed DipPDirect ShiftedPaths')
+ if (l_dipoles) then
+   call initactivate(1,'DipQpt DipBands DipBandsALL')
+   call initactivate(1,'DipBandsALL DipApproach DipComputed DipPDirect ShiftedPaths DipoleEtresh')
 #if defined _NL || defined _SC
- if (l_dipoles) call initactivate(1,'EvPolarization')
+   call initactivate(1,'EvPolarization')
 #endif
+ endif
  !
  if (l_optics.and.l_chi) then
    !
@@ -222,11 +225,11 @@ subroutine INIT_activate()
    !                     
    call initactivate(1,'BSENGexx ALLGexx')
    !
-   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
-   if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
+   if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
+   if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
    if(l_alda_fxc) then
      call initactivate(1,'BSENGfxc')
-     if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk')
+     if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
    endif
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
@@ -255,7 +258,7 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-   call initactivate(1,'BSEprop')
+   call initactivate(1,'BSEprop BSEdips')
    call initactivate(1,'PL_weights')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -263,7 +266,7 @@ subroutine INIT_activate()
    call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
    !
 #if defined _RT
-   call initactivate(1,'ForceEqTrans')
+   call initactivate(1,'RTOccMode ForceEqTrans')
 #endif
    !
  endif                    

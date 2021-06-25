@@ -31,7 +31,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
-&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_W_eh_diag,l_W_eh_cpl,l_W_eh,&
+&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
 #if defined _SCALAPACK
@@ -42,21 +42,19 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
- use it_tools,       ONLY:it,infile_dump,ofiles_append,&
-&                         switch_off_runlevel,check_verbosity,runlevel_is_on
+ use it_tools,       ONLY:it,infile_dump,ofiles_append,switch_off_runlevel,check_verbosity,runlevel_is_on
  use it_m,           ONLY:initdefs,rstatus,initmode,infile,nrnlvls,rnlvls
  use parallel_int,   ONLY:PP_redux_wait
  use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
- use QP_m,           ONLY:QP_t,QP_state,QP_reset,&
-&                         QP_table,COHSEX_use_empties
+ use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties
  use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
- use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_add,STRING_remove,STRING_same
+ use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset
- use BS,             ONLY:BS_bands,BS_n_g_W,&
-&                         BS_eh_en,BSE_mode,BS_res_mode,BS_cpl_mode,BSK_mode
+ use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
+&                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nQ,elph_nQ_used
@@ -88,6 +86,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Work Space
  !
  type(initdefs)   ::defs
+ logical          ::dummy_logical
  !
  ! I/O related
  !
@@ -95,7 +94,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- !
  integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
  !
  logical, external:: file_exists
@@ -395,8 +393,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_pf_fxc     = STRING_same(Chi_mode,'PF')
      l_bs_fxc     = STRING_same(trim(Chi_mode),"BSFXC").or.STRING_same(trim(BSK_mode),"BSFXC")
      l_tddft      = l_alda_fxc.or.l_lrc_fxc.or.l_bs_fxc
-     l_td_hf      = trim(BSK_mode)=="HF"
-     l_W_eh       = trim(BSK_mode)=="SEX"
+     l_td_hf      = STRING_same(trim(BSK_mode),"HF")
+     l_td_sex     = STRING_same(trim(BSK_mode),"SEX")
      !
    end subroutine logicalson
    !
@@ -448,7 +446,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_bse) then
        !
-       if (l_alda_fxc) BS_res_mode='x'
+       if (l_alda_fxc) BS_res_K_exchange=.TRUE.
        !
        if (io_X_err(2)==0) then
          if (io_BS_err/=0) BS_n_g_W=X(2)%ng
@@ -505,28 +503,21 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
-     if (STRING_same(trim(BSE_mode),"causal"))  BSE_mode="retarded"
+     if (STRING_same(trim(BSE_mode),"causal") ) BSE_mode="retarded"
      !
      if (l_bse) then
-       if (l_rpa_IP)                   BS_res_mode='none'
-       if (l_td_hartree)               BS_res_mode='x'
-       if (l_tddft) then
-                                       BS_res_mode='x'
-         if(WF_exx_fraction > 0._SP)   BS_res_mode='xcd'
-         if(WF_exx_screening> 0._SP)   BS_res_mode='xc'
+       BS_res_K_exchange=l_td_hartree.or.l_tddft.or.l_td_hf.or.l_td_sex
+       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex.or.(l_tddft.and.((WF_exx_fraction > 0._SP).or.(WF_exx_screening> 0._SP)))
+       BS_W_is_diagonal =l_td_hf .or. (l_tddft.and.(WF_exx_fraction > 0._SP).and. .not.(WF_exx_screening> 0._SP) )
+       BS_K_coupling    =index(BSE_mode,'coupling')>0
+       if (BS_K_coupling) then
+         BS_cpl_K_exchange=BS_res_K_exchange  
+         BS_cpl_K_corr    =BS_res_K_corr      
        endif
-       if (l_bs_fxc)                   BS_res_mode='c'
-       if (l_td_hf)                    BS_res_mode='xcd'
-       if (l_W_eh)                     BS_res_mode='xc'
-       !
-       if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
-       !
-       if(l_W_eh) then
-         call parser('WehDiag',l_W_eh_diag)
-         call parser('WehCpl' ,l_W_eh_cpl )
-         if (     l_W_eh_diag)         BS_res_mode=trim(STRING_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(STRING_remove(BS_cpl_mode,'c'))
-       endif
+       call parser('WehDiag',dummy_logical)
+       if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
+       call parser('WehCpl' ,dummy_logical )
+       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then

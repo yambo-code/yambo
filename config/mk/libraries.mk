@@ -1,4 +1,8 @@
-EXT_LIBS      = libxc lapack fftw fftqe yaml futile iotk hdf5 pnetcdf netcdf etsf_io blacs scalapack petsc slepc
+#
+# EXT_LIBS imported 
+#
+include lib/archive/package.list
+#
 INT_LIBS      = qe_pseudo slatec math77 local
 YAMBO_INT_LIBS= Yio 
 YAMBO_EXT_LIBS= Ydriver 

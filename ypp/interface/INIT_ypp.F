@@ -650,7 +650,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    endif
    if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
-   if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
+   if (l_RT_abs) then
+     call initactivate(1,"BSQindex EnRngeRt ETStpsRt DampFactor")
+     call initactivate(1,"TRabsOBS TRabsDIPdir TRabsDIPplane TRabsMODE TRabsEtresh")
+   endif
    !
  endif
 #endif

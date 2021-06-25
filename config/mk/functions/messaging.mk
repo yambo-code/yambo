@@ -13,11 +13,10 @@ define make_message
   echo -n " [rtext-project] "; for target in $(RTE_PROJ); do echo -n " $$target" ; done;echo;\
   echo; echo " *** GPL components *** ";\
   echo -n " [gpl]           "; for target in $(GPL); do echo -n " $$target" ; done;echo;\
-  echo ; echo " *** Libraries ***";\
-  echo -n " [libs]           int-libs ext-libs yambo-libs download download-all";echo;\
+  echo ; echo " *** Libraries ***"; \
+  echo -n " [libs]           int-libs ext-libs download";echo;\
   echo -n " [int-libs]      "; for target in $(INT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [ext-libs]      "; for target in $(EXT_LIBS); do echo -n " $$target" ; done;echo;\
-  echo -n " [download-all]  "; for target in $(EXT_LIBS); do echo -n " $$target"-dl ; done;echo;\
   echo -n " [yambo-int-libs]"; for target in $(YAMBO_INT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [yambo-ext-libs]"; for target in $(YAMBO_EXT_LIBS); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Utils & Cleans ***";\

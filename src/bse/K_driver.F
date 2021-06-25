@@ -32,25 +32,12 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
-<<<<<<< HEAD
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_add_antiresonant,BSS_damp_reference,&
-&                         BSS_uses_DbGd,BSS_q0,BSS_eels_to_eps
- use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_n_g_fxc,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,l_BS_anomalous_Hall,&
-&                         BS_W_is_diagonal,BS_res_mode,BS_n_g_W,BS_K_is_ALDA,BS_cpl_mode,BS_cpl_K_corr,BS_cpl_K_exchange,&
-&                         BSE_mode,BSE_prop,BS_Blocks_and_Transitions_free,l_BSE_minimize_memory,BSqpts,L_kind,&
-&                         BS_perturbative_SOC,BS_dip_size,l_BS_abs,l_BS_jdos,l_BS_trace,&
-&                         l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics
- use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,FXC_n_g_corr
- use drivers,        ONLY:l_rpa_IP,l_alda_fxc,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PARALLEL_default_mode,PAR_K_scheme
-=======
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_K_is_ALDA,BS_cpl_K_corr,&
 &                         BS_Blocks_and_Transitions_free,BSqpts,L_kind,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss,l_col_cut
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme
->>>>>>> develop
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
@@ -95,76 +82,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
-<<<<<<< HEAD
- ! If the em1s DB has been calculated in the same run
- ! of a BS-Fxc kernel construction that l_bs_fxc is set .FALSE.
- !      =============
- ! in tddft_do_X_W_typs. So here we need to check again if
- ! l_bs_fxc has been provided
- !
- if (.not.l_bs_fxc) call parser('bs_fxc',l_bs_fxc)
- !
- if (Ken%nb_SOC/=0) BS_perturbative_SOC=.true.
- !
- if (l_bs_fxc) then
-   !==========
-   !
-   BS_n_g_exch=FXC_n_g_corr
-   BS_n_g_fxc =FXC_n_g_corr
-   !
-   if (index(BSS_mode,'t')/=0) then
-     !
-     ! Remove the exchange from the BS_mode
-     ! if TDDFT Fxc is obtained from K
-     !
-     if (index(BSS_mode,'t')==0) BS_res_mode=trim( STRING_remove(BS_res_mode,'x') )
-     BSE_mode='retarded'
-     call parser('FxcRetarded',FXC_is_retarded)
-     !
-   endif
-   !
- endif
- !
- ! Logicals (Drivers)
- !====================
- if (l_rpa_IP.and.index(BSE_mode,'coupling')>0) BSE_mode='retarded'
- !
- BS_res_K_corr=index(BS_res_mode,'c')/=0
- BS_res_K_exchange=index(BS_res_mode,'x')/=0
- BS_cpl_K_corr=index(BS_cpl_mode,'c')/=0
- BS_cpl_K_exchange=index(BS_cpl_mode,'x')/=0
- BS_K_coupling=any((/BS_cpl_K_corr,BS_cpl_K_exchange/)) 
- BSS_add_antiresonant=index(BSE_mode,'retarded')/=0
- BS_W_is_diagonal=index(BS_res_mode,'d')/=0
- BS_K_is_ALDA=l_alda_fxc
- !
- BS_dip_size=1
- !
- l_BS_abs       = (index(BSE_prop,'abs')/=0)
- l_BS_jdos      = (index(BSE_prop,'jdos')/=0).or. (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
- l_BS_esort     = (index(BSE_prop,'esrt')/=0).and.(index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0.or.l_rpa_IP)
- l_BS_dichroism = (index(BSE_prop,'dich')/=0)
- l_BS_kerr      = (index(BSE_prop,'kerr')/=0)
- l_BS_photolum  = (index(BSE_prop,'photolum')/=0)
- l_BS_trace     = (index(BSE_prop,'trace')/=0)
- l_BS_magnons   = (index(BSE_prop,'magn')/=0) .and.n_spin>1
- !
- if (l_BS_magnons.and.n_sp_pol==2) then
-   l_BS_abs    = .false.
-   l_BS_kerr   = .false.
-   l_BS_trace  = .false.
-   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
- endif
- if (l_BS_kerr) then
-   call parser('AnHall',l_BS_anomalous_Hall)
-   BS_dip_size=2
- endif
- if (l_BS_photolum) l_BS_trace  = .false.
- if (l_BS_trace) BS_dip_size=3
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
- !
-=======
->>>>>>> develop
  ! Energy points
  !===============
  call W_reset(W_bss)

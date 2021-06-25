@@ -225,17 +225,12 @@ subroutine INIT_activate()
    !                     
    call initactivate(1,'BSENGexx ALLGexx')
    !
-<<<<<<< HEAD
-   if(l_td_hf.or.l_W_eh) call initactivate(1,'BSENGBlk')
-   if(l_W_eh)            call initactivate(1,'WehDiag WehCpl')
-   if(l_alda_fxc) then
-     call initactivate(1,'BSENGfxc')
-     if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk')
-   endif
-=======
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
->>>>>>> develop
+   if(l_alda_fxc) then
+     call initactivate(1,'BSENGfxc')
+     if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
+   endif
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.

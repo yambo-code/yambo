@@ -506,41 +506,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (STRING_same(trim(BSE_mode),"causal") ) BSE_mode="retarded"
      !
      if (l_bse) then
-<<<<<<< HEAD
-       if (l_rpa_IP)                   BS_res_mode='none'
-       if (l_td_hartree)               BS_res_mode='x'
-       if (l_tddft) then
-                                       BS_res_mode='x'
-         if(WF_exx_fraction > 0._SP)   BS_res_mode='xcd'
-         if(WF_exx_screening> 0._SP)   BS_res_mode='xc'
-       endif
-       if (l_bs_fxc)                   BS_res_mode='c'
-       if (l_td_hf)                    BS_res_mode='xcd'
-       if (l_W_eh)                     BS_res_mode='xc'
-       !
-       if (index(BSE_mode,'coupling')>0) BS_cpl_mode=trim(BS_res_mode)
-       !
-       if(l_W_eh) then
-         call parser('WehDiag',l_W_eh_diag)
-         call parser('WehCpl' ,l_W_eh_cpl )
-         if (     l_W_eh_diag)         BS_res_mode=trim(STRING_add(BS_res_mode,'d'))
-         if (.not.l_W_eh_cpl )         BS_cpl_mode=trim(STRING_remove(BS_cpl_mode,'c'))
-=======
        BS_res_K_exchange=l_td_hartree.or.l_tddft.or.l_td_hf.or.l_td_sex
-       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex
-       BS_W_is_diagonal =l_td_hf
+       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex.or.(l_tddft.and.((WF_exx_fraction > 0._SP).or.(WF_exx_screening> 0._SP)))
+       BS_W_is_diagonal =l_td_hf .or. (l_tddft.and.(WF_exx_fraction > 0._SP).and. .not.(WF_exx_screening> 0._SP) )
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
          BS_cpl_K_corr    =BS_res_K_corr      
        endif
-       if(l_td_sex) then
-         call parser('WehDiag',dummy_logical)
-         if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
-         call parser('WehCpl' ,dummy_logical )
-         if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
->>>>>>> develop
-       endif
+       call parser('WehDiag',dummy_logical)
+       if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
+       call parser('WehCpl' ,dummy_logical )
+       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then

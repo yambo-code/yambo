@@ -168,7 +168,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! perturbed stated and itself
  !
  if (elph_use_q_grid.and..not.elph_grids_are_expanded) then
-   delta_E_at_gamma=en%E(ib,ik,1)  -en%E(ob,ik,1)
+   delta_E_at_gamma=en%E(ib,ik,1)               -en%E(ob,ik,1)
  else
    delta_E_at_gamma=GKKP%E_kpq(1)%E(ib,ik_bz,1) -GKKP%E_kpq(1)%E(ob,ik_bz,1)
  endif

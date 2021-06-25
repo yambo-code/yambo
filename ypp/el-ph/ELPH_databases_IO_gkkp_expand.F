@@ -196,13 +196,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,E,qindx_ID,GKKP)
      ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
    endif
    !
-   ! Notice that the ok_bz index referees to the k-points in the Yambo order
-   ! like in the q=0 case
-   ! I use E instead of E_kpq to keep the same precision in the calculations
-   ! infact small difference between E and E_kpq, calculated in the SCF and PHONON runs,
-   ! can produce an effect in the DW term that makes fail some test
-   !
-   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=E%E(:elph_nb,ok,1)
+   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
    !
  enddo
  !

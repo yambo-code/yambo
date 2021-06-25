@@ -1,5 +1,5 @@
 define makefiles_clean
- find . \( -name 'Makefile' -o -name '*module.dep' -o -name '*project.dep' \) -type f -print | grep -v '\.\/Makefile' | \
+ find . \( -name 'Makefile' -o -name '*module.dep' -o -name '*project.dep' -o -name '*objects.mk' -o -name 'dyn_variables.mk' \) -type f -print | grep -v '\.\/Makefile' | \
         grep -v '.*yaml.*\/Makefile' |  \
         grep -v '.*futile.*\/Makefile' |  \
         grep -v '.*iotk.*\/Makefile' |  \

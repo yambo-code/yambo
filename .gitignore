@@ -76,6 +76,10 @@ Makefile.archive
 *Makefile
 make.dep
 commit.msg
+helper.inc.sh
+make.inc
+objects.mk
+dyn_variables.mk
 
 # Packages #
 ############

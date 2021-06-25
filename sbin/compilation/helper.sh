@@ -22,9 +22,8 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-# DEFS (1): configure-based
 ARGS=$@;
-source ./config/compilation_helper.sh.inc
+source ./sbin/compilation/helper.inc.sh
 #
 # OPTIONS
 source ./sbin/compilation/options.sh
@@ -49,9 +48,6 @@ source ./sbin/compilation/lock_files.sh
 # Libraries
 source ./sbin/compilation/libraries.sh
 #
-# Libraries
-source ./sbin/compilation/includes.sh
-#
 #echo "helper.sh DIR: $cdir"
 #echo "helper.sh TARG: $target"
 #echo "helper.sh OFILE: $ofile"
@@ -73,30 +69,44 @@ source ./sbin/compilation/includes.sh
 # done
 #fi
 #
-# Makefile creation: (I) header
-source ./sbin/compilation/make_makefile.sh HEADER
+# Makefile (I): variables
+cat <<EOF > $cdir/dyn_variables.mk
+srcdir =$srcdir
+target =$target
+wdir   =$cdir
+EOF
 #
-# Makefile creation: (II) OBJECTS list
-source ./sbin/compilation/make_makefile.sh OBJECTS
+# Makefile (II): OBJECTS list
+cp $cdir/.objects $cdir/objects.mk
 #
-# Makefile creation: (III) actual operations 
-source ./sbin/compilation/make_makefile.sh $mode
-#
-# Makefile creation: (IV) operations 
+# Makefile (II): common vars
 rm_command="@rm -f \$*\$(f90suffix)"
 if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
-FC_NOOPT_SRC="mod_parser_m.o mod_logo.o"
-for arg in $@; do
- case $arg in
-  -D_PGI)
-   FC_NOOPT_SRC="$FC_NOOPT_SRC bz_samp_indexes.o" ;;
- esac
-done
-source ./sbin/compilation/make_makefile.sh OPERATIONS
 #
-# Makefile creation: (V) functions 
-source ./sbin/compilation/make_makefile.sh FUNCTIONS
+cat <<EOF > sbin/compilation/mk/static_variables.mk
+libs           =$libs
+linclude       =$lf90include
+lf90libinclude =$lf90libinclude
+lf90include    =$lf90include
+modinclude     =$INCLUDEDIR//$modules_lock
+mfiles         =find . -maxdepth 1 -name '*.mod'
+precomp_mpi    =$precomp_mpi
+precomp_flags  =$precomp_flags -D_\$(os)
+objects_lock   =$objects_lock
+moduledep_file =$moduledep_file
+modlist_file   =$modlist_file
+rm_command     =$rm_command
+EOF
 #
-# Makefile creation: (VI) rules 
-source ./sbin/compilation/make_makefile.sh RULES
+# Makefile (III): copy makefile
+cp sbin/compilation/mk/makefile $cdir/Makefile
+#
+# Makefile creation: (IV) operations 
+#FC_NOOPT_SRC="mod_parser_m.o mod_logo.o"
+#for arg in $@; do
+# case $arg in
+#  -D_PGI)
+#   FC_NOOPT_SRC="$FC_NOOPT_SRC bz_samp_indexes.o" ;;
+# esac
+#done
 #

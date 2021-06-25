@@ -9,7 +9,7 @@ define mk_internal_lib
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
    fi ; \
    ./sbin/compilation/helper.sh -d $$DIR2GO/$$ldir -t lib$$ldir.a -o .objects -m l -- "$(xcpp) $$ADF" ; \
-   cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir || exit "$$?" ; cd ../../; \
+    cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir lib || exit "$$?" ; cd ../../; \
   fi \
  done
 endef

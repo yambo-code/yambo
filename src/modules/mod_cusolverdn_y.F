@@ -56,9 +56,9 @@ module cusolverdn_y
 
   ! types
 
-  !type cusolverDnHandle
-  !   type(c_ptr) :: handle
-  !end type cusolverDnHandle
+  type, bind(c) :: cusolverDnHandle
+     type(c_ptr) :: handle
+  end type cusolverDnHandle
 
   ! ---------
   ! functions
@@ -68,7 +68,8 @@ module cusolverdn_y
      integer(c_int) function cusolverDnCreate(handle) &
           bind(C,name='cusolverDnCreate')
        use iso_c_binding
-       type(c_ptr) :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle) :: handle
      end function cusolverDnCreate
   end interface
 
@@ -76,7 +77,8 @@ module cusolverdn_y
      integer(c_int) function cusolverDnDestroy(handle) &
           bind(C,name='cusolverDnDestroy')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
      end function cusolverDnDestroy
   end interface
 
@@ -89,7 +91,8 @@ module cusolverdn_y
        use cudafor_m
 #endif
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(cuda_stream_kind), value :: stream
      end function cusolverDnSetStream
   end interface
@@ -99,7 +102,8 @@ module cusolverdn_y
           handle, uplo, n, A, lda, Lwork) &
           bind(C, name='cusolverDnZpotrf_bufferSize') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
        complex(8) DEV_ATTR :: A(*) 
@@ -113,7 +117,8 @@ module cusolverdn_y
           handle, uplo, n, A, lda, Lwork) &
           bind(C, name='cusolverDnDpotrf_bufferSize') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
        real(8) DEV_ATTR :: A(*) 
@@ -127,7 +132,8 @@ module cusolverdn_y
           handle, uplo, n, A, lda, Workspace, Lwork, devInfo) &
           bind(C,name='cusolverDnZpotrf') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
        complex(8) DEV_ATTR :: A(*) 
@@ -144,7 +150,8 @@ module cusolverdn_y
           handle, uplo, n, A, lda, Workspace, Lwork, devInfo) &
           bind(C,name='cusolverDnDpotrf') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: uplo 
        integer(c_int), value :: n 
        real(8) DEV_ATTR :: A(*) 
@@ -161,7 +168,8 @@ module cusolverdn_y
           handle, itype, jobz, uplo, n, A, lda, B, ldb, W, Lwork) &
           bind(C, name='cusolverDnZhegvd_bufferSize')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: itype
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
@@ -180,7 +188,8 @@ module cusolverdn_y
           handle, itype, jobz, uplo, n, A, lda, B, ldb, W, Lwork) &
           bind(C, name='cusolverDnDsygvd_bufferSize')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: itype
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
@@ -199,7 +208,8 @@ module cusolverdn_y
           handle, itype, jobz, uplo, n, A, lda, B, ldb, W, Workspace, Lwork, devInfo) &
           bind(C,name='cusolverDnZhegvd')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: itype
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
@@ -221,7 +231,8 @@ module cusolverdn_y
           handle, itype, jobz, uplo, n, A, lda, B, ldb, W, Workspace, Lwork, devInfo) &
           bind(C,name='cusolverDnDsygvd')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: itype
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
@@ -243,7 +254,8 @@ module cusolverdn_y
           handle, jobz, uplo, n, A, lda, W, Lwork) &
           bind(C, name='cusolverDnZheevd_bufferSize')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
@@ -259,7 +271,8 @@ module cusolverdn_y
           handle, jobz, uplo, n, A, lda, W, Workspace, Lwork, devInfo) &
           bind(C,name='cusolverDnZheevd')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: jobz
        integer(c_int), value :: uplo
        integer(c_int), value :: n
@@ -278,7 +291,8 @@ module cusolverdn_y
           handle, m, n, A, lda, Lwork) &
           bind(C, name='cusolverDnCgetrf_bufferSize') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: m
        integer(c_int), value :: n
        complex(4) DEV_ATTR :: A(lda,*) 
@@ -292,7 +306,8 @@ module cusolverdn_y
           handle, m, n, A, lda, Workspace, devIpiv, devInfo) &
           bind(C,name='cusolverDnCgetrf')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: m
        integer(c_int), value :: n
        complex(4) DEV_ATTR :: A(lda,*)
@@ -309,7 +324,8 @@ module cusolverdn_y
           handle, trans, n, nrhs, A, lda, devIpiv, B, ldb, devInfo) &
           bind(C,name='cusolverDnCgetrs')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: trans
        integer(c_int), value :: n
        integer(c_int), value :: nrhs
@@ -327,7 +343,8 @@ module cusolverdn_y
           handle, m, n, A, lda, Lwork) &
           bind(C, name='cusolverDnZgetrf_bufferSize') 
        use iso_c_binding
-       type(c_ptr), value :: handle 
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle 
        integer(c_int), value :: m
        integer(c_int), value :: n
        complex(8) DEV_ATTR :: A(lda,*) 
@@ -341,7 +358,8 @@ module cusolverdn_y
           handle, m, n, A, lda, Workspace, devIpiv, devInfo) &
           bind(C,name='cusolverDnZgetrf')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: m
        integer(c_int), value :: n
        complex(8) DEV_ATTR :: A(lda,*)
@@ -358,7 +376,8 @@ module cusolverdn_y
           handle, trans, n, nrhs, A, lda, devIpiv, B, ldb, devInfo) &
           bind(C,name='cusolverDnZgetrs')
        use iso_c_binding
-       type(c_ptr), value :: handle
+       import cusolverDnHandle
+       type(cusolverDnHandle), value :: handle
        integer(c_int), value :: trans
        integer(c_int), value :: n
        integer(c_int), value :: nrhs

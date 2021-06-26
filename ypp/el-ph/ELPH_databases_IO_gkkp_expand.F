@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,E,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -37,7 +37,6 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,E,qindx_ID,GKKP)
  character(*)  ::mode
  integer, intent(in) :: qindx_ID
  integer, intent(in) :: iq,iq_s
- type(levels), intent(in)  ::E
  type(bz_samp), intent(in) ::k,q
  type(GKKP_me) ::GKKP
  !

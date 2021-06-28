@@ -33,6 +33,7 @@ module P2Ym
  use mod_com2y,             ONLY : verboseIO
  use parallel_m,            ONLY : myid
  use parallel_int,          ONLY : PP_bcast   
+ use units,                 ONLY : Da2AU
  ! 
 #include<memory.h>
  !
@@ -416,7 +417,7 @@ contains
    YAMBO_ALLOC(atom_mass,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
-     atom_mass(i1) = real(amass_(i1),SP)
+     atom_mass(i1) = real(amass_(i1),SP)*Da2AU   ! Mass are stored in Atomic Units
    enddo
    !
    return

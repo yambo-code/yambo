@@ -24,6 +24,7 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use units,          ONLY:Da2AU
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
@@ -103,7 +104,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
  if (allocated(atom_mass)) then
    do is=1,n_atomic_species
-       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is))
+       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is)/Da2AU)
    enddo
  endif
  !

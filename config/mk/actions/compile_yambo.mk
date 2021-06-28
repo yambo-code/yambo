@@ -1,6 +1,6 @@
 yambo: ext-libs
 	@+LIBS2DO="$(INT_LIBS)"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_driver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/lib/yambo/driver/src"; ADF="-D_yambo"; $(mk_external_yambo_lib)
+	@+LIBS2DO="$(YLIBDRIVER)"; NAME="_Ydriver_yambo_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(topdir)/$$DIR2GO"; ADF="-D_yambo"; $(mk_external_yambo_lib)
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(topdir)/src"; $(mk_src)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(topdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; $(mk_yambo)
 #

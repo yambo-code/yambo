@@ -35,7 +35,6 @@ include $(srcdir)/config/setup
 #
 idriver=$(IFLAG)$(libdir)/yambo/driver/include $(IFLAG)$(includedir)/driver
 lf90include=$(IFLAG)$(includedir) $(IFLAG)$(includedir)/headers/common $(IFLAG)$(includedir)/headers/parser $(idriver)
-#lf90include=$(IFLAG)$(includedir) $(IFLAG)$(modinclude) $(IFLAG)$(includedir)/headers/common $(IFLAG)$(includedir)/headers/parser $(idriver)
 lf90libinclude=$(iiotk) $(ipnetcdf) $(inetcdff) $(inetcdf) $(ipetsc) $(islepc) $(ihdf5) $(ilibxc) $(ifft) $(ifutile) $(iyaml) $(idriver)
 mfiles=find . -maxdepth 1 -name '*.mod'
 #

@@ -5,7 +5,7 @@
 #
 # Includes
 #
--include $(moduledep_file)
+-include local_modules.dep
 #
 # Rules
 #

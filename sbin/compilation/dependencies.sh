@@ -92,7 +92,7 @@ sed 's/F:/o /
      s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
 #                                         #   and remove trailing comma
 awk '{print $1 " : @" tolower($3) "@"}' | # create dependency entry
-sort | uniq > modules.list              # remove duplicates
+sort | uniq > modulesdep.list              # remove duplicates
 
 # create list of available modules
 # for each module, create a line of the form:
@@ -102,7 +102,17 @@ sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes
 awk '{print "s/@" tolower($3) "@/" $1 "/" }' | # create substitution line
-sort | uniq >> $compdir/config/modules.rules                    # remove duplicates
+sort | uniq > modules.rules                    # remove duplicates
+
+egrep -H -i "^ *module " $sources |           # look for "MODULE name"
+sed 's/F:/o /
+     s/\//\\\//g' |                            # replace extension, insert
+#                                              #   space and escape slashes
+awk '{print tolower($3) }' | # create substitution line
+sort | uniq > modules.list                    # remove duplicates
+#
+# Add the local rules to the global file
+cat modules.rules  >> $compdir/config/stamps_and_lists/modules.rules
 #
 cd $BASE
 #
@@ -118,7 +128,7 @@ do
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'
  idir=$((idir+1))
- if [ ! -e modules.list ]; then
+ if [ ! -e modulesdep.list ]; then
   cd $BASE
   continue 
  fi
@@ -126,10 +136,14 @@ do
 #===============================================================
 # replace module names with file names
 # by applying the file of substitution patterns just created
-sed -f $compdir/config/modules.rules modules.list |
+sed -f $compdir/config/stamps_and_lists/modules.rules modulesdep.list |
 awk '{if ($1 != $3) print}' |         # remove self dependencies
 sort  | uniq |                        # remove duplicates
-sed 's/@.*@//' > modules.dep
+sed 's/@.*@//' > global_modules.dep
+sed -f modules.rules modulesdep.list |
+awk '{if ($1 != $3) print}' |         # remove self dependencies
+sort  | uniq |                        # remove duplicates
+sed 's/@.*@//' > local_modules.dep
 cd $BASE
 done
 echo

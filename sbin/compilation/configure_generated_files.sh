@@ -1,8 +1,9 @@
+#!/bin/bash
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): HM AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -21,14 +22,20 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-compdir    =@compdir@
-os         =@build_os@
-cpp        =@CPP@
-fpp        =@FPP@
-cppflags   =@CPPFLAGS_yambo@
-ECHO_N     =@ECHO_N@
-LOGID      =@MKMF_LOGID@
-PREFIX     =@MKMF_PREFIX@
-KEEPSRC    =@enable_keep_src@
-INCLUDEDIR =@includedir@
-IFLAG      =@IFLAG@
+# dependencies.sh -- script that computes dependencies on Fortran 90 modules/projects
+# modified from the moduledep.sh distributed with Quantum ESPRESSO and added the project part
+#
+rm -f $compdir/config/stamps_and_lists/autoconf_generated_files.list
+in_files=`find . -name '*.in'`
+for file in $in_files
+do
+ cfg_file=`echo $file |sed -E 's/(.*)\.in/\1/'`
+ echo "$cfg_file" >> $compdir/config/stamps_and_lists/autoconf_generated_files.list
+done
+#
+rm -f $compdir/config/stamps_and_lists/active_directories.list
+for CDIR in $directories
+do
+ echo "$CDIR" >> $compdir/config/stamps_and_lists/active_directories.list
+done
+#

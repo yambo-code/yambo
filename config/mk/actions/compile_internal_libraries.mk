@@ -1,8 +1,8 @@
-int-libs: 
+int-libs: dependencies
 	@for target in $(INT_LIBS) ; do $(MAKE) $$target; done
 #
 qe_pseudo: 
-	+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 slatec: 
 	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
 math77:

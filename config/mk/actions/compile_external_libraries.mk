@@ -1,7 +1,7 @@
 ext-libs: 
-	@for target in $(EXT_LIBS) ; do $(MAKE) $$target; \
+	@for target in $(EXT_LIBS); do if ! test "$$target" = Ydriver; then $(MAKE) $$target; \
 	if test -f "$(topdir)/lib/$$target/Makefile" && test ! -f "$(topdir)/lib/$$target/package-installed"; then \
-	echo "$$target build failed"; break; fi; done
+	echo "$$target build failed"; break; fi; fi; done
 #
 # BLACS& SLK : Parallel compilation of blacs and scalapack fails
 # SLEPC&PETSC: The internal build system of petsc and slepc already compiles the two libraries in parallel.

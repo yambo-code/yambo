@@ -1,8 +1,11 @@
 # SETUP #
 #########
+modulesdep.list
 modules.list
 modules.rules
 dependencies.stamp
+autoconf_generated_files.list
+active_directories.list
 
 # AUTO-generated #
 ##################
@@ -17,7 +20,6 @@ config/compilation_helper.sh.inc
 *.a
 *.so
 *.mod
-modfiles.list
 *.dep
 *.f90
 *.s

@@ -1,35 +1,55 @@
 #
 # NEW
 #
-define stamps_clean
- echo  "\t[CLEAN] ... stamps" ; \
- rm -f $(prefix)/config/stamps/*.stamp
+define clean_configure
+ echo  "\t[CLEANING] Configure, Make-related files and lists"; \
+ for file in `cat config/stamps_and_lists/autoconf_generated_files.list` ; do rm -f $$file; done;
+ for dir in `cat config/stamps_and_lists/active_directories.list` ; do \
+  rm -f $$dir/Makefile; \
+  rm -f $$dir/*.mk; \
+ done; \
+ rm -f $(prefix)/config/stamps_and_lists/*.list \
+ rm -f $(prefix)/*.log \
+ rm -f $(prefix)/*.status 
 endef
-define dependencies_clean
- echo  "\t[CLEAN] ... depependencies" ; \
- find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' \) | xargs rm -f 
+define clean_ext_libs
+ echo  "\t[CLEANING external libs]" ; \
+ rm -f  $(prefix)/lib/bin/*; \
+ rm -fr $(prefix)/include/system
 endef
-define o_clean
- echo  "\t[CLEAN] ... objects & modules " ; \
- find src \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
- find ypp \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
- find interfaces \( -name '*.o' \) |  xargs rm -fr ; \
- find driver \( -name '*.o' \) |  xargs rm -fr 
+define clean_stamps
+ echo  "\t[CLEANING] Stamps" ; \
+ rm -f $(prefix)/config/stamps_and_lists/*.stamp
 endef
-define o_int-lib_clean
- echo  "\t[CLEAN] ... internal libraries objects & modules" ; \
- find lib/local \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
- find lib/math77 \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
- find lib/qe_pseudo \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr ; \
- find lib/slatec \( -name '*.o' -o -name '*.mod' \) |  xargs rm -fr 
+define clean_dependencies
+ echo  "\t[CLEANING] Depependencies" ; \
+ find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list' \) | xargs rm -f 
 endef
-define a_int-lib_clean
- echo  "\t[CLEAN] ... internal libraries archives" ; \
- for libtoclean in "local" "qe_pseudo" "math77" "slatec" ; do \
-   rm -f d $(libdir)/lib$$libtoclean.a ; \
- done;
+define clean_ext_driver
+ if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
+ echo  "\t[CLEANING $$LMSG] Extension(s): $$EXTS" ; \
+ for ext in $$EXTS; do \
+  for dirtoclean in $$TARG; do \
+   find $$WDIR/$$dirtoclean \( -name '*'$$ext  \) |  xargs rm -fr ; \
+  done;\
+ done
 endef
-
+define clean_mod_driver
+ if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
+ echo  "\t[CLEANING $$LMSG] Modules" ; \
+ for dirtoclean in $$TARG; do \
+  if test -f $$WDIR/$$dirtoclean/modules.list; then \
+   for file in `cat $$WDIR/$$dirtoclean/modules.list` ; do rm -f $(includedir)/$$file".mod"; done; \
+  fi; \
+ done
+endef
+define clean_lib_driver
+ if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
+ echo  "\t[CLEANING $$LMSG] Libraries" ; \
+ for dirtoclean in $$TARG; do \
+  find $$WDIR \( -name '*'$$dirtoclean'*.a' \) |  xargs rm -fr ; \
+ done
+endef
 
 #
 # OLD

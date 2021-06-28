@@ -117,7 +117,15 @@ AC_ARG_ENABLE(msgs-comps, AC_HELP_STRING([--enable-msgs-comps],
               [Verbose compilation log]))
 if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="no"; fi
 MKMF_PREFIX=" "
-if test x"$enable_msgs_comps" = "xno"; then MKMF_PREFIX="@"; fi
+MKMF_LOGID=" "
+MKMF_VERBOSE="VERBOSE=1"
+if test x"$enable_msgs_comps" = "xno"; then 
+ MKMF_LOGID="2"
+ MKMF_PREFIX="@"; 
+ MKMF_VERBOSE=" "
+fi
+AC_SUBST(MKMF_VERBOSE)
+AC_SUBST(MKMF_LOGID)
 AC_SUBST(MKMF_PREFIX)
 AC_SUBST(ECHO_N)
 #

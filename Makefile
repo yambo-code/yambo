@@ -29,8 +29,9 @@ else
  include config/mk/no_configure_help.mk
 endif
 #
-# STAMPS and CFGFILES
-include config/mk/variables.mk
+ifndef VERBOSE
+ MAKEFLAGS += --no-print-directory
+endif
 #
 # Targets
 include config/mk/targets.mk

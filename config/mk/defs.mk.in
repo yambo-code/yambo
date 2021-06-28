@@ -1,6 +1,7 @@
 cpu         = @build_cpu@
 os          = @build_os@
 mpi         = @def_mpi@
+make        = @MAKE@
 netcdf      = @def_netcdf@
 scalapack   = @def_scalapack@
 slepc       = @def_slepc@
@@ -36,3 +37,4 @@ libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
 y_version   = "YAMBO @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@"
+@MKMF_VERBOSE@

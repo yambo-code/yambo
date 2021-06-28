@@ -36,6 +36,7 @@ source ./sbin/compilation/options.sh
 # Dependencies?
 if [ "$dep" == "yes" ]; then 
  source ./sbin/compilation/dependencies.sh
+ source ./sbin/compilation/configure_generated_files.sh
  exit 0
 fi
 #
@@ -45,11 +46,6 @@ if [ ! -f $cdir/$ofile ]; then exit 0; fi
 # CLEAN
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-# DEFS (2)
-pjdep_file="project.dep"
-moduledep_file="modules.dep"
-modlist_file="modfiles.list"
-#
 # Projects
 source ./sbin/compilation/projects.sh
 #
@@ -58,15 +54,6 @@ source ./sbin/compilation/lock_files.sh
 #
 # Libraries
 source ./sbin/compilation/libraries.sh
-#
-#echo "helper.sh DIR: $cdir"
-#echo "helper.sh TARG: $target"
-#echo "helper.sh OFILE: $ofile"
-#echo "helper.sh mode: $mode"
-#echo "helper.sh LIBS: $libs"
-#echo "helper.sh PRECOMP: $precomp_flags"
-#echo "helper.sh M LOCKS: $modules_lock"
-#echo "helper.sh O LOCKS: $objects_lock"
 #
 # Project dependencies
 #if [ ! -f $cdir/project.dep ] ; then 
@@ -94,30 +81,25 @@ cp $cdir/.objects $cdir/objects.mk
 rm_command="@rm -f \$*\$(f90suffix)"
 if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 #
+# Makefile creation: (III) special sources 
+source ./sbin/compilation/special_sources.sh
+#
 cat <<EOF > sbin/compilation/mk/static_variables.mk
 libs           =$libs
 linclude       =$lf90include
 lf90libinclude =$lf90libinclude
 lf90include    =$lf90include
-modinclude     =$INCLUDEDIR//$modules_lock
+modinclude     =$INCLUDEDIR #//$modules_lock
 mfiles         =find . -maxdepth 1 -name '*.mod'
 precomp_mpi    =$precomp_mpi
 precomp_flags  =$precomp_flags -D_\$(os)
 objects_lock   =$objects_lock
-moduledep_file =$moduledep_file
-modlist_file   =$modlist_file
 rm_command     =$rm_command
+F77_NOOPT_SRC  =$F77_NOOPT_SRC
+FC_NOOPT_SRC   =$FC_NOOPT_SRC
+FC_LOCAL_SRC   =$FC_LOCAL_SRC
 EOF
 #
 # Makefile (III): copy makefile
 cp sbin/compilation/mk/makefile $cdir/Makefile
-#
-# Makefile creation: (IV) operations 
-#FC_NOOPT_SRC="mod_parser_m.o mod_logo.o"
-#for arg in $@; do
-# case $arg in
-#  -D_PGI)
-#   FC_NOOPT_SRC="$FC_NOOPT_SRC bz_samp_indexes.o" ;;
-# esac
-#done
 #

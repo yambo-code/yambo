@@ -53,7 +53,7 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  i_COMPONENT  =0
  i_SAVE       =0
  SHELF        =""
- TURNK        =""
+ TRUNK        =""
  just_started=.FALSE.
  !
 #if defined _MEM_CHECK

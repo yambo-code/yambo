@@ -10,8 +10,8 @@ LIBNAME=libxc.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_libxc)
 TARBALL=$(tarball_libxc)
-PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 
 #
 # redefinitions

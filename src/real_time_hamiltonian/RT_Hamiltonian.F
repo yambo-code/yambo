@@ -142,7 +142,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
    if(n_spinor==2 .and. l_update_SOC ) then
      !
-     allocate(V_scf(fft_size),V_scf_grad(fft_size,3))
+     allocate(V_scf(fft_size))
      V_scf=cZERO
      if(eval_HARTREE) V_scf=V_scf+V_Hartree_sc(:,1)
      if(eval_DFT)     then

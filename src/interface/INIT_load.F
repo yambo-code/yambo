@@ -26,6 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
+ use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
@@ -195,6 +196,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'Gthresh' ,'[INI] Accuracy for energy shell separation [-1. automatic]',G_mod_zero,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'MolPos',  '[X/BSS] Molecule coord in supercell, 0.5 is the middle',molecule_position,verb_level=V_resp)

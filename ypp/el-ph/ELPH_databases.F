@@ -41,7 +41,8 @@ subroutine ELPH_databases(k,E,q)
 &                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk
  use LIVE_t,              ONLY:live_timing 
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:OP_APP_CL
+ use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
+ use parallel_int,        ONLY:PARALLEL_global_indexes
  !
 #include<memory.h>
  !
@@ -51,9 +52,9 @@ subroutine ELPH_databases(k,E,q)
  ! Work Space...
  !
  logical            ::l_gkkp_expand
- integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID
+ integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_tmp(2)
  character(schlen)  ::what
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
@@ -65,10 +66,24 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
  !
- if (l_gkkp_expand.and..not.allocated(qindx_B)) then
+ ! Setup parallelization to load qindx_B
+ ! ======================================
+ !
+ call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
+ call PARALLEL_SETUP_K_scheme("BZINDX")
+ !
+ ! here qindx_B is allocated
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+ io_err(1)=io_QINDX(k,q,ID)
+ if (l_gkkp_expand.and.io_err(1)/=0) then
    call msg('s',"Missing k/q scattering database")
    call error("Please run a setup with the BSEscatt flag activated")
  endif
+ !
+ ! Initialize qindx_B IO
+ ! =============================
+ io_err(2)=qindx_B_init(qindx_ID) 
+ if(io_err(2)/=0) call error("Error reading qindx_B")
  !
  ! Existence and dimensions 
  !==========================
@@ -241,12 +256,12 @@ subroutine ELPH_databases(k,E,q)
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
-   call ELPH_databases_IO_gkkp_expand("K",iq,1,k,GKKP)
+   call ELPH_databases_IO_gkkp_expand("K",iq,1,k,qindx_ID,GKKP)
    !
    if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
      call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
-     call ELPH_databases_IO_gkkp_expand("K",iq,1,k,GKKP_bare)
+     call ELPH_databases_IO_gkkp_expand("K",iq,1,k,qindx_ID,GKKP_bare)
    endif
    !
    call live_timing(steps=1)
@@ -260,10 +275,10 @@ subroutine ELPH_databases(k,E,q)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star
        GKKP%dVc=GKKP_save%dVc
-       call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP)
+       call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,qindx_ID,GKKP)
        if (l_GKKP_hosts_bare_dV) then
          GKKP%dVc=GKKP_bare_save%dVc
-         call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,GKKP_bare)
+         call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,qindx_ID,GKKP_bare)
        endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)

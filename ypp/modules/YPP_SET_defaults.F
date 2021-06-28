@@ -106,7 +106,7 @@ subroutine YPP_SET_defaults()
  l_RT_occupations =.FALSE.
  l_RT_lifetimes   =.FALSE.
  l_RT_density     =.FALSE.
- l_RT_G_two_times    =.FALSE.
+ l_RT_G_two_times =.FALSE.
  !
  ! PP kind
  !

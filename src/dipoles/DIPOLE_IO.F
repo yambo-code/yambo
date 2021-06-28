@@ -33,7 +33,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
-&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END,NONE
+&                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_redux_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme
 #if defined _RT
@@ -115,7 +115,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
    do while(io_err/=0)
      if(i_count==0) call msg('s','[DIP] Checking dipoles header ')
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=IO_MODE,ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
      io_err=io_DIPOLES(Dip,ID)
      if(read_header_ovlp) then
        if(i_count==0) call msg('s','[DIP] Checking overlaps header ')
@@ -133,6 +133,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    enddo
  endif
  !
+ if(check)   return
  !
  if(writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -179,7 +180,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)) .and.writing) cycle
        if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) .and.writing) cycle
 #if !defined _PAR_IO
        if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)

@@ -36,6 +36,10 @@ case "${FC}" in
       FCKIND="pgi"
       FCVERSION=`$FC --version`
       ;;
+    *nvfortran*)
+      FCKIND="nvfortran"
+      FCVERSION=`$FC --version`
+      ;;
     *gfortran*)
       FCKIND="gfortran" 
       FCVERSION=`$FC --version`

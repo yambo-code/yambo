@@ -29,7 +29,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
 &                         L_kind,l_BS_magnons
  use R_lattice,      ONLY:g_rot,g_rot_d,qindx_X,bz_samp
  use electrons,      ONLY:n_sp_pol
- use com,            ONLY:msg
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc

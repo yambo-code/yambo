@@ -52,6 +52,8 @@ lib/*/lapack-*
 lib/*/fftw-*
 lib/*/blacs*
 lib/*/scalapack-*
+lib/*/petsc-*
+lib/*/slepc-*
 lib/*/futile*
 lib/*/yaml*
 lib/hdf5/hdf5*
@@ -70,7 +72,7 @@ lib/bin/*
 src/external_c/.objects
 .check_configure
 config/mk/defs.mk
-*__lock*
+*_lock*
 Makefile.locks
 Makefile.archive
 *Makefile

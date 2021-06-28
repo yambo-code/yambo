@@ -164,27 +164,37 @@ module vec_operate
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
    end function rlu_v_is_zero
    !
-   subroutine rot_v_xy_plane(t,v_in,v_out)
+   subroutine v_rotate(plane,t,v_in,v_out)
      !
-     ! Rotates v_in of theta in the xy plane
+     ! Rotates v_in of angle t in the 'plane'
      !
      use pars,     ONLY:rZERO,rONE
      !
+     character(2)      :: plane
      real(SP)          :: v_in(3),t
      real(SP), optional:: v_out(3)
-     !
+     ! ws
      real(SP)          :: M(3,3),v_loc(3)
      !
-     !     ( cos(t) -sin(t)  0 )
-     ! M = ( sin(t)  cos(t)  0 )
-     !     (   0       0     1 )
+     ! In the rotation plane
      !
-     M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+     !     ( cos(t) -sin(t) )
+     ! M = ( sin(t)  cos(t) )
+     !
+     select case(plane)
+       case('xy')
+         M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+       case('xz')
+         M=reshape((/cos(t),rZERO,-sin(t),sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+       case('yz')
+         M=reshape((/rZERO,cos(t),-sin(t),rZERO,sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+     end select
+     !
      v_loc=matmul(M,v_in)
      if (     present(v_out)) v_out=v_loc
      if (.not.present(v_out)) v_in =v_loc
      !
-   end subroutine rot_v_xy_plane
+   end subroutine v_rotate
    !
    subroutine c2a(b_in,v_in,v_out,mode)
      !

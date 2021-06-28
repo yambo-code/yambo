@@ -25,14 +25,14 @@ subroutine K_Haydock(iq,W,mode)
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
  use X_m,            ONLY:global_gauge
- use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use wrapper_omp,    ONLY:V_plus_alpha_V_omp
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
 &                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
-&                         l_BS_ares_asymm,BS_H_dim,BS_mat_res_ares_dim
+&                         l_BS_ares_from_res,BS_H_dim,BS_res_ares_n_mat
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_int,         ONLY:io_control
@@ -71,7 +71,7 @@ subroutine K_Haydock(iq,W,mode)
  character(1)       ::sec
  character(11)      ::scheme
  !
- if (BS_mat_res_ares_dim==2) call error(" Haydock not coded for case  with two BSE matricies")
+ if (BS_res_ares_n_mat==2) call error(" Haydock not coded for case  with two BSE matricies")
  !
  call K_output_file(iq,"open Haydock "//trim(mode))
  !
@@ -102,8 +102,8 @@ subroutine K_Haydock(iq,W,mode)
  !
  call section(sec,'Haydock Solver for '//trim(mode)//' @q'//trim(intc(iq))//", scheme "//trim(scheme))
  !
- if (.not.l_BS_ares_asymm) HAYVEC_size = BS_K_dim(1)
- if (     l_BS_ares_asymm) then
+ if (     l_BS_ares_from_res) HAYVEC_size = BS_K_dim(1)
+ if (.not.l_BS_ares_from_res) then
    if(.not.BS_K_coupling) HAYVEC_size = BS_K_dim(1)
    if(     BS_K_coupling) HAYVEC_size = BS_H_dim
  endif
@@ -275,12 +275,12 @@ subroutine K_Haydock(iq,W,mode)
      call K_multiply_by_V(V0,Vnp1,-1)
      call K_dot_product(v0_mod_,V0,Vnp1,1)
      !
-     ! For the coupling case if A = -R* (l_BS_ares_asymm=.true.), V0 = (u0, -iu0*)
+     ! For the coupling case if A = -R* (l_BS_ares_from_res=.FALSE.), V0 = (u0, -iu0*)
      ! At each iteration however the relation changes V1= (u1, iu1*),
      ! this is why the ItParity is needed 
      !
-     if(.not.l_BS_ares_asymm) Haydock_v0_mod=sqrt(2*real(v0_mod_))
-     if(     l_BS_ares_asymm) Haydock_v0_mod=sqrt(  real(v0_mod_))
+     if(     l_BS_ares_from_res) Haydock_v0_mod=sqrt(2*real(v0_mod_))
+     if(.not.l_BS_ares_from_res) Haydock_v0_mod=sqrt(  real(v0_mod_))
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
@@ -295,8 +295,8 @@ subroutine K_Haydock(iq,W,mode)
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,V0,1)
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,V0,1)
      !
-     if(.not.l_BS_ares_asymm) Cf(1)=2*cI*aimag(v0_mod_)
-     if(     l_BS_ares_asymm) Cf(1)=           v0_mod_
+     if(     l_BS_ares_from_res) Cf(1)=2*cI*aimag(v0_mod_)
+     if(.not.l_BS_ares_from_res) Cf(1)=           v0_mod_
      !
    else                           ! [***] Initialization Hermitian case
      !
@@ -344,8 +344,8 @@ subroutine K_Haydock(iq,W,mode)
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
@@ -384,7 +384,7 @@ subroutine K_Haydock(iq,W,mode)
      !
      ! A(n) = <Vn+1|F|Vn+1> (that is <Vn|HFH|Vn>),
      !
-     if (.not.l_BS_ares_asymm) then
+     if (l_BS_ares_from_res) then
        ! A(n) =  0   by symmetry
        Af(it)=0._SP
        ItParity=(-1)**(it+1)
@@ -395,16 +395,16 @@ subroutine K_Haydock(iq,W,mode)
      !
      !|Vn+1> = |Vn+1> - A(n)|Vn> - B(n)|Vn-1>
      !
-     if (l_BS_ares_asymm) then
+     if (.not.l_BS_ares_from_res) then
        do i_g = 1,BS_nT_grps
          if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+         call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        enddo
      endif
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
      ! |Vn-1> = |Vn>
@@ -425,8 +425,8 @@ subroutine K_Haydock(iq,W,mode)
      call K_dot_product(v0_mod_,Vn,Vnp1,1) 
      !       = (2*Re(<Vn|Vnp1>))^(1/2) by symmetry,
      !          where the dot_product is just on eh pair space
-     if (.not.l_BS_ares_asymm) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
-     if (     l_BS_ares_asymm) Bf(it+1)=sqrt(  real(v0_mod_,SP))
+     if (     l_BS_ares_from_res) Bf(it+1)=sqrt(2*real(v0_mod_,SP))
+     if (.not.l_BS_ares_from_res) Bf(it+1)=sqrt(  real(v0_mod_,SP))
      ! Simple test for INF
      if( Bf(it+1)==(Bf(it+1)+1._SP) ) call error('Bf=INF likely because some eigenvalue of the BSE is negative.')
      ! Tests for NaN
@@ -448,7 +448,7 @@ subroutine K_Haydock(iq,W,mode)
      if (.not.use_left_and_right) call K_dot_product(v0_mod_,V0,Vn,1)
      if (     use_left_and_right) call K_dot_product(v0_mod_,W0,Vn,1)
      !
-     if (.not.l_BS_ares_asymm) then
+     if (l_BS_ares_from_res) then
        ! Using symmetry arguments
        ! Cf=(1-ItParity)Re(<dipoles|Vn>) + i*(1+ItParity)Im(<dipoles|Vn>)
        ! with all product evaluated just in the eh pairs subspace

@@ -1,8 +1,9 @@
+#!/bin/bash
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM, DS
+# Authors (see AUTHORS file for details): HM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -21,13 +22,23 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-#==============
-topdir=UNKNOWN
-prefix=UNKNOWN
+# moduledep.sh -- script that computes dependencies on Fortran 90 modules
+# modified from the moduledep.sh distributed with Quantum ESPRESSO
 #
-# External libraries
-include config/mk/actions/download_external_libraries.mk
-#
-#===========
-# Libraries download/clone/checkout
-include config/mk/functions/get_libraries.mk
+sources=" "
+if test `find $1 -maxdepth 1 -name '*.F' | wc -l` -ge 1 ; then
+ sources+=`echo $1/*.F`
+fi
+sources+=" " 
+if test `find $1 -maxdepth 1 -name '*.c' | wc -l` -ge 1 ; then
+ sources+=`echo $1/*.c`
+fi
+pj=`echo $2`
+for file in $sources
+do
+ if test `grep $pj $file | grep '#'| wc -l` -ge 1; then
+   obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
+   sources_pj_dependent+=" ${obj} $pj"
+ fi
+done
+echo $sources_pj_dependent >>  $1/project.dep

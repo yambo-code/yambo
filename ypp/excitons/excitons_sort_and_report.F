@@ -132,7 +132,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    if (trim(R_normalize)=='yes') then
      Rmax = maxval(Residuals)
      Residuals=Residuals/Rmax
-     write(dump_ch,'(a,1e10.5)') " Maximum Residual Value = ",Rmax
+     write(dump_ch,'(a,1e12.5)') " Maximum Residual Value = ",Rmax
    endif
    !
    if (trim(R_normalize)=='yes_deg') then
@@ -146,7 +146,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
         Rmax=Rmax+v2sort(j1)**2
       enddo
       Rmax=sqrt(Rmax/real(BSS_n_eig-j1,SP))
-      write(dump_ch,'(a,1e10.5)') " Maximum Residual Value (summed over degenerate states) = ",Rmax
+      write(dump_ch,'(a,1e12.5)') " Maximum Residual Value (summed over degenerate states) = ",Rmax
       Residuals=Residuals/Rmax
    endif
    !

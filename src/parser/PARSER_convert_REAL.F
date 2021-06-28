@@ -53,7 +53,7 @@ subroutine PARSER_convert_REAL(rfac,v_descr)
  else if (index(trim(v_descr),'THz')/=0) then
    rfac=HA2THZ
  else if (index(trim(v_descr),'ps')/=0) then
-   rfac=1./PS2AUT
+   rfac=1._SP/PS2AUT
  else if (index(trim(v_descr),'fs')/=0) then
    rfac=1./FS2AUT
  else if (index(trim(v_descr),'as')/=0) then

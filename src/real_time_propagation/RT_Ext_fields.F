@@ -61,7 +61,7 @@ subroutine RT_Ext_fields(A,time,i_f)
  !
  Field_time=time-Efield(i_f)%t_initial
  !
- if (Efield(i_f)%ef_name=="none" .or. Field_time<=0._SP ) then
+ if (Efield(i_f)%ef_name=="none" .or. Efield(i_f)%t_initial_indx>(NE_i_time+2) ) then
    call A_vecpot_reset(A)
    return
  endif

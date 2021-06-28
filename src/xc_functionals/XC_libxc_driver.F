@@ -221,7 +221,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      do is1 = 1,n_spin
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
-         sigma(is_xc,i1) = drho(i1,is1,1)**2+drho(i1,is2,2)**2+drho(i1,is2,3)**2
+         sigma(is_xc,i1) = drho(i1,is1,1)*drho(i1,is2,1)+drho(i1,is1,2)*drho(i1,is2,2)+drho(i1,is1,3)*drho(i1,is2,3)
        end do
      end do
    end do

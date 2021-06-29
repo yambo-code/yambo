@@ -35,8 +35,6 @@ do
   -D_*) 
    precomp_flags="$precomp_flags $arg"
    a=`echo $arg  | sed "s/-D_/_/"`
-   objects_lock="$objects_lock$a"
-   modules_lock="$modules_lock$a"
    ;;
  esac
 done

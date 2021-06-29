@@ -49,11 +49,24 @@ if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 # Projects
 source ./sbin/compilation/projects.sh
 #
-# Lock files
-source ./sbin/compilation/lock_files.sh
+# Pre-compiler flags
+precomp_string=`echo $precomp_flags | sed "s/ /_/g" | sed "s/\-D_//g"`
 #
 # Libraries
 source ./sbin/compilation/libraries.sh
+#
+# Now it checks for existing precomp flags:
+#
+#  if the current string is new it saves all precomp-dependent objects in lock folders
+#
+for flag in $precomp_flags
+do
+ flag=`echo $flag | sed "s/\-D_//"`
+ if [ ! -f $cdir/${flag}.lock ] ; then
+  #source ./sbin/compilation/snapshot_save.sh
+  touch $cdir/${flag}.lock
+ fi
+done
 #
 # Project dependencies
 #if [ ! -f $cdir/project.dep ] ; then 
@@ -88,15 +101,15 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 source ./sbin/compilation/special_sources.sh
 #
 cat <<EOF > sbin/compilation/mk/static_variables.mk
+STDLOG         =$compdir/"compile_"$precomp_string".log"
 libs           =$libs
 linclude       =$lf90include
 lf90libinclude =$lf90libinclude
 lf90include    =$lf90include
-modinclude     =$INCLUDEDIR #//$modules_lock
+modinclude     =$INCLUDEDIR
 mfiles         =find . -maxdepth 1 -name '*.mod'
 precomp_mpi    =$precomp_mpi
 precomp_flags  =$precomp_flags -D_\$(os)
-objects_lock   =$objects_lock
 rm_command     =$rm_command
 F77_NOOPT_SRC  =$F77_NOOPT_SRC
 FC_NOOPT_SRC   =$FC_NOOPT_SRC

@@ -9,12 +9,6 @@ lib: $(objs)
 	$(mk_lib) 
 	$(modmove) 
 #
-objects_lock:
-	$(mk_mod_dir)
-	$(o_and_mod_clean)
-	$(o_save)
-#
-#
 # Sources that do not want optimization
 #
 $(F77_NOOPT_SRC):

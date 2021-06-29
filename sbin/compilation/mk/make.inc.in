@@ -27,7 +27,6 @@ cpp        =@CPP@
 fpp        =@FPP@
 cppflags   =@CPPFLAGS_yambo@
 ECHO_N     =@ECHO_N@
-LOGID      =@MKMF_LOGID@
 PREFIX     =@MKMF_PREFIX@
 KEEPSRC    =@enable_keep_src@
 INCLUDEDIR =@includedir@

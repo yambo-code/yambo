@@ -5,13 +5,15 @@ define clean_configure
   rm -f $$dir/Makefile; \
   rm -f $$dir/*.mk; \
  done; \
- rm -f $(prefix)/config/stamps_and_lists/*.list \
- rm -f $(prefix)/*.log \
- rm -f $(prefix)/*.status 
+ rm -f $(prefix)/config/stamps_and_lists/*.list; \
+ rm -f $(prefix)/*.log; \
+ rm -f $(prefix)/*.status; \
+ rm -f $(prefix)/autom4te.cache 
 endef
 define clean_bin
  echo  "\t[CLEANING] bin"; \
- rm -f $(prefix)/bin/*
+ rm -f $(prefix)/bin/*; \
+ rm -f $(prefix)/compile*
 endef
 define clean_ext_libs
  echo  "\t[CLEANING external libs]" ; \

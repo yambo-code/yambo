@@ -77,7 +77,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Initialize
  !=========
- call NL_initialize(E,k,q)
+ call NL_initialize(E,k)
  !
  ! Switch 
  !========

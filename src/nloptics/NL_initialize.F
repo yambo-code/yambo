@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_initialize(E,k,q)
+subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
@@ -47,7 +47,7 @@ subroutine NL_initialize(E,k,q)
 #include<memory.h>
  !
  type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: q,k
+ type(bz_samp),intent(in) :: k
  !
  ! Working space
  !
@@ -146,7 +146,7 @@ subroutine NL_initialize(E,k,q)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
    Efield(i1)%ef_pol        ="linear"
    !
-   call Check_symmetries(Efield(i1)%versor)
+   call Check_symmetries(Efield(i1)%versor,"electric")
    !
  enddo
  !

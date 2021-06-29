@@ -58,7 +58,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm
  integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
-&                                i_sp_pol,n_LT_steps,ik_mem,ic_min
+&                                i_sp_pol,n_LT_steps,ik_mem,ic_min,pp_dim
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
@@ -108,10 +108,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    endif
    !
    if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-     YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,max(pp_kbv_dim_yambo,1)))
      ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+     pp_dim=max(pp_kbv_dim_yambo,1)
+     YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_dim))
      if (have_cuda) then
-       YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ng,n_spinor,4,max(pp_kbv_dim_yambo,1)))
+       YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ng,n_spinor,4,pp_dim))
        DEV_VAR(kbv)=cZERO
      endif
    endif
@@ -294,8 +295,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! CLEAN
  !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
-   YAMBO_FREE(kbv)
    YAMBO_FREE_GPU(DEV_VAR(kbv))
+   YAMBO_FREE(kbv)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
    YAMBO_FREE(pp_kbv_table)

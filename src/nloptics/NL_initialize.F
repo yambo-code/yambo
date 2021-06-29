@@ -117,7 +117,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=1
+ n_ext_fields=2
  !
  do i1=1,n_ext_fields
    !

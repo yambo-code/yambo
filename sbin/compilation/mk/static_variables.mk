@@ -1,4 +1,4 @@
-libs           =-L$(libdir)  
+libs           =-L$(libdir) -lbse -lacfdt -lqp -lpol_function -ldipoles -ltddft -lsetup -lqp_control -linterpolate -lcoulomb -lwf_and_fft -lstop_and_restart -linterface -lxc_functionals -lio -lYio -ltiming -lcommon -lcommunicate -lparser -lparallel -lbz_ops -llinear_algebra -lmatrices -lmodules -lcommunicate -lYio -lmemory -ltools -lyambo_Ydriver_main -lyambo_Ydriver_interface -lyambo_Ydriver_options -ldriver   -lqe_pseudo -lmath77 -lslatec -llocal $(lscalapack) $(lslepc) $(lpetsc) $(llapack) $(lblacs) $(lblas) $(liotk) $(lpnetcdf) $(lnetcdff) $(lnetcdf) $(lhdf5) $(llibxc) $(lfft) $(lfutile) $(lyaml) -lm
 linclude       =
 lf90libinclude =
 lf90include    =

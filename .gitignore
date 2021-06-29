@@ -3,7 +3,7 @@
 modulesdep.list
 modules.list
 modules.rules
-dependencies.stamp
+config/stamps_and_lists/*.stamp
 autoconf_generated_files.list
 active_directories.list
 

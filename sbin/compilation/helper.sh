@@ -75,7 +75,10 @@ wdir   =$cdir
 EOF
 #
 # Makefile (II): OBJECTS list
-cp $cdir/.objects $cdir/objects.mk
+cp $cdir/.objects $cdir/objects.c
+DTARG=`echo $target  | sed "s/\.a//" | sed "s/\-//"`
+$cpp $cppflags $precomp_flags -D_$DTARG $cdir/objects.c  > $cdir/objects.mk
+rm -f $cdir/objects.c 
 #
 # Makefile (II): common vars
 rm_command="@rm -f \$*\$(f90suffix)"

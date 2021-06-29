@@ -2,10 +2,10 @@ exe: $(objs)
 	$(driver)
 	$(link)
 	$(modmove)
-	$(dircheck)
-	$(PREFIX)(mv $@ $(exec_prefix))
+	$(bindir)
+	$(PREFIX)(if test -f $(target); then mv $(target) $(exec_prefix);fi)
 #
-lib: $(objs)
+lib: $(objs) 
 	$(mk_lib) 
 	$(modmove) 
 #

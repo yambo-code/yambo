@@ -18,7 +18,6 @@ define make_message
   echo -n " [int-libs]      "; for target in $(INT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [ext-libs]      "; for target in $(EXT_LIBS); do echo -n " $$target" ; done;echo;\
   echo -n " [yambo-int-libs]"; for target in $(YAMBO_INT_LIBS); do echo -n " $$target" ; done;echo;\
-  echo -n " [yambo-ext-libs]"; for target in $(YAMBO_EXT_LIBS); do echo -n " $$target" ; done;echo;\
   echo ; echo " *** Utils & Cleans ***";\
   echo -n " [utils]         "; for target in $(UTILS); do echo -n " $$target" ; done;echo;\
   echo -n " [clean]         "; for target in $(CLEANS); do echo -n " $$target" ; done;echo;\

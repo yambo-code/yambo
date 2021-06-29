@@ -1,6 +1,8 @@
-clean:     clean_Ydriver clean_ypp clean_src clean_stamps
-distclean: clean_new clean_ext_libs clean_libs clean_stamps clean_deps clean_configure
+clean:     clean_Ydriver clean_ypp clean_src clean_stamps clean_bin
+distclean: clean clean_ext_libs clean_libs clean_stamps clean_deps clean_configure
 #
+clean_bin:
+	@$(clean_bin)
 clean_ext_libs:
 	@$(clean_ext_libs)
 clean_configure:
@@ -20,7 +22,7 @@ clean_ypp: clean_stamps clean_driver
 	 for FOLD in `cat config/stamps_and_lists/active_directories.list|grep ypp`;do TARG="$$TARG $$FOLD";done;\
          $(clean_dir_driver);$(clean_lib_driver);$(clean_mod_driver))
 clean_src: clean_stamps clean_driver
-	@(TARG="";MSG="ypp";EXTS=".f90 .o .tmp_source";WDIR="$(topdir)";\
+	@(TARG="";MSG="src";EXTS=".f90 .o .tmp_source";WDIR="$(topdir)";\
 	 for FOLD in `cat config/stamps_and_lists/active_directories.list|grep src`;do TARG="$$TARG $$FOLD";done;\
          $(clean_dir_driver);$(clean_lib_driver);$(clean_mod_driver))
 clean_libs: clean_stamps clean_driver

@@ -1,12 +1,12 @@
-libs           =-L$(libdir) -lbse -lacfdt -lqp -lpol_function -ldipoles -ltddft -lsetup -lqp_control -linterpolate -lcoulomb -lwf_and_fft -lstop_and_restart -linterface -lxc_functionals -lio -lYio -ltiming -lcommon -lcommunicate -lparser -lparallel -lbz_ops -llinear_algebra -lmatrices -lmodules -lcommunicate -lYio -lmemory -ltools -lyambo_Ydriver_main -lyambo_Ydriver_interface -lyambo_Ydriver_options -ldriver   -lqe_pseudo -lmath77 -lslatec -llocal $(lscalapack) $(lslepc) $(lpetsc) $(llapack) $(lblacs) $(lblas) $(liotk) $(lpnetcdf) $(lnetcdff) $(lnetcdf) $(lhdf5) $(llibxc) $(lfft) $(lfutile) $(lyaml) -lm
+libs           =-L$(libdir)  
 linclude       =
 lf90libinclude =
 lf90include    =
-modinclude     =/home/marini/Yambo/yambo/branches/devel-compilation/include #//_modules_lock_HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK
+modinclude     =/home/marini/Yambo/sources/git/yambo/branches/devel-compilation/include #//_modules_lock_HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK
 mfiles         =find . -maxdepth 1 -name '*.mod'
 precomp_mpi    =yes
-precomp_flags  = -D_HDF5_LIB -D_HDF5_IO -D_MPI -D_FFTW -D_TIMING -D_MEM_CHECK -D_$(os)
-objects_lock   =_objects_lock_HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK
+precomp_flags  = -D_HDF5_LIB -D_HDF5_IO -D_MPI -D_FFTW -D_TIMING -D_MEM_CHECK -D_yambo -D_$(os)
+objects_lock   =_objects_lock_HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK_yambo
 rm_command     = 
 F77_NOOPT_SRC  =xerbla.o slamch.o
 FC_NOOPT_SRC   =mod_parser_m.o mod_logo.o

@@ -341,7 +341,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         if (io_ELPH_err(1)==0) then
+         if (io_ELPH_err(1)==0.or.io_ELPH_err(2)==0) then
            l_elph_corr=runlevel_is_on('el_ph_corr')
            l_phel_corr=runlevel_is_on('ph_el_corr')
          else

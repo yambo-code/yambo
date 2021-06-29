@@ -43,8 +43,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
  use pars,           ONLY:SP,lchlen,zero_dfl
- use drivers,        ONLY:l_bse,l_elel_scatt
- use com,            ONLY:msg
+ use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
+ use com,            ONLY:msg,fat_log
  use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
@@ -121,6 +121,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if (io_err==0) then
    call k_expand(q)
    d3q_factor=RL_vol/real(q%nbz)
+   if(l_setup.and.fat_log) call print_q_indirect( )
    call REPORT_Energies(E_empty,q,q,1,(/1,q%nibz/),'Q',.TRUE.,.FALSE.)
    call q_shadows(.false.)
    return
@@ -487,6 +488,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call PP_redux_wait()
  !
+ if(l_setup.and.fat_log) call print_q_indirect( )
+ !
  if(master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db)
    io_err=io_QINDX(Xk,q,io_db)
@@ -722,5 +725,34 @@ subroutine bz_samp_indexes(en,k,Xk,q)
      sigma_scattering=.false.
      coll_scattering=.false.
    end subroutine bz_X_only_exit
+   !
+   subroutine print_q_indirect( )
+     !
+     use stderr,        ONLY:intc
+     use interfaces,    ONLY:OCCUPATIONS_Gaps
+     use com,           ONLY:COMPOSE_spin_msg
+     !
+     integer :: E_k_ind(n_sp_pol,2)
+     integer :: okbz,ik,iqbz,i_sp_pol
+     logical :: q_found
+     !
+     call OCCUPATIONS_Gaps(en,E_k_ind=E_k_ind)
+     !
+     if(all(E_k_ind(:,1)==E_k_ind(:,2))) return  ! Direct gap case
+     if(.not.allocated(qindx_S))         return
+     !
+     do i_sp_pol=1,n_sp_pol
+       q_found=.false.
+       do iqbz=1,q%nbz
+         okbz=qindx_S(E_k_ind(i_sp_pol,1),iqbz,1)
+         if(k%sstar(okbz,1)==E_k_ind(i_sp_pol,2)) then
+           q_found=.true.
+           exit
+         endif
+       enddo
+       if(q_found) call msg('r',COMPOSE_spin_msg('',0,'Q-point that connects indirect gap',i_sp_pol),q%sstar(iqbz,1))
+     enddo
+     !
+   end subroutine print_q_indirect
    !
 end subroutine

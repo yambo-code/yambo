@@ -25,11 +25,12 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
- use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load
+ use electrons,           ONLY:levels
+ use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
- use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found
+ use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
  !
  implicit none
  !
@@ -81,24 +82,38 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
- qindx_tmp=qindx_B_init(qindx_ID) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID) 
  !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
-   do ok_bz=1,k%nbz
+   if(l_use_qindxB) then
      !
-     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
-     iq_bz=qindx_tmp(1)
+     ! Use qindx_B to expand gkkp
      !
-     if (iq_bz==iq) then
-       ok=k%sstar(ok_bz,1)
-       os=k%sstar(ok_bz,2)
-       exit
-     endif
-   enddo
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+     enddo
+     !
+   else
+     !
+     ! Use qindx_S     
+     !
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
    !
    l_bands_reverted=.FALSE.
    ! 
@@ -140,23 +155,39 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
    enddo
  enddo
  !
+ ! For the energies E(k+q)
+ ! 
  do ik_bz=1,k%nbz
    ! 
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
-   do ok_bz=1,k%nbz
+   if(l_use_qindxB) then
+     !       
+     ! Use qindx_B
      !
-     qindx_tmp=qindx_B_load(ik_bz,ok_bz,qindx_ID)
-     iq_bz=qindx_tmp(1)
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+       !
+     enddo
      !
-     if (iq_bz==iq) then
-       ok=k%sstar(ok_bz,1)
-       os=k%sstar(ok_bz,2)
-       exit
-     endif
+   else
+     !      
+     ! Use qindx_S
      !
-   enddo
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
    !
    if (iq_s>nsym/(i_time_rev+1)) then
      ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
@@ -174,7 +205,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  GKKP%dVc=GKKP_expanded%dVc
  GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
  !
- qindx_tmp=qindx_B_close(qindx_ID)
+ if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID)
  !
  call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !
@@ -195,7 +226,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      small=0
      nsmall=0
      !
-     iq_db=iq
+     iq_db=iq  ! when this function is called iq is in the IBZ
+     !
      if(l_gkkp_expand) then
        iq_db=iq
        if(iq>1) iq_db=sum(q%nstar(:iq-1))+1
@@ -210,6 +242,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
          small(nsmall)=is
        endif
      enddo
+     !
    end subroutine
    !
 end subroutine

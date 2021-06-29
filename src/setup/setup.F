@@ -24,12 +24,13 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use units,          ONLY:Da2AU
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_pos,atom_mass,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -98,17 +99,25 @@ subroutine setup(en,Xen,Ken,k,Xk)
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
    !
-   call msg('nr','List of atomic coordinates    ','[cc]')
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
-       call msg('r',trim(PT_elements(Z_species(is)))//trim(intc(ia))//'       ',atom_pos(:,ia,is))
+   ! Atomic masses
+   !
+   if (allocated(atom_mass)) then
+     call msg('nr','List of atomic masses         ')
+     do is=1,n_atomic_species
+       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is)/Da2AU)
      enddo
-   enddo
- endif
- !
- if (allocated(atom_mass)) then
+   endif
+   !
+   call msg('nr','List of atomic coordinates    ','[cc]')
    do is=1,n_atomic_species
-       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is))
+     do ia=1,n_atoms_species(is)
+       atoms_string=trim(PT_elements(Z_species(is)))//trim(intc(ia))
+       if (allocated(atoms_map)) then
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is),' order '//intc(atoms_map(ia,is)))
+       else
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is))
+       endif
+     enddo
    enddo
  endif
  !
@@ -149,6 +158,24 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call define_zeros(vector_=g_vec,zero_=G_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ !
+ !
+ call msg('r',' ')
+ !
+ if(fat_log) then
+   !      
+   do is=1,n_atomic_species
+   do ia=1,n_atoms_species(is)
+     call c2a(v_out=tmp_V,v_in=atom_pos(:,ia,is),mode='rc2a')
+     if (allocated(atoms_map)) then
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu]  order '//intc(atoms_map(ia,is)))
+     else
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu] ')
+     endif
+   enddo
+   enddo
+   !
+ endif
  !
  ! Symmetries and moltiplication table:
  !

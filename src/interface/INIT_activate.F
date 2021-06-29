@@ -420,7 +420,7 @@ subroutine INIT_activate()
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
-     call initactivate(1,'WRgFsq NewtDchk OnMassShell')
+     call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 

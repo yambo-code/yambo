@@ -277,8 +277,8 @@ module BS
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table)
        YAMBO_FREE(BS_blk(iB)%kp_table)
+       YAMBO_FREE_NO_DEV_CHECK(BS_blk(iB)%O_table)  ! O_table has rank>7, there is not interface for dev_allocated function
 #ifdef _CUDA
        if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
 #endif
@@ -365,7 +365,7 @@ module BS
        !
      enddo
      !
-     YAMBO_FREE(BS_T_grp)
+     deallocate(BS_T_grp)
      if(allocated(BS_blk)) deallocate(BS_blk)
      !
    end subroutine

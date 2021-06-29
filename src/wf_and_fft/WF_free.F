@@ -50,8 +50,8 @@ subroutine WF_free(WF,keep_fft)
  !
  if (.not.allocated(WF%c)) return
  !
- YAMBO_FREE(WF%c)
  YAMBO_FREE_GPU(DEV_VAR(WF%c))
+ YAMBO_FREE(WF%c)
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)
  !

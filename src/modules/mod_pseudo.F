@@ -134,7 +134,7 @@ module pseudo
      use R_lattice,  ONLY:ng_vec
      implicit none
      YAMBO_ALLOC(pp_rhog_nlcc,(ng_vec))
-     YAMBO_ALLOC(pp_has_nlcc_atom,(n_atomic_species))
+     allocate(pp_has_nlcc_atom(n_atomic_species))
      pp_rhog_nlcc =0.
      pp_has_nlcc_atom =0
    end subroutine 
@@ -142,7 +142,7 @@ module pseudo
    subroutine PP_nlcc_free()
      YAMBO_FREE(pp_rhog_nlcc)
      YAMBO_FREE(pp_rho_nlcc)
-     YAMBO_FREE(pp_has_nlcc_atom)
+     deallocate(pp_has_nlcc_atom)
      pp_has_nlcc=.FALSE.
    end subroutine
    !

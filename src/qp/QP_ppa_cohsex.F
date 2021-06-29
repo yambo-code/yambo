@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
@@ -74,6 +74,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
+ real(SP),intent(in) ::W(QP_dSc_steps) ! DALV: this is the frequency grid for Sc now set in the solvers('n','s','g')
  !
  ! Work Space
  !
@@ -100,7 +101,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), external ::QP_ppa_EET_terminator
  !
  integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
- integer               :: cond_g,cond_f,poles_f  !Dario: counts 
+ real(SP)              :: PPcond_rate,TO_rate,PP_err  !DALV: counts 
  !
  ! Reset & checks
  !
@@ -275,22 +276,23 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       cond_f=0
-       cond_g=0
-       poles_f=0
+       PPcond_rate=0.
+       TO_rate=0.
+       PP_err=0.
        !
-       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:cond_f,cond_g,poles_f), collapse(2)
+       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
              if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+               PP_err=PP_err+abs(X_mat(ig1,ig2,X_range(1))/(X%ppaE**2+1._SP)-X_mat(ig1,ig2,X_range(2)) )/&
+&                            maxval(abs(X_mat(ig1,ig2,X_range(:2))))
                X_mat(ig1,ig2,X_range(2))=X%ppaE
-               cond_f=cond_f+1
+               PPcond_rate=PPcond_rate+1.
              else
                X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-               cond_g=cond_g+1
                if(real(1._SP/X_mat(ig1,ig2,X_range(2)),SP)*aimag(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
-                 poles_f = poles_f + 1
+                 TO_rate = TO_rate + 1.
                endif
              endif
            else
@@ -300,9 +302,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        enddo
        !$omp end parallel do
        !
-       call msg('r','     PPA condition good [iqibz,count]: ', (/iqibz,cond_g/) )
-       call msg('r','     PPA condition fail [iqibz,count]: ', (/iqibz,cond_f/) )
-       call msg('r',' PPA time ordering fail [iqibz,count]: ', (/iqibz,poles_f/) )
+       call msg('r',' Current Q-pt index             ',iqibz)
+       call msg('r',' :: PP condition fails/total    ',PPcond_rate/X%ng**2)
+       call msg('r',' :: Time ordering fails/rest    ',TO_rate/(X%ng**2-PPcond_rate))
+       call msg('r',' :: Mean rel dev of PP cond     ',PP_err/X%ng**2)
        !
 #if defined _SC
      endif
@@ -481,7 +484,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !$omp end parallel do
          endif
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -555,13 +559,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                dp_dummy=dp_dummy+ctmp
                !
-               if (i_w==1 .and. i_qp==1 .and. iqbz==1 .and. ib==1 .and. ig2==1 .and.(ig1==1 .or. ig1==2 ) ) then
-                 write(*,*)
-                 write(*,*) "G=",ig1
-                 write(*,*) "ppaE=",PPA_E
-                 write(*,*) "ppaR=",PPA_R/isc%gamp(ig1,ig2)
-                 write(*,*) 
-               endif
              enddo
            enddo
            !$omp end parallel do
@@ -603,7 +600,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if(l_GW_terminator) then
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
        !
        do i_w=1,QP_dSc_steps
          !

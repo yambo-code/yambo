@@ -42,7 +42,7 @@
 !
 module mpa_m
  !
- use pars,            ONLY:SP,DP,cZERO,cI
+ use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
  !
 #include <memory.h>
@@ -51,7 +51,7 @@ module mpa_m
  complex(SP), allocatable :: MPA_R_mat(:,:,:)
  complex(SP), allocatable :: MPA_freqs(:)
 
- public :: mpa_RE_solver,err_func_np
+ public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
 
 contains
@@ -71,30 +71,36 @@ contains
    YAMBO_FREE(MPA_freqs)
  end subroutine
  !
- subroutine mpa_cond1(z, E)
+ subroutine mpa_cond1(z, E, PPcond_rate)
    !
    complex(SP),  intent(in)     :: z(2)
    complex(SP),  intent(inout)  :: E
+   real(SP),     intent(out)    :: PPcond_rate
+   ! 
+   PPcond_rate=0._SP
    ! 
    if(NAN(abs(E)) .or. abs(E)<0.00001_SP) then
-     E=abs(z(2))-cI*epsilon(1._SP)   
+     E=abs(z(2))-cI*epsilon(1._SP) 
+     PPcond_rate=1._SP  
    elseif(real(E)>0._SP) then     
      E = sqrt(E)
    else
      E = sqrt(-conjg(E))
      !E = 1._SP
+     PPcond_rate=1._SP 
    endif
    if(real(E)<0._SP) E=-E
    if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)
    !
  end subroutine mpa_cond1
  !
- subroutine mpa_cond(np, npr, z, E)
+ subroutine mpa_cond(np, npr, z, E, PPcond)
    !
-   integer,  intent(in)         :: np
-   integer,  intent(out)        :: npr
-   complex(SP),  intent(in)     :: z(2*np)
-   complex(SP),  intent(inout)  :: E(np)
+   integer,     intent(in)     :: np
+   integer,     intent(out)    :: npr
+   logical,     intent(out)    :: PPcond(np)
+   complex(SP), intent(in)     :: z(2*np)
+   complex(SP), intent(inout)  :: E(np)
    !
    integer     :: i, j
    complex(SP) :: Eaux(np)
@@ -105,16 +111,22 @@ contains
    ! 
    do i=1,npr
      Eaux(i)=sqrt(E(i))
+     if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
      Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      if(real(Eaux(i),SP)>wmax) then
        Eaux(i)=sqrt(E(npr))
+       PPcond(i)=.true.
+       if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
        Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
        npr=npr-1
      endif
      do j=2,i-1
        if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
          Eaux(j)=real(Eaux(j),SP)+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
+         PPcond(j)=.true.
          Eaux(i)=sqrt(E(npr))
+         PPcond(i)=.true.
+         if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
          Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
          npr=npr-1
          !exit
@@ -124,24 +136,349 @@ contains
    !
    E(1:npr)=Eaux(1:npr)
    do i=np,npr+1,-1
-     E(i)=1._Sp-cI*epsilon(1._SP)
+     E(i)=1._SP-cI*epsilon(1._SP)
+     PPcond(i)=.true.
    enddo
    !
  end subroutine mpa_cond
  !
- subroutine mpa_RE_1p_solver(z, x, R, E) 
+ subroutine mpa_E_1p_solver(z, x, E, PPcond_rate) 
    !
-   ! analytical form of the 1 pole solution
+   ! analytical form of the E position of the 1 pole solution
    !
    implicit none
    !
    complex(SP),  intent(in)     :: z(2)
    complex(SP),  intent(in)     :: x(2)
-   complex(SP),  intent(out)    :: R, E
+   complex(SP),  intent(out)    :: E
+   real(SP),     intent(out)    :: PPcond_rate
+   ! 
+   E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
+   call mpa_cond1(z, E, PPcond_rate)
+   !
+ end subroutine mpa_E_1p_solver
+ !
+ subroutine mpa_R_fit(np,npr, w, xq, R, E)
+   implicit none
+   integer,      intent(in)        :: np, npr
+   complex(SP),  intent(in)        :: w(2*np)
+   complex(SP),  intent(in)        :: xq(2*np), E(np)
+   complex(SP),  intent(out)       :: R(np)
+   ! 
+   complex(SP)                     :: A(2*np,npr), B(2*np)
+   integer                         :: i, k, info, rank, lwork, lwmax 
+   parameter                       (lwmax=1000)
+   real(SP)                        :: rcond
+   integer                         :: iwork(3*npr*0+11*npr)
+   real(SP)                        :: S(npr), rwork(10*npr+2*npr*25+8*npr*0+3*25+26*26)
+   complex(SP)                     :: work(lwmax)
+   ! 
+   do k = 1, 2*np
+     B(k) = xq(k)
+     do i = 1, npr
+       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
+     enddo
+   enddo 
+   ! 
+   rcond=-1._SP
+#ifdef _DOUBLE
+   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
+   lwork=min(lwmax,int(work(1)))
+   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
+#else
+   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
+   lwork=min(lwmax,int(work(1)))
+   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
+#endif
+   ! 
+   R=B(1:npr)
+   do i=np,npr+1,-1
+     R(i)=0._SP
+   enddo
+   ! 
+ end subroutine mpa_R_fit
+ !
+ subroutine mpa_R_solver(np, w, xq, R, E, rcond)
+   implicit none
+   integer,      intent(in)        :: np
+   complex(SP),  intent(in)        :: w(2*np)
+   complex(SP),  intent(in)        :: xq(2*np), E(np)
+   complex(SP),  intent(out)       :: R(np)
+   real(SP),     intent(out)       :: rcond
+   ! 
+   complex(SP)                     :: A(np,np)
+   real(SP)                        :: anorm
+   integer                         :: i, k, info, ind(np)    
+   complex(SP)                     :: rwork(2*np), work(2*np)
+   ! 
+   anorm=abs(2._SP*E(1)/(w(1)**2 -E(1)**2))
+   do k = 1, np
+     R(k) = xq(k)
+     do i = 1, np
+       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
+       if(abs(A(k,i))>anorm) anorm=abs(A(k,i))
+     enddo
+   enddo 
+   ! 
+#ifdef _DOUBLE
+   call zgecon('I', np, A, np, anorm, rcond, work, rwork, info)
+   call zgesv(np, 1, A, np, ind, R, np, info) 
+#else
+   call cgecon('I', np, A, np, anorm, rcond, work, rwork, info)
+   call cgesv(np, 1, A, np, ind, R, np, info) 
+#endif
+   ! 
+ end subroutine mpa_R_solver
+ ! 
+ subroutine mpa_E_solver(np, npr, z, xq, E, PPcond, econd)
+   implicit none
+   integer,      intent(in)        :: np
+   integer,      intent(out)       :: npr
+   complex(SP),  intent(in)        :: z(2*np)
+   complex(SP),  intent(in)        :: xq(2*np)
+   complex(SP),  intent(out)       :: E(np)
+   logical,      intent(out)       :: PPcond(np)
+   real(SP),     intent(out)       :: econd(2)
+   ! 
+   complex(SP)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
+   complex(SP)                     :: M(np,np), b(np), Companion(np,np)
+   complex(SP)                     :: rwork(2*np),work(2*np),VR(np),VL(np),S(np),RCE(np,np),RCV(np,np),ABNRM
+   integer                         :: i, j, info, ind(np), ILO,IHI    
+   real(SP)                        :: rcond, anorm, Wm
+   ! 
+   PPcond(:)=.true.
+   Wm = maxval(abs(z(1:np)))
+   !    
+   do j = 1, np
+     ind(j) = j
+     v1(j)  = xq(j   )*z(j   )**np 
+     b (j)  = xq(j+np)*z(j+np)**np 
+     Z1(j,1) = 1._SP
+     Z2(j,1) = 1._SP  
+     M1(j,1) = -xq(j) 
+     M2(j,1) = -xq(j+np) 
+     M (j,1) = 0._SP
+     M (j,j) = 1._SP
+     do i = 2, np
+       Z1(j,i) =  (z(j)/Wm)**(i-1)
+       Z2(j,i) =  (z(j+np)/Wm)**(i-1)
+       M1(j,i) = -xq(j   )*Z1(j,i)
+       M2(j,i) = -xq(j+np)*Z2(j,i)
+       if(i/=j) M(j,i) = 0._SP 
+     enddo
+   enddo
+   !
+   anorm=abs(Z1(1,1))
+   do j = 1, np
+     do i = 1, np
+       if(abs(Z1(j,i))>anorm) anorm=abs(Z1(j,i))
+     enddo
+   enddo
+   !
+#ifdef _DOUBLE
+   call zgecon('I', np, Z1, np, anorm, econd(1), work, rwork, info)
+   call zgesv(np, np, Z1, np, ind, M, np,info) 
+#else
+   call cgecon('I', np, Z1, np, anorm, econd(1), work, rwork, info)
+   call cgesv(np, np, Z1, np, ind, M, np,info) 
+#endif
+   M  = matmul(Z2,M)
+   M2 = matmul(M,M1) - M2
+   b  = matmul(M,v1) - b
+   ! 
+   M = 0.0_SP
+   do i =1,np
+     M(i,i) = 1.0_SP
+   enddo
+   !
+   anorm=abs(M2(1,1))
+   do j = 1, np
+     do i = 1, np
+       if(abs(M2(j,i))>anorm) anorm=abs(M2(j,i))
+     enddo
+   enddo
+   !
+#ifdef _DOUBLE
+   call zgecon('I', np, M2, np, anorm, econd(2), work, rwork, info)
+   call zgesv(np, 1, M2, np, ind, b, np, info)
+#else
+   call cgecon('I', np, M2, np, anorm, econd(2), work, rwork, info)
+   call cgesv(np, 1, M2, np, ind, b, np, info)
+#endif
+   ! 
+   Companion=0._SP
+   Companion(1,np) = -b(1)
+   do i = 2, np
+     Companion(i,np)  = -b(i)/Wm**(i-1)
+     Companion(i,i-1) = 1._SP
+   enddo
+   !
+#ifdef _DOUBLE
+   call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
+#else
+   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call cgeevx('P','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,10._SP,RCE,RCV,work,2*np,rwork,info)
+#endif
+   ! 
+   ! here we need to force real(E) to be positive.
+   ! This is because of the way the residue integral is performed, later.
+   ! 
+   call mpa_cond(np, npr, z, E, PPcond)
+   ! 
+ end subroutine mpa_E_solver
+ !
+ subroutine mpa_E_solver_Pade(np, npr, z, X, E, PPcond, econd)
+   implicit none
+   integer,      intent(in)        :: np
+   integer,      intent(out)       :: npr
+   complex(SP),  intent(in)        :: z(2*np)
+   complex(SP),  intent(in)        :: X(2*np)
+   complex(SP),  intent(out)       :: E(np)
+   logical,      intent(out)       :: PPcond(np)
+   real(SP),     intent(out)       :: econd(2)
+   ! 
+   complex(SP)                     :: c(2*np), b(np+1), Companion(np,np)
+   complex(SP)                     :: c_m1(2*np), b_m1(np+1), b_m2(np+1)
+   complex(SP)                     :: rwork(2*np),work(2*np),VR(np),VL(np)
+   integer                         :: i, j, info   
+   real(SP)                        :: rcond, anorm, Wm
+   ! 
+   PPcond(:)=.true.
+   b_m1(1)=1._SP
+   b_m2(1)=1._SP
+   b_m1(2:)=0._SP
+   b_m2(2:)=0._SP
+   b=b_m1
+   c=X
+   c_m1=c
+   ! 
+   do i=2, 2*np  
+     do j=i, 2*np
+       c(j)=(c_m1(i-1)-c_m1(j))/((z(j)-z(i-1))*c_m1(j))
+     enddo
+     c_m1=c
+     do j=1, np+1
+       b(j)=b_m1(j)-z(i-1)*c(i)*b_m2(j)
+     enddo
+     do j=1, np
+       b_m2(np+2-j)=c(i)*b_m2(np+1-j)
+     enddo
+     do j=1, np
+       b(j+1)=b(j+1)+b_m2(j+1)
+     enddo
+     b_m2=b_m1
+     b_m1=b
+   enddo
+   ! 
+   Companion=0._SP
+   Companion(1,np) = -b(1)/b(np+1)
+   do i = 2, np
+     Companion(i,np)  = -b(i)/b(np+1)
+     Companion(i,i-1) = 1._SP
+   enddo
+   !
+#ifdef _DOUBLE
+   call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
+#else
+   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
+   !call cgeevx('P','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,10._SP,RCE,RCV,work,2*np,rwork,info)
+#endif
+   ! 
+   ! here we need to force real(E) to be positive.
+   ! This is because of the way the residue integral is performed, later.
+   ! 
+   call mpa_cond(np, npr, z, E, PPcond)
+   ! 
+ end subroutine mpa_E_solver_Pade
+ !
+ subroutine mpa_RE_solver(np, w, x, R, E,MPred,PPcond_rate,MP_err,cond_num) ! version 3.0
+   implicit none
+   !
+   integer,      intent(in)     :: np
+   complex(SP),  intent(in)     :: w(2*np), x(2*np)
+   complex(SP),  intent(out)    :: R(np), E(np)
+   logical,      intent(out)    :: MPred
+   real(SP),     intent(out)    :: PPcond_rate,MP_err
+   ! 
+   integer                      :: i,npr
+   logical                      :: PPcond(np)
+   real(SP)                     :: cond_num(2)
+   ! 
+   PPcond_rate=0._SP
+   ! 
+   select case(np)
+   case(1)
+     call mpa_E_1p_solver(w, x, E(1), PPcond_rate)
+     call mpa_R_fit(1, 1, w, x, R, E)
+   !case(2)
+   !  call mpa_RQ_2p_solver(w, x, R, E)
+   !case(3)
+   !  call mpa_RQ_3p_solver(w, x, R, E)
+   case default
+     !
+     !call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
+     call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond, cond_num)
+     cond_num=log10(1._SP/cond_num)
+     if(npr<np) MPred=.true.
+     call mpa_R_fit(np, npr, w, x, R, E)
+     do i=1,np
+       if(.not.PPcond(i)) PPcond_rate=PPcond_rate+abs(R(i))
+     enddo
+     !
+     PPcond_rate=PPcond_rate/sum(abs(R(:)))
+   end select
+   !
+   MP_err=err_func_X(np, R, E, w, x)
+   !
+ end subroutine mpa_RE_solver
+ !
+ !
+ function err_func_X(np, R, E, w, x)
+   implicit none
+   !
+   integer ,    intent(in)  :: np
+   complex(SP), intent(in)  :: x(2*np), w(2*np)
+   complex(SP), intent(in)  :: R(np), E(np)
+   complex(SP)              :: aux
+   real(SP)                 :: err_func_X
+   integer   ::i,j
+   !      
+   err_func_X = 0._SP                                                    
+   do j=1, 2*np
+     aux = cZERO
+     do i=1, np
+       aux = aux + 2._SP*E(i)*R(i)/(w(j)**2-E(i)**2)     
+     enddo 
+     err_func_X = err_func_X + abs( aux - x(j) )**2
+   enddo  
+   !
+   ! this is the Standard Deviation relative to the maximum: 
+   ! (Coefficient of variation)
+   ! 
+   err_func_X = sqrt(err_func_X/(2._SP*np-1._SP))/maxval(abs(X(:)))
+   !
+ endfunction err_func_X
+ !
+ !
+ ! ----------------------------------------------------------------
+ ! ------- Not in use ---------------------------------------------
+ ! ----------------------------------------------------------------
+ subroutine mpa_RE_1p_solver(z, x, R, E, PPcond_rate) 
+   !
+   ! analytical form of the 1 pole solution
+   !
+   implicit none
+   !
+   complex(SP), intent(in)     :: z(2)
+   complex(SP), intent(in)     :: x(2)
+   complex(SP), intent(out)    :: R, E
+   real(SP),    intent(out)    :: PPcond_rate
    ! 
 !----General cond------------------------------------------------
    E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
-   call mpa_cond1(z, E)
+   call mpa_cond1(z, E, PPcond_rate)
    !R = x(1)*(z(1)**2-E**2)/(2._SP*E) 
    R = x(2)*(z(2)**2-E**2)/(2._SP*E) 
    ! 
@@ -159,21 +496,6 @@ contains
 !--------------------------------------------------------
    !
  end subroutine mpa_RE_1p_solver
- !
- subroutine mpa_E_1p_solver(z, x, E) 
-   !
-   ! analytical form of the 1 pole solution
-   !
-   implicit none
-   !
-   complex(SP),  intent(in)     :: z(2)
-   complex(SP),  intent(in)     :: x(2)
-   complex(SP),  intent(out)    :: E
-   ! 
-   E = (x(1)*z(1)**2 -x(2)*z(2)**2 )/(x(1)-x(2))
-   call mpa_cond1(z, E)
-   !
- end subroutine mpa_E_1p_solver
  !
  subroutine mpa_RQ_2p_solver(w, x, r, q) 
    implicit none
@@ -361,231 +683,6 @@ contains
    endif
    !                                                                
  end subroutine mpa_RQ_3p_solver
- !
- subroutine mpa_R_fit(np,npr, w, xq, R, E)
-   implicit none
-   integer,      intent(in)        :: np, npr
-   complex(SP),  intent(in)        :: w(2*np)
-   complex(SP),  intent(in)        :: xq(2*np), E(np)
-   complex(SP),  intent(out)       :: R(np)
-   ! 
-   complex(SP)                     :: A(2*np,npr), B(2*np)
-   integer                         :: i, k, info, rank, lwork, lwmax 
-   parameter                       (lwmax=1000)
-   real(SP)                        :: rcond
-   integer                         :: iwork(3*npr*0+11*npr)
-   real(SP)                        :: S(npr), rwork(10*npr+2*npr*25+8*npr*0+3*25+26*26)
-   complex(SP)                     :: work(lwmax)
-   ! 
-   do k = 1, 2*np
-     B(k) = xq(k)
-     do i = 1, npr
-       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
-     enddo
-   enddo 
-   ! 
-   rcond=-1._SP
-#ifdef _DOUBLE
-   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
-   lwork=min(lwmax,int(work(1)))
-   call zgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
-#else
-   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,-1,   rwork,iwork,info)
-   lwork=min(lwmax,int(work(1)))
-   call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
-#endif
-   ! 
-   R=B(1:npr)
-   do i=np,npr+1,-1
-     R(i)=0._SP
-   enddo
-   ! 
- end subroutine mpa_R_fit
- !
- subroutine mpa_R_solver(np, w, xq, R, E, rcond)
-   implicit none
-   integer,      intent(in)        :: np
-   complex(SP),  intent(in)        :: w(2*np)
-   complex(SP),  intent(in)        :: xq(2*np), E(np)
-   complex(SP),  intent(out)       :: R(np)
-   real(SP),     intent(out)       :: rcond
-   ! 
-   complex(SP)                     :: A(np,np)
-   real(SP)                        :: anorm
-   integer                         :: i, k, info, ind(np)    
-   complex(SP)                     :: rwork(2*np), work(2*np)
-   ! 
-   anorm=abs(2._SP*E(1)/(w(1)**2 -E(1)**2))
-   do k = 1, np
-     R(k) = xq(k)
-     do i = 1, np
-       A(k,i) = 2._SP*E(i)/(w(k)**2 -E(i)**2)
-       if(abs(A(k,i))>anorm) anorm=abs(A(k,i))
-     enddo
-   enddo 
-   ! 
-#ifdef _DOUBLE
-   call zgecon('I', np, A, np, anorm, rcond, work, rwork, info)
-   call zgesv(np, 1, A, np, ind, R, np, info) 
-#else
-   call cgecon('I', np, A, np, anorm, rcond, work, rwork, info)
-   call cgesv(np, 1, A, np, ind, R, np, info) 
-#endif
-   ! 
- end subroutine mpa_R_solver
- ! 
- subroutine mpa_E_solver(np, npr, z, xq, E, rcond)
-   implicit none
-   integer,      intent(in)        :: np
-   integer,      intent(out)       :: npr
-   complex(SP),  intent(in)        :: z(2*np)
-   complex(SP),  intent(in)        :: xq(2*np)
-   complex(SP),  intent(out)       :: E(np)
-   real(SP),     intent(out)       :: rcond(2)
-   ! 
-   complex(SP)                     :: Z1(np,np), Z2(np,np), M1(np,np), M2(np,np), v1(np)
-   complex(SP)                     :: M(np,np), b(np), Companion(np,np)
-   complex(SP)                     :: rwork(2*np),work(2*np),VR(np),VL(np),S(np),RCE(np,np),RCV(np,np),ABNRM
-   integer                         :: i, j, info, ind(np), ILO,IHI    
-   real(SP)                        :: anorm, Wm
-   ! 
-   Wm = maxval(abs(z(1:np)))
-   !    
-   do j = 1, np
-     ind(j) = j
-     v1(j)  = xq(j   )*z(j   )**np 
-     b (j)  = xq(j+np)*z(j+np)**np 
-     Z1(j,1) = 1._SP
-     Z2(j,1) = 1._SP  
-     M1(j,1) = -xq(j) 
-     M2(j,1) = -xq(j+np) 
-     M (j,1) = 0._SP
-     M (j,j) = 1._SP
-     do i = 2, np
-       Z1(j,i) =  (z(j)/Wm)**(i-1)
-       Z2(j,i) =  (z(j+np)/Wm)**(i-1)
-       M1(j,i) = -xq(j   )*Z1(j,i)
-       M2(j,i) = -xq(j+np)*Z2(j,i)
-       if(i/=j) M(j,i) = 0._SP 
-     enddo
-   enddo
-   !
-   anorm=abs(Z1(1,1))
-   do j = 1, np
-     do i = 1, np
-       if(abs(Z1(j,i))>anorm) anorm=abs(Z1(j,i))
-     enddo
-   enddo
-   !
-#ifdef _DOUBLE
-   call zgecon('I', np, M2, np, anorm, rcond(1), work, rwork, info)
-   call zgesv(np, np, Z1, np, ind, M, np,info) 
-#else
-   call cgecon('I', np, M2, np, anorm, rcond(1), work, rwork, info)
-   call cgesv(np, np, Z1, np, ind, M, np,info) 
-#endif
-   M  = matmul(Z2,M)
-   M2 = matmul(M,M1) - M2
-   b  = matmul(M,v1) - b
-   ! 
-   M = 0.0_SP
-   do i =1,np
-     M(i,i) = 1.0_SP
-   enddo
-   !
-   anorm=abs(M2(1,1))
-   do j = 1, np
-     do i = 1, np
-       if(abs(M2(j,i))>anorm) anorm=abs(M2(j,i))
-     enddo
-   enddo
-   !
-#ifdef _DOUBLE
-   call zgecon('I', np, M2, np, anorm, rcond(2), work, rwork, info)
-   call zgesv(np, 1, M2, np, ind, b, np, info)
-#else
-   call cgecon('I', np, Companion, np, anorm, rcond, work, rwork, info)
-   call cgesv(np, 1, M2, np, ind, b, np, info)
-#endif
-   ! 
-   Companion=0._SP
-   Companion(1,np) = -b(1)
-   do i = 2, np
-     Companion(i,np)  = -b(i)/Wm**(i-1)
-     Companion(i,i-1) = 1._SP
-   enddo
-   !
-#ifdef _DOUBLE
-   call zgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-   !call zgeevx('N','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,ABNRM,RCE,RCV,work,2*np,rwork,info)
-#else
-   call cgeev( 'N', 'N', np, Companion, np, E, VL, 1, VR, 1, work, 2*np, rwork, info )
-   !call cgeevx('P','N','N','N',np,Companion,np,Q,VL,1,VR,1,ILO,IHI,S,10._SP,RCE,RCV,work,2*np,rwork,info)
-#endif
-   ! 
-   ! here we need to force real(E) to be positive.
-   ! This is because of the way the residue integral is performed, later.
-   ! 
-   call mpa_cond(np, npr, z, E)
-   !E=sqrt(E)
-   !E=max(abs(real(E,SP)),abs(aimag(E)))-cI*min(abs(real(E,SP)),abs(aimag(E)))
-   ! 
- end subroutine mpa_E_solver
- !
- !
- subroutine mpa_RE_solver(np, w, x, R, E,edigits,rdigits) ! version 2.1
-   implicit none
-   !
-   integer,      intent(in)     :: np
-   complex(SP),  intent(in)     :: w(2*np), x(2*np)
-   complex(SP),  intent(out)    :: R(np), E(np)
-   real(SP),     intent(out)    :: edigits(2),rdigits
-   ! 
-   integer                      :: npr
-   ! 
-   select case(np)
-   case(1)
-     !call mpa_RE_1p_solver(w, x, R(1), E(1))
-     call mpa_E_1p_solver(w, x, E(1))
-     call mpa_R_fit(1, 1, w, x, R, E)
-   !case(2)
-   !  call mpa_RQ_2p_solver(w, x, R, E)
-   !case(3)
-   !  call mpa_RQ_3p_solver(w, x, R, E)
-   case default
-     !
-     call mpa_E_solver(np, npr, w**2, x, E, edigits)
-     !call mpa_R_solver(np, w, x, R, E, rdigits)
-     if(npr<np)  write(*,*) 'Reduce number of poles::::: ', npr
-     call mpa_R_fit(np, npr, w, x, R, E)
-     !edigits=log10(1._SP/edigits)
-     !rdigits=log10(1._SP/rdigits)
-     !
-   end select
-   ! 
- end subroutine mpa_RE_solver
- !
- !
- function err_func_np(np, R, E, w, x)
-   implicit none
-   !
-   integer ,    intent(in)  :: np
-   complex(SP), intent(in)  :: x(2*np), w(2*np)
-   complex(SP), intent(in)  :: R(np), E(np)
-   complex(SP)              :: aux
-   real(SP)                 :: err_func_np
-   integer   ::i,j
-   !      
-   err_func_np = 0._SP                                                    
-   do j=1, 2*np
-     aux = (0._SP,0._SP)
-     do i=1, np
-     aux = aux + 2._SP*E(i)*R(i)/(w(j)**2-E(i)**2)     
-     enddo 
-     err_func_np = err_func_np + abs( aux - x(j) )**2
-   enddo  
-   err_func_np = sqrt(err_func_np)
- endfunction err_func_np
  !
 end module mpa_m
 

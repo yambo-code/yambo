@@ -25,13 +25,13 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  use pars,          ONLY:rZERO,cZERO,schlen
  use D_lattice,     ONLY:n_atoms
- use R_lattice,     ONLY:nkbz
+ use R_lattice,     ONLY:nkbz,nqbz
  use electrons,     ONLY:E_reset
  use QP_m,          ONLY:QP_n_states
  use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
-&                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz
+&                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
  !
@@ -43,7 +43,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  ! Work Space
  !
- integer          ::iq,is,NS
+ integer          ::iq,is,NS,nq_bz
  character(schlen)::strings(10)
  !
  call STRING_split(what,strings,n_non_empty_strings=NS)
@@ -92,6 +92,15 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
            YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
            YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(elph_nb,nkbz,1))
          enddo
+       endif
+     case ('DGRID')
+       if (.not.allocated(GKKP%E_dg_kpq)) then
+         if (elph_use_q_grid) then
+            nq_BZ=nqbz
+         else
+            nq_BZ=elph_nQ
+         endif
+         allocate(GKKP%E_dg_kpq(nq_BZ))
        endif
      case ('gFsq')
        !
@@ -158,10 +167,19 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
        else
          YAMBO_FREE(GKKP%dVr)
          YAMBO_FREE(GKKP%dVc)
-         if (.not.allocated(GKKP%E_kpq)) return
-         do iq=1,elph_nQ
-           call E_reset( GKKP%E_kpq(iq) )
-         enddo
+         if (allocated(GKKP%E_kpq)) then
+           do iq=1,elph_nQ
+             call E_reset( GKKP%E_kpq(iq) )
+           enddo
+           deallocate(GKKP%E_kpq)
+         endif
+         if (allocated(GKKP%E_dg_kpq)) then
+           nq_BZ=size(GKKP%E_dg_kpq)
+           do iq=1,nq_BZ
+             call FineGd_E_kpq_components_reset( GKKP%E_dg_kpq(iq) )
+           enddo
+           deallocate(GKKP%E_dg_kpq)
+         endif
        endif
        !
    end select

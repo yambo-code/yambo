@@ -27,7 +27,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !                                   (ii) the velocity which uses <v>=<p-[x,Vnl]> 
  !
  ! DIP_iR=i<r>
- ! DIP_P = <v>   (should be called DIP_V ... )
+ ! DIP_P = <P>
+ ! DIP_v = <v> = <P-[x,Vnl]>
  !
  ! For each of the two gauges there exist four approaches of computing the dipoles
  ! 1) G space approach      --> directly computes <v> and then <r>=<v>/DeltaE (called transverse approach as well)
@@ -147,6 +148,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  call DIPOLE_dimensions(Xen,Dip,Dip%ib,(/0._SP,0._SP,0._SP/))
  !
+ ! Parallelization
+ !==================
+ call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
+ !
  ! Check if Dipoles DBs exist and are ok
  !=======================================
  io_err=-1
@@ -160,10 +165,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call IO_and_Messaging_switch("SAVE")
    call IO_and_Messaging_switch("+io_out",CONDITION=.TRUE.)
-   !
-   ! Parallelization
-   !==================
-   call PARALLEL_global_indexes(Xen,Xk,Xq,"DIPOLES",Dip=Dip)
    !
    ! WF distribution
    !=================
@@ -385,7 +386,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     !
    end subroutine DIPOLES_ppredux_and_symmetrize
    !
-   !
    subroutine DIPOLES_ppredux_and_symmetrize_orbt()
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
@@ -430,6 +430,5 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize_orbt
-   !
    !
 end subroutine

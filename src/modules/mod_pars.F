@@ -108,6 +108,7 @@ module pars
  real(SP),    parameter :: zero_dfl=1.E-5_SP
  !
  real(SP),    parameter :: infinity_dfl=HUGE(1._SP)
+ real(SP),    parameter :: tiny_dfl    =TINY(1._SP)
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
  !

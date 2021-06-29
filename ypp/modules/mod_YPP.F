@@ -286,7 +286,7 @@ module YPPm
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
- type(X_t)         ::Xbsk 
+ type(X_t)                ::Xbsk 
  !
  interface
    !

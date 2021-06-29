@@ -23,6 +23,7 @@
 !
 module YPP_real_time
  !
+ use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
  !
 #include<memory.h>
@@ -86,7 +87,7 @@ module YPP_real_time
  real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
  real(SP) :: h_mu_autotune_thr   ! threshold for matching number of pumped holes / electrons
  !
- ! (RT) optics
+ ! (RT) X
  !
  logical  :: Use_FFT
  logical  :: l_skip_OBS_IO
@@ -102,6 +103,20 @@ module YPP_real_time
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  character(3) :: RT_p_format   
+ !
+ ! (RT) TRabs
+ !
+ real(SP)          :: TRabsDIP_dir(3)=0.
+ real(SP)          :: TRabs_Eeh_treshold=1.E-5_SP/HA2EV
+ character(schlen) :: TRabsWHAT="abs"
+ character(schlen) :: TRabsDIP_plane="none"
+ character(schlen) :: TRabsMODE="cv"
+ logical           :: TRabs_lEPS(3,3)=.FALSE.
+ real(SP),    allocatable :: TRabs_E(:)
+ complex(SP), allocatable :: TRabs_RES_left(:,:,:)  ! I_trans, DIP_dir, 1 ( RES_0 ) - 2 ( dRES)
+ complex(SP), allocatable :: TRabs_RES_right(:,:,:)
+ complex(SP), allocatable :: Epsilon_ij(:,:,:)
+ complex(SP), allocatable :: B_Hall(:,:)
  !
  ! (RT) carriers
  !
@@ -168,5 +183,16 @@ module YPP_real_time
      YAMBO_FREE(FT%F_t)
      YAMBO_FREE(FT%W)
    end subroutine
+   !
+   function TRabs_EPS_label(i,j)
+     character(2) :: TRabs_EPS_label
+     integer      :: i,j
+     if (i==1) TRabs_EPS_label="x" 
+     if (i==2) TRabs_EPS_label="y" 
+     if (i==3) TRabs_EPS_label="z" 
+     if (j==1) TRabs_EPS_label=TRabs_EPS_label(1:1)//"x" 
+     if (j==2) TRabs_EPS_label=TRabs_EPS_label(1:1)//"y" 
+     if (j==3) TRabs_EPS_label=TRabs_EPS_label(1:1)//"z" 
+   end function
    !
 end module YPP_real_time

@@ -26,6 +26,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
  use electrons,     ONLY:levels,nel,filled_tresh
+ use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
@@ -48,7 +49,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
-&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode
+&                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff,BSK_IO_mode,BSE_dipole_geometry
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
@@ -78,7 +79,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
-&                        CACHE_OBS_INTERVAL_time_INPUT
+&                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode
  use stderr,        ONLY:intc
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
@@ -104,7 +105,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
-&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -193,6 +194,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'StdoHash','[IO] Live-timing Hashes',nhash,verb_level=V_io)
  call it(defs,'MaxGvecs','[INI] Max number of G-vectors planned to use',ng_closed,unit=G_unit,verb_level=V_RL)
+ call it(defs,'Gthresh' ,'[INI] Accuracy for energy shell separation [-1. automatic]',G_mod_zero,verb_level=V_RL)
  call it(defs,'FFTGvecs','[FFT] Plane-waves',wf_ng,G_unit,verb_level=V_RL) 
  call it(defs,'NonPDirs','[X/BSS] Non periodic chartesian directions (X,Y,Z,XY...)',non_periodic_directions,verb_level=V_resp)
  call it(defs,'MolPos',  '[X/BSS] Molecule coord in supercell, 0.5 is the middle',molecule_position,verb_level=V_resp)
@@ -208,6 +210,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
  call it(defs,'ElPhRndNq',  '[ELPH] Read random Q-points',elph_nQ_used,verb_level=V_kpt) 
+ call it(defs,'EkpqShFact', '[ELPH] E(k+q) Interpolation shell factor (used only with double-grid)',E_kpq_sh_fact,verb_level=V_kpt)
 #endif
  call it('f',defs,'WFbuffIO','[IO] Wave-functions buffered I/O',verb_level=V_io) 
  call it('f',defs,'NoDiagSC','New setup for non-diagonal supercells',verb_level=V_general) 
@@ -300,7 +303,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'NoCondSumRule' ,'[BSE/X] Do not impose the conductivity sum rule in velocity gauge',verb_level=V_resp)
  call it('f',defs,'MetDamp' ,      '[BSE] Define '//slash//'w+=sqrt('//slash//'w*('//slash//'w+i'//slash//'eta))',verb_level=V_resp)
  call it(defs,'BSSmod',    '[BSS] (h)aydock/(d)iagonalization/(s)lepc/(i)nversion/(t)ddft`',BSS_mode,protect=.FALSE.)
- call it(defs,'BSEprop',   '[BSS] abs/kerr/magn/dichr trace',BSE_prop)
+ call it(defs,'BSEprop',   '[BSS] Can be any among abs/jdos/kerr/magn/dich/photolum/esrt',BSE_prop)
+ call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
 &        K_INV_EPS%PERT_FULL_ratio)
@@ -359,6 +363,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! BSE: Real-Time
  !
+ call it(defs,'RTOccMode','[RT-BSE] (K)ernel/(R)esiduals. BSE components to be corrected with the TD occupations',&
+&             RT_BSE_Occ_Mode,verb_level=V_real_time)
  call it('f',defs,'ForceEqTrans','[RT-BSE] Use only equilibrium transitions',verb_level=V_real_time)
  !
 #endif
@@ -577,7 +583,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_RT_ctl_load(defs,1)
  call INIT_RT_ctl_load(defs,2)
  call INIT_RT_ctl_load(defs,3)
- call INIT_RT_ctl_load(defs,4)
  !
 #endif
  !

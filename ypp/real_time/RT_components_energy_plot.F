@@ -154,7 +154,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    !
    ! Part 1: IO and store history
    !==============================
-   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    ! Fill the large arrays to be used for the fitting procedure.
    !

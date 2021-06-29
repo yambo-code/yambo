@@ -1,4 +1,4 @@
-ext-libs:  
+ext-libs: 
 	@for target in $(EXT_LIBS) ; do $(MAKE) $$target; \
 	if test -f "$(topdir)/lib/$$target/Makefile" && test ! -f "$(topdir)/lib/$$target/package-installed"; then \
 	echo "$$target build failed"; break; fi; done
@@ -36,7 +36,10 @@ pnetcdf:
 	@+if test "$(do_pnetcdf)" = yes ; then LIBS2DO="pnetcdf" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 netcdf:
-	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf netcdff" ; \
+	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdf"; \
+	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
+netcdff:
+	@+if test "$(do_netcdf)" = yes ; then LIBS2DO="netcdff" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
 etsf_io: 
 	@+if test "$(do_etsf)" = yes ; then LIBS2DO="etsf_io" ; \
@@ -53,4 +56,3 @@ petsc:
 slepc: 
 	@if test "$(do_slepc)" = yes ; then LIBS2DO="slepc" ; \
 	DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_external_lib); fi
-

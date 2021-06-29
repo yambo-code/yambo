@@ -5,16 +5,16 @@
 # Driver
 #--------
 define driver
- $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c  >>& $(STDLOG) 2>&1  )
+ $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
 endef
 #
 # Linking
 #---------
 define link
  $(PREFIX)(if test ! -f $(compdir)/config/stamps_and_lists/$(target).stamp; then \
-  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)  >> $(STDLOG) 2>&1 ;\
+  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1 ;\
   touch $(compdir)/config/stamps_and_lists/$(target).stamp;\
-  echo "\t [$(wdir)] $(target) (link)";\
+  echo "\t[$(wdir)] $(target) (link)";\
  fi)
 endef
 #
@@ -71,7 +71,7 @@ define mk_lib
   eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  ;\
   mv $(target) $(libdir); \
   chmod u+x $(libdir)/$(target);\
-  echo "\t [$(wdir)] $(target) (lib)";\
+  echo "\t[$(wdir)] $(target) (lib)";\
   touch $(compdir)/config/stamps_and_lists/$(target).stamp;\
  fi)
 endef
@@ -82,6 +82,6 @@ define bindir
  $(PREFIX)if test ! -d $(exec_prefix); then mkdir $(exec_prefix);fi
 endef
 define msg
- $(PREFIX)(echo "\t [$(wdir)] $*" )
+ $(PREFIX)(echo "\t[$(wdir)] $*" )
 endef
 

@@ -1,12 +1,12 @@
-STDLOG         =/home/marini/Yambo/yambo/branches/devel-compilation/"compile_"HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK".log"
-libs           =-L$(libdir)  
+STDLOG         =/home/marini/Yambo/yambo/branches/devel-compilation/"compile_"HDF5_LIB_HDF5_IO_MPI_FFTW_TIMING_MEM_CHECK_P2Y_QEXSD_HDF5".log"
+libs           =-L$(libdir) -lint_modules -lbz_ops -lstop_and_restart -linterface -lsetup -lio -lYio -ltiming -lcommon -lcommunicate -lparser -lparallel -llinear_algebra -lmatrices -lmodules -lcommunicate -lYio -lmemory -ltools -lp2y_Ydriver_main -lp2y_Ydriver_interface -lp2y_Ydriver_options -ldriver   -lqe_pseudo -lmath77 -lslatec -llocal $(lscalapack) $(lslepc) $(lpetsc) $(llapack) $(lblacs) $(lblas) $(liotk) $(lpnetcdf) $(lnetcdff) $(lnetcdf) $(lhdf5) $(llibxc) $(lfft) $(lfutile) $(lyaml) -lm
 linclude       =
 lf90libinclude =
 lf90include    =
 modinclude     =/home/marini/Yambo/yambo/branches/devel-compilation/include
 mfiles         =find . -maxdepth 1 -name '*.mod'
 precomp_mpi    =yes
-precomp_flags  = -D_HDF5_LIB -D_HDF5_IO -D_MPI -D_FFTW -D_TIMING -D_MEM_CHECK -D_$(os)
+precomp_flags  = -D_HDF5_LIB -D_HDF5_IO -D_MPI -D_FFTW -D_TIMING -D_MEM_CHECK -D_P2Y_QEXSD_HDF5 -D_$(os)
 rm_command     = 
 F77_NOOPT_SRC  =xerbla.o slamch.o
 FC_NOOPT_SRC   =mod_parser_m.o mod_logo.o

@@ -10,8 +10,8 @@ LIBNAME=libiotk.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_iotk)
 TARBALL=$(tarball_iotk)
-PACKAGE=`echo $(TARBALL) |sed 's/-.*//'`
 #
 # redefinitions
 #
@@ -23,7 +23,7 @@ all: $(LIBRARY)
 #
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) iotk ; fi )
+	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
 	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
 	touch uncompress-stamp
 

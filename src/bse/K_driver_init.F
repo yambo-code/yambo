@@ -37,7 +37,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
- use D_lattice,    ONLY:l_0D
+ use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,NEQ_Residuals,RT_BSE_Occ_Mode
@@ -76,10 +76,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  call parser('ImposeAsym',l_flag)
  if (l_flag)        l_BS_ares_from_res=.FALSE.
  !
- if (iq/=1 )        l_BS_ares_from_res=.FALSE.
- if (l_BS_photolum) l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2) l_BS_ares_from_res=.FALSE.
- if (trim(BSE_mode)=="resonant")   l_BS_ares_from_res=.TRUE.
+ if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
+ if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
+ if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
+ ! DS: the following line makes no sense. Resonant means I do not want the anti-resonant term ???
+ if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
  ! I need ARES and I cannot get it from RES
  ! 

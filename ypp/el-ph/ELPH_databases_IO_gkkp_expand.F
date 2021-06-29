@@ -195,6 +195,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
    endif
    !
+   ! Notice that the ok_bz index referees to the k-points in the Yambo order
+   ! like in the q=0 case
+   !
    GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
    !
  enddo
@@ -223,7 +226,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      small=0
      nsmall=0
      !
-     iq_db=iq  ! when this function is called iq is ibz
+     iq_db=iq  ! when this function is called iq is in the IBZ
+     !
      if(l_gkkp_expand) then
        iq_db=iq
        if(iq>1) iq_db=sum(q%nstar(:iq-1))+1
@@ -238,6 +242,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
          small(nsmall)=is
        endif
      enddo
+     !
    end subroutine
    !
 end subroutine

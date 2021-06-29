@@ -26,7 +26,7 @@ keep_hdf5=no
 # package names
 #
 pkgname_Ydriver=Ydriver-0.0.2
-pkgname_iotk=iotk-y1.2.2
+pkgname_iotk=iotk
 pkgname_netcdf=netcdf-c-4.7.4
 pkgname_netcdff=netcdf-fortran-4.5.3
 pkgname_pnetcdf=pnetcdf-1.12.1
@@ -46,7 +46,7 @@ pkgname_futile=futile-yambo
 # tarball names
 #
 tarball_Ydriver=$(pkgname_Ydriver).tar.gz
-tarball_iotk=$(pkgname_iotk).tar.gz
+tarball_iotk=iotk-y1.2.2.tar.gz
 tarball_netcdf=$(pkgname_netcdf).tar.gz
 tarball_netcdff=$(pkgname_netcdff).tar.gz
 tarball_pnetcdf=$(pkgname_pnetcdf).tar.gz

@@ -33,6 +33,12 @@ source ./sbin/compilation/helper.inc.sh
 # OPTIONS
 source ./sbin/compilation/options.sh
 #
+# Check what has to be done
+if [ "$new" == "yes" ]; then 
+ source ./sbin/compilation/todo.sh
+ exit 0
+fi
+#
 # Dependencies?
 if [ "$dep" == "yes" ]; then 
  source ./sbin/compilation/dependencies.sh
@@ -55,15 +61,14 @@ precomp_string=`echo $precomp_flags | sed "s/ /_/g" | sed "s/\-D_//g"`
 # Libraries
 source ./sbin/compilation/libraries.sh
 #
-# Now it checks for existing precomp flags:
+# Save current PJ dependent objects
+source ./sbin/compilation/save_and_restore.sh
 #
-#  if the current string is new it saves all precomp-dependent objects in lock folders
-#
+# Lock the current projects
 for flag in $precomp_flags
 do
  flag=`echo $flag | sed "s/\-D_//"`
  if [ ! -f $cdir/${flag}.lock ] ; then
-  #source ./sbin/compilation/snapshot_save.sh
   touch $cdir/${flag}.lock
  fi
 done

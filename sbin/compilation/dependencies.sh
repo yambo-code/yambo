@@ -72,7 +72,7 @@ do
  do
   if test `grep $PJ $file | grep '#'| wc -l` -ge 1; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
-    sources_pj_dependent+=" ${obj} $PJ\n"
+    sources_pj_dependent+=" ${obj}\n"
   fi
  done
  PREFIX=`echo $PJ | sed 's/_//g'`

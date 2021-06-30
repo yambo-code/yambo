@@ -4,7 +4,7 @@ define mk_yambo
   DLIBS="-ldriver";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
    if test ! -d $$XPATH ; then mkdir -p $$XPATH ; fi ; \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
+   if [ "$(compdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
    ./sbin/compilation/helper.sh -d $$XPATH -t $$exe -o .objects -m x -- "$$DLIBS $$LLIBS $(xcpp) $$ADF"; \
@@ -19,7 +19,7 @@ define mk_ypp
  for exe in $$X2DO; do \
   DLIBS="-ldriver";for lib in $$DRILIBS; do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
   if test ! -f "$(bindir)/$$exe" || test "$(keep_objs)" = yes  ; then \
-   if [ "$(topdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
+   if [ "$(compdir)" != "$(prefix)" ] && [ -f $$VPATH/.objects ] ; then \
     cp $$VPATH/.objects $$XPATH ; \
    fi ; \
    ./sbin/compilation/helper.sh -d $$XPATH -t $$exe -o .objects -m x -- "$$DLIBS $$LLIBS $(xcpp) $$ADF" ; \

@@ -21,7 +21,6 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-topdir = .
 ifeq ($(wildcard config/mk/defs.mk),config/mk/defs.mk)
  include config/mk/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
@@ -109,8 +108,14 @@ include config/mk/actions/help.mk
 # Libraries download/clone/checkout
 include config/mk/functions/get_libraries.mk
 #
-# Libraries download/clone/checkout
+# Internal code dependencies
 include config/mk/actions/dependencies.mk
+#
+# New sources to be compiled
+include config/mk/functions/todo.mk
+#
+# Remote compilation
+include config/mk/actions/remote_compilation.mk
 #
 # Messages
 include config/mk/functions/messaging.mk

@@ -1,11 +1,15 @@
-int-libs: dependencies
+int-libs: dependencies migration
 	@for target in $(INT_LIBS) ; do $(MAKE) $$target; done
 #
 qe_pseudo: 
-	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@$(call todo,qe_pseudo)
+	@+LIBS2DO="qe_pseudo"; DIR2GO="lib" ; VPATH="$(compdir)/lib" ; $(mk_internal_lib)
 slatec: 
-	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@$(call todo,slatec)
+	@+LIBS2DO="slatec"; DIR2GO="lib" ; VPATH="$(compdir)/lib" ; $(mk_internal_lib)
 math77:
-	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@$(call todo,math77)
+	@+LIBS2DO="math77"; DIR2GO="lib" ; VPATH="$(compdir)/lib" ; $(mk_internal_lib)
 local:
-	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(topdir)/lib" ; $(mk_internal_lib)
+	@$(call todo,local)
+	@+LIBS2DO="local" ; DIR2GO="lib" ; VPATH="$(compdir)/lib" ; $(mk_internal_lib)

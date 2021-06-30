@@ -1,9 +1,9 @@
 # Download external libs #
 define get_external_libraries
  mkdir -p lib/archive; \
- if [ $(topdir) != $(prefix) ] ; then \
- cp $(topdir)/lib/archive/* lib/archive; \
- cp $(topdir)/config/missing config/ ; \
+ if [ $(compdir) != $(prefix) ] ; then \
+ cp $(compdir)/lib/archive/* lib/archive; \
+ cp $(compdir)/config/missing config/ ; \
  fi ; \
  cd lib/archive; \
  if [ "$$LIB2DO" = "all" ] ; then \

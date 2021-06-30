@@ -11,11 +11,9 @@ endef
 # Linking
 #---------
 define link
- $(PREFIX)(if test ! -f $(compdir)/config/stamps_and_lists/$(target).stamp; then \
-  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1 ;\
-  touch $(compdir)/config/stamps_and_lists/$(target).stamp;\
-  echo "\t[$(wdir)] $(target) (link)";\
- fi)
+ $(PREFIX)(eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1 ;\
+ echo "\t[$(wdir)] $(target) (link)";\
+ touch $(compdir)/config/stamps_and_lists/$(target).stamp )
 endef
 #
 # Compilation

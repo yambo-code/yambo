@@ -38,7 +38,7 @@ subroutine ELPH_databases(k,E,q)
  use zeros,               ONLY:k_iku_zero
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
-&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand
+&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand,l_use_qindxB
  use LIVE_t,              ONLY:live_timing 
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
@@ -64,6 +64,7 @@ subroutine ELPH_databases(k,E,q)
  !=================
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
+ call parser('UseQindxB',l_use_qindxB)
  !
  if(l_gkkp_expand) then
    !      
@@ -73,18 +74,21 @@ subroutine ELPH_databases(k,E,q)
    call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
    call PARALLEL_SETUP_K_scheme("BZINDX")
    !
-   ! here qindx_B is allocated
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_err(1)=io_QINDX(k,q,ID)
-   if (io_err(1)/=0) then
-     call msg('s',"Missing k/q scattering database")
-     call error("Please run a setup with the BSEscatt flag activated")
+   if(l_use_qindxB) then
+     ! here qindx_B is allocated
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+     io_err(1)=io_QINDX(k,q,ID)
+     if (io_err(1)/=0) then
+       call msg('s',"Missing k/q scattering database")
+       call error("Please run a setup with the BSEscatt flag activated")
+     endif
+     !
+     ! Initialize qindx_B IO
+     ! =============================
+     io_err(2)=qindx_B_init(qindx_ID) 
+     if(io_err(2)/=0) call error("Error reading qindx_B")
+     !
    endif
-   !
-   ! Initialize qindx_B IO
-   ! =============================
-   io_err(2)=qindx_B_init(qindx_ID) 
-   if(io_err(2)/=0) call error("Error reading qindx_B")
    !
  endif
  !
@@ -212,6 +216,7 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
+ if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
  !
  !...alloc...
@@ -289,7 +294,7 @@ subroutine ELPH_databases(k,E,q)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
-     if (iq>1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
+     if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_err(3)=io_ELPH(ID,'gkkp')
    endif
    !

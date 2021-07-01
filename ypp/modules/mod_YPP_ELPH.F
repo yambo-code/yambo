@@ -47,6 +47,7 @@ module YPP_ELPH
  logical :: l_gkkp_db
  logical :: l_gkkp_dg
  logical :: l_gkkp_plot
+ logical :: l_use_qindxB
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path

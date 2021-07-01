@@ -34,7 +34,7 @@ subroutine NL_initialize(E,k)
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
-&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
+&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
@@ -166,6 +166,11 @@ subroutine NL_initialize(E,k)
  ! Non-Equilibrium Green's Function
  !
  Phase_LifeTime=2._SP/NL_damping
+ !
+ if(RAD_LifeTime<0._SP) then
+   call msg('sr','Radiative life-time sets equal to the phase lifetime')
+   RAD_LifeTime=Phase_LifeTime
+ endif
  !
  ! Determine the total time from the damping or from T_0
  !
@@ -324,6 +329,7 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Correlation                '//trim(NL_correlation))
  call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
  call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
+ call msg( 'r', 'Radiative LifeTime         ',RAD_LifeTime*AUT2FS,"[fs]")
  do i1=1,n_ext_fields
    call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
    call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")

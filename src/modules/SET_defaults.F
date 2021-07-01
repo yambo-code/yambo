@@ -607,6 +607,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Integrator_name='RK2'
  !
  RAD_LifeTime = 0._SP
+#if defined _NL
+ RAD_LifeTime = -1._SP*FS2AUT  ! Automatic set equal to the dephasing
+#endif
  Phase_LifeTime = 0._SP
  RT_deph_deg_thresh = 1.E-5_SP
  RT_deph_cv_only =.FALSE.

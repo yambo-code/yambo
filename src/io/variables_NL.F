@@ -27,7 +27,7 @@ integer function variables_NL(ID)
  use nl_optics,     ONLY:NL_damping,l_use_DIPOLES,NL_correlation,NL_er,NL_correlation,n_frequencies,      &
 &                        WF_sample_ondisk,n_order,NL_desc
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
- use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands
+ use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_status
@@ -46,7 +46,7 @@ integer function variables_NL(ID)
  !
  ! PARAMETERS
  !
- call io_elemental(ID,VAR="NLPARS",VAR_SZ=13,MENU=0)
+ call io_elemental(ID,VAR="NLPARS",VAR_SZ=14,MENU=0)
  call io_elemental(ID,VAR="[RT] Time steps",I0=NE_steps,     CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTOR=NL_desc)
  call io_elemental(ID,VAR="[RT] Time step",TERMINATOR="[fs]",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
@@ -69,6 +69,7 @@ integer function variables_NL(ID)
      &         DESCRIPTOR=NL_desc)
  call io_elemental(ID,VAR="[NL] Number of G in EXCHANGE(DFT)",I0=QP_ng_Sx,CHECK=.true.,OP=(/"=="/), &
      &         DESCRIPTOR=NL_desc)
+ call io_elemental(ID,VAR="[NL] Radiative Life-Time",R0=RAD_LifeTime,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=NL_desc)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  ! WF SAMPLING

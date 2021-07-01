@@ -75,7 +75,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
    I_relax(i1,i1,:,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
    enddo
    !
-   forall(ib=NL_bands(1):E%nbf)  I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/Phase_LifeTime 
+   forall(ib=NL_bands(1):E%nbf)  I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
    !
  endif
  !

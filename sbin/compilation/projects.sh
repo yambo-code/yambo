@@ -27,14 +27,9 @@ do
  case $arg in
   -D_MPI)
    precomp_mpi="yes" ;
-   precomp_flags="$precomp_flags $arg";
-   ;;
-  -D_64BIT_OFFSET|-D_SLEPC_OFF)
-   precomp_flags="$precomp_flags $arg";
    ;;
   -D_*) 
    precomp_flags="$precomp_flags $arg"
-   a=`echo $arg  | sed "s/-D_/_/"`
    ;;
  esac
 done

@@ -23,6 +23,7 @@
 #
 chmod u+x sbin/*
 #
+if ! test -d log      ; then mkdir log      ; fi
 if ! test -d bin      ; then mkdir bin      ; fi
 if ! test -d include  ; then mkdir include  ; fi
 if ! test -d include/headers ; then mkdir include/headers ; fi

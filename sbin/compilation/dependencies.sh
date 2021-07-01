@@ -41,81 +41,15 @@ BASE=$PWD
 idir=0
 for CDIR in $directories
 do
- cd $CDIR
+  ((i=i%N)); ((i++==0)) && wait
  echo -en "\t[SETUP] Modules detection [ "
  for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'
  idir=$((idir+1))
-#
-# Sources to process
-#====================
-sources=" "
-if test `find . -maxdepth 1 -name '*.F' | wc -l` -ge 1 ; then
- sources+=`echo *.F`
-fi
-sources+=" " 
-if test `find . -maxdepth 1 -name '*.c' | wc -l` -ge 1 ; then
- sources+=`echo *.c`
-fi
-if [ ${#sources} -eq 2 ]; then 
- cd $BASE
- continue 
-fi
-#
-# Projects 
-#==========
-for PJ in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp
-do
- sources_pj_dependent=" "
- for file in $sources
- do
-  if test `grep $PJ $file | grep '#'| wc -l` -ge 1; then
-    obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
-    sources_pj_dependent+=" ${obj}\n"
-  fi
- done
- PREFIX=`echo $PJ | sed 's/_//g'`
- if [ ${#sources_pj_dependent} -gt 1 ]; then
-  echo -e "$sources_pj_dependent" >>  ${PREFIX}_project.dep
- fi
-done
-#
-# Modules. Step I: get the list of modules used and defined
-#===========================================================
-# create list of module dependencies
-# each line is of the form:
-# file_name.o : @module_name@
-# cast all module names to lowercase because Fortran is case insensitive
-egrep -H -i -e "include ?<memory.h>" -e "^ *use " $sources |  # look for "USE name"
-sed 's/F:/o /
-     s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
-#                                         #   and remove trailing comma
-awk '{print $1 " : @" tolower($3) "@"}' | # create dependency entry
-sort | uniq > modulesdep.list              # remove duplicates
-
-# create list of available modules
-# for each module, create a line of the form:
-# s/@module_name@/file_name/g
-egrep -H -i "^ *module " $sources |           # look for "MODULE name"
-sed 's/F:/o /
-     s/\//\\\//g' |                            # replace extension, insert
-#                                              #   space and escape slashes
-awk '{print "s/@" tolower($3) "@/" $1 "/" }' | # create substitution line
-sort | uniq > modules.rules                    # remove duplicates
-
-egrep -H -i "^ *module " $sources |           # look for "MODULE name"
-sed 's/F:/o /
-     s/\//\\\//g' |                            # replace extension, insert
-#                                              #   space and escape slashes
-awk '{print tolower($3) }' | # create substitution line
-sort | uniq > modules.list                    # remove duplicates
-#
-# Add the local rules to the global file
-cat modules.rules  >> $compdir/config/stamps_and_lists/modules.rules
-#
-cd $BASE
-#
+ #
+ source ./sbin/compilation/dependencies_element.sh  &
+ #
 done
 echo
 #

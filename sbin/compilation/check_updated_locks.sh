@@ -22,65 +22,88 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-lock_files=`find $cdir -name '*.lock'`
+lock_files=`find $dir -name '*.lock'`
 sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
 sorted_precomps=$(echo "$precomp_flags"|tr " " "\n"|sort|uniq|tr "\n" " ")
 #
-# Directory where to save the objects
+# Locks -> string
 #
+lock_string=""
+save_dir=""
 for lock in $sorted_locks
 do
  lock=`echo $lock | sed "s/.lock//"`
  lock=`basename $lock`
+ lock_string="${lock} ${lock_string}"
  save_dir="${lock}_${save_dir}"
 done
 save_dir="${save_dir}.save"
 #
-# Directory to be restored
+# -D* -> string
 #
+flag_string=""
+restore_dir=""
 for flag in $sorted_precomps
 do
  flag=`echo $flag | sed "s/\-D_//"`
+ flag_string="${flag} ${flag_string}"
  restore_dir="${flag}_${restore_dir}"
 done
 restore_dir="${restore_dir}.save"
 #
-# Search for objects dependent of PROJECTS not among the current ones
+# Check for missing/new precomp flags
+#
+missing=`comm -23 <(tr ' ' $'\n' <<< $lock_string | sort) <(tr ' ' $'\n' <<< $flag_string | sort)`
+new=`comm -23 <(tr ' ' $'\n' <<< $flag_string | sort) <(tr ' ' $'\n' <<< $lock_string | sort)`
+#
+unmatched="$missing $new"
+#
+# Now new nor missing -> exit
+#
+if [[ -z $new ]] && [[ -z $missing ]]; then
+ return
+fi
+#
+#echo "D" $dir 
+#echo "L" $lock_string
+#echo "F" $flag_string
+#echo "M" $missing 
+#echo "N" $new 
+#
+# Remove the lock
+#
+bdir=`basename $dir`
+#
+if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
+#
+# Search for objects dependent of new/missing PROJECTS 
 # and move them in a dedicated folder
 #
-for lock in $sorted_locks
+for lock in $unmatched
 do
- lock_file=$lock
- lock=`echo $lock | sed "s/.lock//"`
- lock=`basename $lock`
- needed="no"
- for flag in $sorted_precomps
- do
-   flag=`echo $flag | sed "s/\-D_//"`
-   if [ "$lock" == "$flag" ] ; then
-     needed="yes"
-   fi
- done
- if [ "$needed" == "no" ] ; then
-  if ! test -d $save_dir; then mkdir -p $cdir/$save_dir; fi
-  rm -f $lock_file
-  if test -f "$cdir/${lock}_project.dep"; then
-   deps=`cat $cdir/${lock}_project.dep`
-   for object in $deps
-   do
-     if test -f "$cdir/$object"; then
-      mv $cdir/$object $cdir/$save_dir
-     fi
-   done
+ rm -f $dir/$lock.lock
+ if test -f "$dir/${lock}_project.dep"; then
+  deps=`cat $dir/${lock}_project.dep`
+  if grep -q "$lock" $dir/.objects; then
+    rm -f config/stamps_and_lists/lib${bdir}.a.stamp 
+    rm -f config/stamps_and_lists/lib${target}*${bdir}.a.stamp 
   fi
+  for object in $deps
+  do
+    if test -f "$dir/$object"; then
+     rm -f config/stamps_and_lists/lib${bdir}.a.stamp 
+     rm -f config/stamps_and_lists/lib${target}*${bdir}.a.stamp 
+     mv $dir/$object $dir/$save_dir
+    fi
+  done
  fi
 done
 #
 # Restore the files of the project (if there are)
 #
-if test -d "$cdir/$restore_dir"; then
- for file in `ls $cdir/$restore_dir`
+if test -d "$dir/$restore_dir"; then
+ for file in `ls $dir/$restore_dir`
  do
-  mv $cdir/$restore_dir/$file $cdir
+  mv $dir/$restore_dir/$file $dir
  done
 fi

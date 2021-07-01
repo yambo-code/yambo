@@ -1,6 +1,6 @@
 define mk_external_yambo_lib
  for ldir in $$LIBS2DO; do \
-  if test ! -f $(compdir)/config/stamps_and_lists/lib$$NAME$$ldir.a.a.stamp; then \
+  if test ! -f $(compdir)/config/stamps_and_lists/lib$$NAME$$ldir.a.stamp; then \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
    if [ "$(compdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
     cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \

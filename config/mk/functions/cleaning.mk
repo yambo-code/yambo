@@ -3,13 +3,19 @@
 #
 define clean_driver
  if [ "$(1)" = "bin"       ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_bin); fi;\
- if [ "$(1)" = "libs"      ] ||                  [ "$(1)" = "all" ] ; then \
-   $(clean_ext_libs); \
+ if [ "$(1)" = "int-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
    EXTS="\.f90 \.o \.lock \.save \.tmp_source";WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_dir_driver); \
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_lib_driver); \
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_mod_driver); \
+ fi;\
+ if [ "$(1)" = "ext-libs"  ] || [ -z "$(1)" ]                       ; then \
+   EXTS="internal";ACTION="clean";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
- if [ "$(1)" = "stamps"    ] ||                  [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
+ if [ "$(1)" = "ext-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
+   $(clean_ext_libs_bin_and_include); \
+   EXTS="Makefile -stamp";ACTION="clean_all";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
+ fi; \
+ if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
  if [ "$(1)" = "driver"    ] ||                  [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
@@ -43,7 +49,16 @@ define clean_dir_driver
  echo  "\t[CLEANING $$LMSG] Extension(s): $$EXTS" ; \
  for ext in $$EXTS; do \
   for dirtoclean in $$TARG; do \
-   find $$WDIR/$$dirtoclean \( -name '*'$$ext  \) |  xargs rm -fr ; \
+   if test -d $$WDIR/$$dirtoclean; then\
+    find $$WDIR/$$dirtoclean \( -name '*'$$ext  \) |  xargs rm -fr ; \
+    if test -f $$WDIR/$$dirtoclean/Makefile.loc; then \
+      echo  "\t[CLEANING $$dirtoclean] Internal procedures" ; \
+      CWD=`pwd`;\
+      cd $$WDIR/$$dirtoclean;\
+      $(MAKE) -s -f Makefile.loc $$ACTION;\
+      cd $$CWD;\
+    fi;\
+   fi;\
   done;\
  done
 endef
@@ -78,18 +93,22 @@ define clean_config
   done;\
  fi;\
  rm -fr $(prefix)/config/stamps_and_lists/*.list;\
+ rm -fr $(prefix)/log;\
+ rm -fr $(prefix)/bin;\
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
- rm -fr $(prefix)/autom4te.cache
+ rm -fr $(prefix)/autom4te.cache;\
+ rm -fr $(prefix)/sbin/compilation/mk/static_variables.mk;\
+ rm -fr $(prefix)/lib/archive/Makefile
 endef
 define clean_bin
  echo  "\t[CLEANING] bin" ;\
  rm -fr $(prefix)/bin/*; \
- rm -fr $(prefix)/compile*
+ rm -fr $(prefix)/log/*
 endef
-define clean_ext_libs
- echo  "\t[CLEANING] External libraries" ; \
- rm -fr  $(prefix)/lib/bin/*; \
+define clean_ext_libs_bin_and_include
+ echo  "\t[CLEANING] External libraries bin and include" ; \
+ rm -fr $(prefix)/lib/bin/*; \
  rm -fr $(prefix)/include/system
 endef
 define clean_stamps

@@ -38,7 +38,7 @@ include config/mk/targets.mk
 # Libraries (ordered for compiling & linking)
 include config/mk/libraries.mk
 
-.PHONY: interfaces
+.PHONY: interfaces 
 
 nothing: 
 	@$(make_message)
@@ -68,6 +68,12 @@ main: ext-libs
 	@for target in $(MAIN)     ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 all: ext-libs 
 	@for target in $(ALL)      ; do rm -f "$(bindir)/$$target" ; $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+ext-libs:
+	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $$target; fi; done
+int-libs: dependencies migration
+	@for target in $(INT_LIBS) ; do $(MAKE) $$target; done
+yambo-int-libs: 
+	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $$target; done
 #
 #==============
 # COMPILATIONS

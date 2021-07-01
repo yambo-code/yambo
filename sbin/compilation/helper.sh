@@ -33,14 +33,25 @@ source ./sbin/compilation/helper.inc.sh
 # OPTIONS
 source ./sbin/compilation/options.sh
 #
+# Projects
+source ./sbin/compilation/projects.sh
+#
 # Check what has to be done
-if [ "$new" == "yes" ]; then 
- source ./sbin/compilation/todo.sh
+if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directories.list ]] ; then 
+ dirs_to_check=`cat $compdir/config/stamps_and_lists/active_directories.list`
+ for dir in $dirs_to_check
+ do
+  if [[ "$dir" == "./$cdir"* ]]; then
+   ((i=i%N)); ((i++==0)) && wait
+   source ./sbin/compilation/check_updated_sources.sh &
+   source ./sbin/compilation/check_updated_locks.sh &
+  fi
+ done
  exit 0
 fi
 #
 # Dependencies?
-if [ "$dep" == "yes" ]; then 
+if [ "$dep" == "yes" ] ; then
  source ./sbin/compilation/dependencies.sh
  source ./sbin/compilation/configure_generated_files.sh
  exit 0
@@ -52,38 +63,18 @@ if [ ! -f $cdir/$ofile ]; then exit 0; fi
 # CLEAN
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
 #
-# Projects
-source ./sbin/compilation/projects.sh
-#
 # Pre-compiler flags
 precomp_string=`echo $precomp_flags | sed "s/ /_/g" | sed "s/\-D_//g"`
 #
 # Libraries
 source ./sbin/compilation/libraries.sh
 #
-# Save current PJ dependent objects
-source ./sbin/compilation/save_and_restore.sh
-#
 # Lock the current projects
 for flag in $precomp_flags
 do
  flag=`echo $flag | sed "s/\-D_//"`
- if [ ! -f $cdir/${flag}.lock ] ; then
-  touch $cdir/${flag}.lock
- fi
+ touch $cdir/${flag}.lock
 done
-#
-# Project dependencies
-#if [ ! -f $cdir/project.dep ] ; then 
-# for project in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _DOUBLE
-# do
-#   @compdir@/sbin/projectdep.sh $cdir $project
-# done
-# for exe in _a2y _c2y _p2y _yambo _ypp
-# do
-#   @compdir@/sbin/projectdep.sh $cdir $exe
-# done
-#fi
 #
 # Makefile (I): variables
 cat <<EOF > $cdir/dyn_variables.mk
@@ -106,7 +97,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 source ./sbin/compilation/special_sources.sh
 #
 cat <<EOF > sbin/compilation/mk/static_variables.mk
-STDLOG         =$compdir/"compile_"$precomp_string".log"
+STDLOG         =$compdir/log/"compile_"$precomp_string".log"
 libs           =$libs
 linclude       =$lf90include
 lf90libinclude =$lf90libinclude

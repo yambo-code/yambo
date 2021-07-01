@@ -6,6 +6,7 @@ modules.rules
 config/stamps_and_lists/*.stamp
 autoconf_generated_files.list
 active_directories.list
+static_variables.mk
 *.lock
 
 # AUTO-generated #
@@ -47,7 +48,6 @@ include/netcdf.inc
 include/xc*.h
 include/headers/common/have_malloc.h
 include/system/*
-lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc

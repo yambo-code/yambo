@@ -21,19 +21,16 @@ endef
 define c_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -c $(srcdir)/$(wdir)/$*.c  >> $(STDLOG) 2>&1 )
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define f77_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(f77) -c $(fflags) $(srcdir)/$(wdir)/$*.f   >> $(STDLOG) 2>&1 )
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define f77_no_opt_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(f77) -c $(fuflags) $(srcdir)/$(wdir)/$*.f  >> $(STDLOG) 2>&1 )
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define F90_no_opt_elemental_compilation
@@ -42,14 +39,12 @@ define F90_no_opt_elemental_compilation
  $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
  $(PREFIX)($(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1 )
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define F90_local_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(fpp) $(precomp_flags) $*.F > $*$(f90suffix) >>& $(STDLOG) 2>&1 )
  $(PREFIX)($(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix) >>& $(STDLOG) 2>&1 )
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define F90_elemental_compilation
@@ -58,20 +53,17 @@ define F90_elemental_compilation
  $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
  $(PREFIX)($(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1)
- $(PREFIX)(rm -f $(compdir)/config/stamps_and_lists/$(target).stamp)
  $(msg)
 endef
 define modmove
  $(PREFIX)MODS=`find . -name '*.mod'`;for modfile in $$MODS ; do mv $$modfile $(compdir)/include; done
 endef
 define mk_lib
- $(PREFIX)(if test ! -f $(compdir)/config/stamps_and_lists/$(target).stamp; then \
-  eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  ;\
-  mv $(target) $(libdir); \
-  chmod u+x $(libdir)/$(target);\
-  echo "\t[$(wdir)] $(target) (lib)";\
-  touch $(compdir)/config/stamps_and_lists/$(target).stamp;\
- fi)
+ $(PREFIX)(eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  )
+ $(PREFIX)(mv $(target) $(libdir))
+ $(PREFIX)(chmod u+x $(libdir)/$(target))
+ $(PREFIX)(echo "\t[$(wdir)] $(target) (lib)")
+ $(PREFIX)(touch $(compdir)/config/stamps_and_lists/$(target).stamp)
 endef
 #
 # Utils

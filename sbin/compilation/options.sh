@@ -22,7 +22,8 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-while getopts ":d:t:o:m:nD" opt; do
+N=1
+while getopts ":d:t:o:m:nDN:" opt; do
  case $opt in
   d) cdir=${OPTARG}
   ;;
@@ -34,10 +35,15 @@ while getopts ":d:t:o:m:nD" opt; do
   ;;
   n) new="yes"
   ;;
+  N) N=${OPTARG}
+  ;;
   D) dep="yes"
   ;;
   ?) shift
   ;;
  esac 
 done
+if [ ${N:0:2} == "-j" ]; then
+ N=`echo ${N:0:4} | sed s/\-j//`
+fi
 shift $((OPTIND -1))

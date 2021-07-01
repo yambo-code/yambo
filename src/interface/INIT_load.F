@@ -534,7 +534,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ExtF2_Int',             '[NL ExtF] Field Intensity',Efield(2)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
  call it(defs,'ExtF2_Width',           '[NL ExtF] Field Width',Efield(2)%width,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'ExtF2_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)', &
-&         Efield(1)%ef_name,verb_level=V_nl_optics)
+&         Efield(2)%ef_name,verb_level=V_nl_optics)
  call it(defs,'ExtF2_Tstart',          '[NL ExtF] Initial Time',Efield(2)%t_initial,unit=Time_unit(1),               &
 &    verb_level=V_nl_optics)
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)

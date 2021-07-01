@@ -530,6 +530,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
 &    verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Field Versor',Efield(2)%versor,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Field Intensity',Efield(2)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Width',           '[NL ExtF] Field Width',Efield(2)%width,unit=Time_unit(1),verb_level=V_nl_optics)
+ call it(defs,'ExtF2_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)', &
+&         Efield(1)%ef_name,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Tstart',          '[NL ExtF] Initial Time',Efield(2)%t_initial,unit=Time_unit(1),               &
+&    verb_level=V_nl_optics)
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
  !
 #endif
@@ -537,6 +544,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Versor',Efield(2)%versor,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Intensity',Efield(2)%intensity,unit=I_unit,verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
 #endif
  !

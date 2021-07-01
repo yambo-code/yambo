@@ -533,8 +533,8 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField RADLifeTime HARRLvcs EXXRLvcs') 
    call initactivate(1,'Gauge ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
+   call initactivate(1,'ExtF2_Dir ExtF2_FrStep ExtF2_Int ExtF2_Width ExtF2_kind ExtF2_Tstart')
    call init_QP_ctl_switch('G')
  endif
 #endif

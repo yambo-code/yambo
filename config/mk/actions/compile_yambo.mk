@@ -3,6 +3,7 @@ yambo: ext-libs int-libs
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/$$DIR2GO"; ADF="-D_yambo"; $(mk_external_yambo_lib)
 	@$(call todo,$@,src,)
 	@+LIBS2DO="$(MAIN_LIBS)"; XPATH="src"; VPATH="$(compdir)/src"; $(mk_src)
+	@$(call todo,$@,driver,)
 	@+X2DO="yambo"; XPATH="driver"; VPATH="$(compdir)/driver"; XLIBS="$(MAIN_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; $(mk_yambo)
 #
 # Yambo PROJECTS #
@@ -42,6 +43,7 @@ yambo_ph: ext-libs int-libs
 	@+LIBS2DO="$(YLIBDRIVER)"; NAME="yambo_ph_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/lib/yambo/driver/src"; ADF="-D_ELPH -D_yambo -D_PHEL"; $(mk_external_yambo_lib)
 	@$(call todo,$@,src,"-D_ELPH -D_PHEL")
 	@+LIBS2DO="$(PJ_PHLIBS)"; XPATH="src"; VPATH="$(compdir)/src"; ADF="-D_ELPH -D_PHEL"; $(mk_src)
+	@$(call todo,$@,driver,"-D_ELPH -D_PHEL")
 	@+X2DO="yambo_ph"; XPATH="driver"; VPATH="$(compdir)/driver"; XLIBS="$(PJ_PHLIBS_LD)" ; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_ELPH -D_PHEL"; $(mk_yambo)
 yambo_qed: ext-libs int-libs
 	@$(call todo,$@,lib/yambo/driver,"-D_QED -D_RT -D_RT_SCATT -D_ELPH -D_yambo")

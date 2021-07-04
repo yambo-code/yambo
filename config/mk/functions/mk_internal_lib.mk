@@ -1,5 +1,6 @@
 define mk_internal_lib
  for ldir in $$LIBS2DO; do \
+  ./sbin/compilation/helper.sh -n -t $$ldir -d $$DIR2GO/$$ldir -N $(MAKEFLAGS) -- $(xcpp)  $$ADF; \
   if test ! -f $(compdir)/config/stamps_and_lists/lib$$ldir.a.stamp; then \
    if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
    if [ "$(compdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
@@ -10,3 +11,4 @@ define mk_internal_lib
   fi;\
  done
 endef
+

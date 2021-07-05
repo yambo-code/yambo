@@ -24,7 +24,7 @@
 subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
- use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
+ use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree,l_nl_p_and_p
  use vec_operate,    ONLY:normalize_v
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
@@ -141,7 +141,7 @@ subroutine NL_initialize(E,k)
      !
  enddo
  !
- if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
+ if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN'.and..not.l_nl_p_and_p) &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
  !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)

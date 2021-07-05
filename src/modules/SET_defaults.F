@@ -654,7 +654,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/0.2_SP,8._SP/)/HA2EV
- n_frequencies =80
+ n_frequencies =1
  n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
@@ -664,6 +664,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='low'
+ call Efield_reset(Efield(2))
  !
  call IO_desc_reset(NL_desc)
  !

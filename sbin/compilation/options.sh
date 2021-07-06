@@ -23,11 +23,13 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 N=1
-while getopts ":d:t:o:m:nDN:" opt; do
+while getopts ":d:t:o:m:nDN:g:" opt; do
  case $opt in
   d) cdir=${OPTARG}
   ;;
   t) target=${OPTARG}
+  ;;
+  g) goal=${OPTARG}
   ;;
   o) ofile=${OPTARG}
   ;;
@@ -45,5 +47,8 @@ while getopts ":d:t:o:m:nDN:" opt; do
 done
 if [ ${N:0:2} == "-j" ]; then
  N=`echo ${N:0:4} | sed s/\-j//`
+fi
+if [ "${N}" == "" ]; then 
+ N=1 
 fi
 shift $((OPTIND -1))

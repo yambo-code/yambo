@@ -35,7 +35,7 @@ do
   obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
   if grep -q "$obj" $dir/.objects; then
    bdir=`basename $dir`
-   rm -f config/stamps_and_lists/lib${bdir}.a.stamp
-   rm -f config/stamps_and_lists/lib${target}*${bdir}.a.stamp 
+   rm -f config/stamps_and_lists/${goal}.stamp 
+   rm -f config/stamps_and_lists/${target}.a.stamp 
   fi
 done

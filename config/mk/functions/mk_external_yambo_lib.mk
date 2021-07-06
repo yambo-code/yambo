@@ -1,12 +1,9 @@
 define mk_external_yambo_lib
- for ldir in $$LIBS2DO; do \
-  if test ! -f $(compdir)/config/stamps_and_lists/lib$$NAME$$ldir.a.stamp; then \
-   if test ! -d "$$DIR2GO/$$ldir" ; then mkdir -p "$$DIR2GO/$$ldir" ; fi ; \
-   if [ "$(compdir)" != "$(prefix)" ] && [ -f $$VPATH/$$ldir/.objects ] ; then \
-    cp $$VPATH/$$ldir/.objects $$DIR2GO/$$ldir ; \
-   fi ; \
-   ./sbin/compilation/helper.sh -d $$DIR2GO/$$ldir -t lib$$NAME$$ldir.a -o .objects -m l -- "$(precision) $(xcpp) $$ADF" ; \
-   cd $$DIR2GO/$$ldir ; $(MAKE) VPATH=$$VPATH/$$ldir lib || exit "$$?" ; cd ../../../../../; \
+ for lib in $$LIBS; do \
+  if test ! -f $(compdir)/config/stamps_and_lists/lib$$NAME$$lib.a.stamp; then \
+   if test ! -d "$$BASE/$$lib" ; then mkdir -p "$$BASE/$$lib" ; fi ; \
+   ./sbin/compilation/helper.sh -d $$BASE/$$lib -t lib$$NAME$$lib.a -o .objects -m l -g $@ -- "$(precision) $(xcpp) $$ADF" ; \
+   cd $$BASE/$$lib ; $(MAKE) VPATH=$$VPATH/$$lib lib || exit "$$?" ; cd ../../../../../; \
   fi; \
  done
 endef

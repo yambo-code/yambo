@@ -16,7 +16,7 @@ define clean_driver
    EXTS="Makefile -stamp";ACTION="clean_all";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
- if [ "$(1)" = "driver"    ] ||                  [ "$(1)" = "all" ] ; then \
+ if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \

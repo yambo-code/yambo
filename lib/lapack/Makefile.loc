@@ -33,7 +33,6 @@ configure-stamp: uncompress-stamp
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE); $(make) ) ; fi
-	#
 	touch package-ready-stamp
 
 package-installed: uncompress-stamp configure-stamp package-ready-stamp
@@ -46,7 +45,7 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-install
 # cleaning
 #
 clean:
-	if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s cleanlib ) ; fi
 	- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: 
@@ -54,7 +53,7 @@ clean_all:
 	- rm -rf package-ready-stamp configure-stamp package-installed
 
 define install
- cd $(PACKAGE);  cp *.a SRC/liblapack.a $(LIBPATH)/lib ; \
+ cd $(PACKAGE); cp SRC/*.a $(LIBPATH)/lib ; \
  chmod +x $(LIBPATH)/lib/*lapack*.a ; \
  chmod +x $(LIBPATH)/lib/*blas*.a   
 endef  

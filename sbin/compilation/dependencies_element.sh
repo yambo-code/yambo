@@ -54,7 +54,7 @@ do
     sources_pj_dependent+=" ${obj}\n"
   fi
  done
- PREFIX=`echo $PJ | sed 's/_//g'`
+ PREFIX=`echo $PJ | sed 's/_//'`
  if [ ${#sources_pj_dependent} -gt 1 ]; then
   echo -e "$sources_pj_dependent" >>  ${PREFIX}_project.dep
  fi

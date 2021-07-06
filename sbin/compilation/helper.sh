@@ -85,7 +85,7 @@ EOF
 #
 # Makefile (II): OBJECTS list
 cp $cdir/.objects $cdir/objects.c
-DTARG=`echo $target  | sed "s/\.a//" | sed "s/\-//"`
+DTARG=`echo $target | sed "s/\.a//" | sed "s/\-//"`
 $cpp $cppflags $precomp_flags -D_$DTARG $cdir/objects.c  > $cdir/objects.mk
 rm -f $cdir/objects.c 
 #
@@ -97,7 +97,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 source ./sbin/compilation/special_sources.sh
 #
 cat <<EOF > sbin/compilation/mk/static_variables.mk
-STDLOG         =$compdir/log/"compile_"$precomp_string".log"
+STDLOG         =$compdir/log/"compile_"$goal".log"
 libs           =$libs
 linclude       =$lf90include
 lf90libinclude =$lf90libinclude

@@ -37,6 +37,9 @@ do
  lock_string="${lock} ${lock_string}"
  save_dir="${lock}_${save_dir}"
 done
+if [[ -z $save_dir ]] ; then
+ return
+fi
 save_dir="${save_dir}.save"
 #
 # -D* -> string
@@ -69,12 +72,12 @@ fi
 #echo "F" $flag_string
 #echo "M" $missing 
 #echo "N" $new 
+#echo "SAVE" $save_dir 
+#echo "RESTORE" $restore_dir 
 #
 # Remove the lock
 #
 bdir=`basename $dir`
-#
-if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
 #
 # Search for objects dependent of new/missing PROJECTS 
 # and move them in a dedicated folder
@@ -82,18 +85,21 @@ if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
 for lock in $unmatched
 do
  rm -f $dir/$lock.lock
+ if grep -q "$lock" $dir/.objects; then
+  rm -f config/stamps_and_lists/${goal}.stamp 
+  rm -f config/stamps_and_lists/${target}.a.stamp 
+  #echo "LOCK $lock in .objects"
+ fi
  if test -f "$dir/${lock}_project.dep"; then
   deps=`cat $dir/${lock}_project.dep`
-  if grep -q "$lock" $dir/.objects; then
-    rm -f config/stamps_and_lists/lib${bdir}.a.stamp 
-    rm -f config/stamps_and_lists/lib${target}*${bdir}.a.stamp 
-  fi
   for object in $deps
   do
     if test -f "$dir/$object"; then
-     rm -f config/stamps_and_lists/lib${bdir}.a.stamp 
-     rm -f config/stamps_and_lists/lib${target}*${bdir}.a.stamp 
+     if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
+     rm -f config/stamps_and_lists/${goal}.stamp 
+     rm -f config/stamps_and_lists/${target}.a.stamp 
      mv $dir/$object $dir/$save_dir
+     #echo "OBJ $object -> $save_dir"
     fi
   done
  fi

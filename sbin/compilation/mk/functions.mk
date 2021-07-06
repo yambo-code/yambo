@@ -5,31 +5,36 @@
 # Driver
 #--------
 define driver
+ $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c" >> $(STDLOG) )
  $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
 endef
 #
 # Linking
 #---------
 define link
- $(PREFIX)(eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1 ;\
+ $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG) ;\
+ eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
  echo "\t[$(wdir)] $(target) (link)";\
- touch $(compdir)/config/stamps_and_lists/$(target).stamp )
+ if test -f $(target); then touch $(compdir)/config/stamps_and_lists/$(target).stamp; fi )
 endef
 #
 # Compilation
 #-------------
 define c_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -c $(srcdir)/$(wdir)/$*.c" >> $(STDLOG) )
  $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -c $(srcdir)/$(wdir)/$*.c  >> $(STDLOG) 2>&1 )
  $(msg)
 endef
 define f77_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(f77) -c $(fflags) $(srcdir)/$(wdir)/$*.f"   >> $(STDLOG) )
  $(PREFIX)(eval $(f77) -c $(fflags) $(srcdir)/$(wdir)/$*.f   >> $(STDLOG) 2>&1 )
  $(msg)
 endef
 define f77_no_opt_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(f77) -c $(fuflags) $(srcdir)/$(wdir)/$*.f"  >> $(STDLOG) )
  $(PREFIX)(eval $(f77) -c $(fuflags) $(srcdir)/$(wdir)/$*.f  >> $(STDLOG) 2>&1 )
  $(msg)
 endef
@@ -38,7 +43,8 @@ define F90_no_opt_elemental_compilation
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F >> $*.tmp_source)
  $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
- $(PREFIX)($(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1 )
+ $(PREFIX)(echo "$(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)"  >> $(STDLOG) )
+ $(PREFIX)(eval $(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1 )
  $(msg)
 endef
 define F90_local_elemental_compilation
@@ -52,7 +58,8 @@ define F90_elemental_compilation
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F > $*.tmp_source)
  $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
- $(PREFIX)($(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1)
+ $(PREFIX)(echo "$(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)"  >> $(STDLOG))
+ $(PREFIX)(eval $(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1)
  $(msg)
 endef
 define modmove

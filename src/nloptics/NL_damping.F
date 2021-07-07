@@ -32,6 +32,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
  use nl_optics,      ONLY:I_relax,NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
+ use real_time,      ONLY:RT_deph_deg_thresh
  !
  implicit none
  !                      
@@ -61,9 +62,12 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
    !
    do i1=NL_bands(1),NL_bands(2)
      do i2=i1+1,NL_bands(2)
-     I_relax(i1,i2,:,ik_mem,i_sp_pol) = & 
-         & -cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
-     I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
+       !
+       ! In case of dengerate states I use the radiative life-time
+       ! 
+       if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))<RT_deph_deg_thresh ) cycle
+         I_relax(i1,i2,:,ik_mem,i_sp_pol) =-cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
+         I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
      enddo
    enddo
    !
@@ -72,8 +76,20 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  if(RAD_LifeTime>zero_dfl) then
    !      
    do i1=NL_bands(1),NL_bands(2)
-   I_relax(i1,i1,:,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
+     !
+     I_relax(i1,i1,:,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
+     !
+     ! I need this additional part for the degenerate states 
+     !
+     do i2=i1+1,NL_bands(2)
+       if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
+         I_relax(i1,i2,:,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i2,:,ik,i_sp_pol))
+         I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
+     enddo
+     !
    enddo
+   !
+   ! Remove the equilibrium contribution
    !
    forall(ib=NL_bands(1):E%nbf)  I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
    !

@@ -103,7 +103,11 @@ define clean_config
 endef
 define clean_bin
  echo  "\t[CLEANING] bin" ;\
- rm -fr $(prefix)/bin/*; \
+ for file in $(prefix)/bin/*; do \
+  exe=`basename $$file`;\
+  rm -f $(prefix)/bin/$$exe; \
+  rm -f $(prefix)/config/stamps_and_lists/"$$exe.stamp"; \
+ done;\
  rm -fr $(prefix)/log/*
 endef
 define clean_ext_libs_bin_and_include

@@ -1,36 +1,25 @@
-a2y: ext-libs int-libs
-	@$(call todo,$@,lib/yambo/driver,-D_a2y)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="a2y_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/lib/yambo/driver/src"; ADF="-D_a2y"; $(mk_external_yambo_lib)
-	@$(call todo,$@,src,)
-	@+LIBS2DO="$(2YLIBS)"; DIR="src" ; VPATH="$(compdir)/src" ; $(mk_internal_lib)
-	@$(call todo,$@,interfaces,)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(compdir)/interfaces" ; $(mk_internal_lib)
-	@+X2DO="a2y"; DIR="interfaces/a2y"; VPATH="$(compdir)/interfaces/a2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; $(mk_yambo)
-c2y: ext-libs int-libs
-	@$(call todo,$@,lib/yambo/driver,-D_c2y)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="c2y_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/lib/yambo/driver/src"; ADF="-D_c2y"; $(mk_external_yambo_lib)
-	@$(call todo,$@,src,)
-	@+LIBS2DO="$(2YLIBS)"; DIR="src" ; VPATH="$(compdir)/src" ; $(mk_internal_lib)
-	@$(call todo,$@,interfaces,)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(compdir)/interfaces" ; $(mk_internal_lib)
-	@+X2DO="c2y"; DIR="interfaces/c2y"; VPATH="$(compdir)/interfaces/c2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; $(mk_yambo)
+#
+# Variable definitions
+#
+I_PRECMP=
+ifneq (,$(findstring p2y,$(MAKECMDGOALS)))
+ I_PRECMP=$(p2ycpp)
+endif
+#
+GOALS=a2y c2y
 ifeq ($(do_p2y),yes)
-p2y: ext-libs int-libs
-	@$(call todo,$@,lib/yambo/driver,-D_p2y)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="p2y_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/lib/yambo/driver/src"; ADF="-D_p2y"; $(mk_external_yambo_lib)
-	@$(call todo,$@,src)
-	@+LIBS2DO="$(2YLIBS)"; DIR="src" ; VPATH="$(compdir)/src" ; $(mk_internal_lib)
-	@$(call todo,$@,interfaces,)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(compdir)/interfaces" ; $(mk_internal_lib)
-	@+X2DO="p2y" ; DIR="interfaces/p2y"; VPATH="$(compdir)/interfaces/p2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="$(p2ycpp)"; $(mk_yambo) ;
+ GOALS+=p2y
 endif
 ifeq ($(do_e2y),yes)
-e2y: ext-libs int-libs
-	@$(call todo,$@,lib/yambo/driver,-D_e2y)
-	@+LIBS2DO="$(YLIBDRIVER)"; NAME="e2y_Ydriver_"; DIR2GO="lib/yambo/driver/src"; VPATH="$(compdir)/lib/yambo/driver/src"; ADF="-D_e2y"; $(mk_external_yambo_lib)
-	@$(call todo,$@,src,)
-	@+LIBS2DO="$(2YLIBS)"; DIR="src" ; VPATH="$(compdir)/src" ; $(mk_internal_lib)
-	@$(call todo,$@,interfaces,)
-	@+LIBS2DO="int_modules"; DIR2GO="interfaces" ; VPATH="$(compdir)/interfaces" ; $(mk_internal_lib)
-	@+X2DO="e2y" ; DIR="interfaces/e2y"; VPATH="$(compdir)/interfaces/e2y"; XLIBS="$(2YLIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; $(mk_yambo) ;
+ GOALS+=e2y
 endif
+#
+# Compilation
+#
+$(GOALS): ext-libs int-libs
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(I_PRECMP) -D_$@";$(todo_lib);$(mk_lib)
+	@+LIBS="$(2YLIBS)";BASE="src";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="int_modules";BASE="interfaces";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(todo_driver)
+	@sleep 0.1s; 
+	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(mk_exe)

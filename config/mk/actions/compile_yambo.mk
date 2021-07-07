@@ -1,35 +1,44 @@
-yambo: ext-libs int-libs 
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_Ydriver_"; BASE="lib/yambo/driver/src";ADF="-D_yambo"; $(todo); $(mk_lib)
-	@+LIBS="$(MAIN_LIBS)" ;                       BASE="src";                                 $(todo); $(mk_lib)
-	@+X2DO="yambo";XLIBS="$(MAIN_LIBS_LD)";$(todo_driver);$(mk_exe)
 #
-# Yambo PROJECTS #
-# 
-yambo_sc: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_sc_Ydriver_"; BASE="lib/yambo/driver/src";ADF="-D_SC -D_yambo";$(todo); $(mk_lib)
-	@+LIBS="$(PJ_SCLIBS)" ;                          BASE="src"                 ;ADF="-D_SC"         ;$(todo); $(mk_lib)
-	@+X2DO="yambo_sc";XLIBS="$(PJ_SCLIBS_LD)";ADF="-D_SC";$(todo_driver);$(mk_exe)
-yambo_rt_gpl: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_rt_gpl_Ydriver_"; BASE="lib/yambo/driver/src" ;ADF="-D_RT -D_yambo";$(todo); $(mk_lib)
-	@+LIBS="$(PJ_RT_GPL_LIBS)" ;                         BASE="src"                  ;ADF="-D_RT"         ;$(todo); $(mk_lib)
-	@+X2DO="yambo_rt_gpl";XLIBS="$(PJ_RT_GPL_LIBS_LD)";ADF="-D_RT";$(todo_driver);$(mk_exe)
-yambo_rt: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_rt_Ydriver_"; BASE="lib/yambo/driver/src";ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_yambo";$(todo); $(mk_lib)
-	@+LIBS="$(PJ_RTLIBS)";                           BASE="src"                 ;ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL"         ;$(todo); $(mk_lib)
-	@+X2DO="yambo_rt";XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL";$(todo_driver);$(mk_exe)
-yambo_ph: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_ph_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_ELPH -D_yambo -D_PHEL"; $(todo); $(mk_lib)
-	@+LIBS="$(PJ_PHLIBS)"; BASE="src"; VPATH="$(compdir)/src"; ADF="-D_ELPH -D_PHEL"; $(todo); $(mk_lib)
-	@+X2DO="yambo_ph"; XLIBS="$(PJ_PHLIBS_LD)" ;ADF="-D_ELPH -D_PHEL"; $(todo_driver); $(mk_exe)
-yambo_rt_iterative: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_rt_iterative_Ydriver_"; BASE="lib/yambo/driver/src";ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_yambo -D_ELPH_ITERATIVE" ;$(todo); $(mk_lib)
-	@+LIBS="$(PJ_RTLIBS)";                           BASE="src"                 ;ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_ELPH_ITERATIVE"         ;$(todo); $(mk_lib)
-	@+X2DO="yambo_rt_iterative";XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_ELPH_ITERATIVE";$(todo_driver);$(mk_exe)
-yambo_nl: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_nl_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT -D_yambo";$(todo); $(mk_lib)
-	@+LIBS="$(PJ_NLLIBS)";                           BASE="src";                  ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT"; $(todo);$(mk_lib)
-	@+X2DO="yambo_nl";XLIBS="$(PJ_NLLIBS_LD)";ADF="-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT";$(todo_driver); $(mk_exe)
-yambo_qed: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="yambo_qed_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_QED -D_RT -D_RT_SCATT -D_ELPH -D_yambo"; $(todo); $(mk_lib)
-	@+LIBS="$(PJ_RTLIBS)";                            BASE="src";                  ADF="-D_QED -D_RT -D_RT_SCATT -D_ELPH"; $(todo); $(mk_lib)
-	@+X2DO="yambo_qed";XLIBS="$(PJ_RTLIBS_LD)";ADF="-D_QED -D_RT -D_ELPH"; $(todo_driver); $(mk_exe)
+# Variable definitions
+#
+PRECMP=
+SRC_LIBS=$(MAIN_LIBS)
+EXE_LIBS=$(MAIN_LIBS_LD)
+ifneq (,$(findstring yambo_sc,$(MAKECMDGOALS)))
+ PRECMP=-D_SC
+ SRC_LIBS=$(PJ_SCLIBS)
+ EXE_LIBS=$(PJ_SCLIBS_LD)
+else ifneq (,$(findstring yambo_rt_iterative,$(MAKECMDGOALS)))
+ PRECMP=-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_ELPH_ITERATIVE
+ SRC_LIBS=$(PJ_RTITLIBS)
+ EXE_LIBS=$(PJ_RTITLIBS_LD)
+else ifneq (,$(findstring yambo_rt_gpl,$(MAKECMDGOALS)))
+ PRECMP=-D_RT 
+ SRC_LIBS=$(PJ_RT_GPL_LIBS)
+ EXE_LIBS=$(PJ_RT_GPL_LIBS_LD)
+else ifneq (,$(findstring yambo_rt,$(MAKECMDGOALS)))
+ PRECMP=-D_RT -D_RT_SCATT -D_ELPH -D_PHEL
+ SRC_LIBS=$(PJ_RTLIBS)
+ EXE_LIBS=$(PJ_RTLIBS_LD)
+else ifneq (,$(findstring yambo_ph,$(MAKECMDGOALS)))
+ PRECMP=-D_ELPH -D_PHEL
+ SRC_LIBS=$(PJ_PHLIBS)
+ EXE_LIBS=$(PJ_PHLIBS_LD)
+else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
+ PRECMP=-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT
+ SRC_LIBS=$(PJ_NLLIBS)
+ EXE_LIBS=$(PJ_NLLIBS_LD)
+else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
+ PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
+ SRC_LIBS=$(PJ_RTLIBS)
+ EXE_LIBS=$(PJ_RTLIBS_LD)
+endif
+#
+# Compilation
+#
+yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: ext-libs int-libs 
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(PRECMP) -D_yambo";$(todo_lib);$(mk_lib)
+	@+LIBS="$(SRC_LIBS)";BASE="src";ADF="$(PRECMP)";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP)";$(todo_driver)
+	@sleep 0.1s;
+	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP)";$(mk_exe)

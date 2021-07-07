@@ -1,38 +1,51 @@
-ypp: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_Ydriver_"; BASE="lib/yambo/driver/src";  ADF="-D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPP_MAIN_LIBS)";                  BASE="src" ; $(todo) ; $(mk_lib)
-	@+LIBS="$(YPP_LIBS)";   LAB="_ypp_";        BASE="ypp" ; $(todo) ; $(mk_lib)
-	@+X2DO="ypp";XLIBS="$(YPP_MAIN_LIBS_LD)"; X_ypp_LIBS="$(YPP_LIBS_LD)"; $(todo_driver); $(mk_exe)
 #
-# Ypp projects #
+# Variable definitions
 #
-ypp_ph: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_ph_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_YPP_ELPH -D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPP_MAIN_LIBS)";                     BASE="src"; ADF="-D_ELPH";     $(todo) ;$(mk_lib)
-	@+LIBS="$(YPPPH_LIBS)"; LAB="_ypp_";           BASE="ypp"; ADF="-D_YPP_ELPH"; $(todo) ;$(mk_lib)
-	@+X2DO="ypp_ph";XLIBS="$(YPP_MAIN_LIBS_LD)";X_ypp_LIBS="$(YPPPH_LIBS_LD)";ADF="-D_YPP_ELPH"; $(todo_driver); $(mk_exe)
+Y_PRECMP=
+Y_SRC_LIBS=$(YPP_MAIN_LIBS)
+Y_EXE_LIBS=$(YPP_MAIN_LIBS_LD)
+YPP_SRC_LIBS=$(YPP_LIBS)
+YPP_EXE_LIBS=$(YPP_LIBS_LD)
+ifneq (,$(findstring ypp_sc,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_SC
+ YPP_PRECMP=-D_YPP_SC
+ Y_SRC_LIBS=$(YPPSC_MAIN_LIBS)
+ Y_EXE_LIBS=$(YPPSC_MAIN_LIBS_LD)
+else ifneq (,$(findstring ypp_rt_gpl,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_RT -D_YPP_RT
+ YPP_PRECMP=-D_YPP_RT
+ Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
+ Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
+ YPP_SRC_LIBS=$(YPPRT_LIBS)
+ YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
+else ifneq (,$(findstring ypp_rt,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_RT -D_YPP_RT -D_ELPH
+ YPP_PRECMP=-D_YPP_RT -D_ELPH -D_YPP_ELPH
+ Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
+ Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
+ YPP_SRC_LIBS=$(YPPRT_LIBS)
+ YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
+else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_ELPH
+ YPP_PRECMP=-D_YPP_ELPH
+ YPP_SRC_LIBS=$(YPPPH_LIBS)
+ YPP_EXE_LIBS=$(YPPPH_LIBS_LD)
+else ifneq (,$(findstring ypp_nl,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_RT -D_YPP_RT -D_ELPH
+ YPP_PRECMP=-D_YPP_RT -D_ELPH -D_YPP_ELPH
+ Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
+ Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
+ YPP_SRC_LIBS=$(YPPRT_LIBS)
+ YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
+endif
+#
+# Compilation
+#
+ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: ext-libs int-libs
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(YPP_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_SRC_LIBS)";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(YPP_SRC_LIBS)";LAB="_ypp_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(Y_PRECMP)";$(todo_driver)
+	@sleep 0.1s;
+	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(Y_PRECMP)";$(mk_exe)
 
-ypp_rt_gpl: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_rt_gpl_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_RT -D_YPP_RT -D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPPRT_MAIN_LIBS)"; BASE="src"; ADF="-D_RT -D_YPP_RT"; $(mk_internal_lib)
-	@+LIBS="$(YPPRT_LIBS)"; BASE="ypp"; ADF="-D_YPP_RT"; $(mk_ypp_src)
-	@+X2DO="ypp_rt_gpl"; BASE="driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_YPP_RT"; $(mk_ypp)
-ypp_rt: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_rt_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_RT -D_ELPH -D_YPP_RT -D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPPRT_MAIN_LIBS)"; BASE="src"; ADF="-D_RT -D_ELPH -D_YPP_RT"; $(mk_internal_lib)
-	@+LIBS="$(YPPRT_LIBS)"; BASE="ypp"; ADF="-D_ELPH -D_YPP_RT -D_YPP_ELPH"; $(mk_ypp_src)
-	@+X2DO="ypp_rt"; BASE="driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_YPP_RT"; $(mk_ypp)
-ypp_nl: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_nl_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL -D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPPNL_MAIN_LIBS)"; BASE="src"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL -D_RT -D_NL"; $(mk_internal_lib)
-	@+LIBS="$(YPPRT_LIBS)"; BASE="ypp"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_RT -D_YPP_NL"; $(mk_ypp_src)
-	@+X2DO="ypp_nl"; DIBASE="driver"; XLIBS="$(YPPRT_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPPRT_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_DOUBLE -D_SLEPC_OFF -D_YPP_NL -D_YPP_RT"; $(mk_ypp)
-ypp_sc: ext-libs int-libs
-	@+LIBS="$(YLIBDRIVER)"; LAB="ypp_sc_Ydriver_"; BASE="lib/yambo/driver/src"; ADF="-D_SC -D_ypp"; $(todo); $(mk_lib)
-	@+LIBS="$(YPPSC_MAIN_LIBS)"; BASE="src"; ADF="-D_SC"; $(mk_internal_lib)
-	@+LIBS="$(YPP_LIBS)"; BASE="ypp"; ADF="-D_YPP_SC"; $(mk_ypp_src)
-	@+X2DO="ypp_sc"; BASE="driver"; XLIBS="$(YPPSC_MAIN_LIBS_LD)"; \
-	X_ypp_LIBS="$(YPP_LIBS_LD)"; DRILIBS="$(YLIBDRIVER_LD)"; ADF="-D_YPP_SC"; $(mk_ypp)

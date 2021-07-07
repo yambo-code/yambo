@@ -127,14 +127,12 @@ include config/mk/actions/remote_compilation.mk
 include config/mk/functions/messaging.mk
 #
 # LIBs ...
+# ... internal
 include config/mk/functions/mk_lib.mk
 # ... external
 include config/mk/functions/mk_external_lib.mk
 #
-# Yambo LIBS
-include config/mk/functions/mk_external_yambo_lib.mk
-#
-# Final exe's
+# Linker
 include config/mk/functions/mk_exe.mk
 #
 # CLEANING

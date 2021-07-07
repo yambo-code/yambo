@@ -25,7 +25,7 @@ subroutine K_Haydock(iq,W,mode)
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
  use X_m,            ONLY:global_gauge
- use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use wrapper_omp,    ONLY:V_plus_alpha_V_omp
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
@@ -344,8 +344,8 @@ subroutine K_Haydock(iq,W,mode)
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
      ! B(n+1)= <Vn+1|Vn+1>^(1/2)
@@ -398,13 +398,13 @@ subroutine K_Haydock(iq,W,mode)
      if (.not.l_BS_ares_from_res) then
        do i_g = 1,BS_nT_grps
          if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-         call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
+         call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Af(it)*cONE,Vn(i_g)%fragment,Vnp1(i_g)%fragment)
        enddo
      endif
      !
      do i_g = 1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       call V_by_V_plus_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
+       call V_plus_alpha_V_omp(BS_T_grp(i_g)%size,-Bf(it)*cONE,Vnm1(i_g)%fragment,Vnp1(i_g)%fragment)
      end do
      !
      ! |Vn-1> = |Vn>

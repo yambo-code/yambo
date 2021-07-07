@@ -138,6 +138,7 @@ module global_XC
      local_xc_functional=0
      local_perturbation=EXT_NONE
      local_exx_fraction = RZERO
+     local_exx_screening = RZERO
      if (present(xc_functional)) local_xc_functional=xc_functional
      if (present(perturbation))  local_perturbation=perturbation
      if (present(exx_fraction))  local_exx_fraction=exx_fraction

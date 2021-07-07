@@ -28,9 +28,10 @@ subroutine symmetries_driver(E,Xk)
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
  use IO_m,                ONLY:rm_file
+ use IO_int,              ONLY:ver_is_gt_or_eq
  use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
- use D_lattice,           ONLY:nsym
+ use D_lattice,           ONLY:nsym,atom_mass,atoms_map,n_atoms_species_max,n_atomic_species
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
  use interfaces,          ONLY:WF_load,WF_free
@@ -110,6 +111,15 @@ subroutine symmetries_driver(E,Xk)
  !
  YAMBO_ALLOC(kpoints_map,(2,Xk%nibz))
  call k_build_map(Xk,Xk_save,kpoints_map,action_kind)
+ !
+ ! If I remove symmetries from old DB I need to add the new veriables to the DB1
+ !
+ if(.not.allocated(atom_mass)) then
+   YAMBO_ALLOC(atom_mass,(n_atomic_species))
+   YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
+   atom_mass=0._SP
+   atoms_map=1  ! set to 1 to avoid segmentation faults
+ endif
  !
  ! Energies and Wave-functions
  call fix_WFs_and_E(E,Xk,Xk_save,kpoints_map,old_nsym,S_contains_TR,action_kind)

@@ -23,7 +23,7 @@
 !
 module com
  !
- use pars,          ONLY:DP,SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr
+ use pars,          ONLY:DP,SP,lchlen,schlen,max_n_ofs,max_open_ofs,n_max_jobstr,msg_len
  use com_interfcs,  ONLY:msg_characters_vector_int,msg_integers_vector_int,msg_reals_vector_int
  !
  implicit none
@@ -210,5 +210,25 @@ module com
      call msg_reals_vector_int(how,mesg,(/val/),after_msg=after_msg,USE_TABS=USE_TABS,&
 &                              INDENT=INDENT,EXT_FORMAT=EXT_FORMAT,MSG_string=MSG_string)
    end subroutine
+   !
+   character(msg_len) function COMPOSE_spin_msg(title,title_len,msg_,i_spin)
+     !
+     use pars, ONLY:schlen
+     use electrons, ONLY:n_sp_pol
+     !
+     implicit none
+     !
+     character(*) :: msg_,title
+     integer, intent(in) :: i_spin,title_len
+     character(:), allocatable :: COMPOLSE_spin_msg
+     !ws
+     character(schlen) :: spin_ch
+     spin_ch=" "
+     !
+     if (n_sp_pol==2.and.i_spin==1) spin_ch=" [spin UP]"
+     if (n_sp_pol==2.and.i_spin==2) spin_ch=" [spin DN]"
+     COMPOSE_spin_msg=com_compose_msg(title(1:title_len),msg_,spin_ch)
+     !
+   end function
    !
 end module com

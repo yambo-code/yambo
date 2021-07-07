@@ -10,8 +10,8 @@ LIBNAME=libhdf5.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${io_lib_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_hdf5)
 TARBALL=$(tarball_hdf5)
-PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 
 #
 # redefinitions

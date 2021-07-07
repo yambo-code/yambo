@@ -1,5 +1,5 @@
-clean_all:
+clean_all: dependencies
 	@$(call clean_driver,all)
-clean:
+clean: dependencies
 	@$(call clean_driver,$(what))
 

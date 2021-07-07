@@ -27,6 +27,7 @@ do
  case $arg in
   -D_MPI)
    precomp_mpi="yes" ;
+   precomp_flags="$precomp_flags $arg"
    ;;
   -D_*) 
    precomp_flags="$precomp_flags $arg"

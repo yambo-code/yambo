@@ -33,9 +33,7 @@ if ! test -d lib/bin  ; then mkdir lib/bin  ; fi
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
 #
-#
 # Copy system headers
-#
 #
 YAML_INCDIRS=`echo $YAML_INCS       | sed "s/$IFLAG/ /g"` ;                       #  
 for includedir in $YAML_INCDIRS;   do                                             #  This part
@@ -150,11 +148,13 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
  cp     $srcdir/lib/archive/package.list   $compdir/lib/archive
 
+ cp -r  $srcdir/sbin   $compdir/
+ 
  if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
  if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi
  if test ! -d "$compdir/lib"        ; then mkdir "$compdir/lib"        ; fi
 
- for folder in ["include/driver" "include/headers/common" "include/headers/parser" "src/common"] ; do
+ for folder in ["include/driver" "include/headers/common" "include/headers/parser" "src/common" ] ; do
    cd "$srcdir/$folder" ;
    if test ! -d "$compdir/$folder"; then mkdir "$compdir/$folder"     ; fi
    for file in `ls *.h*` ; do

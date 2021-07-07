@@ -1,10 +1,6 @@
 # Download external libs #
 define get_external_libraries
  mkdir -p lib/archive; \
- if [ $(compdir) != $(prefix) ] ; then \
- cp $(compdir)/lib/archive/* lib/archive; \
- cp $(compdir)/config/missing config/ ; \
- fi ; \
  cd lib/archive; \
  if [ "$$LIB2DO" = "all" ] ; then \
    $(MAKE) -f Makefile.loc all ; \

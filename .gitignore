@@ -5,6 +5,7 @@ modules.list
 modules.rules
 config/stamps_and_lists/*.stamp
 config/mk/global/defs.mk
+global_modules_dep.list
 autoconf_generated_files.list
 active_directories.list
 static_variables.mk

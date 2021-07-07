@@ -22,11 +22,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-if test -f $compdir/config/stamps_and_lists/$target.stamp; then
- candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$target.stamp`
+if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
+ candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
 fi
 if test -f $compdir/config/stamps_and_lists/lib${target}.a.stamp; then
- candidates=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/lib${target}.a.stamp`
+ candidates+=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
 for file in $candidates
 do
@@ -37,5 +37,41 @@ do
    bdir=`basename $dir`
    rm -f config/stamps_and_lists/${goal}.stamp 
    rm -f config/stamps_and_lists/${target}.a.stamp 
+   #echo "$file is NEW"
+   #echo "rm -f config/stamps_and_lists/${goal}.stamp"
+   #echo "rm -f config/stamps_and_lists/${target}.a.stamp"
+  fi
+  if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
+   mods1=`grep -w $obj $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+   for mod1 in $mods1
+   do
+    if test "$mod1" == "$obj"; then continue; fi
+    first_level_dep+=" $mod1"
+    mods2=`grep -w $mod1 $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+    for mod2 in $mods2
+    do
+     if test "$mod2" == "$mod1"; then continue; fi
+     second_level_dep+=" $mod2"
+     mods3=`grep -w $mod2 $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+     for mod3 in $mods3
+     do
+      if test "$mod3" == "$mod2"; then continue; fi
+      third_level_dep+=" $mod3"
+     done
+    done
+   done
+   all_deps="$first_level_dep $second_level_dep $third_level_dep"
+   for file in $all_deps
+   do
+    full_path=`find $compdir -name $file`
+    if test -f "$full_path"; then
+     ldir=`dirname $full_path`
+     llib=`basename $ldir`
+     rm -f $full_path
+     rm -f config/stamps_and_lists/lib${llib}.a.stamp 
+     #echo "rm -f  $full_path"
+     #echo "rm -f config/stamps_and_lists/lib${llib}.a.stamp"
+    fi 
+   done
   fi
 done

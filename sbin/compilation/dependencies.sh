@@ -73,7 +73,7 @@ do
 sed -f $compdir/config/stamps_and_lists/modules.rules modulesdep.list |
 awk '{if ($1 != $3) print}' |         # remove self dependencies
 sort  | uniq |                        # remove duplicates
-sed 's/@.*@//' > global_modules.dep
+sed 's/@.*@//' >> $compdir/config/stamps_and_lists/global_modules_dep.list
 sed -f modules.rules modulesdep.list |
 awk '{if ($1 != $3) print}' |         # remove self dependencies
 sort  | uniq |                        # remove duplicates

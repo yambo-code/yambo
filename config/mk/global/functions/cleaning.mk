@@ -98,7 +98,7 @@ define clean_config
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
- rm -fr $(prefix)/sbin/compilation/mk/static_variables.mk;\
+ rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile
 endef
 define clean_bin
@@ -125,6 +125,7 @@ define clean_stamps
 endef
 define clean_dependencies
  echo  "\t[CLEANING] Dependencies" ; \
- find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list' \) | xargs rm -f ;\
+ find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
+           -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
 endef

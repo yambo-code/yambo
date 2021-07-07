@@ -1,13 +1,18 @@
-# SETUP #
-#########
+# DEPS #
+########
 modulesdep.list
 modules.list
 modules.rules
 config/stamps_and_lists/*.stamp
+config/mk/global/defs.mk
 autoconf_generated_files.list
 active_directories.list
 static_variables.mk
 *.lock
+dyn_variables.mk
+helper.inc.sh
+make.inc
+objects.mk
 
 # AUTO-generated #
 ##################
@@ -41,7 +46,6 @@ config.status
 config/report
 config/setup
 config/msg_ydb
-config/make.inc
 include/netcdf.h
 include/netcdf_*.h
 include/netcdf.inc
@@ -80,18 +84,10 @@ lib/bin/*
 ##########
 src/external_c/.objects
 .check_configure
-config/mk/defs.mk
-*objects_lock*
-*modules_lock*
 Makefile.locks
 Makefile.archive
 *Makefile
-make.dep
 commit.msg
-helper.inc.sh
-make.inc
-objects.mk
-dyn_variables.mk
 
 # Packages #
 ############

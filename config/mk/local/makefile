@@ -24,8 +24,8 @@
 # VARIABLES (static and dynamical)
 #
 include dyn_variables.mk
-include $(srcdir)/sbin/compilation/mk/static_variables.mk
-include $(srcdir)/sbin/compilation/mk/make.inc
+include $(srcdir)/config/mk/local/static_variables.mk
+include $(srcdir)/config/mk/local/make.inc
 #
 # SETUP
 #
@@ -44,13 +44,13 @@ include objects.mk
 #
 # OPERATIONS
 #
-include $(srcdir)/sbin/compilation/mk/operations.mk
+include $(srcdir)/config/mk/local/operations.mk
 #
 # RULES
 #
-include $(srcdir)/sbin/compilation/mk/rules.mk
+include $(srcdir)/config/mk/local/rules.mk
 #
 # FUNCTIONS
 #
-include $(srcdir)/sbin/compilation/mk/functions.mk
+include $(srcdir)/config/mk/local/functions.mk
 #

@@ -1,3 +1,4 @@
+CLEANING_COMPONENTS=bin int-libs driver Ydrive src ypp interfaces conf dep
 help:
 	@echo "\n\n * * * Yambo Makefile help * * * \n" ;
 	@echo "Interfaces: " ;
@@ -21,8 +22,9 @@ help:
 	@echo "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling"
 	@echo "\nCleaning: " ;
 	@echo "========= " 
-	@echo " make clean_fast =  remove all Yambo objects, libraries and modules "
-	@echo " make clean      =  clean_fast + remove makefiles, and executables "
-	@echo " make clean_all  =  clean + remove external libraries and configuration files "
-	@echo " make distclean  =  clean_all + remove external libraries source files "
+	@echo " The cleaning procedure of yambo is divided in several modules: $(CLEANING_COMPONENTS)"
+	@echo " Each of these module can be called by using"
+	@echo " make clean what=<MODULE> \n"
+	@echo " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files."
+	@echo " make clean_all           =  remove all modules. Complete cleaning."
 	@echo "\n";

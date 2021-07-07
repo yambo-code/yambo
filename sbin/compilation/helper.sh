@@ -96,7 +96,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 # Makefile creation: (III) special sources 
 source ./sbin/compilation/special_sources.sh
 #
-cat <<EOF > sbin/compilation/mk/static_variables.mk
+cat <<EOF > config/mk/local/static_variables.mk
 STDLOG         =$compdir/log/"compile_"$goal".log"
 libs           =$libs
 linclude       =$lf90include
@@ -113,5 +113,5 @@ FC_LOCAL_SRC   =$FC_LOCAL_SRC
 EOF
 #
 # Makefile (III): copy makefile
-cp sbin/compilation/mk/makefile $cdir/Makefile
+cp config/mk/local/makefile $cdir/Makefile
 #

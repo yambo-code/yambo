@@ -21,11 +21,11 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-ifeq ($(wildcard config/mk/defs.mk),config/mk/defs.mk)
- include config/mk/defs.mk
+ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
+ include config/mk/global/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
 else
- include config/mk/no_configure_help.mk
+ include config/mk/global/no_configure_help.mk
 endif
 #
 ifndef VERBOSE
@@ -33,10 +33,10 @@ ifndef VERBOSE
 endif
 #
 # Targets
-include config/mk/targets.mk
+include config/mk/global/targets.mk
 #
 # Libraries (ordered for compiling & linking)
-include config/mk/libraries.mk
+include config/mk/global/libraries.mk
 
 .PHONY: interfaces 
 
@@ -80,60 +80,60 @@ yambo-int-libs:
 #==============
 #
 # External libraries
-include config/mk/actions/download_external_libraries.mk
-include config/mk/actions/compile_external_libraries.mk
+include config/mk/global/actions/download_external_libraries.mk
+include config/mk/global/actions/compile_external_libraries.mk
 #
 # Internal libraries
-include config/mk/actions/compile_internal_libraries.mk
+include config/mk/global/actions/compile_internal_libraries.mk
 #
 # Yambo libs 
-include config/mk/actions/compile_yambo_libraries.mk
+include config/mk/global/actions/compile_yambo_libraries.mk
 #
 # All libs 
 libs: ext-libs int-libs
 #
 # Yambo 
-include config/mk/actions/compile_yambo.mk
+include config/mk/global/actions/compile_yambo.mk
 #
 # Interfaces #
-include config/mk/actions/compile_interfaces.mk
+include config/mk/global/actions/compile_interfaces.mk
 #
 # YPP 
-include config/mk/actions/compile_ypp.mk
+include config/mk/global/actions/compile_ypp.mk
 #
 # Cleans
-include config/mk/actions/clean.mk
+include config/mk/global/actions/clean.mk
 #
 # Utils
-include config/mk/actions/help.mk
+include config/mk/global/actions/help.mk
 #
 #===========
 # Functions
 #===========
 #
 # Libraries download/clone/checkout
-include config/mk/functions/get_libraries.mk
+include config/mk/global/functions/get_libraries.mk
 #
 # Internal code dependencies
-include config/mk/actions/dependencies.mk
+include config/mk/global/actions/dependencies.mk
 #
 # New sources to be compiled
-include config/mk/functions/todo.mk
+include config/mk/global/functions/todo.mk
 #
 # Remote compilation
-include config/mk/actions/remote_compilation.mk
+include config/mk/global/actions/remote_compilation.mk
 #
 # Messages
-include config/mk/functions/messaging.mk
+include config/mk/global/functions/messaging.mk
 #
 # LIBs ...
 # ... internal
-include config/mk/functions/mk_lib.mk
+include config/mk/global/functions/mk_lib.mk
 # ... external
-include config/mk/functions/mk_external_lib.mk
+include config/mk/global/functions/mk_external_lib.mk
 #
 # Linker
-include config/mk/functions/mk_exe.mk
+include config/mk/global/functions/mk_exe.mk
 #
 # CLEANING
-include config/mk/functions/cleaning.mk
+include config/mk/global/functions/cleaning.mk

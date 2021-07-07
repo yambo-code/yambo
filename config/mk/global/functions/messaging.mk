@@ -1,5 +1,7 @@
 define make_message
-  echo;echo " This is $(y_version)";echo;\
+  echo;echo " This is $(y_version)";
+  echo; echo " Use\n\n  >make help\n\n to get more informations";echo;\
+  echo " *** Collective components *** ";\
   echo " [all]            all";\
   echo " [components]     core sc-project (...) libs (...) utils clean";      echo;\
   echo " *** Main components *** ";\

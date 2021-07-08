@@ -43,6 +43,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  ! Working Space
  !
  integer          :: ib,i1,i2,ik_mem
+ real(SP)         :: W_,Gamma_ij
  !
  ! Damping
  !=========
@@ -58,20 +59,23 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  !
  !  In the 2021 version diagonal and off-diagonal contribution are separated
  !
- if(Phase_LifeTime>zero_dfl) then
-   !
-   do i1=NL_bands(1),NL_bands(2)
-     do i2=i1+1,NL_bands(2)
-       !
-       ! In case of dengerate states I use the radiative life-time
-       ! 
-       if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))<RT_deph_deg_thresh ) cycle
-         I_relax(i1,i2,:,ik_mem,i_sp_pol) =-cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
-         I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
-     enddo
+ do i1=NL_bands(1),NL_bands(2)
+   do i2=i1+1,NL_bands(2)
+     !
+     ! In case of dengerate states I use the radiative life-time
+     !
+     if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))<RT_deph_deg_thresh ) cycle
+     !
+     Gamma_ij=0._SP
+     !
+     if(allocated(E%W))          Gamma_ij=Gamma_ij+E%W(i1,ik,i_sp_pol)-E%W(i2,ik,i_sp_pol)
+     if(Phase_LifeTime>zero_dfl) Gamma_ij=Gamma_ij+2._SP/Phase_LifeTime 
+     !
+     I_relax(i1,i2,:,ik_mem,i_sp_pol) = -cI*Gamma_ij*(conjg(V_bands(i2,:,ik,i_sp_pol))*V_bands(i1,:,ik,i_sp_pol))
+     I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
+     !
    enddo
-   !
- endif
+ enddo
  !
  if(RAD_LifeTime>zero_dfl) then
    !      

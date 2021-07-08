@@ -10,8 +10,8 @@ LIBNAME=libnetcdff.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${io_lib_ver}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_netcdff)
 TARBALL=$(tarball_netcdff)
-PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 
 #
 # redefinitions

@@ -10,8 +10,8 @@ LIBNAME=liblapack.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
+PACKAGE=$(pkgname_lapack)
 TARBALL=$(tarball_lapack)
-PACKAGE=`echo $(TARBALL) |sed 's/.tar.gz.*//'`
 #
 # MAIN target
 #
@@ -32,7 +32,8 @@ configure-stamp: uncompress-stamp
 	
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE); $(make) ) ; fi
+	( cd $(PACKAGE); $(make) blaslib; $(make) lapacklib) ; fi
+	#
 	touch package-ready-stamp
 
 package-installed: uncompress-stamp configure-stamp package-ready-stamp

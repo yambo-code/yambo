@@ -30,7 +30,7 @@ module wrapper_omp
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,    ONLY:DP,SP,cZERO,cONE,cZERO_DP,cONE_DP
- use wrapper, ONLY:V_copy,MM_caxpy,vv_caxpy,vv_saxpy,Vstar_dot_V,V_dot_V
+ use wrapper, ONLY:V_copy,MM_caxpy,vv_c,vv_s,Vstar_dot_V,V_dot_V
  use openmp,  ONLY:n_threads_now
  !
  implicit none
@@ -47,8 +47,12 @@ module wrapper_omp
    module procedure mv_cgemv_omp,mv_sgemv_omp,mv_c_omp,mv_r_omp
  end interface
  !
- interface V_by_V_plus_V_omp
-   module procedure vv_saxpy_omp,vv_caxpy_omp,MM_caxpy_omp
+ interface V_plus_alpha_V_omp
+   module procedure vv_saxpy_omp,vv_caxpy_omp
+ end interface
+ !
+ interface M_plus_alpha_M_omp
+   module procedure MM_caxpy_omp
  end interface
  !
  interface V_dot_V_omp
@@ -187,7 +191,7 @@ module wrapper_omp
    end subroutine mv_r_omp
    !
    !=========================
-   ! interface V_by_V_plus_V 
+   ! interface M_plus_alpha_M
    !=========================
    !
    subroutine MM_caxpy_omp(N, CA, CX,  CY )
@@ -215,6 +219,10 @@ module wrapper_omp
 #endif
    end subroutine MM_caxpy_omp
    !
+   !=========================
+   ! interface V_plus_alpha_V
+   !=========================
+   !
    subroutine vv_caxpy_omp(N, CA, CX,  CY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
@@ -230,11 +238,11 @@ module wrapper_omp
        enddo
 !$omp end parallel do
      else
-       call vv_caxpy(N, CA, CX,  CY )
+       call vv_c(N, CA, CX,  CY )
      endif
      !
 #else
-     call vv_caxpy(N, CA, CX,  CY )
+     call vv_c(N, CA, CX,  CY )
 #endif
    end subroutine vv_caxpy_omp
    !
@@ -253,11 +261,11 @@ module wrapper_omp
        enddo
 !$omp end parallel do
      else
-       call vv_saxpy(N, CA, CX,  CY )
+       call vv_s(N, CA, CX,  CY )
      endif
      !
 #else
-     call vv_saxpy(N, CA, CX,  CY )
+     call vv_s(N, CA, CX,  CY )
 #endif
    end subroutine vv_saxpy_omp   
    !

@@ -296,7 +296,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Sorting procedure
  !===================
  !
- if (l_BS_esort) call K_IP_sort("sort",0,nVAR,0._SP,vtmpC)
+ if (l_BS_esort) call K_IP_sort("sort",0,nVAR,cZERO,vtmpC)
  !
  ! ALL 2 ALL
  !==============

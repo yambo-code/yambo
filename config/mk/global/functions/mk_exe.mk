@@ -5,7 +5,7 @@ define mk_exe
   if test ! -f $(compdir)/config/stamps_and_lists/$$exe.stamp; then \
    DLIBS="-ldriver";for lib in $(YLIBDRIVER_LD); do DLIBS="$$DLIBS -l$$exe$$lib" ; done ; \
    ./sbin/compilation/helper.sh -d $$BASE -t $$exe -o .objects -m x -g $@ -- "$$DLIBS $$LLIBS $(xcpp) $$ADF"; \
-   cd $$BASE ; $(MAKE) VPATH=$(compdir)/$$BASE exe || exit "$$?" ; cd $(compdir); \
+   cd $$BASE ; $(MAKE) VPATH=$(srcdir)/$$BASE exe || exit "$$?" ; cd $(compdir); \
   fi;\
  done
 endef

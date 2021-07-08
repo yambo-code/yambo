@@ -5,8 +5,8 @@
 # Driver
 #--------
 define driver
- $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c" >> $(STDLOG) )
- $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(libdir)/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
+ $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c" >> $(STDLOG) )
+ $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
 endef
 #
 # Linking
@@ -41,7 +41,7 @@ endef
 define F90_no_opt_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F >> $*.tmp_source)
- $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
+ $(PREFIX)($(compdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
  $(PREFIX)(echo "$(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)"  >> $(STDLOG) )
  $(PREFIX)(eval $(fc) -c $(fcuflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1 )
@@ -56,7 +56,7 @@ endef
 define F90_elemental_compilation
  $(rm_command)
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F > $*.tmp_source)
- $(PREFIX)($(srcdir)/sbin/replacer.sh $*.tmp_source)
+ $(PREFIX)($(compdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
  $(PREFIX)(echo "$(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)"  >> $(STDLOG))
  $(PREFIX)(eval $(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix)  >> $(STDLOG) 2>&1)

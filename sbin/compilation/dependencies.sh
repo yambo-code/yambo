@@ -41,16 +41,16 @@ BASE=$PWD
 idir=0
 for CDIR in $directories
 do
-  ((i=i%N)); ((i++==0)) && wait
  echo -en "\t[SETUP] Modules detection [ "
  for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'
+ ((i=i%N)); ((i++==0)) && wait
  idir=$((idir+1))
- #
  source ./sbin/compilation/dependencies_element.sh  &
  #
 done
+wait
 echo
 #
 idir=0

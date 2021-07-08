@@ -29,6 +29,7 @@ do_slepc    = @compile_slepc@
 shell       = @SHELL@
 package_bugreport = @PACKAGE_BUGREPORT@
 prefix      = @prefix@
+srcdir      = @abs_top_srcdir@
 compdir     = @compdir@
 exec_prefix = @exec_prefix@
 libs_prefix = @extlibs_path@

@@ -2,7 +2,7 @@
 # Package List
 #
 include ./package.list
-WGETFLAGS=--no-check-certificate
+WGETFLAGS=--no-check-certificate -c -O
 #
 all: $(EXT_LIBS)
 #
@@ -70,9 +70,9 @@ clean_all:
 #
 define getsrc
 if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
- wget $(WGETFLAGS) -c -O $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL ; \
+ wget $(WGETFLAGS) $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL; \
 elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
- curl -L --progress-bar -o $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL ; \
+ curl -L --progress-bar -o $$TARBALL https://github.com/yambo-code/yambo-libraries/raw/master/external/$$TARBALL; \
 fi ; \
 if test ! -s $$TARBALL ; then \
 echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \

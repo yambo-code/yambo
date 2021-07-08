@@ -3,10 +3,6 @@
 #
 .SUFFIXES: .F .f90 .c .f .o .a
 #
-# Includes
-#
--include local_modules.dep
-#
 # Rules
 #
 .F.o:

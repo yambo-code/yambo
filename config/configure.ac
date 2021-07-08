@@ -40,6 +40,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 # YAMBO SPECIFIC
 #
+m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
 m4_include([config/m4/yambo_libraries.m4])
 # 

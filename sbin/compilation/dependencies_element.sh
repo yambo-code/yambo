@@ -25,7 +25,7 @@
 # dependencies.sh -- script that computes dependencies on Fortran 90 modules/projects
 # modified from the moduledep.sh distributed with Quantum ESPRESSO and added the project part
 #
-cd $CDIR
+cd $srcdir/$CDIR
 #
 # Sources to process
 #====================
@@ -56,7 +56,7 @@ do
  done
  PREFIX=`echo $PJ | sed 's/_//'`
  if [ ${#sources_pj_dependent} -gt 1 ]; then
-  echo -e "$sources_pj_dependent" >>  ${PREFIX}_project.dep
+  echo -e "$sources_pj_dependent" >>  $compdir/$CDIR/${PREFIX}_project.dep
  fi
 done
 #
@@ -71,7 +71,7 @@ sed 's/F:/o /
      s/,/ /;s/#include/ use /;s/<memory.h>/memory/' | # replace extension, insert space
 #                                         #   and remove trailing comma
 awk '{print $1 " : @" tolower($3) "@"}' | # create dependency entry
-sort | uniq > modulesdep.list              # remove duplicates
+sort | uniq > $compdir/$CDIR/modulesdep.list              # remove duplicates
 
 # create list of available modules
 # for each module, create a line of the form:
@@ -81,17 +81,17 @@ sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes
 awk '{print "s/@" tolower($3) "@/" $1 "/" }' | # create substitution line
-sort | uniq > modules.rules                    # remove duplicates
+sort | uniq > $compdir/$CDIR/modules.rules     # remove duplicates
 
 egrep -H -i "^ *module " $sources |           # look for "MODULE name"
 sed 's/F:/o /
      s/\//\\\//g' |                            # replace extension, insert
 #                                              #   space and escape slashes
 awk '{print tolower($3) }' | # create substitution line
-sort | uniq > modules.list                    # remove duplicates
+sort | uniq > $compdir/$CDIR/modules.list      # remove duplicates
 #
 # Add the local rules to the global file
-cat modules.rules  >> $compdir/config/stamps_and_lists/modules.rules
+cat $compdir/$CDIR/modules.rules  >> $compdir/config/stamps_and_lists/modules.rules
 #
 cd $BASE
 #

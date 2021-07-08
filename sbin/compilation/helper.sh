@@ -78,9 +78,10 @@ done
 #
 # Makefile (I): variables
 cat <<EOF > $cdir/dyn_variables.mk
-srcdir =$srcdir
-target =$target
-wdir   =$cdir
+compdir =$compdir
+srcdir  =$srcdir
+target  =$target
+wdir    =$cdir
 EOF
 #
 # Makefile (II): OBJECTS list

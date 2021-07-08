@@ -24,12 +24,16 @@
 # VARIABLES (static and dynamical)
 #
 include dyn_variables.mk
-include $(srcdir)/config/mk/local/static_variables.mk
-include $(srcdir)/config/mk/local/make.inc
+include $(compdir)/config/mk/local/static_variables.mk
+include $(compdir)/config/mk/local/make.inc
 #
 # SETUP
 #
-include $(srcdir)/config/setup
+include $(compdir)/config/setup
+#
+# Module dependencies
+#
+-include local_modules.dep
 #
 # VARIABLES
 #
@@ -44,13 +48,13 @@ include objects.mk
 #
 # OPERATIONS
 #
-include $(srcdir)/config/mk/local/operations.mk
+include $(compdir)/config/mk/local/operations.mk
 #
 # RULES
 #
-include $(srcdir)/config/mk/local/rules.mk
+include $(compdir)/config/mk/local/rules.mk
 #
 # FUNCTIONS
 #
-include $(srcdir)/config/mk/local/functions.mk
+include $(compdir)/config/mk/local/functions.mk
 #

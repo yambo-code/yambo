@@ -79,12 +79,6 @@ subroutine G_shells_finder()
      !
    endif
    !
-   if (have_cuda) then
-     YAMBO_FREE_GPU(DEV_VAR(g_rot))
-     YAMBO_FREE_GPU(DEV_VAR(minus_G))
-     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
-     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
-   endif
    return
    !
  else
@@ -237,7 +231,6 @@ subroutine G_shells_finder()
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
    !
    if (have_cuda) then
-     YAMBO_FREE_GPU(DEV_VAR(minus_G))
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
    endif
    !

@@ -89,6 +89,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  integer ::io_err,ID
  !
  ! Close iG/iGo_max to the nearest shell
+write(*,*) "WF_load1"
  !
  iG_max=iG_in
  if (iG_max==0) iG_max=wf_ng
@@ -111,6 +112,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  if(present(sp_pol_to_load)) sp_pol_to_load_=sp_pol_to_load
  !
  ! Imposed Freeing and Allocating of WF's...
+write(*,*) "WF_load2"
  !
  free_and_alloc=.FALSE.
  !... when a single k-point is loaded each time... (no _SC)
@@ -131,6 +133,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  call check_bounds(WF_buffer,buffer_is_ok)
  !
  buffer_is_ok=.FALSE.
+write(*,*) "WF_load3"
  !
  if (allocated(states_to_load)) then
    !
@@ -157,6 +160,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
    !
  endif
+write(*,*) "WF_load4"
  !
  ! [2]: Check FFT size
  !
@@ -180,6 +184,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
    !
  endif
+write(*,*) "WF_load5"
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
@@ -203,6 +208,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! If the cpu has no WF to load %state must be set to .FALSE. before returning.
  ! This is needed, for example, when in a group of cpus some of them do not 
  ! read the DB
+write(*,*) "WF_load6"
  !
  if (allocated(states_to_load)) then
    WF%to_load=count(states_to_load(WF%b(1):WF%b(2),WF%k(1):WF%k(2),WF%sp_pol(1):WF%sp_pol(2)) .eqv. .true.)>0
@@ -218,11 +224,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  ! is not stopped. If we are in an HF calculation also the XC potential is calculated.
  ! In that case the fft_size must be defined for all cpu's of the density COMM otherwise
  ! the PP_redux in el_density hungs up forever
+write(*,*) "WF_load7"
  !
  if (WF%space=='R') call fft_setup(iG_max,iGo_max,.false.)
  if (WF%space=="R") fft_dim_loaded=fft_dim
  !
  if (.not.WF%to_load) return
+write(*,*) "WF_load8"
  !
 #if defined _SC
  !
@@ -251,6 +259,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  endif
  !
 #endif
+write(*,*) "WF_load9"
  !
  !
  ! Init USPP if needed
@@ -258,13 +267,16 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  call PP_uspp_init()
  !
  ! Memory allocation
+write(*,*) "WF_load10"
  !
  call WF_alloc(WF)
+write(*,*) "WF_load11"
  !
  if (WF%space=='R')  wf_grid_size=fft_size
  if (WF%space=='G')  wf_grid_size=wf_ng
  if (WF%space=='C')  wf_grid_size=wf_ncx
  if (WF%space=='B')  wf_grid_size=wf_ncx
+write(*,*) "Alloc WF_DP", wf_grid_size
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
  !
@@ -352,12 +364,15 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 write(*,*) "before alloc wf_disk", wf_ncx,n_spinor,wf_nb_to_load
 write(*,*) "stat", cuda_devsync()
 write(*,*) "stat", cuda_getstat()
+write(*,*) "wf_disk allocate", allocated(wf_disk),dev_allocated(DEV_VAR(wf_disk))
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
 write(*,*) "after alloc wf_disk H", shape(wf_disk)
 write(*,*) "stat", cuda_devsync()
 write(*,*) "stat", cuda_getstat()
          if (have_cuda) then
+write(*,*) "wf_disk dev_allocate", allocated(wf_disk),dev_allocated(DEV_VAR(wf_disk))
            YAMBO_ALLOC_GPU(DEV_VAR(wf_disk),(wf_ncx,n_spinor,wf_nb_to_load))
+write(*,*) "wf_disk dev_allocated", allocated(wf_disk),dev_allocated(DEV_VAR(wf_disk))
          endif
 write(*,*) "after alloc wf_disk D", shape(wf_disk)
 write(*,*) "stat", cuda_devsync()
@@ -367,11 +382,11 @@ write(*,*) "stat", cuda_getstat()
 write(*,*) "before io_WF, shape(wf_disk)", npwk, shape(wf_disk)
 write(*,*) "stat", cuda_devsync()
 write(*,*) "stat", cuda_getstat()
-         if (have_cuda) then
+#if defined _CUDAF
            io_err=io_WF(ID,wf_disk,DEV_VAR(wf_disk))
-         else
+#else
            io_err=io_WF(ID,wf_disk)
-         endif
+#endif
 write(*,*) "after io_WF, shape(wf_disk)", npwk, shape(wf_disk)
 write(*,*) "stat", cuda_devsync()
 write(*,*) "stat", cuda_getstat()
@@ -403,6 +418,7 @@ write(*,*) "stat", cuda_getstat()
             !
             do i_spinor=1,n_spinor
               !
+write(*,*) "WFs loop"
               ! AF: The following is a workaround for CUDAF/OPENACC compilation
               !     to be further investigated and fixed
 !=====        !
@@ -496,7 +512,12 @@ write(*,*) "stat", cuda_getstat()
        enddo    ! i_b
        !
        if (.not.buffer_is_ok) then
+write(*,*) "wf_disk dev_free", allocated(wf_disk),dev_allocated(DEV_VAR(wf_disk))
          YAMBO_FREE_GPU(DEV_VAR(wf_disk))
+         !!call dev_free(wf_disk,MEM_err)
+         !!cc exit data delete(wf_disk) free(wf_disk)
+         !!cc end data
+write(*,*) "wf_disk free", allocated(wf_disk),dev_allocated(wf_disk)
          YAMBO_FREE(wf_disk)
        endif
        !

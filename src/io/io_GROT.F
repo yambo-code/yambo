@@ -86,7 +86,7 @@ integer function io_GROT(io_db)
  endif
 #ifdef _GPU
  if (read_is_on(io_db).and.inv_index<0) then
-   YAMBO_FREE_GPU(DEV_VAR(minus_G))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
  endif
 #endif

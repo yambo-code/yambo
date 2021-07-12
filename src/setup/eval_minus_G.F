@@ -57,7 +57,6 @@ subroutine eval_minus_G()
  endif
  !
  if (have_cuda) then
-   YAMBO_FREE_GPU(DEV_VAR(minus_G))
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
  endif
  !

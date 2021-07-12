@@ -49,6 +49,6 @@ if [ ${N:0:2} == "-j" ]; then
  N=`echo ${N:0:4} | sed s/\-j//`
 fi
 if [ "${N}" == "" ]; then 
- N=1 
+ N=`grep -c ^processor /proc/cpuinfo`
 fi
 shift $((OPTIND -1))

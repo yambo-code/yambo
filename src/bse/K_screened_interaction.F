@@ -26,7 +26,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
- use drivers,      ONLY:l_td_hf
+ use drivers,      ONLY:l_td_hf,l_tddft
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
  use D_lattice,    ONLY:i_time_rev,i_space_inv
@@ -53,14 +53,18 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  integer    :: nibz
  !
  integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
- logical    :: W_is_em1s,W_is_pp
+ logical    :: W_is_em1s,W_is_pp,W_is_unscreened
  !
  ! I/O
  !
  integer           :: XID,IO_ACT
  integer, external :: io_X
- ! 
- if (l_td_hf) then
+ !
+ ! 2021/02/11 to be modified for functionals with screening
+ !
+ W_is_unscreened=l_td_hf.or.l_tddft
+ !
+ if (W_is_unscreened) then
    !
    io_X_err=0
    !
@@ -80,7 +84,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  call elemental_collision_free(isc)
  !
- if (.not.l_td_hf) then
+ if (.not.W_is_unscreened) then
    !
    ! PP/Epsm1S DBs
    !
@@ -109,7 +113,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    YAMBO_ALLOC(isc%gamp_d,(BS_n_g_W,BS_W_size2))
  endif
  !
- if (.not.l_td_hf) then
+ if (.not.W_is_unscreened) then
    call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=XID)
    io_X_err=io_X(X,Xw,XID)
    if (io_X_err<0) then
@@ -123,7 +127,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    isc%qs(2)=iq_W
    call DEV_SUB(scatter_Gamp)(isc,'c')
    !
-   if (.not.l_td_hf) then
+   if (.not.W_is_unscreened) then
      !
      IO_ACT=manage_action(RD_CL_IF_END,iq_W,1,q%nibz)
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq_W,2*iq_W+1/),ID=XID)
@@ -194,6 +198,6 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  call elemental_collision_free(isc)
  !
- if (.not.l_td_hf) call X_alloc('X')
+ if (.not.W_is_unscreened) call X_alloc('X')
  !
 end subroutine

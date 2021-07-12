@@ -39,6 +39,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
+ use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_tools,       ONLY:it,infile_dump,ofiles_append,switch_off_runlevel,check_verbosity,runlevel_is_on
@@ -514,19 +515,17 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_bse) then
        BS_res_K_exchange=l_td_hartree.or.l_tddft.or.l_td_hf.or.l_td_sex
-       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex
-       BS_W_is_diagonal =l_td_hf
+       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex.or.(l_tddft.and.((WF_exx_fraction > 0._SP).or.(WF_exx_screening> 0._SP)))
+       BS_W_is_diagonal =l_td_hf .or. (l_tddft.and.(WF_exx_fraction > 0._SP).and. .not.(WF_exx_screening> 0._SP) )
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
          BS_cpl_K_corr    =BS_res_K_corr      
        endif
-       if(l_td_sex) then
-         call parser('WehDiag',dummy_logical)
-         if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
-         call parser('WehCpl' ,dummy_logical )
-         if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
-       endif
+       call parser('WehDiag',dummy_logical)
+       if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
+       call parser('WehCpl' ,dummy_logical )
+       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then

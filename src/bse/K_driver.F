@@ -110,7 +110,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! Compute qindx_B_max
  ! =====================
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    !
    ! Here I need the distribution over k
    call PARALLEL_SETUP_K_scheme("K")
@@ -153,7 +153,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !===================
    call K_observables("ALLOC",W_bss)
    !
-   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.(l_bs_fxc.or.BS_K_is_ALDA)) then
+   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
      !
      ! W/X RL size setup looking at the max index of G-G' 
      ! =========

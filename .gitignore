@@ -39,7 +39,6 @@ config/compilation_helper.sh.inc
 ##########
 lib/yambo/driver/yambo/include/editor.h
 lib/yambo/driver/yambo/include/version.h
-include/driver/version.h
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects

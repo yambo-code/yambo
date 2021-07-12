@@ -22,9 +22,9 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 
-#define YAMBO_VERSION @SVERSION@
-#define YAMBO_SUBVERSION @SSUBVERSION@
-#define YAMBO_PATCHLEVEL @SPATCHLEVEL@
-#define YAMBO_REVISION @SREVISION@
-#define YAMBO_HASH "@SHASH@"
+#define YAMBO_VERSION 5
+#define YAMBO_SUBVERSION 1
+#define YAMBO_PATCHLEVEL 0
+#define YAMBO_REVISION 20289
+#define YAMBO_HASH "55a9074a6" 
 

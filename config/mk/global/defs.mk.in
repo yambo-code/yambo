@@ -37,5 +37,5 @@ bindir      = @bindir@
 libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
-y_version   = "YAMBO @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@"
+y_version   = "YAMBO @SVERSION@"
 @MKMF_VERBOSE@

@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  !
  ! Electronic density (and current).
  !
@@ -49,7 +49,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp,b
- use D_lattice,     ONLY:nsym,i_time_rev,mag_syms
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop
  use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
@@ -72,8 +72,9 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  type(bz_samp)::k
  type(levels) ::E       
- real(SP), optional             ::J(fft_size,3)
  real(SP), optional             ::rho(fft_size)
+ real(SP), optional             ::drho(fft_size,3)
+ real(SP), optional             ::J(fft_size,3)
  integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
  !
@@ -82,12 +83,13 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #if defined _YPP_RT
  integer    :: ik_RT
 #endif
- integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,i_r,i_dir
- integer    :: ig
- real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2)
+ integer    :: ig,i_dir,ifft
+ real(SP)   :: f_occ,rho_no_sym(fft_size),drho_no_sym(fft_size,3),J_no_sym(fft_size,3)
  real(SP)   :: raux
+ complex(SP), allocatable :: WF_der(:,:,:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
- logical    :: warn_done,l_si,l_rho !,l_J
+ logical    :: warn_done,l_si,l_rho,l_drho,l_J
  !
 #if defined _RT
  call timing('el_density',OPR='start')
@@ -96,7 +98,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  ! Basic Setups
  !
  l_rho     =present(rho)
- !l_J       =present(J)
+ l_drho    =present(drho)
+ l_J       =present(J)
  l_si      =.false.
  if (present(force_spatial_inversion)) l_si=force_spatial_inversion
  !
@@ -104,11 +107,20 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    rho       =0._SP
    rho_no_sym=0._SP
  endif
- !if (l_J) then
- !  J         =0._SP
- !  J_no_sym  =0._SP
- !endif
- 
+ !
+ if (l_drho) then
+   call warning(" USPP corrections to rho gradient not implemented")
+   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   drho       =0._SP
+   drho_no_sym=0._SP
+ endif
+ !
+ if (l_J) then
+   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   call error(" Calculation of current is implemented but not tested")
+   J         =0._SP
+   J_no_sym  =0._SP
+ endif
  !
  ! USPP contribution
  ! 
@@ -172,21 +184,37 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
          endif
          !
        endif
-       !DEBUG>
-       !if (l_J) then
-       !  !
-       !  call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
-       !  !
-       !  do i_dir=1,3
-       !    do i_spinor=1,n_spinor
-       !      do i_r=1,fft_size
-       !        J_no_sym(i_r,i_dir)=J_no_sym(i_r,i_dir)+E%f(ib,ik,i_sp_pol)*k%weights(ik)*aimag(WF%c(i_r,i_spinor,i_wf)*WF_der(i_r,i_spinor,i_dir))
-       !      enddo
-       !    enddo
-       !  enddo
-       !  !
-       !endif
-       !DEBUG<
+       !
+       if (l_drho) then
+         !
+         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         !
+         do i_dir=1,3
+           do i_spinor=1,n_spinor
+             do ifft=1,fft_size
+               drho_no_sym(ifft,i_dir)=drho_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+               &  k%weights(ik)*2._SP*real(WF%c(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+             enddo
+           enddo
+         enddo
+         !
+       endif
+       !
+       if (l_J) then
+         !
+         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         !
+         do i_dir=1,3
+           do i_spinor=1,n_spinor
+             do ifft=1,fft_size
+               J_no_sym(ifft,i_dir)=J_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+               &   k%weights(ik)*aimag(WF%c(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+             enddo
+           enddo
+         enddo
+         !
+       endif
+       !
      enddo
      !
    enddo
@@ -230,10 +258,13 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    !
  endif
  !
- if (l_rho) call PP_redux_wait(rho_no_sym,COMM=PAR_COM_density%COMM)
- ! DEBUG>
- !if ( l_J ) call PP_redux_wait(J_no_sym  ,COMM=PAR_COM_density%COMM)
- !DEBUG<
+ if (l_rho ) call PP_redux_wait(rho_no_sym, COMM=PAR_COM_density%COMM)
+ if (l_drho) call PP_redux_wait(drho_no_sym,COMM=PAR_COM_density%COMM)
+ if ( l_J  ) call PP_redux_wait(J_no_sym,   COMM=PAR_COM_density%COMM)
+ !
+ if (l_drho.or.l_J) then
+   YAMBO_FREE(WF_der)
+ endif
  !
  ! Symmetrization
  !
@@ -251,11 +282,24 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    endif
  endif
  !
- !if (l_J) then
- !  do i_symm=1,rho_syms
- !    J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
- !  enddo
- !endif
+ if (l_drho) then
+   do i_symm=1,rho_syms
+     do ifft=1,fft_size
+       drho(ifft,:)=drho(ifft,:)+matmul(dl_sop(:,:,i_symm),drho_no_sym(fft_rot_r(ifft,i_symm),:))/real(nsym,SP)
+     enddo
+   enddo
+   if (.not.mag_syms) then
+     if (.not.l_si) drho(:,:)=real(1+i_time_rev,SP)*drho(:,:)
+     if (     l_si) drho(:,:)=real(  i_time_rev,SP)*drho(fft_rot_r_inv(:),:)+drho(:,:)
+   endif
+ endif
+ !
+ if (l_J) then
+   call warning(" Application of symmetries to be fixed")
+   do i_symm=1,rho_syms
+     J(:,:)=J(:,:)+real(J_no_sym(fft_rot_r(:,i_symm),:),SP)/real(nsym,SP)
+   enddo
+ endif
  !
 #if defined _RT
  call timing('el_density',OPR='stop')

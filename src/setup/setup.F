@@ -98,22 +98,34 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
- endif
- !
- ! Atomic masses
- !
- if (allocated(atom_mass)) then
-   do is=1,n_atomic_species
+   !
+   ! Atomic masses
+   !
+   if (allocated(atom_mass)) then
+     call msg('nr','List of atomic masses         ')
+     do is=1,n_atomic_species
        call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is)/Da2AU)
+     enddo
+   endif
+   !
+   call msg('nr','List of atomic coordinates    ','[cc]')
+   do is=1,n_atomic_species
+     do ia=1,n_atoms_species(is)
+       atoms_string=trim(PT_elements(Z_species(is)))//trim(intc(ia))
+       if (allocated(atoms_map)) then
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is),' order '//intc(atoms_map(ia,is)))
+       else
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is))
+       endif
+     enddo
    enddo
  endif
  !
  ! DL vol / RL
  !
  call define_b_and_DL_vol()
- call msg('r','Alat factors          ',alat,'[a.u.]')
- !
- call msg('nr','Direct lattice volume ',DL_vol,'[a.u.]') !
+ call msg('nr','Alat factors          ',alat,'[a.u.]')
+ call msg('r','Direct lattice volume ',DL_vol,'[a.u.]') !
  call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
  tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')
@@ -147,19 +159,6 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call define_zeros(vector_=k%pt, zero_=k_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
  !
- ! Atoms in the cell
- !
- call section('=','Atomic Positions') 
- !
- do is=1,n_atomic_species
- do ia=1,n_atoms_species(is)
-   if (allocated(atoms_map)) then
-     call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] order '//intc(atoms_map(ia,is)))
-   else
-     call msg('r',' '//PT_elements(Z_species(is))//'  ',atom_pos(:,ia,is),' [cc] ')
-   endif
- enddo
- enddo
  !
  call msg('r',' ')
  !

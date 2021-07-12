@@ -14,7 +14,7 @@ endef
 define link
  $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG) ;\
  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
- echo -e "\t[$(wdir)] $(target) (link)";\
+ echo "\t[$(wdir)] $(target) (link)";\
  if test -f $(target); then touch $(compdir)/config/stamps_and_lists/$(target).stamp; fi )
 endef
 #
@@ -69,7 +69,7 @@ define mk_lib
  $(PREFIX)(eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  )
  $(PREFIX)(mv $(target) $(libdir))
  $(PREFIX)(chmod u+x $(libdir)/$(target))
- $(PREFIX)(echo -e "\t[$(wdir)] $(target) (lib)")
+ $(PREFIX)(echo "\t[$(wdir)] $(target) (lib)")
  $(PREFIX)(touch $(compdir)/config/stamps_and_lists/$(target).stamp)
 endef
 #
@@ -79,6 +79,6 @@ define bindir
  $(PREFIX)if test ! -d $(exec_prefix); then mkdir $(exec_prefix);fi
 endef
 define msg
- $(PREFIX)(echo -e "\t[$(wdir)] $*" )
+ $(PREFIX)(echo "\t[$(wdir)] $*" )
 endef
 

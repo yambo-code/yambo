@@ -124,10 +124,11 @@ if test x"$enable_msgs_comps" = "xno"; then
 fi
 AC_SUBST(MKMF_VERBOSE)
 AC_SUBST(MKMF_PREFIX)
-AC_SUBST(ECHO_N)
 #
 # ============================================================================
+#
 # EDITOR
+#
 AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],
   [User-defined editor (none for no editor)],[32]),[],[with_editor="vim vi pico"]) 
 AC_CHECK_PROGS(editor,[$with_editor],[none])

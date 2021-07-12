@@ -46,13 +46,13 @@ define clean_src_driver
 endef
 define clean_dir_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
- echo -e  "\t[CLEANING $$LMSG] Extension(s): $$EXTS" ; \
+ echo "\t[CLEANING $$LMSG] Extension(s): $$EXTS" ; \
  for ext in $$EXTS; do \
   for dirtoclean in $$TARG; do \
    if test -d $$WDIR/$$dirtoclean; then\
     find $$WDIR/$$dirtoclean \( -name '*'$$ext  \) |  xargs rm -fr ; \
     if test -f $$WDIR/$$dirtoclean/Makefile.loc; then \
-      echo -e  "\t[CLEANING $$dirtoclean] Internal procedures" ; \
+      echo  "\t[CLEANING $$dirtoclean] Internal procedures" ; \
       CWD=`pwd`;\
       cd $$WDIR/$$dirtoclean;\
       $(MAKE) -s -f Makefile.loc $$ACTION;\
@@ -64,7 +64,7 @@ define clean_dir_driver
 endef
 define clean_mod_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
- echo -e  "\t[CLEANING $$LMSG] Modules" ; \
+ echo "\t[CLEANING $$LMSG] Modules" ; \
  for dirtoclean in $$TARG; do \
   if test -f $$WDIR/$$dirtoclean/modules.list; then \
    for file in `cat $$WDIR/$$dirtoclean/modules.list`; do rm -fr $(includedir)/$$file".mod"; done; \
@@ -73,7 +73,7 @@ define clean_mod_driver
 endef
 define clean_lib_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
- echo -e  "\t[CLEANING $$LMSG] Libraries" ; \
+ echo "\t[CLEANING $$LMSG] Libraries" ; \
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
   find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; \
@@ -83,7 +83,7 @@ endef
 # Components
 #
 define clean_config
- echo -e  "\t[CLEANING] Configure, Make-related files and lists"; \
+ echo "\t[CLEANING] Configure, Make-related files and lists"; \
  if test -f config/stamps_and_lists/autoconf_generated_files.list; then \
   for file in `cat config/stamps_and_lists/autoconf_generated_files.list` ; do rm -fr $$file; done; fi; \
  if test -f config/stamps_and_lists/active_directories.list; then \
@@ -102,7 +102,7 @@ define clean_config
  rm -fr $(prefix)/lib/archive/Makefile
 endef
 define clean_bin
- echo -e  "\t[CLEANING] bin" ;\
+ echo "\t[CLEANING] bin" ;\
  for file in $(prefix)/bin/*; do \
   exe=`basename $$file`;\
   rm -f $(prefix)/bin/$$exe; \
@@ -111,12 +111,12 @@ define clean_bin
  rm -fr $(prefix)/log/*
 endef
 define clean_ext_libs_bin_and_include
- echo -e  "\t[CLEANING] External libraries bin and include" ; \
+ echo "\t[CLEANING] External libraries bin and include" ; \
  rm -fr $(prefix)/lib/bin/*; \
  rm -fr $(prefix)/include/system
 endef
 define clean_stamps
- echo -e  "\t[CLEANING] Stamps" ; \
+ echo "\t[CLEANING] Stamps" ; \
  rm -fr $(prefix)/config/stamps_and_lists/*keep*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*2y.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/lib*.stamp; \
@@ -124,7 +124,7 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp
 endef
 define clean_dependencies
- echo -e  "\t[CLEANING] Dependencies" ; \
+ echo "\t[CLEANING] Dependencies" ; \
  find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
            -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp

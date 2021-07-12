@@ -117,7 +117,6 @@ cat << EOF > configure.awk
 }
 EOF
 endif
-exit 0
 cat << EOF > version.awk
 {
  gsub("_VERSION \"$version_old\""  ,"_VERSION \"$version_new\""  ,\$0)
@@ -130,7 +129,6 @@ cat << EOF > version.awk
 EOF
 #
 if ( "$argv[1]" != "save" ) then
-
  if (  $version_old != $version_new ) then
    $awk -f configure.awk configure
    mv NEW configure

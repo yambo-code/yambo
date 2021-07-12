@@ -40,7 +40,6 @@ open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);
 # Strip the "src/" (add to this list if needed)
-print "$changedfiles";
 if ($changedfiles) {
 $changedfiles =~ s/  / /g;
 $changedfiles =~ s/src\///g;

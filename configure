@@ -14489,7 +14489,7 @@ fi
 # ============================================================================
 ac_config_headers="$ac_config_headers include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in"
 
-ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/make.inc sbin/compilation/helper.inc.sh include/branch.inc include/driver/editor.h include/driver/version.h"
+ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/make.inc sbin/compilation/helper.inc.sh include/branch.inc include/driver/editor.h"
 
 #
 cat >confcache <<\_ACEOF
@@ -15195,7 +15195,6 @@ do
     "sbin/compilation/helper.inc.sh") CONFIG_FILES="$CONFIG_FILES sbin/compilation/helper.inc.sh" ;;
     "include/branch.inc") CONFIG_FILES="$CONFIG_FILES include/branch.inc" ;;
     "include/driver/editor.h") CONFIG_FILES="$CONFIG_FILES include/driver/editor.h" ;;
-    "include/driver/version.h") CONFIG_FILES="$CONFIG_FILES include/driver/version.h" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

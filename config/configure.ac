@@ -292,7 +292,7 @@ AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
  config/mk/local/make.inc sbin/compilation/helper.inc.sh
- include/branch.inc include/driver/editor.h include/driver/version.h 
+ include/branch.inc include/driver/editor.h 
 ])
 #
 AC_OUTPUT

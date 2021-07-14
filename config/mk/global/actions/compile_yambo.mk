@@ -25,7 +25,7 @@ else ifneq (,$(findstring yambo_ph,$(MAKECMDGOALS)))
  SRC_LIBS=$(PJ_PHLIBS)
  EXE_LIBS=$(PJ_PHLIBS_LD)
 else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
- PRECMP=-D_DOUBLE -D_SLEPC_OFF -D_NL -D_RT
+ PRECMP=-D_DOUBLE -D_NL -D_RT
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
 else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))

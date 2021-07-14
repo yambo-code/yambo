@@ -7,5 +7,9 @@ define mk_exe
    ./sbin/compilation/helper.sh -d $$BASE -t $$exe -o .objects -m x -g $@ -- "$$DLIBS $$LLIBS $(xcpp) $$ADF"; \
    cd $$BASE ; $(MAKE) VPATH=$(srcdir)/$$BASE exe || exit "$$?" ; cd $(compdir); \
   fi;\
+  if test ! -f $(compdir)/config/stamps_and_lists/$$exe.stamp; then \
+   echo "$$exe linking failed. Check logs/compile_$$exe.log";\
+   exit 1;\
+  fi;\
  done
 endef

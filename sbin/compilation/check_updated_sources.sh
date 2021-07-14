@@ -25,7 +25,7 @@
 if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
  candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
 fi
-if test -f $compdir/config/stamps_and_lists/lib${target}.a.stamp; then
+if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
  candidates+=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
 for file in $candidates

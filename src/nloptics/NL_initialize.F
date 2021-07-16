@@ -168,12 +168,9 @@ subroutine NL_initialize(E,k)
  Phase_LifeTime=2._SP/NL_damping
  !
  if(RAD_LifeTime<0._SP) then
-   if(Phase_LifeTime/=0._SP.and..not.allocated(E%W)) then
-     call msg('sr','Radiative life-time sets equal to the phase lifetime')
+   if(Phase_LifeTime/=0._SP) then
      RAD_LifeTime=Phase_LifeTime
-   elseif(allocated(E%W)) then
-     RAD_LifeTime=2._SP*maxval(abs(E%W(:,:,:)))
-     call msg('sr','Radiative life-time sets equal to minimum quasi-particle life-time: ',RAD_LifeTime*HA2EV)
+     call msg('sr','Radiative life-time sets equal to the phase lifetime: ',RAD_LifeTime*AUT2FS,'fs')
    else
      call msg('sr','Radiative life-time equal to zero')
    endif

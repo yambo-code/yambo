@@ -87,7 +87,7 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
      !
      do i2=i1+1,NL_bands(2)
        if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
-         I_relax(i1,i2,:,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i2,:,ik,i_sp_pol))
+         I_relax(i1,i2,:,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,:,ik,i_sp_pol))*V_bands(i2,:,ik,i_sp_pol))
          I_relax(i2,i1,:,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,:,ik_mem,i_sp_pol))
      enddo
      !

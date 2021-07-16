@@ -31,7 +31,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -538,9 +538,10 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
-   call initactivate(1,'Gauge RADLifeTime ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
-   call initactivate(1,'ExtF2_Dir ExtF2_FrStep ExtF2_Int ExtF2_Width ExtF2_kind ExtF2_Tstart')
+   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps')
+   call initactivate(1,'NLDamping UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
+   call initactivate(1,'Gauge RADLifeTime ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind')
+   if(l_nl_p_and_p) call initactivate(1,'ExtF_Tstart ExtF2_Dir ExtF2_FrStep ExtF2_Int ExtF2_Width ExtF2_kind ExtF2_Tstart')
    call init_QP_ctl_switch('G')
  endif
 #endif

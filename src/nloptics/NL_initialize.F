@@ -210,7 +210,7 @@ subroutine NL_initialize(E,k)
    endif
    ! 
  else
-   call msg('s',' Total simulation time read from input') 
+   call msg('s','Total simulation time read from input') 
  endif
  !
  call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")

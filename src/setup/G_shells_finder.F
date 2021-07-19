@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,6 +28,7 @@ subroutine G_shells_finder()
  ! R_is G_ig = G_{g_rot(ig,is)}
  !
  use pars,         ONLY:SP
+ use com,          ONLY:msg
  use LIVE_t,       ONLY:live_timing
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
@@ -37,7 +38,7 @@ subroutine G_shells_finder()
 #endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
- use zeros,        ONLY:G_iku_zero
+ use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  !
@@ -106,8 +107,10 @@ subroutine G_shells_finder()
  ! Shells build-up by finding equal module G_vectors
  ! ==================================================
  !
+ if(G_mod_zero/=1.E-5) call msg('r','Shells accuracy on Gmod is ',G_mod_zero)
+ !
  call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
-&                        1.E-5_SP,Include_single_values=.TRUE.)
+&                        G_mod_zero,Include_single_values=.TRUE.)
  !
  ! Init
  !
@@ -193,6 +196,12 @@ subroutine G_shells_finder()
    endif
    !
  enddo
+ !
+ if (n_g_shells_no_holes/=n_g_shells) then
+   call warning(' Found non closed shells. Max cutoff will be reduced.')
+   call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
+ endif
+ !
  n_g_shells=n_g_shells_no_holes
  !
  ! Shells Allocation & Transfer 

@@ -223,7 +223,7 @@ contains
     n_sp_pol_abinit=n_sp_pol
     if (artificial_spin_pol) n_sp_pol_abinit=1
 
-    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, 1 ) )
+    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol_abinit ) )
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)

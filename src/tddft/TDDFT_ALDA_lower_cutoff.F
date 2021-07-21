@@ -41,12 +41,13 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
  integer     :: i1,i2,ig_fxc,isp1,isp2,isp3,isp4,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
- logical     :: procedure1, procedure2, procedure3=.false.
+ logical     :: procedure1, procedure2, procedure3
  !
  if(trim(ALDA_cut_scheme)=="none") return
  !
  procedure1=trim(ALDA_cut_scheme)=="lower_GmGp"
  procedure2=trim(ALDA_cut_scheme)=="lower_Gmax"
+ procedure3=.false.
  !
  ! DEBUG <
  !procedure1=.false.

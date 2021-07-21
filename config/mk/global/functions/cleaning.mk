@@ -29,6 +29,9 @@ define clean_driver
    $(call clean_src_driver,"ypp");\
    $(call clean_src_driver,"interfaces");\
  fi; \
+ if [ "$(1)" = "ypp"        ] ; then $(call clean_src_driver,"ypp"); fi; \
+ if [ "$(1)" = "src"        ] ; then $(call clean_src_driver,"src"); fi; \
+ if [ "$(1)" = "interfaces" ] ; then $(call clean_src_driver,"interfaces"); fi; \
  if [ "$(1)" = "conf"      ] ||                  [ "$(1)" = "all" ] ; then $(clean_config); fi; \
  if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi 
 endef
@@ -77,6 +80,7 @@ define clean_lib_driver
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
   find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; \
+  rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; \
  done
 endef
 #
@@ -121,7 +125,10 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/*2y.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/lib*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/yambo*.stamp; \
- rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp
+ rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/compiling*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/*.lock;\
+ rm -fr $(prefix)/include/*.save
 endef
 define clean_dependencies
  echo "\t[CLEANING] Dependencies" ; \

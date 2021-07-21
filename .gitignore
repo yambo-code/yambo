@@ -109,12 +109,12 @@ commit.msg
 *.log
 *.sql
 *.sqlite
+*.git
 
 # OS generated files #
 ######################
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db

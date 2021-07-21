@@ -23,7 +23,7 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 N=1
-while getopts ":d:t:o:m:nDN:g:" opt; do
+while getopts ":d:t:o:m:nDGN:g:" opt; do
  case $opt in
   d) cdir=${OPTARG}
   ;;
@@ -38,6 +38,8 @@ while getopts ":d:t:o:m:nDN:g:" opt; do
   n) new="yes"
   ;;
   N) N=${OPTARG}
+  ;;
+  G) global="yes"
   ;;
   D) dep="yes"
   ;;

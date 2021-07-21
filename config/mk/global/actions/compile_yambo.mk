@@ -25,7 +25,7 @@ else ifneq (,$(findstring yambo_ph,$(MAKECMDGOALS)))
  SRC_LIBS=$(PJ_PHLIBS)
  EXE_LIBS=$(PJ_PHLIBS_LD)
 else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
- PRECMP=-D_DOUBLE -D_NL -D_RT
+ PRECMP=-D_NL -D_RT
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
 else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
@@ -37,8 +37,8 @@ endif
 # Compilation
 #
 yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: ext-libs int-libs 
-	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(PRECMP) -D_yambo";$(todo_lib);$(mk_lib)
-	@+LIBS="$(SRC_LIBS)";BASE="src";ADF="$(PRECMP)";$(todo_lib);$(mk_lib)
-	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP)";$(todo_driver)
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(PRECMP) $(DOUBLE_PRECMP) -D_yambo";$(todo_lib);$(mk_lib)
+	@+LIBS="$(SRC_LIBS)";BASE="src";ADF="$(PRECMP) $(DOUBLE_PRECMP)";$(todo_lib);$(mk_lib)
+	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP) $(DOUBLE_PRECMP)";$(todo_driver)
 	@sleep 0.1s;
-	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP)";$(mk_exe)
+	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP) $(DOUBLE_PRECMP)";$(mk_exe)

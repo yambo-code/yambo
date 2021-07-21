@@ -36,6 +36,11 @@ source ./sbin/compilation/options.sh
 # Projects
 source ./sbin/compilation/projects.sh
 #
+if [ "$global" == "yes" ]  ; then
+ source ./sbin/compilation/global_conf_check.sh
+ exit 0
+fi
+#
 # Check what has to be done
 if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directories.list ]] ; then 
  dirs_to_check=`cat $compdir/config/stamps_and_lists/active_directories.list`

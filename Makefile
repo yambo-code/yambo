@@ -24,6 +24,7 @@
 ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
  include config/mk/global/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
+else ifeq ($(MAKECMDGOALS), check)
 else
  include config/mk/global/no_configure_help.mk
 endif
@@ -75,6 +76,16 @@ int-libs: dependencies migration
 yambo-int-libs: 
 	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $$target; done
 #
+#=====================
+# DOUBLE PRECISION?
+#=====================
+#
+ifeq ($(wildcard config/stamps_and_lists/compiling_ypp_nl.stamp),config/stamps_and_lists/compiling_ypp_nl.stamp)
+ DOUBLE_PRECMP=-D_DOUBLE
+else ifeq ($(wildcard config/stamps_and_lists/compiling_yambo_nl.stamp),config/stamps_and_lists/compiling_yambo_nl.stamp)
+ DOUBLE_PRECMP=-D_DOUBLE
+endif
+#
 #==============
 # COMPILATIONS
 #==============
@@ -110,6 +121,9 @@ include config/mk/global/actions/help.mk
 #===========
 # Functions
 #===========
+#
+# Global Configuration Check (DOUBLE, FFTW ...)
+include config/mk/global/functions/global_check.mk
 #
 # Libraries download/clone/checkout
 include config/mk/global/functions/get_libraries.mk

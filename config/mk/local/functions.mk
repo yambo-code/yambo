@@ -15,7 +15,10 @@ define link
  $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG) ;\
  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
  echo "\t[$(wdir)] $(target) (link)";\
- if test -f $(target); then touch $(compdir)/config/stamps_and_lists/$(target).stamp; fi )
+ if test -f $(target); then \
+   rm -f $(compdir)/config/stamps_and_lists/compiling_$(target).stamp; \
+   touch $(compdir)/config/stamps_and_lists/$(target).stamp; \
+ fi )
 endef
 #
 # Compilation
@@ -40,6 +43,7 @@ define f77_no_opt_elemental_compilation
 endef
 define F90_no_opt_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F >> $*.tmp_source" >> $(STDLOG) )
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F >> $*.tmp_source)
  $(PREFIX)($(compdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
@@ -49,12 +53,14 @@ define F90_no_opt_elemental_compilation
 endef
 define F90_local_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(fpp) $(precomp_flags) $*.F > $*$(f90suffix)" >> $(STDLOG) )
  $(PREFIX)(eval $(fpp) $(precomp_flags) $*.F > $*$(f90suffix) >>& $(STDLOG) 2>&1 )
  $(PREFIX)($(fc) -c $(fcflags) $(lf90include) $(lf90libinclude) $*$(f90suffix) >>& $(STDLOG) 2>&1 )
  $(msg)
 endef
 define F90_elemental_compilation
  $(rm_command)
+ $(PREFIX)(echo "$(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F >> $*.tmp_source" >> $(STDLOG) )
  $(PREFIX)(eval $(fpp) $(precomp_flags) $(lf90include) $(lf90libinclude) $(srcdir)/$(wdir)/$*.F > $*.tmp_source)
  $(PREFIX)($(compdir)/sbin/replacer.sh $*.tmp_source)
  $(PREFIX)(mv $*.tmp_source_space $*$(f90suffix))
@@ -66,6 +72,7 @@ define modmove
  $(PREFIX)MODS=`find . -name '*.mod'`;for modfile in $$MODS ; do mv $$modfile $(compdir)/include; done
 endef
 define mk_lib
+ $(PREFIX)(echo "$(ar) $(arflags) $(target) $(objs)"  >> $(STDLOG) )
  $(PREFIX)(eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  )
  $(PREFIX)(mv $(target) $(libdir))
  $(PREFIX)(chmod u+x $(libdir)/$(target))

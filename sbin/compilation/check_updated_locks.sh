@@ -24,7 +24,6 @@
 #
 lock_files=`find $dir -name '*.lock'`
 sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
-sorted_precomps=$(echo "$precomp_flags"|tr " " "\n"|sort|uniq|tr "\n" " ")
 #
 # Locks -> string
 #

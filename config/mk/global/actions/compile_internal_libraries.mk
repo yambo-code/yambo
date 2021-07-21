@@ -1,8 +1,10 @@
 qe_pseudo: dependencies
-	@+LIBS="qe_pseudo"; BASE="lib" ; LAB=""; $(todo_lib); $(mk_lib)
+	@$(global_check)
+	@+LIBS="qe_pseudo"; BASE="lib" ; ADF="$(DOUBLE_PRECMP)"; LAB=""; $(todo_lib); $(mk_lib)
 slatec: dependencies
-	@+LIBS="slatec";    BASE="lib" ; LAB=""; $(todo_lib); $(mk_lib)
+	@+LIBS="slatec";    BASE="lib" ; ADF="$(DOUBLE_PRECMP)"; LAB=""; $(todo_lib); $(mk_lib)
 math77: dependencies
-	@+LIBS="math77";    BASE="lib" ; LAB=""; $(todo_lib); $(mk_lib)
+	@+LIBS="math77";    BASE="lib" ; ADF="$(DOUBLE_PRECMP)"; LAB=""; $(todo_lib); $(mk_lib)
 local: dependencies
-	@+LIBS="local" ;    BASE="lib" ; LAB=""; $(todo_lib); $(mk_lib)
+	@+LIBS="local" ;    BASE="lib" ; ADF="$(DOUBLE_PRECMP)"; LAB=""; $(todo_lib); $(mk_lib)
+

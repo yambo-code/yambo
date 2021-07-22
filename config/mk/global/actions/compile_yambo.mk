@@ -36,7 +36,12 @@ endif
 #
 # Compilation
 #
-yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: ext-libs int-libs 
+yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: 
+	@touch config/stamps_and_lists/compiling_$@.stamp
+	@$(MAKE) conf-check
+	@$(MAKE) $(MAKEFLAGS) dependencies
+	@$(MAKE) $(MAKEFLAGS) ext-libs
+	@$(MAKE) $(MAKEFLAGS) int-libs
 	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(PRECMP) $(DOUBLE_PRECMP) -D_yambo";$(todo_lib);$(mk_lib)
 	@+LIBS="$(SRC_LIBS)";BASE="src";ADF="$(PRECMP) $(DOUBLE_PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="driver";XLIBS="$(EXE_LIBS)";ADF="$(PRECMP) $(DOUBLE_PRECMP)";$(todo_driver)

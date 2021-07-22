@@ -39,42 +39,44 @@ include config/mk/global/targets.mk
 # Libraries (ordered for compiling & linking)
 include config/mk/global/libraries.mk
 
-.PHONY: interfaces 
+.PHONY: interfaces ypp
 
 nothing: 
 	@$(make_message)
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
-interfaces: ext-libs
-	@for target in $(INTERFCS) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-gpl: ext-libs
-	@for target in $(GPL)      ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-core: ext-libs
-	@for target in $(CORE)     ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-ph-project: ext-libs
-	@for target in $(PH_PROJ)  ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-sc-project: ext-libs
-	@for target in $(SC_PROJ)  ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-mag-project: ext-libs
-	@for target in $(MAG_PROJ) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rt-project: ext-libs
-	@for target in $(RT_PROJ)  ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-nl-project: ext-libs
-	@for target in $(NL_PROJ)  ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-rtext-project: ext-libs
-	@for target in $(RTE_PROJ) ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-kerr-project: ext-libs
-	@for target in $(KERR_PROJ); do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-main: ext-libs 
-	@for target in $(MAIN)     ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
-all: ext-libs 
-	@for target in $(ALL)      ; do $(MAKE) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+interfaces:
+	@for target in $(INTERFCS) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+gpl:
+	@for target in $(GPL)      ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+core:
+	@for target in $(CORE)     ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+ph-project:
+	@for target in $(PH_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+sc-project:
+	@for target in $(SC_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+mag-project: 
+	@for target in $(MAG_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rt-project:
+	@for target in $(RT_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+nl-project: 
+	@for target in $(NL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+rtext-project:
+	@for target in $(RTE_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+kerr-project:
+	@for target in $(KERR_PROJ); do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+main:
+	@for target in $(MAIN)     ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+all:
+	@for target in $(ALL)      ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 ext-libs:
-	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $$target; fi; done
-int-libs: dependencies migration
-	@for target in $(INT_LIBS) ; do $(MAKE) $$target; done
+	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $(MAKEFLAGS) $$target; fi; done
+int-libs:
+	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 yambo-int-libs: 
-	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $$target; done
+	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
+conf-check:
+	@$(global_check)
 #
 #=====================
 # DOUBLE PRECISION?
@@ -133,9 +135,6 @@ include config/mk/global/actions/dependencies.mk
 #
 # New sources to be compiled
 include config/mk/global/functions/todo.mk
-#
-# Remote compilation
-include config/mk/global/actions/remote_compilation.mk
 #
 # Messages
 include config/mk/global/functions/messaging.mk

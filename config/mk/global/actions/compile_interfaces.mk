@@ -16,7 +16,12 @@ endif
 #
 # Compilation
 #
-$(GOALS): ext-libs int-libs
+$(GOALS):
+	@touch config/stamps_and_lists/compiling_$@.stamp
+	@$(MAKE) conf-check
+	@$(MAKE) $(MAKEFLAGS) dependencies
+	@$(MAKE) $(MAKEFLAGS) ext-libs
+	@$(MAKE) $(MAKEFLAGS) int-libs
 	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(I_PRECMP) -D_$@";$(todo_lib);$(mk_lib)
 	@+LIBS="$(2YLIBS)";BASE="src";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="int_modules";BASE="interfaces";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)

@@ -178,7 +178,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      type(COLLISIONS_group) :: COLL
      integer :: iqbz,i_J,ic,i_coll,&
 &               i_coll_mem,i_q_mem,i_J_mem,i_b,i_g
-     logical :: l_COH,l_HXC,l_NGW,l_QED
+     logical :: l_COH,l_HXC,l_NGW,l_QED,l_NGW_init,l_QED_init
      !
      call live_timing(trim(COLL%name)//' collisions I/O',COLL%PAR_N)
      !
@@ -195,7 +195,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (l_QED) then
        call COLLISIONS_alloc_and_free("Momentum","collision","alloc",0)
        call COLLISIONS_alloc_and_free("Momentum","v3","alloc ",0)
-       l_QED=(.not.allocated(P_COLL_element(1)%v_r))
+       l_QED      = .not.allocated(P_COLL_element(1)%v_r)
+       l_QED_init = .not.allocated(P_COLL_element(1)%v_r)
      endif
 #endif
      !
@@ -203,7 +204,8 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      if (l_NGW) then
        call COLLISIONS_alloc_and_free("GW_NEQ","collision","alloc",0)
        call COLLISIONS_alloc_and_free("GW_NEQ","v3","alloc distribute",0)
-       l_NGW = .not.allocated(GW_NEQ_COLL_element(1)%v_r)
+       l_NGW      = .not.allocated(GW_NEQ_COLL_element(1)%v_r)
+       l_NGW_init = .not.allocated(GW_NEQ_COLL_element(1)%v_r)
      endif
 #endif
      !
@@ -244,16 +246,19 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
 #if defined _RT
-       if (l_NGW) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
+       if (l_NGW_init) io_err(1)=io_COLLISIONS(ID,COLL,GW_NEQ_COLL_element(1),i_coll=i_coll)
 #endif
 #if defined _QED
-       if (l_QED) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
+       if (l_QED_init) io_err(1)=io_COLLISIONS(ID,COLL,P_COLL_element(1),i_coll=i_coll)
 #endif
        !
        if (l_COH) call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
        if (l_HXC) call COLLISIONS_alloc_and_free(trim(COLL%name),"v1 table","alloc",i_coll_mem)
-       if (l_NGW) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
-       if (l_QED) call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
+       if (l_NGW_init) call COLLISIONS_alloc_and_free("GW_NEQ","v1 table","alloc",1)
+       if (l_QED_init) call COLLISIONS_alloc_and_free("Momentum","v1 table","alloc",1)
+       !
+       l_NGW_init=.false.
+       l_QED_init=.false.
        !
 #if !defined _PAR_IO
        IO_ACT=RD_CL

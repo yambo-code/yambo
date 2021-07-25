@@ -235,7 +235,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
      if(def) call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
      if(io3) then
        call C_F_POINTER(C_LOC(COLL_element%v_r),tmp_link_real,(/COLL_element%N,1/))
-       call  io_variable_bulk(ID,2,R2=tmp_link_real,IPOS=(/1,1,i_coll/))
+       call  io_variable_bulk(ID,2,R2=tmp_link_real,IPOS=(/1,i_coll/))
        nullify(tmp_link_real)
      endif
    else

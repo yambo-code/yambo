@@ -46,6 +46,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
+ use RT_control,     ONLY:l_project_spin_dipoles
  use RT_operations,  ONLY:RT_average_operator
  !
  implicit none
@@ -112,16 +113,18 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
    RT_spin_magn(:,1)=RT_M_tmp
    !
-   if(Ncarr(2)>0._SP) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,2),&
-     &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     RT_spin_magn(:,2)=RT_M_tmp/Ncarr(2)
-   endif
-   !
-   if(Ncarr(3)>0._SP) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,3),&
-     &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     RT_spin_magn(:,3)=RT_M_tmp/Ncarr(3)
+   if (l_project_spin_dipoles) then
+     if(Ncarr(2)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,2),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,2)=RT_M_tmp/Ncarr(2)
+     endif
+     !
+     if(Ncarr(3)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,3),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,3)=RT_M_tmp/Ncarr(3)
+     endif
    endif
    !
    if(NE_i_time==1) then

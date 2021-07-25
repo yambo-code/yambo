@@ -146,6 +146,7 @@ module BS
  !==================
  integer :: O_ng
  integer :: BS_n_g_exch
+ integer :: BS_n_g_fxc
  integer :: BS_n_g_W
  !
  ! Collision

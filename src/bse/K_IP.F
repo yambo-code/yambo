@@ -209,7 +209,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (l_BS_magnons) then
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_eh*Z_eh
-       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_magn,vtmpC)
+       if (l_BS_esort.and.i_res_ares==1) then
+         call K_IP_sort("add",i_sort,nVAR,res_magn(1),vtmpC)
+         call K_IP_sort("add",i_sort,nVAR,res_magn(2),vtmpC)
+       endif
      endif
      !
      if ( abs(real(E_plus_W0)) < Dip%Energy_treshold .and. iq==1 .and. dip_r ) then

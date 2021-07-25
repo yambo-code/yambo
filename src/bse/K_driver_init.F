@@ -59,6 +59,10 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
+ ! L_kind check
+ !==============
+ if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ !
  ! RES/ANTI-RES (q-dependent)
  !==============
  !

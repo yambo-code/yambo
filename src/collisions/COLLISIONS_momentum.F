@@ -49,7 +49,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_coll,PAR_NC_local,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0
+ integer                  ::i_coll,PAR_NC_local,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID_P
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch
@@ -95,7 +95,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! Write Database Header 
  !
- call COLLISIONS_linearize_and_IO("Momentum",0,last_coll,P_collisions,P_COLL_element,PAR_COM_G_b_INDEX%COMM)
+ call COLLISIONS_linearize_and_IO("Momentum",0,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX%COMM)
  !
  call live_timing("Collisions",PAR_NC_local*PAR_nQ_bz)
  !
@@ -155,7 +155,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
    !
-   call COLLISIONS_linearize_and_IO("Momentum",i_coll,last_coll,P_collisions,P_COLL_element,PAR_COM_G_b_INDEX%COMM)
+   call COLLISIONS_linearize_and_IO("Momentum",i_coll,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX%COMM)
    !
  enddo QP_loop
  !

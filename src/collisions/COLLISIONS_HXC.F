@@ -73,7 +73,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  complex(SP)              :: pre_factor1,pre_factor2
  !
  complex(SP), allocatable :: EM1s(:,:),rhotw_tmp(:)
- integer                  :: io_err,ID
+ integer                  :: io_err,ID_X,ID_HXC,ID_COH
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
@@ -102,8 +102,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! Plasmon-Pole/Static interaction DB I/O
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_X(X,Xw,ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_X)
+   io_err=io_X(X,Xw,ID_X)
    if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
    !
    if (X%ng<QP_ng_Sc) then
@@ -253,8 +253,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Write Database Header 
  !
- if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,HXC_COLL_element,LOCAL_COMM(3))
- if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,COH_COLL_element,LOCAL_COMM(3))
+ if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
+ if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
  !
  call live_timing("Collisions",n_steps)
  !
@@ -299,13 +299,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if(l_HXC_collisions) then
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,HXC_COLL_element,LOCAL_COMM(3))
+     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
    endif
    !
    if(l_use_COH_collisions) then
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,COH_COLL_element,LOCAL_COMM(3))
+     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
    endif
    !
  enddo ! loop on i_coll
@@ -476,8 +476,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      integer :: TMP_INDEX(COLL_bands(1):COLL_bands(2))
      !
      if (l_compute_screening) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
-       io_err=io_X(X,Xw,ID)
+       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID_X)
+       io_err=io_X(X,Xw,ID_X)
      endif
      !
      do iqbz=1,q%nbz
@@ -517,8 +517,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          call IO_and_Messaging_switch("-fragments_IO_log")
          !
-         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-         io_err=io_X(X,Xw,ID)
+         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID_X)
+         io_err=io_X(X,Xw,ID_X)
          !
          call IO_and_Messaging_switch("+fragments_IO_log")
          !

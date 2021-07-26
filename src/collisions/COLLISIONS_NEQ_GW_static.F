@@ -63,7 +63,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
 &                           i_mp,i_pmq,i_pmq_s,i_pmq_sp,i_pmq_G0,i_pmq_bz,i_q_mem,i_coll1_mem
  complex(SP), allocatable ::EM1s(:,:)
  type(elemental_collision)::isc,iscp
- integer          ::io_err,ID
+ integer          ::io_err,ID_X,ID_GW
  integer, external::io_X
  complex(SP)      ::local_rhotw(X%ng),pre_factor
  !
@@ -92,8 +92,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Plasmon-Pole/Static interaction DB I/O
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_err=io_X(X,Xw,ID)
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_X)
+ io_err=io_X(X,Xw,ID_X)
  !
  if (io_err<0) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
@@ -131,7 +131,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  ! Write Database Header 
  !
- if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,last_coll,GW_NEQ_collisions,GW_NEQ_COLL_element,PAR_COM_G_b_index%COMM)
+ if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,last_coll,GW_NEQ_collisions,&
+         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index%COMM)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -144,8 +145,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
      GW_NEQ_COLL_element(1)%v3_r=rZERO
    endif
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
-   io_err=io_X(X,Xw,ID)
+   call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID_X)
+   io_err=io_X(X,Xw,ID_X)
    !
    do iqbz=1,q%nbz 
      !
@@ -163,8 +164,8 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
        !
        call Io_and_Messaging_switch("-fragments_IO_log")
        !
-       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-       io_err=io_X(X,Xw,ID)
+       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID_X)
+       io_err=io_X(X,Xw,ID_X)
        !
        call Io_and_Messaging_switch("+fragments_IO_log")
        !
@@ -302,7 +303,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    endif
    !
    if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_coll1,last_coll,GW_NEQ_collisions,&
-   &                                               GW_NEQ_COLL_element,PAR_COM_G_b_INDEX%COMM)
+   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_INDEX%COMM)
    !
  enddo
  !

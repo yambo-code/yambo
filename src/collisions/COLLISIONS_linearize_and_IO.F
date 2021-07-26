@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COMM)
+subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
  use pars,            ONLY:SP
  use parallel_m,      ONLY:master_cpu
  use parallel_int,    ONLY:PP_redux_wait
- use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group,COLL_ID
+ use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:REP,OP_APP_CL,OP_WR_CL,OP_APP,WR,WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
@@ -38,6 +38,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  !
  character(*)                            :: what
  integer,                  intent(in)    :: i_coll,last_coll,COMM
+ integer,                  intent(inout) :: COLL_ID
  type(COLLISIONS_group),   intent(inout) :: COLL
  type(COLLISIONS_element), intent(inout) :: COLL_element(COLL%N)
  !

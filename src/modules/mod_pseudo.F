@@ -142,7 +142,7 @@ module pseudo
    subroutine PP_nlcc_free()
      YAMBO_FREE(pp_rhog_nlcc)
      YAMBO_FREE(pp_rho_nlcc)
-     deallocate(pp_has_nlcc_atom)
+     if (allocated(pp_has_nlcc_atom)) deallocate(pp_has_nlcc_atom)
      pp_has_nlcc=.FALSE.
    end subroutine
    !

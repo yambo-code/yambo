@@ -90,19 +90,18 @@ module collision_el
    subroutine elemental_collision_free(ggw)
      type(elemental_collision), target::ggw
      !
+     YAMBO_FREE_GPU(DEV_VAR(ggw%gamp))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%rhotw))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%rho_tw_rs))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_i))
+     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_o))
+     !
      YAMBO_FREE(ggw%gamp)
      YAMBO_FREE(ggw%rhotw)
      YAMBO_FREE(ggw%rho_tw_rs)
      YAMBO_FREE(ggw%WF_symm_i)
      YAMBO_FREE(ggw%WF_symm_o)
      ! 
-     YAMBO_FREE_GPU(DEV_VAR(ggw%gamp))
-     YAMBO_FREE_GPU(DEV_VAR(ggw%rhotw))
-     !
-     YAMBO_FREE_GPU(DEV_VAR(ggw%rho_tw_rs))
-     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_i))
-     YAMBO_FREE_GPU(DEV_VAR(ggw%WF_symm_o))
-     !
      ! USPP workspace
      call deallocate_bec_type(ggw%ibec)
      call deallocate_bec_type(ggw%obec)

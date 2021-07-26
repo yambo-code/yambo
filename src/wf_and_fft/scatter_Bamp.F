@@ -114,8 +114,8 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
      rho_tw_rs_p(ir) = rho_tw_rs_p(ir)+cmplx(conjg(WF_symm_i_p(ir,2))*WF_symm_o_p(ir,2),kind=DP)
    enddo
  endif
- !DEV_ACC end data
  !DEV_OMP end parallel
+ !DEV_ACC end data
  !
 #endif
 

@@ -59,7 +59,7 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
- use deviceXlib_m,  ONLY:dev_memcpy
+ use deviceXlib_m,  ONLY:dev_memcpy_d2h,dev_memset
  use cuda_m,        ONLY:have_cuda
  use timing_m,      ONLY:timing
 #if defined _RT
@@ -87,11 +87,12 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
 #endif
  integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2) !,,i_dir
  integer    :: ig,i_r
- real(SP)   :: f_occ,rho_no_sym(fft_size) !,J_no_sym(fft_size,3)
+ real(SP)   :: f_occ !,J_no_sym(fft_size,3)
  real(SP)   :: raux,kw
  logical    :: warn_done,l_si,l_rho !,l_J
- complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
+ real(SP),    allocatable :: rho_no_sym(:)
  real(SP),    allocatable DEV_ATTR :: rho_no_sym_d(:)
+ complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
  complex(SP),     pointer DEV_ATTR :: WF_p(:,:,:)
  !
 #if defined _RT
@@ -107,13 +108,15 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !
  WF_p      => DEV_VAR(WF%c)
  !
+ YAMBO_ALLOC(rho_no_sym,(fft_size))
+ !
  if (l_rho) then
    rho       =0._SP
    rho_no_sym=0._SP
    !
    if (have_cuda) then
-     YAMBO_ALLOC(rho_no_sym_d,(fft_size))
-     rho_no_sym_d=0._SP
+     YAMBO_ALLOC_GPU(DEV_VAR(rho_no_sym),(fft_size))
+     call dev_memset(DEV_VAR(rho_no_sym),0._SP )
    endif
    !
  endif
@@ -176,14 +179,17 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
          !
          kw=k%weights(ik)
          !
-         !DEV_OMP parallel do default(shared), private(i_spinor,i_r), collapse(2), reduction(+:rho_no_sym)
+         !DEV_ACC data present(rho_no_sym,WF_p)
+         !DEV_ACC parallel loop collapse(2) async
          !DEV_CUF kernel do(2) <<<*,*>>>
+         !DEV_OMP parallel do default(shared), private(i_spinor,i_r), collapse(2), reduction(+:rho_no_sym)
          do i_spinor=1,n_spinor
            do i_r = 1, fft_size
              DEV_VAR(rho_no_sym)(i_r)=DEV_VAR(rho_no_sym)(i_r)+f_occ*kw*abs(WF_p(i_r,i_spinor,i_wf))**2
            enddo
          enddo
          !DEV_OMP end parallel do
+         !DEV_ACC end data
          !
          ! uspp becsum
          !
@@ -215,7 +221,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
    enddo
  enddo
  !
- if (have_cuda) call dev_memcpy(rho_no_sym,rho_no_sym_d)
+ ! rho_no_sym,rho_no_sym_d
+ if (have_cuda.and.l_rho) call dev_memcpy_d2h(rho_no_sym,DEV_VAR(rho_no_sym))
  !
  !
  ! finalize USPP contribution
@@ -289,7 +296,8 @@ subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
  !  enddo
  !endif
  !
- YAMBO_FREE(rho_no_sym_d)
+ YAMBO_FREE_GPU(DEV_VAR(rho_no_sym))
+ YAMBO_FREE(rho_no_sym)
  !
 #if defined _RT
  call timing('el_density',OPR='stop')

@@ -181,6 +181,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    call fft_best_size(ln)
    if (i4>0) then
       call timing("FFT_setup",opr="stop")
+      YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
       YAMBO_FREE(g_vec_rot)
       return
    endif
@@ -192,15 +193,15 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      cycle
    endif
    !
+   YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
    YAMBO_FREE(fft_rot_r)
-   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
+   YAMBO_FREE_GPU(DEV_VAR(fft_rot_r_inv))
    YAMBO_FREE(fft_rot_r_inv)
-   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
    !
+   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
+   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
    if (have_cuda) then
-     YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
      YAMBO_ALLOC_GPU(DEV_VAR(fft_rot_r),(fft_size,nsym))
-     YAMBO_FREE_GPU(DEV_VAR(fft_rot_r_inv))
      YAMBO_ALLOC_GPU(DEV_VAR(fft_rot_r_inv),(fft_size))
    endif
 
@@ -262,6 +263,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  cufft_plan=0
 #endif
  !
+ YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
  YAMBO_FREE(g_vec_rot)
  call timing("FFT_setup",opr="stop")
  !

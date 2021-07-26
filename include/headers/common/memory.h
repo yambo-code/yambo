@@ -171,7 +171,7 @@
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
-  if ( dev_allocated(x)) &NEWLINE& call error(" Trying to deallocate var x which was still on device memory")NEWLINE \
+  if ( dev_allocated(x)) &NEWLINE& call error(QUOTES Trying to deallocate var x still on device memory QUOTES)NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
 #define YAMBO_FREE_P(x) \
   if (.not.associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \

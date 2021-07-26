@@ -184,8 +184,12 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      l_COH=(COLL%kind==H_SE_COH)
      l_HXC=(COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE)
-     l_NGW=(COLL%kind==QP_SE_GW_NEQ)
+#if defined _QED
      l_QED=(COLL%kind==QP_SE_GW_QED)
+#endif
+#if defined _RT
+     l_NGW=(COLL%kind==QP_SE_GW_NEQ)
+#endif
      !
      l_NGW_init=l_NGW
      l_QED_init=l_QED

@@ -146,7 +146,7 @@ subroutine YPP_SET_defaults()
 #if defined _YPP_SC
  l_mean_potential=.false.
 #endif
- l_norm_to_one=.true.
+ l_norm_to_one=.false.
  output_fname=' '
  plot_title=' '
  !

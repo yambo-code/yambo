@@ -294,8 +294,9 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'Direction', '[rlu] [1/2/3] for 1d or [12/13/23] for 2d [123] for 3D',p_dir)
  call it(defs,'MagDir', 'Magnetization component',mag_dir)
  call it(defs,'CurrentDir', '[cc] Carthesian direction (used to average in 2D/3D plots or to plot in 1D)',current_dir)
- call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
+ call it('f',defs,'NormToOne','Normalize to one the maximum value of the plot')
 #if defined _YPP_SC
+ call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
  call it(defs,'PotValue',  'REal/IMaginary part of the mean potential',V_value)
 #endif
 #if defined _YPP_ELPH

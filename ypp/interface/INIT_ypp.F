@@ -672,7 +672,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
  if (l_plot) then
-   call initactivate(1,"Format Direction FFTGvecs") 
+   call initactivate(1,"Format Direction FFTGvecs NormToOne") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
 #if defined _YPP_ELPH
    if (l_sp_wf) call initactivate(1,"ResTresh")  

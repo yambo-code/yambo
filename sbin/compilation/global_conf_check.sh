@@ -25,14 +25,6 @@
 lock_files=`find $compdir/config/stamps_and_lists/ -name '*.lock'`
 sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
 #
-# Touch the GOAL as .stamp
-#
-case $goal in
- yambo*|ypp*)
-  touch $compdir/config/stamps_and_lists/compiling_${goal}.stamp
-  ;;
-esac
-#
 # Locks -> string
 #
 lock_string=""
@@ -112,6 +104,9 @@ candidates+=" include/pars.mod"
 #
 if [ $COMPILATION_IS_DOUBLE == "yes" ]; then
  echo -e "\t[DOUBLE compilation] Saving the current SINGLE source state"
+ if test -d $dir/${double_save_dir} ; then
+  echo -e "\t[SINGLE compilation] Restoring the previous DOUBLE compiled source"
+ fi
  for file in $candidates
  do
    dir=`dirname $file`
@@ -125,8 +120,7 @@ if [ $COMPILATION_IS_DOUBLE == "yes" ]; then
    done
    rm -f $compdir/config/stamps_and_lists/lib${lib}.a.stamp
    rm -f $compdir/config/stamps_and_lists/lib_ypp_${lib}.a.stamp
-   rm -f $compdir/lib/lib${lib}.a
-   rm -f $compdir/lib/lib_ypp_${lib}.a
+   rm -f $compdir/config/stamps_and_lists/lib_Ydriver_${lib}.a.stamp
    touch $compdir/config/stamps_and_lists/DOUBLE.lock
    if test -d $dir/${double_save_dir} ; then
     files_to_move=`find $dir/${double_save_dir} -type f -name "*.o" -o -name "*.mod"` 
@@ -143,6 +137,9 @@ fi
 #
 if [ $SRC_IS_DOUBLE == "yes" ]; then
  echo -e "\t[SINGLE compilation] Saving the current DOUBLE source state"
+ if test -d $dir/${single_save_dir} ; then
+  echo -e "\t[SINGLE compilation] Restoring the previous SINGLE compiled source"
+ fi
  for file in $candidates
  do
    dir=`dirname $file`
@@ -155,8 +152,7 @@ if [ $SRC_IS_DOUBLE == "yes" ]; then
    done
    rm -f $compdir/config/stamps_and_lists/lib${lib}.a.stamp
    rm -f $compdir/config/stamps_and_lists/lib_ypp_${lib}.a.stamp
-   rm -f $compdir/lib/lib${lib}.a
-   rm -f $compdir/lib/lib_ypp_${lib}.a
+   rm -f $compdir/config/stamps_and_lists/lib_Ydriver_${lib}.a.stamp
    rm -f $compdir/config/stamps_and_lists/DOUBLE.lock
    if test -d $dir/${single_save_dir} ; then
     files_to_move=`find $dir/${single_save_dir} -type f -name "*.o" -o -name "*.mod"` 

@@ -41,7 +41,12 @@ endif
 #
 # Compilation
 #
-ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: ext-libs int-libs
+ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: 
+	@touch config/stamps_and_lists/compiling_$@.stamp
+	@$(MAKE) conf-check
+	@$(MAKE) $(MAKEFLAGS) dependencies
+	@$(MAKE) $(MAKEFLAGS) ext-libs
+	@$(MAKE) $(MAKEFLAGS) int-libs
 	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(YPP_PRECMP) $(DOUBLE_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
 	@+LIBS="$(Y_SRC_LIBS)";BASE="src";ADF="$(Y_PRECMP) $(DOUBLE_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="$(YPP_SRC_LIBS)";LAB="_ypp_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)

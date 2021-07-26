@@ -39,8 +39,4 @@ if [ -f $compdir/config/stamps_and_lists/compiling_yambo_nl.stamp ] || [ -f $com
  precomp_flags+=" -D_DOUBLE"
 fi
 #
-if [ "$goal" == "yambo_nl" ] ||  [ "$goal" == "ypp_nl" ]  ; then
- precomp_flags+=" -D_DOUBLE"
-fi
-#
 sorted_precomps=$(echo "$precomp_flags"|tr " " "\n"|sort|uniq|tr "\n" " ")

@@ -242,8 +242,6 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    !
    if (PLOT_built_in) then
      !
-     if( all((/Grid_to_path_map(ik_local,:)==-1/)) ) cycle
-     !
      n_points=0
      do ik_bz_grid=1,Xk%nbz
        if( Grid_to_path_map(ik_local,ik_bz_grid)==-1 ) cycle

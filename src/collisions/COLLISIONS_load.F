@@ -187,6 +187,9 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      l_NGW=(COLL%kind==QP_SE_GW_NEQ)
      l_QED=(COLL%kind==QP_SE_GW_QED)
      !
+     l_NGW_init=l_NGW
+     l_QED_init=l_QED
+     !
      if (l_COH.or.l_HXC) then
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
      endif

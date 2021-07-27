@@ -23,7 +23,7 @@
 !
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
- use pars,            ONLY:SP
+ use pars,            ONLY:SP,cZERO
  use parallel_m,      ONLY:master_cpu
  use parallel_int,    ONLY:PP_redux_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
@@ -83,6 +83,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  if ( l_HXC .or. l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
  COLL_element(i_ref)%table(:,:,:)='f'
+ store_it=.true.
  !
  do i_cycle=1,2
    !
@@ -92,18 +93,17 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
      do i2=COLL%D(2,1),COLL%D(2,2)
        do i1=COLL%D(1,1),COLL%D(1,2)
          !
-#if !defined _PAR_IO
-         !
          ! In the COHSEX/HF case a cutoff can be applied
          !
          if (l_HXC.or.l_COH) then
            store_it=abs(COLL_element(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff .or. COLLISIONS_cutoff<0.0
          endif
-#else
-         store_it=.true.
+#if defined _PAR_IO
+         if (.not.store_it) then
+           COLL_element(1)%v3_c(i1,i2,i3)=cZERO
+           store_it=.true.
+         endif
 #endif
-         !
-         if (l_GW_NEQ .or. l_QED_P ) store_it=.TRUE.
          !
          if (store_it) then
            ic=ic+1

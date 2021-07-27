@@ -529,13 +529,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
  !
  call COLLISIONS_naming( 0 , "all" )
  !
  ! COLLISIONS I/O
  !
+# if defined _PAR_IO
+ COLLISIONS_cutoff=0.0000_SP
+# else
  COLLISIONS_cutoff=0.0005_SP
+# endif
+ !
  H_potential="NONE"
  !
 #endif

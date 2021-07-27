@@ -28,7 +28,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
- use R_lattice,     ONLY:bz_samp,q_norm
+ use R_lattice,     ONLY:bz_samp,q_norm,RIM_W_for_graph,graph_e,graph_v
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
  use parser_m,      ONLY:parser
  !
@@ -72,12 +72,12 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================
- !  . Non zero Drude Freq.
+ !  . Non zero Drude Freq. or graphene model
  !  . Metallic system 
  !  . Metallic occupations
  !  . Optical response @ q = Gamma
  !
- Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
+ Drude_term(1) = ((real(Wd)>0._SP .and. aimag(Wd)>0._SP) .or. (RIM_W_for_graph))
  Drude_term(2) = Xen%nbf/=Xen%nbm
  Drude_term(3) = (f_eh>0._SP) 
  Drude_term(4) = (iq==1)
@@ -103,8 +103,13 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  l_drude=all(Drude_term)
  if(.not.l_drude) return
  !
- call parser('DrClassic',l_Classical)
- l_Jellium=.not.l_Classical
+ if(RIM_W_for_graph) then
+   l_Classical = .False.
+   l_Jellium = .False.
+ else
+   call parser('DrClassic',l_Classical)
+   l_Jellium=.not.l_Classical
+ end if
  if(.not.all(Drude_term)) return
  !
  call msg(' rs','[X/K] Drude nstates            ',drude_n_states)
@@ -112,6 +117,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
  !
  do iw=1,Xw%n_freqs
+   if(RIM_W_for_graph .and. iw == 1) drude_GreenF(iw) = Graphene_drude(graph_e, graph_v)
    if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))
    if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw)),Wd,q_norm(1))
  enddo
@@ -178,5 +184,26 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    Classical_drude =  -Classical_drude* ( q0_norm**2/(4._SP*pi) )
    !
  end function Classical_drude
+ !
+ !
+ function Graphene_drude(graph_e, graph_v)
+   !
+   !
+   use pars,       ONLY:SP,pi
+   use R_lattice,  ONLY:idir
+   use D_lattice,  ONLY:alat
+   !
+   implicit none
+   !
+   real(SP)    :: graph_e,graph_v,lcut
+   complex(SP) :: Graphene_drude
+   !
+   !Get graph_v in a.u.
+   graph_v = graph_v/2.18769126364
+   !
+   lcut = alat(idir(1))
+   Graphene_drude = abs(graph_e)/(pi*graph_v**2*lcut)
+   !
+ end function Graphene_drude
  !
 end subroutine

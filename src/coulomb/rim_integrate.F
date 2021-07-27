@@ -181,7 +181,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,RIM_W_is_metal,&
+&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,RIM_W_for_graph,&
 &                        RIM_W,f_coeff,cut_is_slab,idir,RIM_id_epsm1_reference
  use D_lattice,     ONLY:alat,a
  !
@@ -194,7 +194,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  integer  :: i1,i1min,i2,i2max,i3
  real(DP) :: func,vslab(RIM_n_rand_pts,RIM_W_ng)
  real(DP) :: r1,rfac,RIM_acc,RIM_acc_anis
- real(SP) :: slab_vz1,slab_vplane1,slab_vz2,slab_vplane2,lcut,pre_factor,anis_fact,vslab2
+ real(SP) :: slab_vz1,slab_vplane1,lcut,pre_factor,anis_fact,vslab2
  !
  rfac=8._SP*k_grid_uc_vol/real(N_out)/(2._SP*pi)**4
  !
@@ -257,7 +257,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  !
  !If the system is a metal, the head is obtained
  !with the q\=0 formula
- if (RIM_W_is_metal) then
+ if (RIM_W_for_graph) then
    !
    do i1=1,RIM_n_rand_pts
      slab_vplane1=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&

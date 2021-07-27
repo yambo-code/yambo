@@ -228,8 +228,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
- if (GW_iter==0) call section('+',trim(SECTION_name))
- if (GW_iter> 0) call section('=',trim(SECTION_name))
+ if (GW_iter==0) then
+   if(l_RIM_W) then
+     call section('-',trim(SECTION_name))
+   else
+     call section('+',trim(SECTION_name))
+   end if
+ end if
+ if (GW_iter > 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)

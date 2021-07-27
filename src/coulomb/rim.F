@@ -87,7 +87,7 @@ subroutine rim(mode)
    if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
    !
  else 
-   call section('+','RIM-W initialization')
+   call section('+','RIM-W integrals')
    if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
  end if
  !
@@ -205,9 +205,7 @@ subroutine rim(mode)
      !
    else
      !
-     call msg('r', "Evaluating integrals for q = ", iq)
      call rim_integrate_w(iq,qr,N_out,em1_anis)
-     call msg('r', "Anisotropy = ", em1_anis)
      !
    endif
    call live_timing(steps=1)

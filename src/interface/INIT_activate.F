@@ -310,7 +310,7 @@ subroutine INIT_activate()
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
-   call initactivate(1,'RIM_W RIM_W_diag RIM_W_metal')
+   call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')

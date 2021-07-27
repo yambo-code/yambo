@@ -47,7 +47,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
  use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
-&                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
+&                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff,&
+&                        graph_e,graph_v
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
 &                        BS_n_g_W,BS_n_g_exch,L_kind,BS_K_cutoff
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
@@ -379,7 +380,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! RIM-W
  call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
- call msg('r', 'I understood RandGvecW =', RIM_W_ng)
+ call it(defs,'GraphIntraEFermi','[RIM-W] Fermi energy for graphene model',graph_e,E_unit,verb_level=V_RL)
+ call it(defs,'GraphIntraVelFermi','[RIM-W] [10^6 m/s] Fermi velocity for graphene model',graph_v,verb_level=V_RL)
  !
  ! CUTOFF
  !

@@ -84,7 +84,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        !
-       if (l_RIM_W) call interpolate_W(X,Xw,q)
+       if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 

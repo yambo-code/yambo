@@ -190,7 +190,7 @@ module vec_operate
      !
      ! rlu = Reduced Lattice Units (crystal coordinated in Quantum-Espresso)
      ! cc  = Cartesian Coordinates (atomic units)
-     ! iku = Internal K-Units (internal Yambo units similar to 2pi/Alat in QE but with 3 scaling foctors)
+     ! iku = Internal K-Units (internal Yambo units similar to 2pi/Alat in QE but with 3 scaling factors)
      !
      ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
      ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)

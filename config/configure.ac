@@ -46,6 +46,7 @@ m4_include([config/m4/yambo_libraries.m4])
 # 
 #  General
 #
+m4_include([config/m4/acx_echo.m4])
 m4_include([config/m4/acx_misc.m4])
 m4_include([config/m4/acx_gmake.m4])
 m4_include([config/m4/acx_cpp.m4])
@@ -64,8 +65,6 @@ m4_include([config/m4/acx_report.m4])
 # ============================================================================
 # Current branch
 ACX_BRANCH
-#
-# Checks for library functions.
 # ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
@@ -291,7 +290,7 @@ AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/h
 AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
- config/mk/local/make.inc sbin/compilation/helper.inc.sh
+ config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
  include/branch.inc include/driver/editor.h 
 ])
 #

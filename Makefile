@@ -23,15 +23,14 @@
 #
 ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
  include config/mk/global/defs.mk
+ include config/mk/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
 else ifeq ($(MAKECMDGOALS), check)
 else
  include config/mk/global/no_configure_help.mk
 endif
 #
-ifndef VERBOSE
- MAKEFLAGS += --no-print-directory
-endif
+MAKEFLAGS = --no-print-directory
 #
 # Targets
 include config/mk/global/targets.mk

@@ -133,6 +133,14 @@ AC_ARG_WITH(editor, AC_HELP_STRING([--with-editor=<exe>],
   [User-defined editor (none for no editor)],[32]),[],[with_editor="vim vi pico"]) 
 AC_CHECK_PROGS(editor,[$with_editor],[none])
 AC_SUBST(editor)
+# ============================================================================
+#
+# ECHO
+#
+AC_ARG_WITH(echo, AC_HELP_STRING([--with-echo=<exe>], [User-defined echo],[32]),[],[with_echo="echo"]) 
+if test x"$with_echo" = "x"; then AC_PROG_ECHO; fi
+ECHO=$with_echo
+AC_SUBST(ECHO)
 #
 # ============================================================================
 # Copyright (C) 2001-2016 Quantum ESPRESSO Foundation

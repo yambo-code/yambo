@@ -22,7 +22,6 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-N=1
 while getopts ":d:t:o:m:nDGN:g:" opt; do
  case $opt in
   d) cdir=${OPTARG}
@@ -37,7 +36,7 @@ while getopts ":d:t:o:m:nDGN:g:" opt; do
   ;;
   n) new="yes"
   ;;
-  N) N=${OPTARG}
+  N) NARG=${OPTARG}
   ;;
   G) global="yes"
   ;;
@@ -47,10 +46,11 @@ while getopts ":d:t:o:m:nDGN:g:" opt; do
   ;;
  esac 
 done
-if [ ${N:0:2} == "-j" ]; then
+N=1
+if [ "${NARG:0:2}" == "-j" ]; then
  N=`echo ${N:0:4} | sed s/\-j//`
 fi
-if [ "${N}" == "" ]; then 
+if [[ "${NARG}" == "" ]] || [[ "${NARG}" == "-j" ]] ; then 
  N=`grep -c ^processor /proc/cpuinfo`
 fi
 shift $((OPTIND -1))

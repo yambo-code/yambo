@@ -14,7 +14,7 @@ endef
 define link
  $(PREFIX)(echo "$(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs)" >> $(STDLOG) ;\
  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
- echo "\t[$(wdir)] $(target) (link)";\
+ $(ECHO) "\t[$(wdir)] $(target) (link)";\
  if test -f $(target); then \
    rm -f $(compdir)/config/stamps_and_lists/compiling_$(target).stamp; \
    touch $(compdir)/config/stamps_and_lists/$(target).stamp; \

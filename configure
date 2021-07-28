@@ -812,9 +812,9 @@ CPPFLAGS
 LDFLAGS
 CFLAGS
 CC
+ECHO
 editor
 MKMF_PREFIX
-MKMF_VERBOSE
 def_memory_profile
 def_uspp
 def_time_profile
@@ -879,6 +879,7 @@ enable_uspp
 enable_memory_profile
 enable_msgs_comps
 with_editor
+with_echo
 enable_options_check
 with_f90ext
 enable_debug_flags
@@ -1650,6 +1651,7 @@ Optional Packages:
   --with-extlibs-path=<path>
                           Path to the external libs
   --with-editor=<exe>           User-defined editor (none for no editor)
+  --with-echo=<exe>             User-defined echo
   --with-f90ext=<flags>         Use .<flags> Fortran 90 extension
   --with-mpi-libs=<libs>        Use MPI libraries <libs>
   --with-mpi-path=<path>        Path to the MPI install directory
@@ -3073,12 +3075,9 @@ fi
 
 if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="no"; fi
 MKMF_PREFIX=" "
-MKMF_VERBOSE="VERBOSE=1"
 if test x"$enable_msgs_comps" = "xno"; then
  MKMF_PREFIX="@";
- MKMF_VERBOSE=" "
 fi
-
 
 #
 # ============================================================================
@@ -3136,6 +3135,21 @@ fi
 done
 test -n "$editor" || editor="none"
 
+
+# ============================================================================
+#
+# ECHO
+#
+
+# Check whether --with-echo was given.
+if test "${with_echo+set}" = set; then :
+  withval=$with_echo;
+else
+  with_echo="echo"
+fi
+
+if test x"$with_echo" = "x"; then AC_PROG_ECHO; fi
+ECHO=$with_echo
 
 #
 # ============================================================================
@@ -4379,6 +4393,14 @@ fi
 #
 #  General
 #
+# AC_PROG_ECHO
+#
+# Inspired from https://invisible-island.net/autoconf/portability-echo.html
+# -------------
+# Check whether to use -e or not to intepret \backslash commands
+#
+# AC_PROG_ECHO
+
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
@@ -4776,8 +4798,6 @@ if test x"$GIT_CHECK" = x"yes" && test -f .gitignore; then
 fi
 
 
-#
-# Checks for library functions.
 # ============================================================================
 for ac_header in malloc.h stdlib.h unistd.h string.h sys/time.h
 do :
@@ -14489,7 +14509,7 @@ fi
 # ============================================================================
 ac_config_headers="$ac_config_headers include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in"
 
-ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/make.inc sbin/compilation/helper.inc.sh include/branch.inc include/driver/editor.h"
+ac_config_files="$ac_config_files config/setup config/mk/global/defs.mk config/report config/msg_ydb src/wf_and_fft/sgfft.F src/tools/.objects config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh include/branch.inc include/driver/editor.h"
 
 #
 cat >confcache <<\_ACEOF
@@ -15191,7 +15211,8 @@ do
     "config/msg_ydb") CONFIG_FILES="$CONFIG_FILES config/msg_ydb" ;;
     "src/wf_and_fft/sgfft.F") CONFIG_FILES="$CONFIG_FILES src/wf_and_fft/sgfft.F" ;;
     "src/tools/.objects") CONFIG_FILES="$CONFIG_FILES src/tools/.objects" ;;
-    "config/mk/local/make.inc") CONFIG_FILES="$CONFIG_FILES config/mk/local/make.inc" ;;
+    "config/mk/local/defs.mk") CONFIG_FILES="$CONFIG_FILES config/mk/local/defs.mk" ;;
+    "config/mk/defs.mk") CONFIG_FILES="$CONFIG_FILES config/mk/defs.mk" ;;
     "sbin/compilation/helper.inc.sh") CONFIG_FILES="$CONFIG_FILES sbin/compilation/helper.inc.sh" ;;
     "include/branch.inc") CONFIG_FILES="$CONFIG_FILES include/branch.inc" ;;
     "include/driver/editor.h") CONFIG_FILES="$CONFIG_FILES include/driver/editor.h" ;;

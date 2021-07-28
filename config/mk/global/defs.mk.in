@@ -61,4 +61,3 @@ libdir      = @prefix@/lib
 includedir  = @prefix@/include
 libbindir   = @prefix@/lib/bin
 y_version   = "YAMBO ver. @SVERSION@"
-@MKMF_VERBOSE@

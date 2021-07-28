@@ -27,6 +27,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
+ use iso_fortran_env
  use pars,          ONLY:SP,DP,schlen,cZERO_DP
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
@@ -355,11 +356,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          endif
          !
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
-#if defined _CUDAF
-           io_err=io_WF(ID,wf_disk,DEV_VAR(wf_disk))
-#else
-           io_err=io_WF(ID,wf_disk)
-#endif
+         !
+         io_err=io_WF(ID,wf_disk)
+         call dev_memcpy_h2d(DEV_VAR(wf_disk),wf_disk)
          !
          if (pp_is_uspp) then
             call PP_compute_becp( becp(ikibz,i_sp_pol), wf_nc_k(ikibz), wf_nb_to_load, wf_disk, wf_b_indx)
@@ -388,18 +387,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !
             do i_spinor=1,n_spinor
               !
-              ! AF: The following is a workaround for CUDAF/OPENACC compilation
-              !     to be further investigated and fixed
-!=====        !
-              !DEV_ACC data present(wf_DP)
-              !DEV_ACC parallel loop async
-              !DEV_CUF kernel do(1) <<<*,*>>>
-              do ic = 1, size(DEV_VAR(wf_DP))
-                 DEV_VAR(wf_DP)(ic)=cZERO_DP
-              enddo
-              !DEV_ACC end data
-!=====        !
-              !call dev_memset(DEV_VAR(wf_DP), cZERO_DP)
+              call dev_memset(DEV_VAR(wf_DP), cZERO_DP)
               !
               npwk=wf_nc_k(ikibz)
               !
@@ -418,7 +406,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !DEV_ACC end data
               !
               call fft_3d_cuda( DEV_VAR(wf_DP),fft_dim,+1,cufft_plan)
-              !
               WFN = WF%N
               !
               !DEV_ACC data present(wfc_p,wf_DP)

@@ -3,6 +3,9 @@
 !
 module cufft_m
   use iso_c_binding
+#ifdef _OPENACC
+  use openacc
+#endif
   implicit none
 
   integer(c_int), parameter :: CUFFT_FORWARD = -1
@@ -45,24 +48,32 @@ module cufft_m
       use iso_c_binding
       implicit none
       integer(c_int) :: plan
-      integer(c_int) :: nx, ny, nz
-      integer(c_int) :: ffttype
+      integer(c_int),value :: nx, ny, nz
+      integer(c_int),value :: ffttype
     end function cufftPlan3d
   
     integer(c_int) function cufftDestroy( plan ) &
         bind(C, name="cufftDestroy")
       use iso_c_binding
       implicit none
-      integer(c_int) :: plan
+      integer(c_int),value :: plan
     end function cufftDestroy
+
+    integer(c_int) function cufftSetStream( plan, stream ) &
+        bind(C, name="cufftSetStream")
+      use iso_c_binding
+      implicit none
+      integer(c_int) :: plan
+      integer(c_intptr_t),value :: stream
+    end function cufftSetStream
     
     integer(c_int) function cufftExecZ2Z( plan, idata, odata, direction ) &
         bind(C, name="cufftExecZ2Z")
       use iso_c_binding
       implicit none
-      integer(c_int) :: plan
       complex(c_double) DEV_ATTR, dimension(*) :: idata, odata
-      integer(c_int) :: direction
+      integer(c_int),value :: plan
+      integer(c_int),value :: direction
     end function cufftExecZ2Z
 
   end interface

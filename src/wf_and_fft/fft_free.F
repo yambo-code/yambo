@@ -32,11 +32,11 @@ subroutine fft_free()
 #endif
 #if defined _GPU
  use FFT_m,    ONLY:cufft_plan,DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
-#endif
 #if defined _CUDAF
  use cufft
 #else
  use cufft_m
+#endif
 #endif
  !
 #include<memory.h>

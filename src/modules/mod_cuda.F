@@ -39,6 +39,8 @@ module cuda_m
   use openacc
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
+  use iso_c_binding
+  !
   implicit none
   public
   !
@@ -66,7 +68,7 @@ module cuda_m
 #ifdef _CUDAF
   integer, parameter :: stream_kind=Cuda_Stream_Kind
 #else
-  integer, parameter :: stream_kind=kind(1)
+  integer, parameter :: stream_kind=c_intptr_t
 #endif
   integer(stream_kind) :: stream_default
   integer(stream_kind) :: stream_h2d
@@ -142,10 +144,12 @@ contains
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
 #elif defined _OPENACC
-    stream_default=acc_async_noval
+    !stream_default=acc_async_noval
+    stream_default=acc_get_cuda_stream(acc_async_sync)
     stream_h2d=1001
     stream_d2h=1002
     stream_d=10
+    !
 #endif
     !
   end subroutine cuda_setup

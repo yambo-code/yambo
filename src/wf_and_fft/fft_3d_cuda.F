@@ -53,24 +53,30 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  use cufft
 #endif
 #if defined _OPENACC
- use cudafor_m
- use cufft_m
+ use openacc
+ use cufft
 #endif
  !
- implicit none
+#include<memory.h> 
+ !
  integer   :: fft_sign,n(3)
  integer   :: cufft_plan
  complex(DP) DEV_ATTR :: c_d(n(1),n(2),n(3))
+ !
  ! 
  ! Work Space
  !
- integer             :: i_sign,istat
+ integer              :: i_sign,istat
+ complex(DP), allocatable :: tmp_d(:,:,:)
  !
  if (fft_sign>0) i_sign=CUFFT_INVERSE
  if (fft_sign<0) i_sign=CUFFT_FORWARD
  !
  if (cufft_plan==0) then
    !
+#ifdef _OPENACC
+   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
+#endif
    istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
  endif
@@ -82,3 +88,4 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !DEV_ACC end data
  !
 end subroutine fft_3d_cuda
+

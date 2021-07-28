@@ -78,6 +78,9 @@ NETCDF_OPT="--enable-netcdf-4"
 NETCDF_VER="v4"
 IO_LIB_VER="serial";
 #
+save_fcflags="$FCFLAGS" ;
+save_libs="$LIBS" ;
+#
 # global options
 #
 #
@@ -176,9 +179,6 @@ if test x"$enable_hdf5" = "xno"; then
   netcdf=no;
   #
   if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" || test x"$with_netcdf_libs" != "x"; then
-    #
-    save_fcflags="$FCFLAGS" ;
-    save_libs="$LIBS" ;
     #
     FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $try_PNETCDF_INCS $save_fcflags";
     LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $try_PNETCDF_LIBS $save_libs";

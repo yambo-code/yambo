@@ -115,7 +115,24 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
  !
  l_dumping=.false.
  !
-9999 ntry=0
+ ! This is better in some cases...
+9999 do ifit=1,nfit
+   if(.not.l_dumping(ifit)) then
+     ! Random guess seems more stable than previous
+     ! fit guess in case of Gauss-Newton
+     T_guess(ifit)=1.E-3_SP
+     Ef_guess(ifit)=RT_E_sorted(last_occupied+(ifit-1))
+   else
+     if(T_save(ifit) <=0._SP) T_guess(ifit) =1.E-3_SP
+     if(Ef_save(ifit)==0._SP) Ef_guess(ifit)=RT_E_sorted(last_occupied+(ifit-1))
+     if(T_save(ifit) > 0._SP) T_guess(ifit) =T_save(ifit)
+     if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
+   endif
+ enddo
+ ! .. in others it is better to skip it
+ !9999 continue
+ !
+ ntry=0
  T_fit=0._SP
  Ef_fit=0._SP
  RT_occ_fit=0._SP
@@ -131,8 +148,19 @@ integer function Fermi_fnc_fit(RT_occ_in,nstates,T_fit,Ef_fit,err_fit,RT_occ_fit
    !
 2000 ntry=ntry+1
    !
-   T_guess(ifit)=1.E-3_SP*10**(ntry-1)
-   Ef_guess(ifit)= RT_E_sorted(last_occupied+1)*(-1._SP)**ifit
+   ! Starting point for high temperatures, this is better in some cases...
+   if(ntry>1) then 
+     T_guess(ifit)=1.E-3_SP*10**(ntry-1)
+     Ef_guess(ifit)= RT_E_sorted(last_occupied+1)*(-1._SP)**ifit
+     if(l_dumping(ifit)) then
+       if(T_save(ifit)>0._SP)   T_guess(ifit) =T_save(ifit)
+       if(Ef_save(ifit)/=0._SP) Ef_guess(ifit)=Ef_save(ifit)
+     endif
+   endif
+   ! ... in other the simpler choice works better
+   !T_guess(ifit)=1.E-3_SP*10**(ntry-1)
+   !Ef_guess(ifit)= RT_E_sorted(last_occupied+1)*(-1._SP)**ifit
+   !
    !
    !DEBUG<
    !write(100,*) ifit,ntry,T_guess(ifit)*HA2KEL,Ef_guess(ifit)*HA2EV

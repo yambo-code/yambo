@@ -45,6 +45,7 @@ integer function io_DB1(E,k,ID)
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
  use cuda_m,           ONLY:have_cuda
+ use deviceXlib_m,     ONLY:dev_memcpy_h2d
 #if defined _SC || defined _RT
  use collision_ext,    ONLY:COLL_bands
  use hamiltonian,      ONLY:H_ref_bands

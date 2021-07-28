@@ -58,7 +58,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
- use deviceXlib_m,  ONLY:dev_memcpy
+ use deviceXlib_m,  ONLY:dev_memcpy,dev_memcpy_h2d,dev_memcpy_d2h
  use cuda_m,        ONLY:have_cuda
 #ifdef _CUDA
  use drivers,       ONLY:Finite_Tel
@@ -248,7 +248,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
      call DEV_SUB(scatter_Gamp)(isc,'c')
-     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
+     if (have_cuda) call dev_memcpy_d2h(isc%gamp,DEV_VAR(isc%gamp))
      !
      ! I/O
      !
@@ -315,7 +315,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
-   if (have_cuda) call dev_memcpy(X_mat_d, X_mat)
+   if (have_cuda) call dev_memcpy_h2d(DEV_VAR(X_mat), X_mat)
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
@@ -353,7 +353,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%qs=(/1,1,1/)
 
        call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw,isc%rhotw_d)
+       if (have_cuda) call dev_memcpy_d2h(isc%rhotw,DEV_VAR(isc%rhotw))
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
@@ -441,15 +441,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        isc%os(1)=ib
        !
        call DEV_SUB(scatter_Bamp)(isc)
-       if (have_cuda) call dev_memcpy(isc%rhotw, isc%rhotw_d)
+       if (have_cuda) call dev_memcpy_d2h(isc%rhotw, DEV_VAR(isc%rhotw))
        iscp%os=isc%os
        !
        if (any(isc%is/=iscp%is)) then
          call DEV_SUB(scatter_Bamp)(iscp)
-         if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
+         if (have_cuda) call dev_memcpy_d2h(iscp%rhotw, DEV_VAR(iscp%rhotw))
        else
          iscp%rhotw=isc%rhotw
-         if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
+         if (have_cuda) call dev_memcpy_h2d(DEV_VAR(iscp%rhotw), iscp%rhotw)
        endif
        !
        dc=cZERO

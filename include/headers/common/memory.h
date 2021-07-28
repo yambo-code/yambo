@@ -164,20 +164,29 @@
   allocate(x, mold=y,  &NEWLINE& stat=MEM_err,errmsg=MEM_msg)NEWLINE \
   YAMBO_ALLOC_CHECK(x)
 
+ /* free */
+
 #define YAMBO_FREE_NO_DEV_CHECK(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
+
+#if defined _OPENACC || defined _OPENMP5
 #define YAMBO_FREE(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if ( dev_allocated(x)) &NEWLINE& call error(QUOTES Trying to deallocate var x still on device memory QUOTES)NEWLINE \
   if (     allocated(x)) &NEWLINE& deallocate(x)
+#else
+#define YAMBO_FREE(x) YAMBO_FREE_NO_DEV_CHECK(x)
+#endif
+
 #define YAMBO_FREE_P(x) \
   if (.not.associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     associated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
   if (     associated(x)) &NEWLINE& deallocate(x);nullify(x)
 
+ /* device allocations, OPENACC/OPENMP5, CUDAF */
 
 #if defined _OPENACC || defined _OPENMP5
 

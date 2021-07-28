@@ -96,17 +96,10 @@ module wave_func
  !
  interface
    !
-   integer function io_WF_old(ID,wf_old)
-     use pars,       ONLY: SP
-     integer            :: ID
-     real(SP), optional :: wf_old(:,:,:,:)
-   end function
-   !
-   integer function io_WF(ID,wf,wf_d)
+   integer function io_WF(ID,wf)
      use pars,       ONLY: SP
      integer            :: ID
      complex(SP), optional :: wf(:,:,:)
-     complex(SP), optional DEV_ATTR :: wf_d(:,:,:)
    end function
    !
    function WF_symm(ifft,isc)

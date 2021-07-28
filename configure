@@ -815,7 +815,6 @@ CC
 ECHO
 editor
 MKMF_PREFIX
-MKMF_VERBOSE
 def_memory_profile
 def_uspp
 def_time_profile
@@ -3076,12 +3075,9 @@ fi
 
 if test x"$enable_msgs_comps" = "x"; then enable_msgs_comps="no"; fi
 MKMF_PREFIX=" "
-MKMF_VERBOSE="VERBOSE=1"
 if test x"$enable_msgs_comps" = "xno"; then
  MKMF_PREFIX="@";
- MKMF_VERBOSE=" "
 fi
-
 
 #
 # ============================================================================

@@ -55,7 +55,10 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 #if defined _OPENACC
  use openacc
  use cufft
+ !use cufft_m
+ use cudafor_m
 #endif
+ use cuda_m,  only: cuda_devsync
  !
 #include<memory.h> 
  !
@@ -75,17 +78,30 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  if (cufft_plan==0) then
    !
 #ifdef _OPENACC
-   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
+   !istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
+   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
 #endif
    istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
  endif
+ !
+#ifdef _OPENACC
+ !DEV_ACC wait(acc_async_noval)
+ !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
+ istat = cuda_devsync()
+#endif
  !
  !DEV_ACC data present(c_d)
  !DEV_ACC host_data use_device(c_d)
  istat = cufftExecZ2Z( cufft_plan, c_d, c_d, i_sign )
  !DEV_ACC end host_data
  !DEV_ACC end data
+ !
+#ifdef _OPENACC
+ !DEV_ACC wait(acc_async_noval)
+ !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
+ istat = cuda_devsync()
+#endif
  !
 end subroutine fft_3d_cuda
 

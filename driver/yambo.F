@@ -39,7 +39,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
  use it_tools,      ONLY:it_reset
@@ -168,10 +168,14 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  l_sta_X = l_em1s .or. (l_optics.and.l_bse)
  !
  i_X_kind=1
- if ( l_real_time .or. l_sc_run) i_X_kind=1
- if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
- if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
- if (                    l_ppa ) i_X_kind=4
+ if  (i_X_kind_existing_DB>0) then
+   i_X_kind=i_X_kind_existing_DB
+ else
+   if ( l_real_time .or. l_sc_run) i_X_kind=1
+   if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
+   if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
+   if (                    l_ppa ) i_X_kind=4
+ endif
  !
  ! DIPOLES
  !=========

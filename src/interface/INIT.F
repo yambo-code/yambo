@@ -49,7 +49,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties,QP_G_er
- use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode,i_X_kind_existing_DB
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset
@@ -533,8 +533,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
        ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
        !
-       if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+       if (io_X_err(2)==0) then
+         i_X_kind_existing_DB=2
+       else if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+         i_X_kind_existing_DB=4
          call X_duplicate(X(4),X(2))
+         Xw(4)%n_freqs=2
          call W_duplicate(Xw(4),Xw(2))
        endif
        !

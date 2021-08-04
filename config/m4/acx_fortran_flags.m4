@@ -316,6 +316,7 @@ ia64*linux* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        FCMFLAG="-nofor-main"
+       CFLAGS="-O2 -std=gnu99"
        ;;
       *17* | *18* | *19* )
        CPU_FLAG=" "

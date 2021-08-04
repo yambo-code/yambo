@@ -126,6 +126,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   Xw(2)%n_freqs=1
+   Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
  endif
  !
@@ -538,7 +540,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        else if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
          i_X_kind_existing_DB=4
          call X_duplicate(X(4),X(2))
-         Xw(4)%n_freqs=2
          call W_duplicate(Xw(4),Xw(2))
        endif
        !

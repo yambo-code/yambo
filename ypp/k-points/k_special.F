@@ -304,9 +304,10 @@ subroutine k_special(LIST_only)
         if (i1<0) chpm="m"
         chpm=trim(chpm)//"p"
         if (i2<0) chpm=trim(chpm)//"m"
+        if (i1==i2.and.i1==1) chpm=" "
         SPECIAL_k%nbz=SPECIAL_k%nbz+1
         SPECIAL_k%pt(SPECIAL_k%nbz,:)=v
-        SPECIAL_k_label(SPECIAL_k%nbz)=label//chpm
+        SPECIAL_k_label(SPECIAL_k%nbz)=label//trim(chpm)
       enddo
     enddo
     !

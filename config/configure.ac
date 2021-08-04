@@ -236,6 +236,7 @@ m4_include([config/urls/repos.list])
 m4_include([config/m4/blas.m4])
 m4_include([config/m4/lapack.m4])
 m4_include([config/m4/netcdf_f90.m4])
+m4_include([config/m4/hdf5_f90.m4])
 m4_include([config/m4/libxc.m4])
 m4_include([config/m4/fft.m4])
 m4_include([config/m4/futile.m4])
@@ -267,6 +268,9 @@ AC_SLK_SETUP
 # ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90
+# ============================================================================
+# HDF5 
+AC_HAVE_HDF5_F90
 # ============================================================================
 # FUTILE library 
 AC_HAVE_FUTILE

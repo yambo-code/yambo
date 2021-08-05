@@ -187,8 +187,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if ( l_em1d .or.(l_life.and.l_elel_corr) ) i_X_kind=3
  if ( l_ppa                               ) i_X_kind=4
  if ( i_X_kind==0 ) then
+   i_X_kind=1
    if ( i_X_kind_existing_DB >0 ) i_X_kind=i_X_kind_existing_DB
-   if ( i_X_kind_existing_DB==0 ) i_X_kind=1
  endif
  !
  driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa

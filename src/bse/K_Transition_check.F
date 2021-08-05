@@ -127,7 +127,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  ! f_eh=0 transitions give no contribution to absorption at the IP level
  ! However they could mix with other transitions beyond IP
  ! Moreover they contribute to the JDOS. However we need to take only the E>0 component
- if ( f_eh_REF==0._SP .and. E_eh<0._SP ) K_Transition_check=.FALSE.
+ if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !

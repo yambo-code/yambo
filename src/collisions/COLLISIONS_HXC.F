@@ -37,7 +37,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_Q_INDEX,&
+&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
@@ -244,7 +244,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (COLLISIONS_parallel_SC_structure) then
    LOCAL_COMM(1)=PAR_COM_QP_A2A%COMM
    LOCAL_COMM(2)=PAR_COM_Q_INDEX%COMM
-   LOCAL_COMM(3)=0 !  ?? PAR_COM_G_b_index%COMM
+   LOCAL_COMM(3)=PAR_COM_QP_INDEX%COMM
  else
    LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
    LOCAL_COMM(2)=MPI_COMM_NULL

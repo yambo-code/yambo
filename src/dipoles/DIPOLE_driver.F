@@ -390,8 +390,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     !
     use parallel_m,  ONLY:PAR_DIPk_ibz_index,PAR_COM_DIPk_ibz_A2A
     !
-    integer  :: ic,iv,i_sp_pol,ik,ik_mem
+    integer  :: ic,iv,i_sp_pol,ik,ik_mem,i_dips,n_dips
     !
+    n_dips=0
+    if (compute_Orb_dipoles) n_dips=2
+    if (l_BS_dichroism)      n_dips=1
+    !
+    do i_dips=1,n_dips
     do i_sp_pol=1,n_sp_pol
       !
       do ik=1,Xk%nibz
@@ -400,33 +405,22 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         !
         ik_mem=PAR_DIPk_ibz_index(ik)
         !
-        if (compute_Orb_dipoles) &
-        & call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,:),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-        if(l_BS_dichroism) call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        call PP_redux_wait(DIP_orbital(:,:,:,ik_mem,i_sp_pol,i_dips),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !
         ! Symmetrization 
         !================
         do iv=Dip%ib(1),Dip%ib_lim(1)
-          if(iv>=Dip%ib_lim(2)) then
-            if (compute_Orb_dipoles) &
-            & DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,:)),0. ,SP)
-           if(l_BS_dichroism) then
-             DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,1)),0. ,SP) 
-           endif
-          endif
+          if(.not.(iv>=Dip%ib_lim(2)) ) cycle
+          DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,i_dips)=cmplx( real(DIP_orbital(:,iv,iv,ik_mem,i_sp_pol,i_dips)),0. ,SP)
           !
           do ic=iv+1,Dip%ib(2)
-            if( iv>=Dip%ib_lim(2) .and. ic<=Dip%ib_lim(1) ) then
-              if (compute_Orb_dipoles) &
-              & DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,:)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,:))
-              if(l_BS_dichroism) then
-                DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,1)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1))
-              endif
-            endif
+            if( .not.(ic<=Dip%ib_lim(1)) ) cycle
+            DIP_orbital(:,iv,ic,ik_mem,i_sp_pol,i_dips)= conjg(DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,i_dips))
           enddo
         enddo
         !
       enddo
+    enddo
     enddo
     !
    end subroutine DIPOLES_ppredux_and_symmetrize_orbt

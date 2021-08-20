@@ -32,7 +32,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_PLASMA_index,&
 &                        PAR_IND_Q_bz,PAR_Q_bz_index,PAR_COM_QP_A2A,PAR_IND_Plasma,&
-&                        PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index,PAR_COM_Q_index
+&                        PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global,PAR_COM_Q_index
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,&
 &                        GW_NEQ_COLL_element,COLL_bands,GW_NEQ_collisions
@@ -132,7 +132,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Write Database Header 
  !
  if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,last_coll,GW_NEQ_collisions,&
-         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index%COMM)
+         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -303,7 +303,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    endif
    !
    if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_coll1,last_coll,GW_NEQ_collisions,&
-   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_INDEX%COMM)
+   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
    !
  enddo
  !

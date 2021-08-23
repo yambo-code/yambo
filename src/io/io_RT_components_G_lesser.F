@@ -217,6 +217,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
 #endif
  !
- call netcdf_call(nf90_sync(io_unit(ID)),ID)
+ ! In case of frequent I/O this gives a significant slowdown of the simulation
+ if (G_IO_steps>=10) call netcdf_call(nf90_sync(io_unit(ID)),ID)
  !
 end subroutine io_RT_components_G_lesser

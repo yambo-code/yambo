@@ -78,6 +78,7 @@ module hamiltonian
    end function
    !
    subroutine H_QP_table_setup(E)
+     use drivers,        ONLY:l_use_collisions
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
@@ -91,11 +92,15 @@ module hamiltonian
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     YAMBO_FREE(QP_state)
-     !
-     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
-     QP_state=.TRUE.
-     call QP_state_table_setup(E)
+     if (.not.l_use_collisions) then
+       !
+       YAMBO_FREE(QP_state)
+       !
+       YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
+       QP_state=.TRUE.
+       call QP_state_table_setup(E)
+       !
+     endif
      !
    end subroutine
    !

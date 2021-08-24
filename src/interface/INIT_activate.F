@@ -458,10 +458,7 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'FFTGvecs')
    !
-   ! The following variable is called EXXCut, but it should be renamed COLLCut
-   ! since it affects all collisions
-   !
-   call initactivate( 1,'EXXCut')
+   call initactivate( 1,'COLLCut')
    !
    call initactivate(-1,'QpntsRXs')
    !

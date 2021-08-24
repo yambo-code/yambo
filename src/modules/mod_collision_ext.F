@@ -46,6 +46,7 @@ module collision_ext
  logical :: COLLISIONS_HXC_local=.FALSE.
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
+ logical :: COLLISIONS_CV_only=.FALSE.
  !
  ! Elements used in the code
  !

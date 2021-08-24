@@ -33,9 +33,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  !  integer,     pointer  :: IO_status(:) => null()
  ! end type
  !
- use collision_ext, ONLY:COLLISIONS_group,COLL_bands
+ use collision_ext, ONLY:COLLISIONS_group,COLL_bands,COLLISIONS_CV_only
  use R_lattice,     ONLY:nXkibz
- use electrons,     ONLY:n_sp_pol
+ use electrons,     ONLY:n_sp_pol,n_full_bands,n_met_bands
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
 #include<memory.h>
@@ -101,6 +101,9 @@ subroutine COLLISIONS_basic_operations( what, COLL )
            ! No Off-diagonal elements in the case of P collisions
            !
            if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
+           !
+           if ( COLLISIONS_CV_only .and. i_n> n_met_bands  ) cycle
+           if ( COLLISIONS_CV_only .and. i_m<=n_full_bands ) cycle
            !
            if (i_m>COLL_bands(2)) cycle
            !

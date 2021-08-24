@@ -67,7 +67,7 @@ subroutine XC_potentials(POTENTIALS_string)
    !
    if (STRING_same(trim(potentials(i_c)),'CVONLY')) then
      COLLISIONS_CV_only=.true.
-     if (.not.STRING_same(trim(POTENTIALS_string),'CVONLY')) POTENTIALS_string=trim(POTENTIALS_string)//" CVONLY"
+     if (.not.index(POTENTIALS_string,'CVONLY')>0) POTENTIALS_string=trim(POTENTIALS_string)//" CVONLY"
    endif
    !
    if (STRING_same(trim(potentials(i_c)),'IP')) then

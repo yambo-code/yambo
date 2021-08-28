@@ -23,12 +23,13 @@
 !
 subroutine ELPH_double_grid(k,E,q)
  !
- use pars,                ONLY:SP,pi
+ use pars,                ONLY:SP,pi,schlen
  use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc,n_sp_pol
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset,qindx_S
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ,EkplusQ_mode
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ,EkplusQ_mode, &
+&                              elph_grids_are_expanded         
  use com,                 ONLY:msg
  use units,               ONLY:HA2CMm1,HA2EV
  use vec_operate,         ONLY:c2a
@@ -46,9 +47,10 @@ subroutine ELPH_double_grid(k,E,q)
  !
  type(bz_samp)         :: q_fine
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded,l_test_PHDGrid
- integer               :: ID,io_err,i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz
+ integer               :: ID,io_err(2),i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz,iq_db
  integer, external     :: io_ELPH,io_Double_Grid
  logical, external     :: file_exists 
+ character(schlen)     :: db_name
  !
  call parser('TestPHDGrid',l_test_PHDGrid)
  !
@@ -82,8 +84,17 @@ subroutine ELPH_double_grid(k,E,q)
  ! Read phonon-frequencies in the ELPH-DB
  ! ======================================
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
- io_err=io_ELPH(ID,'no_matrix_elements')
- if (io_err/=0) call error('El-Ph database not found')
+ io_err(1)=io_ELPH(ID,'gkkp no_matrix_elements')
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID)
+ io_err(2)=io_ELPH(ID,'gkkp_expanded no_matrix_elements')
+ !
+ if (io_err(1)==0.and.io_err(2)==0) call error("Both gkkp and gkkp_expanded are present, please remove one of the two")
+ if (io_err(1)/=0.and.io_err(2)/=0) call error('El-Ph database not found')
+ !
+ if (io_err(1)/=0) db_name='gkkp'
+ if (io_err(1)/=0) db_name='gkkp_expanded'
+ !
+ call msg('rs','GKKP database : '//db_name)
  !
  if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')
  !
@@ -92,10 +103,14 @@ subroutine ELPH_double_grid(k,E,q)
  PH_freqs%nk=elph_nQ
  YAMBO_ALLOC(PH_freqs%E,(PH_freqs%nb,PH_freqs%nk,1))
  !
- do iq_ibz=1,elph_nQ
-   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1+iq_ibz/),ID=ID)
-   io_err=io_ELPH(ID,'no_matrix_elements')
-   PH_freqs%E(:,iq_ibz,1)=sqrt(abs(PH_freqs_sq(iq_ibz,:)))
+ do iq_ibz=1,q%nibz
+   iq_db=iq_ibz
+   if(elph_grids_are_expanded) then
+      if(iq_db>1) iq_db=sum(q%nstar(:iq_ibz-1))+1
+   endif
+   call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1+iq_db/),ID=ID)
+   io_err=io_ELPH(ID,trim(db_name)//' no_matrix_elements')
+   PH_freqs%E(:,iq_db,1)=sqrt(abs(PH_freqs_sq(iq_db,:)))
  enddo
  !
  ! Find border points and remove them if required

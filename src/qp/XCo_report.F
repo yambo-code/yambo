@@ -106,10 +106,8 @@ subroutine XCo_report(qp,E,k)
    if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
    if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
    ! 
-   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))&
-      //trim(ch_spin)//'> ='
-   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))&
-      //trim(ch_spin)//'> ='
+   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))//trim(ch_spin)//'> ='
+   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))//trim(ch_spin)//'> ='
    !
    if (l_Vnl_xc) then
      ch=trim(nloc_fmt)//' '//&

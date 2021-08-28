@@ -27,64 +27,53 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
-AC_MSG_CHECKING([driver lib])
-
-
-
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
  if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
 
-if test -d "$srcdir/src/real_time_lifetimes/"; then
+if test -f ".git" || test -d ".git"; then
   #
-  # develop procedure
+  # git procedure
   #
+  AC_MSG_CHECKING([the yambo-libraries git repository])
   cd lib/
   if ! test -d "yambo/driver/src"; then
-    git clone git@github.com:yambo-code/yambo-libraries.git yambo
+    git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
   else
     cd yambo
-    git checkout master
-    git pull
+    git checkout master >& /dev/null
+    git pull >& /dev/null
     cd ../
   fi
+  m4_include([lib/yambo/driver/config/version.m4])
+  AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
+  #AC_MSG_CHECKING([the libraries archive ])
+  #cp yambo/external/*.gz  $compdir/lib/archive
   cd ../
+  #AC_MSG_RESULT(populated)
   #
 else
   #
-  # gpl procedure
+  # direct download procedure
   #
+  make download
+  TARBALL=`find lib/archive -name 'Ydriver*'`
+  AC_MSG_NOTICE([Extracting yambo internal librar(ies)])
   if ! test -d "lib/yambo/driver/src"; then
-    cd lib/yambo/
-    VERSION="0.0.2"
-    TARBALL="${VERSION}.tar.gz"
-    URL="https://github.com/yambo-code/yambo-libraries/archive/${TARBALL}"
-    rm -rf $TARBALL
-    rm -rf yambo-libraries-${VERSION}
-    if test -x $(command -v wget) ; then
-      wget --no-check-certificate -O ${TARBALL} ${URL} ;
-    elif test -x $(command -v curl) ; then
-      curl -L --progress-bar -o ${TARBALL} ${URL} ;
-    fi
-    if test ! -s $TARBALL ; then
-      echo "*** Unable to download ${TARBALL}. Test whether curl or wget is installed and working," ;
-      echo "*** if you have direct access to the internet." ;
-      echo "*** If not, download ${URL} into folder lib and extract it" ;
-    else
-      echo "Extracting yambo internal library ${TARBALL}" ;
-      tar -xzf $TARBALL
-      rm -rf driver
-      mv yambo-libraries-${VERSION}/* ./
-      rm -rf yambo-libraries-${VERSION}
-    fi
+    AC_MSG_CHECKING([the internal library ${TARBALL}])
+    tar -xzf $TARBALL
+    rm   -rf lib/yambo
+    mkdir -p lib/yambo
+    mv yambo-libraries-*/* lib/yambo
+    rm -rf yambo-libraries-*
+    cd lib/yambo
+    m4_include([lib/yambo/driver/config/version.m4])
+    AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
     cd ../../
-  fi
+  fi 
   #
 fi
 
-m4_include([lib/yambo/driver/config/version.m4])
-
-AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
 
 ])

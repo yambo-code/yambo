@@ -24,7 +24,6 @@
 subroutine K_output_file(iq,mode)
  !
  use pars,      ONLY:pi,SP
- use units,     ONLY:HA2EV
  use drivers,   ONLY:l_col_cut
  use BS_solvers,ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,&
 &                    BSS_n_freqs,K_diago_in_BS_mat  
@@ -41,8 +40,8 @@ subroutine K_output_file(iq,mode)
  use pars,      ONLY:cI
  use electrons, ONLY:spin_occ,n_spinor
  use R_lattice, ONLY:nkbz
- use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI
- use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum
+ use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI,HA2EV
+ use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,BS_field_direction,BS_dip_size
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
  use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
  &                   magp_file_name,magm_file_name
@@ -56,16 +55,15 @@ subroutine K_output_file(iq,mode)
  !
  ! Work Space
  !
- character(2)      :: ordering
- character(2)      :: title_mode
+ character(2)      :: ordering,title_mode
  character(10)     :: name_
  integer           :: iw,i1,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
- complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor
- complex(SP)       :: beta(BSS_n_freqs,3)
- logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out
- logical           :: eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
- &                    l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
+ complex(SP)       :: eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha(BSS_n_freqs,3),refl(BSS_n_freqs,3),alpha_factor,&
+&                     beta(BSS_n_freqs,3)
+ logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out,eval_moke,&
+&                     eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
+&                     l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
  !
  l_INIT      = index(mode,"open")/=0
  l_FINALIZE  = index(mode,"final")/=0
@@ -111,7 +109,6 @@ subroutine K_output_file(iq,mode)
  if (l_abs_out) then
    call parser('Reflectivity',eval_reflectivity)
    eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
-   !
    if (eval_eels) eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
@@ -121,7 +118,8 @@ subroutine K_output_file(iq,mode)
    eval_reflectivity=.false.
  endif
  !
- eval_beta = eval_alpha .and. l_kerr_out
+ eval_beta =      eval_alpha .and. l_kerr_out
+ eval_moke = .not.eval_alpha .and. l_kerr_out
  if ( l_kerr_out.and.l_Haydock ) then
    eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
  endif
@@ -140,8 +138,8 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out) then
    call of_open_close(off_file_name,title_mode)
-   if (.not.eval_beta) call of_open_close(moke_file_name,title_mode)
-   if (     eval_beta) call of_open_close(beta_file_name,title_mode)
+   if (eval_moke) call of_open_close(moke_file_name,title_mode)
+   if (eval_beta) call of_open_close(beta_file_name,title_mode)
  endif
  if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
  if(l_phot_out) call of_open_close(pl_file_name,title_mode)
@@ -153,7 +151,8 @@ subroutine K_output_file(iq,mode)
  if(l_esrt_out) call of_open_close(e_ip_file_name,title_mode)
  if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name,title_mode)
  !
- call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
+ if (BS_dip_size==1) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
+ if (BS_dip_size==2) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(:,2))
  call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  call msg('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#')
@@ -169,14 +168,15 @@ subroutine K_output_file(iq,mode)
  !
  if(eval_alpha_loc) then
    ! Alpha units
-   call msg('o alpha','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o alpha','#',' Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o alpha','#')
  endif
  !
  ! Diamagnetic term
  !
- if(l_abs_out) then
-   call msg('o eps','#','Diamagnetic term',INDENT=0,USE_TABS=.TRUE.)
+ if (l_abs_out) then
+   call msg('o eps','#',' Diamagnetic term',INDENT=0)
+   call msg('o eps','#')
    n_output_data=2
    if(l_IP) n_output_data=1
    headers(:2)=(/'A [nel]','A0[nel]'/)
@@ -192,7 +192,7 @@ subroutine K_output_file(iq,mode)
  !
  if(l_kerr_out .and. eval_beta) then
    ! Alpha units
-   call msg('o beta','#','Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0,USE_TABS=.true.)
+   call msg('o beta','#',' Beta is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o beta','#')
  endif
  !
@@ -200,26 +200,34 @@ subroutine K_output_file(iq,mode)
    !
    ! Hanomalous Hall term
    !
-   call msg('o off','#','Anomalous Hall effect sH',INDENT=0,USE_TABS=.true.)
+   call msg('o off','# ','Anomalous Hall effect (B_Hall):',INDENT=0)
+   call msg('o off','#')
    !
-   n_output_data=6
-   if(l_IP) n_output_data=3
-   headers(:6)=(/'sH ','   ','   ','sH0','   ','   '/)
-   call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-   headers(:6)=(/'  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] ','  [fs]^-1  ','[Ohm*cm]^-1','[e^2/hbar] '/)
-   call msg("o off",'#',headers(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
-   !
+   ! [fs]^-1 -> 1: BS 2: IP
    B_Hall(:)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
    output_data(1)=real(B_Hall(2))
-   output_data(4)=real(B_Hall(1))
+   output_data(2)=real(B_Hall(1))
+   !
+   ! [Ohm*cm]^-1 -> 3: BS 4: IP
    B_Hall(:)=B_Hall(:)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
-   output_data(2)=real(B_Hall(2))
-   output_data(5)=real(B_Hall(1))
-   B_Hall(:)=B_Hall(:)*1.E2_SP*HBAR_SI/e_SI**2
    output_data(3)=real(B_Hall(2))
+   output_data(4)=real(B_Hall(1))
+   !
+   ! [e^2/hbar] -> 5: BS 6: IP
+   B_Hall(:)=B_Hall(:)*1.E2_SP*HBAR_SI/e_SI**2
+   output_data(5)=real(B_Hall(2))
    output_data(6)=real(B_Hall(1))
-   if(l_IP) output_data(1:3)=output_data(4:6)
-   call msg('o off','#',output_data(:n_output_data),INDENT=0,USE_TABS=.TRUE.)
+   !
+   if (l_IP) then
+     call msg('o off','# B_Hall (IP)',output_data(2),INDENT=0,after_msg="[fs]^-1")
+     call msg('o off','#            ',output_data(4),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg('o off','#            ',output_data(6),INDENT=0,after_msg="[e^2/hbar]")
+   else
+     call msg('o off','# B_Hall (BS,IP)',output_data(1:2),INDENT=0,after_msg="[fs]^-1")
+     call msg('o off','#               ',output_data(3:4),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg('o off','#               ',output_data(5:6),INDENT=0,after_msg="[e^2/hbar]")
+   endif
+   !
    call msg('o off','#')
    !
  endif
@@ -256,7 +264,7 @@ subroutine K_output_file(iq,mode)
    call msg("o beta",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
-   if (.not.eval_beta)  then
+   if (eval_moke)  then
      call X_setup_headers('moke')
      call msg("o moke",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
@@ -334,7 +342,6 @@ subroutine K_output_file(iq,mode)
    ! Reflectance is assumed for a 3D system
    ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
    ! R=|r|^2
-   !
    !
    refl=(sqrt(eps)-1._SP)/(sqrt(eps)+1._SP)
    !
@@ -435,7 +442,6 @@ subroutine K_output_file(iq,mode)
      !
    enddo
    !
-   !
    if(eval_beta) then
      !
      ! beta=alpha_xy
@@ -465,11 +471,12 @@ subroutine K_output_file(iq,mode)
      !
    endif
    !
-   if(l_abs_out.and..not.eval_alpha_loc) then
+   if(eval_moke) then
      !
      ! Kerr parameters
      !
      do iw=1,BSS_n_freqs 
+       !
        output_data(1)= w(iw)
        output_data(2)=-aimag(Epsilon_ij(iw,2)/( Epsilon_ii(iw,2)*sqrt(Epsilon_ii(iw,2)+1._SP) ) /DEG2RAD)
        output_data(3)= -real(Epsilon_ij(iw,2)/( Epsilon_ii(iw,2)*sqrt(Epsilon_ii(iw,2)+1._SP) ) /DEG2RAD)
@@ -493,7 +500,10 @@ subroutine K_output_file(iq,mode)
          output_data(6)=-aimag(Epsilon_ij(iw,4)/( Epsilon_ii(iw,4)*sqrt(Epsilon_ii(iw,4)+1._SP) ) /DEG2RAD)
          output_data(7)= -real(Epsilon_ij(iw,4)/( Epsilon_ii(iw,4)*sqrt(Epsilon_ii(iw,4)+1._SP) ) /DEG2RAD)
        endif
-       if (l_IP) then ; n_output_data=3 ; output_data(2:3)=output_data(4:5) ; endif
+       if (l_IP) then  
+         n_output_data=3  
+         output_data(2:3)=output_data(4:5)  
+       endif
        call msg('o moke','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
      enddo
      !

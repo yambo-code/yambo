@@ -35,10 +35,8 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig,&
-&                         BSS_add_antiresonant
- use BS,             ONLY:BS_K_dim,&
-&                         BS_res_ares_dim
+ use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig
+ use BS,             ONLY:BS_K_dim
  !
  implicit none
  !
@@ -71,8 +69,9 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
    if (.not.px%element_1D(i_lambda)) cycle
    !
    BS_R_left(i_lambda) =V_dot_V_omp(BS_K_dim(i_BS_mat),tmp_res,conjg(BS_mat(:,i_lambda)))
-   if (trim(global_gauge)=="velocity") &
-   & BS_R_left(i_lambda) = BS_R_left(i_lambda)*BS_E_real(i_lambda)
+   if (trim(global_gauge)=="velocity") then
+     BS_R_left(i_lambda) = BS_R_left(i_lambda)*BS_E_real(i_lambda)
+   endif
    !
    BS_R_right(i_lambda)=conjg(BS_R_left(i_lambda))
    !

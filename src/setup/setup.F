@@ -24,12 +24,13 @@
 subroutine setup(en,Xen,Ken,k,Xk)
  !
  use pars,           ONLY:SP,pi,schlen
+ use units,          ONLY:Da2AU
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:wf_ng,wf_ncx
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
- use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,&
+ use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
 &                         inv_index,atoms_string,load_PT_elements,n_atoms_species,Z_species,&
 &                         n_atomic_species,PT_elements,non_periodic_directions,lattice,&
@@ -67,7 +68,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_m_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -97,20 +98,34 @@ subroutine setup(en,Xen,Ken,k,Xk)
      if (is<n_atomic_species) atoms_string=atoms_string//"+"
      call msg('r','number of '//PT_elements(Z_species(is))//' atoms    ',n_atoms_species(is))
    enddo
- endif
- !
- if (allocated(atom_mass)) then
+   !
+   ! Atomic masses
+   !
+   if (allocated(atom_mass)) then
+     call msg('nr','List of atomic masses         ')
+     do is=1,n_atomic_species
+       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is)/Da2AU)
+     enddo
+   endif
+   !
+   call msg('nr','List of atomic coordinates    ','[cc]')
    do is=1,n_atomic_species
-       call msg('r','Mass of '//PT_elements(Z_species(is))// '    ',atom_mass(is))
+     do ia=1,n_atoms_species(is)
+       atoms_string=trim(PT_elements(Z_species(is)))//trim(intc(ia))
+       if (allocated(atoms_map)) then
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is),' order '//intc(atoms_map(ia,is)))
+       else
+         call msg('r',trim(atoms_string)//'       ',atom_pos(:,ia,is))
+       endif
+     enddo
    enddo
  endif
  !
  ! DL vol / RL
  !
  call define_b_and_DL_vol()
- call msg('r','Alat factors          ',alat,'[a.u.]')
- !
- call msg('nr','Direct lattice volume ',DL_vol,'[a.u.]') !
+ call msg('nr','Alat factors          ',alat,'[a.u.]')
+ call msg('r','Direct lattice volume ',DL_vol,'[a.u.]') !
  call msg('r','Direct lattice vectors',(/' A[ 1 ]  ',' A[ 2 ]  ',' A[ 3 ]  '/))
  tmp_V=(/a(1,1)/alat(1),a(1,2)/alat(2),a(1,3)/alat(3)/)
  call msg('r',' A[ 1 ]',tmp_V, ' [iru] ')
@@ -143,6 +158,24 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call define_zeros(vector_=g_vec,zero_=G_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_iku_zero)
  call define_zeros(vector_=k%pt, zero_=k_rlu_zero,RLU=.TRUE.)
+ !
+ !
+ call msg('r',' ')
+ !
+ if(fat_log) then
+   !      
+   do is=1,n_atomic_species
+   do ia=1,n_atoms_species(is)
+     call c2a(v_out=tmp_V,v_in=atom_pos(:,ia,is),mode='rc2a')
+     if (allocated(atoms_map)) then
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu]  order '//intc(atoms_map(ia,is)))
+     else
+       call msg('r',' '//PT_elements(Z_species(is))//'  ',tmp_V,' [rlu] ')
+     endif
+   enddo
+   enddo
+   !
+ endif
  !
  ! Symmetries and moltiplication table:
  !

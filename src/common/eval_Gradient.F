@@ -106,7 +106,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    !$cuf kernel do(2) <<<*,*>>>
    do ic = 1,3
    do ig = 1,ng_
-      V3g(ig,ic)=cI*DEV_VAR(g_vec)(ig,ic)*Vr(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
+      V3g(ig,ic)=cI*real(DEV_VAR(g_vec)(ig,ic),DP)*Vr(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
    enddo
    enddo
    !

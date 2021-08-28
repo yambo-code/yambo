@@ -225,13 +225,6 @@ subroutine RT_output(what,VALUES,TIME,E)
        data_to_dump(3:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-2)
      case('YPP-single_time_dos','YPP-single_time_INTERPOLATED_dos')
        data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
-     case('YPP-eps_eq','YPP-refl_eq','YPP-transm_eq')
-       data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
-     case('YPP-trans_eps_real' ,'YPP-trans_eps_imag',&
-&         'YPP-trans_refl_rel','YPP-trans_refl_abs',&
-&         'YPP-trans_transm_rel','YPP-trans_transm_abs',&
-&         'YPP-trans_residual')
-       data_to_dump(3:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-2)
      case('mean_EPlifetimes')
        N=2
        data_to_dump(2:3) = RT_EP_emit_life%mean*HA2EV*1000._SP

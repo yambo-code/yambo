@@ -33,6 +33,7 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        ./configure $(AUXFLAGS) \
 	        CC="$(cc)" \
+	        CFLAGS="$(cflags)" \
 	        FC="$(fc)" \
 	        CPP="$(cpp)" \
 		FCCPP="$(fpp)" ); \

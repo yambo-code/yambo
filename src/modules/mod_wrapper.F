@@ -57,9 +57,9 @@ module wrapper
  end interface
  !
  interface V_plus_alpha_V
-   module procedure vv_saxpy,vv_caxpy,MM_caxpy
+   module procedure vv_s,vv_c,vv_saxpy,vv_caxpy,MM_caxpy
 #ifdef _CUDAF
-   module procedure          vv_caxpy_gpu
+   module procedure          vv_c_gpu,vv_caxpy_gpu
 #endif
  end interface
  !
@@ -271,7 +271,7 @@ module wrapper
    ! interface V_plus_alpha_V
    !=========================
    !
-   subroutine vv_caxpy(N, CA, CX,  CY )
+   subroutine vv_c(N, CA, CX,  CY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(*)
@@ -281,10 +281,24 @@ module wrapper
 #else
      call CAXPY(N,CA,CX,1,CY,1)
 #endif
+   end subroutine vv_c
+
+   !
+   subroutine vv_caxpy(N, CA, CX, LDA,  CY, LDB )
+     complex(SP), intent(in) :: CA
+     integer,     intent(in) :: N
+     complex(SP), intent(in) :: CX(*)
+     complex(SP), intent(out):: CY(*)
+     integer,     intent(in) :: LDA,LDB
+#if defined _DOUBLE
+     call ZAXPY(N,CA,CX,LDA,CY,LDB)
+#else
+     call CAXPY(N,CA,CX,LDA,CY,LDB)
+#endif
    end subroutine vv_caxpy
    !
 #ifdef _CUDAF
-   subroutine vv_caxpy_gpu(N, CA, CX, CY )
+   subroutine vv_c_gpu(N, CA, CX, CY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), device, intent(in) :: CX(*)
@@ -294,10 +308,25 @@ module wrapper
 #else
      call cublasCaxpy(N,CA,CX,1,CY,1)
 #endif
+   end subroutine vv_c_gpu
+#endif
+   !
+#ifdef _CUDAF
+   subroutine vv_caxpy_gpu(N, CA, CX, LDA, CY, LDB )
+     complex(SP), intent(in) :: CA
+     integer,     intent(in) :: N
+     complex(SP), device, intent(in) :: CX(*)
+     complex(SP), device, intent(out):: CY(*)
+     integer,     intent(in) :: LDA,LDB
+#if defined _DOUBLE
+     call cublasZaxpy(N,CA,CX,LDA,CY,LDB)
+#else
+     call cublasCaxpy(N,CA,CX,LDA,CY,LDB)
+#endif
    end subroutine vv_caxpy_gpu
 #endif
    !
-   subroutine vv_saxpy(N, CA, CX, CY )
+   subroutine vv_s(N, CA, CX, CY )
      real(SP),    intent(in) :: CA
      integer,     intent(in) :: N
      real(SP),    intent(in) :: CX(*)
@@ -307,7 +336,21 @@ module wrapper
 #else
      call SAXPY(N,CA,CX,1,CY,1)
 #endif
+   end subroutine vv_s   
+   !
+   subroutine vv_saxpy(N, CA, LDA, CX, CY, LDB )
+     real(SP),    intent(in) :: CA
+     integer,     intent(in) :: N
+     real(SP),    intent(in) :: CX(*)
+     real(SP),    intent(out):: CY(*)
+     integer,     intent(in) :: LDA,LDB
+#if defined _DOUBLE
+     call DAXPY(N,CA,CX,LDA,CY,LDB)
+#else
+     call SAXPY(N,CA,CX,LDA,CY,LDB)
+#endif
    end subroutine vv_saxpy   
+
    !
    !======
    ! COPY 

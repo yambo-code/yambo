@@ -34,7 +34,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,myid
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme
  !
  implicit none
  !
@@ -118,7 +118,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if((i_count==max_count).and.io_err/=0) then
        if(writing) call error(" [DIP] Header not found while writing dipoles ")
        if(reading) call error(" [DIP] Header not found while reading dipoles ")
-       if(  check) call msg('s'," [DIP] Database not correct or missing. To be computed")
+       if(  check) call msg('s',"[DIP] Database not correct or missing. To be computed")
        return
      endif
    enddo

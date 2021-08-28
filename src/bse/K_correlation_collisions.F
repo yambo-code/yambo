@@ -44,7 +44,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_load
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
-&                        BS_K_dim,l_BS_ares_asymm,BS_K_is_ALDA
+&                        BS_K_dim,l_BS_ares_from_res
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
@@ -137,8 +137,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  i_p_bz_last=0  ; i_k_bz_last=0
  !
  mode_now=BS_blk(i_block)%mode
- if(l_BS_ares_asymm) mode_now="F"
- !
+ if (.not.l_BS_ares_from_res) mode_now="F"
  !
  select case (mode_now)
  case("R","A","F")
@@ -178,7 +177,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        ! 
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -269,7 +268,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -385,7 +384,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -486,7 +485,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        ! 
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and..not.BS_K_is_ALDA) then 
+       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 

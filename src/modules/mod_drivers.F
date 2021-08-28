@@ -93,9 +93,7 @@ module drivers
  logical :: l_lrc_fxc            =.FALSE.
  logical :: l_pf_fxc             =.FALSE.
  logical :: l_td_hf              =.FALSE.
- logical :: l_W_eh               =.FALSE.
- logical :: l_W_eh_diag          =.FALSE.
- logical :: l_W_eh_cpl           =.FALSE.
+ logical :: l_td_sex             =.FALSE.
  !
  ! XC kinds (Potential)
  !

@@ -85,13 +85,14 @@ module X_output
      !
    end subroutine
    !
-   subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig)
+   subroutine X_write_q_plus_G(iq,Q_plus_G_pt,ig,Qprime)
      !
      integer            :: iq
-     integer,optional   :: ig
      real(SP)           :: Q_plus_G_pt(3)
-     character(msg_len) :: message(11)
+     character(msg_len) :: message(13)
      character(schlen)  :: unit_msg
+     integer,  optional :: ig
+     real(SP), optional :: Qprime(3)
      !
      if (iq==1.and.ig==1) then
        message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
@@ -104,6 +105,10 @@ module X_output
        message(7) = com_compose_msg(pre='# ',body='moke parameters @ Q('//trim(intc(iq))//')')
        message(8) = com_compose_msg(pre='# ',body='Reflectivity @ Q('//trim(intc(iq))//')')
        unit_msg="[q->0 direction]"
+       if (present(Qprime)) then
+         message(12) = com_compose_msg(pre='# ',body='Off-diagonal Absorption @ Q`('//trim(intc(iq))//')')
+         message(13) = com_compose_msg(pre='# ',body='Off-diagonal Polarizability @ Q`('//trim(intc(iq))//')')
+       endif
      else  if (iq/=1.and.ig==1) then
        message(1) = com_compose_msg(pre='# ',body='Absorption @ Q('//trim(intc(iq))//')')
        message(2) = com_compose_msg(pre='# ',body='EELS @ Q('//trim(intc(iq))//')')
@@ -125,6 +130,10 @@ module X_output
      call msg("o fxc",trim(message(4)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
      call msg("o off",trim(message(5)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
      call msg("o beta",trim(message(6)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
+     if (present(Qprime)) then
+       call msg("o off",trim(message(12)),Qprime,INDENT=0,after_msg=trim(unit_msg))
+       call msg("o beta",trim(message(13)),Qprime,INDENT=0,after_msg=trim(unit_msg))
+     endif
      call msg("o moke",trim(message(7)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
      call msg("o refl",trim(message(8)),Q_plus_G_pt,INDENT=0,after_msg=trim(unit_msg))
      !
@@ -136,7 +145,7 @@ module X_output
      call msg("o Spm" ,"#",trim(message(10)),INDENT=0)
      call msg("o Smp" ,"#",trim(message(11)),INDENT=0)
      !
-     call msg('o eps refl eel fxc alpha off moke jdos Spm Smp CD','#')
+     call msg('o eps refl eel fxc alpha off moke jdos beta Spm Smp CD','#')
      !
    end subroutine
    !
@@ -257,7 +266,7 @@ module X_output
      else
        !
        suffix(1:2) = (/'-Im[2]',  '-Re[3]'/)
-       suffix(3:4) = (/'o-Im[4]','o-Re[5]'/)
+       suffix(3:4) = (/'_o-Im[4]','_o-Re[5]'/)
        suffix(5:6) = (/'`-Im[6]','`-Re[7]'/)
        !
        n_s = 6

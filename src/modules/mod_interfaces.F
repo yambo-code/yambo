@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -110,7 +110,7 @@ module interfaces
      !
    end subroutine
    !
-   subroutine el_density_and_current(E,k,rho,J,bands,force_spatial_inversion)
+   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -118,6 +118,7 @@ module interfaces
      type(bz_samp)::k
      type(levels) ::E       
      real(SP), optional             ::rho(fft_size)
+     real(SP), optional             ::drho(fft_size,3)
      real(SP), optional             ::J(fft_size,3)
      integer,  optional, intent(in) ::bands(2)
      logical,  optional, intent(in) ::force_spatial_inversion

@@ -129,7 +129,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  if (IO_colls) then
    !
 #if defined _PAR_IO
-   call io_control(ACTION=WR,SEC=(/3/),ID=COLL_ID)
+   call io_control(ACTION=WR,SEC=(/3,4/),ID=COLL_ID)
 #else
    call io_control(ACTION=OP_APP_CL,SEC=(/2,3/),ID=COLL_ID)
 #endif
@@ -139,7 +139,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
    !
 #if defined _PAR_IO
    if(i_coll==last_coll) then
-     call io_control(ACTION=WR_CL,SEC=(/4/),ID=COLL_ID)
+     call io_control(ACTION=WR_CL,SEC=(/5/),ID=COLL_ID)
      io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif
 #endif

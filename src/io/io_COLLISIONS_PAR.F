@@ -165,9 +165,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  use pars,          ONLY:schlen,IP,SP
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
-&                        VERIFY,io_extension,io_raw_extension,write_is_on
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,LAST_COLL_sync
+ use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
+&                        VERIFY,io_extension,io_raw_extension,write_is_on,nf90_sync,netcdf_call
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
@@ -188,9 +188,10 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  real(SP),   pointer :: tmp_link_real(:,:)
  complex(SP),pointer :: tmp_link_complex(:,:)
  !
+ character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
- integer           :: i_coll
- logical           :: def,io2,io3
+ integer           :: i_coll,stat
+ logical           :: def1,def2,io2,io3,io4
  !
  call timing('io_COLLISIONS',OPR='start')
  !
@@ -211,37 +212,36 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  if(io_COLLISIONS/=0) goto 1
  !
- def=any(io_sec(ID,:)==1)
+ def1=any(io_sec(ID,:)==1)
+ def2=any(io_sec(ID,:)==2)
+ !
  io2=any(io_sec(ID,:)==2)
  io3=any(io_sec(ID,:)==3)
+ io4=any(io_sec(ID,:)==4)
  !
- if (io2.or.def) then     
-   !
-   if(def) call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,par_io_kind='independent')
-   !
-   if (write_is_on(ID)) then
-     COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
-     if (master_cpu) call io_variable_bulk(ID,1,I0=COLL_element%N)
-   else if(read_is_on(ID)) then
-     call io_variable_bulk(ID,1,I0=COLL_element%N)
-   endif
-   !
+ if (def1) then
+   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,par_io_kind='independent')
+   if (write_is_on(ID)) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
  endif
  !
- if (io3.or.def) then
+ if (io2 .and. ((write_is_on(ID).and.master_cpu).or.read_is_on(ID))) then     
+   call io_variable_bulk(ID,1,I0=COLL_element%N)
+ endif
+ !
+ if (io3.or.def2) then
    !
    if(COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
      ! Real collisions
-     if(def) call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
-     if(io3) then
+     if(def2) call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(io3 ) then
        call C_F_POINTER(C_LOC(COLL_element%v_r),tmp_link_real,(/COLL_element%N,1/))
        call  io_variable_bulk(ID,2,R2=tmp_link_real,IPOS=(/1,i_coll/))
        nullify(tmp_link_real)
      endif
    else
      ! Complex collisions
-     if(def) call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,par_io_kind='independent')
-     if(io3) then
+     if(def2) call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,par_io_kind='independent')
+     if(io3 ) then
        call C_F_POINTER(C_LOC(COLL_element%v_c),tmp_link_complex,(/COLL_element%N,1/))
        call  io_variable_bulk(ID,2,C2=tmp_link_complex,IPOS=(/1,1,i_coll/))
        nullify(tmp_link_complex)
@@ -251,8 +251,27 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    ! This should be used for restart like in BSE ...
    ! if(BS_blk(i_block)%mat(i1,i2)==YAMBO_CMPLX_NO_FILL) cycle
    ! BS_blk(i_block)%done(i1,i2)='t'
-   if(io3.and.read_is_on(ID)) COLL_element%table='t' 
+   if(io3.and.read_is_on(ID)) COLL_element%table='t'
    !
+ endif
+ !
+ if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),0,par_io_kind='independent')
+ !
+ if (io4) then 
+   if (write_is_on(ID)) then
+     COLL%IO_status(i_coll)=1
+     TMP_VAR="t"
+   endif
+   call io_variable_bulk(ID,3,CH1=TMP_VAR(1:1),IPOS=[i_coll])
+   if (read_is_on(ID)) then
+     COLL%IO_status(i_coll)=-1
+     if(TMP_VAR(1)=="t") COLL%IO_status(i_coll)=1
+   endif
+ endif
+ !
+ if(write_is_on(ID).and.i_coll<=LAST_COLL_sync) then
+   stat = nf90_sync(io_unit(ID))
+   call netcdf_call(stat,ID)
  endif
  !
 1 call io_disconnect(ID=ID)

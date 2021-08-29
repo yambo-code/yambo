@@ -36,13 +36,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use xc_functionals,ONLY:F_xc,V_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
- use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
+ use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,ncpu,myid,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
-&                        COLLISIONS_HXC_use_TDDFT
+&                        COLLISIONS_HXC_use_TDDFT,LAST_COLL_sync
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -64,8 +64,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Work Space
  !
  integer                 :: i_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
-&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
+&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,i_loop,&
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,PAR_COLL_min,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
@@ -73,7 +73,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  complex(SP)              :: pre_factor1,pre_factor2
  !
  complex(SP), allocatable :: EM1s(:,:),rhotw_tmp(:)
- integer                  :: io_err,ID_X,ID_HXC,ID_COH
+ integer                  :: io_err,ID_X,ID_HXC,ID_COH,TMP_VEC(ncpu)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
@@ -217,23 +217,35 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
- if (allocated(HXC_collisions%IO_status)) then
-   PAR_NC_local=0
-   do i_coll=1,HXC_collisions%N
-     if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
-     last_coll=i_coll
-     if (HXC_collisions%IO_status(i_coll)/=-1) cycle
-     PAR_NC_local=PAR_NC_local+1
-   enddo
- else if (allocated(COH_collisions%IO_status)) then
-   PAR_NC_local=0
-   do i_coll=1,COH_collisions%N
-     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
-     last_coll=i_coll
-     if (COH_collisions%IO_status(i_coll)/=-1) cycle
-     PAR_NC_local=PAR_NC_local+1
-   enddo
- endif
+ PAR_COLL_min=0
+ !
+ do i_loop=1,2
+   if (allocated(HXC_collisions%IO_status)) then
+     PAR_NC_local=0
+     do i_coll=1,HXC_collisions%N
+       if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+       last_coll=i_coll
+       if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+       PAR_NC_local=PAR_NC_local+1
+       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
+     enddo
+   else if (allocated(COH_collisions%IO_status)) then
+     PAR_NC_local=0
+     do i_coll=1,COH_collisions%N
+       if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+       last_coll=i_coll
+       if (COH_collisions%IO_status(i_coll)/=-1) cycle
+       PAR_NC_local=PAR_NC_local+1
+       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
+     enddo
+   endif
+   if(i_loop==1) then
+     TMP_VEC=0
+     TMP_VEC(myid+1)=PAR_NC_local
+     call PP_redux_wait(TMP_VEC)
+     PAR_COLL_min=minval(TMP_VEC)
+   endif
+ enddo
  !
  n_steps=0
  if (COLLISIONS_HXC_local)                      n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements

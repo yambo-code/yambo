@@ -257,7 +257,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),0,par_io_kind='independent')
  !
- if (io4) then 
+ if (io4) then
    if (write_is_on(ID)) then
      COLL%IO_status(i_coll)=1
      TMP_VAR="t"

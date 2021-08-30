@@ -270,7 +270,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
 #if !defined _PAR_IO
        IO_ACT=RD_CL
 #endif
-       call io_control(ACTION=IO_ACT,SEC=(/3/),ID=ID)
+       call io_control(ACTION=IO_ACT,SEC=(/3,4/),ID=ID)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))
@@ -323,7 +323,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
 #if defined _PAR_IO
      ! close file
-     call io_control(ACTION=RD_CL,SEC=(/4/),ID=ID)
+     call io_control(ACTION=RD_CL,SEC=(/5/),ID=ID)
      io_err(1)=io_COLLISIONS(ID,COLL)
 #endif
      !

@@ -116,12 +116,12 @@ module memory
  !
  interface MEM_count_d
    module procedure &
+#  ifndef _DOUBLE
+&                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
+#  endif
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
-&                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
-#  ifndef _DOUBLE
-&                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d
-#  endif
+&                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d
  end interface MEM_count_d
  !
  contains

@@ -9,7 +9,6 @@ module dev_memory_m
 #if defined __USE_DEVXLIB__
   use deviceXlib_m
 #endif
-  use kinds,         only: SP
   implicit none
   private
 
@@ -86,7 +85,7 @@ contains
   !
   subroutine dev_mem_alloc_r1(var,N,ierr)
     implicit none
-    real(SP), allocatable DEV_ATTR :: var(:)
+    real(c_float), allocatable DEV_ATTR :: var(:)
     integer      :: N
     integer      :: ierr
     !
@@ -101,7 +100,7 @@ contains
   !
   subroutine dev_mem_free_r1(var,ierr)
     implicit none
-    real(SP), allocatable DEV_ATTR :: var(:)
+    real(c_float), allocatable DEV_ATTR :: var(:)
     integer      :: ierr
     !
     ierr=0
@@ -120,30 +119,30 @@ contains
   !
   subroutine dev_memcpy_h2h(x,y)
     implicit none
-    real(SP) :: x(:),y(:)
+    real(c_float) :: x(:),y(:)
     x(:)=y(:)
     return
   end subroutine
   !
   subroutine dev_memcpy_h2d_cuf(x_d,y)
     implicit none
-    real(SP) DEV_ATTR :: x_d(:)
-    real(SP) :: y(:)
+    real(c_float) DEV_ATTR :: x_d(:)
+    real(c_float) :: y(:)
     x_d(:)=y(:)
     return
   end subroutine
   subroutine dev_memcpy_d2h_cuf(x,y_d)
     implicit none
-    real(SP) :: x(:)
-    real(SP) DEV_ATTR :: y_d(:)
+    real(c_float) :: x(:)
+    real(c_float) DEV_ATTR :: y_d(:)
     x(:)=y_d(:)
     return
   end subroutine
   !
   subroutine dev_memcpy_h2d_acc(x_d,y)
     implicit none
-    real(SP) :: x_d(:)
-    real(SP) :: y(:)
+    real(c_float) :: x_d(:)
+    real(c_float) :: y(:)
     !
     x_d=y
     !$acc update device(x_d)
@@ -151,8 +150,8 @@ contains
   !
   subroutine dev_memcpy_d2h_acc(x,y_d)
     implicit none
-    real(SP) :: x(:)
-    real(SP) :: y_d(:)
+    real(c_float) :: x(:)
+    real(c_float) :: y_d(:)
     !
     !$acc update host(y_d)
     x=y_d
@@ -160,8 +159,8 @@ contains
   !
   subroutine dev_memcpy_h2d_omp5(x_d,y)
     implicit none
-    real(SP) :: x_d(:)
-    real(SP) :: y(:)
+    real(c_float) :: x_d(:)
+    real(c_float) :: y(:)
     !
     x_d=y
     !$omp target update to(x_d)
@@ -169,8 +168,8 @@ contains
   !
   subroutine dev_memcpy_d2h_omp5(x,y_d)
     implicit none
-    real(SP) :: x(:)
-    real(SP) :: y_d(:)
+    real(c_float) :: x(:)
+    real(c_float) :: y_d(:)
     !
     !$omp target update from(y_d)
     x=y_d

@@ -3,7 +3,7 @@
 #include <dev_defs.h>
 
 subroutine GPU_test(N)
-  use kinds,            ONLY: SP,DP
+  use iso_c_binding
   use cuda_m,           ONLY: GPU_test_dim
   use gpu_m,            ONLY: have_device
   use dev_memory_m,     ONLY: dev_memcpy_d2h, dev_memcpy_h2d
@@ -12,21 +12,21 @@ subroutine GPU_test(N)
   implicit none
 
   integer, intent(in) :: N
-  real(SP), parameter :: eps=1.0e-6
+  real(c_float), parameter :: eps=1.0e-6
   !
-  real(SP) :: a
+  real(c_float) :: a
   !
   ! prototypes of a standard (and simple) F datastructure
   !
   type(data_t) :: var_ref
   type(data_t) :: var_cpu
   type(data_t), target :: var_gpu
-  real(SP), pointer DEV_ATTR :: var_x_p(:)
-  real(SP), pointer DEV_ATTR :: var_y_p(:)
+  real(c_float), pointer DEV_ATTR :: var_x_p(:)
+  real(c_float), pointer DEV_ATTR :: var_y_p(:)
   !
   character(64) :: device_str
-  real(DP)  :: t0,t1,t_g0,t_g1
-  real(DP), external :: qe_cclock
+  real(c_double)  :: t0,t1,t_g0,t_g1
+  real(c_double), external :: qe_cclock
   integer :: i
 
 !================

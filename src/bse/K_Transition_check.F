@@ -101,8 +101,8 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
    f_h = (spin_occ-Ken%f(ic,ik ,i_sp_c))/spin_occ
  else
-   f_e = (         Ken%f(ic,ikp,i_sp_c))/spin_occ
-   f_h = (spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ
+   f_e = (         Ken%f(ic,ik ,i_sp_c))/spin_occ
+   f_h = (spin_occ-Ken%f(iv,ikp,i_sp_v))/spin_occ
  endif
  !
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ

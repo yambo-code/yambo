@@ -129,8 +129,11 @@ subroutine DIPOLE_shifted_grids(Xen,Xk,Dip)
    !
    if (io_err(iq)/=0) call error(' Shifted grid not found in folder "'//trim(grid_paths_vector(iq))//'" ')
    !
-   if (any( (/nkibz_save/=nkibz_shifted, wf_ncx_save/=wf_ncx_shifted/) ) ) &
-&    call error(' Shifted grid in folder "'//trim(grid_paths_vector(iq))//'": parameters not consistent')
+   if (nkibz_save/=nkibz_shifted) &
+&    call error(' Shifted grid in folder "'//trim(grid_paths_vector(iq))//'": k-points not consistent')
+   !
+   if (wf_ncx_save/=wf_ncx_shifted) &
+&    call warning(' Shifted grid in folder "'//trim(grid_paths_vector(iq))//'": change in number of WFs components')
    !
    call DIPOLE_check_shifted_grids( Xk_shift, Xk, iq, num_shifted_grids, q_mod, grid_order)
    !

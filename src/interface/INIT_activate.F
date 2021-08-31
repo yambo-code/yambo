@@ -263,7 +263,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')

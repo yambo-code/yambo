@@ -113,9 +113,10 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  ! f_eh<0 transitions are included in the anti-resonant part
  if ( f_eh_REF*(-1._SP)**(i_res_ares-1)< 0._SP ) K_Transition_check=.FALSE.
  !
- ! f_eh=0 transitions give no contribution to absorption at the IP level
- ! However they could mix with other transitions beyond IP
- ! Moreover they contribute to the JDOS. However we need to take only the E>0 component
+ !   f_eh=0 transitions give no contribution to absorption at the IP level
+ ! and they do not mix with others neither since the kernel is weighted by f_eh
+ !   However they contribute to the JDOS. We need to take only the E>0 component,
+ ! since the E<0 component is then accounted for by the anti-resonant part
  if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
  !
 #if defined _RT

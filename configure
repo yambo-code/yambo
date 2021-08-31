@@ -679,9 +679,22 @@ internal_yaml
 compile_yaml
 enable_yaml
 def_yaml
+enable_hdf5_p2y_support
+internal_hdf5
+compile_hdf5
+hdf5
+HDF5_OPT
+HDF5_INCS
+HDF5_LIBS
 enable_netcdf_par_io
 enable_netcdf_v3
 enable_netcdf_classic
+internal_netcdf
+compile_pnetcdf
+compile_netcdf
+def_netcdf
+netcdf
+IO_LIB_VER
 PNETCDF_INCS
 PNETCDF_LIBS
 NETCDFF_INCS
@@ -690,19 +703,6 @@ NETCDF_VER
 NETCDF_OPT
 NETCDF_INCS
 NETCDF_LIBS
-enable_hdf5_p2y_support
-internal_hdf5
-internal_netcdf
-compile_hdf5
-compile_pnetcdf
-compile_netcdf
-def_netcdf
-hdf5
-netcdf
-IO_LIB_VER
-HDF5_OPT
-HDF5_INCS
-HDF5_LIBS
 internal_blacs
 compile_blacs
 internal_slk
@@ -924,13 +924,6 @@ with_petsc_includedir
 enable_par_linalg
 with_blacs_libs
 with_scalapack_libs
-with_hdf5_libs
-with_hdf5_path
-with_hdf5_libdir
-with_hdf5_includedir
-enable_hdf5_compression
-enable_hdf5_par_io
-enable_hdf5_p2y_support
 with_netcdf_libs
 with_netcdf_path
 with_netcdf_libdir
@@ -942,7 +935,14 @@ with_netcdff_includedir
 enable_netcdf_classic
 enable_netcdf_par_io
 enable_netcdf_v3
+enable_hdf5_compression
 enable_netcdf_output
+with_hdf5_libs
+with_hdf5_path
+with_hdf5_libdir
+with_hdf5_includedir
+enable_hdf5_par_io
+enable_hdf5_p2y_support
 enable_yaml_output
 with_yaml_libs
 with_yaml_libdir
@@ -1635,17 +1635,17 @@ Optional Features:
   --enable-slepc-linalg   Enable suport for the diagonalization of BSE using
                           SLEPC. Default is no
   --enable-par-linalg     Use parallel linear algebra. Default is no
+  --enable-netcdf-classic Switch to OLD NetCDF classic. Default is no.
+  --enable-netcdf-par-io  Activate the NETCDF parallel io. Default is no.
+  --enable-netcdf-v3      Switch to OLD NETCD v3 format. Default is no.
   --enable-hdf5-compression
                           Activate the HDF5 data compression. Default is no.
+  --enable-netcdf-output  Activate the netcdf copy for some output files.
+                          Default is no.
   --enable-hdf5-par-io    Activate the HDF5 parallel io. Default is no.
   --enable-hdf5-p2y-support
                           Activate HDF5 support in p2y. Default is no unless
                           parallel HDF5 libs are linked.
-  --enable-netcdf-classic Switch to OLD NetCDF classic. Default is no.
-  --enable-netcdf-par-io  Activate the NETCDF parallel io. Default is no.
-  --enable-netcdf-v3      Switch to OLD NETCD v3 format. Default is no.
-  --enable-netcdf-output  Activate the netcdf copy for some output files.
-                          Default is no.
   --enable-yaml-output          Activate the YAML output support. Default is
                                 no
   --enable-iotk           Activate the IOTK support
@@ -1685,10 +1685,6 @@ Optional Packages:
                                 Path to the Petsc include directory
   --with-blacs-libs=<libs>      Use BLACS libraries <libs>
   --with-scalapack-libs=<libs>  Use SCALAPACK libraries <libs>
-  --with-hdf5-libs=<libs>       Use HDF5 libraries <libs>
-  --with-hdf5-path=<path>       Path to the HDF5 install directory
-  --with-hdf5-libdir=<path>     Path to the HDF5 lib directory
-  --with-hdf5-includedir=<path> Path to the HDF5 include directory
   --with-netcdf-libs=<libs>     Use NetCDF libraries <libs>
   --with-netcdf-path=<path>     Path to the NetCDF install directory
   --with-netcdf-libdir=<path>   Path to the NetCDF lib directory
@@ -1699,6 +1695,10 @@ Optional Packages:
   --with-netcdff-libdir=<path>  Path to the NetCDFF lib directory
   --with-netcdff-includedir=<path>
                                 Path to the NetCDFF include directory
+  --with-hdf5-libs=<libs>       Use HDF5 libraries <libs>
+  --with-hdf5-path=<path>       Path to the HDF5 install directory
+  --with-hdf5-libdir=<path>     Path to the HDF5 lib directory
+  --with-hdf5-includedir=<path> Path to the HDF5 include directory
   --with-yaml-libs=<libs>       Use the FUTILE library in <libs>
   --with-yaml-libdir=<path>     Path to the FUTILE lib directory
   --with-yaml-includedir=<path> Path to the FUTILE include directory
@@ -12470,6 +12470,484 @@ LIBS="$reset_LIBS"
 
 
 # ============================================================================
+# NETCDF
+
+
+
+# Check whether --with-netcdf_libs was given.
+if test "${with_netcdf_libs+set}" = set; then :
+  withval=$with_netcdf_libs;
+fi
+
+
+# Check whether --with-netcdf_path was given.
+if test "${with_netcdf_path+set}" = set; then :
+  withval=$with_netcdf_path;
+fi
+
+
+# Check whether --with-netcdf_libdir was given.
+if test "${with_netcdf_libdir+set}" = set; then :
+  withval=$with_netcdf_libdir;
+fi
+
+
+# Check whether --with-netcdf_includedir was given.
+if test "${with_netcdf_includedir+set}" = set; then :
+  withval=$with_netcdf_includedir;
+fi
+
+#
+
+# Check whether --with-netcdff_libs was given.
+if test "${with_netcdff_libs+set}" = set; then :
+  withval=$with_netcdff_libs;
+fi
+
+
+# Check whether --with-netcdff_path was given.
+if test "${with_netcdff_path+set}" = set; then :
+  withval=$with_netcdff_path;
+fi
+
+
+# Check whether --with-netcdff_libdir was given.
+if test "${with_netcdff_libdir+set}" = set; then :
+  withval=$with_netcdff_libdir;
+fi
+
+
+# Check whether --with-netcdff_includedir was given.
+if test "${with_netcdff_includedir+set}" = set; then :
+  withval=$with_netcdff_includedir;
+fi
+
+#
+# Large Databases Support (LFS)
+#
+# Check whether --enable-netcdf_classic was given.
+if test "${enable_netcdf_classic+set}" = set; then :
+  enableval=$enable_netcdf_classic;
+fi
+
+#
+# NETCDF PAR IO
+#
+# Check whether --enable-netcdf_par_io was given.
+if test "${enable_netcdf_par_io+set}" = set; then :
+  enableval=$enable_netcdf_par_io;
+fi
+
+#
+# HDF5 support
+#
+# Check whether --enable-netcdf_v3 was given.
+if test "${enable_netcdf_v3+set}" = set; then :
+  enableval=$enable_netcdf_v3;
+fi
+
+#
+# HDF5 data compression
+#
+# Check whether --enable-hdf5_compression was given.
+if test "${enable_hdf5_compression+set}" = set; then :
+  enableval=$enable_hdf5_compression;
+fi
+
+#
+# NETCDF SHODOW FOR OUTPUT FILES
+#
+# Check whether --enable-netcdf_output was given.
+if test "${enable_netcdf_output+set}" = set; then :
+  enableval=$enable_netcdf_output;
+fi
+
+#
+enable_hdf5="yes" ;
+compile_netcdf="no"
+compile_pnetcdf="no"
+internal_netcdf="no"
+def_netcdf=""
+NETCDF_OPT="--enable-netcdf-4"
+NETCDF_VER="v4"
+IO_LIB_VER="serial";
+#
+save_fcflags="$FCFLAGS" ;
+save_libs="$LIBS" ;
+#
+# global options
+#
+#
+if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no      ; fi
+if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
+if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_hdf5=no  ; fi
+if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
+#
+if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
+#
+#
+#
+# Set NETCDF LIBS and FLAGS from INPUT
+#
+if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
+  #
+  # external netcdf
+  #
+  if test -d "$with_netcdf_libdir" ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF in $with_netcdf_libdir" >&5
+$as_echo_n "checking for NetCDF in $with_netcdf_libdir... " >&6; } ;
+  elif test -d "$with_netcdf_path" ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF in $with_netcdf_path" >&5
+$as_echo_n "checking for NetCDF in $with_netcdf_path... " >&6; } ;
+  fi
+  #
+  if test -d "$with_netcdf_path" ; then
+      try_netcdf_libdir="$with_netcdf_path/lib" ;
+      try_netcdf_incdir="$with_netcdf_path/include" ;
+      try_netcdff_libdir="$with_netcdf_path/lib" ;
+      try_netcdff_incdir="$with_netcdf_path/include" ;
+      try_pnetcdf_libdir="$with_netcdf_path/lib" ;
+      try_pnetcdf_incdir="$with_netcdf_path/include" ;
+  fi
+  if test -d "$with_netcdff_path" ; then
+      try_netcdff_libdir="$with_netcdff_path/lib" ;
+      try_netcdff_incdir="$with_netcdff_path/include" ;
+  fi
+  if test -d "$with_pnetcdf_path" ; then
+      try_pnetcdf_libdir="$with_pnetcdf_path/lib" ;
+      try_pnetcdf_incdir="$with_pnetcdf_path/include" ;
+  fi
+  #
+  if test -d "$with_pnetcdf_libdir"    ; then try_pnetcdf_libdir="$with_pnetcdf_libdir" ; fi
+  if test -d "$with_netcdf_libdir"     ; then try_netcdf_libdir="$with_netcdf_libdir" ; fi
+  if test -d "$with_netcdf_includedir" ; then try_netcdf_incdir="$with_netcdf_includedir" ; fi
+  #
+  if test -d "$with_pnetcdf_libdir"     ; then try_pnetcdf_libdir="$with_pnetcdf_libdir" ; fi
+  if test -d "$with_netcdff_libdir"     ; then try_netcdff_libdir="$with_netcdff_libdir" ; fi
+  if test -d "$with_netcdff_includedir" ; then try_netcdff_incdir="$with_netcdff_includedir" ; fi
+  #
+  if test -z "$try_netcdf_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
+  if test -z "$try_netcdf_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
+  #
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+  #
+  if test -d "$try_pnetcdf_incdir" ; then
+    try_PNETCDF_INCS="$IFLAG$try_pnetcdf_incdir" ;
+  fi
+  try_NETCDF_INCS="$IFLAG$try_netcdf_incdir" ;
+  if test -d "$try_netcdff_incdir" ; then
+    try_NETCDFF_INCS="$IFLAG$try_netcdff_incdir" ;
+  fi
+  #
+  if test x"$enable_pnetcdf" = "xyes"; then
+    if test -r $try_pnetcdf_libdir/libpnetcdf.a ; then
+      try_PNETCDF_LIBS="-L$try_pnetcdf_libdir -lpnetcdf" ;
+    elif test -r $try_netcdf_libdir/libpnetcdf.a ; then
+      try_PNETCDF_LIBS="-L$try_netcdf_libdir -lpnetcdf" ;
+    fi
+  fi
+  try_NETCDF_LIBS="-L$try_netcdf_libdir -lnetcdf" ;
+  if test -r $try_netcdff_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_netcdff_libdir -lnetcdff" ;
+  elif test -r $try_netcdf_libdir/libnetcdff.a ; then
+    try_NETCDFF_LIBS="-L$try_netcdf_libdir -lnetcdff" ;
+  fi
+  #
+elif test x"$with_netcdf_libs" != "x" ; then
+  #
+  # directly provided lib
+  #
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF Library using $with_netcdf_libs" >&5
+$as_echo_n "checking for NetCDF Library using $with_netcdf_libs... " >&6; }
+  if test -d "$with_netcdf_includedir" ; then  try_NETCDF_INCS="$IFLAG$with_netcdf_includedir" ; fi
+  if test -d "$with_netcdff_includedir" ; then try_NETCDFF_INCS="$IFLAG$with_netcdff_includedir" ; fi
+  if test -d "$with_pnetcdf_includedir" ; then try_PNETCDF_INCS="$IFLAG$with_pnetcdf_includedir" ; fi
+  netcdf="yes";
+  try_NETCDF_LIBS="$with_netcdf_libs" ;
+  try_NETCDFF_LIBS="$with_netcdff_libs" ;
+  try_PNETCDF_LIBS="$with_pnetcdf_libs" ;
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  #
+fi
+#
+# TEST NETCDF LIBS and FLAGS
+#
+if test x"$enable_hdf5" = "xno"; then
+  #
+  netcdf=no;
+  #
+  if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" || test x"$with_netcdf_libs" != "x"; then
+    #
+    FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $try_PNETCDF_INCS $save_fcflags";
+    LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $try_PNETCDF_LIBS $save_libs";
+    #
+    cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+      use netcdf
+      implicit none
+      integer nf_err
+      integer ID
+      nf_err = nf90_create('netcdf_test',nf90_share,ID)
+      end
+_ACEOF
+if ac_fn_fc_try_compile "$LINENO"; then :
+  netcdf=yes
+else
+  netcdf=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;
+    #
+    if test "x$netcdf" = "xyes"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; } ;
+      NETCDF_INCS="$try_NETCDF_INCS" ;
+      NETCDF_LIBS="$try_NETCDF_LIBS" ;
+      NETCDFF_INCS="$try_NETCDFF_INCS" ;
+      NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
+      PNETCDF_INCS="$try_PNETCDF_INCS" ;
+      PNETCDF_LIBS="$try_PNETCDF_LIBS" ;
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; } ;
+    fi
+    #
+    FCFLAGS="$save_fcflags" ;
+    LIBS="$save_libs" ;
+    #
+  fi
+  if test "x$netcdf" = "xno"; then
+    #
+    # internal netcdf
+    #
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal NetCDF library" >&5
+$as_echo_n "checking for internal NetCDF library... " >&6; }
+    #
+    internal_netcdf="yes"
+    #
+    if test x"$enable_pnetcdf" = "xyes"; then
+      NETCDF_OPT="--enable-pnetcdf --disable-netcdf-4 --enable-cdf5"
+      NETCDF_VER="v3"
+      IO_LIB_VER="parallel";
+    else
+      NETCDF_OPT="--disable-netcdf-4"
+      NETCDF_VER="v3"
+      IO_LIB_VER="serial";
+    fi
+    #
+    # the following may change if we use a different version
+    # of the netcdf lib
+    #
+    #
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}"
+    #
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a" ;
+    PNETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    #
+    if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
+    if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
+    #
+    netcdf=yes
+    if test x"$enable_pnecdf" = "xyes"; then
+      if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PATH}/lib/libpnetcdf.a"; then
+        compile_netcdf="no" ;
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+      else
+        compile_netcdf="yes" ;
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
+$as_echo "to be compiled" >&6; } ;
+      fi
+    else
+      if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a"; then
+        compile_netcdf="no" ;
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+      else
+        compile_netcdf="yes" ;
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
+$as_echo "to be compiled" >&6; } ;
+      fi
+    fi
+    #
+  fi
+  #
+fi
+#
+#
+# HDF5 support
+#
+if test x"$enable_hdf5" = "xyes"; then
+  #
+  ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+  #
+  # checking for NETDCF
+  #
+  FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $save_fcflags" ;
+  LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS" ;
+  #
+  cat > conftest.$ac_ext <<_ACEOF
+      program main
+
+    use netcdf
+    implicit none
+    integer nf_err
+    integer ID
+    nf_err = nf90_create('netcdf_test',nf90_share,ID)
+
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  netcdf=yes
+else
+  netcdf=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext;
+  #
+  if test "x$netcdf" = "xyes"; then
+    NETCDF_LIBS="$try_NETCDF_LIBS" ;
+    NETCDF_INCS="$try_NETCDF_INCS" ;
+    NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
+    NETCDFF_INCS="$try_NETCDFF_INCS" ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; } ;
+    #
+  fi
+  #
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  #
+  if test "x$netcdf" = "xno"; then
+    if test -d "$with_netcdf_libdir" || test -d "$with_netcdf_path" || test -d "$with_netcdff_libdir" || test -d "$with_netcdff_path" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; } ; fi
+    #
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal NETCDF library" >&5
+$as_echo_n "checking for internal NETCDF library... " >&6; };
+    internal_netcdf="yes" ;
+    #
+    NETCDF_OPT="--enable-netcdf-4";
+    NETCDF_VER="v4";
+    #
+    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
+    NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
+    #
+    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
+    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
+    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
+    #
+    netcdf=yes ;
+    #
+    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ; then
+      #
+      compile_netcdf="no" ;
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+      #
+    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
+      #
+      IO_LIB_VER="parallel";
+      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
+      NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
+      NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled (using parallel version)" >&5
+$as_echo "already compiled (using parallel version)" >&6; } ;
+      #
+    else
+      #
+      compile_netcdf="yes";
+      #
+      if test "$IO_LIB_VER" = "serial";   then HDF5_OPT="--disable-parallel" ; fi
+      if test "$IO_LIB_VER" = "parallel"; then HDF5_OPT="--enable-parallel"  ; fi
+      #
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
+$as_echo "to be compiled" >&6; } ;
+      #
+    fi
+    #
+  fi
+fi
+#
+# NETCDF-HDF5 LIBS
+#
+if test x"$hdf5" = "xyes"; then
+  def_netcdf="-D_HDF5_LIB";
+  #if test "$IO_LIB_VER" = "serial" || test "$IO_LIB_VER" = "unknown" ; then
+  #  def_netcdf="-D_HDF5_LIB";
+  #elif test "$IO_LIB_VER" = "parallel"; then
+  #  def_netcdf="-D_HDF5_PARLIB";
+  #fi
+fi
+#
+# Enable netcdf for output files support
+#
+if test x"$enable_netcdf_output" = "xyes"; then
+  def_netcdf="${def_netcdf} -D_NC_OUTPUT";
+fi
+#
+if test x"$enable_netcdf_classic" = "xyes" ; then
+  #
+  # Disable large File Support
+  #
+  def_netcdf="${def_netcdf} -D_NC_CLASSIC";
+  #
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
+  #
+  # NETCDF-HDF5 IO
+  #
+  def_netcdf="${def_netcdf} -D_HDF5_IO";
+  #
+fi
+#
+# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
+#
+if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_PAR_IO";
+    enable_hdf5_compression="no";
+elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_PAR_IO";
+    compile_pnetcdf=${compile_netcdf};
+    enable_hdf5_compression="no";
+elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
+    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+fi
+#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ============================================================================
 # HDF5
 
 #
@@ -13016,485 +13494,6 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" 
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
 fi
 #
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# ============================================================================
-# NETCDF
-
-
-
-# Check whether --with-netcdf_libs was given.
-if test "${with_netcdf_libs+set}" = set; then :
-  withval=$with_netcdf_libs;
-fi
-
-
-# Check whether --with-netcdf_path was given.
-if test "${with_netcdf_path+set}" = set; then :
-  withval=$with_netcdf_path;
-fi
-
-
-# Check whether --with-netcdf_libdir was given.
-if test "${with_netcdf_libdir+set}" = set; then :
-  withval=$with_netcdf_libdir;
-fi
-
-
-# Check whether --with-netcdf_includedir was given.
-if test "${with_netcdf_includedir+set}" = set; then :
-  withval=$with_netcdf_includedir;
-fi
-
-#
-
-# Check whether --with-netcdff_libs was given.
-if test "${with_netcdff_libs+set}" = set; then :
-  withval=$with_netcdff_libs;
-fi
-
-
-# Check whether --with-netcdff_path was given.
-if test "${with_netcdff_path+set}" = set; then :
-  withval=$with_netcdff_path;
-fi
-
-
-# Check whether --with-netcdff_libdir was given.
-if test "${with_netcdff_libdir+set}" = set; then :
-  withval=$with_netcdff_libdir;
-fi
-
-
-# Check whether --with-netcdff_includedir was given.
-if test "${with_netcdff_includedir+set}" = set; then :
-  withval=$with_netcdff_includedir;
-fi
-
-#
-# Large Databases Support (LFS)
-#
-# Check whether --enable-netcdf_classic was given.
-if test "${enable_netcdf_classic+set}" = set; then :
-  enableval=$enable_netcdf_classic;
-fi
-
-#
-# NETCDF PAR IO
-#
-# Check whether --enable-netcdf_par_io was given.
-if test "${enable_netcdf_par_io+set}" = set; then :
-  enableval=$enable_netcdf_par_io;
-fi
-
-#
-# HDF5 support
-#
-# Check whether --enable-netcdf_v3 was given.
-if test "${enable_netcdf_v3+set}" = set; then :
-  enableval=$enable_netcdf_v3;
-fi
-
-#
-# HDF5 data compression
-#
-# Check whether --enable-hdf5_compression was given.
-if test "${enable_hdf5_compression+set}" = set; then :
-  enableval=$enable_hdf5_compression;
-fi
-
-#
-# NETCDF SHODOW FOR OUTPUT FILES
-#
-# Check whether --enable-netcdf_output was given.
-if test "${enable_netcdf_output+set}" = set; then :
-  enableval=$enable_netcdf_output;
-fi
-
-#
-enable_hdf5="yes" ;
-compile_netcdf="no"
-compile_pnetcdf="no"
-internal_netcdf="no"
-def_netcdf=""
-NETCDF_OPT="--enable-netcdf-4"
-NETCDF_VER="v4"
-IO_LIB_VER="serial";
-#
-save_fcflags="$FCFLAGS" ;
-hdf5_libs="$HDF5_LIBS" ;
-save_libs="$LIBS" ;
-#
-# global options
-#
-#
-if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no      ; fi
-if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
-if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_hdf5=no  ; fi
-if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
-#
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
-if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
-#
-#
-#
-# Set NETCDF LIBS and FLAGS from INPUT
-#
-if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" ; then
-  #
-  # external netcdf
-  #
-  if test -d "$with_netcdf_libdir" ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF in $with_netcdf_libdir" >&5
-$as_echo_n "checking for NetCDF in $with_netcdf_libdir... " >&6; } ;
-  elif test -d "$with_netcdf_path" ; then  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF in $with_netcdf_path" >&5
-$as_echo_n "checking for NetCDF in $with_netcdf_path... " >&6; } ;
-  fi
-  #
-  if test -d "$with_netcdf_path" ; then
-      try_netcdf_libdir="$with_netcdf_path/lib" ;
-      try_netcdf_incdir="$with_netcdf_path/include" ;
-      try_netcdff_libdir="$with_netcdf_path/lib" ;
-      try_netcdff_incdir="$with_netcdf_path/include" ;
-      try_pnetcdf_libdir="$with_netcdf_path/lib" ;
-      try_pnetcdf_incdir="$with_netcdf_path/include" ;
-  fi
-  if test -d "$with_netcdff_path" ; then
-      try_netcdff_libdir="$with_netcdff_path/lib" ;
-      try_netcdff_incdir="$with_netcdff_path/include" ;
-  fi
-  if test -d "$with_pnetcdf_path" ; then
-      try_pnetcdf_libdir="$with_pnetcdf_path/lib" ;
-      try_pnetcdf_incdir="$with_pnetcdf_path/include" ;
-  fi
-  #
-  if test -d "$with_pnetcdf_libdir"    ; then try_pnetcdf_libdir="$with_pnetcdf_libdir" ; fi
-  if test -d "$with_netcdf_libdir"     ; then try_netcdf_libdir="$with_netcdf_libdir" ; fi
-  if test -d "$with_netcdf_includedir" ; then try_netcdf_incdir="$with_netcdf_includedir" ; fi
-  #
-  if test -d "$with_pnetcdf_libdir"     ; then try_pnetcdf_libdir="$with_pnetcdf_libdir" ; fi
-  if test -d "$with_netcdff_libdir"     ; then try_netcdff_libdir="$with_netcdff_libdir" ; fi
-  if test -d "$with_netcdff_includedir" ; then try_netcdff_incdir="$with_netcdff_includedir" ; fi
-  #
-  if test -z "$try_netcdf_libdir" ; then as_fn_error $? "No lib-dir specified" "$LINENO" 5 ; fi
-  if test -z "$try_netcdf_incdir" ; then as_fn_error $? "No include-dir specified" "$LINENO" 5 ; fi
-  #
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-  #
-  if test -d "$try_pnetcdf_incdir" ; then
-    try_PNETCDF_INCS="$IFLAG$try_pnetcdf_incdir" ;
-  fi
-  try_NETCDF_INCS="$IFLAG$try_netcdf_incdir" ;
-  if test -d "$try_netcdff_incdir" ; then
-    try_NETCDFF_INCS="$IFLAG$try_netcdff_incdir" ;
-  fi
-  #
-  if test x"$enable_pnetcdf" = "xyes"; then
-    if test -r $try_pnetcdf_libdir/libpnetcdf.a ; then
-      try_PNETCDF_LIBS="-L$try_pnetcdf_libdir -lpnetcdf" ;
-    elif test -r $try_netcdf_libdir/libpnetcdf.a ; then
-      try_PNETCDF_LIBS="-L$try_netcdf_libdir -lpnetcdf" ;
-    fi
-  fi
-  try_NETCDF_LIBS="-L$try_netcdf_libdir -lnetcdf" ;
-  if test -r $try_netcdff_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$try_netcdff_libdir -lnetcdff" ;
-  elif test -r $try_netcdf_libdir/libnetcdff.a ; then
-    try_NETCDFF_LIBS="-L$try_netcdf_libdir -lnetcdff" ;
-  fi
-  #
-elif test x"$with_netcdf_libs" != "x" ; then
-  #
-  # directly provided lib
-  #
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for NetCDF Library using $with_netcdf_libs" >&5
-$as_echo_n "checking for NetCDF Library using $with_netcdf_libs... " >&6; }
-  if test -d "$with_netcdf_includedir" ; then  try_NETCDF_INCS="$IFLAG$with_netcdf_includedir" ; fi
-  if test -d "$with_netcdff_includedir" ; then try_NETCDFF_INCS="$IFLAG$with_netcdff_includedir" ; fi
-  if test -d "$with_pnetcdf_includedir" ; then try_PNETCDF_INCS="$IFLAG$with_pnetcdf_includedir" ; fi
-  netcdf="yes";
-  try_NETCDF_LIBS="$with_netcdf_libs" ;
-  try_NETCDFF_LIBS="$with_netcdff_libs" ;
-  try_PNETCDF_LIBS="$with_pnetcdf_libs" ;
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  #
-fi
-#
-# TEST NETCDF LIBS and FLAGS
-#
-if test x"$enable_hdf5" = "xno"; then
-  #
-  netcdf=no;
-  #
-  if test -d "$with_netcdf_path" || test -d "$with_netcdf_libdir" || test x"$with_netcdf_libs" != "x"; then
-    #
-    FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $try_PNETCDF_INCS $save_fcflags";
-    LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $try_PNETCDF_LIBS $save_libs";
-    #
-    cat > conftest.$ac_ext <<_ACEOF
-      program main
-
-      use netcdf
-      implicit none
-      integer nf_err
-      integer ID
-      nf_err = nf90_create('netcdf_test',nf90_share,ID)
-      end
-_ACEOF
-if ac_fn_fc_try_compile "$LINENO"; then :
-  netcdf=yes
-else
-  netcdf=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext;
-    #
-    if test "x$netcdf" = "xyes"; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; } ;
-      NETCDF_INCS="$try_NETCDF_INCS" ;
-      NETCDF_LIBS="$try_NETCDF_LIBS" ;
-      NETCDFF_INCS="$try_NETCDFF_INCS" ;
-      NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
-      PNETCDF_INCS="$try_PNETCDF_INCS" ;
-      PNETCDF_LIBS="$try_PNETCDF_LIBS" ;
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; } ;
-    fi
-    #
-    FCFLAGS="$save_fcflags" ;
-    LIBS="$save_libs" ;
-    #
-  fi
-  if test "x$netcdf" = "xno"; then
-    #
-    # internal netcdf
-    #
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal NetCDF library" >&5
-$as_echo_n "checking for internal NetCDF library... " >&6; }
-    #
-    internal_netcdf="yes"
-    #
-    if test x"$enable_pnetcdf" = "xyes"; then
-      NETCDF_OPT="--enable-pnetcdf --disable-netcdf-4 --enable-cdf5"
-      NETCDF_VER="v3"
-      IO_LIB_VER="parallel";
-    else
-      NETCDF_OPT="--disable-netcdf-4"
-      NETCDF_VER="v3"
-      IO_LIB_VER="serial";
-    fi
-    #
-    # the following may change if we use a different version
-    # of the netcdf lib
-    #
-    #
-    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}"
-    #
-    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
-    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
-    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a" ;
-    PNETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    #
-    if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
-    if test "$use_libcurl" = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lcurl"; fi
-    #
-    netcdf=yes
-    if test x"$enable_pnecdf" = "xyes"; then
-      if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PATH}/lib/libpnetcdf.a"; then
-        compile_netcdf="no" ;
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
-$as_echo "already compiled" >&6; } ;
-      else
-        compile_netcdf="yes" ;
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
-$as_echo "to be compiled" >&6; } ;
-      fi
-    else
-      if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a"; then
-        compile_netcdf="no" ;
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
-$as_echo "already compiled" >&6; } ;
-      else
-        compile_netcdf="yes" ;
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
-$as_echo "to be compiled" >&6; } ;
-      fi
-    fi
-    #
-  fi
-  #
-fi
-#
-#
-# HDF5 support
-#
-if test x"$enable_hdf5" = "xyes"; then
-  #
-  ac_ext=${ac_fc_srcext-f}
-ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
-ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_fc_compiler_gnu
-
-  #
-  # checking for NETDCF
-  #
-  FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $save_fcflags" ;
-  LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $hdf5_libs" ;
-  #
-  cat > conftest.$ac_ext <<_ACEOF
-      program main
-
-    use netcdf
-    implicit none
-    integer nf_err
-    integer ID
-    nf_err = nf90_create('netcdf_test',nf90_share,ID)
-
-      end
-_ACEOF
-if ac_fn_fc_try_link "$LINENO"; then :
-  netcdf=yes
-else
-  netcdf=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext;
-  #
-  if test "x$netcdf" = "xyes"; then
-    NETCDF_LIBS="$try_NETCDF_LIBS" ;
-    NETCDF_INCS="$try_NETCDF_INCS" ;
-    NETCDFF_LIBS="$try_NETCDFF_LIBS" ;
-    NETCDFF_INCS="$try_NETCDFF_INCS" ;
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; } ;
-    #
-  fi
-  #
-  FCFLAGS="$save_fcflags" ;
-  LIBS="$save_libs" ;
-  #
-  if test "x$netcdf" = "xno"; then
-    if test -d "$with_netcdf_libdir" || test -d "$with_netcdf_path" || test -d "$with_netcdff_libdir" || test -d "$with_netcdff_path" ; then { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; } ; fi
-    #
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for internal NETCDF library" >&5
-$as_echo_n "checking for internal NETCDF library... " >&6; };
-    internal_netcdf="yes" ;
-    #
-    NETCDF_OPT="--enable-netcdf-4";
-    NETCDF_VER="v4";
-    #
-    NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
-    NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
-    #
-    NETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdf.a" ;
-    NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
-    NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    #
-    netcdf=yes ;
-    #
-    if test -e "${NETCDF_HDF5_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ; then
-      #
-      compile_netcdf="no" ;
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
-$as_echo "already compiled" >&6; } ;
-      #
-    elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
-      #
-      IO_LIB_VER="parallel";
-      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
-      HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
-      NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
-      NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
-      NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
-      NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled (using parallel version)" >&5
-$as_echo "already compiled (using parallel version)" >&6; } ;
-      #
-    else
-      #
-      compile_netcdf="yes";
-      #
-      if test "$IO_LIB_VER" = "serial";   then HDF5_OPT="--disable-parallel" ; fi
-      if test "$IO_LIB_VER" = "parallel"; then HDF5_OPT="--enable-parallel"  ; fi
-      #
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: to be compiled" >&5
-$as_echo "to be compiled" >&6; } ;
-      #
-    fi
-    #
-  fi
-fi
-#
-# NETCDF-HDF5 LIBS
-#
-if test x"$hdf5" = "xyes"; then
-  def_netcdf="-D_HDF5_LIB";
-  #if test "$IO_LIB_VER" = "serial" || test "$IO_LIB_VER" = "unknown" ; then
-  #  def_netcdf="-D_HDF5_LIB";
-  #elif test "$IO_LIB_VER" = "parallel"; then
-  #  def_netcdf="-D_HDF5_PARLIB";
-  #fi
-fi
-#
-# Enable netcdf for output files support
-#
-if test x"$enable_netcdf_output" = "xyes"; then
-  def_netcdf="${def_netcdf} -D_NC_OUTPUT";
-fi
-#
-if test x"$enable_netcdf_classic" = "xyes" ; then
-  #
-  # Disable large File Support
-  #
-  def_netcdf="${def_netcdf} -D_NC_CLASSIC";
-  #
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
-  #
-  # NETCDF-HDF5 IO
-  #
-  def_netcdf="${def_netcdf} -D_HDF5_IO";
-  #
-fi
-#
-# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
-#
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    enable_hdf5_compression="no";
-elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    compile_pnetcdf=${compile_netcdf};
-    enable_hdf5_compression="no";
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-fi
-#
-
-
-
-
 
 
 

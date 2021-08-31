@@ -141,6 +141,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  if (compute_P2_dipoles)   Dip%computed=trim(Dip%computed)//' P2'
  if (compute_Spin_dipoles) Dip%computed=trim(Dip%computed)//' Spin'
  if (compute_Orb_dipoles)  Dip%computed=trim(Dip%computed)//' Orb'
+ if (l_BS_dichroism)       Dip%computed=trim(Dip%computed)//' OrbCD'
  !
  if (use_covariant_approach)  eval_OVERLAPS=.true.
  !

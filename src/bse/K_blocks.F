@@ -136,6 +136,7 @@ subroutine K_blocks( )
    enddo
  enddo
  !
+ n_BS_blks_CPUs=0
  n_BS_blks_CPUs(myid+1)=n_BS_blks
  call PP_redux_wait(n_BS_blks_CPUs)
  n_BS_blks_min=minval(n_BS_blks_CPUs)

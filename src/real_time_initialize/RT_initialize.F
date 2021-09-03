@@ -252,8 +252,8 @@ subroutine RT_initialize(E,k,q)
      if(field_defs(1)/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
 &      call error(trim(MSG_ch)//" field has zero frequency.")
      !
-     !if(Efield(i1)%intensity==0._SP) &
-&    !  call error(trim(MSG_ch)//" field has zero intensity.")
+     if(Efield(i1)%intensity==0._SP) &
+&      call warning(trim(MSG_ch)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
 &      call error(trim(MSG_ch)//" field has undefined direction.")

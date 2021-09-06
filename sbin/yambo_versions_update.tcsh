@@ -119,11 +119,11 @@ EOF
 endif
 cat << EOF > version.awk
 {
- gsub("_VERSION \"$version_old\""  ,"_VERSION \"$version_new\""  ,\$0)
- gsub("_SUBVERSION \"$subver_old\"","_SUBVERSION \"$subver_new\""   ,\$0)
- gsub("_PATCHLEVEL \"$patch_old\"","_PATCHLEVEL \"$patch_new\"",\$0)
- gsub("_REVISION \"$use_rev_old\"" ,"_REVISION \"$use_rev_new\"" ,\$0)
- gsub("_HASH \"$hash_old\""        ,"_HASH \"$hash_new\""        ,\$0)
+ gsub("_VERSION $version_old"  ,"_VERSION $version_new"  ,\$0)
+ gsub("_SUBVERSION $subver_old","_SUBVERSION $subver_new",\$0)
+ gsub("_PATCHLEVEL $patch_old" ,"_PATCHLEVEL $patch_new", \$0)
+ gsub("_REVISION $use_rev_old" ,"_REVISION $use_rev_new" ,\$0)
+ gsub("_HASH \"$hash_old\""    ,"_HASH \"$hash_new\"" ,   \$0)
  print \$0 > "NEW"
 }
 EOF

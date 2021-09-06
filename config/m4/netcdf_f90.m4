@@ -79,6 +79,7 @@ NETCDF_VER="v4"
 IO_LIB_VER="serial";
 #
 save_fcflags="$FCFLAGS" ;
+hdf5_libs="$HDF5_LIBS" ;
 save_libs="$LIBS" ;
 #
 # global options
@@ -274,7 +275,7 @@ if test x"$enable_hdf5" = "xyes"; then
   # checking for NETDCF
   #
   FCFLAGS="$try_NETCDFF_INCS $try_NETCDF_INCS $save_fcflags" ;
-  LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS" ;
+  LIBS="$try_NETCDFF_LIBS $try_NETCDF_LIBS $hdf5_libs" ;
   #
   AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
     use netcdf

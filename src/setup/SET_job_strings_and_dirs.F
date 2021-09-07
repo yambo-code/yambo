@@ -43,6 +43,8 @@ subroutine SET_job_strings_and_dirs(JS)
  alt_jobstr=" "
  jobdir    =" "
  alt_jobdir=" "
+
+ write (*,*) trim(com_path)
  !
  do i_j=1,n_max_jobstr
    !
@@ -68,8 +70,13 @@ subroutine SET_job_strings_and_dirs(JS)
      jobstr=job
      jobdir=path
      if (len_trim(path)>0) then
-       com_path=path
-       if (len_trim(more_io_path)>0) com_path=trim(more_io_path)//"/"//trim(path)
+       if (len_trim(com_path)>0) then
+         com_path=trim(com_path)//"/"//trim(path)
+       else if (len_trim(more_io_path)>0) then
+         com_path=trim(more_io_path)//"/"//trim(path)
+       else
+         com_path=trim(path)
+       endif
      endif
    else
      alt_jobstr(i_j-1)=job

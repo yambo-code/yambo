@@ -43,8 +43,6 @@ subroutine SET_job_strings_and_dirs(JS)
  alt_jobstr=" "
  jobdir    =" "
  alt_jobdir=" "
-
- write (*,*) trim(com_path)
  !
  do i_j=1,n_max_jobstr
    !

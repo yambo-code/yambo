@@ -152,11 +152,11 @@ subroutine NL_initialize(E,k)
  !
  if((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none') then
    l_pump_and_probe=.true.
-   call msg('sr','Pump and probe configuration: verbosity set to high')
+   call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
    if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
    NL_verbosity=VERB_HIGH
  elseif((Efield(1)%ef_name/='none').and.Efield(2)%ef_name=='none') then
-   call msg('sr','Non-linear optics configuration')
+   call msg('sr','[NL] Non-linear optics configuration')
  else
    call error(" Please set at least one external field ! ")
  endif

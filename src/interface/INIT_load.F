@@ -528,7 +528,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
  call it(defs,'ExtF_Dir',             '[NL ExtF] Field Versor',Efield(1)%versor)
- call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit)
  call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
  call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1))

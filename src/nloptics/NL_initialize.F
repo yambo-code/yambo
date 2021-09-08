@@ -39,7 +39,7 @@ subroutine NL_initialize(E,k)
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe
  use electric,       ONLY:l_force_SndOrd
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
@@ -126,7 +126,7 @@ subroutine NL_initialize(E,k)
    if((Efield(i1)%ef_name=='none')) cycle
    !
    if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) then
-     call msg('rs'," External "//intc(i1)//" is zero.")
+     call msg('rs',"External field "//intc(i1)//" versor is zero.")
      Efield(i1)%ef_name='none'
      cycle
    endif
@@ -149,6 +149,17 @@ subroutine NL_initialize(E,k)
    call Check_symmetries(Efield(i1)%versor,"electric")
    !
  enddo
+ !
+ if((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none') then
+   l_pump_and_probe=.true.
+   call msg('sr','Pump and probe configuration: verbosity set to high')
+   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
+   NL_verbosity=VERB_HIGH
+ elseif((Efield(1)%ef_name/='none').and.Efield(2)%ef_name=='none') then
+   call msg('sr','Non-linear optics configuration')
+ else
+   call error(" Please set at least one external field ! ")
+ endif
  !
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')

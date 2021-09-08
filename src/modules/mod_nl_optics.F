@@ -128,6 +128,11 @@ module nl_optics
  integer  :: n_frequencies
  integer  :: n_freqs_todo
  !
+ ! Pump and probe
+ !
+ logical :: l_pump_and_probe=.FALSE.
+ ! 
+ !
  ! Wavefunction sampling
  !
  type NLsampleWF

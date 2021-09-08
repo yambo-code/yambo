@@ -416,7 +416,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative Yambo sets it equal to Phase_LifeTime in NL)', &
+&         RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
  call it(defs,'DephTRange', '[RT] Time range in which Dephasing is applied',RT_deph_range,unit=Time_unit(1),Verb_level=V_real_time)
@@ -533,11 +534,17 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
  call it(defs,'ExtF_Dir',             '[NL ExtF] Field Versor',Efield(1)%versor)
- call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
+ call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit)
+ call it(defs,'ExtF_Freq',            '[NL ExtF] Field Frequency',Efield(1)%frequency,unit=E_unit)
  call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
  call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
- call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
-&    verb_level=V_nl_optics)
+ call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1))
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Field Versor',Efield(2)%versor)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Field Intensity',Efield(2)%intensity,unit=I_unit)
+ call it(defs,'ExtF2_Freq',            '[NL ExtF] Field Frequency',Efield(2)%frequency,unit=E_unit)
+ call it(defs,'ExtF2_Width',           '[NL ExtF] Field Width',Efield(2)%width,unit=Time_unit(1))
+ call it(defs,'ExtF2_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(2)%ef_name)
+ call it(defs,'ExtF2_Tstart',          '[NL ExtF] Initial Time',Efield(2)%t_initial,unit=Time_unit(1))
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
  !
 #endif
@@ -545,6 +552,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Versor',Efield(2)%versor,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Intensity',Efield(2)%intensity,unit=I_unit,verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
 #endif
  !

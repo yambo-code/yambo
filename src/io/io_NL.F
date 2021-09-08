@@ -48,7 +48,7 @@ integer function io_NL(ID)
  !
  integer              :: i_fragment,ID_frag
  character(schlen)    :: VAR_name
- integer, parameter   :: i_Prb=1
+ integer              :: i_Prb
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
@@ -110,6 +110,8 @@ integer function io_NL(ID)
  if(io_NL/=0) goto 1
  !
  ! Efield 
+ !
+ i_Prb=1 ! we store only the first field in the fragments
  !
  call io_elemental(ID_frag,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
  call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))

@@ -155,7 +155,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_NL
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_Nonlinear=io_NL(ID)
+ io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
    if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)

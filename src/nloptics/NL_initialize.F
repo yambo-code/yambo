@@ -26,6 +26,7 @@ subroutine NL_initialize(E,k)
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
+ use collision_ext,  ONLY:COLLISIONS_CV_only
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
@@ -116,10 +117,6 @@ subroutine NL_initialize(E,k)
  ! Check Field
  ! =========================
  !
- ! This part of the code works with only one field
- !
- n_ext_fields=2
- !
  do i1=1,n_ext_fields
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
@@ -176,7 +173,9 @@ subroutine NL_initialize(E,k)
  ! the Phase_LifeTime is 1/2 of the one used in the 
  ! Non-Equilibrium Green's Function
  !
- Phase_LifeTime=2._SP/NL_damping
+ RAD_Lifetime=0._SP
+ Phase_LifeTime=0._SP
+ if (NL_damping>0._SP) Phase_LifeTime=2._SP/NL_damping
  !
  if(RAD_LifeTime<0._SP) then
    if(Phase_LifeTime/=0._SP) then
@@ -237,6 +236,8 @@ subroutine NL_initialize(E,k)
  !
  ! NB.: This part duplicates what is in
  !      INIT.F 
+ !
+ COLLISIONS_CV_only=.true.
  ! 
  select case (trim(NL_Correlation))
     case('IPA')

@@ -148,7 +148,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  do ikbz_ikpbz_FineGd_used=1,X_DbGd_nkpt_at_q(ikbz_mem)
    !
-   ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
+   ikbz_FineGd =X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
    if(ikbz_FineGd==Xk%FGbz%k_range(ikbz,1)) then

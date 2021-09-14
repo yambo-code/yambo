@@ -43,7 +43,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
  end type Haydock_vector
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  !
  ! Slepc
  !==========
@@ -84,7 +84,7 @@ module BS_solvers
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
 #endif
  !

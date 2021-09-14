@@ -134,6 +134,13 @@ subroutine X_redux(iq,X_par,Xw,X)
    v_environ%blc=cZERO
    work%blc=cZERO
    call environ_vcoul(q_pt(iq,:),v_environ,.true.)
+   !
+   ! debug
+! XXX
+   call environ_test(q_pt(iq,:),v_environ,"onsager")
+   STOP
+! XXX
+   !
  endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)

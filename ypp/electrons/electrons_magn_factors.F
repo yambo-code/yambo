@@ -45,13 +45,19 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/kpts(2)-kpts(1)+1,bands(2)-bands(1)+1/))
  !
- call live_timing('Magn-factor',px%n_of_elements(myid+1))
- !
  magn_factors=0._SP
  !
  do ik=kpts(1),kpts(2)
-   if( .not.any(px%element_2D(ik-kpts(1)+1,:)) ) cycle
+   !
+   if( .not.any(px%element_2D(ik-kpts(1)+1,:)) ) then
+     if (ik==kpts(1)) call live_timing('Magn-factor',px%n_of_elements(myid+1))
+     cycle
+   endif
+   !
    call WF_load(WF,0,1,bands,(/ik,ik/),title='-Magn-factor',impose_free_and_alloc=.TRUE.)
+   !
+   if (ik==1) call live_timing('Magn-factor',px%n_of_elements(myid+1))
+   !
    do ib=bands(1),bands(2)
      if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
      i_wf=WF%index(ib,ik,1)

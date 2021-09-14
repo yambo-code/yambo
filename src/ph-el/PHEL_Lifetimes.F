@@ -23,7 +23,7 @@
 !
 subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  !
- ! This routine computes the phonon lifetimes in and out of equilibrium.
+ ! This routine computes the phonon lifetimes out of equilibrium (i.e., scattering rates).
  ! 
  ! It uses a table of allowed phonon scattering transitions pre-determined 
  ! in PH_Grid_Check_Transitions.
@@ -34,16 +34,15 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  use pars,           ONLY:SP,cI,pi,rZERO
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_full_bands,spin_occ,E_fine_grid
- use R_lattice,      ONLY:bz_samp,qindx_X,bz_fine_grid
+ use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use RT_occupations, ONLY:RT_ph_occ,RT_el_occ,RT_ho_occ,RT_life_occ
  use RT_lifetimes,   ONLY:l_initial_equilibrium,RT_PE_life,RT_PE_extra
  use real_time,      ONLY:l_RT_uses_E_FineGd,RT_eh_en
  use ELPH,           ONLY:PH_freqs_sq,MAX_gkkp,PH_acoustic_branch,GKKP_pe_sq,&
 &                         l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
  use parallel_m,     ONLY:PARs_PH_Q_ibz
- use QP_m,           ONLY:QP_G_damp
+ use QP_m,           ONLY:QP_G_damp,l_extended_output
  use LIVE_t,         ONLY:live_timing
- use com,            ONLY:fat_log
  use PHEL,           ONLY:l_PH_uses_E_FineGd,phel_info
  !
  implicit none
@@ -68,7 +67,7 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
  integer               :: iq,ikbz,ik,ik_m_q,iq_mem,ik_rim,ip_rim,iq_life
  ! ... lifetime related quantities ...
  real(SP) :: D_res,D_ares,DELTA_E,DELTA_W,pre_factor,&
-&            TMP_Emit_lifetime,TMP_Abs_lifetime,TMP_eh_lifetime,N_q,f_mkq,f_nk,&
+&            TMP_Emit_lifetime,TMP_Abs_lifetime,N_q,f_mkq,f_nk,&
 &            Hole_f_mkq,Hole_f_nk
  real (SP) :: TMP_linewidth
  !
@@ -82,29 +81,18 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    il     = phel_info%table(it,1) ! phonon branch
    iq     = phel_info%table(it,2) ! phonon momentum (ibz)
    ikbz   = phel_info%table(it,3) ! electron momentum (bz)
-   ik_rim = phel_info%table(it,4) ! fine grid elec. momentum
-   ip_rim = phel_info%table(it,5) ! fine grid scattered elec. momentum
-   i_n    = phel_info%table(it,6) ! electronic band
-   i_np   = phel_info%table(it,7) ! electronic band
+   ik_m_q = phel_info%table(it,4) ! scattered elec. momentum (_PH: bz / _RT: ibz) 
+   ik_rim = phel_info%table(it,5) ! fine grid elec. momentum
+   ip_rim = phel_info%table(it,6) ! fine grid scattered elec. momentum
+   i_n    = phel_info%table(it,7) ! electronic band
+   i_np   = phel_info%table(it,8) ! electronic band
    !
-#if defined _RT
-   ! Obtain k-q in the ibz from k in the bz and q in the ibz: 
-   ik_m_q =k%sstar(qindx_X(iq,ikbz,1),1)
-   ! Obtain k in the ibz from k in the bz: 
+   ! If running RT: use k in the ibz
    ik = k%sstar(ikbz,1)
-#else
-   ! Obtain k-q in the bz from k in the bz and q in the ibz
-   ik_m_q = qindx_X(iq,ikbz,1)
-   ! Use k in the bz
-   ik = ikbz
-#endif
    !
    ! Index for q-parallelised quantities
    iq_mem =PARs_PH_Q_ibz%table(iq)
-   iq_life=iq
-#if defined _RT
    iq_life=iq_mem
-#endif  
    !
    if (l_GKKP_expanded_DB_exists) ph_freq=abs(sqrt(PH_freqs_sq(q%k_table(iq,1),il)))
    if (l_GKKP_DB_exists         ) ph_freq=abs(sqrt(PH_freqs_sq(iq,il)))
@@ -153,20 +141,16 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !====================================
    if (.not. l_RT_uses_E_FineGd .and. .not. l_PH_uses_E_FineGd) then
      !
-#if defined _RT
      if(E_FG%E(i_np,ik_m_q,1)<RT_eh_en(1) .or. E_FG%E(i_np,ik_m_q,1)>RT_eh_en(2)) cycle
      if(E_FG%E(i_n ,ik    ,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik    ,1)>RT_eh_en(2)) cycle
-#endif
      !
      DELTA_E=E_FG%E(i_n,ik,1)-E_FG%E(i_np,ik_m_q,1)
      DELTA_W=E_FG%W(i_n,ik,1)+E_FG%W(i_np,ik_m_q,1)
      !
    else
      ! 
-#if defined _RT
      if(E_FG%E(i_np,ip_rim,1)<RT_eh_en(1) .or. E_FG%E(i_np,ip_rim,1)>RT_eh_en(2)) cycle
      if(E_FG%E(i_n ,ik_rim,1)<RT_eh_en(1) .or. E_FG%E(i_n ,ik_rim,1)>RT_eh_en(2)) cycle
-#endif
      !
      DELTA_E=E_FG%E(i_n,ik_rim,1)-E_FG%E(i_np,ip_rim,1)
      DELTA_W=E_FG%W(i_n,ik_rim,1)+E_FG%W(i_np,ip_rim,1)
@@ -177,13 +161,14 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !============
    ! 
    ! Lorentzian broadening / spectral convolution 
-#if defined _RT
-   D_ares=RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
-   D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')
-#else
-   D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
-   D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
-#endif
+
+   if (l_initial_equilibrium) then
+     D_ares=1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"Ta") )
+     D_res =1./pi*aimag( Lorentzian_FT(ph_freq-cI*QP_G_damp,DELTA_E+cI*delta_W,"r" ) )
+   else
+     D_ares=RT_G_retarded_convolution(DELTA_E,+ph_freq,DELTA_W,0._SP,'EP')
+     D_res =RT_G_retarded_convolution(DELTA_E,-ph_freq,DELTA_W,0._SP,'EP')     
+   endif
    !
    ! Electron and hole occupations
    !
@@ -203,27 +188,41 @@ subroutine PHEL_Lifetimes(E,k,q,k_FG,E_FG)
    !
    TMP_Emit_lifetime=rZERO
    TMP_Abs_lifetime=rZERO
-   TMP_eh_lifetime=rZERO
    TMP_linewidth=rZERO
    !
-   TMP_Emit_lifetime = f_nk*Hole_f_mkq*D_ares+Hole_f_nk*f_mkq*D_res
-   TMP_Abs_lifetime  = f_nk*Hole_f_mkq*D_res +Hole_f_nk*f_mkq*D_ares
+   TMP_Emit_lifetime = f_mkq*Hole_f_nk*D_ares+Hole_f_mkq*f_nk*D_res
+   TMP_Abs_lifetime  = f_mkq*Hole_f_nk*D_res +Hole_f_mkq*f_nk*D_ares
    ! This is Eq. (4) of [PRB 71, 064501 (2005)], i.e., retarded ph-el self-energy g^2*GG
-   if (fat_log) TMP_linewidth     = (f_mkq-f_nk)*D_res
+   if (l_initial_equilibrium) TMP_linewidth      = f_mkq*Hole_f_nk*D_res-Hole_f_mkq*f_nk*D_res
    !
    ! Phonon emission (stimulated and spontaneous)
-   RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+   RT_PE_life%emit(il,iq_life)=RT_PE_life%emit(il,iq_life)+TMP_Emit_lifetime*pre_factor
    ! Phonon absorption
-   RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor*N_q
-   !    
-   if (fat_log) then
+   RT_PE_life%abs(il,iq_life) =RT_PE_life%abs(il,iq_life)+TMP_Abs_lifetime*pre_factor
+   ! Linewidth at equilibrium
+   if (l_initial_equilibrium) then
+     RT_PE_life%eq(il,iq_life)=RT_PE_life%eq(il,iq_life)+TMP_linewidth*pre_factor
+   endif
+   !
+   ! Interband and intraband (Drude) components of the lifetimes (eq or emit depending on calc.)
+   if (l_extended_output) then
      !
-     RT_PE_extra%linewidth(il,iq_life)=RT_PE_extra%linewidth(il,iq_life)+TMP_linewidth*pre_factor
-     ! Interband and intraband (Drude) components of the Emit lifetimes  
      if (i_np == i_n) then
-       RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+       ! Intraband
+       if (l_initial_equilibrium) then
+         RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_linewidth*pre_factor
+       else
+         RT_PE_extra%intraband(il,iq_life)= RT_PE_extra%intraband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       endif
+       !
      else
-       RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor*(N_q+1._SP)
+       ! Interband
+       if (l_initial_equilibrium) then
+         RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_linewidth*pre_factor
+       else
+         RT_PE_extra%interband(il,iq_life)= RT_PE_extra%interband(il,iq_life) +TMP_Emit_lifetime*pre_factor
+       endif
+       !
      endif
      !
    endif

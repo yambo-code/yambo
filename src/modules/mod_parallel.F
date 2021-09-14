@@ -625,6 +625,17 @@ module parallel_m
      CPU_structure(10)%Short_Description="PH_SE"
    end subroutine
    !
+   subroutine COMM_reset(COMM)
+     type(yMPI_comm):: COMM
+     COMM%n_CPU      =1
+     COMM%COMM       =comm_default_value
+     COMM%my_CHAIN   =1
+     COMM%chain_order=nchains_group(2)
+     COMM%CPU_ID     =0
+   end subroutine
+   !
+#if !defined _io_lib
+   !
    subroutine PAR_scheme_reset(PARs)
      type(PAR_scheme):: PARs
      call COMM_reset(PARs%COMM_i)
@@ -638,15 +649,6 @@ module parallel_m
      PARs%consecutive= .FALSE.
    end subroutine
    !
-   subroutine COMM_reset(COMM)
-     type(yMPI_comm):: COMM
-     COMM%n_CPU      =1
-     COMM%COMM       =comm_default_value
-     COMM%my_CHAIN   =1
-     COMM%chain_order=nchains_group(2)
-     COMM%CPU_ID     =0
-   end subroutine
-   !
    subroutine COMM_copy(COMM_in,COMM_out)
      type(yMPI_comm):: COMM_in,COMM_out
      COMM_out%n_CPU      =COMM_in%n_CPU
@@ -656,7 +658,6 @@ module parallel_m
      COMM_out%CPU_ID     =COMM_in%CPU_ID
    end subroutine
    !
-#if !defined _io_lib
    subroutine PAR_INDEX_copy(IND_in,IND_out)
      type(PP_indexes):: IND_in,IND_out
      integer :: dim_

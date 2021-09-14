@@ -196,6 +196,12 @@ subroutine ELPH_databases(k,E,q)
    enddo
  enddo
  elph_use_q_grid=all((/DB_Q_map/=0/))
+ if (.not.elph_use_q_grid) then
+   if (DB_Q_map(1)/=1) call error("First qpt must be Gamma.")
+   do idb=1,DB_nq
+     DB_Q_map(idb)=idb
+   enddo
+ endif
  !
  ! ... Transfer and write ...
  !----------------------------

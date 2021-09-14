@@ -32,14 +32,12 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use parser_m,      ONLY:parser
  use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,QP_n_G_bands,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
-&                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
-&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations
+&                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
+&                        l_GW_terminator,GW_terminator_Kind,QP_G_info,GW_iterations,GWo_iterations
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -54,40 +52,28 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
 #include<memory.h>
  !
- type(levels) ::en,Xen
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(w_samp) ::Xw
+ type(levels)  ::en,Xen
+ type(bz_samp) ::Xk,k,q
+ type(X_t)     ::X
+ type(w_samp)  ::Xw
  type(DIPOLE_t)::Dip
  !
  ! Work Space
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
- integer           :: lw_bnd
+ integer           ::lw_bnd
  integer, external ::io_QP_and_GF
  real(SP),external ::G2E
  !
- ! Driver Logicals
- !=================
- !
- call parser('NewtDchk',   QP_dSc_test)
- call parser('OnMassShell',On_Mass_Shell_approx)
- call parser('QPExpand'   ,l_QP_Expand)
- call parser('UseEbands',  COHSEX_use_empties)
- call parser('QPsymmtrz',   l_QP_symmetrize)
- call parser('GreenF2QP',  use_GreenF_to_eval_QP)
- use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- call parser('ExtendOut',  l_extended_output)
+ ! Logicals
+ !==========
+ call QP_logicals( )
  !
  ! Some check
  if (QP_n_G_bands(2)>en%nb) call error("Too many bands required in Green's function. Run DFT with more bands!")
  !
- if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
- !
  if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
- !
- l_GW_terminator=GW_terminator_Kind/='none'
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
  ! 
@@ -241,9 +227,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  endif
  !
  if (l_ppa.and.l_GW_terminator) then
-     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
-     call warning(' Response block size in GW reduced to '//intc(X%ng) &
-&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+   X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+   call warning(' Response block size in GW reduced to '//intc(X%ng)//'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
  endif
  !
  ! Local Allocations
@@ -479,7 +464,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    end subroutine
    !
 end subroutine
-
+!
 subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !
   ! Check if qp-indexes are continous for SC-GW

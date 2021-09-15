@@ -184,9 +184,11 @@ if test x"$enable_openacc" != "xno" ; then
    case "${FCVERSION}" in
     *nvfortran*)
       DEVXLIB_FLAGS+="--enable-openmp"
-      GPU_FLAGS="-acc="gpu,multicore" -acclibs -gpu=cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-acc=gpu,multicore -acclibs -gpu=cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      ;;
     *pgfortran*)
-      GPU_FLAGS="-acc -acclibs -ta=tesla:${with_cuda_cc}"              # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      DEVXLIB_FLAGS+="--enable-openmp"
+      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc}"            # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       ;;
     *GNU* | *gnu*)
       GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"

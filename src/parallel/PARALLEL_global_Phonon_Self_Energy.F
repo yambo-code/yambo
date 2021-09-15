@@ -23,8 +23,9 @@
 !
 subroutine PARALLEL_global_Phonon_Self_Energy( )
  !
- use R_lattice,     ONLY:nqibz,nXkbz
+ use R_lattice,     ONLY:nXkbz
  use ELPH,          ONLY:QP_PH_n_G_bands
+ use PHEL,          ONLY:PH_Q
  use parallel_int,  ONLY:PARALLEL_assign_chains_and_COMMs,PARALLEL_scheme_initialize
  use parallel_m,    ONLY:COMM_copy,PARs_PH_eh_bands,PARs_PH_Q_ibz,PARs_PH_K_bz,PAR_n_bands,&
 &                        PAR_K_range,PAR_Q_ibz_range
@@ -49,8 +50,8 @@ subroutine PARALLEL_global_Phonon_Self_Energy( )
  !.........................................................................
  !   "q" -> Q-points (IBZ)
  !.........................................................................
- call PARALLEL_scheme_initialize("Q(ibz)","Phonon_Self_Energy",PARs_PH_Q_ibz,(/nqibz/),TABLE=.TRUE.)
- PAR_Q_ibz_range=nqibz
+ call PARALLEL_scheme_initialize("Q(ibz)","Phonon_Self_Energy",PARs_PH_Q_ibz,PH_Q,TABLE=.TRUE.)
+ PAR_Q_ibz_range=PH_Q
  !.........................................................................
  ! Eh bands loop
  !.........................................................................

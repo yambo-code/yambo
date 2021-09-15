@@ -122,6 +122,7 @@ module YPP_ELPH
    !
    subroutine ELPH_DB_alloc()  
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
+     DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))
      YAMBO_ALLOC(YAMBO_K_found,(nkbz))
      YAMBO_ALLOC(DB_ph_qpt,(DB_nq,3))

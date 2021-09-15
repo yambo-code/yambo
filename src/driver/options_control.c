@@ -84,6 +84,14 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="wallt";
  options[*i_opt].bin="yambo";
  options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Memory";
+ options[*i_opt].long_desc[0]="The value is per processor. The value can be provided in Mb/Gb. E.g. 1Gb";
+ options[*i_opt].long_opt="memory";
+ options[*i_opt].int_var=1;
+ options[*i_opt].yambo_string="memorylimit";
+ options[*i_opt].bin="yambo";
+ options[*i_opt].section=desc;
 #if defined _SCALAPACK
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="ScaLapacK test";

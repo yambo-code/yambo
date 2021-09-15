@@ -25,7 +25,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp,bare_qpg
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,&
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_Double_Grid_setup,&
 &                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
@@ -70,7 +70,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(1,k)  
+ call X_Double_Grid_setup(1,k,k%FGbz)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================

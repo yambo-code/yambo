@@ -29,12 +29,7 @@
 cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
-git add configure
-if [ -e include/version.inc ]   ; then  git add include/version.inc ;     fi
-if [ -e config/version.m4 ]     ; then  git add config/version.m4 ;     fi
-if [ -e config/version.m4_gpl ] ; then  git add config/version.m4_gpl ; fi
-if [ -e config/version/version.m4 ]     ; then  git add config/version/version.m4 ;     fi
-if [ -e config/version/version.m4_gpl ] ; then  git add config/version/version.m4_gpl ; fi
+if [ -e include/driver/version.h ]   ; then  git add include/driver/version.h ;     fi
 EOF
 chmod +x .git/hooks/pre-commit
 #
@@ -46,8 +41,7 @@ SOB=\$(git var GIT_AUTHOR_IDENT | sed -n 's/^\(.*>\).*$/ \1/p')
 echo " " >> \$1
 case "\$2,\$3" in
   merge,)
-    echo "Merge commit, configure check prepared"
-    touch .check_configure
+    echo "Merge commit"
   ;;
   *)
     if [ "\$2" != "message" ]; then
@@ -60,60 +54,9 @@ esac
 EOF
 chmod +x .git/hooks/prepare-commit-msg
 #
-# 3. "Post merge"
-#
-cat <<EOF > .git/hooks/post-merge
-#!/bin/bash
-if [ -f .check_configure ]; then
-  echo "Post MERGE hook: Checking if configure was correctly updated"
-  rm .check_configure
-  echo "Regenerating configure after merge"
-  if [ -e lib/yambo/driver/config/version.m4 ]; then
-    cp configure configure_save
-    autoconf configure.ac > configure
-    rm -fr autom4te.cache
-    if [ ! \$(cmp -s configure configure_save) ]; then
-      echo "configure automatically updated after merge"
-      rm configure_save
-      git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
-    else
-      rm configure_save
-      echo "configure did not need update after merge"
-    fi
-  fi
-fi
-EOF
-chmod +x .git/hooks/post-merge
-#
-# 4. "Post commit"
-#
-cat <<EOF > .git/hooks/post-commit
-#!/bin/bash
-if [ -f .check_configure ]; then
-  echo "Post MERGE hook: Checking if configure was correctly updated"
-  rm .check_configure
-  echo "Regenerating configure after merge"
-  cp configure configure_save
-  autoconf configure.ac > configure
-  rm -fr autom4te.cache
-  if [ ! \$(cmp -s configure configure_save) ]; then
-    echo "configure automatically updated after merge"
-    rm configure_save
-    git add configure
-    git commit -m "Automatic commit: configure regenerated after merge"  --no-edit
-  else
-    rm configure_save
-    echo "configure did not need update after merge"
-  fi
-fi
-EOF
-chmod +x .git/hooks/post-commit
-#
-# 5. git config
+# 3. git config
 #
 git config merge.keepTheirs.driver "cp -f %B %A"
 git config merge.commit no
 git config core.editor "vim"
 git config pull.rebase false
-
-

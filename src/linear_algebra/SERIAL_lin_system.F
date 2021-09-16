@@ -78,11 +78,11 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
  use cuda_m
+#include<dev_defs.h>
 #include<memory.h>
  !
  integer     :: n,nrhs
- complex(SP) :: A_d(n,n),B_d(n,nrhs)
- attributes(device):: A_d,B_d
+ complex(SP) DEV_ATTR :: A_d(n,n),B_d(n,nrhs)
  !
  !ws
  character(64)     :: subname="SERIAL_lin_system_gpu"
@@ -93,8 +93,13 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  call LINEAR_ALGEBRA_WS_reset(WS)
  WS%dim=n
- YAMBO_ALLOC(WS%v_int_d,(WS%dim))
- YAMBO_ALLOC(WS%vp_int_d,(WS%dim))
+ !
+ if (have_openacc) then
+   YAMBO_ALLOC(WS%v_int,(WS%dim))
+   YAMBO_ALLOC(WS%vp_int,(WS%dim))
+ endif
+ YAMBO_ALLOC_GPU(DEV_VAR(WS%v_int),(WS%dim))
+ YAMBO_ALLOC_GPU(DEV_VAR(WS%vp_int),(WS%dim))
  !
  ! init
  if (.not.cuda_linalg_init) call cuda_linalg_setup()
@@ -104,12 +109,15 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  WS%i_fail = cusolverDnZgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
  !
- YAMBO_ALLOC(WS%v_cmplx_d,(lwork))
+ if (have_openacc) then
+   YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ endif
+ YAMBO_ALLOC_GPU(DEV_VAR(WS%v_cmplx),(lwork))
  !
- WS%i_fail = cusolverDnZgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,WS%v_cmplx_d,WS%v_int_d,WS%vp_int_d)
+ WS%i_fail = cusolverDnZgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf failed')
  !
- WS%i_fail = cusolverDnZgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,WS%v_int_d,B_d,WS%dim,WS%vp_int_d)
+ WS%i_fail = cusolverDnZgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,dEV_VAR(WS%v_int),B_d,WS%dim,DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrs failed')
  !
 #else
@@ -117,12 +125,15 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  WS%i_fail = cusolverDnCgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
  !
- YAMBO_ALLOC(WS%v_cmplx_d,(lwork))
+ if (have_openacc) then
+   YAMBO_ALLOC(WS%v_cmplx,(lwork))
+ endif
+ YAMBO_ALLOC_GPU(DEV_VAR(WS%v_cmplx),(lwork))
  !
- WS%i_fail = cusolverDnCgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,WS%v_cmplx_d,WS%v_int_d,WS%vp_int_d)
+ WS%i_fail = cusolverDnCgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnCgetrf failed')
  !
- WS%i_fail = cusolverDnCgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,WS%v_int_d,B_d,WS%dim,WS%vp_int_d)
+ WS%i_fail = cusolverDnCgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,DEV_VAR(WS%v_int),B_d,WS%dim,DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnCgetrs failed')
  !
 #endif

@@ -23,10 +23,10 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
- candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
+ candidates=`find $srcdir//$dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
 fi
 if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
- candidates+=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
+ candidates+=`find $srcdir//$dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
 for file in $candidates
 do

@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
@@ -33,10 +35,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
- use R_lattice,           ONLY:bz_samp
- use R_lattice,           ONLY:g_vec_d,g_vec
+ use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
-&                              compute_P2_dipoles,compute_Spin_dipoles
+&                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
@@ -44,9 +45,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
  use cuda_m,              ONLY:have_cuda
- use deviceXlib_m,        ONLY:dev_memcpy
+ use deviceXlib_m,        ONLY:dev_memcpy_h2d,dev_memset
  !
-#include<dev_defs.h>
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
@@ -80,7 +80,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! Synchronize some memory
  if (have_cuda) then
-   YAMBO_ALLOC_SOURCE(g_vec_d,g_vec)
+   YAMBO_FREE_GPU(DEV_VAR(g_vec))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
@@ -111,9 +112,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
      pp_dim=max(pp_kbv_dim_yambo,1)
      YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_dim))
+     !
      if (have_cuda) then
        YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ng,n_spinor,4,pp_dim))
-       DEV_VAR(kbv)=cZERO
+       call dev_memset(DEV_VAR(kbv),cZERO)
      endif
    endif
    !
@@ -131,6 +133,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
+ ! sum_kb workspace
+ !
+ if(l_eval_dip_V.or.l_eval_dip_iR) then
+    call DIP_alloc("DIP_work",[pp_dim,wf_ng])
+ endif
+
+ !
  ! Live Timing steps
  n_LT_steps=0
  do iv=Dip%ib(1),Dip%ib_lim(1) 
@@ -145,6 +154,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  n_LT_steps=n_LT_steps*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
  if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
  !
+
  ! Main loop over k in IBZ
  do i_sp_pol=1,n_sp_pol
    !
@@ -183,7 +193,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
      if (have_cuda .and. (io_KB_abinit_err==0.or.io_KB_pwscf_err ==0) &
-&                  .and. l_use_comm.and.size(kbv)>0) call dev_memcpy(DEV_VAR(kbv),kbv)
+&                  .and. l_use_comm.and.size(kbv)>0) call dev_memcpy_h2d(DEV_VAR(kbv),kbv)
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
@@ -294,6 +304,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! CLEAN
  !
+ call DIP_alloc("DIP_work")
+ !
  if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
    YAMBO_FREE_GPU(DEV_VAR(kbv))
    YAMBO_FREE(kbv)
@@ -305,7 +317,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  else if (io_Vnl_err==0) then
    YAMBO_FREE(Vnl)
  endif
- YAMBO_FREE(g_vec_d)
+ YAMBO_FREE_GPU(DEV_VAR(g_vec))
  !
  call timing('DIPOLE_transverse',OPR='stop')
  !

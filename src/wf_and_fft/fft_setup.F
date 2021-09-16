@@ -130,7 +130,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        endif
        !
        if (i4>0.and..not.ONLY_SIZE) then
-
                        temp_1 = mod(iv_1,fft_dim_1)
                        temp_2 = mod(iv_2,fft_dim_2)
                        temp_3 = mod(iv_3,fft_dim_3)

@@ -456,7 +456,8 @@ module wrapper
      !
      Vstar_dot_VV_c1_gpu=0.0_SP
      !DEV_ACC data present(CX,CY,CZ)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop
+     !!!!!!!! parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
      do i = 1, N
        Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)

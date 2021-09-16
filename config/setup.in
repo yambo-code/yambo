@@ -91,5 +91,5 @@ idriver     = @DRIVER_INCS@
 #
 # VPATH
 #
-VPATH = $$topdir
+VPATH = $$compdir
 #

@@ -33,10 +33,13 @@ module memory
  implicit none
  !
  character(schlen)   :: MEM_msg
+ character(schlen)   :: USER_MEM_limit_string=" "
+ character(2)        :: USER_MEM_unit="Gb"
  integer             :: MEM_err = 0
  integer, parameter  :: HOST_=1
  integer, parameter  :: DEV_=2
  integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT(2)    ! 2 slots: HOST, DEV
+ integer(IP)         :: USER_MEM_limit     = 0
  integer(IP)         :: MAX_MEM_Kb(2)      = 0
  integer(IP)         :: TOT_MEM_Kb(2)
  integer(IP)         :: TOT_MEM_Kb_SAVE(2) =  0
@@ -125,6 +128,26 @@ module memory
  end interface MEM_count_d
  !
  contains
+   !
+   subroutine GET_user_MEM_limit( )
+     use stderr,   ONLY:intc
+     integer           :: i_pos(2)
+     i_pos=(/index(trim(USER_MEM_limit_string),"Gb"),index(trim(USER_MEM_limit_string),"Mb")/) 
+     if (all(i_pos==0)) then
+       USER_MEM_limit_string=" "
+       return
+     endif
+     if (i_pos(1)/=0) then
+       read (USER_MEM_limit_string(:i_pos(1)-1),*) USER_MEM_limit
+       USER_MEM_limit=USER_MEM_limit*1000000
+       USER_MEM_unit="Gb"
+     else
+       read (USER_MEM_limit_string(:i_pos(2)-1),*) USER_MEM_limit
+       USER_MEM_limit=USER_MEM_limit*1000
+       USER_MEM_unit="Mb"
+     endif
+     USER_MEM_limit_string=trim(intc(USER_MEM_limit))//USER_MEM_unit
+   end subroutine
    !
    subroutine MEM_element_init(MEM_element_to_init,size_)
      integer,           intent(in)  :: size_

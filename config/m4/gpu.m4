@@ -44,6 +44,61 @@ AC_ARG_WITH([cuda-cc],
 # cc60  for Pascal cards (eg P100)
 # cc70  for Volta  cards (eg V100)
 # 
+# nvfortran options (nvfortran --help)
+#
+#-ta=host|multicore|tesla
+#                    Choose target accelerator (supported only for OpenACC, DEPRECATED please refer to -acc and -gpu)
+#    host            Compile for serial execution on the host CPU
+#    multicore       Compile for parallel execution on the host CPU
+#    tesla           Compile for parallel execution on a Tesla GPU
+#
+# -[no]acc[=gpu|host|multicore|[no]autopar|[no]routineseq|legacy|strict|verystrict|sync|[no]wait]
+#                    Enable OpenACC directives
+#    gpu             OpenACC directives are compiled for GPU execution only; please refer to -gpu for target specific options
+#    host            Compile for serial execution on the host CPU
+#    multicore       Compile for parallel execution on the host CPU
+#    [no]autopar     Enable (default) or disable loop autoparallelization within acc parallel
+#    [no]routineseq  Compile every routine for the device
+#    legacy          Suppress warnings about deprecated PGI accelerator directives
+#    strict          Issue warnings for non-OpenACC accelerator directives
+#    verystrict      Fail with an error for any non-OpenACC accelerator directive
+#    sync            Ignore async clauses
+#    [no]wait        Wait for each device kernel to finish
+#
+#-gpu=cc35|cc50|cc60|cc62|cc70|cc72|cc75|cc80|ccall|cudaX.Y|fastmath|[no]flushz|[no]fma|keep|[no]lineinfo|llc|zeroinit|deepcopy|loadcache:{L1|L2}|maxregcount:<n>|pinned|[no]rdc|safecache|[no]unroll|managed|beta|autocompare|redundant
+#                    Select specific options for GPU code generation
+#    cc35            Compile for compute capability 3.5
+#    cc50            Compile for compute capability 5.0
+#    cc60            Compile for compute capability 6.0
+#    cc62            Compile for compute capability 6.2
+#    cc70            Compile for compute capability 7.0
+#    cc72            Compile for compute capability 7.2
+#    cc75            Compile for compute capability 7.5
+#    cc80            Compile for compute capability 8.0
+#    ccall           Compile for all supported compute capabilities
+#    cudaX.Y         Use CUDA X.Y Toolkit compatibility, where installed
+#    fastmath        Use fast math library
+#    [no]flushz      Enable flush-to-zero mode on the GPU
+#    [no]fma         Generate fused mul-add instructions (default at -O3)
+#    keep            Keep kernel files
+#    [no]lineinfo    Generate GPU line information
+#    zeroinit        Initialize allocated device memory with zero
+#    deepcopy        Enable Full Deepcopy support in OpenACC Fortran
+#    loadcache       Choose what hardware level cache to use for global memory loads
+#     L1             Use L1 cache
+#     L2             Use L2 cache
+#    maxregcount:<n> Set maximum number of registers to use on the GPU
+#    pinned          Use CUDA Pinned Memory
+#    [no]rdc         Generate relocatable device code
+#    safecache       Allows variable-sized array sections in cache directives and assumes they fit into CUDA shared memory
+#    [no]unroll      Enable automatic inner loop unrolling (default at -O3)
+#    managed         Use CUDA Managed Memory
+#    beta            Enable beta code generation features
+#    autocompare     Automatically compare CPU/GPU results: implies redundant
+#    redundant       Redundant CPU/GPU execution
+
+
+
 AC_ARG_WITH([cuda-runtime],
    [AS_HELP_STRING([--with-cuda-runtime=VAL],[CUDA runtime (Pascal: 8+, Volta: 9+) @<:@default=10.1@:>@])],
    [],[with_cuda_runtime=10.1])
@@ -123,13 +178,17 @@ if test x"$enable_openacc" != "xno" ; then
    #
    # Flags to be passed to the devicexlib library
    #
-   DEVXLIB_FLAGS="--enable-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime}"
+   DEVXLIB_FLAGS="--enable-openacc --with-cuda-cc=${with_cuda_cc} --with-cuda-runtime=${with_cuda_runtime} "
    def_gpu="-D_GPU -D_OPENACC"
    #
    case "${FCVERSION}" in
-    *nvfortran* | *pgfortran*)
+    *nvfortran*)
       DEVXLIB_FLAGS+="--enable-openmp"
-      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc}" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      GPU_FLAGS="-acc=gpu,multicore -acclibs -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime} " # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      ;;
+    *pgfortran*)
+      DEVXLIB_FLAGS+="--enable-openmp"
+      GPU_FLAGS="-acc -acclibs -ta=tesla:cc${with_cuda_cc} "           # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
       ;;
     *GNU* | *gnu*)
       GPU_FLAGS="-fopenacc" # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"

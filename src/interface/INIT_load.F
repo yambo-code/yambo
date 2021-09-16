@@ -53,7 +53,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach
 #endif
@@ -119,7 +119,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
- use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points,PH_Q,PHEL_broad_factor
 #endif
  !
  implicit none
@@ -261,7 +261,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif
@@ -324,7 +323,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',&
 &                                                                          BSS_slepc_approach,verb_level=V_resp)
  call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
@@ -580,7 +579,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,3)
  !
 #if defined _PHEL 
- call it(defs,'PH_SE_mode','[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
+ call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
+ call it(defs,'PHELQpts',   '[PHEL] Q-points considered',PH_Q)
+ call it(defs,'PHELTrans',  '[PHEL] Energy window around W_ph to select transitions (units of GDamping)',PHEL_broad_factor)
+ call it(defs,'PH_SE_mode', '[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
 #endif
  !
 #if defined _RT

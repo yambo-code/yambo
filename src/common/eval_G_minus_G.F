@@ -37,6 +37,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
  use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use cuda_m,       ONLY:have_cuda
  use timing_m,     ONLY:timing
  !
 #include<memory.h>

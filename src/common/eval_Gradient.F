@@ -40,7 +40,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use FFT_m,         ONLY:fftw_plan,cufft_plan
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
- use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_allocated
+ use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_allocated,dev_memset
  use cuda_m,        ONLY:have_cuda,have_openacc
  use timing_m
  !
@@ -54,10 +54,10 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  ! Work Space 
  !
  integer :: ng_,ic,ig,i_spinor
- complex(DP), allocatable :: Vr(:), V3g(:,:)
- complex(DP), allocatable DEV_ATTR :: Vr_d(:), V3g_d(:,:)
- complex(DP), pointer     DEV_ATTR :: Vr_p(:), V3g_p(:,:)
- complex(DP), pointer     :: Vr_h(:)
+ complex(DP), allocatable,          target :: Vr(:), V3g(:,:)
+ complex(DP), allocatable DEV_ATTR, target :: Vr_d(:), V3g_d(:,:)
+ complex(DP), pointer DEV_ATTR :: Vr_p(:), V3g_p(:,:)
+ complex(DP), pointer          :: Vr_h(:)
  !
  call timing("eval_Gradient","start")
  !

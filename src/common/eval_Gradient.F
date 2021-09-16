@@ -38,10 +38,10 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
  use FFT_m,         ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
  use FFT_m,         ONLY:fftw_plan,cufft_plan
- use R_lattice,     ONLY:g_vec,g_vec_d,ng_vec
+ use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
- use deviceXlib_m,  ONLY:dev_memcpy
- use cuda_m,        ONLY:have_cuda,cuda_devsync
+ use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_allocated
+ use cuda_m,        ONLY:have_cuda,have_openacc
  use timing_m
  !
 #include<memory.h>
@@ -54,8 +54,10 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  ! Work Space 
  !
  integer :: ng_,ic,ig,i_spinor
- complex(DP), allocatable DEV_ATTR :: Vr(:), V3g(:,:)
- complex(DP), allocatable :: Vr_h(:)
+ complex(DP), allocatable :: Vr(:), V3g(:,:)
+ complex(DP), allocatable DEV_ATTR :: Vr_d(:), V3g_d(:,:)
+ complex(DP), pointer     DEV_ATTR :: Vr_p(:), V3g_p(:,:)
+ complex(DP), pointer     :: Vr_h(:)
  !
  call timing("eval_Gradient","start")
  !
@@ -71,12 +73,15 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  end select
  !
  YAMBO_ALLOC(Vr,(fft_size))
- YAMBO_ALLOC(Vr_h,(fft_size))
- YAMBO_ALLOC(V3g,(ng_,3))
+ if (have_openacc) then
+   YAMBO_ALLOC(V3g,(ng_,3))
+ endif
+ YAMBO_ALLOC_GPU(DEV_VAR(Vr),(fft_size))
+ YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
- ! Synchronize g_vec_d if needed
- if (have_cuda.and..not.allocated(g_vec_d)) then
-   YAMBO_ALLOC_SOURCE(g_vec_d,g_vec)
+ ! Synchronize g_vec host/dev if needed
+ if (have_cuda.and..not.dev_allocated(DEV_VAR(g_vec))) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !
  f_gradient = cZERO
@@ -84,60 +89,72 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  ! f, f_gradient are on host memory
  ! Vr, V3g on GPU memory if CUDA support is enabled
  !
+ Vr_h  => Vr
+ Vr_p  => DEV_VAR(Vr)
+ V3g_p => DEV_VAR(V3g)
+ !
  do i_spinor=1,spinor_size
    !
    Vr_h=cmplx(f(:,i_spinor),kind=DP)
-   call dev_memcpy(Vr,Vr_h)
+   call dev_memcpy_h2d(Vr_p,Vr_h)
    !
-#if defined _CUDA
-   call fft_3d_cuda(Vr,fft_dim,-1,cufft_plan) 
+#if defined _GPU
+   call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan) 
 #else
 #  if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
-   call fft_3d(Vr,fft_dim,-1,fftw_plan)
+   call fft_3d(Vr_p,fft_dim,-1,fftw_plan)
 #  else
-   call fft_3d(Vr,fft_dim,-1)
+   call fft_3d(Vr_p,fft_dim,-1)
 #  endif
 #endif
    !
-   V3g(:,:) = cZERO_DP
+   call dev_memset(V3g_p,cZERO_DP)
    !
-   !$cuf kernel do(2) <<<*,*>>>
+   !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
+   !DEV_ACC parallel loop collapse(2) async
+   !DEV_CUF kernel do(2) <<<*,*>>>
    do ic = 1,3
    do ig = 1,ng_
-      V3g(ig,ic)=cI*real(DEV_VAR(g_vec)(ig,ic),DP)*Vr(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
+      V3g_p(ig,ic)=cI*real(DEV_VAR(g_vec)(ig,ic),DP)*Vr_p(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
    enddo
    enddo
+   !DEV_ACC end data
    !
    do ic = 1,3
      !
-     Vr = cZERO_DP
-     !$cuf kernel do(1) <<<*,*>>>
-     do ig = 1, ng_
-       Vr(DEV_VAR(fft_g_table)(ig,1)) = V3g(ig,ic)
-     enddo
+     call dev_memset(Vr_p,cZERO_DP)
      !
-#if defined _CUDA    
-     call fft_3d_cuda(Vr,fft_dim,1,cufft_plan) 
+     !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     do ig = 1, ng_
+       Vr_p(DEV_VAR(fft_g_table)(ig,1)) = V3g_p(ig,ic)
+     enddo
+     !DEV_ACC end data
+     !
+#if defined _GPU
+     call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan) 
 #else
 #    if defined _FFTW
      call dfftw_destroy_plan(fftw_plan)
      fftw_plan = 0
-     call fft_3d(Vr,fft_dim,1,fftw_plan)
+     call fft_3d(Vr_p,fft_dim,1,fftw_plan)
 #    else
-     call fft_3d(Vr,fft_dim,1)
+     call fft_3d(Vr_p,fft_dim,1)
 #    endif
 #endif
      !
-     call dev_memcpy(Vr_h,Vr)
+     call dev_memcpy_d2h(Vr_h,Vr_p)
      f_gradient(:,i_spinor,ic) = cmplx(Vr_h(:),kind=SP)
    enddo
    !
  enddo
  !
+ YAMBO_FREE_GPU(DEV_VAR(Vr))
+ YAMBO_FREE_GPU(DEV_VAR(V3g))
  YAMBO_FREE(Vr)
- YAMBO_FREE(Vr_h)
  YAMBO_FREE(V3g)
  !
  call timing("eval_Gradient","stop")

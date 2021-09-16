@@ -66,7 +66,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  !
 end subroutine SERIAL_lin_system
 
-#ifdef _CUDA
+#ifdef _GPU
 subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  !
  !  Solve the linear system

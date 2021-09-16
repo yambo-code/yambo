@@ -43,7 +43,6 @@ subroutine G_shells_finder()
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  use cuda_m,       ONLY:have_cuda
- use deviceXlib_m
  !
 #include<memory.h>
  !

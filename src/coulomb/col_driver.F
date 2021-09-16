@@ -40,6 +40,8 @@
 ! 4 pi / |q+G|^2 = 2 pi DLVol NqBZ qpg(q,G)                                  
 ! |q+G| = Sqrt[ 2 / ( DLVol NqBZ qpg(q,G)) ]                                  
 !
+#include<dev_defs.h>
+!
 subroutine col_driver(bare_NG,q)
  !
  !Here I launch the routine to create/read the 
@@ -59,6 +61,7 @@ subroutine col_driver(bare_NG,q)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
  use cuda_m,        ONLY:have_cuda
+ !
 #include<memory.h>
  !
  integer       :: bare_NG
@@ -150,9 +153,9 @@ subroutine col_driver(bare_NG,q)
    call cutoff_presets()
    !
    if (have_cuda) then
-     YAMBO_FREE(bare_qpg_d)
+     YAMBO_FREE_GPU(DEV_VAR(bare_qpg))
      if (size(bare_qpg)>0) then
-       YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
      endif
    endif
    !
@@ -165,9 +168,9 @@ subroutine col_driver(bare_NG,q)
  ! bare_qpg is modified by cutff_driver
  !
  if (have_cuda) then
-   YAMBO_FREE(bare_qpg_d)
+   YAMBO_FREE_GPU(DEV_VAR(bare_qpg))
    if (size(bare_qpg)>0) then
-     YAMBO_ALLOC_SOURCE(bare_qpg_d,bare_qpg)
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
    endif
  endif
  !

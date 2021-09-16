@@ -178,13 +178,12 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
          !
          kw=k%weights(ik)
          !
-         !DEV_OMP parallel do default(shared), private(i_spinor,i_r), collapse(2), reduction(+:rho_no_sym)
+         !$omp parallel do default(shared), private(i_spinor,i_r), collapse(2), reduction(+:rho_no_sym)
          do i_spinor=1,n_spinor
            do i_r = 1, fft_size
              rho_no_sym(i_r)=rho_no_sym(i_r)+f_occ*kw*abs(WF%c(i_r,i_spinor,i_wf))**2
            enddo
          enddo
-         !DEV_OMP end parallel do
          !
          ! uspp becsum
          !

@@ -184,9 +184,9 @@ module X_m
          if (allocated(X_mat)) return
          YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
          X_mat=cZERO
-#ifdef _CUDA
-         allocate(X_mat_d, source=X_mat)
-#endif
+         if (have_cuda) then
+           YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
+         endif
        end select
      else
        select case(what)
@@ -201,8 +201,8 @@ module X_m
          !
          ! and the matrix itself
          !
+         YAMBO_FREE_GPU(DEV_VAR(X_mat))
          YAMBO_FREE(X_mat)
-         YAMBO_FREE(X_mat_d)
          !
        end select
      endif

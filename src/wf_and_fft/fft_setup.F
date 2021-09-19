@@ -114,7 +114,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    i1_max = min(max(iG_max,wf_ng),ng_vec)
    !
    !DEV_ACC data present(g_vec_rot,fft_g_table)
-   !DEV_ACC parallel loop collapse(2) async
+   !DEV_ACC parallel loop collapse(2)
    !DEV_CUF kernel do(2)
    do i1=1,i1_max
      do i2=1,iGo_max

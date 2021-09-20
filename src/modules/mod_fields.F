@@ -34,7 +34,7 @@ module fields
  type ext_field
    character(schlen) :: ef_name
    character(schlen) :: ef_pol
-   real(SP) :: To
+   real(SP) :: To= 0._SP
    real(SP) :: t_initial
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
@@ -122,6 +122,7 @@ module fields
      use X_m,       ONLY:global_gauge
      use pars,      ONLY:cI,cONE,cZERO,pi,schlen
      use wrapper,   ONLY:FADEVA
+     use real_time, ONLY:NE_tot_time
      !
      type(ext_field), intent(inout)   ::E_field
      !
@@ -165,6 +166,12 @@ module fields
          ! Fields which do not need T_0
          W_0=0._SP
          T_0=0._SP
+         if (sigma>0._SP) then
+           T_0=5*sigma
+           damp_func=1._SP
+           if (T<T_0)             damp_func=exp( (T-T_0)/sigma)
+           if (T>NE_tot_time-T_0) damp_func=exp(-(T-NE_tot_time+T_0)/sigma)
+         endif
        case('SOFTSIN','THETA')
          ! Fields which do not need T_0
          W_0=0._SP
@@ -201,6 +208,7 @@ module fields
            if(trim(field_defs(2))=="ANTIRES")     then ; f0t= 0.5_SP*      exp_iwt  ; f1t=-cI*0.5_SP*      exp_iwt   ; endif
            if(trim(field_defs(2))=="RES")         then ; f0t= 0.5_SP*conjg(exp_iwt) ; f1t= cI*0.5_SP*conjg(exp_iwt)  ; endif
          endif
+         !
          EXPf=exp(-(T-T_0)**2/(2._SP*sigma**2) )
          !
          select case( trim(field_defs(1)) )
@@ -210,9 +218,9 @@ module fields
            if (order==2 ) f_now=0._SP
            !
          case('SIN')
-           if (order==0 ) f_now=      -(f0t-1._SP)/W_field
-           if (order==1 ) f_now=        f1t
-           if (order==2 ) f_now=W_field*f0t
+           if (order==0 ) f_now=-damp_func*(f0t-1._SP)/W_field
+           if (order==1 ) f_now=+damp_func* f1t
+           if (order==2 ) f_now=+damp_func*W_field*f0t
            !
          case('SOFTSIN')
            if (order==-1) f_now=-2

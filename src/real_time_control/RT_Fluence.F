@@ -272,7 +272,7 @@ subroutine Rabi_frequency_all(En,i_field)
  len_gauge=trim(global_gauge)=="length"
  vel_gauge=trim(global_gauge)=="velocity"
  !
- call OUTPUT_add_column('rabi_frequencies',action="reopen")
+ call OUTPUT_add_column('rabi_frequencies',action="append")
  !
  effective_frequency=0._SP
  do i_fr=1,Efield(i_field)%n_frequencies

@@ -67,7 +67,10 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  if (present(action)) then
    if (action=="close")  call of_open_close(OUT_file(i_f)%filename)
    if (action=="open" )  call of_open_close(OUT_file(i_f)%filename,'ot')
-   if (action=="reopen") call of_open_close(OUT_file(i_f)%filename,'oa')
+   if (action=="append") then
+     call of_open_close(OUT_file(i_f)%filename,'oa')
+     OUT_file(i_f)%TITLES_dumped=.TRUE.
+   endif
    if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
  endif
  !

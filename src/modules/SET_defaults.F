@@ -70,7 +70,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use descriptors,ONLY:IO_desc_reset
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
  &                    BSS_slepc_precondition,BSS_slepc_approach
 #endif
@@ -362,7 +362,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  compute_Spin_dipoles       = .FALSE.
  compute_Orb_dipoles        = .FALSE.
  use_X_DbGd=.FALSE.
- X_DbGd_percentual=1.
+ X_DbGd_percentual=-1.
  eps_2_alpha=1._SP
  alpha_dim='adim'
  global_gauge='length'
@@ -472,7 +472,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_n_freqs=100
  MAX_BSK_LIN_size=45000*45000 ! 46341 is the sqare root of the maximum integer in IP: 2147483647
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  BSS_slepc_approach='none'
  BSS_slepc_precondition='none'
  BSS_slepc_extraction='ritz'

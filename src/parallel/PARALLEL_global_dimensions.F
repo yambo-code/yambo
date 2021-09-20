@@ -30,6 +30,9 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  use drivers,       ONLY:l_eval_collisions,l_elph_corr,l_gw0,l_HF_and_locXC,l_life,l_sc_run
  use BS,            ONLY:BS_bands,BS_nT_at_k,BS_n_eh_spaces
  use X_m,           ONLY:X_ng
+#if defined _PHEL
+ use PHEL,          ONLY:PH_Q
+#endif
 #if defined _ELPH
  use ELPH,          ONLY:elph_nQ_used,QP_PH_n_G_bands,elph_use_q_grid
 #endif
@@ -97,9 +100,12 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  !-------
  PAR_Q_ibz_range=(/1,nqibz/)
  PAR_Q_bz_range=(/1,nqbz/)
- if (ENVIRONMENT=="Response_G_space")          PAR_Q_ibz_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
- if (ENVIRONMENT=="Real_Time"       )          PAR_Q_bz_range=(/1,nqbz/)
- if (ENVIRONMENT=="Self_Energy"     ) then
+ if (ENVIRONMENT=="Response_G_space"  )        PAR_Q_ibz_range=(/PAR_X_iq(1),PAR_X_iq(2)/)
+ if (ENVIRONMENT=="Real_Time"         )        PAR_Q_bz_range=(/1,nqbz/)
+#if defined _PHEL
+ if (ENVIRONMENT=="Phonon_Self_Energy")        PAR_Q_ibz_range=PH_Q
+#endif
+ if (ENVIRONMENT=="Self_Energy"       ) then
 #if defined _SC
    if (l_sc_run.and.&
 &      any( (/P_collisions%N,COH_collisions%N,HXC_collisions%N/)> 0))  &

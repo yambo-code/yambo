@@ -38,7 +38,6 @@ endif
 #
 yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: 
 	@touch config/stamps_and_lists/compiling_$@.stamp
-	@$(MAKE) conf-check
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs

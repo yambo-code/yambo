@@ -102,6 +102,8 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 # Makefile creation: (III) special sources 
 source ./sbin/compilation/special_sources.sh
 #
+rm -f $compdir/log/"compile_"$goal".log"
+#
 cat <<EOF > config/mk/local/static_variables.mk
 STDLOG         =$compdir/log/"compile_"$goal".log"
 libs           =$libs

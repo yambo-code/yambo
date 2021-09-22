@@ -154,6 +154,7 @@ subroutine COLLISIONS_alloc_and_free(what,elements,actions,I)
    call local_alloc_and_free(GW_NEQ_COLL_element,GW_NEQ_collisions)
    if((l_collision.or.l_all).and.l_clean) then
      if (allocated(GW_NEQ_COLL_element)) then
+       call local_alloc_and_free(GW_NEQ_COLL_element,GW_NEQ_collisions)
        deallocate(GW_NEQ_COLL_element)
      endif
    endif

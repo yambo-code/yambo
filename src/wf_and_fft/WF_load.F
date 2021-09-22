@@ -536,11 +536,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      enddo
    enddo
    !
-   if (have_cuda) then
-     call msg('rns', '[WF] Updating WF data on GPU device after SC load')
-     WF%c_d = WF%c
-   endif
-   !
    call load_SC_components('WF_clean')
    !
  endif

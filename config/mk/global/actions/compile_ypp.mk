@@ -43,7 +43,6 @@ endif
 #
 ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: 
 	@touch config/stamps_and_lists/compiling_$@.stamp
-	@$(MAKE) conf-check
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs

@@ -7,7 +7,7 @@
 m4_defun([AC_PROG_ECHO],
 [
 ECHO=
-case `echo "\tx"` in
+case `sh -c 'echo "\tx"'` in
 *t*)
   ECHO='echo -e';;
 *)

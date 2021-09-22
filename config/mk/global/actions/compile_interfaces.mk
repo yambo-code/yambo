@@ -18,7 +18,6 @@ endif
 #
 $(GOALS):
 	@touch config/stamps_and_lists/compiling_$@.stamp
-	@$(MAKE) conf-check
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs

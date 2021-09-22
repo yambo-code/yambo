@@ -101,6 +101,10 @@ module X_m
  logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
+ ! I/O DB
+ ! 
+ integer :: i_X_kind_existing_DB=-1
+ !
  ! I/O parameters
  !
  integer,parameter:: n_MAX_blocks_of_rows=1000 ! Note that in NETCDF the max number of vars is 8192

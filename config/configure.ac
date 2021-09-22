@@ -63,6 +63,9 @@ m4_include([config/m4/acx_branch.m4])
 #
 m4_include([config/m4/acx_report.m4])
 # ============================================================================
+# Echo
+AC_PROG_ECHO
+# ============================================================================
 # Current branch
 ACX_BRANCH
 # ============================================================================
@@ -236,6 +239,7 @@ m4_include([config/urls/repos.list])
 m4_include([config/m4/blas.m4])
 m4_include([config/m4/lapack.m4])
 m4_include([config/m4/netcdf_f90.m4])
+m4_include([config/m4/hdf5_f90.m4])
 m4_include([config/m4/libxc.m4])
 m4_include([config/m4/fft.m4])
 m4_include([config/m4/futile.m4])
@@ -264,6 +268,9 @@ AC_PETSC_SLEPC_SETUP
 # ============================================================================
 # SCALAPACK/BLACS
 AC_SLK_SETUP
+# ============================================================================
+# HDF5 
+AC_HAVE_HDF5_F90
 # ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90

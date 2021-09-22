@@ -41,7 +41,9 @@ include config/mk/global/libraries.mk
 .PHONY: interfaces ypp
 
 nothing: 
-	@$(make_message)
+	@$(call yambo_help,"header")
+help:           
+	@$(call yambo_help,"$(what)")
 changelog:
 	./sbin/gitchangelog.py > ChangeLog
 interfaces:
@@ -116,9 +118,6 @@ include config/mk/global/actions/compile_ypp.mk
 # Cleans
 include config/mk/global/actions/clean.mk
 #
-# Utils
-include config/mk/global/actions/help.mk
-#
 #===========
 # Functions
 #===========
@@ -136,7 +135,7 @@ include config/mk/global/actions/dependencies.mk
 include config/mk/global/functions/todo.mk
 #
 # Messages
-include config/mk/global/functions/messaging.mk
+include config/mk/global/functions/help.mk
 #
 # LIBs ...
 # ... internal

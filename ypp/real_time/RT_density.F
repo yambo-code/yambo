@@ -102,7 +102,6 @@ subroutine RT_density(en,kpt,qpt)
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
  !
- !
  ! Parallel Setups & WF_load
  !===========================
  call PARALLEL_global_indexes(en,kpt,qpt," ",RESET=.TRUE.)

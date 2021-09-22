@@ -141,9 +141,6 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
      !
      central_q=k%ptbz(ikbz,:)-k%ptbz(ikpbz,:)
      !
-     ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)
-     ! Fine   grid points are included for ikbz_FineGd>k%bz_DbGd_map(1,ikbz)
-     !
      do ikbz_FineGd=k_FGbz%k_range(ikbz,1),  k_FGbz%k_range(ikbz,2)
        !
        if (ikbz_FineGd==k_FGbz%k_range(ikbz,1)) k_pt_loc=k%ptbz(ikbz,:)

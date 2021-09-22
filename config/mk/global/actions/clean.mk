@@ -1,3 +1,6 @@
+gitclean: clean_all
+	@git clean -fdx
+distclean: clean_all
 clean_all: dependencies
 	@$(call clean_driver,all)
 clean: dependencies

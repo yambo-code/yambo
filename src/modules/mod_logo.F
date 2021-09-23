@@ -69,7 +69,7 @@ module LOGO
      !
      comment(1)='Version '//&
 &                trim(intc(code_version(1)))//'.'//trim(intc(code_version(2)))//&
-&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash '//trim(code_hash)
+&                '.'//trim(intc(code_version(3)))//' Revision '//trim(intc(code_revision))//' Hash (prev commit) '//trim(code_hash)
      !
      comment(2)="Branch is "//trim(code_branch)
      !

@@ -23,7 +23,7 @@
 !
 ! headers
 !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -141,7 +141,7 @@ module interfaces
      real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
    subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cmpl)
      !
      use pars,           ONLY:SP,schlen

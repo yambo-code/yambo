@@ -220,7 +220,6 @@ module com
      !
      character(*) :: msg_,title
      integer, intent(in) :: i_spin,title_len
-     character(:), allocatable :: COMPOLSE_spin_msg
      !ws
      character(schlen) :: spin_ch
      spin_ch=" "

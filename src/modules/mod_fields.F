@@ -118,7 +118,6 @@ module fields
      use X_m,       ONLY:global_gauge
      use pars,      ONLY:cI,cONE,cZERO,pi
      use wrapper,   ONLY:FADEVA
-     use real_time, ONLY:NE_tot_time
      !
      type(ext_field)   ::E_field
      !
@@ -128,7 +127,7 @@ module fields
      real(SP)          ::damp_func,a,b,c
      complex(SP), dimension(2) :: small_a
      !
-     integer           ::i_fr,i_field,n_fields,N_adiabatic
+     integer           ::i_fr,i_field,n_fields
      real(SP)          ::T_0,W_0,W_field,sigma,WtimesT,EXPf,fr_shift(2)
      complex(SP)       ::f_t(2),cZ,cS
      !
@@ -141,15 +140,6 @@ module fields
      fr_shift(1)=0._SP
      fr_shift(2)=pi/2._SP
      E_field%To=T_0
-     !
-     ! Adiabatic section (RES/ANTIRES/SIN)
-     !
-     if (sigma>0.) then
-       E_field%To=5*sigma
-       damp_func=1._SP
-       if (T<E_field%To) damp_func=exp((T-E_field%To)/sigma)
-       if (T>NE_tot_time-E_field%To) damp_func=exp(-(T-NE_tot_time+E_field%To)/sigma)
-     endif
      !
      if(trim(E_field%ef_pol)=="linear"  ) n_fields=1
      if(trim(E_field%ef_pol)=="circular") n_fields=2
@@ -166,9 +156,9 @@ module fields
          do i_fr=1,E_field%n_frequencies     
            W_field=field_frequency(E_field,i_fr)
            WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field*damp_func
-           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)*damp_func
-           if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)*damp_func
+           if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
          enddo 
          !
        case('SOFTSIN')
@@ -212,18 +202,18 @@ module fields
          do i_fr=1,E_field%n_frequencies
            W_field=field_frequency(E_field,i_fr)
            WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*        exp(cI*WtimesT)/W_field*damp_func
-           if (order==1 ) f_t(i_field)=f_t(i_field)+           exp(cI*WtimesT)*damp_func
-           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_field*exp(cI*WtimesT)*damp_func
+           if (order==0 ) f_t(i_field)=f_t(i_field)-cI*        exp(cI*WtimesT)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+           exp(cI*WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)+cI*W_field*exp(cI*WtimesT)
          enddo
          !
        case('RES')
          do i_fr=1,E_field%n_frequencies
            W_field=field_frequency(E_field,i_fr)
            WtimesT=W_field*T+fr_shift(i_field)
-           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*        exp(-cI*WtimesT)/W_field*damp_func
-           if (order==1 ) f_t(i_field)=f_t(i_field)-           exp(-cI*WtimesT)*damp_func
-           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_field*exp(-cI*WtimesT)*damp_func
+           if (order==0 ) f_t(i_field)=f_t(i_field)+cI*        exp(-cI*WtimesT)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)-           exp(-cI*WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)-cI*W_field*exp(-cI*WtimesT)
          enddo
          !
        case('DELTA')

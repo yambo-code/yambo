@@ -44,7 +44,7 @@ fi
 #
 # Projects 
 #==========
-for PJ in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y 
+for PJ in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
 do
  sources_pj_dependent=" "
  for file in $sources

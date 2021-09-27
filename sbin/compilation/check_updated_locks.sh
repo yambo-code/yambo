@@ -74,41 +74,36 @@ fi
 #echo "SAVE" $save_dir 
 #echo "RESTORE" $restore_dir 
 #
-# Remove the lock
-#
-bdir=`basename $dir`
-#
 # Search for objects dependent of new/missing PROJECTS 
 # and move them in a dedicated folder
 #
 for lock in $unmatched
 do
- rm -f $dir/$lock.lock
- if grep -q "$lock" $dir/.objects; then
-  rm -f config/stamps_and_lists/${goal}.stamp 
-  rm -f config/stamps_and_lists/${target}.a.stamp 
-  #echo "LOCK $lock in .objects"
+ if [ "$VERB" == 1 ] ; then
+  echo "rm -f $dir/$lock.lock"
+ else
+  rm -f $dir/$lock.lock
  fi
+ #
+ if grep -q "$lock" $dir/.objects; then
+  if [ "$VERB" == 1 ] ; then
+   echo "rm -f config/stamps_and_lists/${goal}.stamp"
+   echo "rm -f config/stamps_and_lists/${target}.a.stamp "
+  else
+   rm -f config/stamps_and_lists/${goal}.stamp 
+   rm -f config/stamps_and_lists/${target}.a.stamp 
+  fi
+ fi
+ #
+ # Check for PJ specific modules and their childs
+ #
  if test -f "$dir/${lock}_project.dep"; then
   deps=`cat $dir/${lock}_project.dep`
-  for object in $deps
+  for obj in $deps
   do
-    if test -f "$dir/$object"; then
-     if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
-     rm -f config/stamps_and_lists/${goal}.stamp 
-     rm -f config/stamps_and_lists/${target}.a.stamp 
-     mv $dir/$object $dir/$save_dir
-     #echo "OBJ $object -> $save_dir"
-    fi
+    operate="save_and_restore"
+    source ./sbin/compilation/check_object.sh
   done
  fi
 done
 #
-# Restore the files of the project (if there are)
-#
-if test -d "$dir/$restore_dir"; then
- for file in `ls $dir/$restore_dir`
- do
-  mv $dir/$restore_dir/$file $dir
- done
-fi

@@ -163,6 +163,7 @@ subroutine PHEL_Self_Energy(iq_eval,E,k,q,k_FG,E_FG)
    Hole_f_mkq =  RT_ho_occ%N_ref(i_np,ip_rim)/spin_occ
    f_nk       =  RT_el_occ%N_ref(i_n,ik_rim)/spin_occ
    Hole_f_nk  =  RT_ho_occ%N_ref(i_n,ik_rim)/spin_occ
+ write  (100,*) 
    !
    if (l_life) then
      !

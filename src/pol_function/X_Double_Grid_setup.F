@@ -87,6 +87,8 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
        Radius=100.
      endif
      return
+   else
+     DO_it=.TRUE.
    endif
  endif
 #endif

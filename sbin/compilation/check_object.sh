@@ -22,17 +22,37 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
- candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
+# OBJ is among .objects...
+#
+if grep -q "$obj" $dir/.objects; then
+ if [ "$VERB" == 1 ] ; then
+  echo "$obj is NEW"
+  echo "rm -f config/stamps_and_lists/${goal}.stamp"
+  echo "rm -f config/stamps_and_lists/${target}.a.stamp"
+ else
+  rm -f config/stamps_and_lists/${goal}.stamp 
+  rm -f config/stamps_and_lists/${target}.a.stamp 
+ fi
+ file=$obj
+ source ./sbin/compilation/check_object_elemental.sh
 fi
-if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
- candidates+=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
+#
+# Check for OBJ childs (non zero only if OBJ is a module)...
+#
+first_level_dep=
+if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
+ #
+ deps=`grep -w $obj $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+ for dep in $deps
+ do
+  if test "$dep" == "$obj"; then continue; fi
+  first_level_dep+=" $dep"
+ done
+ #
+ for file in $first_level_dep
+ do
+  ((i=i%N)); ((i++==0)) && wait
+  source ./sbin/compilation/check_object_elemental.sh &
+ done
+ wait
 fi
-for file in $candidates
-do
-  file=`basename $file`
-  obj=`echo $file | sed "s/\.o/\.X/"`
-  obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
-  operate="remove"
-  source ./sbin/compilation/check_object.sh
-done

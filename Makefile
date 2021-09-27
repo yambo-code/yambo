@@ -83,10 +83,13 @@ conf-check:
 # DOUBLE PRECISION?
 #=====================
 #
+# int-libs are compiled via an internal make call where MAKECMDGOALS is the lib itself.
+#
+STAMP_DBLE=
 ifeq ($(wildcard config/stamps_and_lists/compiling_ypp_nl.stamp),config/stamps_and_lists/compiling_ypp_nl.stamp)
- DOUBLE_PRECMP=-D_DOUBLE
+ STAMP_DBLE=-D_DOUBLE
 else ifeq ($(wildcard config/stamps_and_lists/compiling_yambo_nl.stamp),config/stamps_and_lists/compiling_yambo_nl.stamp)
- DOUBLE_PRECMP=-D_DOUBLE
+ STAMP_DBLE=-D_DOUBLE
 endif
 #
 #==============

@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): HM AM
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -23,16 +23,19 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
- candidates=`find $dir -type f  \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/$goal.stamp`
+ candidates=`find $dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
+ candidates+=`find $dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
+ candidates+=`find $dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
 fi
 if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
- candidates+=`find $dir -type f \( ! -iname ".o" \) -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
+ candidates=`find $dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
+ candidates+=`find $dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
+ candidates+=`find $dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
 for file in $candidates
 do
   file=`basename $file`
-  obj=`echo $file | sed "s/\.o/\.X/"`
   obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
-  operate="remove"
-  source ./sbin/compilation/check_object.sh
+  DIR_is_to_recompile=1
+  source ./sbin/compilation/check_object.sh "remove"
 done

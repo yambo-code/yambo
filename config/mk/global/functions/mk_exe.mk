@@ -1,5 +1,5 @@
 define mk_exe
- sleep 0.1s; LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
+ LLIBS="";for exe in $$XLIBS; do LLIBS="$$LLIBS -l$$exe" ; done ; \
  for exe in $$X_ypp_LIBS; do LLIBS="$$LLIBS -l_ypp_$$exe" ; done ; \
  for exe in $$X2DO; do \
   if test ! -f $(compdir)/config/stamps_and_lists/$$exe.stamp; then \

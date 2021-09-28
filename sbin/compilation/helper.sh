@@ -49,9 +49,14 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
  for dir in $dirs_to_check
  do
   if [[ "$dir" == "./$cdir"* ]]; then
+   DIR_is_to_recompile=0
    source ./sbin/compilation/check_updated_sources.sh 
    source ./sbin/compilation/check_updated_locks.sh 
-  fi
+   if [ "$DIR_is_to_recompile" == 1 ] ; then
+     source ./sbin/compilation/stamp_remove.sh "goal"
+     source ./sbin/compilation/stamp_remove.sh "target.a"
+   fi
+ fi
  done
  exit 0
 fi

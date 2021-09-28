@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): HM AM
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -74,8 +74,33 @@ fi
 #echo "SAVE" $save_dir 
 #echo "RESTORE" $restore_dir 
 #
-# Search for objects dependent of new/missing PROJECTS 
-# and move them in a dedicated folder
+# SAVE
+#
+for lock in $missing
+do
+ if test -f "$dir/${lock}_project.dep"; then
+  deps=`cat $dir/${lock}_project.dep`
+  for obj in $deps
+  do
+    source ./sbin/compilation/check_object.sh "save"
+  done
+ fi
+done
+#
+# RESTORE
+#
+for lock in $new
+do
+ if test -f "$dir/${lock}_project.dep"; then
+  deps=`cat $dir/${lock}_project.dep`
+  for obj in $deps
+  do
+    source ./sbin/compilation/check_object.sh "restore"
+  done
+ fi
+done
+#
+# Remove lock if the PJ is in the .objects
 #
 for lock in $unmatched
 do
@@ -84,26 +109,6 @@ do
  else
   rm -f $dir/$lock.lock
  fi
- #
- if grep -q "$lock" $dir/.objects; then
-  if [ "$VERB" == 1 ] ; then
-   echo "rm -f config/stamps_and_lists/${goal}.stamp"
-   echo "rm -f config/stamps_and_lists/${target}.a.stamp "
-  else
-   rm -f config/stamps_and_lists/${goal}.stamp 
-   rm -f config/stamps_and_lists/${target}.a.stamp 
-  fi
- fi
- #
- # Check for PJ specific modules and their childs
- #
- if test -f "$dir/${lock}_project.dep"; then
-  deps=`cat $dir/${lock}_project.dep`
-  for obj in $deps
-  do
-    operate="save_and_restore"
-    source ./sbin/compilation/check_object.sh
-  done
- fi
+ DIR_is_to_recompile=1
 done
 #

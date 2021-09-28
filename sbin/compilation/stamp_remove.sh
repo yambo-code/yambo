@@ -22,31 +22,24 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-# Operation mode
-#
-operate=$1
-#
-# Check for OBJ childs (non zero only if OBJ is a module)...
-#
-file=$obj
-source ./sbin/compilation/object_save_restore_remove.sh $operate
-#
-# Check for OBJ childs (non zero only if OBJ is a module)...
-#
-first_level_dep=
-if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
- #
- deps=`grep -w $obj $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
- for dep in $deps
- do
-  if test "$dep" == "$obj"; then continue; fi
-  first_level_dep+=" $dep"
- done
- #
- for file in $first_level_dep
- do
-  ((i=i%N)); ((i++==0)) && wait
-  source ./sbin/compilation/object_save_restore_remove.sh $operate &
- done
- wait
+if [ $1 == "goal" ] ; then
+ if [ "$VERB" == 1 ] ; then
+   echo "rm -f config/stamps_and_lists/${goal}.stamp"
+ else
+  rm -f config/stamps_and_lists/${goal}.stamp 
+ fi
+fi
+if [ $1 == "target.a" ] ; then
+ if [ "$VERB" == 1 ] ; then
+   echo "rm -f config/stamps_and_lists/${target}.a.stamp"
+ else
+  rm -f config/stamps_and_lists/${target}.a.stamp 
+ fi
+fi
+if [ $1 == "lib" ] ; then
+ if [ "$VERB" == 1 ] ; then
+   echo "rm -f config/stamps_and_lists/lib${llib}.a.stamp"
+ else
+   rm -f config/stamps_and_lists/lib${llib}.a.stamp
+ fi
 fi

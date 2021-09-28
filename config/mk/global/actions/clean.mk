@@ -5,6 +5,7 @@ clean_all: dependencies
 	@$(call clean_driver,all)
 clean: dependencies
 	@$(call clean_driver,$(what))
+	@$(call clean_driver,"stamps")
 reset: dependencies
 	@$(call clean_driver,"")
 	@$(call clean_driver,"int-libs")

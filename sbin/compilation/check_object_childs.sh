@@ -22,14 +22,10 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-# Operation mode
-#
-operate=$1
-#
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
 file=$obj
-source ./sbin/compilation/object_save_restore_remove.sh $operate
+source ./sbin/compilation/object_save_restore_remove.sh "remove"
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
@@ -45,8 +41,6 @@ if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
  for file in $first_level_dep
  do
-  ((i=i%N)); ((i++==0)) && wait
-  source ./sbin/compilation/object_save_restore_remove.sh $operate &
+  source ./sbin/compilation/object_save_restore_remove.sh "remove"
  done
- wait
 fi

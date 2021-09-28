@@ -36,8 +36,10 @@ fi
 #
 ldir=`dirname $full_path`
 llib=`basename $ldir`
+#
 source ./sbin/compilation/stamp_remove.sh "lib"
-if [ "$operate" == "remove" ]  ; then
+#
+if [[ "$operate" == "remove" ]] && [[ -f $full_path ]]  ; then
   if [ "$VERB" == 1 ] ; then
    echo "rm -f  $full_path"
    echo "rm -f config/stamps_and_lists/lib${llib}.a.stamp"
@@ -46,23 +48,19 @@ if [ "$operate" == "remove" ]  ; then
    rm -f config/stamps_and_lists/lib${llib}.a.stamp 
   fi
 fi
-if [ "$operate" == "save" ] ; then
-  if [ -f $full_path ] ; then
-    if [ "$VERB" == 1 ] ; then
-     echo "mkdir -p $ldir/$save_dir"
-     echo "mv $full_path $ldir/$save_dir"
-    else
-     mkdir -p $ldir/$save_dir
-     mv $full_path $ldir/$save_dir
-    fi
+if [[ "$operate" == "save" ]] && [[ -f $full_path ]]  ; then
+  if [ "$VERB" == 1 ] ; then
+   echo "mkdir -p $ldir/$save_dir"
+   echo "mv $full_path $ldir/$save_dir"
+  else
+   mkdir -p $ldir/$save_dir
+   mv $full_path $ldir/$save_dir
   fi
 fi
-if [ "$operate" == "restore" ] ; then
-  if test -d "$ldir/$restore_dir"; then
-    if [ "$VERB" == 1 ] ; then
-     echo " mv $ldir/$restore_dir/$file $ldir"
-    else
-     mv $ldir/$restore_dir/$file $ldir
-    fi
+if [[ "$operate" == "restore" ]] && [[ -f $ldir/$restore_dir/$file ]]  ; then
+  if [ "$VERB" == 1 ] ; then
+   echo " cp $ldir/$restore_dir/$file $ldir"
+  else
+   cp $ldir/$restore_dir/$file $ldir
   fi
 fi 

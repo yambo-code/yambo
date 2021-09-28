@@ -74,41 +74,29 @@ fi
 #echo "SAVE" $save_dir 
 #echo "RESTORE" $restore_dir 
 #
-# SAVE
-#
-for lock in $missing
-do
- if test -f "$dir/${lock}_project.dep"; then
-  deps=`cat $dir/${lock}_project.dep`
-  for obj in $deps
-  do
-    source ./sbin/compilation/check_object.sh "save"
-  done
- fi
-done
-#
-# RESTORE
-#
-for lock in $new
-do
- if test -f "$dir/${lock}_project.dep"; then
-  deps=`cat $dir/${lock}_project.dep`
-  for obj in $deps
-  do
-    source ./sbin/compilation/check_object.sh "restore"
-  done
- fi
-done
-#
-# Remove lock if the PJ is in the .objects
-#
 for lock in $unmatched
 do
+ #
+ # SAVE & RESTORE PJ dependent objects (from .dep files)
+ #
+ if test -f "$dir/${lock}_project.dep"; then
+  deps=`cat $dir/${lock}_project.dep`
+  for file in $deps
+  do
+    source ./sbin/compilation/object_save_restore_remove.sh "save"
+    source ./sbin/compilation/object_save_restore_remove.sh "restore"
+  done
+ fi
+ #
+ # Remove the lock 
+ #
  if [ "$VERB" == 1 ] ; then
   echo "rm -f $dir/$lock.lock"
  else
   rm -f $dir/$lock.lock
  fi
  DIR_is_to_recompile=1
+ #
 done
+#
 #

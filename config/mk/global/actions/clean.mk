@@ -12,3 +12,4 @@ reset: dependencies
 check: 
 	@FILES=`git ls-files --others|grep -v .tar.gz|grep -v .sw`; for target in $$FILES ; do echo $$target; done
 	@find . -empty -type d
+

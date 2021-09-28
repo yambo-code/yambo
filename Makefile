@@ -86,9 +86,7 @@ conf-check:
 # int-libs are compiled via an internal make call where MAKECMDGOALS is the lib itself.
 #
 STAMP_DBLE=
-ifeq ($(wildcard config/stamps_and_lists/compiling_ypp_nl.stamp),config/stamps_and_lists/compiling_ypp_nl.stamp)
- STAMP_DBLE=-D_DOUBLE
-else ifeq ($(wildcard config/stamps_and_lists/compiling_yambo_nl.stamp),config/stamps_and_lists/compiling_yambo_nl.stamp)
+ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp))
  STAMP_DBLE=-D_DOUBLE
 endif
 #

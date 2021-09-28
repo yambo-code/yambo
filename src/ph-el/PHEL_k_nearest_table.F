@@ -59,7 +59,6 @@ subroutine PHEL_k_nearest_table(k)
      !
      ! Notice that k-q_yambo ==> k+q_PH because of the MinusQ convention
      KpQ_IO_map(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,k%nbz,i_err=i_err)
- write (*,*) iq,ikbz,KpQ_IO_map(iq,ikbz)
      !
      call live_timing( steps=1 )
      !

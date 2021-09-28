@@ -45,6 +45,7 @@ define clean_src_driver
    for FOLD in `cat config/stamps_and_lists/active_directories.list|grep $(1)`;do TARG="$$TARG $$FOLD";done;\
    $(clean_dir_driver);$(clean_lib_driver);$(clean_mod_driver); \
   fi;\
+  rm -f $(compdir)/config/stamps_and_lists/compilation_*.stamp; \
  fi
 endef
 define clean_dir_driver

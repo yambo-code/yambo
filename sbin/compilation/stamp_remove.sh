@@ -24,22 +24,27 @@
 #
 if [ $1 == "goal" ] ; then
  if [ "$VERB" == 1 ] ; then
-   echo "rm -f config/stamps_and_lists/${goal}.stamp"
+   echo "rm -f $compdir/config/stamps_and_lists/${goal}.stamp"
  else
-  rm -f config/stamps_and_lists/${goal}.stamp 
+  rm -f $compdir/config/stamps_and_lists/${goal}.stamp 
  fi
 fi
 if [ $1 == "target.a" ] ; then
  if [ "$VERB" == 1 ] ; then
-   echo "rm -f config/stamps_and_lists/${target}.a.stamp"
+   echo "rm -f $compdir/config/stamps_and_lists/${target}.a.stamp"
  else
-  rm -f config/stamps_and_lists/${target}.a.stamp 
+  rm -f $compdir/config/stamps_and_lists/${target}.a.stamp 
  fi
 fi
 if [ $1 == "lib" ] ; then
  if [ "$VERB" == 1 ] ; then
-   echo "rm -f config/stamps_and_lists/lib${llib}.a.stamp"
+   echo "rm -f $compdir/config/stamps_and_lists/lib${llib}.a.stamp"
  else
-   rm -f config/stamps_and_lists/lib${llib}.a.stamp
+   rm -f $compdir/config/stamps_and_lists/lib${llib}.a.stamp
  fi
 fi
+if [ $1 == "exe" ] ; then
+  stamp=`find $compdir/config/stamps_and_lists/ -name "compiling*"  | sed "s/compiling_//"`
+  rm -f $stamp
+fi
+

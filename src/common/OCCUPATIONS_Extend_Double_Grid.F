@@ -54,6 +54,16 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  !
  if (E%FG%nb==0.or..not.allocated(E%FG%E)) return
  !
+ !E%FG%E(:,:,:)=E%FG%E(:,:,:)-E%E_Fermi
+ !do is=1,n_sp_pol
+ !  do ik=1,E%FG%nk
+ !    do ib=1,E%FG%nb
+ !      E%FG%f(ib,ik,is) =spin_occ*Fermi_fnc(E%FG%E(ib,ik,is),Tel)
+ !    enddo
+ !  enddo 
+ !enddo
+ !return
+ !
  call parser('FGbandshift',l_user_bands_shift)
  !
  if (l_user_bands_shift) then
@@ -186,7 +196,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
        if (mode=="IBZ") ikibz=ikbz
        if (mode=="BZ" ) ikibz=k%sstar(ikbz,1)
        do is=1,n_sp_pol
-         do ib=1,E%FG%nb
+         do ib=1,min(E%FG%nb,E%nb)
            En=E%E(ib,ikibz,is)
            if (iE_fg>0) En=E%FG%E(ib,iE_fg,is)
            f=spin_occ*Fermi_fnc(En-running_Ef,Tel)

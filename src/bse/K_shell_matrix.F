@@ -68,8 +68,8 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  Slepc_v%it=1
  allocate(Slepc_v%Vi(BS_nT_grps))
  allocate(Slepc_v%Vo(BS_nT_grps))
- call BS_HAYVEC_alloc(Slepc_v%Vi)
- call BS_HAYVEC_alloc(Slepc_v%Vo)
+ call BS_HAYVEC_alloc(Slepc_v%Vi,(/1/))
+ call BS_HAYVEC_alloc(Slepc_v%Vo,(/1/))
  !
  ! Allocate slepc shell matrix
  !

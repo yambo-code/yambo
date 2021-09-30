@@ -88,7 +88,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) 
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last,ig_W_final 
  !
  integer    :: i_block,O_ng_shift,NG,&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
@@ -418,7 +418,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now,ig_W_final, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
@@ -457,6 +457,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
        i_kmq_bz=qindx_X(iq,i_k_bz,1) 
        i_pmq_bz=qindx_X(iq,i_p_bz,1) 
+       !
+       ig_kmq    = qindx_X(iq,i_k_bz,2)
+       ig_pmq    = qindx_X(iq,i_p_bz,2)
        !
        i_kmq   =Xk%sstar(i_kmq_bz,1) 
        i_pmq   =Xk%sstar(i_pmq_bz,1) 
@@ -508,10 +511,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
        i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
        !
-       ! 
-       ig_kmq    = qindx_X(iq,i_k_bz,2) 
-       ig_pmq    = qindx_X(iq,i_p_bz,2) 
-       !        
        if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
@@ -532,7 +531,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          else 
            iq_W_bz_mq=iq_W_bz_mq_last 
            ig_W_mq   =ig_W_mq_last    
-         endif 
+         endif
+         !
+         if (iq==1) ig_W_final=      ig_W_mq
+         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,G_m_G(ig_kmq,ig_pmq))
+         !
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
        endif 
@@ -576,7 +579,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
          !         
        case ("C","Q")
          !
@@ -594,7 +597,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
          !
        end select
        !

@@ -44,11 +44,13 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
  use interfaces,    ONLY:OCCUPATIONS_Gaps
+ !
 #include<memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::K
- character(*), OPTIONAL ::mode,OBJ
+ character(*)           ::OBJ
+ character(*), OPTIONAL ::mode
  integer,      OPTIONAL ::n_bands
  !
  ! Work Space
@@ -251,6 +253,10 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
+ ! => Double Grid extension
+ !
+ call OCCUPATIONS_Extend_Double_Grid(OBJ,E,K)
+ !
  ! Gaps, VBM/CBM
  !
  if (present(mode)) then
@@ -260,11 +266,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
    endif
  endif
  !
- if (present(OBJ)) then
-   call REPORT_Occupations(OBJ,E)
- else
-   call REPORT_Occupations(" ",E)
- endif
+ call REPORT_Occupations(OBJ,E)
  !
  contains
    !

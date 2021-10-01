@@ -26,7 +26,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  use pars,           ONLY:SP,DP
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,spin_occ,n_sp_pol,nel,n_bands
- use R_lattice,      ONLY:bz_samp,bz_fine_grid
+ use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Tel
  use functions,      ONLY:Fermi_fnc
  use units,          ONLY:HA2EV
@@ -43,7 +43,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  ! Ef loop
  integer ,parameter :: n_try=20
  real(SP),parameter :: dE=0.2/HA2EV
- integer            :: i_try,ierr
+ integer            :: i_try,ierr,i_ok
  real(SP)           :: delta_Nel(n_try),Ef(n_try)
  !
  ! re-alignment
@@ -53,16 +53,6 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  real(SP),allocatable :: Edummy(:,:,:)
  !
  if (E%FG%nb==0.or..not.allocated(E%FG%E)) return
- !
- !E%FG%E(:,:,:)=E%FG%E(:,:,:)-E%E_Fermi
- !do is=1,n_sp_pol
- !  do ik=1,E%FG%nk
- !    do ib=1,E%FG%nb
- !      E%FG%f(ib,ik,is) =spin_occ*Fermi_fnc(E%FG%E(ib,ik,is),Tel)
- !    enddo
- !  enddo 
- !enddo
- !return
  !
  call parser('FGbandshift',l_user_bands_shift)
  !
@@ -119,89 +109,102 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  ! ..init
  i_try=1
  Ef(1)=E%E_Fermi
- if (k%FGbz%N>0 ) delta_Nel(1)=gimme_Nel(k%FGbz,"BZ") 
- if (k%FGibz%N>0) delta_Nel(1)=gimme_Nel(k%FGibz,"IBZ") 
- call Ef_update(ierr)
+ call E_Fermi_to_Nel( )
+ if (abs(delta_Nel(1))<1.E-5) then
+   call Occupations_update( 1 )
+   return
+ endif
  !
  ! ..loops
  LOOP: do i_try=2,n_try-1
    !
-   if (ierr<0) then
-     if (k%FGbz%N>0 ) delta_Nel(i_try)=gimme_Nel(k%FGbz,"BZ") 
-     if (k%FGibz%N>0) delta_Nel(i_try)=gimme_Nel(k%FGibz,"IBZ") 
-     call Ef_update(ierr)
-   endif
-   !
+   call check_and_propose_a_new_Fermi_level(ierr)
+   if (ierr<0) call E_Fermi_to_Nel( )
    if (ierr>0) then
-     if (k%FGbz%N>0 ) delta_Nel(i_try)=gimme_Nel(k%FGbz,"BZ") 
-     if (k%FGibz%N>0) delta_Nel(i_try)=gimme_Nel(k%FGibz,"IBZ") 
-     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_try)
+     call Occupations_update( i_ok )
      exit LOOP
    endif
    !
  enddo LOOP
  !
+ if (i_ok==1) return
+ !
  if (abs(delta_Nel(1))>1.E-5) then
    call msg('r','[FineGd@'//what//'] (default) integrated electrons',delta_Nel(1)+nel)
-   call msg('r','[FineGd@'//what//'] Femi Loop search iterations   ',i_try)
-   call msg('r','[FineGd@'//what//'] (new) Fermi level             ',Ef(i_try)*HA2EV,"[eV]")
-   call msg('r','[FineGd@'//what//'] (new) integrated electrons    ',delta_Nel(i_try)+nel)
+   call msg('r','[FineGd@'//what//'] Femi Loop search iterations   ',i_ok)
+   call msg('r','[FineGd@'//what//'] (new) Fermi level             ',Ef(i_ok)*HA2EV,"[eV]")
+   call msg('r','[FineGd@'//what//'] (new) integrated electrons    ',delta_Nel(i_ok)+nel)
    call warning('[FineGd@'//what//'] Fermi level not aligned with from built-in levels')
  endif
  !
  contains
    !
-   subroutine Ef_update(ierr)
+   subroutine check_and_propose_a_new_Fermi_level(ierr)
      !
      integer :: ierr
      !
-     if (abs(delta_Nel(i_try))<1.E-5) then
+     if (abs(delta_Nel(i_try-1))<1.E-5) then
        ierr=1
        return
      endif
-     if (i_try>1) then
-       if (delta_Nel(i_try)*delta_Nel(i_try-1)<0.) then
+     if (i_try>=3) then
+       if (delta_Nel(i_try-2)*delta_Nel(i_try-1)<0.) then
          ierr=1
-         if (abs(delta_Nel(i_try))>abs(delta_Nel(i_try-1))) then
-           Ef(i_try)=Ef(i_try-1) 
+         Ef(i_try)=Ef(i_try-1) 
+         i_ok=i_try-1
+         if (abs(delta_Nel(i_try-1))>abs(delta_Nel(i_try-2))) then
+           Ef(i_try)=Ef(i_try-2) 
+           i_ok=i_try-2
          endif
          return
        endif
-       if (abs(delta_Nel(i_try)-delta_Nel(i_try-1))<1.E-5) then
-         Ef(i_try)=Ef(i_try-1) 
+       if (abs(delta_Nel(i_try-1)-delta_Nel(i_try-2))<1.E-5) then
+         Ef(i_try)=Ef(i_try-2) 
+         i_ok=i_try-2
          ierr=1
          return
        endif
      endif
-     if (delta_Nel(i_try)>0.) Ef(i_try+1)=Ef(i_try)-dE
-     if (delta_Nel(i_try)<0.) Ef(i_try+1)=Ef(i_try)+dE
+     if (delta_Nel(i_try-1)>0.) Ef(i_try)=Ef(i_try-1)-dE
+     if (delta_Nel(i_try-1)<0.) Ef(i_try)=Ef(i_try-1)+dE
      ierr=-1
      !
    end subroutine
    !
-   function gimme_Nel(FG,mode)
-     type(bz_fine_grid) :: FG
-     character(*)       :: mode
-     real(DP)           :: Nel_accumulated
-     integer :: ik_fg,iE_fg,ikbz,ikibz
-     real(SP):: En,gimme_Nel,f
+   subroutine E_Fermi_to_Nel( )
+     real(DP):: Nel_accumulated
+     integer :: ik_fg,iE_fg,ikibz,Nk
+     real(SP):: f,k_weight
      Nel_accumulated=0._DP
-     do ik_fg=1,FG%N
-       iE_fg=FG%E_map(ik_fg)
-       ikbz =FG%k_map(ik_fg)
-       if (mode=="IBZ") ikibz=ikbz
-       if (mode=="BZ" ) ikibz=k%sstar(ikbz,1)
+     do ik_fg=1,k%FGbare%N
+       iE_fg   =k%FGbare%E_map(ik_fg)
+       ikibz   =k%FGbare%k_map(ik_fg)
+       k_weight=k%FGbare%weights(ik_fg)
        do is=1,n_sp_pol
          do ib=1,min(E%FG%nb,E%nb)
-           En=E%E(ib,ikibz,is)
-           if (iE_fg>0) En=E%FG%E(ib,iE_fg,is)
-           f=spin_occ*Fermi_fnc(En-Ef(i_try),Tel)
-           Nel_accumulated=Nel_accumulated+FG%weights(ik_fg)*f
-           if (iE_fg>0) E%FG%f(ib,iE_fg,is)=f
+           if (iE_fg>0) then
+             f=spin_occ*Fermi_fnc(E%FG%E(ib,iE_fg,is)-Ef(i_try),Tel)
+           else
+             f=spin_occ*E%f(ib,ikibz,is)
+           endif
+           Nel_accumulated=Nel_accumulated+k_weight*f
          enddo
        enddo
      enddo
-     gimme_Nel=real(Nel_accumulated,SP)-Nel
-   end function
+     delta_Nel(i_try)=real(Nel_accumulated,SP)-Nel
+   end subroutine
+   !
+   subroutine Occupations_update( i_loop )
+     integer :: ik_fg,i_loop
+     do ik_fg=1,E%FG%Nk
+       do is=1,n_sp_pol
+         do ib=1,E%FG%nb
+           E%FG%f(ib,ik_fg,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_fg,is)-Ef(i_loop),Tel)
+         enddo
+       enddo
+     enddo
+     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_try)
+     E%FG%E_Fermi=Ef(i_try)
+   end subroutine
    !
 end subroutine

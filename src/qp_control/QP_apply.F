@@ -181,11 +181,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
  !
  if (.not.allocated(en%fo) .and. .not. l_sc_run) then
-   if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,OBJ="X+QP")
-   if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,OBJ="K+QP")
+   if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,"X+QP")
+   if (QP_ctl_ID==2) call OCCUPATIONS_Fermi(en,k,"K+QP")
    if (QP_ctl_ID==3) then
-     call OCCUPATIONS_Fermi(en,k,OBJ="G+QP")
-     if (nkibz/=nXkibz) call warning("G and X k-grids have different number of k-points. G Fermi level potentially not alligned")
+     call OCCUPATIONS_Fermi(en,k,"G+QP")
+     if (nkibz/=nXkibz) call warning("G and X k-grids have different number of k-points. G Fermi level potentially not aligned")
    endif
  endif
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_driver(en,k)
+subroutine NL_ypp_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
 &                         l_skip_OBS_IO

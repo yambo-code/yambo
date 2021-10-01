@@ -144,6 +144,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
      integer :: ierr
      !
      if (abs(delta_Nel(i_try-1))<1.E-5) then
+       i_ok=i_try-1
        ierr=1
        return
      endif
@@ -203,8 +204,8 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
          enddo
        enddo
      enddo
-     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_try)
-     E%FG%E_Fermi=Ef(i_try)
+     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_loop)
+     E%FG%E_Fermi=Ef(i_loop)
    end subroutine
    !
 end subroutine

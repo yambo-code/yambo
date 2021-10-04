@@ -234,7 +234,7 @@ module BS
    !------------------
    integer                       :: N_oscillators 
    integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
-   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
+   integer,     allocatable      :: O_table(:,:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
 #ifdef _CUDA
    complex(SP), allocatable, device :: O_c_d(:,:)

@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,g_rot,&
 &                       qindx_X,qindx_B_max,qindx_free,qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
@@ -533,11 +533,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ig_W_mq   =ig_W_mq_last    
          endif
          !
-         if (iq==1) ig_W_final=      ig_W_mq
-         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,G_m_G(ig_kmq,ig_pmq))
-         !
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
+         !
+         if (iq==1) ig_W_final=      ig_W_mq
+         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_pmq,ig_kmq),iq_W_s_mq))
+         !
        endif 
        ! 
        if (BS_K_is_ALDA) then 
@@ -577,9 +578,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Correlations
          if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
+&                                   i_k_s,i_p_s,i_c_k,i_c_p,i_kmq_s,i_pmq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !         
        case ("C","Q")
          !
@@ -595,7 +596,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          ! Correlations
          if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
+&                                 i_k_s,i_p_s,i_c_k,i_v_p,i_kmq_s,i_pmq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
          !

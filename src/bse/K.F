@@ -533,11 +533,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            ig_W_mq   =ig_W_mq_last    
          endif
          !
+         iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
+         iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
+         !
          if (iq==1) ig_W_final=      ig_W_mq
          if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_kmq,ig_pmq),iq_W_s_mq))
          !
-         iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
-         iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
        endif 
        ! 
        if (BS_K_is_ALDA) then 

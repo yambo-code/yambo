@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,g_rot,&
 &                       qindx_X,qindx_B_max,qindx_free,qindx_B_load
  use com,          ONLY:msg
  use stderr,       ONLY:intc
@@ -534,7 +534,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          endif
          !
          if (iq==1) ig_W_final=      ig_W_mq
-         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,G_m_G(ig_kmq,ig_pmq))
+         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_kmq,ig_pmq),iq_W_s_mq))
          !
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 

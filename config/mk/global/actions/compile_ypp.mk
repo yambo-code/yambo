@@ -31,8 +31,8 @@ else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
  YPP_SRC_LIBS=$(YPPPH_LIBS)
  YPP_EXE_LIBS=$(YPPPH_LIBS_LD)
 else ifneq (,$(findstring ypp_nl,$(MAKECMDGOALS)))
- Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_RT -D_NL
- YPP_PRECMP=-D_YPP_RT -D_YPP_NL
+ Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_RT -D_NL -D_DOUBLE
+ YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_DOUBLE
  Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
  Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
  YPP_SRC_LIBS=$(YPPRT_LIBS)
@@ -43,13 +43,13 @@ endif
 #
 ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: 
 	@touch config/stamps_and_lists/compiling_$@.stamp
-	@$(MAKE) conf-check
+	@rm -f ${compdir}/log/"compile_"$@".log"
+	@$(call todo_precision,$(Y_PRECMP))
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
-	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(YPP_PRECMP) $(DOUBLE_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
-	@+LIBS="$(Y_SRC_LIBS)";BASE="src";ADF="$(Y_PRECMP) $(DOUBLE_PRECMP)";$(todo_lib);$(mk_lib)
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(YPP_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
+	@+LIBS="$(Y_SRC_LIBS)";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="$(YPP_SRC_LIBS)";LAB="_ypp_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
-	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP) $(DOUBLE_PRECMP)";$(todo_driver)
-	@sleep 0.1s;
-	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP) $(DOUBLE_PRECMP)";$(mk_exe)
+	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP)";$(todo_driver)
+	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP)";$(mk_exe)

@@ -122,7 +122,6 @@ module fields
      use X_m,       ONLY:global_gauge
      use pars,      ONLY:cI,cONE,cZERO,pi,schlen
      use wrapper,   ONLY:FADEVA
-     use real_time, ONLY:NE_tot_time
      !
      type(ext_field), intent(inout)   ::E_field
      !
@@ -145,6 +144,7 @@ module fields
      !
      small_a=cZERO
      f_t=cZERO
+     damp_func=1._SP
      !
      envelop_only_=.false.
      if(present(envelop_only)) envelop_only_=envelop_only
@@ -166,12 +166,12 @@ module fields
          ! Fields which do not need T_0
          W_0=0._SP
          T_0=0._SP
-         if (sigma>0._SP) then
-           T_0=5*sigma
-           damp_func=1._SP
-           if (T<T_0)             damp_func=exp( (T-T_0)/sigma)
-           if (T>NE_tot_time-T_0) damp_func=exp(-(T-NE_tot_time+T_0)/sigma)
-         endif
+         !if (sigma>0._SP) then
+         !  T_0=5*sigma
+         !  damp_func=1._SP
+         !  if (T<T_0)             damp_func=exp( (T-T_0)/sigma)
+         !  if (T>NE_tot_time-T_0) damp_func=exp(-(T-NE_tot_time+T_0)/sigma)
+         !endif
        case('SOFTSIN','THETA')
          ! Fields which do not need T_0
          W_0=0._SP
@@ -179,8 +179,8 @@ module fields
          a =  3._SP/sigma**4 
          b = -8._SP/sigma**3
          c =  6._SP/sigma**2
-         damp_func=1._SP
-         if(real(T)<sigma.and.sigma>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2) 
+         !damp_func=1._SP
+         !if(real(T)<sigma.and.sigma>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2) 
        case('GAUSS','QSSIN','QSFIELD','PULSE','SPULSE')
          ! Fields which need T_0
          W_0=field_frequency(E_field,1)

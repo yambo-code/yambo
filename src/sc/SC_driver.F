@@ -203,7 +203,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
- call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+ call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
  !
  ! Reference wavefunctions
  !
@@ -477,7 +477,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
    !
    if (l_SC_cycle) then
      !
@@ -496,7 +496,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
      !
      ! New density 
      !=============
@@ -874,7 +874,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
      !
      dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !

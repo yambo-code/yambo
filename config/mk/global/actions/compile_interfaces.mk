@@ -18,7 +18,7 @@ endif
 #
 $(GOALS):
 	@touch config/stamps_and_lists/compiling_$@.stamp
-	@$(MAKE) conf-check
+	@rm -f ${compdir}/log/"compile_"$@".log"
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
@@ -26,5 +26,4 @@ $(GOALS):
 	@+LIBS="$(2YLIBS)";BASE="src";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="int_modules";BASE="interfaces";ADF="$(I_PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(todo_driver)
-	@sleep 0.1s; 
 	@+X2DO="$@";BASE="interfaces/$@";XLIBS="$(2YLIBS_LD)";ADF="$(I_PRECMP)";$(mk_exe)

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_driver(en,k,q)
+subroutine RT_ypp_driver(en,k,q)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels

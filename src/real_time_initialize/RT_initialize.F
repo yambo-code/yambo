@@ -334,7 +334,7 @@ subroutine RT_initialize(E,k,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_elph_scatt) call RT_ELPH_initialize(E,k,q)
+ call RT_ELPH_initialize(E,k,q)
  !
 #endif
  !

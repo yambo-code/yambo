@@ -39,8 +39,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  use units,         ONLY:HA2KEL
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Tel,T_elecs,T_holes,Bose_Temp
- use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,&
-&                        n_spinor,n_spin
+ use electrons,     ONLY:levels,nel,n_sp_pol,spin_occ,n_spinor,n_spin
  use R_lattice,     ONLY:bz_samp
  use vec_operate,   ONLY:sort
  use functions,     ONLY:Fermi_fnc
@@ -53,13 +52,14 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !
  type(levels)  ::E
  type(bz_samp) ::K
- character(*), OPTIONAL ::mode,OBJ
+ character(*)           ::OBJ
+ character(*), OPTIONAL ::mode
  integer,      OPTIONAL ::n_bands
  logical,      OPTIONAL ::impose_balance
  !
  ! Work Space
  !
- integer :: i1,is,ib,ik,ik_FineGd,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
+ integer :: i1,is,ib,ik,i_trials(2),n_b_full_guess,i_Ef(2),i_Ef_fine(2),n_total_states,group_size,nb_here
  integer :: index(E%nk*E%nb*n_sp_pol,3),index_E_sorted(E%nk*E%nb*n_sp_pol)
  real(SP):: E_sorted(E%nk*E%nb*n_sp_pol),n_of_el_from_zero(2),Ef(2),nel_DbGd,nel_diff_zero,n_elecs,n_holes,balance
  logical :: Fermi_is_converged,impose_balance_
@@ -317,47 +317,20 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  !
  E%E(:,:,:)=E%E(:,:,:)-E%E_Fermi
  !
- ! If %E_FineGd is associated I simply extend the %E occupations to %E_FineGd
+ ! => Double Grid extension
  !
- if (E%FG%nb>0.and.allocated(E%FG%E)) then
-   ! 
-   !nel_DbGd=0._SP 
-   !
-   E%FG%E(:,:,:)=E%FG%E(:,:,:)-E%E_Fermi
-   do is=1,n_sp_pol
-     do ik_FineGd=1,E%FG%nk
-       do ib=1,E%FG%nb
-         if(E%FG%E(ib,ik_FineGd,is)<=0._SP) E%FG%f(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_FineGd,is),T_holes)
-         if(E%FG%E(ib,ik_FineGd,is)> 0._SP) E%FG%f(ib,ik_FineGd,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_FineGd,is),T_elecs)
-       enddo
-       !DEBUG>
-       !nel_DbGd=nel_DbGd+sum(E%f_FineGd(:,ik_FineGd,is))*K%FGibz%weights(ik_FineGd)
-       !DEBUG<
-     enddo
-   enddo
-   !DEBUG>
-   !nel_DbGd=nel_DbGd
-   !
-   !if (abs(nel-nel_DbGd)>1.E-2) call error(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   !if (abs(nel-nel_DbGd)>1.E-5) call warning(' Double grid produces  '//trim(real2ch(nel_DbGd))//' e-.')
-   !DEBUG<
-   !
- endif
+ call OCCUPATIONS_Extend_Double_Grid(OBJ,E,K)
  !
  ! Gaps, VBM/CBM
  !
  if (present(mode)) then
    if (mode=="OCCUPATIONS") then
-    call OCCUPATIONS_Gaps(E)
+     call OCCUPATIONS_Gaps(E)
      return
    endif
  endif
  !
- if (present(OBJ)) then
-   call REPORT_Occupations(OBJ,E)
- else
-   call REPORT_Occupations(" ",E)
- endif
+ call REPORT_Occupations(OBJ,E)
  !
  contains
    !

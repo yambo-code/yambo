@@ -53,7 +53,8 @@ module interfaces
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
      type(bz_samp) ::K
-     character(*), OPTIONAL ::mode,OBJ
+     character(*)           ::OBJ
+     character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
      logical,      OPTIONAL ::impose_balance
    end subroutine

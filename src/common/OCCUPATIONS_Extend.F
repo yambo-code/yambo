@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Extend(Xe,E)
+subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  ! The occupation of E levels are decided using the Fermi "Levels" of Xe.
  !
@@ -34,15 +34,17 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ
+ use R_lattice,  ONLY:bz_samp
  use D_lattice,  ONLY:T_elecs,T_holes
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
 #include<memory.h>
  !
- type(levels)::Xe,E
+ type(levels)    ::Xe,E
+ type(bz_samp)   ::k
  !
- !Work Space
+ ! Work Space
  !
  real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
@@ -57,6 +59,9 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  call f_build(Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
+ ! FineGd
+ call OCCUPATIONS_Extend_Double_Grid("E",E,k)
+ !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
  ! in the Fermi routine)
@@ -65,7 +70,6 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
    return
  endif
  !
@@ -87,7 +91,6 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')
@@ -108,17 +111,6 @@ subroutine OCCUPATIONS_Extend(Xe,E)
          enddo
        enddo 
      enddo
-     if (allocated(E%FG%E)) then
-       do i1=1,E%FG%nb
-         do i2=1,E%FG%nk
-           do is=1,n_sp_pol
-             if( (E%FG%E(i1,i2,is)-Ef)<=0._SP) E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,T_holes)
-             if( (E%FG%E(i1,i2,is)-Ef)> 0._SP) E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,T_elecs)
-             Xe%FG%f(i1,i2,is)=E%FG%f(i1,i2,is)
-           enddo
-         enddo 
-       enddo
-     endif
    end subroutine
    !
 end subroutine

@@ -127,13 +127,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
    enddo
  enddo
  !
- !AMBO_ALLOC(BS_blk(i_block)%O_table,(2,nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
- !AMBO_ALLOC(O_todo_table,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol)
- allocate(BS_blk(i_block)%O_table(2,nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ YAMBO_ALLOC(BS_blk(i_block)%O_table1,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ YAMBO_ALLOC(BS_blk(i_block)%O_table2,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
+ !AMBO_ALLOC(O_todo_table,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  allocate(O_todo_table(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  BS_blk(i_block)%N_oscillators=0
- BS_blk(i_block)%O_table=0
+ BS_blk(i_block)%O_table1=0
+ BS_blk(i_block)%O_table2=0
  O_todo_table=.false.
  !
  i_p_bz_last=0  ; i_k_bz_last=0
@@ -581,20 +582,22 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
      do iB_p=iB,1,-1
        if(BS_blk(iB_p)%ira_k/=BS_blk(iB)%ira_k .or. BS_blk(iB_p)%ira_p/=BS_blk(iB)%ira_p) exit
        if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-       if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
-       if(BS_blk(iB_p)%O_table(1,i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)==0) cycle
+       if(.not.allocated(BS_blk(iB_p)%O_table1)) cycle
+       if(BS_blk(iB_p)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)==0) cycle
        !iB_ref=iB_p
        exit
      enddo
      if ( iB_ref==-1 ) then
        iB_ref=iB
        BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-       BS_blk(iB)%O_table(1,i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
-       BS_blk(iB)%O_table(2,i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=iB
+       BS_blk(iB)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
+       BS_blk(iB)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=iB
        O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=.true.
      endif
-     BS_blk(iB)%O_table(:,i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)= &
-&      BS_blk(iB_ref)%O_table(:,i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)
+     BS_blk(iB)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)= &
+&      BS_blk(iB_ref)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)
+     BS_blk(iB)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)= &
+&      BS_blk(iB_ref)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)
    end subroutine
    !
    subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_sp_pol_i,i_sp_pol_o,ibi,ibo,iq_W,i_s_ki,i_s_ko,isc)
@@ -608,7 +611,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
      isc%os=(/ibo,iko,i_s_ko,i_sp_pol_o/)
      isc%qs=(/1,iq_W,1/)
      !
-     iB_oscillator = BS_blk(iB)%O_table(1,i_s_ki,i_s_ko,ikit,ikot,ibi,ibo,i_sp_pol_i)
+     iB_oscillator = BS_blk(iB)%O_table1(i_s_ki,i_s_ko,ikit,ikot,ibi,ibo,i_sp_pol_i)
      !
      call DEV_SUB(scatter_Bamp)(isc)
      call dev_memcpy( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )

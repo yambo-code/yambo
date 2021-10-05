@@ -58,15 +58,15 @@ function K_correlation_kernel(i_block,i_p,i_pmq,                               &
    return
  endif
  !
- iO1       = BS_blk(i_block)%O_table(1,i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
- i_block_1 = BS_blk(i_block)%O_table(2,i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
+ iO1       = BS_blk(i_block)%O_table1(i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
+ i_block_1 = BS_blk(i_block)%O_table2(i_k_s,i_p_s,1,1,i_n_k,i_n_p,i_k_sp_pol_n)
  !PHASE_1=WF_phase(i_p,i_kp_s,i_n_p,i_p_sp_pol_n)
  !if (PHASE_1==cZERO  ) PHASE_1=1._SP
  !if (PHASE_1==-99._SP) PHASE_1=1._SP
  PHASE_1 = 1._SP
  !
- iO2       = BS_blk(i_block)%O_table(1,i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
- i_block_2 = BS_blk(i_block)%O_table(2,i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
+ iO2       = BS_blk(i_block)%O_table1(i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
+ i_block_2 = BS_blk(i_block)%O_table2(i_kmq_s,i_pmq_s,i_kmq_t,i_pmq_t,i_m_k,i_m_p,i_k_sp_pol_m)
  !PHASE_2=WF_phase(i_pmq,i_kp_mq_s,i_m_p,i_p_sp_pol_m)
  !if (PHASE_2==cZERO  ) PHASE_2=1._SP
  !if (PHASE_2==-99._SP) PHASE_2=1._SP

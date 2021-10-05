@@ -233,8 +233,9 @@ module BS
    ! ... correlation
    !------------------
    integer                       :: N_oscillators 
-   integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
-   integer,     allocatable      :: O_table(:,:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
+   integer,     allocatable      :: kp_table(:,:)            ! 2,nkibz @ k = (i_kmq,i_pmq)
+   integer,     allocatable      :: O_table1(:,:,:,:,:,:,:)  ! 1,sym,nkmq,npmq,n,n',spin @ k = iOnn
+   integer,     allocatable      :: O_table2(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = i_block_ref
    complex(SP), allocatable      :: O_c(:,:)
 #ifdef _CUDA
    complex(SP), allocatable, device :: O_c_d(:,:)
@@ -325,7 +326,8 @@ module BS
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table)
+       YAMBO_FREE(BS_blk(iB)%O_table1)
+       YAMBO_FREE(BS_blk(iB)%O_table2)
        YAMBO_FREE(BS_blk(iB)%kp_table)
 #ifdef _CUDA
        if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)

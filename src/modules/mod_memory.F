@@ -99,9 +99,9 @@ module memory
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
-#  ifndef _DOUBLE
+#ifndef _DOUBLE
 &                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
-#  endif
+#endif
 #endif
 &                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,  MEM_i6,  MEM_i7, &
 &                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,                   &
@@ -434,7 +434,7 @@ module memory
      complex(SP), device ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  ifndef _DOUBLE
+#ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
      complex(DP), device ::c(:)
@@ -465,7 +465,7 @@ module memory
      complex(DP), device ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  endif
+#endif
 #endif
    subroutine MEM_l1(name,l)
      character(*)::name

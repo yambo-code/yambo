@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): HM AM
+# Authors (see AUTHORS file for details): AM
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -74,41 +74,29 @@ fi
 #echo "SAVE" $save_dir 
 #echo "RESTORE" $restore_dir 
 #
-# Remove the lock
-#
-bdir=`basename $dir`
-#
-# Search for objects dependent of new/missing PROJECTS 
-# and move them in a dedicated folder
-#
 for lock in $unmatched
 do
- rm -f $dir/$lock.lock
- if grep -q "$lock" $dir/.objects; then
-  rm -f config/stamps_and_lists/${goal}.stamp 
-  rm -f config/stamps_and_lists/${target}.a.stamp 
-  #echo "LOCK $lock in .objects"
- fi
+ #
+ # SAVE & RESTORE PJ dependent objects (from .dep files)
+ #
  if test -f "$dir/${lock}_project.dep"; then
   deps=`cat $dir/${lock}_project.dep`
-  for object in $deps
+  for file in $deps
   do
-    if test -f "$dir/$object"; then
-     if ! test -d $save_dir; then mkdir -p $dir/$save_dir; fi
-     rm -f config/stamps_and_lists/${goal}.stamp 
-     rm -f config/stamps_and_lists/${target}.a.stamp 
-     mv $dir/$object $dir/$save_dir
-     #echo "OBJ $object -> $save_dir"
-    fi
+    source ./sbin/compilation/object_save_restore_remove.sh "save"
+    source ./sbin/compilation/object_save_restore_remove.sh "restore"
   done
  fi
+ #
+ # Remove the lock 
+ #
+ if [ "$VERB" == 1 ] ; then
+  echo "rm -f $dir/$lock.lock"
+ else
+  rm -f $dir/$lock.lock
+ fi
+ DIR_is_to_recompile=1
+ #
 done
 #
-# Restore the files of the project (if there are)
 #
-if test -d "$dir/$restore_dir"; then
- for file in `ls $dir/$restore_dir`
- do
-  mv $dir/$restore_dir/$file $dir
- done
-fi

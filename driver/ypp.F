@@ -232,14 +232,14 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
  !
- if (l_RealTime) call RT_driver(en,k,q)
+ if (l_RealTime) call RT_ypp_driver(en,k,q)
  !
 #endif
  !
 #if defined _YPP_NL
  !
- if (l_NL_X  ) call NL_driver(en,k)
- if (l_NL_exc) call NL_Exc_driver(en,k)
+ if (l_NL_X  ) call NL_ypp_driver(en,k)
+ if (l_NL_exc) call NL_exc_driver(en,k)
  !   ======
 #endif
  !

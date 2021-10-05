@@ -55,7 +55,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  ! 
  ! Work Space
  !
- integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs
+ integer   :: ikbz,ikpbz,ikbz_mem,ikbz_FineGd,ikpbz_FineGd,N_all_pairs,ikibz
  real(SP)  :: central_q(3),running_q(3),k_pt_loc(3),kp_pt_loc(3),q_radius,PERC(1)
  logical   :: FILL_it,DO_it
  !
@@ -68,8 +68,6 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
 #if defined _PHEL
  if (l_phel_corr) then
    !
-   if (X_DbGd_percentual<0.) X_DbGd_percentual=100.
-   !
    PAR_Xk_nbz=k%nbz
    !
    if (.not.l_PH_uses_E_FineGd) then
@@ -77,7 +75,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
      X_DbGd_nkpt_at_q=1
      YAMBO_ALLOC(X_DbGd_nkpt_at_q_table,(PAR_Xk_nbz, maxval(X_DbGd_nkpt_at_q) ,2))
      do ikbz=1,nXkbz
-       call PHEL_gimme_Ks(k,iq,ikbz,ikbz,ikpbz,.FALSE.)
+       call PHEL_gimme_Ks(k,iq,ikbz,ikibz,ikpbz,.FALSE.)
        X_DbGd_nkpt_at_q_table(ikbz,1,:)=(/ikbz,ikpbz/)
      enddo
      if (present(nTrans_percent)) then
@@ -87,6 +85,9 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
        Radius=100.
      endif
      return
+   else
+     if (X_DbGd_percentual<0.) X_DbGd_percentual=100.
+     DO_it=.TRUE.
    endif
  endif
 #endif
@@ -110,7 +111,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
  do ikbz=1,nXkbz
    ikpbz      =qindx_X(iq,ikbz,1) 
 #if defined _PHEL
-   if (l_phel_corr) call PHEL_gimme_Ks(k,iq,ikbz,ikbz,ikpbz,.FALSE.)
+   if (l_phel_corr) call PHEL_gimme_Ks(k,iq,ikbz,ikibz,ikpbz,.FALSE.)
 #endif
    N_all_pairs=N_all_pairs+ (k_FGbz%k_range(ikbz,2)-k_FGbz%k_range(ikbz,1)+1) &
 &                          *(k_FGbz%k_range(ikpbz,2)-k_FGbz%k_range(ikpbz,1)+1)
@@ -130,7 +131,7 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
      !
      if (l_phel_corr) then
 #if defined _PHEL
-       call PHEL_gimme_Ks(k,iq,ikbz,ikbz,ikpbz,.FALSE.)
+       call PHEL_gimme_Ks(k,iq,ikbz,ikibz,ikpbz,.FALSE.)
        ikbz_mem=ikbz
 #endif
      else
@@ -140,9 +141,6 @@ subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
      endif
      !
      central_q=k%ptbz(ikbz,:)-k%ptbz(ikpbz,:)
-     !
-     ! Coarse grid points are included for ikbz_FineGd= k%bz_DbGd_map(1,ikbz)
-     ! Fine   grid points are included for ikbz_FineGd>k%bz_DbGd_map(1,ikbz)
      !
      do ikbz_FineGd=k_FGbz%k_range(ikbz,1),  k_FGbz%k_range(ikbz,2)
        !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Extend(Xe,E)
+subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  ! The occupation of E levels are decided using 
  ! the Fermi "Levels" of Xe.
@@ -37,20 +37,22 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ
+ use R_lattice,  ONLY:bz_samp
  use D_lattice,  ONLY:Tel
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
 #include<memory.h>
  !
- type(levels)::Xe,E
+ type(levels)    ::Xe,E
+ type(bz_samp)   ::k
  !
- !Work Space
+ ! Work Space
  !
  real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
-  if (.not.allocated(E%f)) then
+ if (.not.allocated(E%f)) then
    YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
  endif
  !
@@ -68,6 +70,9 @@ subroutine OCCUPATIONS_Extend(Xe,E)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
+   !
+   ! FineGd
+   call OCCUPATIONS_Extend_Double_Grid("E",E,k)
    return
  endif
  !
@@ -89,6 +94,9 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
+ !
+ ! FineGd
+ call OCCUPATIONS_Extend_Double_Grid("E",E,k)
  !
  if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
    call warning('Global and response function energy levels have different metallic character')

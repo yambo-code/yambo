@@ -22,6 +22,8 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+VERB=0
+#
 # make sure there is no locale setting creating unneeded differences.
 #
 LC_ALL=C
@@ -47,10 +49,17 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
  for dir in $dirs_to_check
  do
   if [[ "$dir" == "./$cdir"* ]]; then
-   ((i=i%N)); ((i++==0)) && wait
-   source ./sbin/compilation/check_updated_sources.sh &
-   source ./sbin/compilation/check_updated_locks.sh &
-  fi
+   DIR_is_to_recompile=0
+   source ./sbin/compilation/check_updated_sources.sh 
+   if [ ! "$mode" == "fast" ] ; then
+     source ./sbin/compilation/check_updated_locks.sh 
+   fi
+   if [ "$DIR_is_to_recompile" == 1 ] ; then
+     source ./sbin/compilation/stamp_remove.sh "goal"
+     source ./sbin/compilation/stamp_remove.sh "target.a"
+     source ./sbin/compilation/stamp_remove.sh "exe"
+   fi
+ fi
  done
  exit 0
 fi
@@ -101,8 +110,6 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 #
 # Makefile creation: (III) special sources 
 source ./sbin/compilation/special_sources.sh
-#
-rm -f $compdir/log/"compile_"$goal".log"
 #
 cat <<EOF > config/mk/local/static_variables.mk
 STDLOG         =$compdir/log/"compile_"$goal".log"

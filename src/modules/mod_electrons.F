@@ -66,6 +66,7 @@ module electrons
    real(SP), allocatable:: W(:,:,:)
    real(SP), allocatable:: f(:,:,:)
    real(SP), allocatable:: df(:,:,:)
+   real(SP)             :: E_Fermi
  end type E_fine_grid
  !
  type levels

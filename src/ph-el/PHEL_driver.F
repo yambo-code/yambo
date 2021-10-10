@@ -210,7 +210,7 @@ subroutine PHEL_driver(E,k,q)
    !
    ! Select allowed transitions for phonon scatterings
    !===================================================
-   call PH_Grid_Check_Transitions((/iq,iq/),k,q,QP_PH_n_G_bands,k_FG,E_FG)
+   call PH_Grid_Check_Transitions(iq,k,q,QP_PH_n_G_bands,k_FG,E_FG)
    !
    ! Calculation of the lifetimes
    !  - Equilibrium (yambo_ph): linewidths with retarded self-energy S^R
@@ -261,7 +261,7 @@ subroutine PHEL_driver(E,k,q)
      if (l_extended_output) then
        call PP_redux_wait(PHEL_qp%interband,COMM=COMM)
        call PP_redux_wait(PHEL_qp%intraband,COMM=COMM)
-       call PP_redux_wait(PHEL_qp%approx,COMM=COMM)
+       call PP_redux_wait(PHEL_qp%allen,COMM=COMM)
      endif
    end subroutine
    !

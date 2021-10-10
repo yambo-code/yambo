@@ -24,6 +24,7 @@
 subroutine PH_of(q)
  !
  use pars,           ONLY:SP,schlen
+ use drivers,        ONLY:l_life
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use PHEL,           ONLY:PH_Q,PH_SF_W,PHEL_qp,PH_energy,QPH
  use ELPH,           ONLY:elph_branches,PHEL_desc,ELPH_desc
@@ -80,24 +81,29 @@ subroutine PH_of(q)
      ! o.ph
      call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
      call OUTPUT_add_column("ph",TITLES=(/"W^0_ph"/),R_VALUES=(/ph_freq/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"HWMH(OMS)"/),R_VALUES=(/aimag(QPH%PI_oms)/2._SP/),UNIT="meV")
+     if (l_life) then
+       call OUTPUT_add_column("ph",TITLES=(/"FWMH(OMS)"/),R_VALUES=(/aimag(QPH%PI_oms)/),UNIT="meV")
+     else
+       call OUTPUT_add_column("ph",TITLES=(/"W-Wo(OMS)"/),R_VALUES=(/real(QPH%PI_oms)-QPH%PI_ref/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Im[\Pi](OMS)"/),R_VALUES=(/aimag(QPH%PI_oms)/),UNIT="meV")
+     endif
      !
-     if (l_extended_output) then
-       call OUTPUT_add_column("ph",TITLES=(/"Width(interb)"/),R_VALUES=(/-PHEL_qp%interband(il,iq)/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"Width(intrab)"/),R_VALUES=(/-PHEL_qp%intraband(il,iq)/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"Width(approx)"/),R_VALUES=(/-PHEL_qp%approx(il,iq)/),UNIT="meV")
+     if (l_extended_output.and.l_life) then
+       call OUTPUT_add_column("ph",TITLES=(/"FWMH(interb)"/),R_VALUES=(/PHEL_qp%interband(il,iq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"FWMH(intrab)"/),R_VALUES=(/PHEL_qp%intraband(il,iq)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"FWMH(Allen)"/),R_VALUES=(/PHEL_qp%allen(il,iq)/),UNIT="meV")
      endif
      !
      if (l_QP_eval_Z) then
        call OUTPUT_add_column("ph",TITLES=(/"Re[beta]"/),R_VALUES=(/real(QPH%beta)/))
        call OUTPUT_add_column("ph",TITLES=(/"Im[beta]"/),R_VALUES=(/aimag(QPH%beta)/))
-       call OUTPUT_add_column("ph",TITLES=(/"W_ph-W^0_ph"/),R_VALUES=(/real(QPH%Pole)-ph_freq/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"HWMH"/),R_VALUES=(/aimag(QPH%Pole)/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"W-Wo"/),R_VALUES=(/real(QPH%Pole)-ph_freq/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"\Im[W]"/),R_VALUES=(/aimag(QPH%Pole)/),UNIT="meV")
      endif
      if (l_QP_eval_GF) then
-       call OUTPUT_add_column("ph",TITLES=(/"W_ph-W^0_ph"/),R_VALUES=(/real(QPH%Pole)-ph_freq/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"HWMH(left)"/),R_VALUES=(/QPH%Half_Width_left/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"HWMH(right)"/),R_VALUES=(/QPH%Half_Width_right/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"W-Wo"/),R_VALUES=(/real(QPH%Pole)-ph_freq/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width(left)"/),R_VALUES=(/QPH%Half_Width_left/),UNIT="meV")
+       call OUTPUT_add_column("ph",TITLES=(/"Width(right)"/),R_VALUES=(/QPH%Half_Width_right/),UNIT="meV")
      endif
      !
      call OUTPUT_add_column("ph",action="write")

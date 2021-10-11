@@ -101,7 +101,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
+     if(trim(L_kind)=="Lfull") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
      if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms
@@ -167,7 +167,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
      !
      BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
-     if(trim(L_kind)=="full") i_g0=1
+     if(trim(L_kind)=="Lfull") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
      !
 #ifdef _CUDA

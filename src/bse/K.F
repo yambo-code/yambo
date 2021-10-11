@@ -48,7 +48,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,L_kind
  use collision_el, ONLY:elemental_collision_free
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -400,9 +400,12 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-   !
-   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+   if (trim(L_kind)/="Ltilde") then
+     call K_exchange_collisions(iq,Xk,i_Tgrp_k)
+     !
+     if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+     !
+   endif
    !
    ! Exchange oscillators
    !----------------------

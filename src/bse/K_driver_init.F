@@ -61,10 +61,13 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! L_kind check
  !==============
- if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ if (trim(L_kind(1:1))/='L') L_kind="L"//L_kind
+ if (trim(L_kind)/="Lbar".and.trim(L_kind)/="Lfull".and.trim(L_kind)/="Ltilde") then
+   call error('set Lkind = Lbar or Lfull or Ltilde ')
+ endif
  !
- if (trim(L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
-   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
+ if (trim(L_kind)=="Lfull".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+   call warning(' Lkind=Lfull with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
    BSE_mode="resonant"
  endif
  !
@@ -103,7 +106,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Need to convert eels to epsilon ? (part A, part B in K_driver)
  !================================================================
  ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1
- if (.not.l_col_cut)          BSS_eels_to_eps=trim(L_kind)=="full"
+ if (.not.l_col_cut)          BSS_eels_to_eps=trim(L_kind)=="Lfull"
  ! If the Coulomb cutoff is     used and the system is 0D  eps= eps^-1=1 since vbar=0
  if (     l_col_cut.and.l_0D) BSS_eels_to_eps=.false.
  ! If the Coulomb cutoff is     used and the system is 1D or 2D it depends on the q-point (see part B)
@@ -148,6 +151,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      BSE_mode='retarded'
      call parser('FxcRetarded',FXC_is_retarded)
    endif
+ endif
+ !
+ ! Remove exchange if computing the irreducible response
+ if (trim(L_kind)=="Ltilde") then
+   BS_res_K_exchange=.FALSE.
+   BS_cpl_K_exchange=.FALSE.
  endif
  !
  ! CORE Logicals

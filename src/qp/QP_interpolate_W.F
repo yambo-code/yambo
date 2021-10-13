@@ -93,6 +93,9 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
+   if (have_cuda) then
+     YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
+   endif
    return
  endif
  !

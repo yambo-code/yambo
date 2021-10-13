@@ -117,6 +117,10 @@ subroutine NL_initialize(E,k)
  ! Check Field
  ! =========================
  !
+ ! This part of the code works with only one field
+ !
+ n_ext_fields=2
+ !
  do i1=1,n_ext_fields
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
@@ -173,9 +177,11 @@ subroutine NL_initialize(E,k)
  ! the Phase_LifeTime is 1/2 of the one used in the 
  ! Non-Equilibrium Green's Function
  !
- RAD_Lifetime=0._SP
- Phase_LifeTime=0._SP
- if (NL_damping>0._SP) Phase_LifeTime=2._SP/NL_damping
+ if(NL_damping>zero_dfl) then
+   Phase_LifeTime=2._SP/NL_damping
+ else
+   Phase_LifeTime=0._SP
+ endif
  !
  if(RAD_LifeTime<0._SP) then
    if(Phase_LifeTime/=0._SP) then
@@ -223,6 +229,7 @@ subroutine NL_initialize(E,k)
  endif
  !
  call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")
+ call msg('sr','Simulation time step        ',RT_step*AUT2FS,"[fs]")
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !

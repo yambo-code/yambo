@@ -29,6 +29,7 @@ integer function variables_NL(ID)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands,RAD_LifeTime
  use electric,      ONLY:l_force_SndOrd
+ use fields,        ONLY:n_ext_fields
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_status
  use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq
@@ -100,7 +101,7 @@ integer function variables_NL(ID)
  !
  ! Efield 
  !
- do i_Prb=1,2
+ do i_Prb=1,n_ext_fields
    call io_elemental(ID,VAR="FIELD_NAME"//trim(intc(i_Prb)),CH0="",VAR_SZ=1,MENU=0)
    call io_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/), &
 &        DESCRIPTOR=NL_desc)

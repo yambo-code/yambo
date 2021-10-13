@@ -158,9 +158,6 @@ integer function io_RIM_W(ID,mode)
    call io_bulk(ID,VAR="RIM_W_E",VAR_SZ=(/shape(RIM_W_E)/))
    call io_bulk(ID,R2=RIM_W_E)
    !
-   if (read_is_on(ID).and.have_cuda) then
-     YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
-   endif
  endif
  !
 1 call io_disconnect(ID=ID)

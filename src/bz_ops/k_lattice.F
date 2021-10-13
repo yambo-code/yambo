@@ -36,6 +36,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         k_grid_uc_vol,nkibz,nkbz,nXkibz,nXkbz,d3k_factor,&
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
+ use parser_m,       ONLY:parser
+ use drivers,        ONLY:l_RIM_W
  !
 #include<memory.h>
  !
@@ -86,6 +88,8 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  N_g_vecs=ng_in_shell(G_shell)
  !
+ call parser('RIM_W',l_RIM_W)
+ !
  ! Andrea 31/03/2009. Bug pointed out by a user.
  !
  ! writing this routine I assumed that a subgroup of the
@@ -127,21 +131,31 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    ! the change introduced in 2010. Therefore I try to use the method that yields the smallest
    ! norm.
    !
-   do i2=1,2
-     !
-     if (i2==1) then
-       if (v_is_zero(v0,zero_=k_rlu_zero)) cycle
-       min_idist(1)=min(min_idist(1), rlu_v_norm(v0,inside_bz=.true.))
-       min_idist(2)=min(min_idist(2), v_norm(v0))
-     else if (min_idist(1)<min_idist(2)) then
-       idist(i1)=rlu_v_norm(v0,inside_bz=.true.)
-     else if (min_idist(1)>=min_idist(2)) then
-       idist(i1)=v_norm(v0)
-     endif
+   ! In the case of RIM-W, I need a grid which is the smallest in the rlu case
+   !
+   if(.not.l_RIM_W) then
+     do i2=1,2
+       !
+       if (i2==1) then
+         if (v_is_zero(v0,zero_=k_rlu_zero)) cycle
+         min_idist(1)=min(min_idist(1), rlu_v_norm(v0,inside_bz=.true.))
+         min_idist(2)=min(min_idist(2), v_norm(v0))
+       else if (min_idist(1)<min_idist(2)) then
+         idist(i1)=rlu_v_norm(v0,inside_bz=.true.)
+       else if (min_idist(1)>=min_idist(2)) then
+         idist(i1)=v_norm(v0)
+       endif
+       order(i1)=i1
+     enddo
+   else
+     ! Store only rlu distance
+     idist(i1)=v_norm(v0)
      order(i1)=i1
-   enddo
+     !
+   endif
  enddo
  if (N_ext_K_pts>1) call sort(idist,indx=order)
+ !
  YAMBO_FREE(idist)
  !
  k_grid_dim=0

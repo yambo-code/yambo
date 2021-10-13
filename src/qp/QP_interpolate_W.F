@@ -77,7 +77,7 @@ subroutine interpolate_W(X,Xw,q,mode)
      delta_q(:,1) = abs(v1)
      call c2a(v_in=delta_q(:,1),mode='ka2i')
    else
-     call msg('r', 'Error in loading q_min')
+     call error('Error in loading q_min')
    end if
  end do
  !

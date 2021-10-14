@@ -110,6 +110,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
      pre_factor = pre_factor+(-1.0_SP)**(n_idx+1)/n_idx/factorial*(G_radii*lcut)**n_idx
    enddo
    RIM_acc(1) = pre_factor/(2.0_SP*pi*lcut)
+   RIM_acc_anis = pre_factor/(2.0_SP*pi*lcut)/3.0_DP*sum(em1_anis)
    !
  else
    !

@@ -244,7 +244,8 @@ subroutine NL_initialize(E,k)
  ! NB.: This part duplicates what is in
  !      INIT.F 
  !
- COLLISIONS_CV_only=.true.
+ !COLLISIONS_CV_only=.true.
+ COLLISIONS_CV_only=.false.
  ! 
  select case (trim(NL_Correlation))
     case('IPA')

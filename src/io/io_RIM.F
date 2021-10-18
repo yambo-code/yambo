@@ -121,7 +121,7 @@ integer function io_RIM_W(ID,mode)
    !
    RL_vol_disk=RL_vol
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=11,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=10,MENU=0)
    !
    call io_elemental(ID,I0=RIM_W_ng,DB_I0=RIM_W_ng_disk,&
 &       VAR=' Screening RL components          :',CHECK=.true.,OP=(/"<="/))
@@ -149,14 +149,16 @@ integer function io_RIM_W(ID,mode)
    !
    if (read_is_on(ID)) then
      YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
-     YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
+     if(l_PPA_E) YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    endif
    !
    call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/shape(RIM_W)/))
    call io_bulk(ID,R3=RIM_W)
    !
-   call io_bulk(ID,VAR="RIM_W_E",VAR_SZ=(/shape(RIM_W_E)/))
-   call io_bulk(ID,R2=RIM_W_E)
+   if(l_PPA_E) then
+     call io_bulk(ID,VAR="RIM_W_E",VAR_SZ=(/shape(RIM_W_E)/))
+     call io_bulk(ID,R2=RIM_W_E)
+   end if
    !
  endif
  !

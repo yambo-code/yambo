@@ -38,6 +38,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
  use cuda_m,        ONLY:have_cuda
+ use parallel_m, ONLY:master_cpu
  !
 #include<memory.h>
  !
@@ -403,8 +404,10 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  !Write the database
  !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
- io_err=io_RIM_W(ID,mode)
+ if (master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
+   io_err=io_RIM_W(ID,mode)
+ endif
  !
  if (have_cuda) then
    YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)

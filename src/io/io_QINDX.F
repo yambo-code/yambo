@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,15 +28,19 @@ integer function io_QINDX(Xk,q,io_db)
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
 &                         sigma_scattering,X_scattering,k_GRIDS_string
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,frag_QINDX,&
-&                         io_variable_elemental,def_variable_elemental,io_status,read_is_on,io_header,&
-&                         ver_is_gt_or_eq,io_extension,io_fragment,IO_OUTDATED_DB,        &
-&                         def_variable_bulk,io_variable_bulk
+ use IO_m,           ONLY:io_sec,frag_QINDX,io_status,read_is_on,IO_OUTDATED_DB, &
+&                         write_is_on,io_extension
+ use IO_int,         ONLY:io_connect,io_disconnect,&
+&                         io_variable_elemental,def_variable_elemental,io_header,&
+&                         ver_is_gt_or_eq,io_fragment,def_variable_bulk,io_variable_bulk
  use timing_m,       ONLY:timing
+ use parallel_m,     ONLY:PAR_K_scheme
  !
 #include<memory.h>
+ !
  type(bz_samp)::q,Xk
- integer      ::io_db,i3,i2,i2_up,i2_step
+ integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
+ logical      ::PAR_IO
  !
  ! Work Space
  !
@@ -44,7 +48,13 @@ integer function io_QINDX(Xk,q,io_db)
  !
  call timing('io_QINDX',OPR='start')
  !
- io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
+ PAR_IO=.false.
+#if defined _PAR_IO
+ PAR_IO=any((/io_sec(io_db,:)==5/)).and.write_is_on(io_db)
+#endif
+ !
+ if (     PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ if (.not.PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
  !
  if (any((/io_sec(io_db,:)==1/))) then
@@ -120,20 +130,23 @@ integer function io_QINDX(Xk,q,io_db)
  ! (coll_scattering) -> qindx_C(nXkbz,nXkbz,2)
  !
  if (any((/io_sec(io_db,:)==3/))) then
-   !
-   if (read_is_on(io_db)) call qindx_alloc('ALL')
-   !
-   ! Fragmentation (1): eXchange indx
-   !
    if (X_scattering) then
+     if (read_is_on(io_db)) call qindx_alloc('X')
+     !
+     ! Fragmentation (1): eXchange indx
+     !
      io_extension(io_db)='kindx'
      call io_fragment(io_db,id_frag,i_fragment=1)
      call def_variable_bulk(id_frag,"Qindx",1,shape(qindx_X),IP+100)
      call  io_variable_bulk(id_frag,1,I3=qindx_X)
      call io_fragment_disconnect(io_db,id_frag)
+     !
    endif
-   !
+ endif
+ !
+ if (any((/io_sec(io_db,:)==4/))) then 
    if (sigma_scattering) then
+     if (read_is_on(io_db)) call qindx_alloc('S')
      !
      ! Fragmentation (2): Self-Energy indx
      !
@@ -142,28 +155,58 @@ integer function io_QINDX(Xk,q,io_db)
      call def_variable_bulk(id_frag,"Sindx",2,shape(qindx_S),IP+100)
      call  io_variable_bulk(id_frag,2,I3=qindx_S)
      call io_fragment_disconnect(io_db,id_frag)
+     !
    endif
-   !
+ endif
+ !
+ if (any((/io_sec(io_db,:)==5/))) then 
    if (bse_scattering) then
+     if (read_is_on(io_db)) call qindx_alloc('B')
      !
      ! Fragmentation (3): BSE indx
      !
      io_extension(io_db)='kindx'
+#if defined _PAR_IO
+     call io_fragment(io_db,id_frag,i_fragment=3,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+     call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+#else
      call io_fragment(io_db,id_frag,i_fragment=3)
-     call def_variable_bulk(id_frag,"Bindx",3,shape(qindx_B),IP+100)
+     call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100)
+#endif
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz
      ! NETCDF has problems in reading when this number overcomes 2147483647
-     i2_step=nXkbz/(nXkbz/46341+1)
+     IO_size=nXkbz !size(qindx_B(1,1,:))
+     i2_step=IO_size/(IO_size/46341+1)
      do i3=1,2
-       do i2=1,nXkbz,i2_step
-         i2_up=min(i2-1+i2_step,nXkbz)
-         call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2:i2_up,i3:i3),IPOS=(/1,i2,i3/))
+       do i2_dn=1,IO_size,i2_step
+         i2_up=min(i2_dn-1+i2_step,IO_size)
+#if !defined _PAR_IO
+         if (read_is_on(id_frag)) then
+#endif
+           ! due to the following loop, the previous loop is not needed
+           ! however I keep also the previous one in case, for future changes,
+           ! the next loop is removed
+           do i2=i2_dn,i2_up
+             if (.not.PAR_K_scheme%IND_bz%element_1D(i2)) cycle
+             if (write_is_on(id_frag).and..not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) cycle
+             i2_mem=PAR_K_scheme%bz_index(i2)
+             call io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_mem:i2_mem,i3:i3),IPOS=(/1,i2,i3/))
+           enddo
+#if !defined _PAR_IO
+         else
+           call  io_variable_bulk(id_frag,3,I3=qindx_B(:,i2_dn:i2_up,i3:i3),IPOS=(/1,i2_dn,i3/))
+         endif
+#endif
        enddo
      enddo
      call io_fragment_disconnect(io_db,id_frag)
    endif
+ endif
+ !
+ if (any((/io_sec(io_db,:)==6/))) then 
    if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
+     if (read_is_on(io_db)) call qindx_alloc('C')
      !
      ! Fragmentation (4): COLL indx
      !
@@ -179,4 +222,62 @@ integer function io_QINDX(Xk,q,io_db)
  !
  call timing('io_QINDX',OPR='stop')
  !
-end function
+end function io_QINDX
+!
+!
+integer function qindx_B_init(ID,ID_frag)
+ !
+ use pars,       ONLY:IP
+ use R_lattice,  ONLY:nXkbz
+ use IO_m,       ONLY:OP_RD,RD,io_status
+ use IO_int,     ONLY:io_control,io_connect,def_variable_bulk,io_fragment
+ !
+ implicit none
+ !
+ integer  :: ID,ID_frag
+ !
+ call io_control(ACTION=OP_RD,ID=ID)
+ qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
+ !
+ call io_fragment(ID,ID_frag,i_fragment=3)
+ call def_variable_bulk(ID_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+ !
+ call io_control(ACTION=RD,ID=ID_frag)
+ !
+ qindx_B_init=io_status(ID_frag)
+ !
+end function qindx_B_init
+!
+!
+integer function qindx_B_close(ID,ID_frag)
+ !
+ use IO_m,    ONLY:RD_CL
+ use IO_int,  ONLY:io_control,io_disconnect
+ !
+ implicit none
+ !
+ integer :: ID,ID_frag
+ !
+ call io_control(ACTION=RD_CL,ID=ID_frag)
+ call io_disconnect(ID=ID_frag)
+ call io_control(ACTION=RD_CL,ID=ID)
+ call io_disconnect(ID=ID)
+ qindx_B_close=0
+ !
+end function qindx_B_close
+!
+!
+function qindx_B_load(ikbz,ikp_bz,ID_frag)
+ !
+ use IO_int,  ONLY:io_variable_bulk
+ !
+ implicit none
+ !
+ integer, dimension(2) :: qindx_B_load
+ integer, intent(in) :: ID_frag,ikbz,ikp_bz
+ integer :: IO_var(1,1,2)
+ !
+ call io_variable_bulk(ID_frag,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
+ qindx_B_load=IO_var(1,1,:)
+ !
+end function qindx_B_load

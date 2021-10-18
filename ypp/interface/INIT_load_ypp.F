@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,6 @@
 !
 subroutine INIT_ypp_load(defs)
  !
- use units
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,E_unit,G_unit,V_general,V_RL,&
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io
@@ -39,15 +38,16 @@ subroutine INIT_ypp_load(defs)
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
 &                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
-&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,&
+&                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,BSiq_via_command_line,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
-&                        DIPOLES_direction,DIPOLES_E_range,DIPOLES_bands
+&                        DIPs_direction,DIPs_E_range,DIPs_C_bands,DIPs_V_bands,DIPs_kind
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,Eh_pumped_pair_energy,&
-&                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr
+&                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
+&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _YPP_SC
@@ -56,6 +56,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
+ use ELPH,          ONLY:EkplusQ_mode
 #endif
  !
  implicit none
@@ -88,6 +89,10 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'interpolate',  '[R] Interpolate')
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg',   '[R] Eliashberg')
+ call it('r',defs,'gkkp_db',   '[R] GKKP database')
+ call it('r',defs,'gkkp_dg',   '[R] GKKP double grid')
+ call it('r',defs,'gkkp_plot',   '[R] GKKP plot')
+ call it('r',defs,'ph_ass_dos',   '[R] Phonon-assisted DOS')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
@@ -187,10 +192,12 @@ subroutine INIT_ypp_load(defs)
  !
  ! TRANSIENT ABSORPTION
  !
- call it(defs,'RTFfrmat', 'Output format [3col/2col]',p_format)
- call it('f',defs,'Transmission','Compute the transient transmissions')
- call it('f',defs,'Reflectivity','Compute the transient reflectivity')
- call it('f',defs,'IncludeIP'   ,'Include the v-v and c-c contribution at IP level')
+ call it(defs,'TRabsOBS',&
+&             '[RT] RT observable. It can be a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
+ call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
+ call it(defs,'TRabsDIPdir',   '[RT] Dipole reference direction. Defines the internal `x` axis',TRabsDIP_dir)
+ call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)
+ call it(defs,'TRabsEtresh',   '[RT] Treshold imposed on the e/h pairs energy',TRabs_Eeh_treshold,unit=E_unit)
  !
 #endif
  !
@@ -230,17 +237,19 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'NPtsPath','Number of Points for each segment of the path',N_path_pts)
  call it(defs,'BZ_random_Nk','BZ Random points to be printed',BZ_random_nkpts)
  !
+ call it('f',defs,'DoNotDistr',    ' Do not generate random points around the k-points of the BZ') 
  call it('f',defs,'NoWeights',    ' Do not print points weight') 
  call it('f',defs,'ForceUserPts', ' Do not check the correcteness of the user points') 
  call it('f',defs,'ListPts',      ' List the internal q/k points also in the parser format') 
  call it('f',defs,'ExpandPts',    ' Expand the internal q/k points in the BZ') 
- call it('f',defs,'DipWeight',    ' Weight the contribution to the exciton WFs with the dipoles') 
  !
  ! DIPOLES
  !
- call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPOLES_E_range,E_unit)
- call it(defs,'DIP_direction', 'Field direction versor',DIPOLES_direction)
- call it(defs,'DIP_bands',     'E/h pairs bands selection',DIPOLES_bands)
+ call it(defs,'DIP_kind',      'Kind of DIPOLES use (IP, EXCITONIC, MASK)',DIPs_kind,protect=.FALSE.)
+ call it(defs,'DIP_E_range',   'E/h pairs energy window',DIPs_E_range,E_unit)
+ call it(defs,'DIP_direction', 'Field direction versor',DIPs_direction)
+ call it(defs,'DIP_C_bands',     'E/h pairs conduction bands selection',DIPs_C_bands,verb_level=V_general)
+ call it(defs,'DIP_V_bands',     'E/h pairs valence bands selection',DIPs_V_bands,verb_level=V_general)
  !
  ! Excitons
  !
@@ -254,6 +263,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'EHdensity', 'Calculate (h)ole/(e)lectron density from BSE wave-function',AVE_exc,case="a")
  call it(defs,'Cells', 'Number of cell repetitions in each direction (odd or 1)',ncell)
  call it(defs,'Hole', '[cc] Hole position in unit cell (positive)',r_hole)
+ call it('f',defs,'PrtDOS', 'Print Exciton Density of States') 
  !
  ! WFs
  !
@@ -263,7 +273,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'ResTresh', '[o/o] Treshold on processed polaronic residuals',elph_residual_treshold)
 #endif
  call it(defs,'WFMult', 'Multiplication factor to the excitonic wavefunction',WF_multiplier,verb_level=V_general)
- call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq)
+ call it(defs,'BSQindex','Q-Index of the BS state(s)',BSiq,protect=.not.BSiq_via_command_line)
  !
 #if defined _YPP_SC
  call it('f',defs,'PhaseTrick','[MAG] Phase trick for a better diagonalization')
@@ -290,12 +300,15 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
+ call it(defs,'EkplusQmode',  'E(k+q) energies calculation mode (interp | dftp)',EkplusQ_mode)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it('f',defs,'TestPHDGrid','Test double-grid: set all values of the fine grid equal to the couse ones')
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
+ call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
  !
 #endif
  !

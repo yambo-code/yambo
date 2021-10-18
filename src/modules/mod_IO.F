@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -59,6 +59,7 @@ module IO_m
  !
  character(lchlen) :: DBs_FRAG_control_string = "none"
  logical           :: frag_DIP
+ logical           :: frag_DG
  logical           :: frag_RESPONSE
  logical           :: frag_WF
  logical           :: frag_QINDX
@@ -111,6 +112,16 @@ module IO_m
  integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_netcdf4)
  integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
 #endif
+#if defined _PAR_IO && !defined _HDF5_IO
+ integer, parameter:: PAR_IO_CREATE_MODE=ior(nf90_mpiio,nf90_64bit_offset)
+ integer, parameter:: PAR_IO_WRITE_MODE =ior(nf90_mpiio,nf90_write)
+#endif
+ !
+#if defined _DOUBLE
+ complex(DP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_double,nf90_fill_double)
+#else
+ complex(SP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_real,  nf90_fill_real)
+#endif
  !
  ! Units
  !
@@ -147,189 +158,6 @@ module IO_m
  integer, private :: io_mode_save
  integer, private :: io_sec_save(max_io_units)
  integer, private :: io_com_save
- !
- ! Interface
- !
- interface 
-   !
-   ! OLD: def and IO in the same subroutine
-   !
-   subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
-&                          R0,DB_R0,R1,DB_R1,D0,DB_D0,C0,DB_C0,CH0,DB_CH0,CH1,L0,DB_L0,UNIT,MENU,&
-&                          DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
-     !
-     use pars,       ONLY:SP,DP,lchlen
-     use descriptors,ONLY:IO_desc
-     integer      :: ID
-     character(*), optional :: VAR,OP(:)
-     integer,      optional :: VAR_SZ,MENU
-     integer,      optional :: I0,DB_I0,I1(:),DB_I1(:)
-     real(SP),     optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     real(DP),     optional :: D0,DB_D0
-     complex(SP),  optional, target :: C0
-     complex(SP),  optional :: DB_C0
-     logical     , optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*), optional :: CH0,DB_CH0,CH1(:),TERMINATOR
-     type(IO_desc),optional :: DESCRIPTOR
-     !
-   end subroutine
-   !
-   subroutine io_bulk(ID,VAR,VAR_SZ,I0,I1,I2,I3,I4,I5,&
-                      &             R0,R1,R2,R3,R4,R5,&
-                      &             D0,D1,D2,D3,D4,D5,&
-                      &             C0,C1,C2,C3,C4,C5,&
-                      &             Z0,Z1,Z2,Z3,Z4,Z5,&
-                      &             L0,L1,L2,L3,L4,   &
-                      &                            IPOS)
-     !
-     use pars,    ONLY:SP,DP,LP
-     integer      :: ID
-     character(*),optional :: VAR
-     integer,     optional :: VAR_SZ(:),IPOS(:)
-     integer,     optional :: I0,I1(:),I2(:,:),I3(:,:,:),I4(:,:,:,:),I5(:,:,:,:,:)
-     real(SP),    optional :: R0,R1(:),R2(:,:),R3(:,:,:),R4(:,:,:,:),R5(:,:,:,:,:)
-     real(DP),    optional :: D0,D1(:),D2(:,:),D3(:,:,:),D4(:,:,:,:),D5(:,:,:,:,:)
-     complex(SP), optional :: C0,C1(:),C2(:,:),C3(:,:,:),C4(:,:,:,:),C5(:,:,:,:,:)
-     complex(DP), optional :: Z0,Z1(:),Z2(:,:),Z3(:,:,:),Z4(:,:,:,:),Z5(:,:,:,:,:)
-     integer(LP), optional :: L0,L1(:),L2(:,:),L3(:,:,:),L4(:,:,:,:)
-     !
-   end subroutine
-   !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID,COMM)
-     character(*)           :: desc
-     integer,      optional :: type,ID
-     character(*), optional :: subfolder
-     logical,      optional :: no_full_RESET
-     logical,      optional :: FORCE_READ_MODE
-     integer,      optional :: COMM
-   end function
-   !
-   !  NEW: def and IO subroutines split in two
-   !
-   subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,par_io_kind)
-     integer               :: ID
-     character(*)          :: VAR
-     integer               :: VAR_SZ
-     integer               :: VAR_KIND
-     integer               :: MENU
-     character(*),optional :: par_io_kind
-   end subroutine def_variable_elemental
-   !
-   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
-     use pars,              ONLY:schlen
-     integer,      intent(in)  :: ID
-     character(*), intent(in)  :: VAR
-     integer,      intent(in)  :: VAR_ID
-     integer,      intent(in)  :: VAR_SZ(:)
-     integer,      intent(in)  :: VAR_KIND
-     character(schlen), optional, intent(in) :: dim_names(:)
-     character(*),      optional, intent(in) :: par_io_kind
-     logical,           optional, intent(in) :: silent
-   end subroutine def_variable_bulk
-   !
-   subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
-        &                       I0, DB_I0, I1, DB_I1, &
-        &                       R0, DB_R0, R1, DB_R1, &
-        &                       D0, DB_D0, C0, DB_C0, &
-        &                       L0, DB_L0,            &
-        &                       CH0,DB_CH0,           &
-        &                       UNIT,DESCRIPTOR,DO_NOT_DUMP,TERMINATOR)
-     !
-     use pars,       ONLY:SP,DP,LP,lchlen
-     use descriptors,ONLY:IO_desc
-     integer               :: ID
-     character(*),optional :: VAR
-     character(*),optional :: OP(:)
-     integer,     optional :: I0,DB_I0,I1(:),DB_I1(:)
-     real(SP),    optional :: R0,DB_R0,R1(:),DB_R1(:),UNIT
-     real(DP),    optional :: D0,DB_D0
-     complex(SP), optional, target :: C0
-     complex(SP), optional :: DB_C0
-     logical,     optional :: L0,DB_L0,CHECK,WARN,DO_NOT_DUMP
-     character(*),optional :: CH0,DB_CH0,TERMINATOR
-     type(IO_desc),optional:: DESCRIPTOR
-     !
-   end subroutine io_variable_elemental
-   !
-   subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
-                                        &  R0, R1, R2, R3, R4, R5,    &
-                                        &  D0, D1, D2, D3, D4, D5,    &
-                                        &  C0, C1, C2, C3, C4, C5, C6,&
-                                        &  Z0, Z1, Z2, Z3, Z4, Z5,    &
-                                        &  L0, L1, L2, L3, L4,        &
-                                        & CH0,CH1,CH2,CH3,CH4,        &
-                                        & STR0,STR1,              IPOS)
-     !
-     use pars,   ONLY:SP,DP,LP
-     integer, intent(in)   :: ID, VAR_ID
-     integer,     optional, intent(in)    :: IPOS(:)
-     integer,     optional, intent(inout) ::  I0, I1(:), I2(:,:), I3(:,:,:), I4(:,:,:,:), I5(:,:,:,:,:)
-     real(SP),    optional, intent(inout) ::  R0, R1(:), R2(:,:), R3(:,:,:), R4(:,:,:,:), R5(:,:,:,:,:)
-     real(DP),    optional, intent(inout) ::  D0, D1(:), D2(:,:), D3(:,:,:), D4(:,:,:,:), D5(:,:,:,:,:)
-     complex(SP), optional, target, intent(inout) ::  C0, C1(:)
-     complex(DP), optional, target, intent(inout) ::  Z0, Z1(:)
-     complex(SP), optional, target, contiguous, intent(inout) ::  C2(:,:), C3(:,:,:), C4(:,:,:,:), C5(:,:,:,:,:), C6(:,:,:,:,:,:)
-     complex(DP), optional, target, contiguous, intent(inout) ::  Z2(:,:), Z3(:,:,:), Z4(:,:,:,:), Z5(:,:,:,:,:)
-     integer(LP), optional, intent(inout) ::  L0, L1(:), L2(:,:), L3(:,:,:), L4(:,:,:,:)
-     character,   optional, intent(inout) :: CH0,CH1(:),CH2(:,:),CH3(:,:,:),CH4(:,:,:,:)
-     character(*),optional, intent(inout) :: STR0,STR1(:)
-     !
-   end subroutine io_variable_bulk
-   !
-#if !defined _io_lib
-   integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
-&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
-     integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE,NOWARN_SER
-     character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
-   end function
-   !
-   logical function ver_is_gt_or_eq(ID,version,revision)
-     integer          :: ID
-     integer,optional :: version(3),revision
-   end function
-   !
-   subroutine IO_and_Messaging_switch(what,CONDITION)
-     character(*)      :: what
-     logical, optional :: CONDITION
-   end subroutine
-   !
-   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
-     integer, intent(in)   :: ID
-     integer, intent(out)  :: ID_frag
-     integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
-   end subroutine
-#endif
-   !
-   character(lchlen) function get_name(desc,subfolder,type,CORE_IO,MORE_IO,COM_IO,ALT_JOB_STRING,ALT_JOB_DIR)
-     use pars,       ONLY:lchlen
-     character(*)           ::desc
-     integer                ::type
-     logical                ::CORE_IO,MORE_IO,COM_IO
-     character(*), optional ::subfolder
-     character(*), optional ::ALT_JOB_STRING
-     character(*), optional ::ALT_JOB_DIR
-   end function get_name
-   !
-   function all_locations(desc,subfolder)
-     use pars,       ONLY:lchlen,num_of_alternative_locations
-     character(*)           ::desc
-     character(*), optional ::subfolder
-     character(lchlen), dimension(num_of_alternative_locations) :: all_locations
-   end function all_locations
-   !
- end interface
- !
-#if defined _HDF5_IO
- interface c_interface
-   function nf90_set_log_level(level) bind (C, name = "nc_set_log_level")
-     use iso_c_binding
-     implicit none
-     integer(c_int) :: nf90_set_log_level
-     integer(c_int), intent (in) :: level
-   end function nf90_set_log_level
- end interface c_interface
-#endif
  !
  contains
    ! 
@@ -375,84 +203,6 @@ module IO_m
      DB_is_OK=any((/io_status(ID)==IO_NO_ERROR,io_status(ID)==IO_NO_BINDING_ERROR/))
      !
    end function
-   !
-   subroutine io_disconnect(ID,FORCE)
-     !
-     integer           :: ID,NC_ERR
-     logical, optional :: FORCE
-     logical           :: I_OPEN
-     !
-     logical :: FORCE_
-     !
-     I_OPEN=.FALSE.
-     !
-     FORCE_=.FALSE.
-     if (present(FORCE)) FORCE_=FORCE
-     !
-     if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
-     !
-     if (io_type(ID)==-2) then
-       I_OPEN=PLAIN_file_is_open(IO_file(ID))
-       if (I_OPEN) close(unit=io_unit(ID))
-     else
-       I_OPEN=NETCDF_file_is_open(ID)
-       if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
-     endif
-     !
-     if (I_OPEN) io_unit(ID)=0
-     !
-     if (io_resetable(ID)) call io_reset(ID)
-     !
-   end subroutine
-   !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
-     !
-     use parallel_int,  ONLY:PP_bcast
-     use parallel_m,    ONLY:master_cpu,myid
-     !
-     integer,intent(in)    :: ACTION
-     integer,intent(inout) :: ID
-     integer,optional,intent(in) :: MODE,COM,SEC(:)
-     integer,optional,intent(in) :: COMM
-     !
-     ! Work Space
-     !
-     integer :: i1
-     logical :: define_ID
-     !
-     ! Assign a new unit if the unit is not already open
-     !
-     define_ID=any((/ACTION==OP_RD_CL, ACTION==OP_WR_CL,    &
-&                    ACTION==OP_APP_CL,ACTION==OP_RD,      &
-&                    ACTION==OP_APP,   ACTION==OP_WR/))
-     !
-     if (  define_ID .and. (master_cpu .or. (.not.present(COMM))) ) then
-       ID=-1
-       do i1=1,max_io_units
-         if (io_unit(i1)==0) then
-           ID=i1
-           call io_reset(ID)
-           io_unit(ID)=40+i1  ! This is not used with netcdf since nf90_create assigns the unit
-           exit
-         endif
-       enddo
-       if(ID==-1) call error(" Recompile Yambo with a larger: max_io_units")
-     endif
-     !
-     if (present(COMM) .and. define_ID) then
-       call PP_bcast(ID,         0,COMM)
-       call PP_bcast(io_unit(ID),0,COMM)
-     endif
-     !
-     io_action(ID)=ACTION
-     if (present(MODE)) io_mode(ID)=MODE
-     if (present(COM )) io_com(ID)=COM
-     if (present(SEC)) then
-       io_sec(ID,:)=0
-       io_sec(ID,:size(SEC))=SEC
-     endif
-     !
-   end subroutine
    !
 #if !defined _io_lib
    integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
@@ -536,12 +286,12 @@ module IO_m
      if (len_trim(dirname)==0) return
      call STRING_split(trim(dirname),dir,"/",n_non_empty_strings=n_s)
      ch_tmp=dir(1)
+     if(dirname(1:1)=="/") ch_tmp="/"//trim(ch_tmp)
      call imkdir( cstr(trim(ch_tmp)) )
      do i_j=2,n_s
        ch_tmp=trim(ch_tmp)//"/"//trim(dir(i_j))
        call imkdir( cstr(trim(ch_tmp)) )
      enddo
-   
    end subroutine
    !
    character(lchlen) function DB_path(dir_,job_,db_)
@@ -588,6 +338,7 @@ module IO_m
    logical function file_is_present(desc,subfolder)
      !
      use pars,         ONLY:num_of_alternative_locations
+     use IO_int,       ONLY:all_locations
      !
      character(*)           :: desc
      character(*), optional :: subfolder
@@ -655,16 +406,29 @@ module IO_m
      end if
    end subroutine
    !
+   integer function netcdf_dim_size(ID,DIMNAME)
+     ! Returns the value of the specified dim of a variable
+     integer,      intent(in)    :: ID
+     character(*), intent(inout) :: DIMNAME
+     integer                     :: nf90_err,NF90_DIM_ID
+     netcdf_dim_size=0
+     nf90_err=nf90_inq_dimid(io_unit(ID),DIMNAME,NF90_DIM_ID)
+     if(nf90_err/=NF90_NOERR) return
+     nf90_err=nf90_inquire_dimension(io_unit(ID),NF90_DIM_ID, name = dimname, len = netcdf_dim_size)
+   end function
+   !
    integer function netcdf_dim(ID,DIM,dim_name)
-     integer,intent(in)       :: ID,DIM
-     integer                  :: dim_found
-     character(schlen)          :: dim_strng
+     ! Returns the ID of the netcdf dimension
+     integer,intent(in)         :: ID,DIM
      character(schlen),optional :: dim_name
+     !
+     integer                    :: nf90_err
+     character(schlen)          :: dim_strng
      netcdf_dim=0
      if (.not.present(dim_name)) write (dim_strng,'(a,i10.10)') 'D_',dim
      if (     present(dim_name)) dim_strng = dim_name
-     dim_found=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
-     if (dim_found/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
+     nf90_err=nf90_inq_dimid(io_unit(ID),dim_strng,netcdf_dim)
+     if (nf90_err/=NF90_NOERR) call netcdf_call(nf90_def_dim(io_unit(ID),dim_strng,dim,netcdf_dim),ID)
    end function
    !
    logical function variable_exist(ID,var_name,var_ID)

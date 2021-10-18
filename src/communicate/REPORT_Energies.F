@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  use pars,           ONLY:schlen,SP
  use units,          ONLY:HA2EV
- use R_lattice,      ONLY:bz_samp,nXkibz
+ use R_lattice,      ONLY:bz_samp,nXkibz,MAX_kpts_to_report
  use electrons,      ONLY:n_sp_pol,nel,n_full_bands
  use stderr,         ONLY:intc
  use wave_func,      ONLY:wf_nc_k
@@ -44,25 +44,23 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  !
  real(SP)          :: k_cc(3),k_al(3)
  integer           :: ik,is_pol,ib,i1,nb_to_print
- integer, parameter:: MAX_K_to_print=50
  character(schlen) :: dumb_ch1,dumb_ch2
  real(SP)          :: E_(n_bands_,n_sp_pol)
  !
  if(l_kpoints) then
    call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
-   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    if (trim(what)/="Q".and.Xk%nibz/=k%nibz) then
-     call msg('r','K-points grids:')
-     call msg('rn','X = response function; S = self-energy')
+     call msg('r', 'IBZ K-points for X ',nXkibz)
    endif
+   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    call msg('r','K/Q-points units:')
    call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units')
  endif
  !
  K_LOOP: do ik=k_range(1),k_range(2)
    !
-   if (.not.fat_log.and.ik>MAX_K_to_print) then
-     dumb_ch1=trim(intc(k%nibz-MAX_K_to_print))
+   if (.not.fat_log.and.ik>MAX_kpts_to_report) then
+     dumb_ch1=trim(intc(k%nibz-MAX_kpts_to_report))
      call msg('nrn','Remaining '//trim(dumb_ch1)//' points informations can be written running with -fatlog')
      exit K_LOOP
    endif
@@ -85,8 +83,6 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (fat_log) call msg('r','      :',k_cc,'[cc]')
      if (trim(what)/="Q") then
        call msg('r','      : wf components',wf_nc_k(ik) )
-       if (ik<=nXkibz) call msg('r','      : BZ grid      ',"X S")
-       if (ik> nXkibz) call msg('r','      : BZ grid      ',"S")
      endif
    endif
    !

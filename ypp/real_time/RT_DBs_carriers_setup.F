@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -26,7 +26,8 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2KEL
  use electrons,     ONLY:levels
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:Bose_Temp
  use RT_control,    ONLY:CARR_RT_IO_t

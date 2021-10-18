@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
  use com,           ONLY:msg,of_open_close
  use DIPOLES,       ONLY:DIPOLE_t
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,X_Double_Grid_setup,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
@@ -43,13 +43,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
-&                        FXC,FXC_K_diagonal,FXC_n_g_corr
+&                        F_xc_gspace,FXC_K_diagonal,FXC_n_g_corr
  use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
 &                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
 &                        X_setup_headers
  use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -101,18 +101,18 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(iq,Xk)
+   call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
    !
    ! ALDA (only once) 
    !
-   if (l_alda_fxc.and..not.allocated(FXC)) then
+   if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
      !
    endif
    !
    ! workaround for possible compiler bug
-#ifdef _PGI
+#if defined _PGI || defined _NV
    if (iq>1.and.size(PAR_IND_Q_ibz%n_of_elements)>1) then
 #else
    if (iq>1) then
@@ -373,11 +373,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  deallocate(X_par)
  call WF_free(WF)
  call PP_redux_wait
- if (allocated(FXC)) then
-   YAMBO_FREE(FXC)
+ if (allocated(F_xc_gspace)) then
+   YAMBO_FREE(F_xc_gspace)
  endif
  if (l_bs_fxc) then
-   YAMBO_FREE(FXC)
    YAMBO_FREE(FXC_K_diagonal)
  endif
  !

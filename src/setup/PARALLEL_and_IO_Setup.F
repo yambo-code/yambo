@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,8 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use com,            ONLY:core_io_path,more_io_path,repfile,jobstr,msg,com_path,&
 &                         alt_jobstr,n_alt_jobstr,jobdir,alt_jobdir,fat_log
  use it_m,           ONLY:infile
- use IO_m,           ONLY:io_control,OP_RD_CL,REP,frag_WF
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP,frag_WF
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use parallel_m,     ONLY:n_nodes,ncpu,PARALLEL_message,n_CPU_str_max,PAR_COM_WORLD,&
@@ -38,8 +39,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
+ use memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
  use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+ !
  implicit none
  !
  type(levels)  :: en
@@ -129,7 +132,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 #endif
  !
  ! I/O and more
- !===============
+ !==============
  !
  call msg('nr','Fragmented WFs      ',frag_WF)
  call msg('r', 'CORE databases      ',trim(core_io_path))
@@ -142,7 +145,11 @@ subroutine PARALLEL_and_IO_Setup(en,k)
    call msg('r','Log files           ',trim(trim(com_path)//"/LOG"))
  endif
  !
- if (len_trim(USER_wall_time_string)>0)  call msg('r','User WALL time      ',trim(USER_wall_time_string))
+ ! USER walltime and memory limits
+ !=================================
+ !
+ if (len_trim(USER_wall_time_string)>0)  call msg('r','User walltime limit ',trim(USER_wall_time_string))
+ if (len_trim(USER_MEM_limit_string)>0)  call msg('r','User Memory   limit ',trim(USER_MEM_limit_string))
  !
  ! Strings & Dirs
  !-----------------

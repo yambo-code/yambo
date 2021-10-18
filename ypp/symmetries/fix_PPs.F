@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -25,7 +25,8 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  !
  use pars,                ONLY:SP,lchlen
  use com,                 ONLY:msg,core_io_path,more_io_path
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,VERIFY,&
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_sp_pol
  use pseudo,              ONLY:pp_kb,pp_kbd,pp_kbs,n_atomic_species,PP_alloc_pwscf,&
@@ -59,7 +60,6 @@ subroutine fix_PPs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_cont
  ! Work space
  !
  type(DIPOLE_t)        :: Dip
- !
  character(lchlen)     :: core_io_path_save,fragment_name,fragment_name_new
  integer               :: n_steps,ID
  integer               :: ierr,io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err

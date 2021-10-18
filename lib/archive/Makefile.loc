@@ -5,13 +5,11 @@ include ./package.list
 WGETFLAGS=--no-check-certificate
 #
 all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_driver)
-
-
+     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_slepc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_Ydriver)
 #
 # Alias
 #
-tarball_driver:    $(tarball_driver)
+tarball_driver:    $(tarball_Ydriver)
 tarball_yaml:      $(tarball_yaml)
 tarball_futile:    $(tarball_futile)
 tarball_iotk:      $(tarball_iotk)
@@ -28,18 +26,16 @@ tarball_petsc:     $(tarball_petsc)
 tarball_slepc:     $(tarball_slepc)
 tarball_fttw:      $(tarball_fftw)
 tarball_fftqe:     $(tarball_fftqe)
-
-
 #
 # Libraries
 #
-$(tarball_driver):
-	@+TARBALL="$(tarball_driver)"   ; URL="$(url_driver)"   ; LIB="DRIVER"; $(getsrc)
+$(tarball_Ydriver):
+	@+TARBALL="$(tarball_Ydriver)"   ; URL="$(url_driver)"   ; LIB="DRIVER"; $(getsrc)
 $(tarball_yaml):
 	@+TARBALL="$(tarball_yaml)"     ; URL="$(url_yaml)"     ; LIB="YAML"; $(getsrc)
 $(tarball_futile):
 	@+TARBALL="$(tarball_futile)"   ; URL="$(url_futile)"   ; LIB="FUTILE"; $(getsrc)
-$(tarball_iotk): 
+$(tarball_iotk):
 	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
 $(tarball_hdf5):
 	@+TARBALL="$(tarball_hdf5)"     ; URL="$(url_hdf5)"     ; LIB="HDF5"; $(getsrc)
@@ -67,8 +63,6 @@ $(tarball_fftw):
 	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
 $(tarball_fftqe):
 	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
-
-
 #
 # cleaning
 #
@@ -76,7 +70,7 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_driver)   && test "$(keep_driver)"    != "yes" ;  then rm $(tarball_driver)    ; fi ; \
+          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)    ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
@@ -89,8 +83,10 @@ clean_all:
           if test -s $(tarball_blacs)    && test "$(keep_blacs)"     != "yes" ;  then rm $(tarball_blacs)     ; fi ; \
           if test -s $(tarball_petsc)    && test "$(keep_petsc)"     != "yes" ;  then rm $(tarball_petsc)     ; fi ; \
           if test -s $(tarball_slepc)    && test "$(keep_slepc)"     != "yes" ;  then rm $(tarball_slepc)     ; fi ; \
+          if test -s $(tarball_yaml)     && test "$(keep_yaml)"      != "yes" ;  then rm $(tarball_yaml)      ; fi ; \
           if test -s $(tarball_fftw)     && test "$(keep_fftw)"      != "yes" ;  then rm $(tarball_fftw)      ; fi ; \
           if test -s $(tarball_fftqe)    && test "$(keep_fftqe)"     != "yes" ;  then rm $(tarball_fftqe)     ; fi ; \
+          if test -s $(tarball_futile)   && test "$(keep_futile)"    != "yes" ;  then rm $(tarball_futile)    ; fi ; \
 	fi
 #
 define getsrc

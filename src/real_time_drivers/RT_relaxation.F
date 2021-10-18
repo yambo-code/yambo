@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -163,7 +163,7 @@ subroutine RT_relaxation(E,k,q,Time)
      !
      if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
      !
-     call PHEL_Lifetimes(iq,E,k,q,RT_bands,RTibz,RT_levels)
+     !call PHEL_Lifetimes(iq,E,k,q,RT_bands,RTibz,RT_levels)
      !
    enddo
    !

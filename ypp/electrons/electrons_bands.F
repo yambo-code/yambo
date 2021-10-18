@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -100,6 +100,7 @@ subroutine electrons_bands(Xk,Xen)
  !====================
  call k_special( )
  call k_circuit_driver( BANDS_path, BANDS_steps )
+ if(CIRCUIT_k%nbz==0.and..not.GRID_interpolate) call error('No BZ circuit defined in input')
  !
  if (BANDS_interpolated.or.l_PROJECT_plane) then
    !
@@ -134,7 +135,7 @@ subroutine electrons_bands(Xk,Xen)
  !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
  !                  only when it can be correctly (all occupied bands) evaulated with GRID_E
  !
- if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,mode="FERMI")
+ if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,"GRID",mode="FERMI")
  !
  call msg("s",'Fermi Level  (BUILT-in bands)     ',Xen%E_Fermi*HA2EV,"[eV]")
  !

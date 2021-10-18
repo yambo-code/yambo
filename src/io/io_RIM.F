@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,9 @@ integer function io_RIM(ID)
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on
+ use IO_m,           ONLY:io_sec,read_is_on,io_status
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
+&                         io_elemental,io_bulk
 #include <memory.h>
  integer :: ID
  ! 

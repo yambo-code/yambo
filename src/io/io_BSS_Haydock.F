@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -31,8 +31,8 @@ integer function io_BSS_Haydock(ID,iq,it,reached_treshold,mode,Af,Bf,Cf,Vnm1,Vn,
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0,Haydock_v0_mod,HAYVEC_size
- use IO_m,          ONLY:io_connect,io_disconnect,io_elemental,&
-&                        io_bulk,io_status,io_sec,io_header
+ use IO_m,          ONLY:io_status,io_sec
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use timing_m,      ONLY:timing
  !
  implicit none

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -239,11 +239,13 @@ module it_tools
      end select
    end subroutine
    !
-   subroutine loadi1var(defs,name,description,defval,unit,verb_level)
+   subroutine loadi1var(defs,name,description,defval,unit,verb_level,protect)
      use parser_m,       ONLY:parser
+     use drivers,        ONLY:infile_editing
      character(*)::name,description
      character(*), optional :: unit
      integer,optional :: verb_level
+     logical,optional :: protect
      integer :: defval
      type(initdefs)::defs
      integer :: v_id
@@ -259,7 +261,12 @@ module it_tools
      else
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
-           if (initmode==4) call parser(trim(name),defs%i1def(i1))
+           if (initmode==4) then
+             if (present(protect)) then
+               if (.not.protect.and.infile_editing) cycle
+             endif
+             call parser(trim(name),defs%i1def(i1))
+           endif
            if (initmode==2) call PARSER_convert_INT(defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)

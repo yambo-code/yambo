@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -66,6 +66,7 @@ module electrons
    real(SP), allocatable:: W(:,:,:)
    real(SP), allocatable:: f(:,:,:)
    real(SP), allocatable:: df(:,:,:)
+   real(SP)             :: E_Fermi
  end type E_fine_grid
  !
  type levels

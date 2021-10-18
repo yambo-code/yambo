@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,14 +29,14 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  use BS,             ONLY:BS_K_dim
  use BS_solvers,     ONLY:BSS_q0,variables_BS
  use TDDFT,          ONLY:FXC_n_g_corr,FXC_desc,&
-&                         FXC_K_diagonal,FXC_n_mem_freqs,FXC,FXC_is_retarded
+&                         FXC_K_diagonal,FXC_n_mem_freqs,F_xc_gspace,FXC_is_retarded
  use frequency,      ONLY:w_samp
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,&
-&                         io_elemental,def_variable_elemental,io_variable_elemental,&
-&                         io_status,io_bulk,io_mode,&
-&                         read_is_on,io_header,DUMP,&
+ use IO_m,           ONLY:io_sec,io_status,io_mode,read_is_on,DUMP,&
 &                         close_is_on,RD_CL,io_action
+ use IO_int,         ONLY:io_connect,io_disconnect,&
+&                         io_elemental,def_variable_elemental,io_variable_elemental,&
+&                         io_bulk,io_header
  use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
 #include<memory.h>
  type(w_samp)        ::FXC_W
@@ -148,7 +148,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
  write (ch,'(a,i3.3)') "FXC_W_GROUP_",w_group
  !
  call io_bulk(ID,VAR=trim(ch),VAR_SZ=(/2,FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs/))
- call io_bulk(ID,C3=FXC)
+ call io_bulk(ID,C3=F_xc_gspace)
  !
 1 call io_disconnect(ID)
  !

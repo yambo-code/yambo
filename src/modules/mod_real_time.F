@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -66,9 +66,9 @@ module real_time
  logical          :: l_velocity_gauge_corr
  logical          :: l_velocity_gauge_diam
  !
- ! TMP SOLUTION FOR TR ABS
+ ! Specific flag for when Yambo libraries are called to perform TRabs via YPP
  !
- logical  :: l_RT_abs_YAMBO = .false.
+ logical  :: l_TRabs_YPP = .false.
  !
  ! ... core step length and Time-points array...
  !

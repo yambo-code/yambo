@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -27,7 +27,6 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
 end function RT_Lifetimes_evaluation_plan
 !
-!
 subroutine RT_ELPH_initialize(E,k,q)
  ! 
  use electrons,      ONLY:levels
@@ -38,13 +37,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
 end subroutine RT_ELPH_initialize
 !
-!
 subroutine RT_ELPH_zeroing()
  !
  return
  !
 end subroutine RT_ELPH_zeroing
-!
 !
 subroutine RT_relaxation_logicals( )
  !

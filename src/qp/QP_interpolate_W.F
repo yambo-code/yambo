@@ -32,8 +32,9 @@ subroutine interpolate_W(X,Xw,q,mode)
  use vec_operate,   ONLY:c2a,v_is_zero,v_norm
  use X_m,           ONLY:X_mat,X_t,X_alloc
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+ use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
+ use IO_int,        ONLY:io_control
  use stderr,        ONLY:STRING_split,intc,STRING_pack,gen_fmt,STRING_split
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing

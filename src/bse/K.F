@@ -33,6 +33,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
+ use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
 &                       qindx_X,qindx_B_max,qindx_free,qindx_B_load,&
 &                       RIM_ng,RIM_W_is_diagonal,RIM_W_ng

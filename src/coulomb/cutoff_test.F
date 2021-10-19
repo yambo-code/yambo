@@ -65,7 +65,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
- if (cut_is_ws.or.cut_is_slab) then 
+ if (cut_is_ws.or.cut_is_slab) then
    !
    ! build the superperiodicity direct lattice
    !
@@ -90,6 +90,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab
  endif
  !
  if (cut_is_cyl) then
+   dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
    if (is_cut(1).and.cyl_length==0) dummy(1)=2.0_SP*plot_factor*dummy(1)*10.0
    if (is_cut(2).and.cyl_length==0) dummy(2)=2.0_SP*plot_factor*dummy(2)*10.0
    if (is_cut(3).and.cyl_length==0) dummy(3)=2.0_SP*plot_factor*dummy(3)*10.0

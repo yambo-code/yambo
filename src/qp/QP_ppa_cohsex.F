@@ -91,13 +91,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::local_rhotw(X%ng),pre_factor,PPA_R
  complex(DP)      ::dp_dummy,ctmp
-#if 1
- complex(DP)      ::dp_vdummy(13)
- complex(SP)      ::QP_Sc_G(QP_n_states,2,13)
- integer          ::out_unit_QP_Sc_G=1000, Tab_NG(X%ng,X%ng)
- real(SP)         ::g1_mod_2D,g2_mod_2D
- logical          ::debug
-#endif
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
@@ -114,94 +107,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Reset & checks
  !
-!!! AG DBG
- debug = .true.
- if(debug) then
- open (unit=out_unit_QP_Sc_G,file="QP_Sc_G.dat",action="write",status="replace")
- write(out_unit_QP_Sc_G,"(3A)") "#band kpoint  head   diag_Gz_c   diag_Gz  diag_G_c",&
-&"    diag_G wing_Gz_c   wing_Gz  wing_G_c    wing_G",&
-&" body_Gz_c   body_Gz  body_G_c    body_G     sum"
- endif
- call msg("r","RIM_W_ng = ", RIM_W_ng)
- !Get table to divide SEc components
- do ig2=1,X%ng
-   !
-   g2_mod_2D = sqrt(g_vec(ig2,1)**2+g_vec(ig2,2)**2)
-   !
-   do ig1=1,X%ng
-     !
-     g1_mod_2D = sqrt(g_vec(ig1,1)**2+g_vec(ig1,2)**2)
-     !
-     ! Head
-     if (ig1 == 1 .and. ig2 == 1) then
-     !
-     Tab_NG(ig1,ig2) = 1
-     !
-     ! Diagonal Gz
-     else if (ig1 == ig2 .and. g2_mod_2D < 1.e-5) then
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 2
-     else
-       Tab_NG(ig1,ig2) = 3
-     end if
-     !
-     ! Diagonal Gxy 
-     else if ( ig1 == ig2 .and. g2_mod_2D > 1.e-5) then
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 4
-     else
-       Tab_NG(ig1,ig2) = 5
-     end if
-     !
-     ! Wing Gz
-     else if ((ig1 == 1 .and. g2_mod_2D < 1.e-5).or.(ig2 == 1 .and. g1_mod_2D < 1.e-5)) then
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 6
-     else
-       Tab_NG(ig1,ig2) = 7
-     end if
-     !
-     ! Wing Gxy 
-     else if ((ig1 == 1 .and. g2_mod_2D > 1.e-5).or.(ig2 == 1 .and. g1_mod_2D > 1.e-5)) then
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 8
-     else
-       Tab_NG(ig1,ig2) = 9
-     end if
-     !
-     ! Body Gz
-     else if (ig1 /= ig2 .and. g1_mod_2D < 1.e-5 .and. g2_mod_2D < 1.e-5) then
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 10
-     else
-       Tab_NG(ig1,ig2) = 11
-     end if
-     !
-     ! Body Gxy 
-     else
-     !
-     if(ig1 <= RIM_W_ng .and. ig2 <= RIM_W_ng) then
-       Tab_NG(ig1,ig2) = 12
-     else
-       Tab_NG(ig1,ig2) = 13
-     end if
-     !
-     end if
-   enddo
- enddo
-!!! AG DBG
- !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
- QP_Sc_G      =cZERO
  !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
@@ -652,12 +562,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do i_w=1,QP_dSc_steps
            !
            dp_dummy = 0.0_DP
-           dp_vdummy = 0.0_DP
            !
            !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp, &
-           !$omp &           l_RIM_W_g), reduction(+:dp_dummy,dp_vdummy)
+           !$omp &           l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
-             !        
              do ig1=1,X%ng
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)),kind=SP)
@@ -682,22 +590,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                dp_dummy=dp_dummy+ctmp
                !
-!!! AG DBG
-               !
-               !Collect the Sc in QP_Sc_G
-               !
-               dp_vdummy(Tab_NG(ig1,ig2))=dp_vdummy(Tab_NG(ig1,ig2))+ctmp
-!!! AG DBG
-               !
              enddo
            enddo
            !$omp end parallel do
            !
            dc(i_w) = cmplx(dp_dummy,kind=SP)
-           !
-!!! AG DBG
-           QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:)+cmplx(dp_vdummy,kind=SP)
-!!! AG DBG
            !
          enddo
 #endif
@@ -739,9 +636,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        do i_w=1,QP_dSc_steps
          !
          dp_dummy=0.0_DP
-         dp_vdummy=0.0_DP
          !
-         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy,dp_vdummy)
+         !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R), reduction(+:dp_dummy)
          do ig2=1,X%ng
            do ig1=1,X%ng
              !
@@ -752,23 +648,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                         QP_ppa_EET_terminator(W_(i_w),E,isc%is,PPA_E,ig1,ig2,isc%qs(2),&
 &                                               eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
              !
-!!! AG DBG
-             !Collect the Sc in QP_Sc_G
-             !
-             dp_vdummy(Tab_NG(ig1,ig2))=dp_vdummy(Tab_NG(ig1,ig2))+cmplx(4._SP/spin_occ*pi* &
-&                         PPA_R*eet_factor(ig1,ig2)*QP_ppa_EET_terminator(W_(i_w),E,isc%is,&
-&                               PPA_E,ig1,ig2,isc%qs(2),eet_cutoff0(1),eet_cutoff1(1)),kind=DP)
-!!! AG DBG
-             !
            enddo
          enddo
          !$omp end parallel do
          !
          QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
-         !
-!!! AG DBG
-         QP_Sc_G(i_qp,i_w,:) = QP_Sc_G(i_qp,i_w,:)+cmplx(dp_vdummy,kind=SP)
-!!! AG DBG
          !
        enddo
        !
@@ -806,7 +690,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call timing('GW(REDUX)',OPR='start')
  call PP_redux_wait(QP_Sc)
- call PP_redux_wait(QP_Sc_G)
  call timing('GW(REDUX)',OPR='stop')
  !
  ! AM, Sept 2019. The COH potential seems to break (in some case of a large amount) the
@@ -818,21 +701,5 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (i_w> 1) call QP_states_simmetrize(E,V_complex=QP_Sc(:,i_w))
    enddo
  endif
- !
-!!! AG DBG
- do i_qp=1,QP_n_states
-   write(out_unit_QP_Sc_G,"(I5, I5, 14F10.4)") &
-&                       QP_table(i_qp,1), QP_table(i_qp,3),&
-&                       real(QP_Sc_G(i_qp,1, 1))*HA2EV,real(QP_Sc_G(i_qp,1, 2))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1, 3))*HA2EV,real(QP_Sc_G(i_qp,1, 4))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1, 5))*HA2EV,real(QP_Sc_G(i_qp,1, 6))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1, 7))*HA2EV,real(QP_Sc_G(i_qp,1, 8))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1, 9))*HA2EV,real(QP_Sc_G(i_qp,1,10))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1,11))*HA2EV,real(QP_Sc_G(i_qp,1,12))*HA2EV,&
-&                       real(QP_Sc_G(i_qp,1,13))*HA2EV,real(QP_Sc(i_qp,1))*HA2EV
- end do
- !
- close(out_unit_QP_Sc_G)
-!!! AG DBG
  !
 end subroutine

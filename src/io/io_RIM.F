@@ -102,7 +102,7 @@ integer function io_RIM_W(ID,mode)
  !
  integer :: ID
  character(3) :: mode
- ! 
+ !
  ! Work Space
  !
  real(SP)            ::RL_vol_disk
@@ -119,7 +119,7 @@ integer function io_RIM_W(ID,mode)
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_RIM_W=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.,CUTOFF=.true.)
-   if (io_RIM_W/=0) goto 1   
+   if (io_RIM_W/=0) goto 1
    !
    RL_vol_disk=RL_vol
    !

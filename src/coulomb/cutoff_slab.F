@@ -55,8 +55,8 @@
      !kxy
      !
      slab_vplane=sqrt(((q%pt(iq,idir(2))+g_vec(ig,idir(2)))*2.*pi/alat(idir(2)))**2+&
-&                     ((q%pt(iq,idir(3))+g_vec(ig,idir(3)))*2.*pi/alat(idir(3)))**2)   
-     !            
+&                     ((q%pt(iq,idir(3))+g_vec(ig,idir(3)))*2.*pi/alat(idir(3)))**2)
+     !
      !Potential regularization
      !
      if(slab_vplane < q0_def_norm) slab_vplane = q0_def_norm

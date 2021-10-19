@@ -142,9 +142,9 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
        !kxy
        slab_vplane=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
 &                       (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
-       if (slab_vplane < q0_def_norm) slab_vplane = q0_def_norm  
-       !     
-       pre_factor=1.0_SP-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)       
+       if (slab_vplane < q0_def_norm) slab_vplane = q0_def_norm
+       !
+       pre_factor=1.0_SP-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
        RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/(r1**2)
        !
      else
@@ -189,7 +189,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  implicit none
  integer  :: iq,N_out
  real(SP) :: qr(3,RIM_n_rand_pts),em1_anis(3)
- ! 
+ !
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3
@@ -227,7 +227,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  ! q /= 0 all terms
  !
  !$omp parallel do default(shared), private(i1,i2,i3,func,RIM_acc)
- do i1=i1min,RIM_W_ng 
+ do i1=i1min,RIM_W_ng
    i2max=RIM_W_ng
    if (RIM_W_is_diagonal) i2max=i1
    do i2=i1,i2max
@@ -285,7 +285,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
      !Store the square root of vslab
      vslab(i1,1) = sqrt(vslab2)
      !
-   end do   
+   end do
  else
    !
    do i1=1,RIM_n_rand_pts
@@ -325,7 +325,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  !
  if (RIM_id_epsm1_reference == 0) then
    RIM_W(1,1,1)=RIM_acc
- else   
+ else
    RIM_W(1,1,1)=RIM_acc_anis
  end if
  !

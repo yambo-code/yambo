@@ -59,7 +59,7 @@ subroutine rim(mode)
  ! 
  if (mode == "x") then
    call timing('RIM',OPR='start')
- else 
+ else
    call timing('RIM-W',OPR='start')
  end if
  !

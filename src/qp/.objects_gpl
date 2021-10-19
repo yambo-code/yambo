@@ -1,5 +1,5 @@
 ELPH_objects =
-#if defined _ELPH 
+#if defined _ELPH
 ELPH_objects = ELPH_Sigma_c.o ELPH_simmetrize_and_distribute_gsqF.o \
                ELPH_gsqF_to_Sigma.o
 #endif

@@ -246,9 +246,9 @@ subroutine interpolate_W(X,Xw,q,mode)
       else
         !
         !Coefficients in rlu
-        dp_dummy(1) = f_func(1)                                                  !f0
-        dp_dummy(2) = (f_func(3)-f_func(5))/(2._DP*q_grid_b_rlu(1,1))              !f1
-        dp_dummy(3) = (f_func(2)-f_func(4))/(2._DP*q_grid_b_rlu(2,2))                !f2
+        dp_dummy(1) = f_func(1)                                                          !f0
+        dp_dummy(2) = (f_func(3)-f_func(5))/(2._DP*q_grid_b_rlu(1,1))                    !f1
+        dp_dummy(3) = (f_func(2)-f_func(4))/(2._DP*q_grid_b_rlu(2,2))                    !f2
         dp_dummy(4) = (f_func(3)-2._DP*f_func(1)+f_func(5))/(2._DP*q_grid_b_rlu(1,1)**2) !f11
         dp_dummy(5) = (f_func(2)-2._DP*f_func(1)+f_func(4))/(2._DP*q_grid_b_rlu(2,2)**2) !f22
         !

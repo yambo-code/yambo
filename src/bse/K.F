@@ -107,7 +107,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr,io_QINDX_err
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,qindx_ID_frag,ID,ID_head,ID_compr,io_QINDX_err
  integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
@@ -194,7 +194,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
@@ -479,7 +479,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 
@@ -673,7 +673,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(F_xc_mat)
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

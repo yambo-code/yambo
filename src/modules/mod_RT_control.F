@@ -45,6 +45,7 @@ module RT_control
  type RT_IO_t
    character(schlen)     :: name
    integer               :: N
+   integer               :: iN_IO ! Current IO point
    integer               :: INTERVAL_steps=0
    integer               :: last_point
    logical               :: first_IO(3)=.TRUE. ! Sec #1, #2 and #3

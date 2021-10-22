@@ -70,8 +70,8 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  if(NE_i_time==NE_i_start_time.or..not.l_real_time) then
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_sz,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
-   if(l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
-   &                                             dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
+   if (l_H_rot) call def_variable_bulk(ID,"H_rotation",6,VAR_sz(1:4),SP,&
+&                                      dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
  endif
  !
  IPOS(4)=PAR_G_k_range(1)
@@ -85,7 +85,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
      call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_k_range(1):PAR_G_k_range(2),i_mem:i_mem),IPOS=IPOS)
    enddo
  else
-   IPOS(5)=GF_RT_IO_t%N
+   IPOS(5)=GF_RT_IO_t%iN_IO
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1),IPOS=IPOS)
  endif
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_G_k_range(1):PAR_G_k_range(2),i_sp_pol),IPOS=IPOS(1:4))
@@ -114,7 +114,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
      call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
    enddo
  else
-   IPOS(5)=GF_RT_IO_t%N
+   IPOS(5)=GF_RT_IO_t%iN_IO
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,1:1),IPOS=IPOS)
  endif
  !

@@ -48,6 +48,7 @@ module YPP_real_time
  logical  :: l_NL_X
  logical  :: l_NL_exc
  logical  :: l_RT_abs
+ logical  :: l_RT_pol
  !
  ! RT post-processing (kind)
  !
@@ -142,7 +143,7 @@ module YPP_real_time
    character(schlen) :: damping    ="NONE"  ! Damp type (none, lorentian or gaussian)
  end type RT_ctl
  !
- type(RT_ctl), save :: RT_conf 
+ type(RT_ctl), save :: RT_conf
  !
  type OBS_el
    character(schlen)        :: title
@@ -194,5 +195,22 @@ module YPP_real_time
      if (j==2) TRabs_EPS_label=TRabs_EPS_label(1:1)//"y" 
      if (j==3) TRabs_EPS_label=TRabs_EPS_label(1:1)//"z" 
    end function
+   !
+   subroutine gimme_a_G_Time_Point(i_T)
+     use real_time,  ONLY:G_MEM_steps
+     use RT_control, ONLY:GF_RT_IO_t
+     integer            ::i_T,i_Tp
+     real(SP)           ::TIME_diff,REF_diff
+     !
+     REF_diff=GF_RT_IO_t%Time(GF_RT_IO_t%N)-GF_RT_IO_t%Time(GF_RT_IO_t%N-G_MEM_steps)
+     !
+     do i_Tp=1,GF_RT_IO_t%N
+       TIME_diff= abs ( GF_RT_IO_t%Time(i_Tp) - RT_time(i_T) )
+       if (abs(TIME_diff)<REF_diff ) then 
+         REF_diff=TIME_diff
+         GF_RT_IO_t%iN_IO=i_Tp
+       endif
+     enddo
+   end subroutine
    !
 end module YPP_real_time

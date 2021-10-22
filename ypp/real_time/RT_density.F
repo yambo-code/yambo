@@ -35,10 +35,10 @@ subroutine RT_density(en,kpt,qpt)
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps
+ use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
- use YPP_real_time,  ONLY:RT_time,RT_conf
+ use YPP_real_time,  ONLY:RT_time,RT_conf,gimme_a_G_Time_Point
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -50,8 +50,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_t_tmp,i_dir,Nt,IO_ACT
- real(SP)              :: TIME_diff,REF_diff
+ integer               :: ID,ik,io_err,i_t,i_dir,IO_ACT
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
  !
@@ -126,22 +125,15 @@ subroutine RT_density(en,kpt,qpt)
  !
  call plot_check_and_launch(.true.)
  !
- Nt=GF_RT_IO_t%N
- !
  do i_T=1,RT_conf%T_n_steps
    !
    call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
+   GF_RT_IO_t%iN_IO=GF_RT_IO_t%N
+   !
    if (load_G_history) then
      !
-     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
-     do i_t_tmp=1,Nt
-       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T) )
-       if (abs(TIME_diff)<REF_diff ) then 
-         REF_diff=TIME_diff
-         GF_RT_IO_t%N=i_t_tmp
-       endif
-     enddo
+     call gimme_a_G_Time_Point(i_T)
      !
 #if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)

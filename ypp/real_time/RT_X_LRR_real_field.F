@@ -58,7 +58,6 @@ subroutine RT_X_LRR_real_field(en)
  !
  call section("=",'Optics')
  !=========================
- !
  call parser('RmAsymLim',l_rm_asympt_limit)
  !
  i_Probe=1

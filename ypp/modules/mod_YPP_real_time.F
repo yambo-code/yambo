@@ -143,7 +143,7 @@ module YPP_real_time
    character(schlen) :: damping    ="NONE"  ! Damp type (none, lorentian or gaussian)
  end type RT_ctl
  !
- type(RT_ctl), save :: RT_conf
+ type(RT_ctl), save :: RT_conf,RT_conf_save
  !
  type OBS_el
    character(schlen)        :: title
@@ -177,6 +177,21 @@ module YPP_real_time
  end interface
    !
    contains 
+   !
+   subroutine RT_conf_duplicate(Cin,Cout)
+     type(RT_ctl) :: Cin,Cout
+     Cout%delta_W=Cin%delta_W
+     Cout%X_W_range=Cin%X_W_range
+     Cout%Carriers_W_range=Cin%Carriers_W_range 
+     Cout%W_n_steps=Cin%W_n_steps   
+     Cout%delta_T=Cin%delta_T   
+     Cout%T_range=Cin%T_range 
+     Cout%T_n_range=Cin%T_n_range 
+     Cout%T_n_steps=Cin%T_n_steps   
+     Cout%damp_factor=Cin%damp_factor   
+     Cout%Field_damp_factor=Cin%Field_damp_factor   
+     Cout%damping=Cin%damping   
+   end subroutine
    !
    subroutine FT_free(FT)
      type(OBS_el) :: FT

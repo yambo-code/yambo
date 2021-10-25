@@ -72,8 +72,8 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(8)
- character(schlen) :: db_name(8)
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(9)
+ character(schlen) :: db_name(9)
  integer, external :: io_RT_components
  integer, external :: RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -121,8 +121,9 @@ subroutine RT_start_and_restart(E,k,q)
  db_name(6)='carriers'
  db_name(7)='THETA'
  db_name(8)='REF'
+ db_name(9)='G_history'
  !
- do i_db=4,8
+ do i_db=4,9
    if (i_db/=5) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
    if (i_db==5) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
    io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
@@ -149,13 +150,13 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (RESTART) then
    !
-   do i_db=4,8
+   do i_db=4,9
      call RT_RESTART_database_copy( trim(db_name(i_db)) )
    enddo
    !
    call PP_redux_wait()
    !
-   do i_db=4,8
+   do i_db=4,9
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
      io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
    enddo

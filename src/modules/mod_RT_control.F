@@ -35,12 +35,14 @@ module RT_control
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now 
  !
- integer                  :: ID(8)                    ! (/4 OBS,5 GFSER,6 OCC,7 THETA,8 REF)
- character(lchlen)        :: RT_DB_file_name(8) = " "
+ integer                  :: ID(9)                    ! (/4 OBS,5 G_lesser,6 OCC,7 THETA,8 REF, 9 G_lesser_history)
+                                                      ! (/3 PAR_IO G_lesser,)
+ character(lchlen)        :: RT_DB_file_name(9) = " "
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
  logical                  :: STOP_the_dynamics_NOW=.FALSE.
+ logical                  :: RT_NAN_found=.FALSE.
  !
  type RT_IO_t
    character(schlen)     :: name
@@ -54,13 +56,14 @@ module RT_control
    real(SP), allocatable :: Time(:)
  end type
  !
- logical                  :: RT_NAN_found=.FALSE.
- logical                  :: SAVE_G_history
- !
  type(RT_IO_t),save  :: OBS_RT_IO_t
  type(RT_IO_t),save  :: CARR_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
  type(RT_IO_t),save  :: GF_RT_IO_t
+ type(RT_IO_t),save  :: GF_history_RT_IO_t
+ !
+ ! G_lesser I/O
+ logical                  :: SAVE_G_history
  !
  ! J, P and M (spin) cache 
  !
@@ -79,6 +82,17 @@ module RT_control
  character(schlen)       :: RT_BSE_Occ_Mode="K"
  character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)
  integer                 :: RT_ctl_interp_neigh(N_RT_ctl_controls)=1
+ !
+ ! Running Logicals
+ logical                 :: l_G=.FALSE.
+ logical                 :: l_G_history=.FALSE.
+ logical                 :: l_OBS=.FALSE.
+ logical                 :: l_THETA=.FALSE.
+ logical                 :: l_REF=.FALSE.
+ logical                 :: l_carriers=.FALSE.
+ logical                 :: l_JP=.FALSE.
+ logical                 :: l_M=.FALSE.
+ logical                 :: l_D=.FALSE.
  ! 
  interface
    !
@@ -122,6 +136,27 @@ module RT_control
  !
  contains
    !
+   subroutine RT_what_IO_is_to_be_done(what)
+     !
+     character(*) :: what
+     !
+     ! DB kind and name...
+     !=====================
+     l_carriers   =what=="carriers"
+     l_THETA      =what=="THETA"
+     l_G          =what=="G"
+     l_G_history  =what=="G_history"
+     l_REF        =what=="REF"
+     !
+     !...OBSERVABLES
+     !===============
+     l_JP         =what=="JP".or.what=="OBSERVABLES"
+     l_M          =what=="M" .or.what=="OBSERVABLES"
+     l_D          =what=="D" .or.what=="OBSERVABLES"
+     l_OBS        =l_JP.or.l_M.or.l_D
+     !
+   end subroutine
+   !
    subroutine RT_control_alloc(what)
      !
      use pars,           ONLY:cZERO,rZERO
@@ -159,6 +194,9 @@ module RT_control
        !
        YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
        GF_RT_IO_t%Time=rZERO
+       !
+       YAMBO_ALLOC(GF_history_RT_IO_t%Time,(NE_steps))
+       GF_history_RT_IO_t%Time=rZERO
        !
      endif
      !

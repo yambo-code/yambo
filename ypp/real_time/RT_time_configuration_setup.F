@@ -24,7 +24,7 @@
 subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
- use YPP_real_time,  ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_conf,RT_time,RT_conf_save,RT_conf_duplicate
  use pars,           ONLY:SP
  use com,            ONLY:msg
  use real_time,      ONLY:RT_step,G_MEM_steps
@@ -38,18 +38,26 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! Work Space
  !
  integer  :: i_t,i_ref(2),j_ref
- logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G
+ logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G,l_reset
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)
  !
+ ! Backup
+ !========
+ if (RT_conf_save%delta_T==0._SP) call RT_conf_duplicate(RT_conf,RT_conf_save)
+ !
  ! Definitions
  !==============
+ l_carriers=index(what,"CARRIERS")>0
+ l_current =index(what,"CURRENT")>0
+ l_G_lesser=index(what,"Glesser")>0
+ l_rho_G   =index(what,"G-DENSITY")>0
+ l_rho_f   =index(what,"f-DENSITY")>0
+ l_reset   =index(what,"reset")>0
  !
- l_carriers=(what=="CARRIERS")
- l_current =(what=="CURRENT")
- l_G_lesser=(what=="Glesser")
- l_rho_G   =(what=="G-DENSITY")
- l_rho_f   =(what=="f-DENSITY")
+ ! Reset
+ !========
+ if (l_reset) call RT_conf_duplicate(RT_conf_save,RT_conf)
  !
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step

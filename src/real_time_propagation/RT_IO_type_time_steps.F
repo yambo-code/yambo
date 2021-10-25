@@ -27,7 +27,7 @@ subroutine RT_IO_type_time_steps(what)
  use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         SETUP_RT_IO_type,CACHE_OBS_INTERVAL_time_INPUT,TIME_adjust,&
 &                         CACHE_OBS_INTERVAL_time,CACHE_OBS_steps,RT_control_free,&
-&                         RT_control_alloc
+&                         RT_control_alloc,GF_history_RT_IO_t
  ! 
  implicit none
  !
@@ -39,6 +39,7 @@ subroutine RT_IO_type_time_steps(what)
    call SETUP_RT_IO_type(OUTPUT_RT_IO_t,who="OUTPUT",what=what)
    call SETUP_RT_IO_type(GF_RT_IO_t,who="GF",what=what)
    call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what=what)
+   call SETUP_RT_IO_type(GF_history_RT_IO_t,who="GF_history",what=what)
    !
  endif
  !

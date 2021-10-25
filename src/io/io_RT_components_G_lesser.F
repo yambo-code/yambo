@@ -29,7 +29,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  use IO_m,           ONLY:variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
- use RT_control,     ONLY:GF_RT_IO_t,SAVE_G_history,NE_i_start_time
+ use RT_control,     ONLY:GF_RT_IO_t,NE_i_start_time,l_G,l_G_history
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -53,10 +53,9 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  dim_names(1:3)  =[character(schlen) :: 'complex', 'RT_nbands','RT_nbands']
  IPOS(1:3)=(/1,1,1/)
  !
- if(.not.SAVE_G_history) then
-   VAR_SZ(5)    = G_MEM_steps
-   dim_names(5) ='G_MEM_steps'
- else
+ VAR_SZ(5)    = G_MEM_steps
+ dim_names(5) ='G_MEM_steps'
+ if (l_G_history) then
    VAR_SZ(5)    = NF90_UNLIMITED
    dim_names(5) ='G_IO_time_step'
  endif
@@ -77,8 +76,8 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  IPOS(4)=PAR_G_k_range(1)
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-     if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-     if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     if (l_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if (l_G)         IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
@@ -106,8 +105,8 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-     if(     SAVE_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-     if(.not.SAVE_G_history) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     if (l_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if (l_G)         IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old

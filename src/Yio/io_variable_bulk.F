@@ -362,7 +362,6 @@ subroutine io_variable_bulk(ID, VAR_ID, I0, I1, I2, I3, I4, I5,    &
    if (read_is_on(ID) ) nf_error=nf90_get_var(io_unit(ID), io_netcdf_var(ID,VAR_ID), RZ5, ipos_loc, isize_loc)
  endif
  !
- !
  call netcdf_call(nf_error,ID,ID_VAR=VAR_ID)
  !
  if (allocated(ipos_loc))  deallocate(ipos_loc)

@@ -73,7 +73,8 @@ integer function io_RT_components(what,ID)
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         SAVE_G_history,CACHE_OBS_steps,RT_DB_file_name
+&                         CACHE_OBS_steps,RT_DB_file_name,GF_history_RT_IO_t
+ use RT_control,     ONLY:l_G,l_G_history,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,RT_what_IO_is_to_be_done
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -86,46 +87,33 @@ integer function io_RT_components(what,ID)
  !
  implicit none
  !
- integer,      intent(in) :: ID
- character(*), intent(in) :: what
- !
- integer, external     :: variables_RT_dynamic
+ integer,      intent(in) ::ID
+ character(*), intent(in) ::what
  !
  ! Work Space
  !
- character(lchlen)     :: db_name
- !
+ character(lchlen)     ::db_name
+ integer, external     ::variables_RT_dynamic
 #if defined _PAR_IO
- integer               :: local_COMM
+ integer               ::local_COMM
 #endif
- integer               :: ik,db_type,T_size,G_IO_steps,ID_frag
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,&
-&                         loading_carr_before_neq,par_IO
+ integer               ::ik,db_type,T_size,G_IO_steps,ID_frag
+ logical               ::loading_carr_before_neq,par_IO
  !
- ! DB kind and name...
- !=====================
- l_carriers   =what=="carriers"
- l_THETA      =what=="THETA"
- l_G          =what=="G"
- l_REF        =what=="REF"
- !
- !...OBSERVABLES
- !===============
- l_JP         =what=="JP".or.what=="OBSERVABLES"
- l_M          =what=="M".or.what=="OBSERVABLES"
- l_D          =what=="D".or.what=="OBSERVABLES"
- l_OBS        =l_JP.or.l_M.or.l_D
+ ! Work to be done
+ !=================
+ call RT_what_IO_is_to_be_done(what)
  !
  call timing('io_RT_components',OPR='start')
  !
  db_name="RT_"//trim(what)
- if (l_OBS)    db_name="RT_OBSERVABLES"
- if (l_REF)    db_name="RT_reference_components"
+ if (l_OBS)       db_name="RT_OBSERVABLES"
+ if (l_REF)       db_name="RT_reference_components"
  !
  ID_frag=0
  !
  db_type=2
- if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF/))) then
+ if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF,l_G_history/))) then
    db_name=trim(what)
    l_carriers=.TRUE.
    db_type=-3
@@ -133,9 +121,9 @@ integer function io_RT_components(what,ID)
  !
  loading_carr_before_neq = (db_type==-3.and.l_real_time) 
  !
- par_IO=.false.
+ par_IO=.FALSE.
 #if defined _PAR_IO
- if (l_G) then
+ if (l_G.or.l_G_history) then
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
    if ( read_is_on(ID)) local_COMM=mpi_comm_world
    par_IO=.true.
@@ -145,7 +133,7 @@ integer function io_RT_components(what,ID)
  ! ACTION
  !========
  !
- if(l_G.and.any((/io_sec(ID,:)>=3/))) then
+ if((l_G.or.l_G_history).and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
    io_RT_components=io_connect(desc=trim(db_name)//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
 #else
@@ -158,11 +146,12 @@ integer function io_RT_components(what,ID)
  endif
  !
  if (read_is_on(ID)) then
-   if (l_OBS     ) db_type=4
-   if (l_G       ) db_type=5
-   if (l_carriers) db_type=6
-   if (l_THETA   ) db_type=7
-   if (l_REF     ) db_type=8
+   if (l_OBS      ) db_type=4
+   if (l_G        ) db_type=5
+   if (l_carriers ) db_type=6
+   if (l_THETA    ) db_type=7
+   if (l_REF      ) db_type=8
+   if (l_G_history) db_type=9
    RT_DB_file_name(db_type)=io_file(ID)
  endif
  !
@@ -170,7 +159,7 @@ integer function io_RT_components(what,ID)
  !=============
  if (any((/io_sec(ID,:)==1/))) then
    !
-   call io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
+   call io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
    if (io_RT_components/=0) goto 1
    !
    if (l_OBS)  call io_RT_components_OBS(ID,l_JP,l_M,"DEF")
@@ -191,25 +180,27 @@ integer function io_RT_components(what,ID)
  ! Time size
  !
  T_size=1
- if ( (write_is_on(ID) .or. l_real_time) .and. l_G ) then
+ if ( (write_is_on(ID) .or. l_real_time) .and. (l_G.or.l_G_history) ) then
    G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-   if(NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
-   if(NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
+   if(NE_i_time> 1 .and. l_G        ) T_size= G_MEM_steps
+   if(NE_i_time> 1 .and. l_G_history) T_size= 1
  endif
  if(l_OBS .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if(any((/l_OBS,l_G,l_carriers/)) .and. .not.loading_carr_before_neq ) then
+   if(any((/l_OBS,l_G,l_G_history,l_carriers/)) .and. .not.loading_carr_before_neq ) then
      io_RT_components=variables_RT_dynamic(ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-   if (l_G)        call io_RT_components_TIME_points(ID,T_size,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
+   if (l_G_history) call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,GF_history_RT_IO_t)
    !
-   if (l_carriers) call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
+   if (l_G)         call io_RT_components_TIME_points(ID,T_size,.FALSE.,.FALSE.,GF_RT_IO_t)
    !
-   if (l_OBS)      call io_RT_components_TIME_points(ID,T_size,.false.,.true.,l_G,OBS_RT_IO_t)
+   if (l_carriers)  call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.TRUE.,CARR_RT_IO_t)
+   !
+   if (l_OBS)       call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,OBS_RT_IO_t)
    !
  endif
  !
@@ -217,8 +208,7 @@ integer function io_RT_components(what,ID)
  !
  ! 3rd SECTION
  !=============
- !
- if (l_THETA.or.l_G) then
+ if (l_THETA.or.l_G.or.l_G_history) then
 #if defined _PAR_IO
    ID_frag=ID
 #else
@@ -244,7 +234,8 @@ integer function io_RT_components(what,ID)
  !
  ! lesser Green Function
  !=======================
- if ( l_G ) call io_RT_components_G_lesser(ID_frag,T_size)
+ if ( l_G )         call io_RT_components_G_lesser(ID_frag,T_size)
+ if ( l_G_history ) call io_RT_components_G_lesser(ID_frag,1)
  !
  ! Carrier components
  !====================
@@ -265,7 +256,7 @@ integer function io_RT_components(what,ID)
  if (l_OBS) call io_RT_components_OBS(ID,l_JP,l_M,"FILL")
  !
 #if !defined _PAR_IO
- if (l_THETA.or.l_G) call io_fragment_disconnect(ID,ID_frag)
+ if (l_THETA.or.l_G.or.l_G_history) call io_fragment_disconnect(ID,ID_frag)
 #endif
  !
 1 call io_disconnect(ID=ID)

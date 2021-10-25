@@ -24,7 +24,7 @@
 subroutine RT_Polarization(en,k,q)
  !
  use pars,           ONLY:cZERO,SP
- use D_lattice,      ONLY:dl_sop,sop_inv
+ use D_lattice,      ONLY:dl_sop,sop_inv,DL_vol
  use units,          ONLY:FS2AUT
  use YPPm,           ONLY:DIPs_kind
  use YPP_real_time,  ONLY:RT_time,Pol,RT_conf,gimme_a_G_Time_Point
@@ -74,7 +74,8 @@ subroutine RT_Polarization(en,k,q)
  ! Time conf
  !-----------
  YAMBO_FREE(RT_time)
- call RT_time_configuration_setup('Glesser',GF_RT_IO_t)
+ call RT_time_configuration_setup('Glesser reset',GF_RT_IO_t)
+ stop
  !
  ! Par setup
  !-----------

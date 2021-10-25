@@ -26,7 +26,7 @@ subroutine RT_databases_IO(E,DO_IT)
  use electrons,      ONLY:n_spin,levels
  use RT_control,     ONLY:ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
 &                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
-&                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
+&                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point,GF_history_RT_IO_t
 #if defined _ELPH_ITERATIVE
  use RT_iterative,   ONLY:THETA_matrix
  use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
@@ -150,10 +150,13 @@ subroutine RT_databases_IO(E,DO_IT)
    !
    if(NE_i_time==NE_i_start_time) then
      !
-     if(.not.SAVE_G_history) IO_ACT=OP_WR_CL
-     if(     SAVE_G_history) IO_ACT=OP_APP_CL
-     call io_control(ACTION=IO_ACT,COM=NONE, SEC=(/1/),ID=ID(5))
+     call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
+     if (SAVE_G_history)  then
+       call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=ID(9))
+       io_G=io_RT_components('G_history',ID(9))
+     endif
      !
 #if defined _ELPH_ITERATIVE
      if (l_RT_iterative_ELPH_lifetimes) then
@@ -170,24 +173,34 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      if (NE_i_time==1) then
        GF_RT_IO_t%N=1
-       GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
+       GF_RT_IO_t%Time(1)=NE_time
+       if (SAVE_G_history) then
+         GF_history_RT_IO_t%N=1
+         GF_history_RT_IO_t%Time(1)=NE_time
+       endif
      else
        G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-       if(.not.SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps
-       if(     SAVE_G_history) GF_RT_IO_t%N=GF_RT_IO_t%N+min(G_MEM_steps,G_IO_steps)
+       GF_RT_IO_t%N=G_MEM_steps
        do i_mem=1-G_MEM_steps,0
          i_time=GF_RT_IO_t%N+i_mem
          GF_RT_IO_t%Time(i_time)=NE_time+i_mem*RT_dyn_step
        enddo
+       if (SAVE_G_history) then
+         GF_history_RT_IO_t%N=GF_history_RT_IO_t%N+1
+         GF_RT_IO_t%Time(GF_history_RT_IO_t%N)=NE_time
+       endif
      endif
      !
 #if defined _PAR_IO
      IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(5))
 #else
-     call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/2/),ID=ID(5))
+     IO_ACT=OP_APP_CL
 #endif
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(5))
      io_G=io_RT_components('G',ID(5))
+     !
+     if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(9))
+     if (SAVE_G_history) io_G=io_RT_components('G_history',ID(9))
      !
      call IO_and_Messaging_switch("SAVE")
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
@@ -195,9 +208,10 @@ subroutine RT_databases_IO(E,DO_IT)
 #if defined _PAR_IO
      !
      if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
-       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       io_G=io_RT_components('G',ID(3))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(5),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       io_G=io_RT_components('G',ID(5))
+       if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(9),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       if (SAVE_G_history) io_G=io_RT_components('G_history',ID(9))
      endif
      !
 #else
@@ -213,6 +227,9 @@ subroutine RT_databases_IO(E,DO_IT)
          IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
          call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(5))
          io_G=io_RT_components('G',ID(5))
+         !
+         if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(9))
+         if (SAVE_G_history) io_G=io_RT_components('G_history',ID(9))
          !
        enddo 
        !
@@ -254,9 +271,10 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  if (write_OBS)  call PP_bcast( OBS_RT_IO_t%last_point,0)
  if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if (write_G)    call PP_bcast(  GF_RT_IO_t%last_point,0)
- !
- !
+ if (write_G) then
+                 call PP_bcast(  GF_RT_IO_t%last_point,0)
+                 call PP_bcast(  GF_history_RT_IO_t%last_point,0)
+ endif
  !
  call timing('RT databases IO',OPR='stop')
  !

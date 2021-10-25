@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
+subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
  !
  use pars,           ONLY:IP,LP,SP,schlen
  use R_lattice,      ONLY:nqbz
@@ -30,13 +30,13 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_
  use IO_m,           ONLY:io_status,frag_RT,read_is_on
  use RT_lifetimes,   ONLY:q_weight_RT
  use real_time,      ONLY:RT_carriers,RT_obj_alloc
- use RT_control,     ONLY:SAVE_G_history
+ use RT_control,     ONLY:SAVE_G_history,l_carriers,l_OBS,l_G,l_THETA,l_REF
  !
  implicit none
  !
  character(*), intent(in) :: what
  integer, intent(in)      :: ID
- logical, intent(in)      :: loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF
+ logical, intent(in)      :: loading_carr_before_neq
  integer, intent(out)     :: io_RT_components
  !
  integer, external     :: variables_RT_static

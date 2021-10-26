@@ -226,8 +226,10 @@ module RT_control
        YAMBO_ALLOC(Gless_RESTART_RT_IO_t%Time,(NE_steps))
        Gless_RESTART_RT_IO_t%Time=rZERO
        !
-       YAMBO_ALLOC(Gless_RT_IO_t%Time,(NE_steps))
-       Gless_RT_IO_t%Time=rZERO
+       if (SAVE_G_history) then
+         YAMBO_ALLOC(Gless_RT_IO_t%Time,(NE_steps))
+         Gless_RT_IO_t%Time=rZERO
+       endif
        !
      endif
      !

@@ -31,7 +31,7 @@ subroutine RT_Polarization(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
  use LIVE_t,         ONLY:live_timing
- use RT_control,     ONLY:SAVE_G_history,Gless_RESTART_RT_IO_t
+ use RT_control,     ONLY:Gless_RESTART_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,dG_lesser,RT_P
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,OP_RD_CL,REP,NONE,manage_action,OP_IF_START_RD_CL_IF_END
@@ -56,7 +56,7 @@ subroutine RT_Polarization(en,k,q)
  !--------
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID) 
  io_err=io_RT_components('G_lesser',ID)
- if(.not.SAVE_G_history) then
+ if(io_err/=0) then
    call warning(" History of G_lesser not found. Impossible to re-build the Polarization")
    return
  endif

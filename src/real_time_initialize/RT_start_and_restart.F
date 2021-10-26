@@ -152,6 +152,7 @@ subroutine RT_start_and_restart(E,k,q)
    call PP_redux_wait()
    !
    do i_db=1,N_RT_databases
+     if (index(RT_DB_name(i_db),"REFERENCE")>0) cycle
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=RT_DB_ID(i_db))
      io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
    enddo

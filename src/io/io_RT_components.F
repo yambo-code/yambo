@@ -128,13 +128,13 @@ integer function io_RT_components(what,ID)
  !
  if(RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
-   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
 #else
-   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
 #endif
    if (io_RT_components/=0) goto 1
  else
-   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID)
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID)
    if (io_RT_components/=0) goto 1
  endif
  !

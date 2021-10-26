@@ -29,7 +29,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  use IO_m,           ONLY:variable_exist,write_is_on,io_sec
  use hamiltonian,    ONLY:H_rotation
- use RT_control,     ONLY:GF_RT_IO_t,NE_i_start_time,l_G,l_G_history
+ use RT_control,     ONLY:Gless_RESTART_RT_IO_t,NE_i_start_time,RT_do_IO
  use real_time,      ONLY:dG_lesser,G_MEM_steps,RT_nbands,RT_nk,l_RT_rotate_DM,&
 &                         NE_i_time,RT_dyn_step,RT_step,i_MEM_now,i_MEM_prev,i_MEM_old
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -55,7 +55,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  VAR_SZ(5)    = G_MEM_steps
  dim_names(5) ='G_MEM_steps'
- if (l_G_history) then
+ if (RT_do_IO("G_lesser")) then
    VAR_SZ(5)    = NF90_UNLIMITED
    dim_names(5) ='G_IO_time_step'
  endif
@@ -76,15 +76,15 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  IPOS(4)=PAR_G_k_range(1)
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-     if (l_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-     if (l_G)         IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser"))         IPOS(5)=Gless_RESTART_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser_RESTART")) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
      call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_k_range(1):PAR_G_k_range(2),i_mem:i_mem),IPOS=IPOS)
    enddo
  else
-   IPOS(5)=GF_RT_IO_t%iN_IO
+   IPOS(5)=Gless_RESTART_RT_IO_t%iN_IO
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,PAR_G_k_range(1):PAR_G_k_range(2),1:1),IPOS=IPOS)
  endif
  if(l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,PAR_G_k_range(1):PAR_G_k_range(2),i_sp_pol),IPOS=IPOS(1:4))
@@ -105,15 +105,15 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  if(l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-     if (l_G_history) IPOS(5)=GF_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-     if (l_G)         IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser"))         IPOS(5)=Gless_RESTART_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser_RESTART")) IPOS(5)=      T_size+(i_mem_sorted-G_MEM_steps)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
      call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,i_mem:i_mem),IPOS=IPOS)
    enddo
  else
-   IPOS(5)=GF_RT_IO_t%iN_IO
+   IPOS(5)=Gless_RESTART_RT_IO_t%iN_IO
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,ik:ik,1:1),IPOS=IPOS)
  endif
  !

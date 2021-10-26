@@ -35,9 +35,11 @@ module RT_control
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now 
  !
- integer                  :: ID(9)                    ! (/4 OBS,5 G_lesser,6 OCC,7 THETA,8 REF, 9 G_lesser_history)
-                                                      ! (/3 PAR_IO G_lesser,)
- character(lchlen)        :: RT_DB_file_name(9) = " "
+ integer       ,parameter :: N_RT_databases=9 
+ integer                  :: RT_DB_ID(N_RT_databases) ! (/4 OBS,5 G_lesser,6 OCC,7 THETA,8 REF, 9 G_lesser_history)
+ integer                  :: RT_current_DB_identifier ! \in [1,9] pointing to the DB under I/O
+ character(lchlen)        :: RT_DB_file_name(N_RT_databases) = " "
+ character(schlen)        :: RT_DB_name(N_RT_databases)      = " "
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
@@ -59,8 +61,8 @@ module RT_control
  type(RT_IO_t),save  :: OBS_RT_IO_t
  type(RT_IO_t),save  :: CARR_RT_IO_t
  type(RT_IO_t),save  :: OUTPUT_RT_IO_t
- type(RT_IO_t),save  :: GF_RT_IO_t
- type(RT_IO_t),save  :: GF_history_RT_IO_t
+ type(RT_IO_t),save  :: Gless_RESTART_RT_IO_t
+ type(RT_IO_t),save  :: Gless_RT_IO_t
  !
  ! G_lesser I/O
  logical                  :: SAVE_G_history
@@ -82,17 +84,6 @@ module RT_control
  character(schlen)       :: RT_BSE_Occ_Mode="K"
  character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)
  integer                 :: RT_ctl_interp_neigh(N_RT_ctl_controls)=1
- !
- ! Running Logicals
- logical                 :: l_G=.FALSE.
- logical                 :: l_G_history=.FALSE.
- logical                 :: l_OBS=.FALSE.
- logical                 :: l_THETA=.FALSE.
- logical                 :: l_REF=.FALSE.
- logical                 :: l_carriers=.FALSE.
- logical                 :: l_JP=.FALSE.
- logical                 :: l_M=.FALSE.
- logical                 :: l_D=.FALSE.
  ! 
  interface
    !
@@ -136,25 +127,65 @@ module RT_control
  !
  contains
    !
-   subroutine RT_what_IO_is_to_be_done(what)
-     !
+   subroutine RT_DB_init()
+     RT_DB_name(1:3)= "none"
+     RT_DB_name(4)= "OBSERVABLES"
+     RT_DB_name(5)= "G_lesser_RESTART"
+     RT_DB_name(6)= "G_lesser"
+     RT_DB_name(7)= "carriers"
+     RT_DB_name(8)= "THETA"
+     RT_DB_name(9)= "REFERENCE"
+   end subroutine
+   !
+   integer function RT_return_db_ID(what)
      character(*) :: what
+     if (what=="JP") RT_return_db_ID=4
+     if (what=="P") RT_return_db_ID=4
+     if (what=="J") RT_return_db_ID=4
+     if (what=="M") RT_return_db_ID=4
+     if (what=="OBSERVABLES") RT_return_db_ID=4
+     if (what=="G_lesser_RESTART") RT_return_db_ID=5
+     if (what=="G_lesser") RT_return_db_ID=6
+     if (what=="carriers") RT_return_db_ID=7
+     if (what=="THETA") RT_return_db_ID=8
+     if (what=="REFERENCE") RT_return_db_ID=9
+   end function
+   !
+   logical function RT_do_IO(what)
+     character(*) :: what
+     RT_do_IO=.FALSE.
      !
-     ! DB kind and name...
-     !=====================
-     l_carriers   =what=="carriers"
-     l_THETA      =what=="THETA"
-     l_G          =what=="G"
-     l_G_history  =what=="G_history"
-     l_REF        =what=="REF"
+     if (what=="ANY".and.RT_current_DB_identifier/=0) RT_do_IO=.TRUE.
+     if (what=="JP".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
+     if (what=="P".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
+     if (what=="J".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
+     if (what=="M".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
+     if (what=="OBSERVABLES".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
      !
-     !...OBSERVABLES
-     !===============
-     l_JP         =what=="JP".or.what=="OBSERVABLES"
-     l_M          =what=="M" .or.what=="OBSERVABLES"
-     l_D          =what=="D" .or.what=="OBSERVABLES"
-     l_OBS        =l_JP.or.l_M.or.l_D
+     if (what=="G_lesser_RESTART".and.RT_current_DB_identifier==5) RT_do_IO=.TRUE.
+     if (what=="G_lesser".and.RT_current_DB_identifier==6) RT_do_IO=.TRUE.
+     if (what=="carriers".and.RT_current_DB_identifier==7) RT_do_IO=.TRUE.
+     if (what=="THETA".and.RT_current_DB_identifier==8) RT_do_IO=.TRUE.
+     if (what=="REFERENCE".and.RT_current_DB_identifier==9) RT_do_IO=.TRUE.
      !
+     if (what=="ANY_G".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6)) RT_do_IO=.TRUE.
+     if (what=="DYN_VARS".and.(RT_current_DB_identifier>=4.or.RT_current_DB_identifier<=8)) RT_do_IO=.TRUE.
+     if (what=="K_SECTION".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6&
+&                               .or.RT_current_DB_identifier==8)) RT_do_IO=.TRUE.
+     !
+   end function
+   !
+   subroutine RT_define_the_IO_DB_identifier(what)
+     character(*) :: what
+     RT_current_DB_identifier=0
+     if ( (what=="JP".or.what=="OBSERVABLES") .or. &
+          (what=="M" .or.what=="OBSERVABLES") .or. &
+          (what=="D" .or.what=="OBSERVABLES") ) RT_current_DB_identifier=4
+     if (what=="G_lesser_RESTART")  RT_current_DB_identifier=5
+     if (what=="G_lesser")  RT_current_DB_identifier=6
+     if (what=="carriers")  RT_current_DB_identifier=7
+     if (what=="THETA")     RT_current_DB_identifier=8
+     if (what=="REFERENCE") RT_current_DB_identifier=9
    end subroutine
    !
    subroutine RT_control_alloc(what)
@@ -192,11 +223,11 @@ module RT_control
        YAMBO_ALLOC(CARR_RT_IO_t%Time,(NE_steps))
        CARR_RT_IO_t%Time=rZERO
        !
-       YAMBO_ALLOC(GF_RT_IO_t%Time,(NE_steps))
-       GF_RT_IO_t%Time=rZERO
+       YAMBO_ALLOC(Gless_RESTART_RT_IO_t%Time,(NE_steps))
+       Gless_RESTART_RT_IO_t%Time=rZERO
        !
-       YAMBO_ALLOC(GF_history_RT_IO_t%Time,(NE_steps))
-       GF_history_RT_IO_t%Time=rZERO
+       YAMBO_ALLOC(Gless_RT_IO_t%Time,(NE_steps))
+       Gless_RT_IO_t%Time=rZERO
        !
      endif
      !
@@ -216,7 +247,7 @@ module RT_control
      if(trim(what)=="times" .or. trim(what)=="all") then
        YAMBO_FREE(OBS_RT_IO_t%Time)
        YAMBO_FREE(CARR_RT_IO_t%Time)
-       YAMBO_FREE(GF_RT_IO_t%Time)
+       YAMBO_FREE(Gless_RESTART_RT_IO_t%Time)
      endif
      !
    end subroutine RT_control_free

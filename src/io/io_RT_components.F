@@ -23,7 +23,7 @@
 !
 integer function io_RT_components(what,ID)
  !
- ! What can be E WF V OBSERV(J,P,M,...) G
+ ! What can be E WF V OBSERV(J,P,M,...) G_lesser G_lesser_RESTART
  !
  ! def/io_variable_bulk VAR_ID table
  ! VAR_ID=1 is used by io_bulk and should never be used by def/io_variable_bulk
@@ -62,7 +62,7 @@ integer function io_RT_components(what,ID)
  !  4 THETA
  !
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP
  use drivers,        ONLY:l_real_time
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
@@ -72,9 +72,9 @@ integer function io_RT_components(what,ID)
  use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         CACHE_OBS_steps,RT_DB_file_name,GF_history_RT_IO_t
- use RT_control,     ONLY:l_G,l_G_history,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,RT_what_IO_is_to_be_done
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
+&                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t
+ use RT_control,     ONLY:RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -87,12 +87,11 @@ integer function io_RT_components(what,ID)
  !
  implicit none
  !
- integer,      intent(in) ::ID
  character(*), intent(in) ::what
+ integer,        optional ::ID
  !
  ! Work Space
  !
- character(lchlen)     ::db_name
  integer, external     ::variables_RT_dynamic
 #if defined _PAR_IO
  integer               ::local_COMM
@@ -102,20 +101,14 @@ integer function io_RT_components(what,ID)
  !
  ! Work to be done
  !=================
- call RT_what_IO_is_to_be_done(what)
+ call RT_define_the_IO_DB_identifier(what)
  !
  call timing('io_RT_components',OPR='start')
  !
- db_name="RT_"//trim(what)
- if (l_OBS)       db_name="RT_OBSERVABLES"
- if (l_REF)       db_name="RT_reference_components"
- !
- ID_frag=0
- !
  db_type=2
- if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF,l_G_history/))) then
-   db_name=trim(what)
-   l_carriers=.TRUE.
+ if (.not.RT_do_IO("ANY")) then
+   RT_current_DB_identifier=3
+   RT_DB_name(RT_current_DB_identifier)=trim(what)
    db_type=-3
  endif
  !
@@ -123,7 +116,7 @@ integer function io_RT_components(what,ID)
  !
  par_IO=.FALSE.
 #if defined _PAR_IO
- if (l_G.or.l_G_history) then
+ if (RT_do_IO("ANY_G")) then
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
    if ( read_is_on(ID)) local_COMM=mpi_comm_world
    par_IO=.true.
@@ -133,27 +126,19 @@ integer function io_RT_components(what,ID)
  ! ACTION
  !========
  !
- if((l_G.or.l_G_history).and.any((/io_sec(ID,:)>=3/))) then
+ if(RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
-   io_RT_components=io_connect(desc=trim(db_name)//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
+   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
 #else
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
+   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
 #endif
    if (io_RT_components/=0) goto 1
  else
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
+   io_RT_components=io_connect(desc=trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID)
    if (io_RT_components/=0) goto 1
  endif
  !
- if (read_is_on(ID)) then
-   if (l_OBS      ) db_type=4
-   if (l_G        ) db_type=5
-   if (l_carriers ) db_type=6
-   if (l_THETA    ) db_type=7
-   if (l_REF      ) db_type=8
-   if (l_G_history) db_type=9
-   RT_DB_file_name(db_type)=io_file(ID)
- endif
+ if (read_is_on(ID)) RT_DB_file_name(RT_current_DB_identifier)=io_file(ID)
  !
  ! 1st SECTION
  !=============
@@ -162,9 +147,9 @@ integer function io_RT_components(what,ID)
    call io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
    if (io_RT_components/=0) goto 1
    !
-   if (l_OBS)  call io_RT_components_OBS(ID,l_JP,l_M,"DEF")
+   if (RT_do_IO("OBSERVABLES")) call io_RT_components_OBS(ID,"DEF")
    !
-   if ( l_carriers .and. .not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
+   if (RT_do_IO("carriers").and..not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
    !
  endif
  !
@@ -172,7 +157,7 @@ integer function io_RT_components(what,ID)
  !
  ! REFERENCE Lifetimes and Green function
  !========================================
- if ( l_REF ) call io_RT_components_Reference(ID)
+ if (RT_do_IO("REFERENCE")) call io_RT_components_Reference(ID)
  !
  ! 2nd SECTION
  !=============
@@ -180,27 +165,27 @@ integer function io_RT_components(what,ID)
  ! Time size
  !
  T_size=1
- if ( (write_is_on(ID) .or. l_real_time) .and. (l_G.or.l_G_history) ) then
-   G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-   if(NE_i_time> 1 .and. l_G        ) T_size= G_MEM_steps
-   if(NE_i_time> 1 .and. l_G_history) T_size= 1
+ if ((write_is_on(ID).or.l_real_time).and. RT_do_IO("ANY_G") ) then
+   G_IO_steps=Gless_RESTART_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+   if(NE_i_time> 1 .and. RT_do_IO("G_lesser_RESTART")) T_size= G_MEM_steps
+   if(NE_i_time> 1 .and. RT_do_IO("G_lesser")        ) T_size= 1
  endif
- if(l_OBS .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
+ if(RT_do_IO("OBSERVABLES") .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if(any((/l_OBS,l_G,l_G_history,l_carriers/)) .and. .not.loading_carr_before_neq ) then
+   if(RT_do_IO("DYN_VARS") .and. .not.loading_carr_before_neq ) then
      io_RT_components=variables_RT_dynamic(ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-   if (l_G_history) call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,GF_history_RT_IO_t)
+   if (RT_do_IO("G_lesser"))          call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,Gless_RT_IO_t)
    !
-   if (l_G)         call io_RT_components_TIME_points(ID,T_size,.FALSE.,.FALSE.,GF_RT_IO_t)
+   if (RT_do_IO("G_lesser_RESTART"))  call io_RT_components_TIME_points(ID,T_size,.FALSE.,.FALSE.,Gless_RESTART_RT_IO_t)
    !
-   if (l_carriers)  call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.TRUE.,CARR_RT_IO_t)
+   if (RT_do_IO("carriers"))          call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.TRUE.,CARR_RT_IO_t)
    !
-   if (l_OBS)       call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,OBS_RT_IO_t)
+   if (RT_do_IO("OBSERVABLES"))       call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,OBS_RT_IO_t)
    !
  endif
  !
@@ -208,7 +193,8 @@ integer function io_RT_components(what,ID)
  !
  ! 3rd SECTION
  !=============
- if (l_THETA.or.l_G.or.l_G_history) then
+ ID_frag=0
+ if (RT_do_IO("K_SECTION")) then
 #if defined _PAR_IO
    ID_frag=ID
 #else
@@ -222,7 +208,7 @@ integer function io_RT_components(what,ID)
  !
  ! ELPH Kernel THETA Matrix 
  !==========================
- if ( l_THETA ) then
+ if (RT_do_IO("THETA")) then
    !
    ! This should be replaced by call THETA_IO
    !
@@ -234,12 +220,11 @@ integer function io_RT_components(what,ID)
  !
  ! lesser Green Function
  !=======================
- if ( l_G )         call io_RT_components_G_lesser(ID_frag,T_size)
- if ( l_G_history ) call io_RT_components_G_lesser(ID_frag,1)
+ if (RT_do_IO("ANY_G")) call io_RT_components_G_lesser(ID_frag,T_size)
  !
  ! Carrier components
  !====================
- if ( l_carriers) then
+ if (RT_do_IO("carriers")) then
    !
    if (CARR_RT_IO_t%first_IO(3).or.read_is_on(ID)) then
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
@@ -253,10 +238,10 @@ integer function io_RT_components(what,ID)
  !
  ! Current and Polarization
  !==========================
- if (l_OBS) call io_RT_components_OBS(ID,l_JP,l_M,"FILL")
+ if (RT_do_IO("OBSERVABLES")) call io_RT_components_OBS(ID,"FILL")
  !
 #if !defined _PAR_IO
- if (l_THETA.or.l_G.or.l_G_history) call io_fragment_disconnect(ID,ID_frag)
+ if (RT_do_IO("K_SECTION")) call io_fragment_disconnect(ID,ID_frag)
 #endif
  !
 1 call io_disconnect(ID=ID)

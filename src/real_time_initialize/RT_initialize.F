@@ -38,8 +38,8 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
-&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,         &
+&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time,RT_DB_init
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
 &                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
@@ -322,6 +322,10 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ ! Databased INIT
+ !================
+ call RT_DB_init( )
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
@@ -399,7 +403,7 @@ subroutine RT_initialize(E,k,q)
  call                          msg('r', 'T cache step  of J,P,M     ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   CAR     ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
- call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', '          I/O of   GFs     ',Gless_RESTART_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !

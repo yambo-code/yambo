@@ -78,7 +78,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        SC_bands,SC_preconditioning,OEP_approx
 #endif
 #if defined _RT
- use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
+ use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,     &
 &                        CACHE_OBS_INTERVAL_time_INPUT,RT_BSE_Occ_Mode
  use stderr,        ONLY:intc
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
@@ -432,10 +432,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
- IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,GF_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
+ IO_times=(/CARR_RT_IO_t%INTERVAL_time_INPUT,Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT,OUTPUT_RT_IO_t%INTERVAL_time_INPUT/)
  call it(defs,'IOtime',      '[RT] Time between two consecutive I/O (CARRIERs - GF - OUTPUT)',IO_times,unit=Time_unit(1))
  CARR_RT_IO_t%INTERVAL_time_INPUT  =IO_times(1)
- GF_RT_IO_t%INTERVAL_time_INPUT    =IO_times(2)
+ Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT    =IO_times(2)
  OUTPUT_RT_IO_t%INTERVAL_time_INPUT=IO_times(3)
  !
  IO_times(1:2)=(/CACHE_OBS_INTERVAL_time_INPUT,OBS_RT_IO_t%INTERVAL_time_INPUT/)

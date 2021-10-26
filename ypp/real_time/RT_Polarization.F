@@ -31,7 +31,7 @@ subroutine RT_Polarization(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
  use LIVE_t,         ONLY:live_timing
- use RT_control,     ONLY:SAVE_G_history,GF_RT_IO_t
+ use RT_control,     ONLY:SAVE_G_history,Gless_RESTART_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,dG_lesser,RT_P
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,OP_RD_CL,REP,NONE,manage_action,OP_IF_START_RD_CL_IF_END
@@ -55,7 +55,7 @@ subroutine RT_Polarization(en,k,q)
  ! I/O...
  !--------
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID) 
- io_err=io_RT_components('G',ID)
+ io_err=io_RT_components('G_lesser',ID)
  if(.not.SAVE_G_history) then
    call warning(" History of G_lesser not found. Impossible to re-build the Polarization")
    return
@@ -74,7 +74,7 @@ subroutine RT_Polarization(en,k,q)
  ! Time conf
  !-----------
  YAMBO_FREE(RT_time)
- call RT_time_configuration_setup('Glesser reset',GF_RT_IO_t)
+ call RT_time_configuration_setup('Glesser reset',Gless_RESTART_RT_IO_t)
  stop
  !
  ! Par setup
@@ -91,12 +91,12 @@ subroutine RT_Polarization(en,k,q)
    !
 #if defined _PAR_IO
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
-   io_err=io_RT_components('G',ID)
+   io_err=io_RT_components('G_lesser',ID)
 #else
    do ik = 1, RT_nk 
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-     io_err=io_RT_components('G',ID)
+     io_err=io_RT_components('G_lesser',ID)
    enddo
 #endif
    !

@@ -27,7 +27,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
  use RT_output_m,    ONLY:RT_desc
- use RT_control,     ONLY:RT_IO_t,l_G,l_G_history
+ use RT_control,     ONLY:RT_IO_t,RT_do_IO
  use netcdf,         ONLY:NF90_UNLIMITED
  use real_time,      ONLY:MEM_pointer,G_MEM_steps,NE_i_time,i_MEM_now,i_MEM_prev,i_MEM_old,&
 &                         RT_dyn_step,RT_step
@@ -61,7 +61,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  call io_variable_elemental(ID,I0=TYP%last_point)
  call io_variable_elemental(ID,I0=TYP%N)
  !
- if (l_G .and. l_real_time) then
+ if (RT_do_IO("G_lesser_RESTART").and. l_real_time) then
    dim_name="G_MEM_steps"
    call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
    call io_variable_bulk(ID,2,I1=MEM_pointer)
@@ -82,7 +82,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  !
  IPOS=TYP%N-VAR_SZ+1
  IO_LIM=(/TYP%N-VAR_SZ+1,TYP%N/)
- if(TYP%first_IO(2).or.l_G.or.l_G_history.or.read_is_on(ID)) then
+ if(TYP%first_IO(2).or.RT_do_IO("ANY_G").or.read_is_on(ID)) then
    dim_name="IO_TIME_n_points"
    if(     UNLIMITED_time) call def_variable_bulk(ID,"IO_TIME_points",3,(/NF90_UNLIMITED/),SP,dim_name,silent=.true.)
    if(.not.UNLIMITED_time) call def_variable_bulk(ID,"IO_TIME_points",3,(/G_MEM_steps/),   SP,dim_name,silent=.true.)

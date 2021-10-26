@@ -137,7 +137,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
- io_RT_G_err=io_RT_components('G' ,ID)
+ io_RT_G_err=io_RT_components('G_lesser_RESTART' ,ID)
  if (io_RT_G_err==0) QP_nb=RT_bands(2)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response

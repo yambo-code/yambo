@@ -25,6 +25,7 @@ subroutine RT_ypp_driver(en,k,q)
  !
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
+ use RT_control,     ONLY:RT_DB_init
  use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
 &                         l_skip_OBS_IO,l_force_min_damp,l_RT_pol
  use YPPm,           ONLY:PROJECT_mode,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
@@ -55,6 +56,10 @@ subroutine RT_ypp_driver(en,k,q)
  call section("*",'== Real-Time Post-Processing ==')
  !
  PAR_G_k_range=(/1,k%nibz/)
+ !
+ ! Databases 
+ !===========
+ call RT_DB_init( )
  !
  ! Output files
  !==============

@@ -24,7 +24,7 @@
 subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  !
  use pars,           ONLY:SP
- use RT_control,     ONLY:RT_output,ID
+ use RT_control,     ONLY:RT_output,RT_DB_ID,N_RT_databases
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
@@ -74,10 +74,10 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    endif
    !
    if(trim(what)=="close") then
-     do i_ID=1,8
-       if(ID(i_ID)==0) cycle
-       call io_control(ACTION=WR_CL,ID=ID(i_ID))
-       call io_disconnect(ID=ID(i_ID))
+     do i_ID=1,N_RT_databases
+       if (RT_DB_ID(i_ID)==0) cycle
+       call io_control(ACTION=WR_CL,ID=RT_DB_ID(i_ID))
+       call io_disconnect(ID=RT_DB_ID(i_ID))
      enddo
    endif
    !

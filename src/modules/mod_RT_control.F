@@ -169,7 +169,7 @@ module RT_control
      if (what=="REFERENCE".and.RT_current_DB_identifier==9) RT_do_IO=.TRUE.
      !
      if (what=="ANY_G".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6)) RT_do_IO=.TRUE.
-     if (what=="DYN_VARS".and.(RT_current_DB_identifier>=4.or.RT_current_DB_identifier<=8)) RT_do_IO=.TRUE.
+     if (what=="DYN_VARS".and.(RT_current_DB_identifier>=4.and.RT_current_DB_identifier<=8)) RT_do_IO=.TRUE.
      if (what=="K_SECTION".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6&
 &                               .or.RT_current_DB_identifier==8)) RT_do_IO=.TRUE.
      !

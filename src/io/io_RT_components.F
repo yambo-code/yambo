@@ -62,7 +62,7 @@ integer function io_RT_components(what,ID)
  !  4 THETA
  !
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_real_time
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
@@ -73,8 +73,8 @@ integer function io_RT_components(what,ID)
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
 &                         RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t
- use RT_control,     ONLY:RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier
+&                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
+&                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
@@ -96,7 +96,8 @@ integer function io_RT_components(what,ID)
 #if defined _PAR_IO
  integer               ::local_COMM
 #endif
- integer               ::ik,db_type,T_size,G_IO_steps,ID_frag
+ character(schlen)     ::db_name
+ integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
  logical               ::loading_carr_before_neq,par_IO
  !
  ! Work to be done
@@ -105,14 +106,16 @@ integer function io_RT_components(what,ID)
  !
  call timing('io_RT_components',OPR='start')
  !
- db_type=2
+ db_kind=2
  if (.not.RT_do_IO("ANY")) then
-   RT_current_DB_identifier=3
-   RT_DB_name(RT_current_DB_identifier)=trim(what)
-   db_type=-3
+   if (index(what,"_carriers")>0) then
+     RT_current_DB_identifier=RT_return_db_ID("carriers")
+     RT_DB_name(RT_current_DB_identifier)="carriers"
+   endif
+   db_kind=-3
  endif
  !
- loading_carr_before_neq = (db_type==-3.and.l_real_time) 
+ loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
  !
  par_IO=.FALSE.
 #if defined _PAR_IO
@@ -128,13 +131,15 @@ integer function io_RT_components(what,ID)
  !
  if(RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_kind,ID=ID,COMM=local_COMM)
 #else
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID,FORCE_READ_MODE=.true.)
 #endif
    if (io_RT_components/=0) goto 1
  else
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_type,ID=ID)
+   if (db_kind>0) db_name="RT_"//trim(RT_DB_name(RT_current_DB_identifier))
+   if (db_kind<0) db_name=trim(what)
+   io_RT_components=io_connect(desc=trim(db_name),type=db_kind,ID=ID)
    if (io_RT_components/=0) goto 1
  endif
  !

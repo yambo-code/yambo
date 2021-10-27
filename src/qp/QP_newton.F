@@ -197,7 +197,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      !
      ! Find new Fermi Energy
      !
-     call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
+     call OCCUPATIONS_Fermi(en,k,"E",mode="OCCUPATIONS")
      !
      ! Write QP on file
      !

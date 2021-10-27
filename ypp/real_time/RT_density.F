@@ -33,7 +33,7 @@ subroutine RT_density(en,kpt,qpt)
  use com,            ONLY:msg,of_open_close
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
- use RT_control,     ONLY:TIME_string,RT_apply,Gless_RESTART_RT_IO_t,CARR_RT_IO_t
+ use RT_control,     ONLY:TIME_string,RT_apply,Gless_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
@@ -71,7 +71,7 @@ subroutine RT_density(en,kpt,qpt)
  ! I/O
  !=====
  if(load_G_history) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
+   call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1,2/),ID=ID) 
    io_err=io_RT_components('G_lesser',ID)
    if (io_err/=0) then
      call warning(" History of G_lesser not found. Density will be computed using the occupations")
@@ -92,7 +92,7 @@ subroutine RT_density(en,kpt,qpt)
      io_err=io_RT_components('REFERENCE',ID)
    endif
    call msg('s',trim(ch_ws(1)))
-   call RT_time_configuration_setup("G-DENSITY",Gless_RESTART_RT_IO_t)
+   call RT_time_configuration_setup("G-DENSITY",Gless_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
    call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
@@ -129,7 +129,7 @@ subroutine RT_density(en,kpt,qpt)
    !
    call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
-   Gless_RESTART_RT_IO_t%iN_IO=Gless_RESTART_RT_IO_t%N
+   Gless_RT_IO_t%iN_IO=Gless_RT_IO_t%N
    !
    if (load_G_history) then
      !

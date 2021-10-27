@@ -195,7 +195,7 @@ subroutine RT_databases_IO(E,DO_IT)
        enddo
        if (SAVE_G_history) then
          Gless_RT_IO_t%N=Gless_RT_IO_t%N+1
-         Gless_RESTART_RT_IO_t%Time(Gless_RT_IO_t%N)=NE_time
+         Gless_RT_IO_t%Time(Gless_RT_IO_t%N)=NE_time
        endif
      endif
      !

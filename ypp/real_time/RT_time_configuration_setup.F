@@ -27,7 +27,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  use YPP_real_time,  ONLY:RT_conf,RT_time,RT_conf_save,RT_conf_duplicate
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use real_time,      ONLY:RT_step,G_MEM_steps
+ use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
  !
 #include<memory.h>
@@ -66,13 +66,6 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !  In the case of non-uniform T samplings the last time points can be imposed by the total time and, hence, the
  !  STEP can appear even smaller than the effective step.
  if (GENERAL_RT_IO_t%N> 2) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-2))
- !
- if (GENERAL_RT_IO_t%N> 1) then
-   if (l_rho_G) then
-    TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
-   endif
- endif
  !
  ! Time range ...
  !===============

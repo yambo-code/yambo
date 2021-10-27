@@ -28,6 +28,11 @@ else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
  PRECMP=-D_NL -D_RT -D_DOUBLE
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
+#aim137:yambo_fl target, including -D_FL 
+else ifneq (,$(findstring yambo_fl,$(MAKECMDGOALS)))
+ PRECMP=-D_FL -D_NL -D_RT -D_DOUBLE
+ SRC_LIBS=$(PJ_NLLIBS)
+ EXE_LIBS=$(PJ_NLLIBS_LD)
 else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
  PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
  SRC_LIBS=$(PJ_RTLIBS)
@@ -36,7 +41,7 @@ endif
 #
 # Compilation
 #
-yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: 
+yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed yambo_fl: 
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@touch config/stamps_and_lists/compiling_$@.stamp
 	@$(call todo_precision,$(PRECMP))

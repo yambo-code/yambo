@@ -16,6 +16,7 @@ define yambo_help
    $(ECHO) -n " [ph-project]    "; for target in $(PH_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rt-project]    "; for target in $(RT_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO) -n " [fl-project]    "; for target in $(FL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rtext-project] "; for target in $(RTE_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** GPL components *** ";\
    $(ECHO) -n " [gpl]           "; for target in $(GPL); do $(ECHO) -n "$$target" ; done;$(ECHO) ;\

@@ -62,6 +62,8 @@ rt-project:
 	@for target in $(RT_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 nl-project: 
 	@for target in $(NL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+fl-project: 
+	@for target in $(FL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rtext-project:
 	@for target in $(RTE_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:

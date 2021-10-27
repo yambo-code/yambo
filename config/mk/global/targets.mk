@@ -13,6 +13,7 @@ PH_PROJ  = yambo_ph ypp_ph
 SC_PROJ  = yambo_sc ypp_sc
 RT_PROJ  = yambo_rt ypp_rt
 NL_PROJ  = yambo_nl ypp_nl
+FL_PROJ  = yambo_fl
 RTE_PROJ = yambo_rt yambo_rt_iterative yambo_qed ypp_rt
 MAIN     = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RT_PROJ)  $(NL_PROJ)
 ALL      = $(CORE) $(PH_PROJ) $(SC_PROJ) $(RTE_PROJ) $(NL_PROJ) $(GPL)

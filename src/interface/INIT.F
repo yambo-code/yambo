@@ -33,7 +33,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
+!aim137: adding fl optics
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,l_fl_optics
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -68,7 +69,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
 #endif
 #if defined _OPENMP
- use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL
+!aim137: adding fl
+ use openmp,         ONLY:n_threads_X,n_threads_DIP,n_threads_SE,n_threads_RT,n_threads_K,n_threads_NL,n_threads_FL
 #endif
 #if defined _YAML_OUTPUT
  use pars,           ONLY:logfile_index,repfile_index
@@ -342,6 +344,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
+!aim137:adding fl 
+#if defined _FL
+       l_fl_optics=runlevel_is_on('floptics')
+#endif
 #if defined  _ELPH || defined _PHEL
        if (.not.CLOSE_Gs) then
          !
@@ -412,7 +418,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      call parser('DipBandsALL',all_bands)
      !
      Dip%bands_ordered=.not.all_bands
-     l_local=l_sc_run.or.l_real_time.or.l_nl_optics 
+     !aim137: preliminarily adding fl, not sure.
+     l_local=l_sc_run.or.l_real_time.or.l_nl_optics.or.l_fl_optics
      if (l_local)         Dip%bands_ordered=.false.
 #if defined _QED
      if (l_elphoton_corr) Dip%bands_ordered=.false.
@@ -489,6 +496,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
+     !aim137: adding fl
+     if (l_fl_optics)                                     n_threads_FL=0
 #endif
 #if defined _OPENMP && defined _SC && !defined _RT && !defined _NL
      if (l_eval_collisions)    n_threads_SE=0

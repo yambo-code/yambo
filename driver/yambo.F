@@ -32,7 +32,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
 &                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
-&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
+&                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,l_fl_optics
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
 #endif
@@ -274,6 +274,20 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  driver_now=l_nl_optics
  !
  if (driver_now) call NL_driver(en,X(:2),k,q,Dip)
+ if (driver_now) call mem_manager_report
+ !
+#endif
+ !
+ !aim137:this is to tell make to compile FL subroutines 
+ !aim137:see actions in make files.
+#if defined _FL
+ !
+ ! FL
+ !====
+ !
+ driver_now=l_fl_optics
+ !
+ if (driver_now) call FL_driver(en,X(:2),k,q,Dip)
  if (driver_now) call mem_manager_report
  !
 #endif

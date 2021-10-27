@@ -64,12 +64,12 @@ tarball_fftw=$(pkgname_fftw).tar.gz
 tarball_fftqe=$(pkgname_fftqe).tar.gz
 tarball_yaml=$(pkgname_yamal).tar.gz
 tarball_futile=$(pkgname_futile).tar.gz
-tarball_devxlib=XXXXX.tar.gz
+tarball_devxlib=0.2.0.tar.gz
 #
 # GIT's repositories and branches
 #
 git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
-branch_devxlib=devel-gpuhack21
+branch_devxlib=master
 #
 # External URL's
 #

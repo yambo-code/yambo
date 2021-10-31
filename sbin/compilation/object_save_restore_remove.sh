@@ -25,13 +25,19 @@
 operate=$1
 #
 file_src=`echo $file | sed 's/.$/F/'`
-full_path=`find $compdir -name $file_src | sed "s/.$/o/"`
+full_path=`find $srcdir -name $file_src`
 if [ -z "$full_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- full_path=`find $compdir -name $file_src | sed "s/.$/o/"`
+ full_path=`find $srcdir -name $file_src`
  if [ -z "$full_path" ] ; then
-  return
+   return
  fi
+fi
+#
+file_obj=`echo $file | sed 's/.$/o/'`
+full_path=`find $compdir -name $file_obj`
+if [ -z "$full_path" ] ; then
+  return
 fi
 #
 ldir=`dirname $full_path`

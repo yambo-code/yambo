@@ -35,7 +35,7 @@ if [ -z "$full_path" ] ; then
 fi
 #
 file_obj=`echo $file | sed 's/.$/o/'`
-full_path=`find $compdir -name $file_obj`
+full_path=`find $compdir -name $file_obj -not -path "/*.save/*"`
 if [ -z "$full_path" ] ; then
   return
 fi

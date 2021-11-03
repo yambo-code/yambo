@@ -112,8 +112,8 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! 3:
  do ik = 1, nkibz 
-   do iv = 1 ,E%nbf
-     do ic = E%nbf+1, X%ib(2)
+   do iv = 1 ,E%nbf(1)
+     do ic = E%nbf(1)+1, X%ib(2)
        ifft=WF%index(iv,ik,1)
        offt=WF%index(ic,ik,1)
        SigmaXC = dot_product(WF%c(:,1,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>

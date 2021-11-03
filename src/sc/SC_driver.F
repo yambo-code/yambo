@@ -265,7 +265,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  ! Initial Polarization
  ! ====================
- if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf,:,:),Initial_Pol)
+ if(l_sc_electric)  then
+   do i_sp_pol=1,n_sp_pol
+     call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),i_sp_pol,Initial_Pol)
+   enddo
+ endif
  !
  ! SCF cycle & NSC shot
  !=====================
@@ -327,7 +331,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    if(l_sc_electric) then
      !      
-     call SC_add_efield(H_rotation(:,1:E%nbf,:,:),E,Xk,Polarization)
+     do i_sp_pol=1,n_sp_pol
+       call SC_add_efield(H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),E,Xk,i_sp_pol,Polarization)
+     enddo
      Polarization=Polarization-Initial_Pol
      !
    endif

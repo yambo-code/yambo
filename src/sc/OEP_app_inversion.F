@@ -113,7 +113,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  YAMBO_ALLOC(rhotw_ds,(fft_size))
  YAMBO_ALLOC(rhotw_rs,(QP_ng_Sx))
  !
- call PARALLEL_index(px,(/nkibz,E%nbf/))
+ call PARALLEL_index(px,(/nkibz,E%nbf(:)/))
  call PP_redux_wait
  if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
  if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
@@ -121,9 +121,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  EWeight = 1._SP
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
-   do iv1 = 1, E%nbf
+   do iv1 = 1, E%nbf(1)
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
-     do iv2 = 1, iv1!E%nbf
+     do iv2 = 1, iv1!E%nbf(1)
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=WF%index(iv1,ik,1)
        offt=WF%index(iv2,ik,1)

@@ -41,13 +41,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
  type(levels), intent(in) :: Xen
  !
  complex(SP), intent(out) :: S_det(6)
- complex(SP), intent(out) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
- complex(SP), intent(out) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
+ complex(SP), intent(out) :: Sm1_plus (Xen%nbf(i_sp_pol),Xen%nbm(i_sp_pol),6)
+ complex(SP), intent(out) :: Sm1_minus(Xen%nbf(i_sp_pol),Xen%nbm(i_sp_pol),6)
  !
  ! Work Space
  !
  integer     :: idx(3),id,ikm,istep,max_step
- complex(SP) :: S_val(1:Xen%nbf,1:Xen%nbf)
+ complex(SP) :: S_val(1:Xen%nbf(i_sp_pol),1:Xen%nbf(i_sp_pol))
  !
  S_det    =cZERO
  Sm1_plus =cZERO

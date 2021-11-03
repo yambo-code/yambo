@@ -59,6 +59,15 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
+ ! L_kind check
+ !==============
+ if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ !
+ if (trim(L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
+   BSE_mode="resonant"
+ endif
+ !
  ! RES/ANTI-RES (q-dependent)
  !==============
  !
@@ -195,7 +204,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Here we will have two options to initialize the slepc matrix:
  call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)

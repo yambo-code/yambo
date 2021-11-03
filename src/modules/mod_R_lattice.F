@@ -23,7 +23,7 @@
 !
 module R_lattice
  !
- use pars,        ONLY:SP,schlen,IP
+ use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
@@ -157,6 +157,16 @@ module R_lattice
  real(SP),   allocatable :: RIM_qpg(:,:,:)
  real(SP),   allocatable DEV_ATTR :: RIM_qpg_d(:,:,:)
  !
+ ! RIM_W
+ !
+ integer :: RIM_W_ng
+ integer :: RIM_W_n_rand_pts
+ logical :: RIM_W_is_diagonal
+ logical :: RIM_W_for_graph
+ real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:),RIM_vpW(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:),RIM_vpW_d(:,:)
+ real(DP),   allocatable :: f_coeff(:,:,:,:,:)
+ !
  ! Coulomb (including Cutoff)
  !
  real(SP)                :: cyl_ph_radius
@@ -174,6 +184,8 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ logical                 :: cut_is_slab
+ integer                 :: idir(3)
  !
  ! BZ map by direction
  !

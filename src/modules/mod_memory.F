@@ -31,10 +31,13 @@ module memory
  implicit none
  !
  character(schlen)   :: MEM_msg
+ character(schlen)   :: USER_MEM_limit_string=" "
+ character(2)        :: USER_MEM_unit="Gb"
  integer             :: MEM_err = 0
  integer, parameter  :: HOST_=1
  integer, parameter  :: DEV_=2
  integer(kind=c_int) :: TOT_MEM_Kb_MEMSTAT(2)    ! 2 slots: HOST, DEV
+ integer(IP)         :: USER_MEM_limit     = 0
  integer(IP)         :: MAX_MEM_Kb(2)      = 0
  integer(IP)         :: TOT_MEM_Kb(2)
  integer(IP)         :: TOT_MEM_Kb_SAVE(2) =  0
@@ -96,15 +99,15 @@ module memory
 &                             MEM_i1_d, MEM_i2_d, MEM_i3_d, MEM_i4_d, MEM_i5_d,             &
 &                             MEM_r1_d, MEM_r2_d, MEM_r3_d, MEM_r4_d, MEM_r5_d,             &
 &                             MEM_c1_d, MEM_c2_d, MEM_c3_d, MEM_c4_d, MEM_c5_d, MEM_c6_d,   &
-#  ifndef _DOUBLE
+#ifndef _DOUBLE
 &                             MEM_cd1_d,MEM_cd2_d,MEM_cd3_d,MEM_cd4_d,MEM_cd5_d,MEM_cd6_d,  &
-#  endif
+#endif
 #endif
 &                             MEM_i1,  MEM_i2,  MEM_i3,  MEM_i4,  MEM_i5,  MEM_i6,  MEM_i7, &
 &                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,                   &
 &                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6,          &
 #ifndef _DOUBLE
-&                             MEM_rd1, MEM_rd2, MEM_rd3,                                    &
+&                             MEM_rd1, MEM_rd2, MEM_rd3, MEM_rd4, MEM_rd5,                  &
 &                             MEM_cd1, MEM_cd2, MEM_cd3, MEM_cd4, MEM_cd5, MEM_cd6,         &
 #endif
 &                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
@@ -113,6 +116,26 @@ module memory
  end interface MEM_count
  !
  contains
+   !
+   subroutine GET_user_MEM_limit( )
+     use stderr,   ONLY:intc
+     integer           :: i_pos(2)
+     i_pos=(/index(trim(USER_MEM_limit_string),"Gb"),index(trim(USER_MEM_limit_string),"Mb")/) 
+     if (all(i_pos==0)) then
+       USER_MEM_limit_string=" "
+       return
+     endif
+     if (i_pos(1)/=0) then
+       read (USER_MEM_limit_string(:i_pos(1)-1),*) USER_MEM_limit
+       USER_MEM_limit=USER_MEM_limit*1000000
+       USER_MEM_unit="Gb"
+     else
+       read (USER_MEM_limit_string(:i_pos(2)-1),*) USER_MEM_limit
+       USER_MEM_limit=USER_MEM_limit*1000
+       USER_MEM_unit="Mb"
+     endif
+     USER_MEM_limit_string=trim(intc(USER_MEM_limit))//USER_MEM_unit
+   end subroutine
    !
    subroutine MEM_element_init(MEM_element_to_init,size_)
      integer,           intent(in)  :: size_
@@ -290,6 +313,16 @@ module memory
      real(DP)    ::r(:,:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),HOST_)
    end subroutine
+   subroutine MEM_rd4(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:,:)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1)),HOST_)
+   end subroutine
+   subroutine MEM_rd5(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:,:,:)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1,1)),HOST_)
+   end subroutine
 #endif
 #ifdef _CUDA
    subroutine MEM_r1_d(name,r)
@@ -411,7 +444,7 @@ module memory
      complex(SP), device ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  ifndef _DOUBLE
+#ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
      complex(DP), device ::c(:)
@@ -442,7 +475,7 @@ module memory
      complex(DP), device ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  endif
+#endif
 #endif
    subroutine MEM_l1(name,l)
      character(*)::name

@@ -39,8 +39,8 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
  ! Work Space
  !
  integer  :: ib,ik,ik_fg,i_spin
- logical  :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol)
- real(SP) :: E_ref(2)
+ logical  :: do_E(n_sp_pol),do_W(n_sp_pol),do_Z(n_sp_pol),val
+ real(SP) :: E_ref(2),Eo
  complex(SP), external ::QP_eval_the_FIT
  !
  if (.not.QP_action(i_ACTION)%active) return
@@ -90,18 +90,21 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
        !
        if (.not.At_least_one_band_corrected) At_least_one_band_corrected=do_E(i_spin)
        !
-       if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"E")
-       if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"W")
-       if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%Eo(ib,ik,i_spin),E_ref,bands,E,k,"Z")
+       Eo=E%Eo(ib,ik,i_spin)
+       val=Eo<=E%E_VBM(i_spin)+1.E-5
+       if (do_E(i_spin)) E%E(ib,ik,i_spin)=E%E(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,E,k,"E",val)
+       if (do_W(i_spin)) E%W(ib,ik,i_spin)=E%W(ib,ik,i_spin)+QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,E,k,"W",val)
+       if (do_Z(i_spin)) E%Z(ib,ik,i_spin)=                  QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,E,k,"Z",val)
        !
        if(allocated(E%FG%E).and.ib<=E%FG%nb) then
          do ik_fg=k%FGbare%k_range(ik,1),k%FGbare%k_range(ik,2)
            if (do_E(i_spin)) E%FG%E(ib,ik_fg,i_spin)=E%FG%E(ib,ik_fg,i_spin)+&
-&                              QP_eval_the_FIT(i_ACTION,i_spin,E%FG%E(ib,ik_fg,i_spin),E_ref,bands,E,k,"E")
+&                              QP_eval_the_FIT(i_ACTION,i_spin,E%FG%E(ib,ik_fg,i_spin),E_ref,bands,E,k,"E",val)
            if (do_W(i_spin)) E%FG%W(ib,ik_fg,i_spin)=E%FG%W(ib,ik_fg,i_spin)+&
-&                              QP_eval_the_FIT(i_ACTION,i_spin,E%FG%E(ib,ik_fg,i_spin),E_ref,bands,E,k,"W")
+&                              QP_eval_the_FIT(i_ACTION,i_spin,E%FG%E(ib,ik_fg,i_spin),E_ref,bands,E,k,"W",val)
            !DEBUG>
-           !if (do_Z(i_spin)) E%Z_FineGd(ib,ik_fg,i_spin)=QP_eval_the_FIT(i_ACTION,i_spin,E%E_FineGd(ib,ik_fg,i_spin),E_ref,bands,E,k,"Z")
+           !if (do_Z(i_spin)) E%Z_FineGd(ib,ik_fg,i_spin)=&
+           !&                  QP_eval_the_FIT(i_ACTION,i_spin,E%E_FineGd(ib,ik_fg,i_spin),E_ref,bands,E,k,"Z",val)
            !DEBUG<
          enddo
        endif

@@ -32,11 +32,11 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
  ! is incuded.
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP,pi,schlen
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
-&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
+&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab
  use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
  use deviceXlib_m
  use timing_m
@@ -128,7 +128,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
      l_RIM=(ig1<=RIM_ng .and. ig2<=RIM_ng)
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
-     if (l_RIM.and..not.l_col_cut) then
+     if (l_RIM.and.(.not.l_col_cut.or.cut_is_slab)) then
        gamp_p(i1,i2)=DEV_VAR(RIM_qpg)(iq,ig1,ig2)/2._SP
        cycle
      else

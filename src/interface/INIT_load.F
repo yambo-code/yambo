@@ -28,7 +28,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use electrons,     ONLY:levels,nel,filled_tresh
  use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
- use it_tools,      ONLY:it
+ use it_tools,      ONLY:it,runlevel_is_on
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
@@ -45,7 +45,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -53,7 +53,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use BS_solvers,    ONLY:BSS_mode,Haydock_threshold,Haydock_iterIO,BSS_n_freqs,&
 &                        BSS_dr,BSS_er,BSS_q0,BSS_damp_reference,BSS_inversion_mode,&
 &                        BSS_Wd,K_INV_EPS,K_INV_PL,BSS_n_eig,Haydock_iterMAX
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  use BS_solvers,    ONLY:BSS_slepc_target_E,BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_maxit,&
  &                       BSS_slepc_precondition,BSS_slepc_approach
 #endif
@@ -118,7 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
- use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points
+ use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points,PH_Q,PHEL_broad_factor
 #endif
  !
  implicit none
@@ -260,7 +260,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _PHEL
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit)
- call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
 #else
  call it(defs,'GDamping', '[GW] G[W] damping',QP_G_damp,E_unit,verb_level=V_qp)
 #endif
@@ -323,7 +322,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  call it(defs,'BSSSlepcApproach','[SLEPC] Approach ("Krylov-Schur","Generalized-Davidson","Jacob-Davidson")',&
 &                                                                          BSS_slepc_approach,verb_level=V_resp)
  call it(defs,'BSSNEig',       '[SLEPC] Number of eigenvalues to compute',BSS_n_eig)
@@ -385,9 +384,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'RandGvec','[RIM] Coulomb interaction RS components',RIM_ng,G_unit)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
+ ! RIM-W
+ call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
+ !
  ! CUTOFF
  !
- call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws X/Y/Z/XY..',cut_geometry)
+ call it(defs,'CUTGeo',   '[CUT] Coulomb Cutoff geometry: box/cylinder/sphere/ws/slab X/Y/Z/XY..',cut_geometry)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
@@ -575,7 +577,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call INIT_QP_ctl_load(defs,3)
  !
 #if defined _PHEL 
- call it(defs,'PH_SE_mode','[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
+ call it(defs,'PHDbGdsize', '[PHEL] Size of subset of double grid k-points',PH_DbGd_points)
+ call it(defs,'PHELQpts',   '[PHEL] Q-points considered',PH_Q)
+ call it(defs,'PHELTrans',  '[PHEL] Energy window around W_ph to select transitions (units of GDamping)',PHEL_broad_factor)
+ call it(defs,'PH_SE_mode', '[PHEL] Self-Energy scattering mode ("bare-bare","dressed-bare","dressed-dressed")',PH_Self_Energy_mode)
 #endif
  !
 #if defined _RT
@@ -697,7 +702,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'OEPapprox','[SC] OEP approximation: n=none s=Slater k=KLI c=CED +w=Weighted',OEP_approx)
 #endif
  !
- call DIP_mirror_bands(en)
+ call DIP_mirror_bands_and_Qs(en)
  ! 
  contains 
    !
@@ -858,12 +863,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
    end subroutine
    !
-   subroutine DIP_mirror_bands(E_in)
+   subroutine DIP_mirror_bands_and_Qs(E_in)
+     !
      use parser_m,       ONLY:parser
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(11)
+     logical :: is_def(14)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if (initmode/=4) return
@@ -882,6 +888,19 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('COLLBands',is_def(10))
      call parser('el_photon_corr',is_def(11))
      if (is_def(11)) call parser('life',is_def(11))
+     call parser('QpntsRXd',is_def(12))
+     call parser('QpntsRXs',is_def(13))
+     call parser('QpntsRXx',is_def(14))
+     !
+     ! Q's
+     !
+     if (is_def(12).and.runlevel_is_on('optics')) Dip%iq=X(3)%iq
+     if (is_def(12).and.runlevel_is_on('em1d')  ) Dip%iq=X(3)%iq
+     if (is_def(12).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
+     if (is_def(13)                             ) Dip%iq=X(2)%iq
+     if (is_def(14)                             ) Dip%iq=X(1)%iq
+     !
+     ! Bands
      !
      bands=-1
      do i1=1,11

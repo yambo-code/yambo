@@ -263,7 +263,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -318,6 +318,7 @@ subroutine INIT_activate()
  !
  if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
+   call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
    !
 #if defined _RT
    call INIT_RT_ctl_switch('X')
@@ -412,7 +413,16 @@ subroutine INIT_activate()
    !
 #if defined  _PHEL 
    !
-   if (l_phel_corr) call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping ElPhModes PHDbGdsize')
+   if (l_phel_corr) then
+     call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
+     call initactivate(1,'ExtendOut')
+     if (l_gw0) then
+       call initactivate(1,'DysSolver OnMassShell')
+       if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
+     else
+       call initactivate(1,'GDamping PHELTrans') 
+     endif
+   endif
    !
 #endif
 #if defined  _ELPH 

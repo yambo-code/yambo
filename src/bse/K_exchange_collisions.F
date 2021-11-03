@@ -103,7 +103,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      if(trim(L_kind)=="full") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
      if(trim(L_kind)=="Lbar") BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
-     if(trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
      !
      ! G/=0 terms
      !
@@ -159,7 +158,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !$omp end parallel do
        !
 #endif
-       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el))
+       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !
      endif
      !
@@ -170,7 +169,6 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      if(trim(L_kind)=="full") i_g0=1
      if(trim(L_kind)=="Lbar") i_g0=2
-     if(trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error(' set Lkind = Lbar or full ')
      !
 #ifdef _CUDA
      call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))

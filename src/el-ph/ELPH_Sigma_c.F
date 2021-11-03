@@ -31,7 +31,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use units,         ONLY:HA2EV,HA2THZ
  use parser_m,      ONLY:parser
  use frequency,     ONLY:w_samp,W_reset
- use electrons,     ONLY:levels,spin_occ
+ use electrons,     ONLY:levels
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
@@ -50,14 +50,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
-&                        elph_nQ,GKKP,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
-&                        gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f ,E_kpq_sh_fact, &
+&                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
+&                        E_kpq_sh_fact, &
 &                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
-&                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold,DW_deltaE_treshold
+&                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet    
- use functions,     ONLY:Fermi_fnc_derivative
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
  !
@@ -70,14 +69,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! WorkSpace  
  !
  integer          ::iq_db,iq_bz,iq_loop,iq_db_ref,iq_s,iq_ibz,ik,ok,ik_bz,okbz,ib,ob,is,il,i_qp,i2,&
-&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,iw,nq_to_sum,iq_mem,live_timing_steps
+&                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT,ID_DG
  integer, external::io_ELPH,io_Double_Grid
  character(schlen)::ch
- real(SP)         ::ph_E,delta_E_at_gamma,one_minus_2f_occ,f_occ,factor,&
-&                   elph_gkkp_sq,gsqF_damping,E_random_shift
- complex(SP)      ::delta_E
+ real(SP)         ::ph_E,factor,&
+&                   elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
@@ -92,11 +90,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  QP_DW=rZERO
  QP_OMS_Fan=rZERO
  !
- if (l_elel_corr) then
-   call section('+','Correlation: Phonon-mediated Self-energy')
- else
-   call section('=','Correlation: Phonon-mediated Self-energy')
- endif
+ if (     l_elel_corr) call section('+','Correlation: Phonon-mediated Self-energy')
+ if (.not.l_elel_corr) call section('=','Correlation: Phonon-mediated Self-energy')
  !
  ! gFsq coefficients 2 DB ?
  !

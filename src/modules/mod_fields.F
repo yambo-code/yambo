@@ -33,7 +33,7 @@ module fields
  type ext_field
    character(schlen) :: ef_name
    character(schlen) :: ef_pol
-   real(SP) :: To
+   real(SP) :: To= 0._SP
    real(SP) :: t_initial
    integer  :: t_initial_indx    ! time index of extern field switch on  (input variable)
    real(SP) :: t_final
@@ -151,6 +151,7 @@ module fields
          if (order==0 ) f_t(i_field)=T
          if (order==1 ) f_t(i_field)=1._SP
          if (order==2 ) f_t(i_field)=0._SP
+         !
        case('SIN')
          do i_fr=1,E_field%n_frequencies     
            W_field=field_frequency(E_field,i_fr)
@@ -159,6 +160,7 @@ module fields
            if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
            if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
          enddo 
+         !
        case('SOFTSIN')
          T_0=sigma
          !

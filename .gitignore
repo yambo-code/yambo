@@ -1,3 +1,25 @@
+# DEPS #
+########
+modulesdep.list
+modules.list
+modules.rules
+config/stamps_and_lists/*.stamp
+config/mk/global/defs.mk
+config/mk/local/defs.mk
+config/mk/defs.mk
+global_modules_dep.list
+autoconf_generated_files.list
+active_directories.list
+static_variables.mk
+*.lock
+dyn_variables.mk
+helper.inc.sh
+objects.mk
+
+# AUTO-generated #
+##################
+config/compilation_helper.sh.inc
+
 # Compiled source #
 ###################
 *.com
@@ -7,7 +29,6 @@
 *.a
 *.so
 *.mod
-modfiles.list
 *.dep
 *.f90
 *.s
@@ -33,7 +54,6 @@ include/netcdf.inc
 include/xc*.h
 include/headers/common/have_malloc.h
 include/system/*
-lib/archive/keep-extlibs-stamp
 lib/install/make_iotk.inc
 lib/iotk/make.sys
 lib/iotk/make_iotk.inc
@@ -60,9 +80,6 @@ lib/hdf5/hdf5*
 lib/external/*
 compile.sh
 gfortran_*
-sbin/make_makefile.sh
-sbin/objects_store.sh
-sbin/generate_gpl.sh
 src/wf_and_fft/sgfft.F
 bin/*
 lib/bin/*
@@ -71,12 +88,9 @@ lib/bin/*
 ##########
 src/external_c/.objects
 .check_configure
-config/mk/defs.mk
-*_lock*
 Makefile.locks
 Makefile.archive
 *Makefile
-make.dep
 commit.msg
 
 # Packages #
@@ -97,12 +111,12 @@ commit.msg
 *.log
 *.sql
 *.sqlite
+*.git
 
 # OS generated files #
 ######################
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db

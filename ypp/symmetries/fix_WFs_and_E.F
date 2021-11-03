@@ -136,7 +136,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
    !
    do i_sp_pol=1,n_sp_pol
      !
-     call live_timing('WFs comp. reduction i_sp_pol= '//trim(intc(i_sp_pol)),k_save%nibz)
+     call live_timing('Reduction',k_save%nibz)
      !
      do ik=1,k_save%nibz
        !
@@ -180,7 +180,7 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
      call live_timing()
      !
      n_steps=(k%nibz-k_save%nibz)
-     if(n_steps>0) call live_timing('WFs rotation  i_sp_pol= '//trim(intc(i_sp_pol)),n_steps)
+     if (n_steps>0) call live_timing('Rotation',n_steps)
      !
      YAMBO_ALLOC(ic_rot_table,(wf_ncx_new))
      YAMBO_ALLOC(wf_tmp,(wf_ncx_new,n_spinor))

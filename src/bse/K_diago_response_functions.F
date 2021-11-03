@@ -84,7 +84,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  para_term_w0=cZERO
  !
- l_ADD_the_ARES_using_the_RES=BS_K_anti_resonant.and..not.BS_K_coupling.and.l_BS_ares_from_res
+ l_ADD_the_ARES_using_the_RES=BS_K_anti_resonant.and.(.not.BS_K_coupling).and.l_BS_ares_from_res
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
  !

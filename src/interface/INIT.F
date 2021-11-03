@@ -48,14 +48,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use com,            ONLY:msg,repfile_unit,inpfile_unit,com_path,write_to_report
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
- use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties
- use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
+ use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties,QP_G_er
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode,i_X_kind_existing_DB
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
+#if defined  _PHEL
+ use PHEL,           ONLY:PH_Q
+ use ELPH,           ONLY:PH_W_debye
+#endif
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nQ,elph_nQ_used
 #endif
@@ -122,6 +126,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   Xw(2)%n_freqs=1
+   Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
  endif
  !
@@ -429,8 +435,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call initactivate(2,'XfnQP_E')
      endif
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
-#if defined  _ELPH
+#if defined _ELPH
      elph_nQ_used=elph_nQ
+#endif
+#if defined _PHEL
+     PH_Q=(/1,elph_nQ/)
+     QP_G_er=(/0.,PH_W_debye/)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
@@ -525,7 +535,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
        ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
        !
-       if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+       if (io_X_err(2)==0) then
+         i_X_kind_existing_DB=2
+       else if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+         i_X_kind_existing_DB=4
          call X_duplicate(X(4),X(2))
          call W_duplicate(Xw(4),Xw(2))
        endif

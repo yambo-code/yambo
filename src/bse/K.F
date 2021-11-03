@@ -28,14 +28,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,         ONLY:SP,schlen,pi,cZERO,cI
  use stderr,       ONLY:intc
  use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_tddft
+ use drivers,      ONLY:l_bs_fxc,l_tddft,l_RIM_W
  use frequency,    ONLY:w_samp
  use electrons,    ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
-&                       qindx_X,qindx_B_max,qindx_free,qindx_B_load
+&                       qindx_X,qindx_B_max,qindx_free,qindx_B_load,&
+&                       RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
@@ -62,6 +63,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
+ use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
@@ -107,7 +109,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! I/O
  !
- integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,ID,ID_head,ID_compr,io_QINDX_err
+ integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,qindx_ID_frag,ID,ID_head,ID_compr,io_QINDX_err
  integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
  !
@@ -194,11 +196,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
  !======================
+ !
+ !Check if there is RIM_W
+ call parser('RIM_W',l_RIM_W)
+ call parser('RIM_W_diag',RIM_W_is_diagonal)
+ if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
+ if (l_RIM_W) call interpolate_W(X,Xw,q,'BSE')
+ !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
  !
@@ -479,7 +488,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 
@@ -673,7 +682,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(F_xc_mat)
  endif
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID)
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  YAMBO_FREE(BS_W)
  call WF_free(WF)

@@ -355,7 +355,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        do ib=1,E%nbf
          call EXP_op(U_tmp(:,:),Ho_plus_Sigma(:,:,ik_mem,is)+I_relax(:,:,ib,ik_mem,is),RT_step*RK4_apar(2))
-         V_tmp(NL_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,:,ik,is))
+         V_tmp(NL_bands(1):,ib,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,ib,ik,is))
          U_tot(:,:,ib,ik,is) = U_tot(:,:,ib,ik,is) + RK4_bpar(2)*(Ho_plus_Sigma(:,:,ik_mem,is)+I_relax(:,:,ib,ik_mem,is)) 
        enddo
      enddo
@@ -382,7 +382,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        do ib=1,E%nbf
          call EXP_op(U_tmp(:,:),Ho_plus_Sigma(:,:,ik_mem,is)+I_relax(:,:,ib,ik_mem,is),RT_step*RK4_apar(3))
-         V_tmp(NL_bands(1):,:,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,:,ik,is))
+         V_tmp(NL_bands(1):,ib,ik,is)=matmul(U_tmp,V_bands(NL_bands(1):,ib,ik,is))
          U_tot(:,:,ib,ik,is) = U_tot(:,:,ib,ik,is) + RK4_bpar(3)*(Ho_plus_Sigma(:,:,ik_mem,is)+I_relax(:,:,ib,ik_mem,is))
        enddo
      enddo

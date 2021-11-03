@@ -235,7 +235,7 @@ contains
      use vec_operate,    ONLY:sort
      use interfaces,     ONLY:DESC_write
      use nl_optics,      ONLY:NL_desc
-     use std_err,        ONLY:intc
+     use stderr,         ONLY:intc
      !
      ! Working Space
      !
@@ -259,14 +259,15 @@ contains
      ! X^0 I don't know :-)
      ! X^n n>2 [cm/stV]^{n-1}
      !
-     headings(2:7,0:1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
      headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
 &                      'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
      do i_order=3,X_order,1
        oexp=trim(intc(i_order-1))
        headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
 &                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
-&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)')
+&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
      enddo
      !
      do i_order=0,X_order,1

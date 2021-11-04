@@ -49,8 +49,6 @@ subroutine PHEL_k_nearest_table(k)
  !
  KpQ_IO_map=0
  !
- !open(unit=100,file="TABLE.db",status='old',form='unformatted')
- !
  do iq=PH_Q(1),PH_Q(2)
    !
    if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
@@ -61,16 +59,12 @@ subroutine PHEL_k_nearest_table(k)
      !
      ! Notice that k-q_yambo ==> k+q_PH because of the MinusQ convention
      KpQ_IO_map(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,k%nbz,i_err=i_err)
-     !write (100) KpQ_IO_map(iq,ikbz)
-     !read (100) KpQ_IO_map(iq,ikbz)
      !
      call live_timing( steps=1 )
      !
    enddo
    !
  enddo
- !
- !close(100)
  !
  ! Only PARALLEL_wait in k and q, NOT in bands
  call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_K_bz%COMM_i%COMM)

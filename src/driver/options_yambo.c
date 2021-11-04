@@ -56,7 +56,11 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dyson Equation solver";
- options[*i_opt].long_desc[0]="<string>=(n)ewton/(s)ecant/(g)reen";
+ options[*i_opt].long_desc[0]="<string>=(g)reen [any scattering]";
+ options[*i_opt].long_desc[1]="<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]";
+#if defined _PHEL
+ options[*i_opt].long_desc[2]="<string>=(n)ewton [order 2] [p-e scattering]";
+#endif
  options[*i_opt].long_opt="dyson";
  options[*i_opt].short_opt='g';
  options[*i_opt].bin="yambo";

@@ -132,7 +132,7 @@ subroutine INIT_activate()
  endif
  !
 #if defined  _ELPH 
- if (l_life.and.l_phel_corr) then
+ if ((l_life.or.l_gw0).and.l_phel_corr) then
    call CPU_activate("PH_SE")
  endif
 #endif
@@ -353,7 +353,7 @@ subroutine INIT_activate()
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_gw0.and..not.trim(QP_solver)=="g") call initactivate(1,'QPsymmtrz')
+   if (l_gw0.and..not.trim(QP_solver)=="g".and.(l_elel_corr.or.l_elph_corr)) call initactivate(1,'QPsymmtrz')
    !
 #if defined _QED
    if (l_elphoton_corr) then
@@ -414,13 +414,9 @@ subroutine INIT_activate()
    !
    if (l_phel_corr) then
      call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut')
-     if (l_gw0) then
-       call initactivate(1,'DysSolver OnMassShell')
-       if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
-     else
-       call initactivate(1,'GDamping PHELTrans') 
-     endif
+     call initactivate(1,'ExtendOut OnMassShell')
+     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
+     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
    endif
    !
 #endif

@@ -239,7 +239,8 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'dyson' ) then
        QP_solver=trim(rstr_piece(i1+1))
-       if (.not.any((/trim(QP_solver)=='n',trim(QP_solver)=='s',trim(QP_solver)=='g',trim(QP_solver)=='r'/)))  QP_solver='n'
+       if (.not.any((/STRING_match(QP_solver,'n'),STRING_match(QP_solver,'s'),&
+&                     STRING_match(QP_solver,'g')/)))  QP_solver='n'
 #if !defined  _ELPH && !defined _QED
        l_elel_corr=.true.
 #endif

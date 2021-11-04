@@ -70,7 +70,6 @@ subroutine PH_of(q)
      files(2)="PI_ph_Q"//trim(intc(iq))//"_Branch_"//trim(intc(il))
      do iw=1,QPH%N_D_freqs
        do i_f=1,2
-         if (.not.l_QP_eval_GF.and.i_f==2) cycle
          if (iw==1) then
            call OUTPUT_add_column(trim(files(i_f)),action="reset")
            call OUTPUT_add_column(trim(files(i_f)),action="open")
@@ -95,13 +94,13 @@ subroutine PH_of(q)
        if (l_QP_eval_GF) then 
          call OUTPUT_add_column(trim(files(2)),TITLES=(/"Im[\Pi]","Re[\Pi]"/),&
 &                               R_VALUES=(/aimag(QPH_full%PI(iw)),real(QPH_full%PI(iw))/),UNIT="meV")
-         call OUTPUT_add_column(trim(files(2)),TITLES=(/"Im[\Pi](QPH)","Re[\Pi](QPH)"/),&
-&                               R_VALUES=(/aimag(QPH%PI(iw)),real(QPH%PI(iw))/),UNIT="meV")
-         call OUTPUT_add_column(trim(files(2)),action="write")
        endif
+       call OUTPUT_add_column(trim(files(2)),TITLES=(/"Im[\Pi](QPH)","Re[\Pi](QPH)"/),&
+&                             R_VALUES=(/aimag(QPH%PI(iw)),real(QPH%PI(iw))/),UNIT="meV")
+       call OUTPUT_add_column(trim(files(2)),action="write")
      enddo
      call OUTPUT_add_column(trim(files(1)),action="close")
-     if (l_QP_eval_GF) call OUTPUT_add_column(trim(files(2)),action="close")
+     call OUTPUT_add_column(trim(files(2)),action="close")
      !
      ! o.ph
      !======

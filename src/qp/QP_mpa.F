@@ -273,7 +273,7 @@ use parser_m,       ONLY:parser
          cond_num(:)=0._SP
          !
          call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
-&                                                                MPred,PPcond_rate,MP_err,cond_num)
+&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
          MP_Qerr=MP_Qerr+MP_err

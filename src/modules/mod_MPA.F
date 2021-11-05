@@ -393,12 +393,13 @@ contains
    ! 
  end subroutine mpa_E_solver_Pade
  !
- subroutine mpa_RE_solver(np, w, x, R, E,MPred,PPcond_rate,MP_err,cond_num) ! version 3.0
+ subroutine mpa_RE_solver(np, w, x, R, E,mpa_sol,MPred,PPcond_rate,MP_err,cond_num) ! version 3.0
    implicit none
    !
    integer,      intent(in)     :: np
    complex(SP),  intent(in)     :: w(2*np), x(2*np)
    complex(SP),  intent(out)    :: R(np), E(np)
+   character(2), intent(in)     :: mpa_sol
    logical,      intent(out)    :: MPred
    real(SP),     intent(out)    :: PPcond_rate,MP_err
    ! 
@@ -418,8 +419,11 @@ contains
    !  call mpa_RQ_3p_solver(w, x, R, E)
    case default
      !
-     !call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
-     call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond, cond_num)
+     if(mpa_sol=='LA') then
+       call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
+     else ! (mpa_sol='PT')
+       call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond, cond_num)
+     endif
      cond_num=log10(1._SP/cond_num)
      if(npr<np) MPred=.true.
      call mpa_R_fit(np, npr, w, x, R, E)

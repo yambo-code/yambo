@@ -21,24 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!--------------------------------------------------------
-! Multipole solution for the polarizability 
-! in the GW approximation
-!                           exact solution for 1-3 poles
-! by Dario A. Leon
+!------------------------------------------------------------
+! Multipole interpolation:
+!                         - analytical solution for 1-3 poles
+!                         - Linear solver for n poles*
+!                         - Pade-Thiele solver for n poles*
+!
+! Failure condition for the position of the poles*
+!
+! *DA. Leon et al, PRB 104, 115157 (2021)
 !
 ! Notes:
 !
 !   1) X(w) is approximated as a sum of poles
 !   2) Form of one pole: -P/(w**2-Q) = 2*E*R/(w**2-E**2)
 !   3) The input are two w and X(w) for each pole
-!   4) The output are R and Q coefficients
+!   4) The output are E and R coefficients
 !   5) Use real(R), imaginary(I) or complex(C) w
 !
-! * The module works for scalar polarizabilities, so if 
+! **The module works for scalar polarizabilities, so if 
 !   one wants the solution for matrix element X(G,G',q)
 !   then RQ_solver should be called for each G, G' and q.  
-!--------------------------------------------------------
+!------------------------------------------------------------
 !
 module mpa_m
  !

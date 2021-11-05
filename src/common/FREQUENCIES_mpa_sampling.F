@@ -26,15 +26,16 @@
 ! Pair sampling of a positive unidimentional (frequency) domain 
 ! as a function of a parameter (the scale)
 ! 
-!                     to be used in the MPA approximation
-! by Dario A. Leon
+!                     to be used in the MPA approximation*
+!
+! *DA. Leon et al, PRB 104, 115157 (2021)
 !
 ! Notes:
 !
 !   1) Homogeneous (homo)
-!   1) Linear Partition Pair Sampling (LPPS)
-!   2) Quadratic Partition Pair Sampling (QPPS)
-!   3) Cubic Partition Pair Sampling (CPPS)
+!   2) Linear Partition Pair Sampling (lPPS)
+!   3) Quadratic Partition Pair Sampling (qPPS)
+!   4) Cubic Partition Pair Sampling (cPPS)
 !   5) ...
 !
 ! *The samplings do not depend on the sampled function 
@@ -48,7 +49,7 @@
    complex(SP),  intent(in)  :: w1,w2    ! segment [w1,w2]
    real(SP),     intent(in)  :: d(2)     ! shifts
    character(2), intent(in)  :: ps       ! flavour of sampling: 1line, 2lines, ...
-   character(2), intent(in)  :: gs       ! type of grid: homo, lPPS, qPPS, cPPS, ...
+   character(2), intent(in)  :: gs       ! type of grid: (ho)mo, (lP)PS, (qP)PS, (cP)PS, ...
    complex(SP),  intent(out) :: w(2*np)
    !
    integer     :: i

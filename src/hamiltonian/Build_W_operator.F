@@ -41,11 +41,11 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
  type(gauge_field), intent(in) :: A_input
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
- complex(SP),  intent(inout)   :: H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2),n_sp_pol)
+ complex(SP),  intent(inout)   :: H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
  !
@@ -53,7 +53,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  integer :: ikbz,istep,max_step
  complex(SP) :: Wk(3,H_ref_bands(2),H_ref_bands(2))
  complex(SP) :: Wop(H_ref_bands(2),H_ref_bands(2),2)
- complex(SP) :: V_tilde(en%nbf,H_ref_bands(2),2)
+ complex(SP) :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
  complex(SP) :: E_vec_pot(3)
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
@@ -84,7 +84,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        !$omp parallel do default(shared), private(i2,i1)
        do i2=H_ref_bands(1),H_ref_bands(2)
          do i1=H_ref_bands(1),H_ref_bands(2)
-           Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf,ik,i_sp))*(V_tilde(1:en%nbf,i1,1)-V_tilde(1:en%nbf,i1,2)))
+           Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf(i_sp),ik))*(V_tilde(1:en%nbf(i_sp),i1,1)-V_tilde(1:en%nbf(i_sp),i1,2)))
          enddo
        enddo
        !$omp end parallel do
@@ -148,7 +148,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !$omp parallel do default(shared), private(i1,id)
  do i1=H_ref_bands(1),H_ref_bands(2)
    do id=1,3
-     H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2),i_sp)=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2),i_sp)-         &
+     H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))-         &
      &                                               E_vec_pot(id)*Wk(id,i1,H_ref_bands(1):H_ref_bands(2))
    enddo
  enddo

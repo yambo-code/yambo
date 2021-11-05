@@ -62,7 +62,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !Work Space
  !
  type(elemental_collision), target::isc,iscp
- integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band,n_lt_bands,n_lt_steps
+ integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx, DP_Sx_l
  complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch,mode_
@@ -127,7 +127,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 !   call live_timing(trim(ch),px%n_of_elements(myid+1)*QP_n_states)
 ! endif
 !
- n_lt_bands=count( PAR_IND_G_b%element_1D(:Sx_upper_band) )
+ n_lt_bands=count( PAR_IND_G_b%element_1D(:maxval(Sx_upper_band)) )
  n_lt_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*n_lt_bands/n_threads_SE
  if (n_lt_steps>0) call live_timing(trim(ch),n_lt_steps)
  !
@@ -205,9 +205,9 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      ikp=k%sstar(qindx_S(ik,iq,1),1)
      iGp=k%sstar(qindx_S(ik,iq,1),2)
      !
-     isc%is =(/ib, ik , 1 ,i_sp_pol)/)
-     isc%os(2:)=(/ ikp,iGp,i_sp_pol)/)
-     iscp%is=(/ibp,ik , 1 ,i_sp_pol)/)
+     isc%is =(/ib, ik , 1 ,i_sp_pol/)
+     isc%os(2:)=(/ ikp,iGp,i_sp_pol/)
+     iscp%is=(/ibp,ik , 1 ,i_sp_pol/)
      !
      isc%qs(1)=qindx_S(ik,iq,2)
      iscp%qs=isc%qs
@@ -222,7 +222,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
         !
         if (ib/=ibp) then
            !
-           call beccopy( becp(ik,i_sp_pl), iscp%ibec )
+           call beccopy( becp(ik,i_sp_pol), iscp%ibec )
            call beccopy( isc%obec, iscp%obec)
            call PP_scatterBamp_init(iscp)
            !
@@ -230,7 +230,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
         !
      endif
      !
-     do jb=Sx_lower_band,Sx_upper_band
+     do jb=Sx_lower_band,Sx_upper_band(i_sp_pol)
        !
        if (.not.PAR_IND_G_b%element_1D(jb)) cycle
        !      

@@ -60,8 +60,6 @@ integer function io_HF_and_locXC(ID)
  endif
  if (io_HF_and_locXC/=0) goto 1
  !
- bands=(/1,n_met_bands/)
- !
  if (any((/io_sec(ID,:)==1/))) then
    !
    io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,&
@@ -78,12 +76,8 @@ integer function io_HF_and_locXC(ID)
    call io_elemental(ID,I0=QP_ng_Sx,&
 &       VAR=' Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,revision=498)) then
-     call io_elemental(ID,I0=n_met_bands,VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"=="/))
-   else
-     call io_elemental(ID,I1=bands,&
-&         VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"==","=="/))
-   endif
+   if(n_sp_pol==1) call io_elemental(ID,I0=n_met_bands(1),VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"=="/))
+   if(n_sp_pol==2) call io_elemental(ID,I1=n_met_bands   ,VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,I0=RIM_ng,&
 &       VAR=' RIM RL components               ',CHECK=.true.,OP=(/"=="/))

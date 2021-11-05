@@ -69,7 +69,7 @@ subroutine el_magnetization(en,Xk,magn)
  !
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
-     do ib=1,en%nbm
+     do ib=1,en%nbm(i_sp_pol)
        !
        if (allocated(PAR_IND_WF_linear%element_2D)) then
          if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

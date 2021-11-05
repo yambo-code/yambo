@@ -40,18 +40,18 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
  integer,      intent(in)      :: ikbz
  integer,      intent(in)      :: i_sp
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
- complex(SP),  intent(out)     :: V_tilde(en%nbf,H_ref_bands(2),2)
+ complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
  !
  ! Work Space
  !
  integer :: i2,iv1,im,idx(3),id,ikp,ikm
  integer :: ikm_ibz,ikp_ibz
- complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf),tmp_Vm(H_ref_bands(2),en%nbf)
+ complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf),tmp_Vm(H_ref_bands(2),en%nbf(i_sp))
  !
  V_tilde=cZERO
  !
@@ -91,11 +91,11 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  ! 
  call M_by_M_omp('N','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
-&  V_bands(:,:,ikp_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:),H_ref_nbands)
+&  V_bands(:,:,ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:),H_ref_nbands)
  !
  call M_by_M_omp('C','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
 &  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
-&  V_bands(:,:,ikm_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:),H_ref_nbands)
+&  V_bands(:,:,ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:),H_ref_nbands)
  !
  ! Build \tilde V(k+delta) - \tilde V(k-delta)
  ! ===========================================

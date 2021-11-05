@@ -39,7 +39,7 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,i_sp_pol,Polarization)
  implicit none           
  type(bz_samp), intent(in)   :: Xk
  type(levels),  intent(in)   :: Xen
- complex(SP),   intent(in)   :: V_bands(H_ref_bands(2),Xen%nbf,QP_nk)
+ complex(SP),   intent(in)   :: V_bands(H_ref_bands(2),Xen%nbf(i_sp_pol),QP_nk)
  integer,       intent(in)   :: i_sp_pol
  complex(SP),   intent(inout):: Polarization(3)
  !

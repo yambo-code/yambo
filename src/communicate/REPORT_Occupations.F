@@ -38,7 +38,7 @@ subroutine REPORT_Occupations(what,E)
  ! 
  ! Work Space
  ! 
- integer           ::i_sp_pol,Nbf(n_sp_pol),Nbm(n_sp_pol),title_len
+ integer           ::i_sp_pol,Nbf(2),Nbm(2),title_len
  character(schlen) ::title
  real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap

@@ -223,7 +223,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
+     call  Build_W_operator(V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),E,k,A_tot,ik,i_sp_pol,H_nl_sc)
      !
    endif                                                         
    !
@@ -235,7 +235,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================
-   call NL_damping(E,V_bands,ik,i_sp_pol)
+   call NL_damping(E,V_bands(:,:E%nbf(i_sp_pol),ik,i_sp_pol),ik,i_sp_pol)
    !
    ! Store the Hamiltonian
    ! =====================

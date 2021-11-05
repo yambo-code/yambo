@@ -68,13 +68,13 @@ subroutine Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,S_det)
        !
        ! Overlap S(k, k-dk)
        !
-       S_val=hermitian(DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikm,i_sp_pol))
+       S_val=hermitian(DIP_S(1:Xen%nbm(i_sp_pol),1:Xen%nbm(i_sp_pol),id+(istep-1)*3,ikm,i_sp_pol))
        call LINEAR_ALGEBRA_driver(INV,M=S_val,lib_in=USE_LK)
        Sm1_minus(:,:,id+(istep-1)*3)=S_val
        !
        ! Overlap S(k, k+dk)
        !
-       S_val=DIP_S(1:Xen%nbm,1:Xen%nbm,id+(istep-1)*3,ikbz,i_sp_pol)
+       S_val=DIP_S(1:Xen%nbm(i_sp_pol),1:Xen%nbm(i_sp_pol),id+(istep-1)*3,ikbz,i_sp_pol)
        call LINEAR_ALGEBRA_driver(INV,M=S_val,lib_in=USE_LK,det=S_det(id+(istep-1)*3))
        Sm1_plus(:,:,id+(istep-1)*3)=S_val
        !

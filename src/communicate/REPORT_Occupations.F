@@ -93,10 +93,10 @@ subroutine REPORT_Occupations(what,E)
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
      call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap',i_sp_pol),E_g_dir(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
      if (E%nk>1) then
        call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between k-points ',i_sp_pol),E_k_ind(i_sp_pol,:))
+       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between kpts ',i_sp_pol),E_k_ind(i_sp_pol,:))
        call msg('r',COMPOSE_spin_msg(title,title_len,'Last valence band width',i_sp_pol), &
 &               E_g_ind(i_sp_pol+(n_sp_pol-1),2)*HA2EV,'[eV]')
        call msg('r',COMPOSE_spin_msg(title,title_len,'1st conduction band width',i_sp_pol), &

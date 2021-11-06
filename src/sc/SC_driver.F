@@ -87,7 +87,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),IO_ACT,io_E,io_V,io_WF,i_sp_pol,i_frag,i_io,io_X_err,io_DIP_err
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),IO_ACT,io_E,io_V,io_WF,i_sp_pol,i_frag,i_io,io_X_err,io_DIP_err,nb
  real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
@@ -105,9 +105,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! SC_bands(2)
  !=============
  if (SC_bands(2)> E%nb)  call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
- if (SC_bands(2)< E%nbm) then
-   SC_bands(2)=E%nbm
-   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(E%nbm)))
+ if (SC_bands(2)< maxval(E%nbm)) then
+   SC_bands(2)=maxval(E%nbm)
+   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(maxval(E%nbm))))
  endif
  !
  spread       =rZERO
@@ -267,7 +267,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! ====================
  if(l_sc_electric)  then
    do i_sp_pol=1,n_sp_pol
-     call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),i_sp_pol,Initial_Pol)
+     call Berry_polarization_NEQ(E,Xk,i_sp_pol,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),Initial_Pol)
    enddo
  endif
  !
@@ -757,7 +757,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      if (l_SC_cycle) then
        do i_sp_pol=1,n_sp_pol
-         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
+         nb=n_met_bands(i_sp_pol)
+         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:nb,:,i_sp_pol))-maxval(E%E(:nb,:,i_sp_pol)) 
          if (l_sc_V_is_local) then
            V_xc_sc(:,i_sp_pol)=V_xc_sc(:,i_sp_pol)+V_xc_sc_shift(i_sp_pol)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))

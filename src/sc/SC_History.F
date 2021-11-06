@@ -43,11 +43,12 @@ subroutine SC_History(it,E)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_nbands*nkibz)
  !
- b_range(1)=max(n_full_bands-1,1)
- b_range(2)=b_range(1)+2
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
+   !
+   b_range(1)=max(n_full_bands(i_spin)-1,1)
+   b_range(2)=b_range(1)+2
    !
    if ( it == 1 ) then
      !

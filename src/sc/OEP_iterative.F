@@ -53,7 +53,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  implicit none
  real(SP),  intent(inout) :: Voep(fft_size)
  real(SP),  intent(in)    :: Vslt(fft_size),rho(fft_size)
- complex(SP), intent(in)  :: U(nkibz,n_met_bands,fft_size)
+ complex(SP), intent(in)  :: U(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k
  !

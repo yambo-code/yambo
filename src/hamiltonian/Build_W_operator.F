@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
+subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  !
  ! Build the Hermitian W operator eq. 62 and 63
  ! in PRB 69, 085106 (2004)
@@ -41,10 +41,10 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
  type(gauge_field), intent(in) :: A_input
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
+ complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
  complex(SP),  intent(inout)   :: H_nl_sc(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Work Space
@@ -75,7 +75,7 @@ subroutine Build_W_operator(V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      !
      do istep=1,max_step
        !
-       call Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
+       call Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
        !
        ! Build the W operator as
        !

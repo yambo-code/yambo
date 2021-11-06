@@ -47,10 +47,10 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  real(SP)    :: I_Berry_RED(3),Tot_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: modfac,rmod
  complex(SP) :: All_S_det(6,Xk%nbz,n_sp_pol)
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
+ complex(SP) :: Sm1_plus (maxval(Xen%nbm),maxval(Xen%nbm),6)
+ complex(SP) :: Sm1_minus(maxval(Xen%nbm),maxval(Xen%nbm),6)
  character(lchlen) :: dumb_ch
- integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol
+ integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol,nb
  logical           :: l_odd
  !
  ! Check for atoms with odd number of electrons
@@ -61,8 +61,10 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  enddo
  !                                         
  do i_sp_pol=1,n_sp_pol
+   nb=Xen%nbm(i_sp_pol)
    do ikbz=1,Xk%nbz
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,&
+             &  Sm1_plus(:nb,:nb,:),Sm1_minus(:nb,:nb,:),All_S_det(:,ikbz,i_sp_pol))
    enddo
  enddo
  !

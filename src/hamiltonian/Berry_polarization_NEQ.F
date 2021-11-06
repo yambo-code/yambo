@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,i_sp_pol,Polarization)
+subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  !
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:n_sp_pol,levels
@@ -39,13 +39,13 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,i_sp_pol,Polarization)
  implicit none           
  type(bz_samp), intent(in)   :: Xk
  type(levels),  intent(in)   :: Xen
- complex(SP),   intent(in)   :: V_bands(H_ref_bands(2),Xen%nbf(i_sp_pol),QP_nk)
  integer,       intent(in)   :: i_sp_pol
+ complex(SP),   intent(in)   :: V_bands(H_ref_bands(2),Xen%nbf(i_sp_pol),QP_nk)
  complex(SP),   intent(inout):: Polarization(3)
  !
  ! Work Space
  !
- integer       :: id,ik_bz
+ integer       :: id,ik_bz,nb
  complex(SP)   :: Polarization_red(3)
  !
 #if defined _TIMING
@@ -58,12 +58,15 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,i_sp_pol,Polarization)
  !
  if (i_sp_pol==1) Polarization=cZERO
  !
+ nb=Xen%nbf(i_sp_pol)
+ !
  do ik_bz=1,nXkbz
    !
    if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
    !
-   call Build_Overlaps_det_NEQ(Xen,Xk,is,ik_bz,V_bands,Sm1_plus(:,:,:,ik_bz,i_sp_pol),Sm1_minus(:,:,:,ik_bz,i_sp_pol), &
-&         All_S_det(:,ik_bz,i_sp_pol)) 
+   call Build_Overlaps_det_NEQ(Xen,Xk,i_sp_pol,ik_bz,V_bands,&
+       &   Sm1_plus(:nb,:nb,:,ik_bz,i_sp_pol),Sm1_minus(:nb,:nb,:,ik_bz,i_sp_pol),&
+       &   All_S_det(:,ik_bz,i_sp_pol)) 
    !
  enddo
  !

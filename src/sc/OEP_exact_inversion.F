@@ -49,7 +49,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
 #include<memory.h>
  real(SP),intent(out)    :: Voep(fft_size)
- complex(SP),intent(in)  :: W_x(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(in)  :: W_x(nkibz,maxval(n_met_bands),fft_size)
  type(X_t)    :: X
  type(levels),intent(in) :: E
  type(bz_samp),intent(in):: k

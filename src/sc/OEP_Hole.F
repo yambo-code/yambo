@@ -43,7 +43,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  implicit none
  real(SP),  intent(out)   :: Vslt(fft_size)
- complex(SP),intent(in)   :: U_x(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(in)   :: U_x(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k
  !
@@ -57,7 +57,7 @@ subroutine OEP_Hole(E,k,Vslt,U_x)
  !
  EWeight = 1._SP 
  Vslt_DP= 0._DP
- do iv1 = 1 ,E%nbm
+ do iv1 = 1 ,E%nbm(1)
    do ik = 1,k%nibz
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+E%E_Fermi
      ifft=WF%index(iv1,ik,1)

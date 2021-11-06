@@ -84,7 +84,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- WFbands=(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/)
+ WFbands=(/H_ref_bands(1),max(H_ref_bands(2),maxval(E%nbm))/)
  call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-SC')
  !
 #if defined _RT

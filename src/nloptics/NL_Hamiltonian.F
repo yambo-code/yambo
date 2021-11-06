@@ -60,7 +60,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
- complex(SP),   intent(in)    :: V_bands(NL_bands(2),QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: V_bands(NL_bands(2),E%nbf,QP_nk,n_sp_pol)
  integer,       intent(in)    :: i_time
  !
  ! Working Space

@@ -89,7 +89,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
  E_kpq%f(1:E%nbf(1),:,1)=spin_occ
- E_kpq%f(E%nbf+1:,:,1)=rZERO
+ E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  !
  ! Store E(k+q) energies in the GKKP
  ! ==========================================

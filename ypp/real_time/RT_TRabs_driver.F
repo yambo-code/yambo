@@ -108,13 +108,13 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    N_cv_trans=BS_K_dim(1)
  else
    DIPs%ib   =RT_bands
-   N_cv_trans=(RT_bands(2)-Xen%nbf)*(Xen%nbm-RT_bands(1)+1)*Xk%nbz
+   N_cv_trans=(RT_bands(2)-Xen%nbf(1))*(Xen%nbm(1)-RT_bands(1)+1)*Xk%nbz
  endif
  label="IP"
  if (l_BS) label="BS"
- N_vv_trans=(Xen%nbf-RT_bands(1)+1)*(Xen%nbf-RT_bands(1)+1)*Xk%nbz
- N_cc_trans=(RT_bands(2)-Xen%nbm)*(RT_bands(2)-Xen%nbm)*Xk%nbz
- nb=(/Xen%nbf,Xen%nbm/)
+ N_vv_trans=(Xen%nbf(1)-RT_bands(1)+1)*(Xen%nbf(1)-RT_bands(1)+1)*Xk%nbz
+ N_cc_trans=(RT_bands(2)-Xen%nbm(1))*(RT_bands(2)-Xen%nbm(1))*Xk%nbz
+ nb=(/Xen%nbf(1),Xen%nbm(1)/)
  !
  N_trans=0
  N_cc_vv_trans=0

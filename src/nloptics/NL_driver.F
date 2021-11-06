@@ -27,7 +27,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
@@ -60,7 +60,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err
+ integer           :: i_f,i1,i_sp_pol,N_sample_size,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_damping(E,V_bands,ik,i_sp_pol)
+subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  ! Output: I_relax
  !
@@ -36,8 +36,8 @@ subroutine NL_damping(E,V_bands,ik,i_sp_pol)
  implicit none
  !                      
  type(levels), intent(in) :: E
- complex(SP),  intent(in) :: V_bands(NL_bands(2),E%nbf(i_sp_pol))
  integer,      intent(in) :: ik,i_sp_pol
+ complex(SP),  intent(in) :: V_bands(NL_bands(2),E%nbf(i_sp_pol))
  !
  ! Working Space
  !

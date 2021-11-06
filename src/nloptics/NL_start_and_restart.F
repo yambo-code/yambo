@@ -65,7 +65,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  ! Working space
  !
- integer :: i1,ib,i_f
+ integer :: i1,ib,i_f,i_sp_pol
  integer :: ID,io_NonLinear
  integer, external::io_NL
  !

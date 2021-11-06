@@ -137,7 +137,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    ib =QP_table(i_qp,1)
    ibp=QP_table(i_qp,2)
-   ik =QP_table(i_qp,2)
+   ik =QP_table(i_qp,3)
    i_sp_pol=spin(QP_table(i_qp,:))
    !
 #if defined _SC  
@@ -155,7 +155,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
 #if !defined _CUDA
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ik,ikp,iGp,i_sp_pol,jb,ib,ibp), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikp,iGp,jb), reduction(+:DP_sx)
 #endif
    !
    call OPENMP_update(master_thread)

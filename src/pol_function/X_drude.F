@@ -31,6 +31,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use R_lattice,     ONLY:bz_samp,q_norm
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
  use parser_m,      ONLY:parser
+ use drivers,       ONLY:l_mpa !DALV: needed for the complex sampling in MPA
  !
  implicit none
  !
@@ -112,8 +113,21 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
  !
  do iw=1,Xw%n_freqs
-   if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))
-   if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw)),Wd,q_norm(1))
+   !if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))
+   !if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw)),Wd,q_norm(1))
+   !DALV: generalization for the complex sampling in MPA
+   if(l_mpa) then
+     !
+     if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(Xw%p(iw),Wd,q_norm(1))
+     if(l_Classical) drude_GreenF(iw)=Classical_drude(Xw%p(iw),Wd,q_norm(1))
+     !
+   else
+     !
+     if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw))+cZERO,Wd,q_norm(1))
+     if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw))+cZERO,Wd,q_norm(1))
+     !
+   endif
+   !
  enddo
  !
  contains
@@ -131,8 +145,8 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    implicit none
    !
-   real(SP)    :: q0_norm,W
-   complex(SP) :: Wd
+   real(SP)    :: q0_norm!,W !DALV: generalization for the complex sampling in MPA
+   complex(SP) :: Wd,W
    !
    ! Work Space
    !
@@ -161,8 +175,8 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    implicit none
    !
-   real(SP)    :: q0_norm,W,W_
-   complex(SP) :: Wd
+   real(SP)    :: q0_norm!,W,W_ !DALV: generalization for the complex sampling in MPA
+   complex(SP) :: Wd,W,W_
    !
    ! Work Space
    !

@@ -121,7 +121,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !============
- if (iq==1) call X_drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
+ if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
  ! Dipoles
  !=========

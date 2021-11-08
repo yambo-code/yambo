@@ -73,7 +73,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  ! Iterations
  !
- integer                  :: it
+ integer                  :: it_sc
  real(SP)                 :: spread(1:SC_bands(2),k%nibz,n_sp_pol),     &
 &                            E_previous(SC_bands(1):SC_bands(2),k%nibz,n_sp_pol), &
 &                            dE(1:SC_bands(2),k%nibz,n_sp_pol),         &
@@ -198,7 +198,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !=============================
  call Bare_Hamiltonian(E,Xk,k)
  !
- call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+ call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
  !
  ! Reference wavefunctions
  !
@@ -262,6 +262,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
  endif
  !
+ !
  ! Initial Polarization
  ! ====================
  if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf,:,:),Initial_Pol)
@@ -278,7 +279,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    H_nl_nm1=cZERO
  endif
  !
- do it = 1, SC_iterations
+ do it_sc = 1, SC_iterations
    !
    E_previous(:,:,:) = E%E(SC_bands(1):SC_bands(2),:,:)
    !
@@ -287,12 +288,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    ! Exchange & Correlation
    !========================
    !
-   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it,V_xc_nm1)
+   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it_sc,V_xc_nm1)
    !
    ! Hartree potential
    !===================
    !
-   if (it>1.and.l_sc_hartree.and..not.COLLISIONS_have_HARTREE) then
+   if (it_sc>1.and.l_sc_hartree.and..not.COLLISIONS_have_HARTREE) then
      !
      if (trim(SC_preconditioning)=="simple") then 
        !
@@ -371,7 +372,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          !
          if (l_SC_nl_mix) then
             !
-            if(it>1) H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,i_sp_pol)
+            if(it_sc>1) H_nl_sc = SC_cycle_mixing*H_nl_sc + (1._SP-SC_cycle_mixing)*H_nl_nm1(:,:,ik,i_sp_pol)
             !
             H_nl_nm1(:,:,ik,i_sp_pol)= H_nl_sc
             !
@@ -425,7 +426,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
    enddo ! i_sp_pol
    !
-   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+   if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
    !
    if (l_SC_cycle) then
      !
@@ -444,7 +445,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
      endif
      !
-     call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS") 
+     call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
      !
      ! New density 
      !=============
@@ -452,35 +453,41 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      rho_nm1 = rho_n 
      if(n_spin>1) magn_nm1 = magn_n 
      !
-     if(.not.l_froze_density) call el_density_and_current(E,k,rho=rho_n,bands=SC_bands)
-     if(n_spin>1) call el_magnetization(E,k,magn_n)
+     if(.not.l_froze_density) then
+       call el_density_and_current(E,k,rho=rho_n,bands=SC_bands)
+       if(n_spin>1) call el_magnetization(E,k,magn_n)
+     endif
      !
      ! Update dipoles and recalcolate the dielectric constant
      ! ======================================================
      !
-     if (SC_up_W_iters>0.and.mod(it,SC_up_W_iters)==0) then
+     if (SC_up_W_iters>0) then
        !
-       ! Update dipoles
-       !
-       ! Davide: this should be replaced by the use of covariant dipoles ...
-       call DIPOLE_SC_rotate(H_rotation,E,Dip, 1)
-       call DIPOLE_SC_rotate(H_rotation,E,Dip,-1)
-       !
-       ! Recalcolate Xo and X  
-       !
-       current_iq=0
-       call IO_and_Messaging_switch("-report")
-       io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.true.)
-       call IO_and_Messaging_switch("+report")
-       !
-       ! Reload and rotate wave-functions if W is updated
-       ! =======================================
-       !
-       call WF_load(WF,WF_G_max,WF_Go_indx,SC_bands,(/1,nkibz/),title='-SC',force_WFo=.true.)
-       !
-       do ik=1,QP_nk
-         call WF_rotate(ik,i_sp_pol,WFo,fft_size)
-       enddo
+       if(mod(it_sc,SC_up_W_iters)==0) then
+         !
+         ! Update dipoles
+         !
+         ! Davide: this should be replaced by the use of covariant dipoles ...
+         call DIPOLE_SC_rotate(H_rotation,E,Dip, 1)
+         call DIPOLE_SC_rotate(H_rotation,E,Dip,-1)
+         !
+         ! Recalcolate Xo and X  
+         !
+         current_iq=0
+         call IO_and_Messaging_switch("-report")
+         io_X_err=X_dielectric_matrix(E,Xk,q,X(2),Xw(2),Dip,.true.)
+         call IO_and_Messaging_switch("+report")
+         !
+         ! Reload and rotate wave-functions if W is updated
+         ! =======================================
+         !
+         call WF_load(WF,WF_G_max,WF_Go_indx,SC_bands,(/1,nkibz/),title='-SC',force_WFo=.true.)
+         !
+         do ik=1,QP_nk
+           call WF_rotate(ik,i_sp_pol,WFo,fft_size)
+         enddo
+         !
+       endif
        !  
      endif
      !
@@ -517,7 +524,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      if(it_now==it_to_start) dumb_ch ='[SC] Iteration'
      dumb_ch2='            '//trim(intc(it_now))//' '
      if (l_sc_V_is_local) then
-       if(it==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) '
+       if(it_sc==1) dumb_ch= trim(dumb_ch) //'  E_tot(Ha) '
        dumb_ch2=trim(dumb_ch2)//'  '//trim(real2ch(E_total))//'  '
      endif
      if (n_spin==2) then
@@ -534,7 +541,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      endif
      !
      if(l_sc_electric) then
-       if(it==1) then
+       if(it_sc==1) then
          dumb_ch= trim(dumb_ch) //'    -  Polarization;'
          dumb_ch2=trim(dumb_ch2)//' - '//trim(real2ch(sqrt(sum(real(Initial_Pol(:))**2))))
        else
@@ -565,7 +572,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      ! History
      !=========
      !
-     call SC_History(it,E)
+     call SC_History(it_sc,E)
      !
    endif
    !
@@ -585,8 +592,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      dumb_ch='WF'
      if ( i_io==2 ) dumb_ch='MP'
      !
-     if (it==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
-     if (it> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
+     if (it_sc==1) call io_control(ACTION=OP_WR,COM=REP, SEC=(/1/),ID=ID(2))
+     if (it_sc> 1) call io_control(ACTION=OP_WR,COM=NONE,SEC=(/1/),ID=ID(2))
      io_WF=io_SC_components(trim(dumb_ch),E,ID(2))
      do i_sp_pol = 1, n_sp_pol 
      do ik = 1, QP_nk 
@@ -804,7 +811,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      ! Final occupations 
      !====================
-     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,OBJ="E")
+     if (l_SC_cycle.or.(l_SC_RESTART.and..not.l_SC_cycle).or.l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E")
      !
      dE(:,:,:)=E%E(1:SC_bands(2),:,:)-E_reference%E(1:SC_bands(2),:,:)
      !

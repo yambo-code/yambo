@@ -56,9 +56,11 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  if (.not.allocated(Ken%Eo)) Eo_eh= E_eh
  !
  ! Small energy transitions. Dipoles in length gauge are not defined
- if (.not.l_BS_magnons.and.iq==1) then
+ if ((.not.l_BS_magnons).and.iq==1) then
    if ( abs(Eo_eh) < Dip%Energy_treshold .and. trim(global_gauge)=="length") K_Transition_check=.FALSE.
  endif
+ ! Null energy transitions are always removed
+ if ( abs(E_eh) == 0._SP )  K_Transition_check=.FALSE.
  !
  if( BS_perturbative_SOC ) then
    if(n_sp_pol==1) pert_range=reshape((/1,2,1,2/),(/2,2/))
@@ -99,8 +101,8 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    f_e = (         Ken%f(iv,ikp,i_sp_v))/spin_occ
    f_h = (spin_occ-Ken%f(ic,ik ,i_sp_c))/spin_occ
  else
-   f_e = (         Ken%f(ic,ikp,i_sp_c))/spin_occ
-   f_h = (spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ
+   f_e = (         Ken%f(ic,ik ,i_sp_c))/spin_occ
+   f_h = (spin_occ-Ken%f(iv,ikp,i_sp_v))/spin_occ
  endif
  !
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
@@ -109,8 +111,13 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.
  !
  ! f_eh<0 transitions are included in the anti-resonant part
- ! f_eh=0 transitions give no contribution to absorption and are not considered
- if ( f_eh_REF*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
+ if ( f_eh_REF*(-1._SP)**(i_res_ares-1)< 0._SP ) K_Transition_check=.FALSE.
+ !
+ !   f_eh=0 transitions give no contribution to absorption at the IP level
+ ! and they do not mix with others neither since the kernel is weighted by f_eh
+ !   However they contribute to the JDOS. We need to take only the E>0 component,
+ ! since the E<0 component is then accounted for by the anti-resonant part
+ if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !

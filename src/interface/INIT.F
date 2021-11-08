@@ -39,6 +39,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
+ use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use electrons,      ONLY:levels,E_reset
  use frequency,      ONLY:w_samp,W_duplicate,W_reset
  use it_tools,       ONLY:it,infile_dump,ofiles_append,switch_off_runlevel,check_verbosity,runlevel_is_on
@@ -48,7 +49,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use vec_operate,    ONLY:v_norm
  use LIVE_t,         ONLY:live_timing_is_on
  use QP_m,           ONLY:QP_t,QP_state,QP_reset,QP_table,COHSEX_use_empties,QP_G_er
- use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,Chi_mode,i_X_kind_existing_DB
  use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use stderr,         ONLY:write_to_log,log_as_a_file,logfile,logfile_unit,STRING_same
  use R_lattice,      ONLY:q0_def_norm,bz_samp,bz_samp_reset
@@ -125,6 +126,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   Xw(2)%n_freqs=1
+   Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
  endif
  !
@@ -345,7 +348,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          !
          ! Only in this case ioELPH_err is defined
          !
-         if (io_ELPH_err(1)==0) then
+         if (io_ELPH_err(1)==0.or.io_ELPH_err(2)==0) then
            l_elph_corr=runlevel_is_on('el_ph_corr')
            l_phel_corr=runlevel_is_on('ph_el_corr')
          else
@@ -513,19 +516,17 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      !
      if (l_bse) then
        BS_res_K_exchange=l_td_hartree.or.l_tddft.or.l_td_hf.or.l_td_sex
-       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex
-       BS_W_is_diagonal =l_td_hf
+       BS_res_K_corr    =l_bs_fxc.or.l_td_hf.or.l_td_sex.or.(l_tddft.and.((WF_exx_fraction > 0._SP).or.(WF_exx_screening> 0._SP)))
+       BS_W_is_diagonal =l_td_hf .or. (l_tddft.and.(WF_exx_fraction > 0._SP).and. .not.(WF_exx_screening> 0._SP) )
        BS_K_coupling    =index(BSE_mode,'coupling')>0
        if (BS_K_coupling) then
          BS_cpl_K_exchange=BS_res_K_exchange  
          BS_cpl_K_corr    =BS_res_K_corr      
        endif
-       if(l_td_sex) then
-         call parser('WehDiag',dummy_logical)
-         if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
-         call parser('WehCpl' ,dummy_logical )
-         if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
-       endif
+       call parser('WehDiag',dummy_logical)
+       if (     dummy_logical) BS_W_is_diagonal=.TRUE. 
+       call parser('WehCpl' ,dummy_logical )
+       if (.not.dummy_logical) BS_cpl_K_corr=.FALSE.
      endif
      !
      if (l_bse) then
@@ -533,7 +534,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        ! When running BSE from input file l_bse is FALSE in before_infile_write_setup.
        ! In any case I have to overwrite X(2) with PP X(4) only if em1s=F
        !
-       if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+       if (io_X_err(2)==0) then
+         i_X_kind_existing_DB=2
+       else if (io_X_err(2)<0.and.io_X_err(4)==0.and..not.l_em1s) then
+         i_X_kind_existing_DB=4
          call X_duplicate(X(4),X(2))
          call W_duplicate(Xw(4),Xw(2))
        endif

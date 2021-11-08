@@ -51,7 +51,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !    TD-SEX      ==>  \Sigma^Hxc=V^H+\Simga^{SEX} (only strategy 2a available)
  !
  use pars,           ONLY:SP,cONE,cZERO
- use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use electrons,      ONLY:levels,n_spinor,n_spin
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -212,7 +212,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      H_nl_sc=cZERO
      call RT_apply_field(ik,1,H_nl_sc,A_input)
      do ik_RT =RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-       call V_by_V_plus_V_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
+       call M_plus_alpha_M_omp(RT_nbands,cONE,H_nl_sc,Ho_plus_sigma(:,:,ik_RT,1))
      enddo
    enddo
    !

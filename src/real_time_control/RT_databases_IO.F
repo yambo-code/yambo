@@ -24,9 +24,10 @@
 subroutine RT_databases_IO(E,DO_IT)
  !
  use electrons,      ONLY:n_spin,levels
- use RT_control,     ONLY:ID,RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
-&                         GF_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
-&                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point
+ use RT_control,     ONLY:RT_carriers_object,J_cache,P_cache,Ms_cache,Ml_cache,A_cache,OBS_RT_IO_t,&
+&                         Gless_RESTART_RT_IO_t,CARR_RT_IO_t,CACHE_OBS_steps_now,CACHE_OBS_steps,    &
+&                         SAVE_G_history,NE_i_start_time,CACHE_OBS_last_point,Gless_RT_IO_t,RT_DB_ID,&
+&                         RT_return_db_ID
 #if defined _ELPH_ITERATIVE
  use RT_iterative,   ONLY:THETA_matrix
  use RT_lifetimes,   ONLY:l_RT_iterative_ELPH_lifetimes
@@ -55,7 +56,7 @@ subroutine RT_databases_IO(E,DO_IT)
  ! Work Space
  !
  logical           :: write_OBS,write_G,write_CARR
- integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu
+ integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,io_THETA,IO_ACT,i_time,i_cpu,i_db,i_db_p
  integer, external :: io_RT_components
  logical, external :: RT_do_it
  !
@@ -70,9 +71,11 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  if (io_OBSERVABLES) then
    !
+   i_db=RT_return_db_ID("OBSERVABLES")
+   !
    if(NE_i_time==NE_i_start_time) then
-     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
-     io_OBS=io_RT_components('OBSERVABLES',ID(4))
+     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=RT_DB_ID(i_db)) 
+     io_OBS=io_RT_components('OBSERVABLES',RT_DB_ID(i_db))
      CACHE_OBS_last_point=OBS_RT_IO_t%last_point
      if (NE_i_time>1) OBS_RT_IO_t%N=OBS_RT_IO_t%N-1
    endif
@@ -104,8 +107,8 @@ subroutine RT_databases_IO(E,DO_IT)
      if (write_OBS) then
        !
        IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=ID(4))
-       io_OBS=io_RT_components('OBSERVABLES',ID(4))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=RT_DB_ID(i_db))
+       io_OBS=io_RT_components('OBSERVABLES',RT_DB_ID(i_db))
        !
        CACHE_OBS_steps_now=0
        !
@@ -119,9 +122,11 @@ subroutine RT_databases_IO(E,DO_IT)
  !=========
  if (io_CARRIERs) then
    !
+   i_db=RT_return_db_ID("carriers")
+   !
    if(NE_i_time==NE_i_start_time) then
-     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(6)) 
-     io_carr=io_RT_components('carriers',ID(6))
+     call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=RT_DB_ID(i_db)) 
+     io_carr=io_RT_components('carriers',RT_DB_ID(i_db))
      if (NE_i_time>1) CARR_RT_IO_t%N=CARR_RT_IO_t%N-1
    endif
    !
@@ -137,8 +142,8 @@ subroutine RT_databases_IO(E,DO_IT)
      call RT_carriers_object(RT_carriers,E,WHAT='fill')
      !
      IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=ID(6))
-     io_carr=io_RT_components('carriers',ID(6))
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=RT_DB_ID(i_db))
+     io_carr=io_RT_components('carriers',RT_DB_ID(i_db))
      !
    endif
    !
@@ -148,17 +153,23 @@ subroutine RT_databases_IO(E,DO_IT)
  !====================
  if (io_GF) then
    !
+   i_db  =RT_return_db_ID("G_lesser_RESTART")
+   i_db_p=RT_return_db_ID("G_lesser")
+   !
    if(NE_i_time==NE_i_start_time) then
      !
-     if(.not.SAVE_G_history) IO_ACT=OP_WR_CL
-     if(     SAVE_G_history) IO_ACT=OP_APP_CL
-     call io_control(ACTION=IO_ACT,COM=NONE, SEC=(/1/),ID=ID(5))
-     io_G=io_RT_components('G',ID(5))
+     call io_control(ACTION=OP_WR_CL,COM=NONE, SEC=(/1/),ID=RT_DB_ID(i_db))
+     io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
+     !
+     if (SAVE_G_history)  then
+       call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=RT_DB_ID(i_db_p))
+       io_G=io_RT_components('G_lesser',RT_DB_ID(i_db_p))
+     endif
      !
 #if defined _ELPH_ITERATIVE
      if (l_RT_iterative_ELPH_lifetimes) then
-       call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=ID(7))
-       io_THETA=io_RT_components('THETA',ID(7))
+       call io_control(ACTION=OP_APP_CL,COM=NONE, SEC=(/1/),ID=RT_DB_ID(RT_return_db_ID("THETA")))
+       io_THETA=io_RT_components('THETA',RT_DB_ID(RT_return_db_ID("THETA")))
      endif
 #endif
      !
@@ -169,25 +180,35 @@ subroutine RT_databases_IO(E,DO_IT)
    if(write_G) then
      !
      if (NE_i_time==1) then
-       GF_RT_IO_t%N=1
-       GF_RT_IO_t%Time(GF_RT_IO_t%N)=NE_time
+       Gless_RESTART_RT_IO_t%N=1
+       Gless_RESTART_RT_IO_t%Time(1)=NE_time
+       if (SAVE_G_history) then
+         Gless_RT_IO_t%N=1
+         Gless_RT_IO_t%Time(1)=NE_time
+       endif
      else
-       G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-       if(.not.SAVE_G_history) GF_RT_IO_t%N=G_MEM_steps
-       if(     SAVE_G_history) GF_RT_IO_t%N=GF_RT_IO_t%N+min(G_MEM_steps,G_IO_steps)
+       G_IO_steps=Gless_RESTART_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+       Gless_RESTART_RT_IO_t%N=G_MEM_steps
        do i_mem=1-G_MEM_steps,0
-         i_time=GF_RT_IO_t%N+i_mem
-         GF_RT_IO_t%Time(i_time)=NE_time+i_mem*RT_dyn_step
+         i_time=Gless_RESTART_RT_IO_t%N+i_mem
+         Gless_RESTART_RT_IO_t%Time(i_time)=NE_time+i_mem*RT_dyn_step
        enddo
+       if (SAVE_G_history) then
+         Gless_RT_IO_t%N=Gless_RT_IO_t%N+1
+         Gless_RT_IO_t%Time(Gless_RT_IO_t%N)=NE_time
+       endif
      endif
      !
 #if defined _PAR_IO
      IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=ID(5))
 #else
-     call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/2/),ID=ID(5))
+     IO_ACT=OP_APP_CL
 #endif
-     io_G=io_RT_components('G',ID(5))
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=RT_DB_ID(i_db))
+     io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
+     !
+     if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2/),ID=RT_DB_ID(i_db_p))
+     if (SAVE_G_history) io_G=io_RT_components('G_lesser',RT_DB_ID(i_db_p))
      !
      call IO_and_Messaging_switch("SAVE")
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
@@ -195,9 +216,10 @@ subroutine RT_databases_IO(E,DO_IT)
 #if defined _PAR_IO
      !
      if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
-       IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(3),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-       io_G=io_RT_components('G',ID(3))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=ID(i_db),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       io_G=io_RT_components('G_lesser_RESTART',ID(i_db))
+       if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=RT_DB_ID(i_db_p),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+       if (SAVE_G_history) io_G=io_RT_components('G_lesser',RT_DB_ID(i_db_p))
      endif
      !
 #else
@@ -211,8 +233,11 @@ subroutine RT_databases_IO(E,DO_IT)
          if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
          !
          IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
-         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(5))
-         io_G=io_RT_components('G',ID(5))
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_db))
+         io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
+         !
+         if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_db_p))
+         if (SAVE_G_history) io_G=io_RT_components('G_lesser',RT_DB_ID(i_db_p))
          !
        enddo 
        !
@@ -238,8 +263,8 @@ subroutine RT_databases_IO(E,DO_IT)
          call PP_redux_wait(THETA_matrix(:,:,:,ik))
          !
          IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,1,RT_nk)
-         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID(7))
-         io_THETA=io_RT_components('THETA',ID(7))
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(8))
+         io_THETA=io_RT_components('THETA',RT_DB_ID(8))
          !
          call RT_ELPH_zeroing()
          !
@@ -254,9 +279,10 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  if (write_OBS)  call PP_bcast( OBS_RT_IO_t%last_point,0)
  if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if (write_G)    call PP_bcast(  GF_RT_IO_t%last_point,0)
- !
- !
+ if (write_G) then
+                 call PP_bcast(  Gless_RESTART_RT_IO_t%last_point,0)
+                 call PP_bcast(  Gless_RT_IO_t%last_point,0)
+ endif
  !
  call timing('RT databases IO',OPR='stop')
  !

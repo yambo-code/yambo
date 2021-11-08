@@ -37,7 +37,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
- use D_lattice,    ONLY:l_0D
+ use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,NEQ_Residuals,RT_BSE_Occ_Mode
@@ -59,6 +59,15 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
+ ! L_kind check
+ !==============
+ if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ !
+ if (trim(L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
+   BSE_mode="resonant"
+ endif
+ !
  ! RES/ANTI-RES (q-dependent)
  !==============
  !
@@ -76,10 +85,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  call parser('ImposeAsym',l_flag)
  if (l_flag)        l_BS_ares_from_res=.FALSE.
  !
- if (iq/=1 )        l_BS_ares_from_res=.FALSE.
- if (l_BS_photolum) l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2) l_BS_ares_from_res=.FALSE.
- if (trim(BSE_mode)=="resonant")   l_BS_ares_from_res=.TRUE.
+ if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
+ if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
+ if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
+ ! DS: the following line makes no sense. Resonant means I do not want the anti-resonant term ???
+ if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
  ! I need ARES and I cannot get it from RES
  ! 
@@ -194,7 +204,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Here we will have two options to initialize the slepc matrix:
  call parser('BSSSlepcMatrix',BSS_slepc_matrix)
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  !
  ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
  l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)

@@ -26,6 +26,7 @@ subroutine INIT_activate()
  use BS_solvers,     ONLY:BSS_mode
  use QP_m,           ONLY:QP_solver,COHSEX_use_empties
  use stderr,         ONLY:intc,STRING_match
+ use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
@@ -126,7 +127,7 @@ subroutine INIT_activate()
  endif
  !
 #if defined  _ELPH 
- if (l_life.and.l_phel_corr) then
+ if ((l_life.or.l_gw0).and.l_phel_corr) then
    call CPU_activate("PH_SE")
  endif
 #endif
@@ -224,6 +225,10 @@ subroutine INIT_activate()
    !
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
+   if(l_alda_fxc) then
+     call initactivate(1,'BSENGfxc')
+     if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
+   endif
    !
    ! BSE + TDDFT = no BS db, Fxc + LF on-fly
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
@@ -256,7 +261,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'DrudeWBS Reflectivity')
    call initactivate(1,'BoseCut ShiftedPaths')
-   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind')
+   call initactivate(1,'BSEQptR BSEBands BSKCut BSKIOmode BSEEhEny BSehWind NoDiagSC')
    !
 #if defined _RT
    call initactivate(1,'RTOccMode ForceEqTrans')
@@ -274,7 +279,7 @@ subroutine INIT_activate()
    !               Thus I move to g-space to solve the Dyson equation
    !
    if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGexx ALLGexx')
-   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk')
+   if (index(BSS_mode,'t')/=0 .and. l_bs_fxc) call initactivate(-1,'BSENGBlk BSENGfxc')
    !
    if (index(BSS_mode,'i')/=0)  call initactivate(1,'BSSInvMode BSEPSInvTrs BSSInvPFratio BSSInvKdiag')
    if (index(BSS_mode,'d')/=0.or.index(BSS_mode,'s')/=0)  call initactivate(1,'WRbsWF BSSPertWidth')
@@ -346,7 +351,7 @@ subroutine INIT_activate()
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_gw0.and..not.trim(QP_solver)=="g") call initactivate(1,'QPsymmtrz')
+   if (l_gw0.and..not.trim(QP_solver)=="g".and.(l_elel_corr.or.l_elph_corr)) call initactivate(1,'QPsymmtrz')
    !
 #if defined _QED
    if (l_elphoton_corr) then
@@ -407,13 +412,9 @@ subroutine INIT_activate()
    !
    if (l_phel_corr) then
      call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut')
-     if (l_gw0) then
-       call initactivate(1,'DysSolver OnMassShell')
-       if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
-     else
-       call initactivate(1,'GDamping PHELTrans') 
-     endif
+     call initactivate(1,'ExtendOut OnMassShell')
+     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
+     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
    endif
    !
 #endif
@@ -422,7 +423,7 @@ subroutine INIT_activate()
    if (l_elph_corr) then
      call initactivate(1,'DysSolver')
      call initactivate(1,'GphBRnge FANdEtresh DWdEtresh ElPhModes GDamping dScStep ExtendOut ElPhRndNq RandQpts')
-     call initactivate(1,'WRgFsq NewtDchk OnMassShell')
+     call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
      call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 

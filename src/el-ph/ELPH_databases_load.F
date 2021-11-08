@@ -192,7 +192,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
      complex(SP), intent(in) :: GKKP_dVc(ph_modes)
      complex(SP), intent(in) :: GKKP_bare_dVc(ph_modes)
      real(SP)                :: GKKP_sq_eff(ph_modes)
-     GKKP_sq_eff = REALPART(GKKP_dVc)*REALPART(GKKP_bare_dVc)+IMAGPART(GKKP_dVc)*IMAGPART(GKKP_bare_dVc)
+     GKKP_sq_eff = real(GKKP_dVc)*real(GKKP_bare_dVc)+aimag(GKKP_dVc)*aimag(GKKP_bare_dVc)
    end function
    !
 end subroutine ELPH_databases_load

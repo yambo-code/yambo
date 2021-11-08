@@ -189,7 +189,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  YAMBO_ALLOC(TRabs_E,(N_trans))
  !
  ! ... Residuals 
- N_res=N_res+1
+ N_res=1
  if (l_BS) N_res=N_res+1
  YAMBO_ALLOC(TRabs_RES_left ,(N_trans*N_res,N_DIP_dirs,2)) ! (ABS/IP, i_dir Res/delta_Res)
  YAMBO_ALLOC(TRabs_RES_right,(N_trans*N_res,N_DIP_dirs,2))
@@ -210,6 +210,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  call FREQUENCIES_setup(W_bss)
  !
  ! Output (init)
+ ofile=" "
  n_files=0
  call RT_Trabs_output("init",label,ofile,N_files,W_bss,0._SP)
  !

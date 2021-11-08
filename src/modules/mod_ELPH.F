@@ -130,6 +130,7 @@ module ELPH
  logical :: l_GKKP_hosts_bare_dV=.FALSE.
  logical :: l_GKKP_DB_exists=.FALSE.
  logical :: l_GKKP_expanded_DB_exists=.FALSE.
+ character(schlen) :: gkkp_db ! Database type for el-ph calculation (gkkp | expanded | genFroh )
  !
  contains
    !

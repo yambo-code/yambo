@@ -48,7 +48,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  use RT_lifetimes,   ONLY:l_RT_eval_lifetimes
  use R_lattice,      ONLY:bz_samp
  use fields,         ONLY:gauge_field
- use wrapper_omp,    ONLY:V_by_V_plus_V_omp
+ use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  !
  implicit none
  !
@@ -93,7 +93,7 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
      !
      H_field=cZERO
      call RT_apply_field(ik,1,H_field,A_input)
-     call V_by_V_plus_V_omp(RT_nbands,cONE,-H_field,H)
+     call M_plus_alpha_M_omp(RT_nbands,cONE,-H_field,H)
      !
    endif
    !
@@ -135,12 +135,6 @@ subroutine RT_Hamiltonian_diagonalize(E,k,BGR,A_input)
  ! Evaluation of the contribution to the minimal gap
  !
  BGR=0._SP
- !call OCCUPATIONS_Fermi(E,k,mode="OCCUPATIONS",n_bands=RT_bands(2))
- !
- !BGR(1)=E%E_dir_gap(1)
- !BGR(2)=E%E_ind_gap(1)
- !BGR(3)=BGR(1)-E_reference%E_dir_gap(1)
- !BGR(4)=BGR(2)-E_reference%E_ind_gap(1)
  !
  call timing('RT H diago',OPR='stop')
  !

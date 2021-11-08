@@ -38,8 +38,8 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
-&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,         &
+&                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time,RT_DB_init
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
 &                         Life_MEM_steps,l_RT_lifetimes_Tfit,l_RT_skip_ph_abs_lifetimes,l_RT_iterative_ELPH_lifetimes
@@ -322,12 +322,16 @@ subroutine RT_initialize(E,k,q)
    !
  endif
  !
+ ! Databased INIT
+ !================
+ call RT_DB_init( )
+ !
 #if defined _ELPH
  !
  ! Electron-phonon
  ! ===============
  !
- if (l_elph_scatt) call RT_ELPH_initialize(E,k,q)
+ call RT_ELPH_initialize(E,k,q)
  !
 #endif
  !
@@ -399,7 +403,7 @@ subroutine RT_initialize(E,k,q)
  call                          msg('r', 'T cache step  of J,P,M     ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   CAR     ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
- call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', '          I/O of   GFs     ',Gless_RESTART_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !
@@ -443,7 +447,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')
-   call msg('r','Gauge                       ',trim(global_gauge))
+   call msg('r','Gauge                               ',trim(global_gauge))
    !
    if (any(Efield(:)%W_step>0)) then
      call msg('r','Pump/Probe periodicity',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS,'[fs]')
@@ -452,13 +456,14 @@ subroutine RT_initialize(E,k,q)
    !
    do i1=1,n_ext_fields
      MSG_ch="Field#"//trim(intc(i1))
-     call msg('r', trim(MSG_ch)//' field                       '//trim(Efield(i1)%ef_name))
-     call msg('r', trim(MSG_ch)//' polarization                '//trim(Efield(i1)%ef_pol))
-     call msg('r', trim(MSG_ch)//' energy window/period        ',(/Efield(i1)%frequency*HA2EV,&
+     call msg('r', trim(MSG_ch)//' field                       ',trim(Efield(i1)%ef_name))
+     call msg('r', trim(MSG_ch)//' polarization                ',trim(Efield(i1)%ef_pol))
+     call msg('r', trim(MSG_ch)//' frequency range             ',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/),'[eV/fs]')
      call msg('r', trim(MSG_ch)//' elemental oscillation       ',EtoT(E=Efield(i1)%frequency(2)-&
 &                                                                       Efield(i1)%frequency(1))*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' width                       ',Efield(i1)%width*AUT2FS,'[fs]')
+     call msg('r', trim(MSG_ch)//' start time                  ',Efield(i1)%t_initial*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')

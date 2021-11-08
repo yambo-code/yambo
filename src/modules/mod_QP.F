@@ -48,13 +48,11 @@ module QP_m
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  integer           :: GW_iterations
- logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_QP_symmetrize=.FALSE.
  logical           :: l_GW_terminator=.FALSE.
  logical           :: l_update_W=.FALSE.
- logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
@@ -64,7 +62,6 @@ module QP_m
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
- real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
@@ -85,6 +82,11 @@ module QP_m
  integer,    allocatable:: QP_table(:,:)
  integer,    allocatable:: QP_W_table(:,:)
  logical,    allocatable:: QP_state(:,:)
+ !
+ ! Solver...
+ real(SP)          :: QP_dSc_delta
+ logical           :: QP_dSc_test
+ logical           :: On_Mass_Shell_approx
  ! 
  ! QED
  !

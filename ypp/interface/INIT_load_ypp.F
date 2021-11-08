@@ -121,6 +121,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTpol',        '[R] Analize time-dependent polarization')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  !
  call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')
@@ -308,6 +309,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'TestPHDGrid','Test double-grid: set all values of the fine grid equal to the couse ones')
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
+ call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
  !
 #endif
  !

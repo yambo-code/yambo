@@ -59,7 +59,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
-&                         l_NL_X,l_NL_exc,RT_conf
+&                         l_NL_X,l_NL_exc,RT_conf,l_RT_pol
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
@@ -137,7 +137,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
- io_RT_G_err=io_RT_components('G' ,ID)
+ io_RT_G_err=io_RT_components('G_lesser_RESTART' ,ID)
  if (io_RT_G_err==0) QP_nb=RT_bands(2)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
@@ -336,6 +336,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_lifetimes   =STRING_match(rstr_piece(i1+1),'l')
        l_RT_density     =STRING_match(rstr_piece(i1+1),'d')
        l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
+       l_RT_pol         =STRING_match(rstr_piece(i1+1),'p')
        !
        l_rtplot=.TRUE.
        !
@@ -378,6 +379,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_RT_time)        call initactivate(1,'RTtime')
  if (l_RT_energy)      call initactivate(1,'RTenergy')
  if (l_RT_dos)         call initactivate(1,'RTdos')
+ if (l_RT_pol)         call initactivate(1,'RTpol')
+ !
 #endif
  !
  if (l_amplitude)      call initactivate(1,'amplitude')
@@ -463,6 +466,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_RTpump_kspace    = runlevel_is_on('Select_kspace')
  l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
+ l_RT_pol           = runlevel_is_on('RTpol')
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
@@ -631,9 +635,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_RealTime) then
    !
-   l_flag=l_RT_occupations.or.l_RT_abs
+   l_flag=l_RT_occupations.or.l_RT_abs.or.l_RT_pol
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
@@ -706,7 +710,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand UseQindxB")
  if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
  if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode TestPHDGrid")
  if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")

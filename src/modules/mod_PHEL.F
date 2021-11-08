@@ -53,11 +53,15 @@ module PHEL
  ! ... GF
  type(w_samp), allocatable :: PH_SF_W(:,:)
  !
+ ! ... Dyson solver
+ !
+ real(SP)                 ::PHEL_fit_Energies(2)=(/0.25,1./)
+ !
  ! ... Scatterings
  !
  ! table:
- ! 1 -> il [ph mode], 2 -> iq [ph q ibz], 3 -> ikbz/ik_rim [k bz]
- ! 4 -> ip_fg [k-q (i)bz DbGd], 5 -> i_n [bnd], 6 -> i_np [bnd]
+ ! 1 -> il [ph mode] 2 -> ikbz/ik_rim [k bz]
+ ! 3 -> ip_fg [k-q (i)bz DbGd], 4 -> i_n [bnd], 5 -> i_np [bnd]
  type phel_scatterings
    !
    integer(IPL)          :: N=0        ! Number of accepted transitions
@@ -71,24 +75,53 @@ module PHEL
    complex(SP), allocatable :: PI(:,:,:)
    real(SP),    allocatable :: interband(:,:)
    real(SP),    allocatable :: intraband(:,:)
-   real(SP),    allocatable :: approx(:,:)
+   real(SP),    allocatable :: allen(:,:)
  end type PHEL_qp_kind
  !
  type(PHEL_qp_kind)  :: PHEL_qp
  !
+ real(SP)    :: PI_ref   = rZERO
+ complex(SP) :: PI_oms   = cZERO
+ !
  type QPHt
-   real(SP)    :: PI_ref = rZERO
-   complex(SP) :: PI_oms = cZERO
-   complex(SP) :: beta   = cZERO
-   complex(SP) :: Z      = cZERO
-   complex(SP) :: Pole   = cZERO
+   character(schlen) :: what=" "
+   integer     :: N_D_freqs= 0
+   complex(SP) :: Pole     = cZERO
+   complex(SP) :: Gamma    = cZERO
+   complex(SP) :: Residual = cZERO
    real(SP)    :: Half_Width_left  = rZERO
    real(SP)    :: Half_Width_right = rZERO
+   complex(SP), allocatable :: W(:)
+   complex(SP), allocatable :: D(:)
+   complex(SP), allocatable :: PI(:)
  end type QPHt
  !
- type (QPHt) :: QPH
+ type (QPHt) :: QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH_DDFPT,QPH
  !
  contains
+   !
+   subroutine QPHt_alloc(what,QPH,N)
+     character(*) :: what
+     type(QPHt)   :: QPH
+     integer      :: N
+     QPH%what=what
+     QPH%N_D_freqs=N
+     if (QPH%N_D_freqs==0) return
+     if (allocated(QPH%W)) return
+     YAMBO_ALLOC(QPH%W,(QPH%N_D_freqs))
+     YAMBO_ALLOC(QPH%D,(QPH%N_D_freqs))
+     YAMBO_ALLOC(QPH%PI,(QPH%N_D_freqs))
+   end subroutine
+   !
+   subroutine QPHt_free(QPH)
+     type(QPHt)   :: QPH
+     QPH%N_D_freqs=0
+     QPH%what=" "
+     if (.not.allocated(QPH%D)) return
+     YAMBO_FREE(QPH%W)
+     YAMBO_FREE(QPH%D)
+     YAMBO_FREE(QPH%PI)
+   end subroutine
    !
    function PH_energy(q,il,iq)
      use ELPH,      ONLY:l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,PH_freqs_sq
@@ -109,20 +142,24 @@ module PHEL
      implicit none
      !
      type(bz_samp) :: k
-     integer       :: iq,ikbz,ik,ik_m_q
+     integer, intent(in)  :: iq,ikbz
+     integer, intent(out) :: ik,ik_m_q
      logical       :: l_RT
      !
-     ! Obtain k-q in the full BZ from k in the bz and q in the ibz
-     if (     elph_use_q_grid) ik_m_q = qindx_X(iq,ikbz,1)
-     if (.not.elph_use_q_grid) ik_m_q = KpQ_IO_map(iq,ikbz)
-     !
-     ! Use k in the bz
-     ik = ikbz
-     !
-     ! If running RT: obtain k-q and k in the IBZ
      if (l_RT) then
+       !
+       ! If running RT: obtain k-q and k in the IBZ
        ik_m_q =k%sstar(ik_m_q,1)
        ik     =k%sstar(ik,1)
+     else
+       !
+       ! Obtain k-q in the full BZ from k in the bz and q in the ibz
+       if (     elph_use_q_grid) ik_m_q = qindx_X(iq,ikbz,1)
+       if (.not.elph_use_q_grid) ik_m_q = KpQ_IO_map(iq,ikbz)
+       !
+       ! Use k in the bz
+       ik = ikbz
+       !
      endif
      !
    end subroutine
@@ -132,10 +169,10 @@ module PHEL
      PHEL_qp%PI=cZERO
      YAMBO_ALLOC(PHEL_qp%interband,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
      YAMBO_ALLOC(PHEL_qp%intraband,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
-     YAMBO_ALLOC(PHEL_qp%approx,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
+     YAMBO_ALLOC(PHEL_qp%allen,(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
      PHEL_qp%interband=rZERO
      PHEL_qp%intraband=rZERO
-     PHEL_qp%approx=rZERO
+     PHEL_qp%allen=rZERO
      YAMBO_ALLOC(PHEL_nTrans_percent,(PH_Q(1):PH_Q(2)))
      YAMBO_ALLOC(PHEL_Q_Radius,(PH_Q(1):PH_Q(2)))
      allocate(PHEL_N_trans_yes(PH_Q(1):PH_Q(2)))
@@ -159,7 +196,7 @@ module PHEL
      YAMBO_FREE(PHEL_qp%PI)
      YAMBO_FREE(PHEL_qp%interband)
      YAMBO_FREE(PHEL_qp%intraband)
-     YAMBO_FREE(PHEL_qp%approx)
+     YAMBO_FREE(PHEL_qp%allen)
      YAMBO_FREE(PHEL_nTrans_percent)
      YAMBO_FREE(PHEL_Q_Radius)
      deallocate(PHEL_N_trans_yes)

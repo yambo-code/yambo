@@ -24,7 +24,7 @@
 subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,&
+&                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,l_RT_pol,&
 &                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
  use RT_control,     ONLY:OBS_RT_IO_t
  use pars,           ONLY:lchlen
@@ -97,8 +97,12 @@ subroutine RT_X_response(en,k,q)
      call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,l_skip_OBS_IO)
      call RT_OBSERVABLES_damp_and_write(Curr,RT_conf,l_skip_OBS_IO)
    endif
-   !
-   if ( l_RT_LRR_real_field ) then
+     !
+   if ( l_RT_pol ) then
+     !
+     call RT_Polarization(en,k,q) 
+     !
+   else if ( l_RT_LRR_real_field ) then
      !
      ! CORE Logicals
      !---------------

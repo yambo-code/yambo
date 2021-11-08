@@ -24,6 +24,7 @@
 subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse,l_alda_fxc
+ use pars,          ONLY:schlen
  use X_m,           ONLY:X_t
  use electrons,     ONLY:levels,n_bands,E_duplicate
  use R_lattice,     ONLY:bz_samp
@@ -35,7 +36,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #endif
 #if defined _ELPH
  use IO_int,        ONLY:io_control
- use IO_m,          ONLY:OP_IF_START_RD_CL_IF_END,manage_action,NONE
+ use IO_m,          ONLY:OP_IF_START_RD_CL_IF_END,manage_action,NONE,DUMP,OP_RD_CL
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:GKKP,elph_nQ,elph_branches,QP_PH_n_G_bands
 #endif
@@ -51,12 +52,13 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  integer  :: iq
  integer  :: elph_branches_save(2)
  integer  :: QP_PH_n_G_bands_save(2)
+ character(schlen) :: db_name
  !
 #if defined _RT
  logical           :: l_apply_RT_corrections
 #endif
 #if defined _ELPH
- integer           :: ID,io_err
+ integer           :: ID,io_err,io_ELPH_err(2)
  integer, external :: io_ELPH
 #endif
  !
@@ -103,18 +105,38 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  bands_to_correct=(/1,n_bands/)
  if (l_gw0)                  call QP_apply(bands_to_correct,en,k,"G",msg_fmt='rs',main_section=.TRUE.)
 #if defined _ELPH
+ !
  ! Green's Function (k+q levels loaded for the _ELPH)
+ !
  if (l_gw0.and.l_elph_corr) then
    elph_branches_save  =elph_branches
    QP_PH_n_G_bands_save=QP_PH_n_G_bands
-   do iq=0,elph_nQ
-     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,0,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
-     io_err=io_ELPH(ID,'no_matrix_elements')
+   !
+   ! Check which databases are present
+   ! =================================
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+   io_ELPH_err(1)=io_ELPH(ID,'gkkp')
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID)
+   io_ELPH_err(2)=io_ELPH(ID,'gkkp_expanded')
+   !
+   if(io_ELPH_err(1)==0) then
+      db_name='gkkp'
+      if(io_ELPH_err(2)==0) call error('Both gkkp and gkkp_expanded databases are present, please remove one of the two!')
+   elseif(io_ELPH_err(2)==0.and.io_ELPH_err(1)/=0) then
+      db_name='gkkp_expanded'
+   endif
+   !
+   do iq=1,elph_nQ
+     call io_control(ACTION=manage_action(OP_IF_START_RD_CL_IF_END,iq,1,elph_nQ),COM=NONE,SEC=(/iq+1/),ID=ID)
+     io_err=io_ELPH(ID,db_name//' no_matrix_elements')
      if (iq>0.and.io_err==0) call QP_apply(GKKP%Nb,GKKP%E_kpq(iq),k,"G",msg_fmt='rs',main_section=.TRUE.)
    enddo
+   !
    elph_branches  =elph_branches_save
    QP_PH_n_G_bands=QP_PH_n_G_bands_save
+   !
  endif
+ !
 #endif
  !
 #if defined _RT

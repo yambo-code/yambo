@@ -100,6 +100,8 @@ subroutine DIPOLES_driver(k,E,q)
  ! ... IO
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
  !
+ if (trim(DIPs_kind)=="LOAD") return
+ !
  DIPs_direction=DIPs_direction/v_norm(DIPs_direction)
  !
  ! ... Alloc

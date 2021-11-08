@@ -25,7 +25,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  ! 
  ! Print the intrisic Polarization of the system
  !
- use pars,          ONLY:SP,lchlen
+ use pars,          ONLY:SP,lchlen,cZERO
  use units,         ONLY:e_SI,AU2M
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp,k_map
@@ -59,6 +59,8 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  do ia=1,n_atomic_species
    if(mod(Z_species(ia),2) == 1) l_odd=.true.
  enddo
+ !
+ Tot_berry_RED=cZERO
  !                                         
  do i_sp_pol=1,n_sp_pol
    nb=Xen%nbm(i_sp_pol)
@@ -66,17 +68,20 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
      call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,&
              &  Sm1_plus(:nb,:nb,:),Sm1_minus(:nb,:nb,:),All_S_det(:,ikbz,i_sp_pol))
    enddo
+   !
+   ! Calculate Electronic polarization
+   !
+   call Berry_polarization_EQ(P_Berry_RED,All_S_det(:,:,i_sp_pol),Xen,Xk,k_map)
+   !
+   Tot_berry_RED=Tot_berry_RED+real(P_berry_RED,SP)
+   !
  enddo
- !
- ! Calculate Electronic polarization
- !
- call Berry_polarization_EQ(P_Berry_RED,All_S_det,Xen,Xk,k_map)
  !
  ! Calculate Electronic polarization and set l_odd
  !
  call Ionic_polarization(I_berry_RED,Xen)
  !
- Tot_berry_RED=real(P_berry_RED,SP)+I_berry_RED
+ Tot_berry_RED=Tot_berry_RED+I_berry_RED
  !
  mod_tot=2
  if(l_odd) mod_tot=1

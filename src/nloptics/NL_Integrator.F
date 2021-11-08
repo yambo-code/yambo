@@ -101,8 +101,8 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        nb=E%nbf(is)
        Ktmp=cZERO
-       call EXP_step(Ktmp,V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step)
-       V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + Ktmp(:,:E%nbf(is))
+       call EXP_step(Ktmp(:,:nb),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step)
+       V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + Ktmp(:,:nb)
      enddo
    enddo
    call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
@@ -118,8 +118,8 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      do is=1,n_sp_pol
        nb=E%nbf(is)
        Ktmp=cZERO
-       Ktmp(:,:E%nbf(is))=V_bands(:,:E%nbf(is),ik,is)
-       call INVINT_step(V_bands(:,:nb,ik,is),Ktmp,Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step)
+       Ktmp(:,:nb)=V_bands(:,:nb,ik,is)
+       call INVINT_step(V_bands(:,:nb,ik,is),Ktmp(:,:nb),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step)
      enddo
    enddo
    call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
@@ -176,7 +176,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call EXP_step(Ktmp,V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step/2._SP)
+       call EXP_step(Ktmp(:,:nb),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb,RT_step/2._SP)
        K_all(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + Ktmp(:,:E%nbf(is))
      enddo
    enddo
@@ -201,8 +201,9 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      endif
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
-       call RK_basestep(Ktmp(:,:),K_all(:,:,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:,ik_mem,is),E%nbf(is))
-       V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + RK2_bpar*RT_step*Ktmp(:,:E%nbf(is))
+       nb=E%nbf(is)
+       call RK_basestep(Ktmp(:,:nb),K_all(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),E%nbf(is))
+       V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_bpar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
    call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
@@ -217,8 +218,8 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call RK_basestep(Ktmp(:,:),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
-       K_all(:,:E%nbf(is),ik,is) = V_bands(:,:nb,ik,is) + RK2_apar*RT_step*Ktmp(:,:nb)
+       call RK_basestep(Ktmp(:,:nb),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
+       K_all(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_apar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
    call PP_redux_wait(K_all,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
@@ -243,8 +244,8 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call RK_basestep(Ktmp(:,:E%nbf(is)),K_all(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
-       V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:nb,ik,is) + RK2_bpar*RT_step*Ktmp(:,:nb)
+       call RK_basestep(Ktmp(:,:nb),K_all(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
+       V_bands(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + RK2_bpar*RT_step*Ktmp(:,:nb)
      enddo
    enddo
    call PP_redux_wait(V_bands,COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
@@ -264,7 +265,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call RK_basestep(Ktmp(:,:E%nbf(is)),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
+       call RK_basestep(Ktmp(:,:nb),V_bands(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
        V_tmp(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + Heun_apar(1)*RT_step*Ktmp(:,:nb)
        K_all(:,:nb,ik,is) = Heun_bpar(1)*Ktmp(:,:nb)
      enddo
@@ -291,7 +292,7 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call RK_basestep(Ktmp(:,:E%nbf(is)),V_tmp(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
+       call RK_basestep(Ktmp(:,:nb),V_tmp(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
        V_tmp(:,:nb,ik,is) = V_bands(:,:nb,ik,is) + Heun_apar(2)*RT_step*Ktmp(:,:nb)
      enddo
    enddo
@@ -312,8 +313,8 @@ subroutine NL_Integrator(E,k,q,X,Integrator,i_time,V_bands)
      ik_mem=PAR_Xk_ibz_index(ik)
      do is=1,n_sp_pol
        nb=E%nbf(is)
-       call RK_basestep(Ktmp(:,:E%nbf(is)),V_tmp(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
-       K_all(:,:E%nbf(is),ik,is)   = K_all(:,:E%nbf(is),ik,is) + Heun_bpar(2)*Ktmp(:,:E%nbf(is))
+       call RK_basestep(Ktmp(:,:nb),V_tmp(:,:nb,ik,is),Ho_plus_Sigma(:,:,ik_mem,is),I_relax(:,:,:nb,ik_mem,is),nb)
+       K_all(:,:E%nbf(is),ik,is)   = K_all(:,:E%nbf(is),ik,is) + Heun_bpar(2)*Ktmp(:,:nb)
        V_bands(:,:E%nbf(is),ik,is) = V_bands(:,:E%nbf(is),ik,is) + RT_step*K_all(:,:E%nbf(is),ik,is)
      enddo
    enddo

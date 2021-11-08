@@ -93,7 +93,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
 !       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
        !
        do istep=1,max_step
-         call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_tilde,V_bands(:,:en%nbf(isp),:,isp))
+         call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
        enddo
        !

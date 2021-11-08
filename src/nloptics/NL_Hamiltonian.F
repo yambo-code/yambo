@@ -110,7 +110,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 #if defined _TIMING
    call timing('NL Hamiltonian',OPR='stop')
 #endif
-   call Berry_Polarization_NEQ(E,k,V_bands,NL_P(1:3))
+   do i_sp_pol=1,n_sp_pol
+     call Berry_Polarization_NEQ(E,k,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),NL_P(1:3))
+   enddo
 #if defined _TIMING
    call timing('NL Hamiltonian',OPR='start')
 #endif   

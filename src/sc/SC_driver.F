@@ -332,7 +332,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    if(l_sc_electric) then
      !      
      do i_sp_pol=1,n_sp_pol
-       call SC_add_efield(H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),E,Xk,i_sp_pol,Polarization)
+       call SC_add_efield(E,Xk,i_sp_pol,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),Polarization)
      enddo
      Polarization=Polarization-Initial_Pol
      !

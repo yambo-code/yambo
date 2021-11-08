@@ -24,7 +24,7 @@
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh
+ use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh,spin_occ
  !
  implicit none
  !
@@ -70,15 +70,12 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  do i_sp_pol=1,n_sp_pol
    do ib=1,E%nb
      !
-     ! A single state (n k) weights 2 only when there is no spin
-     ! components 
+     ! A single state (n k) weights 2 only when there is no spin components 
      !
-     r_nk=sum(E%f(ib,:,i_sp_pol))
-     !
-     if (n_spin==1) r_nk=r_nk/2._SP
+     r_nk=sum(E%f(ib,:,i_sp_pol))/spin_occ/real(E%nk,SP)
      !
      if (r_nk<=tresh) cycle
-     if (abs(r_nk-real(E%nk,SP))<=filled_tresh) then
+     if (abs(r_nk-1._SP)<=filled_tresh) then
        Nbf_(i_sp_pol)=ib
        cycle
      endif

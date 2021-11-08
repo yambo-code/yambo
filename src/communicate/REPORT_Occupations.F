@@ -131,10 +131,11 @@ subroutine REPORT_Occupations(what,E)
    do i_sp_pol=1,n_sp_pol
      f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
+     !
+     call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',i_sp_pol),(/nel/real(n_sp_pol),N_met/))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',i_sp_pol),(/f_met/))
+     !
    enddo
-   !
-   call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',0),(/nel,N_met/))
-   call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',0),(/f_met/))
    !
    if (n_sp_pol==1) call warning(COMPOSE_spin_msg(title,title_len,'Metallic system',0))
    if (n_sp_pol==2) then

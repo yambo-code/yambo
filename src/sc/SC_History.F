@@ -47,7 +47,12 @@ subroutine SC_History(it,E)
  !
  do i_spin=1,n_sp_pol
    !
-   b_range(1)=max(n_full_bands(i_spin)-1,1)
+   ! 2021/11/09 DS
+   ! The commented lin is more correct for the definition of b_range(1).
+   ! However the other one is kept to avoid problems with the test-suite
+   !b_range(1)=max(n_full_bands(i_spin)-1,1)
+   !
+   b_range(1)=max(minval(n_full_bands)-1,1)
    b_range(2)=b_range(1)+2
    !
    if ( it == 1 ) then

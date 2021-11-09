@@ -44,6 +44,7 @@ module OUTPUT_simple
    character(lchlen)  :: filename = " "
    character(schlen)  :: filename_short= " "
    type(COLt)         :: COL(N_MAX_columns)
+   integer            :: COL_WIDTH=0
  end type
  !
  type(OUTt):: OUT_file(N_MAX_files)
@@ -91,6 +92,7 @@ module OUTPUT_simple
        OUT_file(i_f)%TITLES_ordered=.FALSE.
      endif
      if (action=="reset") then
+       OUT_file(i_f)%COL_WIDTH = 0
        OUT_file(i_f)%TITLES_dumped=.FALSE.
        OUT_file(i_f)%filename = " "
        OUT_file(i_f)%filename_short= " "

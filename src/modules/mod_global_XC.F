@@ -118,7 +118,11 @@ module global_XC
    H_SE_COH           = 326, &  ! Coulomb-Hole 
    H_SE_SEX           = 327, &  ! Screened-eXchange
    H_SE_COHSEX        = H_SE_SEX+H_SE_COH  ! Coulomb-Hole + Screened-eXchange
-   !
+ !
+ ! Phonons
+ integer, public, parameter :: &
+   QPH_X_RPA         = 501    ! Simple RPA PH self-energy
+ !
  contains
    !
    subroutine  setup_global_XC(what,kind,xc_functional,perturbation,exx_fraction,exx_screening,STRING)
@@ -243,11 +247,11 @@ module global_XC
         case(QP_SE_COHSEX)
           global_XC_string='COHSEX'
         case(QP_SE_GoWo_PPA)
-          global_XC_string='GoWo Plasmon Pole appox.'
+          global_XC_string='GoWo Plasmon Pole approx.'
         case(QP_SE_GoWo)
           global_XC_string='GoWo on real axis'
         case(QP_SE_GWo_PPA)
-          global_XC_string='GWo Plasmon Pole appox.'
+          global_XC_string='GWo Plasmon Pole approx.'
         case(QP_SE_GWo)
           global_XC_string='GWo on real axis'
         case(QP_SE_POLARON)
@@ -256,6 +260,8 @@ module global_XC
           global_XC_string='OUT-of-EQ GW'
         case(QP_SE_GW_QED)
           global_XC_string='QED-based GW'
+        case(QPH_X_RPA)
+          global_XC_string='QPH RPA approx'
         case default
           if(trim(global_XC_string)/="".and.local_kind>1000) global_XC_string='SC HARTREE +'//trim(global_XC_string)
       end select

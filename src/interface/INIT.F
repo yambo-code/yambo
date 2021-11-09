@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
+&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,l_Xo
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -311,6 +311,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_bse=runlevel_is_on('bse')
        l_bss=runlevel_is_on('bss')
        l_tddft=runlevel_is_on('tddft')
+       l_Xo   =runlevel_is_on('Xo')
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
@@ -444,10 +445,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (l_em1s)   call initactivate(1,'dipoles')
-     if (l_em1d)   call initactivate(1,'dipoles')
-     if (l_optics) call initactivate(1,'dipoles')
-     if (l_ppa)    call initactivate(1,'em1d dipoles')
+     if (any((/l_em1s,l_em1d,l_Xo,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
+     if (l_ppa)    call initactivate(1,'em1d')
      if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,&
 &                             l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
@@ -481,7 +480,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_dipoles) then
        n_threads_DIP=0
      endif
-     if (l_optics.or.l_em1s.or.l_em1d.or.l_ppa.or.l_bse) then
+     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_bse,l_Xo/)) then
        n_threads_K=0
        n_threads_X=0
        n_threads_DIP=0

@@ -77,11 +77,15 @@ module drivers
  !
  logical :: l_optics             =.FALSE.
  logical :: l_chi                =.FALSE.
- logical :: l_em1d               =.FALSE.
- logical :: l_em1s               =.FALSE.
  logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
+ !
+ ! The optical runlevels ...
+ !
+ logical :: l_Xo                 =.FALSE.
+ logical :: l_em1d               =.FALSE.
+ logical :: l_em1s               =.FALSE.
  !
  ! ... and the kernel
  !

@@ -24,7 +24,7 @@
 subroutine INIT_read_command_line(rstr,init_)
  !
  use pars,           ONLY:schlen
- use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
+ use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,l_Xo,&
 &                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,&
 &                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_phel_scatt,l_phel_corr,l_dipoles
  use BS,             ONLY:BSK_mode
@@ -160,9 +160,11 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
      !
      if ( trim(rstr_piece(i1)) == 'screen') then
-       l_em1s= STRING_same(trim(rstr_piece(i1+1)),'s')
-       l_em1d= (STRING_same(trim(rstr_piece(i1+1)),'f') )
-       l_ppa = (STRING_same(trim(rstr_piece(i1+1)),'p') )
+       l_em1s= STRING_match(trim(rstr_piece(i1+1)),'s')
+       l_em1d= (STRING_match(trim(rstr_piece(i1+1)),'d') )
+       l_ppa = (STRING_match(trim(rstr_piece(i1+1)),'p') )
+       l_Xo  = (STRING_match(trim(rstr_piece(i1+1)),'X') )
+       if (l_Xo)   call initactivate(1,'Xo')
        if (l_em1s) call initactivate(1,'em1s')
        if (l_em1d) call initactivate(1,'em1d')
        if (l_ppa)  call initactivate(1,'ppa')

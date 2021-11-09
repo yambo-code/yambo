@@ -26,7 +26,7 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  use pars,                ONLY:SP,schlen,lchlen
  use OUTPUT_simple,       ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
  use com,                 ONLY:msg,of_open_close
- use stderr,              ONLY:STRING_same,set_real_printed_length
+ use stderr,              ONLY:STRING_same
  !
  implicit none
  !

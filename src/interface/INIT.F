@@ -118,7 +118,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
    call bz_samp_reset(k)
    call bz_samp_reset(q)
-   call W_reset(Xw(1))
+   call W_reset(Xw(1),damping=0.001_SP)
    call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))

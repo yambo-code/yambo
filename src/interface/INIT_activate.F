@@ -73,13 +73,19 @@ subroutine INIT_activate()
  !
  ! CPU structure
  !
- if (any((/l_optics.and..not.l_bse,l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
-   if (any((/l_em1s,l_em1d,l_ppa,l_life,l_Xo/))) then
-     call CPU_activate("X_and_IO")
-   else
-     call CPU_activate("X")
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_Xo) then
+   if (l_elel_corr) then
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_Xo) then
+       call CPU_activate("X_and_IO")
+     else
+       call CPU_activate("X")
+     endif
+     call initactivate(1,'X_Threads')
    endif
-   call initactivate(1,'X_Threads')
+   if (l_elel_corr.or.l_elphoton_corr) then
+     call CPU_activate("DIP")
+     call initactivate(1,'X_Threads DIP_Threads')
+   endif
  endif
  !
  if(l_sc_run) then

@@ -25,13 +25,19 @@
 operate=$1
 #
 file_src=`echo $file | sed 's/.$/F/'`
-full_path=`find $compdir -name $file_src | sed "s/.$/o/"`
-if [ -z $full_path ] ; then
+full_path=`find $srcdir -name $file_src`
+if [ -z "$full_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- full_path=`find $compdir -name $file_src | sed "s/.$/o/"`
- if [ -z $full_path ] ; then
-  return
+ full_path=`find $srcdir -name $file_src`
+ if [ -z "$full_path" ] ; then
+   return
  fi
+fi
+#
+file_obj=`echo $file | sed 's/.$/o/'`
+full_path=`find $compdir -name $file_obj -not -path "/*.save/*"`
+if [ -z "$full_path" ] ; then
+  return
 fi
 #
 ldir=`dirname $full_path`
@@ -39,7 +45,7 @@ llib=`basename $ldir`
 #
 source ./sbin/compilation/stamp_remove.sh "lib"
 #
-if [[ "$operate" == "remove" ]] && [[ -f $full_path ]]  ; then
+if [[ "$operate" == "remove" ]] && [[ -f "$full_path" ]]  ; then
   if [ "$VERB" == 1 ] ; then
    echo "rm -f  $full_path"
    echo "rm -f config/stamps_and_lists/lib${llib}.a.stamp"
@@ -48,7 +54,7 @@ if [[ "$operate" == "remove" ]] && [[ -f $full_path ]]  ; then
    rm -f config/stamps_and_lists/lib${llib}.a.stamp 
   fi
 fi
-if [[ "$operate" == "save" ]] && [[ -f $full_path ]]  ; then
+if [[ "$operate" == "save" ]] && [[ -f "$full_path" ]]  ; then
   if [ "$VERB" == 1 ] ; then
    echo "mkdir -p $ldir/$save_dir"
    echo "mv $full_path $ldir/$save_dir"
@@ -57,7 +63,7 @@ if [[ "$operate" == "save" ]] && [[ -f $full_path ]]  ; then
    mv $full_path $ldir/$save_dir
   fi
 fi
-if [[ "$operate" == "restore" ]] && [[ -f $ldir/$restore_dir/$file ]]  ; then
+if [[ "$operate" == "restore" ]] && [[ -f "$ldir/$restore_dir/$file" ]]  ; then
   if [ "$VERB" == 1 ] ; then
    echo " cp $ldir/$restore_dir/$file $ldir"
   else

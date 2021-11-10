@@ -102,12 +102,13 @@ subroutine COLLISIONS_basic_operations( what, COLL )
            !
            if (trim(COLL%name)=="Momentum".and.i_mix>0)  cycle
            !
-           if ( COLLISIONS_CV_only .and. i_n> n_met_bands  ) cycle
-           if ( COLLISIONS_CV_only .and. i_m<=n_full_bands ) cycle
-           !
            if (i_m>COLL_bands(2)) cycle
            !
            do i_sp=1,n_sp_pol
+             !
+             if ( COLLISIONS_CV_only .and. i_n> n_met_bands(i_sp)  ) cycle
+             if ( COLLISIONS_CV_only .and. i_m<=n_full_bands(i_sp) ) cycle
+             !
              COLL%N=COLL%N+1
              if (i_c==2) then
                COLL%state(COLL%N,:4)=(/i_n,i_m,i_k,i_sp/)

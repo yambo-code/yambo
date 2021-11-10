@@ -176,9 +176,9 @@ subroutine RT_select_k_space(E_RT,kpt,do_kpt)
      call msg('s','User    defined',u_k,after_msg="[iku]"//" "//trim(label))
      call msg('s','Nearest k-point',RT_carriers%kpt(ik,:),after_msg="[iku][ik="//trim(intc(ik))//"]")
      call msg('s','Distance       ',k_dist(ik),after_msg="[iku]")
-     do i_c=E_RT%nbf+1,E_RT%nbf+2
-       do i_v=E_RT%nbf-1,E_RT%nbf
-         title="Gap CBm+"//trim(intc(i_c-E_RT%nbf))//" VBM-"//trim(intc(E_RT%nbf-i_v))
+     do i_c=E_RT%nbf(1)+1,E_RT%nbf(1)+2
+       do i_v=E_RT%nbf(1)-1,E_RT%nbf(1)
+         title="Gap CBm+"//trim(intc(i_c-E_RT%nbf(1)))//" VBM-"//trim(intc(E_RT%nbf(1)-i_v))
          call msg('s',trim(title),(E_RT%E(i_c,ik,1)-E_RT%E(i_v,ik,1))*HA2EV,after_msg="[ev]")
        enddo 
      enddo

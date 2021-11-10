@@ -203,8 +203,8 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
      ! ... Apply the DIPOLES Mask
      if (l_dipoles) RT_carriers%OCC_el%dN(i_RT)=RT_carriers%OCC_el%dN(i_RT)*DIPs_mask(ib,ik,i_spin)
      !
-     if (ib<=RT_E%nbf) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
-     if (ib> RT_E%nbf) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
+     if (ib<=RT_E%nbf(i_spin)) integrated_Nhole(i_T,1)=integrated_Nhole(i_T,1)-RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
+     if (ib> RT_E%nbf(i_spin)) integrated_Nel(i_T,1)  =integrated_Nel(i_T,1)+RT_carriers%OCC_el%dN(i_RT)*RT_k%weights(ik_RT)
    enddo
    Max_occ=maxval(abs(RT_carriers%OCC_el%dN))
    !
@@ -214,7 +214,7 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
        ik_path=PROJECTION_k_on_the_path_or_plane(ik)
        if (ik_path==0) cycle
        do ib=BANDS_bands(1),BANDS_bands(2)
-         if (ib<=RT_E%nbf) then
+         if (ib<=RT_E%nbf(1)) then
            integrated_dF_holes(ik_path,i_T,:)=integrated_dF_holes(ik_path,i_T,:)-&
 &                                             GRID_k%weights(ik)*INTERP_obj(ID_grid)%INTERP(ib,ik,1)
          else
@@ -307,8 +307,8 @@ subroutine RT_occ_bands_interpolation(en,k,q,n_T_steps)
      if (ID==ID_circuit) NK=real(CIRCUIT_k%nbz)
      if (ID==ID_grid)    NK=real(GRID_k%nbz)
      !
-     integrated_Nhole(i_T,2)=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf,:,:))/NK
-     integrated_Nel(i_T,2)  = sum(INTERP_obj(ID)%INTERP(RT_E%nbf+1:RT_bands(2),:,:))/NK
+     integrated_Nhole(i_T,2)=-sum(INTERP_obj(ID)%INTERP(RT_bands(1):RT_E%nbf(1),:,:))/NK
+     integrated_Nel(i_T,2)  = sum(INTERP_obj(ID)%INTERP(RT_E%nbf(1)+1:RT_bands(2),:,:))/NK
      !
    end subroutine
    !

@@ -105,11 +105,11 @@ subroutine RT_plot_interpolated_values(CIRCUIT_E,RT_E,CIRCUIT_dE,i_T,ID_circuit,
      if (l_RT_occupations) then
        if (Max_occ>0. .and. abs(Nel_fac-1.)>zero_dfl ) values(3)=values(3)/Max_occ*Nel_fac
        !
-       if (ib>=RT_E%nbf+1.and.values(3)<0.) then
+       if (ib>=RT_E%nbf(1)+1.and.values(3)<0.) then
          WARN_elec=.TRUE.
          values(3)=0.
        endif
-       if (ib<=RT_E%nbf  .and.values(3)>0.) then
+       if (ib<=RT_E%nbf(1)  .and.values(3)>0.) then
          WARN_hole=.TRUE.
          values(3)=0.
        endif

@@ -217,12 +217,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    !
    do ib1=RT_bands(1),RT_bands(2)
      do ib2=RT_bands(1),RT_bands(2)
-       if((ib1<=en%nbf.and.ib2<=en%nbf).and.(.not.keep_vv) ) cycle
-       if((ib1> en%nbf.and.ib2> en%nbf).and.(.not.keep_cc) ) cycle
-       if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_cv) ) cycle
-       if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_vc) ) cycle
-       !if ( build_G_ret .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
-       !if ( build_G_ret .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+       if((ib1<=en%nbf(1).and.ib2<=en%nbf(1)).and.(.not.keep_vv) ) cycle
+       if((ib1> en%nbf(1).and.ib2> en%nbf(1)).and.(.not.keep_cc) ) cycle
+       if((ib1> en%nbf(1).and.ib2<=en%nbf(1)).and.(.not.keep_cv) ) cycle
+       if((ib1<=en%nbf(1).and.ib2> en%nbf(1)).and.(.not.keep_vc) ) cycle
+       !if ( build_G_ret .and. (ib1> en%nbf(1).and.ib2<=en%nbf(1)).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+       !if ( build_G_ret .and. (ib1<=en%nbf(1).and.ib2> en%nbf(1)).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
        F_k_tmtp(ik,i_Tc)=F_k_tmtp(ik,i_Tc)+G_tmp(ib1,ib2)
      enddo
    enddo
@@ -274,8 +274,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
        do ib1=RT_bands(1),RT_bands(2)
          do ib2=RT_bands(1),RT_bands(2)
            deph_factor=1._SP
-           if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
-           if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+           if((ib1> en%nbf(1).and.ib2<=en%nbf(1))) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+           if((ib1<=en%nbf(1).and.ib2> en%nbf(1))) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
            H_rho_T(ib1,ib2,:,i_kind)=H_EQ(ib1,ib2,:,1)+Ho_plus_sigma(ib1,ib2,:,1)*deph_factor
          enddo
        enddo
@@ -291,8 +291,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
          do ib1=RT_bands(1),RT_bands(2)
            do ib2=RT_bands(1),RT_bands(2)
              deph_factor=1._SP
-             if((ib1> en%nbf.and.ib2<=en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
-             if((ib1<=en%nbf.and.ib2> en%nbf)) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+             if((ib1> en%nbf(1).and.ib2<=en%nbf(1))) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
+             if((ib1<=en%nbf(1).and.ib2> en%nbf(1))) deph_factor=exp(-Rho_deph*RT_time(i_T(i_kind)))
              rho_T(ib1,ib2,:)=-cI*dG_lesser(ib1,ib2,:,1)*deph_factor
            enddo
          enddo
@@ -363,15 +363,15 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
      do ib1=RT_bands(1),RT_bands(2)
        do ib2=RT_bands(1),RT_bands(2)
-         if((ib1<=en%nbf.and.ib2<=en%nbf).and.(.not.keep_vv) ) cycle
-         if((ib1> en%nbf.and.ib2> en%nbf).and.(.not.keep_cc) ) cycle
-         if((ib1> en%nbf.and.ib2<=en%nbf).and.(.not.keep_cv) ) cycle
-         if((ib1<=en%nbf.and.ib2> en%nbf).and.(.not.keep_vc) ) cycle
+         if((ib1<=en%nbf(1).and.ib2<=en%nbf(1)).and.(.not.keep_vv) ) cycle
+         if((ib1> en%nbf(1).and.ib2> en%nbf(1)).and.(.not.keep_cc) ) cycle
+         if((ib1> en%nbf(1).and.ib2<=en%nbf(1)).and.(.not.keep_cv) ) cycle
+         if((ib1<=en%nbf(1).and.ib2> en%nbf(1)).and.(.not.keep_vc) ) cycle
          !
-         !if ( build_G_ret .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
-         !if ( build_G_ret .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
-         !if ( build_G_adv .and. (ib1> en%nbf.and.ib2<=en%nbf).and. keep_cv ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
-         !if ( build_G_adv .and. (ib1<=en%nbf.and.ib2> en%nbf).and. keep_vc ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
+         !if ( build_G_ret .and. (ib1> en%nbf(1).and.ib2<=en%nbf(1)).and. keep_cv ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+         !if ( build_G_ret .and. (ib1<=en%nbf(1).and.ib2> en%nbf(1)).and. keep_vc ) G_tmp(ib1,ib2)=G_tmp(ib1,ib2)*rho_T(ib2,ib1,ik)
+         !if ( build_G_adv .and. (ib1> en%nbf(1).and.ib2<=en%nbf(1)).and. keep_cv ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
+         !if ( build_G_adv .and. (ib1<=en%nbf(1).and.ib2> en%nbf(1)).and. keep_vc ) G_tmp(ib2,ib1)=rho_T(ib1,ib2,ik)*G_tmp(ib1,ib2)
          !
          if( .not.build_G_adv ) F_k_tmtp(ik,i_T(1))=F_k_tmtp(ik,i_T(1))+      G_tmp(ib1,ib2)  ! G_adv is zero for t>t'
          if( .not.build_G_ret ) F_k_tmtp(ik,i_T(2))=F_k_tmtp(ik,i_T(2))-conjg(G_tmp(ib2,ib1)) ! G_ret is zero for t<t'

@@ -60,7 +60,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  type(bz_samp), intent(in)    :: k,q
  real(SP),      intent(in)    :: Time
  type(X_t),     intent(in)    :: X
- complex(SP),   intent(in)    :: V_bands(NL_bands(2),QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: V_bands(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol)
  integer,       intent(in)    :: i_time
  !
  ! Working Space
@@ -110,7 +110,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 #if defined _TIMING
    call timing('NL Hamiltonian',OPR='stop')
 #endif
-   call Berry_Polarization_NEQ(E,k,V_bands,NL_P(1:3))
+   do i_sp_pol=1,n_sp_pol
+     call Berry_Polarization_NEQ(E,k,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),NL_P(1:3))
+   enddo
 #if defined _TIMING
    call timing('NL Hamiltonian',OPR='start')
 #endif   
@@ -223,7 +225,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
      ! Use Sm1_plus, Sm1_minus and V_bands to build the W operator
      !
-     call  Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
+     call  Build_W_operator(E,k,A_tot,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),H_nl_sc)
      !
    endif                                                         
    !
@@ -235,7 +237,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
    ! Damping: NL_damping fills the I_relax matrix 
    ! ================================================
-   call NL_damping(E,V_bands,ik,i_sp_pol)
+   call NL_damping(E,ik,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),ik,i_sp_pol))
    !
    ! Store the Hamiltonian
    ! =====================

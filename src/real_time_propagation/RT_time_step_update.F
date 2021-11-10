@@ -71,8 +71,8 @@ subroutine RT_time_step_update( E )
    do ik=1,RT_nk
      !
      if( .not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
-     do ib=RT_bands(1),E%nbf
-       do ibp=E%nbf+1,RT_bands(2)
+     do ib=RT_bands(1),E%nbf(1)
+       do ibp=E%nbf(1)+1,RT_bands(2)
          dG_lesser(ib,ibp,ik,:)=cZERO
          dG_lesser(ibp,ib,ik,:)=cZERO
           G_lesser(ib,ibp,ik,:)=cZERO

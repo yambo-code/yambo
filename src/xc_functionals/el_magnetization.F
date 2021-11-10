@@ -68,10 +68,10 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  if (n_spin==1) return
  !
- bands_range=(/1,en%nbm/)
- if(present(bands)) bands_range=bands
  !
  do i_sp_pol=1,n_sp_pol
+   bands_range=(/1,en%nbm(i_sp_pol)/)
+   if(present(bands)) bands_range=bands
    do ik=1,Xk%nibz
      do ib=bands_range(1),bands_range(2)
        !

@@ -110,8 +110,8 @@ subroutine RT_manual_excitation(E_RT,k,do_kpt,SUCCESS)
            iv=ibp
            ic=ib
            !
-           if (ic <=E_RT%nbf) cycle
-           if (iv > E_RT%nbm) cycle
+           if (ic <=E_RT%nbf(1)) cycle
+           if (iv > E_RT%nbm(1)) cycle
            !
            if (Pumped_state(iv,ik)) cycle
            if (Pumped_state(ic,ik)) cycle

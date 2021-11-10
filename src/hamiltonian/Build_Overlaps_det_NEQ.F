@@ -42,16 +42,16 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  integer,      intent(in) :: i_sp
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
- complex(SP),  intent(in) :: V_bands(H_ref_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in) :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
  complex(SP), intent(out) :: S_det(6)
- complex(SP), intent(out) :: Sm1_plus (en%nbf,en%nbf,6)
- complex(SP), intent(out) :: Sm1_minus(en%nbf,en%nbf,6)
+ complex(SP), intent(out) :: Sm1_plus (en%nbf(i_sp),en%nbf(i_sp),6)
+ complex(SP), intent(out) :: Sm1_minus(en%nbf(i_sp),en%nbf(i_sp),6)
  !
  ! Work Space
  !
  integer     :: idx(3),id,ikp,ikm,i1,i2
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
- !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf) ! used in full construction of overlaps
+ !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf(i_sp)) ! used in full construction of overlaps
  complex(SP) :: tmp_det,vtmp(H_ref_bands(2))
  !
  S_det    =cZERO
@@ -102,11 +102,11 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Full construction of the Sm1_minus matrix
        !
-!       call M_by_M_omp('C','N',H_ref_bands(2),en%nbf,H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
-!&                          H_ref_bands(2),V_bands(:,:,ikm_ibz,i_sp),H_ref_bands(2),cZERO,V_tmp,H_ref_bands(2))
+!       call M_by_M_omp('C','N',H_ref_bands(2),en%nbf(i_sp),H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
+!&                          H_ref_bands(2),V_bands(:,:,ikm_ibz),H_ref_bands(2),cZERO,V_tmp,H_ref_bands(2))
        !
-!       call M_by_M_omp('C','N',en%nbf,en%nbf,H_ref_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-!&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf)
+!       call M_by_M_omp('C','N',en%nbf(i_sp),en%nbf(i_sp),H_ref_bands(2),cONE,V_bands(:,:,ik_ibz),&
+!&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf(i_sp))
        !
        ! Matrix head
        !
@@ -122,8 +122,8 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1
-         do i1=H_ref_bands(1),en%nbf
-           Sm1_minus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz,i_sp), &
+         do i1=H_ref_bands(1),en%nbf(i_sp)
+           Sm1_minus(i1,i2,id+(istep-1)*3)=Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz), &
 &                conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
           enddo
        enddo
@@ -131,14 +131,14 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Matrix core
        !
-       do i2=H_ref_bands(1),en%nbf
-         call M_by_V_omp('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz,i_sp),vtmp)
+       do i2=H_ref_bands(1),en%nbf(i_sp)
+         call M_by_V_omp('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),V_bands(:,i2,ikm_ibz),vtmp)
          !
-         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf(i_sp),cONE,V_bands(:,:,ik_ibz),&
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
        enddo
        !
-       call SERIAL_inversion(en%nbf,Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.false.)
+       call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.false.)
        !
        idx=k_map%k_map_inv(ikbz,:)
        idx(id)=idx(id)+istep
@@ -151,11 +151,11 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Full construction of the Sm1_plus matrix
        !
-!       call M_by_M_omp('N','N',H_ref_bands(2),en%nbf,H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
-!&                  H_ref_bands(2),V_bands(:,:,ikp_ibz,i_sp),H_ref_bands(2),cZERO,V_tmp(:,:),H_ref_bands(2))
+!       call M_by_M_omp('N','N',H_ref_bands(2),en%nbf(i_sp),H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
+!&                  H_ref_bands(2),V_bands(:,:,ikp_ibz),H_ref_bands(2),cZERO,V_tmp(:,:),H_ref_bands(2))
 !       !
-!       call M_by_M_omp('C','N',en%nbf,en%nbf,H_ref_bands(2),cONE,V_bands(:,:,ik_ibz,i_sp),&
-!&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf)
+!       call M_by_M_omp('C','N',en%nbf(i_sp),en%nbf(i_sp),H_ref_bands(2),cONE,V_bands(:,:,ik_ibz),&
+!&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf(i_sp))
        !
        ! Matrix head
        !
@@ -171,23 +171,23 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1
-         do i1=H_ref_bands(1),en%nbf
+         do i1=H_ref_bands(1),en%nbf(i_sp)
             Sm1_plus(i1,i2,id+(istep-1)*3)=&
-            &  Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz,i_sp),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+            &  Vstar_dot_V(H_ref_bands(2),V_bands(:,i1,ik_ibz),DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
          enddo
        enddo
 !$omp end parallel do
        !
        ! Matrix Core
        !
-       do i2=H_ref_bands(1),en%nbf
-         call M_by_V_omp('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),V_bands(:,i2,ikp_ibz,i_sp),vtmp)
+       do i2=H_ref_bands(1),en%nbf(i_sp)
+         call M_by_V_omp('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),V_bands(:,i2,ikp_ibz),vtmp)
          !
-         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,V_bands(:,:,ik_ibz,i_sp),&
+         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf(i_sp),cONE,V_bands(:,:,ik_ibz),&
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
        enddo
        !
-       call SERIAL_inversion(en%nbf,Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.true.)
+       call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.true.)
        !
      enddo  
      !

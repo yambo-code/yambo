@@ -67,7 +67,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  ! Work Space
  !
- integer          ::i_spin,nbf_m_SAVE(2),i_a
+ integer          ::i_spin,nbf_SAVE(2),nbm_SAVE(2),nb_SAVE(2),i_a
  character(2)     ::sec_mode
  !
  ! Resets
@@ -178,7 +178,10 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  ! Fermi Level Updates
  !=====================
  !
- if (input_Tel_is_negative) nbf_m_SAVE=(/en%nbf,en%nbm/)
+ if (input_Tel_is_negative) then
+   nbf_SAVE=en%nbf
+   nbm_SAVE=en%nbm
+ endif
  !
  if (.not.allocated(en%fo) .and. .not. l_sc_run) then
    if (QP_ctl_ID==1) call OCCUPATIONS_Fermi(en,k,"X+QP")
@@ -190,14 +193,14 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  endif
  !
  if (input_Tel_is_negative) then
-   en%nbf=nbf_m_SAVE(1)
-   en%nbm=nbf_m_SAVE(2)
+   en%nbf=nbf_SAVE
+   en%nbm=nbm_SAVE
  endif
  !
  ! Energies report
  !-----------------
  !
- if (en%nbf==en%nbm) then
+ if (all((/en%nbf(:n_sp_pol)==en%nbm(:n_sp_pol)/))) then
    !
    call QP_apply_gap_report(en,"coarse-grid")
    if (allocated(en%FG%E)) call QP_apply_gap_report(en,"FineGd")
@@ -225,11 +228,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
     character(100)::space,msg_ch
     space(1:100)=" "
     do i_spin=1,n_sp_pol
-      Ego(i_spin)=minval(E%Eo(E%nbf+1,:,i_spin))-maxval(E%Eo(E%nbf,:,i_spin))
+      Ego(i_spin)=minval(E%Eo(E%nbf(i_spin)+1,:,i_spin))-maxval(E%Eo(E%nbf(i_spin),:,i_spin))
       if (title=="FineGd") then
-        Eg(i_spin)=minval(E%FG%E(E%nbf+1,:,i_spin))-maxval(E%FG%E(E%nbf,:,i_spin))
+        Eg(i_spin)=minval(E%FG%E(E%nbf(i_spin)+1,:,i_spin))-maxval(E%FG%E(E%nbf(i_spin),:,i_spin))
       else
-        Eg(i_spin)=minval(E%E(E%nbf+1,:,i_spin))-maxval(E%E(E%nbf,:,i_spin))
+        Eg(i_spin)=minval(E%E(E%nbf(i_spin)+1,:,i_spin))-maxval(E%E(E%nbf(i_spin),:,i_spin))
       endif
       !
       msg_ch='['//title//'] Minimum Bare Gap        [ev]'

@@ -77,20 +77,20 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! COND bands
  !------------
  if (ENVIRONMENT=="DIPOLES"                  ) PAR_n_c_bands= (/PAR_Dip_ib_lim(2),PAR_Dip_ib(2)/)
- if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_G_space"         ) PAR_n_c_bands= (/E%nbf+1,PAR_X_ib(2)/)
- if (ENVIRONMENT=="Response_T_space"         ) PAR_n_c_bands= (/E%nbf+1,BS_bands(2)/)
+ if (index(ENVIRONMENT, "Response_G_space")>0) PAR_n_c_bands= (/minval(E%nbf)+1,PAR_X_ib(2)/)
+ if (ENVIRONMENT=="Response_G_space"         ) PAR_n_c_bands= (/minval(E%nbf)+1,PAR_X_ib(2)/)
+ if (ENVIRONMENT=="Response_T_space"         ) PAR_n_c_bands= (/minval(E%nbf)+1,BS_bands(2)/)
  !
  ! VAL bands
  !-----------
  if (ENVIRONMENT=="DIPOLES")                          PAR_n_v_bands= (/PAR_Dip_ib(1),PAR_Dip_ib_lim(1)/)
- if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
+ if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),maxval(E%nbm)/)
 #if defined _NL || defined _SC
  if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/1,PAR_X_ib(2)/)
 #else
- if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),E%nbm/)
+ if (index(ENVIRONMENT, "Response_G_space")>0       ) PAR_n_v_bands= (/PAR_X_ib(1),maxval(E%nbm)/)
 #endif
- if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),E%nbm/)
+ if (ENVIRONMENT=="Response_T_space"                ) PAR_n_v_bands= (/BS_bands(1),maxval(E%nbm)/)
  !
  ! # G vectors
  !-------------
@@ -145,7 +145,7 @@ subroutine PARALLEL_global_dimensions(E,Xk,q,ENVIRONMENT)
  ! Generic Bands
  !---------------
  if (ENVIRONMENT=="Self_Energy"                     ) then
-   if (l_HF_and_locXC)                               PAR_n_bands=(/1,max(E%nbm,QP_nb)/)
+   if (l_HF_and_locXC)                               PAR_n_bands=(/1,maxval((/E%nbm(:),QP_nb/))/)
    if ((l_gw0.or.l_life).and..not.computing_Fock)    PAR_n_bands=(/1,max(QP_n_G_bands(2),QP_nb)/)
    if (.not.computing_Fock)                          PAR_n_bands(1)=QP_n_G_bands(1)
 #if defined _SC || defined _RT

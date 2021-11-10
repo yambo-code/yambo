@@ -42,7 +42,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  type(levels),  intent(in)  :: en
  type(bz_samp), intent(in)  :: Xk
  type(bz_map),  intent(in)  :: k_map
- complex(SP),   intent(in)  :: All_S_det(6,Xk%nbz,n_sp_pol)
+ complex(SP),   intent(in)  :: All_S_det(6,Xk%nbz)
  complex(SP),   intent(out) :: P_Berry_RED(3)  ! In reduced coordinates
  !
  ! Work Space
@@ -76,7 +76,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
          !
          idx(id_in)=i1
          ikbz=k_map%k_map_dir(idx(1),idx(2),idx(3))
-         zeta=zeta*All_S_det(id_in,ikbz,1)
+         zeta=zeta*All_S_det(id_in,ikbz)
          !
        enddo
        !
@@ -97,10 +97,6 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  !
  P_Berry_RED=P_Berry_RED/(2._SP*pi)*spin_occ
  !
- if(n_spin==1) then
-   P_Berry_RED=real(P_Berry_RED,SP)-2._SP*NINT(real(P_Berry_RED,SP)/2._SP)
- else
-   P_Berry_RED=real(P_Berry_RED,SP)-1._SP*NINT(real(P_Berry_RED,SP)/1._SP)
- endif
+ P_Berry_RED=real(P_Berry_RED,SP)-spin_occ*NINT(real(P_Berry_RED,SP)/spin_occ)
  !
 end subroutine Berry_polarization_EQ

@@ -38,7 +38,7 @@ subroutine REPORT_Occupations(what,E)
  ! 
  ! Work Space
  ! 
- integer           ::i_sp_pol,Nbf(n_sp_pol),Nbm(n_sp_pol),title_len
+ integer           ::i_sp_pol,Nbf(2),Nbm(2),title_len
  character(schlen) ::title
  real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
@@ -93,10 +93,10 @@ subroutine REPORT_Occupations(what,E)
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
      call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap',i_sp_pol),E_g_dir(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
      if (E%nk>1) then
        call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between k-points ',i_sp_pol),E_k_ind(i_sp_pol,:))
+       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between kpts ',i_sp_pol),E_k_ind(i_sp_pol,:))
        call msg('r',COMPOSE_spin_msg(title,title_len,'Last valence band width',i_sp_pol), &
 &               E_g_ind(i_sp_pol+(n_sp_pol-1),2)*HA2EV,'[eV]')
        call msg('r',COMPOSE_spin_msg(title,title_len,'1st conduction band width',i_sp_pol), &
@@ -131,10 +131,11 @@ subroutine REPORT_Occupations(what,E)
    do i_sp_pol=1,n_sp_pol
      f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
+     !
+     call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',i_sp_pol),(/nel/real(n_sp_pol),N_met/))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',i_sp_pol),(/f_met/))
+     !
    enddo
-   !
-   call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',0),(/nel,N_met/))
-   call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',0),(/f_met/))
    !
    if (n_sp_pol==1) call warning(COMPOSE_spin_msg(title,title_len,'Metallic system',0))
    if (n_sp_pol==2) then

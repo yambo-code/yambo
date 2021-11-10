@@ -38,5 +38,5 @@ do
   obj=`echo $file | sed "s/\.o/\.X/"`
   obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
   DIR_is_to_recompile=1
-  source ./sbin/compilation/check_object_childs.sh "remove"
+  source ./sbin/compilation/check_object_childs.sh
 done

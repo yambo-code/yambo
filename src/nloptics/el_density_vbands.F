@@ -55,7 +55,7 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  type(bz_samp),intent(in)  :: Xk
  type(levels), intent(in)  :: en       
  real(SP),     intent(out) :: rho(fft_size)
- complex(SP),  intent(in)  :: VAL_BANDS(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol)
+ complex(SP),  intent(in)  :: VAL_BANDS(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol)
  !
  ! Work Space 
  !
@@ -73,7 +73,7 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
 !$omp parallel do default(shared), private(ir,is)
    do ir=1,fft_size
      do is=1,n_sp_pol
-       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*sum(abs(VAL_BANDS(ir,:,ik_mem,is))**2._SP)
+       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*sum(abs(VAL_BANDS(ir,:en%nbf(is),ik_mem,is))**2._SP)
      enddo
    enddo
 !$omp end parallel do

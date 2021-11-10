@@ -44,7 +44,7 @@ subroutine INIT_barriers()
  !
  ! ...
  !
- metallic_system=n_met_bands/=n_full_bands
+ metallic_system=any(n_met_bands/=n_full_bands)
  !
  newton=trim(QP_solver)=='n'
  QP_secant=trim(QP_solver)=='s'

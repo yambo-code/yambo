@@ -86,8 +86,8 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (n_sp_pol==2) then
-     if (i_spin==1) ch="= Spin DN ============================================"
-     if (i_spin==2) ch="= Spin UP ============================================"
+     if (i_spin==1) ch="= Spin UP ============================================"
+     if (i_spin==2) ch="= Spin DN ============================================"
      call msg(' rn',trim(ch))
    endif
    !

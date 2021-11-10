@@ -31,7 +31,7 @@ subroutine PHEL_driver(E,k,q)
  use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,&
 &                         l_GKKP_expanded_DB_exists,elph_nb,elph_use_q_grid
  use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&
-&                         PH_DbGd_points,PH_energy,KpQ_IO_map,phel_info,PHEL_fit_Energies,&
+&                         PH_DbGd_points,PH_energy,KpQ_io_map,phel_info,PHEL_fit_Energies,&
 &                         QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH,QPHt_alloc,QPH_DDFPT
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,   ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
@@ -43,10 +43,6 @@ subroutine PHEL_driver(E,k,q)
  use frequency,      ONLY:W_reset
  use stderr,         ONLY:STRING_same
  use parallel_m,     ONLY:PARs_PH_Q_ibz
- ! SCREENING TEST >
- use stderr,         ONLY:STRING_same
- use QP_m,           ONLY:QP_solver
- ! SCREENING TEST <
  !
 #include<memory.h>
  !
@@ -62,11 +58,6 @@ subroutine PHEL_driver(E,k,q)
  !
  call section('*',"Phonon-Electron Interaction and properties")
  !==============================================================
- !
- if (STRING_same(QP_solver,"d")) then
-   call PHEL_screening(E,q)
-   return
- endif
  !
  ! Setup
  !=======
@@ -109,12 +100,15 @@ subroutine PHEL_driver(E,k,q)
  !====================
  call ELPH_databases_grids_map(k,q)
  !
+ ! ... Static-Screening test/correction 
+ call PHEL_screening(E,q)
+ !
  ! El-Ph databases I/O
  !=====================
+ call section("=","El-Ph databases loading")
  call ELPH_databases_load(GKKP_pe_sq,E,k,q,QP_PH_n_G_bands,PH_Q,"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
- !
  call ELPH_acoustic_phonon_properties(q)
  !
  ! Maps into the RT kinds
@@ -231,7 +225,7 @@ subroutine PHEL_driver(E,k,q)
    !
    call section("=","K-Q table (non uniform Q-grid)")
    !--------------------------------------------------
-   YAMBO_ALLOC(KpQ_IO_map,(PH_Q(1):PH_Q(2),k%nbz) )
+   YAMBO_ALLOC(KpQ_io_map,(PH_Q(1):PH_Q(2),k%nbz) )
    call PHEL_k_nearest_table(k)
  endif
  !

@@ -150,7 +150,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
  call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
  call it('r',defs,'cohsex',  '[R][Xp] COlumb Hole Screened EXchange')
- call it('r',defs,'Xo',      '[R][Xx] Dynamical IP Response Function')
+ call it('r',defs,'Xx',       '[R][Xx] Dynamical Response Function')
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
@@ -277,7 +277,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  call it('f',defs,'QPsymmtrz', '[GW] Force symmetrization of states with the same energy',verb_level=V_qp)
  !
- ! Xs Xd Xp
+ ! Xx Xs Xd Xp
  !
  call it(defs,'Chimod',       '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.,case="A")
  call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys,cpu/gpu',Chi_linalg_mode,verb_level=V_resp,case="A")
@@ -287,6 +287,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
+ call it('f',defs,'WriteXo', '[X] Write on the-fly the IP response function',verb_level=V_resp)
  !
  ! BSE/BSK
  !
@@ -391,7 +392,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
-! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
@@ -506,11 +506,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
- ! Non-linear Optics
- !
 #if defined _NL
  !
- ! Non liner optics
+ ! Non-linear Optics
  !
  call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 

@@ -155,7 +155,7 @@ module PHEL
        !
        ! Obtain k-q in the full BZ from k in the bz and q in the ibz
        if (     elph_use_q_grid) ik_m_q = qindx_X(iq,ikbz,1)
-       if (.not.elph_use_q_grid) ik_m_q = KpQ_IO_map(iq,ikbz)
+       if (.not.elph_use_q_grid) ik_m_q = KpQ_io_map(iq,ikbz)
        !
        ! Use k in the bz
        ik = ikbz

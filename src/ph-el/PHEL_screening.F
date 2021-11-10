@@ -23,18 +23,21 @@
 !
 subroutine PHEL_screening(E,q)
  !
- use pars,          ONLY:SP,cZERO,schlen
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,nqibz,bare_qpg
- use frequency,     ONLY:w_samp
- use X_m,           ONLY:X_mat,X_t
- use IO_int,        ONLY:io_control
- use IO_m,          ONLY:DUMP,NONE,REP,OP_RD_CL,RD_CL_IF_END,manage_action,OP_RD
- use LIVE_t,        ONLY:live_timing
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
- use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,myid
- use OUTPUT_simple, ONLY:OUTPUT_add_column
- use stderr,        ONLY:intc
+ use pars,           ONLY:SP,cZERO,schlen
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp,k_the_nearest,nqbz
+ use frequency,      ONLY:w_samp
+ use X_m,            ONLY:X_mat,X_t,X_alloc
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:DUMP,NONE,REP,RD_CL_IF_END,manage_action,OP_RD
+ use LIVE_t,         ONLY:live_timing
+ use ELPH,           ONLY:PH_qpt
+ use PHEL,           ONLY:PH_Q
+ use parallel_int,   ONLY:PARALLEL_index
+ use com,            ONLY:msg
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,myid
+ use vec_operate,    ONLY:rlu_iku_v_norm
+ use stderr,         ONLY:intc,real2ch
  !
 #include<memory.h>
  !
@@ -43,103 +46,138 @@ subroutine PHEL_screening(E,q)
  !
  ! Work Space
  !
- integer      ::Xo_ID,EM1D_ID,io_err(2),iq,SEC(2),IO_ACT,ig1,ig2,iw,ig3
- real(SP)     ::INT_SF(nqibz,2)
- type(w_samp) ::Xow,EM1Dw
- type(X_t)    ::Xo,EM1D
- complex(SP), allocatable :: Xo_mat(:,:,:)
+ !... map
+ integer      ::Q_local_map(PH_Q(2))
+ real(SP)     ::q_dist(nqbz),min_q_modulus
+ !
+ !... functions
+ integer , external ::io_X
+ character(schlen)  ::Q_map_report
+ !
+ ! ...X's
+ type(X_t)    ::X(2) ! ! 1:Xo 2:em1d 
+ type(w_samp) ::Xw(2)
+ integer      ::io_err(2),i_db,ID(2),iq,IO_ACT
+ complex(SP), allocatable :: X_loc_mat(:,:,:,:)
+ !
+ ! ...Output and naming
+ !integer      ::Xo_ID,EM1D_ID,io_err(2),iq,SEC(2),IO_ACT,ig1,ig2,iw,ig3
  complex(SP), allocatable :: F_test(:,:,:)
  type(PP_indexes)  ::px
- character(schlen) ::fname
  !
- integer , external ::io_X
- real(SP), external ::RIntegrate
+ call section("=","Static-Screening test&correct")
+ !=================================================
  !
- Xo%whoami=1
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=Xo_ID)
- io_err(1)=io_X(Xo,Xow,Xo_id)
+ ! Correspondance PH_q <-> q%
+ !----------------------------
+ call k_ibz2bz(q,'i',.false.)
+ min_q_modulus=10000.
+ do iq=2,q%nbz
+   if (iku_v_norm(q%ptbz(iq,:))<min_q_modulus) min_q_modulus=iku_v_norm(q%ptbz(iq,:))
+ enddo
+ do iq=PH_Q(1),PH_Q(2)
+   Q_local_map(iq)=k_the_nearest(PH_qpt(iq,:),q%ptbz,q%nbz,i_err=io_err(1),k_dist=q_dist)
+   Q_map_report='PH_Q ['//trim(intc(iq))//']: '//trim(intc(q%sstar(Q_local_map(iq),1)))//' (IBZ) '//&
+&               trim(real2ch(q_dist(Q_local_map(iq))/min_q_modulus))//' (distance/minimum Q modulus)'
+   call msg('r',trim(Q_map_report))
+ enddo
+ call k_ibz2bz(q,'d',.false.)
  !
- YAMBO_ALLOC(Xo_mat,(Xo%ng,Xo%ng,Xow%n_freqs))
- YAMBO_ALLOC(F_test,(nqibz,Xow%n_freqs,2))
+ ! DB's check 
+ !-------------
+ do i_db=1,2
+   if (i_db==1) X(i_db)%whoami=1
+   if (i_db==2) X(i_db)%whoami=3
+   call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=ID(i_db))
+   io_err(i_db)=io_X(X(i_db),Xw(i_db),ID(i_db))
+ enddo
+ !
+ if (any(io_err<0)) return
+ !
+ ! Alloc
+ !-------
+ call X_alloc('X',(/X(1)%ng,X(1)%ng,Xw(1)%n_freqs/))
+ YAMBO_ALLOC(X_loc_mat,(X(1)%ng,X(1)%ng,Xw(1)%n_freqs,2))
+ YAMBO_ALLOC(F_test,(PH_Q(1):PH_Q(2),Xw(1)%n_freqs,2))
  F_test=cZERO
  !
- EM1D%whoami=3
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1,2/),MODE=DUMP,ID=EM1D_ID)
- io_err(2)=io_X(EM1D,EM1Dw,EM1D_id)
- !
  call PP_indexes_reset(px)
- call PARALLEL_index(px,(/nqibz,Xow%n_freqs/))
- call live_timing('Screening test',px%n_of_elements(myid+1))
+ call PARALLEL_index(px,(/X(1)%ng**2/))
+ call live_timing('Screening Test-Function',px%n_of_elements(myid+1))
  !
- do iq=1,nqibz
-   !
-   if (iq==1) bare_qpg(iq,1)=1._SP
-   !
-   SEC=(/2*iq,2*iq+1/)
-   IO_ACT=manage_action(RD_CL_IF_END,iq,1,nqibz)
-   call io_control(ACTION=IO_ACT,COM=NONE,SEC=SEC,MODE=DUMP,ID=Xo_ID)
-   io_err(1)=io_X(Xo,Xow,Xo_id)
-   Xo_mat=X_mat
-   call io_control(ACTION=IO_ACT,COM=NONE,SEC=SEC,MODE=DUMP,ID=EM1D_ID)
-   io_err(2)=io_X(EM1D,EM1Dw,EM1D_id)
-   !
-   if (.not.any(px%element_2D(iq,:))) cycle
-   !
-   if (any(io_err/=0)) then
-     call live_timing(steps=Xow%n_freqs)
-     cycle
-   endif
-   !
-   do iw=1,Xow%n_freqs
-     if (.not.px%element_2D(iq,iw)) cycle 
-     call live_timing(steps=1)
-     do ig1=1,Xo%ng
-       do ig2=1,Xo%ng
-         do ig3=1,Xo%ng
-           F_test(iq,iw,1)= F_test(iq,iw,1)+Xo_mat(ig1,ig3,iw)*X_mat(ig3,ig2,iw)/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-           F_test(iq,iw,2)= F_test(iq,iw,2)+Xo_mat(ig1,ig3,iw)*X_mat(ig3,ig2,1)/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-         enddo
-       enddo
-     enddo 
+ do iq=PH_Q(1),PH_Q(2)
+!   !
+!   if (iq==1) bare_qpg(iq,1)=1._SP
+!   !
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,PH_Q(2))
+   do i_db=1,2
+     if (i_db==1) X(i_db)%whoami=1
+     if (i_db==2) X(i_db)%whoami=3
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq,2*iq+1/),MODE=DUMP,ID=ID(i_db))
+     io_err(i_db)=io_X(X(i_db),Xw(i_db),ID(i_db))
+     X_loc_mat(:,:,:,i_db)=X_mat
    enddo
-   !
+   write (*,*) iq,io_err
+!   !
+!   if (.not.any(px%element_2D(iq,:))) cycle
+!   !
+!   if (any(io_err/=0)) then
+!     call live_timing(steps=Xow%n_freqs)
+!     cycle
+!   endif
+!   !
+!   do iw=1,Xow%n_freqs
+!     if (.not.px%element_2D(iq,iw)) cycle 
+!     call live_timing(steps=1)
+!     do ig1=2,Xo%ng
+!       do ig2=1,Xo%ng
+!         do ig3=2,Xo%ng
+!           F_test(iq,iw,1)= F_test(iq,iw,1)+Xo_mat(ig1,ig3,iw)*X_mat(ig3,ig2,iw)/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+!           F_test(iq,iw,2)= F_test(iq,iw,2)+Xo_mat(ig1,ig3,iw)*X_mat(ig3,ig2,1)/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+!         enddo
+!       enddo
+!     enddo 
+!   enddo
+!   !
  enddo 
  !
- call PP_redux_wait(F_test)
+ ! Free
+ call X_alloc('X')
+ YAMBO_FREE(X_loc_mat)
  !
- call OUTPUT_add_column("phel_screening_diff",action="reset")
- call OUTPUT_add_column("phel_screening_diff",action="open")
- !
- do iq=1,nqibz
-   !
-   INT_SF(iq,1)=RIntegrate(aimag(F_test(iq,:,1)),real(Xow%p),Xow%n_freqs)
-   INT_SF(iq,2)=RIntegrate(aimag(F_test(iq,:,2)),real(Xow%p),Xow%n_freqs)
-   !
-   fname="phel_screening_q"//trim(intc(iq))
-   call OUTPUT_add_column(trim(fname),action="reset")
-   call OUTPUT_add_column(trim(fname),action="open")
-   do iw=1,Xow%n_freqs
-     !
-     call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xow%p(iw))/),UNIT="eV")
-     call OUTPUT_add_column(trim(fname),&
-&         TITLES=(/"Im[Xo x Em1D]","Re[Xo x Em1D]"/),R_VALUES=(/aimag(F_test(iq,iw,1)),real(F_test(iq,iw,1))/))
-     call OUTPUT_add_column(trim(fname),&
-&         TITLES=(/"Im[Xo x Em1S]","Re[Xo x Em1S]"/),R_VALUES=(/aimag(F_test(iq,iw,2)),real(F_test(iq,iw,2))/))
-     call OUTPUT_add_column(trim(fname),action="write")
-   enddo
-   call OUTPUT_add_column(trim(fname),action="close")
-   !
-   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Q-point"/),I_VALUES=(/iq/))
-   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"dInt[%]     ","Int(Im[DYN])"/),&
-&                         R_VALUES=(/(INT_SF(iq,1)-INT_SF(iq,2))/INT_SF(iq,1)*100.,INT_SF(iq,1)/))
-   call OUTPUT_add_column("phel_screening_diff",action="write")
-   !
- enddo
- call OUTPUT_add_column("phel_screening_diff",action="close")
+! !
+! call PP_redux_wait(F_test)
+! !
+! call OUTPUT_add_column("phel_screening_diff",action="reset")
+! call OUTPUT_add_column("phel_screening_diff",action="open")
+! !
+! do iq=1,nqibz
+!   !
+!   INT_SF(iq,1)=RIntegrate(aimag(F_test(iq,:,1)),real(Xow%p),Xow%n_freqs)
+!   INT_SF(iq,2)=RIntegrate(aimag(F_test(iq,:,2)),real(Xow%p),Xow%n_freqs)
+!   !
+!   fname="phel_screening_q"//trim(intc(iq))
+!   call OUTPUT_add_column(trim(fname),action="reset")
+!   call OUTPUT_add_column(trim(fname),action="open")
+!   do iw=1,Xow%n_freqs
+!     !
+!     call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xow%p(iw))/),UNIT="eV")
+!     call OUTPUT_add_column(trim(fname),&
+!&         TITLES=(/"Im[Xo x Em1D]","Re[Xo x Em1D]"/),R_VALUES=(/aimag(F_test(iq,iw,1)),real(F_test(iq,iw,1))/))
+!     call OUTPUT_add_column(trim(fname),&
+!&         TITLES=(/"Im[Xo x Em1S]","Re[Xo x Em1S]"/),R_VALUES=(/aimag(F_test(iq,iw,2)),real(F_test(iq,iw,2))/))
+!     call OUTPUT_add_column(trim(fname),action="write")
+!   enddo
+!   call OUTPUT_add_column(trim(fname),action="close")
+!   !
+!   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"Q-point"/),I_VALUES=(/iq/))
+!   call OUTPUT_add_column("phel_screening_diff",TITLES=(/"dInt[%]     ","Int(Im[DYN])"/),&
+!&                         R_VALUES=(/(INT_SF(iq,1)-INT_SF(iq,2))/INT_SF(iq,1)*100.,INT_SF(iq,1)/))
+!   call OUTPUT_add_column("phel_screening_diff",action="write")
+!   !
+! enddo
+! call OUTPUT_add_column("phel_screening_diff",action="close")
  !
  call live_timing( )
- !
- YAMBO_FREE(F_test)
- YAMBO_FREE(Xo_mat)
  !
 end subroutine PHEL_screening

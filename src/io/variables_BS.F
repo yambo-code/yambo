@@ -151,7 +151,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
      ! W_TDDFT_KERNEL
      !
      call def_variable_elemental(ID,"W_TDDFT_KERNEL",1,0,0)
-     call io_variable_elemental(ID,VAR='[W] xc-Kernel',CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=desc)
+     call io_variable_elemental(ID,VAR='[W] Hxc Kernel',CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=desc)
      !
    endif
    !

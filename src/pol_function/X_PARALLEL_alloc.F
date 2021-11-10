@@ -47,8 +47,6 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Type of allocation....
  !
- !l_XUP        =mode=="XUP"
- !l_PAR        =mode=="X"
  l_XUP      = index(mode,"XUP")>0
  l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
  l_CPU_ONLY = index(mode,"CPU_ONLY")>0

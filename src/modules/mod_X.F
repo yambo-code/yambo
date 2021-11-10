@@ -97,6 +97,7 @@ module X_m
  logical :: self_detect_E_range
  real(SP):: X_terminator_E
  real(SP):: X_term_E
+ logical :: l_write_disk_Xo=.false.
  logical :: l_X_terminator=.false.
  logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
@@ -126,7 +127,7 @@ module X_m
  complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
-   integer    :: whoami ! 1:Xo 2:em1s 3:em1d 4:pp
+   integer    :: whoami ! 1:X 2:em1s 3:em1d 4:pp
    integer    :: ng
    integer    :: ng_db
    integer    :: iq(2)
@@ -142,7 +143,7 @@ module X_m
    complex(SP):: Wd
    logical          :: Vnl_included
    character(2)     :: ordering
-   character(schlen):: f_xc
+   character(schlen):: KERNEL
  end type
  !
  interface
@@ -230,7 +231,7 @@ module X_m
      Xo%cg_percentual=Xi%cg_percentual
      Xo%ppaE         =Xi%ppaE
      Xo%Wd           =Xi%Wd
-     Xo%f_xc=Xi%f_xc
+     Xo%KERNEL       =Xi%KERNEL
    end subroutine
    !
    subroutine X_reset(X,type)
@@ -254,7 +255,7 @@ module X_m
      X%cg_percentual=100._SP
      X%ppaE         =1._SP
      X%ordering     ="T"
-     X%f_xc         ="none"       
+     X%KERNEL       ="none"       
    end subroutine
    !
 end module

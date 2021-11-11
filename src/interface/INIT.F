@@ -480,7 +480,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_dipoles) then
        n_threads_DIP=0
      endif
-     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_bse,l_Xo/)) then
+     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_bse,l_Xo/))) then
        n_threads_K=0
        n_threads_X=0
        n_threads_DIP=0

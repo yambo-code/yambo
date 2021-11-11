@@ -52,6 +52,7 @@ subroutine PHEL_driver(E,k,q)
  ! Work Space
  !
  integer             ::i_err,ID,nk_CG,iq,il
+ logical             ::l_SS_test
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
@@ -101,7 +102,8 @@ subroutine PHEL_driver(E,k,q)
  call ELPH_databases_grids_map(k,q)
  !
  ! ... Static-Screening test/correction 
- call PHEL_screening(E,q)
+ call PHEL_screening(E,q,l_SS_test)
+ if (l_SS_test) return
  !
  ! El-Ph databases I/O
  !=====================

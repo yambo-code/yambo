@@ -127,7 +127,7 @@ module X_m
  complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
-   integer    :: whoami ! 1:X 2:em1s 3:em1d 4:pp
+   integer    :: whoami ! 1:X 2:em1s 3:em1d 4:pp 5:Xo
    integer    :: ng
    integer    :: ng_db
    integer    :: iq(2)

@@ -51,7 +51,10 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  X%KERNEL='none'
  !
- if (l_rpa_IP) return
+ if (l_rpa_IP) then
+   X%KERNEL='IP'
+   return
+ endif
  !
  ! Hartree
  !

@@ -34,7 +34,7 @@ integer function io_X(X,Xw,ID)
  use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_RESPONSE,IO_NOT_ALLOWED,&
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_X_WORLD
 #if defined _PAR_IO
@@ -76,6 +76,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
+ if (STRING_same(X%KERNEL,"IP")) db_desc='Xo'
  !
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
@@ -149,6 +150,7 @@ integer function io_X(X,Xw,ID)
  if (iq==0) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ io_X=io_err
  if (io_err/=0) goto 1
  !
  !  type(X_t)    ::X(4)  x s d p

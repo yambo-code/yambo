@@ -381,7 +381,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        ! In some cases l_elel_corr is switched on by default
        !
-       if (.not.l_elel_corr) then
+       if (.not.l_elel_corr.and.infile_editing) then
          l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr)
        endif
        !

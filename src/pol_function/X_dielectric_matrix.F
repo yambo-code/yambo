@@ -334,9 +334,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    subroutine elemental_IO(iq_,this_is_Xo)
      !
+     use IO_m,          ONLY:NONE
      use pars,          ONLY:schlen
      !
-     integer :: iq_,whoami_save,idb
+     integer :: iq_,whoami_save,idb,COM
      logical :: this_is_Xo
      character(schlen) :: KERNEL_save
      !
@@ -345,17 +346,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      X%ng_db=X%ng
      idb=1
+     COM=REP
      !
      if (this_is_Xo) then
+       COM=NONE
        whoami_save=X%whoami
        KERNEL_save=X%KERNEL
        X%whoami=1
        idb=2
-       X%KERNEL="NONE"
+       X%KERNEL="IP"
      endif
      !
-     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/1/),ID=ID(idb))
-     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb))
+     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/1/),ID=ID(idb))
+     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb))
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then

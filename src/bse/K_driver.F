@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg
  use stderr,         ONLY:STRING_remove,intc
- use electrons,      ONLY:levels,n_sp_pol,n_spin
+ use electrons,      ONLY:levels,n_sp_pol,n_spin,n_spinor
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
@@ -44,7 +44,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X
- use D_lattice,      ONLY:l_0D,l_1D,l_2D
+ use D_lattice,      ONLY:l_0D,l_1D,l_2D,nsym
 #if defined _RT
  use drivers,        ONLY:l_rt_carriers_in_use
 #endif
@@ -211,6 +211,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  ! Tranferred momentum
  !======================
+ !
+ if ( (BS_q(1)/=1.or.BS_q(2)/=1) .and. n_spinor==2 .and. nsym>1) &
+&  call error(' Finite q bse with spinors works only without symmetries. Use ypp to generate SAVE without symmetries.')
  !
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
  do iq=BS_q(1),BS_q(2)

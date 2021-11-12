@@ -163,8 +163,8 @@ module R_lattice
  integer :: RIM_W_n_rand_pts
  logical :: RIM_W_is_diagonal
  logical :: RIM_W_for_graph
- real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:),RIM_vpW(:,:)
- real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:),RIM_vpW_d(:,:)
+ real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
  real(DP),   allocatable :: f_coeff(:,:,:,:,:)
  !
  ! Coulomb (including Cutoff)

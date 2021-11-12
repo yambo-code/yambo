@@ -112,13 +112,13 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
    n_loops=1
  endif
  !
- V_bands=(/BS_bands(1),Ken%nbm/)
- C_bands=(/Ken%nbf+1,BS_bands(2)/)
+ V_bands=(/BS_bands(1),maxval(Ken%nbm)/)
+ C_bands=(/minval(Ken%nbf)+1,BS_bands(2)/)
 #if defined _RT
  ! Bands range. In the _RT case %nbf and %nbm turn metallic when carriers are used.
  if (l_rt_carriers_in_use.and.EQ_Transitions) then
-   V_bands=(/BS_bands(1),n_met_bands/)
-   C_bands=(/n_full_bands+1,BS_bands(2)/)
+   V_bands=(/BS_bands(1),maxval(n_met_bands)/)
+   C_bands=(/minval(n_full_bands)+1,BS_bands(2)/)
  endif
 #endif
  !

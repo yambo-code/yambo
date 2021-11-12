@@ -78,7 +78,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !  . Optical response @ q = Gamma
  !
  Drude_term(1) = ((real(Wd)>0._SP .and. aimag(Wd)>0._SP) .or. (RIM_W_for_graph))
- Drude_term(2) = Xen%nbf/=Xen%nbm
+ Drude_term(2) = any( (/Xen%nbf(:n_sp_pol)/=Xen%nbm(:n_sp_pol)/) )
  Drude_term(3) = (f_eh>0._SP) 
  Drude_term(4) = (iq==1)
  !

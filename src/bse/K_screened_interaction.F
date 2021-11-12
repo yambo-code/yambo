@@ -29,7 +29,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use drivers,      ONLY:l_td_hf,l_tddft,l_RIM_W
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,RIM_W,RIM_W_d,RIM_W_is_diagonal,&
-&                       RIM_W_ng,RIM_vpW,RIM_vpW_d
+&                       RIM_W_ng
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
@@ -55,6 +55,9 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
  logical    :: W_is_em1s,W_is_pp,W_is_unscreened,l_RIM_W_g
+ !
+ real(SP),   allocatable          :: RIM_vpW(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_vpW_d(:,:)
  !
  ! I/O
  !
@@ -238,6 +241,13 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  endif
  !
  call elemental_collision_free(isc)
+ !
+ if (have_cuda) then
+   YAMBO_FREE(isc%gamp_d)
+   YAMBO_FREE(RIM_vpW_d)
+ else
+   YAMBO_FREE(RIM_vpW)
+ endif
  !
  if (.not.W_is_unscreened) call X_alloc('X')
  !

@@ -140,7 +140,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  bands_to_load=COLL_bands
  if (COLLISIONS_HXC_use_TDDFT) then
    bands_to_load(1)=1
-   bands_to_load(2)=max(COLL_bands(2),E%nbm)
+   bands_to_load(2)=max(COLL_bands(2),maxval(E%nbm))
  endif
  !
  if (WF_buffered_IO) call WF_load(WF_buffer,0,1,bands_to_load,(/1,k%nibz/),space='B',title='-BUFFER')

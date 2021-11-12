@@ -120,7 +120,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! COHSEX: bands setup
  !
  if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
-   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
  endif
  !
  ! Section
@@ -379,7 +379,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
-           eet_cutoff0(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff0(is)=minval(E%E(E%nbf(is)+1,:,is))
            eet_cutoff1(is)=minval(E%E(QP_n_G_bands(2),:,is))
          enddo
          eet_cutoff0(1)=minval(eet_cutoff0(:))

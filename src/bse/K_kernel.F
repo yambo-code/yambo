@@ -29,7 +29,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_tddft,l_RIM_W
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin,n_spinor
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
@@ -41,6 +41,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
  use interfaces,   ONLY:el_density_and_current
+ use QP_m,         ONLY:QP_ng_Vxc
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,BS_q,&
 &                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
@@ -49,7 +50,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el, ONLY:elemental_collision_free
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -183,7 +184,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
    !call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
    !! Hybrid functional.
-   !if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+   !if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"fxc")
    ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
@@ -312,9 +313,20 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
    !
+   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
+     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
+   endif
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
-   V_xc=0._SP
+   if(l_BS_magnons.and.n_spinor==2) then
+     ! In principle here there is a factor 4 between thei energy cutoff on the potential and the one of the kernel
+     ! The following line, or something similar, should be used here and before
+     !QP_nG=G_index_energy_factor(BS_n_g_fxc,0.25_SP)
+     ! However in practice the one on the kernel is never set 4 the potential, i.e. 16 times the one onf the WFs
+     QP_ng_Vxc=BS_n_g_fxc
+     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+     V_xc=0._SP
+   endif
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
@@ -322,17 +334,15 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
    call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    YAMBO_FREE(F_xc)
-   YAMBO_FREE(V_xc)
+   if(l_BS_magnons.and.n_spinor==2) then
+     YAMBO_FREE(V_xc)
+   endif
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
    !
    call WF_free(WF)
    !
-   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
-     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   endif
  endif
  !
  call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title))
@@ -705,6 +715,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(F_xc_gspace)
      YAMBO_FREE(FXC_K_diagonal)
    else if (BS_K_is_ALDA) then
+     YAMBO_FREE(V_xc)
      YAMBO_FREE(F_xc)
      YAMBO_FREE(F_xc_mat)
    endif

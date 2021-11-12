@@ -53,7 +53,8 @@ module interfaces
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
      type(bz_samp) ::K
-     character(*), OPTIONAL ::mode,OBJ
+     character(*)           ::OBJ
+     character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
    end subroutine
    !
@@ -193,8 +194,8 @@ module interfaces
      type(levels)       :: E
      real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
      real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
-     integer , optional :: N_f(n_sp_pol)
-     integer , optional :: N_m(n_sp_pol)
+     integer , optional :: N_f(2)
+     integer , optional :: N_m(2)
      integer , optional :: I_dir(2)
      integer , optional :: E_k_dir(n_sp_pol)    ! k-point of the direct gap
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap

@@ -25,6 +25,7 @@ subroutine QP_logicals( )
  !
  use pars,          ONLY:SP
  use parser_m,      ONLY:parser
+ use drivers,       ONLY:l_life
  use QP_m,          ONLY:QP_dSc_test,On_Mass_Shell_approx,l_QP_Expand,COHSEX_use_empties,l_QP_symmetrize,&
 &                        use_GreenF_to_eval_QP,l_extended_output,use_GreenF_Zoom,QP_G_Zoom_treshold,&
 &                        GW_terminator_Kind,l_GW_terminator,l_QP_eval_GF,l_QP_eval_Z,QP_solver
@@ -58,5 +59,8 @@ subroutine QP_logicals( )
  l_QP_eval_GF=STRING_same(QP_solver,"g")
  call parser('GreenF2QP',  use_GreenF_to_eval_QP)
  use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
+ !
+ ! Lifetimes
+ if (l_life) QP_solver="none"
  !
 end subroutine

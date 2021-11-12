@@ -162,8 +162,8 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
            iv=ibp
            ic=ib
            !
-           if (ic <=E_local%nbf) cycle
-           if (iv > E_local%nbm) cycle
+           if (ic <=E_local%nbf(1)) cycle
+           if (iv > E_local%nbm(1)) cycle
            !
            if (Pumped_state(iv,ik)) cycle
            if (Pumped_state(ic,ik)) cycle
@@ -239,9 +239,9 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
      call msg('s','User    defined',u_k,after_msg="[iku]"//" "//trim(label))
      call msg('s','Nearest k-point',RT_carriers%kpt(ik,:),after_msg="[iku][ik="//trim(intc(ik))//"]")
      call msg('s','Distance       ',k_dist(ik),after_msg="[iku]")
-     do i_c=E_local%nbf+1,E_local%nbf+2
-       do i_v=E_local%nbf-1,E_local%nbf
-         title="Gap CBm+"//trim(intc(i_c-E_local%nbf))//" VBM-"//trim(intc(E_local%nbf-i_v))
+     do i_c=E_local%nbf(1)+1,E_local%nbf(1)+2
+       do i_v=E_local%nbf(1)-1,E_local%nbf(1)
+         title="Gap CBm+"//trim(intc(i_c-E_local%nbf(1)))//" VBM-"//trim(intc(E_local%nbf(1)-i_v))
          call msg('s',trim(title),(E_local%E(i_c,ik,1)-E_local%E(i_v,ik,1))*HA2EV,after_msg="[ev]")
        enddo 
      enddo

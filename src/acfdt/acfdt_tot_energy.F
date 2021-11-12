@@ -260,7 +260,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  ! Exchange Energy (EXX)
  !
- QP_nb=En%nbm
+ QP_nb=maxval(En%nbm)
  QP_nk=k%nibz
  YAMBO_FREE(QP_state)
  YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))

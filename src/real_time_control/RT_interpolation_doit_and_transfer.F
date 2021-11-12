@@ -63,8 +63,8 @@ subroutine RT_interpolation_doit_and_transfer(OBJ,K,E,nb,l_B,N_carriers,df_Max,d
    ! Metallic and Insulating bands update
    !
    E%nbc=nb
-   E%nbf=nb(1)-1
-   E%nbm=nb(2)
+   E%nbf(1)=nb(1)-1
+   E%nbm(1)=nb(2)
    !
    E%df( nb(1):nb(2),:,:)=INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)
    df_Max=maxval(abs(INTERP_obj(ID)%INTERP(nb(1):nb(2),:,:)))

@@ -2939,10 +2939,12 @@ if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  cp     $srcdir/Makefile $compdir/
  cp -r  $srcdir/config   $compdir/
  #
- rsync -az --include='*/' --include='*.h.F'        --exclude='*' $srcdir/ $compdir
- rsync -az --include='*/' --include='*.h'          --exclude='*' $srcdir/ $compdir
- rsync -az --include='*/' --include='*.objects'    --exclude='*' $srcdir/ $compdir
- rsync -az --include='*/' --include='*Makefile.lo' --exclude='*' $srcdir/ $compdir
+ basecomp=$(basename $compdir)
+ #
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h.F'        --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h'          --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.objects'    --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.lo' --exclude='*' $srcdir/ $compdir
  #
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
@@ -7065,7 +7067,7 @@ ia64*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2021* )
+      *2020* | *2021* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        FCMFLAG="-nofor-main"
@@ -7074,6 +7076,7 @@ ia64*linux* )
       *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99"
        ;;
       *10*)
        CPU_FLAG="-xW"
@@ -9911,7 +9914,7 @@ if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
 
-if test -f ".git" || test -d ".git"; then
+if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   #
   # git procedure
   #

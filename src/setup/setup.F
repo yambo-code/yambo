@@ -68,7 +68,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_SAVE(2),nbm_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
@@ -248,7 +248,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  enddo
  !
  call section('=','Reciprocal space')
- !============================
+ !====================================
  !
  call G_shells_finder()
  !
@@ -320,7 +320,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (En%FG%nb>0.and.allocated(en%FG%E)) then
    !
    call section('=','Double K-grid')
-   !=======================================
+   !================================
    !
    call DESC_write("r","  ",FineGd_desc)
    !
@@ -376,20 +376,21 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (input_Tel_is_negative) then
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk,mode="OCCUPATIONS")
-   nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,"X",mode="OCCUPATIONS")
+   nbf_SAVE=Xen_COPY%nbf
+   nbm_SAVE=Xen_COPY%nbm
    call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
- call OCCUPATIONS_Fermi(Xen,Xk,OBJ="X")
- call OCCUPATIONS_Extend(Xen,en)
+ call OCCUPATIONS_Fermi(Xen,Xk,"X")
+ call OCCUPATIONS_Extend(Xen,en,k)
  !
  if (input_Tel_is_negative) then
-   Xen%nbf=nbf_m_SAVE(1)
-   Xen%nbm=nbf_m_SAVE(2)
-   en%nbf =nbf_m_SAVE(1)
-   en%nbm =nbf_m_SAVE(2)
+   Xen%nbf=nbf_SAVE
+   Xen%nbm=nbm_SAVE
+   en%nbf =nbf_SAVE
+   en%nbm =nbm_SAVE
  endif
  !
  n_met_bands =en%nbm

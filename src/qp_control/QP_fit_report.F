@@ -55,6 +55,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
  character(schlen)::titles(20)
  integer :: E_index(qp%n_states),n_titles
  integer :: n_steps=500
+ logical :: is_val
  real(SP):: E_sorted(qp%n_states),value(20),Eo
  complex(SP), external ::QP_eval_the_FIT
  !
@@ -85,8 +86,8 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    endif
    !
    if (n_sp_pol==2) then
-     if (i_spin==1) ch="= Spin DN ============================================"
-     if (i_spin==2) ch="= Spin UP ============================================"
+     if (i_spin==1) ch="= Spin UP ============================================"
+     if (i_spin==2) ch="= Spin DN ============================================"
      call msg(' rn',trim(ch))
    endif
    !
@@ -202,21 +203,22 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
    !
    do i_s=1,n_steps
      Eo=minval(E_sorted)+( maxval(E_sorted)-minval(E_sorted))/real(n_steps,SP)*real(i_s,SP)
+     is_val=Eo<=en%E_VBM(i_spin)+1.E-5
      n_titles=1
      value(1)=Eo*HA2EV
      if (l_E) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"E")*HA2EV
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"E",is_val)*HA2EV
      endif
      if (l_W) then
        n_titles=n_titles+1
-       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"W")*HA2EV*1000.
+       value(n_titles)=QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"W",is_val)*HA2EV*1000.
      endif
      if (l_Z) then
        n_titles=n_titles+1
-       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z"))
+       value(n_titles)=real(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z",is_val))
        n_titles=n_titles+1
-       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z"))
+       value(n_titles)=aimag(QP_eval_the_FIT(i_ACTION,i_spin,Eo,E_ref,bands,en,k,"Z",is_val))
      endif
      call msg('o .fit','',value(:n_titles),INDENT=-2,USE_TABS=.TRUE.)
    enddo

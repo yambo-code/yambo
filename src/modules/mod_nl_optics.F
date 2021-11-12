@@ -133,7 +133,7 @@ module nl_optics
  type NLsampleWF
    integer              :: n_order     ! Sampling NL order
    integer              :: n_size      ! Size of sampling
-   integer              :: n_val       ! Number of valence
+   integer              :: n_val(2)    ! Number of valence per spin channel
    integer              :: n_k         ! Number of kpoints
    logical              :: ison        ! WF sample logical switch 
    integer, allocatable :: indx_T(:)   ! indexes of time sampling
@@ -180,7 +180,7 @@ module nl_optics
      call H_alloc(en,.true.,.false.)
      !
      !
-     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(V_bands,(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol))
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))
@@ -229,9 +229,9 @@ module nl_optics
      ! Valence bands in fft space
      !
      if(fft_size>0) then
-       YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+       YAMBO_ALLOC(VAL_BANDS,(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      endif
-     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      !
    end subroutine NL_alloc_k_distributed
@@ -279,7 +279,7 @@ module nl_optics
    real(SP) :: Egap,beta,omega
    type(levels) :: en
      !	
-     Egap = sum(en%E(en%nbf+1,:,1)-en%E(en%nbf,:,1))/real(en%nk,SP)
+     Egap = sum(en%E(en%nbf(1)+1,:,1)-en%E(en%nbf(1),:,1))/real(en%nk,SP)
      beta = NL_LRC_alpha/Egap**2
      Alpha_ED = NL_LRC_alpha + beta*omega**2
    end function
@@ -290,7 +290,7 @@ module nl_optics
      integer         ,intent(in)  :: n 
      real(SP)        ,intent(in)  :: Tstep
      real(SP)        ,intent(in)  :: Trange(2)
-     integer         ,optional    :: v,k 
+     integer         ,optional    :: v(2),k 
      ! ws:
      integer :: i_t,i_t_start,i_deltaT     
      !
@@ -344,7 +344,7 @@ module nl_optics
      integer,         intent(in) :: nb,ns
      !
      if (W%ison) then
-       YAMBO_ALLOC(V_bands_t,(W%n_size,nb,W%n_val,W%n_k,ns))
+       YAMBO_ALLOC(V_bands_t,(W%n_size,nb,maxval(W%n_val),W%n_k,ns))
      endif
    end subroutine NL_ALLOC_WF_sample
    !

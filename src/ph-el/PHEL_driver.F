@@ -101,10 +101,6 @@ subroutine PHEL_driver(E,k,q)
  !====================
  call ELPH_databases_grids_map(k,q)
  !
- ! ... Static-Screening test/correction 
- call PHEL_screening(E,q,l_SS_test)
- if (l_SS_test) return
- !
  ! El-Ph databases I/O
  !=====================
  call section("=","El-Ph databases loading")
@@ -112,6 +108,11 @@ subroutine PHEL_driver(E,k,q)
  !
  !...acoustic branches
  call ELPH_acoustic_phonon_properties(q)
+ !
+ ! Static-Screening test/correction 
+ !==================================
+ call PHEL_screening(E,q,l_SS_test)
+ if (l_SS_test) return
  !
  ! Maps into the RT kinds
  !========================

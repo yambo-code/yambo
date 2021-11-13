@@ -273,9 +273,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
            call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
            forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
          endif
-         call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
-         ! Yambo internal for Kxc
-         call XC_eval_lda_kernel(v1rho,v2rho2)
+         if( (.not.l_BS_magnons) .or. n_spinor==2) then
+           call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
+           ! Yambo internal for Kxc
+           call XC_eval_lda_kernel(v1rho,v2rho2)
+         endif
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
         !GAUPBE short range x-energy  and potentials part
@@ -301,9 +303,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
            ! Yambo internal for V_xc
            call XC_eval_gga_potential(v1rho,v1sigma,drho)
          endif
-         call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
-         ! Yambo internal for Kxc
-         call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
+         if( (.not.l_BS_magnons) .or. n_spinor==2) then
+           call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
+           ! Yambo internal for Kxc
+           call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
+         endif
      end select
    end if
    call xc_f03_func_end(fnctl(ixc)%conf)

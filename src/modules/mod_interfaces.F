@@ -182,10 +182,11 @@ module interfaces
      logical,     optional, intent(in) :: quiet
    end subroutine
    !
-   subroutine WF_free(WF,keep_fft)
+   subroutine WF_free(WF,keep_fft,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      type(WAVEs)           :: WF
      logical     ,optional :: keep_fft
+     logical     ,optional :: keep_states_to_load
    end subroutine
    !
    subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)

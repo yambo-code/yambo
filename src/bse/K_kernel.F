@@ -29,7 +29,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use LOGO,         ONLY:pickup_a_random
  use drivers,      ONLY:l_bs_fxc,l_tddft,l_RIM_W
  use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin,n_spinor
+ use electrons,    ONLY:levels,spin_occ,spin,n_spin,n_spinor,n_sp_pol
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
@@ -283,6 +283,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do iHxc=1,3
  !
+ if(l_BS_magnons.and.n_sp_pol==2.and.iHxc==1) cycle
+ !
  if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
  !
  section_title='-BSK-'//trim(intc(iHxc))
@@ -304,14 +306,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
    !
    if(rho_map_thresh>0._SP) then
-     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
+     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
      YAMBO_ALLOC(rho,(fft_size))
      call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
      YAMBO_FREE(rho)
-     call WF_free(WF)
+     call WF_free(WF,keep_states_to_load=.true.)
    endif
    !
-   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT")
+   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
    if (trim(ALDA_cut_scheme)=="lower_Gmax") then
      call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
@@ -341,11 +343,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(magn)
    endif
    !
-   call WF_free(WF)
+   call WF_free(WF,keep_states_to_load=.true.)
    !
  endif
  !
- call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title))
+ call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
  !
  ! Wave Functions Phases
  !=======================
@@ -733,7 +735,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- call WF_free(WF)
+ call WF_free(WF,keep_states_to_load=iHxc<3)
  !
  enddo ! iHxc loop
  !

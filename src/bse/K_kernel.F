@@ -283,6 +283,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do iHxc=1,3
  !
+ if(iHxc==1) BS_blk_done=.false.
+ !
  if(l_BS_magnons.and.n_sp_pol==2.and.iHxc==1) cycle
  !
  if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
@@ -367,8 +369,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! First load previously computed matrix elements.
  !=================================================
- !
- if(iHxc==1) BS_blk_done=.false.
  !
 #ifdef _PAR_IO
  if (l_BSE_restart.and.iHxc==1) then

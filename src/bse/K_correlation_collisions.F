@@ -71,14 +71,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
  !
- integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq,iHxc
+ integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  character(1):: mode_now
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  !
  if (.not.BS_res_K_corr) return
- !
- iHxc=3
  !
  call timing('T_space CORR Osc.',OPR='start')
  !

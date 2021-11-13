@@ -322,7 +322,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   if(l_BS_magnons.and.n_spinor==2) then
+   if(l_BS_magnons) then
      ! In principle here there is a factor 4 between thei energy cutoff on the potential and the one of the kernel
      ! The following line, or something similar, should be used here and before
      !QP_nG=G_index_energy_factor(BS_n_g_fxc,0.25_SP)
@@ -338,7 +338,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
    call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    YAMBO_FREE(F_xc)
-   if(l_BS_magnons.and.n_spinor==2) then
+   if(l_BS_magnons) then
      YAMBO_FREE(V_xc)
    endif
    if(n_spin>1) then
@@ -717,8 +717,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      YAMBO_FREE(F_xc_gspace)
      YAMBO_FREE(FXC_K_diagonal)
    else if (BS_K_is_ALDA) then
-     YAMBO_FREE(V_xc)
-     YAMBO_FREE(F_xc)
      YAMBO_FREE(F_xc_mat)
    endif
    !

@@ -104,9 +104,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- ! Oscillators
- !
- logical    :: load_O_X
+ logical    :: load_O_X,l_bs_corr,l_load_WFs
  !
  ! I/O
  !
@@ -176,7 +174,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng_exch =maxval(qindx_X(iq,:,2))
  O_ng_shift=O_ng_exch
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+ l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc
+ !
+ if (l_bs_corr) then
    O_ng=G_m_G_maxval
    ! < WARNIGN: 2021/03/19
    ! The following can be safely removed with the new implementation 
@@ -202,7 +202,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
+ if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
@@ -215,7 +215,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (l_RIM_W) call interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
- if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
+ if (l_bs_corr) call K_screened_interaction(X,Xw,q,io_X_err)
  !
  if (io_X_err<0) then
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
@@ -283,9 +283,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  do iHxc=1,3
  !
- if(iHxc==1) BS_blk_done=.false.
+ if (iHxc==1) BS_blk_done=.false.
  !
- if(l_BS_magnons.and.n_sp_pol==2.and.iHxc==1) cycle
+ if (l_BS_magnons.and.n_sp_pol==2.and.iHxc==1) cycle
  !
  if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
  !
@@ -300,6 +300,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==3) NG=(/O_ng,O_ng_shift/)
  !if (iHxc==3) NG(2)=O_ng_shift
  ! WARNING >
+ !
+ l_load_WFs= iHxc==1 .or. iHxc==2 .or. (iHxc==3.and.l_bs_corr)
  !
  ! ALDA
  !======
@@ -349,11 +351,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
+ if (l_load_WFs) call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
  !
  ! Wave Functions Phases
  !=======================
- if (iHxc==3) call K_WF_phases(Xk)
+ if (iHxc==3.and.l_bs_corr) call K_WF_phases(Xk)
  ! 
  ! Spatial Inversion Test
  !========================
@@ -421,6 +423,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==1) section_title=trim(section_title)//' exch'
  if (iHxc==2) section_title=trim(section_title)//' tddft'
  if (iHxc==3) section_title=trim(section_title)//' corr'
+ if (.not.l_load_WFs) section_title='Final I/O'
  !
  if(m_steps>0) call live_timing(trim(section_title),m_steps)
  !
@@ -464,7 +467,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   if(iHxc==3) call K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
+   if(iHxc==3.and.l_bs_corr) call K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
    !
    ! Transition Loops
    !------------------
@@ -521,7 +524,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s =Xk%sstar(i_kmq_bz,2) 
        i_pmq_s =Xk%sstar(i_pmq_bz,2) 
        !
-       if (BS_res_K_corr.and.iHxc==3) then 
+       if (iHxc==3.and.l_bs_corr) then 
          i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
          i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
        endif 
@@ -529,7 +532,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and.iHxc==3) then 
+       if (iHxc==3.and.l_bs_corr) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -569,7 +572,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and.iHxc==3) then 
+       if (iHxc==3.and.l_bs_corr) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
@@ -601,7 +604,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          os_p = (/i_v_p,i_pmq,i_pmq_s,i_p_sp_pol_v/) 
        endif 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr).and.iHxc==3) then 
+       if (iHxc==3.and.l_bs_corr) then 
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
@@ -733,7 +736,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- call WF_free(WF,keep_states_to_load=iHxc<3)
+ if (l_load_WFs) call WF_free(WF,keep_states_to_load=iHxc<3)
  !
  enddo ! iHxc loop
  !

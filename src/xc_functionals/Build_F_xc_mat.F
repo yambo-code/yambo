@@ -84,18 +84,26 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
      !
    else
      !
-     Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
+     ! The following is in principle ok
+     ! In practice, due to numerical noise, it gives wrong results
+     ! 
+     !Vxc_mag(:)  =(V_xc(:,1)-V_xc(:,2))/2._SP
+     !!
+     !do ifft=1,fft_size
+     !  mod_mag=abs(magn(ifft,3))
+     !  if(mod_mag==0._SP) magn_inv(ifft)=0._SP
+     !  if(mod_mag/=0._SP) magn_inv(ifft)=1._SP/mod_mag
+     !enddo
+     !!
+     !F_xc_mat(:,1,2,1,2)= cZERO
+     !F_xc_mat(:,1,2,2,1)= F_xc(:,1,2) !2*Vxc_mag*magn_inv
+     !F_xc_mat(:,2,1,1,2)= F_xc(:,2,1) !2*Vxc_mag*magn_inv
+     !F_xc_mat(:,2,1,2,1)= cZERO
      !
-     do ifft=1,fft_size
-       mod_mag=abs(magn(ifft,3))
-       if(mod_mag==0._SP) magn_inv(ifft)=0._SP
-       if(mod_mag/=0._SP) magn_inv(ifft)=1._SP/mod_mag
-     enddo
-     !
-     F_xc_mat(:,1,2,1,2)= cZERO
-     F_xc_mat(:,1,2,2,1)= 2*Vxc_mag*magn_inv
-     F_xc_mat(:,2,1,1,2)= 2*Vxc_mag*magn_inv
-     F_xc_mat(:,2,1,2,1)= cZERO
+     F_xc_mat(:,1,2,1,2)= F_xc(:,1,1)
+     F_xc_mat(:,1,2,2,1)= F_xc(:,1,2)
+     F_xc_mat(:,2,1,1,2)= F_xc(:,2,1)
+     F_xc_mat(:,2,1,2,1)= F_xc(:,2,2)
      !
    endif
    !

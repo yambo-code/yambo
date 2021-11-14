@@ -105,7 +105,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     !
     ! 2: sum up with the other partial derivative (and in case the other xc component)
     !
-    V_xc(:,is1) = V_xc(:,is1) + real(v1rho(is1,:),SP) + Gv_drho(:)
+    V_xc(:,is1) = V_xc(:,is1) + real(v1rho(is1,:),SP)+ Gv_drho(:)
     !
   enddo
   !

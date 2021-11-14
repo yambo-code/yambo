@@ -630,7 +630,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                               BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
-         if (BS_K_is_ALDA     .and.iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
+         if (BS_K_is_ALDA     .and.iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
          !
          ! Correlations
          if (BS_res_K_corr    .and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
@@ -648,7 +648,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
                                            &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
-         if (BS_K_is_ALDA     .and.iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
+         if (BS_K_is_ALDA     .and.iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
          !
          ! Correlations
          if (BS_cpl_K_corr    .and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &

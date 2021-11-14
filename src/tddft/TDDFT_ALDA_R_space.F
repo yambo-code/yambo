@@ -57,7 +57,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  ! Work Space
  !
  logical     :: l_use_rho_map
- integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,irho,is_yambo,os_yambo
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,irho,is_yambo,os_yambo,i_spinor_y,j_spinor_y
  complex(SP) :: rhotwr1(rho_map_size*n_spinor*n_spinor)
  complex(SP) :: rhotwr2(rho_map_size*n_spinor*n_spinor)
  complex(SP) :: WF_symm1(rho_map_size,n_spinor)
@@ -118,6 +118,8 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
    rhotwr2=cZERO
    do i_spinor=1,n_spinor
      do j_spinor=1,n_spinor
+       i_spinor_y=j_spinor
+       j_spinor_y=i_spinor
        do ip_spinor=1,n_spinor
          do jp_spinor=1,n_spinor
            do irho=1,rho_map_size
@@ -125,7 +127,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
              if(.not.l_use_rho_map) ifft=        irho
              irhotw=irho+(i_spinor-1)*rho_map_size+(j_spinor-1)*n_spinor*rho_map_size
              rhotwr2(irhotw)=rhotwr2(irhotw)+&
-             &  F_xc_mat(ifft,i_spinor,j_spinor,ip_spinor,jp_spinor)*WF_symm1(irho,ip_spinor)*conjg(WF_symm2(irho,jp_spinor))
+             &  F_xc_mat(ifft,i_spinor_y,j_spinor_y,ip_spinor,jp_spinor)*WF_symm1(irho,ip_spinor)*conjg(WF_symm2(irho,jp_spinor))
            enddo
          enddo
        enddo

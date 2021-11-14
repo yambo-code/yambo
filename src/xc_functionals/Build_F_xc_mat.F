@@ -27,6 +27,7 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
  use BS,             ONLY:l_BS_magnons
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
+ use D_lattice,      ONLY:DL_vol
  use xc_functionals, ONLY:magn
  use vec_operate,    ONLY:v_norm
  !
@@ -122,8 +123,8 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
    !
    F_xc_mat(:,1,2,1,2) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)-cI*magn_versor(:,2))**2                      !  (mag)
    F_xc_mat(:,1,2,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
-   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
-   F_xc_mat(:,2,2,1,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+cI*magn_versor(:,2))**2                      !  (mag)
+   F_xc_mat(:,2,1,1,2) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)**2+magn_versor(:,2)**2)+2*Vxc_mag*magn_inv   !  (mag)
+   F_xc_mat(:,2,1,2,1) = (Fxc_mag2+Vxc_mag*magn_inv)*(magn_versor(:,1)+cI*magn_versor(:,2))**2                      !  (mag)
    !
    ! TO DO !!
    !

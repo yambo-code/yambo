@@ -57,7 +57,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  ! Work Space
  !
  logical     :: l_use_rho_map
- integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,irho
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,irho,is_yambo,os_yambo
  complex(SP) :: rhotwr1(rho_map_size*n_spinor*n_spinor)
  complex(SP) :: rhotwr2(rho_map_size*n_spinor*n_spinor)
  complex(SP) :: WF_symm1(rho_map_size,n_spinor)
@@ -75,6 +75,15 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  call WF_apply_symm(os,WF_symm2)
  !
  l_use_rho_map=allocated(rho_map)
+ !
+ ! This takes into account the different conventions between the definition of the spin indexes
+ ! between yambo and the derivation of fxc in spin space for magnons
+ ! This happens because in the yambo convention the left indexes "v sigma_v, c sigma_c, k" are inverted
+ ! with respect to the standard convention, i.e. "c sigma_c, v sigma_v, k"
+ ! As a result f_\up\dn,\dn\up is in yambo f_\dn\up,\dn\up and so on
+ is_yambo=os(4)
+ os_yambo=is(4)
+ ! To check/fix the spinorial version 
  !
  if(n_spinor==1) rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
  !
@@ -99,10 +108,10 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  if (l_use_rho_map) then
    if( n_spin==1 ) rhotwr2(:)=F_xc_mat(rho_map(:),1,1,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
-   if(n_sp_pol==2) rhotwr2(:)=F_xc_mat(rho_map(:),is(4),os(4),isp(4),osp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+   if(n_sp_pol==2) rhotwr2(:)=F_xc_mat(rho_map(:),is_yambo,os_yambo,isp(4),osp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  else
    if( n_spin==1 ) rhotwr2(:)=F_xc_mat(:,1,1,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
-   if(n_sp_pol==2) rhotwr2(:)=F_xc_mat(:,is(4),os(4),isp(4),osp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+   if(n_sp_pol==2) rhotwr2(:)=F_xc_mat(:,is_yambo,os_yambo,isp(4),osp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  endif
  !
  if(n_spinor==2) then

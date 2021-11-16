@@ -34,8 +34,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
@@ -239,7 +238,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (FULL.and.PERTURBATIVE) then
    !==============
-   !
    call FULL_INF_pre_setup(K_INV_EPS)
    if (l_BS_photolum) call FULL_INF_pre_setup(K_INV_PL)
    !
@@ -247,7 +245,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! FULL INVERSION
  !================
- !
  if (K_INV_EPS%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_EPS)
  if (l_BS_photolum) then
    if (K_INV_PL%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_PL)
@@ -274,7 +271,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Final Output
  !==============
- !
  if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
  !

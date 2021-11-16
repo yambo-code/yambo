@@ -132,6 +132,7 @@ module BS_solvers
    complex(SP), allocatable :: spectra(:,:)
  end type K_Inversion_data
  !
+ type(K_Inversion_data), save :: K_INV_PI_PH
  type(K_Inversion_data), save :: K_INV_EPS
  type(K_Inversion_data), save :: K_INV_PL
  !

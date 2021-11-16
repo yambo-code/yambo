@@ -33,7 +33,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
  use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps
- use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_K_is_ALDA,BS_cpl_K_corr,&
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
 &                         BS_Blocks_and_Transitions_free,BSqpts,L_kind,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss,l_col_cut
@@ -189,7 +189,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! ... EH space (no parallelization)
    call K_Transitions_setup("K",iq,Ken,Xk,Dip)
-   !call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)

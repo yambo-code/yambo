@@ -36,7 +36,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
- !
 #if defined _ELPH
  use BS_solvers,     ONLY:BSS_uses_GreenF
  use BS,             ONLY:BS_bands
@@ -70,7 +69,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(1,k,k%FGbz)
+ call X_Double_Grid_setup(iq,k,k%FGbz)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================

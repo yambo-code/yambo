@@ -68,7 +68,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -464,6 +464,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PI_PH%what = "PH_PI"
  K_INV_PL%what     = "PLS"
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"

@@ -165,8 +165,16 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                ikpbz=qindx_X(iq,ikbz,1)
                ikp  =Xk%sstar(ikpbz,1)
                !
-               if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
-               if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
+               ib1=iv 
+               ib2=ic 
+               isp1=i_sp_v 
+               isp2=i_sp_c
+               if (i_res_ares==2) then
+                 ib1=ic 
+                 ib2=iv 
+                 isp1=i_sp_c 
+                 isp2=i_sp_v
+               endif
                !
                if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
 &                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle

@@ -310,7 +310,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
-&        K_INV_EPS%PERT_FULL_ratio)
+&             K_INV_EPS%PERT_FULL_ratio)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
@@ -867,7 +867,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(14)
+     logical :: is_def(15)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if (initmode/=4) return
@@ -889,6 +889,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('QpntsRXd',is_def(12))
      call parser('QpntsRXs',is_def(13))
      call parser('QpntsRXx',is_def(14))
+     call parser('BSEQptR', is_def(15))
      !
      ! Q's
      !
@@ -897,6 +898,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      if (is_def(12).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
      if (is_def(13)                             ) Dip%iq=X(2)%iq
      if (is_def(14)                             ) Dip%iq=X(1)%iq
+     if (is_def(15)                             ) Dip%iq=BS_q
      !
      ! Bands
      !

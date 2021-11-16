@@ -23,9 +23,9 @@
 !
 subroutine REPORT_Occupations(what,E)
  !
- use pars,          ONLY:SP,schlen,msg_len
+ use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
- use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
+ use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol,input_GS_Tel
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,COMPOSE_spin_msg
  use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ
@@ -62,8 +62,9 @@ subroutine REPORT_Occupations(what,E)
  !
  if (n_sp_pol==1) call msg('r',title(1:title_len)//"=== General ===")
  if (n_sp_pol==2) call msg('r',title(1:title_len)//"=== Spin Independent ===")
- call msg('r',COMPOSE_spin_msg(title,title_len,'Electronic Temperature',0),(/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
- call msg('r',COMPOSE_spin_msg(title,title_len,'Bosonic    Temperature',0),(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/),'[eV K]')
+ call msg('r',COMPOSE_spin_msg(title,title_len,'Electronic  Temperature',0),(/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
+ call msg('r',COMPOSE_spin_msg(title,title_len,'Bosonic     Temperature',0),(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/),'[eV K]')
+ call msg('r',COMPOSE_spin_msg(title,title_len,'Default(GS) Temperature',0),(/input_GS_Tel*HA2EV,input_GS_Tel*HA2KEL/),'[eV K]')
  call msg('r',COMPOSE_spin_msg(title,title_len,'Finite Temperature mode',0),Finite_Tel)
  call msg('r',COMPOSE_spin_msg(title,title_len,'El. density',0),(/nel/(DL_vol*BO2ANG**3*1.E-24)/),'[cm-3]')
  call msg('rn',COMPOSE_spin_msg(title,title_len,'Fermi Level',0),E%E_Fermi*HA2EV,'[eV]')

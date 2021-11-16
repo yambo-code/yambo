@@ -72,7 +72,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
      !
      if(.not.px%element_1D(iw)) then
        K_INV_EPS%err(iw)=0
-       if(l_BS_photolum) K_INV_PL%err(iw)=0
+       if (l_BS_photolum) K_INV_PL%err(iw)=0
        cycle
      endif
      !

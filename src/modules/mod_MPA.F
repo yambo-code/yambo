@@ -332,7 +332,7 @@ contains
    ! 
  end subroutine mpa_E_solver
  !
- subroutine mpa_E_solver_Pade(np, npr, z, X, E, PPcond, econd)
+ subroutine mpa_E_solver_Pade(np, npr, z, X, E, PPcond)
    implicit none
    integer,      intent(in)        :: np
    integer,      intent(out)       :: npr
@@ -340,7 +340,6 @@ contains
    complex(SP),  intent(in)        :: X(2*np)
    complex(SP),  intent(out)       :: E(np)
    logical,      intent(out)       :: PPcond(np)
-   real(SP),     intent(out)       :: econd(2)
    ! 
    complex(SP)                     :: c(2*np), b(np+1), Companion(np,np)
    complex(SP)                     :: c_m1(2*np), b_m1(np+1), b_m2(np+1)
@@ -425,10 +424,11 @@ contains
      !
      if(mpa_sol=='LA') then
        call mpa_E_solver(np, npr, w**2, x, E, PPcond, cond_num)
+       cond_num=log10(1._SP/cond_num)
      else ! (mpa_sol='PT')
-       call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond, cond_num)
+       cond_num=0.
+       call mpa_E_solver_Pade(np, npr, w**2, x, E, PPcond)
      endif
-     cond_num=log10(1._SP/cond_num)
      if(npr<np) MPred=.true.
      call mpa_R_fit(np, npr, w, x, R, E)
      do i=1,np

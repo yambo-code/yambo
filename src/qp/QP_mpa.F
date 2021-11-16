@@ -192,6 +192,8 @@ use parser_m,       ONLY:parser
  ch=trim(SECTION_name)
  call live_timing(trim(ch),timing_steps)
  !
+ call msg('r','  MPA interpolation solver:      ',Xw%mpa_solver)
+ !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
@@ -308,7 +310,7 @@ use parser_m,       ONLY:parser
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
        call msg('r',' :: Mean np reduction    ',MPred_rate)
        call msg('r',' :: Mean Xm rel dev      ',MP_Qerr)
-       !call msg('r',' :: Condition numbers    ',cond_numQ)
+       if(Xw%mpa_solver=='LA') call msg('r',' :: Condition numbers    ',cond_numQ)
        !
      endif
      !

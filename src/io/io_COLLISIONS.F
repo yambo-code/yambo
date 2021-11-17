@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
+integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  use pars,          ONLY:schlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts

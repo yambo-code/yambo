@@ -230,9 +230,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (     l_rpa_IP) then
        Alpha(:,2)=Alpha(:,1)
      else
-       if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       if((.not.l_col_cut) .or.  iq>1) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
        ! Here I assume X_par is small and I use 1/(1+x)~1-x 
-       if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       if(      l_col_cut .and. iq==0) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
      !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)

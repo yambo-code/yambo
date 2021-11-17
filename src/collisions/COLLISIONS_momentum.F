@@ -49,7 +49,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !Work Space
  !
  type(elemental_collision)::I,I_grad_k,I_grad_p
- integer                  ::i_coll,PAR_NC_local,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID_P
+ integer                  ::i_coll,last_coll,PAR_NC_local,i_q_bz,i_q,i_g,i_g_mem,i_c,i_cp,i_m,i_G0,ID_P
  complex(SP)              ::P(3)
  real(SP)                 ::ACC,T_matrix(3,3),T_vec(3),photon_E
  character(schlen)        ::ch

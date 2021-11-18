@@ -23,7 +23,7 @@
 ! 
 subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
- ! Multi-pole approximation to the Correlation Self-Energy
+ ! Multipole approximation to the Correlation Self-Energy
  !
  use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
@@ -66,7 +66,7 @@ use parser_m,       ONLY:parser
  type(X_t)           ::X
  type(QP_t)          ::qp
  type(w_samp)        ::Xw
- real(SP),intent(in) ::W(QP_dSc_steps) ! this is the frequency grid for Sc now set in the solvers('n','s','g')
+ real(SP),intent(in) ::W(QP_dSc_steps) ! DALV: this is the frequency grid for Sc now set in the solvers('n','s','g')
  integer             ::GW_iter
  !
  ! Work Space
@@ -234,26 +234,6 @@ use parser_m,       ONLY:parser
      !
      ! Poles and Residues
      !
-     !
-!#define _DARIO
-#ifdef _DARIO
-     write(str,*) iqibz
-     str = adjustl(str)
-     open(10,file = 'mpa.ER_fragment_'//trim(str))
-     write(10,*) 'Parameters of the MPA'
-     write(10,*)
-     write(10,*) 'matrix_size = ', X%ng
-     write(10,*) 'number_of_poles = ', X%mpa_npoles
-     write(10,*)
-     write(10,*) 'rE_iE_rR_iR(size,size,npoles,4) ='
-     open(11,file = 'mpa.err_fragment_'//trim(str))
-     write(11,*) 'Errors of the MPA'
-     write(11,*)
-     write(11,*) 'matrix_size = ', X%ng
-     write(11,*)
-     write(11,*) 'err(size,size) ='
-#endif
-     !
      MPred_rate=0._SP
      PPcond_Qrate=0._SP
      MP_Qerr=0._SP
@@ -268,7 +248,7 @@ use parser_m,       ONLY:parser
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)!*isc%gamp(ig1,ig2) 
+         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)! DALV: Differently from PPA the factor isc%gamp(ig1,ig2) is included later
          MPred=.false.
          PPcond_rate=0._SP
          MP_err=0._SP
@@ -354,8 +334,8 @@ use parser_m,       ONLY:parser
      iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
-     !dc=cZERO !DALV: is duplicated in below
-     forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp ! DALV: here the grid is center in E0
+     ! DALV: here the grid is center in E0
+     forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -372,8 +352,6 @@ use parser_m,       ONLY:parser
        if (any(isc%is/=iscp%is)) call scatter_Bamp(iscp)
        !
        dc=cZERO
-       !
-       !forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E_bare(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
        !
        E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
        f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -405,6 +383,7 @@ use parser_m,       ONLY:parser
                  endif
                endif
                !
+               ! DALV: the factor isc%gamp(ig1,ig2) is included here
                ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2)) *isc%gamp(ig1,ig2)  *&
 &                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &

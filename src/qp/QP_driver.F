@@ -375,7 +375,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    if (l_elel_corr.and.l_ppa) then ! AF, DALV
      !
-     QP_dSc_steps=30
+     QP_dSc_steps=QP_Sc_steps !QP_dSc_steps=30
      W(1)=QP_G_er(1)
      forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
      !
@@ -384,7 +384,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    endif
    if (l_elel_corr.and.l_mpa) then ! AF, DALV
      !
-     QP_dSc_steps=30
+     QP_dSc_steps=QP_Sc_steps !QP_dSc_steps=30
      W(1)=QP_G_er(1)
      forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
      !
@@ -460,7 +460,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      if (l_cohsex)                    QP_dSc_steps=1
      !
      !
-     if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
+     if (trim(QP_solver)/='g')        QP_dSc_steps=QP_Sc_steps
      !
      YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
      !

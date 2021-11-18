@@ -218,11 +218,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! Header
      !
-#if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
-#else
-     call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)
-#endif
      !
      if (l_COH) io_err(1)=io_COLLs_header(ID,COLL)
      if (l_HXC) io_err(1)=io_COLLs_header(ID,COLL)
@@ -248,7 +244,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
        !
        i_coll_mem=COLL%PAR_map(i_coll)
        !
-       call io_control(ACTION=RD,SEC=(/2/),ID=ID)
+#if !defined _PAR_IO
+       IO_ACT=OP_RD
+#endif
+       !
+       call io_control(ACTION=IO_ACT,SEC=(/2/),ID=ID)
        !
        if (l_COH) io_err(1)=io_COLLISIONS(ID,COLL,COH_COLL_element(i_coll_mem))
        if (l_HXC) io_err(1)=io_COLLISIONS(ID,COLL,HXC_COLL_element(i_coll_mem))

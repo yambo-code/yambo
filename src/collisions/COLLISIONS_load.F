@@ -218,7 +218,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
      !
      ! Header
      !
-#if defined_PAR_IO
+#if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,SEC=(/1/),ID=ID)
 #else
      call io_control(ACTION=OP_RD,SEC=(/1/),ID=ID)

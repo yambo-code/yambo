@@ -436,7 +436,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
- L_kind='Lbar'
+ L_kind='BAR'
  BSE_mode='resonant'
  BSE_prop='abs'
  BSK_mode=' '

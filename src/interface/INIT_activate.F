@@ -164,9 +164,8 @@ subroutine INIT_activate()
  !
  if (l_em1s.or.l_em1d.or.l_X)      call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
  if (l_optics.and.l_bse)           call initactivate(1,'BSKmod Lkind')
- if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
+ if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSEmod BSSmod')
  !
  if (l_dipoles) then
    call initactivate(1,'DipQpt DipBands DipBandsALL')
@@ -263,7 +262,6 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-   call initactivate(1,'BSEprop BSEdips')
    call initactivate(1,'PL_weights')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -281,6 +279,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   call initactivate(1,'BSEprop BSEdips')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation

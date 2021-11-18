@@ -34,24 +34,21 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use BS_solvers,     ONLY:run_Slepc
 #endif
  use BS,             ONLY:BS_K_has_been_calculated_loaded,&
- &                       BS_blks_free,l_BS_abs
+&                         BS_blks_free,l_BS_abs,l_BS_photolum,l_BS_kerr,l_BS_magnons
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
- use BS,             ONLY:l_BS_photolum,l_BS_kerr,l_BS_magnons
  use PHOTOLUM,       ONLY:BSS_PL_free
  use MAGNONS,        ONLY:BSS_MAGN_free
  use DICHROISM,      ONLY:BSS_DICH_free
  !
 #include<memory.h>
+ !
  type(levels) ::Ken
  type(bz_samp)::Xk,q
  type(X_t)    ::X_static
  type(w_samp) ::W_bss
  integer      ::iq
- !
- ! Work Space
- !
  !
  ! Check first if the BS database has been calculated/loaded in K.F
  !

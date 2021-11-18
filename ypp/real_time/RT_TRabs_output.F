@@ -25,7 +25,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  !
  use pars,            ONLY:SP,schlen,pi,cI
  use units,           ONLY:HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,HA2EV
- use OUTPUT_simple,   ONLY:OUTPUT_add_column
+ use OUTPUT,          ONLY:OUTPUT_add_column
  use RT_output_m,     ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use interfaces,      ONLY:DESC_write
  use YPP_real_time,   ONLY:TRabsWHAT,TRabsMODE,Epsilon_ij,B_Hall,TRabs_EPS_label,&

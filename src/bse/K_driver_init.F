@@ -61,7 +61,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! L_kind check
  !==============
- if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ if (.not.STRING_match(L_kind,"bar").and..not.STRING_match(L_kind,"full")) call error('set Lkind = BAR or FULL')
  !
  if (trim(L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
    call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')

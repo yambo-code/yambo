@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_output_file(iq,mode)
+subroutine K_output(iq,mode)
  !
  use pars,      ONLY:pi,SP
  use drivers,   ONLY:l_col_cut
@@ -30,11 +30,9 @@ subroutine K_output_file(iq,mode)
  use BS,        ONLY:l_BS_abs,BSE_mode,BS_K_is_ALDA,BSqpts,BS_H_dim,l_BS_esort,&
  &                   l_BS_jdos,BS_K_coupling
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
- use com,       ONLY:msg,of_open_close
+ use com,       ONLY:msg
  use parser_m,  ONLY:parser
- use X_output,  ONLY:headers,X_setup_headers,X_setup_file_names,eps_file_name,jdos_file_name,&
-&                    eel_file_name,alpha_file_name,refl_file_name,esort_file_name,e_ip_file_name,&
-&                    X_write_messages_before_headers,X_write_q_plus_g
+ use OUTPUT,    ONLY:headers,OUTPUT_driver,OUTPUT_q_plus_G
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write
  use pars,      ONLY:cI
@@ -43,10 +41,7 @@ subroutine K_output_file(iq,mode)
  use units,     ONLY:DEG2RAD,HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,e_SI,HBAR_SI,HA2EV
  use BS,        ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,BS_field_direction,BS_dip_size
  use X_m,       ONLY:Epsilon_ij,X_magnons,X_dichroism
- use X_output,  ONLY:moke_file_name,off_file_name,beta_file_name,dichr_file_name,&
- &                   magp_file_name,magm_file_name
  use BS_solvers,ONLY:B_Hall,A_drude
- use X_output,  ONLY:pl_file_name
  use PHOTOLUM,  ONLY:PL
  !
  implicit none
@@ -55,7 +50,7 @@ subroutine K_output_file(iq,mode)
  !
  ! Work Space
  !
- character(2)      :: ordering,title_mode
+ character(2)      :: ordering
  character(10)     :: name_
  integer           :: iw,i1,i_IP_BSE,n_IP_BSE,E_size,n_output_data,n_headers
  real(SP)          :: output_data(9),w(BSS_n_freqs)
@@ -74,8 +69,8 @@ subroutine K_output_file(iq,mode)
  l_Inversion = index(mode,"Inversion")/=0
  l_IP        = index(mode,"IP")/=0
  !
- ! File Names 
- !
+ ! OUTPUT files activate
+ !=======================
  if (l_Haydock)   name_="haydock"
  if (l_Diago)     name_="diago"
  if (l_Slepc)     name_="slepc"
@@ -90,21 +85,22 @@ subroutine K_output_file(iq,mode)
  l_dich_out =l_BS_dichroism.and.((.not.l_Haydock).or.index(mode,"dich")>0).and.(.not.l_Inversion)
  l_phot_out =l_BS_photolum .and.l_Inversion
  !
- l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
+ if (l_esrt_out.and..not.l_IP)  call OUTPUT_driver("activate Esort")
+ if (l_abs_out)   call OUTPUT_driver("activate abs")
+ if (l_jdos_out)  call OUTPUT_driver("activate jdos")
+ if (l_magn_out)  call OUTPUT_driver("activate Spm")
+ if (l_magn_out.and.n_spinor==2)  call OUTPUT_driver("activate Smp")
+ if (l_kerr_out)  call OUTPUT_driver("activate off")
+ if (l_dich_out)  call OUTPUT_driver("activate CD")
+ if (l_phot_out)  call OUTPUT_driver("activate pl")
  !
  if (l_INIT) then
-   if (l_IP) then
-     call X_setup_file_names(iq,trim(name_),' ',' ')
-   else
-     call X_setup_file_names(iq,trim(name_),' ','bse')
-     if (BS_K_is_ALDA) call X_setup_file_names(iq,trim(name_),'alda','bse')
-   endif
+   call OUTPUT_driver("keys ALL",IQ=iq)
+   if (     BS_K_is_ALDA) call OUTPUT_driver("keys ALL",keys='alda')
+   if (.not.l_IP)         call OUTPUT_driver("keys ALL",keys='bse')
  endif
  !
- if (     trim(BSE_mode)=='resonant' ) ordering='r'
- if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
- !
- ! EELS / ALPHA / REFLECTIVITY logicals
+ ! ... EELS / ALPHA / REFLECTIVITY logicals
  !
  if (l_abs_out) then
    call parser('Reflectivity',eval_reflectivity)
@@ -117,43 +113,37 @@ subroutine K_output_file(iq,mode)
    eval_alpha_loc=.false.
    eval_reflectivity=.false.
  endif
+ if (eval_eels)         call OUTPUT_driver("activate eel")
+ if (eval_alpha_loc)    call OUTPUT_driver("activate alpha")
+ if (eval_reflectivit)  call OUTPUT_driver("activate refl")
  !
  eval_beta =      eval_alpha .and. l_kerr_out
  eval_moke = .not.eval_alpha .and. l_kerr_out
  if ( l_kerr_out.and.l_Haydock ) then
    eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
  endif
+ if (eval_beta)  call OUTPUT_driver("activate beta")
+ if (eval_moke)  call OUTPUT_driver("activate moke")
+ !
+ ! Open
+ !=========
+ if (.not.l_INIT) call OUTPUT_driver("open ALL Ot")
+ if (     l_INIT) call OUTPUT_driver("open ALL ot")
+ !
+ ! Headers
+ !=========
+ l_print_col4=l_Haydock.or.(l_Inversion.and..not.K_diago_in_BS_mat)
+ !
+ if (     trim(BSE_mode)=='resonant' ) ordering='r'
+ if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
  !
  n_headers=5
  if (l_print_col4) n_headers=7
  if (l_IP) n_headers=3
  !
- title_mode='Ot'
- if (l_INIT) title_mode='ot'
- !
- if (l_abs_out)         call of_open_close(eps_file_name,title_mode)
- if (eval_reflectivity) call of_open_close(refl_file_name,title_mode)
- if (eval_eels)         call of_open_close(eel_file_name,title_mode)
- if (eval_alpha_loc)    call of_open_close(alpha_file_name,title_mode)
- !
- if(l_kerr_out) then
-   call of_open_close(off_file_name,title_mode)
-   if (eval_moke) call of_open_close(moke_file_name,title_mode)
-   if (eval_beta) call of_open_close(beta_file_name,title_mode)
- endif
- if(l_dich_out) call of_open_close(dichr_file_name,title_mode)
- if(l_phot_out) call of_open_close(pl_file_name,title_mode)
- if(l_magn_out) then
-   call of_open_close(magp_file_name,title_mode)
-   if(n_spinor==2) call of_open_close(magm_file_name,title_mode)
- endif
- if(l_jdos_out) call of_open_close(jdos_file_name,title_mode)
- if(l_esrt_out) call of_open_close(e_ip_file_name,title_mode)
- if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name,title_mode)
- !
- if (BS_dip_size==1) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1)
- if (BS_dip_size==2) call X_write_q_plus_g(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(:,2))
- call X_write_messages_before_headers(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
+ if (BS_dip_size==1) call OUTPUT_q_plus_G(iq,BSqpts(:,iq),ig=1)
+ if (BS_dip_size==2) call OUTPUT_q_plus_G(iq,BSqpts(:,iq),ig=1,Qprime=BS_field_direction(:,2))
+ call OUTPUT_messages(iq,BSS_uses_GreenF,BSS_Vnl_included,ordering)
  !
  call msg('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#')
  !
@@ -162,7 +152,7 @@ subroutine K_output_file(iq,mode)
  call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#',BSS_desc)
  !
  if (l_INIT) then 
-   call CLOSE_the_files( )
+   call OUTPUT_driver("close ALL")
    return
  endif
  !
@@ -235,56 +225,56 @@ subroutine K_output_file(iq,mode)
  ! Headers
  !
  if(l_abs_out) then
-   call X_setup_headers('EPS')
+   call OUTPUT_headers('EPS')
    call msg("o eps",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
  if (eval_reflectivity) then 
-   call X_setup_headers('REFL')
+   call OUTPUT_headers('REFL')
    call msg("o refl",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_eels) then 
-   call X_setup_headers('EEL')
+   call OUTPUT_headers('EEL')
    call msg("o eel",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  end if   
  !
  if (eval_alpha_loc) then 
-   call X_setup_headers('ALPHA')
+   call OUTPUT_headers('ALPHA')
    call msg("o alpha",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
  if(l_kerr_out) then
    !
-   call X_setup_headers('off')
+   call OUTPUT_headers('off')
    call msg("o off",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    !
    if (eval_beta) then 
-     call X_setup_headers('beta')
+     call OUTPUT_headers('beta')
    call msg("o beta",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
    if (eval_moke)  then
-     call X_setup_headers('moke')
+     call OUTPUT_headers('moke')
      call msg("o moke",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
    endif
    !
  endif
  !
  if (l_phot_out) then
-   call X_setup_headers('PL')
+   call OUTPUT_headers('PL')
    call msg("o pl_",'#',headers(:(n_headers-1)/2+1),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
  if(l_magn_out) then
    !
-   call X_setup_headers('Spm ')
+   call OUTPUT_headers('Spm ')
    if (l_Haydock.or.l_Inversion) call msg("o Spm",'#',headers,INDENT=0,USE_TABS=.TRUE.)
    if (l_Diago.or.l_Slepc) call msg("o Spm",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o Spm",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
    !
    if(n_spinor==2) then
-     call X_setup_headers('Smp')
+     call OUTPUT_headers('Smp')
      if (l_Haydock.or.l_Inversion) call msg("o Smp",'#',headers,INDENT=0,USE_TABS=.TRUE.)
      if (l_Diago.or.l_Slepc) call msg("o Smp",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
      if (l_IP) call msg("o Smp",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
@@ -294,7 +284,7 @@ subroutine K_output_file(iq,mode)
  !
  if(l_dich_out) then
    !
-   call X_setup_headers('CD ')
+   call OUTPUT_headers('CD ')
    if (l_Haydock.or.l_Inversion) call msg("o CD",'#',headers,INDENT=0,USE_TABS=.TRUE.)
    if (l_Diago.or.l_Slepc) call msg("o CD",'#',headers(:5),INDENT=0,USE_TABS=.TRUE.)
    if (l_IP) call msg("o CD",'#',headers(:3),INDENT=0,USE_TABS=.TRUE.)
@@ -302,7 +292,7 @@ subroutine K_output_file(iq,mode)
  endif
  !
  if (.not.l_Haydock) then
-   call X_setup_headers('jdos')
+   call OUTPUT_headers('jdos')
    call msg("o jdos",'#',headers(:n_headers),INDENT=0,USE_TABS=.TRUE.)
  endif
  !
@@ -640,42 +630,6 @@ subroutine K_output_file(iq,mode)
    !
  endif
  !
- call CLOSE_the_files( )
+ call OUTPUT_driver("close ALL reset")
  !
- contains
-   !
-   subroutine CLOSE_the_files( )
-     !
-     if(l_abs_out) then
-       call of_open_close(eps_file_name)
-       call of_open_close(refl_file_name)
-       call of_open_close(eel_file_name)
-       call of_open_close(alpha_file_name)
-     endif
-     !
-     if(l_phot_out) then
-       call of_open_close(pl_file_name)
-     endif
-     !
-     if(l_kerr_out) then
-       call of_open_close(off_file_name)
-       call of_open_close(beta_file_name)
-       call of_open_close(moke_file_name)
-     endif
-     !
-     if(l_magn_out) then
-       call of_open_close(magp_file_name)
-       call of_open_close(magm_file_name)
-     endif
-     !
-     if(l_dich_out) then
-       call of_open_close(dichr_file_name)
-     endif
-     !
-     if(l_jdos_out) call of_open_close(jdos_file_name)
-     if(l_esrt_out) call of_open_close(e_ip_file_name)
-     if(l_esrt_out.and..not.l_IP) call of_open_close(esort_file_name)
-     !
-   end subroutine
-   !
- end subroutine
+end subroutine

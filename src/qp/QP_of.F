@@ -32,7 +32,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                        use_GreenF_to_eval_QP,Vnlxc_kind,report_Vxc,&
 &                        report_Vnlxc,QP_G_amplitude_integral,&
 &                        QP_states_simmetrize,QP_G_info,QP_dSc,report_Sc
- use OUTPUT_simple, ONLY:OUTPUT_add_column
+ use OUTPUT,        ONLY:OUTPUT_add_column
  use interfaces,    ONLY:DESC_write
  !
  implicit none

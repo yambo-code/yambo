@@ -182,7 +182,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Initialize the output file 
  !============================
- call K_output_file(iq,"open Inversion")
+ call K_output(iq,"open Inversion")
  !
  ! Perturbative Inversion
  !========================
@@ -222,7 +222,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
- call K_output_file(iq,"Inversion")
+ call K_output(iq,"Inversion")
  !
  ! Full Inversion
  !=================
@@ -278,7 +278,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call IO_desc_add(BSS_desc,kind="r",str="[INV] Converged frequencies",term="o/o",R=(/ratio/))
  !
- call K_output_file(iq,"Inversion")
+ call K_output(iq,"Inversion")
  !
  ! CLEAN
  !

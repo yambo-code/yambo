@@ -36,7 +36,7 @@ subroutine DIPOLES_driver(k,E,q)
  use QP_CTL_m,       ONLY:QP_apply
  use vec_operate,    ONLY:v_norm
  use interfaces,     ONLY:DESC_write
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_add_column
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj

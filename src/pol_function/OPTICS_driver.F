@@ -33,7 +33,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
- use com,           ONLY:msg,of_open_close
+ use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,X_Double_Grid_setup,&
 &                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
@@ -44,9 +44,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
 &                        F_xc_gspace,FXC_K_diagonal,FXC_n_g_corr
- use X_output,      ONLY:X_setup_file_names,eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,&
-&                        X_write_q_plus_G,X_write_messages_before_headers,headers,&
-&                        X_setup_headers
+ use OUTPUT,        ONLY:OUTPUT_driver,OUTPUT_q_plus_G,headers
  use interfaces,    ONLY:WF_load,WF_free,DESC_write,WF_load
  use matrix,        ONLY:MATRIX_reset
  use IO_int,        ONLY:IO_and_Messaging_switch
@@ -71,7 +69,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  call section('*','Optics')
  !
  ! Basical Checks
- !
  call X_pre_setup(Xen,Xk,X)
  !
  allocate(X_par(1))
@@ -157,31 +154,28 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Check if EELS can be evaluated
    !
    eval_eels= .not. (l_col_cut .or. trim(alpha_dim)=="volume")
-   if(eval_eels) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   if (eval_eels) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut.or.trim(alpha_dim)=="volume")
    !
    ! OutPut files...
    !
-   if(.not.l_rpa_IP) call X_setup_file_names(iq,'inv',trim(FXC_type),'dyson',ig=i_G_shift)
-   if(     l_rpa_IP) call X_setup_file_names(iq,'ip','','',ig=i_G_shift)
+   call OUTPUT_driver("activate eps")
+   if (eval_eels)  call OUTPUT_driver("activate eel")
+   if (eval_alpha) call OUTPUT_driver("activate alpha")
+   if (l_bs_fxc)   call OUTPUT_driver("activate fxc")
+   if(.not.l_rpa_IP) call OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
+   if(     l_rpa_IP) call OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
    !
    ! ... permissions ...
    if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
    !
    ! ... open ...
-   call of_open_close(eps_file_name,'ot')
-   if (     eval_eels)  call of_open_close(eel_file_name,'ot')
-   if (.not.eval_eels)  eel_file_name=' '
-   if (     eval_alpha) call of_open_close(alpha_file_name,'ot')
-   if (.not.eval_alpha) alpha_file_name=' '
-   if (     l_bs_fxc)   call of_open_close(fxc_file_name,'ot')
-   if (.not.l_bs_fxc)   fxc_file_name=' '
+   call OUTPUT_driver("open ALL ot")
    if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
    !
    ! Initial Messages
-   !
-   call X_write_q_plus_G(iq,Q_plus_G_pt,ig=i_G_shift)
+   call OUTPUT_q_plus_G(iq,Q_plus_G_pt,ig=i_G_shift)
    !
    ! Fxc descriptions
    !
@@ -193,7 +187,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      ! Fxc file titles
      !
-     call X_setup_headers('q^2Fxc')
+     call OUTPUT_headers('q^2Fxc')
      call msg('o fxc','#',(/headers(1),headers(3),headers(2)/),INDENT=0,USE_TABS=.true.)    
      call msg('o fxc','#')
    endif
@@ -201,10 +195,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   call of_open_close(eps_file_name)
-   call of_open_close(eel_file_name)
-   call of_open_close(alpha_file_name)
-   call of_open_close(fxc_file_name)
+   call OUTPUT_driver("close ALL")
    !
    ! e Table
    ! 1:e0     2:e     ==> Epsilon_ii(iw,1:2)
@@ -249,24 +240,22 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      end if
    end if
    !
-   call of_open_close(eps_file_name,'oa')
-   call of_open_close(eel_file_name,'oa')
-   call of_open_close(alpha_file_name,'oa')
+   call OUTPUT_driver("open ALL oa")
    !
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
-   call X_write_messages_before_headers(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
+   call OUTPUT_messages(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
    !
    ! Titles 
    !
    n_output=5
    if(l_rpa_IP.or.l_skip_non_int_eps) n_output=3
    call msg('o eps_q eel_q fxc alpha','#')
-   call X_setup_headers('EPS')
+   call OUTPUT_headers('EPS')
    call msg('o eps_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('EEL')
+   call OUTPUT_headers('EEL')
    call msg('o eel_q',  '#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
-   call X_setup_headers('ALPHA')
+   call OUTPUT_headers('ALPHA')
    call msg('o alpha','#',headers(:n_output),INDENT=0,USE_TABS=.true.)    
    call msg('o eps_q eel_q alpha','#')
    !
@@ -280,26 +269,19 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
    enddo
    !
-   call of_open_close(eps_file_name)
-   !
    ! EEL
    !
    if (eval_eels) then 
-     !
-     call of_open_close(eel_file_name,'oa')
      !
      eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
      if(.not.l_rpa_IP) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      do iw=1,wv%n_freqs
-       !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(EEL(iw,2)),real(EEL(iw,2)),&
 &                    aimag(EEL(iw,1)),real(EEL(iw,1))/)
        call msg('o eel_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      enddo
-     !
-     call of_open_close(eel_file_name)
      !
    endif
    !
@@ -310,8 +292,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
      !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
      !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     !
-     call of_open_close(alpha_file_name,'oa')
      !
      if(l_col_cut.or.trim(alpha_dim)=="volume") then
        alpha_factor=eps_2_alpha/4._SP/pi
@@ -326,14 +306,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      endif
      !
      do iw=1,wv%n_freqs
-       !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(Alpha(iw,2)),real(Alpha(iw,2)),&
 &                    aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       !
        call msg('o alpha','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
      enddo
-     !
-     call of_open_close(alpha_file_name)
      !
    endif
    !
@@ -342,13 +318,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (l_bs_fxc) then
      if (iq==1) call PP_redux_wait(X_fxc)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
-     call of_open_close(fxc_file_name,'oa')
      do iw=1,wv%n_freqs
        call msg('o fxc','',(/real(wv%p(iw))*HA2EV,real(X_fxc(iw)*q_norm(iq)**2),&
 &                           aimag(X_fxc(iw)*q_norm(iq)**2)/),INDENT=-2,USE_TABS=.true.)
      enddo
-     call of_open_close(fxc_file_name)
    endif
+   !
+   call OUTPUT_driver("close ALL reset")
    !
    ! CLEAN (each q)
    !

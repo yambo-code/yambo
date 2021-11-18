@@ -18,6 +18,7 @@ objs =	K_blocks.o K_driver_init.o K_dipoles.o K_IP.o K_IP_sort.o \
         K_inversion_driver.o K_diagonal.o K_inversion_Lo.o  K_inversion_restart.o K_inversion_engine.o \
         K_diago_driver.o K_diago_non_hermitian_residuals.o K_diago_hermitian_residuals.o \
         K_diago_perturbative.o K_diago_response_functions.o K_eps_interpolate.o \
-        K_output_file.o K_multiply_by_V.o K_multiply_by_V_transpose.o K_dot_product.o K_components_folded_in_serial_arrays.o \
+        K_output.o \
+        K_multiply_by_V.o K_multiply_by_V_transpose.o K_dot_product.o K_components_folded_in_serial_arrays.o \
         K_stored_in_a_big_matrix.o K_observables.o K_diago_kerr_residual.o K_diago_magnons_residual.o  \
         PL_diago_residual.o PL_via_perturbative_inversion.o $(SLEPC_objects) $(SLK_objects)

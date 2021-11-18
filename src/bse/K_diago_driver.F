@@ -313,8 +313,8 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Initialize & write the output file 
  !=====================================
- call K_output_file(iq,"open "//trim(Solver))
- call K_output_file(iq,trim(Solver))
+ call K_output(iq,"open "//trim(Solver))
+ call K_output(iq,trim(Solver))
  !
  ! CLEAN
  !

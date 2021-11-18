@@ -40,7 +40,7 @@ subroutine PHEL_screening(E,q,DONE)
  use vec_operate,    ONLY:iku_v_norm
  use wrapper,        ONLY:M_by_V,V_dot_V
  use stderr,         ONLY:intc,real2ch
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_add_column
  !
 #include<memory.h>
  !

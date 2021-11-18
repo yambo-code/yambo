@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module OUTPUT_simple
+module OUTPUT
  !
  use pars,  ONLY:SP,schlen,lchlen,rZERO
  !
@@ -49,6 +49,25 @@ module OUTPUT_simple
  !
  type(OUTt):: OUT_file(N_MAX_files)
  !
+ type OUT_data_t
+   logical               :: active
+   character(schlen)     :: what
+   character(schlen)     :: file
+   character(schlen)     :: headers(10)
+   character(schlen)     :: keywords(10)
+   integer               :: N_cols
+   real(SP), allocatable :: data(:)
+ end type
+ ! 
+ ! See: X_output_INIT
+ integer, parameter    :: N_OUT_data=15
+ type(OUT_data_t)      :: OUT_data(N_OUT_data) 
+ !
+ character(15)     :: headers(7)
+ character(schlen) :: eps_file_name,eel_file_name,alpha_file_name,fxc_file_name,jdos_file_name,pl_file_name
+ character(schlen) :: off_file_name,beta_file_name,moke_file_name,refl_file_name,magp_file_name,magm_file_name
+ character(schlen) :: dichr_file_name,e_ip_file_name,esort_file_name
+ !
  interface
    !
    subroutine OUTPUT_unit_conversion(Ivar,Rvar,DESC,KIND,PARSER_call)
@@ -70,6 +89,22 @@ module OUTPUT_simple
      character(*) , OPTIONAL :: ORDER(:)
      character(*) , OPTIONAL :: UNIT
      character(*) , OPTIONAL :: KIND
+   end subroutine
+   !
+   subroutine OUTPUT_q_plus_G(iq,Q_plus_G_pt,ig,Qprime)
+     use pars,      ONLY:schlen,SP,msg_len
+     integer            :: iq
+     real(SP)           :: Q_plus_G_pt(3)
+     character(msg_len) :: message(13)
+     character(schlen)  :: unit_msg
+     integer,  optional :: ig
+     real(SP), optional :: Qprime(3)
+   end subroutine
+   !
+   subroutine OUTPUT_driver(what,keys,IQ,IG)
+     character(*)           :: what
+     character(*), optional :: keys
+     integer,      optional :: IQ,IG
    end subroutine
    !
  end interface

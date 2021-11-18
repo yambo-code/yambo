@@ -40,7 +40,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use RT_control,     ONLY:RT_apply
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use real_time,      ONLY:RT_carriers,RT_bands
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_add_column
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
  !

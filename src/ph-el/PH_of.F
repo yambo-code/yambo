@@ -25,7 +25,7 @@ subroutine PH_of(q)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_life
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_add_column
  use PHEL,           ONLY:PH_Q,PHEL_qp,PH_energy,&
 &                         QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH,QPH_DDFPT
  use ELPH,           ONLY:elph_branches,PHEL_desc,ELPH_desc

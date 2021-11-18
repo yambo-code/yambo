@@ -407,8 +407,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !
    ! Initialize & write the output file
    !
-   call K_output_file(iq,"open IP")
-   call K_output_file(iq,"IP")
+   call K_output(iq,"open IP")
+   call K_output(iq,"IP")
    !
  endif
  !

@@ -25,7 +25,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use com,            ONLY:msg
- use stderr,         ONLY:intc,STRING_match
+ use stderr,         ONLY:intc,STRING_match,STRING_same
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
@@ -139,14 +139,15 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    call K_driver_init("loop-init",iq,Ken,Xk)
    !
-   call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
+   if (iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
+   if (iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
    !
    ! Need to convert eels to epsilon ? (part B)
    !===========================================
    ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
    if (l_col_cut.and.(l_1D.or.l_2D)) then
      if(iq==1) BSS_eels_to_eps=.false.
-     if(iq/=1) BSS_eels_to_eps=trim(L_kind)=="full"
+     if(iq/=1) BSS_eels_to_eps=STRING_same(L_kind,"full")
    endif
    !
    ! BSS output arrays

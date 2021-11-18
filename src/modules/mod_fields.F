@@ -135,7 +135,7 @@ module fields
      complex(SP), dimension(2) :: small_a
      !
      integer           ::i_fr,i_field,n_fields
-     real(SP)          ::T_0,W_0,sigma,WtimesT,EXPf,fr_shift(2),W_field,cos_wt,sin_wt
+     real(SP)          ::T_0,W_0,sigma,WtimesT,EXPf,fr_shift(2),W_field,W_field_m1,cos_wt,sin_wt
      complex(SP)       ::f_now,f_t(2),f0t,f1t,cZ,cS,exp_iwt,erfi_z
      character(schlen) ::field_defs(3)
      logical           ::envelop_only_
@@ -166,21 +166,25 @@ module fields
          ! Fields which do not need T_0
          W_0=0._SP
          T_0=0._SP
+         damp_func=1._SP
+         ! DEBUG <
+         ! damping for sin 
          !if (sigma>0._SP) then
          !  T_0=5*sigma
          !  damp_func=1._SP
          !  if (T<T_0)             damp_func=exp( (T-T_0)/sigma)
          !  if (T>NE_tot_time-T_0) damp_func=exp(-(T-NE_tot_time+T_0)/sigma)
          !endif
+         ! DEBUG >
        case('SOFTSIN','THETA')
-         ! Fields which do not need T_0
+         ! Fields which do not need T_0 and with damp_func
          W_0=0._SP
          T_0=0._SP
          a =  3._SP/sigma**4 
          b = -8._SP/sigma**3
          c =  6._SP/sigma**2
-         !damp_func=1._SP
-         !if(real(T)<sigma.and.sigma>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2) 
+         damp_func=1._SP
+         if(real(T)<sigma.and.sigma>0._SP) damp_func=(a*T**4 + b*T**3 + c*T**2) 
        case('GAUSS','QSSIN','QSFIELD','PULSE','SPULSE')
          ! Fields which need T_0
          W_0=field_frequency(E_field,1)
@@ -198,10 +202,12 @@ module fields
          !
          if (envelop_only_) then
            W_field=0._SP
+           W_field_m1=0._SP
            WtimesT=fr_shift(i_field)
            f0t=cONE ; f1t=cONE
          else
            W_field=field_frequency(E_field,i_fr)
+           W_field_m1=1._SP/W_field
            WtimesT=W_field*(T-T_0)+fr_shift(i_field)
            cos_wt=cos(WtimesT) ; sin_wt=sin(WtimesT); exp_iwt=cos_wt+cI*sin_wt
            f0t=cmplx(cos_wt,0._SP) ; f1t=cmplx(sin_wt,0._SP)
@@ -218,15 +224,15 @@ module fields
            if (order==2 ) f_now=0._SP
            !
          case('SIN')
-           if (order==0 ) f_now=-damp_func*(f0t-1._SP)/W_field
+           if (order==0 ) f_now=-damp_func*(f0t-1._SP)*W_field_m1
            if (order==1 ) f_now=+damp_func* f1t
-           if (order==2 ) f_now=+damp_func*W_field*f0t
+           if (order==2 ) f_now=+damp_func* f0t       *W_field
            !
          case('SOFTSIN')
            if (order==-1) f_now=-2
-           if (order== 0) f_now=-damp_func*(f0t-1._SP)/W_field
+           if (order== 0) f_now=-damp_func*(f0t-1._SP)*W_field_m1
            if (order== 1) f_now=+damp_func* f1t
-           if (order== 2) f_now=+damp_func*W_field*f0t
+           if (order== 2) f_now=+damp_func* f0t       *W_field
            !
          case('THETA')
            if (order==0 ) f_now=damp_func*T

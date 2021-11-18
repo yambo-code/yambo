@@ -380,6 +380,8 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
  call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
+ call it('f',defs,'STD_style','Prin occupations in output with standard style',verb_level=V_real_time) 
+ !
 #endif
  !
 end subroutine

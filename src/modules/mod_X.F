@@ -27,16 +27,21 @@ module X_m
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
+ use OUTPUT,         ONLY:N_MAX_columns
  use cuda_m,         ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>
  !
- ! Polarizability
+ ! Observables
  !
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
  logical                  :: eval_alpha
+ logical                  :: eval_eels
+ logical                  :: eval_beta
+ logical                  :: eval_moke
+ logical                  :: eval_reflectivity
  logical                  :: l_drude
  integer                  :: drude_n_states
  !
@@ -146,7 +151,30 @@ module X_m
    character(schlen):: KERNEL
  end type
  !
+ ! Observables
+ type X_obs_t
+   logical               :: active
+   character(schlen)     :: what
+   character(schlen)     :: prefix
+   integer               :: N_columns
+   character(schlen)     :: COL_header(N_MAX_columns)
+ end type
+ integer, parameter :: N_X_obs=15
+ type(X_obs_t)      :: X_obs(N_X_obs) 
+ !
  interface
+   !
+   subroutine X_observables(WHAT,W,keys,IQ,IG,DESC,data)
+     use pars,          ONLY:SP
+     use frequency,      ONLY:w_samp
+     use descriptors,    ONLY:IO_desc
+     character(*)          :: WHAT
+     type(w_samp), optional:: W
+     character(*), optional:: keys
+     integer,      optional:: IQ,IG
+     type(IO_desc),optional:: DESC
+     real(SP),     optional:: data(:)
+   end subroutine
    !
    subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
      use R_lattice,     ONLY:bz_samp,bz_fine_grid

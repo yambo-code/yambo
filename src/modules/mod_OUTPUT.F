@@ -58,8 +58,7 @@ module OUTPUT
    integer               :: N_cols
    real(SP), allocatable :: data(:)
  end type
- ! 
- ! See: X_output_INIT
+ !
  integer, parameter    :: N_OUT_data=15
  type(OUT_data_t)      :: OUT_data(N_OUT_data) 
  !
@@ -79,7 +78,7 @@ module OUTPUT
      logical     ,optional :: PARSER_call
    end subroutine
    !
-   subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+   subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
      character(*)            :: file
      character(*) , OPTIONAL :: action
@@ -101,7 +100,7 @@ module OUTPUT
      real(SP), optional :: Qprime(3)
    end subroutine
    !
-   subroutine OUTPUT_driver(what,keys,IQ,IG)
+   subroutine OUTPUT_init(what,keys,IQ,IG)
      character(*)           :: what
      character(*), optional :: keys
      integer,      optional :: IQ,IG

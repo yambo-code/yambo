@@ -40,7 +40,7 @@ subroutine PHEL_screening(E,q,DONE)
  use vec_operate,    ONLY:iku_v_norm
  use wrapper,        ONLY:M_by_V,V_dot_V
  use stderr,         ONLY:intc,real2ch
- use OUTPUT,         ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_driver
  !
 #include<memory.h>
  !
@@ -250,17 +250,17 @@ subroutine PHEL_screening(E,q,DONE)
    do il=elph_branches(1),elph_branches(2)
      if (.not.fat_log) cycle
      fname="potentials_q"//trim(intc(iq_ph))//"_branch"//trim(intc(il))
-     call OUTPUT_add_column(trim(fname),action="open")
+     call OUTPUT_driver(trim(fname),action="open")
      desc(1)="|q+G|[a.u]"
      desc(2)="V_bare[a.u]"
      desc(3)="W_static[a.u]"
      desc(4)="W_dyn(W_ph)[a.u]" 
      do ig=1,X(1)%ng
        data(:4)=(/bare_qpg(iq_ph,ig),V(iq_ph,ig),W_static(iq_ph,ig),W_dyn(iq_ph,ig,iw_Wph(iq_ph,il))/)
-       call OUTPUT_add_column(trim(fname),TITLES=desc(:4),R_VALUES=data(:4))
-       call OUTPUT_add_column(trim(fname),action="write")
+       call OUTPUT_driver(trim(fname),TITLES=desc(:4),R_VALUES=data(:4))
+       call OUTPUT_driver(trim(fname),action="write")
      enddo
-     call OUTPUT_add_column(trim(fname),action="close")
+     call OUTPUT_driver(trim(fname),action="close")
    enddo
    !
    do i_f=1,2
@@ -269,10 +269,10 @@ subroutine PHEL_screening(E,q,DONE)
      if (i_f==2) prefix="IM"
      !
      fname="static_screening-"//prefix//"_q"//trim(intc(iq_ph))
-     call OUTPUT_add_column(trim(fname),action="open")
+     call OUTPUT_driver(trim(fname),action="open")
      !
      do iw=1,Xw(1)%n_freqs
-       call OUTPUT_add_column(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xw(1)%p(iw))/),UNIT="eV")
+       call OUTPUT_driver(trim(fname),TITLES=(/"Energy"/),R_VALUES=(/real(Xw(1)%p(iw))/),UNIT="eV")
        if (i_f==1) data(:3)= real((/V_X_V(iq_ph,iw),V_Xo_Ws(iq_ph,iw),Ws_Xo_Ws(iq_ph,iw)/))
        if (i_f==2) data(:3)= aimag((/V_X_V(iq_ph,iw),V_Xo_Ws(iq_ph,iw),Ws_Xo_Ws(iq_ph,iw)/))
        data(4) = data(1)/data(2)
@@ -282,11 +282,11 @@ subroutine PHEL_screening(E,q,DONE)
        desc(3)=prefix//"[Ws.Xo.Ws]"
        desc(4)=prefix//"[X]/"//prefix//"[V.Xo.Ws]"
        desc(5)=prefix//"[X]/"//prefix//"[Ws.Xo.Ws]"
-       call OUTPUT_add_column(trim(fname),TITLES=desc(:5),R_VALUES=data(:5))
-       call OUTPUT_add_column(trim(fname),action="write")
+       call OUTPUT_driver(trim(fname),TITLES=desc(:5),R_VALUES=data(:5))
+       call OUTPUT_driver(trim(fname),action="write")
        call live_timing( steps=1 )
      enddo
-     call OUTPUT_add_column(trim(fname),action="close")
+     call OUTPUT_driver(trim(fname),action="close")
      !
    enddo
    !

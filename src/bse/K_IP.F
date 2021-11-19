@@ -403,14 +403,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (l_rpa_IP) then
-   !
-   ! Initialize & write the output file
-   !
-   call K_output(iq,"open IP")
-   call K_output(iq,"IP")
-   !
- endif
+ if (l_rpa_IP) call K_output(iq,"open IP write close reset")
  !
  ! Clean
  ! 

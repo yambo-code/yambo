@@ -46,7 +46,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use it_m,          ONLY:infile
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
- use OUTPUT,        ONLY:OUTPUT_driver
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
@@ -137,10 +136,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Update the default variables
  !
  i_err=INIT(en,q,k,X,Xw,Dip,instr,lnstr,.true.,.false.)
- !
- ! OUTPUT
- ! 
- call OUTPUT_driver( "def" )
  !
  ! BZ sampling
  !==============

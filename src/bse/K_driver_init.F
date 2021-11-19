@@ -24,15 +24,14 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:n_spin,levels,n_sp_pol
+ use electrons,    ONLY:levels
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match
  use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp
  use BS,           ONLY:L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
-&                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
-&                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics,&
+&                       BS_perturbative_SOC,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
@@ -86,8 +85,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (l_flag)        l_BS_ares_from_res=.FALSE.
  !
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
- if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
  ! DS: the following line makes no sense. Resonant means I do not want the anti-resonant term ???
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
@@ -99,6 +96,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  if (what=="loop-init") return
+ !
+ BS_K_is_ALDA=l_alda_fxc
+ BS_dip_size=1
  !
  ! Need to convert eels to epsilon ? (part A, part B in K_driver)
  !================================================================
@@ -153,43 +153,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! CORE Logicals
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
- !
- BS_K_is_ALDA=l_alda_fxc
- !
- BS_dip_size=1
- !
- ! What...
- !--------
- l_BS_abs       = STRING_match(BSE_prop,'abs')
- l_BS_jdos      = STRING_match(BSE_prop,'jdos').or.STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP
- l_BS_dichroism = STRING_match(BSE_prop,'dich')
- l_BS_kerr      = STRING_match(BSE_prop,'kerr')
- l_BS_photolum  = STRING_match(BSE_prop,'photolum')
- l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
- !
- ! How ...
- !---------
- l_BS_esort     = STRING_match(BSE_prop,'esrt').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
- !
- ! How to treat dipoles...
- !------------------------
- l_BS_trace     = STRING_match(BSE_prop,'trace')
- !
- if (l_BS_magnons.and.n_sp_pol==2) then
-   l_BS_abs    = .false.
-   l_BS_kerr   = .false.
-   l_BS_trace  = .false.
-   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
- endif
- if (l_BS_kerr) then
-   call parser('AnHall',l_BS_anomalous_Hall)
-   BS_dip_size=2
-   l_BS_abs=.TRUE.
- endif
- if (l_BS_photolum) l_BS_trace  = .false.
- if (l_BS_trace   ) BS_dip_size = 3
- !
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !
  ! TR-ABS logicals
  !-----------------

@@ -73,7 +73,7 @@ subroutine K_Haydock(iq,W,mode)
  !
  if (BS_res_ares_n_mat==2) call error(" Haydock not coded for case  with two BSE matricies")
  !
- call K_output(iq,"open Haydock "//trim(mode))
+ call K_output(iq,"open Haydock close "//trim(mode))
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')
  !
@@ -491,7 +491,7 @@ subroutine K_Haydock(iq,W,mode)
    if(     tmp_converged) Haydock_n_converged=Haydock_n_converged+1
    if(.not.tmp_converged) Haydock_n_converged=0
    !
-   if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output(iq,"Haydock "//trim(mode))
+   if ( mod(it,max(1,Haydock_iterIO/10))==0) call K_output(iq,"open write Haydock close "//trim(mode))
    !
    if ( mod(it,Haydock_iterIO)==0 .or. Haydock_n_converged==Haydock_required_converged) then
      !
@@ -523,7 +523,7 @@ subroutine K_Haydock(iq,W,mode)
    !
    if (Haydock_n_converged==Haydock_required_converged) then
      !
-     call K_output(iq,"Haydock final "//trim(mode))
+     call K_output(iq,"open write Haydock close reset "//trim(mode))
      !
      call msg('r','Accuracy (reached)        ',reached_threshold,"[o/o]")
      call msg('r','Iterations                ',it)
@@ -556,7 +556,6 @@ subroutine K_Haydock(iq,W,mode)
  call timing('Haydock Solver',OPR='stop')
  !
 end subroutine
-!
 !
 subroutine HAYVEC_gather(V,fullV,fullV_size)
  !
@@ -595,7 +594,6 @@ subroutine HAYVEC_gather(V,fullV,fullV_size)
  call PP_redux_wait( fullV ,COMM=PAR_COM_eh_INDEX%COMM )
  !
 end subroutine HAYVEC_gather  
-!
 !
 subroutine HAYVEC_scatter(V,fullV,fullV_size)
  !

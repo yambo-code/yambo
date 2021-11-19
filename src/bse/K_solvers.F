@@ -28,13 +28,12 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_free,BS_mat,&
-&                         run_Haydock,run_inversion,run_Diago
+ use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,run_inversion,run_Diago
 #if defined _SLEPC && !defined _NL
  use BS_solvers,     ONLY:run_Slepc
 #endif
  use BS,             ONLY:BS_K_has_been_calculated_loaded,&
-&                         BS_blks_free,l_BS_abs,l_BS_photolum,l_BS_kerr,l_BS_magnons
+&                         BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons
  use parallel_m,     ONLY:master_cpu,CPU_structure
  use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
@@ -65,26 +64,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! DEBUG_AM
  ! Solvers
  !
- run_Diago     = index(BSS_mode,'d')/=0
- run_Haydock   = index(BSS_mode,'h')/=0
- run_inversion = index(BSS_mode,'i')/=0
-#if defined _SLEPC && !defined _NL
- run_Slepc     = index(BSS_mode,'s')/=0
-#endif
- !
- if (l_BS_photolum.and.run_Haydock) then
-   call warning('PL currently implemented only using the diagonalization/inversion solver')
-   run_Haydock  =.false.
- endif
- !
  ! I/O. All read. Only master writes.
  ! 
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
- !
- if (run_Haydock.and.allocated(Ken%W)) then
-   call warning('K with QP widths not supported in the Haydock solver')
-   run_Haydock=.false.
- endif
  !
  ! Diagonalization
  !
@@ -136,9 +118,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
    !
-   if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs")
-   if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr")
-   if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons")
+   if (l_BS_abs)     call K_Haydock(iq,W_bss,"abs")
+   if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr")
+   if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons")
    !
  endif
  !

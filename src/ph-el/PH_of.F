@@ -25,7 +25,7 @@ subroutine PH_of(q)
  !
  use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_life
- use OUTPUT,         ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_driver
  use PHEL,           ONLY:PH_Q,PHEL_qp,PH_energy,&
 &                         QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH,QPH_DDFPT
  use ELPH,           ONLY:elph_branches,PHEL_desc,ELPH_desc
@@ -45,8 +45,8 @@ subroutine PH_of(q)
  character(schlen):: files(2)
  !
  ! Ouput init...
- call OUTPUT_add_column("ph",action="reset")
- call OUTPUT_add_column("ph",action="open")
+ call OUTPUT_driver("ph",action="reset")
+ call OUTPUT_driver("ph",action="open")
  call DESC_write('o ph','#',PHEL_desc)
  call DESC_write('o ph','#',ELPH_desc)
  !
@@ -71,84 +71,84 @@ subroutine PH_of(q)
      do iw=1,QPH%N_D_freqs
        do i_f=1,2
          if (iw==1) then
-           call OUTPUT_add_column(trim(files(i_f)),action="reset")
-           call OUTPUT_add_column(trim(files(i_f)),action="open")
+           call OUTPUT_driver(trim(files(i_f)),action="reset")
+           call OUTPUT_driver(trim(files(i_f)),action="open")
            call DESC_write('o '//trim(files(i_f)),'#',PHEL_desc)
            call DESC_write('o '//trim(files(i_f)),'#',ELPH_desc)
          endif
-         call OUTPUT_add_column(trim(files(i_f)),TITLES=(/"Energy"/),R_VALUES=(/real(QPH%W(iw))/),UNIT="meV")
+         call OUTPUT_driver(trim(files(i_f)),TITLES=(/"Energy"/),R_VALUES=(/real(QPH%W(iw))/),UNIT="meV")
        enddo
        if (l_QP_eval_GF) then 
-         call OUTPUT_add_column(trim(files(1)),TITLES=(/"-Im[D]","Re[D] "/),&
+         call OUTPUT_driver(trim(files(1)),TITLES=(/"-Im[D]","Re[D] "/),&
 &                               R_VALUES=(/-aimag(QPH_full%D(iw)),real(QPH_full%D(iw))/))
        endif
        if (On_Mass_Shell_approx) then
-         call OUTPUT_add_column(trim(files(1)),TITLES=(/"-Im[D](OMS)","Re[D](OMS) "/),&
+         call OUTPUT_driver(trim(files(1)),TITLES=(/"-Im[D](OMS)","Re[D](OMS) "/),&
 &                               R_VALUES=(/-aimag(QPH_OMS%D(iw)),real(QPH_OMS%D(iw))/))
        endif
-       call OUTPUT_add_column(trim(files(1)),TITLES=(/"-Im[D](OMS+BP)","Re[D](OMS+BP) "/),&
+       call OUTPUT_driver(trim(files(1)),TITLES=(/"-Im[D](OMS+BP)","Re[D](OMS+BP) "/),&
 &                             R_VALUES=(/-aimag(QPH_OMS_bare_Pole%D(iw)),real(QPH_OMS_bare_Pole%D(iw))/))
-       call OUTPUT_add_column(trim(files(1)),TITLES=(/"-Im[D](QPH)","Re[D](QPH) "/),&
+       call OUTPUT_driver(trim(files(1)),TITLES=(/"-Im[D](QPH)","Re[D](QPH) "/),&
 &                             R_VALUES=(/-aimag(QPH%D(iw)),real(QPH%D(iw))/))
-       call OUTPUT_add_column(trim(files(1)),action="write")
+       call OUTPUT_driver(trim(files(1)),action="write")
        if (l_QP_eval_GF) then 
-         call OUTPUT_add_column(trim(files(2)),TITLES=(/"Im[\Pi]","Re[\Pi]"/),&
+         call OUTPUT_driver(trim(files(2)),TITLES=(/"Im[\Pi]","Re[\Pi]"/),&
 &                               R_VALUES=(/aimag(QPH_full%PI(iw)),real(QPH_full%PI(iw))/),UNIT="meV")
        endif
-       call OUTPUT_add_column(trim(files(2)),TITLES=(/"Im[\Pi](QPH)","Re[\Pi](QPH)"/),&
+       call OUTPUT_driver(trim(files(2)),TITLES=(/"Im[\Pi](QPH)","Re[\Pi](QPH)"/),&
 &                             R_VALUES=(/aimag(QPH%PI(iw)),real(QPH%PI(iw))/),UNIT="meV")
-       call OUTPUT_add_column(trim(files(2)),action="write")
+       call OUTPUT_driver(trim(files(2)),action="write")
      enddo
-     call OUTPUT_add_column(trim(files(1)),action="close")
-     call OUTPUT_add_column(trim(files(2)),action="close")
+     call OUTPUT_driver(trim(files(1)),action="close")
+     call OUTPUT_driver(trim(files(2)),action="close")
      !
      ! o.ph
      !======
-     call OUTPUT_add_column("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
-     call OUTPUT_add_column("ph",TITLES=(/"Eo"/),R_VALUES=(/ph_freq/),UNIT="meV")
+     call OUTPUT_driver("ph",TITLES=(/"Q-point","Branch "/),I_VALUES=(/iq,il/))
+     call OUTPUT_driver("ph",TITLES=(/"Eo"/),R_VALUES=(/ph_freq/),UNIT="meV")
      !
      ! Lifetimes...
      if (l_life) then
-       call OUTPUT_add_column("ph",TITLES=(/"FWMH"/),R_VALUES=(/real(QPH_OMS_bare_Pole%GAMMA)*2./),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"FWMH"/),R_VALUES=(/real(QPH_OMS_bare_Pole%GAMMA)*2./),UNIT="meV")
        if (l_extended_output) then
-         call OUTPUT_add_column("ph",TITLES=(/"FWMH(interb)"/),R_VALUES=(/PHEL_qp%interband(il,iq)/),UNIT="meV")
-         call OUTPUT_add_column("ph",TITLES=(/"FWMH(intrab)"/),R_VALUES=(/PHEL_qp%intraband(il,iq)/),UNIT="meV")
-         call OUTPUT_add_column("ph",TITLES=(/"FWMH(Allen)"/),R_VALUES=(/PHEL_qp%allen(il,iq)/),UNIT="meV")
+         call OUTPUT_driver("ph",TITLES=(/"FWMH(interb)"/),R_VALUES=(/PHEL_qp%interband(il,iq)/),UNIT="meV")
+         call OUTPUT_driver("ph",TITLES=(/"FWMH(intrab)"/),R_VALUES=(/PHEL_qp%intraband(il,iq)/),UNIT="meV")
+         call OUTPUT_driver("ph",TITLES=(/"FWMH(Allen)"/),R_VALUES=(/PHEL_qp%allen(il,iq)/),UNIT="meV")
        endif
-       call OUTPUT_add_column("ph",action="write")
+       call OUTPUT_driver("ph",action="write")
        cycle
      endif
      !
      ! ...Energies 
      if (l_QP_eval_GF) then
-       call OUTPUT_add_column("ph",TITLES=(/"E(SF)"/),R_VALUES=(/real(QPH_full%Pole)/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"E(SF)"/),R_VALUES=(/real(QPH_full%Pole)/),UNIT="meV")
      else
-       call OUTPUT_add_column("ph",TITLES=(/"E(DDFPT)"/),R_VALUES=(/real(QPH_DDFPT%Pole)/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"E(DDFPT)"/),R_VALUES=(/real(QPH_DDFPT%Pole)/),UNIT="meV")
      endif
-     call OUTPUT_add_column("ph",TITLES=(/"E(QPH)"/),R_VALUES=(/real(QPH%Pole)/),UNIT="meV")
+     call OUTPUT_driver("ph",TITLES=(/"E(QPH)"/),R_VALUES=(/real(QPH%Pole)/),UNIT="meV")
      if (On_Mass_Shell_approx) then
-       call OUTPUT_add_column("ph",TITLES=(/"E(OMS)"/),R_VALUES=(/real(QPH_OMS%Pole)/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"E(OMS)"/),R_VALUES=(/real(QPH_OMS%Pole)/),UNIT="meV")
      endif
      !
      ! ...widths
      if (l_QP_eval_GF) then
-       call OUTPUT_add_column("ph",TITLES=(/"\G(SF,L)"/),R_VALUES=(/QPH_full%Half_Width_left/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"\G(SF,R)"/),R_VALUES=(/QPH_full%Half_Width_right/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"\G(SF,L)"/),R_VALUES=(/QPH_full%Half_Width_left/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"\G(SF,R)"/),R_VALUES=(/QPH_full%Half_Width_right/),UNIT="meV")
      endif
      if (On_Mass_Shell_approx) then
-       call OUTPUT_add_column("ph",TITLES=(/"\G(OMS,L)"/),R_VALUES=(/QPH_OMS%Half_Width_left/),UNIT="meV")
-       call OUTPUT_add_column("ph",TITLES=(/"\G(OMS,R)"/),R_VALUES=(/QPH_OMS%Half_Width_right/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"\G(OMS,L)"/),R_VALUES=(/QPH_OMS%Half_Width_left/),UNIT="meV")
+       call OUTPUT_driver("ph",TITLES=(/"\G(OMS,R)"/),R_VALUES=(/QPH_OMS%Half_Width_right/),UNIT="meV")
      endif
-     call OUTPUT_add_column("ph",TITLES=(/"FWMH(OMS+BP)"/),R_VALUES=(/real(QPH_OMS_bare_Pole%GAMMA)*2./),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"\G(QPH,L)"/),R_VALUES=(/QPH%Half_Width_left/),UNIT="meV")
-     call OUTPUT_add_column("ph",TITLES=(/"\G(QPH,R)"/),R_VALUES=(/QPH%Half_Width_right/),UNIT="meV")
+     call OUTPUT_driver("ph",TITLES=(/"FWMH(OMS+BP)"/),R_VALUES=(/real(QPH_OMS_bare_Pole%GAMMA)*2./),UNIT="meV")
+     call OUTPUT_driver("ph",TITLES=(/"\G(QPH,L)"/),R_VALUES=(/QPH%Half_Width_left/),UNIT="meV")
+     call OUTPUT_driver("ph",TITLES=(/"\G(QPH,R)"/),R_VALUES=(/QPH%Half_Width_right/),UNIT="meV")
      !
-     call OUTPUT_add_column("ph",action="write")
+     call OUTPUT_driver("ph",action="write")
      !
    enddo
  enddo
  !
- call OUTPUT_add_column("ph",action="close")
+ call OUTPUT_driver("ph",action="close")
  !
  ! Clean
  !

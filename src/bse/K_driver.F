@@ -28,7 +28,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use stderr,         ONLY:intc,STRING_match,STRING_same
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_observables
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
@@ -73,6 +73,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  ! Logicals initialization
  !=========================
  call K_driver_init("init",1,Ken,Xk)
+ !
+ ! Output files & observables initialization
+ !===========================================
+ call K_output_init(Ken)
+ call X_observables("INIT")
  !
  ! PL is implemented only in velocity gauge
  if (l_BS_photolum) global_gauge="velocity"
@@ -152,7 +157,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! BSS output arrays
    !===================
-   call K_observables("ALLOC",W_bss)
+   call X_observables("ALLOC",W_bss)
    !
    if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
      !
@@ -246,10 +251,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    endif
    !
    ! CLEAN (OBSs)
-   call K_observables("FREE",W_bss)
+   call X_observables("FREE")
    !
    ! CLEAN (Blocks)
-   !
    call BS_Blocks_and_Transitions_free( )
    !
  enddo

@@ -3,7 +3,7 @@
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
-! 
+!
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
 ! modify it under the terms of the GNU General Public 
@@ -21,93 +21,152 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OUTPUT_driver(what,keys,IQ,IG)
+subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  !
- use pars,           ONLY:schlen
- use OUTPUT,         ONLY:OUT_data,N_OUT_data
- use stderr,         ONLY:STRING_match,STRING_split,intc
- use com,            ONLY:of_open_close
+ use pars,                ONLY:SP,schlen,lchlen
+ use OUTPUT,              ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
+ use com,                 ONLY:msg,of_open_close
+ use stderr,              ONLY:STRING_same,set_real_printed_length
  !
  implicit none
  !
- character(*)           :: what
- character(*), optional :: keys
- integer,      optional :: IQ,IG
+ character(*)            :: file
+ character(*) , OPTIONAL :: action
+ character(*) , OPTIONAL :: TITLES(:)
+ integer      , OPTIONAL :: I_VALUES(:)
+ real(SP)     , OPTIONAL :: R_VALUES(:)
+ character(*) , OPTIONAL :: ORDER(:)
+ character(*) , OPTIONAL :: UNIT
+ character(*) , OPTIONAL :: KIND
  !
- ! Workspace
- integer            ::it,ik
- character(schlen)  ::key(10)
+ ! Work Space
  !
- if (STRING_match(what,"def")) then
-   OUT_data(1)%what="fxc"
-   OUT_data(2)%what="pl"
-   OUT_data(3)%what="eps"
-   OUT_data(4)%what="refl"
-   OUT_data(5)%what="eel"
-   OUT_data(6)%what="alpha"
-   OUT_data(7)%what='E_IP'
-   OUT_data(8)%what='Esort'
-   OUT_data(9)%what='off'
-   OUT_data(10)%what='beta'
-   OUT_data(11)%what='moke'
-   OUT_data(12)%what='jdos'
-   OUT_data(13)%what='Spm'
-   OUT_data(14)%what='Smp'
-   OUT_data(15)%what='CD'
-   do it=1,N_OUT_data
-     OUT_data(it)%active=.FALSE.
-     OUT_data(it)%file=OUT_data(it)%what
-   enddo
- endif
+ integer           :: N,M,i_t,i_o,i_COL,i_f
+ logical           :: NEW_COL
+ real(SP)          :: o_R_values(N_MAX_columns)
+ integer           :: o_I_values(N_MAX_columns)
+ character(1)      :: o_KINDS(N_MAX_columns)
+ character(schlen) :: o_titles(N_MAX_columns)
+ character(lchlen) :: MSG_string(N_MAX_columns)
  !
- if (STRING_match(what,"activate")) then
-   do it=1,N_OUT_data
-     if (.not.STRING_match(what,trim(OUT_data(it)%what))) cycle
-     OUT_data(it)%active=.TRUE.
-   enddo
- endif
- !
- if (STRING_match(what,"open")) then
-   do it=1,N_OUT_data
-     if (.not.OUT_data(it)%active) cycle
-     if (.not.STRING_match(what,trim(OUT_data(it)%what)).and..not.STRING_match(what,"ALL")) cycle
-     if (STRING_match(what,"Ot")) call of_open_close(OUT_data(it)%file,'Ot')
-     if (STRING_match(what,"ot")) call of_open_close(OUT_data(it)%file,'ot')
-     if (STRING_match(what,"oa")) call of_open_close(OUT_data(it)%file,'oa')
-   enddo
- endif
- !
- if (STRING_match(what,"close")) then
-   do it=1,N_OUT_data
-     if (.not.OUT_data(it)%active) cycle
-     if (.not.STRING_match(what,trim(OUT_data(it)%what)).and..not.STRING_match(what,"ALL")) cycle
-     call of_open_close(OUT_data(it)%file)
-   enddo
- endif
- !
- if (STRING_match(what,"keys").and.present(keys)) then
-   call STRING_split(keys,key)
-   do it=1,N_OUT_data
-     if (.not.OUT_data(it)%active) cycle
-     if (.not.STRING_match(what,trim(OUT_data(it)%what)).and..not.STRING_match(what,"ALL")) cycle
-     if (present(IQ)) then
-       OUT_data(it)%file=trim(OUT_data(it)%file)//"_q"//trim(intc(IQ))
+ i_f=0
+ do i_t=1,N_MAX_files
+   if (index(trim(OUT_file(i_t)%filename_short),trim(file))>0) i_f=i_t
+ enddo
+ if (i_f==0) then
+   do i_t=1,N_MAX_files
+     if (len_trim(OUT_file(i_t)%filename)==0) then
+       i_f=i_t
+       OUT_file(i_f)%filename      =file
+       OUT_file(i_f)%filename_short=file
+       exit
      endif
-     if (present(IG)) then
-       if (IG>1) OUT_data(it)%file=trim(OUT_data(it)%file)//"_G"//trim(intc(IG))
+   enddo
+ endif
+ !
+ if (present(action)) then
+   if (action=="close"    ) call of_open_close(OUT_file(i_f)%filename)
+   if (action=="open"     ) call of_open_close(OUT_file(i_f)%filename,'ot')
+   if (action=="overwrite") call of_open_close(OUT_file(i_f)%filename,'Ot')
+   if (action=="append") then
+     call of_open_close(OUT_file(i_f)%filename,'oa')
+     OUT_file(i_f)%TITLES_dumped=.TRUE.
+   endif
+   if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
+ endif
+ !
+ if (present(TITLES)) then
+   N=size(TITLES)
+   do i_t=1,N
+     NEW_COL=.TRUE.
+     i_COL=OUT_file(i_f)%N_columns+1
+     do i_o=1,N
+       if (STRING_same(trim(TITLES(i_t)),trim(OUT_file(i_f)%COL(i_o)%title))) then
+         i_COL=i_o
+         NEW_COL=.FALSE.
+       endif
+     enddo
+     if (NEW_COL) then
+       OUT_file(i_f)%N_columns=OUT_file(i_f)%N_columns+1
+       OUT_file(i_f)%N_columns_ordered=OUT_file(i_f)%N_columns_ordered+1
      endif
-     do ik=1,10 
-       if (len_trim(key(ik))==0) cycle
-       OUT_data(it)%file=trim(OUT_data(it)%file)//"_"//trim(key(ik))
+     OUT_file(i_f)%COL(i_COL)%title=TITLES(i_t)
+     OUT_file(i_f)%COL_WIDTH=max(OUT_file(i_f)%COL_WIDTH,len_trim(TITLES(i_t)))
+     OUT_file(i_f)%COL(i_COL)%POS=i_COL
+     if (present(I_VALUES)) then
+       OUT_file(i_f)%COL(i_COL)%I_value=I_VALUES(i_t)
+       OUT_file(i_f)%COL(i_COL)%KIND="I"
+     endif
+     if (present(R_VALUES)) then
+       if (present(UNIT)) then
+         OUT_file(i_f)%COL(i_COL)%title=trim(OUT_file(i_f)%COL(i_COL)%title)//" ["//UNIT//"]"
+         if (present(KIND)) then
+           call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT,KIND=KIND)
+         else
+           call OUTPUT_unit_conversion(rVAR=R_VALUES(i_t),DESC=UNIT)
+         endif
+       endif
+       OUT_file(i_f)%COL(i_COL)%R_value=R_VALUES(i_t)
+       OUT_file(i_f)%COL(i_COL)%KIND="R"
+     endif
+   enddo
+ endif
+ !
+ if (present(ORDER)) then
+   N=size(ORDER) 
+   M=0
+   if (.not.OUT_file(i_f)%TITLES_ordered) then
+     OUT_file(i_f)%COL(:)%POS=0
+     OUT_file(i_f)%N_columns_ordered=0
+   endif
+   do i_t=1,OUT_file(i_f)%N_columns
+     do i_o=1,N
+       if (index(OUT_file(i_f)%COL(i_t)%title,trim(ORDER(i_o)))==1) then
+         M=M+1
+         OUT_file(i_f)%COL(i_t)%POS=i_o+OUT_file(i_f)%N_columns_ordered
+       endif
      enddo
    enddo
+   OUT_file(i_f)%N_columns_ordered=OUT_file(i_f)%N_columns_ordered+M
+   OUT_file(i_f)%TITLES_ordered=.TRUE.
  endif
  !
- if (STRING_match(what,"reset")) then
-   do it=1,N_OUT_data
-     OUT_data(it)%active=.FALSE.
-     OUT_data(it)%file=OUT_data(it)%what
-   enddo
+ if (.not.present(action)) return
+ if (.not.action=="write") return
+ !
+ ! TITLES
+ !--------
+ do i_t=1,OUT_file(i_f)%N_columns
+   if (OUT_file(i_f)%COL(i_t)%POS==0) cycle
+   o_titles(OUT_file(i_f)%COL(i_t)%POS)=OUT_file(i_f)%COL(i_t)%title
+ enddo
+ if (.not.OUT_file(i_f)%TITLES_dumped) then
+   call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
+   call msg('o '//OUT_file(i_f)%filename_short,'#')
+   call msg('o '//OUT_file(i_f)%filename_short,'#',(o_titles(:OUT_file(i_f)%N_columns_ordered)),INDENT=0,USE_TABS=.TRUE.)
+   call msg('o '//OUT_file(i_f)%filename_short,'#')
+   OUT_file(i_f)%TITLES_dumped=.TRUE.
+   call set_real_printed_length( )
  endif
+ !
+ ! DATA
+ !-------
+ MSG_string=" "
+ do i_t=1,OUT_file(i_f)%N_columns
+   if (OUT_file(i_f)%COL(i_t)%POS==0) cycle
+   o_KINDS(OUT_file(i_f)%COL(i_t)%POS)=OUT_file(i_f)%COL(i_t)%KIND
+   if (OUT_file(i_f)%COL(i_t)%KIND=="R") o_R_values(OUT_file(i_f)%COL(i_t)%POS)=OUT_file(i_f)%COL(i_t)%R_value
+   if (OUT_file(i_f)%COL(i_t)%KIND=="I") o_I_values(OUT_file(i_f)%COL(i_t)%POS)=OUT_file(i_f)%COL(i_t)%I_value
+ enddo
+ !
+ do i_t=1,OUT_file(i_f)%N_columns_ordered
+   if (o_KINDS(i_t)=="I") call msg('string','',o_I_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
+   if (o_KINDS(i_t)=="R") call msg('string','',o_R_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
+ enddo
+ call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
+ call msg('o '//OUT_file(i_f)%filename_short,' ',MSG_string(:OUT_file(i_f)%N_columns_ordered),INDENT=-2,USE_TABS=.TRUE.)
+ call set_real_printed_length( )
+ !
+ call OUTPUT_reset(i_f,"row")
  !
 end subroutine

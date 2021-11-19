@@ -32,7 +32,7 @@ subroutine K_output(iq,mode)
  use X_m,       ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,eval_alpha,eps_2_alpha,alpha_dim,OPTICS_eels
  use com,       ONLY:msg
  use parser_m,  ONLY:parser
- use OUTPUT,    ONLY:headers,OUTPUT_driver,OUTPUT_q_plus_G
+ use OUTPUT,    ONLY:headers,OUTPUT_init,OUTPUT_q_plus_G
  use R_lattice, ONLY:bare_qpg,q_norm
  use interfaces,ONLY:DESC_write
  use pars,      ONLY:cI
@@ -58,10 +58,12 @@ subroutine K_output(iq,mode)
 &                     beta(BSS_n_freqs,3)
  logical           :: l_kerr_out,l_dich_out,l_phot_out,l_magn_out,eval_moke,&
 &                     eval_alpha_loc,eval_beta,eval_eels,eval_reflectivity,l_Haydock,l_Diago,l_Inversion,l_Slepc,&
-&                     l_IP,l_INIT,l_FINALIZE,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out
+&                     l_IP,l_OPEN,l_print_col4,l_jdos_out,l_esrt_out,l_abs_out,l_RESET,l_DUMP,l_CLOSE
  !
- l_INIT      = index(mode,"open")/=0
- l_FINALIZE  = index(mode,"final")/=0
+ l_OPEN      = index(mode,"open")/=0
+ l_CLOSE     = index(mode,"close")/=0
+ l_RESET     = index(mode,"reset")/=0
+ l_DUMP      = index(mode,"dump")/=0
  !
  l_Haydock   = index(mode,"Haydock")/=0
  l_Diago     = index(mode,"Diago")/=0
@@ -69,42 +71,26 @@ subroutine K_output(iq,mode)
  l_Inversion = index(mode,"Inversion")/=0
  l_IP        = index(mode,"IP")/=0
  !
- ! OUTPUT files activate
- !=======================
  if (l_Haydock)   name_="haydock"
  if (l_Diago)     name_="diago"
  if (l_Slepc)     name_="slepc"
  if (l_Inversion) name_="inv"
  if (l_IP)        name_="IP"
  !
- l_esrt_out =l_BS_esort    .and.(.not.(l_Inversion.or.l_Haydock))
- l_abs_out  =l_BS_abs      .and.((.not.l_Haydock).or.index(mode,"abs")>0 )
- l_jdos_out =l_BS_jdos     .and.((.not.l_Haydock).or.index(mode,"jdos")>0).and.(.not.l_Inversion)
- l_magn_out =l_BS_magnons  .and.((.not.l_Haydock).or.index(mode,"magn")>0).and.(.not.l_Inversion)
- l_kerr_out =l_BS_kerr     .and.((.not.l_Haydock).or.index(mode,"kerr")>0)
- l_dich_out =l_BS_dichroism.and.((.not.l_Haydock).or.index(mode,"dich")>0).and.(.not.l_Inversion)
- l_phot_out =l_BS_photolum .and.l_Inversion
- !
- if (l_esrt_out.and..not.l_IP)  call OUTPUT_driver("activate Esort")
- if (l_abs_out)   call OUTPUT_driver("activate abs")
- if (l_jdos_out)  call OUTPUT_driver("activate jdos")
- if (l_magn_out)  call OUTPUT_driver("activate Spm")
- if (l_magn_out.and.n_spinor==2)  call OUTPUT_driver("activate Smp")
- if (l_kerr_out)  call OUTPUT_driver("activate off")
- if (l_dich_out)  call OUTPUT_driver("activate CD")
- if (l_phot_out)  call OUTPUT_driver("activate pl")
- !
- if (l_INIT) then
-   call OUTPUT_driver("keys ALL",IQ=iq)
-   if (     BS_K_is_ALDA) call OUTPUT_driver("keys ALL",keys='alda')
-   if (.not.l_IP)         call OUTPUT_driver("keys ALL",keys='bse')
- endif
+ if (l_BS_esort)      call OUTPUT_init("activate Esort")
+ if (l_BS_abs)        call OUTPUT_init("activate eps")
+ if (l_BS_jdos)       call OUTPUT_init("activate jdos")
+ if (l_BS_magnons)    call OUTPUT_init("activate Spm")
+ if (l_BS_magnons.and.n_spinor==2)  call OUTPUT_init("activate Smp")
+ if (l_BS_kerr)       call OUTPUT_init("activate off")
+ if (l_BS_dichroism)  call OUTPUT_init("activate CD")
+ if (l_BS_photolum)   call OUTPUT_init("activate pl")
  !
  ! ... EELS / ALPHA / REFLECTIVITY logicals
  !
- if (l_abs_out) then
+ if (l_BS_abs) then
    call parser('Reflectivity',eval_reflectivity)
-   eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
+   eval_eels = ((.not.l_Haydock) .or. l_CLOSE.or.l_OPEN) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
    if (eval_eels) eval_eels= OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
    eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
@@ -113,22 +99,31 @@ subroutine K_output(iq,mode)
    eval_alpha_loc=.false.
    eval_reflectivity=.false.
  endif
- if (eval_eels)         call OUTPUT_driver("activate eel")
- if (eval_alpha_loc)    call OUTPUT_driver("activate alpha")
- if (eval_reflectivit)  call OUTPUT_driver("activate refl")
+ if (eval_eels)          call OUTPUT_init("activate eel")
+ if (eval_alpha_loc)     call OUTPUT_init("activate alpha")
+ if (eval_reflectivity)  call OUTPUT_init("activate refl")
  !
  eval_beta =      eval_alpha .and. l_kerr_out
  eval_moke = .not.eval_alpha .and. l_kerr_out
- if ( l_kerr_out.and.l_Haydock ) then
+ if (l_BS_kerr.and.l_Haydock ) then
    eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
  endif
- if (eval_beta)  call OUTPUT_driver("activate beta")
- if (eval_moke)  call OUTPUT_driver("activate moke")
+ if (eval_beta)  call OUTPUT_init("activate beta")
+ if (eval_moke)  call OUTPUT_init("activate moke")
+ !
+ ! Keys
+ !======
+ if (l_OPEN) then
+   call OUTPUT_init("keys ALL",IQ=iq)
+   if (     l_IP                      ) call OUTPUT_init("keys ALL",keys='IP')
+   if (.not.l_IP.and..not.BS_K_is_ALDA) call OUTPUT_init("keys ALL",keys=trim(name_)//' bse')
+   if (                   BS_K_is_ALDA) call OUTPUT_init("keys ALL",keys=trim(name_)//' alda bse')
+ endif
  !
  ! Open
  !=========
- if (.not.l_INIT) call OUTPUT_driver("open ALL Ot")
- if (     l_INIT) call OUTPUT_driver("open ALL ot")
+ if (.not.l_OPEN) call OUTPUT_init("open ALL Ot")
+ if (     l_OPEN) call OUTPUT_init("open ALL ot")
  !
  ! Headers
  !=========
@@ -151,16 +146,18 @@ subroutine K_output(iq,mode)
  !
  call DESC_write('o eps_q refl eel_q fxc alpha off beta moke jdos Esort','#',BSS_desc)
  !
- if (l_INIT) then 
-   call OUTPUT_driver("close ALL")
-   return
- endif
- !
  if(eval_alpha_loc) then
    ! Alpha units
    call msg('o alpha','#',' Alpha is in a.u. of '//trim(alpha_dim)//' ',INDENT=0)
    call msg('o alpha','#')
  endif
+ !
+ if (l_CLOSE.and..not.l_DUMP) then 
+   call OUTPUT_init("close ALL")
+   return
+ endif
+ !
+ if (.not.l_DUMP) return 
  !
  ! Diamagnetic term
  !
@@ -630,6 +627,7 @@ subroutine K_output(iq,mode)
    !
  endif
  !
- call OUTPUT_driver("close ALL reset")
+ if (l_CLOSE.and..not.l_RESET) call OUTPUT_init("close ALL")
+ if (l_CLOSE.and.     l_RESET) call OUTPUT_init("close ALL reset")
  !
 end subroutine

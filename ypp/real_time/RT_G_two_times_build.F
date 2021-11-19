@@ -34,6 +34,9 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use com,            ONLY:msg,of_open_close
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG
+#if !defined _PAR_IO
+ use IO_m,           ONLY:manage_action
+#endif
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
@@ -48,6 +51,9 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  ! Workspace
  !
  real(SP)              :: T_c,REF_diff,TIME_diff,deph_factor
+#if !defined _PAR_IO
+ integer               :: IO_ACT
+#endif
  integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
@@ -166,8 +172,9 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
  io_err=io_RT_components('G',ID)
 #else
- do ik = 1, RT_nk 
-   call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+1/),ID=ID)
+ do ik = 1, RT_nk
+   IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
+   call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID)
    io_err=io_RT_components('G',ID)
  enddo
 #endif
@@ -261,7 +268,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      io_err=io_RT_components('G',ID)
 #else
      do ik = 1, RT_nk 
-       call io_control(ACTION=OP_IF_START_RD_CL_IF_END,COM=NONE,SEC=(/ik+2/),ID=ID)
+       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
        io_err=io_RT_components('G',ID)
      enddo
 #endif

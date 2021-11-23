@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
+subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  !
  use pars,           ONLY:SP,cZERO
  use electrons,      ONLY:n_sp_pol,levels
@@ -37,14 +37,15 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
 #endif
  !
  implicit none           
- type(bz_samp), intent(in)  :: Xk
- type(levels),  intent(in)  :: Xen
- complex(SP),   intent(in)  :: V_bands(H_ref_bands(2),Xen%nbf,QP_nk,n_sp_pol)
- complex(SP),   intent(out) :: Polarization(3)
+ type(bz_samp), intent(in)   :: Xk
+ type(levels),  intent(in)   :: Xen
+ integer,       intent(in)   :: i_sp_pol
+ complex(SP),   intent(in)   :: V_bands(H_ref_bands(2),Xen%nbf(i_sp_pol),QP_nk)
+ complex(SP),   intent(inout):: Polarization(3)
  !
  ! Work Space
  !
- integer       :: id,is,ik_bz
+ integer       :: id,ik_bz,nb
  complex(SP)   :: Polarization_red(3)
  !
 #if defined _TIMING
@@ -55,32 +56,34 @@ subroutine Berry_polarization_NEQ(Xen,Xk,V_bands,Polarization)
  Sm1_plus =cZERO
  All_S_det=cZERO
  !
+ if (i_sp_pol==1) Polarization=cZERO
+ !
+ nb=Xen%nbf(i_sp_pol)
+ !
  do ik_bz=1,nXkbz
    !
    if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
    !
-   do is=1,n_sp_pol
-      call Build_Overlaps_det_NEQ(Xen,Xk,is,ik_bz,V_bands,Sm1_plus(:,:,:,ik_bz,is),Sm1_minus(:,:,:,ik_bz,is), &
-&         All_S_det(:,ik_bz,is)) 
-   enddo
+   call Build_Overlaps_det_NEQ(Xen,Xk,i_sp_pol,ik_bz,V_bands,&
+       &   Sm1_plus(:nb,:nb,:,ik_bz,i_sp_pol),Sm1_minus(:nb,:nb,:,ik_bz,i_sp_pol),&
+       &   All_S_det(:,ik_bz,i_sp_pol)) 
    !
  enddo
  !
- do is=1,n_sp_pol
-   call PP_redux_wait(Sm1_minus(:,:,:,:,is),COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
-   call PP_redux_wait( Sm1_plus(:,:,:,:,is),COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
- enddo
- call PP_redux_wait(All_S_det,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
+ call PP_redux_wait(Sm1_minus(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM) 
+ call PP_redux_wait( Sm1_plus(:,:,:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !
- call Berry_polarization_EQ(Polarization_Red,All_S_det,Xen,Xk,k_map)
+ call PP_redux_wait(All_S_det(:,:,i_sp_pol),COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
+ !
+ call Berry_polarization_EQ(Polarization_Red,All_S_det(:,:,i_sp_pol),Xen,Xk,k_map)
  !
  ! Transform in cartesian coordinates
  !
-!$omp parallel do default(shared), private(id)
+ !$omp parallel do default(shared), private(id)
  do id=1,3
-   Polarization(id)=sum(Polarization_red(:)*a(:,id))/DL_vol
+   Polarization(id)=Polarization(id)+sum(Polarization_red(:)*a(:,id))/DL_vol
  enddo
-!$omp end parallel do
+ !$omp end parallel do
  !
 #if defined _TIMING
  call timing('NL Berry Pol NEQ',OPR='stop')

@@ -27,7 +27,7 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
  ! Slater and OEP approx/procedure. 
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym
  use FFT_m,         ONLY:fft_size,fft_rot_r
@@ -40,13 +40,16 @@ subroutine OEP_Weighted_Density(en,Xk,rho)
  !
  ! Work Space 
  !
- integer :: i1,i2,ifft
+ integer :: i1,i2,ifft,i_sp
  real(SP):: rho_no_sym(fft_size),EWeight
  !
  rho=0._SP
  rho_no_sym=0._SP
  !
- do i1=1,en%nbm
+ if(n_sp_pol==2) call error("OEP not coded for n_sp_pol=2")
+ i_sp=1
+ !
+ do i1=1,en%nbm(i_sp)
    do i2=1,Xk%nibz
      if (size(WF%index,1)<i1) cycle
      if (size(WF%index,2)<i2) cycle

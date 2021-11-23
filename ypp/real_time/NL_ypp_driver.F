@@ -235,6 +235,7 @@ contains
      use vec_operate,    ONLY:sort
      use interfaces,     ONLY:DESC_write
      use nl_optics,      ONLY:NL_desc
+     use stderr,         ONLY:intc
      !
      ! Working Space
      !
@@ -243,7 +244,7 @@ contains
      logical           :: l_prt_err
      real(SP)          :: Unit_of_Measure,VALUEs(11)
      integer           :: f_indx(max_n_of_paths),n_headings
-     character(schlen) :: headings(11)
+     character(schlen) :: headings(11,0:X_order),oexp
      !
      l_prt_err=.false.
      !
@@ -252,9 +253,22 @@ contains
      !
      n_headings=7
      !
-     headings(1)=" E [eV]"
-     headings(2:7)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
-&                              'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     headings(1,:)=" E [eV]"
+     !
+     ! X^1 is adimensional
+     ! X^0 I don't know :-)
+     ! X^n n>2 [cm/stV]^{n-1}
+     !
+     headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
+&                      'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     do i_order=3,X_order,1
+       oexp=trim(intc(i_order-1))
+       headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
+&                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
+&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
+     enddo
      !
      do i_order=0,X_order,1
        !
@@ -265,7 +279,7 @@ contains
        call DESC_write('o probe','#',NL_desc)
        !
        call msg('o probe','#')
-       call msg('o probe','#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o probe','#',headings(1:n_headings,i_order),INDENT=0,USE_TABS=.TRUE.)
        call msg('o probe','#')
        !
        do i_fp=1,n_frequencies

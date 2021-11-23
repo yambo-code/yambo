@@ -44,7 +44,7 @@ subroutine INIT_barriers()
  !
  ! ...
  !
- metallic_system=n_met_bands/=n_full_bands
+ metallic_system=any(n_met_bands/=n_full_bands)
  !
  TR_or_SI=i_time_rev==1.or.i_space_inv==1
  !

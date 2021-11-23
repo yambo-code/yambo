@@ -26,9 +26,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
- use drivers,      ONLY:l_td_hf,l_tddft
+ use drivers,      ONLY:l_td_hf,l_tddft,l_RIM_W
  use collision_el, ONLY:elemental_collision,elemental_collision_free
- use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
+ use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,RIM_W,RIM_W_d,RIM_W_is_diagonal,&
+&                       RIM_W_ng
  use D_lattice,    ONLY:i_time_rev,i_space_inv
  use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
@@ -53,7 +54,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  integer    :: nibz
  !
  integer    :: BS_W_size2,i_g2,i_g3,i_g2_mat,i_g3_mat,iq_W
- logical    :: W_is_em1s,W_is_pp,W_is_unscreened
+ logical    :: W_is_em1s,W_is_pp,W_is_unscreened,l_RIM_W_g
+ !
+ real(SP),   allocatable          :: RIM_vpW(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_vpW_d(:,:)
  !
  ! I/O
  !
@@ -111,6 +115,9 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  YAMBO_ALLOC(isc%gamp,(BS_n_g_W,BS_W_size2))
  if (have_cuda) then
    YAMBO_ALLOC(isc%gamp_d,(BS_n_g_W,BS_W_size2))
+   YAMBO_ALLOC(RIM_vpW_d,(RIM_W_ng,RIM_W_ng))
+ else
+  YAMBO_ALLOC(RIM_vpW,(RIM_W_ng,RIM_W_ng))
  endif
  !
  if (.not.W_is_unscreened) then
@@ -148,6 +155,22 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      nibz=q%nibz
 #endif
      !
+     if(l_RIM_W) then
+       !$cuf kernel do(2) <<<*,*>>>
+       do i_g3=1,RIM_W_ng
+         do i_g2=1,RIM_W_ng
+#if defined _CUDA
+           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(iq_W,i_g2,i_g3)
+           if(i_g2==i_g3) RIM_vpW_d(i_g2,i_g2)=RIM_vpW_d(i_g2,i_g2)+2._SP*gamp_d(i_g2,i_g2)
+#else
+           RIM_vpW(i_g2,i_g3) = RIM_W(iq_W,i_g2,i_g3)
+           if(i_g2==i_g3) RIM_vpW(i_g2,i_g2)=RIM_vpW(i_g2,i_g2)+2._SP*isc%gamp(i_g2,i_g2)
+#endif
+         enddo
+       enddo
+       !
+     end if
+     !
      if (BS_W_is_diagonal) then
        !$cuf kernel do(1) <<<*,*>>>
        do i_g2=1, BS_n_g_W
@@ -164,13 +187,34 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
          i_g3_mat=min(i_g3,X%ng)
          do i_g2=1,BS_n_g_W
            i_g2_mat=min(i_g2,X%ng)
+           !
+           !RIM_W support
+           l_RIM_W_g=(l_RIM_W.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
+           if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(i_g2==i_g3)
+           !
+           if (l_RIM_W_g) then
+             !
 #if defined _CUDA
-           BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2_mat,i_g3_mat,1)*gamp_d(i_g2,i_g3)
-           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,nibz+iq_W)=X_mat_d(i_g3_mat,i_g2_mat,1)*gamp_d(i_g2,i_g3)
+             BS_W(i_g2,i_g3,iq_W) = cmplx(RIM_vpW_d(i_g2_mat,i_g3_mat)/2._SP, &
+&                             aimag(X_mat_d(i_g2_mat,i_g3_mat,1))*real(gamp_d(i_g2_mat,i_g3_mat)),kind=SP)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2_mat,i_g3_mat,nibz+iq_W)= cmplx(RIM_vpW_d(i_g3_mat,i_g2_mat)/2._SP, &
+&                             aimag(X_mat_d(i_g3_mat,i_g2_mat,1))*real(gamp_d(i_g2_mat,i_g3_mat)),kind=SP)
 #else
-           BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2_mat,i_g3_mat,1)*isc%gamp(i_g2,i_g3)
-           if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3_mat,i_g2_mat,1)*isc%gamp(i_g2,i_g3)
+             BS_W(i_g2,i_g3,iq_W) = cmplx(RIM_vpW(i_g2_mat,i_g3_mat)/2._SP, &
+&                             aimag(X_mat(i_g2_mat,i_g3_mat,1))*real(isc%gamp(i_g2_mat,i_g3_mat)),kind=SP)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2_mat,i_g3_mat,q%nibz+iq_W)= cmplx(RIM_vpW(i_g3_mat,i_g2_mat)/2._SP, &
+&                             aimag(X_mat(i_g3_mat,i_g2_mat,1))*real(isc%gamp(i_g2_mat,i_g3_mat)),kind=SP)
 #endif
+           else
+
+#if defined _CUDA
+             BS_W(i_g2,i_g3,iq_W)=X_mat_d(i_g2_mat,i_g3_mat,1)*gamp_d(i_g2,i_g3)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,nibz+iq_W)=X_mat_d(i_g3_mat,i_g2_mat,1)*gamp_d(i_g2,i_g3)
+#else
+             BS_W(i_g2,i_g3,iq_W)=X_mat(i_g2_mat,i_g3_mat,1)*isc%gamp(i_g2,i_g3)
+             if (i_space_inv==0.and.i_time_rev==1) BS_W(i_g2,i_g3,q%nibz+iq_W)=X_mat(i_g3_mat,i_g2_mat,1)*isc%gamp(i_g2,i_g3)
+#endif
+           end if
          enddo
        enddo
      endif
@@ -197,6 +241,13 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  endif
  !
  call elemental_collision_free(isc)
+ !
+ if (have_cuda) then
+   YAMBO_FREE(isc%gamp_d)
+   YAMBO_FREE(RIM_vpW_d)
+ else
+   YAMBO_FREE(RIM_vpW)
+ endif
  !
  if (.not.W_is_unscreened) call X_alloc('X')
  !

@@ -203,6 +203,10 @@ subroutine ELPH_databases(k,E,q)
    enddo
  endif
  !
+ call section("*","== Q-points list in the DBS (iku units) ==")
+ do idb=1,DB_nq
+    call msg('r','',real(DB_PH_qpt(idb,:),SP),USE_TABS=.TRUE.)
+ enddo
  ! ... Transfer and write ...
  !----------------------------
  ph_modes   =DB_ph_modes
@@ -210,6 +214,10 @@ subroutine ELPH_databases(k,E,q)
  elph_nQ    =DB_nq
  elph_nk_bz =k%nbz
  if (l_gkkp_expand) elph_nQ=q%nbz
+ !
+ ! If the input q-grid is not equivalent to the Yambo one cannot be expanded!
+ if (l_gkkp_expand.and..not.elph_use_q_grid) & 
+    call error(' Only regular q-grids compatible with the Yambo one can be expanded')
  !
  !...report...
  call msg('s',':: Code generator        :',DB_kind)
@@ -259,6 +267,7 @@ subroutine ELPH_databases(k,E,q)
  !
  !... GKKP
  call live_timing('ELPH databases: transfer and I/O',DB_nq)
+ call section("*","== Q-points list in Yambo (iku units) ==")
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -297,11 +306,13 @@ subroutine ELPH_databases(k,E,q)
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       call msg('r','',PH_qpt(iq_bz,:),USE_TABS=.TRUE.)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_err(3)=io_ELPH(ID,'gkkp')
+     call msg('r','',PH_qpt(iq,:),USE_TABS=.TRUE.)
    endif
    !
  enddo

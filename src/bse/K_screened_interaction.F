@@ -30,7 +30,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy
  use D_lattice,    ONLY:i_time_rev,i_space_inv
- use X_m,          ONLY:X_alloc,X_t,X_mat,X_mat_d
+ use X_m,          ONLY:X_ALLOC_elemental,X_t,X_mat,X_mat_d
  use BS,           ONLY:BS_n_g_W,BS_W_is_diagonal,BS_W
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
@@ -91,8 +91,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    W_is_em1s=X%whoami==2
    W_is_pp  =X%whoami==4
    !
-   if (W_is_em1s) call X_alloc('X',(/X%ng,X%ng,1/))
-   if (W_is_pp)   call X_alloc('X',(/X%ng,X%ng,2/))
+   if (W_is_em1s) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
+   if (W_is_pp)   call X_ALLOC_elemental('X',(/X%ng,X%ng,2/))
    !
  endif
  !
@@ -198,6 +198,6 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  call elemental_collision_free(isc)
  !
- if (.not.W_is_unscreened) call X_alloc('X')
+ if (.not.W_is_unscreened) call X_ALLOC_elemental('X')
  !
 end subroutine

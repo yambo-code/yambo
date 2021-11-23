@@ -21,31 +21,25 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_output_init( )
+subroutine K_observables( )
  !
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
- use BS,           ONLY:BS_dip_size,&
-&                       l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
+ use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res,&
-&                       eval_beta,eval_eels,eval_moke,eval_reflectivity
- use drivers,      ONLY:l_col_cut,l_rpa_IP
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
+ use drivers,      ONLY:l_rpa_IP
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
- use X_m,          ONLY:alpha_dim,eval_alpha
  !
  implicit none
  !
  type(levels)  ::Ken
  !
- ! Work Space
- logical :: eval_alpha_loc
- !
  ! What...
  !=========
  l_BS_abs       = STRING_match(BSE_prop,'abs')
- l_BS_jdos      = STRING_match(BSE_prop,'jdos').or.STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP
+ l_BS_jdos      = STRING_match(BSE_prop,'jdos').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
  l_BS_dichroism = STRING_match(BSE_prop,'dich')
  l_BS_kerr      = STRING_match(BSE_prop,'kerr')
  l_BS_photolum  = STRING_match(BSE_prop,'photolum')
@@ -98,33 +92,5 @@ subroutine K_output_init( )
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.
  endif
- !
- if (l_BS_abs) then
-   call parser('Reflectivity',eval_reflectivity)
-   eval_eels=.true.
-   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
-   eval_reflectivity=eval_reflectivity .and. .not. eval_alpha
- else
-   eval_eels=.false.
-   eval_alpha_loc=.false.
-   eval_reflectivity=.false.
- endif
- !
- eval_beta =      eval_alpha .and. l_BS_kerr
- eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
- eval_moke = .not.eval_alpha .and. l_BS_kerr
- !
- ! OUPUT(s)
- !==========
-! do iq=BS_q(1),BS_q(2)
-!   !
-!   keys_string=' '
-!   if (l_rpa_IP) keys_string=' IP'
-!   if (BS_K_is_ALDA) keys_string=trim(keys_string)//' alda'
-!   if (.not.l_rpa_IP.and..not.BS_K_is_ALDA) keys_string=' bse'
-!   if (                       BS_K_is_ALDA) keys_string=' alda bse'
-!   call OUTPUT_init("keys ALL",IQ=iq,keys=trim(keys_string))
-!   !
-! enddo
  !
 end subroutine

@@ -26,7 +26,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp,bare_qpg
  use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_Double_Grid_setup,&
-&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
+&                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule,X_do_obs
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
@@ -41,7 +41,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  use BS,             ONLY:BS_bands
 #endif
  use BS,             ONLY:l_BS_photolum
- use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor,PL_init
+ use PHOTOLUM,       ONLY:BSS_PL_f,BSS_dipoles_PL,PL,PL_prefactor
  !
 #include<memory.h>
  !
@@ -60,12 +60,10 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  complex(SP)      :: SF(W%n_freqs,2)
  character(schlen):: LT_title
  !
- ! PL_0
+ ! Zeroing
  !=======
- call PL_init( )
- PL(:,3) = rZERO
- !
- Epsilon_ii(:,3:4) = cZERO
+ if (X_do_obs("pl"))  PL(:,3) = rZERO
+ if (X_do_obs("eps")) Epsilon_ii(:,3:4) = cZERO
  !
  ! DbGd setup
  !

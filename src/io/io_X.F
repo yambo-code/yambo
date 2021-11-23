@@ -26,7 +26,7 @@ integer function io_X(X,Xw,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_alloc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_ALLOC_elemental
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
@@ -217,7 +217,7 @@ integer function io_X(X,Xw,ID)
    else if(read_is_on(ID)) then
 #endif
      !
-     if (.not.allocated(X_mat).and.read_is_on(ID)) call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+     if (.not.allocated(X_mat).and.read_is_on(ID)) call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
      call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
      call  io_variable_bulk(ID_frag,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
      !

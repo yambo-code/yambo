@@ -46,7 +46,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
- use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
@@ -83,7 +83,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
- logical          ::X_is_TR_rotated,l_X_alloc
+ logical          ::X_is_TR_rotated,l_X_ALLOC_elemental
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
@@ -205,10 +205,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2/))
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
@@ -623,11 +623,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_FREE(eet_factor)
    endif
  endif
- l_X_alloc=.true.
+ l_X_ALLOC_elemental=.true.
 #if defined _SC
- l_X_alloc=l_sc_run.and.io_RESPONSE
+ l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
 #endif
- if(l_X_alloc) call X_alloc('X')
+ if(l_X_ALLOC_elemental) call X_ALLOC_elemental('X')
  !
  call timing('GW(ppa)',OPR='stop')
  !

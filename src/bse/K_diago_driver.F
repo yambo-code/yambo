@@ -256,17 +256,17 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        call K_diago_overlap_matrix(BS_V_left,BS_V_right,BS_overlap)
        !
-       if(l_BS_optics ) call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
-       if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
-       if(l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap)
-       if(l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
+       if (l_BS_optics ) call K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,BS_V_right,BS_overlap)
+       if (l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_V_right,BS_R_right_kerr)
+       if (l_BS_magnons) call K_diago_non_herm_magnons_residual(BS_R_left_magn,BS_R_right_magn,BS_V_left,BS_V_right,BS_overlap)
+       if (l_BS_photolum)call PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap)
        !
      else
        !
-       if(l_BS_optics)  call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
-       if(l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
-       if(l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn)
-       if(l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
+       if (l_BS_optics)  call K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
+       if (l_BS_kerr   ) call K_diago_kerr_residual(BS_E,BS_mat,BS_R_right_kerr)
+       if (l_BS_magnons) call K_diago_herm_magnons_residual(i_BS_mat,BS_R_left_magn,BS_R_right_magn)
+       if (l_BS_photolum)call PL_diago_residual(BS_mat,BS_mat,BS_R_PL,K_is_not_hermitian)
        !
      endif
      !
@@ -312,8 +312,8 @@ subroutine K_diago_driver(iq,W,X_static)
  enddo
  !
  ! Initialize & write the output file 
- !=====================================
- call K_output(iq,"open write close reset "//trim(Solver))
+ !====================================
+ call K_OUTPUT(iq,W,"open dump close "//trim(Solver),"ALL")
  !
  ! CLEAN
  !

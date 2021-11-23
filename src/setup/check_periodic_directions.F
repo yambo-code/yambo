@@ -25,9 +25,8 @@ subroutine check_periodic_directions(is_cut)
  !
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
- use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,&
-&                         l_0D,l_1D,l_2D,l_3D
+ use X_m,            ONLY:eps_2_alpha,alpha_dim,X_OUTPUT_driver
+ use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,l_0D,l_1D,l_2D,l_3D
  use vec_operate,    ONLY:v_norm
  !
  implicit none
@@ -38,6 +37,7 @@ subroutine check_periodic_directions(is_cut)
  !
  integer  :: non_p_dir(3),i1,ia,i_check
  real(SP) :: non_p_dot_product(3),periodic_length,non_periodic_length
+ logical  :: eval_alpha
  !
  non_p_dir=0
  if (any(is_cut)) then
@@ -103,7 +103,9 @@ subroutine check_periodic_directions(is_cut)
    enddo
  endif
  !
- if (.not.eval_alpha) then
+ if (eval_alpha) then
+   call X_OUTPUT_driver("ON alpha")
+ else
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif

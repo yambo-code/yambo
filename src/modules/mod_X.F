@@ -37,11 +37,6 @@ module X_m
  !
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
- logical                  :: eval_alpha
- logical                  :: eval_eels
- logical                  :: eval_beta
- logical                  :: eval_moke
- logical                  :: eval_reflectivity
  logical                  :: l_drude
  integer                  :: drude_n_states
  !
@@ -81,6 +76,7 @@ module X_m
  complex(SP), allocatable :: Joint_DOS(:,:) 
  complex(SP), allocatable :: EEL(:,:)
  complex(SP), allocatable :: Alpha(:,:)
+ complex(SP), allocatable :: X_over_qpG(:,:)
  complex(SP), allocatable :: X_drude_term(:)
  complex(SP), allocatable :: X_fxc(:)
  complex(SP), allocatable :: X_magnons(:,:,:)
@@ -155,16 +151,32 @@ module X_m
  type X_obs_t
    logical               :: active
    character(schlen)     :: what
+   character(schlen)     :: title
    character(schlen)     :: prefix
+   character(schlen)     :: scattering
    integer               :: N_columns
    character(schlen)     :: COL_header(N_MAX_columns)
+   integer               :: N_messages
+   character(schlen)     :: messages(N_MAX_columns)
  end type
- integer, parameter :: N_X_obs=15
- type(X_obs_t)      :: X_obs(N_X_obs) 
+ integer, parameter     :: N_X_obs=15
+ type(X_obs_t)          :: X_obs(N_X_obs) 
  !
  interface
    !
-   subroutine X_observables(WHAT,W,keys,IQ,IG,DESC,data)
+   subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
+     use pars,      ONLY:schlen,SP,msg_len
+     integer                :: iq
+     integer,      optional :: ig
+     logical,      optional :: Vnl
+     logical,      optional :: GF
+     character(2), optional :: ordering
+     real(SP),     optional :: Q_plus_G(3)
+     real(SP),     optional :: Qprime(3)
+     character(*), optional :: MORE
+   end subroutine
+   !
+   subroutine X_OUTPUT_driver(WHAT,W,keys,IQ,IG,DESC,data)
      use pars,          ONLY:SP
      use frequency,      ONLY:w_samp
      use descriptors,    ONLY:IO_desc
@@ -194,53 +206,26 @@ module X_m
      complex(SP) ,optional:: eps(nw),eel(nw)
    end function
    !
+   subroutine X_ALLOC_elemental(WHAT,DIM)
+     character(*)      :: WHAT
+     integer, optional :: DIM(:)
+   end subroutine
+   !
  end interface
  !
  contains
    !
-   subroutine X_alloc(what,d)
-     !
-     use pars,      ONLY:cZERO
-     !
-     character(*)      :: what
-     integer, optional :: d(:)
-     !
-     if (present(d)) then
-       select case(what)
-       case('EPS')
-         if (allocated(Epsilon_ii)) return
-         YAMBO_ALLOC(Epsilon_ii,(d(1),d(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
-         YAMBO_ALLOC(X_drude_term,(d(1)))
-         Epsilon_ii   = cZERO
-         X_drude_term = cZERO
-       case('X')
-         if (allocated(X_mat)) return
-         YAMBO_ALLOC(X_mat,(d(1),d(2),d(3)))
-         X_mat=cZERO
-#ifdef _CUDA
-         allocate(X_mat_d, source=X_mat)
-#endif
-       end select
-     else
-       select case(what)
-       case('EPS')
-         YAMBO_FREE(Epsilon_ii)
-         YAMBO_FREE(X_drude_term)
-       case('X')
-         !
-         ! I clean the RL components mapping
-         !
-         YAMBO_FREE(X_RLcomp_ig)
-         !
-         ! and the matrix itself
-         !
-         YAMBO_FREE(X_mat)
-         YAMBO_FREE(X_mat_d)
-         !
-       end select
-     endif
-     !
-   end subroutine
+   logical function X_do_obs(OBS)
+     use stderr, ONLY:STRING_match
+     character(*)   :: OBS
+     integer        :: it
+     X_do_obs=.FALSE.
+     do it=1,N_X_obs
+       if (.not.X_obs(it)%active) cycle
+       if (STRING_match(OBS,trim(X_obs(it)%what))      ) X_do_obs=.TRUE.
+       if (STRING_match(OBS,trim(X_obs(it)%scattering))) X_do_obs=.TRUE.
+     enddo
+   end function
    !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo

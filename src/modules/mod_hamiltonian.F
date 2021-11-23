@@ -152,7 +152,7 @@ module hamiltonian
    !
    subroutine H_free()
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_alloc
+     use X_m,            ONLY:X_ALLOC_elemental
      !
      implicit none
      !

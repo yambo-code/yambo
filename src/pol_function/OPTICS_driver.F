@@ -31,19 +31,17 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg
- use com,           ONLY:msg
- use DIPOLES,       ONLY:DIPOLE_t
+ use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,X_Double_Grid_setup,&
-&                        use_X_DbGd,eval_alpha,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_observables,eval_eels
+&                        use_X_DbGd,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,X_OUTPUT_messages,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use TDDFT,         ONLY:FXC_desc,FXC_type,&
-&                        F_xc_gspace,FXC_K_diagonal,FXC_n_g_corr
- use OUTPUT,        ONLY:OUTPUT_q_plus_G
+&                        F_xc_gspace,FXC_K_diagonal
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
  use IO_int,        ONLY:IO_and_Messaging_switch
@@ -61,15 +59,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  integer          :: iw,iq,i_G_shift
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  complex(SP)      :: alpha_factor
- logical          :: l_skip_non_int_eps,Macroscopic_CPU
+ logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
  !
  integer,external :: O_select_q_and_G
  !
  call section('*','Optics')
  !
- ! Basic Checks
+ ! Basic Checks/DEFS
  call X_pre_setup(Xen,Xk,X)
- call X_observables("INIT")
+ call X_OUTPUT_driver("DEF")
+ call X_OUTPUT_driver("INIT")
  !
  allocate(X_par(1))
  !
@@ -83,10 +82,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! WF distribution 
    !=================
    !
-   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,&
-&                              B_index=PAR_IND_CON_BANDS_X(X%whoami),&
-&                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),&
-&                              CLEAN_UP=.TRUE.)
+   call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_CON_BANDS_X(X%whoami),&
+&                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),CLEAN_UP=.TRUE.)
    !
    call PARALLEL_WF_index(COMM=PAR_COM_Q_A2A)
    !
@@ -135,45 +132,32 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    call X_half_mat_check(Xen,Xk,wv)
    !
-   call X_PARALLEL_alloc(X_par(1),X%ng,wv%n_freqs,"XUP")
+   call X_ALLOC_parallel(X_par(1),X%ng,wv%n_freqs,"XUP")
    !
    Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
 &                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
-   ! Check if EELS/ALPHA can be evaluated
-   !
-   eval_eels= .not. (l_col_cut .or. trim(alpha_dim)=="volume")
-   if (eval_alpha) eval_alpha=(eval_eels.or.l_col_cut.or.trim(alpha_dim)=="volume")
-   !
-   ! ... eps2eels
-   if (eval_eels) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
-   !
    ! Observables allocation
-   call X_observables("ALLOC",wv)
+   call X_ALLOC_global("ALLOC",wv)
+   !
+   ! Check if EELS can be evaluated
+   if (X_do_obs("eel")) l_eels=OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    ! OutPut files...
    !
-   if (.not.l_rpa_IP) call X_observables("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
-   if (     l_rpa_IP) call X_observables("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
+   if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
+   if (     l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
    !
    ! ... permissions ...
    if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
    !
    ! ... open ...
-   call X_observables("open ALL")
+   call X_OUTPUT_driver("open ALL")
    if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
    !
    ! Initial Messages
-   call OUTPUT_q_plus_G(iq,Q_plus_G_pt,ig=i_G_shift)
-   !
-   ! Fxc descriptions
-   !
-   if (l_bs_fxc) then
-     call X_observables("DESC",DESC=FXC_desc)
-     call msg('o eps_q eel_q alpha','# TDDFT|Fxc size             ',FXC_n_g_corr,INDENT=0)    
-     call msg('o eps_q eel_q alpha','#      |Hartree size         ',X%ng        ,INDENT=0)    
-     call msg('o eps_q eel_q alpha','#      |Ordering             ',X%ordering  ,INDENT=0)    
-   endif
+   call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift,MORE="X_size")
+   if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
    !
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
@@ -198,9 +182,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (     l_rpa_IP) then
        Alpha(:,2)=Alpha(:,1)
      else
-       if(.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       if (.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
        ! Here I assume X_par is small and I use 1/(1+x)~1-x 
-       if(     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       if (     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
      !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
@@ -212,39 +196,45 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (abs(b_xc).le.1.e-5) then
        Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
      else
-       forall(iw=1:wv%n_freqs) Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
-&               (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+       do iw=1,wv%n_freqs
+         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+       enddo
      end if
    end if
    !
-   !call X_observables("append ALL")
-   !
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    !
-   call OUTPUT_messages(iq,allocated(Xen%GreenF),X%Vnl_included,X%ordering)
+   call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
+   !
+   ! Descriptors 
+   !
+   call X_OUTPUT_driver("DESC",DESC=DIP_desc)
+   call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
+   if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     call X_observables("WRITE eps",data=output_data)
+     call X_OUTPUT_driver("WRITE eps",data=output_data)
    enddo
    !
    ! EEL
    !
-   if (eval_eels) then 
-     eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+   if (X_do_obs("eel")) then 
+     l_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) eval_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) l_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
-       call X_observables("WRITE eel",data=output_data)
+       call X_OUTPUT_driver("WRITE eel",data=output_data)
      enddo
    endif
    !
    ! Alpha
    !
-   if (eval_alpha) then
+   if (X_do_obs("alpha")) then 
      !
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
      !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
@@ -263,9 +253,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      endif
      !
      do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),&
-&                    aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       call X_observables("WRITE alpha",data=output_data)
+       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
+       call X_OUTPUT_driver("WRITE alpha",data=output_data)
      enddo
      !
    endif
@@ -277,17 +266,17 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
      do iw=1,wv%n_freqs
        output_data(1:3)=(/real(wv%p(iw)),real(X_fxc(iw)*q_norm(iq)**2),aimag(X_fxc(iw)*q_norm(iq)**2)/)
-       call X_observables("WRITE fxc",data=output_data(:3))
+       call X_OUTPUT_driver("WRITE fxc",data=output_data(:3))
      enddo
    endif
    !
-   call X_observables("close ALL")
+   call X_OUTPUT_driver("close ALL")
    !
    ! CLEAN (each q)
    !
-   call X_observables("FREE")
+   call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
-   call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
+   call X_ALLOC_parallel(X_par(1),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -298,6 +287,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
+ call X_OUTPUT_driver("DEF")
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)

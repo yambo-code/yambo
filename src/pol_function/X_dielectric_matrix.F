@@ -28,7 +28,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use pars,          ONLY:SP
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
+ use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use frequency,     ONLY:w_samp
@@ -185,12 +185,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      allocate(X_par(1))
      X_MEM_n_tot_freqs=Xw%n_freqs
 #if !defined _PAR_IO
-     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
 #endif
    else
      allocate(X_par(PAR_nQ_ibz))
      X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
-     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
    endif
    !
  endif
@@ -272,7 +272,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+   call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
    !
@@ -301,7 +301,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! CLEAN (2)
    !
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   if (io_RESPONSE) call X_ALLOC_parallel(X_par(iq_mem),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !

@@ -47,7 +47,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
@@ -182,7 +182,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! Allocation (EM1S can be bigger than N_g_vecs_C)
    !
-   call X_alloc('X',(/X%ng,X%ng,1/))
+   call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    YAMBO_ALLOC(EM1s,(N_g_vecs_C,N_g_vecs_C))
    !
    call elemental_collision_alloc(isc_XC, NG=NG_XC,NG_GAMP=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
@@ -312,7 +312,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  if (l_compute_screening) then
    YAMBO_FREE(EM1s)
-   call X_alloc('X')
+   call X_ALLOC_elemental('X')
    call elemental_collision_free(isc_H)
    call elemental_collision_free(iscp_H)
    call elemental_collision_free(isc_XC)

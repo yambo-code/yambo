@@ -26,7 +26,7 @@ subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  use pars,                ONLY:SP,schlen,lchlen
  use OUTPUT,              ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
  use com,                 ONLY:msg,of_open_close
- use stderr,              ONLY:STRING_same,set_real_printed_length
+ use stderr,              ONLY:STRING_same,set_real_printed_length,STRING_match
  !
  implicit none
  !
@@ -65,14 +65,14 @@ subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  endif
  !
  if (present(action)) then
-   if (action=="close"    ) call of_open_close(OUT_file(i_f)%filename)
-   if (action=="open"     ) call of_open_close(OUT_file(i_f)%filename,'ot')
-   if (action=="overwrite") call of_open_close(OUT_file(i_f)%filename,'Ot')
-   if (action=="append") then
+   if (STRING_match(action,"close"))      call of_open_close(OUT_file(i_f)%filename)
+   if (STRING_match(action,"open"))       call of_open_close(OUT_file(i_f)%filename,'ot')
+   if (STRING_match(action,"override"))   call of_open_close(OUT_file(i_f)%filename,'Ot')
+   if (STRING_match(action,"append")) then
      call of_open_close(OUT_file(i_f)%filename,'oa')
      OUT_file(i_f)%TITLES_dumped=.TRUE.
    endif
-   if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
+   if (STRING_match(action,"reset").or.STRING_match(action,"close")) call OUTPUT_reset(i_f,"reset")
  endif
  !
  if (present(TITLES)) then
@@ -132,7 +132,7 @@ subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  endif
  !
  if (.not.present(action)) return
- if (.not.action=="write") return
+ if (.not.STRING_match(action,"write")) return
  !
  ! TITLES
  !--------

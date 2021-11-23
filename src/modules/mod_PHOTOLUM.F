@@ -45,23 +45,14 @@ module PHOTOLUM
  contains
    !
    subroutine PL_init( )
-     !
      use pars,       ONLY:pi,rZERO
      use units,      ONLY:SPEED_OF_LIGHT
      use R_lattice,  ONLY:RL_vol,nqbz
      use vec_operate,ONLY:v_norm
      use BS_solvers, ONLY:BSS_n_freqs
-     !
-     integer :: ic
-     !
      PL_prefactor =32._SP*pi**3*SPEED_OF_LIGHT*2._SP/3._SP*RL_vol/nqbz/(2._SP*pi)**3
-     !
      if (allocated(PL))  return
-     !
-     YAMBO_ALLOC(PL,(BSS_n_freqs,3))!2(int)3(nonint)
-     PL = rZERO
      PL_weights=PL_weights/v_norm(PL_weights)
-     !
    end subroutine
    !
    subroutine BSS_PL_alloc( )

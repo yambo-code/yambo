@@ -31,7 +31,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use global_XC,  ONLY:EXT_NONE
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
@@ -368,7 +367,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  global_gauge='length'
  grid_paths=' '
  skip_cond_sum_rule=.FALSE.
- eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1

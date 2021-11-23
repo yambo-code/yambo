@@ -307,7 +307,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_abs) then
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   !
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
@@ -403,7 +402,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
- if (l_rpa_IP) call K_output(iq,"open IP write close reset")
+ if (l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","ALL")
  !
  ! Clean
  ! 

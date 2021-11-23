@@ -28,7 +28,7 @@ subroutine PHEL_screening(E,q,DONE)
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp,k_the_nearest,nqbz,bare_qpg
  use frequency,      ONLY:w_samp
- use X_m,            ONLY:X_mat,X_t,X_alloc
+ use X_m,            ONLY:X_mat,X_t,X_ALLOC_elemental
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,NONE,REP,RD_CL_IF_END,manage_action,OP_RD,VERIFY,OP_RD_CL
  use LIVE_t,         ONLY:live_timing
@@ -123,7 +123,7 @@ subroutine PHEL_screening(E,q,DONE)
  ! Alloc
  !-------
  !... X (I/O)
- call X_alloc('X',(/X(1)%ng,X(1)%ng,Xw(1)%n_freqs/))
+ call X_ALLOC_elemental('X',(/X(1)%ng,X(1)%ng,Xw(1)%n_freqs/))
  !
  !... V's
  YAMBO_ALLOC(V,(PH_Q(2),X(1)%ng))
@@ -296,7 +296,7 @@ subroutine PHEL_screening(E,q,DONE)
  !
  ! Free
  call PP_indexes_reset(px)
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  YAMBO_FREE(V)
  YAMBO_FREE(W_static)
  YAMBO_FREE(W_dyn)

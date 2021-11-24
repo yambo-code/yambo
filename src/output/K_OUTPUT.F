@@ -63,9 +63,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    if (STRING_match(WHAT,"Inversion")) solver="inv"
    if (STRING_match(WHAT,"IP"))        solver="IP"
    !
-   if (     STRING_match(WHAT,"IP")                      ) call X_OUTPUT_driver("keys "//OBS,keys='IP')
-   if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) call X_OUTPUT_driver("keys "//OBS,keys=trim(solver)//' bse')
-   if (                   BS_K_is_ALDA) call X_OUTPUT_driver("keys "//OBS,keys=trim(solver)//' alda bse')
+   if (     STRING_match(WHAT,"IP")                      ) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys='IP')
+   if (.not.STRING_match(WHAT,"IP").and..not.BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' bse')
+   if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
    !
    call X_OUTPUT_driver("open "//OBS)
  endif

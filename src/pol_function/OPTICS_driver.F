@@ -216,7 +216,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     call X_OUTPUT_driver("WRITE eps",data=output_data)
+     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
+     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
    enddo
    !
    ! EEL
@@ -228,7 +229,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
-       call X_OUTPUT_driver("WRITE eel",data=output_data)
+       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
+       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data)
      enddo
    endif
    !
@@ -254,7 +256,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       call X_OUTPUT_driver("WRITE alpha",data=output_data)
+       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
+       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
      enddo
      !
    endif

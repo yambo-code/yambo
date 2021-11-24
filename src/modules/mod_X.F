@@ -176,12 +176,11 @@ module X_m
      character(*), optional :: MORE
    end subroutine
    !
-   subroutine X_OUTPUT_driver(WHAT,W,keys,IQ,IG,DESC,data)
+   subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
      use pars,          ONLY:SP
      use frequency,      ONLY:w_samp
      use descriptors,    ONLY:IO_desc
      character(*)          :: WHAT
-     type(w_samp), optional:: W
      character(*), optional:: keys
      integer,      optional:: IQ,IG
      type(IO_desc),optional:: DESC

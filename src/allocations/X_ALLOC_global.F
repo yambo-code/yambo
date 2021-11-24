@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_ALLOC_global(WHAT)
+subroutine X_ALLOC_global(WHAT,W)
  !
  use pars,          ONLY:cZERO
  use X_m,           ONLY:X_ALLOC_elemental,Epsilon_ii,Joint_DOS,Epsilon_ij,X_magnons,X_dichroism,X_obs,EEL

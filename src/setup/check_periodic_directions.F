@@ -37,7 +37,6 @@ subroutine check_periodic_directions(is_cut)
  !
  integer  :: non_p_dir(3),i1,ia,i_check
  real(SP) :: non_p_dot_product(3),periodic_length,non_periodic_length
- logical  :: eval_alpha
  !
  non_p_dir=0
  if (any(is_cut)) then
@@ -62,7 +61,6 @@ subroutine check_periodic_directions(is_cut)
  if (l_0D) then 
    alpha_dim='volume'
    eps_2_alpha=DL_vol
-   eval_alpha=.TRUE.
  endif
  !
  ! 2D case. Note that to be a correct geometric configuration
@@ -98,14 +96,11 @@ subroutine check_periodic_directions(is_cut)
          eps_2_alpha=non_periodic_length
          alpha_dim='length'
        endif
-       eval_alpha=.TRUE.
      endif
    enddo
  endif
  !
- if (eval_alpha) then
-   call X_OUTPUT_driver("ON alpha")
- else
+ if (trim(alpha_dim)=="none") then
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif

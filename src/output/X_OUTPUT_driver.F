@@ -46,7 +46,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
  !
  ! Work Space
  integer            ::it,ik,ic
- character(schlen)  ::key(10)
+ character(schlen)  ::key(10),BASIC_col(7)
  !
  if (WHAT=="DEF") then
    call ELEMENTAL_init(1,"fxc","Exchange-Correlation Kernel","optics")
@@ -83,7 +83,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
    if (l_col_cut) X_obs(5)%active=.FALSE.
    if (trim(alpha_dim)=="volume") X_obs(5)%active=.FALSE.
    !
-   !X_obs(6)%active is activated in periodic_directions
+   X_obs(6)%active=trim(alpha_dim)/='adim'
    !
    X_obs(8)%active =l_BS_esort
    X_obs(9)%active =l_BS_kerr
@@ -104,26 +104,29 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
      X_obs(1)%COL_header(2:3) = (/'Re(q^2Fxc)[2]','Re(q^2Fxc)[3]'/)
    endif
    !
+   BASIC_col(1)   = 'E/ev[1]'
+   BASIC_col(2:3) = (/'Im(XXX)[2]', 'Re(XXX)[3]'/)
+   BASIC_col(4:5) = (/'Im(XXXo)[4]', 'Re(XXXo)[5]'/)
+   BASIC_col(6:7) = (/'Im(XXX`)[6]','Re(XXX`)[7]'/)
+   !
    if (X_obs(3)%active) then
-     X_obs(3)%N_columns=5 
-     if (l_rpa_IP) X_obs(3)%N_columns=3
-     X_obs(3)%COL_header(1)   = 'E/ev[1]'
-     X_obs(3)%COL_header(2:3) = (/'Im(EPS)[2]',  'Re(EPS)[3]'/)
-     X_obs(3)%COL_header(4:5)  = (/'Im(EPS_o)[4]','Re(EPS_o)[5]'/)
-     X_obs(3)%COL_header(6:7)  = (/'Im(EPS`)[6]','Re(EPS`)[7]'/)
+     X_obs(3)%N_columns=7 
+     do ic=1,X_obs(3)%N_columns
+       X_obs(3)%COL_header(ic)=STRING_remove(BASIC_col(ic),"XXX","EPS")
+     enddo
    endif
    !
    if (X_obs(5)%active) then
-     X_obs(5)%N_columns=X_obs(3)%N_columns
+     X_obs(5)%N_columns=7 
      do ic=1,X_obs(5)%N_columns
-       X_obs(5)%COL_header(ic)=STRING_remove(X_obs(3)%COL_header(ic),"EPS","EEL")
+       X_obs(5)%COL_header(ic)=STRING_remove(BASIC_col(ic),"XXX","EEL")
      enddo
    endif
    !
    if (X_obs(6)%active) then
-     X_obs(6)%N_columns=X_obs(3)%N_columns
+     X_obs(6)%N_columns=7 
      do ic=1,X_obs(6)%N_columns
-       X_obs(6)%COL_header(ic)=STRING_remove(X_obs(3)%COL_header(ic),"EPS","ALPHA")
+       X_obs(6)%COL_header(ic)=STRING_remove(BASIC_col(ic),"XXX","ALPHA")
      enddo
    endif
    !

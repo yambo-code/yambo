@@ -30,7 +30,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS,            ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size
  use stderr,        ONLY:STRING_match
  use X_m,           ONLY:Epsilon_ii,eps_2_alpha,alpha_dim,OPTICS_eels,X_OUTPUT_driver,&
-&                        X_do_obs,X_OUTPUT_messages
+&                        X_do_obs,X_OUTPUT_messages,X_dichroism
  use R_lattice,     ONLY:bare_qpg,q_norm
  !
  implicit none
@@ -43,9 +43,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  character(10)     :: solver
  integer           :: iw
- complex(SP)       :: spectra(BSS_n_freqs,3),alpha_factor
+ complex(SP)       :: spectra(BSS_n_freqs,3),eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha_factor
  logical           :: l_last_col,eval_eels
-
+!
 ! if ( l_kerr_out.and.l_Haydock ) then
 !   eval_beta = eval_alpha .and. (l_col_cut .or. trim(alpha_dim)=="volume" )
 ! endif
@@ -54,7 +54,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 !   eval_eels = ((.not.l_Haydock) .or. l_FINALIZE.or.l_INIT) .and. (.not.l_Slepc) .and. (.not.trim(alpha_dim)=="volume")
 !   eval_alpha_loc=eval_alpha .and. ((l_col_cut) .or. (eval_eels) .or. trim(alpha_dim)=="volume" )
 ! endif
-! !
+! 
  if (STRING_match(WHAT,"open")) then
    !
    if (STRING_match(WHAT,"Haydock"))   solver="haydock"
@@ -96,15 +96,18 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  ! ABSORPTION
  !------------
- if (X_do_obs("eps")) call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
+ if (X_do_obs("eps")) then
+   eps=Epsilon_ii(:,2:4)+1._SP
+   call ELEMENTAL_dump("eps",eps)
+ endif
  !
  ! EELS 
  !-------
  if (X_do_obs("eel")) then
-   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),spectra(:,1)) 
-   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),spectra(:,2)) 
-   if (l_last_col) eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),spectra(:,3)) 
-   !call ELEMENTAL_dump("eel",spectra)
+   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,1),eels(:,1)) 
+   eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,2),eels(:,2)) 
+   if (l_last_col) eval_eels=OPTICS_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,3),eels(:,3)) 
+   call ELEMENTAL_dump("eel",eels)
  endif
  !
  ! POLARIZABILITY
@@ -116,10 +119,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (l_last_col) spectra(:,3)=Epsilon_ii(:,4)*alpha_factor
    else
      alpha_factor=eps_2_alpha/4._SP/pi
-     spectra=(1._SP+spectra)*alpha_factor ! Here input spectra is eels
+     spectra=(1._SP+eels)*alpha_factor 
    endif
    call ELEMENTAL_dump("alpha",spectra)
  endif
+ !
+ !  DICHROISM
+ !------
+ if(X_do_obs("CD")) call ELEMENTAL_dump("CD",X_dichroism(:,2:))
  !
 ! !
 ! ! Diamagnetic term
@@ -346,25 +353,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 !   !
 ! endif
 ! !
-! !  DICHROISM
-! !------
-! if(l_dich_out) then
-!   !
-!   n_output_data=5
-!   if (STRING_match(WHAT,"Haydock").or.l_Inversion) n_output_data=7
-!   if (l_IP) n_output_data=3
-!   !
-!   do iw=1,BSS_n_freqs 
-!     output_data(1:5)=(/real(X_dichroism(iw,1))*HA2EV,aimag(X_dichroism(iw,2)),real(X_dichroism(iw,2)),&
-!&                  aimag(X_dichroism(iw,3)),real(X_dichroism(iw,3))/)
-!     if (STRING_match(WHAT,"Haydock").or.l_Inversion) output_data(6:7)=(/aimag(X_dichroism(iw,4)),real(X_dichroism(iw,4))/)
-!     if (l_IP) output_data(2:3)=output_data(4:5)
-!     call msg('o CD','',output_data(:n_output_data),INDENT=-2,USE_TABS=.true.)
-!     !
-!   enddo
-!   !
-! endif
-! !
 ! ! JOINT DOS
 ! !------------
 ! !
@@ -458,10 +446,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
          data(2*(I-1)+3)=real(F(iw,I))
        enddo
        if (STRING_match(WHAT,"IP")) then
-         call X_OUTPUT_driver("WRITE "//OBS,data=(/data(1),data(4),data(5)/))
+         call X_OUTPUT_driver("WRITE "//OBS_local,data=(/data(1),data(4),data(5)/))
        else
-         if (.not.l_last_col) call X_OUTPUT_driver("WRITE "//OBS,data=data(:5))
-         if (     l_last_col) call X_OUTPUT_driver("WRITE "//OBS,data=data(:7))
+         if (.not.l_last_col) call X_OUTPUT_driver("WRITE "//OBS_local,data=data(:5))
+         if (     l_last_col) call X_OUTPUT_driver("WRITE "//OBS_local,data=data(:7))
        endif
      enddo
    end subroutine

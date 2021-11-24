@@ -89,20 +89,17 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Excitonic hamiltonian, residuals independent
  !==============================================
- !
  real(SP),allocatable    :: BS_E_real(:)
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
- !
  complex(SP),allocatable :: BS_V_left(:,:)
  complex(SP),allocatable :: BS_V_right(:,:)
  complex(SP),pointer     :: BS_overlap(:,:)    => null()
  !
  ! Residuals, different for each response function
  !=================================================
- !
  complex(SP),pointer     :: BS_R_left(:)         => null()
  complex(SP),pointer     :: BS_R_right(:)        => null()
  !
@@ -114,7 +111,6 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
  !
  ! I/O
- !
  integer                 :: io_err,ID
  type(X_t),intent(in)    :: X_static
  !
@@ -129,6 +125,9 @@ subroutine K_diago_driver(iq,W,X_static)
 #endif
  !
  call timing(trim(Solver)//' Solver',OPR='start')
+ !
+ call X_OUTPUT_driver("DEF") 
+ call X_OUTPUT_driver("INIT") 
  !
  ! Sectioning
  !============
@@ -162,7 +161,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-  &                                BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+&                      BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
    !
    K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
    !

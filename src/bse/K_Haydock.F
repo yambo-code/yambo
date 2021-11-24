@@ -73,6 +73,10 @@ subroutine K_Haydock(iq,W,OBS)
  !
  if (BS_res_ares_n_mat==2) call error(" Haydock not coded for case  with two BSE matricies")
  !
+ ! Initialize & write the output file 
+ !====================================
+ call X_OUTPUT_driver("DEF") 
+ call X_OUTPUT_driver("INIT") 
  call K_OUTPUT(iq,W,"open Haydock close ",trim(OBS))
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')

@@ -226,6 +226,16 @@ module X_m
      enddo
    end function
    !
+   subroutine X_obs_onoff(WHAT)
+     use stderr, ONLY:STRING_match
+     character(*)   :: WHAT
+     integer        :: it
+     do it=1,N_X_obs
+       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"ON" )) X_obs(it)%active=.TRUE.
+       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"OFF")) X_obs(it)%active=.FALSE.
+     enddo
+   end subroutine
+   !
    subroutine X_duplicate(Xi,Xo)
      type(X_t):: Xi,Xo
      Xo%ng           =Xi%ng

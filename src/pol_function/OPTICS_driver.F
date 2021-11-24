@@ -67,8 +67,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Basic Checks/DEFS
  call X_pre_setup(Xen,Xk,X)
- call X_OUTPUT_driver("DEF")
- call X_OUTPUT_driver("INIT")
+ call X_OUTPUT_driver("DEF INIT")
  !
  allocate(X_par(1))
  !

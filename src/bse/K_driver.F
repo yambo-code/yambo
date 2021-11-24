@@ -78,7 +78,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !===========================================
  call K_observables( )
  call X_OUTPUT_driver("DEF") 
- call X_OUTPUT_driver("INIT")
+ call X_OUTPUT_driver("INIT") 
  !
  ! PL is implemented only in velocity gauge
  if (l_BS_photolum) global_gauge="velocity"

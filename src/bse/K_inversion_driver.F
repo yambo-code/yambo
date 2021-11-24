@@ -180,8 +180,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
- ! Initialize the output file 
- !============================
+ ! Initialize & write the output file 
+ !====================================
+ call X_OUTPUT_driver("DEF") 
+ call X_OUTPUT_driver("INIT") 
  call K_OUTPUT(iq,W,"open Inversion close","ALL")
  !
  ! Perturbative Inversion

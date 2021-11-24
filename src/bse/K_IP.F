@@ -298,12 +298,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Sorting procedure
  !===================
- !
  if (l_BS_esort) call K_IP_sort("sort",0,nVAR,cZERO,vtmpC)
  !
  ! ALL 2 ALL
  !==============
- !
  if (l_BS_abs) then
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )

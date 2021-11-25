@@ -63,6 +63,14 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
        call msg("o "//trim(X_obs(it)%prefix),"# Polarizability units",alpha_dim,INDENT=0)
        call msg("o "//trim(X_obs(it)%prefix),"#")
      endif
+     if (STRING_match(X_obs(it)%what,"moke")) then
+       call msg("o "//trim(X_obs(it)%prefix),"# Moke units","Radiants",INDENT=0)
+       call msg("o "//trim(X_obs(it)%prefix),"#")
+     endif
+     if (STRING_match(X_obs(it)%what,"beta")) then
+       call msg("o "//trim(X_obs(it)%prefix),"# Beta units",alpha_dim,INDENT=0)
+       call msg("o "//trim(X_obs(it)%prefix),"#")
+     endif
    endif
    !
    if (present(GF)) then
@@ -91,6 +99,16 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
    endif
    !
    if (present(MORE)) then
+     if (STRING_match(MORE,"Diamagnetic")) then
+       call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
+     endif
+   ! ... Diamagnetic term
+   !A_drude(:)=A_drude(:)/real(nkbz,SP)*spin_occ
+!   call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
+!   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),real(A_drude(2)),INDENT=0,after_msg="[nel]")
+!   if (.not.STRING_match(WHAT,"IP")) call msg("o eps",com_compose_msg(pre="# ",body="A"),&
+!&                                             real(A_drude(1)),INDENT=0,after_msg="[nel]")
+   !
      if (STRING_match(MORE,"FXC_size")) then
        call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="[FXC] G-size"),FXC_n_g_corr,INDENT=0)
      endif

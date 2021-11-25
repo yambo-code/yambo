@@ -34,7 +34,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,X_Double_Grid_setup,&
-&                        use_X_DbGd,eps_2_alpha,OPTICS_eels,X_par_lower_triangle,X_OUTPUT_messages,&
+&                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_IND_CON_BANDS_X,&
@@ -61,7 +61,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  complex(SP)      :: alpha_factor
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
  !
- integer,external :: O_select_q_and_G
+ integer,external :: OPTICS_select_q_and_G
  !
  call section('*','Optics')
  !
@@ -116,7 +116,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
    ! and if an additional RL vectors must be added
    !
-   i_G_shift=O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+   i_G_shift=OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    if (i_G_shift<0) cycle
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
@@ -140,7 +140,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_ALLOC_global("ALLOC",wv)
    !
    ! Check if EELS can be evaluated
-   if (X_do_obs("eel")) l_eels=OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   if (X_do_obs("eel")) l_eels=EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    ! OutPut files...
    !
@@ -222,9 +222,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! EEL
    !
    if (X_do_obs("eel")) then 
-     l_eels= OPTICS_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+     l_eels= EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) l_eels= OPTICS_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) l_eels= EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
      !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
@@ -289,7 +289,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
- call X_OUTPUT_driver("DEF")
  call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)

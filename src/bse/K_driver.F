@@ -74,11 +74,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
- ! Output files & observables initialization
- !===========================================
+ ! Observables initialization
+ !============================
  call K_observables( )
- call X_OUTPUT_driver("DEF") 
- call X_OUTPUT_driver("INIT") 
  !
  ! PL is implemented only in velocity gauge
  if (l_BS_photolum) global_gauge="velocity"
@@ -139,6 +137,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  YAMBO_ALLOC(BSqpts,(3,BS_q(1):BS_q(2)))
  !
  do iq=BS_q(1),BS_q(2)
+   !
+   ! Output files & observables initialization
+   !===========================================
+   call X_OUTPUT_driver("DEF INIT") 
    !
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)

@@ -21,13 +21,13 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function OPTICS_trasmission_and_reflection( )
+function EPS_2_trasmission_and_reflection( )
  ! 
  use pars,          ONLY:SP
  !
  implicit none
  !
- real(SP) :: OPTICS_trasmission_and_reflection
+ real(SP) :: EPS_2_trasmission_and_reflection
  !
 ! if(STRING_match(TRabsWHAT,"r")) then
 !   ! Reflectance is assumed for a 3D system

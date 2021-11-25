@@ -21,14 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
+subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  use pars,          ONLY:schlen,SP
  use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs
  use drivers,       ONLY:l_chi,l_optics,l_bs_fxc,l_col_cut
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
- use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,&
+ use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
 &                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
@@ -40,6 +40,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
  !
  character(*)           :: WHAT
  character(*), optional :: keys
+ character(*), optional :: solver
  integer,      optional :: IQ,IG
  type(IO_desc),optional :: DESC
  real(SP),     optional :: data(:)
@@ -49,10 +50,10 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
  character(schlen)  ::key(10),BASIC_col(7)
  logical            ::l_flag
  !
- if (WHAT=="DEF") then
+ if (STRING_match(WHAT,"DEF")) then
    call ELEMENTAL_init(1,"fxc","Exchange-Correlation Kernel","optics")
-   call ELEMENTAL_init(2,"E_IP","IP Energies","optics")
-   call ELEMENTAL_init(3,"Esort","Sorted Energies","optics")
+   call ELEMENTAL_init(2,"E_IP","Sorted IP Energies","sort")
+   call ELEMENTAL_init(3,"Esort","Sorted Interacting Energies","sort")
    call ELEMENTAL_init(4,"pl","Photoluminescence","PL")
    call ELEMENTAL_init(5,"eps","Absorption","optics")
    call ELEMENTAL_init(6,"refl","Reflectivity","optics")
@@ -62,52 +63,83 @@ subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
    call ELEMENTAL_init(10,"beta","Off-diagonal Polarizability","kerr")
    call ELEMENTAL_init(11,"moke","MOKE parameters","kerr")
    call ELEMENTAL_init(12,"jdos","Joint Density of states","optics")
-   call ELEMENTAL_init(13,"Spm","Magnons (S+-)","magnons")
-   call ELEMENTAL_init(14,"Smp","Magnons (S-p)","magnons")
-   call ELEMENTAL_init(15,"CD","Dichroism","dichroism")
+   call ELEMENTAL_init(13,"CD","Dichroism","dichroism")
+   call ELEMENTAL_init(14,"Spm","Magnons (S+-)","magnons")
+   call ELEMENTAL_init(15,"Smp","Magnons (S-p)","magnons")
  endif
  !
- if (WHAT=="INIT") then
+ if (STRING_match(WHAT,"INIT")) then
    !
-   ! Logicals activation
-   if (l_bs_fxc) call X_obs_onoff("ON fxc")
-   if (l_BS_photolum) call X_obs_onoff("ON pl")
-   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) call X_obs_onoff("ON eps")
+   ! Logicals activation...
+   !------------------------
+   if (l_bs_fxc) call X_obs_onoff("+ fxc")
+   if (l_BS_photolum) call X_obs_onoff("+ pl")
+   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) call X_obs_onoff("+ eps")
    !
    ! Check if EELS(5)/ALPHA(6) can be evaluated
-   call X_obs_onoff("ON eel")
-   if (l_col_cut.or.trim(alpha_dim)=="volume") call X_obs_onoff("OFF eel")
+   if (X_do_obs("eps")) call X_obs_onoff("+ eel")
+   if (l_col_cut.or.trim(alpha_dim)=="volume") call X_obs_onoff("- eel")
    !
    if (l_BS_abs) then
      call parser('Reflectivity',l_flag)
-     if (l_flag) call X_obs_onoff("ON refl") 
-     if (X_do_obs("eel")) call X_obs_onoff("OFF refl")
+     if (l_flag) call X_obs_onoff("+ refl") 
+     if (X_do_obs("eel")) call X_obs_onoff("- refl")
    endif
-   if (trim(alpha_dim)/='adim') call X_obs_onoff("ON alpha")
-   if (l_BS_esort) call X_obs_onoff("ON Esort")
-   if (l_BS_kerr) call X_obs_onoff("ON off")
-   if (X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("ON beta")
-   if (.not.X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("ON moke")
-   if (l_BS_jdos) call X_obs_onoff("ON jdos")
-   if (l_BS_magnons) call X_obs_onoff("ON Spm")
-   if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("ON Smp")
-   if (l_BS_dichroism) call X_obs_onoff("ON CD")
+   if (l_BS_jdos) call X_obs_onoff("+ jdos")
+   if (trim(alpha_dim)/='adim'.and.X_do_obs("eps")) call X_obs_onoff("+ alpha")
+   if (l_BS_esort) call X_obs_onoff("+ Esort E_IP")
+   if (l_BS_kerr) call X_obs_onoff("+ off")
+   if (X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ beta")
+   if (.not.X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ moke")
+   if (l_BS_magnons) call X_obs_onoff("+ Spm")
+   if (l_BS_magnons.and.n_spinor==2) call X_obs_onoff("+ Smp")
+   if (l_BS_dichroism) call X_obs_onoff("+ CD")
+   !
+   !...solvers specific
+   if (present(solver)) then
+     if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP kerr magnons")
+     if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP")
+     if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP")
+   endif
    !
    ! Headers...
-   !
+   !------------
    ! ... specific
    if (X_do_obs("fxc")) then
      X_obs(1)%N_columns=2
-     X_obs(1)%COL_header(1)   = 'E/ev[1]'
-     X_obs(1)%COL_header(2:3) = (/'Re(q^2Fxc)[2]','Re(q^2Fxc)[3]'/)
+     X_obs(1)%COL_header(1)   = 'E'
+     X_obs(1)%COL_header(2:3) = (/'Re(q^2Fxc)','Re(q^2Fxc)'/)
+   endif
+   if (X_do_obs("Esort")) then
+     do ic=2,3
+       X_obs(ic)%N_columns=2
+       X_obs(ic)%COL_header(1:2)  = (/'E    ','N_deg'/)
+     enddo
+     if (BS_K_coupling) then
+       X_obs(3)%N_columns=3
+       X_obs(3)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
+     endif
+     do it=1,N_X_obs
+       if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
+       if (.not.any(trim(X_obs(it)%what)==((/"eps","Spm","Smp","off"/))).and..not.trim(X_obs(it)%what)=="CD") cycle
+       do ic=2,3
+         X_obs(ic)%N_columns=X_obs(ic)%N_columns+1
+         X_obs(ic)%COL_header(X_obs(ic)%N_columns) =trim(X_obs(it)%what) 
+       enddo
+     enddo
+   endif
+   if (X_do_obs("PL")) then
+     X_obs(4)%N_columns=3
+     X_obs(4)%COL_header(1)   = 'E'
+     X_obs(4)%COL_header(2:3) = (/'PL  ','PL_o'/)
    endif
    !
    ! ... pre-formatted
-   BASIC_col(1)   = 'E/ev[1]'
-   BASIC_col(2:3) = (/'Im(XXX)[2]', 'Re(XXX)[3]'/)
-   BASIC_col(4:5) = (/'Im(XXXo)[4]', 'Re(XXXo)[5]'/)
-   BASIC_col(6:7) = (/'Im(XXX`)[6]','Re(XXX`)[7]'/)
-   do it=4,N_X_obs
+   BASIC_col(1)   = 'E[1]'
+   BASIC_col(2:3) = (/'Im(XXX)', 'Re(XXX)'/)
+   BASIC_col(4:5) = (/'Im(XXX_o)', 'Re(XXX_o)'/)
+   BASIC_col(6:7) = (/'Im(XXX`)','Re(XXX`)'/)
+   do it=5,N_X_obs
      X_obs(it)%N_columns=7 
      do ic=1,X_obs(it)%N_columns
        X_obs(it)%COL_header(ic)=STRING_remove(BASIC_col(ic),"XXX",trim(X_obs(it)%what))

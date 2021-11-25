@@ -27,7 +27,6 @@ subroutine K_observables( )
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
- use drivers,      ONLY:l_rpa_IP
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -39,7 +38,7 @@ subroutine K_observables( )
  ! What...
  !=========
  l_BS_abs       = STRING_match(BSE_prop,'abs')
- l_BS_jdos      = STRING_match(BSE_prop,'jdos').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
+ l_BS_jdos      = STRING_match(BSE_prop,'jdos')
  l_BS_dichroism = STRING_match(BSE_prop,'dich')
  l_BS_kerr      = STRING_match(BSE_prop,'kerr')
  l_BS_photolum  = STRING_match(BSE_prop,'photolum')
@@ -47,7 +46,7 @@ subroutine K_observables( )
  !
  ! How ...
  !---------
- l_BS_esort     = STRING_match(BSE_prop,'esrt').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
+ l_BS_esort     = STRING_match(BSE_prop,'esrt')
  !
  ! How to treat dipoles...
  !------------------------
@@ -76,18 +75,16 @@ subroutine K_observables( )
  !
  ! Solver Logicals
  !=================
- run_Diago     = index(BSS_mode,'d')/=0
- run_Haydock   = index(BSS_mode,'h')/=0
- run_inversion = index(BSS_mode,'i')/=0
+ run_Diago     = STRING_match(BSS_mode,'d')
+ run_Haydock   = STRING_match(BSS_mode,'h')
+ run_inversion = STRING_match(BSS_mode,'i')
 #if defined _SLEPC && !defined _NL
- run_Slepc     = index(BSS_mode,'s')/=0
+ run_Slepc     = STRING_match(BSS_mode,'s')
 #endif
- !
  if (l_BS_photolum.and.run_Haydock) then
    call warning('PL currently implemented only using the diagonalization/inversion solver')
    run_Haydock  =.false.
  endif
- !
  if (run_Haydock.and.allocated(Ken%W)) then
    call warning('K with QP widths not supported in the Haydock solver')
    run_Haydock=.false.

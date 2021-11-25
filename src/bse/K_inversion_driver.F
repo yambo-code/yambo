@@ -24,7 +24,7 @@
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
- use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,X_OUTPUT_driver
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
 &                         K_INV_EPS,K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,BS_K_anti_resonant
@@ -182,8 +182,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Initialize & write the output file 
  !====================================
- call X_OUTPUT_driver("DEF") 
- call X_OUTPUT_driver("INIT") 
+ call X_OUTPUT_driver("DEF INIT",solver="Inversion") 
  call K_OUTPUT(iq,W,"open Inversion close","ALL")
  !
  ! Perturbative Inversion

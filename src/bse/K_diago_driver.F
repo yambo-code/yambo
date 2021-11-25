@@ -43,7 +43,7 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_optics !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -126,8 +126,9 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  call timing(trim(Solver)//' Solver',OPR='start')
  !
- call X_OUTPUT_driver("DEF") 
- call X_OUTPUT_driver("INIT") 
+ ! Output files initialization
+ !=============================
+ call X_OUTPUT_driver("DEF INIT",solver=Solver) 
  !
  ! Sectioning
  !============

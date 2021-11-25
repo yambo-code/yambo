@@ -70,6 +70,7 @@ module X_m
  !
  ! Absorption & Polarizability
  !
+ integer                  :: N_BS_E_sorted=0
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)
@@ -176,11 +177,12 @@ module X_m
      character(*), optional :: MORE
    end subroutine
    !
-   subroutine X_OUTPUT_driver(WHAT,keys,IQ,IG,DESC,data)
+   subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      use pars,          ONLY:SP
      use frequency,      ONLY:w_samp
      use descriptors,    ONLY:IO_desc
      character(*)          :: WHAT
+     character(*), optional:: solver
      character(*), optional:: keys
      integer,      optional:: IQ,IG
      type(IO_desc),optional:: DESC
@@ -196,7 +198,7 @@ module X_m
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !
-   logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)
+   logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
      use pars,          ONLY:SP
      integer              :: nw 
      complex(SP)          :: wv(nw)
@@ -231,8 +233,8 @@ module X_m
      character(*)   :: WHAT
      integer        :: it
      do it=1,N_X_obs
-       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"ON" )) X_obs(it)%active=.TRUE.
-       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"OFF")) X_obs(it)%active=.FALSE.
+       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"+" )) X_obs(it)%active=.TRUE.
+       if (STRING_match(WHAT,trim(X_obs(it)%what)).and.STRING_match(WHAT,"-")) X_obs(it)%active=.FALSE.
      enddo
    end subroutine
    !

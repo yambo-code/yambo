@@ -24,7 +24,7 @@ subroutine K_Haydock(iq,W,OBS)
  !
  use pars,           ONLY:SP,schlen,cI,cZERO,cONE
  use functions,      ONLY:NAN
- use X_m,            ONLY:global_gauge
+ use X_m,            ONLY:global_gauge,X_OUTPUT_driver
  use wrapper_omp,    ONLY:V_plus_alpha_V_omp
  use frequency,      ONLY:w_samp
  use com,            ONLY:msg,isec
@@ -75,8 +75,7 @@ subroutine K_Haydock(iq,W,OBS)
  !
  ! Initialize & write the output file 
  !====================================
- call X_OUTPUT_driver("DEF") 
- call X_OUTPUT_driver("INIT") 
+ call X_OUTPUT_driver("DEF INIT",solver="Haydock") 
  call K_OUTPUT(iq,W,"open Haydock close ",trim(OBS))
  !
  call PARALLEL_Haydock_VEC_COMMs('assign')

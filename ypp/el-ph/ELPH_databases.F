@@ -278,12 +278,12 @@ subroutine ELPH_databases(k,E,q)
    !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
-   call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
+   call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP)
    call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,GKKP)
    !
    if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
-     call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
+     call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP_bare)
      call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,GKKP_bare)
    endif
    !

@@ -281,15 +281,15 @@ subroutine INIT_read_command_line(rstr,init_)
          infile_editing=.true.
          l_ppa=.TRUE.
          if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'ppa')
+         call initactivate(1,'ppa el_el_corr')
        else if (trim(rstr_piece(i1+1))=='c') then
          infile_editing=.true.
          if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'cohsex dyson')
+         call initactivate(1,'cohsex dyson el_el_corr')
        else if (trim(rstr_piece(i1+1))=='r') then
          infile_editing=.true.
          if (i_cycle==1) QP_solver="s"
-         call initactivate(1,'em1d')
+         call initactivate(1,'em1d el_el_corr')
 #if defined  _ELPH 
        else if (trim(rstr_piece(i1+1))=='fan') then
          infile_editing=.true.

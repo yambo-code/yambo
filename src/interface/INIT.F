@@ -372,12 +372,11 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
          l_phel_corr=runlevel_is_on('ph_el_corr')
        endif
-       l_elel_corr=runlevel_is_on('el_el_corr')
 #endif
 #if defined  _QED
-       l_elel_corr    =runlevel_is_on('el_el_corr')
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
+       l_elel_corr    =runlevel_is_on('el_el_corr')
        !
        ! In some cases l_elel_corr is switched on by default
        !
@@ -444,6 +443,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      PH_Q=(/1,elph_nQ/)
      QP_G_er=(/0.,PH_W_debye/)
 #endif
+     if (l_elel_corr) call initactivate(1,'el_el_corr')
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
      if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
@@ -549,6 +549,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        endif
        !
      endif
+     !
+     if (l_cohsex) l_elel_corr=.true.
 #if !defined _ELPH  && !defined _QED && !defined _PHEL
      if (l_gw0) l_elel_corr=.true.
 #endif

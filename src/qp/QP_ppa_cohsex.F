@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
+&                        l_rt_carriers_in_use,l_RIM_W
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -40,14 +41,16 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
 &                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
- use IO_m,          ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -78,15 +81,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! Work Space
  !
- integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
+ integer      ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&               i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
+ !
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
- logical          ::X_is_TR_rotated,l_X_alloc
- real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
- complex(DP)      ::dp_dummy,ctmp
+ !
+ logical      ::X_is_TR_rotated,l_X_alloc,l_RIM_W_g
+ real(SP)     ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
+ complex(SP)  ::local_rhotw(X%ng),pre_factor,PPA_R
+ complex(DP)  ::dp_dummy,ctmp
  !
 #ifdef _CUDA
  integer                      :: Xng, Xr1, Xr2
@@ -97,11 +102,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
  complex(SP), pointer, device :: isc_gamp_d(:,:)
 #endif
+ !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
  !
- integer               :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
- real(SP)              :: PPcond_rate,TO_rate,PP_err  !DALV: counts 
+ integer      :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
+ integer      :: PPcond_rate,TO_rate
+ real(SP)     :: PP_err
  !
  ! Reset & checks
  !
@@ -118,7 +125,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  ! COHSEX: bands setup
  !
  if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
-   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
  endif
  !
  ! Section
@@ -137,8 +144,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
- if (GW_iter==0) call section('+',trim(SECTION_name))
- if (GW_iter> 0) call section('=',trim(SECTION_name))
+ if (GW_iter==0) then
+   if(l_RIM_W) then
+     call section('-',trim(SECTION_name))
+   else
+     call section('+',trim(SECTION_name))
+   end if
+ end if
+ if (GW_iter > 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
@@ -236,7 +249,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
    io_err=io_X(X,Xw,ID)
  endif
  !
- Q_loop: do iqbz=iq_to_start,q%nbz 
+ Q_loop: do iqbz=iq_to_start,q%nbz
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
@@ -269,42 +282,67 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      !
      ! DV comment:
      ! When cutoff is used, here a careful check is needed.
-     ! Because of qpg can be imaginary, also are some component of X_mat, I'm not sure
+     ! Because of qpg can be imaginary, also are some component of X_mat, I am not sure
      ! that the definition here below of X_mat(ig1,ig2,:) is correct.
      !
 #if defined _SC
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       PPcond_rate=0.
-       TO_rate=0.
-       PP_err=0.
+       PPcond_rate=0
+       TO_rate=0
+       PP_err=0.0_SP
        !
-       !$omp parallel do default(shared), private(ig1,ig2), reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
+       !$omp     parallel do default(shared), private(ig1,ig2,l_RIM_W_g), &
+       !$omp &   reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
        do ig2=1,X%ng
          do ig1=1,X%ng
+           !
            if (l_ppa) then
-             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-               PP_err=PP_err+abs(X_mat(ig1,ig2,X_range(1))/(X%ppaE**2+1._SP)-X_mat(ig1,ig2,X_range(2)) )/&
-&                            maxval(abs(X_mat(ig1,ig2,X_range(:2))))
-               X_mat(ig1,ig2,X_range(2))=X%ppaE
-               PPcond_rate=PPcond_rate+1.
+             !
+             ! RIM W support
+             !
+             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+             if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+             !
+             if (l_RIM_W_g) then
+               !
+               X_mat(ig1,ig2,X_range(2))=RIM_W_E(ig1,ig2)
+               !
              else
-               X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
-               if(real(1._SP/X_mat(ig1,ig2,X_range(2)),SP)*aimag(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
-                 TO_rate = TO_rate + 1.
+               !
+               if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+                 !
+                 X_mat(ig1,ig2,X_range(2))=X%ppaE
+                 !
+                 PP_err=PP_err+abs(X_mat(ig1,ig2,X_range(1))/(X%ppaE**2+1._SP)-X_mat(ig1,ig2,X_range(2)) )/&
+&                              maxval(abs(X_mat(ig1,ig2,X_range(:2))))
+                 PPcond_rate=PPcond_rate+1
+               else
+                 !
+                 X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+                 !
+                 if(real(1._SP/X_mat(ig1,ig2,X_range(2)),SP)*aimag(1._SP/X_mat(ig1,ig2,X_range(2)))>0._SP) then
+                   TO_rate=TO_rate+1
+                 endif
                endif
+               !
              endif
+             !
            else
+             !
+             ! COHSEX
+             !
              X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
            endif
+           !
          enddo
        enddo
        !$omp end parallel do
        !
        call msg('r',' Current Q-pt index             ',iqibz)
-       call msg('r',' :: PP condition fails/total    ',PPcond_rate/X%ng**2)
-       call msg('r',' :: Time ordering fails/rest    ',TO_rate/(X%ng**2-PPcond_rate))
+       call msg('r',' :: PP condition fails/total    ',real(PPcond_rate,SP)/X%ng**2)
+       call msg('r',' :: Time ordering fails/rest    ',real(TO_rate,SP)/(X%ng**2-PPcond_rate))
        call msg('r',' :: Mean rel dev of PP cond     ',PP_err/X%ng**2)
        !
 #if defined _SC
@@ -375,7 +413,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
-           eet_cutoff0(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff0(is)=minval(E%E(E%nbf(is)+1,:,is))
            eet_cutoff1(is)=minval(E%E(QP_n_G_bands(2),:,is))
          enddo
          eet_cutoff0(1)=minval(eet_cutoff0(:))
@@ -512,8 +550,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
              do ig1=1,Xng
                !
                PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
-               PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+               !
+               ! RIM W support
+               !
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+               !
+               if (l_RIM_W_g) then
+                 PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
+&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+               else
+                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+               endif
+               !
 
+               !
                ! inline bose_f function
                bose_PPA_E=0.
                if (PPA_E<0.) bose_PPA_E=-spin_occ
@@ -545,12 +596,27 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
          do i_w=1,QP_dSc_steps
            !
            dp_dummy = 0.0_DP
-           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
+           !
+           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp, &
+           !$omp &           l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)),kind=SP)
-               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               !
+               ! RIM W support
+               !
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+               !
+               if (l_RIM_W_g) then
+                 PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP, &
+&                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
+               else
+                 PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               end if
+               !
+
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&

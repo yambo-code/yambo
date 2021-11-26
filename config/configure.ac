@@ -40,11 +40,13 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 # YAMBO SPECIFIC
 #
+m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
 m4_include([config/m4/yambo_libraries.m4])
 # 
 #  General
 #
+m4_include([config/m4/acx_echo.m4])
 m4_include([config/m4/acx_misc.m4])
 m4_include([config/m4/acx_gmake.m4])
 m4_include([config/m4/acx_cpp.m4])
@@ -61,10 +63,11 @@ m4_include([config/m4/acx_branch.m4])
 #
 m4_include([config/m4/acx_report.m4])
 # ============================================================================
+# Echo
+AC_PROG_ECHO
+# ============================================================================
 # Current branch
 ACX_BRANCH
-#
-# Checks for library functions.
 # ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
@@ -106,7 +109,7 @@ AC_SUBST(MAKE)
 #AR 
 AC_CHECK_TOOL(AR, ar, false)
 test -z "$AR" && AR=ar
-test -z "$AR_FLAGS" && AR_FLAGS="-ru"
+test -z "$AR_FLAGS" && AR_FLAGS="-r"
 AC_SUBST(AR_FLAGS)
 #
 # ============================================================================
@@ -236,6 +239,7 @@ m4_include([config/urls/repos.list])
 m4_include([config/m4/blas.m4])
 m4_include([config/m4/lapack.m4])
 m4_include([config/m4/netcdf_f90.m4])
+m4_include([config/m4/hdf5_f90.m4])
 m4_include([config/m4/libxc.m4])
 m4_include([config/m4/fft.m4])
 m4_include([config/m4/futile.m4])
@@ -265,6 +269,9 @@ AC_PETSC_SLEPC_SETUP
 # SCALAPACK/BLACS
 AC_SLK_SETUP
 # ============================================================================
+# HDF5 
+AC_HAVE_HDF5_F90
+# ============================================================================
 # NETCDF 
 AC_HAVE_NETCDF_F90
 # ============================================================================
@@ -287,10 +294,12 @@ AC_HAVE_CUDA
 ACX_REPORT()
 # ============================================================================
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
-AC_CONFIG_FILES([config/setup config/mk/defs.mk config/report config/msg_ydb
-                 src/wf_and_fft/sgfft.F
-                 sbin/make_makefile.sh sbin/objects_store.sh src/tools/.objects include/branch.inc
-                 include/driver/editor.h include/driver/version.h])
+AC_CONFIG_FILES([
+ config/setup config/mk/global/defs.mk config/report config/msg_ydb
+ src/wf_and_fft/sgfft.F src/tools/.objects  
+ config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
+ include/branch.inc include/driver/editor.h 
+])
 #
 AC_OUTPUT
 #

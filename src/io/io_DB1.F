@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,7 +31,7 @@ integer function io_DB1(E,k,ID)
 &                           n_spinor
  use D_lattice,        ONLY:a, alat, nsym, i_time_rev, input_GS_Tel, dl_sop, &
 &                           Tel, n_atoms_species_max,n_atomic_species,n_atoms_species,atom_pos, &
-&                           Z_species, n_atoms, mag_syms
+&                           Z_species, n_atoms, mag_syms, atom_mass, atoms_map
  use R_lattice,        ONLY:ng_vec, g_vec, bz_samp,nkibz,&
 &                           QP_states_k,nXkibz,ng_closed
  use wave_func,        ONLY:wf_ncx, wf_nc_k, wf_igk,wf_ng,wf_nb_io
@@ -39,10 +39,10 @@ integer function io_DB1(E,k,ID)
  use wave_func,        ONLY:wf_igk_d
 #endif
  use LIVE_t,           ONLY:live_timing_is_on
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,variable_exist, &
-&                           io_elemental, io_status, io_bulk,read_is_on,&
+ use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,io_bulk,ver_is_gt_or_eq
+ use IO_m,             ONLY:io_sec,variable_exist,io_status,read_is_on,&
 &                           serial_number,io_serial_number,io_code_revision,&
-&                           DUMP,io_mode,write_is_on,io_code_version,ver_is_gt_or_eq
+&                           DUMP,io_mode,write_is_on,io_code_version
  use QP_m,             ONLY:QP_nk,QP_nb,QP_n_G_bands
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
@@ -297,6 +297,10 @@ integer function io_DB1(E,k,ID)
      YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
      !
    endif
+   if(ver_is_gt_or_eq(ID,revision=20105)) then
+     YAMBO_ALLOC(atom_mass,(n_atomic_species))
+     YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
+   endif
    !
  endif
  !
@@ -318,6 +322,12 @@ integer function io_DB1(E,k,ID)
    call io_bulk(ID,VAR="atomic_numbers",VAR_SZ=(/n_atomic_species/))
    call io_bulk(ID,I1=Z_species)
    !
+   if(ver_is_gt_or_eq(ID,revision=20105)) then
+     call io_bulk(ID,VAR="ATOM_MASS",VAR_SZ=shape(atom_mass))
+     call io_bulk(ID,R1=atom_mass)
+     call io_bulk(ID,VAR="ATOM_MAP",VAR_SZ=shape(atoms_map))
+     call io_bulk(ID,I2=atoms_map)
+   endif
    if (io_mode(ID)==DUMP.or.write_is_on(ID))  n_atoms=sum(n_atoms_species) 
    !
  endif

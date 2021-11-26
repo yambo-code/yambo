@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,11 +23,13 @@
 !
 module R_lattice
  !
- use pars,        ONLY:SP,schlen,IP
+ use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
 #include<memory.h>
+ !
+ integer, parameter:: MAX_kpts_to_report=50
  !
  ! K lattice
  !
@@ -122,6 +124,7 @@ module R_lattice
  integer, allocatable :: qindx_B(:,:,:)
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
+ integer  :: qindx_B_max
  !
  ! SYMs
  !
@@ -154,6 +157,16 @@ module R_lattice
  real(SP),   allocatable :: RIM_qpg(:,:,:)
  real(SP),   allocatable DEV_ATTR :: RIM_qpg_d(:,:,:)
  !
+ ! RIM_W
+ !
+ integer :: RIM_W_ng
+ integer :: RIM_W_n_rand_pts
+ logical :: RIM_W_is_diagonal
+ logical :: RIM_W_for_graph
+ real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
+ real(DP),   allocatable :: f_coeff(:,:,:,:,:)
+ !
  ! Coulomb (including Cutoff)
  !
  real(SP)                :: cyl_ph_radius
@@ -171,6 +184,8 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ logical                 :: cut_is_slab
+ integer                 :: idir(3)
  !
  ! BZ map by direction
  !
@@ -185,14 +200,22 @@ module R_lattice
    !
    integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,border_point)
      use pars, ONLY: SP
-     integer :: n_k
-     real(SP):: k_ref(3)
-     real(SP):: k(n_k,3)
-     real(SP),optional :: k_dist(n_k)
-     logical, optional :: ROTATE_k_ref,border_point
-     integer, optional :: k_symm
-     integer, optional :: i_err
-   end function 
+     integer,  intent(in) :: n_k
+     real(SP), intent(in) :: k_ref(3)
+     real(SP), intent(in) :: k(n_k,3)
+     real(SP), intent(out),  optional :: k_dist(n_k)
+     logical,  intent(out),  optional :: border_point
+     logical,  intent(in) ,  optional :: ROTATE_k_ref
+     integer,  intent(out),  optional :: k_symm
+     integer,  intent(out),  optional :: i_err
+   end function
+   ! 
+   function qindx_B_load(ikbz,ikp_bz,ID)
+     !
+     integer, dimension(2) :: qindx_B_load
+     integer, intent(in) :: ID,ikbz,ikp_bz
+     !
+   end function qindx_B_load
    !
  end interface
  !
@@ -200,7 +223,11 @@ module R_lattice
    !
    subroutine qindx_alloc(what)
      !
+     use parallel_m,   ONLY:PAR_K_scheme
+     !
      character(*), intent(in) :: what
+     !
+     integer :: nK_qindx_B
      !
      if(  (index(what,"X")/=0 .or. index(what,"ALL")/=0) .and. X_scattering) then
        YAMBO_ALLOC(qindx_X,(nqibz,nXkbz,2))
@@ -213,7 +240,13 @@ module R_lattice
      endif
      !
      if( (index(what,"B")/=0 .or. index(what,"ALL")/=0) .and. Xk_grid_is_uniform .and. bse_scattering) then
-       YAMBO_ALLOC(qindx_B,(nXkbz,nXkbz,2))
+#if defined _PAR_IO
+       nK_qindx_B=PAR_K_scheme%nbz
+#else
+       if(PAR_K_scheme%nbz> 0) nK_qindx_B=PAR_K_scheme%nbz  ! read mode
+       if(PAR_K_scheme%nbz==0) nK_qindx_B=nXkbz             ! write mode
+#endif
+       YAMBO_ALLOC(qindx_B,(nXkbz,nK_qindx_B,2))
        qindx_B=0
      endif
      !
@@ -232,13 +265,13 @@ module R_lattice
        YAMBO_FREE(qindx_X)
      endif
      if(  index(what,"B")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_B)
+       YAMBO_FREE(qindx_B)
      endif
      if(  index(what,"S")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_S)
+       YAMBO_FREE(qindx_S)
      endif
      if(  index(what,"C")/=0 .or. index(what,"ALL")/=0) then
-     YAMBO_FREE(qindx_C)
+       YAMBO_FREE(qindx_C)
      endif
    end subroutine qindx_free
    !

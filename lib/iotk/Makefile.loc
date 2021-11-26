@@ -12,18 +12,15 @@ LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_iotk)
 TARBALL=$(tarball_iotk)
-
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(LIBPATH) \
-         IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
-
+AUXFLAGS=--prefix=$(LIBPATH) IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 #
 # MAIN target
 #
 all: $(LIBRARY)
-
+#
 uncompress-stamp:
 	( cd ../archive ; if ! test -e $(TARBALL) ; then \
 	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
@@ -47,30 +44,27 @@ configure-stamp: uncompress-stamp
 	        fi ) ; \
 	fi
 	touch configure-stamp
-	           #IOTK_REAL_KINDS="ALL" \
-	
+#
 package-ready-stamp: uncompress-stamp configure-stamp 
 	if test -d $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
 	touch package-ready-stamp
-
+#
 package-installed: uncompress-stamp configure-stamp package-ready-stamp
 	if ! test -e package-installed ; then ($(install)); fi
 	touch package-installed
-
+#
 $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
-
 #
 # cleaning
 #
 clean:
 	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp package-installed
-
+#
 clean_all: clean
 	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf make.sys uncompress-stamp 
-	
 #
 # Replaces make install which seems to be missing for iotk
 #

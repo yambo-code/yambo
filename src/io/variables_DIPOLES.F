@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,7 +26,8 @@ integer function variables_DIPOLES(Dip,ID)
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use IO_m,          ONLY:io_variable_elemental,def_variable_elemental,io_status,io_elemental
+ use IO_m,          ONLY:io_status
+ use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,io_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use descriptors,   ONLY:IO_desc_reset
  !
@@ -39,7 +40,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call IO_desc_reset(DIP_desc)
  !
- call def_variable_elemental(ID,"PARS",11,SP,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"PARS",11,SP,0)
  !
  call io_variable_elemental(ID,DB_I1=Dip%db_ib,VAR="DIP band range",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/),&
 &                           DESCRIPTOR=DIP_desc)
@@ -58,11 +59,11 @@ integer function variables_DIPOLES(Dip,ID)
  !
  ! Character variables
  !
- call def_variable_elemental(ID,"APPROACH",1,0,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"APPROACH",1,0,0)
  call  io_variable_elemental(ID,VAR="Approach used",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
- call def_variable_elemental(ID,"KINDS",1,0,0,par_io_kind="independent")
+ call def_variable_elemental(ID,"KINDS",1,0,0)
  call  io_variable_elemental(ID,VAR="Dipoles computed",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/),&
 &                           DESCRIPTOR=DIP_desc)
  !

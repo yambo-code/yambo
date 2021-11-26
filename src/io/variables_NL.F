@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, AC
@@ -28,9 +28,11 @@ integer function variables_NL(ID)
 &                        WF_sample_ondisk,n_order,NL_desc
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx
  use real_time,     ONLY:Integrator_name,NE_steps,RT_step,l_RT_induced_field,RT_bands
+ use electrons,     ONLY:n_sp_pol
  use electric,      ONLY:l_force_SndOrd
  use fields,        ONLY:Efield
- use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_status
+ use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc_reset
  !
  implicit none
@@ -72,11 +74,16 @@ integer function variables_NL(ID)
  ! WF SAMPLING
  !
  if (ver_is_gt_or_eq(ID,revision=15726)) then !THIS NEEDS TO BE UPDATED IN CASE ENTERS INTO A DISTRO
-   call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=3,MENU=0)
+   call io_elemental(ID,VAR="WF_SAMPLE",VAR_SZ=2+n_sp_pol,MENU=0)
    call io_elemental(ID,VAR="[NL] WF sample order   ",I0=n_order,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTOR=NL_desc)
-   call io_elemental(ID,VAR="[NL] WF sample valence ",I0=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"=="/), & 
-        &         DESCRIPTOR=NL_desc)
+   if (n_sp_pol==1) then
+     call io_elemental(ID,VAR="[NL] WF sample valence ",I0=WF_sample_ondisk%n_val(1),CHECK=.true.,OP=(/"=="/), & 
+          &         DESCRIPTOR=NL_desc)
+   else
+     call io_elemental(ID,VAR="[NL] WF sample valence ",I1=WF_sample_ondisk%n_val,CHECK=.true.,OP=(/"==","=="/), & 
+          &         DESCRIPTOR=NL_desc)
+   endif
    call io_elemental(ID,VAR="[NL] WF sample kpoints ",I0=WF_sample_ondisk%n_k,CHECK=.true.,OP=(/"=="/), & 
         &         DESCRIPTOR=NL_desc)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

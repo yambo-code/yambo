@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -26,12 +26,13 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  use pars,           ONLY:SP
  use units,          ONLY:BO2ANG,HA2EV
  use D_lattice,      ONLY:DL_vol
+ use vec_operate,    ONLY:c2a
  use R_lattice,      ONLY:bz_samp,k_the_nearest
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ,E_reset,E_duplicate,n_sp_pol
  use com,            ONLY:msg
  use real_time,      ONLY:RT_carriers,RT_bands,RTibz
- use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label
+ use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label,coo_in
  use YPP_interfaces, ONLY:k_special
  use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
 &                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
@@ -97,6 +98,9 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    do i_region=1,Eh_pumped_pair_n_BZ_regions
      local_k=Eh_pumped_pair_BZ_regions(i_region,:)
      !
+     if (trim(coo_in)=="cc")  call c2a(v_in=local_k,mode="kc2i")
+     if (trim(coo_in)=="rlu") call c2a(v_in=local_k,mode="ka2i")
+     !
      i_k_near=k_the_nearest(local_k,RT_carriers%kpt,RT_carriers%nk,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
      !
      if (k_dist(i_k_near)<Eh_pumped_pair_BZ_width.or.Eh_pumped_pair_BZ_width<0) then
@@ -158,8 +162,8 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
            iv=ibp
            ic=ib
            !
-           if (ic <=E_local%nbf) cycle
-           if (iv > E_local%nbm) cycle
+           if (ic <=E_local%nbf(1)) cycle
+           if (iv > E_local%nbm(1)) cycle
            !
            if (Pumped_state(iv,ik)) cycle
            if (Pumped_state(ic,ik)) cycle
@@ -235,9 +239,9 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
      call msg('s','User    defined',u_k,after_msg="[iku]"//" "//trim(label))
      call msg('s','Nearest k-point',RT_carriers%kpt(ik,:),after_msg="[iku][ik="//trim(intc(ik))//"]")
      call msg('s','Distance       ',k_dist(ik),after_msg="[iku]")
-     do i_c=E_local%nbf+1,E_local%nbf+2
-       do i_v=E_local%nbf-1,E_local%nbf
-         title="Gap CBm+"//trim(intc(i_c-E_local%nbf))//" VBM-"//trim(intc(E_local%nbf-i_v))
+     do i_c=E_local%nbf(1)+1,E_local%nbf(1)+2
+       do i_v=E_local%nbf(1)-1,E_local%nbf(1)
+         title="Gap CBm+"//trim(intc(i_c-E_local%nbf(1)))//" VBM-"//trim(intc(E_local%nbf(1)-i_v))
          call msg('s',trim(title),(E_local%E(i_c,ik,1)-E_local%E(i_v,ik,1))*HA2EV,after_msg="[ev]")
        enddo 
      enddo

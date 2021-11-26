@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex,l_RIM_W
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
@@ -37,7 +37,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use stderr,        ONLY:intc
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -82,8 +82,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  do while((iter<=SC_iterations.or.SC_iterations<0).and..not.GWo_SC_done) 
    !
    if (l_elel_corr) then
+     !
+     ! AF,DALV: use of RIM_W to be extended beyond PPA
+     !
      if (l_ppa) then
        !
+       if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
        !
      else if (l_mpa) then
@@ -205,7 +209,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      !
      ! Find new Fermi Energy
      !
-     call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
+     call OCCUPATIONS_Fermi(en,k,"E",mode="OCCUPATIONS")
      !
      ! Write QP on file
      !
@@ -257,3 +261,4 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  if (GW_iterations<0)  GW_iterations =iter
  !
 end subroutine
+

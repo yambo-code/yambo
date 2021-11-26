@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -33,7 +33,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_potential
  use D_lattice,     ONLY:DL_vol,sop_inv
- use xc_functionals,ONLY:F_xc,XC_potential_driver
+ use xc_functionals,ONLY:F_xc,V_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
@@ -45,14 +45,14 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
 &                        COLLISIONS_HXC_use_TDDFT
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
- use IO_m,          ONLY:io_control,OP_RD_CL,REP,VERIFY,NONE,IO_and_Messaging_switch,io_COLLs
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
  use hamiltonian,   ONLY:B_mat_index
  use fft_m,         ONLY:fft_size
- use xc_functionals,ONLY:magn
  !
 #include<memory.h>
  !
@@ -140,7 +140,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  bands_to_load=COLL_bands
  if (COLLISIONS_HXC_use_TDDFT) then
    bands_to_load(1)=1
-   bands_to_load(2)=max(COLL_bands(2),E%nbm)
+   bands_to_load(2)=max(COLL_bands(2),maxval(E%nbm))
  endif
  !
  if (WF_buffered_IO) call WF_load(WF_buffer,0,1,bands_to_load,(/1,k%nibz/),space='B',title='-BUFFER')
@@ -197,10 +197,19 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (COLLISIONS_HXC_use_TDDFT) then
    Co=4._SP*pi/DL_vol/real(q%nbz,SP)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   if (n_spin>1) then
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+   V_xc=0._SP
+   if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif
    call XC_potential_driver(E,K,WF_kind,WF_xc_functional,2)
+   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
+   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
+   YAMBO_FREE(F_xc)
+   YAMBO_FREE(V_xc)
+   if(n_spin>1) then
+     YAMBO_FREE(magn)
+   endif
  endif
  !
  n_colls=max(HXC_collisions%N,COH_collisions%N)

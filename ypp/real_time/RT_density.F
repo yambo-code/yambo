@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,8 +31,8 @@ subroutine RT_density(en,kpt,qpt)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
-&                         manage_action
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
  use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps
@@ -96,12 +96,11 @@ subroutine RT_density(en,kpt,qpt)
    call RT_time_configuration_setup("G-DENSITY",GF_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
-   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
    call RT_occupation_alloc("electrons",RT_el_occ,RT_bands,RT_nk)
    call msg('s',trim(ch_ws(1)))
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
- !
  !
  ! Parallel Setups & WF_load
  !===========================

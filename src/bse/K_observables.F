@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine K_observables(WHAT,W)
  use X_m,           ONLY:X_alloc,Epsilon_ii,Joint_DOS,BS_E_sorted
  use frequency,     ONLY:w_samp
  use BS_solvers,    ONLY:BSS_n_freqs
- use BS,            ONLY:BS_H_dim,l_BS_abs,l_BS_jdos,l_BS_esort
+ use BS,            ONLY:l_BS_abs,l_BS_jdos,l_BS_esort
  use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_init
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
@@ -66,7 +66,7 @@ subroutine K_observables(WHAT,W)
      PL(:,1) = W%p(:)  
    endif
    !
-   if(l_BS_abs) then
+   if(l_BS_abs.or.l_BS_kerr) then
      call X_alloc("EPS",(/BSS_n_freqs,4/))
      Epsilon_ii(:,1)=W%p(:)
    endif

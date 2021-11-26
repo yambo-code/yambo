@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,6 +24,7 @@
 module it_m
  !
  use pars,       ONLY:schlen,lchlen,SP
+ !
  implicit none
  !
  character(lchlen)  :: infile
@@ -41,7 +42,6 @@ module it_m
  character(3),parameter :: Angle_unit(2)=(/'deg','rad'/)
  ! 
  ! Verbosity
- !===========
  !
  integer, parameter :: V_RL=1
  integer, parameter :: V_kpt=2
@@ -53,6 +53,7 @@ module it_m
  integer, parameter :: V_real_time=8
  integer, parameter :: V_parallel=9
  integer, parameter :: V_nl_optics=10
+ integer, parameter :: V_ph=11
  integer, parameter :: V_all=99
  !
  integer, parameter :: maxrnlvls=60

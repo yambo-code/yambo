@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -36,6 +36,10 @@ case "${FC}" in
       FCKIND="pgi"
       FCVERSION=`$FC --version`
       ;;
+    *nvfortran*)
+      FCKIND="nvfortran"
+      FCVERSION=`$FC --version`
+      ;;
     *gfortran*)
       FCKIND="gfortran" 
       FCVERSION=`$FC --version`
@@ -63,6 +67,7 @@ case "${FC}" in
       VER_17=`grep 17. ver_ | wc -l`
       VER_18=`grep 18. ver_ | wc -l`
       VER_19=`grep 19. ver_ | wc -l`
+      VER_2021=`grep 2021. ver_ | wc -l`
       if ! test "$VER_8" = "0";  then INTELVERSION="8"  ; fi
       if ! test "$VER_9" = "0";  then INTELVERSION="9"  ; fi
       if ! test "$VER_10" = "0"; then INTELVERSION="10" ; fi
@@ -75,6 +80,7 @@ case "${FC}" in
       if ! test "$VER_17" = "0"; then INTELVERSION="17" ; fi
       if ! test "$VER_18" = "0"; then INTELVERSION="18" ; fi
       if ! test "$VER_19" = "0"; then INTELVERSION="19" ; fi
+      if ! test "$VER_2021" = "0"; then INTELVERSION="2021" ; fi
       rm -f ver_
       ;;
     *)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -38,7 +38,8 @@ subroutine RT_driver(E,X,k,q,Dip)
  use FFT_m,          ONLY:fft_size
  use interfaces,     ONLY:WF_load,WF_free
  use R_lattice,      ONLY:bz_samp,qindx_free
- use IO_m,           ONLY:OP_WR_CL,NONE,io_control
+ use IO_int,         ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,           ONLY:OP_WR_CL,NONE,io_COLLs
  use hamiltonian,    ONLY:WF_G_max,WF_Go_indx,rho_n,magn_n,&
 &                         H_potential,H_kind,H_xc_functional,H_perturbation
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,ID,&
@@ -57,7 +58,6 @@ subroutine RT_driver(E,X,k,q,Dip)
  use QP_CTL_m,        ONLY:QP_apply
  use parallel_int,    ONLY:PP_bcast,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,      ONLY:PAR_IND_WF_b,PAR_IND_WF_k,PAR_IND_DIPk_ibz,PAR_IND_B_mat,PAR_COM_Xk_ibz_INDEX
- use IO_m,            ONLY:IO_and_Messaging_switch,io_COLLs
  use units,           ONLY:FS2AUT
  use RT_lifetimes,    ONLY:l_initial_equilibrium
  !
@@ -106,10 +106,10 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  RT_perturbation =H_perturbation
  !
  call section('*',trim(RT_potential)//' Real-Time Dynamics '//trim(sec_title))
+ !############################################################################
  !
- !
- call section('+','Initialization')
- !#################################
+ call section('+','Pre-Initialization')
+ !######################################
  !
  ! Check if RT_bands respect levels degeneracy...
  call LEVELS_respect_degenerations(RT_bands,E,.FALSE.)
@@ -134,6 +134,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Dipoles
  !=========
+ call section('=','Dipoles')
+ !##########################
+ !
  call DIPOLE_dimensions(E,Dip,RT_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'RT')
  !
@@ -143,8 +146,8 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  call RT_apply(RT_bands,E,k,what="G",VERBOSE=.true.)
  !
- ! Core initialization
- !
+ call section('=','Initialization')
+ !#################################
  call RT_initialize(E,k,q)
  !
  ! Dipoles & WF dimensions

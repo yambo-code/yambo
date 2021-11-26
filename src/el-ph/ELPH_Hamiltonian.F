@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,8 @@ subroutine ELPH_Hamiltonian(en,k,q)
  use units,         ONLY:HA2EV
  use ELPH,          ONLY:elph_Ham_bands,elph_Ham_ik,ph_modes,&
 &                        PH_freqs_sq,GKKP,elph_branches,PH_pol_vector,RES_tresh
- use IO_m,          ONLY:io_control,manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,mk_dir
  use com,           ONLY:msg,of_open_close,jobstr,jobdir,core_io_path
  use R_lattice,     ONLY:nqbz,nqibz,bz_samp,qindx_S
  use D_lattice,     ONLY:sop_inv,nsym,sop_tab,i_time_rev,n_atoms

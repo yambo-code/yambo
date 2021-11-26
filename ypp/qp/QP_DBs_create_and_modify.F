@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -26,7 +26,8 @@ subroutine QP_DBs_create_and_modify(en,k)
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use electrons,     ONLY:levels,n_sp_pol
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP
  use QP_m,          ONLY:QP_t,QP_reset,QP_state,QP_nb,QP_nk,QP_n_states,QP_alloc
  use R_lattice,     ONLY:bz_samp
  use YPPm,          ONLY:QP_user_corrections

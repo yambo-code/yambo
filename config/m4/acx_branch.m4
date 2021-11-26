@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -25,8 +25,12 @@ AC_DEFUN([ACX_BRANCH],
 [
 Y_BRANCH="master"
 AC_CHECK_PROG(GIT_CHECK,git,yes)
-if test x"$GIT_CHECK" = x"yes" && test -f .gitignore; then
-  Y_BRANCH=`git branch | grep \* | cut -d ' ' -f2`
+if test x"$GIT_CHECK" = x"yes"; then
+  if [[ "$compdir" != "$srcdir" ]] ; then  cd $srcdir; fi 
+  if test -f .gitignore; then
+    Y_BRANCH=`git branch | grep \* | cut -d ' ' -f2`
+  fi
+  if [[ "$compdir" != "$srcdir" ]] ; then  cd $compdir; fi 
 fi
 AC_SUBST(Y_BRANCH)
 ])

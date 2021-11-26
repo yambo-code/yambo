@@ -28,14 +28,12 @@ integer function io_MPA(X,Xw,ID)
  use R_lattice,     ONLY:nqibz,g_vec
  use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc,X_alloc
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_com,&
-&                        io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,&
-&                        ver_is_gt_or_eq,io_serial_number,serial_number,&
-&                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,&
-&                        io_fragment,IO_OUTDATED_DB,frag_MULTIPOLE,&
-&                        IO_NO_DATABASE,io_mode,DUMP,io_extension,&
-&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
+&                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
+&                        io_fragment,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,io_serial_number,serial_number,&
+&                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
+&                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:PAR_COM_X_WORLD
@@ -246,7 +244,8 @@ integer function variables_MPA(ID,local_desc,X)
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use X_m,           ONLY:X_t
- use IO_m,          ONLY:io_elemental,io_status,ver_is_gt_or_eq,read_is_on
+ use IO_int,        ONLY:io_elemental,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_status,read_is_on
  implicit none
  !
  integer            ::ID

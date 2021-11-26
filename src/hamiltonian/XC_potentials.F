@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -119,19 +119,19 @@ subroutine XC_potentials(POTENTIALS_string)
      H_kind=H_kind+XC_EXCHANGE_CORRELATION
    else if (STRING_same(trim(potentials(i_c)),'EXX')) then
      l_sc_exx=.true.
-     if (n_full_bands/=n_met_bands) return
+     if (any(n_full_bands/=n_met_bands)) return
      H_kind=H_kind+H_SE_EXX
    else if (STRING_same(trim(potentials(i_c)),'EXXC')) then
      l_sc_exx=.true.
      l_sc_is_libDFT=.true.
      if(H_xc_functional/=0) call error(' Cannot use two DFT XC flavors. Set one only in input')
      H_xc_functional=XC_LDA_C_PZ
-     if (n_full_bands/=n_met_bands) return
+     if (any(n_full_bands/=n_met_bands)) return
      H_kind=H_kind+H_SE_EXXC
    else if (STRING_same(trim(potentials(i_c)),'SRPA')) then
      l_sc_exx=.true.
      l_sc_srpa=.true.
-     if (n_full_bands/=n_met_bands) return
+     if (any(n_full_bands/=n_met_bands)) return
      H_kind=H_kind+H_SE_SRPA
    else if (STRING_same(trim(potentials(i_c)),'COH')) then
      l_sc_coh=.true.

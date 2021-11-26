@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -309,7 +309,6 @@ subroutine RT_initialize(E,k,q)
  !
  ! Checking extended COLLISIONS
  !==============================
- !
  if (l_elel_scatt.or.l_sc_sex.or.l_sc_fock.or.l_sc_hartree.or.l_sc_is_libDFT) then
    !
    call section('=','Electronic Collisions loading and setup')
@@ -328,7 +327,7 @@ subroutine RT_initialize(E,k,q)
  ! Electron-phonon
  ! ===============
  !
- if (l_elph_scatt) call RT_ELPH_initialize(E,k,q)
+ call RT_ELPH_initialize(E,k,q)
  !
 #endif
  !
@@ -444,7 +443,7 @@ subroutine RT_initialize(E,k,q)
  !
  if (l_NE_with_fields) then
    call msg( 'nr','---Fields---')
-   call msg('r','Gauge                       ',trim(global_gauge))
+   call msg('r','Gauge                               ',trim(global_gauge))
    !
    if (any(Efield(:)%W_step>0)) then
      call msg('r','Pump/Probe periodicity',EtoT(E=maxval(Efield(:)%W_step))*AUT2FS,'[fs]')
@@ -453,13 +452,14 @@ subroutine RT_initialize(E,k,q)
    !
    do i1=1,n_ext_fields
      MSG_ch="Field#"//trim(intc(i1))
-     call msg('r', trim(MSG_ch)//' field                       '//trim(Efield(i1)%ef_name))
-     call msg('r', trim(MSG_ch)//' polarization                '//trim(Efield(i1)%ef_pol))
-     call msg('r', trim(MSG_ch)//' energy window/period        ',(/Efield(i1)%frequency*HA2EV,&
+     call msg('r', trim(MSG_ch)//' field                       ',trim(Efield(i1)%ef_name))
+     call msg('r', trim(MSG_ch)//' polarization                ',trim(Efield(i1)%ef_pol))
+     call msg('r', trim(MSG_ch)//' frequency range             ',(/Efield(i1)%frequency*HA2EV,&
 &                  2._SP*pi*HBAR_evfs/(Efield(i1)%frequency*HA2EV)/),'[eV/fs]')
      call msg('r', trim(MSG_ch)//' elemental oscillation       ',EtoT(E=Efield(i1)%frequency(2)-&
 &                                                                       Efield(i1)%frequency(1))*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' width                       ',Efield(i1)%width*AUT2FS,'[fs]')
+     call msg('r', trim(MSG_ch)//' start time                  ',Efield(i1)%t_initial*AUT2FS,'[fs]')
      call msg('r', trim(MSG_ch)//' energy steps                ',Efield(i1)%n_frequencies)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')

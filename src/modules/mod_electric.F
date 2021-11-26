@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -55,8 +55,8 @@ module electric
      type(levels), intent(in) :: en
      !
      YAMBO_ALLOC(All_S_det,(6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(Sm1_plus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(Sm1_minus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_plus,(maxval(en%nbf),maxval(en%nbf),6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_minus,(maxval(en%nbf),maxval(en%nbf),6,nXkbz,n_sp_pol))
      !
    end subroutine ELECTRIC_alloc
    

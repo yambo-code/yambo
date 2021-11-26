@@ -134,7 +134,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !============
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
- call section("+P",trim(Solver)//' Solver @q'//trim(intc(iq)))
+ call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
 #if defined _SLEPC && !defined _NL
  if(l_slepc) call K_slepc_local_init()

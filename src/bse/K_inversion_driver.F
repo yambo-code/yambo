@@ -25,9 +25,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  use pars,           ONLY:SP,pi
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,X_OUTPUT_driver
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
-&                         K_INV_EPS,K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,BS_K_anti_resonant
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
+&                         K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
+&                         BS_K_anti_resonant,l_BS_photolum
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
@@ -48,10 +49,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
- !
- use BS,             ONLY:l_BS_photolum
- use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
+ !
  !
 #include<memory.h>
  !

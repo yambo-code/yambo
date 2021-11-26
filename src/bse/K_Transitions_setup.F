@@ -85,7 +85,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  logical, external :: K_Transition_check
  !
- if (mode=="K") call section("+",'Transition pre-analysis @q'//trim(intc(iq)))
+ if (mode=="K") call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
  if (mode=="T") call section("=",'Transition Groups build-up @q'//trim(intc(iq)))
  !
  call k_build_up_BZ_tables(Xk)

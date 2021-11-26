@@ -898,7 +898,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      if (is_def(12).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
      if (is_def(13)                             ) Dip%iq=X(2)%iq
      if (is_def(14)                             ) Dip%iq=X(1)%iq
-     if (is_def(15)                             ) Dip%iq=BS_q
+     if (is_def(15).and..not.runlevel_is_on('ppa').and..not.runlevel_is_on('em1s')) Dip%iq=BS_q
      !
      ! Bands
      !

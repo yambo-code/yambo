@@ -65,22 +65,23 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  call section('*','Optics')
  !
- ! Basic Checks/DEFS
+ ! Basic Checks
  call X_pre_setup(Xen,Xk,X)
- call X_OUTPUT_driver("DEF INIT")
  !
  allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
    !
+   ! Output files init 
+   !===================
+   call X_OUTPUT_driver("DEF INIT")
+   !
    ! PARALLEL indexes
    !==================
-   !
    call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)
    !
    ! WF distribution 
    !=================
-   !
    call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,B_index=PAR_IND_CON_BANDS_X(X%whoami),&
 &                              Bp_index=PAR_IND_VAL_BANDS_X(X%whoami),CLEAN_UP=.TRUE.)
    !
@@ -89,15 +90,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (WF_buffered_IO) call WF_load(WF_buffer,0,1,X%ib,(/1,Xk%nibz/),space='B',title='-BUFFER')
    !
    ! TDDFT setup
-   !
    call TDDFT_do_X_W_typs(iq,X,wv)
    !
    ! DbGd setup
-   !
    call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
    !
    ! ALDA (only once) 
-   !
    if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
      !
      call TDDFT_ALDA_G_space(Xen,Xk)
@@ -115,20 +113,17 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
    ! and if an additional RL vectors must be added
-   !
    i_G_shift=OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    if (i_G_shift<0) cycle
    !
    ! In TDDFT with BS based kernel eps0 is non-sense
    ! as shifted of the K diagonal
-   !
    l_skip_non_int_eps=l_bs_fxc
    !
    ! Frequencies (AFTER TDDFT SETUP!)
    call FREQUENCIES_setup(wv)
    !
    ! Response function parallel allocation
-   !
    call X_half_mat_check(Xen,Xk,wv)
    !
    call X_ALLOC_parallel(X_par(1),X%ng,wv%n_freqs,"XUP")
@@ -143,7 +138,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (X_do_obs("eel")) l_eels=EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
    !
    ! OutPut files...
-   !
    if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
    if (     l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
    !
@@ -169,11 +163,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_irredux(iq,X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF eps
-   !
    if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
-   !
    if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
    !
    if (Macroscopic_CPU) then
@@ -203,11 +195,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    end if
    !
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
-   !
    call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
    !
    ! Descriptors 
-   !
    call X_OUTPUT_driver("DESC",DESC=DIP_desc)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
@@ -220,7 +210,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    ! EEL
-   !
    if (X_do_obs("eel")) then 
      l_eels= EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
@@ -234,7 +223,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    endif
    !
    ! Alpha
-   !
    if (X_do_obs("alpha")) then 
      !
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
@@ -262,7 +250,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    endif
    !
    ! TDDFT Kernel output
-   !
    if (l_bs_fxc) then
      if (iq==1) call PP_redux_wait(X_fxc)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
@@ -275,7 +262,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("close ALL")
    !
    ! CLEAN (each q)
-   !
    call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
    call X_ALLOC_parallel(X_par(1),0,0,"CLEAN")

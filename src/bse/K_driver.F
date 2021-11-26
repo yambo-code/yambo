@@ -148,7 +148,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call K_driver_init("loop-init",iq,Ken,Xk)
    !
    if (iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
-   if (iq> BS_q(1)) call section('-','Bethe Salpeter Equation @q'//trim(intc(iq)))
+   if (iq> BS_q(1)) then
+     call section('-P',' ')
+     call section('=','Bethe Salpeter Equation @q'//trim(intc(iq)))
+   endif
    !
    ! Need to convert eels to epsilon ? (part B)
    !===========================================

@@ -82,9 +82,6 @@ subroutine K_Haydock(iq,W,OBS)
  !
  call timing('Haydock Solver',OPR='start')
  !
- if (isec(2)/=0) sec="="
- if (isec(2)==0) sec="+"
- !
  Haydock_n_converged=0
  Haydock_required_converged=2
  !
@@ -102,6 +99,8 @@ subroutine K_Haydock(iq,W,OBS)
  use_left_and_right=trim(OBS)=="kerr".or.trim(OBS)=="dichroism"
  velocity_correction= trim(global_gauge)=="velocity" .and. (trim(OBS)=="optics" .or. trim(OBS)=="kerr")
  !
+ if (isec(2)/=0) sec="="
+ if (isec(2)==0) sec="+"
  call section(sec,'Haydock Solver in the '//trim(OBS)//' basis @q'//trim(intc(iq))//" using the "//trim(scheme)//" scheme")
  !
  if (     l_BS_ares_from_res) HAYVEC_size = BS_K_dim(1)

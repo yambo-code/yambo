@@ -31,7 +31,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
-&                        BS_K_is_ALDA,BS_cpl_K_exchange,&
+&                        BS_K_is_ALDA,BS_cpl_K_exchange,L_kind,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
  use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
@@ -54,14 +54,14 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  var_size=29
  if (ver_is_gt_or_eq(ID,(/3,0,9/)))      var_size=30
- if (ver_is_gt_or_eq(ID,revision=16339)) var_size=33
- if (iq>1)                               var_size=35
+ if (ver_is_gt_or_eq(ID,revision=16339)) var_size=var_size+3
+ if (iq>1)                               var_size=var_size+2
  !
  call IO_desc_reset(desc)
  !
  call def_variable_elemental(ID,"PARS1",var_size,SP,0)
  call io_variable_elemental(ID,VAR="[K] Identifier",I0=BS_identifier,DESCRIPTOR=desc)
- if(iq>1) then
+ if (iq>1) then
    call io_variable_elemental(ID,VAR="[K] Q-point",&
 &                             R1=BSqpts(:,iq),CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=desc)
  endif
@@ -151,7 +151,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
      ! W_TDDFT_KERNEL
      !
      call def_variable_elemental(ID,"W_TDDFT_KERNEL",1,0,0)
-     call io_variable_elemental(ID,VAR='[W] xc-Kernel',CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=desc)
+     call io_variable_elemental(ID,VAR='[W] Hxc Kernel',CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=desc)
      !
    endif
    !
@@ -176,6 +176,11 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &       VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    endif
    !
+ endif
+ !
+ if (ver_is_gt_or_eq(ID,revision=20415)) then
+   call def_variable_elemental(ID,"X_kind",1,0,0)
+   call io_variable_elemental(ID,VAR="[K] Kernel long-range exchange",CH0=L_kind,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  !
  if (     CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,1)

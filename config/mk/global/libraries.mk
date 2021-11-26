@@ -12,9 +12,9 @@ YLIBIO_LD     = $(YLIBIO)
 #
 # Source code
 #
-BASIC_LIBS   = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
+BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= tools memory communicate modules matrices linear_algebra bz_ops parallel parser communicate common timing Yio io \
+BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
@@ -56,15 +56,15 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
 # YAMBO sources needed by Interfaces
 #
-2YLIBS       = driver tools modules memory matrices linear_algebra parallel parser communicate common timing Yio io \
+2YLIBS       = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io \
                setup interface stop_and_restart bz_ops 
-2YLIBS_LD    = tools memory communicate modules matrices linear_algebra parallel parser communicate common timing Yio io \
+2YLIBS_LD    = tools memory allocations communicate modules matrices linear_algebra parallel parser output common timing Yio io \
                setup interface stop_and_restart bz_ops 
 #
 # YPP
 #
 YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits electrons dipoles
-YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles
+YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph excitons

@@ -150,7 +150,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'bse',     '[R][BSE] Bethe Salpeter Equation.')
  call it('r',defs,'tddft',   '[R][K] Use TDDFT kernel')
  call it('r',defs,'cohsex',  '[R][Xp] COlumb Hole Screened EXchange')
- call it('r',defs,'Xo',      '[R][Xx] Dynamical IP Response Function')
+ call it('r',defs,'Xx',       '[R][Xx] Dynamical Response Function')
  call it('r',defs,'em1s',    '[R][Xs] Statically Screened Interaction')
  call it('r',defs,'em1d',    '[R][X] Dynamically Screened Interaction')
  call it('r',defs,'ppa',     '[R][Xp] Plasmon Pole Approximation for the Screened Interaction')
@@ -277,7 +277,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'ExtendOut', '[GW] Print all variables in the output file',verb_level=V_qp)
  call it('f',defs,'QPsymmtrz', '[GW] Force symmetrization of states with the same energy',verb_level=V_qp)
  !
- ! Xs Xd Xp
+ ! Xx Xs Xd Xp
  !
  call it(defs,'Chimod',       '[X] IP/Hartree/ALDA/LRC/PF/BSfxc',Chi_mode,protect=.FALSE.,case="A")
  call it(defs,'ChiLinAlgMod', '[X] inversion/lin_sys,cpu/gpu',Chi_linalg_mode,verb_level=V_resp,case="A")
@@ -287,11 +287,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'XTermKind','[X] X terminator ("none","BG" Bruneval-Gonze)',X_terminator_Kind)
  call it(defs,'XTermEn',  '[X] X terminator energy (only for kind="BG")',X_terminator_E,E_unit,verb_level=V_resp)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
+ call it('f',defs,'WriteXo', '[X] Write on the-fly the IP response function',verb_level=V_resp)
  !
  ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
- call it(defs,'Lkind',   '[BSE] Lbar (default) / full',L_kind,verb_level=V_resp)
+ call it(defs,'Lkind',   '[BSE,X] bar(default)/full',L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -309,7 +310,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSEdips',   '[BSS] Can be "trace/none" or "xy/xz/yz" to define off-diagonal rotation plane',BSE_dipole_geometry)
  call it(defs,'BSSInvMode','[BSS] Inversion solver modality `(f)ull/(p)erturbative`',BSS_inversion_mode)
  call it(defs,'BSSInvPFratio','[BSS] Inversion solver. Ratio between the number of frequencies solved pert/full',&
-&        K_INV_EPS%PERT_FULL_ratio)
+&             K_INV_EPS%PERT_FULL_ratio)
  call it(defs,'BLongDir',  '[BSS] [cc] Electric Field',BSS_q0)
  call it(defs,'BEnRange',  '[BSS] Energy range',BSS_er,E_unit)
  call it(defs,'BDmRange',  '[BSS] Damping range',BSS_dr,E_unit)
@@ -394,7 +395,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'CUTBox',   '[CUT] [au] Box sides',box_length)
  call it(defs,'CUTRadius','[CUT] [au] Sphere/Cylinder radius',cyl_ph_radius)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
-! call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff,unit=G_unit)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
@@ -509,11 +509,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
 #endif
  !
- ! Non-linear Optics
- !
 #if defined _NL
  !
- ! Non liner optics
+ ! Non-linear Optics
  !
  call it(defs,'NLBands',      '[NL] Bands range',NL_bands)
  call it(defs,'NLverbosity',  '[NL] Verbosity level (low | high)',NL_verb_name) 
@@ -872,7 +870,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(14)
+     logical :: is_def(15)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if (initmode/=4) return
@@ -894,6 +892,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('QpntsRXd',is_def(12))
      call parser('QpntsRXs',is_def(13))
      call parser('QpntsRXx',is_def(14))
+     call parser('BSEQptR', is_def(15))
      !
      ! Q's
      !
@@ -902,6 +901,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      if (is_def(12).and.runlevel_is_on('ppa')   ) Dip%iq=X(4)%iq
      if (is_def(13)                             ) Dip%iq=X(2)%iq
      if (is_def(14)                             ) Dip%iq=X(1)%iq
+     if (is_def(15).and..not.runlevel_is_on('ppa').and..not.runlevel_is_on('em1s')) Dip%iq=BS_q
      !
      ! Bands
      !

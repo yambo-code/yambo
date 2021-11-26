@@ -51,7 +51,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use functions,     ONLY:bose_decay
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
@@ -277,7 +277,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! ALLOCATION (scattering_main)
  !
- call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
  !
  call elemental_collision_alloc(scattering_main,NG=X%ng,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
@@ -545,7 +545,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    enddo
  endif
  !
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  call WF_free(WF)
  call elemental_collision_free(scattering_main)
  call elemental_collision_free(scattering_prime)

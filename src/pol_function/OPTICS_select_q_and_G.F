@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+integer function OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  use pars,           ONLY:SP,schlen
  use X_m,            ONLY:q_plus_G_direction,X_t,Q_Shift_Order
@@ -43,7 +43,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  real(SP):: v(3),projection
  character(schlen):: RL_msg(2)
  !
- O_select_q_and_G=1 
+ OPTICS_select_q_and_G=1 
  !
  ! IBZ q-point
  !
@@ -67,7 +67,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    !
    v=Q_plus_G_pt/v_norm(Q_plus_G_pt)
    projection=dot_product(q_plus_G_direction,v)-1._SP
-   if (abs(projection)>1.E-5_SP) O_select_q_and_G=-1
+   if (abs(projection)>1.E-5_SP) OPTICS_select_q_and_G=-1
    !
    return
    !
@@ -80,7 +80,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    projection=dot_product(q_plus_G_direction,Q_plus_G_pt)-1._SP
    if (abs(projection)>1.E-5_SP) then
      call warning(' Field direction and Q drection are different. q=0 case not computed')
-     O_select_q_and_G=-1
+     OPTICS_select_q_and_G=-1
      return
    endif
    Q_plus_G_pt=0._SP
@@ -88,7 +88,7 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  !
  RL_msg(1)='Compatible RL shift of @ Q('//trim(intc(iq))//')'
  !
- O_select_q_and_G=-1 
+ OPTICS_select_q_and_G=-1 
  i_found=1
  !
  do ig=2,X%ng
@@ -97,17 +97,17 @@ integer function O_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
    projection=dot_product(q_plus_G_direction,v)-1._SP
    if (abs(projection)<1.E-5) then
      i_found=i_found+1
-     if (i_found==Q_Shift_Order) O_select_q_and_G=ig
+     if (i_found==Q_Shift_Order) OPTICS_select_q_and_G=ig
      RL_msg(2)=trim(RL_msg(1))//' '//trim(intc(ig)) 
      RL_msg(1)=RL_msg(2)
    endif
  enddo
  !
- if (O_select_q_and_G/=-1) then
-   Q_plus_G_pt=Q_plus_G_pt+g_vec(O_select_q_and_G,:)
+ if (OPTICS_select_q_and_G/=-1) then
+   Q_plus_G_pt=Q_plus_G_pt+g_vec(OPTICS_select_q_and_G,:)
    Q_plus_G_sq_modulus=iku_v_norm(Q_plus_G_pt)**2
    call msg('rs',trim(RL_msg(2)))
-   call msg('r','Momentum shift     ',g_vec(O_select_q_and_G,:),"[c.c.]")
+   call msg('r','Momentum shift     ',g_vec(OPTICS_select_q_and_G,:),"[c.c.]")
    call msg('r','Total Momentum     ',Q_plus_G_pt(:),"[c.c.]")
  endif
  !

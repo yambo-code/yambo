@@ -26,9 +26,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! Calculates and stores on file the dielectric matrix.
  !
  use pars,          ONLY:SP
- use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_Xo
+ use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
+ use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use frequency,     ONLY:w_samp
@@ -57,8 +57,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
-&                        X_MEM_n_tot_freqs,whoami_save,n_poles
+ integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
+&                        X_MEM_n_tot_freqs,n_poles
  real(SP)             :: minmax_ehe(2)
  integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
@@ -78,10 +78,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  X%ngostnts=Dip%ng
  !
- ! TDDFT SETUP (-1 argument)
- !
- ! X%f_xc is setup when using ALDA, so that 
- ! the comparison in ioX can be done safely
+ ! TDDFT KERNEL SETUP (-1 argument)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
  !
@@ -91,7 +88,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (depth>0) sec_mode='='
  !
  X_dielectric_matrix=-1
- whoami_save=X%whoami
  !
  if (X%whoami==1) then
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamical IP Response Function Matrix')
@@ -119,11 +115,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    X%ordering='R'
  endif
  !
- if (X%whoami/=1.and.l_Xo) then
+ call X_pre_setup(Xen,Xk,X)
+ !
+ if (l_write_disk_Xo) then
    if (.not.SILENT_MODE) call warning('On-the-fly extraction of IP Response Function Matrix')
  endif
- !
- call X_pre_setup(Xen,Xk,X)
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
@@ -139,8 +135,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  if (io_RESPONSE.and..not.l_recalculate_X) then
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(1))
+   i_err=io_X(X,Xw,ID(1))
    !
    if (i_err==0) then
      !
@@ -158,8 +154,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
          Xw%er=minmax_ehe
        endif
        !
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-       io_X_done(iq)=io_X(X,Xw,Xdb)
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=ID(1))
+       io_X_done(iq)=io_X(X,Xw,ID(1))
        !
      enddo
      !
@@ -189,12 +185,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      allocate(X_par(1))
      X_MEM_n_tot_freqs=Xw%n_freqs
 #if !defined _PAR_IO
-     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
 #endif
    else
      allocate(X_par(PAR_nQ_ibz))
      X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
-     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
    endif
    !
  endif
@@ -238,12 +234,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   call elemental_IO( 0 )
-   if (l_Xo.and.X%whoami/=1) then
-     X%whoami=1
-     call elemental_IO( 0 )
-     X%whoami=whoami_save
-   endif
+   call                      elemental_IO( 0 , .FALSE. )
+   if (l_write_disk_Xo) call elemental_IO( 0 , .TRUE. )
    !
  endif
  !
@@ -280,26 +272,22 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+   call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
    call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
    !
-   if (l_Xo.and.X%whoami/=1) then
+   if (l_write_disk_Xo) then
      call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
-     X%whoami=1
-     call elemental_IO( iq )
-     X%whoami=whoami_save
+     call elemental_IO( iq , .TRUE. )
    endif
    !
-   ! When X%whoami == 1 X is Xo.
-   !
-   if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
+   if (.not.l_rpa_IP) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
    ! X_par => X_mat
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
-   call elemental_IO( iq )
+   call elemental_IO( iq , .FALSE. )
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
@@ -313,7 +301,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! CLEAN (2)
    !
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   if (io_RESPONSE) call X_ALLOC_parallel(X_par(iq_mem),0,0,"CLEAN")
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !
@@ -344,18 +332,39 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  contains
    !
-   subroutine elemental_IO(iq_)
+   subroutine elemental_IO(iq_,this_is_Xo)
      !
-     integer :: iq_
+     use IO_m,          ONLY:NONE
+     use pars,          ONLY:schlen
+     !
+     integer :: iq_,whoami_save,idb,COM
+     logical :: this_is_Xo
+     character(schlen) :: KERNEL_save
      !
      ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
      ! be re-initialized for all the cpus
      !
      X%ng_db=X%ng
+     idb=1
+     COM=REP
      !
-     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/1/),ID=Xdb)
-     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq_,2*iq_+1/),ID=Xdb)
-     i_err=io_X(X,Xw,Xdb)
+     if (this_is_Xo) then
+       COM=NONE
+       whoami_save=X%whoami
+       KERNEL_save=X%KERNEL
+       X%whoami=1
+       idb=2
+       X%KERNEL="IP"
+     endif
+     !
+     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/1/),ID=ID(idb))
+     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb))
+     i_err=io_X(X,Xw,ID(idb))
+     !
+     if (this_is_Xo) then
+       X%whoami=whoami_save
+       X%KERNEL=KERNEL_save
+     endif
      !
    end subroutine
    !

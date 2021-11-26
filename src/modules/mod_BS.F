@@ -51,10 +51,17 @@ module BS
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  !
- ! Kind of response function
- !===========================
- logical :: l_BS_jdos
+ ! Dipoles tracing 
+ !=================
  logical :: l_BS_trace
+ !
+ ! AH 
+ !====
+ logical :: l_BS_anomalous_hall
+ !
+ ! Observables
+ !=============
+ logical :: l_BS_jdos
  logical :: l_BS_abs
  logical :: l_BS_kerr
  logical :: l_BS_photolum
@@ -62,7 +69,6 @@ module BS
  logical :: l_BS_dichroism
  logical :: l_BS_optics
  logical :: l_BS_esort
- logical :: l_BS_anomalous_hall
  !
  ! Dimensions
  !=============

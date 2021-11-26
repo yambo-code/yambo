@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module OUTPUT_simple
+module OUTPUT
  !
  use pars,  ONLY:SP,schlen,lchlen,rZERO
  !
@@ -60,7 +60,7 @@ module OUTPUT_simple
      logical     ,optional :: PARSER_call
    end subroutine
    !
-   subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+   subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
      use pars,  ONLY:SP
      character(*)            :: file
      character(*) , OPTIONAL :: action

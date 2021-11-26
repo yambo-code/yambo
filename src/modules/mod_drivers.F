@@ -82,9 +82,10 @@ module drivers
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
  !
- ! The optical runlevels ...
+ ! The screening runlevels ...
  !
- logical :: l_Xo                 =.FALSE.
+ logical :: l_screen             =.FALSE.
+ logical :: l_X                  =.FALSE.
  logical :: l_em1d               =.FALSE.
  logical :: l_em1s               =.FALSE.
  !

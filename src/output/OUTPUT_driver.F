@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  !
  use pars,                ONLY:SP,schlen,lchlen
- use OUTPUT_simple,       ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
+ use OUTPUT,              ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
  use com,                 ONLY:msg,of_open_close
- use stderr,              ONLY:STRING_same,set_real_printed_length
+ use stderr,              ONLY:STRING_same,set_real_printed_length,STRING_match
  !
  implicit none
  !
@@ -65,13 +65,14 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  endif
  !
  if (present(action)) then
-   if (action=="close" ) call of_open_close(OUT_file(i_f)%filename)
-   if (action=="open"  ) call of_open_close(OUT_file(i_f)%filename,'ot')
-   if (action=="append") then
+   if (STRING_match(action,"close"))      call of_open_close(OUT_file(i_f)%filename)
+   if (STRING_match(action,"open"))       call of_open_close(OUT_file(i_f)%filename,'ot')
+   if (STRING_match(action,"override"))   call of_open_close(OUT_file(i_f)%filename,'Ot')
+   if (STRING_match(action,"append")) then
      call of_open_close(OUT_file(i_f)%filename,'oa')
      OUT_file(i_f)%TITLES_dumped=.TRUE.
    endif
-   if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
+   if (STRING_match(action,"reset").or.STRING_match(action,"close")) call OUTPUT_reset(i_f,"reset")
  endif
  !
  if (present(TITLES)) then
@@ -131,7 +132,7 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  endif
  !
  if (.not.present(action)) return
- if (.not.action=="write") return
+ if (.not.STRING_match(action,"write")) return
  !
  ! TITLES
  !--------

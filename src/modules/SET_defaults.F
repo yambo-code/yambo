@@ -31,7 +31,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use global_XC,  ONLY:EXT_NONE
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
@@ -68,7 +67,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -372,7 +371,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  global_gauge='length'
  grid_paths=' '
  skip_cond_sum_rule=.FALSE.
- eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
@@ -440,7 +438,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
- L_kind='Lbar'
+ L_kind='BAR'
  BSE_mode='resonant'
  BSE_prop='abs'
  BSK_mode=' '
@@ -468,6 +466,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PI_PH%what = "PH_PI"
  K_INV_PL%what     = "PLS"
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"

@@ -40,7 +40,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use RT_control,     ONLY:RT_apply
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use real_time,      ONLY:RT_carriers,RT_bands
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
  !
@@ -137,7 +137,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    titles(4:5) =(/'<E_Holes>[eV]','<E_Elecs>[eV]'/)
    titles(6:7) =(/'<Var_Holes>[eV]','<Var_Elecs>[eV]'/)
    !
-   call OUTPUT_add_column("bands_occupation",action="open")
+   call OUTPUT_driver("bands_occupation",action="open")
    !
  endif
  !
@@ -312,11 +312,11 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        data_to_plot(5)=rZERO
        data_to_plot(7)=rZERO
      endif
-     call OUTPUT_add_column("bands_occupation",TITLES=(/"Time"/),R_VALUES=(/io_TIME/),UNIT="fs",KIND="Time")
+     call OUTPUT_driver("bands_occupation",TITLES=(/"Time"/),R_VALUES=(/io_TIME/),UNIT="fs",KIND="Time")
      do ibp=RT_bands(1),RT_bands(2)
-       call OUTPUT_add_column("bands_occupation",TITLES=(/"Band "//trim(intc(ibp))/),R_VALUES=(/band_occupation(ibp)/))
+       call OUTPUT_driver("bands_occupation",TITLES=(/"Band "//trim(intc(ibp))/),R_VALUES=(/band_occupation(ibp)/))
      enddo
-     call OUTPUT_add_column("bands_occupation",action="write")
+     call OUTPUT_driver("bands_occupation",action="write")
      call open_file( output_fname(1,1),output_fname_short(1))
      call msg('o '//trim(output_fname_short(1)),'',(/data_to_plot(1:3),&
 &                                                    data_to_plot(4:7)*HA2EV/),INDENT=-2,USE_TABS=.true.)
@@ -327,7 +327,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
  enddo
  !
- call OUTPUT_add_column("bands_occupation",action="close")
+ call OUTPUT_driver("bands_occupation",action="close")
  !
  call live_timing()
  !

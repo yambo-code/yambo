@@ -24,7 +24,7 @@
 subroutine INIT_barriers()
  !
  use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_phel_corr,&
-&                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft,l_nl_optics
+&                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft,l_nl_optics,l_screen
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
  use R_lattice,  ONLY:Xk_grid_is_uniform
@@ -71,7 +71,7 @@ subroutine INIT_barriers()
  !
  ! NON-GPL RUNLEVELS that MUST BE SWITCHED OFF  
  ! (those runlevels can be on if a non-gpl input file is being reading)
- !====================================================================
+ !======================================================================
  !
  ! GPL_INCLUDE_START
  !call switch_off_runlevel('acfdt',on_name=' ')
@@ -157,6 +157,12 @@ subroutine INIT_barriers()
  if (l_flag) then
    on_runlevels='optics bse bss tddft em1s dipoles em1d ppa photolum'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
+   goto 1
+ endif
+ !
+ if (l_screen) then
+   on_runlevels='em1s dipoles em1d ppa X'
+   call switch_off_runlevel('',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
  !

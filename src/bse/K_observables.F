@@ -23,6 +23,9 @@
 !
 subroutine K_observables( )
  !
+#if defined _SLEPC && !defined _NL
+ use BS_solvers,   ONLY:run_Slepc
+#endif
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&

@@ -17,8 +17,9 @@ endif
 # Compilation
 #
 $(GOALS):
-	@touch config/stamps_and_lists/compiling_$@.stamp
 	@rm -f ${compdir}/log/"compile_"$@".log"
+	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
+	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs

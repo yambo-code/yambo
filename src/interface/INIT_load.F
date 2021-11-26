@@ -172,9 +172,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _PHEL 
  call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
 #endif
-#if defined _SC
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
-#endif
 #if defined _QED
  call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
 #endif

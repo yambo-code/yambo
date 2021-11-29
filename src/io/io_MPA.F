@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2019 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): DALV
+! Authors (see AUTHORS file for details): DALV, AF
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -157,57 +157,20 @@ integer function io_MPA(X,Xw,ID)
      YAMBO_ALLOC(Xw%p,(Xw%n_freqs))
    endif
    !
-!   ch="FREQ_sec_iq"//trim(intc(iq))
-!#if defined _PAR_IO
-!   call def_variable_bulk(ID_frag,trim(ch),1,(/4,Xw%n_freqs/2/),SP,par_io_kind='independent')
-!#else
-!   call def_variable_bulk(ID_frag,trim(ch),1,(/4,Xw%n_freqs/2/),SP)
-!#endif
-!   if(perform_IO) call io_variable_bulk(ID_frag,1,C1=Xw%p)
-   !
-   ! allocations
-   !
-!   if (read_is_on(ID)) call MPA_alloc((/X%ng,X%ng,Xw%n_freqs/2,Xw%n_freqs/))
-   !
    ! poles @iq
    !
    ch="MPA_E_Q_"//trim(intc(iq))
    !
-!#if defined _PAR_IO
-!   if(write_is_on(ID)) then
-!     !
-!     call def_variable_bulk(ID_frag,trim(ch),1,shape(MPA_E_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
-!     call  io_variable_bulk(ID_frag,1,C3=MPA_E_par(1)%blc(:,:,:),IPOS=(/1,MPA_E_par(1)%rows(1),MPA_E_par(1)%cols(1),1/))
-!     !
-!   else if(read_is_on(ID)) then
-!#endif
-     !
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
-     call  io_variable_bulk(ID_frag,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
-     !
-!#if defined _PAR_IO
-!   endif
-!#endif
+   !
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
+   call  io_variable_bulk(ID_frag,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
    !
    ! residues @iq
    !
    ch="MPA_R_Q_"//trim(intc(iq))
    !
-!#if defined _PAR_IO
-!   if(write_is_on(ID)) then
-!     !
-!     call def_variable_bulk(ID,trim(ch),1,shape(MPA_R_par(1)%blc(:,:,:)),SP,par_io_kind='collective')
-!     call  io_variable_bulk(ID,1,C3=MPA_R_par(1)%blc(:,:,:),IPOS=(/1,MPA_R_par(1)%rows(1),MPA_R_par(1)%cols(1),1/))
-!     !
-!   else if(read_is_on(ID)) then
-!#endif
-     !
-     call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
-     call  io_variable_bulk(ID_frag,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
-     !
-!#if defined _PAR_IO
-!   endif
-!#endif
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
+   call  io_variable_bulk(ID_frag,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
      call error('[io_MPA] different_db_RL_order    not implemented')

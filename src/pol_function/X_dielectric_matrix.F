@@ -179,20 +179,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
+ if (     io_RESPONSE) X_MEM_n_tot_freqs=Xw%n_freqs
+ if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
-   !
-   if (io_RESPONSE) then
-     allocate(X_par(1))
-     X_MEM_n_tot_freqs=Xw%n_freqs
+   if (     io_RESPONSE) allocate(X_par(1))
 #if !defined _PAR_IO
-     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
 #endif
-   else
-     allocate(X_par(PAR_nQ_ibz))
-     X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
-     call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
-   endif
-   !
+   if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
+   if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
  !
  ! WF distribution 

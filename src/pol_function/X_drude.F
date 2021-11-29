@@ -151,7 +151,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    implicit none
    !
-   real(SP)    :: q0_norm!,W !DALV: generalization for the complex sampling in MPA
+   real(SP)    :: q0_norm !DALV: W is in general complex for the sampling in MPA
    complex(SP) :: Wd,W
    !
    ! Work Space
@@ -162,8 +162,8 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    Kf =((3._SP*pi*real(Wd)**2)/4._SP)**(1._SP/3._SP)
    fac=Kf*q0_norm
    xi1=W/fac+cI*aimag(Wd)
-   xi2=conjg(xi1)
-   rxi=real(xi1)
+   xi2=W/fac-cI*aimag(Wd)
+   rxi=abs(xi1)
    !
    if (abs(rxi)<=10._SP) then
      Jellium_drude=-Kf/(2._SP*pi**2)*( 2._SP + xi1*log((xi1-1._SP)/(xi1)) - xi2*log((xi2+1._SP)/(xi2)) )
@@ -181,18 +181,29 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    implicit none
    !
-   real(SP)    :: q0_norm!,W,W_ !DALV: generalization for the complex sampling in MPA
+   real(SP)    :: q0_norm !DALV: W,W_ are in general complex for the sampling in MPA
    complex(SP) :: Wd,W,W_
    !
    ! Work Space
    !
-   complex(SP) :: Classical_drude
+   complex(SP) :: xi1,Classical_drude
+   real(SP)    :: Kf,rxi,fac
    !
    W_=W
-   if (abs(real(W_))<=1.E-8) W_=1.E-8
+   if (abs(real(W_))<=1.E-8) W_=1.E-8 + CI*aimag(W_)
    !
-   ! eps_D(w)= -w_p^2/(W*(i*g_p-W)) with Wd=(w_p,g_p)
-   Classical_drude = -real(Wd)**2/(W_*(cI*aimag(Wd)-W_) )
+   Kf =((3._SP*pi*real(Wd)**2)/4._SP)**(1._SP/3._SP)
+   fac=Kf*q0_norm
+   xi1=W/fac+cI*aimag(Wd)
+   rxi=abs(W/fac)
+   !
+   if (abs(rxi)<=10._SP) then
+       ! eps_D(w)= -w_p^2/(W*(i*g_p-W)) with Wd=(w_p,g_p)
+       Classical_drude =-real(Wd)**2/(W_*(cI*aimag(Wd)-W_) )
+   else
+       ! DALV: Taylor expansion at W_=infinity
+       Classical_drude =-real(Wd)**2*(1._SP+cI*aimag(Wd)/W_)/(W_**2._SP)
+   endif
    !
    ! X_D(w)=-q^2/(4pi) eps_D(w)
    Classical_drude =  -Classical_drude* ( q0_norm**2/(4._SP*pi) )

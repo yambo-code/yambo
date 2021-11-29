@@ -153,7 +153,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  if (CLOSE_Gs) then
    call call_INIT_load('Close_G_vectors')
    call INIT_barriers( )
-   call logicalson
+   call LOCAL_from_runlevels_to_logicals()
    return
  endif
  !
@@ -197,13 +197,17 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  endif
  !
  !Runlevels variables activation (Logicals from stdin)
+ call LOCAL_from_runlevels_to_logicals()
  !
- call logicalson
+ ! Given the stding vars here I fix/check the 
+ ! corr/scatt logicals
+ call LOCAL_scatt_and_correlation_logicals( )
  !
  !Setup on the basis of the DB read/stdin variables
  !Here I can propose values to be written in the input file
+ call LOCAL_setup_before_input_IO( )
  !
- call before_infile_write_setup( )
+ ! Scattering/correlation logicals
  !
  !Variables(read from DB files) -> local cache
  !
@@ -224,9 +228,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (trim(rnlvls(i_r,1))=="setup") rstatus(i_r)=-1
    enddo
  endif
- call logicalson
- call varsetup2
- call logicalson
+ call LOCAL_from_runlevels_to_logicals()
+ call LOCAL_after_input_IO()
+ call LOCAL_from_runlevels_to_logicals()
  !
  call INIT_activate()
  !
@@ -278,7 +282,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call SET_logicals()
  !
- call Dip_check_ordered
+ call LOCAL_dipole_bands_ordering()
  !
  ! Report/Log Files
  !
@@ -300,7 +304,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      call INIT_load(defs,en,q,k,X,Xw,Dip)
    end subroutine
    !
-   subroutine logicalson
+   subroutine LOCAL_from_runlevels_to_logicals()
      !
      integer     ::i1
      !
@@ -328,10 +332,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_slk_test =runlevel_is_on('slktest')
 #endif
 #if defined _RT
-       !
        l_real_time=runlevel_is_on('negf')
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
+       l_phel_scatt=runlevel_is_on('ph_el_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
 #endif
 #if defined _SC && !defined _RT
@@ -345,44 +349,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_nl_optics=runlevel_is_on('nloptics')
 #endif
 #if defined  _ELPH || defined _PHEL
-       if (.not.CLOSE_Gs) then
-         !
-         ! Only in this case ioELPH_err is defined
-         !
-         if (io_ELPH_err(1)==0.or.io_ELPH_err(2)==0) then
-           l_elph_corr=runlevel_is_on('el_ph_corr')
-           l_phel_corr=runlevel_is_on('ph_el_corr')
-         else
-           l_elph_corr=.FALSE.
-           l_phel_corr=.FALSE.
-           call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
-         endif
-         if (io_ELPH_err(2)==0) then
-           l_elph_scatt=runlevel_is_on('el_ph_scatt')
-           l_phel_scatt=runlevel_is_on('ph_el_scatt')
-         else
-           l_elph_scatt=.FALSE.
-           l_phel_scatt=.FALSE.
-           call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
-         endif
-         !
-         l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
-       else
-         l_elph_corr=runlevel_is_on('el_ph_corr')
-         l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
-         l_phel_corr=runlevel_is_on('ph_el_corr')
-       endif
+       l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
+       l_elph_corr=runlevel_is_on('el_ph_corr')
+       l_phel_corr=runlevel_is_on('ph_el_corr')
 #endif
 #if defined  _QED
        l_elphoton_corr=runlevel_is_on('el_photon_corr')
 #endif
        l_elel_corr    =runlevel_is_on('el_el_corr')
-       !
-       ! In some cases l_elel_corr is switched on by default
-       !
-       if (.not.l_elel_corr.and.infile_editing) then
-         l_elel_corr=(l_gw0.or.l_life).and.(.not.l_elph_corr.and..not.l_elphoton_corr.and..not.l_phel_corr)
-       endif
        !
        ! Check if this runlevel is allowed in the
        ! present configuration
@@ -403,9 +377,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      l_td_hf      = STRING_same(trim(BSK_mode),"HF")
      l_td_sex     = STRING_same(trim(BSK_mode),"SEX")
      !
-   end subroutine logicalson
+   end subroutine LOCAL_from_runlevels_to_logicals
    !
-   subroutine Dip_check_ordered
+   subroutine LOCAL_dipole_bands_ordering()
      !
      implicit none
      logical :: all_bands,l_local
@@ -419,9 +393,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_elphoton_corr) Dip%bands_ordered=.false.
 #endif
      !
-   end subroutine Dip_check_ordered
+   end subroutine LOCAL_dipole_bands_ordering
    !
-   subroutine before_infile_write_setup
+   subroutine LOCAL_setup_before_input_IO()
      !
      ! After DB reading/stdin logicals I propose here values for the input file
      !
@@ -435,7 +409,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        call W_duplicate(Xxcw,Xw(3))
        call initactivate(2,'XfnQP_E')
      endif
-     if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined _ELPH
      elph_nQ_used=elph_nQ
 #endif
@@ -443,7 +416,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      PH_Q=(/1,elph_nQ/)
      QP_G_er=(/0.,PH_W_debye/)
 #endif
-     if (l_elel_corr) call initactivate(1,'el_el_corr')
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
      if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
@@ -500,9 +472,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_eval_collisions)    n_threads_NL=0
 #endif
      !
-   end subroutine before_infile_write_setup
+   end subroutine LOCAL_setup_before_input_IO
    !
-   subroutine varsetup2
+   subroutine LOCAL_after_input_IO
      !
      ! q0 renormalization
      !
@@ -550,11 +522,20 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-     if (l_cohsex) l_elel_corr=.true.
-#if !defined _ELPH  && !defined _QED && !defined _PHEL
-     if (l_gw0) l_elel_corr=.true.
+   end subroutine LOCAL_after_input_IO
+   !
+   subroutine LOCAL_scatt_and_correlation_logicals( )
+     !
+     if (l_cohsex) call initactivate(1,'el_el_corr')
+#if !defined _ELPH
+     if (l_life) call initactivate(1,'el_el_corr')
 #endif
      !
-   end subroutine varsetup2
+     if (io_ELPH_err(1)<0.and.io_ELPH_err(2)<0) call switch_off_runlevel('el_ph_corr ph_el_corr',on_name=' ')
+     if (io_ELPH_err(2)<0                     ) call switch_off_runlevel('el_ph_scatt ph_el_scatt',on_name=' ')
+     !
+     if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
+     !
+   end subroutine LOCAL_scatt_and_correlation_logicals
    !
 end function

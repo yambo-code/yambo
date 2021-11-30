@@ -75,7 +75,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
-&                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
+&                     BS_K_is_ALDA,BSE_mode,BSE_prop,BSE_L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,ALDA_cut_scheme,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -438,7 +438,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
- L_kind='BAR'
+ BSE_L_kind='BAR'
  BSE_mode='resonant'
  BSE_prop='abs'
  BSK_mode=' '

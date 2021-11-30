@@ -26,7 +26,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use pars,           ONLY:SP,cZERO
  use D_lattice,      ONLY:nsym,i_time_rev,sop_inv,sop_inv_d
  use BS,             ONLY:BS_T_grp,K_EXCH_collision,BS_oscillators_alloc,BS_n_g_exch,&
-&                         L_kind,l_BS_magnons
+&                         BSE_L_kind,l_BS_magnons
  use R_lattice,      ONLY:g_rot,g_rot_d,qindx_X,bz_samp
  use stderr,         ONLY:STRING_match
  use electrons,      ONLY:n_sp_pol
@@ -102,8 +102,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      ! G==0 term
      !
-     if (STRING_match(L_kind,"full")) BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
-     if (STRING_match(L_kind,"bar"))  BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
+     if (STRING_match(BSE_L_kind,"full")) BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=BS_T_grp(i_T_grp)%dipoles_opt(1,i_T_el,1)
+     if (STRING_match(BSE_L_kind,"bar"))  BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
      ! G/=0 terms
      !
@@ -169,8 +169,8 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      !
      BS_T_grp(i_T_grp)%DEV_VAR(O_x)(1,i_T_el)=cZERO
      !
-     if (STRING_match(L_kind,"full")) i_g0=1
-     if (STRING_match(L_kind,"bar"))  i_g0=2
+     if (STRING_match(BSE_L_kind,"full")) i_g0=1
+     if (STRING_match(BSE_L_kind,"bar"))  i_g0=2
      !
 #ifdef _CUDA
      call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))

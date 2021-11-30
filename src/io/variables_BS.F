@@ -31,7 +31,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
-&                        BS_K_is_ALDA,BS_cpl_K_exchange,L_kind,&
+&                        BS_K_is_ALDA,BS_cpl_K_exchange,BSE_L_kind,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
  use IO_int,        ONLY:ver_is_gt_or_eq,def_variable_elemental,io_variable_elemental
@@ -180,7 +180,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
  if (ver_is_gt_or_eq(ID,revision=20415)) then
    call def_variable_elemental(ID,"X_kind",1,0,0)
-   call io_variable_elemental(ID,VAR="[K] Kernel long-range exchange",CH0=L_kind,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
+   call io_variable_elemental(ID,VAR="[K] Kernel long-range exchange",CH0=BSE_L_kind,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  !
  if (     CLOSE_the_menu) call def_variable_elemental(ID,"",0,0,1)

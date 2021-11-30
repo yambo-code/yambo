@@ -33,7 +33,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,alpha_dim,X_Double_Grid_setup,&
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
 &                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
@@ -58,7 +58,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  integer          :: iw,iq,i_G_shift
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
- complex(SP)      :: alpha_factor
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
  !
  integer,external :: OPTICS_select_q_and_G
@@ -155,11 +154,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq==1) call PP_redux_wait
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
-   ! e Table
-   ! 1:e0     2:e     ==> Epsilon_ii(iw,1:2)
-   ! 1:eel0   2:eel   ==> EEL(iw,1:2)
-   ! 1:alpha0 6:alpha ==> Alpha(iw,1:2)
-   !
+   ! Irredux (Xo) 
    call X_irredux(iq,X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF eps
@@ -179,6 +174,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      endif
      !
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
+     !
+     ! I make alpha consistent with the above, IP, definition
+     if (l_col_cut) Alpha(:,2)=Alpha(:,2)*bare_qpg(1,1)**2/q_norm(1)**2
      !
    endif
    !
@@ -202,6 +200,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
+   ! Epsilon
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
@@ -214,7 +213,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      l_eels= EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
      if(.not.l_rpa_IP) l_eels= EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
-     !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
@@ -224,29 +222,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     !
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
      !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
      !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     !
-     if(l_col_cut.or.trim(alpha_dim)=="volume") then
-       alpha_factor=eps_2_alpha/4._SP/pi
-       Alpha(:,1)=Alpha(:,1)*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor
-       if(.not.l_rpa_IP) Alpha(:,2)=Alpha(:,2)*alpha_factor*bare_qpg(1,1)**2/q_norm(1)**2
-     else
-       alpha_factor=eps_2_alpha/4._SP/pi
-       Alpha(:,1)=(1._SP+EEL(:,1))*alpha_factor
-       if(     l_rpa_IP) Alpha(:,2)= Alpha(:,1)
-       if(.not.l_rpa_IP) Alpha(:,2)=(1._SP+EEL(:,2))*alpha_factor
-     endif
-     !
+     Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
        if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
      enddo
-     !
    endif
    !
    ! TDDFT Kernel output

@@ -29,9 +29,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
- use X_m,            ONLY:Epsilon_ii,eps_2_alpha,alpha_dim,EPS_2_eels,X_OUTPUT_driver,&
-&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons,&
-&                         Epsilon_ij
+ use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,&
+&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
  use electrons,      ONLY:spin_occ
@@ -49,7 +48,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3),eps(BSS_n_freqs,3),eels(BSS_n_freqs,3),alpha_factor
+ complex(SP)       :: spectra(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
  ! 
@@ -108,30 +107,22 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 &                                             real(A_drude(2))/real(nkbz,SP)*spin_occ,INDENT=0,after_msg="[nel]")
    !
    ! ... Epsilon
-   eps=Epsilon_ii(:,2:4)+1._SP
-   call ELEMENTAL_dump("eps",eps)
+   call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
  endif
  !
  ! EELS 
  !-------
  if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,1),eels(:,1)) 
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,2),eels(:,2)) 
-   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,eps(:,3),eels(:,3)) 
-   call ELEMENTAL_dump("eel",eels)
+   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,spectra(:,1)) 
+   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,spectra(:,2)) 
+   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,spectra(:,3)) 
+   call ELEMENTAL_dump("eel",spectra)
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (l_col_cut.or.trim(alpha_dim)=="volume") then
-     alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-     spectra(:,1:2)=Epsilon_ii(:,2:3)*alpha_factor
-     if (l_last_col) spectra(:,3)=Epsilon_ii(:,4)*alpha_factor
-   else
-     alpha_factor=eps_2_alpha/4._SP/pi
-     spectra=(1._SP+eels)*alpha_factor 
-   endif
+   spectra(:,1:3)=Epsilon_ii(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
@@ -201,11 +192,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("beta")) then
    spectra=0._SP
-   if (l_col_cut.or.trim(alpha_dim)=="volume") then
-     alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-     spectra(:,1:2)=Epsilon_ij(:,2:3)*alpha_factor
-     if (l_last_col) spectra(:,3)=Epsilon_ij(:,4)*alpha_factor
-   endif
+   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
    call ELEMENTAL_dump("beta",spectra)
  endif
  ! 
@@ -224,7 +211,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! Reflectance is assumed for a 3D system
    ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
    ! R=|r|^2
-   spectra=(sqrt(eps)-1._SP)/(sqrt(eps)+1._SP)
+   spectra(:,1:3)=(sqrt(Epsilon_ii(:,2:4)+1._SP)-1._SP)/(sqrt(Epsilon_ii(:,2:4)+1._SP)+1._SP)
    call ELEMENTAL_dump("refl",spectra)
  endif
  !

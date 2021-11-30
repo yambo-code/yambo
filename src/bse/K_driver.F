@@ -25,23 +25,22 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  use pars,           ONLY:IP
  use com,            ONLY:msg
- use stderr,         ONLY:intc,STRING_match,STRING_same
+ use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_OUTPUT_driver
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0
  use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,L_kind,l_BS_photolum
+&                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
- use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss,l_col_cut
+ use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
- use D_lattice,      ONLY:l_1D,l_2D
  !
 #include<memory.h>
  !
@@ -151,14 +150,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    if (iq> BS_q(1)) then
      call section('-P',' ')
      call section('=','Bethe Salpeter Equation @q'//trim(intc(iq)))
-   endif
-   !
-   ! Need to convert eels to epsilon ? (part B)
-   !===========================================
-   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
-   if (l_col_cut.and.(l_1D.or.l_2D)) then
-     if(iq==1) BSS_eels_to_eps=.false.
-     if(iq/=1) BSS_eels_to_eps=STRING_same(L_kind,"full")
    endif
    !
    ! BSS output arrays

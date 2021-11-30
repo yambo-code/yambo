@@ -72,8 +72,10 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
  eps_extended   =cZERO
  call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
- forall(iw=1:nw) eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
- forall(iw=1:nw) wv_kk(iw)=-wv(nw-iw+1)
+ do iw=1,nw
+   eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
+   wv_kk(iw)=-wv(nw-iw+1)
+ enddo
  eps_kk(1)      =cZERO
  eps_kk(nw)     =cZERO
  call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)

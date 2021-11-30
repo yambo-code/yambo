@@ -24,12 +24,13 @@
 subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  use pars,          ONLY:schlen,SP
+ use D_lattice,     ONLY:l_0D
  use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs
- use drivers,       ONLY:l_chi,l_optics,l_bs_fxc,l_col_cut
+ use drivers,       ONLY:l_chi,l_optics,l_bs_fxc
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_dichroism,BS_K_coupling,&
-&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort
+&                        l_BS_photolum,l_BS_abs,l_BS_jdos,l_BS_esort,BS_K_anti_resonant
  use stderr,         ONLY:STRING_match,STRING_split,intc,STRING_remove
  use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
@@ -76,9 +77,12 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    if (l_BS_photolum) call X_obs_onoff("+ pl")
    if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) call X_obs_onoff("+ eps")
    !
-   ! Check if EELS(5)/ALPHA(6) can be evaluated
+   ! Check if EELS has to be evaluated
    if (X_do_obs("eps")) call X_obs_onoff("+ eel")
-   if (l_col_cut.or.trim(alpha_dim)=="volume") call X_obs_onoff("- eel")
+   if (l_0D) call X_obs_onoff("- eel")
+   if (BS_K_anti_resonant.and..not.BS_K_coupling) then
+     call warning("Anti-Resonant kernel but no coupling: EELs evaluation switched-off")
+   endif
    !
    if (l_BS_abs) then
      call parser('Reflectivity',l_flag)
@@ -97,6 +101,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    !
    !...solvers specific
    if (present(solver)) then
+     if (STRING_match(solver,"Slepc")) call X_obs_onoff("- eel")
      if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP kerr magnons jdos")
      if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP")
      if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP")

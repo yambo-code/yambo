@@ -29,7 +29,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
- use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,&
+ use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
@@ -112,6 +112,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  ! EELS 
  !-------
+ if (X_do_obs("eel")) then
+   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
+   if (.not.eval_eels) call X_obs_onoff("- eel")
+ endif
  if (X_do_obs("eel")) then
    eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,spectra(:,1)) 
    eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,spectra(:,2)) 

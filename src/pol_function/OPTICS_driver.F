@@ -31,6 +31,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
+ use D_lattice,     ONLY:l_0D
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
@@ -176,7 +177,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      Epsilon_ii(:,1:2)=1._SP+Alpha(:,1:2)
      !
      ! I make alpha consistent with the above, IP, definition
-     if (l_col_cut) Alpha(:,2)=Alpha(:,2)*bare_qpg(1,1)**2/q_norm(1)**2
+     if (l_col_cut.or.l_0D) Alpha(:,2)=Alpha(:,2)*bare_qpg(1,1)**2/q_norm(1)**2
      !
    endif
    !
@@ -225,7 +226,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
      !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
      !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
+     if (      l_col_cut.or.l_0D ) Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
+     if (.not.(l_col_cut.or.l_0D)) Alpha(:,1:2)=(1._SP+EEL(:,1:2))*eps_2_alpha/4._SP/pi
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))

@@ -33,6 +33,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
+ use D_lattice,      ONLY:l_0D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
  use PHOTOLUM,       ONLY:PL
@@ -48,7 +49,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3)
+ complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
  ! 
@@ -117,16 +118,17 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    if (.not.eval_eels) call X_obs_onoff("- eel")
  endif
  if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,spectra(:,1)) 
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,spectra(:,2)) 
-   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,spectra(:,3)) 
-   call ELEMENTAL_dump("eel",spectra)
+   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,eel(:,1)) 
+   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,eel(:,2)) 
+   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,eel(:,3)) 
+   call ELEMENTAL_dump("eel",eel)
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   spectra(:,1:3)=Epsilon_ii(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !

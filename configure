@@ -4791,7 +4791,7 @@ esac
 # ============================================================================
 # Current branch
 
-Y_BRANCH="master"
+Y_BRANCH="unknown"
 # Extract the first word of "git", so it can be a program name with args.
 set dummy git; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5

@@ -151,7 +151,7 @@ if ( "$argv[1]" != "save" ) then
  $awk -f version.m4.awk config/version/version.m4
  mv NEW config/version/version.m4
 endif
-#rm -fr version.*.awk configure.awk 
+rm -fr version.*.awk configure.awk 
 #
 exit 0
 

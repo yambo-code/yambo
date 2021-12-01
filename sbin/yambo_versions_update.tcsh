@@ -132,9 +132,9 @@ EOF
 cat << EOF > version.m4.awk
 {
  gsub("$v_string_old","$v_string_new",\$0)
- gsub("SVERSION=$subver_old","SVERSION=$subver_new",\$0)
- gsub("SPATCHLEVEL=$patch_old" ,"SPATCHLEVEL=$patch_new", \$0)
- gsub("SREVISION=$use_rev_old" ,"SREVISION=$use_rev_new" ,\$0)
+ gsub("SVERSION=\"$subver_old\"","SVERSION=\"$subver_new\"",\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"" ,"SPATCHLEVEL=\"$patch_new\"", \$0)
+ gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
  gsub("SHASH=\"$hash_old\""    ,"SHASH=\"$hash_new\"" ,   \$0)
  print \$0 > "NEW"
 }

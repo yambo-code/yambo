@@ -131,12 +131,6 @@ cat << EOF > version.h.awk
 EOF
 cat << EOF > version.m4.awk
 {
-AC_INIT(Yambo, 5.1.0 r.20256 h.5fb96907c, yambo@yambo-code.org)
-SVERSION="5"
-SSUBVERSION="1"
-SPATCHLEVEL="0"
-SREVISION="20256"
-SHASH="5fb96907c"
  gsub("$v_string_old","$v_string_new",\$0)
  gsub("SVERSION=$subver_old","SVERSION=$subver_new",\$0)
  gsub("SPATCHLEVEL=$patch_old" ,"SPATCHLEVEL=$patch_new", \$0)
@@ -154,8 +148,10 @@ if ( "$argv[1]" != "save" ) then
  endif
  $awk -f version.h.awk include/driver/version.h
  mv NEW include/driver/version.h
+ $awk -f version.m4.awk config/version/version.m4
+ mv NEW config/version/version.m4
 endif
-rm -fr version.h.awk configure.awk
+#rm -fr version.*.awk configure.awk 
 #
 exit 0
 

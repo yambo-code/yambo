@@ -125,7 +125,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 #ifdef _CUDA
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
- call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
+ if (len_trim(cuda_visible_devices)>0) call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
  call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
  ierr = cudaGetDevice(i_dev)
  call msg('s', 'MPI assigned to GPU ',i_dev)

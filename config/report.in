@@ -24,8 +24,9 @@
 # [@YDB_str@] YDB: Yambo DataBase
 # [@YPY_str@] YAMBOpy: Yambo Python scripts
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL/CUDA SUPPORT -
 #
+# [@CUDA_check@] CUDA
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
 # 

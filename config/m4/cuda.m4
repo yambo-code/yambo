@@ -50,29 +50,34 @@ CUDA_LIBS="-Mcudalib=cufft,cublas,cusolver"
 # cc60  for Pascal cards (eg P100)
 # cc70  for Volta  cards (eg V100)
 #
-
+AC_MSG_CHECKING([for CUDA support])
 if test x"$enable_cuda" = "xyes" ; then
-   def_cuda="-D_CUDA"
-   CUDA_FLAGS="-Mcuda=cuda9.0,cc70,nollvm $CUDA_LIBS"
+  def_cuda="-D_CUDA"
+  CUDA_FLAGS="-Mcuda=cuda9.0,cc70,nollvm $CUDA_LIBS"
+  AC_MSG_RESULT($CUDA_FLAGS)
 elif ! test x"$enable_cuda" = "x" ; then
-   def_cuda="-D_CUDA"
-   CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+  def_cuda="-D_CUDA"
+  CUDA_FLAGS="-Mcuda=$enable_cuda $CUDA_LIBS"
+  AC_MSG_RESULT($CUDA_FLAGS)
 fi
 #
 if test x"$enable_cuda" = "x" -o x"$enable_cuda" = "xno" ; then
   enable_nvtx=no
   def_cuda=""
   CUDA_FLAGS=""
+  AC_MSG_RESULT(no)
 fi
 #
+AC_MSG_CHECKING([for NVTX support])
 if ! test x"$enable_nvtx" = "xno" ; then
-  #
   if test x"$enable_nvtx" = "xyes" ; then
-     def_cuda="$def_cuda -D_NVTX"
-     CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
+    def_cuda="$def_cuda -D_NVTX"
+    CUDA_FLAGS="$CUDA_FLAGS -lnvToolsExt"
+    AC_MSG_RESULT(yes)
   elif ! test x"$enable_nvtx" = "x" ; then
-     def_cuda="$def_cuda -D_NVTX"
-     CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
+    def_cuda="$def_cuda -D_NVTX"
+    CUDA_FLAGS="$CUDA_FLAGS -L$enable_nvtx/lib64 -lnvToolsExt"
+    AC_MSG_RESULT(no)
   fi
 fi
 #

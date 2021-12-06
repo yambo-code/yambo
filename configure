@@ -4417,6 +4417,7 @@ fi
 #
 #  General
 #
+
 # AC_PROG_ECHO
 #
 # Inspired from https://invisible-island.net/autoconf/portability-echo.html
@@ -9891,18 +9892,16 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 
 
-if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
- if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
- if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
-fi
+cd $srcdir
 
 if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   #
   # git procedure
   #
+  cd lib
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking the yambo-libraries git repository" >&5
 $as_echo_n "checking the yambo-libraries git repository... " >&6; }
-  cd lib/
+  cd $srcdir/lib/
   if ! test -d "yambo/driver/src"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
   else
@@ -9911,25 +9910,16 @@ $as_echo_n "checking the yambo-libraries git repository... " >&6; }
     git pull >& /dev/null
     cd ../
   fi
-  YDRI_VERSION="1"
-YDRI_SUBVERSION="0"
-YDRI_PATCHLEVEL="0"
-
-
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: @ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL" >&5
-$as_echo "@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL" >&6; }
-  #AC_MSG_CHECKING([the libraries archive ])
-  #cp yambo/external/*.gz  $compdir/lib/archive
-  cd ../
-  #AC_MSG_RESULT(populated)
+  cd ..
   #
 else
   #
   # direct download procedure
   #
   make download
+  #AC_MSG_CHECKING([the libraries archive ])
+  #cp yambo/external/*.gz  $compdir/lib/archive
+  #AC_MSG_RESULT(populated)
   TARBALL=`find lib/archive -name 'Ydriver*'`
   { $as_echo "$as_me:${as_lineno-$LINENO}: Extracting yambo internal librar(ies)" >&5
 $as_echo "$as_me: Extracting yambo internal librar(ies)" >&6;}
@@ -9941,19 +9931,26 @@ $as_echo_n "checking the internal library ${TARBALL}... " >&6; }
     mkdir -p lib/yambo
     mv yambo-libraries-*/* lib/yambo
     rm -rf yambo-libraries-*
-    cd lib/yambo
-    YDRI_VERSION="1"
+  fi
+  #
+fi
+
+cd lib/yambo
+YDRI_VERSION="1"
 YDRI_SUBVERSION="0"
 YDRI_PATCHLEVEL="0"
 
 
 
 
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: @ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL" >&5
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: @ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL" >&5
 $as_echo "@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL" >&6; }
-    cd ../../
-  fi
-  #
+cd ../../
+
+cd $compdir
+if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
+ if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
+ if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
 
 

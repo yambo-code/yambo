@@ -73,10 +73,5 @@ AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
 cd ../../
 
 cd $compdir
-if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
- if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
-fi
-
 
 ])

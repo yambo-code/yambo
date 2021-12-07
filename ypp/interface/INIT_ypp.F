@@ -539,7 +539,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  !
  if (l_RT_X) then 
-   call initactivate(1,"Xorder Xkind ProbeKey PumpKey EnRngeRt ETStpsRt")
+   call initactivate(1,"Xorder XKind ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !

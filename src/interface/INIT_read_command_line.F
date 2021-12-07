@@ -342,6 +342,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
        !
      endif
 #endif
@@ -361,6 +362,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
        !
      endif
 #endif

@@ -27,12 +27,17 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
+GIT_procedure="no"
+if test -f "$compdir/.git" || test -d "$compdir/.git"; then
+ GIT_procedure="yes"
+fi
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
  if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
+ GIT_procedure="no"
 fi
 
-if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
+if test "$GIT_procedure" = "yes"; then
   #
   # git procedure
   #

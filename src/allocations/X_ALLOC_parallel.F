@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
+subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  !
  use pars,          ONLY:cZERO
  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
@@ -47,8 +47,6 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Type of allocation....
  !
- !l_XUP        =mode=="XUP"
- !l_PAR        =mode=="X"
  l_XUP      = index(mode,"XUP")>0
  l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
  l_CPU_ONLY = index(mode,"CPU_ONLY")>0

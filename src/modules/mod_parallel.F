@@ -250,7 +250,7 @@ module parallel_m
  ! Number of Response functions
  !==============================
  !
- !1:Xo 2:em1s 3:em1d 4:pp 5:bse
+ ! 1:X 2:em1s 3:em1d 4:pp 5:bse
  !
  integer, parameter :: n_parallel_X_types=5
  !

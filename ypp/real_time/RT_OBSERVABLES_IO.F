@@ -70,7 +70,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz))
      !
      call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
-     io_G=io_RT_components('G',ID)
+     io_G=io_RT_components('G_lesser_RESTART',ID)
      !
      if (present(IO_error)) IO_error=io_G/=0
      if (io_G/=0) return
@@ -78,7 +78,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
      do ik=1,nkibz
        IO_ACT=manage_action(RD_CL_IF_END,ik,1,nkibz)
        call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/2,ik+2/),MODE=DUMP,ID=ID)
-       io_G=io_RT_components('G',ID)
+       io_G=io_RT_components('G_lesser_RESTART',ID)
      enddo
      !
    endif
@@ -88,7 +88,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  else
    !
    call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
-   io_G=io_RT_components('G',ID)
+   io_G=io_RT_components('G_lesser_RESTART',ID)
    !
  endif
  !

@@ -41,6 +41,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind,l_sp_wf,l_mean_potential
 #if defined _YPP_RT
+ use RT_control,          ONLY:RT_DB_init
  use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
@@ -206,6 +207,12 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call setup(en,Xen,Ken,k,Xk)
  !
  call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
+ !
+#if defined _YPP_RT
+ !
+ call RT_DB_init( )
+ !
+#endif
  !
  ! Specific SECTIONS
  !===================

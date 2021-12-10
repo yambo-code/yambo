@@ -62,9 +62,6 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  call f_build(Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
- ! FineGd
- call OCCUPATIONS_Extend_Double_Grid("E",E,k)
- !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
  ! in the Fermi routine)
@@ -73,6 +70,9 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
+   !
+   ! FineGd
+   call OCCUPATIONS_Extend_Double_Grid("E",E,k)
    return
  endif
  !
@@ -94,6 +94,9 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
+ !
+ ! FineGd
+ call OCCUPATIONS_Extend_Double_Grid("E",E,k)
  !
  if (any(E%nbf/=Xe%nbf).or.any(E%nbm/=Xe%nbm)) then
    call warning('Global and response function energy levels have different metallic character')

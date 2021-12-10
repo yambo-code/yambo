@@ -128,7 +128,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (E%FG%nb>0) Tel=Tel_step
+ if (E%FG%nb>0.and.Tel<Tel_step) Tel=Tel_step
  !
  FERMI_LOOP: do while (.not.Fermi_is_converged)
    !

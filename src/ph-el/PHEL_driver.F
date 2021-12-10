@@ -31,15 +31,17 @@ subroutine PHEL_driver(E,k,q)
  use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,&
 &                         l_GKKP_expanded_DB_exists,elph_nb,elph_use_q_grid
  use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&
-&                         PH_DbGd_points,PH_energy,KpQ_IO_map,phel_info
+&                         PH_DbGd_points,PH_energy,KpQ_io_map,phel_info,PHEL_fit_Energies,&
+&                         QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH,QPHt_alloc,QPH_DDFPT
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes
  use RT_lifetimes,   ONLY:RT_PE_life,RT_lifetime_alloc,Life_MEM_steps,l_initial_equilibrium,RT_ALL_lifetimes_free                        
  use RT_occupations, ONLY:RT_EL_occupations_alloc,RT_PH_occupations_alloc,RT_ALL_occupations_free
  use real_time,      ONLY:l_RT_uses_E_FineGd
- use QP_m,           ONLY:l_extended_output,QP_Sc_steps,QP_G_er,QP_G_damp,On_Mass_Shell_approx,l_QP_eval_GF,l_QP_eval_Z
+ use QP_m,           ONLY:l_extended_output,QP_Sc_steps,QP_G_er,QP_G_damp,l_QP_eval_GF,QP_solver,On_Mass_Shell_approx
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,OP_WR_CL
  use frequency,      ONLY:W_reset
+ use stderr,         ONLY:STRING_same
  use parallel_m,     ONLY:PARs_PH_Q_ibz
  !
 #include<memory.h>
@@ -50,6 +52,7 @@ subroutine PHEL_driver(E,k,q)
  ! Work Space
  !
  integer             ::i_err,ID,nk_CG,iq,il
+ logical             ::l_SS_test
  integer, external   ::io_PH
  type(E_fine_grid)   ::E_FG
  type(bz_fine_grid)  ::k_FG
@@ -100,11 +103,16 @@ subroutine PHEL_driver(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
+ call section("=","El-Ph databases loading")
  call ELPH_databases_load(GKKP_pe_sq,E,k,q,QP_PH_n_G_bands,PH_Q,"Q-sym Q-IBZ K-BZ",PH_Self_Energy_mode)
  !
  !...acoustic branches
- !
  call ELPH_acoustic_phonon_properties(q)
+ !
+ ! Static-Screening test/correction 
+ !==================================
+ call PHEL_screening(E,q,l_SS_test)
+ if (l_SS_test) return
  !
  ! Maps into the RT kinds
  !========================
@@ -141,30 +149,52 @@ subroutine PHEL_driver(E,k,q)
  ! ... Spectral Function energy points
  if (l_life) then
    QP_Sc_steps=1
+   call QPHt_alloc("OMS_bare_Pole",QPH_OMS_bare_Pole,0)
  else
+   !
+   if (On_Mass_Shell_approx) call QPHt_alloc("OMS",QPH_OMS,QP_Sc_steps)
+   call QPHt_alloc("OMS_bare_Pole",QPH_OMS_bare_Pole,QP_Sc_steps)
+   call QPHt_alloc("QPH",QPH,QP_Sc_steps)
+   if (l_QP_eval_GF) then
+     call QPHt_alloc("FULL",QPH_full,QP_Sc_steps)
+   else 
+     call QPHt_alloc("DDFPT",QPH_DDFPT,0)
+   endif
+   !
    allocate(PH_SF_W(elph_branches(1):elph_branches(2),PH_Q(1):PH_Q(2)))
    do iq=PH_Q(1),PH_Q(2)
      do il=elph_branches(1),elph_branches(2)
        call W_reset(PH_SF_W(il,iq))
        PH_SF_W(il,iq)%dr=QP_G_damp
-       if (l_QP_eval_GF) then
-         PH_SF_W(il,iq)%n_freqs=QP_Sc_steps 
-         PH_SF_W(il,iq)%er=QP_G_er
-         call FREQUENCIES_setup(PH_SF_W(il,iq))
-       else if (l_QP_eval_Z) then
-         QP_Sc_steps=3
-         PH_SF_W(il,iq)%n_freqs=3 
-         PH_SF_W(il,iq)%er=(/0._SP,1._SP/)
-         call FREQUENCIES_setup(PH_SF_W(il,iq))
-         PH_SF_W(il,iq)%p=(/0._SP,PH_energy(q,il,iq),PH_energy(q,il,iq)+QP_G_damp/)+cI*QP_G_damp
-       else if (On_Mass_Shell_approx) then
-         QP_Sc_steps=2
-         PH_SF_W(il,iq)%n_freqs=2 
-         PH_SF_W(il,iq)%er=(/0._SP,PH_energy(q,il,iq)/)
-         call FREQUENCIES_setup(PH_SF_W(il,iq))
-       endif
+       PH_SF_W(il,iq)%n_freqs=QP_Sc_steps 
+       PH_SF_W(il,iq)%er=QP_G_er
+       call FREQUENCIES_setup(PH_SF_W(il,iq))
+       if (On_Mass_Shell_approx) QPH_OMS%W=PH_SF_W(il,iq)%p
+       QPH_OMS_bare_Pole%W=PH_SF_W(il,iq)%p
+       QPH%W=PH_SF_W(il,iq)%p
+       if (l_QP_eval_GF) QPH_full%W=PH_SF_W(il,iq)%p
      enddo
    enddo
+   !
+   ! SE energy points
+   if (STRING_same(QP_solver,"n")) then
+     do iq=PH_Q(1),PH_Q(2)
+       do il=elph_branches(1),elph_branches(2)
+         call W_reset(PH_SF_W(il,iq))
+         QP_Sc_steps=4
+         PH_SF_W(il,iq)%n_freqs=4 
+         !
+         ! Fake range just to call FREQUENCIES_setup
+         PH_SF_W(il,iq)%er=(/0._SP,1._SP/)
+         call FREQUENCIES_setup(PH_SF_W(il,iq))
+         !
+         ! Manual points
+         PH_SF_W(il,iq)%p(  1)=cI*QP_G_damp
+         PH_SF_W(il,iq)%p(2:3)=PHEL_fit_Energies*PH_energy(q,il,iq)+cI*QP_G_damp
+         PH_SF_W(il,iq)%p(  4)=cI*PH_energy(q,il,iq)
+       enddo
+     enddo
+   endif
  endif
  !
  ! ... allocs
@@ -198,7 +228,7 @@ subroutine PHEL_driver(E,k,q)
    !
    call section("=","K-Q table (non uniform Q-grid)")
    !--------------------------------------------------
-   YAMBO_ALLOC(KpQ_IO_map,(PH_Q(1):PH_Q(2),k%nbz) )
+   YAMBO_ALLOC(KpQ_io_map,(PH_Q(1):PH_Q(2),k%nbz) )
    call PHEL_k_nearest_table(k)
  endif
  !

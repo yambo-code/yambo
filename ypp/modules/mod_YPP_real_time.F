@@ -48,6 +48,7 @@ module YPP_real_time
  logical  :: l_NL_X
  logical  :: l_NL_exc
  logical  :: l_RT_abs
+ logical  :: l_RT_pol
  !
  ! RT post-processing (kind)
  !
@@ -142,7 +143,7 @@ module YPP_real_time
    character(schlen) :: damping    ="NONE"  ! Damp type (none, lorentian or gaussian)
  end type RT_ctl
  !
- type(RT_ctl), save :: RT_conf 
+ type(RT_ctl), save :: RT_conf,RT_conf_save
  !
  type OBS_el
    character(schlen)        :: title
@@ -177,6 +178,21 @@ module YPP_real_time
    !
    contains 
    !
+   subroutine RT_conf_duplicate(Cin,Cout)
+     type(RT_ctl) :: Cin,Cout
+     Cout%delta_W=Cin%delta_W
+     Cout%X_W_range=Cin%X_W_range
+     Cout%Carriers_W_range=Cin%Carriers_W_range 
+     Cout%W_n_steps=Cin%W_n_steps   
+     Cout%delta_T=Cin%delta_T   
+     Cout%T_range=Cin%T_range 
+     Cout%T_n_range=Cin%T_n_range 
+     Cout%T_n_steps=Cin%T_n_steps   
+     Cout%damp_factor=Cin%damp_factor   
+     Cout%Field_damp_factor=Cin%Field_damp_factor   
+     Cout%damping=Cin%damping   
+   end subroutine
+   !
    subroutine FT_free(FT)
      type(OBS_el) :: FT
      YAMBO_FREE(FT%F_w)
@@ -194,5 +210,22 @@ module YPP_real_time
      if (j==2) TRabs_EPS_label=TRabs_EPS_label(1:1)//"y" 
      if (j==3) TRabs_EPS_label=TRabs_EPS_label(1:1)//"z" 
    end function
+   !
+   subroutine gimme_a_G_Time_Point(i_T)
+     use real_time,  ONLY:G_MEM_steps
+     use RT_control, ONLY:Gless_RT_IO_t
+     integer            ::i_T,i_Tp
+     real(SP)           ::TIME_diff,REF_diff
+     !
+     REF_diff=Gless_RT_IO_t%Time(Gless_RT_IO_t%N)-Gless_RT_IO_t%Time(Gless_RT_IO_t%N-G_MEM_steps)
+     !
+     do i_Tp=1,Gless_RT_IO_t%N
+       TIME_diff= abs ( Gless_RT_IO_t%Time(i_Tp) - RT_time(i_T) )
+       if (abs(TIME_diff)<REF_diff ) then 
+         REF_diff=TIME_diff
+         Gless_RT_IO_t%iN_IO=i_Tp
+       endif
+     enddo
+   end subroutine
    !
 end module YPP_real_time

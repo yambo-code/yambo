@@ -39,7 +39,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use electrons,      ONLY:levels,nel
  use D_lattice,      ONLY:DL_vol
  use com,            ONLY:msg
- use X_m,            ONLY:X_t,X_alloc,X_mat
+ use X_m,            ONLY:X_t,X_ALLOC_elemental,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision_el,   ONLY:elemental_collision,elemental_collision_free
  use IO_int,         ONLY:io_control
@@ -202,7 +202,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    YAMBO_ALLOC(isc%gamp,(X%ng,1))
    YAMBO_ALLOC(tddftk,(X%ng,X%ng))
    YAMBO_ALLOC(dX,(X%ng))
-   call X_alloc('X',(/X%ng,X%ng,ACFDT_n_freqs/))
+   call X_ALLOC_elemental('X',(/X%ng,X%ng,ACFDT_n_freqs/))
    !
    ACFDT_Ec=0.
    !
@@ -249,7 +249,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
    !
    ! Partial CLEAN
    !
-   call X_alloc('X')
+   call X_ALLOC_elemental('X')
    call elemental_collision_free(isc)
    call PP_indexes_reset(plw)
    YAMBO_FREE(X_s)

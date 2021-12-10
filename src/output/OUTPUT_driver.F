@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
+subroutine OUTPUT_driver(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIND)
  !
  use pars,                ONLY:SP,schlen,lchlen
- use OUTPUT_simple,       ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
+ use OUTPUT,              ONLY:OUT_file,N_MAX_files,N_MAX_columns,OUTPUT_reset,OUTPUT_unit_conversion
  use com,                 ONLY:msg,of_open_close
- use stderr,              ONLY:STRING_same
+ use stderr,              ONLY:STRING_same,set_real_printed_length,STRING_match
  !
  implicit none
  !
@@ -65,13 +65,14 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  endif
  !
  if (present(action)) then
-   if (action=="close" ) call of_open_close(OUT_file(i_f)%filename)
-   if (action=="open"  ) call of_open_close(OUT_file(i_f)%filename,'ot')
-   if (action=="append") then
+   if (STRING_match(action,"close"))      call of_open_close(OUT_file(i_f)%filename)
+   if (STRING_match(action,"open"))       call of_open_close(OUT_file(i_f)%filename,'ot')
+   if (STRING_match(action,"override"))   call of_open_close(OUT_file(i_f)%filename,'Ot')
+   if (STRING_match(action,"append")) then
      call of_open_close(OUT_file(i_f)%filename,'oa')
      OUT_file(i_f)%TITLES_dumped=.TRUE.
    endif
-   if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
+   if (STRING_match(action,"reset").or.STRING_match(action,"close")) call OUTPUT_reset(i_f,"reset")
  endif
  !
  if (present(TITLES)) then
@@ -90,6 +91,7 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
        OUT_file(i_f)%N_columns_ordered=OUT_file(i_f)%N_columns_ordered+1
      endif
      OUT_file(i_f)%COL(i_COL)%title=TITLES(i_t)
+     OUT_file(i_f)%COL_WIDTH=max(OUT_file(i_f)%COL_WIDTH,len_trim(TITLES(i_t)))
      OUT_file(i_f)%COL(i_COL)%POS=i_COL
      if (present(I_VALUES)) then
        OUT_file(i_f)%COL(i_COL)%I_value=I_VALUES(i_t)
@@ -130,7 +132,7 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  endif
  !
  if (.not.present(action)) return
- if (.not.action=="write") return
+ if (.not.STRING_match(action,"write")) return
  !
  ! TITLES
  !--------
@@ -139,10 +141,12 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
    o_titles(OUT_file(i_f)%COL(i_t)%POS)=OUT_file(i_f)%COL(i_t)%title
  enddo
  if (.not.OUT_file(i_f)%TITLES_dumped) then
+   call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
    call msg('o '//OUT_file(i_f)%filename_short,'#')
    call msg('o '//OUT_file(i_f)%filename_short,'#',(o_titles(:OUT_file(i_f)%N_columns_ordered)),INDENT=0,USE_TABS=.TRUE.)
    call msg('o '//OUT_file(i_f)%filename_short,'#')
    OUT_file(i_f)%TITLES_dumped=.TRUE.
+   call set_real_printed_length( )
  endif
  !
  ! DATA
@@ -159,7 +163,9 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
    if (o_KINDS(i_t)=="I") call msg('string','',o_I_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
    if (o_KINDS(i_t)=="R") call msg('string','',o_R_values(i_t),USE_TABS=.TRUE.,MSG_string=MSG_string(i_t))
  enddo
+ call set_real_printed_length(f_length=OUT_file(i_f)%COL_WIDTH,of_length=OUT_file(i_f)%COL_WIDTH)
  call msg('o '//OUT_file(i_f)%filename_short,' ',MSG_string(:OUT_file(i_f)%N_columns_ordered),INDENT=-2,USE_TABS=.TRUE.)
+ call set_real_printed_length( )
  !
  call OUTPUT_reset(i_f,"row")
  !

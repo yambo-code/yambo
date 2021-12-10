@@ -53,6 +53,10 @@ module PHEL
  ! ... GF
  type(w_samp), allocatable :: PH_SF_W(:,:)
  !
+ ! ... Dyson solver
+ !
+ real(SP)                 ::PHEL_fit_Energies(2)=(/0.25,1./)
+ !
  ! ... Scatterings
  !
  ! table:
@@ -76,19 +80,48 @@ module PHEL
  !
  type(PHEL_qp_kind)  :: PHEL_qp
  !
+ real(SP)    :: PI_ref   = rZERO
+ complex(SP) :: PI_oms   = cZERO
+ !
  type QPHt
-   real(SP)    :: PI_ref = rZERO
-   complex(SP) :: PI_oms = cZERO
-   complex(SP) :: beta   = cZERO
-   complex(SP) :: Z      = cZERO
-   complex(SP) :: Pole   = cZERO
+   character(schlen) :: what=" "
+   integer     :: N_D_freqs= 0
+   complex(SP) :: Pole     = cZERO
+   complex(SP) :: Gamma    = cZERO
+   complex(SP) :: Residual = cZERO
    real(SP)    :: Half_Width_left  = rZERO
    real(SP)    :: Half_Width_right = rZERO
+   complex(SP), allocatable :: W(:)
+   complex(SP), allocatable :: D(:)
+   complex(SP), allocatable :: PI(:)
  end type QPHt
  !
- type (QPHt) :: QPH
+ type (QPHt) :: QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH_DDFPT,QPH
  !
  contains
+   !
+   subroutine QPHt_alloc(what,QPH,N)
+     character(*) :: what
+     type(QPHt)   :: QPH
+     integer      :: N
+     QPH%what=what
+     QPH%N_D_freqs=N
+     if (QPH%N_D_freqs==0) return
+     if (allocated(QPH%W)) return
+     YAMBO_ALLOC(QPH%W,(QPH%N_D_freqs))
+     YAMBO_ALLOC(QPH%D,(QPH%N_D_freqs))
+     YAMBO_ALLOC(QPH%PI,(QPH%N_D_freqs))
+   end subroutine
+   !
+   subroutine QPHt_free(QPH)
+     type(QPHt)   :: QPH
+     QPH%N_D_freqs=0
+     QPH%what=" "
+     if (.not.allocated(QPH%D)) return
+     YAMBO_FREE(QPH%W)
+     YAMBO_FREE(QPH%D)
+     YAMBO_FREE(QPH%PI)
+   end subroutine
    !
    function PH_energy(q,il,iq)
      use ELPH,      ONLY:l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,PH_freqs_sq
@@ -122,7 +155,7 @@ module PHEL
        !
        ! Obtain k-q in the full BZ from k in the bz and q in the ibz
        if (     elph_use_q_grid) ik_m_q = qindx_X(iq,ikbz,1)
-       if (.not.elph_use_q_grid) ik_m_q = KpQ_IO_map(iq,ikbz)
+       if (.not.elph_use_q_grid) ik_m_q = KpQ_io_map(iq,ikbz)
        !
        ! Use k in the bz
        ik = ikbz

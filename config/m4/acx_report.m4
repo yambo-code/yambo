@@ -38,17 +38,16 @@ if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 MEM_profile_check="-"
 if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL/CUDA SUPPORT -
 # 
+CUDA_check="-"
+if ! test x"$enable_cuda" = "x"; then CUDA_check="X"; fi
 MPI_check="-"
 if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
-#
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
-
 #
 # - LIBRARIES -
-#
 #
 YAML_str=" - "
 if test "$internal_yaml" = "yes" ; then
@@ -200,6 +199,7 @@ AC_SUBST(KEEP_OBJS_check)
 AC_SUBST(TIME_profile_check)
 AC_SUBST(MEM_profile_check)
 #
+AC_SUBST(CUDA_check)
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
 #

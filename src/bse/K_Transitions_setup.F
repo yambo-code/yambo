@@ -48,7 +48,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
- use com,          ONLY:isec
  use BS_solvers,   ONLY:BSS_mode
  ! mode ="T"
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
@@ -78,7 +77,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  ! Work Space
  !
- character(1) :: sec
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,isp1,isp2,  &
@@ -87,11 +85,8 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  logical, external :: K_Transition_check
  !
- if (isec(3)/=0) sec="-"
- if (isec(3)==0) sec="+"
- !
- if (mode=="K") call section(sec,'Transition pre-analysis @q'//trim(intc(iq)))
- if (mode=="T") call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
+ if (mode=="K") call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
+ if (mode=="T") call section("=",'Transition Groups build-up @q'//trim(intc(iq)))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -165,8 +160,16 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                ikpbz=qindx_X(iq,ikbz,1)
                ikp  =Xk%sstar(ikpbz,1)
                !
-               if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
-               if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
+               ib1=iv 
+               ib2=ic 
+               isp1=i_sp_v 
+               isp2=i_sp_c
+               if (i_res_ares==2) then
+                 ib1=ic 
+                 ib2=iv 
+                 isp1=i_sp_c 
+                 isp2=i_sp_v
+               endif
                !
                if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
 &                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle

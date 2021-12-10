@@ -28,7 +28,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  use R_lattice,      ONLY:bz_samp,qindx_X
  use electrons,      ONLY:levels,n_sp_pol,spin
  use stderr,         ONLY:intc,real2ch
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_driver
  use YPPm,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states,DIPs,&
 &                         DIPs_direction,l_dipoles,BSiq
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
@@ -133,8 +133,8 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    o_file(2)='exc_qpt'//trim(intc(iq))//'_amplitude_at_'//trim(intc(i_l_grp))
    !
    do j1=1,2
-     call OUTPUT_add_column(o_file(j1),action="reset")
-     call OUTPUT_add_column(o_file(j1),action="open")
+     call OUTPUT_driver(o_file(j1),action="reset")
+     call OUTPUT_driver(o_file(j1),action="open")
      call DESC_write('o '//o_file(j1),'#',BSS_desc)
    enddo
    !
@@ -187,13 +187,13 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
      !
      if (A_weight(neh)<EXCITON_weight_treshold) cycle
      !
-     call OUTPUT_add_column('weight',TITLES=(/"Band_V","Band_C"/),I_VALUES=(/iv,ic/))
-     call OUTPUT_add_column('weight',TITLES=(/"Kv-q ibz","Symm_kv "/),I_VALUES=(/ikp,isp/))
-     call OUTPUT_add_column('weight',TITLES=(/"Kc q ibz","Symm_kc "/),I_VALUES=(/ikibz,is/))
-     if (n_sp_pol>1) call OUTPUT_add_column('weight',TITLES=(/"Spin"/),I_VALUES=(/j1/))
-     call OUTPUT_add_column('weight',TITLES=(/"Weight"/),R_VALUES=(/A_weight(neh)/))
-     call OUTPUT_add_column('weight',TITLES=(/"Energy"/),R_VALUES=(/amp_trans(amp_n_trans,1)/),UNIT="eV")
-     call OUTPUT_add_column("weight",action="write")
+     call OUTPUT_driver('weight',TITLES=(/"Band_V","Band_C"/),I_VALUES=(/iv,ic/))
+     call OUTPUT_driver('weight',TITLES=(/"Kv-q ibz","Symm_kv "/),I_VALUES=(/ikp,isp/))
+     call OUTPUT_driver('weight',TITLES=(/"Kc q ibz","Symm_kc "/),I_VALUES=(/ikibz,is/))
+     if (n_sp_pol>1) call OUTPUT_driver('weight',TITLES=(/"Spin"/),I_VALUES=(/j1/))
+     call OUTPUT_driver('weight',TITLES=(/"Weight"/),R_VALUES=(/A_weight(neh)/))
+     call OUTPUT_driver('weight',TITLES=(/"Energy"/),R_VALUES=(/amp_trans(amp_n_trans,1)/),UNIT="eV")
+     call OUTPUT_driver("weight",action="write")
      !
    enddo
    !
@@ -210,13 +210,13 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call OUTPUT_add_column('_amp',TITLES=(/"Energy"/),R_VALUES=(/real(amp_E(j1),SP)/),UNIT="eV")
-     call OUTPUT_add_column('_amp',TITLES=(/"Amplitude"/),R_VALUES=(/amp_I(j1)/))
-     call OUTPUT_add_column("_amp",action="write")
+     call OUTPUT_driver('_amp',TITLES=(/"Energy"/),R_VALUES=(/real(amp_E(j1),SP)/),UNIT="eV")
+     call OUTPUT_driver('_amp',TITLES=(/"Amplitude"/),R_VALUES=(/amp_I(j1)/))
+     call OUTPUT_driver("_amp",action="write")
    enddo
    !
    do j1=1,2
-     call OUTPUT_add_column(o_file(j1),action="close")
+     call OUTPUT_driver(o_file(j1),action="close")
    enddo
    !
  enddo

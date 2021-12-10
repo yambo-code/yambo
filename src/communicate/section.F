@@ -27,7 +27,7 @@ subroutine section(mode,name)
  !      =  +     : increase level
  !      =  -     : decrease level
  !      =  p     : increase the level ONLY in this section
- !      = +P     : increase the level and save the current level
+ !      = +P     : save the current level and increase it 
  !      = -P     : restore the level saved with +P and exit
  !      =  #     : increase level #
  !      =  r     : reset to zero level end exit

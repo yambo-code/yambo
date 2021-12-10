@@ -121,6 +121,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTpol',        '[R] Analize time-dependent polarization')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  !
  call it('r',defs,'RTfitbands',   '[R] Post-Processing kind: fit on bands')

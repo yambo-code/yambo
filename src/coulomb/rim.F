@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim()
+subroutine rim(mode)
  !
- use pars,          ONLY:SP,pi,DP
+ use pars,          ONLY:SP,pi,DP,schlen
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
@@ -32,17 +32,20 @@ subroutine rim()
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
-&                        RIM_n_rand_pts,RIM_ng,RIM_qpg,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy
+&                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
+&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
+&                        cut_is_slab,idir
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
+ !
+ character(1)       :: mode
  !
  ! Work Space
  !
  type(PP_indexes)::px
  integer   :: iq
- real(SP)  :: em1_anis(3),G_sph_radii
+ real(SP)  :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -52,8 +55,13 @@ subroutine rim()
  real(SP), allocatable  :: qr(:,:)
  integer            :: iseed(8)
  real(DP), external :: dlaran
+ character(schlen)  :: msg_dum(2)
  ! 
- call timing('RIM',OPR='start')
+ if (mode == "x") then
+   call timing('RIM',OPR='start')
+ else
+   call timing('RIM-W',OPR='start')
+ end if
  !
  call PP_indexes_reset(px)
  !
@@ -68,13 +76,20 @@ subroutine rim()
  !
  if (RIM_id_epsm1_reference<0.or.RIM_id_epsm1_reference>3) RIM_id_epsm1_reference=0
  if (RIM_id_epsm1_reference==0) em1_anis=0.
- if (RIM_id_epsm1_reference>0 ) em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
+ if (RIM_id_epsm1_reference>0 .and. mode == "x") em1_anis=em1_anis/em1_anis(RIM_id_epsm1_reference)
  !
  ! Filling the small BZ with the random grid
  !===========================================
  !
- call section('+','RIM initialization')
- if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
+ if (mode == "x") then
+   !
+   call section('+','RIM initialization')
+   if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
+   !
+ else 
+   call section('+','RIM-W integrals')
+   if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
+ end if
  !
  call msg('nr','8 x (sBL volume)        ',8._SP*k_grid_uc_vol,"[a.u.]")
  call msg('r', 'sBZ random points       ',RIM_n_rand_pts)
@@ -145,6 +160,10 @@ subroutine rim()
    N_in=N_in+1
    if (mod(N_in,rep_factor)==0) call live_timing(steps=1)
  enddo loop
+ !
+ !Only the 2D-BZ is sampled for 2D systems
+ if (cut_is_slab) qr(idir(1),:) = 0._SP
+ !
  call live_timing()
  call msg('r','Points outside the sBZ  ',N_out)
  !  
@@ -156,31 +175,50 @@ subroutine rim()
  !
  call section('=','RIM integrals')
  !
- YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
- RIM_qpg=0._SP
+ if (mode == "x") then
+   YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
+   RIM_qpg=0._SP
+ else if (mode == "c") then
+   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   RIM_W=0._SP
+ end if
  !
  call PARALLEL_index(px,(/nqibz/))
  call live_timing('Momenta loop',px%n_of_elements(myid+1))
+ !
  do iq=1,nqibz
    if (.not.px%element_1D(iq)) cycle
    !
-   call rim_integrate(iq,qr,em1_anis,N_out,N_out_G,G_sph_radii)
-   !
-   if (iq==1) then
-     call msg('r','Gamma point sphere radius             ',G_sph_radii,"[a.u.]")
-     call msg('r','Points outside the sphere             ',n_out_G)
-     call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
+   if (mode == "x") then
+     call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
+     !
+     if (iq==1) then
+       call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
+       call msg('r','Points outside the sphere             ',n_out_G)
+       call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
 &                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
-     call msg('r','                               should be <',7.7956_SP)
-     if (RIM_id_epsm1_reference/=0) call &
-&         msg('r','Anisotropy correction            [o/o]',&
-&                 (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
+       call msg('r','                               should be <',7.7956_SP)
+       if (RIM_id_epsm1_reference/=0) call &
+&           msg('r','Anisotropy correction            [o/o]',&
+&                   (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
+     endif
+     !
+   else
+     !
+     call rim_integrate_w(iq,qr,N_out,em1_anis)
+     !
    endif
    call live_timing(steps=1)
+   !
  enddo
+ !
  call live_timing()
  !
- call PP_redux_wait(RIM_qpg)
+ if (mode == "x") then
+   call PP_redux_wait(RIM_qpg)
+ else if (mode == "c") then
+   call PP_redux_wait(RIM_W)
+ end if
  call PP_redux_wait(RIM_anisotropy)
  !
  ! CLEAN
@@ -188,6 +226,10 @@ subroutine rim()
  call PP_indexes_reset(px)
  YAMBO_FREE(qr)
  !
- call timing('RIM',OPR='stop')
+ if (mode == "x") then
+   call timing('RIM',OPR='stop')
+ else
+   call timing('RIM-W',OPR='stop')
+ end if
  !
 end subroutine

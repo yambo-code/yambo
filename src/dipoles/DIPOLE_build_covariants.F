@@ -54,8 +54,8 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec_KS
- complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
+ complex(SP) :: Sm1_plus (maxval(Xen%nbf),maxval(Xen%nbm),6)
+ complex(SP) :: Sm1_minus(maxval(Xen%nbf),maxval(Xen%nbm),6)
  complex(SP) :: S_det(6)
  complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
@@ -64,7 +64,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  !
- if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
+ if (any(Xen%nbf/=Xen%nbm)) call error(' Covariant dipoles not implemented for metals')
  !
  call parser('EvPolarization'  ,l_eval_polarization)
  call parser('FrSndOrd'        ,l_force_SndOrd)
@@ -128,13 +128,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          Wop(:,:,istep)=cZERO
          !
-         iv_max=min(Dip%ib_lim(1),Xen%nbm)
+         iv_max=min(Dip%ib_lim(1),Xen%nbm(i_sp_pol))
          do iv=Dip%ib(1),iv_max
            ic_min=max(iv,Dip%ib_lim(2))
            do ic=ic_min,Dip%ib(2)
              !
-             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,iv,id_red + (istep-1)*3))- &
-&                             sum(S_tmp(ic,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,iv,id_red + (istep-1)*3))
+             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf(i_sp_pol),1)* Sm1_plus(1:Xen%nbf(i_sp_pol),iv,id_red + (istep-1)*3))- &
+&                             sum(S_tmp(ic,1:Xen%nbf(i_sp_pol),2)*Sm1_minus(1:Xen%nbf(i_sp_pol),iv,id_red + (istep-1)*3))
              !
            enddo
          enddo

@@ -107,6 +107,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  if(n_spin>1) then
    !
+   RT_spin_magn=cZERO
+   !
    ! C : Spin magnetization
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&

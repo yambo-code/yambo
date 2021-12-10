@@ -289,7 +289,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
          do ic=Dip%ib_lim(2),Dip%ib(2)
            !
            if (ic<=Xen%nbf(i_sp_pol) .and. iv<=Xen%nbf(i_sp_pol)) then
-             DIP_spin   (:,ic,iv,:,i_sp_pol,2)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
+             DIP_spin(:,ic,iv,:,i_sp_pol,2)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
            endif
            if (ic> Xen%nbf(i_sp_pol) .and. iv> Xen%nbf(i_sp_pol) ) then
              DIP_spin(:,ic,iv,:,i_sp_pol,3)=DIP_spin(:,ic,iv,:,i_sp_pol,1)

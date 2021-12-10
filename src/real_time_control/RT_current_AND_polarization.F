@@ -35,7 +35,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !  each time step. When devel-dipoles will be finally merged inside the master
  !  this will be avoided by expanding the dipoles once for all
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol

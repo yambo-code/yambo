@@ -46,7 +46,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
- use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
+ use IO_m,          ONLY:OP_RD,RD,RD_CL,OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -63,7 +63,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
+ integer                 :: i_coll,first_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,i_loop,&
 &                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,PAR_COLL_min,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
@@ -218,6 +218,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  PAR_NC_local=HXC_collisions%PAR_N
  PAR_COLL_min=0
+ first_coll=-1
  !
  do i_loop=1,2
    if (allocated(HXC_collisions%IO_status)) then
@@ -226,6 +227,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
        last_coll=i_coll
        if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+       if (first_coll==-1) first_coll=i_coll
        PAR_NC_local=PAR_NC_local+1
        if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
      enddo
@@ -235,6 +237,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
        last_coll=i_coll
        if (COH_collisions%IO_status(i_coll)/=-1) cycle
+       if (first_coll==-1) first_coll=i_coll
        PAR_NC_local=PAR_NC_local+1
        if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
      enddo
@@ -487,8 +490,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      integer :: TMP_INDEX(COLL_bands(1):COLL_bands(2))
      !
-     if (l_compute_screening) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID_X)
+     if (l_compute_screening.and.i_coll==first_coll) then
+       call io_control(ACTION=OP_RD,COM=NONE, SEC=(/1/),ID=ID_X)
        io_err=io_X(X,Xw,ID_X)
      endif
      !
@@ -529,7 +532,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          call IO_and_Messaging_switch("-fragments_IO_log")
          !
-         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID_X)
+         call io_control(ACTION=RD,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID_X)
          io_err=io_X(X,Xw,ID_X)
          !
          call IO_and_Messaging_switch("+fragments_IO_log")
@@ -606,6 +609,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        enddo ! loop on the band i_mp
        !
      enddo ! loop on iqbz
+     !
+     if (l_compute_screening.and.i_coll==last_coll) then
+       call io_control(ACTION=RD_CL,COM=NONE, SEC=(/-2/),ID=ID_X)
+       io_err=io_X(X,Xw,ID_X)
+     endif
      !
    end subroutine compute_MBPT_XC_collisions
    !

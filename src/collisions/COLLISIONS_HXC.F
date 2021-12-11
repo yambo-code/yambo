@@ -218,25 +218,30 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  PAR_NC_local=HXC_collisions%PAR_N
  PAR_COLL_min=0
+ !
  first_coll=-1
  !
  do i_loop=1,2
-   if (allocated(HXC_collisions%IO_status)) then
+   if (allocated(HXC_collisions%PAR_IND%element_1D)) then
      PAR_NC_local=0
      do i_coll=1,HXC_collisions%N
        if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
        last_coll=i_coll
-       if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+       if (allocated(HXC_collisions%IO_status)) then
+         if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+       endif
        if (first_coll==-1) first_coll=i_coll
        PAR_NC_local=PAR_NC_local+1
        if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
      enddo
-   else if (allocated(COH_collisions%IO_status)) then
+   else if (allocated(COH_collisions%PAR_IND%element_1D)) then
      PAR_NC_local=0
      do i_coll=1,COH_collisions%N
        if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
        last_coll=i_coll
-       if (COH_collisions%IO_status(i_coll)/=-1) cycle
+       if (allocated(COH_collisions%IO_status)) then
+         if (COH_collisions%IO_status(i_coll)/=-1) cycle
+       endif
        if (first_coll==-1) first_coll=i_coll
        PAR_NC_local=PAR_NC_local+1
        if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll

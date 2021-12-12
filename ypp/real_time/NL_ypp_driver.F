@@ -118,7 +118,7 @@ subroutine NL_ypp_driver(en,k)
    !
    if(io_Nonlinear_REF==0) then
      call warning("removing reference polarization/current")
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
      io_Nonlinear=io_NL(dbname//"_REF",ID_REF)
      do i_d=1,3
        RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)

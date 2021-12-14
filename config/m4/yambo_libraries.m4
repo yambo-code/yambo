@@ -35,7 +35,6 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   #
   cd lib
   AC_MSG_CHECKING([the yambo-libraries git repository])
-  cd $srcdir/lib/
   if ! test -d "yambo/driver/src"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
   else

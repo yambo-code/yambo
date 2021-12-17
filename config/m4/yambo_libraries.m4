@@ -32,7 +32,7 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
 fi
 
-if test -f ".git" || test -d ".git"; then
+if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   #
   # git procedure
   #

@@ -251,14 +251,19 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- if (iq==1.and.master_thread.and.drude_n_states>0) then
+ if (iq==1.and.master_thread.and.drude_n_states>0.and.(.not.RIM_W_for_graph)) then
    do i_cg = 1,coarse_grid_N
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
-     ctmp = DEV_VAR(Xo_res)(1,1)
+     !
+     if (RIM_W_for_graph) then
+       ctmp = 1.0_SP
+     else
+       ctmp = DEV_VAR(Xo_res)(1,1)
+     endif
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
@@ -271,6 +276,30 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      exit
    enddo
  endif
+ !
+ !Graphene intraband term
+ !
+ if (iq==1.and.master_thread.and.RIM_W_for_graph) then
+   call msg('r', 'Graphene analytical model of intraband transitions')
+   call msg('r', 'Graphene intraband is applied only to head static response function')
+   !
+   lcut = alat(idir(1))
+   !
+   !Analytical model for graphene:
+   !X_00(w=0) = -1/(4*v_fermi)*q/L
+   !
+   !Put shomewhere the change from 10^6 m/s to a.u.
+   !v_fermi_au = v_fermi/2.187691_SP
+   !
+   X_graph = -qnorm(1)/(4._SP*v_fermi*lcut)
+   ctmp = 
+   !
+   X_par%blc(1,1,1)=X_par%blc(1,1,1)+ctmp
+   !
+   if (have_cuda) X_par%blc_d(1,1,1)=X_par%blc(1,1,1)
+   !
+ endif
+ !
  !
  ! MAIN LOOP
  !===========

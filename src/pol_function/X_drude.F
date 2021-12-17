@@ -190,13 +190,13 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  function Graphene_drude(Wd,q0_norm)
    !
    !
-   use pars,       ONLY:SP,pi
+   use pars,       ONLY:SP
    use R_lattice,  ONLY:idir
    use D_lattice,  ONLY:alat
    !
    implicit none
    !
-   real(SP)    :: lcut,q0_norm
+   real(SP)    :: lcut,q0_norm,vf
    complex(SP) :: Graphene_drude,Wd
    !
    !Get graph_v in a.u.
@@ -205,8 +205,12 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    !Analytical model for graphene:
    !X_D(w=0) = -1/(4*vf)*q/L
-   !real(Wd) = 1/(4*vf)
-   Graphene_drude = -real(Wd)*q0_norm/lcut
+   !real(Wd) = vf in 10^6 m/s
+   !
+   !Get vf in a.u. from the "fake" Drude frequency
+   vf = real(Wd)/2.187691_SP
+   !
+   Graphene_drude = -q0_norm/(4._SP*vf*lcut)
    !
  end function Graphene_drude
  !

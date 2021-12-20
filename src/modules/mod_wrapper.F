@@ -32,80 +32,78 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,   ONLY:SP,cI
-#if defined _CUDAF
- use cublas
-#elif defined _OPENACC || defined _OPENMP5
- use cublas_core_m
- use cublas_m
-#endif
+ use device_linalg_m,   only: M_by_M_gpu=>dev_xGEMM_gpu,dev_xGEMM_gpu,dev_xGEMV_gpu,&
+&                             dev_xAXPY_gpu,dev_xDOTC_gpu,dev_xDOTU_gpu
+ use dev_cublas_m
  !
  implicit none
  !
  interface M_by_M
-   module procedure mm_cgemm
-   module procedure mm_c 
+   module procedure :: mm_cgemm
+   module procedure :: mm_c
 #ifdef _CUDAF
-   module procedure mm_cgemm_gpu
+          procedure :: dev_xGEMM_gpu
 #endif
  end interface
  !
- interface M_by_V 
-   module procedure mv_cgemv,mv_sgemv,mv_c,mv_r
+ interface M_by_V
+   module procedure :: mv_cgemv,mv_sgemv,mv_c,mv_r
 #ifdef _CUDAF
-   module procedure                   mv_c_gpu
+   module procedure :: mv_c_gpu
+!          procedure :: dev_xGEMV_gpu
 #endif
  end interface
  !
  interface V_plus_alpha_V
-   module procedure vv_s,vv_c,vv_saxpy,vv_caxpy,MM_caxpy
+   module procedure :: vv_s,vv_c,vv_saxpy,vv_caxpy,MM_caxpy
 #ifdef _CUDAF
-   module procedure          vv_c_gpu,vv_caxpy_gpu
+   module procedure :: vv_c_gpu
+!          procedure :: dev_xAXPY_gpu
 #endif
  end interface
  !
  interface M_plus_alpha_M
-   module procedure MM_caxpy
+   module procedure :: MM_caxpy
  end interface
  !
  interface V_by_V_pwise
-   module procedure V_by_V_pwise_cpu
+   module procedure :: V_by_V_pwise_cpu
  end interface
  !
  interface Vstar_dot_V
-   module procedure Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
+   module procedure :: Vstar_dot_V_c1_cpu, Vstar_dot_V_c2_cpu
  end interface
  !
  interface Vstar_dot_VV
-   module procedure Vstar_dot_VV_c1_cpu
+   module procedure :: Vstar_dot_VV_c1_cpu
  end interface
  !
  interface V_dot_V
-   module procedure V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
+   module procedure :: V_dot_V_r1_cpu, V_dot_V_c1_cpu, V_dot_V_c2_cpu
  end interface
  !
  interface V_dot_VV
-   module procedure V_dot_VV_c1_cpu
+   module procedure :: V_dot_VV_c1_cpu
  end interface
  !
-#if defined _GPU
+ ! GPU-aware interfaces
+ ! defined but unsuable or working on host memory when undef _GPU
+ ! (de facto, place holders to have _gpu names defined)
  !
  interface V_by_V_pwise_gpu
-   module procedure V_by_V_pwise_gpu
+   module procedure :: V_by_V_pwise_gpu
  end interface
  interface Vstar_dot_V_gpu
-   module procedure Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
+   module procedure :: Vstar_dot_V_c1_gpu, Vstar_dot_V_c2_gpu
  end interface
  interface Vstar_dot_VV_gpu
-   module procedure Vstar_dot_VV_c1_gpu
+   module procedure :: Vstar_dot_VV_c1_gpu
  end interface
  interface V_dot_V_gpu
-   module procedure V_dot_V_c1_gpu
+   module procedure :: V_dot_V_c1_gpu
  end interface
  interface V_dot_VV_gpu
-   module procedure V_dot_VV_c1_gpu
- end interface
- interface M_by_M_gpu
-   module procedure mm_cgemm_gpu
+   module procedure :: V_dot_VV_c1_gpu
  end interface
  !
  public :: V_by_V_pwise_gpu
@@ -114,17 +112,17 @@ module wrapper
  public :: V_dot_V_gpu
  public :: V_dot_VV_gpu
  public :: M_by_M_gpu
-#endif
  !
- public :: M_by_M
- public :: V_copy
+ public :: V_by_V_pwise
  public :: Vstar_dot_V
  public :: Vstar_dot_VV
  public :: V_dot_V
  public :: V_dot_VV
- public :: M_by_V
  public :: V_plus_alpha_V
- public :: V_by_V_pwise
+ public :: M_by_V
+ public :: M_by_M
+ !
+ public :: V_copy
  public :: FADEVA
  !
  contains
@@ -159,27 +157,33 @@ module wrapper
 #endif
    end subroutine mm_cgemm
    !
-#ifdef _GPU
    subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
      implicit none
-     complex(SP), intent(in)  :: ALPHA,BETA
-     integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
-     character,   intent(in)  :: TRANSA,TRANSB
+     complex(SP),          intent(in)  :: ALPHA,BETA
+     integer,              intent(in)  :: K,LDA,LDB,LDC,M,N
+     character,            intent(in)  :: TRANSA,TRANSB
      complex(SP) DEV_ATTR, intent(in)  :: A(LDA,*),B(LDB,*)
      complex(SP) DEV_ATTR, intent(out) :: C(LDC,*)
      !
+#if defined _GPU
      !DEV_ACC data present(A,B,C)
      !DEV_ACC host_data use_device(A,B,C)
 #  if defined _DOUBLE
      call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
-#else
+#  else
      call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #  endif
      !DEV_ACC end host_data
      !DEV_ACC end data
-   end subroutine mm_cgemm_gpu
+#else
+#  if defined _DOUBLE
+     call ZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#  else
+     call CGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
+#  endif
 #endif
-   !
+   end subroutine mm_cgemm_gpu
+
    subroutine mm_c(TRANSA,TRANSB,msize,A,B,C)
      integer,  intent(in)  :: msize
      complex(SP), intent(in)  :: A(msize,msize),B(msize,msize)
@@ -234,19 +238,15 @@ module wrapper
 #endif
    end subroutine mv_c
    !
-#ifdef _CUDAF
    subroutine mv_c_gpu(TRANS,msize,A,X,Y)
-     integer,     intent(in) :: msize
-     complex(SP), device, intent(in) :: A(msize,*),X(*)
-     complex(SP), device, intent(out):: Y(*)
-     character,   intent(in) :: TRANS
-#if defined _DOUBLE
-     call cublasZgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
-#else
-     call cublasCgemv(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
-#endif
+     integer,              intent(in) :: msize
+     complex(SP) DEV_ATTR, intent(in) :: A(msize,msize),X(msize)
+     complex(SP) DEV_ATTR, intent(out):: Y(msize)
+     character,            intent(in) :: TRANS
+     !
+     call dev_xGEMV_gpu(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     !
    end subroutine mv_c_gpu
-#endif
    !
    subroutine mv_r(TRANS,msize,A,X,Y)
      integer,  intent(in) :: msize
@@ -306,34 +306,14 @@ module wrapper
 #endif
    end subroutine vv_caxpy
    !
-#ifdef _CUDAF
    subroutine vv_c_gpu(N, CA, CX, CY )
-     complex(SP), intent(in) :: CA
-     integer,     intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*)
-     complex(SP), device, intent(out):: CY(*)
-#if defined _DOUBLE
-     call cublasZaxpy(N,CA,CX,1,CY,1)
-#else
-     call cublasCaxpy(N,CA,CX,1,CY,1)
-#endif
+     complex(SP),          intent(in)  :: CA
+     integer,              intent(in)  :: N
+     complex(SP) DEV_ATTR, intent(in)  :: CX(N)
+     complex(SP) DEV_ATTR, intent(out) :: CY(N)
+     !
+     call dev_xAXPY_gpu(N,CA,CX,1,CY,1)
    end subroutine vv_c_gpu
-#endif
-   !
-#ifdef _CUDAF
-   subroutine vv_caxpy_gpu(N, CA, CX, LDA, CY, LDB )
-     complex(SP), intent(in) :: CA
-     integer,     intent(in) :: N
-     complex(SP), device, intent(in) :: CX(*)
-     complex(SP), device, intent(out):: CY(*)
-     integer,     intent(in) :: LDA,LDB
-#if defined _DOUBLE
-     call cublasZaxpy(N,CA,CX,LDA,CY,LDB)
-#else
-     call cublasCaxpy(N,CA,CX,LDA,CY,LDB)
-#endif
-   end subroutine vv_caxpy_gpu
-#endif
    !
    subroutine vv_s(N, CA, CX, CY )
      real(SP),    intent(in) :: CA
@@ -347,16 +327,16 @@ module wrapper
 #endif
    end subroutine vv_s   
    !
-   subroutine vv_saxpy(N, CA, LDA, CX, CY, LDB )
+   subroutine vv_saxpy(N, CA, CX, INCX, CY, INCY )
      real(SP),    intent(in) :: CA
      integer,     intent(in) :: N
      real(SP),    intent(in) :: CX(*)
      real(SP),    intent(out):: CY(*)
-     integer,     intent(in) :: LDA,LDB
+     integer,     intent(in) :: INCX,INCY
 #if defined _DOUBLE
-     call DAXPY(N,CA,CX,LDA,CY,LDB)
+     call DAXPY(N,CA,CX,INCX,CY,INCY)
 #else
-     call SAXPY(N,CA,CX,LDA,CY,LDB)
+     call SAXPY(N,CA,CX,INCX,CY,INCY)
 #endif
    end subroutine vv_saxpy   
 
@@ -406,21 +386,13 @@ module wrapper
 #endif
    end function Vstar_dot_V_c2_cpu
    !
-#if defined _GPU
    complex(SP) function Vstar_dot_V_c1_gpu(N,CX,CY)
      implicit none
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
-     !DEV_ACC data present(CX,CY)
-     !DEV_ACC host_data use_device(CX,CY)
-#if defined _DOUBLE
-     Vstar_dot_V_c1_gpu=cublasZdotc(N,CX,1,CY,1)
-#else
-     Vstar_dot_V_c1_gpu=cublasCdotc(N,CX,1,CY,1)
-#endif
-     !DEV_ACC end host_data
-     !DEV_ACC end data
+     Vstar_dot_V_c1_gpu=dev_xDOTC_gpu(N,CX,1,CY,1)
+     !
    end function Vstar_dot_V_c1_gpu
    !
    complex(SP) function Vstar_dot_V_c2_gpu(N,CX,CY)
@@ -428,17 +400,26 @@ module wrapper
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:,:),CY(:,:)
      !
+#if defined _GPU
      !DEV_ACC data present(CX,CY)
      !DEV_ACC host_data use_device(CX,CY)
-#if defined _DOUBLE
+#  if defined _DOUBLE
      Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
-#else
+#  else
      Vstar_dot_V_c2_gpu=cublasCdotc(N,CX,1,CY,1)
-#endif
+#  endif
      !DEV_ACC end host_data
      !DEV_ACC end data
-   end function Vstar_dot_V_c2_gpu
+#else
+#  if defined _DOUBLE
+     complex(SP)::zdotc
+     Vstar_dot_V_c2_gpu=ZDOTC(N,CX,1,CY,1)
+#  else
+     complex(SP)::cdotc
+     Vstar_dot_V_c2_gpu=CDOTC(N,CX,1,CY,1)
+#  endif
 #endif
+   end function Vstar_dot_V_c2_gpu
    !
    !==============
    ! DOT PRODUCTS: Vstar_dot_VV
@@ -466,7 +447,6 @@ module wrapper
      Vstar_dot_VV_c1_gpu=0.0_SP
      !DEV_ACC data present(CX,CY,CZ)
      !DEV_ACC parallel loop
-     !!!!!!!! parallel loop async
      !DEV_CUF kernel do(1) <<<*,*>>>
      do i = 1, N
        Vstar_dot_VV_c1_gpu=Vstar_dot_VV_c1_gpu+conjg(CX(i))*CY(i)*CZ(i)
@@ -517,22 +497,14 @@ module wrapper
 #endif
    end function V_dot_V_c2_cpu
    !
-#if defined _GPU
    complex(SP) function V_dot_V_c1_gpu(N,CX,CY)
      implicit none
-     integer,    intent(in) :: N
+     integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
-     !DEV_ACC data present(CX,CY)
-     !DEV_ACC host_data use_device(CX,CY)
-#if defined _DOUBLE
-     V_dot_V_c1_gpu=cublasZDOTU(N,CX,1,CY,1)
-#else
-     V_dot_V_c1_gpu=cublasCDOTU(N,CX,1,CY,1)
-#endif
-     !DEV_ACC end host_data
-     !DEV_ACC end data
+     !
+     V_dot_V_c1_gpu=dev_xDOTU_gpu(N,CX,1,CY,1)
+     !
    end function V_dot_V_c1_gpu
-#endif
    !
    !==============
    ! DOT PRODUCTS: V_dot_VV
@@ -540,8 +512,8 @@ module wrapper
    !
    complex(SP) function V_dot_VV_c1_cpu(N,CX,CY,CZ)
      implicit none
-     integer,    intent(in) :: N
-     complex(SP),intent(in) :: CX(N),CY(N),CZ(N)
+     integer,     intent(in) :: N
+     complex(SP), intent(in) :: CX(N),CY(N),CZ(N)
 #if defined _DOUBLE
      complex(SP)::zdotu
      V_dot_VV_c1_cpu=ZDOTU(N,CX,1,CY*CZ,1)
@@ -552,7 +524,7 @@ module wrapper
    end function V_dot_VV_c1_cpu
    !
    complex(SP) function V_dot_VV_c1_gpu(N,CX,CY,CZ)
-     integer,    intent(in) :: N
+     integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N),CZ(N)
      integer :: i
      !
@@ -604,13 +576,13 @@ module wrapper
    end subroutine V_by_V_pwise_cpu
    !
    subroutine V_by_V_pwise_gpu(N,CZ,CX,CY)
-     integer,    intent(in) :: N
+     integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(N),CY(N)
      complex(SP) DEV_ATTR, intent(out):: CZ(N)
      !
      integer :: i
      !DEV_ACC data present(CX,CY,CZ)
-     !DEV_ACC parallel loop async
+     !DEV_ACC parallel loop
      !DEV_CUF kernel do(1) <<<*,*>>>
      do i=1,N
         CZ(i)=CX(i)*CY(i)

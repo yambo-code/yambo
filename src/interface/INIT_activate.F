@@ -31,7 +31,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -468,10 +468,7 @@ subroutine INIT_activate()
    !
    call initactivate( 1,'FFTGvecs')
    !
-   ! The following variable is called EXXCut, but it should be renamed COLLCut
-   ! since it affects all collisions
-   !
-   call initactivate( 1,'EXXCut')
+   call initactivate( 1,'COLLCut')
    !
    call initactivate(-1,'QpntsRXs')
    !
@@ -508,6 +505,8 @@ subroutine INIT_activate()
    call initactivate(1,'SCmixing SClwBand SCnlMix BandMix')
    call initactivate(1,'SCdiag Mean_Potential')
    !
+   call initactivate(1,'SCneqKIND SCmu SCocc SCcohIt')
+   !
  endif
  !
 #endif
@@ -523,15 +522,16 @@ subroutine INIT_activate()
    call initactivate(1,'RTskipImposeN RTeeImposeE InducedField')
    call initactivate(1,'Gauge VelGaugeCorr VelGaugeDiam PfromJ RTUpdateSOC RTUpdateE SaveGhistory')
    call initactivate(1,'RTEqScatt RTImpForMet RTzeroTempRef RTskipPHabs RTEvalEnergy RTEvalEntropy')
-   call initactivate(1,'dTupdateTime dTupdateJump dTupdateTresh dT_MAX')
+   call initactivate(1,'dTupdateTime dTupdateTimeSet dTupdateJump dTupdateTresh dT_MAX dT_SET')
    if (l_elel_scatt .or. l_elph_scatt .or. l_elphoton_scatt) then
      call initactivate(1,'LifeExtrapolation LifeExtrapSteps LifeFitTemp RelaxTimeApprox RTAtemp RTAchem LifeFitTemp')
    endif
    if (l_elph_scatt) call initactivate(1,'MemTresh RandQpts RT_T_evol ElPhModes UseDebyeE')
    if (l_elel_scatt) call initactivate( 1,'EERimPerc')
    !
-   call initactivate(1,'RTBands Integrator GrKind TwoAlpha RADLifeTime RADmagnific PhLifeTime RTehEny ScattTresh') 
-   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh')
+   call initactivate(1,'RTBands Integrator GrKind TwoAlph RTehEny ScattTresh')
+   call initactivate(1,'RADLifeTime RADmagnific PhLifeTime DephCVonly DephEThresh DephTRange')
+   call initactivate(1,'RTstep NEsteps NETime DipoleEtresh SPINprojected')
    call initactivate(1,'IOtime IOCachetime')
    !
    ! n_ext_fields is by default 0.  It is set to the input number of fields when a command line option is provided (below in init.F)
@@ -548,8 +548,10 @@ subroutine INIT_activate()
 #if defined _NL
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
-   call initactivate(1,'NLEnRange NLEnSteps NLDamping UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
-   call initactivate(1,'Gauge ExtF_Dir ExtF_FrStep ExtF_Int ExtF_Width ExtF_kind ExtF_Tstart')
+   if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps')
+   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
+   call initactivate(1,'Gauge RADLifeTime ExtF_Dir ExtF_Int ExtF_Width ExtF_kind')
+   if(l_nl_p_and_p) call initactivate(1,'ExtF_Freq ExtF_Tstart ExtF2_Dir ExtF2_Freq ExtF2_Int ExtF2_Width ExtF2_kind ExtF2_Tstart')
    call init_QP_ctl_switch('G')
  endif
 #endif
@@ -561,6 +563,12 @@ subroutine INIT_activate()
  if (l_sc_magnetic) then
    call initactivate(1,'Hamiltonian B_Field B_psi B_theta B_Gauge PhaseTrick')
    if (MAG_landau) call initactivate(1,'B_radius')
+ endif
+ !
+ ! Electric
+ !
+ if (l_sc_electric) then
+   call initactivate(1,'EvPolarization ExtF_Dir ExtF_Int FrSndOrd')
  endif
  !
 #endif

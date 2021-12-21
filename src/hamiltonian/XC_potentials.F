@@ -30,7 +30,8 @@ subroutine XC_potentials(POTENTIALS_string)
  use hamiltonian,    ONLY:H_kind,H_xc_functional,l_sc_XC_is_local,l_sc_V_is_local
  use xc_functionals, ONLY:XC_LDA_X,XC_LDA_C_PZ,XC_EXCHANGE_CORRELATION,XC_EXCHANGE,&
 &                         GS_xc_KIND,GS_xc_FUNCTIONAL
- use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,COLLISIONS_HXC_use_TDDFT
+ use collision_ext,  ONLY:COLLISIONS_have_HARTREE,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,COLLISIONS_HXC_use_TDDFT,&
+&                         COLLISIONS_CV_only
  use electrons,      ONLY:n_full_bands,n_met_bands
  use stderr,         ONLY:STRING_split,STRING_same
  !
@@ -63,6 +64,11 @@ subroutine XC_potentials(POTENTIALS_string)
  do i_c=1,10
    !
    if (len_trim(potentials(i_c))==0) cycle
+   !
+   if (STRING_same(trim(potentials(i_c)),'CVONLY')) then
+     COLLISIONS_CV_only=.true.
+     if (.not.index(POTENTIALS_string,'CVONLY')>0) POTENTIALS_string=trim(POTENTIALS_string)//" CVONLY"
+   endif
    !
    if (STRING_same(trim(potentials(i_c)),'IP')) then
      ! This means Hartree and V_xc are frozed: IP=KS-IP
@@ -158,6 +164,8 @@ subroutine XC_potentials(POTENTIALS_string)
      H_kind=H_kind+H_SE_SEX+H_SE_COH
    else if (STRING_same(trim(potentials(i_c)),'NONE')) then
      call warning("NULL SC potential! ")
+   else if (STRING_same(trim(potentials(i_c)),'CVONLY')) then
+     call warning("Only CV components included ")
    else
      call error("Unknown SC potential! ")
    endif

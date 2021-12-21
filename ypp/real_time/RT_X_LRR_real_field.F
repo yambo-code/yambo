@@ -27,7 +27,7 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,ElField,FT_free
+ use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,FT_free,X_kind
  use pars,           ONLY:SP,pi,cI,cZERO,schlen
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
@@ -47,8 +47,8 @@ subroutine RT_X_LRR_real_field(en)
  !
  integer      :: i_t,i_w,i_p_dir,iE_err,i_Probe,i_field,n_fields,NW
  logical      :: l_rm_asympt_limit
- real(SP)     :: W_reached,Field_time,outdata(6),E_ver(3,3)
- complex(SP)  :: Pol_proj(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
+ real(SP)     :: W_reached,Field_time,outdata(6),E_ver(3,3),Fac
+ complex(SP)  :: OBS_proj,OBS_vec(3),E_w_SP(3),Field,E_of_t(2),A_of_t(2),theta,delta,Field_freq
  complex(SP), allocatable :: EELS(:,:),EPS(:,:)
  !
 #if defined _YPP_NL
@@ -68,7 +68,13 @@ subroutine RT_X_LRR_real_field(en)
  ! 1D FFT setup
  !--------------
  call RT_1D_Fourier_setup(ElField,RT_conf,n_fields) 
- call RT_1D_Fourier_setup(Pol,RT_conf,3) 
+ if (trim(X_kind)=="rhorho") then
+   call RT_1D_Fourier_setup(Pol,RT_conf,3) 
+ else if(trim(X_kind)=="jj") then
+   call RT_1D_Fourier_setup(Curr,RT_conf,3) 
+ else
+   call error(" wrong Xkind in input")
+ endif
  !
  NW=RT_conf%W_n_steps
  if (Use_FFT) NW=RT_conf%T_n_steps
@@ -95,7 +101,9 @@ subroutine RT_X_LRR_real_field(en)
    delta  =theta_function(Field_time,RT_time(2)-RT_time(1),1)
    !
    do i_field=1,n_fields
-     ElField%F_t(i_t,i_field)=Efield(i_Probe)%amplitude*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
+     Fac=Efield(i_Probe)%amplitude
+     if(trim(X_kind)=="jj")     ElField%F_t(i_t,i_field)=-Fac*(A_of_t(i_field)*theta)
+     if(trim(X_kind)=="rhorho") ElField%F_t(i_t,i_field)= Fac*(E_of_t(i_field)*theta+A_of_t(i_field)*delta)
    enddo
    !
  enddo
@@ -108,7 +116,7 @@ subroutine RT_X_LRR_real_field(en)
  !... Analytic ...
  !
  iE_err=-1
- if (n_fields==1) then
+ if (n_fields==1.and.trim(X_kind)=="rhorho") then
    do i_w = 1, RT_conf%W_n_steps
      !
      if(trim(RT_conf%damping) /= "NONE")                      Field_freq=ElField%W(i_w)-cI*RT_conf%damp_factor
@@ -132,16 +140,25 @@ subroutine RT_X_LRR_real_field(en)
  !
  ! Damp and (eventually) remove the asymptotic limit of Pol
  !
- do i_p_dir=1,3
-   if (l_rm_asympt_limit) Pol%F_t(:,i_p_dir)= Pol%F_t(:,i_p_dir)-Pol%F_t(RT_conf%T_n_steps,i_p_dir)
- enddo
+ if (l_rm_asympt_limit) then
+   call msg("s","Removing asymptotic limit")
+   do i_p_dir=1,3
+     if (trim(X_kind)=="rhorho") Pol%F_t(:,i_p_dir) =  Pol%F_t(:,i_p_dir)- Pol%F_t(RT_conf%T_n_steps,i_p_dir)
+     if (trim(X_kind)=="jj")     Curr%F_t(:,i_p_dir)= Curr%F_t(:,i_p_dir)-Curr%F_t(RT_conf%T_n_steps,i_p_dir)
+   enddo
+ endif
  !
  !
  ! Pol FT
  !--------
  !
- Pol%title="PolFFT"
- call RT_1D_Fourier_Transform('T2W',Pol,RT_conf,1)
+ if (trim(X_kind)=="rhorho") then
+   Pol%title="PolFFT"
+   call RT_1D_Fourier_Transform('T2W',Pol,RT_conf,1)
+ else if(trim(X_kind)=="jj") then
+   Curr%title="CurrFFT"
+   call RT_1D_Fourier_Transform('T2W',Curr,RT_conf,1)
+ endif
  !
  ! a) If the induced field is     computed: E_input=E_ext
  ! b) If the induced field is NOT computed: E_input=E_tot
@@ -213,11 +230,14 @@ subroutine RT_X_LRR_real_field(en)
    !
    do i_p_dir=1,3
      !
-     Pol_proj(i_p_dir)=dot_product(E_ver(:,i_p_dir),cmplx(Pol%F_w(i_w,:),kind=SP) )
+     if(trim(X_kind)=="rhorho") OBS_vec=cmplx( Pol%F_w(i_w,:),kind=SP)
+     if(trim(X_kind)=="jj")     OBS_vec=cmplx(Curr%F_w(i_w,:),kind=SP)/ElField%W(i_w)**2
+     !
+     OBS_proj=dot_product(E_ver(:,i_p_dir),OBS_vec)
      if(Efield(i_Probe)%ef_pol=="circular") Field=dot_product(E_ver(:,i_p_dir),E_w_SP )
      !
-     if(     l_RT_induced_field) EELS(i_w,i_p_dir) = 4._SP*pi*Pol_proj(i_p_dir)/Field
-     if(.not.l_RT_induced_field) EPS( i_w,i_p_dir) = 4._SP*pi*Pol_proj(i_p_dir)/Field
+     if(     l_RT_induced_field) EELS(i_w,i_p_dir) = 4._SP*pi*OBS_proj/Field
+     if(.not.l_RT_induced_field) EPS( i_w,i_p_dir) = 4._SP*pi*OBS_proj/Field
      !
    enddo
    !
@@ -287,7 +307,8 @@ subroutine RT_X_LRR_real_field(en)
  YAMBO_FREE(EELS)
  YAMBO_FREE(EPS)
  !
- call FT_free(Pol)
+ if (trim(X_kind)=="rhorho") call FT_free(Pol)
+ if (trim(X_kind)=="jj")     call FT_free(Curr)
  call FT_free(ElField)
  !
 end subroutine

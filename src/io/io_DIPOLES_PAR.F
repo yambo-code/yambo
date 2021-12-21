@@ -193,10 +193,10 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! Spin magntization
    !
-   VAR_ID=5
+   VAR_ID=6
    VAR_name='DIP_spin'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
  !
@@ -205,7 +205,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! P_Spinor
    !
-   VAR_ID=6
+   VAR_ID=7
    VAR_name='DIP_P_spinor'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
@@ -218,7 +218,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! P2
    !
-   VAR_ID=7
+   VAR_ID=8
    VAR_name='P_square'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,P2_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C4=P_square(:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=P2_ipos)

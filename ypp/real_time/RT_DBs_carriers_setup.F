@@ -30,11 +30,11 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  use IO_m,          ONLY:OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:Bose_Temp
- use RT_control,    ONLY:CARR_RT_IO_t
  use parallel_m,    ONLY:PAR_G_k_range
+ use RT_control,    ONLY:CARR_RT_IO_t,RT_carriers_to_RT_E
  use real_time,     ONLY:RT_carriers,NE_i_time,l_elel_scatt,l_elph_scatt,&
 &                        l_elphoton_scatt,RT_potential
- use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_kspace,l_RTpump_Fermi
+ use YPP_real_time, ONLY:l_RTpump_energy,l_RTpump_Fermi
  !
  implicit none
  !
@@ -43,13 +43,16 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  ! Work Space
  !
+ type(levels)      :: E_RT
+ !
  integer           :: io_RT_err,ID
  integer, external :: io_RT_components
  logical           :: SUCCESS
  character(schlen) :: sec_ch
  !
+ logical, allocatable :: do_kpt(:)
+ !
  if (l_RTpump_energy) sec_ch="Energy selection"
- if (l_RTpump_kspace) sec_ch="K-space selection"
  if (l_RTpump_Fermi)  sec_ch="Fermi function"
  !
  call section('*','Manual carriers excitation via '//trim(sec_ch))
@@ -72,9 +75,17 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_carriers_object(RT_carriers,en,kpt,ID,"allocate")
  !
- if(l_RTpump_energy .or. l_RTpump_kspace) call RT_manual_excitation(en,kpt,SUCCESS)
+ allocate(do_kpt(RT_carriers%nk))
  !
- if(l_RTpump_Fermi)                       call RT_Fermi_excitation(en,kpt,SUCCESS)
+ call RT_carriers_to_RT_E(en,E_RT,"Eo")
+ !
+ call RT_select_k_space(E_RT,kpt,do_kpt)
+ !
+ if(l_RTpump_energy) call RT_manual_excitation(E_RT,kpt,do_kpt,SUCCESS)
+ !
+ if(l_RTpump_Fermi)  call RT_Fermi_excitation(E_RT,kpt,do_kpt,SUCCESS)
+ !
+ deallocate(do_kpt)
  !
  if (.not.SUCCESS) then
    call warning("No level to be manually pumped found")
@@ -92,4 +103,85 @@ subroutine RT_DBs_carriers_setup(en,kpt,qpt)
  !
  call RT_free("carriers")
  !
-end subroutine
+end subroutine RT_DBs_carriers_setup
+!
+!
+subroutine RT_select_k_space(E_RT,kpt,do_kpt)
+ !
+ use com,            ONLY:msg
+ use pars,           ONLY:SP
+ use stderr,         ONLY:intc
+ use units,          ONLY:HA2EV
+ use vec_operate,    ONLY:c2a
+ use electrons,      ONLY:levels
+ use YPPm,           ONLY:coo_in,BANDS_path,CIRCUIT_k,CIRCUIT_k_label
+ use YPP_interfaces, ONLY:k_special
+ use R_lattice,      ONLY:bz_samp,k_the_nearest
+ use real_time,      ONLY:RT_carriers
+ use YPP_real_time,  ONLY:Eh_pumped_pair_BZ_width,Eh_pumped_pair_BZ_regions,&
+&                         Eh_pumped_pair_n_BZ_regions
+ !
+ implicit none
+ !
+ type(levels),  intent(in)  :: E_RT
+ type(bz_samp), intent(in)  :: kpt
+ logical,       intent(out) :: do_kpt(RT_carriers%nk)
+ !
+ integer      :: i_region,i_k_near,i_err
+ real(SP)     :: local_k(3),k_dist(RT_carriers%nk)
+ !
+ do_kpt=.true.
+ if(Eh_pumped_pair_n_BZ_regions==0) return
+ !
+ do_kpt=.false.
+ !
+ ! Use special points to select the region
+ !
+ call k_special( )
+ !
+ if (len_trim(BANDS_path)>0) call k_circuit_driver( BANDS_path, 0 )
+ !
+ do i_region=1,Eh_pumped_pair_n_BZ_regions
+   local_k=Eh_pumped_pair_BZ_regions(i_region,:)
+   !
+   if (trim(coo_in)=="cc")  call c2a(v_in=local_k,mode="kc2i")
+   if (trim(coo_in)=="rlu") call c2a(v_in=local_k,mode="ka2i")
+   !
+   i_k_near=k_the_nearest(local_k,RT_carriers%kpt,RT_carriers%nk,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
+   !
+   if (k_dist(i_k_near)<Eh_pumped_pair_BZ_width.or.Eh_pumped_pair_BZ_width<0) then
+     do_kpt(i_k_near)=.TRUE. 
+     call NEAR_k_report(i_k_near,local_k," ")
+   endif
+ enddo
+ !
+ do i_region=1,CIRCUIT_k%nbz
+   !
+   i_k_near=k_the_nearest(CIRCUIT_k%pt(i_region,:),RT_carriers%kpt,RT_carriers%nk,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
+   !
+   if (k_dist(i_k_near)<Eh_pumped_pair_BZ_width.or.Eh_pumped_pair_BZ_width<0) then
+     do_kpt(i_k_near)=.TRUE. 
+     call NEAR_k_report(i_k_near,CIRCUIT_k%pt(i_region,:),CIRCUIT_k_label(i_region))
+   endif
+ enddo
+ !
+ contains
+   !
+   subroutine NEAR_k_report( ik, u_k, label )
+     use pars,           ONLY:schlen
+     integer           :: ik,i_c,i_v
+     real(SP)          :: u_k(3)
+     character(*)      :: label
+     character(schlen) :: title
+     call msg('s','User    defined',u_k,after_msg="[iku]"//" "//trim(label))
+     call msg('s','Nearest k-point',RT_carriers%kpt(ik,:),after_msg="[iku][ik="//trim(intc(ik))//"]")
+     call msg('s','Distance       ',k_dist(ik),after_msg="[iku]")
+     do i_c=E_RT%nbf(1)+1,E_RT%nbf(1)+2
+       do i_v=E_RT%nbf(1)-1,E_RT%nbf(1)
+         title="Gap CBm+"//trim(intc(i_c-E_RT%nbf(1)))//" VBM-"//trim(intc(E_RT%nbf(1)-i_v))
+         call msg('s',trim(title),(E_RT%E(i_c,ik,1)-E_RT%E(i_v,ik,1))*HA2EV,after_msg="[ev]")
+       enddo 
+     enddo
+   end subroutine NEAR_k_report
+   !
+end subroutine RT_select_k_space

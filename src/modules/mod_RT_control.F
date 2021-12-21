@@ -55,6 +55,7 @@ module RT_control
  !
  logical                  :: RT_NAN_found=.FALSE.
  logical                  :: SAVE_G_history
+ logical                  :: l_project_spin_dipoles
  !
  type(RT_IO_t),save  :: OBS_RT_IO_t
  type(RT_IO_t),save  :: CARR_RT_IO_t
@@ -65,7 +66,7 @@ module RT_control
  !
  complex(SP), allocatable    :: J_cache(:,:)
  complex(SP), allocatable    :: P_cache(:,:)
- complex(SP), allocatable    :: Ms_cache(:,:)
+ complex(SP), allocatable    :: Ms_cache(:,:,:)
  complex(SP), allocatable    :: Ml_cache(:,:,:)
  complex(SP), allocatable    :: A_cache(:,:,:)
  !
@@ -74,6 +75,7 @@ module RT_control
  logical                 :: NEQ_Kernel=.FALSE.
  logical                 :: NEQ_Residuals=.FALSE.
  logical                 :: EQ_Transitions=.TRUE.
+ logical                 :: EQ_NoOcc=.FALSE.
  integer,      parameter :: N_RT_ctl_controls=3
  character(schlen)       :: RT_BSE_Occ_Mode="K"
  character(schlen)       :: RT_ctl_db(N_RT_ctl_controls)
@@ -136,7 +138,7 @@ module RT_control
        YAMBO_ALLOC(P_cache,(3,CACHE_OBS_steps))
        P_cache=cZERO
        if(n_spin>1) then
-         YAMBO_ALLOC(Ms_cache,(3,CACHE_OBS_steps))
+         YAMBO_ALLOC(Ms_cache,(3,3,CACHE_OBS_steps))
          Ms_cache=cZERO
          YAMBO_ALLOC(Ml_cache,(3,2,CACHE_OBS_steps))
          Ml_cache=cZERO
@@ -300,6 +302,23 @@ module RT_control
        endif
      endif
      !
+   end subroutine
+   !
+   subroutine RTibz_to_RT_k( K )
+     use R_lattice,      ONLY:bz_samp,bz_samp_reset
+     use real_time,      ONLY:RTibz
+     type(bz_samp) :: K
+     integer       :: ik
+     call bz_samp_reset(K)
+     K%units='i'
+     K%description="RT_GRID"
+     K%nibz=RTibz%N
+     YAMBO_ALLOC(K%pt,(K%nibz,3))
+     YAMBO_ALLOC(K%weights,(K%nibz))
+     do ik=1,K%nibz
+       K%pt(ik,:)   =RTibz%pt(ik,:)
+       K%weights(ik)=RTibz%weights(ik)
+     enddo
    end subroutine
    !
    subroutine RT_carriers_to_RT_k( K )

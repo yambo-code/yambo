@@ -293,16 +293,16 @@ module wrapper
    end subroutine vv_c
 
    !
-   subroutine vv_caxpy(N, CA, CX, LDA,  CY, LDB )
+   subroutine vv_caxpy(N, CA, CX, INCX,  CY, INCY )
      complex(SP), intent(in) :: CA
      integer,     intent(in) :: N
      complex(SP), intent(in) :: CX(*)
      complex(SP), intent(out):: CY(*)
-     integer,     intent(in) :: LDA,LDB
+     integer,     intent(in) :: INCX,INCY
 #if defined _DOUBLE
-     call ZAXPY(N,CA,CX,LDA,CY,LDB)
+     call ZAXPY(N,CA,CX,INCX,CY,INCY)
 #else
-     call CAXPY(N,CA,CX,LDA,CY,LDB)
+     call CAXPY(N,CA,CX,INCX,CY,INCY)
 #endif
    end subroutine vv_caxpy
    !

@@ -65,7 +65,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  use BS,           ONLY:l_BS_magnons,l_BS_photolum
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:EQ_Transitions
+ use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
 #endif
  !
 #include<memory.h>
@@ -119,6 +119,10 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  if (l_rt_carriers_in_use.and.EQ_Transitions) then
    V_bands=(/BS_bands(1),maxval(n_met_bands)/)
    C_bands=(/minval(n_full_bands)+1,BS_bands(2)/)
+ endif
+ if (EQ_NoOcc) then
+   V_bands=BS_bands
+   C_bands=BS_bands
  endif
 #endif
  !

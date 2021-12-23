@@ -57,10 +57,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
 #endif
 #if defined _HDF5_IO
  ! For I/O debug, see below
- !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
+ !use IO_m,           ONLY:netcdf_call
 #endif
  !
 #include <memory.h>
+ !
+ ! For I/O debug, see below
+#if defined _HDF5_IO
+!#include <netcdf.inc>
+#endif
  !
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
@@ -75,8 +80,8 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !
 #if defined _HDF5_IO
  ! This is very useful for I/O debug
- ! NETCDF library need to be compiled with --enable-loggning flag
- ! call netcdf_call(nf90_set_log_level(3),1)
+ ! NETCDF library need to be compiled with --enable-logging flag
+ !call netcdf_call(nf_set_log_level(3),1)
 #endif
  !
  call section('*','CORE Variables Setup') 

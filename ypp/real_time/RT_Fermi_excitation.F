@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fermi_excitation(E,k,SUCCESS)
+subroutine RT_Fermi_excitation(E,k,do_kpt,SUCCESS)
  !
  ! What I want is:
  ! [i]   Select arbitrarily chemical potentials for holes and electrons 
@@ -42,6 +42,7 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
+ logical,       intent(in) :: do_kpt(RT_carriers%nk)
  logical,       intent(out):: SUCCESS
  !
  ! Work Space
@@ -105,6 +106,8 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
        ib = RT_carriers%table(i_RT,1)
        ik = RT_carriers%table(i_RT,2)
        !
+       if(.not.do_kpt(ik)) cycle
+       !
        if(E%E(ib,ik,1)<=E%E_VBM(1)) then
          RT_carriers%OCC_el%dN(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-mu_hole),Eh_temp(1))
          delta_Nho=delta_Nho+RT_carriers%OCC_el%dN(i_RT)*k%weights(ik)
@@ -116,6 +119,7 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
        endif
        !
      enddo
+     !
    end subroutine
    !
 end subroutine RT_Fermi_excitation

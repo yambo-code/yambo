@@ -94,7 +94,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use SC,         ONLY:SC_iterations,SC_rho_threshold,SC_potential,OEP_approx,l_NSC_shot,&
 &                     compatible_SC_DB,SC_cycle_mixing,SC_fft_size,found_SC_DB,&
 &                     l_Mean_Potential,SC_up_W_iters,l_SC_diagonal,&
-&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc
+&                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
@@ -107,12 +107,12 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use RT_lifetimes,ONLY:RT_life_extrap_times
- use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,&
+ use real_time,  ONLY:RT_step,NE_steps,NE_time,Integrator_name,RT_deph_range,&
 &                     Gr_kind,two_alpha,RAD_LifeTime,Phase_LifeTime,&
 &                     NE_tot_time,NE_MEM_treshold,RT_eh_en,l_update_SOC,&
 &                     DbGd_EE_percent,RT_scatt_tresh,integrator_step,RT_nk,&
-&                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,&
-&                     RT_deph_deg_thresh,RT_deph_cv_only,&
+&                     i_MEM_old,i_MEM_prev,i_MEM_now,G_MEM_steps,RT_step_manual_prefactor,&
+&                     RT_deph_deg_thresh,RT_deph_cv_only,NE_time_step_update_manual,&
 &                     NE_time_step_update_last_point,NE_time_step_update_jump,NE_time_step_update_jump_INPUT, &
 &                     NE_initial_time_step_update,NE_step_update_treshold
  use fields,     ONLY:Efield,Efield_reset,n_ext_fields_max,n_ext_fields,A_vecpot_reset,   &
@@ -533,13 +533,18 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #endif
  !
-#if defined _SC || defined _RT || defined _QED
+#if defined _SC || defined _RT || defined _QED || defined _NL
  !
  call COLLISIONS_naming( 0 , "all" )
  !
  ! COLLISIONS I/O
  !
+# if defined _PAR_IO
+ COLLISIONS_cutoff=0.0000_SP
+# else
  COLLISIONS_cutoff=0.0005_SP
+# endif
+ !
  H_potential="NONE"
  !
 #endif
@@ -562,6 +567,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_SC_diagonal=.FALSE.
  l_SC_nl_mix =.FALSE.
  l_NSC_shot  =.FALSE.
+ !
+ SC_neq_kind   ='none'
+ SC_last_coh_it=50
  !
  call IO_desc_reset(SC_desc)
  !
@@ -586,6 +594,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT current 
  !
+ RT_step_manual_prefactor=0._SP
  RT_step=0.010*FS2AUT
  NE_steps=1
  NE_time=0._SP
@@ -596,6 +605,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NE_time_step_update_jump_INPUT  = 0._SP
  NE_initial_time_step_update    = 0._SP
  NE_step_update_treshold        = 0.1_SP
+ NE_time_step_update_manual     =-1.0_SP
  !
  CACHE_OBS_steps      = 0
  CACHE_OBS_steps_now  = 0
@@ -612,9 +622,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Integrator_name='RK2'
  !
  RAD_LifeTime = 0._SP
+#if defined _NL
+ RAD_LifeTime = -1._SP*FS2AUT  ! Automatic set equal to the dephasing
+#endif
  Phase_LifeTime = 0._SP
  RT_deph_deg_thresh = 1.E-5_SP
  RT_deph_cv_only =.FALSE.
+ RT_deph_range=-1._SP
  !
  NE_MEM_treshold=0._SP
  RT_nk=0
@@ -665,14 +679,22 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
  NL_er         =(/0.2_SP,8._SP/)/HA2EV
- n_frequencies =80
+ n_frequencies =1
  n_order    = 0
  NL_damping    =0.2_SP/HA2EV
  NL_LRC_alpha  =0._SP
- call Efield_reset(Efield(1))
- Efield(1)%frequency=0.1_SP/HA2EV
+ !
+ do i1=1,n_ext_fields_max
+   call Efield_reset(Efield(i1))
+   Efield(i1)%frequency=0.1_SP/HA2EV
+   Efield(i1)%intensity=0.0_SP
+   Efield(i1)%FWHM=2._SP*FS2AUT
+   Efield(i1)%ef_name="none"
+   Efield(i1)%versor =(/0._SP,0._SP,0._SP/)
+ enddo
+ !
+ Efield(1)%versor =(/0._SP,0._SP,0._SP/)
  Efield(1)%intensity=1000._SP*kWCMm22AU
- Efield(1)%FWHM=2._SP*FS2AUT
  Efield(1)%ef_name="SOFTSIN"
  NL_verb_name='high'
  !

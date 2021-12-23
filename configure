@@ -9901,7 +9901,6 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   cd lib
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking the yambo-libraries git repository" >&5
 $as_echo_n "checking the yambo-libraries git repository... " >&6; }
-  cd $srcdir/lib/
   if ! test -d "yambo/driver/src"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
   else

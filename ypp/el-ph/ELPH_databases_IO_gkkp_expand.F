@@ -91,8 +91,6 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
    !
    if(l_use_qindxB) then
      !
-     ! Use qindx_B to expand gkkp
-     !
      do ok_bz=1,k%nbz
        !
        qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)

@@ -70,20 +70,22 @@ module fields
  contains
    !
    logical function field_is_ok(E_field)
+     use stderr,        ONLY:STRING_same
      type(ext_field)   ::E_field
-     field_is_ok= any((/ trim(E_field%ef_name) == 'SIN' ,&
-&                        trim(E_field%ef_name) == 'SOFTSIN' ,& 
-&                        trim(E_field%ef_name) == 'ANTIRES' ,& 
-&                        trim(E_field%ef_name) == 'RES' ,& 
-&                        trim(E_field%ef_name) == 'DELTA' ,& 
-&                        trim(E_field%ef_name) == 'GAUSS' ,& 
-&                        trim(E_field%ef_name) == 'THETA' ,& 
-&                        trim(E_field%ef_name) == 'PULSE' ,& 
-&                        trim(E_field%ef_name) == 'QSSIN' ,&
-&                        trim(E_field%ef_name) == 'SPULSE',&
-&                        trim(E_field%ef_name) == 'QSFIELD' /)) .and. &
-&                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
-&                        trim(E_field%ef_pol)  == 'circular' /))
+     field_is_ok= any((/ STRING_same(E_field%ef_name,'SIN') ,&
+&                        STRING_same(E_field%ef_name,'COS') ,& 
+&                        STRING_same(E_field%ef_name,'SOFTSIN') ,& 
+&                        STRING_same(E_field%ef_name,'ANTIRES') ,& 
+&                        STRING_same(E_field%ef_name,'RES') ,& 
+&                        STRING_same(E_field%ef_name,'DELTA') ,& 
+&                        STRING_same(E_field%ef_name,'GAUSS') ,& 
+&                        STRING_same(E_field%ef_name,'THETA') ,& 
+&                        STRING_same(E_field%ef_name,'PULSE') ,& 
+&                        STRING_same(E_field%ef_name,'QSSIN') ,&
+&                        STRING_same(E_field%ef_name,'SPULSE'),&
+&                        STRING_same(E_field%ef_name,'QSFIELD') /)) .and. &
+&                 any((/ STRING_same(E_field%ef_pol,'linear') ,&
+&                        STRING_same(E_field%ef_pol,'circular') /))
    end function
    !
    real(SP) function EtoT(E,T)
@@ -159,6 +161,16 @@ module fields
            if (order==0 ) f_t(i_field)=f_t(i_field)-    (cos(WtimesT)-1._SP)/W_field
            if (order==1 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)
            if (order==2 ) f_t(i_field)=f_t(i_field)+W_field*cos(WtimesT)
+         enddo 
+         !
+         !
+       case('COS')
+         do i_fr=1,E_field%n_frequencies     
+           W_field=field_frequency(E_field,i_fr)
+           WtimesT=W_field*T+fr_shift(i_field)
+           if (order==0 ) f_t(i_field)=f_t(i_field)+     sin(WtimesT)/W_field
+           if (order==1 ) f_t(i_field)=f_t(i_field)+     cos(WtimesT)
+           if (order==2 ) f_t(i_field)=f_t(i_field)-W_field*sin(WtimesT)
          enddo 
          !
        case('SOFTSIN')

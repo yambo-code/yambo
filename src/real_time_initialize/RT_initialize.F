@@ -237,10 +237,9 @@ subroutine RT_initialize(E,k,q)
    !
    MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
    !
-   if((Efield(i1)%ef_name/='none')) then
+   if(trim(Efield(i1)%ef_name)/='none') then
      !
-     if (.not.field_is_ok( Efield(i1)) ) &
-&      call error(trim(MSG_ch)//' not supported or polarization is wrong')
+     if (.not.field_is_ok( Efield(i1)) ) call error(trim(MSG_ch)//' not supported or polarization is wrong')
      !
      l_NE_with_fields=.true.
      !

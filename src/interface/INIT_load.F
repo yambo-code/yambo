@@ -725,12 +725,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &            Efield(i_field)%width,unit=Time_unit(1))
      call it(defs,trim(name)//'_FWHM',            '[RT '//trim(name)//'] Full Width at Half Maximum (overwrite width if set)',&
 &            Efield(i_field)%FWHM,unit=Time_unit(1),verb_level=V_real_time)
-     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
-&            Efield(i_field)%ef_name,verb_level=V_real_time)
+     call it(defs,trim(name)//'_kind',            '[RT '//trim(name)//'] Kind(SIN|COS|RES|ANTIRES|GAUSS|DELTA|QSSIN)',&
+&            Efield(i_field)%ef_name)
      call it(defs,trim(name)//'_pol',             '[RT '//trim(name)//'] Pol(linear|circular)',&
-&            Efield(i_field)%ef_pol,verb_level=V_real_time)
+&            Efield(i_field)%ef_pol)
      call it(defs,trim(name)//'_Dir',             '[RT '//trim(name)//'] Versor',&
-&            Efield(i_field)%versor,verb_level=V_real_time)
+&            Efield(i_field)%versor)
      call it(defs,trim(name)//'_Dir_circ',        '[RT '//trim(name)//'] Versor_circ',&
 &            Efield(i_field)%versor_circ,verb_level=V_real_time)
      call it(defs,trim(name)//'_Tstart',          '[RT '//trim(name)//'] Initial Time',&

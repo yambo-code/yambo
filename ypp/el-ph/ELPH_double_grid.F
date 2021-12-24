@@ -223,7 +223,7 @@ subroutine ELPH_double_grid(k,E,q)
    !
  endif
  !
- if(E%nbm/=E%nbf) call error("This code for the moment works only for semiconductors/insulators")
+ if(any(E%nbm/=E%nbf)) call error("ELPH_double_grid: This code for the moment works only for semiconductors/insulators")
  !
  ! Final I/O
  !===========

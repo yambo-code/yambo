@@ -31,7 +31,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions
+ use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
 #endif
  !
  implicit none
@@ -106,6 +106,17 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  endif
  !
  f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ !
+#if defined _RT
+ if(EQ_NoOcc) then
+   f_eh_REF=1._SP
+   f_eh    =1._SP
+   f_eh_RES=1._SP
+   f_check =1._SP
+   f_e     =1._SP
+   f_h     =1._SP
+ endif
+#endif
  !
  ! A 0.001 % fractional occupation swiches on the particular treatment of finite temp. BSE 
  if ( abs(abs(f_eh_REF)-1._SP)> filled_tresh ) BS_not_const_eh_f=.TRUE.

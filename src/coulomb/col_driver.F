@@ -48,13 +48,14 @@ subroutine col_driver(bare_NG,q)
  use pars,          ONLY:SP,schlen,pi
  use drivers,       ONLY:l_rim,l_col_cut
  use parser_m,      ONLY:parser
- use stderr,        ONLY:STRING_pack,intc,gen_fmt
+ use stderr,        ONLY:STRING_pack,intc,gen_fmt,STRING_split
  use com,           ONLY:msg
  use vec_operate,   ONLY:iku_v_norm,sort
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:d3q_factor,RIM_is_diagonal,RIM_qpg,bare_qpg,&
 &                        nqibz,g_vec,q_pt,nqbz,RIM_ng,RIM_n_rand_pts,&
-&                        bz_samp,q_norm,cutoff_presets,bare_qpg_d
+&                        bz_samp,q_norm,cutoff_presets,bare_qpg_d,&
+&                        cut_geometry,cut_is_slab,idir
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
@@ -66,7 +67,7 @@ subroutine col_driver(bare_NG,q)
  !
  ! Work Space
  !
- logical          :: l_RandQpts
+ logical          :: l_RandQpts,is_cut(3)
  integer          :: ig,iq,ID,io_err
  integer, external:: io_RIM
  !
@@ -75,6 +76,7 @@ subroutine col_driver(bare_NG,q)
  integer          :: q_norm_i(nqibz),i1,i2
  real(SP)         :: r_dum(2),q_norm_s(nqibz)
  character(schlen):: ch_dum,fmt_dum,msg_dum(2)
+ character(schlen):: str_piece(5)
  !
  ! Bare interaction
  !
@@ -105,6 +107,33 @@ subroutine col_driver(bare_NG,q)
  call parser('QpgFull',RIM_is_diagonal)
  RIM_is_diagonal=.not.RIM_is_diagonal
  !
+ !Here, we need to check if we want to perform the RIM
+ !of bare_qpg or the RIM of cutoff_slab
+ !
+ call STRING_split(cut_geometry,str_piece)
+ !
+ cut_is_slab=trim(str_piece(1))=='slab'
+ !
+ ! Cutoffed directions
+ !
+ is_cut(1)=index(str_piece(2),'x')/=0.or.index(str_piece(2),'X')/=0
+ is_cut(2)=index(str_piece(2),'y')/=0.or.index(str_piece(2),'Y')/=0
+ is_cut(3)=index(str_piece(2),'z')/=0.or.index(str_piece(2),'Z')/=0
+ !
+ if(is_cut(1)) then
+   idir(1) = 1
+   idir(2) = 2
+   idir(3) = 3
+ elseif(is_cut(2)) then
+   idir(1) = 2
+   idir(2) = 1
+   idir(3) = 3
+ elseif(is_cut(3)) then
+   idir(1) = 3
+   idir(2) = 2
+   idir(3) = 1
+ endif
+ !
  if (l_rim) then
    !
    call section('*','Coloumb potential Random Integration (RIM)')
@@ -113,7 +142,10 @@ subroutine col_driver(bare_NG,q)
    io_err=io_RIM(ID)
    !
    if (io_err/=0) then
-     call rim()
+     if (cut_is_slab) then
+       call msg('nr','Performing RIM of v_slab')
+     endif
+     call rim("x")
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
      io_err=io_RIM(ID)
    endif

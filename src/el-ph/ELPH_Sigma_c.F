@@ -301,7 +301,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      !
      if (.not.elph_use_q_grid.or.elph_grids_are_expanded) then
        !
-       if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf,1,1)-en%E(en%nbf,1,1)
+       if (iq_bz==1) E_random_shift=GKKP%E_kpq(iq_db)%E(en%nbf(1),1,1)-en%E(en%nbf(1),1,1)
        !
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !

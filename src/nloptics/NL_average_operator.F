@@ -40,7 +40,7 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
  !
  type(bz_samp), intent(in) :: k
  type(levels),  intent(in) :: en
- complex(SP),   intent(in) :: V_bands(NL_bands(2),en%nbf,QP_nk, n_sp_pol)
+ complex(SP),   intent(in) :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk, n_sp_pol)
  integer,       intent(in) :: nK_mem
  !
  ! Optionals
@@ -91,7 +91,7 @@ subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
      if(OUTPUT_dim==1) Hk(1,:,:)    =Hk_tmp(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2))
      if(OUTPUT_dim==3) Hk(i_dir,:,:)=Hk_vec_tmp(i_dir,:,:)
      !
-     do iv=1,en%nbf
+     do iv=1,en%nbf(i_sp_pol)
        call M_by_V_omp(op,NL_nbands,NL_nbands,cONE,Hk(i_dir,:,:),NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol) &
 &               ,1,cZERO,V_tmp,1)
        VALUE_tmp(i_dir)=VALUE_tmp(i_dir)+spin_occ*Vstar_dot_V_omp(NL_nbands,V_bands(NL_bands(1):,iv,ik_ibz,i_sp_pol),V_tmp) 

@@ -57,7 +57,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output(what=trim(what)//" curr pol")
    !
-   call RT_output(what=trim(what)//" carr magn")
+   call RT_output(what=trim(what)//" carr spin orbt")
    if (eval_energy)  call RT_output(what=trim(what)//" energy")
    if (eval_entropy) call RT_output(what=trim(what)//" therm")
    if (l_RT_update_Energies) call RT_output(what=trim(what)//" BGR")
@@ -108,7 +108,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Energetics and BGR
    !====================
    !
-   call RT_output('magn',TIME=NE_time*AUT2FS)
+   call RT_output('spin orbt',TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)

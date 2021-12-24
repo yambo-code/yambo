@@ -78,7 +78,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if (l_BS_photolum) global_gauge="velocity"
  !
  if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
-   call warning(" Not a valid gauge in input. Switching to lenght gauge")
+   call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
  endif
  !

@@ -99,7 +99,7 @@ integer function io_RT_components(what,ID)
  integer               :: local_COMM
 #endif
  integer               :: ik,db_type,T_size,G_IO_steps,ID_frag
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP,l_M,l_D,&
+ logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP_REF,l_JP,l_M,l_D,&
 &                         loading_carr_before_neq,par_IO
  !
  ! DB kind and name...
@@ -111,15 +111,17 @@ integer function io_RT_components(what,ID)
  !
  !...OBSERVABLES
  !===============
+ l_JP_REF     =what=="JP_REF".or.what=="OBSERVABLES_REF"
  l_JP         =what=="JP".or.what=="OBSERVABLES"
  l_M          =what=="M".or.what=="OBSERVABLES"
  l_D          =what=="D".or.what=="OBSERVABLES"
- l_OBS        =l_JP.or.l_M.or.l_D
+ l_OBS        =l_JP.or.l_M.or.l_D.or.l_JP_REF
  !
  call timing('io_RT_components',OPR='start')
  !
  db_name="RT_"//trim(what)
  if (l_OBS)    db_name="RT_OBSERVABLES"
+ if (l_JP_REF) db_name="RT_OBSERVABLES_REF"
  if (l_REF)    db_name="RT_reference_components"
  !
  ID_frag=0
@@ -170,10 +172,12 @@ integer function io_RT_components(what,ID)
  !=============
  if (any((/io_sec(ID,:)==1/))) then
    !
-   call io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
-   if (io_RT_components/=0) goto 1
+   if (.not.l_JP_REF) then
+     call io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
+     if (io_RT_components/=0) goto 1
+   endif
    !
-   if (l_OBS)  call io_RT_components_OBS(ID,l_JP,l_M,"DEF")
+   if (l_OBS)  call io_RT_components_OBS(ID,l_JP.or.l_JP_REF,l_M,"DEF")
    !
    if ( l_carriers .and. .not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
    !
@@ -200,7 +204,7 @@ integer function io_RT_components(what,ID)
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if(any((/l_OBS,l_G,l_carriers/)) .and. .not.loading_carr_before_neq ) then
+   if(any((/l_OBS,l_G,l_carriers/)) .and. .not.(loading_carr_before_neq.or.l_JP_REF) ) then
      io_RT_components=variables_RT_dynamic(ID)
      if (io_RT_components/=0) goto 1
    endif
@@ -262,7 +266,7 @@ integer function io_RT_components(what,ID)
  !
  ! Current and Polarization
  !==========================
- if (l_OBS) call io_RT_components_OBS(ID,l_JP,l_M,"FILL")
+ if (l_OBS) call io_RT_components_OBS(ID,l_JP.or.l_JP_REF,l_M,"FILL")
  !
 #if !defined _PAR_IO
  if (l_THETA.or.l_G) call io_fragment_disconnect(ID,ID_frag)

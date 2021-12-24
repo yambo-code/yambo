@@ -35,10 +35,10 @@ subroutine RT_output(what,VALUES,TIME,E)
  use RT_output_m,    ONLY:N_MAX_RT_o_files,RT_descriptors_dumped,RT_o_file_is_open,&
 &                         N_RT_o_files,RT_o_file_is_open,RT_o_file_short,RT_o_file_long,&
 &                         n_RT_headings,RT_headings,N_MAX_RT_headings,RT_desc,Gr_desc,TIME_STEP_desc
- use RT_control,     ONLY:RT_NAN_found,OUTPUT_RT_IO_t
+ use RT_control,     ONLY:RT_NAN_found,OUTPUT_RT_IO_t,l_project_spin_dipoles
  use RT_lifetimes,   ONLY:l_RT_lifetimes_Tfit,&
 &                         RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life
- use real_time,      ONLY:RT_ind_J,RT_P,RT_spin_magn,NE_i_time
+ use real_time,      ONLY:RT_ind_J,RT_P,RT_spin_magn,RT_orbt_magn,NE_i_time
  use timing_m,       ONLY:timing
  use C_driver,       ONLY:code_bin
  use functions,      ONLY:NAN
@@ -142,7 +142,7 @@ subroutine RT_output(what,VALUES,TIME,E)
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',FineGd_desc)
      call DESC_write('o '//trim(RT_o_file_short(i_f)),'#',TIME_STEP_desc)
      !
-     if (n_spin>1.and.trim(RT_o_file_short(i_f))=="magnetization") then
+     if (n_spin>1.and.trim(RT_o_file_short(i_f))=="spin_magnetization") then
        call msg('o '//trim(RT_o_file_short(i_f)),'#')
        dumb_ch="Equilibrium spin magnetization"
        call msg('o '//trim(RT_o_file_short(i_f)),com_compose_msg(pre='# ',body=dumb_ch),&
@@ -179,17 +179,25 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')
        data_to_dump(2:4) =real(RT_P)
-    !
-     case('magnetization')
-       data_to_dump(2: 4) = real(RT_spin_magn)
+     !
+     case('spin_magnetization')
+       data_to_dump(2: 4) = real(RT_spin_magn(:,1))
+       if (l_project_spin_dipoles) then
+         data_to_dump(5: 7) = real(RT_spin_magn(:,2))
+         data_to_dump(8:10) = real(RT_spin_magn(:,3))
+       endif
+     case('orbt_magnetization')
+       data_to_dump(2: 4) = real(RT_orbt_magn(:,1))
+       data_to_dump(5: 7) = real(RT_orbt_magn(:,2))
      case('total_field')
        data_to_dump(2:4) = -real(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_tot%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
      case('external_field')
        data_to_dump(2:4) = -real(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ext%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
-       data_to_dump(8)=A_ext%intensity*AU2KWCMm2
-       data_to_dump(9)=A_ext%fluence*AU2KWCMm2/real(PS2AUT,SP)
+       data_to_dump(8)   =A_ext%envelop  *AU2VMm1
+       data_to_dump(9)   =A_ext%intensity*AU2KWCMm2
+       data_to_dump(10)  =A_ext%fluence  *AU2KWCMm2/real(PS2AUT,SP)
      case('induced_field')
        data_to_dump(2:4) = -real(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
        data_to_dump(5:7) =-aimag(A_ind%vecpot_vel(:))/SPEED_OF_LIGHT*AU2VMm1
@@ -200,7 +208,7 @@ subroutine RT_output(what,VALUES,TIME,E)
        if(.not.l_use_Hxc_collisions) data_to_dump(2:6) = VALUES(1:5)
      case('carriers')
        data_to_dump(2:4) = VALUES(1:3)
-       if(RT_EE_life%active.or.RT_EP_emit_life%active) data_to_dump(5:6) = VALUES(4:5)
+       if(RT_EE_life%active.or.RT_EP_emit_life%active) data_to_dump(5:8) = VALUES(4:7)
      case('thermodynamics')
        data_to_dump(2: 4) = VALUES(1:3)*HA2EV
        data_to_dump(5: 7) = VALUES(4:6)*HA2EV/HA2KEL

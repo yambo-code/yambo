@@ -61,7 +61,7 @@ subroutine OEP_driver(X,Xw,E,k,q,V_oep)
  !
  real(SP)    ::V_io(fft_size)
  real(SP),allocatable    ::rho(:),V_slt(:)
- complex(SP)             ::W(nkibz,n_met_bands,fft_size)
+ complex(SP)             ::W(nkibz,maxval(n_met_bands),fft_size)
  !
  V_io = V_oep
  V_oep= 0._SP

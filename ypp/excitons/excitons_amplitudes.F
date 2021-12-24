@@ -65,7 +65,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    !
    ! ... Dimensions
    DIPs%ib    =BS_bands
-   DIPs%ib_lim=(/Xen%nbm,Xen%nbf+1/)
+   DIPs%ib_lim=(/maxval(Xen%nbm),minval(Xen%nbf)+1/)
    !
    ! ... PARALLEL setup
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)

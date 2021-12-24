@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
+subroutine PH_Grid_Check_Transitions(iq,k,q,bands,k_FG,E_FG)
  !
  ! This routine selects the indices of the PH mediated transitions. 
  !
@@ -40,10 +40,10 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use real_time,      ONLY:RT_eh_en
  use ELPH,           ONLY:elph_branches,PH_acoustic_branch
- use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands,PARs_PH_Q_ibz
+ use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_eh_bands
  use QP_m,           ONLY:QP_G_damp
  use LIVE_t,         ONLY:live_timing
- use PHEL,           ONLY:phel_info,PH_Q,PHEL_broad_factor,PHEL_gimme_Ks,PH_energy,&
+ use PHEL,           ONLY:phel_info,PHEL_broad_factor,PHEL_gimme_Ks,PH_energy,&
 &                         PHEL_N_trans_yes,PHEL_N_trans_tot,PHEL_nTrans_percent,PHEL_Q_Radius
  use X_m,            ONLY:X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use timing_m,       ONLY:timing
@@ -51,7 +51,7 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
 #include<memory.h>
  !
  type(bz_samp),     intent(in)    :: k,q
- integer,           intent(in)    :: bands(2),iq_eval
+ integer,           intent(in)    :: bands(2),iq
  type(bz_fine_grid),intent(inout) :: k_FG
  type(E_fine_grid) ,intent(in)    :: E_FG
  !
@@ -59,12 +59,12 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
  !
  logical               :: l_phel_allowed,l_cycle
  real(SP)              :: ph_freq
- integer               :: i_loop,i_trans,iq_range(2),N_steps
+ integer               :: i_loop,i_trans
  character(schlen)     :: sec_name(2)
  ! ... band/branch index ...
  integer               :: il,i_n,i_np
  ! ... BZ index ...
- integer               :: iq,ikbz,ik,ik_m_q,ik_rim,ip_rim
+ integer               :: ikbz,ik,ik_m_q,ik_rim,ip_rim
  ! ... energy related quantities ...
  real(SP)              :: DELTA_E,DELTA_W
  !
@@ -73,16 +73,9 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
  !
  sec_name(1)='Compatibility scan'
  sec_name(2)='Compatibility fill'
- if (iq_eval>0) then
-   iq_range=iq_eval
-   N_steps=PARs_PH_K_bz%N_par
-   do i_loop=1,2
-     sec_name(i_loop)=trim(sec_name(i_loop))//"@Q"//trim(intc(iq_eval))
-   enddo
- else
-   iq_range=PH_Q
-   N_steps=PARs_PH_Q_ibz%N_par*PARs_PH_K_bz%N_par
- endif
+ do i_loop=1,2
+   sec_name(i_loop)=trim(sec_name(i_loop))//"@Q"//trim(intc(iq))
+ enddo
  !
  call timing("Compatibility scan and fill",OPR='start')
  !
@@ -90,97 +83,92 @@ subroutine PH_Grid_Check_Transitions(iq_eval,k,q,bands,k_FG,E_FG)
    !
    if (i_loop==2) then
      if (phel_info%N==0) call error('No allowed scattering found')
-     YAMBO_ALLOC(phel_info%table,(phel_info%N,6) )
+     YAMBO_ALLOC(phel_info%table,(phel_info%N,5) )
    endif
    !
-   call live_timing(trim(sec_name(i_loop)),N_steps)
+   call live_timing(trim(sec_name(i_loop)),PARs_PH_K_bz%N_par)
    !
-   phel_info%N    = 0
+   phel_info%N          =0
+   PHEL_N_trans_yes(iq) =0
+   PHEL_N_trans_tot(iq) =0
    ! 
    ! Main loop over iq in the ibz
    !==============================
-   do iq=iq_range(1),iq_range(2)
-     !
-     if (iq_range(1)/=iq_range(2)) then
-       if (.not.PARs_PH_Q_ibz%IND%element_1D(iq)) cycle
-     endif
-     !
-     call X_Double_Grid_setup(iq,k,k_FG,nTrans_percent=PHEL_nTrans_percent(iq),Radius=PHEL_Q_Radius(iq))
-     !
-     ! Inner loop over ik in the bz
-     !==============================
-     do ikbz=1,k%nbz
-       !
-       if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
-       !
-#if defined _RT
-       call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.TRUE.)
-#else
-       call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.FALSE.)
-#endif
-       !
-       ! Loop over il, i.e., phonon branches
-       !====================================    
-       do il=elph_branches(1),elph_branches(2)
-         !
-         ph_freq=PH_energy(q,il,iq)
-         !
-         if (iq==1 .and. PH_acoustic_branch(il)) cycle
-         !
-         ! Loops over i_n, i_np, i.e., electronic bands
-         !==============================================
-         do i_n=bands(1),bands(2)
-           !
-           do i_np=bands(1),bands(2)
-             !
-             if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
-             !
-             ! Loops over fine grid kpoints 
-             !==============================    
-             do i_trans=1,X_DbGd_nkpt_at_q(ikbz)
-               !
-               ik_rim=X_DbGd_nkpt_at_q_table(ikbz,i_trans,1)
-               ip_rim=X_DbGd_nkpt_at_q_table(ikbz,i_trans,2)
-               !
-               call eval_delta_E_W(i_n,ik_rim,i_np,ip_rim,l_cycle)
-               if (l_cycle) cycle
-               !
-               ! Select energy-allowed transitions
-               !=================================== 
-               l_phel_allowed=.TRUE.
-               if (l_life) then
-                 l_phel_allowed = abs(DELTA_E-ph_freq)<PHEL_broad_factor*QP_G_damp.or.&
-&                                 abs(DELTA_E+ph_freq)<PHEL_broad_factor*QP_G_damp
-               endif
-               !
-               if (l_phel_allowed) then
-                 !
-                 phel_info%N          = phel_info%N+1
-                 PHEL_N_trans_yes(iq) = PHEL_N_trans_yes(iq)+1
-                 !
-                 if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,iq,ik_rim,ip_rim,i_n,i_np/)
-                 !
-               endif
-               !
-               PHEL_N_trans_tot(iq) = PHEL_N_trans_tot(iq)+1
-               !
-             enddo ! Fine-Grid transitions
-             !
-           enddo ! i_np i.e. (mk-q) 
-           !
-         enddo ! i_n i.e. (nk)
-         !
-       enddo ! il
-       !
-       call live_timing( steps=1 )
-       !
-     enddo ! ikbz
-     !
-     YAMBO_FREE(X_DbGd_nkpt_at_q)
-     YAMBO_FREE(X_DbGd_nkpt_at_q_table)
-     ! 
-   enddo ! iq
    !
+   call X_Double_Grid_setup(iq,k,k_FG,nTrans_percent=PHEL_nTrans_percent(iq),Radius=PHEL_Q_Radius(iq))
+   !
+   ! Inner loop over ik in the bz
+   !==============================
+   do ikbz=1,k%nbz
+     !
+     if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
+     !
+#if defined _RT
+     call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.TRUE.)
+#else
+     call PHEL_gimme_Ks(k,iq,ikbz,ik,ik_m_q,.FALSE.)
+#endif
+     !
+     ! Loop over il, i.e., phonon branches
+     !====================================    
+     do il=elph_branches(1),elph_branches(2)
+       !
+       ph_freq=PH_energy(q,il,iq)
+       !
+       if (iq==1 .and. PH_acoustic_branch(il)) cycle
+       !
+       ! Loops over i_n, i_np, i.e., electronic bands
+       !==============================================
+       do i_n=bands(1),bands(2)
+         !
+         do i_np=bands(1),bands(2)
+           !
+           if ( .not. PARs_PH_eh_bands%IND%element_1D( B_mat_index(i_n,i_np,bands) ) ) cycle
+           !
+           ! Loops over fine grid kpoints 
+           !==============================    
+           do i_trans=1,X_DbGd_nkpt_at_q(ikbz)
+             !
+             ik_rim=X_DbGd_nkpt_at_q_table(ikbz,i_trans,1)
+             ip_rim=X_DbGd_nkpt_at_q_table(ikbz,i_trans,2)
+             !
+             call eval_delta_E_W(i_n,ik_rim,i_np,ip_rim,l_cycle)
+             if (l_cycle) cycle
+             !
+             ! Select energy-allowed transitions
+             !=================================== 
+             l_phel_allowed=.TRUE.
+             if (l_life) then
+               l_phel_allowed = abs(DELTA_E-ph_freq)<PHEL_broad_factor*QP_G_damp.or.&
+&                               abs(DELTA_E+ph_freq)<PHEL_broad_factor*QP_G_damp
+             endif
+             !
+             if (l_phel_allowed) then
+               !
+               phel_info%N          = phel_info%N+1
+               PHEL_N_trans_yes(iq) = PHEL_N_trans_yes(iq)+1
+               !
+               if (i_loop==2) phel_info%table(phel_info%N,:)= (/il,ik_rim,ip_rim,i_n,i_np/)
+               !
+             endif
+             !
+             PHEL_N_trans_tot(iq) = PHEL_N_trans_tot(iq)+1
+             !
+           enddo ! Fine-Grid transitions
+           !
+         enddo ! i_np i.e. (mk-q) 
+         !
+       enddo ! i_n i.e. (nk)
+       !
+     enddo ! il
+     !
+     call live_timing( steps=1 )
+     !
+   enddo ! ikbz
+   !
+   YAMBO_FREE(X_DbGd_nkpt_at_q)
+   YAMBO_FREE(X_DbGd_nkpt_at_q_table)
+   ! 
    call live_timing( )
    !
  enddo ! i_loop

@@ -1,5 +1,5 @@
 #if defined _RT_SCATT
 objs = RT_driver.o RT_relaxation.o
 #else
-objs = RT_driver.o RT_empty.o
+objs = RT_driver.o RT_empty_driver.o
 #endif

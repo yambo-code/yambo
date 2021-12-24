@@ -55,8 +55,8 @@ module electric
      type(levels), intent(in) :: en
      !
      YAMBO_ALLOC(All_S_det,(6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(Sm1_plus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(Sm1_minus,(en%nbf,en%nbf,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_plus,(maxval(en%nbf),maxval(en%nbf),6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(Sm1_minus,(maxval(en%nbf),maxval(en%nbf),6,nXkbz,n_sp_pol))
      !
    end subroutine ELECTRIC_alloc
    

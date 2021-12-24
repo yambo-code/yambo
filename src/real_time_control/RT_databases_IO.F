@@ -92,7 +92,7 @@ subroutine RT_databases_IO(E,DO_IT)
      J_cache(1:3,CACHE_OBS_steps_now)=RT_ind_J
      P_cache(1:3,CACHE_OBS_steps_now)=RT_P
      if(n_spin>1) then
-       Ms_cache(1:3,CACHE_OBS_steps_now)= RT_spin_magn
+       Ms_cache(1:3,1:3,CACHE_OBS_steps_now)= RT_spin_magn
        Ml_cache(1:3,1:2,CACHE_OBS_steps_now)= RT_orbt_magn
      endif
      if(l_NE_with_fields) then

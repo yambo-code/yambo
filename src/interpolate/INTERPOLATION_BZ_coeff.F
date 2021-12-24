@@ -172,8 +172,9 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
      if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
    enddo
  enddo
- if (.not.INTERPOLATE_is_quiet)  call live_timing()
+ !
  if (.not.INTERPOLATE_is_serial) call PP_redux_wait(h_mat)
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  ! Lapack CALL
  !============
@@ -194,6 +195,8 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
  !
  if(info/=0) call error("[INTERPOLATION] Error in GETRS")
  !
+ if (.not.INTERPOLATE_is_quiet) call live_timing("Interpolation@"//trim(INTERP_obj(ID)%what)//" (computing engre)",PAR_nshells)
+ !=======================================================================================================================
  YAMBO_ALLOC(PAR_engre,(PAR_nshells,nvalues))
  PAR_engre=cZERO
  engre    =cZERO
@@ -202,14 +205,20 @@ subroutine INTERPOLATION_BZ_coeff(Xk,VALUEs,engre,nvalues,Nk,ID)
    BZ_star(:,ik) = BZ_star(:,ik) * sqrt(rho(:))
  enddo
  do i_shell=1,nshells
-   if (i_shell==1) cycle
+   if (i_shell==1) then
+     if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
+     cycle
+   endif
    if (.not.px%element_1D(i_shell)) cycle
    i_par_shell=SHELL_index(i_shell)
    do iv=1,nvalues
      PAR_engre(i_par_shell,iv)= dot_product(BZ_star(i_par_shell,1:Nkm1)/rho(i_par_shell),cmplx(delta(1:Nkm1,iv),kind=DP))
    enddo
    engre(i_shell,:)=PAR_engre(i_par_shell,:)
+   if (.not.INTERPOLATE_is_quiet) call live_timing(steps=1)
  enddo
+ !
+ if (.not.INTERPOLATE_is_quiet)  call live_timing()
  !
  pre_factor=1._DP/real(ncpu,DP)
  if (INTERPOLATE_is_serial) pre_factor=1._DP

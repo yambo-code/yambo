@@ -127,8 +127,8 @@ integer function io_PH(ID)
      call def_variable_bulk(ID,"PH_LIFE_INTRABAND",6,(/elph_branches(2)-elph_branches(1)+1,PH_Q(2)-PH_Q(1)+1/),SP)
      call io_variable_bulk(ID,6,R2=PHEL_qp%intraband(:,:))
      !
-     call def_variable_bulk(ID,"PH_LIFE_EQ_APPROX",7,(/elph_branches(2)-elph_branches(1)+1,PH_Q(2)-PH_Q(1)+1/),SP)
-     call io_variable_bulk(ID,7,R2=PHEL_qp%approx(:,:))    
+     call def_variable_bulk(ID,"PH_LIFE_EQ_ALLEN",7,(/elph_branches(2)-elph_branches(1)+1,PH_Q(2)-PH_Q(1)+1/),SP)
+     call io_variable_bulk(ID,7,R2=PHEL_qp%allen(:,:))    
      !
    endif
    !

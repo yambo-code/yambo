@@ -75,7 +75,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use QP_m,          ONLY:SC_band_mixing
  use SC,            ONLY:SC_iterations,SC_up_W_iters,&
 &                        SC_rho_threshold,SC_cycle_mixing,&
-&                        SC_bands,SC_preconditioning,OEP_approx
+&                        SC_bands,SC_preconditioning,OEP_approx,&
+&                        SC_neq_kind,SC_mu,SC_last_coh_it
 #endif
 #if defined _RT
  use RT_control,    ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,     &
@@ -84,12 +85,13 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,         &
+&                        NE_tot_time,RT_bands,RT_deph_Range,                     &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
-&                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,          &
+&                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
 &                        NE_initial_time_step_update,NE_step_update_treshold,    &
-&                        RT_MAX_step,RAD_magnification,RT_deph_deg_thresh
+&                        RT_MAX_step,RAD_magnification,  &
+&                        RT_deph_deg_thresh,RT_step_manual_prefactor,NE_time_step_update_manual
  use fields,        ONLY:Efield,n_ext_fields_max,n_ext_fields
  use plasma,        ONLY:PLASMA_redux_percent
 #endif
@@ -417,9 +419,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'TwoAlpha',   '[RT] C_nk ~ alpha*Gamma_nk^2 ',two_alpha,Verb_level=V_real_time)
  call it(defs,'GrKind',     '[RT] G-ret kind: Lorentzian (QP)/ Hyperbolic QP_secant (HS)',Gr_kind,Verb_level=V_real_time)
- call it(defs,'RADLifeTime','[RT] Radiative life-time',RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
+ call it(defs,'RADLifeTime','[RT] Radiative life-time (if negative Yambo sets it equal to Phase_LifeTime in NL)', &
+&         RAD_LifeTime,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'RADmagnific','[RT] Radiative life-time magnification',RAD_magnification,Verb_level=V_real_time)
  call it(defs,'PhLifeTime', '[RT] Constant Dephasing Time',Phase_LifeTime,unit=Time_unit(1))
+ call it(defs,'DephTRange', '[RT] Time range in which Dephasing is applied',RT_deph_range,unit=Time_unit(1),Verb_level=V_real_time)
  call it(defs,'DephEThresh', '[RT] Threshold on the energy difference between two states to dephase them',&
          &   RT_deph_deg_thresh,unit=E_unit,Verb_level=V_real_time)
  !
@@ -427,12 +431,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'RTstep',      '[RT] Real Time step length',RT_step,unit=Time_unit(3))
  call it(defs,'NETime',      '[RT] Simulation Time',NE_tot_time,unit=Time_unit(2))
+ call it(defs,'dTupdateTimeSet','[RT] Time for manual deltaT update',NE_time_step_update_manual,&
+&                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTime','[RT] Initial Time for deltaT update (active only if non-zero) ',NE_initial_time_step_update,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateJump','[RT] Time betweem two deltaT updates',  NE_time_step_update_jump_INPUT,&
 &                            unit=Time_unit(1),verb_level=V_real_time)
  call it(defs,'dTupdateTresh','[RT][o/o] Treshold of deltaT updates',  NE_step_update_treshold ,verb_level=V_real_time)
  call it(defs,'dT_MAX',      '[RT] Maximum value for the time-dependent dT',  RT_MAX_step ,verb_level=V_real_time,unit=Time_unit(1))
+ call it(defs,'dT_SET',      '[RT] Prefactor for manual dT update',  RT_step_manual_prefactor,verb_level=V_real_time)
  call it(defs,'Integrator',  '[RT] Integrator. Use keywords space separated  ( "EULER/EXPn/INV" "SIMPLE/RK2/RK4/HEUN" "RWA") ',&
 &              Integrator_name)
  !
@@ -491,13 +498,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'UseDebyeE',   '[RT] Use a single Debye energy for all phonon modes',verb_level=V_real_time)
  call it('f',defs,'RT_T_evol',   '[RT] Use a complete Time evolution instead of the CCA',verb_level=V_real_time)
  !
- ! External fields
- !
- if (initmode==4.and..not.infile_editing) n_ext_fields=0
- do i_field=1,n_ext_fields_max
-   call Afield(i_field)
- enddo
- !
  call it('f',defs,'InducedField','[RT] Include induced field in coupling and current',verb_level=V_real_time)
  call it('f',defs,'VelGaugeCorr','[RT] Correct the non local term of the pseudo with the vector potential',verb_level=V_real_time)
  !
@@ -529,19 +529,26 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_nl_optics)
  call it('f',defs,'EvalCurrent','[NL] Evaluate the current')
  !
- call it(defs,'ExtF_Dir',             '[NL ExtF] Field Versor',Efield(1)%versor)
- call it(defs,'ExtF_Int',             '[NL ExtF] Field Intensity',Efield(1)%intensity,unit=I_unit  ,verb_level=V_nl_optics)
- call it(defs,'ExtF_Width',           '[NL ExtF] Field Width',Efield(1)%width,unit=Time_unit(1),verb_level=V_nl_optics)
- call it(defs,'ExtF_kind',            '[NL ExtF] Kind(SIN|SOFTSIN|RES|ANTIRES|GAUSS|DELTA|QSSIN)',Efield(1)%ef_name)
- call it(defs,'ExtF_Tstart',          '[NL ExtF] Initial Time',Efield(1)%t_initial,unit=Time_unit(1),               &
-&    verb_level=V_nl_optics)
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
+ !
+#endif
+ !
+#if defined _RT || defined _NL
+ !
+ ! External fields
+ !
+ if (initmode==4.and..not.infile_editing) n_ext_fields=0
+ do i_field=1,n_ext_fields_max
+   call Afield(i_field)
+ enddo
  !
 #endif
  !
 #if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)
  call it(defs,'ExtF_Int',             '[NL ExtF] Intensity',Efield(1)%intensity,unit=I_unit)
+ call it(defs,'ExtF2_Dir',             '[NL ExtF] Versor',Efield(2)%versor,verb_level=V_nl_optics)
+ call it(defs,'ExtF2_Int',             '[NL ExtF] Intensity',Efield(2)%intensity,unit=I_unit,verb_level=V_nl_optics)
  call it('f',defs,'FrSndOrd','[NL] Force second order in Covariant Dipoles',verb_level=V_sc)
 #endif
  !
@@ -631,8 +638,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'ShiftedPaths',   '[DIP] Shifted grids paths (separated by a space)',grid_paths,verb_level=V_resp)
  call it('f',defs,'DipPDirect', '[DIP] Directly compute <v> also when using other approaches for dipoles',verb_level=V_resp)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
-#if defined _NL
+#if defined _NL || defined _ELECTRIC
  call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
+#endif
+#if defined _RT
+ call it('f',defs,'SPINprojected', '[DIP] Project the spin dipoles in the c/v channels ',verb_level=V_real_time)
 #endif
  !
  ! El-Ph
@@ -670,6 +680,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ !
+ ! SC [NEQ]
+ !
+ call it(defs,'SCneqKIND',  '[SC] Options are [contrained-occ/constrained-mu/matsubara]',SC_neq_kind,verb_level=V_sc)
+ call it(defs,'SCmu',       '[SC] Reference / holes / electrons chem potential',SC_mu,unit=E_unit,verb_level=V_sc)
+ call it(defs,'SCcohIt',    '[SC] Impose off-diagonal rho in the initial basis set for N iterations',SC_last_coh_it,verb_level=V_sc)
  ! 
  ! SC [common with RT]
  !
@@ -690,7 +706,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call TMP_mirror_bands( )
  !
  call it(defs,'HXC_Potential', '[SC] SC HXC Potential',H_potential,protect=.FALSE.,case="A")
- call it(defs,'EXXCut',    '[SC,RT] Cutoff on the exchange, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
+ call it(defs,'COLLCut',    '[SC,RT] Cutoff on the collisions, 0=full 1=none',COLLISIONS_cutoff,verb_level=V_sc)
  !
 #endif
  !
@@ -707,7 +723,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! 
  contains 
    !
-#if defined _RT
+#if defined _RT || defined _NL
    !
    subroutine Afield(i_field)
      use units,    ONLY  :AU2KWCMm2

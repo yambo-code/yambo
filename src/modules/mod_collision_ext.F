@@ -33,6 +33,8 @@ module collision_ext
  implicit none
  !
  integer :: COLL_bands(2)
+ integer :: COLL_ID
+ integer :: LAST_COLL_sync
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
@@ -45,6 +47,7 @@ module collision_ext
  logical :: COLLISIONS_HXC_local=.FALSE.
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
+ logical :: COLLISIONS_CV_only=.FALSE.
  !
  ! Elements used in the code
  !

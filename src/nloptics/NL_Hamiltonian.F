@@ -125,7 +125,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  ! Evaluate the external/total field
  !=================================
  !
- call RT_Ext_fields(A_ext,Time)
+ call RT_Ext_fields_sum(A_ext,Time)
  !
  A_tot=A_ext
  !
@@ -249,8 +249,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    !
   enddo  !---- loop on k-point
  enddo
- !
- if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
 #if defined _TIMING
  call timing('NL Hamiltonian',OPR='stop')

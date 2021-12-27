@@ -23,7 +23,7 @@
 !
 subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                           COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
-                                            COMM_A2A_3,COMM_A2A_4)
+                                            COMM_A2A_3,COMM_A2A_4,COMM_index_global_2)
  !
  use parallel_m,    ONLY:yMPI_comm,INTRA_CHAIN,INTER_CHAIN,ncpu,COMM_copy,&
 &                        nchains_group,ncpu_chain,n_groups
@@ -40,6 +40,7 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2
  type(yMPI_comm),optional :: COMM_A2A_2
  type(yMPI_comm),optional :: COMM_A2A_3
  type(yMPI_comm),optional :: COMM_A2A_4
+ type(yMPI_comm),optional :: COMM_index_global_2
  !
  ! Work Space
  !
@@ -68,6 +69,9 @@ subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2
  call PARALLEL_build_up_child_INTER_chains(i_chain(2),COMM_index_2,i_chain(1))
  if (present(COMM_A2A_2).and.i_cpu(2)/=ncpu) then
    call COMM_copy(INTER_CHAIN(i_chain(2)),COMM_A2A_2)
+ endif
+ if (present(COMM_index_global_2)) then
+   call COMM_copy(INTRA_CHAIN(i_chain(2)),COMM_index_global_2)
  endif
  !
  if(n_elements==2) return 

@@ -36,17 +36,17 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use xc_functionals,ONLY:F_xc,V_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
- use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,&
-&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,&
-&                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_Q_INDEX
+ use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,ncpu,myid,&
+&                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,&
+&                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
-&                        COLLISIONS_HXC_use_TDDFT
+&                        COLLISIONS_HXC_use_TDDFT,LAST_COLL_sync
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
- use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
+ use IO_m,          ONLY:OP_RD,RD,RD_CL,OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
@@ -63,9 +63,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(2),&
-&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
+ integer                 :: i_coll,first_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
+&                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,i_loop,&
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,PAR_COLL_min,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
@@ -73,7 +73,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  complex(SP)              :: pre_factor1,pre_factor2
  !
  complex(SP), allocatable :: EM1s(:,:),rhotw_tmp(:)
- integer                  :: io_err,ID
+ integer                  :: io_err,ID_X,ID_HXC,ID_COH,TMP_VEC(ncpu)
  integer, external        :: io_X
  complex(SP),   external  :: TDDFT_ALDA_R_space
  !
@@ -102,8 +102,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! Plasmon-Pole/Static interaction DB I/O
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
-   io_err=io_X(X,Xw,ID)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID_X)
+   io_err=io_X(X,Xw,ID_X)
    if (io_err<0) call error(' Incomplete and/or broken PPA/Static diel. fun. database')
    !
    if (X%ng<QP_ng_Sc) then
@@ -217,21 +217,43 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  ! Parallel Indexes & LIVE-TIMING STEPS
  !
  PAR_NC_local=HXC_collisions%PAR_N
- if (allocated(HXC_collisions%IO_status)) then
-   PAR_NC_local=0
-   do i_coll=1,HXC_collisions%N
-     if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
-     if (HXC_collisions%IO_status(i_coll)/=-1) cycle
-     PAR_NC_local=PAR_NC_local+1
-   enddo
- else if (allocated(COH_collisions%IO_status)) then
-   PAR_NC_local=0
-   do i_coll=1,COH_collisions%N
-     if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
-     if (COH_collisions%IO_status(i_coll)/=-1) cycle
-     PAR_NC_local=PAR_NC_local+1
-   enddo
- endif
+ PAR_COLL_min=0
+ !
+ first_coll=-1
+ !
+ do i_loop=1,2
+   if (allocated(HXC_collisions%PAR_IND%element_1D)) then
+     PAR_NC_local=0
+     do i_coll=1,HXC_collisions%N
+       if (.not.HXC_collisions%PAR_IND%element_1D(i_coll)) cycle
+       last_coll=i_coll
+       if (allocated(HXC_collisions%IO_status)) then
+         if (HXC_collisions%IO_status(i_coll)/=-1) cycle
+       endif
+       if (first_coll==-1) first_coll=i_coll
+       PAR_NC_local=PAR_NC_local+1
+       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
+     enddo
+   else if (allocated(COH_collisions%PAR_IND%element_1D)) then
+     PAR_NC_local=0
+     do i_coll=1,COH_collisions%N
+       if (.not.COH_collisions%PAR_IND%element_1D(i_coll)) cycle
+       last_coll=i_coll
+       if (allocated(COH_collisions%IO_status)) then
+         if (COH_collisions%IO_status(i_coll)/=-1) cycle
+       endif
+       if (first_coll==-1) first_coll=i_coll
+       PAR_NC_local=PAR_NC_local+1
+       if (i_loop==2.and.PAR_NC_local<=PAR_COLL_min) LAST_COLL_sync=i_coll
+     enddo
+   endif
+   if(i_loop==1) then
+     TMP_VEC=0
+     TMP_VEC(myid+1)=PAR_NC_local
+     call PP_redux_wait(TMP_VEC)
+     PAR_COLL_min=minval(TMP_VEC)
+   endif
+ enddo
  !
  n_steps=0
  if (COLLISIONS_HXC_local)                      n_steps=n_steps+PAR_NC_local*K%nibz*PAR_n_Bp_mat_elements
@@ -242,15 +264,17 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (COLLISIONS_parallel_SC_structure) then
    LOCAL_COMM(1)=PAR_COM_QP_A2A%COMM
    LOCAL_COMM(2)=PAR_COM_Q_INDEX%COMM
+   LOCAL_COMM(3)=PAR_COM_QP_INDEX%COMM
  else
    LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
    LOCAL_COMM(2)=MPI_COMM_NULL
+   LOCAL_COMM(3)=PAR_COM_G_b_INDEX_global%COMM
  endif
  !
  ! Write Database Header 
  !
- if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,HXC_collisions,HXC_COLL_element)
- if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,COH_collisions,COH_COLL_element)
+ if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
+ if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
  !
  call live_timing("Collisions",n_steps)
  !
@@ -295,13 +319,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if(l_HXC_collisions) then
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("HXC",i_coll,HXC_collisions,HXC_COLL_element)
+     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
    endif
    !
    if(l_use_COH_collisions) then
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("COH",i_coll,COH_collisions,COH_COLL_element)
+     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
    endif
    !
  enddo ! loop on i_coll
@@ -471,9 +495,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      integer :: TMP_INDEX(COLL_bands(1):COLL_bands(2))
      !
-     if (l_compute_screening) then
-       call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/1/),ID=ID)
-       io_err=io_X(X,Xw,ID)
+     if (l_compute_screening.and.i_coll==first_coll) then
+       call io_control(ACTION=OP_RD,COM=NONE, SEC=(/1/),ID=ID_X)
+       io_err=io_X(X,Xw,ID_X)
      endif
      !
      do iqbz=1,q%nbz
@@ -513,8 +537,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
          !
          call IO_and_Messaging_switch("-fragments_IO_log")
          !
-         call io_control(ACTION=OP_RD_CL,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-         io_err=io_X(X,Xw,ID)
+         call io_control(ACTION=RD,COM=NONE, SEC=(/2*iqibz,2*iqibz+1/),ID=ID_X)
+         io_err=io_X(X,Xw,ID_X)
          !
          call IO_and_Messaging_switch("+fragments_IO_log")
          !
@@ -590,6 +614,11 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
        enddo ! loop on the band i_mp
        !
      enddo ! loop on iqbz
+     !
+     if (l_compute_screening.and.i_coll==last_coll) then
+       call io_control(ACTION=RD_CL,COM=NONE, SEC=(/-2/),ID=ID_X)
+       io_err=io_X(X,Xw,ID_X)
+     endif
      !
    end subroutine compute_MBPT_XC_collisions
    !

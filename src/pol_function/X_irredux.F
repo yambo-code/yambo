@@ -56,8 +56,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G
- use D_lattice,     ONLY:i_space_inv
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph
+ use D_lattice,     ONLY:i_space_inv,alat
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
@@ -65,6 +65,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
  use X_m,           ONLY:rhotw_save_d
  use cuda_m,        ONLY:have_cuda
+ use parser_m,       ONLY:parser
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
@@ -88,8 +89,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
 &                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
- complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
+ real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff,lcut,v_fermi
+ complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp,X_Dirac
  complex(SP),allocatable  :: Xo_res(:,:)
  !
  complex(SP),allocatable DEV_ATTR :: Xo_res_d(:,:)
@@ -251,7 +252,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- if (iq==1.and.master_thread.and.drude_n_states>0.and.(.not.RIM_W_for_graph)) then
+ if (iq==1.and.master_thread.and.drude_n_states>0) then
    do i_cg = 1,coarse_grid_N
      Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
      if(.not.Drude_pole) cycle
@@ -259,11 +260,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
      !
-     if (RIM_W_for_graph) then
-       ctmp = 1.0_SP
-     else
-       ctmp = DEV_VAR(Xo_res)(1,1)
-     endif
+     ctmp = DEV_VAR(Xo_res)(1,1)
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
@@ -286,15 +283,21 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    lcut = alat(idir(1))
    !
    !Analytical model for graphene:
-   !X_00(w=0) = -1/(4*v_fermi)*q/L
+   !X^0_00_Dirac(w=0) = -1/(4*v_fermi)*q/L
    !
-   !Put shomewhere the change from 10^6 m/s to a.u.
-   !v_fermi_au = v_fermi/2.187691_SP
+   call parser('v_fermi',v_fermi)
    !
-   X_graph = -qnorm(1)/(4._SP*v_fermi*lcut)
-   ctmp = 
+   call msg('r', 'Fermi vellocity (10^6 m/s)', v_fermi)
    !
-   X_par%blc(1,1,1)=X_par%blc(1,1,1)+ctmp
+   !From 10^6 m/s to a.u.
+   !
+   v_fermi = v_fermi/2.187691_SP
+   !
+   call msg('r', 'Fermi vellocity (a.u.)', v_fermi)
+   !
+   X_Dirac = -q_norm(1)/(4._SP*v_fermi*lcut)
+   !
+   X_par%blc(1,1,1)=X_par%blc(1,1,1)+X_Dirac
    !
    if (have_cuda) X_par%blc_d(1,1,1)=X_par%blc(1,1,1)
    !

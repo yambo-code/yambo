@@ -99,7 +99,7 @@ subroutine QP_fit_report(i_ACTION,bands,en,k,qp)
      call msg(' r','             (FIT, actual)     ',fit_scissor*HA2EV,"[eV]")
    endif
    !
-   if (any(E/=(/0._SP,1._SP,0._SP,1._SP/))) then
+   if (any(E/=(/10._SP,10._SP,10._SP,10._SP/))) then
      call msg(' r',' Energies 0th order            ',(/E(1),E(3)/)*HA2EV,"[eV]")
      call msg(' r',' Energies 1st order            ',(/E(2),E(4)/))
      if (any((/E_err/=0._SP/)))then

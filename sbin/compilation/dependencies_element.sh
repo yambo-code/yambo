@@ -49,7 +49,7 @@ do
  sources_pj_dependent=" "
  for file in $sources
  do
-  if test `grep $PJ $file | grep '#'| wc -l` -ge 1; then
+  if test `grep $PJ $file | grep '#'| wc -l` -ge 1 || test "$PJ" = "_DOUBLE" ; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
     sources_pj_dependent+=" ${obj}\n"
   fi

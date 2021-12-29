@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -35,6 +35,8 @@ AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
               [Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
+HDF5_MODE="production";
+#
 def_compiler=
 #
 case "${host}" in
@@ -48,7 +50,16 @@ i?86*linux*)
     OMPFLAGS="-mp"
     NETCDFFLAGS="-DpgiFortran"
     def_compiler="-D_PGI"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
+    ;;
+  *nvfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    NETCDFFLAGS="-DpgiFortran"
+    def_compiler="-D_PGI"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *abf90*)
     SYSFLAGS="-B101 -YEXT_NAMES=LCS -YEXT_SFX=_"
@@ -130,6 +141,15 @@ i?86*linux*)
     NETCDFFLAGS="-DpgiFortran"
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
+  *nvfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    NETCDFFLAGS="-DpgiFortran"
+    def_compiler="-D_PGI"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -g -mtune=native"
@@ -171,6 +191,15 @@ i?86*linux*)
 ia64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    NETCDFFLAGS="-DpgiFortran"
+    def_compiler="-D_PGI"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    ;;
+  *nvfortran* )
     SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -241,14 +270,15 @@ ia64*linux* )
   ;;
 *x86*64* )
   case "${FC}" in
-  *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    FUFLAGS="-O0 -g -Mbackslash"
+  *pgf9* | *ftn* | *pgfortran* | *nvfortran* )
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -Munroll -Mnoframe -Mdalign -Mbackslash -cpp"
+    FUFLAGS="-O0 -g -Mbackslash -cpp"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
     def_compiler="-D_PGI"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash -cpp"
     ;;
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
@@ -282,14 +312,16 @@ ia64*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2021* )
+      *2020* | *2021* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        FCMFLAG="-nofor-main"
+       CFLAGS="-O2 -std=gnu99"
        ;;
       *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99"
        ;;
       *10*)
        CPU_FLAG="-xW"
@@ -301,7 +333,7 @@ ia64*linux* )
     SYSFLAGS="-assume bscc -O3 -g -ip ${CPU_FLAG}"
     FUFLAGS="-assume bscc -O0 -g ${CPU_FLAG}"
     NETCDFFLAGS="-DpgiFortran"
-    DEBUG_FLAGS="-CB -traceback"
+    DEBUG_FLAGS="-CB -traceback -debug full"
     ;;
   *openf9*)
     SYSFLAGS="-O2 -fno-second-underscore"
@@ -329,6 +361,15 @@ alphaev*)
 powerpc64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
+    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    FUFLAGS="-O0 -g -Mbackslash"
+    FCMFLAG="-Mnomain"
+    OMPFLAGS="-mp"
+    def_compiler="-D_PGI"
+    NETCDFFLAGS="-DpgiFortran"
+    DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
+    ;;
+  *nvfortran* )
     SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -395,6 +436,7 @@ fi
 if test x"$enable_debug_flags" = "xyes"; then 
  FCFLAGS="$DEBUG_FLAGS"  
  FCUFLAGS="$DEBUG_FLAGS"  
+ HDF5_MODE="debug";
 fi
 #
 AC_MSG_CHECKING([for specific NETCDF flags])
@@ -408,6 +450,7 @@ AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)
 AC_SUBST(NETCDFFLAGS)
 AC_SUBST(DEBUG_FLAGS)
+AC_SUBST(HDF5_MODE)
 AC_SUBST(def_compiler)
 ])
 #

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,7 +24,7 @@
 subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
   !
   use parallel_int,  ONLY:PP_bcast
-  use parallel_m,    ONLY:master_cpu,myid
+  use parallel_m,    ONLY:master_cpu
   use IO_m,          ONLY:io_unit,io_mode,io_com,io_action,io_sec,max_io_units, &
 &                         OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,io_reset
   !

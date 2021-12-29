@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -35,6 +35,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
  use hamiltonian,    ONLY:H_rotation,H_ref_bands
+ use cuda_m,         ONLY:have_cuda
  !
  implicit none
  !
@@ -73,6 +74,8 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
      enddo
    enddo
    !$omp end parallel do
+   !
+   if (have_cuda) WF%c_d(:,:,i_wf) = WF%c(:,:,i_wf)
    !
  enddo
  !

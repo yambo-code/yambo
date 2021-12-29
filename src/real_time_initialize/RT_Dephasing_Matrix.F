@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,7 +23,7 @@
 !
 subroutine RT_Dephasing_Matrix(E)
  !
- use pars,          ONLY:SP,pi
+ use pars,          ONLY:SP
  use units,         ONLY:FS2AUT
  use com,           ONLY:msg
  use electrons,     ONLY:levels
@@ -64,8 +64,8 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_1=RT_bands(1),RT_bands(2)
        do ib_2=ib_1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))>=RT_deph_deg_thresh ) cycle
-         RT_Deph_Matrix(ib_1,ib_2,ik)=2._SP*pi/RAD_LifeTime
-         RT_Deph_Matrix(ib_2,ib_1,ik)=2._SP*pi/RAD_LifeTime
+         RT_Deph_Matrix(ib_1,ib_2,ik)=1._SP/RAD_LifeTime
+         RT_Deph_Matrix(ib_2,ib_1,ik)=1._SP/RAD_LifeTime
        enddo
      enddo
    enddo
@@ -86,9 +86,9 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_1=RT_bands(1),RT_bands(2)
        do ib_2=ib_1+1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<RT_deph_deg_thresh ) cycle
-         if ( (ib_1> E%nbf .or. ib_2<=E%nbf) .and. RT_deph_cv_only )  cycle
-         RT_Deph_Matrix(ib_1,ib_2,ik)=2._SP*pi/Phase_LifeTime
-         RT_Deph_Matrix(ib_2,ib_1,ik)=2._SP*pi/Phase_LifeTime
+         if ( (ib_1> E%nbf(1) .or. ib_2<=E%nbf(1)) .and. RT_deph_cv_only )  cycle
+         RT_Deph_Matrix(ib_1,ib_2,ik)=1._SP/Phase_LifeTime
+         RT_Deph_Matrix(ib_2,ib_1,ik)=1._SP/Phase_LifeTime
        enddo
      enddo
    enddo
@@ -123,9 +123,9 @@ subroutine RT_Dephasing_Matrix(E)
          cycle
        endif
        if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<RT_deph_deg_thresh ) cycle
-       if ( (ib_1> E%nbf .or. ib_2<=E%nbf) .and. RT_deph_cv_only )  cycle
-       RT_Deph_Matrix(ib_1,ib_2,ik)  =RT_Deph_Matrix(ib_1,ib_2,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
-       RT_Deph_Matrix(ib_2,ib_1,ik)  =RT_Deph_Matrix(ib_2,ib_1,ik)+2._SP*pi/RT_INPUT_Deph_limits(i1,4)
+       if ( (ib_1> E%nbf(1) .or. ib_2<=E%nbf(1)) .and. RT_deph_cv_only )  cycle
+       RT_Deph_Matrix(ib_1,ib_2,ik)  =RT_Deph_Matrix(ib_1,ib_2,ik)+1._SP/RT_INPUT_Deph_limits(i1,4)
+       RT_Deph_Matrix(ib_2,ib_1,ik)  =RT_Deph_Matrix(ib_2,ib_1,ik)+1._SP/RT_INPUT_Deph_limits(i1,4)
      enddo
      !
    endif
@@ -145,7 +145,7 @@ subroutine RT_Dephasing_Matrix(E)
      do ib_1=RT_bands(1),RT_bands(2)
        do ib_2=ib_1+1,RT_bands(2)
          if ( abs(E%E(ib_1,ik,1)-E%E(ib_2,ik,1))<RT_deph_deg_thresh ) cycle
-         if ( (ib_1> E%nbf .or. ib_2<=E%nbf) .and. RT_deph_cv_only )  cycle
+         if ( (ib_1> E%nbf(1) .or. ib_2<=E%nbf(1)) .and. RT_deph_cv_only )  cycle
          RT_Deph_Matrix(ib_1,ib_2,ik)=RT_Deph_Matrix(ib_1,ib_2,ik)+(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
          RT_Deph_Matrix(ib_2,ib_1,ik)=RT_Deph_Matrix(ib_2,ib_1,ik)+(abs(E%W(ib_1,ik,1))+abs(E%W(ib_2,ik,1)))
        enddo     

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): FP
@@ -43,6 +43,8 @@ subroutine PHEL_double_grid_subset(k,k_FG,nk_CG)
  !
  if (.not.l_PH_uses_E_FineGd .and..not. l_RT_uses_E_FineGd) return
  if (PH_DbGd_points<0) return
+ !
+ call section("=","Electronic Fine Grid")
  !
  N_FG_per_K_average=ceiling(float(PH_DbGd_points)/float(nk_CG))
  !

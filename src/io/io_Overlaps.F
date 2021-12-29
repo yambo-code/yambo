@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA MG DS
@@ -37,7 +37,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err,ID_frag
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,ID_frag
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !

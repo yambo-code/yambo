@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -63,7 +63,7 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
      PAR_K_scheme%bz_index=PAR_BZINDXk_bz_index
    endif
    PAR_K_scheme%comm_world=mpi_comm_world
- case ("DIP","RT","SC","QED")
+ case ("DIP","RT","SC","QED","YPP")
    call COMM_copy(PAR_COM_DIPk_ibz_INDEX,PAR_K_scheme%COM_ibz_INDEX)
    call COMM_copy(PAR_COM_DIPk_ibz_A2A,  PAR_K_scheme%COM_ibz_A2A)
    call PAR_INDEX_copy(PAR_IND_DIPk_ibz,PAR_K_scheme%IND_ibz)

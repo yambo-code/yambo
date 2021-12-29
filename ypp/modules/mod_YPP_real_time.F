@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,6 +23,7 @@
 !
 module YPP_real_time
  !
+ use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
  !
 #include<memory.h>
@@ -35,7 +36,6 @@ module YPP_real_time
  ! RT DBs (what)
  !
  logical  :: l_RTpump_energy
- logical  :: l_RTpump_kspace
  logical  :: l_RTpump_Fermi
  !
  ! RT Post-processing (what)
@@ -43,6 +43,7 @@ module YPP_real_time
  logical  :: l_RT_occupations
  logical  :: l_RT_lifetimes
  logical  :: l_RT_density
+ logical  :: l_RT_G_two_times
  logical  :: l_RT_X
  logical  :: l_NL_X
  logical  :: l_NL_exc
@@ -86,7 +87,7 @@ module YPP_real_time
  real(SP) :: Eh_temp(2)          ! effective temperature for holes, electrons
  real(SP) :: h_mu_autotune_thr   ! threshold for matching number of pumped holes / electrons
  !
- ! (RT) optics
+ ! (RT) X
  !
  logical  :: Use_FFT
  logical  :: l_skip_OBS_IO
@@ -96,12 +97,27 @@ module YPP_real_time
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
+ character(schlen) :: X_kind
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=500
  character(schlen) :: Pump_path
  character(schlen) :: Probe_path(max_n_of_paths)
  character(3) :: RT_p_format   
+ !
+ ! (RT) TRabs
+ !
+ real(SP)          :: TRabsDIP_dir(3)=0.
+ real(SP)          :: TRabs_Eeh_treshold=1.E-5_SP/HA2EV
+ character(schlen) :: TRabsWHAT="abs"
+ character(schlen) :: TRabsDIP_plane="none"
+ character(schlen) :: TRabsMODE="cv"
+ logical           :: TRabs_lEPS(3,3)=.FALSE.
+ real(SP),    allocatable :: TRabs_E(:)
+ complex(SP), allocatable :: TRabs_RES_left(:,:,:)  ! I_trans, DIP_dir, 1 ( RES_0 ) - 2 ( dRES)
+ complex(SP), allocatable :: TRabs_RES_right(:,:,:)
+ complex(SP), allocatable :: Epsilon_ij(:,:,:)
+ complex(SP), allocatable :: B_Hall(:,:)
  !
  ! (RT) carriers
  !
@@ -113,6 +129,10 @@ module YPP_real_time
  !
  real(SP),allocatable     :: RT_time(:)
  !
+ ! (RT) G<(t,t')
+ !
+ real(SP)                 :: Rho_deph
+ !
  type RT_ctl
    real(SP) :: delta_W             =0._SP   ! delta W
    real(SP) :: X_W_range(2)        =0._SP   ! Response energy range 
@@ -120,6 +140,7 @@ module YPP_real_time
    integer  :: W_n_steps           =0       ! number of steps in energy mesh
    real(SP) :: delta_T             =0._SP   ! delta T
    real(SP) :: T_range(2)          =0._SP   ! time windows for the transform
+   integer  :: T_n_range(2)        =0       ! lower and upper value of time range
    integer  :: T_n_steps           =0       ! number of steps in Time mesh
    real(SP) :: damp_factor         =0._SP   ! factor used in damping
    real(SP) :: Field_damp_factor   =0._SP   ! factor used deduced from the Field 
@@ -139,6 +160,7 @@ module YPP_real_time
  type(OBS_el) :: Pol 
  type(OBS_el) :: Curr 
  type(OBS_el) :: ElField 
+ type(OBS_el) :: GreenF_T_and_W
  !
  interface
    !
@@ -167,5 +189,16 @@ module YPP_real_time
      YAMBO_FREE(FT%F_t)
      YAMBO_FREE(FT%W)
    end subroutine
+   !
+   function TRabs_EPS_label(i,j)
+     character(2) :: TRabs_EPS_label
+     integer      :: i,j
+     if (i==1) TRabs_EPS_label="x" 
+     if (i==2) TRabs_EPS_label="y" 
+     if (i==3) TRabs_EPS_label="z" 
+     if (j==1) TRabs_EPS_label=TRabs_EPS_label(1:1)//"x" 
+     if (j==2) TRabs_EPS_label=TRabs_EPS_label(1:1)//"y" 
+     if (j==3) TRabs_EPS_label=TRabs_EPS_label(1:1)//"z" 
+   end function
    !
 end module YPP_real_time

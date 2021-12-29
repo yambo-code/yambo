@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -53,11 +53,17 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step
+ if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+ !
+ !  In the case of non-uniform T samplings the last time points can be imposed by the total time and, hence, the
+ !  STEP can appear even smaller than the effective step.
+ if (GENERAL_RT_IO_t%N> 2) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-2))
+ !
  if (GENERAL_RT_IO_t%N> 1) then
-   STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
-   if (l_rho_G) then
+   if (RT_conf%delta_T> 0._SP) STEP=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
+   if (l_rho_G .or. l_G_lesser) then
     TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
+    if( .not. abs(TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
    endif
  endif
  !
@@ -70,7 +76,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
    !
    i_ref      = 0
-   REF_diff   = STEP
+   REF_diff   = 100.*STEP
    !
    do i_t=1,GENERAL_RT_IO_t%N
      !
@@ -101,6 +107,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif
  !
+ RT_conf%T_n_range=i_ref
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?
@@ -169,7 +176,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !===========
  !
  call msg('s','['//what//'] Uniform grid       :',UNIFORM)
- call msg('s','['//what//'] Time range         :',RT_conf%T_range*AUT2FS,"[fs]")
+ call msg('s','['//what//'] Time range         :',(/minval(RT_time),maxval(RT_time)/)*AUT2FS,"[fs]")
  call msg('s','['//what//'] Time step          :',RT_conf%delta_T*AUT2FS,"[fs]")
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !

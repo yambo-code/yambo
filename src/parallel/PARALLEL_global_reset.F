@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,15 +23,14 @@
 !
 subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
- use R_lattice,     ONLY:bz_samp,nXkibz
+ use R_lattice,     ONLY:bz_samp
  use openmp,        ONLY:OPENMP_set_threads
  use wave_func,     ONLY:states_to_load
  use IO_int,        ONLY:IO_and_Messaging_switch
- use parallel_m,    ONLY:PP_indexes_reset,n_groups,master_cpu
+ use parallel_m,    ONLY:PP_indexes_reset,n_groups
  ! SLK
  use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,PAR_COM_X_WORLD,PAR_COM_X_WORLD_RL_resolved
  use matrix,        ONLY:TRANSFER_world
- use BS,            ONLY:BS_res_ares_dim
  ! SCHEMES
  use parallel_m,    ONLY:PARs_PH_Q_ibz,PARs_PH_K_bz,PARs_PH_eh_bands,PAR_scheme_reset
  ! COMMUNICATORS
@@ -41,8 +40,8 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_COM_Xk_ibz_INDEX,PAR_COM_Xk_ibz_A2A,PAR_COM_Q_INDEX,&
 &                        PAR_COM_Xk_bz_INDEX,PAR_COM_SLK_INDEX_global,PAR_COM_SLK,&
 &                        PAR_COM_QP_INDEX,PAR_COM_PLASMA_INDEX,PAR_COM_freqs_INDEX,PAR_COM_freqs,&
-&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_A2A,PAR_COM_BZINDXk_ibz_A2A,&
-&                        PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
+&                        PAR_COM_QP_A2A,PAR_COM_G_b_INDEX,PAR_COM_G_b_INDEX_global,PAR_COM_G_b_A2A,&
+&                        PAR_COM_BZINDXk_ibz_A2A,PAR_COM_WF_k_A2A,PAR_COM_WF_b_INDEX,PAR_COM_WF_k_INDEX,&
 &                        PAR_COM_DIPk_bz_A2A,PAR_COM_DIPk_ibz_A2A,PAR_COM_Xk_bz_A2A,PAR_COM_density,&
 &                        PAR_COM_eh_INDEX,PAR_COM_eh_A2A,PAR_COM_T_INDEX,PAR_COM_SLK_INDEX_local
  ! IND
@@ -50,7 +49,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
 &                        PAR_IND_VAL_BANDS_X,PAR_IND_Q_ibz,PAR_IND_Q_bz,PAR_IND_SLK,&
 &                        PAR_IND_QP,PAR_IND_G_b,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_WF_k,&
 &                        PAR_IND_B_mat,PAR_IND_Plasma,PAR_IND_WF_linear,PAR_IND_T_Haydock,&
-&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_eh,PAR_IND_WF_b_and_k,&
+&                        PAR_IND_Bp_mat,PAR_IND_G_k,PAR_IND_WF_b_and_k,&
 &                        PAR_IND_T_groups,PAR_IND_Kk_ibz,PAR_IND_T_ordered,PAR_IND_freqs,&
 &                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP
  ! INDEX
@@ -80,7 +79,6 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  !
  ! Work Space
  !
- integer              :: i_k
  !
  call PP_indexes_reset(PAR_IND_SLK)
  call PP_indexes_reset(PAR_IND_Q_ibz)
@@ -157,6 +155,7 @@ subroutine PARALLEL_global_reset(ENVIRONMENT,X_type)
  call COMM_reset(PAR_COM_QP_A2A)
  call COMM_reset(PAR_COM_G_b_INDEX)
  call COMM_reset(PAR_COM_G_b_A2A)
+ call COMM_reset(PAR_COM_G_b_INDEX_global)
  call COMM_reset(PAR_COM_WF_k_A2A)
  call COMM_reset(PAR_COM_WF_b_INDEX)
  call COMM_reset(PAR_COM_WF_k_INDEX)

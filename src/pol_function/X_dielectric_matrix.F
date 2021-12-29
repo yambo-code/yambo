@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -30,7 +30,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
-&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -42,7 +42,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
  use com,           ONLY:depth
- use TDDFT,         ONLY:FXC
+ use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,PAR_matrix
@@ -218,11 +218,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! DbGd setup
    !
-   call X_Double_Grid_setup(1,Xk)
+   call X_Double_Grid_setup(1,Xk,Xk%FGbz)
    !
    ! ALDA (only once) 
    !
-   if (l_alda_fxc.and..not.allocated(FXC)) then
+   if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
      !
      call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
      !
@@ -250,11 +250,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      ! DbGd setup
      !
-     call X_Double_Grid_setup(iq,Xk)
+     call X_Double_Grid_setup(iq,Xk,Xk%FGbz)
      !
      ! ALDA (only once) 
      !
-     if (l_alda_fxc.and..not.allocated(FXC)) then
+     if (l_alda_fxc.and..not.allocated(F_xc_gspace)) then
        !
        call PARALLEL_WF_index(COMM=PAR_COM_X_WORLD)
        !
@@ -379,8 +379,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 #endif
    deallocate(X_par)
  endif
- if (allocated(FXC)) then
-   YAMBO_FREE(FXC)
+ if (allocated(F_xc_gspace)) then
+   YAMBO_FREE(F_xc_gspace)
  endif
  call DIP_alloc('DIP_iR')
  call DIP_alloc('DIP_P')

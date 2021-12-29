@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -65,7 +65,7 @@ subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
    !
    ! ... Dimensions
    DIPs%ib    =BS_bands
-   DIPs%ib_lim=(/Xen%nbm,Xen%nbf+1/)
+   DIPs%ib_lim=(/maxval(Xen%nbm),minval(Xen%nbf)+1/)
    !
    ! ... PARALLEL setup
    call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)

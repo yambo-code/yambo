@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -286,7 +286,7 @@ module YPPm
  real(SP),    pointer     ::BS_E_SOC_corr(:,:) => null()
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
- type(X_t)         ::Xbsk 
+ type(X_t)                ::Xbsk 
  !
  interface
    !

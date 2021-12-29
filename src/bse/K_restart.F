@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS AF
@@ -31,9 +31,8 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  use BS,           ONLY:l_BSE_restart,l_BSE_kernel_complete,&
 &                       BS_K_cutoff,BS_K_cutoff_done,n_BS_blks
  use IO_int,       ONLY:io_control
- use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,&
-&                       RD,WR,RD_CL,RD_CL_IF_END,OP_WR,OP_WR_CL,WR_CL,OP_APP,OP_APP_CL,DUMP,&
-&                       manage_action
+ use IO_m,         ONLY:OP_RD_CL,REP,VERIFY,NONE,OP_RD,manage_action,&
+&                       RD,WR,RD_CL,RD_CL_IF_END,WR_CL,OP_APP,DUMP
  !
  implicit none
  !
@@ -162,6 +161,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
  ID_head=0
  ID_compr=0
+ l_BSE_kernel_complete=.false.
  l_partial_kernel_loaded=.false.
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _XLF || defined _PGI
+#if defined _aix || defined _XLF || defined _PGI || defined _NV
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -37,7 +37,7 @@ subroutine RT_density(en,kpt,qpt)
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
-&                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
+&                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
@@ -96,12 +96,11 @@ subroutine RT_density(en,kpt,qpt)
    call RT_time_configuration_setup("G-DENSITY",GF_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
-   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
    call RT_occupation_alloc("electrons",RT_el_occ,RT_bands,RT_nk)
    call msg('s',trim(ch_ws(1)))
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
- !
  !
  ! Parallel Setups & WF_load
  !===========================
@@ -122,8 +121,6 @@ subroutine RT_density(en,kpt,qpt)
  nr_tot = fft_size
  nr     = fft_dim
  YAMBO_ALLOC(v2plot,(nr_tot))
- !
- l_norm_to_one=.false.
  !
  call plot_check_and_launch(.true.)
  !

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS AM
@@ -23,18 +23,10 @@
 #
 chmod u+x sbin/*
 #
-if ! test -d bin      ; then mkdir bin      ; fi
-if ! test -d include  ; then mkdir include  ; fi
-if ! test -d include/headers ; then mkdir include/headers ; fi
-if ! test -d lib      ; then mkdir lib      ; fi
-if ! test -d lib/bin  ; then mkdir lib/bin  ; fi
-#
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
 #
-#
 # Copy system headers
-#
 #
 YAML_INCDIRS=`echo $YAML_INCS       | sed "s/$IFLAG/ /g"` ;                       #  
 for includedir in $YAML_INCDIRS;   do                                             #  This part
@@ -143,21 +135,9 @@ if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
 fi
 #
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- cp     $srcdir/Makefile $compdir/
- cp -r  $srcdir/config   $compdir/ 
  if test ! -d "$compdir/driver"     ; then mkdir "$compdir/driver"     ; fi
-
+ cp -r  $srcdir/sbin   $compdir/
  if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
  if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi
  if test ! -d "$compdir/lib"        ; then mkdir "$compdir/lib"        ; fi
-
- for folder in ["include/driver" "include/headers/common" "include/headers/parser" "src/common"] ; do
-   cd "$srcdir/$folder" ;
-   if test ! -d "$compdir/$folder"; then mkdir "$compdir/$folder"     ; fi
-   for file in `ls *.h*` ; do
-     cp "$file" "$compdir/$folder" ;
-   done ;
-   cd $compdir
- done
-
 fi

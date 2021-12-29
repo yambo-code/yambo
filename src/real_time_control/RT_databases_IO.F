@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -74,6 +74,7 @@ subroutine RT_databases_IO(E,DO_IT)
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(4)) 
      io_OBS=io_RT_components('OBSERVABLES',ID(4))
      CACHE_OBS_last_point=OBS_RT_IO_t%last_point
+     if (NE_i_time>1) OBS_RT_IO_t%N=OBS_RT_IO_t%N-1
    endif
    !
    write_OBS=RT_do_it('OBS').or.DO_IT
@@ -91,7 +92,7 @@ subroutine RT_databases_IO(E,DO_IT)
      J_cache(1:3,CACHE_OBS_steps_now)=RT_ind_J
      P_cache(1:3,CACHE_OBS_steps_now)=RT_P
      if(n_spin>1) then
-       Ms_cache(1:3,CACHE_OBS_steps_now)= RT_spin_magn
+       Ms_cache(1:3,1:3,CACHE_OBS_steps_now)= RT_spin_magn
        Ml_cache(1:3,1:2,CACHE_OBS_steps_now)= RT_orbt_magn
      endif
      if(l_NE_with_fields) then
@@ -121,6 +122,7 @@ subroutine RT_databases_IO(E,DO_IT)
    if(NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=ID(6)) 
      io_carr=io_RT_components('carriers',ID(6))
+     if (NE_i_time>1) CARR_RT_IO_t%N=CARR_RT_IO_t%N-1
    endif
    !
    write_CARR=RT_do_it('CARR').or.DO_IT

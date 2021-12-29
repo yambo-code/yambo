@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -92,7 +92,7 @@ end subroutine PARALLEL_global_Response_T_base
 subroutine PARALLEL_global_Response_T_transitions(Xk)
  !
  use R_lattice,     ONLY:bz_samp,nXkibz
- use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_res_ares_dim
+ use BS,            ONLY:BS_nT_at_k,BS_nT_grps,BS_n_eh_spaces
  use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_live_message
  use parallel_m,    ONLY:PAR_n_c_bands,PAR_n_v_bands,PP_indexes_reset,master_cpu
@@ -103,7 +103,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  use parallel_m,    ONLY:PAR_IND_T_groups,PAR_IND_T_ordered,PAR_IND_eh,  &
 &                        PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_Kk_nibz,PAR_Xk_nbz,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_BS_nT_col_grps
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
  !
@@ -127,9 +127,9 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  ! I fill the PAR_IND_eh for all k in order to define the total number of Transition groups
  !
  if (allocated(PAR_IND_eh)) deallocate(PAR_IND_eh)
- allocate(PAR_IND_eh(nXkibz*BS_res_ares_dim))
+ allocate(PAR_IND_eh(nXkibz*BS_n_eh_spaces))
  !
- do i_k=1,nXkibz*BS_res_ares_dim
+ do i_k=1,nXkibz*BS_n_eh_spaces
    !
    call PP_indexes_reset(PAR_IND_eh(i_k))
    call PARALLEL_index(PAR_IND_eh(i_k),(/BS_nT_at_k(i_k)/),COMM=PAR_COM_eh_INDEX,CONSECUTIVE=.TRUE.,NO_EMPTIES=.FALSE.)

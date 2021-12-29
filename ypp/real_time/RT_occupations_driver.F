@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -44,7 +44,7 @@ subroutine RT_occupations_driver(k,q,en)
  !
  ! Pre-setup of carrier components and Time evolution parameters
  !===============================================================
- call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.)
+ call RT_apply(RT_bands,en,k,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
  !
  if (.not.l_rt_carriers_in_use) return
  !

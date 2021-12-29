@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,15 +33,21 @@ module YPP_ELPH
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
  logical :: l_ph_ass_dos
+ logical :: l_gkkp_expand
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
  real(SP):: elph_Ef
  real(SP):: elph_E_max
  real(SP):: elph_residual_treshold = 0.
+ integer :: ik_gkkp,ib_gkkp
  !
  ! ...GKKP I/O
  logical :: l_gkkp
+ logical :: l_gkkp_db
+ logical :: l_gkkp_dg
+ logical :: l_gkkp_plot
+ logical :: l_use_qindxB
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path
@@ -81,26 +87,42 @@ module YPP_ELPH
      integer, optional  :: BS_E_degs(BSS_n_eig)
    end subroutine
    !
-   subroutine ELPH_databases_IO_freqs(ph_freqs_file,n_q,q_pt,ph_freq)
+   subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
      !
      use pars,           ONLY:schlen,SP 
      use D_lattice,      ONLY:n_atoms
      !
      implicit none
      !
-     character(schlen), intent(in)   :: ph_freqs_file
-     integer,      intent(inout)     :: n_q
-     real(SP), optional, intent(out) :: q_pt(n_q,3)
-     real(SP), optional, intent(out) :: ph_freq(n_q,3*n_atoms)
+     character(schlen), intent(in)   :: ph_file
+     integer,     intent(inout)  :: n_q
+     real(SP),    optional,   intent(out) :: q_pt(n_q,3)
+     real(SP),    optional,   intent(out) :: ph_freqs(3*n_atoms,n_q)
+     complex(SP), optional,   intent(out) :: ph_pol(n_q,3*n_atoms,n_atoms,3)
      !
    end subroutine
    !
+   subroutine ELPH_databases_IO_freqs(ph_file,n_q,q_pt,ph_freqs)
+     !
+     use pars,           ONLY:schlen,SP 
+     use D_lattice,      ONLY:n_atoms
+     !
+     implicit none
+     !
+     character(schlen), intent(in)   :: ph_file
+     integer,      intent(inout)     :: n_q
+     real(SP), optional, intent(out) :: q_pt(n_q,3)
+     real(SP), optional, intent(out) :: ph_freqs(3*n_atoms,n_q)
+     !
+   end subroutine
+     !
  end interface
  !
  contains
    !
    subroutine ELPH_DB_alloc()  
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
+     DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))
      YAMBO_ALLOC(YAMBO_K_found,(nkbz))
      YAMBO_ALLOC(DB_ph_qpt,(DB_nq,3))

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -39,7 +39,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
 #endif
- use BS,            ONLY:l_BS_magnons,l_BS_dichroism
+ use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -180,7 +180,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
  !

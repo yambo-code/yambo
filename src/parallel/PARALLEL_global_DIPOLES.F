@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -146,4 +146,3 @@ subroutine PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  endif
  !
 end subroutine PARALLEL_global_DIPOLES
-

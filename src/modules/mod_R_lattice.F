@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 module R_lattice
  !
- use pars,        ONLY:SP,schlen,IP
+ use pars,        ONLY:SP,DP,schlen, IP
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
@@ -157,6 +157,16 @@ module R_lattice
  real(SP),   allocatable :: RIM_qpg(:,:,:)
  real(SP),   allocatable DEV_ATTR :: RIM_qpg_d(:,:,:)
  !
+ ! RIM_W
+ !
+ integer :: RIM_W_ng
+ integer :: RIM_W_n_rand_pts
+ logical :: RIM_W_is_diagonal
+ logical :: RIM_W_for_graph
+ real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
+ real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
+ real(DP),   allocatable :: f_coeff(:,:,:,:,:)
+ !
  ! Coulomb (including Cutoff)
  !
  real(SP)                :: cyl_ph_radius
@@ -174,6 +184,8 @@ module R_lattice
  real(SP)                :: cyl_vr_save
  real(SP)                :: cyl_vz_save
  real(SP)                :: cyl_zz_save
+ logical                 :: cut_is_slab
+ integer                 :: idir(3)
  !
  ! BZ map by direction
  !
@@ -188,13 +200,14 @@ module R_lattice
    !
    integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,border_point)
      use pars, ONLY: SP
-     integer :: n_k
-     real(SP):: k_ref(3)
-     real(SP):: k(n_k,3)
-     real(SP),optional :: k_dist(n_k)
-     logical, optional :: ROTATE_k_ref,border_point
-     integer, optional :: k_symm
-     integer, optional :: i_err
+     integer,  intent(in) :: n_k
+     real(SP), intent(in) :: k_ref(3)
+     real(SP), intent(in) :: k(n_k,3)
+     real(SP), intent(out),  optional :: k_dist(n_k)
+     logical,  intent(out),  optional :: border_point
+     logical,  intent(in) ,  optional :: ROTATE_k_ref
+     integer,  intent(out),  optional :: k_symm
+     integer,  intent(out),  optional :: i_err
    end function
    ! 
    function qindx_B_load(ikbz,ikp_bz,ID)

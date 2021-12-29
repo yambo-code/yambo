@@ -46,6 +46,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,PAR_matrix
+ use parser_m,      ONLY:parser
+ use com,           ONLY:msg
  use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
@@ -57,17 +59,25 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  type(w_samp)  ::Xw
  logical       ::SILENT_MODE
  !
+ ! External
+ !
+ integer, external    :: io_X,X_eh_setup
+ !
  ! Work Space
  !
  type(PAR_matrix)     :: X_par_tmp
+ logical              :: l_average_q0
  integer              :: iq,iq_dir,nq_dir,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2),q0_save(3)
- integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
  !
  ! logicals and control
  !
  self_detect_E_range=.false.
+ !
+ call parser("AvgQzero",l_average_q0)
+ !
+ if (l_average_q0) call msg('s','[X] Averaging over three directions for q0 term ')
  !
  ! Some check
  !
@@ -132,6 +142,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (X%iq(1)>1) io_X_done(:X%iq(1)-1)=1
  !
  if (io_RESPONSE.and..not.l_recalculate_X) then
+   !
+   if (l_average_q0) X%q0=(/-9._SP,-9._SP,-9._SP/)
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
    i_err=io_X(X,Xw,Xdb)
@@ -270,18 +282,20 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (io_RESPONSE) iq_mem=1
    call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   if (iq/=1) nq_dir=1
-   if (iq==1) nq_dir=3
+   nq_dir=1
    !
-   if (iq==1) call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"XUP")
-   !
-   q0_save=X%q0
+   if (iq==1.and.l_average_q0) then
+     nq_dir=3
+     call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"XUP")
+   endif
    !
    do iq_dir=1,nq_dir
      !
-     if(iq_dir==1) X%q0=(/1,0,0/)
-     if(iq_dir==2) X%q0=(/0,1,0/)
-     if(iq_dir==3) X%q0=(/0,0,1/)
+     if(iq==1 .and. l_average_q0) then
+       if(iq_dir==1) X%q0=(/1,0,0/)
+       if(iq_dir==2) X%q0=(/0,1,0/)
+       if(iq_dir==3) X%q0=(/0,0,1/)
+     endif
      !
      call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
@@ -289,7 +303,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
      !
-     if(iq==1) then
+     if( iq==1 .and. l_average_q0) then
        ! average over the three directions
        X_par_tmp%blc=X_par_tmp%blc+X_par(iq_mem)%blc*1._SP/3._SP
        X_par(iq_mem)%blc=cZERO
@@ -297,18 +311,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
          X_par_tmp%blc_d=X_par_tmp%blc_d+X_par(iq_mem)%blc_d*1._SP/3._SP
          X_par(iq_mem)%blc_d=cZERO
        endif
-     endif
-     !
-     if(iq_dir==3) then
-       ! store back the average
-       X_par(iq_mem)%blc=X_par_tmp%blc
-       if (have_cuda) X_par(iq_mem)%blc_d=X_par_tmp%blc_d
-       call X_PARALLEL_alloc(X_par_tmp,0,0,"CLEAN")
+       !
+       if(iq_dir==3) then
+         ! store back the average
+         X_par(iq_mem)%blc=X_par_tmp%blc
+         if (have_cuda) X_par(iq_mem)%blc_d=X_par_tmp%blc_d
+         call X_PARALLEL_alloc(X_par_tmp,0,0,"CLEAN")
+       endif
+       !
      endif
      !
    enddo
    !
-   X%q0=q0_save
+   if(iq==1 .and. l_average_q0) X%q0=(/-9._SP,-9._SP,-9._SP/)
    !
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then

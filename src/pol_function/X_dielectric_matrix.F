@@ -307,18 +307,29 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
    nq_dir_now=1
    if (iq==1.and.nq_dir_average>1) then
      nq_dir_now=nq_dir_average
      q0_save=X%q0
+     !
+     ! Note. DS. 2021/12/29
+     ! X_par(iq_mem) is forst allocated with Xup structure
+     ! and later stored somewhere and re-allocated with X,CPU_ONLY
+     ! if X_par(iq_mem)%INTER_comm%n_CPU>1
+     ! I need to mimic this for X_par_tmp
      call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"XUP")
+     if (X_par_tmp%INTER_comm%n_CPU>1) then
+       call MATRIX_reset(X_par_tmp)
+       call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"X,CPU_ONLY")
+     endif
    endif
    !
    do iq_dir=1,nq_dir_now
      !
      if(iq==1 .and. nq_dir_average>1) X%q0=qdirs(:,iq_dir)
+     !
+     call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
      !
      call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
@@ -334,6 +345,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
          X_par_tmp%blc_d=X_par_tmp%blc_d+X_par(iq_mem)%blc_d*1._SP/real(nq_dir_average,SP)
          X_par(iq_mem)%blc_d=cZERO
        endif
+       !
+       if(iq_dir<nq_dir_average) call MATRIX_reset(X_par(iq_mem))
        !
        if(iq_dir==nq_dir_average) then
          ! store back the average

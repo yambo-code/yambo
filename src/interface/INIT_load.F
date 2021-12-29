@@ -376,13 +376,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'DbGdQsize', '[X,DbGd][o/o] Percentual of the total DbGd transitions to be used',X_DbGd_percentual,verb_level=V_resp)
  !
- ! Anysotropy in the q->0 limit of the screening
- !
- call it('f',defs,'AvgQzero','[X] For the q=0 term average over the three direction ',verb_level=V_resp)
- !
  ! RIM
  !
- call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',RIM_epsm1,verb_level=V_RL)
+ call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
+&                         RIM_epsm1,verb_level=V_RL)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
 &                         RIM_id_epsm1_reference,verb_level=V_RL)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)
@@ -390,7 +387,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! RIM-W
- !
  call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
  !
  ! CUTOFF

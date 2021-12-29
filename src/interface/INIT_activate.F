@@ -308,9 +308,10 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('X')
 #endif
    !
-   call initactivate(1,'ShiftedPaths AvgQzero')
+   call initactivate(1,'ShiftedPaths')
    call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','GrFnTp','DmRnge','CGrdSp','EhEngy','LongDr','DrudeW'/))
-   call initactivate(1,'XTermKind XTermEn')
+   call initactivate(1,'XTermKind')
+   call initactivate(1,'XTermEn')
  endif
  !
  ! GW (PPA & COHSEX) 
@@ -323,7 +324,7 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('X')
 #endif
    !
-   call initactivate(1,'ShiftedPaths AvgQzero')
+   call initactivate(1,'ShiftedPaths')
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                           'EhEngy','LongDr','PPAPnt'/))

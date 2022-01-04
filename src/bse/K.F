@@ -561,6 +561,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
+         if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
+         !
          if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !
        endif

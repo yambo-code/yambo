@@ -564,6 +564,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
+         if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
+         !
          if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !
        endif
@@ -610,7 +612,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_p_s,i_c_k,i_v_p,i_kmq_s,i_pmq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
        end select
        !

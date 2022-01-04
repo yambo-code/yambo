@@ -29,11 +29,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties
-<<<<<<< HEAD
- use R_lattice,    ONLY:qindx_S,G_m_G_maxval,k_map,bz_samp
-=======
- use R_lattice,    ONLY:qindx_S,G_m_G,bz_samp
->>>>>>> bug-fixes
+ use R_lattice,    ONLY:qindx_S,G_m_G_maxval,bz_samp
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max,l_sc_XC_is_local
 #if defined _RT || defined _NL

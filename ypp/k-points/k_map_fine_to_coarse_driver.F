@@ -149,7 +149,6 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  !
  ! CLEAN
  !========
- !
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  call FineGd_E_components_reset(Xen,.TRUE.)

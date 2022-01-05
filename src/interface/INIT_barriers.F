@@ -23,7 +23,7 @@
 !
 subroutine INIT_barriers()
  !
- use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,&
+ use drivers,    ONLY:l_acfdt,l_bse,l_bss,l_cohsex,l_elph_corr,l_gw0,l_phel_corr,&
 &                     l_eval_collisions,l_life,l_ppa,l_real_time,l_sc_run,l_tddft,l_nl_optics
  use pars,       ONLY:lchlen
  use D_lattice,  ONLY:i_time_rev,i_space_inv
@@ -44,7 +44,7 @@ subroutine INIT_barriers()
  !
  ! ...
  !
- metallic_system=n_met_bands/=n_full_bands
+ metallic_system=any(n_met_bands/=n_full_bands)
  !
  newton=trim(QP_solver)=='n'
  QP_secant=trim(QP_solver)=='s'
@@ -189,5 +189,8 @@ subroutine INIT_barriers()
  ! MORE
  !======
  if ( (l_ppa.and.trim(QP_solver)=='s').or.l_cohsex ) QP_solver='n'
+#if defined  _PHEL 
+ if ( l_phel_corr.and.trim(QP_solver)=='s' ) QP_solver='n'
+#endif
  !
 end subroutine

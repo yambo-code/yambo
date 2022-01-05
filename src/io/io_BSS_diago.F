@@ -26,7 +26,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_mat_res_ares_dim
+ use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_res_ares_n_mat
  use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig,BSS_desc
  use X_m,           ONLY:X_t
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
@@ -50,7 +50,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  call timing('io_BSS_diago',OPR='start')
  !
- if (BS_mat_res_ares_dim>1) then
+ if (BS_res_ares_n_mat>1) then
    if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))
    if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
  else
@@ -77,7 +77,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
    call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="[BSS] Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Number of BSE matrices   ",I0=BS_res_ares_n_mat,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return

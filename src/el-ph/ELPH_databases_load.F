@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM FP
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
+subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
  ! 
  ! mode can be combination of
  !
@@ -42,7 +42,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
 #include<memory.h>
  ! 
- integer,      intent(in)    :: n_bands(2)
+ integer,      intent(in)    :: n_bands(2),q_range(2)
  type(levels), intent(in)    :: E
  type(bz_samp),intent(in)    :: k,q
  character(*), intent(in)    :: K_mode,SCATT_mode
@@ -80,7 +80,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  ! Allocation
  !============
- YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,elph_nQ))
+ YAMBO_ALLOC(MAX_gkkp_expanded_at_kpq,(k%nbz,q_range(1):q_range(2)))
  YAMBO_ALLOC(GKKP_to_sym,(ph_modes,n_bands(2),n_bands(2)))
  if (l_Q_IBZ) NQ=PARs_PH_Q_ibz%N_par
  if (l_Q_BZ ) NQ=PAR_nQ_bz
@@ -92,7 +92,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  !
  call live_timing('El-Ph matrix-elements I/O ('//trim(SCATT_mode)//' and '//trim(K_mode)//')',NQ)
  !
- do iq=1,elph_nQ
+ do iq=q_range(1),q_range(2)
    !
    !...map
    idb=Q_io_map(iq)
@@ -148,7 +148,8 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
          elseif (l_bare) then
            GKKP_to_sym(:,i_n,i_np)=abs(GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))**2
          elseif (l_mixed) then
-           GKKP_to_sym(:,i_n,i_np)=abs(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1)*GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))
+           GKKP_to_sym(:,i_n,i_np)= &
+&          get_mixed_couplings(GKKP%dVc(:,i_np,i_n,K_io_map(ik_bz),1), GKKP_bare%dVc(:,i_np,i_n,K_io_map(ik_bz),1))
          endif
          !
        enddo
@@ -184,4 +185,14 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,K_mode,SCATT_mode)
  call ELPH_alloc("FREE",GKKP=GKKP)
  call ELPH_alloc("FREE",GKKP=GKKP_bare)
  !
+ contains
+   !
+   ! Here we construct the asymmetric bare-dressed coupling expression (notes by FP 23_10_20)
+   function get_mixed_couplings(GKKP_dVc,GKKP_bare_dVc) result(GKKP_sq_eff)
+     complex(SP), intent(in) :: GKKP_dVc(ph_modes)
+     complex(SP), intent(in) :: GKKP_bare_dVc(ph_modes)
+     real(SP)                :: GKKP_sq_eff(ph_modes)
+     GKKP_sq_eff = real(GKKP_dVc)*real(GKKP_bare_dVc)+aimag(GKKP_dVc)*aimag(GKKP_bare_dVc)
+   end function
+   !
 end subroutine ELPH_databases_load

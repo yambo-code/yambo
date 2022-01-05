@@ -180,7 +180,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
  !

@@ -76,9 +76,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  & ! standard
-&                              USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,& ! optionals
-&                              WF_fac=WF_fac,PDOS_fac=PDOS_fac)                    ! optional pointers
+   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &              ! standard
+&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,& ! optionals
+&                              WF_fac=WF_fac,PDOS_fac=PDOS_fac)                                 ! optional pointers
    !
    if (LIVE_t_) call live_timing(steps=1)
    !

@@ -42,16 +42,6 @@ module RT_lifetimes
    real(SP)                 :: Tfit(2)=rZERO      ! 
  end type RT_lifetime
  !
- type RT_extra_lifetime
-   logical                  :: active=.FALSE.
-   character(schlen)        :: KIND="none"
-   integer                  :: D1(2)=0
-   integer                  :: D2=0
-   real(SP),    allocatable :: linewidth(:,:)
-   real(SP),    allocatable :: interband(:,:)
-   real(SP),    allocatable :: intraband(:,:)
- end type RT_extra_lifetime
- !
  type RT_obj_lifetime
    logical                  :: active=.FALSE.
    character(schlen)        :: KIND="none"
@@ -64,9 +54,8 @@ module RT_lifetimes
  !
  ! Lifetimes (updated)
  !-----------
- type(RT_lifetime)     :: RT_EE_life,RT_EP_emit_life,RT_EH_life,RT_PE_life,RT_EP_abs_life
- type(RT_obj_lifetime) :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
- type(RT_extra_lifetime)   :: RT_PE_extra 
+ type(RT_lifetime)       :: RT_EE_life,RT_EP_emit_life,RT_EH_life,RT_PE_life,RT_EP_abs_life
+ type(RT_obj_lifetime)   :: RT_obj_EE_life,RT_obj_EP_emit_life,RT_obj_EH_life,RT_obj_PE_life,RT_obj_EP_abs_life
  !
  ! Lifetimes (REFERENCE)
  !-----------
@@ -140,7 +129,6 @@ module RT_lifetimes
      integer :: D1(2),D2
      if (l_phel_scatt) then
        call RT_lifetime_alloc("ph-el",RT_PE_life,D1,D2)
-       call RT_extra_lifetime_alloc("ph-el",RT_PE_extra,D1,D2)
        call RT_lifetime_alloc("ph-el-REF",RT_PE_REF_life,D1,D2)
      endif
    end subroutine
@@ -154,7 +142,6 @@ module RT_lifetimes
      if (l_elph_scatt)     call RT_lifetime_free(RT_EP_abs_REF_life)
      if (l_elel_scatt)     call RT_lifetime_free(RT_EE_REF_life)
      if (l_elphoton_scatt) call RT_lifetime_free(RT_EH_REF_life)
-     if (l_phel_scatt)     call RT_extra_lifetime_free(RT_PE_extra)
      YAMBO_FREE(SAVED_times)
    end subroutine
    !
@@ -187,31 +174,6 @@ module RT_lifetimes
      YAMBO_FREE(LIFE%abs)
      YAMBO_FREE(LIFE%abs_save)
      YAMBO_FREE(LIFE%emit_save)
-   end subroutine
-   !
-   subroutine RT_extra_lifetime_alloc(KIND,LIFE,D1,D2)
-     character(*)      :: KIND
-     type(RT_extra_lifetime) :: LIFE
-     integer :: D1(2),D2
-     LIFE%D1=D1
-     LIFE%D2=D2
-     YAMBO_ALLOC(LIFE%linewidth,(D1(1):D1(2),D2))
-     YAMBO_ALLOC(LIFE%interband,(D1(1):D1(2),D2))
-     YAMBO_ALLOC(LIFE%intraband,(D1(1):D1(2),D2))
-     LIFE%KIND=KIND
-     LIFE%active=.true.
-     LIFE%linewidth=rZERO
-     LIFE%interband=rZERO
-     LIFE%intraband=rZERO
-   end subroutine
-   !
-   subroutine RT_extra_lifetime_free(LIFE)
-     type(RT_extra_lifetime) :: LIFE
-     LIFE%KIND="none"
-     LIFE%active=.FALSE.
-     YAMBO_FREE(LIFE%linewidth)
-     YAMBO_FREE(LIFE%interband)
-     YAMBO_FREE(LIFE%intraband)
    end subroutine
    !
    subroutine RT_obj_lifetime_alloc(KIND,LIFE,Ns)

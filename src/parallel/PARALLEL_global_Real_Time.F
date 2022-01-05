@@ -37,8 +37,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,&
-&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
+ use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_G_b_INDEX_global,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,&
+&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k,&
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
@@ -58,7 +58,7 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  ! Work space
  !
- integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL
+ integer              :: ib1,ib2,ik,nk_G_IO,nk_SERIAL,i_shift
  logical              :: CONSECUTIVE
  !
  CALL PARALLEL_structure(4,(/"k ","b ","q ","qp"/))
@@ -69,7 +69,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                                        COMM_index_4=PAR_COM_PLASMA_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
-&                                        COMM_A2A_3=PAR_COM_Q_A2A)
+&                                        COMM_A2A_3=PAR_COM_Q_A2A,&
+&                                        COMM_index_global_2=PAR_COM_G_b_INDEX_global)
  !
  ! COMMs setup
  !
@@ -114,13 +115,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  !
  YAMBO_ALLOC(PAR_IND_WF_b%n_of_elements,(PAR_COM_WF_b_INDEX%n_CPU))
  YAMBO_ALLOC(PAR_IND_WF_b%element_1D,(RT_bands(2)))
- PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=RT_bands(1)-1
+ PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=0
  PAR_IND_WF_b%element_1D(:)=.FALSE.
- if (RT_bands(1)>1) PAR_IND_WF_b%element_1D(1:RT_bands(1)-1)=.TRUE.
- !
- ! Non evolved bands loaded by all
- !
- PAR_IND_WF_b%element_1D(:max(RT_bands(1)-1,1))=.TRUE.
  !
  do ib1=RT_bands(1),RT_bands(2)
    do ib2=ib1,RT_bands(2)
@@ -136,6 +132,23 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
      endif
    enddo
  enddo
+ !
+ ! Distribute non evolved bands
+ !
+ if (RT_bands(1)>1) then
+   i_shift=0
+   do ib1=1,RT_bands(1)-1
+     ib2=ib1+RT_bands(1)-1-i_shift*(RT_bands(2)-RT_bands(1)+1)
+     if(ib2>RT_bands(2)) then
+       i_shift=i_shift+1
+       ib2=ib2-(RT_bands(2)-RT_bands(1)+1)
+     endif
+     PAR_IND_WF_b%element_1D(ib1)=PAR_IND_WF_b%element_1D(ib2)
+     if (.not.PAR_IND_WF_b%element_1D(ib1)) cycle
+     PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)=PAR_IND_WF_b%n_of_elements(PAR_IND_WF_b_ID+1)+1
+   enddo
+ endif
+ !
  !.........................................................................
  ! Oscillators for external field interaction
  !

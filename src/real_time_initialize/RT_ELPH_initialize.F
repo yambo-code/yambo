@@ -28,9 +28,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  use electrons,      ONLY:levels
  use drivers,        ONLY:l_elph_scatt,l_phel_scatt
  use R_lattice,      ONLY:bz_samp
- use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD_CL,VERIFY,NONE
- use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists
+ use ELPH,           ONLY:PH_freqs_sq,PH_W_debye,GKKP_ep_sq,GKKP_pe_sq,l_GKKP_expanded_DB_exists,elph_nQ
  !
 #include<memory.h>
  !
@@ -39,17 +37,10 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! Work Space
  !
- integer             ::ID,i_err
- integer, external   ::io_RT_components
  logical             ::l_use_Debye_E
  !
  call section('=','El-Ph matrix elements')
  !                 ---------------------
- ! Restart
- !==========
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID) 
- i_err=io_RT_components('REF',ID)
- !
  ! Logicals
  !==========
  if (.not.l_elph_scatt.and..not.l_phel_scatt) return
@@ -71,11 +62,11 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases I/O
  !=====================
- if (l_elph_scatt) call ELPH_databases_load(GKKP_ep_sq,E,k,q,RT_bands,"Q-BZ K-IBZ K-sym","dressed-dressed")
+ if (l_elph_scatt) call ELPH_databases_load(GKKP_ep_sq,E,k,q,RT_bands,(/1,elph_nQ/),"Q-BZ K-IBZ K-sym","dressed-dressed")
  !
  ! Pj-El databases I/O
  !=====================
- if (l_phel_scatt) call ELPH_databases_load(GKKP_pe_sq,E,k,q,RT_bands,"Q-IBZ K-BZ Q-sym","dressed-dressed")
+ if (l_phel_scatt) call ELPH_databases_load(GKKP_pe_sq,E,k,q,RT_bands,(/1,elph_nQ/),"Q-IBZ K-BZ Q-sym","dressed-dressed")
  !
  ! Test of the effect of using a single optical mode
  !                               ===================

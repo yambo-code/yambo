@@ -141,12 +141,14 @@ integer function io_X(X,Xw,ID)
    endif
  endif
  !
+ iq=0
  do i1=1,size(io_sec(ID,:))
    if (io_sec(ID,i1)==0) cycle
    iq=io_sec(ID,i1)/2
  enddo
  !
- if (iq==0) goto 1
+ if (iq==0 ) goto 1
+ if (iq==-1) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  if (io_err/=0) goto 1

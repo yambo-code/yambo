@@ -33,6 +33,7 @@ module YPP_ELPH
  logical :: l_eliashberg
  logical :: l_atomic_amplitude
  logical :: l_ph_ass_dos
+ logical :: l_gkkp_expand
  integer :: elph_steps
  real(SP):: elph_gamma_broad
  real(SP):: ph_broad
@@ -46,6 +47,7 @@ module YPP_ELPH
  logical :: l_gkkp_db
  logical :: l_gkkp_dg
  logical :: l_gkkp_plot
+ logical :: l_use_qindxB
  logical :: use_ext_ph_modes=.FALSE.
  logical :: use_ext_ph_freqs=.FALSE.
  character(schlen)    :: elph_dbs_path
@@ -120,6 +122,7 @@ module YPP_ELPH
    !
    subroutine ELPH_DB_alloc()  
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
+     DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))
      YAMBO_ALLOC(YAMBO_K_found,(nkbz))
      YAMBO_ALLOC(DB_ph_qpt,(DB_nq,3))

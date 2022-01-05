@@ -32,6 +32,7 @@ subroutine RT_output_INIT( )
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
  use RT_lifetimes,   ONLY:l_RT_lifetimes_Tfit,RT_EP_abs_life
+ use RT_control,     ONLY:l_project_spin_dipoles
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
  !
@@ -40,7 +41,7 @@ subroutine RT_output_INIT( )
  ! Work space
  !
  integer                  :: i_f,i_fp,i_c,i_order,il
- character(schlen)        :: dumb_ch,dumb_ch2
+ character(schlen)        :: dumb_ch
  character(2)             :: chart_string(3)
  !
  call msg('s','Output files definition ...')
@@ -56,15 +57,13 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add(name='polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
  !
- call RT_FILE_add('total_field',TITLES=(/"Time[fs]"/))
- call RT_FILE_add(TITLES=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
- !
- do i_fp=1,2
+ do i_fp=1,3
    if (i_fp==1) dumb_ch="external_field"
    if (i_fp==2) dumb_ch="induced_field"
+   if (i_fp==3) dumb_ch="total_field"
    call RT_FILE_add(trim(dumb_ch),&
 &                 TITLES=(/"Time[fs]   ","E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
-   if (i_fp==1) call RT_FILE_add(TITLES=(/"Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
+   if (i_fp==1) call RT_FILE_add(TITLES=(/"Profile  [V/m]  ","Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
  enddo
  !
  call RT_FILE_add('energy',TITLES=(/"Time[fs]  ","dE_kin[eV]","dE_ion[eV]"/))
@@ -74,7 +73,7 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('carriers',TITLES=(/"Time[fs]"/))
  call RT_FILE_add(TITLES=(/"d(N_hole-N_elec)"/))
  call RT_FILE_add(TITLES=(/"dN_hole","dN_elec"/))
- if (l_elel_scatt.or.l_elph_scatt) call RT_FILE_add(TITLES=(/"T_hole [K]","T_elec [K]"/))
+ if (l_elel_scatt.or.l_elph_scatt) call RT_FILE_add(TITLES=(/"T_hole [K]","T_elec [K]","Ef(h) [eV]","Ef(e) [eV]"/))
  !
  call RT_FILE_add('thermodynamics',&
 &  TITLES=(/"Time[fs]   ","dE   [eV]  ","dE(h)[eV]  ","dE(e)[eV]  ","dS   [eV/K]",&
@@ -155,39 +154,14 @@ subroutine RT_output_INIT( )
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
  if (n_spin>1) then
-   call RT_FILE_add('magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
- endif
- !
- call RT_FILE_add('trans_residual',TITLES=(/'T [fs]','E [eV]'/))
- call RT_FILE_add(TITLES=(/'Residual'/))
- !
- do i_f=1,3
-   if (i_f==1) dumb_ch='trans_eps_real'
-   if (i_f==2) dumb_ch='trans_eps_imag'
-   if (i_f==3) dumb_ch='eps_eq'
-   if(i_f<3) then
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]','Eps   '/))
-   else
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]','EPS-Im','EPS-Re'/))
+   if (l_project_spin_dipoles) then
+     call RT_FILE_add('spin_magnetization',&
+     &                TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  ","Mv_x  ","Mv_y  ","Mv_z  ","Mc_x  ","Mc_y  ","Mc_z  "/))
+   else 
+     call RT_FILE_add('spin_magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
    endif
- enddo
- !
- do i_fp=1,2
-   if (i_fp==1) dumb_ch2="refl"
-   if (i_fp==2) dumb_ch2="transm"
-   do i_f=1,3
-     if (i_f==1) dumb_ch='trans_'//trim(dumb_ch2)//'_rel'
-     if (i_f==2) dumb_ch='trans_'//trim(dumb_ch2)//'_abs'
-     if (i_f==3) dumb_ch=trim(dumb_ch2)//'_eq'
-     if(i_f<3) then
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]'/))
-     else
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]'/))
-     endif
-     if (i_fp==1) call RT_FILE_add(TITLES=(/'Reflectivity'/))
-     if (i_fp==2) call RT_FILE_add(TITLES=(/'Transmission'/))
-   enddo
- enddo
+   call RT_FILE_add('orbt_magnetization',TITLES=(/'T [fs]',"Ml_x  ","Ml_y  ","Ml_z  ","Mi_x  ","Mi_y  ","Mi_z  "/))
+ endif
  !
  call msg('l','done')
  !

@@ -117,7 +117,7 @@ contains
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                    DL_vol, a, alat, &
-&                                    n_atomic_species,n_atoms_species,&
+&                                    n_atomic_species,n_atoms_species,atoms_map, &
 &                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
     use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor
     implicit none
@@ -180,11 +180,13 @@ contains
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
     n_atoms_species(:) = 0 
     YAMBO_ALLOC( atom_pos, (3, n_atoms_species_max, n_atomic_species) )
+    YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
     do i1 = 1, n_atoms
       a_species = atom_species_(i1)
       n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
       atom_pos(:, n_atoms_species( a_species ) , a_species ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
+      atoms_map( n_atoms_species( a_species ) , a_species ) = i1
     enddo
     YAMBO_FREE( reduced_atom_positions_ )
     YAMBO_FREE( atom_species_ )
@@ -230,7 +232,7 @@ contains
     n_sp_pol_abinit=n_sp_pol
     if (artificial_spin_pol) n_sp_pol_abinit=1
 
-    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, 1 ) )
+    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol_abinit ) )
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)

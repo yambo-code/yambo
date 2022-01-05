@@ -77,7 +77,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  if ( ( read_is_on(ID).and..not.IO_read ).or.&
 &     (write_is_on(ID).and..not.IO_write)      ) then
    io_connect=IO_NOT_ALLOWED
-   call io_reset(ID)
    return
  endif
  !

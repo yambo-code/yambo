@@ -44,7 +44,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:,:) ! (/ i_Tr; maxval(Xk%FGbz%N_mapped('kpts_in_T_gr')) /)
  end type Haydock_vector
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  !
  ! Slepc
  !==========
@@ -79,14 +79,13 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: BSS_add_antiresonant
  logical  :: BSS_eels_to_eps
  logical  :: BSS_uses_pert_SOC=.FALSE.
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
 #endif
  !

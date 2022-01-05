@@ -32,8 +32,8 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  use memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
 &                       MEM_err,MEM_msg,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,N_MEM_SAVE_max,&
-&                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,&
-&                       N_MEM_max_element_components
+&                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,USER_MEM_limit_string,&
+&                       N_MEM_max_element_components,USER_MEM_limit
  !
  implicit none
  !
@@ -77,10 +77,8 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  !
  ! Database Update
  !=================
- !
- ! ALLOCATION => ADDITION
- !.......................
- !
+ ! Sizes
+ !-------
  LARGE_wk=real(Sz,DP)*real(Kn,DP)/Kilobyte
  MEM_now_Kb=int(LARGE_wk)
  !
@@ -90,6 +88,8 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  !
  if (TOT_MEM_Kb(where)>MAX_MEM_Kb(where)) MAX_MEM_Kb(where)=TOT_MEM_Kb(where)
  !
+ ! ALLOCATION => ADDITION
+ !------------------------
  if (i_SHELF==0) then
    if (N_MEM_elements<N_MEM_SAVE_max) then
      N_MEM_elements=N_MEM_elements+1
@@ -133,6 +133,14 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  endif
  !
  if(.not.just_started) call MEM_manager_messages(what,.true.,MEM_now_Kb,where)
+ !
+ ! TOT_MEM (HOST) > USER_MEM_limit =? STOP
+ !-----------------------------------------
+ if (USER_MEM_limit>0.and.where==1) then
+   if (TOT_MEM_Kb(where)>USER_MEM_limit) then
+     call error("Allocation of "//what//" leads total memory above USER limit ["//trim(USER_MEM_limit_string)//"]")
+   endif
+ endif
  !
 #else
  call MEM_error(what)

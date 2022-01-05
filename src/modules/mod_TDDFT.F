@@ -43,7 +43,9 @@ module TDDFT
  logical          :: FXC_is_retarded
  !
  real(SP),    allocatable :: FXC_K_diagonal(:)
- complex(SP), allocatable :: FXC(:,:,:)
+ complex(SP), allocatable :: F_xc_gspace(:,:,:)
+ !
+ character(10)     :: ALDA_cut_scheme
  !
  interface 
    !

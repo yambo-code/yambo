@@ -111,6 +111,20 @@ if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
    #
 fi
 #
+# check for MKL
+#
+if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
+   tty_fft_incdir="${MKLROOT}/include"
+   case "${FC}" in
+   *gfortran* )
+   	try_fft_libs="-lmkl_gf_lp64 -lmkl_gf_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+    ;;
+    *ifort* | *pgi* | *nvfortran* | *ifc* )
+   	try_fft_libs="-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+    ;;
+    esac 
+fi
+#
 if ! test x"$try_fft_libs" = "x" ; then
   #
   save_libs=$LIBS

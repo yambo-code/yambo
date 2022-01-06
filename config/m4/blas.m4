@@ -110,8 +110,6 @@ if test $acx_blas_ok = no; then
                         [], [-lblas $FLIBS])])
 fi
 
-echo " PASSO QUI $FC ";
-
 # BLAS in Intel MKL library?
 if test $acx_blas_ok = no; then
 	# MKL for gfortran
@@ -147,7 +145,6 @@ if test $acx_blas_ok = no; then
 		esac
 	esac
 fi
-echo " PASSO QUA $BLAS_LIBS ";
 
 # Generic BLAS library?
 if test $acx_blas_ok = no; then

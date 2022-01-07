@@ -118,8 +118,8 @@ if test $acx_blas_ok = no; then
 		case "${host}" in
 		*x86*64*)
 			AC_CHECK_LIB(mkl_gf_lp64, $caxpy,
-				[acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf_lp64 -lmkl_gf_thread -lmkl_core -liomp5 -lpthread -lm -ldl"],,
-				[-lmkl_gf_lp64 -lmkl_gf_thread -lmkl_core -liomp5 -lpthread -lm -ldl])
+				[acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread -lm -ldl"],,
+				[-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread -lm -ldl])
 		;;
 		i?86*linux*)
 			AC_CHECK_LIB(mkl_gf, $caxpy,

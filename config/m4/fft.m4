@@ -115,11 +115,11 @@ fi
 #
 if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    tty_fft_incdir="${MKLROOT}/include"
-   case "${FC}" in
+   case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+   	try_fft_libs="-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lpthread -lm -ldl"
     ;;
-    *ifort* | *pgi* | *nvfortran* | *ifc* )
+    *intel* | *pgi* | *nvfortran* )
    	try_fft_libs="-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
     ;;
     esac 

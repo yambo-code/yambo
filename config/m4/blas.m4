@@ -113,13 +113,13 @@ fi
 # BLAS in Intel MKL library?
 if test $acx_blas_ok = no; then
 	# MKL for gfortran
-	case "${FC}" in
+	case "${FCKIND}" in
 	*gfortran* )
 		case "${host}" in
 		*x86*64*)
 			AC_CHECK_LIB(mkl_gf_lp64, $caxpy,
-				[acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread -lm -ldl"],,
-				[-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -liomp5 -lpthread -lm -ldl])
+				[acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"],,
+				[-lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl])
 		;;
 		i?86*linux*)
 			AC_CHECK_LIB(mkl_gf, $caxpy,
@@ -129,7 +129,7 @@ if test $acx_blas_ok = no; then
 		esac
 	;;
 	# MKL for other compilers (Intel, PGI, ...?)
-	*ifort* | *pgi* | *nvfortran* | *ifc* )
+	*intel* | *nvfortran* | *pgi* )
 		# 64 bit
 		case "${host}" in
 		*x86*64*)

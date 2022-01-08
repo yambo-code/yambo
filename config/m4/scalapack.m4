@@ -70,7 +70,7 @@ if test -d "${MKLROOT}" ; then
       try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
       ;; 
    *gfortran* )
-      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
+      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
       ;;
    esac
 fi

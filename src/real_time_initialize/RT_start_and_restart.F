@@ -73,7 +73,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(9),COM_MODE
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(9),COM_MODE,ib,iE_fg,ik_RT
  integer, external :: io_RT_components
  integer, external :: RT_Lifetimes_evaluation_plan
  logical :: RESTART

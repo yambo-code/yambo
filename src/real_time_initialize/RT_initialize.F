@@ -276,7 +276,7 @@ subroutine RT_initialize(E,k,q)
      else if ( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='QSFIEL') .or. &
      &         (field_defs(1)=='GAUSS') .or.                                     &
      &         (field_defs(1)=='PULSE') .or. (field_defs(1)=='SPULSE')      ) then
-       call RT_Fluence_and_pikind(E,i1)
+       call RT_Fluence_and_PI_kind(E,i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)

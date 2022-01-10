@@ -413,25 +413,6 @@ module fields
      A%envelop= sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
    end subroutine compute_envelop
    !
-   complex(SP) function Rabi_Factor(Field,P,R)
-     use X_m,       ONLY:global_gauge
-     !
-     ! Rabi=2 * \mu.E
-     !
-     ! E is the field amplitude = sqrt ( I *8*pi/c  ) 
-     !
-     ! I is given in the input file
-     !
-     use pars, ONLY: cI
-     type(ext_field), intent(in) :: Field
-     complex(SP)                 :: P(3),R(3)
-     if ( trim(global_gauge)=='length' ) then
-       Rabi_Factor=2._SP*sum(R(:)*Field%versor(:))*Field%amplitude
-     else 
-       Rabi_Factor=2._SP*sum(P(:)*Field%versor(:))*Field%amplitude
-     endif
-   end function Rabi_Factor
-   !
    complex(SP) function Divide_by_Field(Field,order)
      !
      use pars, ONLY: cI,cONE,pi,schlen

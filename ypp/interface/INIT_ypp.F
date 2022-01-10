@@ -56,7 +56,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use electrons,      ONLY:levels,E_reset
 #endif
 #if defined _YPP_RT 
- use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_G_two_times,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,l_NL_exc,RT_conf,l_RT_pol
@@ -155,7 +155,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_NL
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_Nonlinear=io_NL(ID)
+ io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
    if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
@@ -375,6 +375,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_RT_occupations) call initactivate(1,'RToccupations')
  if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
  if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+ if (l_RT_G_two_times) call initactivate(1,'RTGtwotimes')
  if (l_RT_bands)       call initactivate(1,'RTfitbands')
  if (l_RT_time)        call initactivate(1,'RTtime')
  if (l_RT_energy)      call initactivate(1,'RTenergy')
@@ -471,6 +472,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
  l_RT_density       = runlevel_is_on('RTdeltaRho')
+ l_RT_G_two_times   = runlevel_is_on('RTGtwotimes')
  !
  l_RT_bands         = runlevel_is_on('RTfitbands')
  l_RT_time          = runlevel_is_on('RTtime')
@@ -538,12 +540,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut KeepKGrid")
  !
 #if defined _YPP_RT
  !
  if (l_RT_X) then 
-   call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
+   call initactivate(1,"Xorder XKind ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
@@ -563,13 +565,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  if (l_electrons.and.l_bands)   call initactivate(1,"PROJECT_mode PROJECT_threshold")  
 #if defined _YPP_RT
- if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
+ if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold UPDATE_E STD_style")
 #endif
  !
  ! Interpolation
  l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
 #if defined _YPP_RT
- l_flag=l_flag.or.(l_RealTime.and.l_RT_bands).or.(l_RealTime.and.l_RT_dos)
+ l_flag=l_flag.or.(l_RealTime.and.(l_RT_bands.or.l_RT_dos.or.l_RT_G_two_times))
 #endif
  if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
  !
@@ -582,12 +584,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_excitons.and.l_interp) call initactivate(1,"BANDS_steps cooIn cooOut")
  l_flag=l_bands
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_bands
+ l_flag=l_bands.or.l_RT_bands.or.l_RT_G_two_times
 #endif
  if (l_flag) then
    call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
    if (l_bands) call initactivate(1,"BANDS_bands")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
+ endif
+ if (l_flag) then
+   call initactivate(1,"INTERP_mode OutputAlat cooIn cooOut NormN NelFac")
+   if (l_bands) call initactivate(1,"BANDS_bands")
+   call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
  endif
  !
  ! Dipoles
@@ -637,7 +644,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs.or.l_RT_pol
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol.or.l_RT_G_two_times
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
@@ -647,6 +654,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
+   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -673,7 +681,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
  if (l_plot) then
-   call initactivate(1,"Format Direction FFTGvecs") 
+   call initactivate(1,"Format Direction FFTGvecs NormToOne") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
 #if defined _YPP_ELPH
    if (l_sp_wf) call initactivate(1,"ResTresh")  
@@ -752,7 +760,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_flag=l_bands
  !
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_bands
+ l_flag=l_flag.or.l_RT_bands.or.l_RT_G_two_times
 #endif
  !
  if (l_flag) call USER_vector_handle("BANDS_kpts")

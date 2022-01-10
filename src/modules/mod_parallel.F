@@ -402,6 +402,7 @@ module parallel_m
  ! ... G bands
  type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX
  type(yMPI_comm),SAVE :: PAR_COM_G_b_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX_global
  !
  ! ... WF
  type(yMPI_comm),SAVE :: PAR_COM_WF_k_A2A

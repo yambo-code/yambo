@@ -39,7 +39,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv,l_1D,l_2D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
- use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,NEQ_Residuals,RT_BSE_Occ_Mode
+ use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
 #endif
  !
  implicit none
@@ -169,6 +169,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  NEQ_Kernel   =STRING_match(RT_BSE_Occ_Mode,"k").and.allocated(Ken%fo)
  NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
  call parser('ForceEqTrans',EQ_Transitions)
+ call parser('ForceEqNoOcc',EQ_NoOcc)
 #endif
  !
  ! SLEPC

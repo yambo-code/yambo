@@ -24,10 +24,10 @@
 subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
  use YPP_real_time,  ONLY:RT_conf,Pol,Curr
- use pars,           ONLY:DP,schlen,cZERO_DP
+ use pars,           ONLY:DP,schlen,cZERO_DP,cZERO
  use R_lattice,      ONLY:nkibz
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
+ use IO_m,           ONLY:OP_RD,RD_CL,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,CACHE_OBS_steps,CACHE_OBS_steps_now
  use real_time,      ONLY:NE_steps,NE_i_time,&
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
@@ -42,7 +42,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! Work Space
  !
- integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
+ integer            :: io_OBS,ID,ID_REF,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -104,7 +104,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  if (present(IO_error)) IO_error=.FALSE.
  !
  NE_i_time=1
- call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
+ call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID)
  io_OBS=io_RT_components(what,ID)
  if( io_OBS/=0 ) then
    if (present(IO_error)) IO_error=.TRUE.
@@ -133,12 +133,15 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  Curr%N   =3
  !
  if (what=="JP".and..not.allocated(Curr%F_t)) then
+   !
    CACHE_OBS_steps=RT_conf%T_n_steps+RT_conf%T_n_range(1)-1
    CACHE_OBS_steps_now=RT_conf%T_n_steps+RT_conf%T_n_range(1)-1
    call RT_control_alloc("cache")
    NE_i_time=NE_steps
-   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID)
-   io_OBS=io_RT_components(what,ID)
+   !
+   call io_control(ACTION=RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID)
+   io_OBS=io_RT_components("JP",ID)
+   !
    YAMBO_ALLOC(Curr%F_t,(RT_conf%T_n_steps,3))
    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
    Curr%F_t =cZERO_DP
@@ -146,12 +149,31 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
    do i_dir=1,3
      do it=1,RT_conf%T_n_steps
        it_now=it+RT_conf%T_n_range(1)-1
-       Curr%F_t(it,i_dir)=J_cache(i_dir,it_now)
-       Pol%F_t(it,i_dir) =P_cache(i_dir,it_now)
+       Curr%F_t(it,i_dir)=cmplx(J_cache(i_dir,it_now),kind=DP)
+       Pol%F_t(it,i_dir) =cmplx(P_cache(i_dir,it_now),kind=DP)
      enddo
    enddo
    !
+   call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID_REF)
+   io_OBS=io_RT_components("JP_REF",ID_REF)
+   !
+   if(io_OBS==0) then
+     call warning("removing reference polarization/current")
+     J_cache=cZERO
+     P_cache=cZERO
+     call io_control(ACTION=RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID_REF)
+     io_OBS=io_RT_components("JP_REF",ID_REF)
+     do i_dir=1,3
+       do it=1,RT_conf%T_n_steps
+         it_now=it+RT_conf%T_n_range(1)-1
+         Curr%F_t(it,i_dir)=Curr%F_t(it,i_dir)-cmplx(J_cache(i_dir,it_now),kind=DP)
+         Pol%F_t(it,i_dir) =Pol%F_t(it,i_dir) -cmplx(P_cache(i_dir,it_now),kind=DP)
+       enddo
+     enddo
+   endif
+   !
    call RT_control_free("cache")
+   !
  endif
  !
  ! Define Efield amplitude

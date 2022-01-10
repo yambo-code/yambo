@@ -115,11 +115,11 @@ integer function io_RT_components(what,ID)
    db_kind=-3
  endif
  !
- loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
+ loading_carr_before_neq = (db_type==-3.and.l_real_time) 
  !
- par_IO=.FALSE.
+ par_IO=.false.
 #if defined _PAR_IO
- if (RT_do_IO("ANY_G")) then
+ if (l_G) then
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
    if ( read_is_on(ID)) local_COMM=mpi_comm_world
    par_IO=.true.

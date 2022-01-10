@@ -45,7 +45,7 @@ subroutine RT_start_and_restart(E,k,q)
  use RT_control,     ONLY:NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,&
 &                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc,RT_DB_name,RT_DB_ID,N_RT_databases,&
 &                         RT_return_db_ID
- use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,&
+ use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,H_EQ,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
 &                         RT_P,RT_step,dG_lesser,NE_i_time,RT_dyn_step,&
@@ -54,7 +54,7 @@ subroutine RT_start_and_restart(E,k,q)
 &                         NE_time_step_update_jump,l_velocity_gauge_corr
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_iterative_ELPH_lifetimes
  use fields,         ONLY:A_tot
- use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc
+ use hamiltonian,    ONLY:H_nl_sc,V_hartree_sc,V_xc_sc,E_reference
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD,OP_RD_CL,OP_IF_START_RD_CL_IF_END,RD_CL_IF_END,&
 &                         manage_action,REP,VERIFY,NONE,DUMP
@@ -62,7 +62,7 @@ subroutine RT_start_and_restart(E,k,q)
  use wave_func,      ONLY:WF
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
- use parallel_m,     ONLY:PAR_G_k_range
+ use parallel_m,     ONLY:PAR_G_k_range,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
@@ -83,6 +83,23 @@ subroutine RT_start_and_restart(E,k,q)
  call RT_local_init()
  call RT_occupations_and_levels_init(RT_bands,E,k,q,RTibz,RT_levels)
  call RT_G_lesser_init()
+ !
+ ! The Equilibrium Hamiltonian
+ !=========================
+ H_EQ=cZERO
+ do ik=1,nXkibz
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
+     do ib=RT_bands(1),RT_bands(2)
+       if (ik_RT/=RTibz%k_range(ik,1)) then
+         iE_fg=RTibz%E_map(ik_RT)
+         H_EQ(ib,ib,ik_RT,1)=E_reference%FG%E(ib,iE_fg,1)
+       else
+         H_EQ(ib,ib,ik_RT,1)=E_reference%E(ib,ik,1)
+       endif
+     enddo
+   enddo
+ enddo
  !
  if(.not.l_RT_is_WFfree) then
    !

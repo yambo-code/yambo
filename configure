@@ -10949,8 +10949,9 @@ fi
 fi
 
 # BLAS in Intel MKL library?
-if test $acx_blas_ok = no; then
+if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
 	# MKL for gfortran
+	mkl_libdir="${MKLROOT}/lib"
 	case "${FCKIND}" in
 	*gfortran* )
 		case "${host}" in
@@ -10962,7 +10963,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_gf_lp64 -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -10981,7 +10982,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
 fi
 
 		;;
@@ -10993,7 +10994,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_gf -lmkl_gf -lmkl_sequential -lmkl_core -lpthread $LIBS"
+LIBS="-lmkl_gf -L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11012,7 +11013,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-lmkl_gf -lmkl_sequential -lmkl_core -lpthread"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread"
 fi
 
 		;;
@@ -11030,7 +11031,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_intel_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11049,7 +11050,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
 fi
 
 		;;
@@ -11061,7 +11062,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_intel -lmkl_intel -lmkl_sequential -lmkl_core -lpthread $LIBS"
+LIBS="-lmkl_intel -L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11080,7 +11081,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-lmkl_intel -lmkl_sequential -lmkl_core -lpthread"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread"
 fi
 
 		;;
@@ -11804,12 +11805,13 @@ fi
 #
 if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    tty_fft_incdir="${MKLROOT}/include"
+   mkl_libdir="${MKLROOT}/lib"
    case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl"
     ;;
     *intel* | *pgi* | *nvfortran* )
-   	try_fft_libs="-lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
     ;;
     esac
 fi
@@ -12581,6 +12583,8 @@ if test -d "${MKLROOT}" ; then
    #
    # Check for MPI libraries
    #
+   mkl_libdir="${MKLROOT}/lib"
+   #
    case "${MPIKIND}" in
    *Sgi* | *sgi* | *SGI* )
       lib_mkl_blacs="mkl_blacs_sgimpt_lp64" ;;
@@ -12594,10 +12598,10 @@ if test -d "${MKLROOT}" ; then
    #
    case "${FCKIND}" in
    *intel* | *pgi* | *nvfortran* )
-      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
       ;;
    *gfortran* )
-      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
       ;;
    esac
 fi

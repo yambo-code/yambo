@@ -54,6 +54,8 @@ if test -d "${MKLROOT}" ; then
    #
    # Check for MPI libraries
    #
+   mkl_libdir="${MKLROOT}/lib"
+   #
    case "${MPIKIND}" in
    *Sgi* | *sgi* | *SGI* )
       lib_mkl_blacs="mkl_blacs_sgimpt_lp64" ;;
@@ -67,10 +69,10 @@ if test -d "${MKLROOT}" ; then
    #
    case "${FCKIND}" in
    *intel* | *pgi* | *nvfortran* )
-      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
       ;; 
    *gfortran* )
-      try_mkl_scalapack="-lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
       ;;
    esac
 fi

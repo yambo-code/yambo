@@ -79,7 +79,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  G_IO_steps   =1
 #if defined _PAR_IO
  k_range      =PAR_G_k_range
- G_IO_steps   =GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+ G_IO_steps   =Gless_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
 #endif
  ! 
  ! H_sig/H_rot...

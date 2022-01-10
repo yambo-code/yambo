@@ -37,7 +37,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
 #if !defined _PAR_IO
  use IO_m,           ONLY:manage_action
 #endif
- use RT_control,     ONLY:RT_apply,SAVE_G_history,GF_RT_IO_t
+ use RT_control,     ONLY:RT_apply,SAVE_G_history,Gless_RT_IO_t
  use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
@@ -97,7 +97,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    &  call error(" History of rho not found. Two times function cannot be computed")
  !
  RT_dyn_step=RT_step
- call RT_time_configuration_setup("Glesser",GF_RT_IO_t)
+ call RT_time_configuration_setup("Glesser",Gless_RT_IO_t)
  !
  if (build_G_les) function_name="G<"
  if (build_G_grt) function_name="G>"
@@ -155,14 +155,14 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  call msg('s',function_name//"(k,w) at time "//trim(real2ch(real(T_c/FS2AUT,SP)))//" fs")
  !
- Nt=GF_RT_IO_t%N
+ Nt=Gless_RT_IO_t%N
  !
- REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+ REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
  do i_t_tmp=1,Nt
-   TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_Tc) )
+   TIME_diff= abs ( Gless_RT_IO_t%Time(i_t_tmp) - RT_time(i_Tc) )
    if (abs(TIME_diff)<REF_diff ) then 
      REF_diff=TIME_diff
-     GF_RT_IO_t%N=i_t_tmp
+     Gless_RT_IO_t%N=i_t_tmp
    endif
  enddo
  !
@@ -252,12 +252,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    !
    do i_kind=1,2
      !
-     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+     REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
      do i_t_tmp=1,Nt
-       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T(i_kind)) )
+       TIME_diff= abs ( Gless_RT_IO_t%Time(i_t_tmp) - RT_time(i_T(i_kind)) )
        if (abs(TIME_diff)<REF_diff ) then 
          REF_diff=TIME_diff
-         GF_RT_IO_t%N=i_t_tmp
+         Gless_RT_IO_t%N=i_t_tmp
        endif
      enddo
      !

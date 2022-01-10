@@ -27,7 +27,7 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  ! PRB 69, 085106 (2004), in terms of Kohn-Sham orbitals
  !
  use pars,           ONLY:SP,cZERO,cONE
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use electric,       ONLY:Sm1_plus,Sm1_minus
  use QP_m,           ONLY:QP_nk
  use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands

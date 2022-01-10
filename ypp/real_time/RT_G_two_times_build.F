@@ -29,16 +29,16 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  use matrix_operate, ONLY:hermitian
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:real2ch
  use wrapper,        ONLY:M_by_M
  use com,            ONLY:msg,of_open_close
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE
 #if !defined _PAR_IO
  use IO_m,           ONLY:manage_action
 #endif
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
+ use RT_control,     ONLY:RT_apply,SAVE_G_history,GF_RT_IO_t
+ use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
@@ -54,7 +54,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
 #if !defined _PAR_IO
  integer               :: IO_ACT
 #endif
- integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
+ integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,&

@@ -46,7 +46,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  ! Work space
  !
  integer   :: i_sp_pol,ik,ik_fg,ib,iE_fg
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin),DOS_Broadening_
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin),DOS_broadening_
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_W_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP

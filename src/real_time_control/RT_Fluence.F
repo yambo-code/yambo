@@ -24,10 +24,9 @@
 subroutine RT_Fluence_and_pikind(En,i_field)
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT
+ use units,          ONLY:PS2AUT
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time
  use fields,         ONLY:Efield,gauge_field
- use functions,      ONLY:theta_function
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  !
@@ -242,16 +241,15 @@ subroutine Rabi_frequency_all(En,i_field)
  ! To be fixed in parallel
  ! To be fixed for degenerate states 
  !
- use pars,           ONLY:SP,rZERO,cZERO,cI
+ use pars,           ONLY:SP,cZERO,cI
  use units,          ONLY:HA2EV,PS2AUT
  use R_lattice,      ONLY:nkibz
- use electrons,      ONLY:n_sp_pol,levels,spin_occ
+ use electrons,      ONLY:n_sp_pol,levels
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:Efield,field_frequency
  use real_time,      ONLY:RT_bands,RT_nbands
  use dipoles,        ONLY:DIP_iR,DIP_v
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_Xk_ibz_index
- use com,            ONLY:msg
  use vec_operate,    ONLY:degeneration_finder
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  !

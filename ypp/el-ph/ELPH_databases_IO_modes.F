@@ -26,7 +26,6 @@ subroutine ELPH_databases_IO_modes(ph_file,n_q,q_pt,ph_freqs,ph_pol)
  use pars,           ONLY:schlen,SP 
  use D_lattice,      ONLY:n_atoms
  use units,          ONLY:HA2THZ
- use vec_operate,    ONLY:v_is_zero
  use stderr,         ONLY:intc
  use com,            ONLY:msg
  !

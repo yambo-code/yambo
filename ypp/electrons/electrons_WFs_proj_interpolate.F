@@ -26,7 +26,6 @@ subroutine electrons_WFs_proj_interpolate(Xen,SEED_k,OUT_k,BANDS_range,proj_fac,
  use pars,           ONLY:SP,cZERO
  use wave_func,      ONLY:WF
  use electrons,      ONLY:levels
- use electrons,      ONLY:n_spinor
  use R_lattice,      ONLY:bz_samp
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
  use SC,             ONLY:load_SC_components,SC_bands

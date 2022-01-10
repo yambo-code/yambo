@@ -26,7 +26,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  ! Build overlaps determinants between valence bands
  !
  use pars,           ONLY:SP,cZERO,cONE
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use hamiltonian,    ONLY:H_ref_bands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx

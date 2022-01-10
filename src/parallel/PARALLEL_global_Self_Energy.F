@@ -39,7 +39,7 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                        PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k,&
-&                        PAR_INd_DIPk_bz,PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz
+&                        PAR_IND_DIPk_bz,PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz
  ! INDEX
  use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index,PAR_IND_Bp_mat
  ! DIMENSIONS

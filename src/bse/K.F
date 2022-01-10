@@ -34,15 +34,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,        ONLY:fft_size
  use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
-&                       qindx_X,qindx_B_max,qindx_free,qindx_B_load,&
+ use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,&
+&                       qindx_X,qindx_B_max,qindx_B_load,&
 &                       RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,          ONLY:msg
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_Block_size,BS_q,&
+&                       BS_res_K_exchange,BS_Block_size,&
 &                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
 &                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
 &                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
@@ -77,7 +77,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  character(schlen) :: section_title
  character(1)      :: mode_now
- integer, external :: io_BS_PAR_init
  !
  ! ... Kernel loop
  !

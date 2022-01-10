@@ -44,12 +44,11 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,IO_ACT
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
 #if defined _PAR_IO
- integer, external :: io_collisions_header
 #endif
  !
  if (i_coll==0) then

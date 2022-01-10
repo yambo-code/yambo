@@ -26,7 +26,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,q0_def_norm,&
-&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,nqibz,b,cut_is_slab,idir
+&                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,b,cut_is_slab,idir
  use D_lattice,     ONLY:alat
  !
  implicit none
@@ -36,7 +36,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  ! Work Space
  !
  integer  :: i1,i1min,i2,i2max,i3,n_idx,n_max
- real(SP) :: v1(3),v2(3),factorial,G_circ,vslab,func
+ real(SP) :: v1(3),v2(3),factorial,G_circ
  real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
  real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
  !
@@ -182,7 +182,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  use pars,          ONLY:SP,DP,pi
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
-&                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,RIM_W_for_graph,&
+&                        RIM_W_ng,q_pt,b,RIM_W_is_diagonal,RIM_W_for_graph,&
 &                        RIM_W,f_coeff,cut_is_slab,idir,RIM_id_epsm1_reference
  use D_lattice,     ONLY:alat,a
  !

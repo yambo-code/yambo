@@ -43,7 +43,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  ! Work Space
  !
- integer          ::iq,is,NS,nq_bz
+ integer          ::iq,is,NS,nq_BZ
  character(schlen)::strings(10)
  !
  call STRING_split(what,strings,n_non_empty_strings=NS)

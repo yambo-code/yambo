@@ -23,12 +23,12 @@
 !
 integer function io_COLLISIONS_header(ID,COLL)
  !
- use pars,          ONLY:schlen,IP,SP
+ use pars,          ONLY:schlen,IP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
-&                        VERIFY,io_extension,io_raw_extension
- use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group
+ use IO_m,          ONLY:io_status,IO_OUTDATED_DB,read_is_on,&
+&                        io_raw_extension
+ use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
 &                        H_SE_FOCK,H_SE_COH,H_SE_SEX,H_SE_HARTREE
@@ -45,7 +45,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  ! Work Space
  !
  character(schlen)     :: db_name
- integer               :: V_kind_disk,io_err,SIZE_
+ integer               :: V_kind_disk,SIZE_
  !
  integer, external     :: io_descriptors
  !
@@ -164,8 +164,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  use pars,          ONLY:schlen,IP,SP
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
- use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,LAST_COLL_sync
+ use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
 &                        VERIFY,io_extension,io_raw_extension,write_is_on,nf90_sync,netcdf_call
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &

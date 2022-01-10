@@ -23,7 +23,7 @@
 !
 subroutine rim(mode)
  !
- use pars,          ONLY:SP,pi,DP,schlen
+ use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
@@ -33,7 +33,7 @@ subroutine rim(mode)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
+&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
  !
@@ -55,7 +55,6 @@ subroutine rim(mode)
  real(SP), allocatable  :: qr(:,:)
  integer            :: iseed(8)
  real(DP), external :: dlaran
- character(schlen)  :: msg_dum(2)
  ! 
  if (mode == "x") then
    call timing('RIM',OPR='start')

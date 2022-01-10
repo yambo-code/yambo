@@ -68,8 +68,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp(2) 
  ! OMP LAST DEF
- integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
+ integer ::     i_k_bz_last,i_p_bz_last, & 
+&               iq_W_bz_last,ig_W_last
  !
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  character(1):: mode_now

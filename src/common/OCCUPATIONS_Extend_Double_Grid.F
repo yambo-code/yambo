@@ -27,7 +27,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,spin_occ,n_sp_pol,nel,n_bands
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:Tel,T_elecs,T_holes
+ use D_lattice,      ONLY:T_elecs,T_holes
  use functions,      ONLY:Fermi_fnc
  use units,          ONLY:HA2EV
  use com,            ONLY:msg

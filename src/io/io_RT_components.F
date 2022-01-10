@@ -91,14 +91,10 @@ integer function io_RT_components(what,ID)
  integer,        optional ::ID
  !
  ! Work Space
- !
- integer, external     ::variables_RT_dynamic
-#if defined _PAR_IO
- integer               ::local_COMM
-#endif
  character(schlen)     ::db_name
- integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
+ integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag,local_COMM
  logical               ::loading_carr_before_neq,par_IO
+ integer, external     :: variables_RT_dynamic
  !
  ! Work to be done
  !=================
@@ -115,7 +111,7 @@ integer function io_RT_components(what,ID)
    db_kind=-3
  endif
  !
- loading_carr_before_neq = (db_type==-3.and.l_real_time) 
+ loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
  !
  par_IO=.false.
 #if defined _PAR_IO

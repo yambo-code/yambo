@@ -1,21 +1,17 @@
 
 subroutine build_spin_sop()
  !
- use pars,           ONLY:SP,pi,cI,cONE,cZERO
- use matrix_operate, ONLY:m3det
- use D_lattice,      ONLY:dl_sop,spin_sop,nsym,i_time_rev,&
-&                         sigma_0,sigma_x,sigma_y,sigma_z
+ use pars,           ONLY:SP,pi,cONE
+ use D_lattice,      ONLY:dl_sop,spin_sop,nsym,sigma_z
  use electrons,      ONLY:n_spinor
- !
  !
 #include<memory.h>
  !
- real(SP) :: s(3,3)
+ real(SP)    :: s(3,3)
  complex(SP) :: u(2,2)
  real(SP), parameter :: eps=1.d-5
- real(SP)  :: det, saux(3,3), ax(3), angle, cosa, sina
+ real(SP) :: det, saux(3,3), ax(3), angle, cosa, sina
  integer  :: is, i1, i2
- !
  !
  YAMBO_FREE(spin_sop)
  !

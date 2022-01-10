@@ -268,7 +268,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  else
    LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
    LOCAL_COMM(2)=MPI_COMM_NULL
-   LOCAL_COMM(3)=PAR_COM_G_b_INDEX_global%COMM
+   LOCAL_COMM(3)=PAR_COM_G_b_index_global%COMM
  endif
  !
  ! Write Database Header 
@@ -483,6 +483,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      ! Scattering geometry
      !=====================
+     !
+     use IO_m, ONLY:OP_RD,RD,RD_CL
      !
      !                      W(i_kmq_G0,iqibz,iqs)                    
      !                        _ _ _ _ \ _ _ _ _

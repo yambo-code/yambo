@@ -23,8 +23,7 @@
 !
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
- use pars,                ONLY:SP,pi,rZERO
- use units,               ONLY:HA2EV
+ use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc

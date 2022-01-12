@@ -51,6 +51,8 @@ define yambo_help
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Linear_response_from_real_time_simulations";\
    $(ECHO)  " yambo_nl =  Non-linear optics project ";\
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response";\
+   $(ECHO)  " yambo_fl =  Floquet approach to non-linear optics project ";\
+   $(ECHO)  "             http://www.yambo-code.org/ ";\
    $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
   fi

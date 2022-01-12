@@ -31,8 +31,8 @@ else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
 #aim137:yambo_fl target, including -D_FL 
 else ifneq (,$(findstring yambo_fl,$(MAKECMDGOALS)))
  PRECMP=-D_FL -D_NL -D_RT -D_DOUBLE
- SRC_LIBS=$(PJ_NLLIBS)
- EXE_LIBS=$(PJ_NLLIBS_LD)
+ SRC_LIBS=$(PJ_FLLIBS)
+ EXE_LIBS=$(PJ_FLLIBS_LD)
 else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
  PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
  SRC_LIBS=$(PJ_RTLIBS)

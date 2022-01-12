@@ -39,7 +39,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !                              takes into account the phases. symmetries not yet implemented 
  !                              and then <v> as <r>*DeltaE
  !
- use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_nl_optics
+!aim137: adding l_fl_optics
+ use drivers,        ONLY:l_optics,l_real_time,l_sc_run,l_nl_optics,l_fl_optics
  use pars,           ONLY:SP,cZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use IO_m,           ONLY:io_DIP
@@ -94,6 +95,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
 #if defined _NL
  if (l_nl_optics) then
+   call parser('UseDipoles',l_use_DIPOLES)
+   if(.not.l_use_DIPOLES) then
+     Dip%approach="Covariant"
+     Dip%ib(1)   =1
+   endif
+ endif
+#endif
+ !
+!aim137: adding the same for FL, otherwise dipoles default to G-space
+#if defined _FL
+ if (l_fl_optics) then
    call parser('UseDipoles',l_use_DIPOLES)
    if(.not.l_use_DIPOLES) then
      Dip%approach="Covariant"

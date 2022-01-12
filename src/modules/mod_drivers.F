@@ -46,7 +46,7 @@ module drivers
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
  logical :: l_nl_optics          =.FALSE.
- !aim137: addinf fl optics
+ !aim137: adding fl optics
  logical :: l_fl_optics          =.FALSE.
  !
  ! The self-energy correlation "kind"

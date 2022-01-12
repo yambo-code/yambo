@@ -105,6 +105,13 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="nloptics";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Floquet approach to Non-linear spectroscopy";
+ options[*i_opt].long_opt="fl";
+ options[*i_opt].short_opt='f';
+ options[*i_opt].bin="yambo_nl";
+ options[*i_opt].yambo_string="floptics";
+ options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
  options[*i_opt].short_desc="NEQ scattering kind";
  i_desc=0;
  options[*i_opt].long_desc[i_desc]="<string>=(ee):electron-electron interaction";

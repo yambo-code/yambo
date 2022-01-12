@@ -1,8 +1,8 @@
-! 
+!
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG AC
+! Authors (see AUTHORS file for details): MG IA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,27 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module fl_optics
- !
- use descriptors,     ONLY:IO_desc
- use pars,            ONLY:SP,schlen,lchlen
- use electrons,       ONLY:levels
- !
-#include<memory.h>
- !
- integer                      :: n_flmodes
- !
- contains
-   subroutine FL_alloc
-   !
-   end subroutine FL_alloc
-   !
-   subroutine FL_alloc_k_distributed
-   !
-   end subroutine FL_alloc_k_distributed
-   !
-   subroutine FL_free
-   !
-   end subroutine FL_free
- !
-end module
+subroutine FL_Duffin
+
+end subroutine

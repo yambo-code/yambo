@@ -164,8 +164,9 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! DIPOLES
  !=========
  !
+!aim137: adding l_fl_optics here
  driver_now= any((/l_em1d,l_em1s,l_ppa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
-&                  l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
+&                  l_sc_run,l_nl_optics,l_fl_optics/)).and.Dip%iq(1)==1
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
  if (driver_now) call mem_manager_report
@@ -280,6 +281,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  !aim137:this is to tell make to compile FL subroutines 
  !aim137:see actions in make files.
+ !
 #if defined _FL
  !
  ! FL

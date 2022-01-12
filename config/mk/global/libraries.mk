@@ -53,6 +53,10 @@ PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
+
+#aim137: adding Floque so make enters directory
+PJ_FLLIBS    = $(PJ_NLLIBS) floquet
+PJ_FLLIBS_LD = $(PJ_NLLIBS_LD) floquet
 #
 # YAMBO sources needed by Interfaces
 #

@@ -30,6 +30,10 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,          ONLY:SP,cI
+ !
+ ! Implementation based on C_F_POINTER assumes that variables are contiguous,
+ ! which may not be the case
+ !
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
 #ifdef _CUDA
  use cublas
@@ -386,19 +390,13 @@ module wrapper
    complex(SP) function Vstar_dot_V_c2_cpu(N,CX,CY)
      implicit none
      integer,    intent(in) :: N
-     complex(SP),target,intent(in) :: CX(:,:),CY(:,:)
+     complex(SP),target,contiguous,intent(in) :: CX(:,:),CY(:,:)
 #if defined _DOUBLE
      complex(SP)::zdotc
+     Vstar_dot_V_c2_cpu=ZDOTC(N,CX,1,CY,1)
 #else
      complex(SP)::cdotc
-#endif
-     real(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
-#if defined _DOUBLE
-     Vstar_dot_V_c2_cpu=ZDOTC(N,CX1D,1,CY1D,1)
-#else
-     Vstar_dot_V_c2_cpu=CDOTC(N,CX1D,1,CY1D,1)
+     Vstar_dot_V_c2_cpu=CDOTC(N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_c2_cpu
    !
@@ -419,14 +417,14 @@ module wrapper
      implicit none
      integer,             intent(in) :: N
      complex(SP), device, target, intent(in) :: CX(:,:),CY(:,:)
+     !real(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
      !
-     real(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
 #if defined _DOUBLE
-     Vstar_dot_V_c2_gpu=cublasZdotc(N,CX1D,1,CY1D,1)
+     Vstar_dot_V_c2_gpu=cublasZdotc(N,CX,1,CY,1)
 #else
-     Vstar_dot_V_c2_gpu=cublasCdotc(N,CX1D,1,CY1D,1)
+     Vstar_dot_V_c2_gpu=cublasCdotc(N,CX,1,CY,1)
 #endif
    end function Vstar_dot_V_c2_gpu
 #endif
@@ -489,13 +487,13 @@ module wrapper
 #else
      real(SP)::sdot
 #endif
-     real(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+     !real(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
 #if defined _DOUBLE
-     V_dot_V_r2_cpu=DDOT(N,CX1D,1,CY1D,1)
+     V_dot_V_r2_cpu=DDOT(N,CX,1,CY,1)
 #else
-     V_dot_V_r2_cpu=SDOT(N,CX1D,1,CY1D,1)
+     V_dot_V_r2_cpu=SDOT(N,CX,1,CY,1)
 #endif
    end function V_dot_V_r2_cpu
    !
@@ -522,13 +520,13 @@ module wrapper
 #else
      real(SP)::sdot
 #endif
-     real(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+     !real(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
 #if defined _DOUBLE
-     V_dot_V_r2_gpu=cublasDDOT(N,CX1D,1,CY1D,1)
+     V_dot_V_r2_gpu=cublasDDOT(N,CX,1,CY,1)
 #else
-     V_dot_V_r2_gpu=cublasSDOT(N,CX1D,1,CY1D,1)
+     V_dot_V_r2_gpu=cublasSDOT(N,CX,1,CY,1)
 #endif
    end function V_dot_V_r2_gpu
 #endif
@@ -555,13 +553,13 @@ module wrapper
 #else
      complex(SP)::cdotu
 #endif
-     complex(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+     !complex(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
 #if defined _DOUBLE
-     V_dot_V_c2_cpu=ZDOTU(N,CX1D,1,CY1D,1)
+     V_dot_V_c2_cpu=ZDOTU(N,CX,1,CY,1)
 #else
-     V_dot_V_c2_cpu=CDOTU(N,CX1D,1,CY1D,1)
+     V_dot_V_c2_cpu=CDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V_c2_cpu
    !
@@ -588,13 +586,13 @@ module wrapper
 #else
      complex(SP)::cdotu
 #endif
-     complex(SP),pointer    :: CX1D(:),CY1D(:)
-     call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
-     call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
+     !complex(SP),pointer    :: CX1D(:),CY1D(:)
+     !call C_F_POINTER(C_LOC(CX),CX1D,(/N/))
+     !call C_F_POINTER(C_LOC(CY),CY1D,(/N/))
 #if defined _DOUBLE
-     V_dot_V_c2_gpu=cublasZDOTU(N,CX1D,1,CY1D,1)
+     V_dot_V_c2_gpu=cublasZDOTU(N,CX,1,CY,1)
 #else
-     V_dot_V_c2_gpu=cublasCDOTU(N,CX1D,1,CY1D,1)
+     V_dot_V_c2_gpu=cublasCDOTU(N,CX,1,CY,1)
 #endif
    end function V_dot_V_c2_gpu
 #endif

@@ -60,7 +60,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
  !
  integer     :: ib,ibp,ik,RT_bands2,ik_ibz,i_sp_pol,iE_fg,i_cmp
  real(SP)    :: deltaE,deltaE_fg
- complex(SP) :: Hk(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2)),VALUE_tmp(N_V), &
+ complex(SP) :: Hk(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),N_V),VALUE_tmp(N_V), &
 &               Hk_tmp(RT_bands(2),RT_bands(2)),                                    &
 &               Hk_vec_tmp(N_V,RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
  logical     :: l_DbGd_energy,l_DbGd_dipole
@@ -97,33 +97,33 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
          if(l_DbGd_energy.and.RTibz%k_range(ik_ibz,1)/=ik) then
            iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
-             Hk(1,ib,ib)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%FG%E(ib,iE_fg,i_sp_pol)
+             Hk(ib,ib,1)=Hk_tmp(ib,ib)-en%E(ib,ik_ibz,i_sp_pol)+en%FG%E(ib,iE_fg,i_sp_pol)
              do ibp=ib+1,RT_bands(2)
-               Hk(1,ib,ibp)=Hk_tmp(ib,ibp)
-               Hk(1,ibp,ib)=Hk_tmp(ibp,ib)
+               Hk(ib,ibp,1)=Hk_tmp(ib,ibp)
+               Hk(ibp,ib,1)=Hk_tmp(ibp,ib)
              enddo
            enddo
          else if(l_DbGd_dipole.and.RTibz%k_range(ik_ibz,1)/=ik) then
            iE_fg=RTibz%E_map(ik)
            do ib=RT_bands(1),RT_bands(2)
-             Hk(i_cmp,ib,ib)=Hk_vec_tmp(i_cmp,ib,ib)
+             Hk(ib,ib,i_cmp)=Hk_vec_tmp(i_cmp,ib,ib)
              do ibp=ib+1,RT_bands(2)
                deltaE   =en%E(ib,ik_ibz,i_sp_pol)  -en%E(ibp,ik_ibz,i_sp_pol)
                deltaE_fg=en%FG%E(ib,iE_fg,i_sp_pol)-en%FG%E(ibp,iE_fg,i_sp_pol)
                if(abs(deltaE)>1.E-5 .and. abs(deltaE_Fg)>1.E-5) then
-                 Hk(i_cmp,ib,ibp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_fg
-                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_fg
+                 Hk(ib,ibp,i_cmp)=Hk_vec_tmp(i_cmp,ib,ibp)*deltaE/deltaE_fg
+                 Hk(ibp,ib,i_cmp)=Hk_vec_tmp(i_cmp,ibp,ib)*deltaE/deltaE_fg
                else
-                 Hk(i_cmp,ibp,ib)=Hk_vec_tmp(i_cmp,ibp,ib)
+                 Hk(ibp,ib,i_cmp)=Hk_vec_tmp(i_cmp,ibp,ib)
                endif
              enddo
            enddo
          else
-           if(N_V==1) Hk(1,:,:)    =Hk_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
-           if(N_V> 1) Hk(i_cmp,:,:)=Hk_vec_tmp(i_cmp,:,:)
+           if(N_V==1) Hk(:,:,1)    =Hk_tmp(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2))
+           if(N_V> 1) Hk(:,:,i_cmp)=Hk_vec_tmp(i_cmp,:,:)
          endif 
          !
-         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(i_cmp,:,:),G(:,:,ik))*RTibz%weights(ik)
+         VALUE_tmp(i_cmp)=VALUE_tmp(i_cmp)-cI*Vstar_dot_V_omp(RT_bands2,Hk(:,:,i_cmp),G(:,:,ik))*RTibz%weights(ik)
          !
        enddo
        !

@@ -248,9 +248,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
      endif
    endif
    !
-   ! This should be used for restart like in BSE ...
-   ! if(BS_blk(i_block)%mat(i1,i2)==YAMBO_CMPLX_NO_FILL) cycle
-   ! BS_blk(i_block)%done(i1,i2)='t'
    if(io3.and.read_is_on(ID)) COLL_element%table='t'
    !
  endif

@@ -725,15 +725,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if(iHxc==3) then
-   !
-   if (BS_res_K_corr.or.BS_cpl_K_corr) then
-     YAMBO_FREE(WF_phase)
-   endif
-   !
-   if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+ if(iHxc==3.and.l_bs_corr) then
+   YAMBO_FREE(WF_phase)
+   qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
    YAMBO_FREE(BS_W)
-   !
  endif
  !
  if (l_load_WFs) call WF_free(WF,keep_states_to_load=iHxc<3)

@@ -542,7 +542,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
+       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size,WF%space)
      enddo
    enddo
    !

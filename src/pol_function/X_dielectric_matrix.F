@@ -46,7 +46,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,PAR_matrix
- use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
  !
@@ -72,7 +71,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  self_detect_E_range=.false.
  !
- call check_average_directions(X%q0,nq_dir_average,qdirs)
+ call X_check_average_directions(X%q0,nq_dir_average,qdirs)
  !
  ! Some check
  !
@@ -278,17 +277,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (iq==1.and.nq_dir_average>1) then
      nq_dir_now=nq_dir_average
      q0_save=X%q0
-     !
-     ! Note. DS. 2021/12/29
-     ! X_par(iq_mem) is first allocated with Xup structure
-     ! and later stored somewhere and re-allocated with X,CPU_ONLY
-     ! if X_par(iq_mem)%INTER_comm%n_CPU>1
-     ! I need to mimic this for X_par_tmp
-     call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"XUP")
-     if (X_par_tmp%INTER_comm%n_CPU>1) then
-       call MATRIX_reset(X_par_tmp)
-       call X_PARALLEL_alloc(X_par_tmp,X%ng,Xw%n_freqs,"X,CPU_ONLY")
-     endif
    endif
    !
    do iq_dir=1,nq_dir_now
@@ -303,25 +291,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
      !
-     if( iq==1 .and. nq_dir_average>1) then
-       ! average over the three directions
-       X_par_tmp%blc=X_par_tmp%blc+X_par(iq_mem)%blc*1._SP/real(nq_dir_average,SP)
-       X_par(iq_mem)%blc=cZERO
-       if (have_cuda) then
-         X_par_tmp%blc_d=X_par_tmp%blc_d+X_par(iq_mem)%blc_d*1._SP/real(nq_dir_average,SP)
-         X_par(iq_mem)%blc_d=cZERO
-       endif
-       !
-       if(iq_dir<nq_dir_average) call MATRIX_reset(X_par(iq_mem))
-       !
-       if(iq_dir==nq_dir_average) then
-         ! store back the average
-         X_par(iq_mem)%blc=X_par_tmp%blc
-         if (have_cuda) X_par(iq_mem)%blc_d=X_par_tmp%blc_d
-         call X_PARALLEL_alloc(X_par_tmp,0,0,"CLEAN")
-       endif
-       !
-     endif
+     if( iq==1 .and. nq_dir_average>1) call X_par_average(iq_dir,nq_dir_average,X%ng,Xw%n_freqs,X_par_tmp,X_par(iq_mem))
      !
    enddo
    !
@@ -404,10 +374,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  call DIP_alloc('DIP_v')
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
-end function
+end function X_dielectric_matrix
 !
 !
-subroutine check_average_directions(q0,nq_dir_average,qdirs)
+subroutine X_check_average_directions(q0,nq_dir_average,qdirs)
  !
  use pars,          ONLY:SP
  use vec_operate,   ONLY:v_norm
@@ -454,4 +424,52 @@ subroutine check_average_directions(q0,nq_dir_average,qdirs)
    endif
  endif
  !
-end subroutine
+end subroutinei X_check_average_directions
+!
+!
+subroutine X_par_average(iq_dir,nq_dir_average,ng,nw,X_par_tmp,X_par)
+ !
+ use pars,          ONLY:SP,cZERO
+ use cuda_m,        ONLY:have_cuda
+ use matrix,        ONLY:MATRIX_reset,PAR_matrix
+ !
+ implicit none
+ !
+ integer,          intent(in)     :: iq_dir,nq_dir_average,ng,nw
+ type(PAR_matrix), intent(inout)  :: X_par_tmp,X_par
+ !
+ if (iq_dir==1) then
+   !
+   ! Note. DS. 2021/12/29
+   ! X_par(iq_mem) is first allocated with Xup structure
+   ! and later stored somewhere and re-allocated with X,CPU_ONLY
+   ! if X_par(iq_mem)%INTER_comm%n_CPU>1
+   ! I need to mimic this for X_par_tmp
+   !
+   call X_PARALLEL_alloc(X_par_tmp,ng,nw,"XUP")
+   !
+   if (X_par_tmp%INTER_comm%n_CPU>1) then
+     call MATRIX_reset(X_par_tmp)
+     call X_PARALLEL_alloc(X_par_tmp,ng,nw,"X,CPU_ONLY")
+   endif
+   !
+ endif
+ !
+ ! average over the three directions
+ X_par_tmp%blc=X_par_tmp%blc+X_par%blc*1._SP/real(nq_dir_average,SP)
+ X_par%blc=cZERO
+ if (have_cuda) then
+   X_par_tmp%blc_d=X_par_tmp%blc_d+X_par%blc_d*1._SP/real(nq_dir_average,SP)
+   X_par%blc_d=cZERO
+ endif
+ !
+ if(iq_dir<nq_dir_average) call MATRIX_reset(X_par)
+ !
+ if(iq_dir==nq_dir_average) then
+   ! store back the average
+   X_par%blc=X_par_tmp%blc
+   if (have_cuda) X_par%blc_d=X_par_tmp%blc_d
+   call X_PARALLEL_alloc(X_par_tmp,0,0,"CLEAN")
+ endif
+ !
+end subroutine X_par_average

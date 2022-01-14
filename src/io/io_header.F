@@ -60,7 +60,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
  logical             :: WARN,WARN_SERIAL,xc_kind_force,l_IMPOSE,l_R_LATT
- logical             :: QPTS_,R_LATT_,WF_,IMPOSE_SN_,T_EL_,KPTS_,D_LATT_,CUTOFF_,GAUGE_,IMPOSE_GAUGE_,ACCEPT_SPIN_,FRAG_,D_LATT_
+ logical             :: QPTS_,R_LATT_,WF_,IMPOSE_SN_,T_EL_,KPTS_,CUTOFF_,GAUGE_,IMPOSE_GAUGE_,ACCEPT_SPIN_,FRAG_,D_LATT_
  character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
  io_header=0
@@ -83,7 +83,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  if(present(CUTOFF)) CUTOFF_=CUTOFF
  !
  D_LATT_=.false.
- if(present(D_LATT)) D_LATT_=D_LATTT
+ if(present(D_LATT)) D_LATT_=D_LATT
  !
  IMPOSE_GAUGE_=.false.
  if(present(IMPOSE_GAUGE)) IMPOSE_GAUGE_=IMPOSE_GAUGE
@@ -382,10 +382,10 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! GAUGE
  !
- if (GAUGE) then
+ if (GAUGE_) then
    call io_elemental(ID,VAR='GAUGE',CH0="",VAR_SZ=1,MENU=MENU)
    MENU=0
-   if (IMPOSE_GAUGE) then
+   if (IMPOSE_GAUGE_) then
      call io_elemental(ID,CH0=global_gauge,&
 &         VAR='Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
    else

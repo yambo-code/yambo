@@ -209,10 +209,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      if(i_symm>1) then
        do i_fft=1,fft_size
          i_fft_rot=fft_rot_r(i_fft,i_symm)
-         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%c(i_fft_rot,:,i_wf_SOC) )
+         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%r(i_fft_rot,:,i_wf_SOC) )
        enddo
      else
-       WF_SOC_rot=WF_SOC%c(:,:,i_wf_SOC)
+       WF_SOC_rot=WF_SOC%r(:,:,i_wf_SOC)
      endif
      !
      do i_fft=1,fft_size

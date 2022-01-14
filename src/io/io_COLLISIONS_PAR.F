@@ -70,7 +70,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  SIZE_=6
  if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
  if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
- if (.not.ver_is_gt_or_eq(ID,revision=21128)) then
+ if (ver_is_gt_or_eq(ID,revision=21128)) then
    SIZE_ = SIZE_+1
  endif
  call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
@@ -104,7 +104,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR='Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
- if (.not.ver_is_gt_or_eq(ID,revision=21128)) then
+ if (ver_is_gt_or_eq(ID,revision=21128)) then
    call io_elemental(ID,L0=COLLISIONS_CV_only,VAR='CV only scattering    ',WARN=.true.,OP=(/"=="/))
  endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

@@ -80,7 +80,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   if (.not.ver_is_gt_or_eq(ID,revision=5453)) then
+   if (ver_is_gt_or_eq(ID,revision=5453)) then
      io_COLLISIONS=IO_OUTDATED_DB
      goto 1
    endif
@@ -92,7 +92,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    SIZE_=6
    if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
    if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
-   if (.not.ver_is_gt_or_eq(ID,revision=21128)) then
+   if (ver_is_gt_or_eq(ID,revision=21128)) then
      SIZE_ = SIZE_+1
    endif
    call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)

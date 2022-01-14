@@ -30,8 +30,8 @@ subroutine NL_initialize(E,k)
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
+ use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
@@ -293,7 +293,7 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
- if(eval_COLLISIONS.and.COLLISIONS_CV_only) call msg('rs','ONLY c<->v scattering in COLLISIONS! ')
+ if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
  ! 
  H_potential = RT_potential
  !

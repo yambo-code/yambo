@@ -32,7 +32,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use frequency,     ONLY:w_samp
- use R_lattice,     ONLY:bz_samp,nqibz,q0_def_norm
+ use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
@@ -46,8 +46,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,PAR_matrix
- use com,           ONLY:msg
- use vec_operate,   ONLY:v_norm
  use cuda_m,        ONLY:have_cuda
  !
 #include<memory.h>
@@ -74,39 +72,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  self_detect_E_range=.false.
  !
- nq_dir_average=count(abs(X%q0+99._SP)<1.E-5_SP)
- !
- ! The folowing is not really needed since X_irredux does again the same operation
- ! However it is kept for back compatibility of old databases, since I've removed
- ! this operation from INIT.F
- if (nq_dir_average< 2) X%q0(:)=X%q0/v_norm(X%q0)*q0_def_norm
- !
- if (nq_dir_average> 1) then
-   !
-   call msg('rs','[X] Number of directions used for q0 term average ',nq_dir_average)
-   !
-   qdirs=0._SP
-   if      (nq_dir_average==3) then
-     qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-     qdirs(:,2)=(/0._SP,1._SP,0._SP/)
-     qdirs(:,3)=(/0._SP,0._SP,1._SP/)
-   else if (nq_dir_average==2) then
-     if     (abs(X%q0(1)+99._SP)<1.E-5_SP.and.abs(X%q0(2)+99._SP)<1.E-5_SP) then
-       qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-       qdirs(:,2)=(/0._SP,1._SP,0._SP/)
-       X%q0(3)=0._SP
-     else if(abs(X%q0(1)+99._SP)<1.E-5_SP.and.abs(X%q0(3)+99._SP)<1.E-5_SP) then
-       qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-       qdirs(:,2)=(/0._SP,0._SP,1._SP/)
-       X%q0(2)=0._SP
-     else if(abs(X%q0(2)+99._SP)<1.E-5_SP.and.abs(X%q0(3)+99._SP)<1.E-5_SP) then
-       qdirs(:,1)=(/0._SP,1._SP,0._SP/)
-       qdirs(:,2)=(/0._SP,0._SP,1._SP/)
-       X%q0(1)=0._SP
-     endif
-   endif
-   !
- endif
+ call check_average_directions(X%q0,nq_dir_average,qdirs)
  !
  ! Some check
  !
@@ -314,7 +280,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      q0_save=X%q0
      !
      ! Note. DS. 2021/12/29
-     ! X_par(iq_mem) is forst allocated with Xup structure
+     ! X_par(iq_mem) is first allocated with Xup structure
      ! and later stored somewhere and re-allocated with X,CPU_ONLY
      ! if X_par(iq_mem)%INTER_comm%n_CPU>1
      ! I need to mimic this for X_par_tmp
@@ -439,3 +405,53 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function
+!
+!
+subroutine check_average_directions(q0,nq_dir_average,qdirs)
+ !
+ use pars,          ONLY:SP
+ use vec_operate,   ONLY:v_norm
+ use com,           ONLY:msg
+ use R_lattice,     ONLY:q0_def_norm
+ !
+ implicit none
+ !
+ real(SP),intent(inout) :: q0(3)
+ integer, intent(out)   :: nq_dir_average
+ real(SP),intent(out)   :: qdirs(3,3)
+ !
+ nq_dir_average=count(abs(q0+99._SP)<1.E-5_SP)
+ !
+ ! The folowing is not really needed since X_irredux does again the same operation
+ ! However it is kept for back compatibility of old databases, since I've removed
+ ! this operation from INIT.F
+ !
+ if (nq_dir_average< 2) then
+   q0(:)=q0/v_norm(q0)*q0_def_norm
+   return
+ endif
+ !
+ call msg('rs','[X] Number of directions used for q0 term average ',nq_dir_average)
+ !
+ qdirs=0._SP
+ if      (nq_dir_average==3) then
+   qdirs(:,1)=(/1._SP,0._SP,0._SP/)
+   qdirs(:,2)=(/0._SP,1._SP,0._SP/)
+   qdirs(:,3)=(/0._SP,0._SP,1._SP/)
+ else if (nq_dir_average==2) then
+   if     (abs(q0(1)+99._SP)<1.E-5_SP.and.abs(q0(2)+99._SP)<1.E-5_SP) then
+     qdirs(:,1)=(/1._SP,0._SP,0._SP/)
+     qdirs(:,2)=(/0._SP,1._SP,0._SP/)
+     q0(3)=0._SP
+   else if(abs(q0(1)+99._SP)<1.E-5_SP.and.abs(q0(3)+99._SP)<1.E-5_SP) then
+     qdirs(:,1)=(/1._SP,0._SP,0._SP/)
+     qdirs(:,2)=(/0._SP,0._SP,1._SP/)
+     q0(2)=0._SP
+   else if(abs(q0(2)+99._SP)<1.E-5_SP.and.abs(q0(3)+99._SP)<1.E-5_SP) then
+     qdirs(:,1)=(/0._SP,1._SP,0._SP/)
+     qdirs(:,2)=(/0._SP,0._SP,1._SP/)
+     q0(1)=0._SP
+   endif
+ endif
+ !
+end subroutine

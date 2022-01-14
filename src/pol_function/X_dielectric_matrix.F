@@ -424,7 +424,7 @@ subroutine X_check_average_directions(q0,nq_dir_average,qdirs)
    endif
  endif
  !
-end subroutinei X_check_average_directions
+end subroutine X_check_average_directions
 !
 !
 subroutine X_par_average(iq_dir,nq_dir_average,ng,nw,X_par_tmp,X_par)

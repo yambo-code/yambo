@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,6 +33,7 @@ module drivers
  !
  logical :: l_setup              =.FALSE.
  logical :: l_rim                =.FALSE.
+ logical :: l_RIM_W              =.FALSE.
  logical :: l_col_cut            =.FALSE.
  logical :: l_acfdt              =.FALSE.
  !
@@ -46,6 +47,7 @@ module drivers
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
  logical :: l_nl_optics          =.FALSE.
+ logical :: l_nl_p_and_p         =.FALSE.
  !
  ! The self-energy correlation "kind"
  !
@@ -93,9 +95,7 @@ module drivers
  logical :: l_lrc_fxc            =.FALSE.
  logical :: l_pf_fxc             =.FALSE.
  logical :: l_td_hf              =.FALSE.
- logical :: l_W_eh               =.FALSE.
- logical :: l_W_eh_diag          =.FALSE.
- logical :: l_W_eh_cpl           =.FALSE.
+ logical :: l_td_sex             =.FALSE.
  !
  ! XC kinds (Potential)
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -30,7 +30,8 @@ subroutine ELPH_atomic_amplitude(q)
  use D_lattice,           ONLY:n_atoms
  use ELPH,                ONLY:ph_modes,PH_freqs_sq,elph_nQ,elph_use_q_grid,&
 &                              PH_pol_vector,PH_qpt
- use IO_m,                ONLY:io_control,manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
  use interfaces,          ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc

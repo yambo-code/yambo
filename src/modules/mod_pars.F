@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,7 +65,7 @@ module pars
  !
  !...I/O
  integer, parameter :: max_io_units=20
- integer, parameter :: max_io_vars_open=50
+ integer, parameter :: max_io_vars_open=500
  integer, parameter :: max_active_sections=10
  !
  !...QP_apply
@@ -108,6 +108,7 @@ module pars
  real(SP),    parameter :: zero_dfl=1.E-5_SP
  !
  real(SP),    parameter :: infinity_dfl=HUGE(1._SP)
+ real(SP),    parameter :: tiny_dfl    =TINY(1._SP)
  real(SP),    parameter :: rZERO=0._SP
  real(SP),    parameter :: rONE =1._SP
  !
@@ -118,7 +119,7 @@ module pars
  complex(SP), parameter :: cZERO=(0._SP,0._SP)
  !
  complex(DP), parameter :: cI_DP   =(0._DP,1._DP)
- complex(SP), parameter :: cONE_DP =(1._DP,0._DP)
- complex(SP), parameter :: cZERO_DP=(0._DP,0._DP)
+ complex(DP), parameter :: cONE_DP =(1._DP,0._DP)
+ complex(DP), parameter :: cZERO_DP=(0._DP,0._DP)
  !
 end module 

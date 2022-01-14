@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,7 +45,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
- use IO_m,           ONLY:OP_RD_CL,DUMP,io_control,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _YPP_SC
  use YPPm,           ONLY:l_mean_potential
  use SC,             ONLY:SC_bands
@@ -55,9 +56,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use electrons,      ONLY:levels,E_reset
 #endif
 #if defined _YPP_RT 
- use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,&
+ use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_G_two_times,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
-&                         l_RTpump_energy,l_RTpump_kspace,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
+&                         l_RTpump_energy,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
 &                         l_NL_X,l_NL_exc,RT_conf
  use real_time,      ONLY:RT_bands
 #endif
@@ -154,7 +155,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_NL
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_Nonlinear=io_NL(ID)
+ io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
    if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
@@ -288,6 +289,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_interp          =STRING_match(rstr_piece(i1+1),'i')
        !
      endif
+#if defined _YPP_ELPH
+     if ( trim(rstr_piece(i1)) == 'gkkp') then
+       l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
+       l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
+       l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
+     endif
+#endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
        if (STRING_match(rstr_piece(i1+1),'ip') ) DIPs_kind="IP"
        if (STRING_match(rstr_piece(i1+1),'exc')) DIPs_kind="EXCITONIC"
@@ -317,7 +325,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      !
      if ( trim(rstr_piece(i1)) == 'RTDBs') then
        l_RTpump_energy=STRING_match(rstr_piece(i1+1),'e')
-       l_RTpump_kspace=STRING_match(rstr_piece(i1+1),'k')
        l_RTpump_Fermi =STRING_match(rstr_piece(i1+1),'f')
      endif
      !
@@ -327,6 +334,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_occupations =STRING_match(rstr_piece(i1+1),'o')
        l_RT_lifetimes   =STRING_match(rstr_piece(i1+1),'l')
        l_RT_density     =STRING_match(rstr_piece(i1+1),'d')
+       l_RT_G_two_times =STRING_match(rstr_piece(i1+1),'g')
        l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
        !
        l_rtplot=.TRUE.
@@ -366,6 +374,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_RT_occupations) call initactivate(1,'RToccupations')
  if (l_RT_lifetimes)   call initactivate(1,'RTlifetimes')
  if (l_RT_density)     call initactivate(1,'RTdeltaRho')
+ if (l_RT_G_two_times) call initactivate(1,'RTGtwotimes')
  if (l_RT_bands)       call initactivate(1,'RTfitbands')
  if (l_RT_time)        call initactivate(1,'RTtime')
  if (l_RT_energy)      call initactivate(1,'RTenergy')
@@ -380,9 +389,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_ELPH
  !
- if (l_eliashberg)       call initactivate(1,'eliashberg')
- if (l_gkkp)             call initactivate(1,'gkkp')
- if (l_ph_ass_dos)         call initactivate(1,'ph_ass_dos')
+ if (l_eliashberg)        call initactivate(1,'eliashberg')
+ if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp_db)           call initactivate(1,'gkkp_db')
+ if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
+ if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')
+ if (l_ph_ass_dos)        call initactivate(1,'ph_ass_dos')
  !
 #endif
 #if defined _YPP_SC
@@ -401,7 +413,6 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  !
  if (l_RTpump_energy) call initactivate(1,'Select_energy')
- if (l_RTpump_kspace) call initactivate(1,'Select_kspace')
  if (l_RTpump_Fermi ) call initactivate(1,'Select_Fermi')
  !
 #endif
@@ -436,6 +447,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_eliashberg=runlevel_is_on('eliashberg')
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
+ l_gkkp_db   =runlevel_is_on('gkkp_db')
+ l_gkkp_dg   =runlevel_is_on('gkkp_dg')
+ l_gkkp_plot =runlevel_is_on('gkkp_plot')
  l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
 #endif
 #if defined _YPP_RT
@@ -446,13 +460,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_RT_DBs           = runlevel_is_on('RTDBs')
  !
  l_RTpump_energy    = runlevel_is_on('Select_energy')
- l_RTpump_kspace    = runlevel_is_on('Select_kspace')
  l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
  l_RT_density       = runlevel_is_on('RTdeltaRho')
+ l_RT_G_two_times   = runlevel_is_on('RTGtwotimes')
  !
  l_RT_bands         = runlevel_is_on('RTfitbands')
  l_RT_time          = runlevel_is_on('RTtime')
@@ -502,7 +516,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    if (l_q_grid)        call initactivate(1,"NoWeights cooIn cooOut ListPts ExpandPts ForceUserPts")
    if (l_high_sym_pts)  call initactivate(1,"cooOut PtsPath NPtsPath")
    if (l_shifted_grid)  call initactivate(1,"NoWeights cooIn cooOut")
-   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius")
+   if (l_random_grid)   call initactivate(1,"NoWeights cooOut BZ_random_Nk GammaRadius DoNotDistr")
    if (l_regular_grid)  call initactivate(1,"NoWeights cooOut Shift01 INTERP_Grid")
  endif
  !
@@ -520,12 +534,12 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_fix_syms.and.n_spinor==2.and.i_time_rev==0) call initactivate(1,"ExpandSymm")
  !
- if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut")
+ if (l_fix_syms) call initactivate(1,"Efield1 Efield2 BField Bpsi Btheta RmAllSymm RmTimeRev RmSpaceInv GvecsCut KeepKGrid")
  !
 #if defined _YPP_RT
  !
  if (l_RT_X) then 
-   call initactivate(1,"Xorder ProbeKey PumpKey EnRngeRt ETStpsRt")
+   call initactivate(1,"Xorder XKind ProbeKey PumpKey EnRngeRt ETStpsRt")
    call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
@@ -539,19 +553,19 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_SOC_map)  call initactivate(1,"SOC_DBs SOC_splitting bands_to_map bands_buffer")
  !
  ! Projections
- l_flag=l_dipoles.or.(l_electrons.and.l_dos)
+ l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos)
  if (l_flag) then
    call initactivate(1,"PROJECT_mode PROJECT_path PROJECT_steps PROJECT_depth PROJECT_threshold")  
  endif
  if (l_electrons.and.l_bands)   call initactivate(1,"PROJECT_mode PROJECT_threshold")  
 #if defined _YPP_RT
- if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold")
+ if (l_RealTime.and.l_RT_bands) call initactivate(1,"PROJECT_mode PROJECT_depth PROJECT_threshold UPDATE_E STD_style")
 #endif
  !
  ! Interpolation
- l_flag=l_dipoles.or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
+ l_flag=(l_dipoles.and.trim(DIPs_kind)=="IP").or.(l_electrons.and.l_dos).or.l_bands.or.(l_excitons.and.l_interp)
 #if defined _YPP_RT
- l_flag=l_flag.or.(l_RealTime.and.l_RT_bands).or.(l_RealTime.and.l_RT_dos)
+ l_flag=l_flag.or.(l_RealTime.and.(l_RT_bands.or.l_RT_dos.or.l_RT_G_two_times))
 #endif
  if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
  !
@@ -564,26 +578,36 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_excitons.and.l_interp) call initactivate(1,"BANDS_steps cooIn cooOut")
  l_flag=l_bands
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_bands
+ l_flag=l_bands.or.l_RT_bands.or.l_RT_G_two_times
 #endif
  if (l_flag) then
    call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
    if (l_bands) call initactivate(1,"BANDS_bands")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
  endif
+ if (l_flag) then
+   call initactivate(1,"INTERP_mode OutputAlat cooIn cooOut NormN NelFac")
+   if (l_bands) call initactivate(1,"BANDS_bands")
+   call initactivate(1,"INTERP_Shell_Fac INTERP_NofNN")
+ endif
  !
  ! Dipoles
  if (l_dipoles) then
-   call INIT_QP_ctl_switch('G')
-   call initactivate(1,"DIP_kind DIP_E_range DIP_C_bands DIP_direction cooOut")
+   call initactivate(1,"DIP_kind cooOut")
+   if (trim(DIPs_kind)=="EXCITONIC") then
+     call initactivate(1,"States BSQindex Degen_Step Weight_treshold En_treshold Res_treshold")
+   else
+     call INIT_QP_ctl_switch('G')
+     call initactivate(1,"DIP_E_range DIP_C_bands DIP_direction")
 #if !defined _YPP_RT
-   call initactivate(1,"DIP_V_bands")
+     call initactivate(1,"DIP_V_bands")
 #endif
+   endif
  endif
  !
  ! Electrons
  if (l_electrons) then
-   if (l_dos.or.l_bands.or.l_dipoles) call INIT_QP_ctl_switch('G')
+   if (l_dos.or.l_bands) call INIT_QP_ctl_switch('G')
    if (l_dos) then
      call initactivate(1,"DOSERange DOSESteps DOS_broad DOS_bands DOSUsesOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -591,22 +615,19 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
 #if defined _YPP_RT
  if (l_RT_DBs)    then
-   call initactivate(1,'RTpumpNel RTpumpSpin RTBands')
-   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpEhWd')
-   if (l_RTpump_kspace) call initactivate(1,'RTpumpDE RTpumpEhWd RTpumpBZWd cooIn BANDS_path')
-   if (l_RTpump_kspace) then
-     call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
-     if (Eh_pumped_pair_n_BZ_regions>0) then
-       YAMBO_ALLOC(Eh_pumped_pair_BZ_regions,(Eh_pumped_pair_n_BZ_regions,3))
-       call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,R_v=Eh_pumped_pair_BZ_regions)
-       call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
+   call initactivate(1,'RTpumpNel RTpumpSpin RTBands RTpumpBZWd cooIn BANDS_path')
+   call PARSER_array(mode="REAL dimensions",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3)
+   if (Eh_pumped_pair_n_BZ_regions>0) then
+     YAMBO_ALLOC(Eh_pumped_pair_BZ_regions,(Eh_pumped_pair_n_BZ_regions,3))
+     call PARSER_array(mode="read",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,R_v=Eh_pumped_pair_BZ_regions)
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=Eh_pumped_pair_n_BZ_regions,M=3,&
 &                        DESC="[RT] K-points manually excited",&
 &                        R_v=Eh_pumped_pair_BZ_regions(:Eh_pumped_pair_n_BZ_regions,:))
-     else if (infile_editing) then
-       call PARSER_array(mode="write",VAR="RTpumpBZ",N=0,M=3,&
+   else if (infile_editing) then
+     call PARSER_array(mode="write",VAR="RTpumpBZ",N=0,M=3,&
 &                        DESC="[RT] K-points manually excited")
-     endif
    endif
+   if (l_RTpump_energy) call initactivate(1,'RTpumpEhEn RTpumpDE RTpumpEhWd')
    if (l_RTpump_Fermi) call initactivate(1, 'RTmuEh RTtempEh RTautotuneThr')
  endif
  !
@@ -614,7 +635,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    !
    l_flag=l_RT_occupations.or.l_RT_abs
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_G_two_times
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
@@ -624,6 +645,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
+   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -631,7 +653,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    endif
    if ((l_RT_dos.or.l_RT_time).and.n_spinor==2) call initactivate(1,'WFReference')
    !
-   if (l_RT_abs)    call initactivate(1,"EnRngeRt ETStpsRt DampFactor Transmission Reflectivity IncludeIP RTformat")
+   if (l_RT_abs) then
+     call initactivate(1,"BSQindex EnRngeRt ETStpsRt DampFactor")
+     call initactivate(1,"TRabsOBS TRabsDIPdir TRabsDIPplane TRabsMODE TRabsEtresh")
+   endif
    !
  endif
 #endif
@@ -647,7 +672,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
  if (l_plot) then
-   call initactivate(1,"Format Direction FFTGvecs") 
+   call initactivate(1,"Format Direction FFTGvecs NormToOne") 
    if (l_sp_wf) call initactivate(1,"Degen_Step")  
 #if defined _YPP_ELPH
    if (l_sp_wf) call initactivate(1,"ResTresh")  
@@ -660,11 +685,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_excitons) then
    call initactivate(1,"States En_treshold Res_treshold BSQindex")
-   if (l_amplitude.or.l_dipoles) then
-     call INIT_QP_ctl_switch('G')
-     call initactivate(1,"DipWeight")
-   endif
-   if (l_exc_wf.or.l_amplitude.or.l_dipoles) call initactivate(1,"Degen_Step Weight_treshold")
+   if (l_amplitude) call INIT_QP_ctl_switch('G')
+   if (l_exc_wf.or.l_amplitude) call initactivate(1,"Degen_Step Weight_treshold")
    if (l_exc_wf.and.(.not.l_free_hole.and..not.l_average_eh)) call initactivate(1,"Cells Hole Dimension") 
    if (l_exc_wf.and.(l_free_hole.or.l_average_eh)) call initactivate(1,"WFMult") 
    if (l_exc_wf.and.l_average_eh) call initactivate(1,"EHdensity")
@@ -680,14 +702,17 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
-     call initactivate(1,"PHfreqF DOSERange DOSESteps DOS_broad")
+     call initactivate(1,"PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
      call initactivate(2,"BoseTemp")
    endif
 #endif
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp.and..not.l_excitons)   call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand")
+ if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand UseQindxB")
+ if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
+ if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode TestPHDGrid")
+ if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")
  if ( ((l_excitons.or.l_electrons).and.l_eliashberg) .or. (l_phonons.and.l_dos) ) call initactivate(1,"PhBroad PhStps")
 #endif
@@ -711,6 +736,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_init_QP=l_plot.and.l_sp_wf
 #if defined _YPP_ELPH
  if (.not.l_init_QP) l_init_QP=l_electrons.and.l_eliashberg
+ if (.not.l_init_QP) l_init_QP=l_gkkp_plot
 #endif
 #if defined _YPP_SC
  if (.not.l_init_QP) l_init_QP=(l_electrons.and.l_mean_potential).or.l_angular_momentum.or.l_position
@@ -725,7 +751,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_flag=l_bands
  !
 #if defined _YPP_RT
- l_flag=l_flag.or.l_RT_bands
+ l_flag=l_flag.or.l_RT_bands.or.l_RT_G_two_times
 #endif
  !
  if (l_flag) call USER_vector_handle("BANDS_kpts")

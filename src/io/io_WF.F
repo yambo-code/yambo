@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -28,8 +28,9 @@ integer function io_WF(ID,wf,wf_d)
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
  use wave_func,        ONLY:wf_ncx,wf_nb_io,wf_nb_to_load,wf_b_indx,wf_nb_io_groups
- use IO_m,             ONLY:io_connect, io_disconnect, io_sec,io_bulk,io_header,&
-&                           io_fragment,io_elemental,io_resetable,frag_WF
+ use IO_m,             ONLY:io_sec,io_resetable,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect,io_bulk,io_header,&
+&                           io_fragment,io_elemental
  use timing_m,         ONLY:timing
  implicit none
  integer,       intent(in) :: ID

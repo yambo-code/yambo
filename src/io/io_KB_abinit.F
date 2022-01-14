@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -31,9 +31,9 @@ integer function io_KB_abinit(ID)
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_abinit
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,ver_is_gt_or_eq,frag_WF
+ use IO_m,             ONLY:io_sec,read_is_on,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
+&                           io_elemental,io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,         ONLY:timing
 #include<memory.h>
  !

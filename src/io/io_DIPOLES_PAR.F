@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -27,10 +27,10 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
  use electrons,     ONLY:n_spin,n_sp_pol
  use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
-&                        io_variable_bulk,def_variable_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
+ use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
+&                        nf90_sync,write_is_on,io_unit,netcdf_call
+ use IO_int,        ONLY:io_connect,io_disconnect,io_variable_bulk,def_variable_bulk,io_header
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital, &
 &                        compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
 #if defined _RT
@@ -39,7 +39,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
 #endif
- use BS,            ONLY:l_BS_magnons,l_BS_dichroism
+ use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -50,7 +50,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(6),DIP_ipos(6),VAR_ID
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(6),DIP_ipos(6),VAR_ID,stat
 #if defined _RT || defined _SC
  integer :: P2_size(5),P2_ipos(5),Pspinor_size(7),Pspinor_ipos(7)
 #endif
@@ -78,7 +78,11 @@ integer function io_DIPOLES(Dip,ID)
  !
  io_extension(ID)='dipoles'
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ if (any((/io_sec(ID,:)==1/))) then
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
+ else
+   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+ endif
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -92,7 +96,14 @@ integer function io_DIPOLES(Dip,ID)
  endif
  !
  if (i_fragment==0)               goto 1
- if (i_fragment> n_sp_pol*nXkibz) goto 1
+ if (i_fragment> n_sp_pol*nXkibz) then
+   if(write_is_on(ID)) then
+     stat = nf90_sync(io_unit(ID))
+     call netcdf_call(stat,ID)
+   endif
+   goto 1
+ endif
+ ! 
  !
  if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik)
  !
@@ -182,10 +193,10 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! Spin magntization
    !
-   VAR_ID=5
+   VAR_ID=6
    VAR_name='DIP_spin'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
-   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_spin(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
  !
@@ -194,7 +205,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! P_Spinor
    !
-   VAR_ID=6
+   VAR_ID=7
    VAR_name='DIP_P_spinor'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,Pspinor_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C6=DIP_P_spinor(:,:,:,:,:,ik_mem:ik_mem),IPOS=Pspinor_ipos)
@@ -207,7 +218,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    ! P2
    !
-   VAR_ID=7
+   VAR_ID=8
    VAR_name='P_square'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,P2_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C4=P_square(:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=P2_ipos)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,8 +27,8 @@ integer function variables_X(ID,local_desc,X)
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use pars,          ONLY:SP,IP,schlen
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual
- use IO_m,          ONLY:def_variable_elemental,io_variable_elemental,io_status,&
-&                        ver_is_gt_or_eq,read_is_on,variable_exist
+ use IO_m,          ONLY:io_status,read_is_on,variable_exist
+ use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
  !
  implicit none
  !

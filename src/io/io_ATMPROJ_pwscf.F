@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,9 +28,10 @@ integer function io_ATMPROJ_pwscf(ID)
  use electrons,        ONLY:n_sp_pol
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
+ use IO_m,             ONLY:io_sec,read_is_on,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect, &
 &                           io_elemental,io_variable_bulk,def_variable_bulk, &
-&                           io_header,read_is_on,io_fragment,frag_WF
+&                           io_header,io_fragment
  use timing_m,       ONLY:timing
  !
 #include<memory.h>
@@ -60,7 +61,7 @@ integer function io_ATMPROJ_pwscf(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
+   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.false.,FRAG=frag_WF)
    if (io_ATMPROJ_pwscf/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=2,MENU=0)

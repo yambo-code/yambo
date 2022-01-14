@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,6 +38,8 @@ module D_lattice
  ! Temperature
  !
  real(SP) :: Tel
+ real(SP) :: T_elecs
+ real(SP) :: T_holes
  real(SP) :: Bose_Temp
  real(SP) :: input_GS_Tel
  logical  :: input_Tel_is_negative
@@ -77,6 +79,8 @@ module D_lattice
  real(SP) :: DL_vol
  real(SP) :: a(3,3)
  real(SP) :: alat(3)
+ real(SP), allocatable :: atom_mass(:)
+ integer,  allocatable :: atoms_map(:,:)  ! Map atoms order from YAMBO to the DFT one
  integer,  allocatable :: PW_atomic_kind(:)
  integer,  allocatable :: n_atoms_species(:)
  integer,  allocatable :: Z_species(:)

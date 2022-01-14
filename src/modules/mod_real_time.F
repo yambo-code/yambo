@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -66,15 +66,16 @@ module real_time
  logical          :: l_velocity_gauge_corr
  logical          :: l_velocity_gauge_diam
  !
- ! TMP SOLUTION FOR TR ABS
+ ! Specific flag for when Yambo libraries are called to perform TRabs via YPP
  !
- logical  :: l_RT_abs_YAMBO = .false.
+ logical  :: l_TRabs_YPP = .false.
  !
  ! ... core step length and Time-points array...
  !
  real(SP)              :: RT_step             ! Elemental step used to define dimensions and time-points
  real(SP)              :: RT_dyn_step = 0._SP ! On-the-fly time-step
  real(SP)              :: RT_MAX_step =-1._SP*FS2AUT ! MAX value of the dynamical RT step value
+ real(SP)              :: RT_step_manual_prefactor
  !
  ! ... NE dynamics ...
  !
@@ -86,6 +87,7 @@ module real_time
  real(SP) :: NE_time_step_update_jump_INPUT
  real(SP) :: NE_initial_time_step_update         ! Time above which the time-step is dynamically updated (0. means no update)
  real(SP) :: NE_step_update_treshold             ! Time-step update treshold
+ real(SP) :: NE_time_step_update_manual          ! Time at which the time step is updated with a manual pre-factor
  !
  integer  :: NE_i_time=1 ! = NE_time/RT_step+1
  integer  :: NE_steps    ! Still relative to RT_step
@@ -125,7 +127,7 @@ module real_time
  !
  ! ... and magnetization
  !----------------------
- complex(SP) :: RT_spin_magn(3)
+ complex(SP) :: RT_spin_magn(3,3)
  complex(SP) :: RT_orbt_magn(3,2)
  !
  ! Diagonal (QP) and off-diagonal (Phase) relaxation time
@@ -184,6 +186,7 @@ module real_time
  ! Relaxation: Dephasing Matrix
  !------------------------------
  real(SP)                 :: RT_ave_dephasing
+ real(SP)                 :: RT_deph_range(2)
  real(SP),    allocatable :: RT_INPUT_Deph_limits(:,:)
  real(SP),    allocatable :: RT_Deph_Matrix(:,:,:)
  !
@@ -200,9 +203,11 @@ module real_time
  complex(SP), allocatable :: G_lesser_reference(:,:,:)  ! Band, Band, K
  complex(SP), allocatable :: I1_matrix(:,:)
  !
- ! COLLISIONS
- !------------
+ ! RT_Hamiltonian
+ !----------------
+ !
  complex(SP), allocatable :: Ho_plus_Sigma(:,:,:,:)
+ complex(SP), allocatable :: H_EQ(:,:,:,:)
  complex(SP), allocatable :: H_pseudo_eq(:,:,:,:)
  complex(SP), allocatable :: RT_Vnl_xc(:,:,:,:)
  !

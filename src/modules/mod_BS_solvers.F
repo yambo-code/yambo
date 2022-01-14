@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,7 @@ module BS_solvers
    complex(SP), allocatable :: fragment(:)
  end type Haydock_vector
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  !
  ! Slepc
  !==========
@@ -78,14 +78,13 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: BSS_add_antiresonant
  logical  :: BSS_eels_to_eps
  logical  :: BSS_uses_pert_SOC=.FALSE.
  !
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.
  logical  :: run_Diago=.FALSE.
-#if defined _SLEPC && !defined _SLEPC_OFF
+#if defined _SLEPC && !defined _NL
  logical  :: run_Slepc=.FALSE.
 #endif
  !
@@ -126,6 +125,7 @@ module BS_solvers
    integer                  :: n_freqs = 0
    integer                  :: n_full_inv_freqs = 0
    real(SP)                 :: treshold 
+   real(SP)                 :: max_treshold 
    real(SP)                 :: PERT_FULL_ratio = 1. 
    integer    , allocatable :: err(:)
    integer    , allocatable :: iw_full(:)

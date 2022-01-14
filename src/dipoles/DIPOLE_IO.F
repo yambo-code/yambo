@@ -24,16 +24,21 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,        ONLY:SP,cI,cZERO
+ use parser_m,    ONLY:parser
  use stderr,      ONLY:intc
  use com,         ONLY:msg
  use IO_m,        ONLY:io_DIP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels,n_sp_pol
  use DIPOLES,     ONLY:DIPOLE_t,DIP_v,use_covariant_approach
- use IO_m,        ONLY:io_control,manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
+ use IO_int,      ONLY:io_control
+ use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PAR_COM_X_WORLD
+ use parallel_int,ONLY:PP_redux_wait
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme
+#if defined _RT
+ use RT_control,  ONLY:l_project_spin_dipoles
+#endif
  !
  implicit none
  !
@@ -47,10 +52,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ! Work space
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
-&                     write_header_ovlp,read_header_ovlp
- integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,i_cpu
+&                     write_header_ovlp,read_header_ovlp,l_project_dipoles
+ integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
+ integer  :: i_count
  !
  if (.not.IO_dip) return
  !
@@ -60,19 +66,20 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
  !
- call DIPOLE_setup_PAR_K_scheme(PAR_K_scheme_kind)
+#if defined _RT
+ call parser("SPINprojected",l_project_spin_dipoles)
+ call parser("DIPprojected", l_project_dipoles)
+#endif
+ !
+ call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
  ID=0
  ID_S=0
  io_err=0
  !
-#if defined _PAR_IO
- write_header  =       PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing
- read_header   =(.not.(PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing)).or.reading.or.check
-#else
- write_header  =(      master_cpu.and.writing )
- read_header   =.not.writing.and.(reading.or.check)
-#endif
+ write_header  =  (master_cpu.and.writing)
+ read_header   =  .not.write_header 
+ !
  write_header_ovlp  =write_header.and.use_covariant_approach
  read_header_ovlp   = read_header.and.use_covariant_approach
  !
@@ -81,20 +88,14 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
    io_err=io_DIPOLES(Dip,ID)
  endif
+ !
  if(write_header_ovlp) then
    call msg('s','[DIP] Writing overlaps header ')
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_S)
    io_err=io_err+io_Overlaps(Dip,ID_S)
  endif
  !
- ! Master node bcast matrix dimensions for the other cores
- !
- if(writing) then
-   call PP_bcast(Dip%ib,0)
-   call PP_bcast(Dip%db_ib,0)
-   call PP_bcast(Dip%ib_lim,0)
-   call PP_bcast(Dip%db_ib_lim,0) 
- endif
+ ! To fix problems with asynchronous I/O 
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -102,21 +103,37 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
  !
  if(read_header) then
-   call msg('s','[DIP] Checking dipoles header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
-   io_err=io_DIPOLES(Dip,ID)
- endif
- if(read_header_ovlp) then
-   call msg('s','[DIP] Checking overlaps header ')
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
-   io_err=io_err+io_Overlaps(Dip,ID_S)
+   !
+   io_err=-1
+   i_count=0
+   !
+   ! Wait until the ndb.dipoles file is available to all cores
+   ! In writing mode the loop is needed to fix for asynchronous I/O
+   !
+   if(writing)          max_count=120
+   if(reading.or.check) max_count=1
+   !
+   do while(io_err/=0)
+     if(i_count==0) call msg('s','[DIP] Checking dipoles header ')
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID)
+     io_err=io_DIPOLES(Dip,ID)
+     if(read_header_ovlp) then
+       if(i_count==0) call msg('s','[DIP] Checking overlaps header ')
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=IO_MODE,ID=ID_S)
+       io_err=io_err+io_Overlaps(Dip,ID_S)
+     endif
+     if(io_err/=0) call sleep(1)
+     i_count=i_count+1
+     if((i_count==max_count).and.io_err/=0) then
+       if(writing) call error(" [DIP] Header not found while writing dipoles ")
+       if(reading) call error(" [DIP] Header not found while reading dipoles ")
+       if(  check) call warning("[DIP] Database not correct or missing. To be computed")
+       return
+     endif
+   enddo
  endif
  !
- if (check.or.io_err/=0) then
-   if (io_err/=0.and.     check) call warning(" DIPOLES database not correct or missing")
-   if (io_err/=0.and..not.check) call   error(" DIPOLES database not correct or missing")
-   return
- endif
+ if(check)   return
  !
  if(writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
@@ -126,10 +143,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if(writing) IO_ACTION=OP_IF_START_APP_CL_IF_END
  !
 #if defined _PAR_IO
- IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
- call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID)
- io_err=io_DIPOLES(Dip,ID)
- IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
+ if ( (PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing).or.reading ) then
+   IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
+   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID)
+   io_err=io_DIPOLES(Dip,ID)
+   IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
@@ -145,22 +163,24 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    enddo
  enddo
 #if defined _PAR_IO
- IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
- call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID)
- io_err=io_DIPOLES(Dip,ID)
+   IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
+   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID)
+   io_err=io_DIPOLES(Dip,ID)
+ endif
 #endif
  !
  if(use_covariant_approach) then
 #if defined _PAR_IO
-   IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S)
-   io_err=io_Overlaps(Dip,ID_S)
-   IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
+   if ( (PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing).or.reading ) then
+     IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
+     call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S)
+     io_err=io_Overlaps(Dip,ID_S)
+     IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)).and.writing) cycle
+       if ((.not.PAR_K_scheme%IND_bz%element_1D(ik)) .and.writing) cycle
        if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0) .and.writing) cycle
 #if !defined _PAR_IO
        if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)
@@ -172,15 +192,21 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      enddo
    enddo
 #if defined _PAR_IO
-   IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID_S)
-   io_err=io_Overlaps(Dip,ID_S)
+     IO_ACT_NOW=manage_action(IO_ACTION,2,0,2)
+     call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/2+Xk%nibz*n_sp_pol/),ID=ID_S)
+     io_err=io_Overlaps(Dip,ID_S)
+   endif
 #endif
  endif
  !
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
+ !
+#if defined _RT
+ if(reading.and.l_project_spin_dipoles) call project_spin_dipoles(Dip)
+ if(reading.and.l_project_dipoles)      call project_dipoles(Dip)
+#endif
  !
  contains
    !
@@ -193,6 +219,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      !      However it maybe needed in the future when avoiding dipoles IO)
      !
      ! For a definition of v_eff see PRB 48, 11789 (1993)
+     !
+     use DIPOLES,   ONLY:DIP_v
      !
      integer,       intent(in)    :: dir
      type(DIPOLE_t),intent(inout) :: Dip
@@ -248,5 +276,58 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if( dir==+1) Dip%v_eff=.true.
      !
    end subroutine
+   !
+#if defined _RT
+   subroutine project_spin_dipoles(Dip)
+     use DIPOLES,   ONLY:DIP_spin
+     type(DIPOLE_t),  intent(in) :: Dip
+     !
+     if(.not.allocated(DIP_spin)) return
+     !
+     do i_sp_pol=1,n_sp_pol
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=Dip%ib_lim(2),Dip%ib(2)
+           !
+           if (ic<=Xen%nbf(i_sp_pol) .and. iv<=Xen%nbf(i_sp_pol)) then
+             DIP_spin(:,ic,iv,:,i_sp_pol,2)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
+           endif
+           if (ic> Xen%nbf(i_sp_pol) .and. iv> Xen%nbf(i_sp_pol) ) then
+             DIP_spin(:,ic,iv,:,i_sp_pol,3)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine project_spin_dipoles
+   !
+   subroutine project_dipoles(Dip)
+     use DIPOLES,   ONLY:DIP_iR,DIP_P,DIP_v
+     use pars,      ONLY:cZERO
+     type(DIPOLE_t),  intent(in) :: Dip
+     !
+     if(.not.allocated(DIP_iR)) return
+     !
+     do i_sp_pol=1,n_sp_pol
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=Dip%ib_lim(2),Dip%ib(2)
+           !
+           if (ic<=Xen%nbf(i_sp_pol) .and. iv<=Xen%nbf(i_sp_pol) ) then
+             DIP_iR(:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_P (:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_v (:,ic,iv,:,i_sp_pol)=cZERO
+           endif
+           if (ic> Xen%nbf(i_sp_pol) .and. iv> Xen%nbf(i_sp_pol) ) then
+             DIP_iR(:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_P (:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_v (:,ic,iv,:,i_sp_pol)=cZERO
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine project_dipoles
+#endif
    !
 end subroutine DIPOLE_IO

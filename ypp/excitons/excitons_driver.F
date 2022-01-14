@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV DS
@@ -29,9 +29,8 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  use electrons,     ONLY:levels,spin
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:l_sort,l_exc_wf,l_spin,l_amplitude,EXCITONS_user_indexes,BSiq, &
-&                        BS_R_right,BS_E,BS_E_SOC_corr,l_interp
+&                        BS_R_right,BS_E,BS_E_SOC_corr,l_interp,l_dipoles
  use BS_solvers,    ONLY:BSS_n_eig
- use BS,            ONLY:BS_H_dim
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:l_eliashberg,l_gkkp,l_ph_ass_dos
 #endif
@@ -49,19 +48,9 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  logical              :: l_flag
  integer ,allocatable :: BS_E_degs(:)
  !... I/0
- integer              :: iq
+ integer              :: iq,io_err
  !
- if(.not.l_interp) then
-    call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
- else
-    call section('*','Excitonic Properties')
- endif
- !
- iq = BSiq
- !
- call excitons_read(k,Xk,en,Xen,BSiq,"check")
- !
- l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp
+ l_flag=l_sort .or. l_exc_wf .or.l_amplitude .or. l_spin .or. l_interp .or. l_dipoles
 #if defined _YPP_ELPH
  l_flag=l_flag .or. l_eliashberg .or. l_gkkp .or. l_ph_ass_dos
 #endif
@@ -71,20 +60,43 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  if(.not.l_flag) return
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues")
+ if(.not.l_interp) call section('*','Excitonic Properties @ Q-index #'//trim(intc(BSiq)))
+ if(     l_interp) call section('*','Excitonic Properties')
+ !
+ iq = BSiq
+ !
+ call                excitons_read(k,Xk,en,Xen,BSiq,"check",io_err)
+ !
+ if (io_err==0) call excitons_read(k,Xk,en,Xen,BSiq,"eigenvalues",io_err)
+ !
+ if (io_err/=0) then
+   call warning("BSE databases not found.")
+#if defined _YPP_RT
+   if (l_RT_abs) call RT_transient_absorption(Xen,Xk,q)
+#endif
+   return
+ endif
  !
  ! Sort energies and write to output
  !===================================
  if (l_sort) call excitons_sort_and_report(iq,BS_R_right,BS_E,BS_E_SOC_corr=BS_E_SOC_corr)
  !
- ! Sort energies to find degenerate states
- !========================================
- YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
- call excitons_find_degeneracies(BS_E,BS_E_degs)
- !
- ! Define the USER set of excitonic states
- !=========================================
- if(.not.l_sort) call get_user_excitonic_states( )
+#if defined _YPP_RT
+ if (.not.l_RT_abs) then
+#endif
+   !
+   ! Sort energies to find degenerate states
+   !========================================
+   YAMBO_ALLOC(BS_E_degs,(BSS_n_eig))
+   call excitons_find_degeneracies(BS_E,BS_E_degs)
+   !
+   ! Define the USER set of excitonic states
+   !=========================================
+   if(.not.l_sort) call get_user_excitonic_states( )
+   !
+#if defined _YPP_RT
+ endif
+#endif
  !
  ! Exciton dispersion interpolation
  ! =======================================
@@ -102,7 +114,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  endif
 #endif
  !
- if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors")
+ if(.not.l_sort)   call excitons_read(k,Xk,en,Xen,BSiq,"eigenvectors",io_err)
  ! 
  ! Exciton's spin
  !=====================
@@ -110,7 +122,7 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Exciton's Amplitude
  !=====================
- if (l_amplitude)  call excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
+ if (l_amplitude.or.l_dipoles)  call excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  !
  ! Exciton's WFs
  !=====================
@@ -130,13 +142,13 @@ subroutine excitons_driver(k,Xk,en,Xen,q)
  !
  ! Transient absorption 
  !======================
- if(l_RT_abs)      call RT_transient_absorption(Xen,Xk,q,BS_H_dim,BS_E,BS_R_right)
+ if (l_RT_abs)     call RT_transient_absorption(Xen,Xk,q)
  !
 #endif
  !
  ! CLEAN
  !
- call excitons_read(k,Xk,en,Xen,BSiq,"clean")
+ call excitons_read(k,Xk,en,Xen,BSiq,"clean",io_err)
  !
  YAMBO_FREE(EXCITONS_user_indexes)
  !

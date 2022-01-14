@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,8 @@ subroutine QP_DBs_manipulate( E )
  use YPPm,          ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_input_control
  use stderr,        ONLY:intc,real2ch
  use com,           ONLY:msg
- use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
  use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
@@ -60,7 +61,7 @@ subroutine QP_DBs_manipulate( E )
        call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
        i_err=io_QP_and_GF(trim(QP_db_input_control(i_qp,4)),QP_db(n_QP_dbs),ID)
        if (i_err/=0) then
-         call warning("QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
+         call warning(" Error in reading QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
          call QP_reset(QP_db(n_QP_dbs))
          n_QP_dbs=n_QP_dbs-1
        endif

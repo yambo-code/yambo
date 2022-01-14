@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV DS
@@ -25,7 +25,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
- use QP_m,           ONLY:QP_nk,QP_nb,QP_Vxc,QP_n_states
+ use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
 &                         H_ref_bands,WF_G_max,WF_Go_indx
  use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_WF_linear
@@ -33,7 +33,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp,nkibz
  use xc_functionals, ONLY:V_xc
- use interfaces,     ONLY:el_density_and_current,WF_load
+ use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
  use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
 #if defined _SC
@@ -74,7 +74,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    ! If exist the non local part of the pseudo then construct kbv
    !
-   call Pseudo_KB_G_to_R_space(k,E)  
+   call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(Xk,E,.true.)
    call Pseudo_Hamiltonian(Xk,E,.false.)
    !
@@ -84,7 +84,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  ! WF Loading, density and magnetization
  !=======================================
- WFbands=(/H_ref_bands(1),max(H_ref_bands(2),E%nbm)/)
+ WFbands=(/H_ref_bands(1),max(H_ref_bands(2),maxval(E%nbm))/)
  call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-SC')
  !
 #if defined _RT
@@ -97,7 +97,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
 #if defined _SC
  if(l_sc_run) then
    call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
-   if(n_spin>1) call el_magnetization(E,Xk,magn_n)
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=H_ref_bands)
  endif
 #endif
  !
@@ -131,9 +131,8 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      ! Add bare energies ... 
      !=======================
      !
-     do ib=1,QP_nb
+     do ib=H_ref_bands(1),H_ref_bands(2)
        if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
-       if( ib<H_ref_bands(1).or.ib>H_ref_bands(2) ) cycle
        Hzero(ib,ib,ik,i_sp_pol) = Hzero(ib,ib,ik,i_sp_pol) + E_reference%E(ib,ik,i_sp_pol)  
      enddo
      !

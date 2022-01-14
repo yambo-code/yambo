@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,8 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
  use units,          ONLY:AUT2FS
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use IO_m,           ONLY:IO_and_Messaging_switch,io_control,io_disconnect,WR_CL
+ use IO_m,           ONLY:WR_CL
+ use IO_int,         ONLY:IO_and_Messaging_switch,io_control,io_disconnect
  use RT_lifetimes,   ONLY:RT_EP_emit_life,RT_EE_life,RT_EH_life,RT_EP_abs_life,&
 &                         RT_EP_emit_REF_life,RT_EE_REF_life,RT_EH_REF_life,RT_EP_abs_REF_life
  use real_time,      ONLY:eval_energy,eval_entropy,l_RT_update_Energies,l_NE_with_fields,NE_time, &
@@ -56,7 +57,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    !
    call RT_output(what=trim(what)//" curr pol")
    !
-   call RT_output(what=trim(what)//" carr magn")
+   call RT_output(what=trim(what)//" carr spin orbt")
    if (eval_energy)  call RT_output(what=trim(what)//" energy")
    if (eval_entropy) call RT_output(what=trim(what)//" therm")
    if (l_RT_update_Energies) call RT_output(what=trim(what)//" BGR")
@@ -107,7 +108,7 @@ subroutine RT_output_and_IO_driver(what,E,k,OBSERVABLES)
    ! Energetics and BGR
    !====================
    !
-   call RT_output('magn',TIME=NE_time*AUT2FS)
+   call RT_output('spin orbt',TIME=NE_time*AUT2FS)
    call RT_output('carr',VALUES=(/NCarr(:),TFit(:),EfFit(:)/),TIME=NE_time*AUT2FS)
    if(eval_energy)          call RT_output('energy',VALUES=Ener,                          TIME=NE_time*AUT2FS)
    if(eval_entropy)         call RT_output('therm ',VALUES=(/EnEntr(:),Entr(:),TEntr(:)/),TIME=NE_time*AUT2FS)

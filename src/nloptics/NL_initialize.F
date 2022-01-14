@@ -244,9 +244,6 @@ subroutine NL_initialize(E,k)
  ! NB.: This part duplicates what is in
  !      INIT.F 
  !
- !COLLISIONS_CV_only=.true.
- COLLISIONS_CV_only=.false.
- ! 
  select case (trim(NL_Correlation))
     case('IPA')
         Correlation=IPA
@@ -296,6 +293,8 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
+ if(eval_COLLISIONS.and.COLLISIONS_CV_only) call msg('rs','ONLY c<->v scattering in COLLISIONS! ')
+ ! 
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required

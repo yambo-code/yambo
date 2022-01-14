@@ -482,7 +482,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp )
+   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp )
 #endif
    !
    call OPENMP_update(master_thread)   

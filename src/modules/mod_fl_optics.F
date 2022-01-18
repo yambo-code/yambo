@@ -26,22 +26,213 @@ module fl_optics
  use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
+ use nl_optics
  !
 #include<memory.h>
+!!
+! !
+!! Long range correction field
+!!
+!real(SP)          :: NL_LRC_alpha
+!!
+!! Time steps and step length defined in module real_time.F
+!! --------------------------------------------------------
+!!
+!! Polarization
+!! ------------
+!! Calculated from the string-averaged discretized geometric phase
+!! see ref. PRB 47, 1651 (1993), or from DIPOLES
+!!
+!complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
+!complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
+!!
+!! Current
+!!
+!complex(SP)    :: NL_J(6)
+!complex(SP)    :: NL_initial_J(6)
+!!
+!! Diagonal (QP) and off-diagonal (Phase) relaxation time
+!!
+!real(SP)    :: NL_damping
+!!
+!! Initial Energies and Damping
+!!------------
+!complex(SP), allocatable :: I_relax(:,:,:,:,:)
+!real(SP),    allocatable :: E_full(:,:,:)
+!!
+!! For TDDFT, V_xc_0 stores the V_xc at equilibrium
+!!
+!real(SP), allocatable    :: V_xc_0(:,:)
+!!
+!! For JGM E_xc_0 for the microscopic part of the functional
+!!
+!complex(SP) :: E_xc_0(3)
+!!
+!! WFs and Density
+!!
+!! Bands in terms of Kohn-Sham orbitals
+!complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
+!!
+!! Time-dependent Valence bands in real-space
+!complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
+!!
+!real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
+!!
+!! Density matrix
+!complex(SP), allocatable :: dG(:,:,:)
+!!
+!! Verbosity
+!!
+!integer, parameter :: VERB_HIGH = 1
+!integer, parameter :: VERB_LOW  = 2
+!!
+!integer :: NL_verbosity
+!character(schlen)            :: NL_verb_name
+!!
+!! Correlation
+!!
+!character(schlen)            :: NL_correlation
+!integer                      :: Correlation
+!!
+!integer, parameter :: IPA    = 1
+!integer, parameter :: HARTREE= 2
+!integer, parameter :: TDDFT  = 3
+!integer, parameter :: LRC    = 4
+!integer, parameter :: JGM    = 5
+!integer, parameter :: LRCW   = 6
+!integer, parameter :: HF     = 7
+!integer, parameter :: SEX    = 8
+!!
+!logical :: eval_COLLISIONS
+!logical :: eval_dG
+!!
+!! Non-linear spectra parameters
+!!
+!real(SP) :: NL_er(2)
+!real(SP) :: NL_estep
+!integer  :: NL_bands(2)
+!integer  :: NL_nbands
+!integer  :: n_frequencies
+!integer  :: n_freqs_todo
+!!
+!! Wavefunction sampling
+!!
+!type NLsampleWF
+!  integer              :: n_order     ! Sampling NL order
+!  integer              :: n_size      ! Size of sampling
+!  integer              :: n_val       ! Number of valence
+!  integer              :: n_k         ! Number of kpoints
+!  logical              :: ison        ! WF sample logical switch
+!  integer, allocatable :: indx_T(:)   ! indexes of time sampling
+!end type NLsampleWF
+!!
+!integer  :: n_order
+!type(NLsampleWF) :: WF_sample, WF_sample_ondisk
+!!
+!! Databases input/output
+!!
+!integer                  :: ID(3)
+!!
+!! Other
+!!
+!logical  :: l_use_DIPOLES   ! Use standard dipoles (valid only for linear response)
+!logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
+!!
+!! IO variables
+!!
+!real(SP),     allocatable :: NL_P_t(:,:)
+!complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
+!complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
+!logical,      allocatable :: freqs_done(:)
+!type(IO_desc)             :: NL_desc
  !
- integer                      :: n_flmodes
+ !aim137 new variables
+ integer                   :: n_flmodes
  !
  contains
-   subroutine FL_alloc
+   subroutine FL_alloc(en)
+     !
+     use pars,           ONLY:SP
+     use FFT_m,          ONLY:fft_size
+     use electrons,      ONLY:levels,n_spin,n_sp_pol
+     use hamiltonian,    ONLY:H_alloc
+     use real_time,      ONLY:rho_reference,RT_Vnl_xc
+     use R_lattice,      ONLY:nXkbz
+     use QP_m,           ONLY:QP_nk
+     use electric,       ONLY:ELECTRIC_alloc
+     use drivers,        ONLY:l_use_Hxc_collisions
+     !
+     implicit none
+     !
+     type(levels), intent(in) :: en
+     !
+     call H_alloc(en,.true.,.false.)
+     !
+     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     if (fft_size>0) then
+       YAMBO_ALLOC(rho_reference,(fft_size))
+       YAMBO_ALLOC(full_rho,(fft_size))
+     endif
+     !
+     ! Reference energies
+     !
+     YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))
+     !
+     if(.not.l_use_DIPOLES) then
+       call  ELECTRIC_alloc(en)
+     endif
+     !
    !
    end subroutine FL_alloc
    !
-   subroutine FL_alloc_k_distributed
-   !
+   subroutine FL_alloc_k_distributed(en)
+     !
+     use parallel_m,     ONLY:PAR_Xk_nibz,PAR_Xk_ibz_index
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels,n_spin,n_sp_pol
+     use real_time,      ONLY:Ho_plus_Sigma
+     use R_lattice,      ONLY:nXkbz
+     use QP_m,           ONLY:QP_nk
+     use FFT_m,          ONLY:fft_size
+     !
+     implicit none
+     !
+     type(levels),  intent(in) :: en
+     !
+     ! Valence bands in fft space
+     !
+     if(fft_size>0) then
+       YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+     endif
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
+     !
    end subroutine FL_alloc_k_distributed
    !
    subroutine FL_free
-   !
+     !
+     use hamiltonian,    ONLY:H_free
+     use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
+     use electric,       ONLY:ELECTRIC_free
+     use drivers,        ONLY:l_use_Hxc_collisions
+     !
+     implicit none
+     !
+     call H_free()
+     !
+     YAMBO_FREE(Ho_plus_Sigma)
+     YAMBO_FREE(I_relax)
+     YAMBO_FREE(V_bands)
+     !
+     YAMBO_FREE(rho_reference)
+     YAMBO_FREE(full_rho)
+     YAMBO_FREE(E_full)
+     YAMBO_FREE(VAL_BANDS)
+     !
+     if(.not.l_use_DIPOLES) then
+       call ELECTRIC_free()
+     endif
+     !
    end subroutine FL_free
  !
 end module

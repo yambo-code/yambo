@@ -77,7 +77,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  if(allocated(V_xc_sc))         V_xc_sc     =rZERO
  if(allocated(V_hartree_sc))    V_hartree_sc=rZERO
  H_nl_sc           =cZERO
- I_relax           =cZERO
+ I_relax           =cZERO     ! no se que es, pero da error
  V_bands           =cZERO
  !
  if(NL_bands(2)<=E%nbf.or.NL_bands(1)>E%nbf) &

@@ -27,7 +27,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
@@ -62,9 +62,10 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,FL_iteration
+ integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,FL_iteration,i_sp_pol
  logical           :: l_selfconsistency_reached
  real(SP)          :: Time
+ complex(SP)       :: All_S_mat_EQ(E%nbm,E%nbm,6,k%nbz,n_sp_pol)
  !
  print*, "first line"
  ! In Non-Linear NL_bands always equal to RT_bands
@@ -146,15 +147,15 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  ! Allocation
  ! ==================
-  call FL_alloc!(E) 
-  call FL_alloc_k_distributed!(E)
-!aim137: call a newly written subroutine FL_alloc for Vbands and whatever else we need
+  call FL_alloc(E) 
+  call FL_alloc_k_distributed(E)
+!aim137: newly written subroutines - under review
  !
  ! Initialization
  ! ==================
  call section('*','FL Start and Restart')
- !aim137: re-write NL_start as FL_start
- call FL_start_and_restart!(E,k,Dip)
+ call FL_start_and_restart(E,k,Dip)
+!aim137: newly written subroutine - under review
  !
  ! Check if calculation was already done
  ! =====================================
@@ -169,6 +170,14 @@ subroutine FL_driver(E,X,k,q,Dip)
  !===================
  !aim137: check this is what we need:
  call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
+ !
+ ! Calculate Overlap matrices in EQ (no inversion nor determinant)
+ ! ===============================================================
+ do i_sp_pol=1,n_sp_pol
+   do i_k_bz=1,k%nbz
+     call FL_Build_Overlaps_Mat_EQ(E,i_sp_pol,i_k_bz,All_S_mat_EQ(:,:,:,i_k_bz,i_sp_pol))
+   enddo
+ enddo
  !
  do i_f=1,n_frequencies
    !
@@ -212,7 +221,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_polarization
      !
-     ! preliminary criterion to avoid infinit loop
+     !aim137: preliminary criterion to avoid infinit loop
      l_selfconsistency_reached= (FL_iteration>=4)
      !
    enddo

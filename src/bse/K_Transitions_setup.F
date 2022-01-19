@@ -242,7 +242,8 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
                !
-               ! AIM137 transition energies in fine grid only for Haydock + DbGd case
+               ! IA (2022/01/19):
+               ! Transition energies in fine grid only for Haydock + DbGd case
                !
                if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
                  do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)

@@ -237,7 +237,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
    !
  end if
  !
- ! AIM137 V0 in DbGd initialised as V0 in coarse grid
+ ! IA (2022/01/19):
+ ! V0 in DbGd initialised as V0 in coarse grid
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
@@ -249,10 +250,10 @@ subroutine K_Haydock(iq,W,mode,Xk)
      enddo
      !
      ! IA (2022/01/19):
-     ! AIM137  Setting some elements to 0 as the number of mapped points 
-     ! AIM137  is not the same for every k point in the transition group.
-     ! AIM137  Within a given transition group there may be transitions
-     ! AIM137  with, e.g., 128 or 129 mapped points
+     ! Setting some elements to 0 as the number of mapped points 
+     ! is not the same for every k point in the transition group.
+     ! Within a given transition group there may be transitions
+     ! with, e.g., 128 or 129 mapped points
      !
      if (BSS_uses_DbGd) then
        do i_T=1,BS_T_grp(i_g)%size

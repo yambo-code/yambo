@@ -28,8 +28,9 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
  ! See mod_BS for details on the K structure
  !
- !AIM137: extra dimension of %fragment and %E hardcoded to 1
- !AIM137: to be modified if DbGd applied to Slepc
+ ! IA (2022/01/19):
+ ! Extra dimension of %fragment and %E hardcoded to 1
+ ! To be modified if DbGd applied to Slepc
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait

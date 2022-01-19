@@ -155,8 +155,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-     ! AIM137 energies in DbGd as difference wrt to coarse grid
-     ! AIM137 BS_nkFGbz_in_Tgrp(i_T_g) > 1 only for Haydock + DbGd
+     ! IA (2022/01/19):
+     ! Energies in DbGd as difference with respect to coarse grid
+     ! BS_nkFGbz_in_Tgrp(i_T_g) > 1 only for Haydock + DbGd
      !
      allocate(E_DbGd(BS_nkFGbz_in_Tgrp(i_T_g)))
      E_DbGd = cZERO

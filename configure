@@ -1686,8 +1686,9 @@ Optional Packages:
   --with-petsc-libdir=<path>    Path to the Petsc lib directory
   --with-petsc-includedir=<path>
                                 Path to the Petsc include directory
-  --with-blacs-libs=<libs>      Use BLACS libraries <libs>
-  --with-scalapack-libs=<libs>  Use SCALAPACK libraries <libs>
+  --with-blacs-libs=(libs|mkl)  Use BLACS libraries <libs> or setup MKL
+  --with-scalapack-libs=(libs|mkl)
+                                Use SCALAPACK libraries <libs> or setup MKL
   --with-hdf5-libs=<libs>       Use HDF5 libraries <libs>
   --with-hdf5-path=<path>       Path to the HDF5 install directory
   --with-hdf5-libdir=<path>     Path to the HDF5 lib directory
@@ -10947,6 +10948,147 @@ fi
 
 fi
 
+# BLAS in Intel MKL library?
+if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
+	# MKL for gfortran
+	mkl_libdir="${MKLROOT}/lib"
+	case "${FCKIND}" in
+	*gfortran* )
+		case "${host}" in
+		*x86*64*)
+			as_ac_Lib=`$as_echo "ac_cv_lib_mkl_gf_lp64_$caxpy" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $caxpy in -lmkl_gf_lp64" >&5
+$as_echo_n "checking for $caxpy in -lmkl_gf_lp64... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $caxpy
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+fi
+
+		;;
+		i?86*linux*)
+			as_ac_Lib=`$as_echo "ac_cv_lib_mkl_gf_$caxpy" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $caxpy in -lmkl_gf" >&5
+$as_echo_n "checking for $caxpy in -lmkl_gf... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmkl_gf -L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $caxpy
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread"
+fi
+
+		;;
+		esac
+	;;
+	# MKL for other compilers (Intel, PGI, ...?)
+	*intel* | *nvfortran* | *pgi* )
+		# 64 bit
+		case "${host}" in
+		*x86*64*)
+			as_ac_Lib=`$as_echo "ac_cv_lib_mkl_intel_lp64_$caxpy" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $caxpy in -lmkl_intel_lp64" >&5
+$as_echo_n "checking for $caxpy in -lmkl_intel_lp64... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $caxpy
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+fi
+
+		;;
+		i?86*linux*)
+			as_ac_Lib=`$as_echo "ac_cv_lib_mkl_intel_$caxpy" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $caxpy in -lmkl_intel" >&5
+$as_echo_n "checking for $caxpy in -lmkl_intel... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmkl_intel -L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call $caxpy
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread"
+fi
+
+		;;
+		esac
+	esac
+fi
+
 # Generic BLAS library?
 if test $acx_blas_ok = no; then
         as_ac_Lib=`$as_echo "ac_cv_lib_blas_$caxpy" | $as_tr_sh`
@@ -11657,6 +11799,21 @@ if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
        try_fft_libs="-lfftw3"
    fi
    #
+fi
+#
+# check for MKL
+#
+if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
+   tty_fft_incdir="${MKLROOT}/include"
+   mkl_libdir="${MKLROOT}/lib"
+   case "${FCKIND}" in
+   *gfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl"
+    ;;
+    *intel* | *pgi* | *nvfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+    ;;
+    esac
 fi
 #
 if ! test x"$try_fft_libs" = "x" ; then
@@ -12418,17 +12575,62 @@ blacs_routine="blacs_set"
 scalapack_routine="pcheev"
 mpi_routine=MPI_Init
 #
+# Search for MKL-Scalapack
+#
+try_mkl_scalapack="no"
+#
+if test -d "${MKLROOT}" ; then
+   #
+   # Check for MPI libraries
+   #
+   mkl_libdir="${MKLROOT}/lib"
+   #
+   case "${MPIKIND}" in
+   *Sgi* | *sgi* | *SGI* )
+      lib_mkl_blacs="mkl_blacs_sgimpt_lp64" ;;
+   *OpenMPI* | *Open* )
+      lib_mkl_blacs="mkl_blacs_openmpi_lp64" ;;
+   *)
+      lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
+   esac
+   #
+   # Check for compiler
+   #
+   case "${FCKIND}" in
+   *intel* | *pgi* | *nvfortran* )
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
+      ;;
+   *gfortran* )
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
+      ;;
+   esac
+fi
+#
 # Parse configure options
 #
 case $with_blacs_libs in
   yes) enable_blacs="internal" ;;
-  no) enable_blacs="no" ; enable_par_linalg="no" ;;
+  no)  enable_blacs="no" ; enable_par_linalg="no" ;;
+  mkl)
+    if test "$try_mkl_scalapack" = "no" ; then
+       enable_blacs="no" ; enable_par_linalg="no"
+    else
+       enable_blacs="check"; BLACS_LIBS="$try_mkl_scalapack"
+    fi
+    ;;
   *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
 esac
 #
 case $with_scalapack_libs in
   yes) enable_scalapack="internal" ;;
   no) enable_scalapack="no" ; enable_par_linalg="no" ;;
+  mkl)
+    if test "$try_mkl_scalapack" = "no" ; then
+       enable_scalapack="no" ; enable_par_linalg="no"
+    else
+       enable_scalapack="check"; SCALAPACK_LIBS="$try_mkl_scalapack"
+    fi
+    ;;
   *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
 esac
 #

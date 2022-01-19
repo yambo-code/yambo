@@ -21,15 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!aim137: critical: still need to modify this subroutine.
-!aim137: the extra dimension of %fragment and %E
-!aim137: are hardcoded to 1 so that the code compiles.
 subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
  ! Given K distributed on the processors, and Vi distributed on the processors
  ! multiply Tranpose(K) by Vi.
  !
  ! See mod_BS for details on the K structure
+ !
+ !AIM137: extra dimension of %fragment and %E hardcoded to 1
+ !AIM137: to be modified if DbGd applied to Slepc
  ! 
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
@@ -50,8 +50,6 @@ subroutine K_multiply_by_V_transpose(Vi,Vo,iter_par)
  !
  ! The factor cI is needed for the coupling when l_BS_ares_from_res=.TRUE.
  !
-!aim137: checking this is not used in my example
-print*, 'in K_multiply_by_V_transpose'
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
  !

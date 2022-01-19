@@ -41,7 +41,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
  real(SP),    intent(in) :: Bf(it+1),Af(it)
  complex(SP), intent(in) :: Cf(Cf_size)
  real(SP),    intent(out):: reached_threshold
-!aim137: adding FG_factor
  real(SP),    intent(in) :: FG_factor
  !
  ! Work Space
@@ -250,7 +249,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
-!aim137: scaling absorption spectrum by FG_factor=N_kpts/N_FG_kpts
    if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor
    if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor
    if (trim(mode)=="abs") then

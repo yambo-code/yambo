@@ -35,8 +35,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
-!aim137: R2. adding BS_nkFGbz_in_Tgrp
-!aim137: adding BSS_mode 
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,&
 &                        BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
  use BS,            ONLY:BS_T_grp,BS_nT_grps,BS_perturbative_SOC,&
@@ -69,7 +67,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used,Z_eh,E_eh
  !
-!aim137: adding variables for DbGd
  real(SP)      :: FG_factor
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
@@ -150,7 +147,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Energy
      !========
      !
-!aim137: hard coded %E(:,1) - revise later
      E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)
      if(allocated(BS_T_grp(i_T_g)%W)) then
        E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)-cI*BS_T_grp(i_T_g)%W(i_T)
@@ -159,8 +155,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      if (.not.BS_perturbative_SOC) E_plus_W=E_plus_W0
      if (     BS_perturbative_SOC) E_plus_W(:)=E_plus_W0+BS_T_grp(i_T_g)%E_SOC_corr(:,i_T)
      !
-!aim137: energies for DbGd as delta wrt coarse grid
-!aim137: R2. BS_nkFGbz_in_Tgrp(i_T_g) > 1 only in Haydock+DbGd
+     ! AIM137 energies in DbGd as difference wrt to coarse grid
+     ! AIM137 BS_nkFGbz_in_Tgrp(i_T_g) > 1 only for Haydock + DbGd
+     !
      allocate(E_DbGd(BS_nkFGbz_in_Tgrp(i_T_g)))
      E_DbGd = cZERO
      do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
@@ -259,7 +256,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if (l_BS_abs) then
-!aim137: added loop and variable - must generalise to all responses later
          do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
            Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
@@ -324,7 +320,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  call live_timing()
  !
-!aim137: FG factor
  Epsilon_ii(:,3) = Epsilon_ii(:,3) * FG_factor
  !
  ! Sorting procedure

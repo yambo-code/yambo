@@ -49,8 +49,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use com,          ONLY:isec
-!aim137: Added BSS_uses_DbGd
-!aim137: R2. added BS_nkFGbz_in_Tgrp
  use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
  ! mode ="T"
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
@@ -107,7 +105,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
    enddo
    n_loops=2
    !
-!aim137: R2. allocating BS_nkFG_in_Tgrp
    allocate(BS_nkFGbz_in_Tgrp(BS_nT_grps))
    !
    call PP_indexes_reset(PAR_IND_WF_b_and_k)
@@ -158,9 +155,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
        ! Moreover I cannot move iv,ic loops insiede i_sp_pol and i_star loops
        ! Otherwise runs with parallelization over eh fail
        !
-!aim137: dom_k for each tr group as max within
-!aim137: transitions in that group
-!aim137: R2. nColFG_in_T_group_now is a temporary variable
        if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
          nColFG_in_T_group_now = maxval(Xk%FGbz%N_mapped(&
          &                       Xk%k_table(ik,Xk%star(&
@@ -205,7 +199,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                !
                if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
                !
-!aim137: R2. adding value of current Transition to BS_nkFGbz_in_Tgrp
                if (i_loop==2) BS_nkFGbz_in_Tgrp(i_T_group_now) = nColFG_in_T_group_now
                !
                l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
@@ -222,7 +215,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                  !
                  if (i_loop==2) then
                    !
-!aim137: R2. passing nColFG_in_T_group_now
                    call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,nColFG_in_T_group_now)
                    !
                    BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
@@ -247,10 +239,11 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
                endif
                !
-!aim137: E_eh assigned to 1st column of E
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
-!aim137: calculating energies of transitions in the fine grid
+               !
+               ! AIM137 transition energies in fine grid only for Haydock + DbGd case
+               !
                if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
                  do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
                    ikFG = Xk%FGbz%E_map(ikFGbz)
@@ -258,7 +251,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                    BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_ColFG) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
                  enddo
                end if
-!aim137: end calculating energies of transitions in fine grid
                !
                ! To be fixed
                if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL

@@ -180,12 +180,10 @@ module BS
    integer                       :: first_cv                   ! Position in the cv transitions @ k
    integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
-!aim137: added extra index to %E
    real(SP)   , allocatable      :: E(:,:)                     ! (/ i_Tr; maxval(Xk%FGbz%N_mapped('kpts_in_T_gr')) /)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
    real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent
-!aim137: Question: what is W, it is substracted from E in K_IP.F
    real(SP)   , allocatable      :: W(:)
    real(SP)   , allocatable      :: E_SOC_corr(:,:)            ! (/2/n_sp_pol; i_Tr /)
    complex(SP), allocatable      :: Z(:)
@@ -341,7 +339,6 @@ module BS
      use pars,       ONLY:IP,cZERO
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
-!aim137: added dom_k_T_group, passed from K_Transitions_setup
      integer,      intent(in) :: iT,dom_k_T_group
      type(levels), intent(in) :: E
      integer :: nT,nDIP
@@ -358,7 +355,6 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
-!aim137: allocating extra index to %E
      YAMBO_ALLOC(BS_T_grp(iT)%E,(nT,dom_k_T_group))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
@@ -372,7 +368,7 @@ module BS
      if (allocated(E%E_SOC)) then
        YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
-!aim137: set Energies to zero
+     !
      BS_T_grp(iT)%E(:,:) = 0._SP
      !
    end subroutine

@@ -31,7 +31,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_uses_DbGd
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res
  use wrapper,        ONLY:M_by_V
  !
@@ -91,6 +91,12 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      end if
      !
    case("C")
+     !
+     ! IA (2022/01/19):
+     ! Preliminary implementation of DbGd into coupling case does not work - to be tested
+     !
+     if (BSS_uses_DbGd) call error("[Haydock] Double Grid method not yet implemented in &
+                                   &coupling (pseudo-Hermitian) case of Haydock solver")
      !
      if (l_BS_ares_from_res) then
        !

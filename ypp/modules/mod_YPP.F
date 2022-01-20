@@ -288,6 +288,10 @@ module YPPm
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  type(X_t)                ::Xbsk 
  !
+ ! NL
+ !
+ character(lchlen) :: PUMP_path = 'none'
+ !
  interface
    !
    subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)

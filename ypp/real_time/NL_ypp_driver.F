@@ -34,7 +34,7 @@ subroutine NL_ypp_driver(en,k)
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
- use com,            ONLY:msg
+ use com,            ONLY:msg,core_io_path
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -72,8 +72,14 @@ subroutine NL_ypp_driver(en,k)
  io_Nonlinear=io_NL(dbname,ID)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
- io_Nonlinear_REF=io_NL(dbname//"_REF",ID_REF)
+ if(PUMP_path/='none') then
+    core_io_path_save=core_io_path
+    core_io_pat      =PUMP_path
+    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
+    io_Nonlinear_REF=io_NL(dbname//"_REF",ID_REF)
+    if(io_Nonlinear_REF) call msg('rs','Found Pump reference polarization')
+    core_io_path =core_io_path_save
+ endif 
  !
  l_skip_OBS_IO=.false.
  !
@@ -118,13 +124,15 @@ subroutine NL_ypp_driver(en,k)
    !
    if(io_Nonlinear_REF==0) then
      call warning("removing reference polarization/current")
+     core_io_path_save=core_io_path
+     core_io_pat      =PUMP_path
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
      io_Nonlinear=io_NL(dbname//"_REF",ID_REF)
+     core_io_path_save=core_io_path_save
      do i_d=1,3
        RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
      enddo
    endif
-
    !
  enddo
  !

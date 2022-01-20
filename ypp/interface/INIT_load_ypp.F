@@ -40,7 +40,7 @@ subroutine INIT_ypp_load(defs)
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,BSiq_via_command_line,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
-&                        DIPs_direction,DIPs_E_range,DIPs_C_bands,DIPs_V_bands,DIPs_kind
+&                        DIPs_direction,DIPs_E_range,DIPs_C_bands,DIPs_V_bands,DIPs_kind,PUMP_path
  use YPP_symm,      ONLY:wf_ng_cut
 #if defined _YPP_RT
  use YPPm,          ONLY:Nel_fac
@@ -134,6 +134,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_NL
  call it('r',defs,'NL_X',     '[R] NonLinear Optics Response Post-Processing')
  call it('r',defs,'NL_exc',   '[R] NonLinear Optics Excitation Post-Processing')
+ call it(defs,'PumpPATH',"Path of the simulation with the Pump only",PUMP_path)
 #endif
  !
  ! Variables...

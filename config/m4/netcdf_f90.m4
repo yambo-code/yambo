@@ -94,6 +94,18 @@ if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
 #
 #
+# Automatic Configuration of NETCDF
+#
+if ! test -d "$with_netcdf_path" && ! test -d "$with_netcdf_libdir" ; then
+ if test -x "$(command -v nc-config)" ; then
+   with_netcdf_includedir=`nc-config --includedir`
+   with_netcdf_libdir=`nc-config --libdir`
+   netcdf_prefix=`nc-config --prefix`
+   echo "Found NETCDF libraries in: $netcdf_prefix "
+   if test `nc-config --has-hdf5` = "yes" ; then   enable_hdf5=yes 	;  fi
+ fi
+fi
+#
 #
 # Set NETCDF LIBS and FLAGS from INPUT
 #

@@ -367,6 +367,7 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'Force periodic pol.        ',.not.l_no_P_periodic)
  call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

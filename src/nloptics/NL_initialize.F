@@ -41,7 +41,7 @@ subroutine NL_initialize(E,k)
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe
- use electric,       ONLY:l_force_SndOrd
+ use electric,       ONLY:l_force_SndOrd,l_no_P_periodic
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -61,6 +61,7 @@ subroutine NL_initialize(E,k)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
+ call parser('NoPperiodic' ,         l_no_P_periodic)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  !

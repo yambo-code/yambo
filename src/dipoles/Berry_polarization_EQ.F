@@ -36,6 +36,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  use R_lattice,      ONLY:bz_samp,bz_map
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
+ use electric,       ONLY:l_no_P_periodic
  !
  implicit none           
  !
@@ -97,6 +98,6 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  !
  P_Berry_RED=P_Berry_RED/(2._SP*pi)*spin_occ
  !
- P_Berry_RED=real(P_Berry_RED,SP)-spin_occ*NINT(real(P_Berry_RED,SP)/spin_occ)
+ if(.not.l_no_P_periodic) P_Berry_RED=real(P_Berry_RED,SP)-spin_occ*NINT(real(P_Berry_RED,SP)/spin_occ)
  !
 end subroutine Berry_polarization_EQ

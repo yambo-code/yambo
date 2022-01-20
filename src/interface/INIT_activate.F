@@ -255,7 +255,7 @@ subroutine INIT_activate()
    call initactivate(1,'NoCondSumRule MetDamp AnHall')
    !
 #if defined _NL || defined _SC
-   call initactivate(1,'EvPolarization FrSndOrd')
+   call initactivate(1,'EvPolarization FrSndOrd NoPperiodic')
 #endif
    !
    call initactivate(1,'BSEprop BSEdips')

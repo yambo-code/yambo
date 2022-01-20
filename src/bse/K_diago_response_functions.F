@@ -26,7 +26,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
- use pars,           ONLY:cZERO,cONE,SP,pi
+ use pars,           ONLY:cZERO,cONE,cI,SP,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,X_drude_term,global_gauge,skip_cond_sum_rule
  use electrons,      ONLY:n_sp_pol
@@ -292,7 +292,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  endif
  !
  ! Factors to be fixed
- if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
+ if (l_BS_dichroism) X_dichroism(:,2)=X_dichroism(:,2)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

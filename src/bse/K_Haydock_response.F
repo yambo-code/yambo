@@ -22,7 +22,7 @@
 !
 subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
  !
- use pars,           ONLY:SP,cZERO,cONE,pi
+ use pars,           ONLY:SP,cZERO,cONE,cI,pi
  use units,          ONLY:SPEED_OF_LIGHT
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
 &                         X_magnons,X_dichroism,Epsilon_ij
@@ -237,7 +237,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    case("magnons")
      X_magnons(iw,1,i_eps(:))=-X_o(1:2,1)*Co/(4._SP*pi)
    case("dichroism")
-     X_dichroism(iw,i_eps(:))=-X_o(1:2,1)*Co/(4._SP*pi)*(-1/SPEED_OF_LIGHT)
+     X_dichroism(iw,i_eps(:))=-X_o(1:2,1)*Co/(4._SP*pi)*(cI/SPEED_OF_LIGHT)
    end select
    !
  enddo

@@ -133,6 +133,8 @@ subroutine NL_ypp_driver(en,k)
      do i_d=1,3
        RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
      enddo
+      ! Restore original parameters of the Probe
+     call Efield_duplicate(Efield_probe,Efield(i_Probe))
    endif
    !
  enddo

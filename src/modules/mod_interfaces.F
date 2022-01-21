@@ -48,7 +48,7 @@ module interfaces
      character(*), optional, intent(in) :: skip_patt
    end subroutine
    !
-   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -56,6 +56,7 @@ module interfaces
      character(*)           ::OBJ
      character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
+     logical,      OPTIONAL ::impose_balance
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
@@ -125,8 +126,20 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
+   subroutine el_magnetization(en,Xk,magn,bands)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(levels), intent(in ) ::en
+     type(bz_samp),intent(in ) ::Xk
+     real(SP),     intent(out) ::magn(fft_size,3)
+     integer,  optional, intent(in) ::bands(2)
+   end subroutine el_magnetization
+   !
    subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                                  USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
+&                                  USE_the_DbGd,USE_Eo,USE_W,USE_occupations,WF_fac,PDOS_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -136,7 +149,7 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,DOS_broadening
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,  optional, intent(in) :: USE_Eo,USE_occupations,USE_the_DbGd
+     logical,  optional, intent(in) :: USE_Eo,USE_W,USE_occupations,USE_the_DbGd
      real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
      real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states

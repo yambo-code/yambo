@@ -53,6 +53,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  if(trim(INTERP_input_mode)=='NN') NEAREST=.TRUE.
  GRID   =.FALSE.
  !
+ ID_bands=-1
+ !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !
  if (BANDS_range(2)-BANDS_range(1)+1>20) call error(" YPP cannot interpolate more than 20 bands. Reduce bands range")

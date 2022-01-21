@@ -29,6 +29,7 @@ subroutine RT_initialize(E,k,q)
  use drivers,        ONLY:l_phel_scatt
 #endif
  use pars,           ONLY:SP,pi,schlen
+ use stderr,         ONLY:STRING_split
  use units,          ONLY:HA2EV,HBAR_eVfs,AU2VMm1,AU2KWCMm2,AUT2FS
  use stderr,         ONLY:intc
  use com,            ONLY:msg
@@ -56,7 +57,7 @@ subroutine RT_initialize(E,k,q)
 &                         eval_energy,eval_entropy,l_RT_is_WFfree,l_update_SOC,    &
 &                         l_RT_eq_is_zero_temp,l_RT_include_eq_scatt,  &
 &                         l_velocity_gauge_corr,l_velocity_gauge_diam,l_RT_impose_for_metals, &
-&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz
+&                         l_P_integrating_J,l_RT_rotate_DM,RT_deph_cv_only,RTibz,RT_nbands
  use IO_m,           ONLY:io_COLLs
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:Bose_Temp
@@ -73,7 +74,7 @@ subroutine RT_initialize(E,k,q)
  ! Work space
  !
  integer                  :: i1,N_T_samplings,ik,NK_cpu(PAR_COM_Xk_ibz_INDEX%n_CPU)
- character(schlen)        :: MSG_ch
+ character(schlen)        :: MSG_ch,field_defs(3)
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
@@ -130,6 +131,8 @@ subroutine RT_initialize(E,k,q)
  !
  eval_DFT     =  l_sc_is_libDFT
  eval_HARTREE =  l_sc_hartree
+ !
+ RT_nbands=RT_bands(2)-RT_bands(1)+1
  !
  ! DbGd PAR memory distribution index updated
  !============================================
@@ -244,16 +247,18 @@ subroutine RT_initialize(E,k,q)
      !
      l_NE_with_fields=.true.
      !
-     if(Efield(i1)%ef_name/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
+     call STRING_split(Efield(i1)%ef_name,field_defs)
+     !
+     if(field_defs(1)/='DELTA'.and.Efield(i1)%frequency(1)==0._SP) &
 &      call error(trim(MSG_ch)//" field has zero frequency.")
      !
      if(Efield(i1)%intensity==0._SP) &
-&      call error(trim(MSG_ch)//" field has zero intensity.")
+&      call warning(trim(MSG_ch)//" field has zero intensity.")
      !
      if( all( abs(Efield(i1)%versor(:))<epsilon(1.) ) ) &
 &      call error(trim(MSG_ch)//" field has undefined direction.")
      !
-     if ( ((Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE')) &
+     if ( ((field_defs(1)=='QSSIN') .or. (field_defs(1)=='GAUSS') .or. (field_defs(1)=='PULSE')) &
 &        .and. Efield(i1)%width<epsilon(1.)  ) &
 &      call error(trim(MSG_ch)//" field has undefined duration.")
      !
@@ -266,11 +271,13 @@ subroutine RT_initialize(E,k,q)
      !
      call Check_symmetries(Efield(i1)%versor,"electric")
      !
-     if ( Efield(i1)%ef_name=='DELTA' ) then
+     if ( field_defs(1)=='DELTA' ) then
        Efield(i1)%t_final_indx=Efield(i1)%t_initial_indx+2
        Efield(i1)%t_final=RT_step*(Efield(i1)%t_final_indx-1)
-     else if ( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='PULSE') ) then
-       call RT_Fluence(i1)
+     else if ( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='QSFIEL') .or. &
+     &         (field_defs(1)=='GAUSS') .or.                                     &
+     &         (field_defs(1)=='PULSE') .or. (field_defs(1)=='SPULSE')      ) then
+       call RT_Fluence_and_pikind(E,i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
@@ -464,8 +471,9 @@ subroutine RT_initialize(E,k,q)
      call msg('r', trim(MSG_ch)//' electric field              ',Efield(i1)%amplitude*AU2VMm1,'[V/m]')
      call msg('r', trim(MSG_ch)//' max intensity               ',Efield(i1)%intensity*AU2KWCMm2,'[kW/cm^2]')
      !
-     if( (Efield(i1)%ef_name=='QSSIN') .or. (Efield(i1)%ef_name=='GAUSS') .or. (Efield(i1)%ef_name=='DELTA') ) then
+     if( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='GAUSS') .or. (field_defs(1)=='DELTA') ) then
        call msg('r', trim(MSG_ch)//' max fluence                 ',Efield(i1)%fluence,'[nJ/cm^2]')
+       call msg('r', trim(MSG_ch)//' area at selected Rabi trans.',Efield(i1)%pi_kind )
        call msg('r', trim(MSG_ch)//' final time                  ',Efield(i1)%t_final*AUT2FS,'[fs]')
        call msg('r', trim(MSG_ch)//' half maximum full width     ',Efield(i1)%width*2.*sqrt(2.*log(2.))*AUT2FS,'[fs]')
      endif

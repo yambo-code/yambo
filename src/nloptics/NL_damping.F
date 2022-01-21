@@ -29,9 +29,10 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  use zeros,          ONLY:zero_dfl
  use electrons,      ONLY:levels,n_sp_pol
  use QP_m,           ONLY:QP_nk
- use real_time,      ONLY:Phase_LifeTime
+ use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
  use nl_optics,      ONLY:I_relax,NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
+ use real_time,      ONLY:RT_deph_deg_thresh
  !
  implicit none
  !                      
@@ -42,6 +43,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  ! Working Space
  !
  integer          :: ib,i1,i2,ik_mem
+ real(SP)         :: W_,Gamma_ij
  !
  ! Damping
  !=========
@@ -51,19 +53,59 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  ! Fictitious lifetime equivalent to the broadening
  ! in linear optics
  !
- if(Phase_LifeTime<zero_dfl) return
+ ! In the 2013 version this term was:
  !
- ! the |V_b(t)><V_b(t)| term
+ ! I = 2*cI/Phase_LifeTime ( (|V_b(t=0)><V_b(t=0)| -|V_b(t)><V_b(t)| )
  !
- forall(ib=1:E%nbf(i_sp_pol),i1=NL_bands(1):NL_bands(2),i2=NL_bands(1):NL_bands(2))
-   I_relax(i1,i2,ib,ik_mem,i_sp_pol) = & 
-       & -cI*2._SP/Phase_LifeTime*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
- end forall
+ !  In the 2021 version diagonal and off-diagonal contribution are separated
  !
- ! the |V_b(t=0)><V_b(t=0)| term 
+ do i1=NL_bands(1),NL_bands(2)
+   do i2=i1+1,NL_bands(2)
+     !
+     ! In case of dengerate states I use the radiative life-time
+     !
+     if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))<RT_deph_deg_thresh ) cycle
+     !
+     Gamma_ij=0._SP
+     !
+     if(allocated(E%W))          Gamma_ij=Gamma_ij+abs(E%W(i1,ik,i_sp_pol))+abs(E%W(i2,ik,i_sp_pol))
+     if(Phase_LifeTime>zero_dfl) Gamma_ij=Gamma_ij+2._SP/Phase_LifeTime 
+     !
+     do ib=1,E%nbf(i_sp_pol)
+       I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*Gamma_ij*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
+       I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
+     enddo
+     !
+   enddo
+ enddo
  !
- forall(ib=NL_bands(1):E%nbf(i_sp_pol)) &
-&     I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/Phase_LifeTime 
+ if(RAD_LifeTime>zero_dfl) then
+   !      
+   do i1=NL_bands(1),NL_bands(2)
+     !
+     do ib=1,E%nbf(i_sp_pol)
+       I_relax(i1,i1,ib,ik_mem,i_sp_pol)=-cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i1,ib))
+     enddo
+     !
+     ! I need this additional part for the degenerate states 
+     !
+     do i2=i1+1,NL_bands(2)
+       if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
+         do ib=1,E%nbf(i_sp_pol)
+           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i2,ib))
+           I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
+         enddo
+     enddo
+     !
+   enddo
+   !
+   ! Remove the equilibrium contribution
+   !
+   do ib=NL_bands(1),E%nbf(i_sp_pol)
+     I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
+   enddo
+   !
+ endif
  !
 end subroutine NL_damping
 

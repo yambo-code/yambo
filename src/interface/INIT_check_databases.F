@@ -41,8 +41,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+# if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
+# endif
 #endif
+ !
+ ! Define io_COLLs_header to handle either serial or parallel I/O
+ !
+#include<collisions.h>
  !
 #include<memory.h>
  !
@@ -65,6 +71,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+#if defined _PAR_IO
+ integer, external  :: io_COLLISIONS_header
+#endif
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -277,17 +286,17 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
 #endif
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
 #endif
  !
 end subroutine

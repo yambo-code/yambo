@@ -1,5 +1,9 @@
 #if defined _SC || _RT || _QED
+# if defined _PAR_IO
+COMMON_objects =  io_COLLISIONS_PAR.o
+# else
 COMMON_objects =  io_COLLISIONS.o
+# endif
 #endif
 #if defined _SC
 SC_objects = load_SC_components.o io_SC_components.o variables_SC.o io_KB_real_space.o

@@ -189,7 +189,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].section="Real-Time";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Carriers database generation";
- options[*i_opt].long_desc[0]="<string>=(e)nergy,(k)-space,(f)ermi";
+ options[*i_opt].long_desc[0]="<string>=(e)nergy,(f)ermi";
  options[*i_opt].long_opt=  "rtdb";
  options[*i_opt].short_opt='c';
  options[*i_opt].bin="ypp_rt";
@@ -204,7 +204,7 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity";
+ options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(g)reenfunction";
  options[*i_opt].long_desc[1]=" ";
  options[*i_opt].long_desc[2]="response uses the time-resolved polarization. absorption amends the Kubo expression with the time-dependent occupations";
  *i_opt=*i_opt+1;

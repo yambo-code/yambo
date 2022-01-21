@@ -27,7 +27,7 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
  use parser_m,       ONLY:parser
  use electrons,      ONLY:levels,spin_occ,n_sp_pol,nel,n_bands
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:Tel
+ use D_lattice,      ONLY:Tel,T_elecs,T_holes
  use functions,      ONLY:Fermi_fnc
  use units,          ONLY:HA2EV
  use com,            ONLY:msg
@@ -184,7 +184,8 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
        do is=1,n_sp_pol
          do ib=1,min(E%FG%nb,E%nb)
            if (iE_fg>0) then
-             f=spin_occ*Fermi_fnc(E%FG%E(ib,iE_fg,is)-Ef(i_try),Tel)
+             if(E%FG%E(ib,iE_fg,is)-Ef(i_try)<=0._SP) f=spin_occ*Fermi_fnc(E%FG%E(ib,iE_fg,is)-Ef(i_try),T_holes)
+             if(E%FG%E(ib,iE_fg,is)-Ef(i_try)> 0._SP) f=spin_occ*Fermi_fnc(E%FG%E(ib,iE_fg,is)-Ef(i_try),T_elecs)
            else
              f=spin_occ*E%f(ib,ikibz,is)
            endif
@@ -197,15 +198,16 @@ subroutine OCCUPATIONS_Extend_Double_Grid(what,E,k)
    !
    subroutine Occupations_update( i_loop )
      integer :: ik_fg,i_loop
+     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_loop)
+     E%FG%E_Fermi=Ef(i_loop)
      do ik_fg=1,E%FG%Nk
        do is=1,n_sp_pol
          do ib=1,E%FG%nb
-           E%FG%f(ib,ik_fg,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_fg,is)-Ef(i_loop),Tel)
+           if(E%FG%E(ib,ik_fg,is)<=0._SP) E%FG%f(ib,ik_fg,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_fg,is),T_holes)
+           if(E%FG%E(ib,ik_fg,is)> 0._SP) E%FG%f(ib,ik_fg,is)=spin_occ*Fermi_fnc(E%FG%E(ib,ik_fg,is),T_elecs)
          enddo
        enddo
      enddo
-     E%FG%E(:,:,:)=E%FG%E(:,:,:)-Ef(i_loop)
-     E%FG%E_Fermi=Ef(i_loop)
    end subroutine
    !
 end subroutine

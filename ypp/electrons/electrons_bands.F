@@ -45,6 +45,9 @@ subroutine electrons_bands(Xk,Xen)
  use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+#if defined _YPP_SC
+ use SC,             ONLY:SC_neq_kind
+#endif
  !
 #include<memory.h>
  !
@@ -57,6 +60,11 @@ subroutine electrons_bands(Xk,Xen)
  integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
  real(SP)              :: dEf
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
+#if defined _YPP_SC
+ integer               :: ID_proj
+ logical               :: proj_wfc
+#endif
+ !
  logical, external     :: file_exists
  character(schlen)     :: INTERP_mode_save
  real(SP)              :: INTERP_shell_factor_save
@@ -124,6 +132,19 @@ subroutine electrons_bands(Xk,Xen)
      call electrons_spin_and_magn_interpolate("S M",Xk,CIRCUIT_k,BANDS_bands,ID_spin,ID_magn)
    endif
    !
+#if defined _YPP_SC
+   !
+   proj_wfc=(trim(SC_neq_kind)=="matsubara")
+   !
+   ! Perform interpolation of projection factors
+   !=============================================
+   if(proj_wfc) then
+     call section('=','Interpolation@work: SC-WFs projections')
+     call electrons_WFs_proj_interpolate(Xen,Xk,CIRCUIT_k,BANDS_bands,ID_proj)
+   endif
+   !
+#endif
+   !
  endif
  !
  ! Fermi Levels
@@ -159,15 +180,22 @@ subroutine electrons_bands(Xk,Xen)
    nfiles(nqnt-1:nqnt)=(/2,3/)
    IDs(nqnt-1:nqnt)=(/ID_spin,ID_magn/)
  endif
+#if defined _YPP_SC
+ if( proj_wfc  ) then
+   nqnt=nqnt+1
+   nfiles(nqnt)=2
+   IDs(nqnt)=ID_proj
+ endif
+#endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands")
+&   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",0)
  !
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands")
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
  !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands")
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",0)
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

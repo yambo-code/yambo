@@ -37,14 +37,14 @@ subroutine RT_X_effective(en)
  use real_time,      ONLY:RT_P
  use vec_operate,    ONLY:sort
  use LIVE_t,         ONLY:live_timing
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:intc,real2ch,STRING_split
  !
 #include<memory.h>
  !
  type(levels)  :: en
  !
  character(lchlen) :: jobstr_save
- character(schlen) :: X_file_name
+ character(schlen) :: X_file_name,field_defs(3)
  integer           :: i_f,i_fp,f_indx(max_n_of_paths),i_order,min_X_order,i_c,i_t,i_conv,&
 &                     i_p,N_periods,i_Pump,i_Probe
  real(SP)          :: Pump_Frequency(1),Unit_of_Measure
@@ -174,7 +174,9 @@ subroutine RT_X_effective(en)
  !
  if (Probe_consistency_error) call error('Not all probes have consistent parameters')
  !
- if (trim(Efield_probe%ef_name)=='ANTIRES'.and.one_P_many_W) then
+ call STRING_split(Efield_probe%ef_name,field_defs)
+ !
+ if (trim(field_defs(2))=='ANTIRES'.and.one_P_many_W) then
    if (N_pumps==1) then
      call msg('s',' Pump  frequency range       ',(/minval(Pump_Frequency), maxval(Pump_Frequency)/)*HA2EV,"[eV]")
    else
@@ -230,7 +232,7 @@ subroutine RT_X_effective(en)
  !     =====================
  ! the polarization purged of the pump part.
  !
- if ( trim( Efield_probe%ef_name ) == 'DELTA' ) then
+ if ( trim( field_defs(1) ) == 'DELTA' ) then
    !
    ! Negative energies needed in FT. No FFT. 
    ! 

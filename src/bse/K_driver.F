@@ -27,7 +27,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use com,            ONLY:msg
  use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
- use frequency,      ONLY:w_samp,W_reset
+ use frequency,      ONLY:w_samp,W_reset,Mauri_damp
  use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
@@ -40,8 +40,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,RIM_W_for_graph
  use D_lattice,      ONLY:l_1D,l_2D
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -65,6 +66,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  call section('*','Bethe Salpeter Equation driver')
  !
+ call parser('RIM_W_graph',RIM_W_for_graph)
+ call msg('r','RIM_W_graph', RIM_W_for_graph)
+ !
  ! TDDFT setup and Resets
  !========================
  call X_reset(X_tddft)
@@ -81,6 +85,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call warning(" Not a valid gauge in input. Switching to lenght gauge")
    global_gauge="length"
  endif
+ !
+ Mauri_damp = .false.
+ call parser('Mauri_damp',Mauri_damp)
+ if(Mauri_damp) call warning("Using damping of Mauri paper")
  !
  ! Energy points
  !===============

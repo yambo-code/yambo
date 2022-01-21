@@ -245,12 +245,14 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                ! IA (2022/01/19):
                ! Transition energies in fine grid only for Haydock + DbGd case
                !
-               if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) .and. Xk%FGbz%N_mapped(ikbz)>0 ) then
-                 do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
-                   ikFG = Xk%FGbz%E_map(ikFGbz)
-                   i_ColFG = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
-                   BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_ColFG) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
-                 enddo
+               if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) ) then
+                 if( Xk%FGbz%N_mapped(ikbz)>0 ) then
+                   do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
+                     ikFG = Xk%FGbz%E_map(ikFGbz)
+                     i_ColFG = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
+                     BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_ColFG) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
+                   enddo
+                 endif
                end if
                !
                ! To be fixed

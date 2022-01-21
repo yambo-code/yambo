@@ -290,8 +290,6 @@ module YPPm
  !
  ! NL
  !
- character(lchlen) :: PUMP_path = 'none'
- !
  interface
    !
    subroutine k_grid_printer(nk,k,coo_in,form,wk,coo_out)

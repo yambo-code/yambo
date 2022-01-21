@@ -85,7 +85,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
        ! Do we miss a factor 2?
        !
        imag_zeta=aimag(log(zeta))
-       imag_zeta=imag_zeta-1._DP*pi*nint(imag_zeta/(1._DP*pi))
+       if(.not.l_no_P_periodic) imag_zeta=imag_zeta-1._DP*pi*nint(imag_zeta/(1._DP*pi))
        !
        P_Berry_RED(id_in)=P_Berry_RED(id_in)+imag_zeta
        !

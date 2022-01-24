@@ -592,6 +592,8 @@ subroutine K_Haydock(iq,W,mode,Xk)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
  !
+ deallocate(BS_nkFGbz_in_Tgrp)
+ !
  call BS_HAYVEC_free(V0)
  deallocate(V0)
  if (use_left_and_right)  then

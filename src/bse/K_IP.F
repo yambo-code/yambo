@@ -321,7 +321,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  call live_timing()
  !
- Epsilon_ii(:,3) = Epsilon_ii(:,3) * FG_factor
+ if (l_BS_abs) Epsilon_ii(:,3) = Epsilon_ii(:,3) * FG_factor
  !
  ! Sorting procedure
  !===================

@@ -46,14 +46,6 @@ module fl_optics
 !complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
 !complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
 !!
-!! Current
-!!
-!complex(SP)    :: NL_J(6)
-!complex(SP)    :: NL_initial_J(6)
-!!
-!! Diagonal (QP) and off-diagonal (Phase) relaxation time
-!!
-!real(SP)    :: NL_damping
 !!
 !! Initial Energies and Damping
 !!------------
@@ -71,7 +63,7 @@ module fl_optics
 !! WFs and Density
 !!
 !! Bands in terms of Kohn-Sham orbitals
-!complex(SP), allocatable :: V_bands(:,:,:,:)  ! time-dependent valence bands
+ complex(SP), allocatable :: FL_V_bands(:,:,:,:)  ! time-dependent valence bands
 !!
 !! Time-dependent Valence bands in real-space
 !complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
@@ -147,7 +139,7 @@ module fl_optics
 !type(IO_desc)             :: NL_desc
  !
  !aim137 new variables
- integer                   :: n_flmodes
+ integer                   :: n_fl_modes=3 ! momentaneamente fijo
  !
  contains
    subroutine FL_alloc(en)
@@ -165,10 +157,18 @@ module fl_optics
      implicit none
      !
      type(levels), intent(in) :: en
+     integer                  :: FL_H_dim
+     !
+     FL_H_dim = NL_bands(2)*(2*n_fl_modes+1)
+     !aim137 print
+     print*, 'NL_bands(2) =',NL_bands(2)
+     print*, 'n_fl_modes =',n_fl_modes
+     print*, 'FL_H_dim =',FL_H_dim
      !
      call H_alloc(en,.true.,.false.)
      !
-     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     ! aim137 FL_bands in FKS space
+     YAMBO_ALLOC(FL_V_bands,(FL_H_dim,en%nbf,QP_nk,n_sp_pol))
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))

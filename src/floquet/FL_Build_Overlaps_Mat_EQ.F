@@ -57,6 +57,7 @@ subroutine FL_Build_Overlaps_Mat_EQ(Xen,i_sp_pol,ikbz,All_S_Mat_Eq)
      !
      max_step=1
      if(k_map%max_kdir(id)>=6) max_step=2
+     !aim137: note that max_step is 2 in the examples I ran
      !
      do istep=1,max_step
        idx=k_map%k_map_inv(ikbz,:)

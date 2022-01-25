@@ -49,10 +49,11 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use com,          ONLY:isec
- use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
+ use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  ! mode ="T"
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
-&                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
+&                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC,&
+&                       BS_nkFGbz_in_Tgrp
  ! mode ="K"
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,  &
 &                       l_BS_ares_from_res,BS_n_eh_spaces,BS_res_ares_n_mat

@@ -30,9 +30,9 @@ subroutine K_Haydock(iq,W,mode,Xk)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
-&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd,BS_nkFGbz_in_Tgrp
+&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
-&                         l_BS_ares_from_res,BS_H_dim,BS_res_ares_n_mat
+&                         l_BS_ares_from_res,BS_H_dim,BS_res_ares_n_mat,BS_nkFGbz_in_Tgrp
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:tty_size,intc,real2ch
  use IO_int,         ONLY:io_control
@@ -50,6 +50,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  type(w_samp), intent(in) :: W
  integer,      intent(in) :: iq
  character(*), intent(in) :: mode
+ type(bz_samp),intent(in) :: Xk
  !
  ! Work Space
  !
@@ -61,7 +62,6 @@ subroutine K_Haydock(iq,W,mode,Xk)
  complex(SP), allocatable :: Cf(:) 
  !
  type(Haydock_vector),allocatable :: W0(:)
- type(bz_samp), intent(in) :: Xk
  integer    :: i_ColFG,i_T,i_k_bz,ik
  real(SP)   :: FG_factor
  !
@@ -242,29 +242,28 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle
-     do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
-       if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
-       if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
-       if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
-       V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
-     enddo
-     !
-     ! IA (2022/01/19):
-     ! Setting some elements to 0 as the number of mapped points 
-     ! is not the same for every k point in the transition group.
-     ! Within a given transition group there may be transitions
-     ! with, e.g., 128 or 129 mapped points
-     !
-     if (BSS_uses_DbGd) then
-       do i_T=1,BS_T_grp(i_g)%size
-         i_k_bz=BS_T_grp(i_g)%table(i_T,1)
-         do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
-           if (i_ColFG .gt. Xk%FGbz%N_mapped(i_k_bz)) then
-             V0(i_g)%fragment(i_T,i_ColFG)=cZERO
-           end if
-         enddo
+   do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+     if (trim(mode)=="abs")       V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(1,:,1)
+     if (trim(mode)=="kerr")      V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_opt(2,:,1)
+     if (trim(mode)=="magnons")   V0(i_g)%fragment(:,i_ColFG) = BS_T_grp(i_g)%dipoles_mag(1,:,1)
+     V0(i_g)%fragment(:,i_ColFG) = V0(i_g)%fragment(:,i_ColFG)*sqrt(cmplx(BS_T_grp(i_g)%f_RES,kind=SP))
+   enddo
+   !
+   ! IA (2022/01/19):
+   ! Setting some elements to 0 as the number of mapped points 
+   ! is not the same for every k point in the transition group.
+   ! Within a given transition group there may be transitions
+   ! with, e.g., 128 or 129 mapped points
+   !
+   if (BSS_uses_DbGd) then
+     do i_T=1,BS_T_grp(i_g)%size
+       i_k_bz=BS_T_grp(i_g)%table(i_T,1)
+       do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_g)
+         if (i_ColFG <= Xk%FGbz%N_mapped(i_k_bz)) cycle
+         V0(i_g)%fragment(i_T,i_ColFG)=cZERO
        enddo
-     end if
+     enddo
+   endif
    if(velocity_correction) V_tmp(i_g)%fragment = V0(i_g)%fragment/BS_T_grp(i_g)%E
  enddo
  !
@@ -591,8 +590,6 @@ subroutine K_Haydock(iq,W,mode,Xk)
  call BS_HAYVEC_free(Vnp1)
  call BS_HAYVEC_free(Vnm1)
  deallocate(Vn,Vnp1,Vnm1)
- !
- deallocate(BS_nkFGbz_in_Tgrp)
  !
  call BS_HAYVEC_free(V0)
  deallocate(V0)

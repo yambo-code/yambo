@@ -204,6 +204,7 @@ module BS
  type(BS_T_group), allocatable, target :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
+ integer         , allocatable  :: BS_nkFGbz_in_Tgrp(:)
  integer                        :: BS_nT_grps
  !
  ! Blocks ...
@@ -415,7 +416,9 @@ module BS
        !
      enddo
      !
-     YAMBO_FREE(BS_T_grp)
+     deallocate(BS_T_grp)
+     deallocate(BS_nkFGbz_in_Tgrp)
+     !
      if(allocated(BS_blk)) deallocate(BS_blk)
      !
    end subroutine

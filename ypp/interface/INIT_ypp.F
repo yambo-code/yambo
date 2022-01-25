@@ -662,7 +662,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec PumpPATH")
+ if(l_NL_X)   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec PumpPATH")
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !

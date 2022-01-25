@@ -255,7 +255,7 @@ subroutine INIT_activate()
    call initactivate(1,'NoCondSumRule MetDamp AnHall')
    !
 #if defined _NL || defined _SC
-   call initactivate(1,'EvPolarization FrSndOrd NoPperiodic')
+   call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
    call initactivate(1,'BSEprop BSEdips')
@@ -549,8 +549,8 @@ subroutine INIT_activate()
  if (l_nl_optics) then
    call initactivate(1,'FFTGvecs NLBands NLverbosity NLstep NLtime NLintegrator NLCorrelation NLLrcAlpha')
    if(.not.l_nl_p_and_p) call initactivate(1,'NLEnRange NLEnSteps')
-   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd EvalCurrent InducedField HARRLvcs EXXRLvcs') 
-   call initactivate(1,'Gauge RADLifeTime')
+   call initactivate(1,'NLDamping RADLifeTime UseDipoles FrSndOrd EvalCurrent InducedField NoPperiodic') 
+   call initactivate(1,'Gauge RADLifeTime HARRLvcs EXXRLvcs') 
    call init_QP_ctl_switch('G')
  endif
  !

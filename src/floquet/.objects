@@ -1,1 +1,1 @@
-objs =  FL_driver.o FL_initialize.o FL_start_and_restart.o FL_overlaps.o FL_Duffin.o FL_Hamiltonian.o FL_Diagonalization.o FL_polarization.o FL_output.o FL_Build_Overlaps_Mat_EQ.o
+objs =  FL_driver.o FL_initialize.o FL_start_and_restart.o FL_overlaps.o FL_Duffin.o FL_Hamiltonian.o FL_Diagonalization.o FL_polarization.o FL_output.o FL_Build_Overlaps_Mat_EQ.o FL_build_W_operator.o

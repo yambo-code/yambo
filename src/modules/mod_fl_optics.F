@@ -63,7 +63,7 @@ module fl_optics
 !! WFs and Density
 !!
 !! Bands in terms of Kohn-Sham orbitals
- complex(SP), allocatable :: FL_V_bands(:,:,:,:)  ! time-dependent valence bands
+ complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! time-dependent valence bands
 !!
 !! Time-dependent Valence bands in real-space
 !complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
@@ -139,7 +139,9 @@ module fl_optics
 !type(IO_desc)             :: NL_desc
  !
  !aim137 new variables
- integer                   :: n_fl_modes=3 ! momentaneamente fijo
+ integer                   :: max_fl_mode=3 ! momentaneamente fijo
+ integer                   :: n_tot_fl_modes
+ integer                   :: FL_space_dim
  !
  contains
    subroutine FL_alloc(en)
@@ -147,7 +149,7 @@ module fl_optics
      use pars,           ONLY:SP
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
-     use hamiltonian,    ONLY:H_alloc
+     use hamiltonian,    ONLY:FL_H_alloc
      use real_time,      ONLY:rho_reference,RT_Vnl_xc
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
@@ -157,18 +159,14 @@ module fl_optics
      implicit none
      !
      type(levels), intent(in) :: en
-     integer                  :: FL_H_dim
      !
-     FL_H_dim = NL_bands(2)*(2*n_fl_modes+1)
-     !aim137 print
-     print*, 'NL_bands(2) =',NL_bands(2)
-     print*, 'n_fl_modes =',n_fl_modes
-     print*, 'FL_H_dim =',FL_H_dim
+     n_tot_fl_modes = 2*max_fl_mode+1
+     FL_space_dim = (NL_bands(2)-NL_bands(1)+1)*n_tot_fl_modes
      !
-     call H_alloc(en,.true.,.false.)
+     call FL_H_alloc(en,.true.,.false.)
      !
      ! aim137 FL_bands in FKS space
-     YAMBO_ALLOC(FL_V_bands,(FL_H_dim,en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))
@@ -220,8 +218,12 @@ module fl_optics
      !
      call H_free()
      !
+     !aim137 YAMBO_FREE is crashinf but I don't know that subroutine is
+     print*, 'estoy aca 0'
      YAMBO_FREE(Ho_plus_Sigma)
+     print*, 'estoy aca 1'
      YAMBO_FREE(I_relax)
+     print*, 'estoy aca 2'
      YAMBO_FREE(V_bands)
      !
      YAMBO_FREE(rho_reference)

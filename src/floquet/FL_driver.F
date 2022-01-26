@@ -42,7 +42,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
- use fl_optics,      ONLY:n_fl_modes,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -62,13 +62,12 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,FL_iteration,i_sp_pol
- integer           :: FL_zero_mode_index
+ integer           :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
+ integer           :: FL_iteration,fl_shifted_zero_mode
  logical           :: l_selfconsistency_reached
  real(SP)          :: Time
  complex(SP)       :: All_S_mat_EQ(E%nbm,E%nbm,6,k%nbz,n_sp_pol)
  !
- print*, "first line"
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
  !
@@ -78,7 +77,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  RT_nbands=NL_nbands
  !
  call section('*','FL Initialization')
- !#################################
  !
  ! Initialize
  !=========
@@ -148,9 +146,10 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  ! Allocation
  ! ==================
+ !aim137: newly written subroutines - under review
   call FL_alloc(E) 
+ !aim137: this populated the variable FL_space_dim
   call FL_alloc_k_distributed(E)
-!aim137: newly written subroutines - under review
  !
  ! Initialization
  ! ==================
@@ -195,15 +194,10 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_V_bands=cZERO
    do i1=1,E%nbf 
      !
-     FL_zero_mode_index = n_fl_modes+1 + (i1-1)*(2*n_fl_modes+1)
-     FL_V_bands(FL_zero_mode_index,i1,:,:)=cONE
-     ! if(WF_sample%ison) FL_V_bands_t = cZERO    -- no se que es esto
+     fl_shifted_zero_mode = max_fl_mode+1
+     FL_V_bands(i1,fl_shifted_zero_mode,i1,:,:)=cONE
      !
    enddo
-   !aim137 print
-   open(111,file='FL_V_bands')
-   write(111,*) FL_V_bands(:,:,22,1)
-   close(111)
    !
    ! Efield
    ! ================
@@ -216,11 +210,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      FL_iteration=FL_iteration+1
      !
+     ! aim137:
      ! do i_k_bz=1,k%nbz ! I do the k-loops inside Hamiltonian and Diagonalization,
      ! because that is how it's done in NL, but I don't understand the benefits. If
-     ! anythin, I think it would me worse for memory.
+     ! anything, I think it would be worse for memory.
      !
-     call FL_Hamiltonian
+     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
      call FL_Diagonalization
      !
@@ -233,7 +228,9 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
    enddo
    !
-   call NL_databases_IO(i_f,'write')
+   !aim137 this subroutine is taking too much, have a look
+   !aim137 it doesn't crash, but it gets stuck here
+   !call NL_databases_IO(i_f,'write')
    !
  enddo
  !
@@ -247,9 +244,13 @@ subroutine FL_driver(E,X,k,q,Dip)
  wf_ng     = wf_ng_save
  !
  call WF_free(WF)
- call NL_free()
+ !it's crashing in the following subroutine
+ call FL_free()
+ print*, 'pre deallocation 3'
  call DIP_alloc('DIP_S')
+ print*, 'pre deallocation 4'
  call DIP_alloc('DIP_R')
+ print*, 'pre deallocation 5'
  call DIP_alloc('DIP_v')
  !
 end subroutine FL_driver

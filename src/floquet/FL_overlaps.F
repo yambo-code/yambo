@@ -21,6 +21,215 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_overlaps
-
-end subroutine
+!!!!!subroutine FL_overlaps
+!!!!!end subroutine FL_overlaps
+subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
+! write this taking the structure from Build_Overlaps_det_NEQ
+ !
+ ! Build Floquet overlaps between valence bands
+ !
+ use pars,           ONLY:SP,cZERO,cONE
+ use electrons,      ONLY:levels,n_sp_pol
+ use hamiltonian,    ONLY:H_ref_bands
+ use R_lattice,      ONLY:k_map,bz_samp
+ use vec_operate,    ONLY:k_periodic_idx
+ use DIPOLES,        ONLY:DIP_S
+ use wrapper_omp,    ONLY:M_by_V_omp,mv_cgemv_omp
+ use wrapper,        ONLY:Vstar_dot_V
+ use QP_m,           ONLY:QP_nk
+ use electric,       ONLY:l_force_SndOrd
+ use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes
+ !
+ implicit none
+ !
+ integer,      intent(in) :: ikbz
+ integer,      intent(in) :: i_sp
+ type(levels), intent(in) :: en
+ type(bz_samp),intent(in) :: Xk
+ complex(SP),  intent(in) :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP), intent(out) :: FL_S_plus(en%nbf,en%nbf,n_tot_fl_modes,6)
+ complex(SP), intent(out) :: FL_S_minus(en%nbf,en%nbf,n_tot_fl_modes,6)
+ !
+ ! Work Space
+ !
+ integer     :: idx(3),id,ikp,ikm,i1,i2
+ integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
+ !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf) ! used in full construction of overlaps
+ complex(SP) :: tmp_det,vtmp(H_ref_bands(2))
+ integer     :: i1_fl,i2_fl,i1_shifted_fl
+ !
+ FL_S_plus =cZERO
+ FL_S_minus=cZERO
+ !
+ ! I split the construction of the FL_S_minus(Sm1_plus) matrix in four parts
+ !
+ !   1:H_ref_bands(1)-1   H_ref_bands(1):en%nbf
+ !  _____________________________________
+ !  |                 |                  |
+ !  |     head        |      wing        |     1:H_ref_bands(1)-1
+ !  |                 |                  |
+ !  |                 |                  |
+ !  |------------------------------------|
+ !  |                 |                  | 
+ !  |    wing         |      core        |   H_ref_bands(1):en%nbf
+ !  |                 |                  |
+ !  |                 |                  |
+ !  ------------------------------------- 
+ !
+ ! 
+ !  The haed part is time-independent, the wings depends only from
+ !  one of the time-dependent valence bands, while the core part depends from
+ !  both the wave-functions at k and k-delta
+ !
+ !
+ do id=1,3
+   !
+   ik_ibz=Xk%sstar(ikbz,1)
+   !
+   if(k_map%max_kdir(id)/=1) then ! periodic directions
+     !
+     max_step=1
+     if(k_map%max_kdir(id)>=6.and..not.l_force_SndOrd) max_step=2
+     !
+     do istep=1,max_step
+       !
+       ! Overlap S(k, k-dk)
+       !
+       idx=k_map%k_map_inv(ikbz,:)
+       idx(id)=idx(id)-istep
+       idx=k_periodic_idx(idx,k_map)
+       ikm=k_map%k_map_dir(idx(1),idx(2),idx(3))
+       !
+       ! FL_S_minus(l,m; k, k - delta) = \sum_{i,j} V*(l,i; k) S*(i,j; k-delta, k) V(m,j ;k - delta)
+       !
+       ikm_ibz=Xk%sstar(ikm,1)
+       !
+       ! Matrix head
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,H_ref_bands(1)-1
+         do i1=1,H_ref_bands(1)-1
+           do i1_fl=1,n_tot_fl_modes
+             i1_shifted_fl = i1_fl - (max_fl_mode+1)
+             if (i1_shifted_fl /= 0) cycle
+             FL_S_minus(i1,i2,i1_fl,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix wings
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i1=1,H_ref_bands(1)-1 ! wing 2
+         do i2=H_ref_bands(1),en%nbf
+           do i1_fl=1,n_tot_fl_modes
+             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
+             FL_S_minus(i1,i2,id+(istep-1)*3)=&
+             &  Vstar_dot_V(H_ref_bands(2),&
+                           &conjg((DIP_S(:,i1,id+(istep-1)*3,ikm,i_sp)),&
+                           &FL_V_bands(:,i1_fl,i2,ikm_ibz,i_sp))
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,H_ref_bands(1)-1 ! wing 1
+         do i1=H_ref_bands(1),en%nbf
+           do i1_fl=1,n_tot_fl_modes
+             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
+             FL_S_minus(i1,i2,id+(istep-1)*3)=&
+             &  Vstar_dot_V(H_ref_bands(2),&
+                           &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
+                           &conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix core
+       !
+       do i2=H_ref_bands(1),en%nbf
+           do i1_fl=1,n_tot_fl_modes
+      !      i1_shifted_fl = i1_fl - (max_fl_mode+1)
+      !      do i2_fl=1,n_tot_fl_modes
+      !        i2_shifted_fl = i2_fl - (max_fl_mode+1)
+      !        i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
+      !        if (abs(i_sum_shifted) > max_fl_mode) cycle
+      !        i_sum = i_sum_shifted + (max_fl_mode+1)
+         call M_by_V_omp('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),FL_V_bands(:,i2,ikm_ibz,i_sp),vtmp)
+         !
+         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,:,ik_ibz,i_sp),&
+&                      H_ref_bands(2),vtmp,1,cZERO,FL_S_minus(:,i2,id+(istep-1)*3),1)
+       enddo
+       !
+       !
+       idx=k_map%k_map_inv(ikbz,:)
+       idx(id)=idx(id)+istep
+       idx=k_periodic_idx(idx,k_map)
+       ikp=k_map%k_map_dir(idx(1),idx(2),idx(3))  
+       !
+       ! Sm1_plus(l,m; k, k + delta) = \sum_{i,j} V*(l,i; k) S(i,j; k-delta, k) V(m,j ;k + delta)
+       !
+       ikp_ibz=Xk%sstar(ikp,1)
+       !
+       ! Matrix head
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i1=1,H_ref_bands(1)-1
+         do i2=1,H_ref_bands(1)-1
+           do i1_fl=1,n_tot_fl_modes
+             i1_shifted_fl = i1_fl - (max_fl_mode+1)
+             if (i1_shifted_fl /= 0) cycle
+             FL_S_plus(i1,i2,i1_fl,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix wings
+       !
+!$omp parallel do default(shared), private(i1,i2)
+       do i1=1,H_ref_bands(1)-1 ! wing 2
+         do i2=H_ref_bands(1),en%nbf
+           do i1_fl=1,n_tot_fl_modes
+             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
+             FL_S_plus(i1,i2,id+(istep-1)*3)=&
+             &  Vstar_dot_V(H_ref_bands(2),&
+                           &DIP_S(i1,:,id+(istep-1)*3,ikbz,i_sp),&
+                           &FL_V_bands(:,i1_fl,i2,ikp_ibz,i_sp))
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+!$omp parallel do default(shared), private(i1,i2)
+       do i2=1,H_ref_bands(1)-1 ! wing 1
+         do i1=H_ref_bands(1),en%nbf
+           do i1_fl=1,n_tot_fl_modes
+             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
+             FL_S_plus(i1,i2,id+(istep-1)*3)=&
+             &  Vstar_dot_V(H_ref_bands(2),&
+                           &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
+                           &DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
+           enddo
+         enddo
+       enddo
+!$omp end parallel do
+       !
+       ! Matrix Core
+       !
+       do i2=H_ref_bands(1),en%nbf
+         call M_by_V_omp('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),FL_V_bands(:,i2,ikp_ibz,i_sp),vtmp)
+         !
+         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,:,ik_ibz,i_sp),&
+&                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
+       enddo
+       !
+       !
+     enddo  
+     !
+   endif
+   !
+ enddo
+ !
+end subroutine FL_overlaps

@@ -108,6 +108,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lin_path,Lout_path
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -169,6 +170,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+ call it('r',defs,'ExcPhSigma',    '[R][EXCPH] Exciton-Phonon Self-Energy')
+ call it('r',defs,'ExcitonGkkp',   '[R][EXCPH] Exciton-Phonon Matrix Elelements')
 #endif
 #if defined _PHEL 
  call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
@@ -652,6 +655,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
+ !
+ call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
+ call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
+ call it(defs,'LinPath',       '[EXCPH] Path of the incoming L',Lin_path)
+ call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lin_path)
  !
  ! GPL_EXCLUDE_START
  !

@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,l_EXCPH_Sigma
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -372,6 +372,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_phel_corr=runlevel_is_on('ph_el_corr')
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
+       l_EXCPH_Sigma=runlevel_is_on('ExPhSE')
+
 #endif
 #if defined  _QED
        l_elel_corr    =runlevel_is_on('el_el_corr')

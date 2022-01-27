@@ -46,7 +46,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use matrix,        ONLY:PAR_matrix
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
- use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved
+ use parallel_m,    ONLY:PAR_COM_X_WORLD,PAR_COM_RL_INDEX,myid,PAR_COM_X_WORLD_RL_resolved,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use openmp,        ONLY:OPENMP_update,n_threads_X,master_thread,OPENMP_set_threads,n_threads_X,&
 &                        n_out_threads,n_inn_threads,OPENMP_locks_reset,n_threads_FFT
@@ -276,7 +276,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  !Graphene intraband term
  !
- if (iq==1.and.master_thread.and.RIM_W_for_graph) then
+ if (iq==1.and.master_thread.and.RIM_W_for_graph.and.master_cpu) then
    call msg('r', 'Graphene analytical model of intraband transitions')
    call msg('r', 'Graphene intraband is applied only to head static response function')
    !

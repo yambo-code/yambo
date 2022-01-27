@@ -51,6 +51,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  ! Work Space
  !
  integer           :: iq1,ig1,iq2,ig2,iq,ig
+ integer           :: ig1_tmp,iq2_tmp,ig2_tmp
  integer           :: nn,idm,igr,igc,ig2max,iomega
  integer           :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  real(SP)          :: dummy(2),anis_factor,em1_anis(3)
@@ -204,7 +205,8 @@ subroutine interpolate_W(X,Xw,q,mode)
     !
     do iq1=1,q%nibz
       !
-      !Evaluate f_func
+      ! Evaluate f_func nearest neighbour
+      !
       do nn=1,5
         !
         !Select the index of the reference/n.n.
@@ -243,6 +245,66 @@ subroutine interpolate_W(X,Xw,q,mode)
 
         enddo
         !
+      else if(iq == 1 .and. (igr == 1 .or. igc == 1) .and. RIM_W_for_graph) then
+        !
+        ! Evaluate f_func next nearest neighbour
+        !Index ordering of NEXT nearest-neighbour maps
+        !
+        !       4
+        !       ^
+        !       |
+        !       2
+        !       ^
+        !       |
+        !       1 --> 3 --> 5
+        !
+        !Find nearest 1 --> 2
+        !
+        iq2_tmp = idx_q(igr,iq1,2)
+        ig1_tmp = idx_G(igr,iq1,2)
+        ig2_tmp = idx_G(igc,iq1,2)
+        !
+        !Find nearest 2 --> 4
+        !
+        iq2 = idx_q(ig1_tmp,iq2_tmp,2)
+        ig1 = idx_G(ig1_tmp,iq2_tmp,2)
+        ig2 = idx_G(ig2_tmp,iq2_tmp,2)
+        !
+        f_func(4) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
+&       real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
+        !
+        !Find nearest 1 --> 3
+        !
+        iq2_tmp = idx_q(igr,iq1,3)
+        ig1_tmp = idx_G(igr,iq1,3)
+        ig2_tmp = idx_G(igc,iq1,3)
+        !
+        !Find nearest 3 --> 5
+        !
+        iq2 = idx_q(ig1_tmp,iq2_tmp,3)
+        ig1 = idx_G(ig1_tmp,iq2_tmp,3)
+        ig2 = idx_G(ig2_tmp,iq2_tmp,3)
+        !
+        f_func(5) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
+&       real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
+        !
+        !
+        !Coefficients in rlu
+        dp_dummy(1) = f_func(1)                                                              !f0
+        dp_dummy(2) = (-f_func(5)+4._DP*f_func(3)-3._DP*f_func(1))/(2._DP*q_grid_b_rlu(1,1)) !f1
+        dp_dummy(3) = (-f_func(4)+4._DP*f_func(2)-3._DP*f_func(1))/(2._DP*q_grid_b_rlu(2,2)) !f2
+        dp_dummy(4) = (f_func(5)-2._DP*f_func(3)+f_func(1))/(2._DP*q_grid_b_rlu(1,1)**2)     !f11
+        dp_dummy(5) = (f_func(4)-2._DP*f_func(2)+f_func(1))/(2._DP*q_grid_b_rlu(2,2)**2)     !f22
+        !
+        !Coefficients in iku
+        !
+        f_coeff(1,igr,igc,iq1,iomega) =  dp_dummy(1)                                           !f   (iku)
+        f_coeff(2,igr,igc,iq1,iomega) =  dp_dummy(2)+dp_dummy(3)*a(2,1)/alat(1)                !fx  (iku)
+        f_coeff(3,igr,igc,iq1,iomega) =  dp_dummy(3)+dp_dummy(2)*a(1,2)/alat(2)                !fy  (iku)
+        f_coeff(4,igr,igc,iq1,iomega) =  dp_dummy(4)+dp_dummy(5)*(a(2,1)/alat(1))**2           !fxx (iku)
+        f_coeff(5,igr,igc,iq1,iomega) =  dp_dummy(4)*a(1,2)/alat(2)+dp_dummy(5)*a(2,1)/alat(1) !fxy (iku)
+        f_coeff(6,igr,igc,iq1,iomega) =  dp_dummy(5)+dp_dummy(4)*(a(1,2)/alat(2))**2           !fyy (iku)
+        !
       else
         !
         !Coefficients in rlu
@@ -268,6 +330,7 @@ subroutine interpolate_W(X,Xw,q,mode)
   enddo
  enddo
  enddo
+ !
  call timing('RIM-W-coeff',OPR='stop')
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

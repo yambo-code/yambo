@@ -63,7 +63,9 @@ module fl_optics
 !! WFs and Density
 !!
 !! Bands in terms of Kohn-Sham orbitals
- complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! time-dependent valence bands
+ complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
+ complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
+ complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
 !!
 !! Time-dependent Valence bands in real-space
 !complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
@@ -155,6 +157,7 @@ module fl_optics
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
      use drivers,        ONLY:l_use_Hxc_collisions
+     use nl_optics,       ONLY:V_bands
      !
      implicit none
      !
@@ -163,14 +166,21 @@ module fl_optics
      n_tot_fl_modes = 2*max_fl_mode+1
      FL_space_dim = (NL_bands(2)-NL_bands(1)+1)*n_tot_fl_modes
      !
-     call FL_H_alloc(en,.true.,.false.)
+     call FL_H_alloc(en,.true.,.false.,FL_space_dim)
      !
+     ! aim137 allocate V_bands because I still need it for FL_start_and_restart
+     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
      ! aim137 FL_bands in FKS space
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))
      endif
+     !
+     ! FL overlaps
+     !
+     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_fl_modes,6,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_fl_modes,6,QP_nk,n_sp_pol))
      !
      ! Reference energies
      !

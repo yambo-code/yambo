@@ -169,21 +169,21 @@ module hamiltonian
      YAMBO_FREE(V_hartree_sc)
      !
    end subroutine
-   !
-   ! aim137 Adding subroutine here, to allocate FL hamiltonian
-   !
-   subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix)
+     !
+     ! aim137 adding FL_alloc
+     !
+   subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix,FL_space_dim)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_nl_optics,l_sc_run
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
      use xc_functionals, ONLY:magn,V_xc
-     use fl_optics,      ONLY:n_fl_modes,FL_space_dim
      !
      implicit none
      !
      type(levels), intent(in) :: E
      logical,      intent(in) :: l_real_space,l_rotation_matrix
+     integer,      intent(in) :: FL_space_dim
      !
      ! Store the reference energies
      !

@@ -21,12 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!!!!!subroutine FL_overlaps
-!!!!!end subroutine FL_overlaps
-subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
-! write this taking the structure from Build_Overlaps_det_NEQ
+subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
  !
  ! Build Floquet overlaps between valence bands
+ ! Structure taken from Build_Overlaps_det_NEQ
  !
  use pars,           ONLY:SP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
@@ -47,8 +45,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
  complex(SP),  intent(in) :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
- complex(SP), intent(out) :: FL_S_plus(en%nbf,en%nbf,n_tot_fl_modes,6)
- complex(SP), intent(out) :: FL_S_minus(en%nbf,en%nbf,n_tot_fl_modes,6)
+ complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_fl_modes,6)
+ complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_fl_modes,6)
  !
  ! Work Space
  !
@@ -56,7 +54,9 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
  integer     :: ikm_ibz,ikp_ibz,ik_ibz,max_step,istep
  !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf) ! used in full construction of overlaps
  complex(SP) :: tmp_det,vtmp(H_ref_bands(2))
- integer     :: i1_fl,i2_fl,i1_shifted_fl
+ complex(SP) :: vtmp2(en%nbf)
+ integer     :: i1_fl,i2_fl,i1_shifted_fl,i2_shifted_fl,i_sum_shifted,i_sum_fl,i1_inverted_fl
+ character(4) :: filename
  !
  FL_S_plus =cZERO
  FL_S_minus=cZERO
@@ -120,25 +120,27 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
        !
        ! Matrix wings
        !
-!$omp parallel do default(shared), private(i1,i2)
-       do i1=1,H_ref_bands(1)-1 ! wing 2
-         do i2=H_ref_bands(1),en%nbf
-           do i1_fl=1,n_tot_fl_modes
-             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
-             FL_S_minus(i1,i2,id+(istep-1)*3)=&
-             &  Vstar_dot_V(H_ref_bands(2),&
-                           &conjg((DIP_S(:,i1,id+(istep-1)*3,ikm,i_sp)),&
-                           &FL_V_bands(:,i1_fl,i2,ikm_ibz,i_sp))
-           enddo
-         enddo
-       enddo
-!$omp end parallel do
+       ! aim137: this wing is included in the calculation of the core
+       !
+!!$omp parallel do default(shared), private(i1,i2)
+!       do i1=1,H_ref_bands(1)-1 ! wing 2
+!         do i2=H_ref_bands(1),en%nbf
+!           do i1_fl=1,n_tot_fl_modes
+!             i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
+!             FL_S_minus(i1,i2,i1_fl,id+(istep-1)*3)=&
+!             &  Vstar_dot_V(H_ref_bands(2),&
+!                           &conjg(DIP_S(:,i1,id+(istep-1)*3,ikm,i_sp)),&
+!                           &FL_V_bands(:,i1_fl,i2,ikm_ibz,i_sp))
+!           enddo
+!         enddo
+!       enddo
+!!$omp end parallel do
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1 ! wing 1
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
-             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
-             FL_S_minus(i1,i2,id+(istep-1)*3)=&
+             i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
+             FL_S_minus(i1,i2,i1_fl,id+(istep-1)*3)=&
              &  Vstar_dot_V(H_ref_bands(2),&
                            &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
                            &conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
@@ -150,17 +152,22 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
        ! Matrix core
        !
        do i2=H_ref_bands(1),en%nbf
-           do i1_fl=1,n_tot_fl_modes
-      !      i1_shifted_fl = i1_fl - (max_fl_mode+1)
-      !      do i2_fl=1,n_tot_fl_modes
-      !        i2_shifted_fl = i2_fl - (max_fl_mode+1)
-      !        i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
-      !        if (abs(i_sum_shifted) > max_fl_mode) cycle
-      !        i_sum = i_sum_shifted + (max_fl_mode+1)
-         call M_by_V_omp('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),FL_V_bands(:,i2,ikm_ibz,i_sp),vtmp)
-         !
-         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,:,ik_ibz,i_sp),&
-&                      H_ref_bands(2),vtmp,1,cZERO,FL_S_minus(:,i2,id+(istep-1)*3),1)
+         do i1_fl=1,n_tot_fl_modes
+           i1_shifted_fl = i1_fl - (max_fl_mode+1)
+           do i2_fl=1,n_tot_fl_modes
+             i2_shifted_fl = i2_fl - (max_fl_mode+1)
+             i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
+             if (abs(i_sum_shifted) > max_fl_mode) cycle
+             i_sum_fl = i_sum_shifted + (max_fl_mode+1)
+             !
+             call M_by_V_omp('C',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),FL_V_bands(:,i_sum_fl,i2,ikm_ibz,i_sp),vtmp)
+             !
+             call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,i2_fl,:,ik_ibz,i_sp),&
+&                    H_ref_bands(2),vtmp,1,cZERO,vtmp2,1)
+             !
+             FL_S_minus(:,i2,i1_fl,id+(istep-1)*3) = FL_S_minus(:,i2,i1_fl,id+(istep-1)*3) + vtmp2
+           enddo
+         enddo
        enddo
        !
        !
@@ -189,25 +196,27 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
        !
        ! Matrix wings
        !
-!$omp parallel do default(shared), private(i1,i2)
-       do i1=1,H_ref_bands(1)-1 ! wing 2
-         do i2=H_ref_bands(1),en%nbf
-           do i1_fl=1,n_tot_fl_modes
-             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
-             FL_S_plus(i1,i2,id+(istep-1)*3)=&
-             &  Vstar_dot_V(H_ref_bands(2),&
-                           &DIP_S(i1,:,id+(istep-1)*3,ikbz,i_sp),&
-                           &FL_V_bands(:,i1_fl,i2,ikp_ibz,i_sp))
-           enddo
-         enddo
-       enddo
-!$omp end parallel do
+       !aim137: this wing is included in the calculation of the core
+       !
+!!$omp parallel do default(shared), private(i1,i2)
+!       do i1=1,H_ref_bands(1)-1 ! wing 2
+!         do i2=H_ref_bands(1),en%nbf
+!           do i1_fl=1,n_tot_fl_modes
+!             i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
+!             FL_S_plus(i1,i2,i1_fl,id+(istep-1)*3)=&
+!             &  Vstar_dot_V(H_ref_bands(2),&
+!                           &DIP_S(i1,:,id+(istep-1)*3,ikbz,i_sp),&
+!                           &FL_V_bands(:,i1_fl,i2,ikp_ibz,i_sp))
+!           enddo
+!         enddo
+!       enddo
+!!$omp end parallel do
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1 ! wing 1
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
-             i1_inverted_fl =  (max_fl_mode+1) - i1_fl
-             FL_S_plus(i1,i2,id+(istep-1)*3)=&
+             i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
+             FL_S_plus(i1,i2,i1_fl,id+(istep-1)*3)=&
              &  Vstar_dot_V(H_ref_bands(2),&
                            &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
                            &DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
@@ -219,10 +228,22 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
        ! Matrix Core
        !
        do i2=H_ref_bands(1),en%nbf
-         call M_by_V_omp('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),FL_V_bands(:,i2,ikp_ibz,i_sp),vtmp)
-         !
-         call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,:,ik_ibz,i_sp),&
-&                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
+         do i1_fl=1,n_tot_fl_modes
+            i1_shifted_fl = i1_fl - (max_fl_mode+1)
+            do i2_fl=1,n_tot_fl_modes
+              i2_shifted_fl = i2_fl - (max_fl_mode+1)
+              i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
+              if (abs(i_sum_shifted) > max_fl_mode) cycle
+              i_sum_fl = i_sum_shifted + (max_fl_mode+1)
+              !
+              call M_by_V_omp('N',H_ref_bands(2),DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),FL_V_bands(:,i_sum_fl,i2,ikp_ibz,i_sp),vtmp)
+              !
+              call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,i2_fl,:,ik_ibz,i_sp),&
+&                      H_ref_bands(2),vtmp,1,cZERO,vtmp2,1)
+              !
+              FL_S_plus(:,i2,i1_fl,id+(istep-1)*3) = FL_S_plus(:,i2,i1_fl,id+(istep-1)*3) + vtmp2
+            enddo
+         enddo
        enddo
        !
        !
@@ -231,5 +252,30 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,Sm1_plus,FL_S_minus,S_det)
    endif
    !
  enddo
+ !aim137 DEBUG
+!write(filename,'(i0)') ikbz
+!open(111,file='FL_S_plus'//trim(adjustl(filename))//'.dat')
+!do id=1,6
+!write(111,*) 'Direction is =', id
+!do i1_fl=1,n_tot_fl_modes
+!write(111,*) '    Floquet mode is =', i1_fl
+!do i1=1,size(FL_S_plus,dim=1)
+!write(111,*) FL_S_plus(i1,:,i1_fl,id)
+!enddo
+!enddo
+!enddo
+!close(111)
+!open(111,file='FL_S_mins'//trim(adjustl(filename))//'.dat')
+!do id=1,6
+!write(111,*) 'Direction is =', id
+!do i1_fl=1,n_tot_fl_modes
+!write(111,*) '    Floquet mode is =', i1_fl
+!do i1=1,size(FL_S_minus,dim=1)
+!write(111,*) FL_S_minus(i1,:,i1_fl,id)
+!enddo
+!enddo
+!enddo
+!close(111)
+ !aim137 END DEBUG
  !
 end subroutine FL_overlaps

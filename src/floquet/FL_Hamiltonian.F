@@ -27,9 +27,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  ! call FL_Build_W_operator
  !
  ! Add diagonal part
- ! 
- ! hacer primero la parte diagonal para ver que todo funciona,
- ! y despues me mando a calcular la el W operator
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
@@ -48,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P
- use fl_optics,      ONLY:max_fl_mode,FL_space_dim
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
@@ -63,12 +60,12 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
- complex(SP),   intent(in)    :: FL_V_bands(FL_space_dim,E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: FL_V_bands(FL_space_dim,n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  real(SP),      intent(in)    :: w0
  !
  ! Working Space
  !
- integer     :: ik,i_sp_pol,is,i1,ik_mem
+ integer     :: ik_bz,i_sp_pol,is,i1,ik_mem
  !aim137
  integer     :: i_fl,i_fks
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
@@ -85,24 +82,22 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! aim137: deleted call to Build_berry_polarization_NEQ
  ! aim137: Sm1_plus,Sm1_minus and All_S_det matrices were updated here as well
-
-  !
+ !
  ! Evaluate Floquet Overlaps
  ! ===================================================================
  !
- !Sm1_minus=cZERO
- !Sm1_plus =cZERO
- !All_S_det=cZERO
+ FL_S_minus=cZERO
+ FL_S_plus =cZERO
  !
- do ik=1,QP_nk
+ do ik_bz=1,QP_nk
    !
- !  if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+   !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
    !
- !  do is=1,n_sp_pol
-      call FL_overlaps !complete with passing variables - based on
-      !(Xen,Xk,is,ik_bz,V_bands,Sm1_plus(:,:,:,ik_bz,is),Sm1_minus(:,:,:,ik_bz,is),All_S_det(:,ik_bz,is)) 
-      !as is passed in Berry_polarization_NEQ to Build_Overlaps_det_NEQ
- ! enddo
+   do is=1,n_sp_pol
+     !
+     call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),FL_S_minus(:,:,:,:,ik_bz,is)) 
+     !
+   enddo
    !
  enddo
  !
@@ -119,11 +114,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  E_ks =E_ext
  !
  ! aim137: deleted more beyond-IPA stuff
- !
- ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
- ! ======================================================
-!if(eval_dG)              call NL_build_dG_lesser(E,V_bands,dG)
-!if(l_use_Hxc_collisions) call COLLISIONS_compose_nl(dG)
+ ! aim137: deleted G_lesser
  !
  ! Build the Hamiltonian
  ! =====================
@@ -132,11 +123,11 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  I_relax      =cZERO
  !
  do i_sp_pol=1,n_sp_pol
-  do ik=1,QP_nk
+  do ik_bz=1,QP_nk
    !
-   if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
+   if (.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
    !
-   ik_mem=PAR_Xk_ibz_index(ik)
+   ik_mem=PAR_Xk_ibz_index(ik_bz)
    !
    ! Here I fill H_nl_sc with...
    !
@@ -148,7 +139,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    ! aim137: deleted more beyond-IPA stuff
    !
    ! Add Ho = T+V_ion+V_h+V_xc
-   !==================
+   !==========================
    !
    ! aim137: omp features commented out for now.
 ! $omp parallel do default(shared), private(i1)
@@ -158,9 +149,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
-&            + E_full(i1,ik,i_sp_pol) &
-&            - real(i_fl,SP) * w0
-!aim137: assuming units of w0 and E_full are compatible. check.
+&            + E_full(i1,ik_bz,i_sp_pol) &
+&            - real(i_fl,SP) * w0  !aim137: assuming units of w0 and E_full are compatible. check.
        !
      enddo
    enddo
@@ -168,13 +158,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    !
    if(l_use_DIPOLES.or.trim(global_gauge)=='velocity') then
      !    
-     ! aim137 no se que es esto
-     ! call RT_apply_field(ik,i_sp_pol,H_nl_sc,A_tot)
+     !aim137 no se que es esto
+     !call RT_apply_field(ik_bz,i_sp_pol,H_nl_sc,A_tot)
      !
    else
      !
-     ! aim137 commented out for now
-     !call Build_W_operator(V_bands,E,k,A_tot,ik,i_sp_pol,H_nl_sc)
+     !aim137 commented out for now
+     !call Build_W_operator(V_bands,E,k,A_tot,ik_bz,i_sp_pol,H_nl_sc)
      !
    endif                                                         
    !

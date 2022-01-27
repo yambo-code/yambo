@@ -196,6 +196,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      fl_shifted_zero_mode = max_fl_mode+1
      FL_V_bands(i1,fl_shifted_zero_mode,i1,:,:)=cONE
+     !aim137 DEBUG test mixing
+     !FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
+     !FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=cONE*0.1
+     !FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=cONE*0.1
+     !FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
+     !aim137 END DEBUG
      !
    enddo
    !
@@ -217,7 +223,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
-     call FL_Diagonalization
+     call FL_diagonalization
      !
      call live_timing(steps=1)
      !

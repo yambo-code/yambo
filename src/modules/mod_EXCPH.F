@@ -49,9 +49,9 @@ module EXCPH
  real(SP),    allocatable :: EXCPH_Renorm_PH_abs(:)
  complex(SP), allocatable :: BS_EXCPH_E(:)
  real(SP),    allocatable :: ph_EXCPH_E(:)
- complex(SP), allocatable :: BS_mat_gamma(:,:)
- complex(SP), allocatable :: BS_E_gamma(:)
- integer,     allocatable :: BSS_eh_table_gamma(:,:)
+ complex(SP), allocatable :: BS_mat_in(:,:)
+ complex(SP), allocatable :: BS_E_in(:)
+ integer,     allocatable :: BSS_eh_table_in(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c(:,:,:)
  !

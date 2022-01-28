@@ -66,7 +66,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  integer           ::lw_bnd
  integer, external ::io_QP_and_GF
  real(SP),external ::G2E
- real(SP)          ::W(QP_Sc_steps) ! DALV: frequency grid for Sc in the Green Function
+ ! frequency grid for Sc in the Green Function
+ real(SP),allocatable ::W(:)
  !
  ! Logicals
  !==========
@@ -361,32 +362,29 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (trim(QP_solver)=='g') then
    !
    if (l_elel_corr.and.(.not.l_ppa.and..not.l_mpa.and..not.l_cohsex)) &
-&                               call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
+&                 call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0)
    !
    ! DALV: GF for ppa and mpa
    !
-   if (l_elel_corr.and.l_ppa) then ! AF, DALV
+   if (l_elel_corr.and.(l_ppa.or.l_mpa)) then
+     !
+     YAMBO_ALLOC(W,(QP_Sc_steps))
      !
      QP_dSc_steps=QP_Sc_steps
      W(1)=QP_G_er(1)
+     !
      forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
      !
-     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,W,0)
+     if ( l_ppa ) call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,W,0)
+     if ( l_mpa ) call QP_mpa(X,Xk,en,k,q,qp,Xw,W,0)
      !
-   endif
-   if (l_elel_corr.and.l_mpa) then ! AF, DALV
-     !
-     QP_dSc_steps=QP_Sc_steps
-     W(1)=QP_G_er(1)
-     forall(i1=1:QP_Sc_steps-1) W(i1+1)=W(1)+(QP_G_er(2)-QP_G_er(1))*real(i1,SP)/(QP_Sc_steps-1._SP)
-     !
-     call QP_mpa(X,Xk,en,k,q,qp,Xw,W,0)
+     YAMBO_FREE(W)
      !
    endif
    !
 #if defined _ELPH 
    !
-   if (l_elph_corr)                               call ELPH_Sigma_c(en,k,q,qp)
+   if (l_elph_corr) call ELPH_Sigma_c(en,k,q,qp)
    !
 #endif
    !
@@ -444,15 +442,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      ! Sc energy steps. 2/3 If Newton/Secant. QP_Sc_steps 
      ! the full Green`s function is requested.
      !
-     if (.not.l_life.and.trim(QP_solver)/='n')                 QP_dSc_steps=2
+     if (.not.l_life)                 QP_dSc_steps=2
      if (.not.l_life.and.QP_dSc_test) QP_dSc_steps=3
      !
      ! Cohsex is static
      !
      if (l_cohsex)                    QP_dSc_steps=1
      !
-     !
-     if (trim(QP_solver)/='g')        QP_dSc_steps=QP_Sc_steps
+     if (trim(QP_solver)/='g')        QP_Sc_steps=QP_dSc_steps
      !
      YAMBO_ALLOC(QP_Sc,(QP_n_states,QP_Sc_steps))
      !

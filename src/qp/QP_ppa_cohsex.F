@@ -1,4 +1,4 @@
-!
+!rr
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !

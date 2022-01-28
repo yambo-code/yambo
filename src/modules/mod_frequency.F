@@ -87,7 +87,7 @@ module frequency
      if(present(damping)) local_damping=damping
      W%n_freqs=100
      W%per_memstps=100._SP
-     W%er=(/0._SP,2._SP/)!/HA2EV
+     W%er=(/0._SP,10._SP/)/HA2EV
      W%ir=(/1._SP,1._SP/)!/HA2EV
      W%dr=(/local_damping,local_damping/)/HA2EV
      W%damp_reference=0._SP

@@ -35,13 +35,13 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  implicit none
  !
- type(levels) ,intent(in)   :: Xen
+ type(levels), intent(in)   :: Xen
  type(bz_samp),intent(in)   :: Xk
- type(w_samp) ,intent(in)   :: Xw
+ type(w_samp), intent(in)   :: Xw
  !
- integer      ,intent(in)   :: iq
- complex(SP)  ,intent(inout):: Wd
- complex(SP)  ,intent(out)  :: drude_GreenF(Xw%n_freqs)
+ integer,      intent(in)   :: iq
+ complex(SP),  intent(inout):: Wd
+ complex(SP),  intent(out)  :: drude_GreenF(Xw%n_freqs)
  !
  real(SP)             :: f_eh,f_occ
  logical              :: Drude_term(4),l_Jellium,l_Classical
@@ -129,16 +129,16 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
      !
    else
      !
-     if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw))+cZERO,Wd,q_norm(1))
-     if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw))+cZERO,Wd,q_norm(1))
+     if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw),SP)+cZERO,Wd,q_norm(1))
+     if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw),SP)+cZERO,Wd,q_norm(1))
      !
    endif
    !
  enddo
  !
  contains
-   !
-   function Jellium_drude(W,Wd,q0_norm)
+  !
+  function Jellium_drude(W,Wd,q0_norm)
    !
    !See R.D. Mattuck "A guide to Feynmann diagrams in the Many-Body problem", pag. 197.
    !Jellium Xo propagator with a given plasma frequency.
@@ -146,12 +146,12 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !Davide: If Drude is used at finite temperature / with fractional occupations
    !        I would need the retarded propagator ... occupations are not used here
    !
-   !  
    use pars,  ONLY:SP,pi,cI
-   !
    implicit none
    !
-   real(SP)    :: q0_norm !DALV: W is in general complex for the sampling in MPA
+   ! DALV: W is in general complex for the sampling in MPA
+   !
+   real(SP)    :: q0_norm
    complex(SP) :: Wd,W
    !
    ! Work Space
@@ -175,18 +175,18 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
   !
   !
   function Classical_drude(W,Wd,q0_norm)
-   !
    !  
    use pars,  ONLY:SP,pi,cI,cZERO
-   !
    implicit none
    !
-   real(SP)    :: q0_norm !DALV: W,W_ are in general complex for the sampling in MPA
-   complex(SP) :: Wd,W,W_
+   ! DALV: W,W_ are in general complex for the sampling in MPA
+   !
+   real(SP)    :: q0_norm
+   complex(SP) :: Wd,W
    !
    ! Work Space
    !
-   complex(SP) :: xi1,Classical_drude
+   complex(SP) :: W_,xi1,Classical_drude
    real(SP)    :: Kf,rxi,fac
    !
    W_=W
@@ -213,15 +213,14 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  function Graphene_drude(Wd,q0_norm)
    !
-   !
    use pars,       ONLY:SP,pi
    use R_lattice,  ONLY:idir
    use D_lattice,  ONLY:alat
-   !
    implicit none
    !
-   real(SP)    :: lcut,q0_norm
+   real(SP)    :: q0_norm
    complex(SP) :: Graphene_drude,Wd
+   real(SP)    :: lcut
    !
    !Get graph_v in a.u.
    !

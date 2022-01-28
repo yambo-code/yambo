@@ -270,13 +270,6 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      !
      exit
    enddo
-!!DALV:
-!     open(10,file = 'X_par_blc_1-1.dat')
-!     write(10,*) 'w, X0, Xdrude'
-!     write(10,*)
-!     do iw=1,Xw%n_freqs
-!       write(10,*) real(Xw%p(iw)), real(X_par%blc(1,1,iw)), real(drude_GreenF(iw))
-!     enddo
  endif
  !
  ! MAIN LOOP

@@ -37,7 +37,7 @@
 !! @param[out]      gsqF_life_bose      Imaginary part Fan self-energy Bose part
 !! @param[out]      gsqF_life_f         Imaginary part Fan self-energy Fermi part
 !
-subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
+subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi,cZERO
  use units,         ONLY:HA2THZ,HA2EV

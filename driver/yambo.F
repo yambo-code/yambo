@@ -31,7 +31,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
-&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,l_EXCPH_gkkp,l_EXCPH_Sigma,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
@@ -233,6 +233,21 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (driver_now) call K_driver(Xen,Ken,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip)
  if (driver_now) call mem_manager_report
+ !
+ ! EXCITON-PHONON MATRIX ELEMENTS
+ ! ==============================
+ driver_now=l_EXC_gkkp
+ if (driver_now) call 
+ !
+ ! EXCITON-PHONON MATRIX ELEMENTS
+ ! ==============================
+ driver_now=l_EXCPH_gkkp
+ if (driver_now) call 
+ !
+! driver_now=l_EXCPH_Sigma
+! if (driver_now) call 
+ !
+ !
  !
  ! ACFDT
  !=======

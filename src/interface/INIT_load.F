@@ -108,7 +108,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lin_path,Lout_path
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -657,8 +657,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
  call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
- call it(defs,'LinPath',       '[EXCPH] Path of the incoming L',Lin_path)
- call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lin_path)
+ call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  !
  ! GPL_EXCLUDE_START
  !

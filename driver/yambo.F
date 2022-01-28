@@ -236,13 +236,13 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! EXCITON-PHONON MATRIX ELEMENTS
  ! ==============================
- driver_now=l_EXC_gkkp
- if (driver_now) call 
- !
- ! EXCITON-PHONON MATRIX ELEMENTS
- ! ==============================
  driver_now=l_EXCPH_gkkp
- if (driver_now) call 
+ !if (driver_now) call 
+ !
+ ! EXCITON-PHONON Self-Energy
+ ! ==============================
+! driver_now=l_EXCPH_gkkp
+! if (driver_now) call 
  !
 ! driver_now=l_EXCPH_Sigma
 ! if (driver_now) call 

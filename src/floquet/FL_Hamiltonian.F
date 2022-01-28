@@ -45,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,FL_states,FL_Ho_plus_Sigma
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
@@ -60,7 +60,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
- complex(SP),   intent(in)    :: FL_V_bands(FL_space_dim,n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  real(SP),      intent(in)    :: w0
  !
  ! Working Space
@@ -70,6 +70,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  integer     :: i_fl,i_fks
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
+ character(4) :: filename
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
@@ -144,8 +145,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    ! aim137: omp features commented out for now.
 ! $omp parallel do default(shared), private(i1)
    do i1=NL_bands(1),NL_bands(2) 
-     do i_fl=-max_fl_mode,max_fl_mode
-       i_fks = i_fl + max_fl_mode+1 + (i1-1)*(2*max_fl_mode+1)
+     do i_fl=1,n_tot_fl_modes
+       i_fks = i_fl + (i1-1)*n_tot_fl_modes
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
@@ -164,7 +165,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    else
      !
      !aim137 commented out for now
-     !call Build_W_operator(V_bands,E,k,A_tot,ik_bz,i_sp_pol,H_nl_sc)
+     call FL_build_W_operator(FL_V_bands,E,k,A_tot,ik_bz,i_sp_pol,H_nl_sc)
      !
    endif                                                         
    !
@@ -176,10 +177,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 !aim137: omp features disabled for now
 ! $omp parallel do default(shared), private(i1)
    do i1=NL_bands(1),NL_bands(2) 
-     do i_fl=-max_fl_mode,max_fl_mode
-     !aim137 pasar este loop a 1,n_tot_fl_modes
-       i_fks = i_fl + max_fl_mode+1 + (i1-1)*(2*max_fl_mode+1)
-       Ho_plus_Sigma(:,i_fks,ik_mem,i_sp_pol)=H_nl_sc(:,i_fks)
+     do i_fl=1,n_tot_fl_modes
+       i_fks = i_fl + (i1-1)*n_tot_fl_modes
+       FL_Ho_plus_Sigma(:,i_fks,ik_mem,i_sp_pol)=H_nl_sc(:,i_fks)
      enddo
    enddo
 ! $omp end parallel do
@@ -193,4 +193,14 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  call timing('FL Hamiltonian',OPR='stop')
 #endif
  !
+  !aim137 DEBUG
+do ik_bz=1,QP_nk
+write(filename,'(i0)') ik_bz
+open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
+do i_fks=FL_states(1),FL_states(2)
+write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
+enddo
+close(111)
+enddo
+ !aim137 END DEBUG
 end subroutine FL_Hamiltonian

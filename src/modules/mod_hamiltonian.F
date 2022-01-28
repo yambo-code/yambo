@@ -172,7 +172,7 @@ module hamiltonian
      !
      ! aim137 adding FL_alloc
      !
-   subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix,FL_space_dim)
+   subroutine FL_H_alloc(E,l_real_space,l_rotation_matrix,FL_states)
      use pars,           ONLY:SP
      use drivers,        ONLY:l_nl_optics,l_sc_run
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
@@ -183,7 +183,7 @@ module hamiltonian
      !
      type(levels), intent(in) :: E
      logical,      intent(in) :: l_real_space,l_rotation_matrix
-     integer,      intent(in) :: FL_space_dim
+     integer,      intent(in) :: FL_states(2)
      !
      ! Store the reference energies
      !
@@ -194,12 +194,12 @@ module hamiltonian
      !
      H_ref_nbands=H_ref_bands(2)-H_ref_bands(1)+1
      !
-     YAMBO_ALLOC(Hzero,(FL_space_dim,FL_space_dim,E%nk,n_sp_pol))
+     YAMBO_ALLOC(Hzero,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),E%nk,n_sp_pol))
      !
-     YAMBO_ALLOC(H_nl_sc,(FL_space_dim,FL_space_dim))
+     YAMBO_ALLOC(H_nl_sc,(FL_states(1):FL_states(2),FL_states(1):FL_states(2)))
      !
      if(l_rotation_matrix) then
-       YAMBO_ALLOC(H_rotation,(FL_space_dim,FL_space_dim,E%nk,n_sp_pol))
+       YAMBO_ALLOC(H_rotation,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),E%nk,n_sp_pol))
      endif
      !
      if (.not.l_real_space.or.fft_size==0) return

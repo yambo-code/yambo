@@ -25,7 +25,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
  use drivers,        ONLY:l_use_Hxc_collisions
- use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
+ use QP_m,           ONLY:QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
  use X_m,            ONLY:X_t
@@ -236,7 +236,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    !aim137 this subroutine is taking too much, have a look
    !aim137 it doesn't crash, but it gets stuck here
-   !call NL_databases_IO(i_f,'write')
+   call NL_databases_IO(i_f,'write')
    !
  enddo
  !
@@ -252,11 +252,8 @@ subroutine FL_driver(E,X,k,q,Dip)
  call WF_free(WF)
  !it's crashing in the following subroutine
  call FL_free()
- print*, 'pre deallocation 3'
  call DIP_alloc('DIP_S')
- print*, 'pre deallocation 4'
  call DIP_alloc('DIP_R')
- print*, 'pre deallocation 5'
  call DIP_alloc('DIP_v')
  !
 end subroutine FL_driver

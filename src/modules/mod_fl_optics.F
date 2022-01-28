@@ -66,6 +66,7 @@ module fl_optics
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
+ complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
 !!
 !! Time-dependent Valence bands in real-space
 !complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
@@ -143,7 +144,7 @@ module fl_optics
  !aim137 new variables
  integer                   :: max_fl_mode=3 ! momentaneamente fijo
  integer                   :: n_tot_fl_modes
- integer                   :: FL_space_dim
+ integer                   :: FL_space_dim,FL_states(2)
  !
  contains
    subroutine FL_alloc(en)
@@ -157,21 +158,26 @@ module fl_optics
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
      use drivers,        ONLY:l_use_Hxc_collisions
-     use nl_optics,       ONLY:V_bands
+     use nl_optics,      ONLY:V_bands
      !
      implicit none
      !
      type(levels), intent(in) :: en
      !
      n_tot_fl_modes = 2*max_fl_mode+1
-     FL_space_dim = (NL_bands(2)-NL_bands(1)+1)*n_tot_fl_modes
+     FL_space_dim = NL_bands(2) * n_tot_fl_modes
+     FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
+     FL_states(2) = FL_space_dim
      !
-     call FL_H_alloc(en,.true.,.false.,FL_space_dim)
+     call FL_H_alloc(en,.true.,.false.,FL_states)
      !
      ! aim137 allocate V_bands because I still need it for FL_start_and_restart
      YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
-     ! aim137 FL_bands in FKS space
+     ! aim137 FL_bands in FKS space broken down in bands x fl modes
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
+     !
+     YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),QP_nk,n_sp_pol))
+     !
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))
@@ -193,7 +199,7 @@ module fl_optics
    !
    end subroutine FL_alloc
    !
-   subroutine FL_alloc_k_distributed(en)
+   subroutine FL_alloc_k_distributed(en) !aim137 still need to modify this subroutine
      !
      use parallel_m,     ONLY:PAR_Xk_nibz,PAR_Xk_ibz_index
      use pars,           ONLY:SP
@@ -228,12 +234,8 @@ module fl_optics
      !
      call H_free()
      !
-     !aim137 YAMBO_FREE is crashinf but I don't know that subroutine is
-     print*, 'estoy aca 0'
      YAMBO_FREE(Ho_plus_Sigma)
-     print*, 'estoy aca 1'
      YAMBO_FREE(I_relax)
-     print*, 'estoy aca 2'
      YAMBO_FREE(V_bands)
      !
      YAMBO_FREE(rho_reference)

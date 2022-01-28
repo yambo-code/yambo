@@ -438,9 +438,6 @@ subroutine INIT_activate()
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
    !
-   if (l_EXCPH_gkkp)  call initactivate(1,'ELPhExcStates ELPhExcSum LinPath LoutPath FANdEtresh')
-   if (l_EXCPH_Sigma) call initactivate(1, 'GEnSteps GEnRnge GDmRnge')
-   !
 #endif
    !
  endif
@@ -455,6 +452,11 @@ subroutine INIT_activate()
  if (l_elph_Hamiltonian) then
    call initactivate(1,'ElPhHBRnge ElPhModes ElPhHKpt GDamping REStresh')
  endif
+ !
+ ! Exciton-phonon Self-energy
+ !
+ if (l_EXCPH_gkkp)  call initactivate(1,'ELPhExcStates ELPhExcSum LinPath LoutPath FANdEtresh')
+ if (l_EXCPH_Sigma) call initactivate(1,'GEnSteps GEnRnge GDmRnge')
  !
 #endif
  !

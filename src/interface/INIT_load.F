@@ -170,8 +170,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
- call it('r',defs,'ExcPhSigma',    '[R][EXCPH] Exciton-Phonon Self-Energy')
- call it('r',defs,'ExcitonGkkp',   '[R][EXCPH] Exciton-Phonon Matrix Elelements')
+ call it('r',defs,'ExcGkkp',   '[R][EXCPH] Exciton-Phonon Matrix Elelements')
 #endif
 #if defined _PHEL 
  call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   

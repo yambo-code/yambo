@@ -161,6 +161,7 @@ subroutine K_restart(iq,X,ID_head,ID,ID_compr,l_partial_kernel_loaded)
  !
  ID_head=0
  ID_compr=0
+ l_BSE_kernel_complete=.false.
  l_partial_kernel_loaded=.false.
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID)

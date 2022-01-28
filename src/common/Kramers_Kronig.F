@@ -34,7 +34,9 @@ subroutine Kramers_Kronig(fi,wi,ni,fo,wo,no,y0)
  ! fo is not INITIALIZED to 0. !
  !
  use pars,    ONLY:SP
+ !
  implicit none
+ !
  integer,     intent(in)    :: ni,no
  real(SP),    intent(in)    :: wi(ni)
  complex(SP), intent(in)    :: fi(ni),wo(no),y0

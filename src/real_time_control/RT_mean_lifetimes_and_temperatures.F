@@ -50,7 +50,7 @@ subroutine RT_mean_lifetimes_and_temperatures( LIFE, LIFE_ref )
    if (trim(LIFE%kind)=="el-photon".or.trim(LIFE%kind)=="el-ph_abs") l_RT_lifetimes_Tfit_LOC=.FALSE.
    if (l_RT_lifetimes_Tfit_LOC) then
      occupations=rZERO
-     occupations(RT_bands(1):n_full_bands,:)=spin_occ
+     occupations(RT_bands(1):n_full_bands(1),:)=spin_occ
    endif
  endif
  !

@@ -39,7 +39,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  use pars,           ONLY:SP,pi,cZERO
  use FFT_m,          ONLY:fft_size
- use xc_functionals, ONLY:F_xc
+ use xc_functionals, ONLY:F_xc_mat
  use BS,             ONLY:l_BS_magnons
  use wrapper_omp,    ONLY:V_dot_V_omp
  use electrons,      ONLY:n_spinor,n_sp_pol,n_spin
@@ -55,9 +55,9 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  ! 
  ! Work Space
  !
- integer     :: i_sp_fxc(2)
- complex(SP) :: rhotwr1(fft_size,n_spinor)
- complex(SP) :: rhotwr2(fft_size,n_spinor)
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw
+ complex(SP) :: rhotwr1(fft_size*n_spinor*n_spinor)
+ complex(SP) :: rhotwr2(fft_size*n_spinor*n_spinor)
  complex(SP) :: WF_symm1(fft_size,n_spinor)
  complex(SP) :: WF_symm2(fft_size,n_spinor)
  !
@@ -69,37 +69,54 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,mode)
  !
  TDDFT_ALDA_R_space=cZERO
  !
- i_sp_fxc(1)=is(4)
  call WF_apply_symm(is,WF_symm1) 
  call WF_apply_symm(os,WF_symm2)
  !
- rhotwr1=conjg(WF_symm1)*WF_symm2
+ if(n_spinor==1) rhotwr1(:)=conjg(WF_symm1(:,1))*WF_symm2(:,1)
+ !
+ if(n_spinor==2) then
+   do i_spinor=1,n_spinor
+     do j_spinor=1,n_spinor
+       do ifft=1,fft_size
+         irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
+         rhotwr1(irhotw)=conjg(WF_symm1(ifft,i_spinor))*WF_symm2(ifft,j_spinor)
+       enddo
+     enddo
+   enddo
+ endif
  !
  if (mode=="RES") then
    call WF_apply_symm(isp,WF_symm1) 
    call WF_apply_symm(osp,WF_symm2)
-   i_sp_fxc(2)=isp(4)
  else if (mode=="CPL") then
    call WF_apply_symm(isp,WF_symm2)
    call WF_apply_symm(osp,WF_symm1)
-   i_sp_fxc(2)=osp(4)
  endif
  !
- if( n_spin==1 ) rhotwr2(:,1)=F_xc(:,  1  ,   1  )*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ if( n_spin==1 ) rhotwr2(:)=F_xc_mat(:,1,1,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  !
- if(n_sp_pol==2) rhotwr2(:,1)=F_xc(:,i_sp_fxc(1),i_sp_fxc(2))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
+ if(n_sp_pol==2) rhotwr2(:)=F_xc_mat(:,is(4),os(4),isp(4),osp(4))*WF_symm1(:,1)*conjg(WF_symm2(:,1))
  !
  if(n_spinor==2) then
-   ! This is only the optical part of the kernel
-   rhotwr2(:,1)=F_xc(:,1,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&
-                  F_xc(:,1,2)*WF_symm1(:,2)*conjg(WF_symm2(:,2))
-   rhotwr2(:,2)=F_xc(:,2,1)*WF_symm1(:,1)*conjg(WF_symm2(:,1))+&
-                  F_xc(:,2,2)*WF_symm1(:,2)*conjg(WF_symm2(:,2))
+   rhotwr2=cZERO
+   do i_spinor=1,n_spinor
+     do j_spinor=1,n_spinor
+       do ip_spinor=1,n_spinor
+         do jp_spinor=1,n_spinor
+           do ifft=1,fft_size
+             irhotw=ifft+(i_spinor-1)*fft_size+(j_spinor-1)*n_spinor*fft_size
+             rhotwr2(irhotw)=rhotwr2(irhotw)+&
+             &  F_xc_mat(ifft,i_spinor,j_spinor,ip_spinor,jp_spinor)*WF_symm1(ifft,ip_spinor)*conjg(WF_symm2(ifft,jp_spinor))
+           enddo
+         enddo
+       enddo
+     enddo
+   enddo
  endif
  !
  ! SUM
  !=====
- TDDFT_ALDA_R_space=V_dot_V_omp(fft_size*n_spinor,rhotwr1,rhotwr2)
+ TDDFT_ALDA_R_space=V_dot_V_omp(fft_size*n_spinor*n_spinor,rhotwr1,rhotwr2)
  !
  ! tddft_alda_r_space should be mutiplied by X, it is mutiplied by Co in K
  ! X  = fft_size*spin_occ/DL_vol/Nq 

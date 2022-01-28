@@ -23,7 +23,16 @@
 !
 subroutine k_special(LIST_only)
  !
- ! Special k-points. Output in IKU
+ ! Special k-points. Output in IKU.
+ ! 
+ ! The strategy in this routine is to define the list of special points in IKU 
+ ! by specifing a set of reference b1,b2,b3. This in order to prevent 
+ ! problems when, internally, yambo adopts different forms of them.
+ !
+ ! To get the coordinates one possibility is to find the space gro
+ !
+ ! 1. find the space group: e.g. https://materialsproject.org/materials/
+ ! 2. find the special points list: e.g. https://www.cryst.ehu.es/cryst/get_kvec.html
  !
  use pars,                ONLY:SP,schlen
  use units,               ONLY:pi
@@ -42,7 +51,6 @@ subroutine k_special(LIST_only)
  !
  ! Work Space
  !
- logical            :: l_use_yambo_b
  integer            :: ik
  real(SP)           :: trial_b(3,3),ap,bp,cp,fp,ep,k_l(3)
  character(schlen)  :: dumb_ch
@@ -54,33 +62,13 @@ subroutine k_special(LIST_only)
  !
  YAMBO_ALLOC(SPECIAL_k%pt,(n_SPECIAL_k_MAX,3))
  !
- ! Special K taken from 
- ! 
- !  http://cst-www.nrl.navy.mil/bind/kpts/index.html
- !  http://lamp.tu-graz.ac.at/
- !
- ! 2019/02/01:
- ! If yambo "b" is different
- ! i.e. in case for example the FCC has
- ! b(1,:)=(/-0.5, 0.5, 0.5/)*2.*pi/alat(1)
- ! b(2,:)=(/ 0.5,-0.5.,0.5/)*2.*pi/alat(1)
- ! b(3,:)=(/ 0.5, 0.5,-0.5/)*2.*pi/alat(1)
- ! to properly detect special k-points
- ! set the following logical to .true.
- !
- l_use_yambo_b=.false.
- !
  select case (trim(lattice))
    !
    case('FCC')
      !
-     if(l_use_yambo_b) then
-       trial_b=b
-     else
-       trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
-       trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
-       trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
-     endif
+     trial_b(1,:)=(/-1., 1., 1./)*2.*pi/alat(1)
+     trial_b(2,:)=(/ 1.,-1., 1./)*2.*pi/alat(1)
+     trial_b(3,:)=(/ 1., 1.,-1./)*2.*pi/alat(1)
      !
      call k_add((/0._SP,0._SP,0._SP/),'G' )
      call k_add((/0.5_SP,0.5_SP,0._SP/),'X' )
@@ -95,13 +83,9 @@ subroutine k_special(LIST_only)
      !
    case('BCC')
      !
-     if(l_use_yambo_b) then
-       trial_b=b
-     else
-       trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
-       trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
-       trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
-     endif
+     trial_b(1,:)=(/ 0._SP, 1._SP, 1._SP/)*2._SP*pi/alat(1)
+     trial_b(2,:)=(/ 1._SP, 0._SP, 1._SP/)*2._SP*pi/alat(1)
+     trial_b(3,:)=(/ 1._SP, 0._SP,-1._SP/)*2._SP*pi/alat(1)
      !
      call k_add((/0._SP,0._SP,0._SP/),'G' )
      call k_add((/0.5_SP,0.5_SP,0._SP/),'N' )
@@ -139,27 +123,33 @@ subroutine k_special(LIST_only)
      !
      call orthorombic_lengths(ap,bp)
      !
-     call k_add((/0._SP,0._SP,0._SP/),'G' ) 
-     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )
+     call k_add((/0._SP,0._SP,0._SP/),'G' ) ! 1 
+     call k_add(SPECIAL_k%pt(1,:)+(/0._SP,0._SP,cp/),'Z' )! 2
      !
-     call k_add((/fp,0._SP,0._SP/),'X' )
-     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' )
+     call k_add((/fp,0._SP,0._SP/),'X' ) ! 3
+     call k_add(SPECIAL_k%pt(3,:)+(/0._SP,0._SP,cp/),'A' ) ! 4
      !
-     call k_add((/0._SP,bp,0._SP/),'Y' )
-     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' )
+     call k_add((/0._SP,bp,0._SP/),'Y' ) ! 5
+     call k_add(SPECIAL_k%pt(5,:)+(/0._SP,0._SP,cp/),'T' ) ! 6
      !
-     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' )
-     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' )
+     call k_add((/ap/2._SP,bp/2._SP,0._SP/),'S' ) ! 7
+     call k_add(SPECIAL_k%pt(7,:)+(/0._SP,0._SP,cp/),'R' ) ! 8
      !
-     call k_add((/ep,bp,0._SP/),'X1' )
-     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' )
+     call k_add((/ep,bp,0._SP/),'X1' ) ! 9 
+     call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' ) ! 10
      !
-     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' )
+     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' ) ! X+Y
      call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:),'A2' )
      call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:),'A3' )
      call k_add(SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:),'A4' )
      call k_add(SPECIAL_k%pt(13,:)+SPECIAL_k%pt(5,:),'A5' )
      call k_add(SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:),'A6' )
+     !
+     ! Y direction
+     !
+     call k_add(SPECIAL_k%pt(3,:)-SPECIAL_k%pt(5,:), 'X3' ) ! X-Y
+     call k_add(-SPECIAL_k%pt(3,:)-SPECIAL_k%pt(5,:),'X4' ) ! -X-Y
+     call k_add(-SPECIAL_k%pt(5,:),'Yp' ) ! -Y
      !
      ! X=+, Z=- quadrant
      !
@@ -217,13 +207,9 @@ subroutine k_special(LIST_only)
      !
    case('CUB')
      !
-     if(l_use_yambo_b) then
-       trial_b=b
-     else
-       trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
-       trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
-       trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
-     endif
+     trial_b(1,:)=(/ 1., 0., 0./)*2.*pi/alat(1)
+     trial_b(2,:)=(/ 0., 1., 0./)*2.*pi/alat(1)
+     trial_b(3,:)=(/ 0., 0., 1./)*2.*pi/alat(1)
      !
      call k_add((/0._SP,0._SP,0._SP/),'G' )
      call k_add((/0.5_SP,0._SP,0._SP/),'X' )
@@ -236,29 +222,22 @@ subroutine k_special(LIST_only)
      !
    case('HCP')
      !
-     if(l_use_yambo_b) then
-       trial_b=b
-     else
-       trial_b(1,:)=(/ 1.,-1./sqrt(3.), 0./)*2.*pi/alat(1)
-       trial_b(2,:)=(/ 1., 1./sqrt(3.), 0./)*2.*pi/alat(1)
-       trial_b(3,:)=(/ 0., 0.,          1./)*2.*pi/alat(3)
-     endif
+     ! https://www.cryst.ehu.es/cgi-bin/cryst/programs/nph-kv-list
      !
-     SPECIAL_k%nbz=7
+     trial_b(1,:)=(/1., 0., 0./)
+     trial_b(2,:)=(/0., 1., 0./)
+     trial_b(3,:)=(/0., 0., 1./)
      !
-     call k_add((/0._SP,0._SP,0._SP/),'G' )
-     call k_add((/0._SP ,0.5_SP,0._SP/),'M' )
+     call k_add((/0.0_SP,0.0_SP,0.0_SP/),'G' )
+     call k_add((/0.0_SP,0.0_SP,0.5_SP/),'A' )
      !
-     ! In the old version also the point (/1./3.,1./3.,0./) was assigned to K. To be checked.
-     !
-     call k_add((/1._SP/3._SP,1._SP/3._SP,0._SP/),'K' )
-     call k_add((/-1._SP/3._SP,-1._SP/3._SP,0._SP/),'Kp' )
-     call k_add((/0._SP ,0._SP  ,0.5_SP/),'A' )
-     call k_add((/0._SP,0.5_SP,0.5_SP/),'L' )
-     call k_add((/1._SP/3._SP,1._SP/3._SP,0.5_SP/),'H' )
+     call k_expand_plane((/0.5_SP,0.25_SP,0.0_SP/),"xy","M")
+     call k_expand_plane((/0.5_SP,0.25_SP,0.5_SP/),"xy","L")
+     call k_expand_plane((/1./3._SP,0.5_SP,0.0_SP/),"xy","K")
+     call k_expand_plane((/1./3._SP,0.5_SP,0.5_SP/),"xy","H")
      !
      do ik=1,SPECIAL_k%nbz
-       call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ka2c')
+       call c2a(b_in=trial_b,v_in=SPECIAL_k%pt(ik,:),mode='ki2c')
      enddo
      !
  end select
@@ -302,7 +281,39 @@ subroutine k_special(LIST_only)
     !
    end subroutine
    !
-   subroutine k_add( coordinates,labels_string )
+   subroutine k_expand_plane(base,plane,label)
+    !
+    implicit none
+    !
+    real(SP)     :: base(3)
+    character(*) :: plane
+    character(*) :: label
+    !
+    ! Work Space
+    !
+    integer      :: i1,i2
+    character(2) :: chpm
+    real(SP)     :: v(3)
+    !
+    do i1=-1,1,2
+      do i2=-1,1,2
+        if (plane=="xy") v=(/i1*base(1),i2*base(2),   base(3)/)
+        if (plane=="xz") v=(/i1*base(1),   base(2),i2*base(3)/)
+        if (plane=="yz") v=(/   base(1),i1*base(2),i2*base(3)/)
+        chpm="p"
+        if (i1<0) chpm="m"
+        chpm=trim(chpm)//"p"
+        if (i2<0) chpm=trim(chpm)//"m"
+        if (i1==i2.and.i1==1) chpm=" "
+        SPECIAL_k%nbz=SPECIAL_k%nbz+1
+        SPECIAL_k%pt(SPECIAL_k%nbz,:)=v
+        SPECIAL_k_label(SPECIAL_k%nbz)=label//trim(chpm)
+      enddo
+    enddo
+    !
+   end subroutine
+   !
+   subroutine k_add(coordinates,labels_string)
     !
     use stderr,              ONLY:STRING_split
     !
@@ -323,7 +334,7 @@ subroutine k_special(LIST_only)
     !
    end subroutine
    !
-   subroutine k_ORTHO_b_gt_a_add( coordinates,labels_string )
+   subroutine k_ORTHO_b_gt_a_add(coordinates,labels_string)
     !
     use stderr,              ONLY:STRING_split
     !

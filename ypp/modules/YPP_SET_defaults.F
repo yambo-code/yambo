@@ -47,9 +47,9 @@ subroutine YPP_SET_defaults()
 #if defined _YPP_RT
  use YPP_real_time,  ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_BZ_width,&
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
-&                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes   ,l_RT_occupations,&
-&                         l_RT_time  ,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
-&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format
+&                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes,l_RT_occupations,&
+&                         l_RT_time,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
+&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format,l_RT_G_two_times,X_kind
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
@@ -99,13 +99,14 @@ subroutine YPP_SET_defaults()
  l_RealTime=.FALSE.
  l_RT_DBs  =.FALSE.
  !
- ! Absorption, occupations, lifetimes, density
+ ! Absorption, occupations, lifetimes, density, G_lesser
  !
  l_RT_X           =.FALSE.
  l_RT_abs         =.FALSE.
  l_RT_occupations =.FALSE.
  l_RT_lifetimes   =.FALSE.
  l_RT_density     =.FALSE.
+ l_RT_G_two_times =.FALSE.
  !
  ! PP kind
  !
@@ -145,7 +146,7 @@ subroutine YPP_SET_defaults()
 #if defined _YPP_SC
  l_mean_potential=.false.
 #endif
- l_norm_to_one=.true.
+ l_norm_to_one=.false.
  output_fname=' '
  plot_title=' '
  !
@@ -226,6 +227,7 @@ subroutine YPP_SET_defaults()
  RT_conf%X_W_range(:)  =(/0._SP,20./HA2EV/)
  Probe_Keyword ="none"
  Pump_Keyword  ="none"
+ X_kind        ="rhorho"
  X_order       =1
  n_ext_fields  =1
  !

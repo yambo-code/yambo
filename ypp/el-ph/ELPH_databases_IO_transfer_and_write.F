@@ -44,11 +44,8 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  complex(DP) :: DW_ws_L(n_atoms),DW_ws_R(n_atoms)
  real(SP)    :: E_shift
  !
- if(elph_use_q_grid) then
-   iq=DB_Q_map(IDB)
- else
-   iq=IDB
- endif
+ iq=IDB
+ if (elph_use_q_grid) iq=DB_Q_map(IDB)
  !
  GKKP%dVc=cZERO
  if (allocated(GKKP%dVr)) GKKP%dVr=rZERO

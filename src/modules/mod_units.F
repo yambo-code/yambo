@@ -64,7 +64,7 @@ module UNITS
  real(SP), parameter :: MEGA  =1E6_SP
  real(SP), parameter :: GIGA  =1E9_SP
  real(SP), parameter :: TERA  =1E12_SP
- real(SP), parameter :: PETA  =1E12_SP
+ real(SP), parameter :: PETA  =1E15_SP
  !
  ! LENGTHS
  !=========
@@ -163,6 +163,9 @@ module UNITS
  real(SP), parameter  :: kWCMm22AU=1E7_SP*J2AU/(M2AU**2 * SEC2AU)  ! kW/cm^2 = kWCMm22AU * AU
  real(SP), parameter  :: AU2KWCMm2=1._SP/kWCMm22AU                 ! AU      = AU2KWCMm2 kW/cm^2
  !
+ ! Mass
+ ! =======================
+ real(SP), parameter  :: Da2AU = 1822.888486209                    ! Dalton to Atomic Units
  !
  ! Computer Units
  ! ===============

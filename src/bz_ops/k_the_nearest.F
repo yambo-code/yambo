@@ -59,7 +59,6 @@ integer function k_the_nearest(k_ref,k,n_k,k_dist,ROTATE_k_ref,k_symm,i_err,bord
  endif
  !
  ROTATE_k_ref_=.FALSE.
- nsym_loop=nsym
  if (present(ROTATE_k_ref)) then
    ROTATE_k_ref_=ROTATE_k_ref
  endif

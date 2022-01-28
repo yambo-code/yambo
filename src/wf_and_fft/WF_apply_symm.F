@@ -57,6 +57,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  if(isc(3)==idt_index) then
    !
    call dev_memcpy(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
+   return
    !
  endif
  !

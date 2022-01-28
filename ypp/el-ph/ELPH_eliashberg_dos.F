@@ -64,7 +64,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
  integer, external :: io_Double_Grid
  real(SP), external :: Eliashberg_Dos_Func
  !
- if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.n_met_bands/=n_full_bands
+ if (l_eliashberg) l_eliashberg=elph_gamma_broad>1.E-8.and.any(n_met_bands/=n_full_bands)
  if (l_dos)        l_dos       =ph_broad>1.E-8
  !
  if (l_eliashberg.and.l_dos) then

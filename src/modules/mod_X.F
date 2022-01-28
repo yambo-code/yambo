@@ -101,6 +101,10 @@ module X_m
  logical :: l_recalculate_X=.false.
  character(schlen) :: X_terminator_Kind="none"
  !
+ ! I/O DB
+ ! 
+ integer :: i_X_kind_existing_DB=-1
+ !
  ! I/O parameters
  !
  integer,parameter:: n_MAX_blocks_of_rows=1000 ! Note that in NETCDF the max number of vars is 8192
@@ -142,6 +146,16 @@ module X_m
  end type
  !
  interface
+   !
+   subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)
+     use R_lattice,     ONLY:bz_samp,bz_fine_grid
+     use pars,          ONLY:SP
+     integer                       :: iq
+     type(bz_samp)                 :: k
+     type(bz_fine_grid),intent(in) :: k_FGbz
+     real(SP),            optional :: nTrans_percent,Radius
+   end subroutine
+   !
    logical function OPTICS_eels(wv,nw,be_verbose,ordering,eps,eel)
      use pars,          ONLY:SP
      integer              :: nw 
@@ -150,6 +164,7 @@ module X_m
      character(2)         :: ordering
      complex(SP) ,optional:: eps(nw),eel(nw)
    end function
+   !
  end interface
  !
  contains

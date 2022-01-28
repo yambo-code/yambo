@@ -204,7 +204,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
          !
          do while (CONDITION)
            !
-           call PARALLEL_global_defaults__define_the_basis(NC,BASIS)
+           call PARALLEL_global_defaults_define_the_basis(NC,BASIS)
            !
            if (all(VALS_sorted<BASIS)) exit sc_loop
            if (BASIS>VALS_sorted(i_v)) exit
@@ -232,7 +232,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    !
 end subroutine
 !
-subroutine PARALLEL_global_defaults__define_the_basis(NC,BASIS)
+subroutine PARALLEL_global_defaults_define_the_basis(NC,BASIS)
   implicit none
   integer, intent(in) :: NC
   integer, intent(out):: BASIS

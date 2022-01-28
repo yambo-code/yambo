@@ -32,7 +32,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
+&                        l_rt_carriers_in_use,l_RIM_W
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -49,7 +50,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_par,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V,V_dot_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose,MATRIX_duplicate
@@ -85,7 +87,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer          :: X_rows1,X_rows2,X_cols1,X_cols2,X_nrows,X_ncols
  !
  character(schlen):: ch,SECTION_name,W_name
- logical          :: X_is_TR_rotated,l_X_alloc
+ logical          :: X_is_TR_rotated,l_X_alloc,l_RIM_W_g
  real(SP)         :: eet_cutoff0_sp(n_sp_pol),eet_cutoff0,eet_cutoff1_sp(n_sp_pol),eet_cutoff1
  real(SP)         :: X_ppaE,bose_PPA_E,eet_energy
  real(SP)         :: E_kmq,f_kmq,PPA_E
@@ -103,6 +105,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
  complex(SP), pointer DEV_ATTR :: X_blc_p(:,:,:)
+ real(SP),    pointer DEV_ATTR :: RIM_W_p(:,:,:)
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -122,7 +125,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! COHSEX: bands setup
  !
  if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
-   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
  endif
  !
  ! Section
@@ -141,8 +144,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
- if (GW_iter==0) call section('+',trim(SECTION_name))
- if (GW_iter> 0) call section('=',trim(SECTION_name))
+ if (GW_iter==0) then
+   if(l_RIM_W) then
+     call section('-',trim(SECTION_name))
+   else
+     call section('+',trim(SECTION_name))
+   end if
+ end if
+ if (GW_iter > 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
@@ -257,7 +266,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  X_range2=Xw%n_freqs
  X_ppaE  =X%ppaE
  !
- Q_loop: do iqbz=iq_to_start,q%nbz 
+ Q_loop: do iqbz=iq_to_start,q%nbz
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
@@ -295,14 +304,26 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_ppa) then
          !
-         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+         !$omp parallel do default(shared), private(ig1,ig2,l_RIM_W_g), collapse(2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
-           if (real(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2))<=1._SP) then
-             X_par(iq_mem)%blc(ig1,ig2,X_range2)=X%ppaE
+           !
+           ! RIM W support
+           !
+           l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+           if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+           !
+           if (l_RIM_W_g) then
+             X_par(iq_mem)%blc(ig1,ig2,X_range2)=RIM_W_E(ig1,ig2)
+             !
            else
-             X_par(iq_mem)%blc(ig1,ig2,X_range2)=sqrt(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2)-1)
+             if (real(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2))<=1._SP) then
+               X_par(iq_mem)%blc(ig1,ig2,X_range2)=X_ppaE
+             else
+               X_par(iq_mem)%blc(ig1,ig2,X_range2)=sqrt(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2)-1)
+             endif
            endif
+           !
          enddo
          enddo
          !
@@ -375,6 +396,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      isc_gamp_p => DEV_VAR(isc%gamp)
    endif
    !
+   if(l_ppa.and.l_RIM_W) then
+     RIM_W_p=>DEV_VAR(RIM_W)
+   endif
+   !
    if(l_ppa.and.l_GW_terminator) then
      YAMBO_ALLOC(eet_factor,(X_rows1:X_rows2,X_cols1:X_cols2))
    endif
@@ -422,7 +447,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        if (l_GW_terminator) then
          !
          do is=1,n_sp_pol
-           eet_cutoff0_sp(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff0_sp(is)=minval(E%E(E%nbf(is)+1,:,is))
            eet_cutoff1_sp(is)=minval(E%E(QP_n_G_bands(2),:,is))
          enddo
          eet_cutoff0=minval(eet_cutoff0_sp(:))
@@ -593,14 +618,26 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            dp_dummy = 0.0_DP
            !
            !DEV_CUF kernel do(2)
-           !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), &
-           !DEV_OMP &        reduction(+:dp_dummy)
+           !DEV_OMP parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp,l_RIM_W_g), &
+           !DEV_OMP &        reduction(+:dp_dummy), collapse(2)
            !
            do ig2=X_cols1,X_cols2
            do ig1=X_rows1,X_rows2
              !
              PPA_E= real(X_ppaE/X_blc_p(ig1,ig2,X_range2),kind=SP)
-             PPA_R=-X_blc_p(ig1,ig2,X_range1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
+             !
+             ! RIM W support
+             !
+             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+             if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+             !
+             if (l_RIM_W_g) then
+               PPA_R=-cmplx(RIM_W_p(iqibz,ig1,ig2)/2._SP, &
+&                           aimag(X_blc_p(ig1,ig2,X_range1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
+             else
+               PPA_R=-X_blc_p(ig1,ig2,X_range1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
+             endif
+             
              !
              ! inline bose_f function
              bose_PPA_E=0.
@@ -617,10 +654,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg_iscp_rhotw(ig2)*(-PPA_R)*&
 &                   ( (spin_occ-f_kmq+bose_PPA_E)/(W_i-E_kmq-PPA_E)+&
 &                     (f_kmq+bose_PPA_E)/(conjg(W_i)-E_kmq+PPA_E))
-             !
-!             ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg_iscp%rhotw(ig2)*(-PPA_R)*&
-!&                   ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
-!&                     (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
              !
 #ifdef _CUDA
              dp_dummy_r=dp_dummy_r+real(ctmp,DP)
@@ -639,6 +672,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          enddo
          !
          QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+         !
          !
        else if (l_sc_sex.or.l_cohsex.or.(l_sc_coh.and.COHSEX_use_empties)) then
          !

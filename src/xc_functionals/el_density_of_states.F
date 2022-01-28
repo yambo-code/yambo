@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                               USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
+&                               USE_the_DbGd,USE_Eo,USE_W,USE_occupations,WF_fac,PDOS_fac)
  !
  use pars,           ONLY:SP
  use electrons,      ONLY:levels
@@ -39,26 +39,31 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  real(SP),   intent(in)  :: dos_E,DOS_broadening
  integer,    intent(in)  :: DOS_bands(2)
  real(SP),   intent(out) :: dos_value(n_spin)
- logical,  optional, intent(in) :: USE_Eo,USE_the_DbGd,USE_occupations
+ logical,  optional, intent(in) :: USE_Eo,USE_W,USE_the_DbGd,USE_occupations
  real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
  real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
  !
  ! Work space
  !
  integer   :: i_sp_pol,ik,ik_fg,ib,iE_fg
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin)
- logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin),DOS_Broadening_
+ logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_W_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP
  !
+ USE_the_DbGd_=.FALSE.
+ if (present(USE_the_DbGd))    USE_the_DbGd_=USE_the_DbGd
+ !
  USE_Eo_=.FALSE.
  if (present(USE_Eo))          USE_Eo_=USE_Eo
+ if (.not.allocated(Xen%Eo))   USE_Eo_=.FALSE.
+ if (USE_the_DbGd)             USE_Eo_=.FALSE.
+ !
+ USE_W_=.FALSE.
+ if (present(USE_W))           USE_W_ =USE_W.and.(allocated(Xen%W))
  !
  USE_occ=.FALSE.
  if (present(USE_occupations)) USE_occ=USE_occupations
- !
- USE_the_DbGd_=.FALSE.
- if (present(USE_the_DbGd))    USE_the_DbGd_=USE_the_DbGd
  !
  USE_WFs=.FALSE.
  if (present(WF_fac))          USE_WFs=associated(WF_fac)
@@ -66,8 +71,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  USE_PDOS=.FALSE.
  if (present(PDOS_fac))        USE_PDOS=associated(PDOS_fac)
  !
- if(.not.allocated(Xen%Eo)) USE_Eo_=.FALSE.
- if (USE_the_DbGd)          USE_Eo_=.FALSE.
+ DOS_broadening_=DOS_broadening
  !
  do i_sp_pol=1,n_sp_pol
    !
@@ -85,15 +89,17 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if ( abs(E-dos_E)>20._SP*DOS_broadening ) cycle
        if (USE_occ) f_occ=Xen%f(ib,ik,i_sp_pol)
-       el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening)
+       if (USE_W_)  DOS_broadening_=DOS_broadening+abs(Xen%W(ib,ik,i_sp_pol))
+       el_dos_tmp(i_sp_pol)=f_occ*Xk%weights(ik)*Fermi_fnc_derivative(E-dos_E,DOS_broadening_)
        !
        if (USE_the_DbGd_) then
          !
          do ik_fg=Xk%FGibz%k_range(ik,1)+1,Xk%FGibz%k_range(ik,2)
            iE_fg =Xk%FGibz%E_map(ik_fg)
            if (USE_occ) f_occ=Xen%FG%f(ib,iE_fg,i_sp_pol)
+           if (USE_W_.and.allocated(Xen%FG%W)) DOS_broadening_=DOS_broadening+abs(Xen%FG%W(ib,ik_fg,i_sp_pol))
            el_dos_tmp(i_sp_pol)=el_dos_tmp(i_sp_pol)+f_occ*Xk%FGibz%weights(ik_fg)*&
-&                               Fermi_fnc_derivative(Xen%FG%E(ib,iE_fg,i_sp_pol)-dos_E,DOS_broadening)
+&                               Fermi_fnc_derivative(Xen%FG%E(ib,iE_fg,i_sp_pol)-dos_E,DOS_broadening_)
          enddo
          ! 
        endif

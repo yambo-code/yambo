@@ -38,7 +38,9 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  real(SP):: one_over_magn,mod_mag
  !
  if (n_spin==1) then
-   forall(ifft=1:fft_size) F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v2rho2(1,ifft),SP)
+   do ifft=1,fft_size
+     F_xc(ifft,1,1) = F_xc(ifft,1,1) + real(v2rho2(1,ifft),SP)
+   enddo
  endif
  !
  if (n_sp_pol==2) then
@@ -69,8 +71,6 @@ subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  endif
  !
  if (n_spinor==2) then
-   ! To be coded ...
-   ! Here F_xc has 4 spin indexes. The old one is wrong
    do is1 = 1,n_spinor
      do is2 = 1,n_spinor
        is_xc = xc_spin_map1(is1,is2)

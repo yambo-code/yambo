@@ -39,7 +39,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
- use X_m,           ONLY:X_t
+ use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu
  use it_tools,      ONLY:it_reset
@@ -74,7 +74,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! Local Variables
  !
  integer           ::i_err,i_X_kind
- logical           ::l_sta_X,l_dyn_X,driver_now
+ logical           ::driver_now
  !
  ! Externals
  !
@@ -161,22 +161,11 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  call External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
- ! Logicals for \eps^-1
- !======================
- !
- l_dyn_X = l_em1d .or. (l_optics.and.l_chi) .or. (l_life.and.l_elel_corr) .or. l_ppa
- l_sta_X = l_em1s .or. (l_optics.and.l_bse)
- !
- i_X_kind=1
- if ( l_real_time .or. l_sc_run) i_X_kind=1
- if ( l_sta_X .and. .not.l_ppa ) i_X_kind=2
- if ( l_dyn_X .and. .not.l_ppa ) i_X_kind=3
- if (                    l_ppa ) i_X_kind=4
- !
  ! DIPOLES
  !=========
  !
- driver_now= l_sta_X.or.l_dyn_X.or.l_dipoles.or.l_real_time.or.l_sc_run.or.l_nl_optics
+ driver_now= any((/l_em1d,l_em1s,l_ppa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
+&                  l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
  if (driver_now) call mem_manager_report
@@ -191,6 +180,17 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================
+ !
+ ! ... select the response function kind
+ i_X_kind=0
+ if ( l_real_time .or. l_sc_run           ) i_X_kind=1
+ if ( l_em1s                              ) i_X_kind=2
+ if ( l_em1d .or.(l_life.and.l_elel_corr) ) i_X_kind=3
+ if ( l_ppa                               ) i_X_kind=4
+ if ( i_X_kind==0 ) then
+   i_X_kind=1
+   if ( i_X_kind_existing_DB >0 ) i_X_kind=i_X_kind_existing_DB
+ endif
  !
  driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa
  !

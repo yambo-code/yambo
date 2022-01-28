@@ -377,6 +377,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 end function X_dielectric_matrix
 !
 !
+!
+!> @brief Check which directions are periodic to perform the average
+!!
+!! @param[in]       q0(3)               direction to check
+!!
+!! @param[out]      qdirs(3,3)
+!! @param[out]      nq_dir_average      number of direction to average
+!
 subroutine X_check_average_directions(q0,nq_dir_average,qdirs)
  !
  use pars,          ONLY:SP
@@ -426,6 +434,17 @@ subroutine X_check_average_directions(q0,nq_dir_average,qdirs)
  !
 end subroutine X_check_average_directions
 !
+!
+!
+!> @brief Calculate the average of the X at q=0
+!!
+!! @param[in]       iq_dir              cartesian direction index
+!! @param[in]       nq_dir_average      number of direction to average
+!! @param[in]       ng                  number of plane-waves
+!! @param[in]       nw                  number of frequencies
+!!
+!! @param[out]      X_par_tmp           temporary array to store the average 
+!! @param[inout]    X_par               X in the different direction, that is replace with the average
 !
 subroutine X_par_average(iq_dir,nq_dir_average,ng,nw,X_par_tmp,X_par)
  !

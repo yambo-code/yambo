@@ -51,20 +51,16 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  integer :: ID_BS,io_err
  character(lchlen) :: jobstr_save
  !
+ if(index(Ltype,'Lout')>0.and.Lout_path/='none') then
+   jobstr_save=jobstr
+   jobstr     =trim(Lout_path)
+ endif
+ !
  if(index(what,'check')>0) then
-   !
-   if(index(Ltype,'Lout')>0.and.Lout_path/='none') then
-      jobstr_save=jobstr
-      jobstr     =trim(Lout_path)
-   endif
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID_BS)
    io_err=io_BSS_diago(iq_bse,1,ID_BS,X)
-   if(io_err/=0) call error(" Error loading "//trim(Ltype))
-   !
-   if(index(Ltype,'Lout')>0.and.Lout_path/='none') then
-      jobstr     =jobstr_save
-   endif
+   if(io_err/=0) call error(" Error checking "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
    !
    if (BS_res_ares_n_mat/=1) call error("Excitonic Gkkp: anti-resonant part not implemented")
    !
@@ -74,7 +70,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    !
    if(EXCPH_states(2)>BSS_n_eig) call error("Number of exc. states in the excphon coupling must         <= number of BSE eigenstates")
    !
-   if(EXCPH_sum(2)>BS_H_dim)     call error("Number of virtual exc. states in the excphon coupling must <= than the size of the exc. Hamiltonian")
+   if(EXCPH_sum(2)>BS_H_dim)     call error("Number of virtual exc. states in the excphon coupling must <= size of the exc. Hamiltonian")
    !
    if(iq_bse==1) call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))
    !
@@ -82,8 +78,12 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,3/),ID=ID_BS)
    io_err=io_BSS_diago(iq_bse,1,ID_BS,X)
-   if(io_err/=0) call error(" Error loading the Lin ")
+   if(io_err/=0) call error(" Error loading "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
    !
+ endif
+ !
+ if(index(Ltype,'Lout')>0.and.Lout_path/='none') then
+   jobstr     =jobstr_save
  endif
  !
 end subroutine EXCPH_load_L

@@ -97,10 +97,19 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_Gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
  !
+ ! Check if Lout is present
+ ! 
+ call EXCPH_load_L(1,X,'check','Lout')
+ !
  ! Main q-loop
  !
  call live_timing('Excitonic Gkkp',q%nibz*(elph_branches(2)-elph_branches(1)+1))
+ !
  do iq=1,q%nibz
+   ! 
+   if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
+   call EXCPH_load_L(iq,X,'load','Lout')
+   !
    do il=elph_branches(1),elph_branches(2)
      call live_timing(steps=1)
    enddo

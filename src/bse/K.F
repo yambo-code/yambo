@@ -528,7 +528,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            i_kmq_bz_last=i_kmq_bz 
            if (i_kmq_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID_frag) 
              iq_W_bz_mq=qindx_tmp(1) 
              ig_W_mq   =qindx_tmp(2) 
              !$omp end critical 

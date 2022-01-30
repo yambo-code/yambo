@@ -60,6 +60,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  !                                    ->ivp [Calculate Xi(1)]
  !                                    ->icp [Calculate Xi(2)]
  !                                    ->i_alpha ->i_H [Calculate Gkkp]
+ Xi=cZERO
  !
  do i_beta=EXCPH_sum(1),EXCPH_sum(2)
    !
@@ -152,7 +153,9 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
    !
  enddo !Loop i_beta
  !
- call compute_squared_couplings()
+ ! Compute the squared couplings
+ !
+ EXCPH_Gkkp_sq(il,:,:)=EXCPH_Gkkp(il,:,:)*conjg(EXCPH_Gkkp(il,:,:))
  !
  contains
    !
@@ -170,22 +173,5 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
        elemental_scattering = k%k_table(i_k_IBZ, sop_tab(sop_inv(i_q_SYM),i_k_SYM) )
        !
    end function
-   !
-   subroutine compute_squared_couplings()
-       !
-       integer :: i_alpha,i_beta
-       !
-       do i_alpha=EXCPH_states(1),EXCPH_states(2)
-         !
-         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-           !
-           EXCPH_Gkkp_sq(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)+&
-&                                             EXCPH_Gkkp(il,i_beta,i_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
-           !
-         enddo
-         !
-       enddo
-       !
-   end subroutine
    !
 end subroutine

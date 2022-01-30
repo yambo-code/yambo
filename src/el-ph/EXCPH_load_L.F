@@ -33,7 +33,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  use R_lattice,      ONLY:bz_samp
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_Gkkp,EXCPH_Gkkp_sq,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,Lout_path
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,Lout_path,L_kind_in,L_kind_out
  use IO_int,         ONLY:io_control
  use stderr,         ONLY:intc
  use X_m,            ONLY:X_t
@@ -72,7 +72,16 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    !
    if(EXCPH_sum(2)>BS_H_dim)     call error("Number of virtual exc. states in the excphon coupling must <= size of the exc. Hamiltonian")
    !
-   if(iq_bse==1) call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))
+   if(iq_bse==1) then
+     call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))
+     if(index(Ltype,'Lout')>0) then
+       L_kind_out=L_kind
+       call msg('rs','L kind out'//trim(L_kind_out))
+     elseif(index(Ltype,'Lin')>0) then
+       call msg('rs','L kind in'//trim(L_kind_in))
+       L_kind_in =L_kind
+     endif
+   endif
    !
  elseif(index(what,'load')>0) then
    !      

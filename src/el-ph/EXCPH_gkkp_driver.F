@@ -36,7 +36,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use IO_int,         ONLY:io_control
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
+ use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,L_kind_in,L_kind_out,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
@@ -95,7 +95,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Write headers
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  !
  ! Check if Lout is present
  ! 
@@ -123,7 +123,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    ! I/O
    !=====
    call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    !
  enddo
  call live_timing( )

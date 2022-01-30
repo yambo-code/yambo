@@ -28,7 +28,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts,cut_geometry
- use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,&
+ use BS,            ONLY:BS_identifier,BS_K_dim,BS_bands,L_kind,&
 &                        BS_K_coupling,BS_res_K_exchange,BS_res_K_corr,&
 &                        BS_n_g_exch,BS_n_g_W,BS_eh_en,BS_eh_win,BS_W_is_diagonal,&
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,&
@@ -37,6 +37,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use IO_int,        ONLY:def_variable_elemental,io_variable_elemental
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use parallel_m,    ONLY:master_cpu
+ use IO_int,        ONLY:ver_is_gt_or_eq
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif
@@ -122,6 +123,11 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  call def_variable_elemental(ID,"CPL_RANGE",2,SP,0)
  call io_variable_elemental(ID,&
 &     VAR="[K] Coupling range",TERMINATOR="[o/o]",R1=BS_eh_win,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=desc)
+ !
+ if(ver_is_gt_or_eq(ID,revision=21261)) then
+   call def_variable_elemental(ID,"L_kind",1,0,0)
+   call io_variable_elemental(ID,VAR='[K] L kind',CH0=L_kind,CHECK=.true.,DESCRIPTOR=desc)
+ endif
  !
  ! Interaction
  !

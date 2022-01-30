@@ -40,6 +40,11 @@ module EXCPH
  character(lchlen)       :: Lin_path 
  character(lchlen)       :: Lout_path 
  !
+ ! L types
+ !
+ character(schlen)       :: L_kind_in
+ character(schlen)       :: L_kind_out 
+ !
  ! ExcPH gkkp
  ! 
  complex(SP),allocatable :: A_rot(:,:),Xi(:,:,:)

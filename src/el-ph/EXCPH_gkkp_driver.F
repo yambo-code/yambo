@@ -36,7 +36,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use IO_int,         ONLY:io_control
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,L_kind_in,L_kind_out,&
+ use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing

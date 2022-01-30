@@ -76,10 +76,10 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
      call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))
      if(index(Ltype,'Lout')>0) then
        L_kind_out=L_kind
-       call msg('rs','L kind out'//trim(L_kind_out))
+       call msg('rs','L kind out: '//trim(L_kind_out))
      elseif(index(Ltype,'Lin')>0) then
-       call msg('rs','L kind in'//trim(L_kind_in))
        L_kind_in =L_kind
+       call msg('rs','L kind  in: '//trim(L_kind_in))
      endif
    endif
    !

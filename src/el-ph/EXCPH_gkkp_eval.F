@@ -25,9 +25,9 @@
 ! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
 ! - FP
 !
-subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X)
+subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP,cZERO,rZERO
  use drivers,        ONLY:l_EXCPH_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab
@@ -38,20 +38,20 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X)
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_Gkkp,EXCPH_Gkkp_sq,Xi,&
+ use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table
 #include<memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::k,q
  type(X_t)     ::X
- integer, intent(in) :: iq,il
+ integer, intent(in)    :: iq,il
+ integer, intent(inout) :: ID_gkkp
  !
  ! Work Space
  !
  integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_star,iq_bz,i_H,i_Hp,i_alpha,&
 &                           iv,ic,ik_bz,ivp,icp,iq_s,i_beta,ip_bz,ik_plus_iq_bz
- integer, save           :: ID_gkkp
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
  !
@@ -75,6 +75,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X)
      !
      call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_gkkp)
      io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+     if(io_err/=0) call error(" Error reading gkkp_expanded") 
      !
      ph_E=sqrt(abs(ph_freqs_sq(iq_bz,il)))
      !
@@ -99,7 +100,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
          !
-         elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_bz,1)/sqrt(2.*ph_E)
+         elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_bz,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp/=0) then
            Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
@@ -120,7 +121,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          !
-         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ip_bz,1)/sqrt(2.*ph_E)
+         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ip_bz,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp/=0) then
            Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))

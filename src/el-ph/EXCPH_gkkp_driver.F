@@ -36,7 +36,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use IO_int,         ONLY:io_control
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_Gkkp,EXCPH_Gkkp_sq,&
+ use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
@@ -85,7 +85,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call build_inverse_eh_table()
  !
- ! Load gkkp
+ ! Check if gkkp_expanded is present
  !
  call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
@@ -94,7 +94,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Write headers
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_Gkkp)
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
  !
  ! Check if Lout is present
@@ -110,14 +110,20 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
    call EXCPH_load_L(iq,X,'load','Lout')
    !
+   EXCPH_gkkp   =cZERO
+   EXCPH_gkkp_sq=rZERO
+   !
    do il=elph_branches(1),elph_branches(2)
+     !
+     call  EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
      call live_timing(steps=1)
+     !
    enddo
    !
    ! I/O
    !=====
-   call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_Gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_Gkkp,'excitonic_Gkkp')
+   call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_gkkp)
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
    !
  enddo
  call live_timing( )

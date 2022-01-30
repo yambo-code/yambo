@@ -29,7 +29,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  use pars,           ONLY:SP,cZERO,rZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,qindx_B_load
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
@@ -38,7 +38,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
- use stderr,         ONLY:intc
  use com,            ONLY:msg
  !
 #include<memory.h>
@@ -49,8 +48,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Work Space
  !
- integer :: ID_BS,io_err
- complex(SP),allocatable :: BS_E(:),A_rot(:,:),Xi(:,:,:)
+ complex(SP),allocatable :: A_rot(:,:),Xi(:,:,:)
  integer,    allocatable :: BSS_eh_table_m1(:,:,:),k_plus_q_table(:,:)
  !
  call timing('EXCPH_gkkp',OPR='start')
@@ -67,9 +65,23 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call EXCPH_load_L(1,X,'load','Lin')
  !
+ ! Save the Lin in BS_mat_in
+ ! 
  BS_mat_in=BS_mat(:,EXCPH_states(1):EXCPH_states(2))
  BSS_eh_table_in=BSS_eh_table(EXCPH_states(1):EXCPH_states(2),:)
  !
+ ! Alloage EXCPH_gkkp
+ !
+ call EXCPH_gkkp_alloc()
+ !
+ ! K plus q table
+ !
+ call build_k_plus_q_table()
+ !
+ ! BSS_eh_table_m1
+ !
+ call build_inverse_eh_table()
+ ! 
  call timing('EXCPH_gkkp',OPR='stop')
  !
  return
@@ -91,5 +103,55 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BSS_eh_table_m1 = 0
      !
    end subroutine BSE_alloc
+   !
+   subroutine EXCPH_gkkp_alloc()
+     YAMBO_ALLOC(EXCPH_Gkkp,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Gkkp_sq,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(Xi,(BS_H_dim,EXCPH_sum(1):EXCPH_sum(2),2))    
+   end subroutine EXCPH_gkkp_alloc
+   !
+   subroutine build_k_plus_q_table()
+     !      
+     integer, external ::qindx_B_init,qindx_B_close 
+     integer :: qindx_ID,qindx_ID_frag,qindx_tmp(2)
+     integer :: ik_bz,iq_bz,ip_bz
+     !
+     call live_timing('K plus q table',k%nbz)
+     qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag)
+     do ik_bz=1,k%nbz
+       call live_timing(steps=1)
+       IQ_bz_loop: do iq_bz=1,q%nbz
+         do ip_bz=1,k%nbz
+           qindx_tmp=qindx_B_load(ip_bz,ik_bz,qindx_ID_frag)
+           if (qindx_tmp(1)==iq_bz) then
+             k_plus_q_table(ik_bz,iq_bz)=ip_bz
+             cycle IQ_bz_loop
+           endif
+         enddo
+       enddo IQ_bz_loop
+     enddo
+     qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+     call live_timing( )
+     !
+   end subroutine build_k_plus_q_table
+   !
+   subroutine build_inverse_eh_table()
+     !
+     integer :: iv,ic,i_H,ik_bz
+     !     
+     call live_timing('BSE inverse eh-table',BS_H_dim)
+     do i_H=1,BS_H_dim
+       !
+       ik_bz = BSS_eh_table(i_H,1)
+       iv    = BSS_eh_table(i_H,2)
+       ic    = BSS_eh_table(i_H,3)
+       !
+       BSS_eh_table_m1(ik_bz,iv,ic)=i_H
+       call live_timing(steps=1)
+       !
+     enddo
+     call live_timing( )
+     !
+   end subroutine build_inverse_eh_table
    !
 end subroutine

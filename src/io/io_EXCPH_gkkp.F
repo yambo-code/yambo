@@ -52,7 +52,7 @@ integer function io_EXCPH_gkkp(ID,what)
  !
  ! DB name
  !
- db_name='excph_Gkkp'
+ db_name='excph_gkkp'
  !
  if (index(what,'excitonic_SE')>0) l_exc_SE = .true.
  !

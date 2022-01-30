@@ -34,8 +34,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
  use ELPH,           ONLY:ph_freqs_sq,elph_branches
+ use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
+ use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_Gkkp,EXCPH_Gkkp_sq,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -48,8 +50,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Work Space
  !
- complex(SP),allocatable :: A_rot(:,:),Xi(:,:,:)
- integer,    allocatable :: BSS_eh_table_m1(:,:,:),k_plus_q_table(:,:)
+ integer, external :: io_ELPH,io_EXCPH_gkkp
+ integer :: ID_gkkp,ID_exc_gkkp,io_err
+ integer :: il,iq
  !
  call timing('EXCPH_gkkp',OPR='start')
  !
@@ -81,6 +84,34 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! BSS_eh_table_m1
  !
  call build_inverse_eh_table()
+ !
+ ! Load gkkp
+ !
+ call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+ call deliver_IO_error_message(io_err,"GKKP")
+ if (io_err/=0) call error('El-Ph database not found')
+ !
+ ! Write headers
+ !
+ call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_Gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp,'excitonic_Gkkp')
+ !
+ ! Main q-loop
+ !
+ call live_timing('Excitonic Gkkp',q%nibz*(elph_branches(2)-elph_branches(1)+1))
+ do iq=1,q%nibz
+   do il=elph_branches(1),elph_branches(2)
+     call live_timing(steps=1)
+   enddo
+   !
+   ! I/O
+   !=====
+   call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_Gkkp)
+   io_err=io_EXCPH_gkkp(ID_exc_Gkkp,'excitonic_Gkkp')
+   !
+ enddo
+ call live_timing( )
  ! 
  call timing('EXCPH_gkkp',OPR='stop')
  !

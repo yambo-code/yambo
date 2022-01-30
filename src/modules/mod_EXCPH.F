@@ -40,7 +40,13 @@ module EXCPH
  character(lchlen)       :: Lin_path 
  character(lchlen)       :: Lout_path 
  !
+ ! ExcPH gkkp
+ ! 
+ complex(SP),allocatable :: A_rot(:,:),Xi(:,:,:)
+ integer,    allocatable :: BSS_eh_table_m1(:,:,:),k_plus_q_table(:,:)
+ !
  ! ... Sigma
+ !
  complex(SP), allocatable :: BS_Sat_E(:,:,:)
  complex(SP), allocatable :: BS_Sat_E_PH_abs(:,:,:)
  real(SP),    allocatable :: BS_Sat_WEIGHT(:,:,:)

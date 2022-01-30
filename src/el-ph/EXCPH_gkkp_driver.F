@@ -39,6 +39,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_Gkkp,EXCPH_Gkkp_sq,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind
  use LIVE_t,         ONLY:live_timing
+ use timing_m,       ONLY:timing
  !
 #include<memory.h>
  !
@@ -48,7 +49,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Work Space
  !
- call section('-','Excitonic Gkkp matrix elements')
+ call timing('EXCPH_gkkp',OPR='start')
+ !
+ call section('*','Excitonic gkkp')
  !======================================
+ !
+ call timing('EXCPH_gkkp',OPR='stop')
+ !
+ return
  !
 end subroutine

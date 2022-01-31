@@ -93,7 +93,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
      do ok_bz=1,k%nbz
        !
-       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
        if (iq_bz==iq) then
@@ -166,7 +166,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
      do ok_bz=1,k%nbz
        !
-       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
        if (iq_bz==iq) then

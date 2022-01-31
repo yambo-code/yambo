@@ -416,7 +416,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
+   call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    ! Transition Loops
    !------------------

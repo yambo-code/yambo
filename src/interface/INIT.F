@@ -366,7 +366,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
-         l_EXCPH_Sigma=runlevel_is_on('ExcPhSigma').and.io_ELPH_err(2)==0
+         l_EXCPH_Sigma=runlevel_is_on('ExcPhSigma')
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')

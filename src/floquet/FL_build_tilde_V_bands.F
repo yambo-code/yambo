@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_build_tilde_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
+subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
  !
  ! Build the \tilde Valence bands as defined in Eq. 53 of
  ! PRB 69, 085106 (2004), in terms of Kohn-Sham orbitals
@@ -44,17 +44,19 @@ subroutine FL_build_tilde_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_til
  integer,      intent(in)      :: i_sp
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
- complex(SP),  intent(out)     :: V_tilde(en%nbf,H_ref_bands(2),2)
  complex(SP),  intent(in)      :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
  complex(SP),  intent(out)     :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_fl_modes,en%nbf,2) !2 for plus and minus
  !
  ! Work Space
  !
- integer :: i2,iv1,im,idx(3),id,ikp,ikm
- integer :: ikm_ibz,ikp_ibz
- complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf),tmp_Vm(H_ref_bands(2),en%nbf)
+ integer     :: i2,iv1,im,idx(3),id,ikp,ikm
+ integer     :: ikm_ibz,ikp_ibz
+ complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf,n_tot_fl_modes),tmp_Vm(H_ref_bands(2),en%nbf,n_tot_fl_modes)
+ integer     :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
+ complex(SP) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_fl_modes)
+ complex(SP) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_fl_modes)
  !
- V_tilde=cZERO
+ FL_V_tilde=cZERO
  !
  if(k_map%max_kdir(id_red)==1) return
  !
@@ -73,30 +75,25 @@ subroutine FL_build_tilde_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_til
  ikm_ibz=Xk%sstar(ikm,1)
  ikp_ibz=Xk%sstar(ikp,1)
  !
- ! Construct \tilde V_bands(k,k+delta) and \tilde V_bands(k,k-delta)
- !
- ! Build Vp and Vm (stored in tmp_Vp and tmp_Vm)
- !
- ! m,n indexes on valence bands
- !
- ! i,j indexes on all bands CMR basis
- !
- ! Vp(m,i) = \sum_{j} S(k,K+delta)_{i,j}   V(m,j)
- !
- ! Vm(m,i) = \sum_{j} S^H(k-delta,K)_{j,i} V(m,j)
- !
  ! 
- ! Build \tilde V(k+delta) - \tilde V(k-delta)
- ! ===========================================
- ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
+ call FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i_sp,ikbz)
  ! 
- call M_by_M_omp('N','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
-&  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
-&  V_bands(:,:,ikp_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:),H_ref_nbands)
- !
- call M_by_M_omp('C','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
-&  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
-&  V_bands(:,:,ikm_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:),H_ref_nbands)
+ ! 
+ ! 
+ do i1_fl=1,n_tot_fl_modes !gamma1
+   !
+   call M_by_M_omp('N','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
+  &  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
+  &  FL_V_bands(:,i1_fl,:,ikp_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:,i1_fl),H_ref_nbands)
+   !
+   ! aim137: las dos instancias de H_ref_bands(1): son "j" en mis ecuaciones. o sea, la dim del H.
+   ! aim137: pero recordar que al final el H va de H_ref_bands(1) a H_ref_bands(2)
+   !
+   call M_by_M_omp('C','N',H_ref_nbands,en%nbf,H_ref_bands(2),cONE,  &
+  &  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
+  &  FL_V_bands(:,i1_fl,:,ikm_ibz,i_sp),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:,i1_fl),H_ref_nbands)
+   !
+ enddo
  !
  ! Build \tilde V(k+delta) - \tilde V(k-delta)
  ! ===========================================
@@ -105,10 +102,15 @@ subroutine FL_build_tilde_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_til
 !$omp parallel do default(shared), private(i2,iv1)
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf
-     V_tilde(iv1,i2,1)=sum( Sm1_plus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:)) 
-     V_tilde(iv1,i2,2)=sum(Sm1_minus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:))
+     do i1_fl=1,n_tot_fl_modes
+       do i2_fl=1,n_tot_fl_modes
+         FL_V_tilde(i2,i1_fl,i2_fl,iv1,1)=sum( FL_Sm1_Duffin_plus(:,iv1,i2_fl)*tmp_Vp(i2,:,i1_fl)) 
+         FL_V_tilde(i2,i1_fl,i2_fl,iv1,2)=sum(FL_Sm1_Duffin_minus(:,iv1,i2_fl)*tmp_Vm(i2,:,i1_fl))
+                                                      !aim137: en ^, como elijo aca una columna y no la otra?
+       enddo
+     enddo
    enddo
  enddo
 !$omp end parallel do
  !
-end subroutine FL_build_tilde_bands
+end subroutine FL_build_tilde_V_bands

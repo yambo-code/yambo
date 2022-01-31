@@ -80,9 +80,9 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      !
      do istep=1,max_step
        !
-       ! call Build_tilde_vbands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
+       call FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
        ! aim137 forn now:
-       FL_V_tilde = cZERO
+       ! FL_V_tilde = cZERO
        !
        ! Build the W operator as
        !
@@ -173,6 +173,8 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
    endif
    !
  enddo ! loop on id_red
+     
+
  !
  ! Make an Hermitian operator
  !

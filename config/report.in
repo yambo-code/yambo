@@ -82,3 +82,5 @@
 # [ F77U] @FUFLAGS@ @CUDA_FLAGS@
 # [Cmain] @FCMFLAG@
 #
+# You can modify compilers and flags by editing the file "config/setup"
+#

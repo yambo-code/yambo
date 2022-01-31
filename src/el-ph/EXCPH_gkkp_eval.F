@@ -33,7 +33,8 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab
  use R_lattice,      ONLY:nqibz,bz_samp,qindx_B_load
  use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BS_mat,BSS_eh_table,BSS_free,BSS_write_eig_2_db
- use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
+ use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
+&                         deliver_IO_error_message,manage_action,RD
  use IO_int,         ONLY:io_control
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
@@ -51,7 +52,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  ! Work Space
  !
  integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_star,iq_bz,i_H,i_Hp,i_alpha,&
-&                           iv,ic,ik_bz,ivp,icp,iq_s,i_beta,ip_bz,ik_plus_iq_bz
+&                           iv,ic,ik_bz,ivp,icp,iq_s,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
  !
@@ -62,25 +63,28 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  !                                    ->i_alpha ->i_H [Calculate Gkkp]
  Xi=cZERO
  !
- do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+ do i_star=1,q%nstar(iq)
    !
-   do i_star=1,q%nstar(iq)
-     !
-     iq_s=q%star(iq,i_star)
-     !
-     iq_bz = q%k_table(iq, iq_s)
-     !
-     ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
-     !
-     ! with k and q in the BZ
-     !
-     call io_control(ACTION=RD_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_gkkp)
-     io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
-     if(io_err/=0) call error(" Error reading gkkp_expanded") 
-     !
-     ph_E=sqrt(abs(ph_freqs_sq(iq_bz,il)))
-     !
-     if (abs(ph_E)<FAN_deltaE_treshold) cycle
+   iq_s=q%star(iq,i_star)
+   !
+   iq_bz = q%k_table(iq, iq_s)
+   !
+   ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
+   !
+   ! with k and q in the BZ
+   !
+   IO_ACT=manage_action(RD,iq_bz,1,q%nbz)
+   if(il==elph_branches(2).and.i_star==q%nstar(iq)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+   !
+   call io_control(ACTION=IO_ACT,SEC=(/iq_bz+1/),ID=ID_gkkp)
+   io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+   if(io_err/=0) call error(" Error reading gkkp_expanded") 
+   !
+   ph_E=sqrt(abs(ph_freqs_sq(iq_bz,il)))
+   !
+   if (ph_E<FAN_deltaE_treshold) cycle
+   !
+   do i_beta=EXCPH_sum(1),EXCPH_sum(2)
      !
      do i_H=1,BS_H_dim
        !
@@ -149,13 +153,15 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
      !
      Xi=cZERO
      !
-   enddo !Loop i_star
+   enddo !Loop i_beta
    !
- enddo !Loop i_beta
+ enddo !Loop i_star
  !
  ! Compute the squared couplings
  !
- EXCPH_Gkkp_sq(il,:,:)=EXCPH_Gkkp(il,:,:)*conjg(EXCPH_Gkkp(il,:,:))
+ forall(i_alpha=EXCPH_states(1):EXCPH_states(2),i_beta=EXCPH_sum(1):EXCPH_sum(2))
+   EXCPH_Gkkp_sq(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
+ end forall
  !
  contains
    !

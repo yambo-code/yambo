@@ -33,8 +33,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
- use ELPH,           ONLY:ph_freqs_sq,elph_branches
- use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
+ use ELPH,           ONLY:elph_branches
+ use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message,REP
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
@@ -87,7 +87,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Check if gkkp_expanded is present
  !
- call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID_gkkp)
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  call deliver_IO_error_message(io_err,"GKKP")
  if (io_err/=0) call error('El-Ph database not found')

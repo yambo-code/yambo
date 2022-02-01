@@ -43,7 +43,7 @@ configure-stamp: uncompress-stamp
 	  cd $(PACKAGE);  \
 	  unset PETSC_DIR; \
 	  unset PETSC_ARCH; \
-	  python ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
+	  python3 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
 	

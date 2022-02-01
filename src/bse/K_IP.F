@@ -397,7 +397,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    !  N = molecular density = ??
    !  SPEED_OF_LIGHT =  c in a.u.
    !
-   X_dichroism(:,3)=X_dichroism(:,3)*(-1/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
+   X_dichroism(:,3)=X_dichroism(:,3)*(cI/SPEED_OF_LIGHT)*Co_factor/(4._SP*pi)   !  this is (omega/c)*beta, with beta=-((i*hbar*me)/(omega*qe^2))*G_ij
    !
  endif
  !

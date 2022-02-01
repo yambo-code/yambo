@@ -142,7 +142,7 @@ module fl_optics
 !type(IO_desc)             :: NL_desc
  !
  !aim137 new variables
- integer                   :: max_fl_mode=3 ! momentaneamente fijo
+ integer                   :: max_fl_mode=5 ! momentaneamente fijo
  integer                   :: n_tot_fl_modes
  integer                   :: FL_space_dim,FL_states(2)
  !

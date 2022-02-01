@@ -23,11 +23,11 @@
 !
 subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i_sp,ikbz)
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,cZERO,cONE,pi
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,k_map
  use fl_optics,      ONLY:FL_S_plus,FL_S_minus,n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states
- use wrapper_omp,    ONLY:M_by_M_omp
+ use wrapper_omp,    ONLY:M_by_M_omp,M_by_V_omp
  !
  implicit none
  !
@@ -46,16 +46,42 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  complex(SP) :: FL_Duffin_Gmatrix_plus(en%nbf,en%nbf,n_tot_fl_modes,n_tot_fl_modes)
  complex(SP) :: FL_Duffin_Gmatrix_minus(en%nbf,en%nbf,n_tot_fl_modes,n_tot_fl_modes)
  complex(SP) :: tmp_M(en%nbf,en%nbf)
+ complex(SP) :: test_mat_1(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
+ complex(SP) :: test_mat_2(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf*n_tot_fl_modes)
+ complex(SP) :: vector_b(en%nbf*n_tot_fl_modes)
+ complex(SP) :: vtmp(en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_fl_modes)
  complex(SP) :: trace_over_dim,sum_minus_trace
  real(SP)    :: time
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,ikm
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks,i1_inverted_fl
+ logical :: l_solver_linear_problem
  !
+ !
+ ! Using an example matrix
+ ! =======================
+ !
+FL_S_plus = cZERO
+FL_S_plus(1,1,1+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
+FL_S_plus(1,1,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
+FL_S_plus(1,2,5+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
+FL_S_plus(1,2,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
+FL_S_plus(2,1,2+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
+FL_S_plus(2,1,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
+FL_S_plus(3,3,1+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
+FL_S_plus(3,3,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
+FL_S_plus(3,4,5+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
+FL_S_plus(3,4,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
+FL_S_plus(4,3,2+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
+FL_S_plus(4,3,0+max_fl_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
+do i1_fl=1,n_tot_fl_modes
+  if (mod(i1_fl,2) == 1) FL_S_plus(2,2,i1_fl,id_red+(istep-1)*3,ikbz,i_sp) = 2 / (pi*i1_fl)*(-1)**((i1_fl-1)/2)
+  if (i1_fl == 0)  FL_S_plus(2,2,i1_fl,id_red+(istep-1)*3,ikbz,i_sp) = 4
+enddo
  !
  ! Build G matrix
  ! ======================
@@ -102,19 +128,21 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      do i1_fl=1,n_tot_fl_modes
        do i2_fl=1,n_tot_fl_modes
          !
-         i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-         i2_fks = i2_fl + (i2-1)*n_tot_fl_modes
+         i1_fks = i1_fl + (i2-1)*n_tot_fl_modes ! note i2
+         i2_fks = i2_fl + (i1-1)*n_tot_fl_modes ! note i1
          !
+         !                                                               !aim137 i1,i2 o i2,i1?
          FL_Duffin_BIG_MATRIX_plus(i1_fks,i2_fks)=FL_Duffin_Gmatrix_plus(i1,i2,i1_fl,i2_fl)
          FL_Duffin_BIG_MATRIX_minus(i1_fks,i2_fks)=FL_Duffin_Gmatrix_minus(i1,i2,i1_fl,i2_fl)
          !
+         !aim137 creo que esto esta mal, creo que me falta transponer, o al menos transponer i1 e i2
        enddo
      enddo
    enddo
  enddo
  ! 
  ! 
- do i2=1,en%nbf
+ do i_m=1,en%nbf ! solving column m of F <=> row m of H
    !
    ! Build Duffin BIG VECTORS
    ! ========================
@@ -125,19 +153,49 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
      !
-     FL_Duffin_BIG_VECTOR_plus(i1_fks)  = conjg(FL_S_plus(i1,i2,i1_inverted_fl,id_red+(istep-1)*3,ikbz,i_sp))
-     FL_Duffin_BIG_VECTOR_minus(i1_fks) = conjg(FL_S_minus(i1,i2,i1_inverted_fl,id_red+(istep-1)*3,ikbz,i_sp))
+     FL_Duffin_BIG_VECTOR_plus(i1_fks)  = conjg(FL_S_plus(i1,i_m,i1_fl,id_red+(istep-1)*3,ikbz,i_sp))
+     FL_Duffin_BIG_VECTOR_minus(i1_fks) = conjg(FL_S_minus(i1,i_m,i1_fl,id_red+(istep-1)*3,ikbz,i_sp))
+     !aim137 this is just conjg, not transpose.
      !
      enddo
    enddo
    ! 
-   ! Solve linear problem
-   ! ====================
-   !
-   call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus)
-   call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus)
-   !aim137: I understand A x = b returns b in the variable where x was passed on
-   !
+!  ! Solve linear problem
+!  ! ====================
+   l_solver_linear_problem = .false.
+!  !
+   if (l_solver_linear_problem) then
+           ! this needs fixing, I don't get to the same as with inversion.
+!    !aim137 debug
+!    vector_b=FL_Duffin_BIG_VECTOR_plus
+!    !aim137 debug
+!    !
+                                            ! this needs fixing, I don't get to the same as with inversion.
+     call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus)
+     call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus)
+     !aim137: I understand A x = b returns b in the variable where x was passed on
+     !
+!    !aim137 debug
+!      do i1=1,en%nbf*n_tot_fl_modes
+!      trace_over_dim=0
+!      do i1_fl=1,en%nbf*n_tot_fl_modes
+!      trace_over_dim=trace_over_dim+FL_Duffin_BIG_MATRIX_plus(i1,i1_fl)*FL_Duffin_BIG_VECTOR_plus(i1_fl)
+!      enddo
+!      print*, trace_over_dim - vector_b(i1)
+!      enddo
+!    !aim137 debug
+   else
+     !
+     call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_plus,trace_over_dim,.false.)
+     call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_minus,trace_over_dim,.false.)
+     !
+     call M_by_V_omp('N',en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus,vtmp)
+     FL_Duffin_BIG_VECTOR_plus = vtmp
+     call M_by_V_omp('N',en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus,vtmp)
+     FL_Duffin_BIG_VECTOR_minus = vtmp
+     !
+     !
+   end if
    !
    ! Scatter to Inverse matrix
    !
@@ -146,19 +204,19 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      !
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      !
-     FL_Sm1_Duffin_plus(i1,i2,i1_fl) = FL_Duffin_BIG_VECTOR_plus(i1_fks)
-     FL_Sm1_Duffin_minus(i1,i2,i1_fl) = FL_Duffin_BIG_VECTOR_minus(i1_fks)
+     FL_Sm1_Duffin_plus(i_m,i1,i1_fl) = FL_Duffin_BIG_VECTOR_plus(i1_fks)
+     FL_Sm1_Duffin_minus(i_m,i1,i1_fl) = FL_Duffin_BIG_VECTOR_minus(i1_fks)
      !
      enddo
    enddo
    !
- enddo ! loop over i2
+ enddo ! loop over i_m
  ! 
  call FL_check_Duffin_inverse(FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
-         &                    FL_Sm1_Duffin_plus,time,en%nbf,trace_over_dim,sum_minus_trace)
+         &     FL_Sm1_Duffin_plus,time,en%nbf,trace_over_dim,sum_minus_trace)
  !
- print*, 'uno igual a ', trace_over_dim
- !print*, 'cero igual a ', sum_minus_trace
+ print*, 'uno igual a ', real(trace_over_dim),aimag(trace_over_dim)
+ !print*, 'cero igual a ', real(sum_minus_trace),aimag(sum_minus_trace)
  !
 end subroutine FL_Duffin
 !
@@ -182,7 +240,7 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,time,dim_of_matrix,trace
   complex(SP)  :: inverse_at_t(dim_of_matrix,dim_of_matrix)
   complex(SP)  :: identity_at_t(dim_of_matrix,dim_of_matrix)
   complex(SP)  :: trace
-  integer      :: i1,i1_fl
+  integer      :: i1,i2,i1_fl
   !
   matrix_at_t = cZERO
   inverse_at_t = cZERO
@@ -193,11 +251,11 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,time,dim_of_matrix,trace
     inverse_at_t = inverse_at_t + FL_inverse(:,:,i1_fl)
     !
   enddo
-  !
-  call M_by_M_omp('N','N',dim_of_matrix,dim_of_matrix,dim_of_matrix,cONE,  &
-                       &  matrix_at_t,dim_of_matrix, &
-                       &  inverse_at_t,dim_of_matrix,cZERO,&
-                       &  identity_at_t,dim_of_matrix)
+   
+   call M_by_M_omp('N','N',dim_of_matrix,dim_of_matrix,dim_of_matrix,cONE,  &
+                        &  matrix_at_t,dim_of_matrix, &
+                        &  inverse_at_t,dim_of_matrix,cZERO,&
+                        &  identity_at_t,dim_of_matrix)
   !
   trace = cZERO
   do i1=1,dim_of_matrix 

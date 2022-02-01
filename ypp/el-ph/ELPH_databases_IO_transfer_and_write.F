@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
+subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,GKKP)
  !
  use pars,                ONLY:SP,DP,rZERO,cZERO
  use D_lattice,           ONLY:n_atoms
@@ -34,7 +34,7 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,q,GKKP)
  implicit none
  !
  integer       :: IDB
- type(bz_samp) :: k,q
+ type(bz_samp) :: k
  type(levels)  :: E
  type(GKKP_me) :: GKKP
  !

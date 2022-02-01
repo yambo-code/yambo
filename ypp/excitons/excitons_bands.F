@@ -94,7 +94,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  ! Interpolate exciton on a grid
  !
- if (GRID_interpolate.and..not.l_prt_dos.and.BANDS_steps<1) then
+ if (GRID_interpolate) then
    !      
    call msg('s','Exciton Grid')
    !
@@ -114,13 +114,6 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  if(l_prt_dos) then
    !      
    call msg('s','Exciton Density of States')
-   !
-   GRID_q%description="INTERP"
-   call INTERPOLATION_grid(GRID_q,'i',INTERP_grid)
-   !
-   YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,GRID_q%nibz))      
-   !
-   call INTERPOLATION_BZ(K=GRID_q,NK=GRID_q%nibz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
    call electrons_dos_setup(BSE_interp_E, dos_E, (/1,EXCITONS_n_user_states/))
    !

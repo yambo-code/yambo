@@ -35,6 +35,7 @@ integer function io_EXCPH_gkkp(ID)
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nqibz
  use timing_m,       ONLY:timing
+ !
 #include<memory.h>
  !
  integer      ::ID
@@ -117,17 +118,22 @@ integer function io_EXCPH_gkkp(ID)
  ! Excitonic Gkkp (and SE) fragments
  !=========================
  !
+ if (read_is_on(ID).and..not.allocated(EXCPH_gkkp)) then
+   YAMBO_ALLOC(EXCPH_gkkp,(ph_modes,EXCPH_sum(2),EXCPH_states(2)))
+   YAMBO_ALLOC(EXCPH_gkkp_sq,(ph_modes,EXCPH_sum(2),EXCPH_states(2)))
+ endif
+ !
  VAR_name="EXCITON_PH_GKKP_Q"//trim(intc(iq))
  VAR_size=(/2,ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
  dim_names = [character(schlen) :: 'complex','PH_modes','N_exc_sum','N_exc_states']
  call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
- call io_variable_bulk(ID_frag,1,C3=EXCPH_Gkkp)
+ call io_variable_bulk(ID_frag,1,C3=EXCPH_gkkp)
  !
  VAR_name="EXCITON_PH_GKKP_SQUARED_Q"//trim(intc(iq))
  VAR_size_sq=(/ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
  dim_names_sq = [character(schlen) :: 'PH_modes','N_exc_sum','N_exc_states']
  call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
- call io_variable_bulk(ID_frag,1,R3=EXCPH_Gkkp_sq)
+ call io_variable_bulk(ID_frag,1,R3=EXCPH_gkkp_sq)
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !

@@ -34,7 +34,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
  use ELPH,           ONLY:elph_branches
- use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message,REP
+ use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
+&                         REP,VERIFY
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi
@@ -54,10 +55,17 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  integer :: ID_gkkp,ID_exc_gkkp,io_err
  integer :: il,iq
  !
- call timing('EXCPH_gkkp',OPR='start')
- !
  call section('*','Excitonic gkkp')
  !======================================
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
+ !
+ if(io_err==0) return
+ !
+ if(io_err/=0) call warning("[EXCPH] Exc-ph matrix elements not correct or missing. To be computed")
+ !
+ call timing('EXCPH_gkkp',OPR='start')
  !
  call EXCPH_load_L(1,X,'check','Lin') ! At present the Lin can be only gamma iq=1
  !

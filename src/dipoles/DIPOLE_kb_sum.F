@@ -31,7 +31,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  use iso_c_binding, ONLY:C_F_POINTER,C_LOC
  use pars,          ONLY:SP,cONE,cZERO
- use wrapper,       ONLY:M_by_M,M_by_M_gpu
+ use wrapper,       ONLY:M_by_M,DEV_SUB(M_by_M)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo

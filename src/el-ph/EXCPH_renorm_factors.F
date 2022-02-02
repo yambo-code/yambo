@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! --- Theory ---
-! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
-! - FP
+! Calculate renormalization factors R
+!
+! R_{a,l} = \sum_{q,b } | G(q)_{a,n} |^2/(E_a - E_b -\Omega_{q,l} )
 !
 subroutine EXCPH_renorm_factors(E,k,q,X)
  !

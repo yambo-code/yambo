@@ -124,3 +124,8 @@ Thumbs.db
 myconfig*
 nohup.out
 autom4te.cache
+
+#Scripts
+gfortran*.sh
+pgi*.sh
+nvidia*.sh

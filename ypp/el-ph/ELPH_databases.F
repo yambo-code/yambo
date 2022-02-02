@@ -32,7 +32,7 @@ subroutine ELPH_databases(k,E,q)
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqibz
+ use R_lattice,           ONLY:bz_samp,qindx_B,nqibz,bse_scattering
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
@@ -51,7 +51,7 @@ subroutine ELPH_databases(k,E,q)
  !
  ! Work Space...
  !
- integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID
+ integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
  character(schlen)  ::what
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
  logical, external  ::file_exists
@@ -75,8 +75,11 @@ subroutine ELPH_databases(k,E,q)
    call PARALLEL_SETUP_K_scheme("BZINDX")
    !
    if(l_use_qindxB) then
+     !
+     if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
+     !
      ! here qindx_B is allocated
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
      io_err(1)=io_QINDX(k,q,ID)
      if (io_err(1)/=0) then
        call msg('s',"Missing k/q scattering database")
@@ -85,7 +88,7 @@ subroutine ELPH_databases(k,E,q)
      !
      ! Initialize qindx_B IO
      ! =============================
-     io_err(2)=qindx_B_init(qindx_ID) 
+     io_err(2)=qindx_B_init(qindx_ID,qindx_ID_frag) 
      if(io_err(2)/=0) call error("Error reading qindx_B")
      !
    endif
@@ -203,6 +206,10 @@ subroutine ELPH_databases(k,E,q)
    enddo
  endif
  !
+ call section("*","== Q-points list in the DBS (iku units) ==")
+ do idb=1,DB_nq
+    call msg('r','',real(DB_PH_qpt(idb,:),SP),USE_TABS=.TRUE.)
+ enddo
  ! ... Transfer and write ...
  !----------------------------
  ph_modes   =DB_ph_modes
@@ -210,6 +217,10 @@ subroutine ELPH_databases(k,E,q)
  elph_nQ    =DB_nq
  elph_nk_bz =k%nbz
  if (l_gkkp_expand) elph_nQ=q%nbz
+ !
+ ! If the input q-grid is not equivalent to the Yambo one cannot be expanded!
+ if (l_gkkp_expand.and..not.elph_use_q_grid) & 
+    call error(' Only regular q-grids compatible with the Yambo one can be expanded')
  !
  !...report...
  call msg('s',':: Code generator        :',DB_kind)
@@ -259,6 +270,7 @@ subroutine ELPH_databases(k,E,q)
  !
  !... GKKP
  call live_timing('ELPH databases: transfer and I/O',DB_nq)
+ call section("*","== Q-points list in Yambo (iku units) ==")
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -269,13 +281,13 @@ subroutine ELPH_databases(k,E,q)
    !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
-   call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP)
-   call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,GKKP)
+   call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP)
+   call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,qindx_ID_frag,GKKP)
    !
    if (l_GKKP_hosts_bare_dV) then 
      io_err(2)=ELPH_databases_IO_elemental("dV_bare GKKP",idb)
-     call ELPH_databases_IO_transfer_and_write(idb,k,E,q,GKKP_bare)
-     call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,GKKP_bare)
+     call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP_bare)
+     call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,qindx_ID_frag,GKKP_bare)
    endif
    !
    call live_timing(steps=1)
@@ -289,19 +301,21 @@ subroutine ELPH_databases(k,E,q)
        iq_bz=i_star
        if (iq>1) iq_bz=sum(q%nstar(:iq-1))+i_star
        GKKP%dVc=GKKP_save%dVc
-       call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,q,qindx_ID,GKKP)
+       call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,q,qindx_ID,qindx_ID_frag,GKKP)
        if (l_GKKP_hosts_bare_dV) then
          GKKP%dVc=GKKP_bare_save%dVc
-         call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,q,qindx_ID,GKKP_bare)
+         call ELPH_databases_IO_gkkp_expand("Q",iq_bz,q%star(iq,i_star),k,q,qindx_ID,qindx_ID_frag,GKKP_bare)
        endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
        io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       call msg('r','',PH_qpt(iq_bz,:),USE_TABS=.TRUE.)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
      io_err(3)=io_ELPH(ID,'gkkp')
+     call msg('r','',PH_qpt(iq,:),USE_TABS=.TRUE.)
    endif
    !
  enddo

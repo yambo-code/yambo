@@ -89,6 +89,10 @@ if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_hdf5=no  ; fi
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
+#
+if test x"$enable_hdf5_par_io" = "xyes"  &&  test x"$enable_netcdf_par_io" = "xyes" ; then
+  AC_MSG_ERROR([Select hdf5-par-io or netcdf-par-io, not both!!]) ;
+fi
 #    
 if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
@@ -379,15 +383,19 @@ fi
 #
 # NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
 #
+parallel_io="-" ;
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
+    parallel_io="HDF5";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
+    parallel_io="NetCDF";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+    parallel_io="COMPRESS-HDF5";
 fi
 #
 AC_SUBST(NETCDF_LIBS)
@@ -404,6 +412,7 @@ AC_SUBST(def_netcdf)
 AC_SUBST(compile_netcdf)
 AC_SUBST(compile_pnetcdf)
 AC_SUBST(internal_netcdf)
+AC_SUBST(parallel_io)
 AC_SUBST(enable_netcdf_classic)
 AC_SUBST(enable_netcdf_v3)
 AC_SUBST(enable_netcdf_par_io)

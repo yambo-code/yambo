@@ -52,6 +52,7 @@ if test "$enable_openacc"      = "yes" ; then GPU_check="X"; fi
 if test "$enable_openmp5"      = "yes" ; then GPU_check="X"; fi
 
 
+PARIO_check="$parallel_io"
 #
 # - LIBRARIES -
 #
@@ -224,6 +225,7 @@ AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
 AC_SUBST(GPU_check)
 AC_SUBST(GPU_libinfo)
+AC_SUBST(PARIO_check)
 #
 AC_SUBST(YAML_str)
 AC_SUBST(FUTILE_str)

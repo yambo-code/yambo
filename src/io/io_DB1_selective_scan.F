@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode)
  !
  ! Do a selective (only variables specified in what) or a 
@@ -29,12 +31,10 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
  !
  use pars,             ONLY:lchlen,SP
  use electrons,        ONLY:levels,E_reset
- use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,nsym,alat
+ use D_lattice,        ONLY:dl_sop,n_atoms_species,Z_species,atom_pos,&
+&                           atom_mass,atoms_map,nsym,alat
  use R_lattice,        ONLY:g_vec,rl_sop,bz_samp,bz_samp_reset
- use wave_func,        ONLY:wf_nc_k,wf_igk
-#ifdef _CUDA
- use wave_func,        ONLY:wf_igk_d
-#endif
+ use wave_func,        ONLY:wf_nc_k,wf_igk,DEV_VAR(wf_igk)
  use com,              ONLY:core_io_path
  use IO_m,             ONLY:OP_RD_CL,NONE,DUMP
  use IO_int,           ONLY:io_control,io_connect,io_disconnect,io_elemental,io_bulk
@@ -89,15 +89,18 @@ integer function io_DB1_selective_scan(what,DB1_path,E,k,db1_alat,db1_a,COM_mode
      YAMBO_FREE(dl_sop)
      YAMBO_FREE(rl_sop)
      YAMBO_FREE(wf_nc_k)
+     !
+     YAMBO_FREE_GPU(DEV_VAR(wf_igk))
      YAMBO_FREE(wf_igk)
-#ifdef _CUDA
-     YAMBO_FREE(wf_igk_d)
-#endif
    endif
    if (allocated(n_atoms_species)) then
      YAMBO_FREE(n_atoms_species)
      YAMBO_FREE(Z_species)
      YAMBO_FREE(atom_pos)
+   endif
+   if(allocated(atom_mass)) then
+     YAMBO_FREE(atom_mass)
+     YAMBO_FREE(atoms_map)
    endif
    !
    ! DB1

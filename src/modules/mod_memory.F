@@ -451,7 +451,7 @@ module memory
      complex(SP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  ifndef _DOUBLE
+#ifndef _DOUBLE
    subroutine MEM_cd1_d(name,c)
      character(*)::name
      complex(DP) DEV_ATTR ::c(:)
@@ -482,7 +482,7 @@ module memory
      complex(DP) DEV_ATTR ::c(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(c,KIND=IPL),2*kind(c(1,1,1,1,1,1)),DEV_)
    end subroutine
-#  endif
+#endif
    ! end of GPU subroutines
    !
    subroutine MEM_l1(name,l)

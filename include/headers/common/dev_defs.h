@@ -30,7 +30,7 @@
 #  define CAT(a,b) PASTE(a)b
 #endif
 
-#ifdef _CUDA
+#ifdef _CUDAF
 #  define DEV_SUBNAME(x)        CAT(x,_gpu)
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_gpu)
 #  define DEV_VARNAME(x)        CAT(x,_d)
@@ -65,7 +65,7 @@
 #  define DEV_ACC !!!!
 #endif
 
-#if defined _CUDA
+#if defined _CUDAF
 #  define DEV_CUF $cuf
 #else
 #  define DEV_CUF !!!!

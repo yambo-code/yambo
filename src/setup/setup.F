@@ -248,7 +248,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  enddo
  !
  call section('=','Reciprocal space')
- !============================
+ !====================================
  !
  call G_shells_finder()
  !
@@ -320,7 +320,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (En%FG%nb>0.and.allocated(en%FG%E)) then
    !
    call section('=','Double K-grid')
-   !=======================================
+   !================================
    !
    call DESC_write("r","  ",FineGd_desc)
    !
@@ -376,14 +376,14 @@ subroutine setup(en,Xen,Ken,k,Xk)
  if (input_Tel_is_negative) then
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
-   call OCCUPATIONS_Fermi(Xen_COPY,Xk,mode="OCCUPATIONS")
+   call OCCUPATIONS_Fermi(Xen_COPY,Xk,"X",mode="OCCUPATIONS")
    nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
    call E_reset(Xen_COPY)
  endif
  !
  Tel=Tel_SAVE
- call OCCUPATIONS_Fermi(Xen,Xk,OBJ="X")
- call OCCUPATIONS_Extend(Xen,en)
+ call OCCUPATIONS_Fermi(Xen,Xk,"X")
+ call OCCUPATIONS_Extend(Xen,en,k)
  !
  if (input_Tel_is_negative) then
    Xen%nbf=nbf_m_SAVE(1)

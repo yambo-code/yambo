@@ -39,6 +39,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
  use interfaces,        ONLY:WF_shift_kpoint,DEV_SUB(WF_symm_kpoint),eval_G_minus_G,WF_load,WF_free
+ use cuda_m,            ONLY:have_openacc
  use timing_m,          ONLY:timing
  !
 #include<memory.h>
@@ -85,6 +86,12 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  !
  call WF_load(WF,0,1,(/1,Dip%ib(2)/),(/1,Xk%nibz/),space='G',title='-Oscillators/G space/Overlaps')
  !
+ if (have_openacc) then
+   YAMBO_ALLOC(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
+   YAMBO_ALLOC(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+   YAMBO_ALLOC(WF_ik,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+   YAMBO_ALLOC(WF_ikp,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
+ endif
  YAMBO_ALLOC_GPU(WF_symm,(wf_ng_1st_BZ,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC_GPU(WF_shifted,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
  YAMBO_ALLOC_GPU(WF_ik,(wf_ng_overlaps,n_spinor,Dip%ib(2),n_sp_pol))
@@ -177,6 +184,12 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  YAMBO_FREE_GPU(WF_shifted)
  YAMBO_FREE_GPU(WF_ik)
  YAMBO_FREE_GPU(WF_ikp)
+ if (have_openacc) then
+   YAMBO_FREE(WF_symm)
+   YAMBO_FREE(WF_shifted)
+   YAMBO_FREE(WF_ik)
+   YAMBO_FREE(WF_ikp)
+ endif
  !
  call WF_free(WF)
  !

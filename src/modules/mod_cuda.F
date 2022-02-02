@@ -51,6 +51,16 @@ module cuda_m
 #else
   logical, parameter:: have_cuda=.false.
 #endif
+#ifdef _CUDAF
+  logical, parameter:: have_cuf=.true.
+#else
+  logical, parameter:: have_cuf=.false.
+#endif
+#ifdef _OPENACC
+  logical, parameter:: have_openacc=.true.
+#else
+  logical, parameter:: have_openacc=.false.
+#endif
   !
   logical:: have_cuda_devices=.false.
   character(256) :: cuda_visible_devices=" "
@@ -79,6 +89,8 @@ module cuda_m
   ! public
   !
   public :: have_cuda
+  public :: have_cuf
+  public :: have_openacc
   public :: have_cuda_devices
   public :: cuda_visible_devices
   public :: cuda_setup

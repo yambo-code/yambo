@@ -26,7 +26,9 @@ module DIPOLES
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
+ use cuda_m,        ONLY:have_cuda,have_openacc
  !
+#include <dev_defs.h>
 #include <memory.h>
  !
  ! Logicals
@@ -59,6 +61,17 @@ module DIPOLES
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
+ !
+ ! DIP Transverse workspace
+ !
+ complex(SP), allocatable          :: DIP_work_drho(:,:,:)
+ complex(SP), allocatable DEV_ATTR :: DIP_work_drho_d(:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: DIP_work_XXv(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: DIP_work_XXc(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: DIP_work_WFv(:,:)
+ complex(SP), allocatable DEV_ATTR :: DIP_work_WFc(:,:)
+ !
+ ! type def
  !
  type DIPOLE_t
    integer    :: iq(2)
@@ -128,6 +141,23 @@ module DIPOLES
          if (allocated(P_square)) return
          YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
+       case('DIP_work')
+         ! d(1) = pp_kbv_dim_yambo
+         ! d(2) = wf_ng
+         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
+         if (.not.have_cuda .or. have_openacc) then
+           YAMBO_ALLOC(DIP_work_XXv,(n_spinor,n_spinor,4,d(1)))
+           YAMBO_ALLOC(DIP_work_XXc,(n_spinor,n_spinor,4,d(1)))
+           YAMBO_ALLOC(DIP_work_WFv,(d(2),n_spinor))
+           YAMBO_ALLOC(DIP_work_WFc,(d(2),n_spinor))
+         endif
+         if (have_cuda) then
+           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
+           YAMBO_ALLOC_GPU(DIP_work_XXv,(n_spinor,n_spinor,4,d(1)))
+           YAMBO_ALLOC_GPU(DIP_work_XXc,(n_spinor,n_spinor,4,d(1)))
+           YAMBO_ALLOC_GPU(DIP_work_WFv,(d(2),n_spinor))
+           YAMBO_ALLOC_GPU(DIP_work_WFc,(d(2),n_spinor))
+         endif
        end select
      else
        select case(what)
@@ -155,6 +185,17 @@ module DIPOLES
        case('P_square')
          if (.not.allocated(P_square)) return
          YAMBO_FREE(P_square)
+       case('DIP_work')
+         YAMBO_FREE_GPU(DEV_VAR(DIP_work_drho))
+         YAMBO_FREE_GPU(DIP_work_XXv)
+         YAMBO_FREE_GPU(DIP_work_XXc)
+         YAMBO_FREE_GPU(DIP_work_WFv)
+         YAMBO_FREE_GPU(DIP_work_WFc)
+         YAMBO_FREE(DIP_work_drho)
+         YAMBO_FREE(DIP_work_XXv)
+         YAMBO_FREE(DIP_work_XXc)
+         YAMBO_FREE(DIP_work_WFv)
+         YAMBO_FREE(DIP_work_WFc)
        end select
      endif
    end subroutine

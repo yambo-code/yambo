@@ -312,7 +312,7 @@ ia64*linux* )
        #CPU_FLAG="-xHost"
        CPU_FLAG=" "
        ;;
-      *2021* )
+      *2020* | *2021* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        FCMFLAG="-nofor-main"
@@ -321,6 +321,7 @@ ia64*linux* )
       *17* | *18* | *19* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99"
        ;;
       *10*)
        CPU_FLAG="-xW"

@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 integer function eval_G_minus_G(iG,iGo,COMM)
  !
  ! Evaluates the  G-G' table :
@@ -34,8 +36,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use vec_operate,  ONLY:iku_v_norm, c2a
  use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use R_lattice,    ONLY:G_m_G,G_m_G_d,g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),g_vec,ng_in_shell,n_g_shells,E_of_shell
+ use cuda_m,       ONLY:have_cuda
  use timing_m,     ONLY:timing
+ !
 #include<memory.h>
  !
  integer :: iG,iGo
@@ -240,10 +244,10 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call PP_indexes_reset(PAR_IND_G)
  YAMBO_FREE(E_G_m_G)
  !
-#ifdef _CUDA
- YAMBO_FREE(G_m_G_d)
- YAMBO_ALLOC_SOURCE(G_m_G_d,G_m_G)
-#endif
+ if (have_cuda) then
+   YAMBO_FREE_GPU(DEV_VAR(G_m_G))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(G_m_G),G_m_G)
+ endif
  !
  call timing("eval_G_minus_G",opr="stop")
  !

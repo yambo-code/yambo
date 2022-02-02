@@ -104,12 +104,16 @@ module wrapper
  interface V_dot_VV_gpu
    module procedure V_dot_VV_c1_gpu
  end interface
+ interface M_by_M_gpu
+   module procedure mm_cgemm_gpu
+ end interface
  !
  public :: V_by_V_pwise_gpu
  public :: Vstar_dot_V_gpu
  public :: Vstar_dot_VV_gpu
  public :: V_dot_V_gpu
  public :: V_dot_VV_gpu
+ public :: M_by_M_gpu
 #endif
  !
  public :: M_by_M
@@ -155,19 +159,24 @@ module wrapper
 #endif
    end subroutine mm_cgemm
    !
-#ifdef _CUDAF
+#ifdef _GPU
    subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
      implicit none
      complex(SP), intent(in)  :: ALPHA,BETA
      integer,     intent(in)  :: K,LDA,LDB,LDC,M,N
      character,   intent(in)  :: TRANSA,TRANSB
-     complex(SP), device, intent(in)  :: A(LDA,*),B(LDB,*)
-     complex(SP), device, intent(out) :: C(LDC,*)
+     complex(SP) DEV_ATTR, intent(in)  :: A(LDA,*),B(LDB,*)
+     complex(SP) DEV_ATTR, intent(out) :: C(LDC,*)
+     !
+     !DEV_ACC data present(A,B,C)
+     !DEV_ACC host_data use_device(A,B,C)
 #  if defined _DOUBLE
      call cublasZGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #else
      call cublasCGEMM(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
 #  endif
+     !DEV_ACC end host_data
+     !DEV_ACC end data
    end subroutine mm_cgemm_gpu
 #endif
    !

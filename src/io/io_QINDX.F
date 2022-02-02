@@ -225,34 +225,41 @@ integer function io_QINDX(Xk,q,io_db)
 end function io_QINDX
 !
 !
-integer function qindx_B_init(ID)
+integer function qindx_B_init(ID,ID_frag)
  !
  use pars,       ONLY:IP
  use R_lattice,  ONLY:nXkbz
- use IO_m,       ONLY:OP_RD,RD
- use IO_int,     ONLY:io_control,io_connect,def_variable_bulk
+ use IO_m,       ONLY:OP_RD,RD,io_status
+ use IO_int,     ONLY:io_control,io_connect,def_variable_bulk,io_fragment
  !
  implicit none
  !
- integer  :: ID
+ integer  :: ID,ID_frag
  !
  call io_control(ACTION=OP_RD,ID=ID)
  qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
- call def_variable_bulk(ID,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
- call io_control(ACTION=RD,ID=ID)
+ !
+ call io_fragment(ID,ID_frag,i_fragment=3)
+ call def_variable_bulk(ID_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+ !
+ call io_control(ACTION=RD,ID=ID_frag)
+ !
+ qindx_B_init=io_status(ID_frag)
  !
 end function qindx_B_init
 !
 !
-integer function qindx_B_close(ID)
+integer function qindx_B_close(ID,ID_frag)
  !
  use IO_m,    ONLY:RD_CL
  use IO_int,  ONLY:io_control,io_disconnect
  !
  implicit none
  !
- integer :: ID
+ integer :: ID,ID_frag
  !
+ call io_control(ACTION=RD_CL,ID=ID_frag)
+ call io_disconnect(ID=ID_frag)
  call io_control(ACTION=RD_CL,ID=ID)
  call io_disconnect(ID=ID)
  qindx_B_close=0
@@ -260,17 +267,17 @@ integer function qindx_B_close(ID)
 end function qindx_B_close
 !
 !
-function qindx_B_load(ikbz,ikp_bz,ID)
+function qindx_B_load(ikbz,ikp_bz,ID_frag)
  !
  use IO_int,  ONLY:io_variable_bulk
  !
  implicit none
  !
  integer, dimension(2) :: qindx_B_load
- integer, intent(in) :: ID,ikbz,ikp_bz
+ integer, intent(in) :: ID_frag,ikbz,ikp_bz
  integer :: IO_var(1,1,2)
  !
- call io_variable_bulk(ID,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
+ call io_variable_bulk(ID_frag,3,I3=IO_var,IPOS=(/ikbz,ikp_bz,1/))
  qindx_B_load=IO_var(1,1,:)
  !
 end function qindx_B_load

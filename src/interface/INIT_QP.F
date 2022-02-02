@@ -35,7 +35,6 @@ subroutine INIT_QP(comment)
  character(*) ::comment
  ! 
  ! Work Space
- !
  integer              :: n_states
  integer ,allocatable :: I_states(:,:)
  real(SP),allocatable :: R_states(:,:)

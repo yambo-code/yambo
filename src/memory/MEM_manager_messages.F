@@ -41,7 +41,7 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  character(lchlen) :: msg_,label
  !
  label=" "
-#if defined _CUDA
+#if defined _GPU
  if (where==HOST_) label=" (HOST)" 
  if (where==DEV_)  label=" (DEV)" 
 #endif

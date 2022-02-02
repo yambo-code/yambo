@@ -44,7 +44,7 @@ configure-stamp: uncompress-stamp
 
 package-ready-stamp: uncompress-stamp configure-stamp
 	if test -e $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) all) ; fi
+	( cd $(PACKAGE);  $(make) core) ; fi
 	touch package-ready-stamp
 
 package-installed: uncompress-stamp configure-stamp package-ready-stamp

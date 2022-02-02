@@ -387,7 +387,7 @@ subroutine K_output_file(iq,mode)
  if (eval_alpha_loc) then
    !
    if(l_col_cut.or.trim(alpha_dim)=="volume") then
-     alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+     alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
      alpha(:,1)=Epsilon_ii(:,2)*alpha_factor
      alpha(:,2)=Epsilon_ii(:,3)*alpha_factor
      if (l_print_col4) alpha(:,3)=Epsilon_ii(:,4)*alpha_factor
@@ -447,7 +447,7 @@ subroutine K_output_file(iq,mode)
      ! beta=alpha_xy
      !
      if(l_col_cut.or.trim(alpha_dim)=="volume") then
-       alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+       alpha_factor=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
        beta(:,1)=Epsilon_ij(:,2)*alpha_factor
        beta(:,2)=Epsilon_ij(:,3)*alpha_factor
        if (l_print_col4) beta(:,3)=Epsilon_ij(:,4)*alpha_factor

@@ -79,11 +79,11 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  call C_F_POINTER(C_LOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
  call C_F_POINTER(C_LOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
- !call dev_memcpy_h2d(WFv,WF%c(:,:,iv_wf))
- !call dev_memcpy_h2d(WFc,WF%c(:,:,ic_wf))
+ call dev_memcpy_h2d(WFv,WF%c(:,:,iv_wf))
+ call dev_memcpy_h2d(WFc,WF%c(:,:,ic_wf))
  !
- call M_by_M_gpu('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,iv_wf), wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
- call M_by_M_gpu('T','N', n_spinor, dim_flat, wf_ng, cONE, WF%c(:,:,ic_wf), wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
+ call M_by_M_gpu('T','N', n_spinor, dim_flat, wf_ng, cONE, WFv, wf_ng, kbv_p, wf_ng, cZERO, XXv_p, n_spinor)
+ call M_by_M_gpu('T','N', n_spinor, dim_flat, wf_ng, cONE, WFc, wf_ng, kbv_p, wf_ng, cZERO, XXc_p, n_spinor)
  !
 #else
  call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ng,dim_flat/) )

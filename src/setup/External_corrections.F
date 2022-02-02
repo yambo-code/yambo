@@ -26,7 +26,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use drivers,       ONLY:l_optics,l_chi,l_em1s,l_em1d,l_acfdt,l_ppa,l_bss,l_gw0,l_bse,l_alda_fxc
  use pars,          ONLY:schlen
  use X_m,           ONLY:X_t
- use electrons,     ONLY:levels,n_bands,E_duplicate
+ use electrons,     ONLY:levels,n_bands,E_duplicate,n_sp_pol
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:BS_bands
  use QP_CTL_m,      ONLY:QP_apply
@@ -49,7 +49,7 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! Work Space
  ! 
- integer  :: iq
+ integer  :: iq,i_sp_pol
  integer  :: elph_branches_save(2)
  integer  :: QP_PH_n_G_bands_save(2)
  character(schlen) :: db_name
@@ -145,8 +145,11 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
 #endif
  !
  call E_duplicate(en,DIPen)
- DIPen%nbf=minval((/en%nbf,Xen%nbf,Ken%nbf/))
- DIPen%nbm=maxval((/en%nbm,Xen%nbm,Ken%nbm/))
+ !
+ do i_sp_pol=1,n_sp_pol
+   DIPen%nbf(i_sp_pol)=minval((/en%nbf(i_sp_pol),Xen%nbf(i_sp_pol),Ken%nbf(i_sp_pol)/))
+   DIPen%nbm(i_sp_pol)=maxval((/en%nbm(i_sp_pol),Xen%nbm(i_sp_pol),Ken%nbm(i_sp_pol)/))
+ enddo
  !
  call section('r',' ')
  !

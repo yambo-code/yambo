@@ -66,7 +66,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! States selector
  !=================
  !
- NB=(/1,Xen%nbm/)
+ NB=(/1,maxval(Xen%nbm)/)
  NK=(/1,Xk%nibz/)
  !
  if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then

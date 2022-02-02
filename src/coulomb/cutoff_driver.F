@@ -46,7 +46,8 @@ subroutine cutoff_driver(q)
  use pars,          ONLY:SP,schlen,lchlen
  use vec_operate,   ONLY:v_is_zero
  use com,           ONLY:msg
- use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff
+ use R_lattice,     ONLY:cyl_ph_radius,box_length,cyl_length,cut_geometry,bz_samp,cut_description,ws_cutoff,&
+                         cut_is_slab
  use stderr,        ONLY:STRING_split,STRING_pack
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY,NONE
@@ -63,6 +64,7 @@ subroutine cutoff_driver(q)
  real(SP)::length(3)
  logical ::l_col_test
  character(schlen)::str_piece(5)
+ character(schlen)::dir
  character(lchlen)::ch1,ch2
  !
  ! Potential symmetry
@@ -87,6 +89,7 @@ subroutine cutoff_driver(q)
  cut_is_box=trim(str_piece(1))   =='box'
  cut_is_cyl=trim(str_piece(1))   =='cylinder'
  cut_is_ws=trim(str_piece(1))    =='ws'
+ cut_is_slab=trim(str_piece(1))  =='slab'
  !
  ! Cutoffed directions
  !
@@ -115,7 +118,7 @@ subroutine cutoff_driver(q)
  !
  ! Return conditions
  !
- if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws/))) then
+ if (.not.any((/cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab/))) then
    l_col_cut=.false.
    return
  endif
@@ -163,6 +166,14 @@ subroutine cutoff_driver(q)
  if (cut_is_ws) then
    call msg('r','WS Cutoff   [units to be defined]',ws_cutoff)
    write (cut_description,'(a,f6.3)') trim(cut_geometry)//' ', ws_cutoff
+ endif
+ if (cut_is_slab) then
+   dir=""
+   if (is_cut(1)) dir="X"
+   if (is_cut(2)) dir="Y"
+   if (is_cut(3)) dir="Z"
+   call msg('r','Slab Cutoff:',dir)
+   write (cut_description,'(a)') trim(cut_geometry)
  endif
  if (cut_is_box) then
    i1=0
@@ -238,14 +249,15 @@ subroutine cutoff_driver(q)
    if (cut_is_box)    call cutoff_box(q,is_cut)
    if (cut_is_cyl)    call cutoff_cylinder(q,is_cut)
    if (cut_is_ws)     call cutoff_ws(q)
+   if (cut_is_slab)   call cutoff_slab(q,is_cut)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
    io_err=io_COL_CUT(ID)
    !
-   ! Real-Space Test 
+   ! Real-Space Test
    !
    call parser('CUTCol_test',l_col_test)
-   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
+   if (l_col_test) call cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
    !
  endif
  call timing('Coulomb Cutoff',OPR='stop')

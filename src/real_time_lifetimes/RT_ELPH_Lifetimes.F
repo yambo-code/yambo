@@ -40,7 +40,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  ! Iteration: in this case I ***think*** (even if I am not completely sure) that everything is ok.
  !
  use pars,           ONLY:SP,rZERO
- use electrons,      ONLY:levels,spin_occ,n_full_bands
+ use electrons,      ONLY:levels,spin_occ,n_full_bands,n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_S,nqbz,q_sstar
  use real_time,      ONLY:RT_bands
  use ELPH,           ONLY:PH_freqs_sq,elph_branches,GKKP_ep_sq,MAX_gkkp
@@ -65,7 +65,7 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  real(SP), parameter   :: cutoff= 5.E-3
  !
  ! ... band/k index ...
- integer               :: i_n,i_np,ik_rim,ip_rim,iqbz,ik_m_q,ik_mem,iq_mem,il,iq_ibz
+ integer               :: i_n,i_np,ik_rim,ip_rim,iqbz,ik_m_q,ik_mem,iq_mem,il,iq_ibz,i_sp
  !
  ! ... Gamma components ...
  real(SP) :: P_ph_abs,P_ph_emit,DELTA_E,DELTA_W,pre_factor,&
@@ -75,6 +75,9 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
  real(SP), external :: RT_G_retarded_convolution
  !
  ik_mem=PAR_Xk_ibz_index(ik)
+ !
+ if (n_sp_pol==2) call error("RT_ELPH_lifetimes not coded for n_sp_pol=2")
+ i_sp=1
  !
  do iqbz=1,nqbz
    !
@@ -95,8 +98,8 @@ subroutine RT_ELPH_Lifetimes(ik,E,k)
          !
          ! Extra condition: the EP scattering cannot cross the gap
          !
-         if ((i_n<=n_full_bands.and.i_np>  n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
-         if ((i_n> n_full_bands.and.i_np<= n_full_bands).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
+         if ((i_n<=n_full_bands(i_sp).and.i_np>  n_full_bands(i_sp)).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
+         if ((i_n> n_full_bands(i_sp).and.i_np<= n_full_bands(i_sp)).and.(E%E_ind_gap(1)>0.1/HA2EV)) cycle
          !
          if ( .not. PAR_IND_B_mat%element_1D( B_mat_index(i_n,i_np,RT_bands) ) ) cycle
          !

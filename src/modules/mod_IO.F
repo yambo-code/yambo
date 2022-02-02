@@ -205,24 +205,39 @@ module IO_m
    end function
    !
 #if !defined _io_lib
-   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
+   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index,element_1D)
      !
      use parallel_m, ONLY:PP_indexes
      !
      integer, intent(in) :: IO_ACTION,NOW
      integer, intent(in) :: FIRST,LAST
      type(PP_indexes), intent(in), optional :: PAR_index
+     logical, intent(in),          optional :: element_1D(LAST-FIRST+1)
      !
-     integer :: start_,end_,ii
+     integer :: start_,end_,ii,N
+     logical, allocatable :: element_1D_(:)
      !
      end_  =LAST
      start_=FIRST
      !
      if (present(PAR_index)) then
+       if(.not.allocated(PAR_index%element_1D)) call error(" manage action, element_1S of PAR_index not allocated")
+       N=size(PAR_index%element_1D)
+       allocate(element_1D_(N))
+       element_1D_=PAR_index%element_1D
+     endif
+     !
+     if (present(element_1D)) then
+       N=LAST-FIRST+1
+       allocate(element_1D_(N))
+       element_1D_=element_1D
+     endif
+     !
+     if(allocated(element_1D_)) then
        start_=0
        end_  =0
-       do ii=1,size(PAR_index%element_1D)
-         if (PAR_index%element_1D(ii)) then
+       do ii=1,N
+         if (element_1D_(ii)) then
            if (start_==0) start_=ii
            end_=ii
          endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2020 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -24,6 +24,7 @@
 subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  use pars,        ONLY:SP,cI,cZERO
+ use parser_m,    ONLY:parser
  use stderr,      ONLY:intc
  use com,         ONLY:msg
  use IO_m,        ONLY:io_DIP
@@ -35,6 +36,9 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_redux_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme
+#if defined _RT
+ use RT_control,  ONLY:l_project_spin_dipoles
+#endif
  !
  implicit none
  !
@@ -48,7 +52,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  ! Work space
  !
  logical           :: write_header,     read_header,     check,reading,writing,&
-&                     write_header_ovlp,read_header_ovlp
+&                     write_header_ovlp,read_header_ovlp,l_project_dipoles
  integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
@@ -61,6 +65,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  writing=trim(check_read_or_write)=="write"
  !
  if(.not.any((/check,reading,writing/))) call error("Wrong call to DIPOLES_IO")
+ !
+#if defined _RT
+ call parser("SPINprojected",l_project_spin_dipoles)
+ call parser("DIPprojected", l_project_dipoles)
+#endif
  !
  call PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
@@ -194,6 +203,11 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  call fix_velocity(Dip,1)
  !
+#if defined _RT
+ if(reading.and.l_project_spin_dipoles) call project_spin_dipoles(Dip)
+ if(reading.and.l_project_dipoles)      call project_dipoles(Dip)
+#endif
+ !
  contains
    !
    subroutine fix_velocity(Dip,dir)
@@ -205,6 +219,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      !      However it maybe needed in the future when avoiding dipoles IO)
      !
      ! For a definition of v_eff see PRB 48, 11789 (1993)
+     !
+     use DIPOLES,   ONLY:DIP_v
      !
      integer,       intent(in)    :: dir
      type(DIPOLE_t),intent(inout) :: Dip
@@ -260,5 +276,58 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if( dir==+1) Dip%v_eff=.true.
      !
    end subroutine
+   !
+#if defined _RT
+   subroutine project_spin_dipoles(Dip)
+     use DIPOLES,   ONLY:DIP_spin
+     type(DIPOLE_t),  intent(in) :: Dip
+     !
+     if(.not.allocated(DIP_spin)) return
+     !
+     do i_sp_pol=1,n_sp_pol
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=Dip%ib_lim(2),Dip%ib(2)
+           !
+           if (ic<=Xen%nbf(i_sp_pol) .and. iv<=Xen%nbf(i_sp_pol)) then
+             DIP_spin(:,ic,iv,:,i_sp_pol,2)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
+           endif
+           if (ic> Xen%nbf(i_sp_pol) .and. iv> Xen%nbf(i_sp_pol) ) then
+             DIP_spin(:,ic,iv,:,i_sp_pol,3)=DIP_spin(:,ic,iv,:,i_sp_pol,1)
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine project_spin_dipoles
+   !
+   subroutine project_dipoles(Dip)
+     use DIPOLES,   ONLY:DIP_iR,DIP_P,DIP_v
+     use pars,      ONLY:cZERO
+     type(DIPOLE_t),  intent(in) :: Dip
+     !
+     if(.not.allocated(DIP_iR)) return
+     !
+     do i_sp_pol=1,n_sp_pol
+       do iv=Dip%ib(1),Dip%ib_lim(1) 
+         do ic=Dip%ib_lim(2),Dip%ib(2)
+           !
+           if (ic<=Xen%nbf(i_sp_pol) .and. iv<=Xen%nbf(i_sp_pol) ) then
+             DIP_iR(:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_P (:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_v (:,ic,iv,:,i_sp_pol)=cZERO
+           endif
+           if (ic> Xen%nbf(i_sp_pol) .and. iv> Xen%nbf(i_sp_pol) ) then
+             DIP_iR(:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_P (:,ic,iv,:,i_sp_pol)=cZERO
+             DIP_v (:,ic,iv,:,i_sp_pol)=cZERO
+           endif
+           !
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine project_dipoles
+#endif
    !
 end subroutine DIPOLE_IO

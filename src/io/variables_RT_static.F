@@ -36,7 +36,7 @@ integer function variables_RT_static(ID,what,l_carriers)
 &                         Integrator_name,RT_bands,RAD_LifeTime,Phase_LifeTime,&
 &                         l_RT_induced_field,G_MEM_steps,NE_tot_time,NE_steps,&
 &                         l_RT_impose_N_dN,l_RT_uses_E_FineGd,DbGd_EE_percent,l_RT_impose_E,RT_potential
- use IO_m,           ONLY:io_sec,io_status,read_is_on
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,variable_exist
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
@@ -51,7 +51,7 @@ integer function variables_RT_static(ID,what,l_carriers)
  character(*)       :: what
  logical            :: l_carriers
  !
- integer, external :: io_descriptors
+ integer, external  ::io_descriptors
  !
  integer               :: i1,MENU_
  logical               :: l_OBS,l_G,l_carriers_,l_NE_with_fields_disk,l_RT_diamagnetic
@@ -137,12 +137,12 @@ integer function variables_RT_static(ID,what,l_carriers)
    call io_variable_elemental(ID,R0=RAD_LifeTime,&
 &    VAR=' [RT] Radiative life time', CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
    call io_variable_elemental(ID,R0=Phase_LifeTime,&
-&    VAR=' [RT] Dephasing life time', CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
+&    VAR=' [RT] Dephasing life time', WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
    call io_variable_elemental(ID,L0=l_NE_with_fields,DB_L0=l_NE_with_fields_disk,&
-&    VAR=' [RT] External Field(s)', CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   call io_variable_elemental(ID,I0=n_ext_fields,VAR=' [RT] Number of Fields', CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   call io_variable_elemental(ID,L0=l_RT_diamagnetic,VAR=' [RT] Diamagnetic term',  CHECK=.false.,OP=(/"=="/),DESCRIPTOR=RT_desc)
-   call io_variable_elemental(ID,L0=l_RT_induced_field,VAR=' [RT] Induced field',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+&    VAR=' [RT] External Field(s)', WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID,I0=n_ext_fields,VAR=' [RT] Number of Fields', WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID,L0=l_RT_diamagnetic,VAR=' [RT] Diamagnetic term', WARN=.false.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+   call io_variable_elemental(ID,L0=l_RT_induced_field,VAR=' [RT] Induced field', WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
    ! G retarded variables
    !======================
@@ -172,29 +172,26 @@ integer function variables_RT_static(ID,what,l_carriers)
      call io_variable_elemental(ID,CH0=global_gauge, VAR=' [FIELDs] Gauge Type',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
      !
      do i1=1,n_ext_fields
+       if( read_is_on(ID) .and. .not.variable_exist(ID,"FIELD_NAME"//trim(intc(i1))) ) cycle
        call def_variable_elemental(ID,VAR="FIELD_NAME"//trim(intc(i1)),VAR_SZ=1,VAR_KIND=0,MENU=0)
-       call io_variable_elemental(ID,CH0=Efield(i1)%ef_name,VAR=' [FIELDs] Type',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+       call io_variable_elemental(ID,CH0=Efield(i1)%ef_name,VAR=' [FIELDs] Type',DESCRIPTOR=RT_desc)
        !
        call def_variable_elemental(ID,VAR="FIELD_POL"//trim(intc(i1)),VAR_SZ=1,VAR_KIND=0,MENU=0)
-       call io_variable_elemental(ID,CH0=Efield(i1)%ef_pol,&
-&                                 VAR=' [FIELDs] Polarization',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+       call io_variable_elemental(ID,CH0=Efield(i1)%ef_pol,VAR=' [FIELDs] Polarization',DESCRIPTOR=RT_desc)
+       !
        call def_variable_elemental(ID,VAR="EXTERNAL_FIELD"//trim(intc(i1)),VAR_SZ=13,VAR_KIND=SP,MENU=0)
-       call io_variable_elemental(ID,R1=Efield(i1)%versor,WARN=.true.,VAR=" [FIELDs] Versor",OP=(/"==","==","=="/),&
-&                                 DESCRIPTOR=RT_desc)
-       call io_variable_elemental(ID,R1=Efield(i1)%versor_circ,WARN=.true.,&
-&                                 VAR=" [FIELDs] Versor_circ",OP=(/"==","==","=="/),DESCRIPTOR=RT_desc)
-       call io_variable_elemental(ID,VAR=" [FIELDs] Intensity",R0=Efield(i1)%intensity,CHECK=.true.,OP=(/"=="/),&
+       call io_variable_elemental(ID,R1=Efield(i1)%versor,VAR=" [FIELDs] Versor",DESCRIPTOR=RT_desc)
+       call io_variable_elemental(ID,R1=Efield(i1)%versor_circ,VAR=" [FIELDs] Versor_circ",DESCRIPTOR=RT_desc)
+       call io_variable_elemental(ID,VAR=" [FIELDs] Intensity",R0=Efield(i1)%intensity,&
 &                                 DESCRIPTOR=RT_desc,UNIT=AU2KWCMm2,TERMINATOR="[kWCMm2]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Damping",R0=Efield(i1)%width,CHECK=.true.,OP=(/"=="/),&
-&                                 DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R1=Efield(i1)%frequency,CHECK=.true.,OP=(/"==","=="/),&
+       call io_variable_elemental(ID,VAR=" [FIELDs] Damping",R0=Efield(i1)%width,DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
+       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency range",R1=Efield(i1)%frequency,&
 &                                 DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
-       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency steps",&
-&                                 I0=Efield(i1)%n_frequencies,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
+       call io_variable_elemental(ID,VAR=" [FIELDs] Frequency steps",I0=Efield(i1)%n_frequencies,DESCRIPTOR=RT_desc)
        call io_variable_elemental(ID,VAR=" [FIELDs] Frequency step",R0=Efield(i1)%W_step,&
 &                                 CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=HA2EV,TERMINATOR="[eV]")
-       call io_variable_elemental(ID,R0=Efield(i1)%t_initial,VAR=' [FIELDs] Initial time',CHECK=.true.,&
-&                                 OP=(/"=="/),DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
+       call io_variable_elemental(ID,R0=Efield(i1)%t_initial,VAR=' [FIELDs] Initial time',&
+&                                 DESCRIPTOR=RT_desc,UNIT=AUT2FS,TERMINATOR="[fs]")
        !                       
      enddo
      !

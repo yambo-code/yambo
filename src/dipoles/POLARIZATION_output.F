@@ -25,7 +25,7 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  ! 
  ! Print the intrisic Polarization of the system
  !
- use pars,          ONLY:SP,lchlen
+ use pars,          ONLY:SP,lchlen,cZERO
  use units,         ONLY:e_SI,AU2M
  use electrons,     ONLY:levels,n_sp_pol
  use R_lattice,     ONLY:bz_samp,k_map
@@ -47,10 +47,10 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  real(SP)    :: I_Berry_RED(3),Tot_Berry_RED(3)  ! In reduced (crystaline) coordinated 
  real(SP)    :: modfac,rmod
  complex(SP) :: All_S_det(6,Xk%nbz,n_sp_pol)
- complex(SP) :: Sm1_plus (Xen%nbm,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbm,Xen%nbm,6)
+ complex(SP) :: Sm1_plus (maxval(Xen%nbm),maxval(Xen%nbm),6)
+ complex(SP) :: Sm1_minus(maxval(Xen%nbm),maxval(Xen%nbm),6)
  character(lchlen) :: dumb_ch
- integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol
+ integer           :: id,Nperpend,id2,id3,ia,mod_tot,ikbz,i_sp_pol,nb
  logical           :: l_odd
  !
  ! Check for atoms with odd number of electrons
@@ -59,22 +59,29 @@ subroutine POLARIZATION_output(Xen,Xk,Dip)
  do ia=1,n_atomic_species
    if(mod(Z_species(ia),2) == 1) l_odd=.true.
  enddo
+ !
+ Tot_berry_RED=cZERO
  !                                         
  do i_sp_pol=1,n_sp_pol
+   nb=Xen%nbm(i_sp_pol)
    do ikbz=1,Xk%nbz
-     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,Sm1_plus,Sm1_minus,All_S_det(:,ikbz,i_sp_pol))
+     call Build_Overlaps_Det_EQ(Xen,i_sp_pol,ikbz,&
+             &  Sm1_plus(:nb,:nb,:),Sm1_minus(:nb,:nb,:),All_S_det(:,ikbz,i_sp_pol))
    enddo
+   !
+   ! Calculate Electronic polarization
+   !
+   call Berry_polarization_EQ(P_Berry_RED,All_S_det(:,:,i_sp_pol),Xen,Xk,k_map)
+   !
+   Tot_berry_RED=Tot_berry_RED+real(P_berry_RED,SP)
+   !
  enddo
- !
- ! Calculate Electronic polarization
- !
- call Berry_polarization_EQ(P_Berry_RED,All_S_det,Xen,Xk,k_map)
  !
  ! Calculate Electronic polarization and set l_odd
  !
  call Ionic_polarization(I_berry_RED,Xen)
  !
- Tot_berry_RED=real(P_berry_RED,SP)+I_berry_RED
+ Tot_berry_RED=Tot_berry_RED+I_berry_RED
  !
  mod_tot=2
  if(l_odd) mod_tot=1

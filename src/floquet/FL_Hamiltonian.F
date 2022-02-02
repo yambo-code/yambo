@@ -151,7 +151,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
-&            - real(i_fl,SP) * w0  !aim137: assuming units of w0 and E_full are compatible. check.
+&            - real(i_fl,SP) * w0  !aim137: w0 is in Hartree
        !
      enddo
    enddo

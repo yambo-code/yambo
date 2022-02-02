@@ -36,7 +36,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
  use wrapper,        ONLY:Vstar_dot_V
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
- use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes
+ use fl_optics,      ONLY:max_fl_mode,max_extra_mode,FL_space_dim,n_tot_fl_modes,n_tot_extra_modes
  !
  implicit none
  !
@@ -45,8 +45,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
  complex(SP),  intent(in) :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
- complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_fl_modes,6)
- complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_fl_modes,6)
+ complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes,6)
+ complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_extra_modes,6)
  !
  ! Work Space
  !
@@ -55,7 +55,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
  !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf) ! used in full construction of overlaps
  complex(SP) :: tmp_det,vtmp(H_ref_bands(2))
  complex(SP) :: vtmp2(en%nbf)
- integer     :: i1_fl,i2_fl,i1_shifted_fl,i2_shifted_fl,i_sum_shifted,i_sum_fl,i1_inverted_fl
+ integer     :: i1_fl,i2_fl,i1_shifted_fl,i2_shifted_fl,i_sum_shifted,i_sum_fl,i1_inverted_fl,i1_extra,i2_extra
  character(4) :: filename
  !
  FL_S_plus =cZERO
@@ -109,11 +109,9 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
 !$omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1
          do i1=1,H_ref_bands(1)-1
-           do i1_fl=1,n_tot_fl_modes
-             i1_shifted_fl = i1_fl - (max_fl_mode+1)
-             if (i1_shifted_fl /= 0) cycle
-             FL_S_minus(i1,i2,i1_fl,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
-           enddo
+           i1_extra = max_extra_mode+1 
+           !I replaced an i1_fl loop + "if /=0 cycle" by just assigning the value
+           FL_S_minus(i1,i2,i1_extra,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
          enddo
        enddo
 !$omp end parallel do
@@ -140,8 +138,9 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
              i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
-             FL_S_minus(i1,i2,i1_fl,id+(istep-1)*3)=&
-             &  Vstar_dot_V(H_ref_bands(2),&
+             i1_extra = i1_fl + max_extra_mode - max_fl_mode !added extra mode
+             FL_S_minus(i1,i2,i1_extra,id+(istep-1)*3)=& !assign to extra mode
+                           &  Vstar_dot_V(H_ref_bands(2),&
                            &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
                            &conjg(DIP_S(i2,:,id+(istep-1)*3,ikm,i_sp)))
            enddo
@@ -152,10 +151,12 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
        ! Matrix core
        !
        do i2=H_ref_bands(1),en%nbf
-         do i1_fl=1,n_tot_fl_modes
-           i1_shifted_fl = i1_fl - (max_fl_mode+1)
-           do i2_fl=1,n_tot_fl_modes
-             i2_shifted_fl = i2_fl - (max_fl_mode+1)
+         do i1_extra=1,n_tot_extra_modes
+           i1_fl = i1_extra - max_extra_mode + max_fl_mode ! added this
+           i1_shifted_fl = i1_fl - (max_fl_mode+1) !this needs no change
+           do i2_extra=1,n_tot_extra_modes
+             i2_fl = i2_extra - max_extra_mode + max_fl_mode ! added this
+             i2_shifted_fl = i2_fl - (max_fl_mode+1) !this needs no change
              i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
              if (abs(i_sum_shifted) > max_fl_mode) cycle
              i_sum_fl = i_sum_shifted + (max_fl_mode+1)
@@ -165,7 +166,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
              call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,i2_fl,:,ik_ibz,i_sp),&
 &                    H_ref_bands(2),vtmp,1,cZERO,vtmp2,1)
              !
-             FL_S_minus(:,i2,i1_fl,id+(istep-1)*3) = FL_S_minus(:,i2,i1_fl,id+(istep-1)*3) + vtmp2
+             FL_S_minus(:,i2,i1_extra,id+(istep-1)*3) = FL_S_minus(:,i2,i1_extra,id+(istep-1)*3) + vtmp2
            enddo
          enddo
        enddo
@@ -185,11 +186,9 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
 !$omp parallel do default(shared), private(i1,i2)
        do i1=1,H_ref_bands(1)-1
          do i2=1,H_ref_bands(1)-1
-           do i1_fl=1,n_tot_fl_modes
-             i1_shifted_fl = i1_fl - (max_fl_mode+1)
-             if (i1_shifted_fl /= 0) cycle
-             FL_S_plus(i1,i2,i1_fl,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
-           enddo
+           i1_extra = max_extra_mode+1 
+           !I replaced an i1_fl loop + "if /=0 cycle" by just assigning the value
+           FL_S_plus(i1,i2,i1_extra,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
          enddo
        enddo
 !$omp end parallel do
@@ -216,7 +215,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
              i1_inverted_fl =  (2*max_fl_mode+1) + 1 - i1_fl
-             FL_S_plus(i1,i2,i1_fl,id+(istep-1)*3)=&
+             i1_extra = i1_fl + max_extra_mode - max_fl_mode !added extra mode
+             FL_S_plus(i1,i2,i1_extra,id+(istep-1)*3)=& !assign to extra mode
              &  Vstar_dot_V(H_ref_bands(2),&
                            &FL_V_bands(:,i1_inverted_fl,i1,ik_ibz,i_sp),&
                            &DIP_S(:,i2,id+(istep-1)*3,ikbz,i_sp))
@@ -228,9 +228,11 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
        ! Matrix Core
        !
        do i2=H_ref_bands(1),en%nbf
-         do i1_fl=1,n_tot_fl_modes
+         do i1_extra=1,n_tot_extra_modes
+            i1_fl = i1_extra - max_extra_mode + max_fl_mode
             i1_shifted_fl = i1_fl - (max_fl_mode+1)
-            do i2_fl=1,n_tot_fl_modes
+            do i2_extra=1,n_tot_extra_modes
+              i2_fl = i2_extra - max_extra_mode + max_fl_mode
               i2_shifted_fl = i2_fl - (max_fl_mode+1)
               i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
               if (abs(i_sum_shifted) > max_fl_mode) cycle
@@ -241,7 +243,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
               call mv_cgemv_omp('C',H_ref_bands(2),en%nbf,cONE,FL_V_bands(:,i2_fl,:,ik_ibz,i_sp),&
 &                      H_ref_bands(2),vtmp,1,cZERO,vtmp2,1)
               !
-              FL_S_plus(:,i2,i1_fl,id+(istep-1)*3) = FL_S_plus(:,i2,i1_fl,id+(istep-1)*3) + vtmp2
+              FL_S_plus(:,i2,i1_extra,id+(istep-1)*3) = FL_S_plus(:,i2,i1_extra,id+(istep-1)*3) + vtmp2
             enddo
          enddo
        enddo

@@ -34,7 +34,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
- use fl_optics,      ONLY:FL_S_plus,FL_S_minus,n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states
+ use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states
  !
  implicit none
  !

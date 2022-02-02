@@ -143,7 +143,9 @@ module fl_optics
  !
  !aim137 new variables
  integer                   :: max_fl_mode=5 ! momentaneamente fijo
+ integer                   :: max_extra_mode
  integer                   :: n_tot_fl_modes
+ integer                   :: n_tot_extra_modes
  integer                   :: FL_space_dim,FL_states(2)
  !
  contains
@@ -164,7 +166,9 @@ module fl_optics
      !
      type(levels), intent(in) :: en
      !
+     max_extra_mode = 2*max_fl_mode
      n_tot_fl_modes = 2*max_fl_mode+1
+     n_tot_extra_modes = 4*max_fl_mode+1
      FL_space_dim = NL_bands(2) * n_tot_fl_modes
      FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
      FL_states(2) = FL_space_dim
@@ -185,8 +189,8 @@ module fl_optics
      !
      ! FL overlaps
      !
-     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_fl_modes,6,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_fl_modes,6,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      !
      ! Reference energies
      !

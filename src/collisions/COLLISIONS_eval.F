@@ -52,8 +52,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use plasma,         ONLY:EH_gas
  use frequency,      ONLY:w_samp
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD_CL,VERIFY,REP,io_COLLs
- use COLL_interfaces,ONLY:io_COLLISIONS
+ use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
@@ -68,7 +67,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,IO_err
+ integer       :: ID,IO_err,IO_ACT
  character(20) :: PAR_ch,FREE_ch
  !
  call timing('COLLISIONS_eval',OPR='start')
@@ -249,6 +248,17 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
    subroutine CHECK_and_ALLOC(COLL)
      !
+#include<collisions.h>
+     !
+     ! Define io_COLLs_header to handle either serial or parallel I/O
+     !
+     use COLL_interfaces,   ONLY:io_COLLISIONS
+#if defined _PAR_IO
+     integer, external :: io_COLLISIONS_header
+#endif
+     !
+     integer :: i_coll
+     !
      type(COLLISIONS_group) :: COLL
      !
      IO_err=-1
@@ -256,7 +266,19 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (io_COLLs) then
        COLL%IO_status=-1
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLISIONS(ID,COLL)
+       IO_err=io_COLLs_header(ID,COLL)
+#if defined _PAR_IO
+       call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+       io_err=io_COLLISIONS(ID,COLL)
+       if(io_err==0) then
+         call warning(" Restarting from previous database")
+         do i_coll=1,COLL%N
+           IO_ACT=manage_action(RD_CL_IF_END,i_coll,1,COLL%N)
+           call io_control(ACTION=IO_ACT,COM=REP,SEC=(/4/),ID=ID)
+           io_err=io_COLLISIONS(ID,COLL,i_coll=i_coll)
+         enddo
+       endif
+#endif
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !

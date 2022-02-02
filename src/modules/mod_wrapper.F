@@ -40,9 +40,9 @@ module wrapper
  !
  interface M_by_M
    module procedure :: mm_cgemm
-   module procedure :: mm_c
+   module procedure :: mm_c,mm_cg
 #ifdef _CUDAF
-          procedure :: dev_xGEMM_gpu
+!          procedure :: dev_xGEMM_gpu
 #endif
  end interface
  !
@@ -185,7 +185,7 @@ module wrapper
    end subroutine mm_cgemm_gpu
 
    subroutine mm_c(TRANSA,TRANSB,msize,A,B,C)
-     integer,  intent(in)  :: msize
+     integer,     intent(in)  :: msize
      complex(SP), intent(in)  :: A(msize,msize),B(msize,msize)
      complex(SP), intent(out) :: C(msize,msize)
      character,   intent(in)  :: TRANSA,TRANSB
@@ -195,6 +195,19 @@ module wrapper
      call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,(0._SP,0._SP),C,msize)
 #endif
    end subroutine mm_c
+   !
+   subroutine mm_cg(TRANSA,TRANSB,msize,A,B,BETA,C)
+     complex(SP), intent(in)  :: BETA
+     integer,     intent(in)  :: msize
+     complex(SP), intent(in)  :: A(msize,msize),B(msize,msize)
+     complex(SP), intent(out) :: C(msize,msize)
+     character,   intent(in)  :: TRANSA,TRANSB
+#if defined _DOUBLE
+     call ZGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,BETA,C,msize)
+#else
+     call CGEMM(TRANSA,TRANSB,msize,msize,msize,(1._SP,0._SP),A,msize,B,msize,BETA,C,msize)
+#endif
+   end subroutine mm_cg
    !
    !===================
    ! interface M_by_V 

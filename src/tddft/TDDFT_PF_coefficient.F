@@ -184,13 +184,17 @@ contains
    end function Alpha_JGM
    !
    subroutine Alpha_LOR(epsM0,alpha,beta)
+     !
      ! Botti: only static now PRB 72, 125203, dynamic later on 
      !
-     use units, ONLY:HA2EV
+     use units,     ONLY:HA2EV
+     use electrons, ONLY:n_sp_pol
      real(SP) :: Wp, Egap, epsM0, alpha,beta
      real(SP), parameter :: A_Fit = 104.5/HA2EV 
      !
-     Egap = Egap + sum(en%E(en%nbf+1,:,1)-en%E(en%nbf,:,1))/real(en%nk,SP)
+     if (n_sp_pol==2) call error("Alpha_LOR not coded for n_sp_pol=2 case")
+     !
+     Egap = Egap + sum(en%E(en%nbf(1)+1,:,1)-en%E(en%nbf(1),:,1))/real(en%nk,SP)
      Wp = sqrt(4._SP*pi*nel/DL_vol)
      call msg('nrs','[TDDFT] Average Gap for Lorentzian model ',Egap*HA2EV)
      call msg('nrs','[TDDFT] Plasma frequency for Lorentzian model ',Wp*HA2EV)

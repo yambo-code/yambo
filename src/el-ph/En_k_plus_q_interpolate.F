@@ -42,6 +42,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
  !
+ if (n_sp_pol==2) call error("En_k_plus_q_interpolate to be checked for n_sp_pol==2")
+ !
  ! Allocation of the Double Grids for each k+q points
  ! =====================================================
  n_k_plus_q=0
@@ -86,8 +88,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  ! For the moment I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- E_kpq%f(1:E%nbf,:,1)=spin_occ
- E_kpq%f(E%nbf+1:,:,1)=rZERO
+ E_kpq%f(1:E%nbf(1),:,1)=spin_occ
+ E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  !
  ! Store E(k+q) energies in the GKKP
  ! ==========================================

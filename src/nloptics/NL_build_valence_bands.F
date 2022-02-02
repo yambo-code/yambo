@@ -37,8 +37,8 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
  !
  type(levels), intent(in)  :: en
  integer,      intent(in)  :: lowest_band
- complex(SP),  intent(in)  :: V_input(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
- complex(SP),  intent(out) :: VAL_BANDS(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol)
+ complex(SP),  intent(in)  :: V_input(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
+ complex(SP),  intent(out) :: VAL_BANDS(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol)
  !
  ! Work Space
  !
@@ -56,7 +56,7 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
        !
        i_wf=WF%index(ib,ik,is)
 !$omp parallel do default(shared), private(i_v,i_spinor)
-       do i_v=1,en%nbf
+       do i_v=1,en%nbf(is)
          do i_spinor=1,n_spinor
            Val_bands(:,i_v,ik_mem,is)=Val_bands(:,i_v,ik_mem,is)+V_input(ib,i_v,ik,is)*WF%c(:,i_spinor,i_wf)
          enddo

@@ -50,7 +50,7 @@ module interpolate
  logical           :: INTERPOLATE_use_symm=.TRUE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
- integer, parameter :: max_interpls=10
+ integer, parameter :: max_interpls=20
  !
  ! NN method
  !

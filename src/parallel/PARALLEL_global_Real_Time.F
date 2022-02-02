@@ -37,8 +37,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
  use parallel_m,    ONLY:ncpu,HEAD_QP_cpu,HEAD_k_cpu,HEAD_q_cpu,COMM_copy,PAR_INDEX_copy,&
 &                        PAR_build_index,PP_indexes_reset
  ! COMMUNICATORS
- use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,PAR_COM_Xk_ibz_INDEX,&
-&                        PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
+ use parallel_m,    ONLY:PAR_COM_G_b_INDEX,PAR_COM_G_b_INDEX_global,PAR_COM_Q_INDEX,PAR_COM_WF_b_INDEX,&
+&                        PAR_COM_Xk_ibz_INDEX,PAR_COM_G_b_A2A,PAR_COM_Xk_ibz_A2A,PAR_COM_Plasma_INDEX,PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_B_mat_ordered,PAR_IND_WF_b,PAR_IND_B_mat,PAR_IND_WF_k,&
 &                        PAR_IND_Q_bz,PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_DIPk_ibz
@@ -69,7 +69,8 @@ subroutine PARALLEL_global_Real_Time(E,Xk,q,X_type)
 &                                        COMM_index_4=PAR_COM_PLASMA_INDEX,&
 &                                        COMM_A2A_1=PAR_COM_Xk_ibz_A2A,&
 &                                        COMM_A2A_2=PAR_COM_G_b_A2A,&
-&                                        COMM_A2A_3=PAR_COM_Q_A2A)
+&                                        COMM_A2A_3=PAR_COM_Q_A2A,&
+&                                        COMM_index_global_2=PAR_COM_G_b_INDEX_global)
  !
  ! COMMs setup
  !

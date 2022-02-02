@@ -99,7 +99,9 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Non-linear spectroscopy";
+ options[*i_opt].long_desc[0]="<string>=(p)ump or probe,(n) non-linear optics";
  options[*i_opt].long_opt="nl";
+ options[*i_opt].char_var=1;
  options[*i_opt].short_opt='u';
  options[*i_opt].bin="yambo_nl";
  options[*i_opt].yambo_string="nloptics";

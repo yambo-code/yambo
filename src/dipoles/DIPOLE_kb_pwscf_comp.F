@@ -81,7 +81,7 @@ subroutine DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
            kb_Ylm(1)=Ylm(il,im)                                              ! To be checked why
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)     ! I need conjg here and 
            kb_Ylm=conjg(kb_Ylm)                                              ! not in abinit
-            !                                                               
+           !
            i1=i1+1
            i2=pp_kbv_table(i1)
            !

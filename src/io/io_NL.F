@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_NL(ID)
+integer function io_NL(what,ID)
  !
  use pars,          ONLY:schlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
@@ -41,6 +41,7 @@ integer function io_NL(ID)
 #include<memory.h>
  !
  integer,      intent(in) :: ID
+ character(*), intent(in) :: what 
  !
  integer, external    :: variables_NL
  !
@@ -48,13 +49,13 @@ integer function io_NL(ID)
  !
  integer              :: i_fragment,ID_frag
  character(schlen)    :: VAR_name
- integer, parameter   :: i_Prb=1
+ integer              :: i_Prb
  !
 #if defined _TIMING
  call timing('io_NL',OPR='start')
 #endif
  !
- io_extension(ID)='Nonlinear'
+ io_extension(ID)=trim(what)
  !
  ID_frag=0
  !
@@ -109,7 +110,11 @@ integer function io_NL(ID)
  call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_NL)
  if(io_NL/=0) goto 1
  !
+ if(what=="Nonlinear_REF") goto 2
+ !
  ! Efield 
+ !
+ i_Prb=1 ! we store only the first field in the fragments
  !
  call io_elemental(ID_frag,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
  call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
@@ -137,10 +142,12 @@ integer function io_NL(ID)
  call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
  !
  ! Polarization
- !  
- write (VAR_name,'(a,i4.4)') 'NL_P_freq_',i_fragment
+ ! 
+2 write (VAR_name,'(a,i4.4)') 'NL_P_freq_',i_fragment
  call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(NL_P_t))
  call io_bulk(ID_frag,R2=NL_P_t)
+ !
+ if(what=="Nonlinear_REF") goto 1
  !
  ! E_ext
  ! 

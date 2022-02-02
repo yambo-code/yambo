@@ -108,7 +108,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
    ikp= Xk%sstar(ikpbz,1)
    isp= Xk%sstar(ikpbz,2)
    !
-   l_X_term_vv = (l_X_terminator.and.ic>=X%ib(1).and.ic<=Xen%nbm)
+   l_X_term_vv = (l_X_terminator.and.ic>=X%ib(1).and.ic<=Xen%nbm(i_spin))
    !
    ! take into account the cancellation of terms
    ! occurring when dealing with the wings

@@ -699,6 +699,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
    Efield(i1)%FWHM=2._SP*FS2AUT
    Efield(i1)%ef_name="none"
    Efield(i1)%versor =(/0._SP,0._SP,0._SP/)
+   Efield(i1)%ef_pol ="linear"
  enddo
  !
  Efield(1)%versor =(/0._SP,0._SP,0._SP/)

@@ -51,8 +51,9 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[9]="LDA_X   => <string>=ldax";
  options[*i_opt].long_desc[10]="PZ      => <string>=pz";
  options[*i_opt].long_desc[11]="GS      => <string>=gs";
- options[*i_opt].long_desc[12]=" ";
- options[*i_opt].long_desc[13]="Potentials can be combined. Example: use hf for Hartree-Fock";
+ options[*i_opt].long_desc[12]="CVONLY  => <string>=cvonly (compute only cv collisions)";
+ options[*i_opt].long_desc[13]=" ";
+ options[*i_opt].long_desc[14]="Potentials can be combined. Example: use hf for Hartree-Fock";
  options[*i_opt].long_opt="potential";
  options[*i_opt].short_opt='v';
  options[*i_opt].bin="yambo_sc yambo_rt yambo_nl";

@@ -269,7 +269,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    endif
  endif
  !
- if(write_is_on(ID).and.i_coll<=LAST_COLL_sync) then
+ if(write_is_on(ID).and.i_coll<=LAST_COLL_sync.and.io3) then
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
  endif

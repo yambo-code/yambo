@@ -54,14 +54,17 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  complex(SP) :: vector_b(en%nbf*n_tot_fl_modes)
  complex(SP) :: vtmp(en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_fl_modes)
- complex(SP) :: trace_over_dim(en%nbf),sum_minus_trace,dummy_det
+ complex(SP) :: diagonal_elements(en%nbf),sum_minus_trace,dummy_det
  integer     :: time_samples
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,ikm
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks,i1_inverted_fl
- integer :: i1_extra,i2_extra,i3_extra,i_comb_extra,i_start,i_finish
- logical :: l_solver_linear_problem
+ integer :: i1_extra,i2_extra,i3_extra,i_comb_extra,i_start,i_finish,i1_extra_inverted
+ logical :: l_solve_linear_problem,l_debug_printouts
  !
+ !
+ l_solve_linear_problem = .false.
+ l_debug_printouts = .true.
  !
  ! Using an example matrix
  ! =======================
@@ -93,11 +96,11 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      !
      do i3_fl=1,n_tot_fl_modes
        !
-       i3_extra = i3_fl + max_extra_mode - max_fl_mode
        i_shift_comb_fl = (i1_fl-(max_fl_mode+1)) &
                       &- (i2_fl-(max_fl_mode+1)) &
                       &+ (i3_fl-(max_fl_mode+1))
        if (abs(i_shift_comb_fl) > max_extra_mode) cycle !the criterion changes
+       i3_extra = i3_fl + max_extra_mode - max_fl_mode
        i_comb_fl    = i_shift_comb_fl + (max_fl_mode+1)
        i_comb_extra = i_shift_comb_fl + (max_extra_mode+1)
        !
@@ -119,6 +122,21 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
        !
    enddo
  enddo
+ !
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ if (l_debug_printouts) then
+   open(111,file='G_matrix_real.dat')
+     do i1_fl=1,n_tot_fl_modes
+       write(111,'(100(1f7.4))') real(FL_Duffin_Gmatrix_plus(1,1,i1_fl,:))
+     enddo
+   close(111)
+   open(111,file='G_matrix_complex.dat')
+     do i1_fl=1,n_tot_fl_modes
+       write(111,'(100(1f7.4))') aimag(FL_Duffin_Gmatrix_plus(1,1,i1_fl,:))
+     enddo
+   close(111)
+ endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
  ! 
  ! Build Duffin BIG MATRIX
  ! ========================
@@ -136,17 +154,47 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
          FL_Duffin_BIG_MATRIX_plus(i1_fks,i2_fks)=FL_Duffin_Gmatrix_plus(i1,i2,i1_fl,i2_fl)
          FL_Duffin_BIG_MATRIX_minus(i1_fks,i2_fks)=FL_Duffin_Gmatrix_minus(i1,i2,i1_fl,i2_fl)
          !
-         !aim137 creo que esto esta mal, creo que me falta transponer, o al menos transponer i1 e i2
        enddo
      enddo
    enddo
  enddo
- open(111,file='BigG_matrix_real.dat')
-   do i1_fks=1,en%nbf*n_tot_fl_modes
-     write(111,'(100(1f7.4)))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
-   enddo
- close(111)
+ !
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ if (l_debug_printouts) then
+   open(111,file='BigG_matrix_real.dat')
+     do i1_fks=1,en%nbf*n_tot_fl_modes
+       write(111,'(100(1f7.4))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
+     enddo
+   close(111)
+ endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+ !
+ if (.not. l_solve_linear_problem) then
+   !
+   call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_plus,dummy_det,.false.)
+   call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_minus,dummy_det,.false.)
+   !
+   !
+   !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+   if (l_debug_printouts) then
+     open(111,file='BigGm1_matrix_real.dat')
+       do i1_fks=1,en%nbf*n_tot_fl_modes
+         write(111,'(100(1f7.4))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
+       enddo
+     close(111)
+     open(111,file='BigGm1_matrix_complex.dat')
+       do i1_fks=1,en%nbf*n_tot_fl_modes
+         write(111,'(100(1f7.4))') aimag(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
+       enddo
+     close(111)
+   endif
+   !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+   !
+ end if
  ! 
+ ! 
+ ! Solving the system column by column
+ ! =================================== 
  ! 
  do i_m=1,en%nbf ! solving column m of F <=> row m of H
    !
@@ -157,6 +205,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      do i1_fl=1,n_tot_fl_modes
      !
      i1_extra = i1_fl + max_extra_mode - max_fl_mode
+     i1_extra_inverted = n_tot_extra_modes + 1 - i1_extra
      !
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      !
@@ -167,49 +216,49 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      enddo
    enddo
    ! 
-!  ! Solve linear problem
-!  ! ====================
-   l_solver_linear_problem = .false.
-!  !
-   if (l_solver_linear_problem) then
-           ! this needs fixing, I don't get to the same as with inversion.
-!    !aim137 debug
-!    vector_b=FL_Duffin_BIG_VECTOR_plus
-!    !aim137 debug
-!    !
-                                            ! this needs fixing, I don't get to the same as with inversion.
+   ! Solve linear problem
+   ! ====================
+   !
+   if (l_solve_linear_problem) then
+     !aim137:  this needs fixing, I don't get to the same as with inversion.
+     !aim137:  update, inversion was wrong. But in any case, do a final check when everything else works.
      call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus)
      call SERIAL_lin_system(en%nbf*n_tot_fl_modes,1,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus)
      !aim137: I understand A x = b returns b in the variable where x was passed on
      !
-!    !aim137 debug
-!      do i1=1,en%nbf*n_tot_fl_modes
-!      trace_over_dim=0
-!      do i1_fl=1,en%nbf*n_tot_fl_modes
-!      trace_over_dim=trace_over_dim+FL_Duffin_BIG_MATRIX_plus(i1,i1_fl)*FL_Duffin_BIG_VECTOR_plus(i1_fl)
-!      enddo
-!      print*, trace_over_dim - vector_b(i1)
-!      enddo
-!    !aim137 debug
    else
      !
-     call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_plus,dummy_det,.false.)
-     call SERIAL_inversion(en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_minus,dummy_det,.false.)
      !
- open(111,file='BigGm1_matrix_real.dat')
-   do i1_fks=1,en%nbf*n_tot_fl_modes
-     write(111,'(100(1f7.4)))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
-   enddo
- close(111)
+     !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+     if (l_debug_printouts) then
+       open(111,file='F_vector.dat')
+         do i1_fks=1,en%nbf*n_tot_fl_modes
+           write(111,*) FL_Duffin_BIG_VECTOR_plus(i1_fks)
+         enddo
+       close(111)
+     endif
+     !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+     !
      call M_by_V_omp('N',en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus,vtmp)
      FL_Duffin_BIG_VECTOR_plus = vtmp
      call M_by_V_omp('N',en%nbf*n_tot_fl_modes,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus,vtmp)
      FL_Duffin_BIG_VECTOR_minus = vtmp
      !
+     !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+     if (l_debug_printouts) then
+       open(111,file='H_vector.dat')
+         do i1_fks=1,en%nbf*n_tot_fl_modes
+           write(111,*) FL_Duffin_BIG_VECTOR_plus(i1_fks)
+         enddo
+       close(111)
+     endif
+     !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+     !
      !
    end if
    !
    ! Scatter to Inverse matrix
+   ! ========================
    !
    do i1=1,en%nbf
      do i1_fl=1,n_tot_fl_modes
@@ -223,16 +272,29 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    enddo
    !
  enddo ! loop over i_m
+ !
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ if (l_debug_printouts) then
+   open(111,file='FL_Sm1.dat')
+     do i1_fl=1,n_tot_fl_modes
+       write(111,*) 'FL mode =',i1_fl
+       do i1=1,en%nbf
+       write(111,*) FL_Sm1_Duffin_plus(i1,:,i1_fl)
+       enddo
+     enddo
+   close(111)
+ endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
  ! 
  i_start = 1+max_extra_mode-max_fl_mode
  i_finish = 1+max_extra_mode+max_fl_mode
  call FL_check_Duffin_inverse(&
          &     FL_S_plus(:,:,i_start:i_finish,id_red+(istep-1)*3,ikbz,i_sp),&
-         &     FL_Sm1_Duffin_plus,en%nbf,trace_over_dim,sum_minus_trace,100)
+         &     FL_Sm1_Duffin_plus,en%nbf,diagonal_elements,sum_minus_trace,100,l_debug_printouts)
  !
- write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(trace_over_dim(i1)), i1=1,en%nbf)
- !print*, 'uno igual a ', real(trace_over_dim)
- !print*, 'cero igual a ', real(sum_minus_trace),aimag(sum_minus_trace)
+!print*, ''
+ write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf)
+ !
  if (ikbz == 3) then
          if (id_red == 2) then
                  if (istep == 2) then
@@ -244,94 +306,107 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
 end subroutine FL_Duffin
 !
 !
-subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,trace_over_dim,sum_minus_trace,time_samples)
-  !
-  use pars,           ONLY:SP,cZERO,cONE,cI,pi
-  use units,          ONLY:HA2FSm1
-  use fields,         ONLY:Efield
-  use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode
-  use wrapper_omp,    ONLY:M_by_M_omp
-  !
-  implicit none
-  !
-  complex(SP), intent(in) :: FL_matrix(dim_of_matrix,dim_of_matrix,n_tot_fl_modes)
-  complex(SP), intent(in) :: FL_inverse(dim_of_matrix,dim_of_matrix,n_tot_fl_modes)
-  integer,     intent(in) :: dim_of_matrix
-  complex(SP), intent(out) :: trace_over_dim(dim_of_matrix), sum_minus_trace 
-  !
-  ! Work Space
-  complex(SP)  :: matrix_at_t(dim_of_matrix,dim_of_matrix,time_samples)
-  complex(SP)  :: inverse_at_t(dim_of_matrix,dim_of_matrix,time_samples)
-  complex(SP)  :: identity_at_t(dim_of_matrix,dim_of_matrix,time_samples)
-  complex(SP)  :: trace
-  integer      :: i1,i2,i1_fl,i_t,i1_shifted_fl,time_samples
-  real(SP)     :: time,w0_sm1
-  !
-  matrix_at_t = cZERO
-  inverse_at_t = cZERO
-  !
-  do i_t=1,time_samples
-    !
-    w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-    time = 1/(w0_sm1) * i_t/time_samples
-    !
-    do i1_fl=1,n_tot_fl_modes
-      !
-      i1_shifted_fl = i1_fl -(max_fl_mode+1)
-      !
-      matrix_at_t(:,:,i_t)  = matrix_at_t(:,:,i_t)  + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_matrix(:,:,i1_fl)
-      inverse_at_t(:,:,i_t) = inverse_at_t(:,:,i_t) + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_inverse(:,:,i1_fl)
-      !
-    enddo
-     
-    call M_by_M_omp('N','N',dim_of_matrix,dim_of_matrix,dim_of_matrix,cONE, &
-                         &  matrix_at_t(:,:,i_t),dim_of_matrix, &
-                         &  inverse_at_t(:,:,i_t),dim_of_matrix,cZERO, &
-                         &  identity_at_t(:,:,i_t),dim_of_matrix)
-    !
-  enddo
-  !
-  trace = cZERO
-  do i1=1,dim_of_matrix 
-     trace=trace+identity_at_t(i1,i1,time_samples)
-     trace_over_dim(i1) = identity_at_t(i1,i1,time_samples)
-  enddo
-   sum_minus_trace = sum(identity_at_t(:,:,time_samples)) - trace
-!  trace_over_dim = trace / dim_of_matrix
-  !
-  open(111,file='S_at_t_real.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (real(matrix_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
-  !
-  open(111,file='S_at_t_complex.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (aimag(matrix_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
-  !
-  open(111,file='Sm1_at_t_real.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (real(inverse_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
-  !
-  open(111,file='Sm1_at_t_complex.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (aimag(inverse_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
-  !
-  open(111,file='I_at_t_real.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (real(identity_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
-  !
-  open(111,file='I_at_t_complex.dat')
-  do i_t=1,time_samples
-    time = 1/(w0_sm1) * i_t/time_samples
-    write(111,*) time, (aimag(identity_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
-  enddo
+subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_elements,&
+                &sum_minus_trace,time_samples,l_debug_printouts)
+ !
+ use pars,           ONLY:SP,cZERO,cONE,cI,pi
+ use units,          ONLY:HA2FSm1
+ use fields,         ONLY:Efield
+ use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode
+ use wrapper_omp,    ONLY:M_by_M_omp
+ !
+ implicit none
+ !
+ complex(SP), intent(in) :: FL_matrix(dim_of_matrix,dim_of_matrix,n_tot_fl_modes)
+ complex(SP), intent(in) :: FL_inverse(dim_of_matrix,dim_of_matrix,n_tot_fl_modes)
+ integer,     intent(in) :: dim_of_matrix
+ complex(SP), intent(out) :: diagonal_elements(dim_of_matrix), sum_minus_trace 
+ logical,     intent(in) :: l_debug_printouts
+ !
+ ! Work Space
+ complex(SP)  :: matrix_at_t(dim_of_matrix,dim_of_matrix,time_samples)
+ complex(SP)  :: inverse_at_t(dim_of_matrix,dim_of_matrix,time_samples)
+ complex(SP)  :: identity_at_t(dim_of_matrix,dim_of_matrix,time_samples)
+ complex(SP)  :: trace
+ integer      :: i1,i2,i1_fl,i_t,i1_shifted_fl,time_samples
+ real(SP)     :: time,w0_sm1
+ !
+ matrix_at_t = cZERO
+ inverse_at_t = cZERO
+ !
+ do i_t=1,time_samples
+   !
+   w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
+   time = 1/(w0_sm1) * i_t/time_samples
+   !
+   do i1_fl=1,n_tot_fl_modes
+     !
+     i1_shifted_fl = i1_fl -(max_fl_mode+1)
+     !
+     matrix_at_t(:,:,i_t)  = matrix_at_t(:,:,i_t)  + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_matrix(:,:,i1_fl)
+     inverse_at_t(:,:,i_t) = inverse_at_t(:,:,i_t) + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_inverse(:,:,i1_fl)
+     !
+   enddo
+    
+   call M_by_M_omp('N','N',dim_of_matrix,dim_of_matrix,dim_of_matrix,cONE, &
+                        &  matrix_at_t(:,:,i_t),dim_of_matrix, &
+                        &  inverse_at_t(:,:,i_t),dim_of_matrix,cZERO, &
+                        &  identity_at_t(:,:,i_t),dim_of_matrix)
+   !
+ enddo
+ !
+ trace = cZERO
+ do i1=1,dim_of_matrix 
+    trace=trace+identity_at_t(i1,i1,time_samples)
+    diagonal_elements(i1) = identity_at_t(i1,i1,time_samples)
+ enddo
+  sum_minus_trace = sum(identity_at_t(:,:,time_samples)) - trace
+ !
+ !
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ if (l_debug_printouts) then
+   open(111,file='S_at_t_real.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (real(matrix_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+   !
+   open(111,file='S_at_t_complex.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (aimag(matrix_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+   !
+   open(111,file='Sm1_at_t_real.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (real(inverse_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+   !
+   open(111,file='Sm1_at_t_complex.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (aimag(inverse_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+   !
+   open(111,file='I_at_t_real.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (real(identity_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+   !
+   open(111,file='I_at_t_complex.dat')
+   do i_t=1,time_samples
+     time = 1/(w0_sm1) * i_t/time_samples
+     write(111,*) time, (aimag(identity_at_t(i2,:,i_t)),i2=1,dim_of_matrix)
+   enddo
+   close(111)
+ endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+ ! 
 end subroutine FL_check_Duffin_inverse

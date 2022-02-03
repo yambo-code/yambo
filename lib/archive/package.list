@@ -69,7 +69,7 @@ tarball_devxlib=0.2.0.tar.gz
 # GIT's repositories and branches
 #
 git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
-branch_devxlib=master
+branch_devxlib=develop
 #
 # External URL's
 #

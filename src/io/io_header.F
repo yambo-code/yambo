@@ -151,13 +151,15 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  ! SPIN polarizations/spinors
  !
  if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
-   if(.not.ACCEPT_SPIN_) then
+   if(ACCEPT_SPIN_ .and. n_spinor==2 .and. SPIN_vec_disk(2)==1) then
+     if (io_com(ID)/=NONE) call warning(' Accepting DB computed without SOC '//trim(io_file(ID)))
+   else
      if (io_com(ID)/=NONE) call warning(' Refusing incompatible SPIN pol/spinors for '//trim(io_file(ID)))
      io_header=-1
      goto 1
-   else
-     if (io_com(ID)/=NONE) call warning(' Accepting incompatible SPIN pol/spinors for '//trim(io_file(ID)))
    endif
+ else
+   if(ACCEPT_SPIN_) ACCEPT_SPIN=.FALSE.
  endif
  !
  ! DL lattice

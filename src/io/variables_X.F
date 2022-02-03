@@ -58,7 +58,7 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  if (read_is_on(ID).and.EM1S_NOSOC) then
    ! Here I'm in the case where I'm using a DB computed without SOC
    ! The bands in X%ib are with SOC, while on disk I have half of the bands
-   tmp_ib(1)=(X%ib(1)-1)/2
+   tmp_ib(1)=(X%ib(1)-1)/2+1
    tmp_ib(2)= X%ib(2)   /2
  endif
  !

@@ -72,6 +72,7 @@ subroutine NL_ypp_driver(en,k)
  io_Nonlinear=io_NL(dbname,ID)
  if(io_Nonlinear/=0) call error(" Error reading NonLinear database")
  !
+ io_Nonlinear_REF=-1
  if(Pump_path/='none') then
     jobstr_save=jobstr
     jobstr     =trim(Pump_path)

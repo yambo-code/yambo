@@ -296,6 +296,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              ! RIM W support
              !
              l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+             l_RIM_W_g=(l_RIM_W_g.and.(.not.RIM_W_for_graph))
              if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
              !
              if (l_RIM_W_g) then
@@ -602,6 +603,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                end if
+               if(ig1==1.and.ig2==1.and.iqbz==1) then
+                 call msg("r","isc%rhotw(ig1)",real(isc%rhotw(ig1),SP))
+                 call msg("r","isc%rhotw(ig2)",real(isc%rhotw(ig2),SP))
+                 call msg("r","PPA_E",real(PPA_E,SP))
+                 call msg("r","Re[PPA_R]",real(PPA_R,SP))
+                 call msg("r","Im[PPA_R]",aimag(PPA_R))
+                 call msg("r","occ_res", real(spin_occ-f_kmq+bose_f(PPA_E),SP))
+                 call msg("r","occ_ares", real(f_kmq+bose_f(PPA_E),SP))
+                 call msg("r","Re[W_(1)-E_kmq-PPA_E]",real(W_(1)-E_kmq-PPA_E,SP))
+                 call msg("r","Im[W_(1)-E_kmq-PPA_E]",aimag(W_(1)-E_kmq-PPA_E))
+                 call msg("r","Re[So(iq=ig1=ig2=0)] = ",  real(ctmp,SP))
+                 call msg("r","Im[So(iq=ig1=ig2=0)] = ", aimag(cmplx(ctmp,kind=SP)))
+               endif
                dp_dummy=dp_dummy+ctmp
                !
              enddo

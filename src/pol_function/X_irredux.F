@@ -39,7 +39,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! 
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE,io_DIP
- use pars,          ONLY:SP,cZERO,schlen
+ use pars,          ONLY:SP,cZERO,schlen,pi
  use wrapper,       ONLY:V_plus_alpha_V,vv_caxpy
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
@@ -56,7 +56,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph,Xo_graph_wings,RL_vol
  use D_lattice,     ONLY:i_space_inv,alat
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
@@ -86,7 +86,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  ! Work Space
  !
  character(schlen)        :: live_t_string
- integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
+ integer                  :: ig1,ig2,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
 &                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
  logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
  real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff,lcut,v_fermi
@@ -107,6 +107,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !===================
  GreenF                           = cZERO
  drude_GreenF                     = cZERO
+ Xo_graph_wings                   = cZERO
  !
  X_rows1=X_par%rows(1)
  X_rows2=X_par%rows(2)
@@ -252,55 +253,94 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- if (iq==1.and.master_thread.and.drude_n_states>0) then
-   do i_cg = 1,coarse_grid_N
-     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
-     if(.not.Drude_pole) cycle
-     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
-     !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
-     !
-     ctmp = DEV_VAR(Xo_res)(1,1)
-     !
-     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
-     !
-     if (have_cuda) then
-       do iw=1,Xw%n_freqs
-         X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
-       enddo
-     endif
-     !
-     exit
-   enddo
- endif
+ !if (iq==1.and.master_thread.and.drude_n_states>0) then
+ !  do i_cg = 1,coarse_grid_N
+ !    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+ !    if(.not.Drude_pole) cycle
+ !    if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+ !    !
+ !    call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+ !    !
+ !    ctmp = DEV_VAR(Xo_res)(1,1)
+ !    !
+ !    X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
+ !    !
+ !    if (have_cuda) then
+ !      do iw=1,Xw%n_freqs
+ !        X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+ !      enddo
+ !    endif
+ !    !
+ !    exit
+ !  enddo
+ !endif
  !
  !Graphene intraband term
  !
- if (iq==1.and.master_thread.and.RIM_W_for_graph.and.master_cpu) then
-   call msg('r', 'Graphene analytical model of intraband transitions')
-   call msg('r', 'Graphene intraband is applied only to head static response function')
+ if (iq==1.and.master_thread.and.RIM_W_for_graph) then
    !
-   lcut = alat(idir(1))
-   !
-   !Analytical model for graphene:
-   !X^0_00_Dirac(w=0) = -1/(4*v_fermi)*q/L
-   !
-   call parser('v_fermi',v_fermi)
-   !
-   call msg('r', 'Fermi vellocity (10^6 m/s)', v_fermi)
-   !
-   !From 10^6 m/s to a.u.
-   !
-   v_fermi = v_fermi/2.187691_SP
-   !
-   call msg('r', 'Fermi vellocity (a.u.)', v_fermi)
-   !
-   X_Dirac = -q_norm(1)/(4._SP*v_fermi*lcut)
-   !
-   X_par%blc(1,1,1)=X_par%blc(1,1,1)+X_Dirac
-   !
-   if (have_cuda) X_par%blc_d(1,1,1)=X_par%blc(1,1,1)
-   !
+   if(X_par%rows(1)==1.and.X_par%cols(1)==1) then
+     call msg('r', 'Graphene analytical model of intraband transitions')
+     call msg('r', 'Graphene intraband is applied only to head static response function')
+     !
+     ! Head correction
+     !=================
+     !
+     lcut = alat(idir(1))
+     !
+     !Analytical model for graphene:
+     !X^0_00_Dirac(w=0) = -1/(4*v_fermi)*q/L
+     !
+     call parser('v_fermi',v_fermi)
+     !
+     call msg('r', 'Fermi vellocity (10^6 m/s)', v_fermi)
+     !
+     !From 10^6 m/s to a.u.
+     !
+     v_fermi = v_fermi/2.187691_SP
+     !
+     call msg('r', 'Fermi vellocity (a.u.)', v_fermi)
+     !
+     X_Dirac = -q_norm(1)/(4._SP*v_fermi*lcut)
+     !
+     if(master_cpu) then
+       !
+       X_par%blc(1,1,1)=X_par%blc(1,1,1)+X_Dirac
+       !
+       if (have_cuda) X_par%blc_d(1,1,1)=X_par%blc(1,1,1)
+       !
+     endif
+     !
+     ! Wings corrections
+     !===================
+     !
+     !do i_cg = 1,coarse_grid_N
+     !  !
+     !  if(.not.(abs(coarse_grid_Pt(i_cg))<1.E-5)) cycle
+     !  !
+     !  call msg('r','i_cg',i_cg)
+     !  call msg('r','Poles',bare_grid_N(i_cg))
+     !  !
+     !  call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+     !  !
+     !  do ig1 = 2,X_par%rows(2)
+     !    call msg('r', 'Re{Xo_res}', real(Xo_graph_wings(ig1)))
+     !    call msg('r', 'Im{Xo_res}',aimag(Xo_graph_wings(ig1)))
+     !    !X_par%blc(1,ig1,1) = X_par%blc(1,ig1,1)+Xo_graph_wings(ig1)*X_Dirac*0.5_SP
+     !    !X_par%blc(ig1,1,1) = X_par%blc(ig1,1,1)+conjg(Xo_graph_wings(ig1))*X_Dirac*0.5_SP
+     !    !
+     !    do ig2 = 2,X_par%cols(2)
+     !      !
+     !      ctmp = -2._SP*DEV_VAR(Xo_res)(ig1,ig2)/(v_fermi*pi**2*lcut)*sqrt(RL_vol/(lcut*pi))
+     !      !
+     !      !X_par%blc(ig1,ig2,:) = X_par%blc(ig1,ig2,:) + ctmp
+     !      !
+     !    enddo
+     !    !
+     !  enddo
+     !  !
+     !enddo
+   endif
  endif
  !
  !

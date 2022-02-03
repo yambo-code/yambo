@@ -166,6 +166,7 @@ module R_lattice
  real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
  real(DP),   allocatable :: f_coeff(:,:,:,:,:)
  logical :: RIM_W_for_graph
+ complex(SP),   allocatable :: Xo_graph_wings(:)
  !real(SP):: v_fermi
  !
  ! Coulomb (including Cutoff)

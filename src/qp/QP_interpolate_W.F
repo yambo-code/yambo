@@ -62,11 +62,14 @@ subroutine interpolate_W(X,Xw,q,mode)
  integer           :: ID, io_err, ng_save,G_max_ibz(q%nibz)
  integer, external :: io_X, io_RIM_W
  character(schlen) :: ch_dum,fmt_dum,msg_dum(2)
+ logical           :: test
  !
  call timing('RIM-W-coeff',OPR='start')
  YAMBO_ALLOC(f_coeff,(6,RIM_W_ng,RIM_W_ng,q%nibz,Xw%n_freqs))
  !
  call section("+", "RIM-W interpolation")
+ !
+ call msg('r','RIM_W_for_graph',RIM_W_for_graph)
  !
  !Load q_grid_b in iku
  do idm=1,2
@@ -197,6 +200,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  !
  do iomega=1,Xw%n_freqs
+ !call msg('r','iomega',iomega)
  do igr=1,RIM_W_ng
   !
   ig2max = RIM_W_ng
@@ -219,8 +223,16 @@ subroutine interpolate_W(X,Xw,q,mode)
         !
       enddo
       !
+      !test = (iq1==1.and.igr == 1.and.igc == 1)
+      !call msg('r','iq',iq1)
+      !call msg('r','igr',igr)
+      !call msg('r','igc',igc)
+      !call msg('r','test',test)
+      !
       ! q == 0 terms must be tratened separately
       if (iq1 == 1 .and. igr == 1 .and. igc == 1 .and. (.not. RIM_W_for_graph)) then
+        !
+        call msg("r","Evaluating coefficients q = 0")
         !
         if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
           !vX is included in the anis_factor
@@ -245,7 +257,9 @@ subroutine interpolate_W(X,Xw,q,mode)
 
         enddo
         !
-      else if(iq == 1 .and. (igr == 1 .or. igc == 1) .and. RIM_W_for_graph) then
+      else if(iq1 == 1 .and. (igr == 1 .or. igc == 1) .and. RIM_W_for_graph) then
+        !
+        call msg("r","Evaluating coefficients q = 0 graph")
         !
         ! Evaluate f_func next nearest neighbour
         !Index ordering of NEXT nearest-neighbour maps
@@ -270,6 +284,18 @@ subroutine interpolate_W(X,Xw,q,mode)
         ig1 = idx_G(ig1_tmp,iq2_tmp,2)
         ig2 = idx_G(ig2_tmp,iq2_tmp,2)
         !
+        call msg('r','iq  =',iq1)
+        call msg('r','igr =',igr)
+        call msg('r','igc =',igc)
+        !
+        call msg('r','iq_nn  =',iq2_tmp)
+        call msg('r','igr_nn =',ig1_tmp)
+        call msg('r','igc_nn =',ig2_tmp)
+        !
+        call msg('r','iq_nnn  =',iq2)
+        call msg('r','igr_nnn =',ig1)
+        call msg('r','igc_nnn =',ig2)
+        !
         f_func(4) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
 &       real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
         !
@@ -284,6 +310,14 @@ subroutine interpolate_W(X,Xw,q,mode)
         iq2 = idx_q(ig1_tmp,iq2_tmp,3)
         ig1 = idx_G(ig1_tmp,iq2_tmp,3)
         ig2 = idx_G(ig2_tmp,iq2_tmp,3)
+        !
+        call msg('r','iq_nn  =',iq2_tmp)
+        call msg('r','igr_nn =',ig1_tmp)
+        call msg('r','igc_nn =',ig2_tmp)
+        !
+        call msg('r','iq_nnn  =',iq2)
+        call msg('r','igr_nnn =',ig1)
+        call msg('r','igc_nnn =',ig2)
         !
         f_func(5) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
 &       real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
@@ -305,7 +339,16 @@ subroutine interpolate_W(X,Xw,q,mode)
         f_coeff(5,igr,igc,iq1,iomega) =  dp_dummy(4)*a(1,2)/alat(2)+dp_dummy(5)*a(2,1)/alat(1) !fxy (iku)
         f_coeff(6,igr,igc,iq1,iomega) =  dp_dummy(5)+dp_dummy(4)*(a(1,2)/alat(2))**2           !fyy (iku)
         !
+        call msg('r',"f_coeff", real(f_coeff(1,igr,igc,iq1,iomega)))
+        call msg('r',"f_coeff", real(f_coeff(2,igr,igc,iq1,iomega)))
+        call msg('r',"f_coeff", real(f_coeff(3,igr,igc,iq1,iomega)))
+        call msg('r',"f_coeff", real(f_coeff(4,igr,igc,iq1,iomega)))
+        call msg('r',"f_coeff", real(f_coeff(5,igr,igc,iq1,iomega)))
+        call msg('r',"f_coeff", real(f_coeff(6,igr,igc,iq1,iomega)))
+        !
       else
+        !
+        !call msg("r","Evaluating coefficients q/= 0")
         !
         !Coefficients in rlu
         dp_dummy(1) = f_func(1)                                                          !f0
@@ -366,6 +409,28 @@ subroutine interpolate_W(X,Xw,q,mode)
        if (iq1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
    enddo
    call msg('r','')
+   call msg('nr','Comparison between head Wc = W - v averages: < Wc > [au] RIM-W/RIM')
+   do ig1=1,RIM_W_ng,2
+       !
+       msg_dum=' '
+       !
+       do ig2=ig1,min(ig1+1,RIM_W_ng)
+         !
+         !iq=q_norm_i(i2)
+         ch_dum=' < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
+         if (ig1/=ig2) ch_dum=' * < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
+         !
+         r_dum(1)= -RIM_W(1,ig2,1)*2._SP*pi
+         r_dum(2)= -vX_nn(1,1,ig2,1,1)*RIM_qpg(1,ig2,1)*2_SP*pi
+         !
+         fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
+         write (msg_dum(ig2-ig1+1),trim(fmt_dum)) trim(ch_dum),r_dum
+         !
+       enddo
+       if (ig1==1) call msg('nr',trim(STRING_pack(msg_dum(1),msg_dum(2))))
+       if (ig1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
+   enddo
+
  end if
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -386,11 +451,14 @@ subroutine interpolate_W(X,Xw,q,mode)
          end if
          !
        else
-         dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
-&                                          +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
+         dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-5*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
+&                                          +1.E-5*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
                                            +2._SP*f_coeff(5,ig1,ig2,1,:)))
+         call msg("r","dummy",real(dummy)) 
          dummy(:) = dummy(:)*4._SP*pi/(bare_qpg(1,ig1)*bare_qpg(1,ig2))
-         dummy(:) = dummy/(1-dummy)
+         call msg("r","dummy",real(dummy))
+         dummy(:) = dummy/(1._SP-dummy)
+         call msg("r","dummy",real(dummy))
        endif
        !
        if (dummy(1)/dummy(2)<=1._SP) then
@@ -398,6 +466,9 @@ subroutine interpolate_W(X,Xw,q,mode)
        else
          RIM_W_E(ig1,ig2)=sqrt(dummy(1)/dummy(2)-1._SP)
        endif
+       !
+       dummy(1) = 1/RIM_W_E(ig1,ig2)
+       call msg('r','PPA_E', real(dummy(1)))
        !
      end do
    end do

@@ -25,18 +25,20 @@
 module cuda_m
   !================
   !
+  use dev_openacc_m
+  ! 2022-02-02 DS and AF TO BE FIXED
+  !use dev_cudafor_m
+  use dev_cublas_m
+  use device_memcpy_m
+  use cusolverdn_y
 # if defined _CUDAF
   use cudafor
-  use cublas
+  !use cublas
   use cufft
-  use cusolverdn_y
+  !use cusolverdn_y
 # elif defined _OPENACC
   use cudafor_m
-  use cublas_core_m
-  use cublas_m
   use cufft_m
-  use cusolverdn_y
-  use openacc
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   use iso_c_binding
@@ -156,8 +158,10 @@ contains
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
 #elif defined _OPENACC
+    ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
-    stream_default=acc_get_cuda_stream(acc_async_sync)
+    !stream_default=acc_get_cuda_stream(acc_async_sync)
+    call dev_stream_create(stream_default,default_stream=.true.)
     stream_h2d=1001
     stream_d2h=1002
     stream_d=10

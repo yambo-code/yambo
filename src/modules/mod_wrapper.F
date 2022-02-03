@@ -157,6 +157,7 @@ module wrapper
 #endif
    end subroutine mm_cgemm
    !
+#if defined _COMMENT
    subroutine mm_cgemm_gpu(TRANSA,TRANSB,M,N,K,ALPHA,A,LDA,B,LDB,BETA,C,LDC)
      implicit none
      complex(SP),          intent(in)  :: ALPHA,BETA
@@ -183,6 +184,7 @@ module wrapper
 #  endif
 #endif
    end subroutine mm_cgemm_gpu
+#endif
 
    subroutine mm_c(TRANSA,TRANSB,msize,A,B,C)
      integer,     intent(in)  :: msize

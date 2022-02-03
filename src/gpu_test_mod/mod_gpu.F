@@ -38,6 +38,7 @@ module gpu_m
   !
 #if defined _GPU
   type(cuBlasHandle) :: cublas_h
+  !type(c_ptr) :: cublas_h
   public :: cublas_h
 #endif
 

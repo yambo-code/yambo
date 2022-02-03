@@ -281,7 +281,8 @@ module BS
        if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
        if (have_cuda) then
-         YAMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_T_grp(iG)%O_x),BS_T_grp(iG)%O_x)
+         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_T_grp(iG)%O_x),BS_T_grp(iG)%O_x)
+         YAMBO_ALLOC_GPU(DEV_VAR(BS_T_grp(iG)%O_x),(BS_n_g_exch,BS_T_grp(iG)%size))
        endif
      endif
      !
@@ -289,7 +290,8 @@ module BS
        if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
        if (have_cuda) then
-         YAMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_blk(iB)%O_c),BS_blk(iB)%O_c)
+         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_blk(iB)%O_c),BS_blk(iB)%O_c)
+         YAMBO_ALLOC_GPU(DEV_VAR(BS_blk(iB)%O_c),(O_ng,BS_blk(iB)%N_oscillators))
        endif
      endif
      !

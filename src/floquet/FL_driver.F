@@ -200,10 +200,10 @@ subroutine FL_driver(E,X,k,q,Dip)
    enddo
    !aim137 DEBUG test mixing
    do i1=NL_bands(1),E%nbf
-     FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
-     FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=cONE*-0.1
-     FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=cONE*-0.1
-     FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=cONE*-0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=cONE*-0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
    enddo
    !aim137 END DEBUG
    !
@@ -232,7 +232,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization
      !
      !aim137: preliminary criterion to avoid infinit loop
-     l_selfconsistency_reached= (FL_iteration>=4)
+     l_selfconsistency_reached= (FL_iteration>=1)
      !
    enddo
    !

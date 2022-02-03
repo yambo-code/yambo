@@ -259,10 +259,10 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
 !open(111,file='FL_S_plus'//trim(adjustl(filename))//'.dat')
 !do id=1,6
 !write(111,*) 'Direction is =', id
-!do i1_fl=1,n_tot_fl_modes
-!write(111,*) '    Floquet mode is =', i1_fl
+!do i1_extra=1,n_tot_extra_modes
+!write(111,*) '    Floquet mode is =', i1_extra
 !do i1=1,size(FL_S_plus,dim=1)
-!write(111,*) FL_S_plus(i1,:,i1_fl,id)
+!write(111,*) FL_S_plus(i1,:,i1_extra,id)
 !enddo
 !enddo
 !enddo
@@ -270,10 +270,10 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
 !open(111,file='FL_S_mins'//trim(adjustl(filename))//'.dat')
 !do id=1,6
 !write(111,*) 'Direction is =', id
-!do i1_fl=1,n_tot_fl_modes
-!write(111,*) '    Floquet mode is =', i1_fl
+!do i1_extra=1,n_tot_extra_modes
+!write(111,*) '    Floquet mode is =', i1_extra
 !do i1=1,size(FL_S_minus,dim=1)
-!write(111,*) FL_S_minus(i1,:,i1_fl,id)
+!write(111,*) FL_S_minus(i1,:,i1_extra,id)
 !enddo
 !enddo
 !enddo

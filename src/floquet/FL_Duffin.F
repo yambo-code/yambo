@@ -51,15 +51,15 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
  complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf*n_tot_fl_modes)
+ complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_fl_modes)
  complex(SP) :: vector_b(en%nbf*n_tot_fl_modes)
  complex(SP) :: vtmp(en%nbf*n_tot_fl_modes)
- complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_fl_modes)
  complex(SP) :: diagonal_elements(en%nbf),sum_minus_trace,dummy_det
  integer     :: time_samples
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,ikm
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks,i1_inverted_fl
- integer :: i1_extra,i2_extra,i3_extra,i_comb_extra,i_start,i_finish,i1_extra_inverted
+ integer :: i1_extra,i2_extra,i3_extra,i_comb_extra,i_start,i_finish,i1_extra_inverted,i3_extra_inverted
  logical :: l_solve_linear_problem,l_debug_printouts
  !
  !
@@ -69,21 +69,21 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  ! Using an example matrix
  ! =======================
  !
- ! FL_S_plus = cZERO
- ! FL_S_plus(1,1,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
- ! FL_S_plus(1,1,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
- ! FL_S_plus(1,2,5+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
- ! FL_S_plus(1,2,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
- ! FL_S_plus(2,1,2+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
- ! FL_S_plus(2,1,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
- ! FL_S_plus(3,3,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
- ! FL_S_plus(3,3,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
- ! FL_S_plus(3,4,5+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
- ! FL_S_plus(3,4,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
- ! FL_S_plus(4,3,2+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
- ! FL_S_plus(4,3,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
- ! FL_S_plus(5,3,3+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
- ! FL_S_plus(5,3,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
+ !FL_S_plus = cZERO
+ !FL_S_plus(1,1,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
+ !FL_S_plus(1,1,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
+ !FL_S_plus(1,2,5+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
+ !FL_S_plus(1,2,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
+ !FL_S_plus(2,1,2+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
+ !FL_S_plus(2,1,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
+ !FL_S_plus(3,3,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 2
+ !FL_S_plus(3,3,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 4
+ !FL_S_plus(3,4,5+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 7
+ !FL_S_plus(3,4,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 13*cONE
+ !FL_S_plus(4,3,2+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
+ !FL_S_plus(4,3,0+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
+ !FL_S_plus(5,3,3+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 5*cONE
+ !FL_S_plus(5,3,1+max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp) = 9
  !
  ! Build G matrix
  ! ======================
@@ -93,20 +93,23 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      !
      FL_Duffin_Gmatrix_plus(:,:,i1_fl,i2_fl) = cZERO
      FL_Duffin_Gmatrix_minus(:,:,i1_fl,i2_fl) = cZERO
+     tmp_M = cZERO
      !
-     do i3_fl=1,n_tot_fl_modes
+     do i3_extra=1,n_tot_extra_modes
        !
+       i3_extra_inverted = n_tot_extra_modes + 1 - i3_extra !new
+       i3_fl = i3_extra - max_extra_mode + max_fl_mode
        i_shift_comb_fl = (i1_fl-(max_fl_mode+1)) &
                       &- (i2_fl-(max_fl_mode+1)) &
-                      &+ (i3_fl-(max_fl_mode+1))
+                      &- (i3_fl-(max_fl_mode+1)) ! new
        if (abs(i_shift_comb_fl) > max_extra_mode) cycle !the criterion changes
-       i3_extra = i3_fl + max_extra_mode - max_fl_mode
+       !i3_extra = i3_fl + max_extra_mode - max_fl_mode
        i_comb_fl    = i_shift_comb_fl + (max_fl_mode+1)
        i_comb_extra = i_shift_comb_fl + (max_extra_mode+1)
        !
-       call M_by_M_omp('N','N',en%nbf,en%nbf,en%nbf,cONE,  &
+       call M_by_M_omp('N','N',en%nbf,en%nbf,en%nbf,cONE,  & !tested ok
       &  FL_S_plus(:,:,i_comb_extra,id_red+(istep-1)*3,ikbz,i_sp),en%nbf, &
-      &  conjg(FL_S_plus(:,:,i3_extra,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf,cZERO,&
+      &  conjg(FL_S_plus(:,:,i3_extra_inverted,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf,cZERO,&!new
       &  tmp_M,en%nbf)
        !
        FL_Duffin_Gmatrix_plus(:,:,i1_fl,i2_fl) = FL_Duffin_Gmatrix_plus(:,:,i1_fl,i2_fl) + tmp_M
@@ -122,6 +125,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
        !
    enddo
  enddo
+       !call error('')
  !
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  if (l_debug_printouts) then
@@ -209,8 +213,8 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      !
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      !
-     FL_Duffin_BIG_VECTOR_plus(i1_fks)  = conjg(FL_S_plus(i1,i_m,i1_extra,id_red+(istep-1)*3,ikbz,i_sp))
-     FL_Duffin_BIG_VECTOR_minus(i1_fks) = conjg(FL_S_minus(i1,i_m,i1_extra,id_red+(istep-1)*3,ikbz,i_sp))
+     FL_Duffin_BIG_VECTOR_plus(i1_fks)  = conjg(FL_S_plus(i1,i_m,i1_extra_inverted,id_red+(istep-1)*3,ikbz,i_sp))
+     FL_Duffin_BIG_VECTOR_minus(i1_fks) = conjg(FL_S_minus(i1,i_m,i1_extra_inverted,id_red+(istep-1)*3,ikbz,i_sp))
      !aim137 this is just conjg, not transpose.
      !
      enddo
@@ -288,6 +292,20 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  ! 
  i_start = 1+max_extra_mode-max_fl_mode
  i_finish = 1+max_extra_mode+max_fl_mode
+ !
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ if (l_debug_printouts) then
+   open(111,file='FL_S.dat')
+     do i1_extra=i_start,i_finish
+       write(111,*) 'FL mode =',i1_extra-max_extra_mode+max_fl_mode
+       do i1=1,en%nbf
+       write(111,*) FL_S_plus(i1,:,i1_extra,id_red+(istep-1)*3,ikbz,i_sp)
+       enddo
+     enddo
+   close(111)
+ endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+ !
  call FL_check_Duffin_inverse(&
          &     FL_S_plus(:,:,i_start:i_finish,id_red+(istep-1)*3,ikbz,i_sp),&
          &     FL_Sm1_Duffin_plus,en%nbf,diagonal_elements,sum_minus_trace,100,l_debug_printouts)
@@ -333,6 +351,7 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_e
  !
  matrix_at_t = cZERO
  inverse_at_t = cZERO
+ identity_at_t = cZERO
  !
  do i_t=1,time_samples
    !

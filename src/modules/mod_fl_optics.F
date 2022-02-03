@@ -168,7 +168,7 @@ module fl_optics
      !
      max_extra_mode = 2*max_fl_mode
      n_tot_fl_modes = 2*max_fl_mode+1
-     n_tot_extra_modes = 4*max_fl_mode+1
+     n_tot_extra_modes = 2*max_extra_mode+1
      FL_space_dim = NL_bands(2) * n_tot_fl_modes
      FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
      FL_states(2) = FL_space_dim

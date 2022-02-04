@@ -34,18 +34,19 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
- use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states,n_tot_duffin_modes
+ use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states,n_tot_duffin_modes,l_Duffin,&
+&                         FL_S_plus,FL_S_minus,max_duffin_mode,max_extra_mode
  !
  implicit none
  !
- type(levels), intent(in)      :: en
- type(bz_samp),intent(in)      :: Xk
- integer,      intent(in)      :: ikbz
- integer,      intent(in)      :: i_sp
- integer,      intent(in)      :: istep
- integer,      intent(in)      :: id_red
- complex(SP),  intent(in)      :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
- complex(SP),  intent(out)     :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) !2 for plus and minus
+ type(levels), intent(in)  :: en
+ type(bz_samp),intent(in)  :: Xk
+ integer,      intent(in)  :: ikbz
+ integer,      intent(in)  :: i_sp
+ integer,      intent(in)  :: istep
+ integer,      intent(in)  :: id_red
+ complex(SP),  intent(in)  :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(out) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) !2 for plus and minus
  !
  ! Work Space
  !
@@ -55,6 +56,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  integer     :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
  complex(SP) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_duffin_modes)
  complex(SP) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_duffin_modes)
+ complex(SP) :: dummy_det
  !
  FL_V_tilde=cZERO
  !
@@ -76,7 +78,22 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  ikp_ibz=Xk%sstar(ikp,1)
  !
  ! 
- call FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i_sp,ikbz)
+ if (l_Duffin) then
+   !
+   call FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i_sp,ikbz)
+   !
+ else
+   !
+   FL_Sm1_Duffin_plus = cZERO
+   FL_Sm1_Duffin_minus = cZERO
+   !
+   FL_Sm1_Duffin_plus(:,:,max_duffin_mode+1)  = FL_S_plus(:,:,max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp)
+   FL_Sm1_Duffin_minus(:,:,max_duffin_mode+1) = FL_S_minus(:,:,max_extra_mode+1,id_red+(istep-1)*3,ikbz,i_sp)
+   !
+   call SERIAL_inversion(en%nbf,FL_Sm1_Duffin_plus(:,:,max_duffin_mode+1),dummy_det,.false.)
+   call SERIAL_inversion(en%nbf,FL_Sm1_Duffin_minus(:,:,max_duffin_mode+1),dummy_det,.false.)
+   !
+ endif
  ! 
  ! 
  ! 

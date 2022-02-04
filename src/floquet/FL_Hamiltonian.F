@@ -67,7 +67,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  integer     :: ik_bz,i_sp_pol,is,i1,ik_mem
  !aim137
- integer     :: i_fl,i_fks
+ integer     :: i_fl,i_fks,i_shifted_fl
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
  real :: alpha_
  character(4) :: filename
@@ -105,7 +105,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  ! Evaluate the external/total field
  !=================================
  !
- !call RT_Ext_fields(A_ext,Time)
+ call RT_Ext_fields(A_ext,0.41341373336561360)
  !
  A_tot=A_ext
  !
@@ -147,11 +147,12 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    do i1=NL_bands(1),NL_bands(2) 
      do i_fl=1,n_tot_fl_modes
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
+       i_shifted_fl = i_fl - (max_fl_mode+1)
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
-&            - real(i_fl,SP) * w0  !aim137: w0 is in Hartree
+&            - real(i_shifted_fl,SP) * w0  !aim137: w0 is in Hartree
        !
      enddo
    enddo
@@ -164,7 +165,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
      !
    else
      !
-     !aim137 commented out for now
      call FL_build_W_operator(FL_V_bands,E,k,A_tot,ik_bz,i_sp_pol,H_nl_sc)
      !
    endif                                                         
@@ -194,13 +194,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 #endif
  !
   !aim137 DEBUG
-!do ik_bz=1,QP_nk
-!write(filename,'(i0)') ik_bz
-!open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
-!do i_fks=FL_states(1),FL_states(2)
-!write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
-!enddo
-!close(111)
-!enddo
+ do ik_bz=1,QP_nk
+ write(filename,'(i0)') ik_bz
+ open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
+ do i_fks=FL_states(1),FL_states(2)
+ write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
+ enddo
+ close(111)
+ enddo
  !aim137 END DEBUG
 end subroutine FL_Hamiltonian

@@ -42,7 +42,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
- use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -200,19 +200,20 @@ subroutine FL_driver(E,X,k,q,Dip)
    enddo
    !aim137 DEBUG test mixing
    do i1=NL_bands(1),E%nbf
-     FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
-     FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=cONE*-0.1
-     FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=cONE*-0.1
-     FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=-cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=-cONE*0.1
+    !FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
    enddo
    !aim137 END DEBUG
+   !
+   l_selfconsistency_reached = .false.
+   l_Duffin = .false.
+   FL_iteration = 0
    !
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !
-   l_selfconsistency_reached=.false.
-   FL_iteration = 0
    !
    do while(.not.l_selfconsistency_reached)
      !
@@ -232,13 +233,14 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization
      !
      !aim137: preliminary criterion to avoid infinit loop
-     l_selfconsistency_reached= (FL_iteration>=1)
+     l_selfconsistency_reached = (FL_iteration>=4)
+     !aim137: preliminary skipping Duffin
+     l_Duffin = .true.
      !
    enddo
    !
-   !aim137 this subroutine is taking too much, have a look
-   !aim137 it doesn't crash, but it gets stuck here
-   call NL_databases_IO(i_f,'write')
+   !aim137 it's crashing here
+!  call NL_databases_IO(i_f,'write')
    !
  enddo
  !

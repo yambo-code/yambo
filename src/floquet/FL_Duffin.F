@@ -65,7 +65,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  !
  !
  l_solve_linear_problem = .false.
- l_debug_printouts = .true.
+ l_debug_printouts = .false.
  !
  ! Using an example matrix
  ! =======================
@@ -123,7 +123,6 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
        !
    enddo
  enddo
-       !call error('')
  !
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  if (l_debug_printouts) then
@@ -313,16 +312,18 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
          &     FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
          &     FL_Sm1_Duffin_plus,en%nbf,diagonal_elements,sum_minus_trace,100,l_debug_printouts)
  !
-!print*, ''
- write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf)
+ !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
+ !print*, ''
+ !write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf)
  !
- if (ikbz == 3) then
-         if (id_red == 2) then
-                 if (istep == 2) then
-                         call error('        paro aca')
-                 endif
-         endif
- endif
+ !if (ikbz == 3) then
+ !  if (id_red == 2) then
+ !    if (istep == 2) then
+ !      call error('        stop here;)
+ !    endif
+ !  endif
+ !endif
+ !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
  !
 end subroutine FL_Duffin
 !

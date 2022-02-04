@@ -29,126 +29,21 @@ module fl_optics
  use nl_optics
  !
 #include<memory.h>
-!!
-! !
-!! Long range correction field
-!!
-!real(SP)          :: NL_LRC_alpha
-!!
-!! Time steps and step length defined in module real_time.F
-!! --------------------------------------------------------
-!!
-!! Polarization
-!! ------------
-!! Calculated from the string-averaged discretized geometric phase
-!! see ref. PRB 47, 1651 (1993), or from DIPOLES
-!!
-!complex(SP)    :: NL_P(6)  ! NL_P(1:3) Berry Pol, NL_P(4:6) Dip Pol
-!complex(SP)    :: NL_initial_P(6) ! in principle it can be different from zero
-!!
-!!
-!! Initial Energies and Damping
-!!------------
-!complex(SP), allocatable :: I_relax(:,:,:,:,:)
-!real(SP),    allocatable :: E_full(:,:,:)
-!!
-!! For TDDFT, V_xc_0 stores the V_xc at equilibrium
-!!
-!real(SP), allocatable    :: V_xc_0(:,:)
-!!
-!! For JGM E_xc_0 for the microscopic part of the functional
-!!
-!complex(SP) :: E_xc_0(3)
-!!
-!! WFs and Density
-!!
-!! Bands in terms of Kohn-Sham orbitals
+ ! Bands in terms of Kohn-Sham orbitals
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
-!!
-!! Time-dependent Valence bands in real-space
-!complex(SP), allocatable :: VAL_BANDS(:,:,:,:)
-!!
-!real(SP),    allocatable :: full_rho(:)       ! density of all bands from 1:SC_bands(2)
-!!
-!! Density matrix
-!complex(SP), allocatable :: dG(:,:,:)
-!!
-!! Verbosity
-!!
-!integer, parameter :: VERB_HIGH = 1
-!integer, parameter :: VERB_LOW  = 2
-!!
-!integer :: NL_verbosity
-!character(schlen)            :: NL_verb_name
-!!
-!! Correlation
-!!
-!character(schlen)            :: NL_correlation
-!integer                      :: Correlation
-!!
-!integer, parameter :: IPA    = 1
-!integer, parameter :: HARTREE= 2
-!integer, parameter :: TDDFT  = 3
-!integer, parameter :: LRC    = 4
-!integer, parameter :: JGM    = 5
-!integer, parameter :: LRCW   = 6
-!integer, parameter :: HF     = 7
-!integer, parameter :: SEX    = 8
-!!
-!logical :: eval_COLLISIONS
-!logical :: eval_dG
-!!
-!! Non-linear spectra parameters
-!!
-!real(SP) :: NL_er(2)
-!real(SP) :: NL_estep
-!integer  :: NL_bands(2)
-!integer  :: NL_nbands
-!integer  :: n_frequencies
-!integer  :: n_freqs_todo
-!!
-!! Wavefunction sampling
-!!
-!type NLsampleWF
-!  integer              :: n_order     ! Sampling NL order
-!  integer              :: n_size      ! Size of sampling
-!  integer              :: n_val       ! Number of valence
-!  integer              :: n_k         ! Number of kpoints
-!  logical              :: ison        ! WF sample logical switch
-!  integer, allocatable :: indx_T(:)   ! indexes of time sampling
-!end type NLsampleWF
-!!
-!integer  :: n_order
-!type(NLsampleWF) :: WF_sample, WF_sample_ondisk
-!!
-!! Databases input/output
-!!
-!integer                  :: ID(3)
-!!
-!! Other
-!!
-!logical  :: l_use_DIPOLES   ! Use standard dipoles (valid only for linear response)
-!logical  :: l_eval_CURRENT  ! Evaluate current using the commutator v=[H,r] and the IP formulation
-!!
-!! IO variables
-!!
-!real(SP),     allocatable :: NL_P_t(:,:)
-!complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
-!complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
-!logical,      allocatable :: freqs_done(:)
-!type(IO_desc)             :: NL_desc
  !
  !aim137 new variables
- integer                   :: max_fl_mode
- integer                   :: max_extra_mode
- integer                   :: max_duffin_mode
- integer                   :: n_tot_fl_modes
- integer                   :: n_tot_extra_modes
- integer                   :: n_tot_duffin_modes
- integer                   :: FL_space_dim,FL_states(2)
+ integer :: max_fl_mode
+ integer :: max_extra_mode
+ integer :: max_duffin_mode
+ integer :: n_tot_fl_modes
+ integer :: n_tot_extra_modes
+ integer :: n_tot_duffin_modes
+ integer :: FL_space_dim,FL_states(2)
+ logical :: l_Duffin
  !
  contains
    subroutine FL_alloc(en)
@@ -207,7 +102,6 @@ module fl_optics
        call  ELECTRIC_alloc(en)
      endif
      !
-   !
    end subroutine FL_alloc
    !
    subroutine FL_alloc_k_distributed(en) !aim137 still need to modify this subroutine

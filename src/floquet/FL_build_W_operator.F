@@ -103,10 +103,28 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                                   &+ (i3_fl-(max_fl_mode+1)) &
                                   &+ (i2_fl-(max_fl_mode+1)) &
                                   &- (i1_fl-(max_fl_mode+1))
-                   if (abs(i_shift_comb_fl) > max_fl_mode) cycle
+                   !
+                   if (abs(i_shift_comb_fl) > max_fl_mode+1) cycle !the +1 ensures both +1 & -1 are out of bounds
                    i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
                    !
-                   do i_m=1,en%nbf
+                   if (abs(i_shift_comb_fl) > max_fl_mode+1) then
+                     !
+                     if (i_shift_comb_fl > 0) then
+                       l_E_plus = 0  !logical
+                       l_E_minus = 1 ! logical
+                     else
+                       l_E_plus = 1  !logical
+                       l_E_minus = 0 ! logical
+                     endif
+                   else
+                     l_E_plus = 1  !logical
+                     l_E_minus = 1 ! logical
+                   endif
+                     !
+                     !
+                   endif
+                   
+                   do i_m=1,en%nbf !Adapt this equation to accomodato both signs.
                      !
                      Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + &
                                               & conjg(FL_V_bands(i2,i_comb_fl,i_m,ik,i_sp)) * &
@@ -129,7 +147,8 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
            !
            i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
            Wop(i1_fks,:,istep) = &
-         & Wop(i1_fks,:,istep)*cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP))
+         & Wop(i1_fks,:,istep)* &
+         & cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP)) / (2._SP*cI)! added factor due to E field Sin
            !
          enddo
        enddo

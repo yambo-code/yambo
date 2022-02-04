@@ -160,8 +160,8 @@ contains
 #elif defined _OPENACC
     ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
-    !stream_default=acc_get_cuda_stream(acc_async_sync)
-    call dev_stream_create(stream_default,default_stream=.true.)
+    stream_default=acc_get_cuda_stream(acc_async_sync)
+    !call dev_stream_create(stream_default,default_stream=.true.)
     stream_h2d=1001
     stream_d2h=1002
     stream_d=10

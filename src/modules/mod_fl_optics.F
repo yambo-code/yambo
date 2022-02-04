@@ -142,10 +142,12 @@ module fl_optics
 !type(IO_desc)             :: NL_desc
  !
  !aim137 new variables
- integer                   :: max_fl_mode=3 ! momentaneamente fijo
+ integer                   :: max_fl_mode
  integer                   :: max_extra_mode
+ integer                   :: max_duffin_mode
  integer                   :: n_tot_fl_modes
  integer                   :: n_tot_extra_modes
+ integer                   :: n_tot_duffin_modes
  integer                   :: FL_space_dim,FL_states(2)
  !
  contains
@@ -166,9 +168,14 @@ module fl_optics
      !
      type(levels), intent(in) :: en
      !
-     max_extra_mode = 2*max_fl_mode
-     n_tot_fl_modes = 2*max_fl_mode+1
-     n_tot_extra_modes = 2*max_extra_mode+1
+     max_fl_mode=3 ! momentaneamente fijo
+     max_extra_mode  = 2*max_fl_mode
+     max_duffin_mode = 4*max_fl_mode
+     !
+     n_tot_fl_modes     = 2*max_fl_mode+1
+     n_tot_extra_modes  = 2*max_extra_mode+1
+     n_tot_duffin_modes = 2*max_duffin_mode+1
+     !
      FL_space_dim = NL_bands(2) * n_tot_fl_modes
      FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
      FL_states(2) = FL_space_dim

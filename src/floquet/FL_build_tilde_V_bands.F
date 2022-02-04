@@ -34,7 +34,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
- use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states
+ use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states,n_tot_duffin_modes
  !
  implicit none
  !
@@ -45,7 +45,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
  complex(SP),  intent(in)      :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
- complex(SP),  intent(out)     :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_fl_modes,en%nbf,2) !2 for plus and minus
+ complex(SP),  intent(out)     :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) !2 for plus and minus
  !
  ! Work Space
  !
@@ -53,8 +53,8 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  integer     :: ikm_ibz,ikp_ibz
  complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf,n_tot_fl_modes),tmp_Vm(H_ref_bands(2),en%nbf,n_tot_fl_modes)
  integer     :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
- complex(SP) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_fl_modes)
- complex(SP) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_fl_modes)
+ complex(SP) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_duffin_modes)
+ complex(SP) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_duffin_modes)
  !
  FL_V_tilde=cZERO
  !
@@ -103,7 +103,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf
      do i1_fl=1,n_tot_fl_modes
-       do i2_fl=1,n_tot_fl_modes
+       do i2_fl=1,n_tot_duffin_modes
          FL_V_tilde(i2,i1_fl,i2_fl,iv1,1)=sum( FL_Sm1_Duffin_plus(:,iv1,i2_fl)*tmp_Vp(i2,:,i1_fl)) 
          FL_V_tilde(i2,i1_fl,i2_fl,iv1,2)=sum(FL_Sm1_Duffin_minus(:,iv1,i2_fl)*tmp_Vm(i2,:,i1_fl))
                                                       !aim137: en ^, como elijo aca una columna y no la otra?

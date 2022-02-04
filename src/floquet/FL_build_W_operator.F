@@ -36,7 +36,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field
- use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states
+ use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,max_duffin_mode
  !
  implicit none
  !
@@ -56,7 +56,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  complex(SP) :: Wop(FL_states(1):FL_states(2),FL_states(1):FL_states(2),2)
  complex(SP) :: V_tilde(en%nbf,H_ref_bands(2),2)
  !aim137: cambie el orden de las variables respecto a NL V_tilde
- complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_fl_modes,en%nbf,2) 
+ complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
  !
@@ -97,9 +97,9 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !i,eta
                !
                do i3_fl=1,n_tot_fl_modes
-                 do i4_fl=1,n_tot_fl_modes
+                 do i4_fl=1,n_tot_duffin_modes
                    !
-                   i_shift_comb_fl = (i4_fl-(max_fl_mode+1)) &
+                   i_shift_comb_fl = (i4_fl-(max_duffin_mode+1)) &
                                   &+ (i3_fl-(max_fl_mode+1)) &
                                   &+ (i2_fl-(max_fl_mode+1)) &
                                   &- (i1_fl-(max_fl_mode+1))

@@ -154,9 +154,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
          do i1_extra=1,n_tot_extra_modes
            i1_fl = i1_extra - max_extra_mode + max_fl_mode ! added this
            i1_shifted_fl = i1_fl - (max_fl_mode+1) !this needs no change
-           do i2_extra=1,n_tot_extra_modes
-             i2_fl = i2_extra - max_extra_mode + max_fl_mode ! added this
-             i2_shifted_fl = i2_fl - (max_fl_mode+1) !this needs no change
+           do i2_fl=1,n_tot_fl_modes
+             i2_shifted_fl = i2_fl - (max_fl_mode+1)
              i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
              if (abs(i_sum_shifted) > max_fl_mode) cycle
              i_sum_fl = i_sum_shifted + (max_fl_mode+1)
@@ -231,8 +230,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
          do i1_extra=1,n_tot_extra_modes
             i1_fl = i1_extra - max_extra_mode + max_fl_mode
             i1_shifted_fl = i1_fl - (max_fl_mode+1)
-            do i2_extra=1,n_tot_extra_modes
-              i2_fl = i2_extra - max_extra_mode + max_fl_mode
+            do i2_fl=1,n_tot_fl_modes
               i2_shifted_fl = i2_fl - (max_fl_mode+1)
               i_sum_shifted = (i1_shifted_fl+i2_shifted_fl)
               if (abs(i_sum_shifted) > max_fl_mode) cycle

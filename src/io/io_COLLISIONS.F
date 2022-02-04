@@ -127,7 +127,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
 &       VAR='Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
    if (.not.ver_is_gt_or_eq(ID,revision=21128)) then
-     call io_elemental(ID,L0=COLLISIONS_CV_only,VAR='CV only scattering    ',WARN=.true.,OP=(/"=="/))
+     call io_elemental(ID,L0=COLLISIONS_CV_only,VAR='CV only scattering    ',CHECK=.true.,OP=(/"=="/))
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !

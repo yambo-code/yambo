@@ -24,7 +24,7 @@
 module wave_func
  !
  use pars,           ONLY:SP
- use cuda_m
+ use cuda_m_y
  use devicexlib_m
  !
 #include <dev_defs.h>

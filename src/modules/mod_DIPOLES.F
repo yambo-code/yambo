@@ -26,7 +26,7 @@ module DIPOLES
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
- use cuda_m,        ONLY:have_cuda,have_openacc
+ use cuda_m_y,      ONLY:have_cuda,have_openacc
  !
 #include <dev_defs.h>
 #include <memory.h>

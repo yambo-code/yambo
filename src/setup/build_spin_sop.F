@@ -31,7 +31,7 @@ subroutine build_spin_sop()
 &                         sigma_0,sigma_x,sigma_y,sigma_z
  use D_lattice,      ONLY:DEV_VAR(spin_sop)
  use electrons,      ONLY:n_spinor
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  !
 #include<memory.h>
  !

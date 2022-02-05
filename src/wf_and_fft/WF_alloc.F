@@ -28,7 +28,7 @@ subroutine WF_alloc(WF)
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  use deviceXlib_m
  !
 #include<dev_defs.h>

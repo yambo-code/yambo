@@ -38,7 +38,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #endif
  use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  use deviceXlib_m,   ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_memset
  !
 #include<memory.h>

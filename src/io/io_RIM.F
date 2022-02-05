@@ -97,7 +97,7 @@ integer function io_RIM_W(ID,mode)
  use IO_m,           ONLY:io_sec,read_is_on,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
 #include <memory.h>
  !
  integer :: ID

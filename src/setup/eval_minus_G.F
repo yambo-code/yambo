@@ -32,7 +32,7 @@ subroutine eval_minus_G()
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
  use R_lattice,    ONLY:DEV_VAR(minus_G)
- use cuda_m,       ONLY:have_cuda
+ use cuda_m_y,     ONLY:have_cuda
  !
 #include<memory.h>
  !

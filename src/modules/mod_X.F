@@ -27,7 +27,7 @@ module X_m
  use pars,           ONLY:SP,lchlen,schlen
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  !
 #include <dev_defs.h>
 #include <memory.h>

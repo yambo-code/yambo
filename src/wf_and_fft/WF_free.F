@@ -25,7 +25,7 @@ subroutine WF_free(WF,keep_fft)
  !
  use wave_func,    ONLY:WAVEs
  use pseudo,       ONLY:pp_is_uspp,PP_uspp_free
- use cuda_m,       ONLY:have_cuda
+ use cuda_m_y,     ONLY:have_cuda
  use deviceXlib_m, ONLY:dev_allocated
  !
 #include<dev_defs.h>

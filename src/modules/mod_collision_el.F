@@ -30,7 +30,7 @@ module collision_el
  use pars,        ONLY:DP,SP,LP,schlen
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
- use cuda_m,      ONLY:have_cuda
+ use cuda_m_y,    ONLY:have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>

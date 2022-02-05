@@ -41,7 +41,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
  use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_allocated,dev_memset
- use cuda_m,        ONLY:have_cuda,have_openacc
+ use cuda_m_y,      ONLY:have_cuda,have_openacc
  use timing_m
  !
 #include<memory.h>

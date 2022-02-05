@@ -4,7 +4,7 @@
 
 subroutine GPU_test(N)
   use iso_c_binding
-  use cuda_m,           ONLY: GPU_test_dim, cuda_devsync
+  use cuda_m_y,         ONLY: GPU_test_dim, cuda_devsync
   use gpu_m,            ONLY: have_device
   use dev_memory_m,     ONLY: dev_memcpy_d2h, dev_memcpy_h2d
   use dev_linalg_m,     ONLY: dev_saxpy

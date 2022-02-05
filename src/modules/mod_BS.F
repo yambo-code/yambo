@@ -25,7 +25,7 @@ module BS
  !
  use pars,          ONLY: IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY: elemental_collision
- use cuda_m,        ONLY: have_cuda
+ use cuda_m_y,      ONLY: have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>

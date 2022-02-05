@@ -37,7 +37,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
  use deviceXlib_m, ONLY:dev_memcpy
- use cuda_m,       ONLY:have_cuda
+ use cuda_m_y,     ONLY:have_cuda
  !
 #include<dev_defs.h>
 #include<memory.h>

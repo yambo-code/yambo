@@ -61,7 +61,7 @@ subroutine col_driver(bare_NG,q)
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  !
 #include<memory.h>
  !

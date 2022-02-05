@@ -34,7 +34,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
  use stderr,        ONLY:intc
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  !
  implicit none
  !

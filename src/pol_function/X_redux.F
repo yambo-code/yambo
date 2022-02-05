@@ -51,7 +51,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
- use cuda_m
+ use cuda_m_y
  use deviceXlib_m
  !
 #include<dev_defs.h>

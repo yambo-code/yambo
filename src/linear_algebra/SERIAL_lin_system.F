@@ -77,7 +77,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
- use cuda_m
+ use cuda_m_y
 #include<dev_defs.h>
 #include<memory.h>
  !

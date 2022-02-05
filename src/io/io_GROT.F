@@ -32,7 +32,7 @@ integer function io_GROT(io_db)
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
 &                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  !
 #include<memory.h>
  !

@@ -37,7 +37,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
  use hamiltonian,    ONLY:H_rotation,H_ref_bands
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  use deviceXlib_m,   ONLY:dev_memcpy_h2d
  !
  implicit none

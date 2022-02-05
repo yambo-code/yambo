@@ -84,7 +84,7 @@
 !*************************************************************************
 
 !Start cudafor module
-module cudafor_m
+module cudafor_m_y
 use iso_c_binding
 implicit none
 private
@@ -281,6 +281,6 @@ end interface cudaGetDevice
 
 #endif
 
-end module cudafor_m
+end module cudafor_m_y
 !End cudaFor module
 

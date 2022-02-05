@@ -33,11 +33,10 @@ module cuda_m
   use cusolverdn_y
 # if defined _CUDAF
   use cudafor
-  !use cublas
   use cufft
   !use cusolverdn_y
 # elif defined _OPENACC
-  use cudafor_m
+  use cudafor_m_y
   use cufft_m
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
@@ -221,7 +220,7 @@ module nvtx
   use cudafor
 #endif
 #if defined _OPENACC || defined _OPENMP5
-  use cudafor_m
+  use cudafor_m_y
 #endif
   implicit none
 

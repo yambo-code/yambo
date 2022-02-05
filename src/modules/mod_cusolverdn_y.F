@@ -88,7 +88,7 @@ module cusolverdn_y
 #ifdef _CUDAF
        use cudafor
 #else
-       use cudafor_m
+       use cudafor_m_y
 #endif
        use iso_c_binding
        import cusolverDnHandle

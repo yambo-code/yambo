@@ -35,7 +35,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  use R_lattice,      ONLY:bz_samp,k_map
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
- use fields,         ONLY:gauge_field
+ use fields,         ONLY:gauge_field,Efield
  use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,max_duffin_mode
  !
  implicit none
@@ -59,6 +59,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
+ integer :: l_E_plus,l_E_minus
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
@@ -88,7 +89,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
-       !$omp parallel do default(shared), private(i2,i1)
+       !$ omp parallel do default(shared), private(i2,i1)
        do i1=H_ref_bands(1),H_ref_bands(2) !j
          do i2=H_ref_bands(1),H_ref_bands(2) !i
            do i1_fl=1,n_tot_fl_modes !gamma
@@ -113,35 +114,35 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                        l_E_plus = 0  !logical
                        l_E_minus = 1 ! logical
                      else
-                       l_E_plus = 1  !logical
+                       l_E_plus = -1 !logical
                        l_E_minus = 0 ! logical
                      endif
                    else
-                     l_E_plus = 1  !logical
+                     l_E_plus = -1 !logical
                      l_E_minus = 1 ! logical
                    endif
                      !
-                     !
-                   endif
-                   
                    do i_m=1,en%nbf !Adapt this equation to accomodato both signs.
                      !
                      Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + &
-                                              & conjg(FL_V_bands(i2,i_comb_fl,i_m,ik,i_sp)) * &
+                                 &  l_E_plus*(conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * &
                                               & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                              &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))
+                                              &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))) + &
+                                 & l_E_minus*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
+                                              & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
+                                              &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                      !
                    enddo
-                 enddo
-               enddo
+                 enddo ! i4_fl
+               enddo ! i3_fl
                !
-             enddo
-           enddo
-         enddo
-       enddo
-       !$omp end parallel do
+             enddo ! i2_fl
+           enddo ! i1_fl
+         enddo ! i2 band
+       enddo ! i1 band
+       ! $omp end parallel do
        !
-       !$omp parallel do default(shared), private(i1)
+       ! $omp parallel do default(shared), private(i1)
        do i1=H_ref_bands(1),H_ref_bands(2)
          do i1_fl=1,n_tot_fl_modes
            !
@@ -208,7 +209,8 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
    do i1_fl=1,n_tot_fl_modes
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      do id=1,3
-       H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:)-E_vec_pot(id)*Wk(id,i1,:)
+       H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
+&      Efield(1)%amplitude*Efield(1)%versor(id)*Wk(id,i1,:) !I need amplitude and direction here
      enddo
    enddo
  enddo

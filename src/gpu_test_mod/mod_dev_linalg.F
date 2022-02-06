@@ -12,7 +12,6 @@ module dev_linalg_m
 #endif
 #if defined _OPENACC || defined _OPENMP5
   use cublas_m
-  use cublas_m
 #endif
   !
   implicit none

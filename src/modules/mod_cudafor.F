@@ -92,17 +92,10 @@ private
 #if defined _GPU && ! defined _CUDAF
 
 public :: c_devptr
-public :: cudaMemcpyKind,           &
-          cudaMemcpyHostToHost,     &
-          cudaMemcpyHostToDevice,   &
-          cudaMemcpyDeviceToHost,   &
-          cudaMemcpyDeviceToDevice, &
-          cudaMemcpyDefault
 public :: cuda_stream_kind
 public :: cudaGetDeviceCount
 public :: cudaSetDevice
 public :: cudaMalloc
-public :: cudaMemcpy
 public :: cudaFree
 ! Added by Andrea Ferretti, Jun 2021
 public :: cudaGetLastError
@@ -115,18 +108,6 @@ type, bind(c) :: c_devptr
 type(c_ptr) :: member
 end type c_devptr
 !End c_devptr
-
-!Start cudaMemcpyKind
-type, bind(c) :: cudaMemcpyKind
-integer(c_int) :: member
-end type cudaMemcpyKind
-
-type(cudaMemcpyKind), parameter :: cudaMemcpyHostToHost     = cudaMemcpyKind(0), &
-                                   cudaMemcpyHostToDevice   = cudaMemcpyKind(1), &
-                                   cudaMemcpyDeviceToHost   = cudaMemcpyKind(2), &
-                                   cudaMemcpyDeviceToDevice = cudaMemcpyKind(3), &
-                                   cudaMemcpyDefault        = cudaMemcpyKind(4)
-!End cudaMemcpyKind
 
 !Start cuda_stream_kind
 integer(c_intptr_t), parameter :: cuda_stream_kind = c_intptr_t
@@ -167,36 +148,6 @@ integer(c_size_t), value :: size
 end function cudaMalloc
 end interface cudaMalloc
 !End cudaMalloc
-
-!Start cudaMemcpy
-interface cudaMemcpy
-
-!Start cudaMemcpyH2D
-integer(c_int) function cudaMemcpyH2D(dst, src, count, kind) bind(c, name = "cudaMemcpy")
-import :: c_ptr, c_int, c_size_t
-import :: c_devptr, cudaMemcpyKind
-implicit none
-type(c_devptr), value :: dst
-type(c_ptr), value :: src
-integer(c_size_t), value :: count
-type(cudaMemcpyKind), value :: kind
-end function cudaMemcpyH2D
-!End cudaMemcpyH2D
-
-!Start cudaMemcpyD2H
-integer(c_int) function cudaMemcpyD2H(dst, src, count, kind) bind(c, name = "cudaMemcpy")
-import :: c_ptr, c_int, c_size_t
-import :: c_devptr, cudaMemcpyKind
-implicit none
-type(c_ptr), value :: dst
-type(c_devptr), value :: src
-integer(c_size_t), value :: count
-type(cudaMemcpyKind), value :: kind
-end function cudaMemcpyD2H
-!End cudaMemcpyD2H
-
-end interface cudaMemcpy
-!End cudaMemcpy
 
 !Start cudaFree
 interface cudaFree

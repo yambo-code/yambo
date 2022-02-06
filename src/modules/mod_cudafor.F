@@ -104,11 +104,7 @@ public :: cudaSetDevice
 public :: cudaMalloc
 public :: cudaMemcpy
 public :: cudaFree
-public :: cudaStreamCreate
-public :: cudaStreamSynchronize
-public :: cudaStreamDestroy
 ! Added by Andrea Ferretti, Jun 2021
-public :: cudaDeviceSynchronize
 public :: cudaGetLastError
 public :: cudaGetDevice
 
@@ -213,50 +209,9 @@ end function cudaFree
 end interface cudaFree
 !End cudaFree
 
-!Start cudaStreamCreate
-interface cudaStreamCreate
-integer(c_int) function cudaStreamCreate(pStream) bind(c, name = "cudaStreamCreate")
-import :: c_int
-import :: cuda_stream_kind
-implicit none
-integer(cuda_stream_kind) :: pStream
-end function cudaStreamCreate
-end interface cudaStreamCreate
-!End cudaStreamCreate
-
-!Start cudaStreamSynchronize
-interface cudaStreamSynchronize
-integer(c_int) function cudaStreamSynchronize(stream) bind(c, name = "cudaStreamSynchronize")
-import :: c_int
-import :: cuda_stream_kind
-implicit none
-integer(cuda_stream_kind), value :: stream
-end function cudaStreamSynchronize
-end interface cudaStreamSynchronize
-!End cudaStreamSynchronize
-
-!Start cudaStreamDestroy
-interface cudaStreamDestroy
-integer(c_int) function cudaStreamDestroy(stream) bind(c, name = "cudaStreamDestroy")
-import :: c_int
-import :: cuda_stream_kind
-implicit none
-integer(cuda_stream_kind), value :: stream
-end function cudaStreamDestroy
-end interface cudaStreamDestroy
-!End cudaStreamDestroy
-
 !
 ! THe following have been added by Andrea Ferretti on Jun 2021
 !
-!Start cudaDeviceSynchronize
-interface cudaDeviceSynchronize
-integer(c_int) function cudaDeviceSynchronize() bind(c, name = "cudaDeviceSynchronize")
-import :: c_int
-implicit none
-end function cudaDeviceSynchronize
-end interface cudaDeviceSynchronize
-!End cudaDeviceSynchronize
 
 !Start cudaGetLastError
 interface cudaGetLastError

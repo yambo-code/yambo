@@ -27,12 +27,11 @@ module cuda_m_y
   !
   use dev_openacc_m
   ! 2022-02-02 DS and AF TO BE FIXED
-  !use dev_cudafor_m
+  use dev_cudafor_m
   use dev_cublas_m
   use device_memcpy_m
   use cusolverdn_y
 # if defined _CUDAF
-  use cudafor
   use cufft
   !use cusolverdn_y
 # elif defined _OPENACC

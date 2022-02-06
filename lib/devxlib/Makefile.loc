@@ -22,7 +22,7 @@ uncompress-stamp:
 	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(TARBALL) ; cd - ; fi )
 	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
 	if test -d ../archive/$(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi
-	if test -f Makefile ; then (cp Makefile.loc Makefile); fi
+	if ! test -f Makefile ; then (cp Makefile.loc Makefile); fi
 	touch uncompress-stamp
 
 configure-stamp: uncompress-stamp

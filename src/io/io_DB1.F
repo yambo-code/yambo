@@ -44,7 +44,7 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
- use cuda_m,           ONLY:have_cuda
+ use cuda_m_y,         ONLY:have_cuda
  use deviceXlib_m,     ONLY:dev_memcpy_h2d
 #if defined _SC || defined _RT
  use collision_ext,    ONLY:COLL_bands
@@ -59,6 +59,8 @@ integer function io_DB1(E,k,ID)
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
+ use cuda_m_y,         ONLY:cuda_devsync
+ !
 #include<memory.h>
  !
  type(levels)  :: E
@@ -365,8 +367,10 @@ integer function io_DB1(E,k,ID)
  !
  if(have_cuda.and.read_is_on(ID)) then
    !
+   write(*,*) "h2d ",cuda_devsync()
    ! host2dev,  wf_igk_d = wf_igk
    call dev_memcpy_h2d(DEV_VAR(wf_igk),wf_igk)
+   write(*,*) "h2d done",cuda_devsync()
  endif
  !
 1 call io_disconnect(ID=ID)

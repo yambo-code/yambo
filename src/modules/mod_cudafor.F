@@ -95,8 +95,6 @@ public :: c_devptr
 public :: cuda_stream_kind
 public :: cudaGetDeviceCount
 public :: cudaSetDevice
-public :: cudaMalloc
-public :: cudaFree
 ! Added by Andrea Ferretti, Jun 2021
 public :: cudaGetLastError
 public :: cudaGetDevice
@@ -136,29 +134,6 @@ integer(c_int), value :: device
 end function cudaSetDevice
 end interface cudaSetDevice
 !End cudaSetDevice
-
-!Start cudaMalloc
-interface cudaMalloc
-integer(c_int) function cudaMalloc(devPtr, size) bind(c, name = "cudaMalloc")
-import :: c_int, c_size_t
-import :: c_devptr
-implicit none
-type(c_devptr) :: devPtr
-integer(c_size_t), value :: size
-end function cudaMalloc
-end interface cudaMalloc
-!End cudaMalloc
-
-!Start cudaFree
-interface cudaFree
-integer(c_int) function cudaFree(devPtr) bind(c, name = "cudaFree")
-import :: c_int
-import :: c_devptr
-implicit none
-type(c_devptr), value :: devPtr
-end function cudaFree
-end interface cudaFree
-!End cudaFree
 
 !
 ! THe following have been added by Andrea Ferretti on Jun 2021

@@ -180,7 +180,7 @@ end subroutine
 subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  !
  use pars,          ONLY:SP,DP,pi
- use vec_operate,   ONLY:iku_v_norm
+ use vec_operate,   ONLY:iku_v_norm,c2a
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,q0_def_norm,&
 &                        RIM_W_ng,q_pt,nqibz,b,RIM_W_is_diagonal,RIM_W_for_graph,&
 &                        RIM_W,f_coeff,cut_is_slab,idir,RIM_id_epsm1_reference
@@ -195,7 +195,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
  integer  :: i1,i1min,i2,i2max,i3
  real(DP) :: func,vslab(RIM_n_rand_pts,RIM_W_ng)
  real(DP) :: r1,rfac,RIM_acc,RIM_acc_anis
- real(SP) :: slab_vz1,slab_vplane1,lcut,pre_factor,anis_fact,vslab2
+ real(SP) :: slab_vz1,slab_vplane1,lcut,pre_factor,anis_fact,vslab2,vtmp(3)
  !
  rfac=8._SP*k_grid_uc_vol/real(N_out)/(2._SP*pi)**4
  !
@@ -240,7 +240,7 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
 &                                  +qr(2,i3)*(f_coeff(3,i1,i2,iq,1)+qr(2,i3)*f_coeff(6,i1,i2,iq,1)&
 &                                  +2_SP*qr(1,i3)*f_coeff(5,i1,i2,iq,1))
        ! Accumulate W
-       RIM_acc = RIM_acc + rfac*vslab(i3,i1)**2*func*vslab(i3,i2)**2/(1-vslab(i3,i1)*func*vslab(i3,i2))
+       RIM_acc = RIM_acc + rfac*vslab(i3,i1)**2*func*vslab(i3,i2)**2/(1._DP-vslab(i3,i1)*func*vslab(i3,i2))
      enddo
      !
      RIM_W(iq,i1,i2)=RIM_acc
@@ -266,21 +266,34 @@ subroutine rim_integrate_w(iq,qr,N_out,em1_anis)
      !kxy
      r1=iku_v_norm(qr(:,i1))
      if (slab_vplane1 < 1.e-5) then
-       vslab(i1,1) = sqrt(4._DP*pi*(1.-exp(-q0_def_norm*lcut))/q0_def_norm**2)
-       RIM_acc = RIM_acc + rfac*f_coeff(1,1,1,1,1)
+       write(*,*) "reg"
+       vslab(i1,1) = sqrt(4._DP*pi*(1._DP-exp(-q0_def_norm*lcut))/q0_def_norm**2)
+       func = f_coeff(1,1,1,1,1)*q0_def_norm
+       RIM_acc = RIM_acc + rfac*vslab(i1,1)**2*func*vslab(i1,1)**2/(1._DP-vslab(i1,1)**2*func)
        cycle
      end if
      !
      !Evaluate v_slab
-     vslab2 = 4._DP*pi*(1.-exp(-slab_vplane1*lcut))/r1**2
+     vslab2 = 4._DP*pi*(1.-exp(-slab_vplane1*lcut))/r1**2 ! to be managed
      !
      !Evaluate func
      !
-     func = f_coeff(1,1,1,1,1)+qr(1,i1)*(f_coeff(2,1,1,1,1)+qr(1,i1)*f_coeff(4,1,1,1,1))&
-&                             +qr(2,i1)*(f_coeff(3,1,1,1,1)+qr(2,i1)*f_coeff(6,1,1,1,1)&
-&                             +2_SP*qr(1,i1)*f_coeff(5,1,1,1,1))
+     !func = f_coeff(1,1,1,1,1)*r1*exp(-sqrt((f_coeff(2,1,1,1,1)*(qr(2,i1)+a(2,1)/a(1,1)*qr(1,i1)))**2+&
+!&                                           (f_coeff(3,1,1,1,1)*(qr(1,i1)+a(2,1)/a(1,1)*qr(2,i1)))**2))
+
+     call c2a(v_in=qr(:,i1),v_out=vtmp,mode='ki2a')
+     func = f_coeff(1,1,1,1,1)*r1*exp(sign(1._DP,f_coeff(2,1,1,1,1))*&
+&                                    sqrt((f_coeff(2,1,1,1,1)*vtmp(1))**2+&    !<= there is probably an error in
+&                                         (f_coeff(3,1,1,1,1)*vtmp(2))**2))    ! the units!!
      !
-     RIM_acc = RIM_acc + rfac*vslab2*func*vslab2/(1._DP-vslab2*func)
+     RIM_acc = RIM_acc+rfac*vslab2*func*vslab2/(1._DP-vslab2*func)
+     !
+     if(i1<100) then
+       !write(*,*) 2._DP*pi*lcut/r1
+       !write(*,*) vslab2/r1
+       write(*,*) func
+       write(*,*) rfac*vslab2*func*vslab2/(1._DP-vslab2*func)*real(N_out)
+     endif
      !
      !Store the square root of vslab
      vslab(i1,1) = sqrt(vslab2)

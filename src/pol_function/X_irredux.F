@@ -326,14 +326,14 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      !  do ig1 = 2,X_par%rows(2)
      !    call msg('r', 'Re{Xo_res}', real(Xo_graph_wings(ig1)))
      !    call msg('r', 'Im{Xo_res}',aimag(Xo_graph_wings(ig1)))
-     !    !X_par%blc(1,ig1,1) = X_par%blc(1,ig1,1)+Xo_graph_wings(ig1)*X_Dirac*0.5_SP
-     !    !X_par%blc(ig1,1,1) = X_par%blc(ig1,1,1)+conjg(Xo_graph_wings(ig1))*X_Dirac*0.5_SP
+     !    X_par%blc(1,ig1,1) = X_par%blc(1,ig1,1)+Xo_graph_wings(ig1)*X_Dirac*0.5_SP
+     !    X_par%blc(ig1,1,1) = X_par%blc(ig1,1,1)+conjg(Xo_graph_wings(ig1))*X_Dirac*0.5_SP
      !    !
      !    do ig2 = 2,X_par%cols(2)
      !      !
      !      ctmp = -2._SP*DEV_VAR(Xo_res)(ig1,ig2)/(v_fermi*pi**2*lcut)*sqrt(RL_vol/(lcut*pi))
      !      !
-     !      !X_par%blc(ig1,ig2,:) = X_par%blc(ig1,ig2,:) + ctmp
+     !      X_par%blc(ig1,ig2,:) = X_par%blc(ig1,ig2,:) + ctmp
      !      !
      !    enddo
      !    !

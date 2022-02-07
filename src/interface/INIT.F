@@ -369,12 +369,14 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
          l_EXCPH_optics    =runlevel_is_on('ExcPhOptics')
          l_EXCPH_lifetime  =runlevel_is_on('ExcPhLifeT')
+         l_EXCPH_gkkp      =runlevel_is_on('ExcGkkp')
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
          l_phel_corr=runlevel_is_on('ph_el_corr')
          l_EXCPH_optics    =runlevel_is_on('ExcPhOptics')
          l_EXCPH_lifetime  =runlevel_is_on('ExcPhLifeT')
+         l_EXCPH_gkkp      =runlevel_is_on('ExcGkkp')
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
 #endif
@@ -443,7 +445,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined _ELPH
      elph_nQ_used=elph_nQ
-     if(l_EXCPH_optics.or.l_EXCPH_lifetime) call initactivate(1,'ExcGkkp') 
+     if(l_EXCPH_optics.or.l_EXCPH_lifetime) then
+       l_EXCPH_gkkp=.true.
+       call initactivate(1,'ExcGkkp') 
+     endif
      if(l_EXCPH_optics)                     call initactivate(1,'ExcPhOptics') 
      if(l_EXCPH_lifetime)                   call initactivate(1,'ExcPhLifeT') 
 #endif

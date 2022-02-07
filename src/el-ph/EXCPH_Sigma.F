@@ -21,16 +21,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-! Calculate renormalization factors R
+! --- Theory ---
+! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
+! - FP
 !
-! R_{a,l} = \sum_{q,b } | G(q)_{a,n} |^2/(E_a - E_b -\Omega_{q,l} )
-!
-subroutine EXCPH_renorm_factors(E,k,q,X)
+subroutine EXCPH_Sigma(E,k,q,X)
  !
  use pars,           ONLY:SP,cZERO,rZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
+ use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
  !
@@ -40,11 +41,9 @@ subroutine EXCPH_renorm_factors(E,k,q,X)
  type(bz_samp) ::k,q
  type(X_t)     ::X
  !
- call section('*','Exciton-phonon renormalization factors(R)')
+ ! Work Space
+ !
+ call section('*','Exciton-phonon self-energy')
  !======================================
- !
- call timing('EXCPH_Rfact',OPR='start')
- !
- call timing('EXCPH_Rfact',OPR='stop')
  !
 end subroutine

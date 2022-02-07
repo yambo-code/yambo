@@ -244,8 +244,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! EXCITON-PHONON Self-Energy
  ! ==============================
 #if defined _ELPH
-! driver_now=l_EXCPH_gkkp
-! if (driver_now) call 
+ driver_now=l_EXCPH_Sigma
+ if (driver_now) call EXCPH_Sigma(Ken,Xk,q,X(i_X_kind))
 #endif
  !
  !

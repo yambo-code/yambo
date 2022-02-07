@@ -122,7 +122,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    !DALV: generalization for the complex sampling in MPA
    !
-   if(lppa.or.l_mpa) then
+   if(l_ppa.or.l_mpa) then
      !
      if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(Xw%p(iw),Wd,q_norm(1))
      if(l_Classical) drude_GreenF(iw)=Classical_drude_T(Xw%p(iw),Wd,q_norm(1))

@@ -194,13 +194,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 #endif
  !
   !aim137 DEBUG
- do ik_bz=1,QP_nk
- write(filename,'(i0)') ik_bz
- open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
- do i_fks=FL_states(1),FL_states(2)
- write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
- enddo
- close(111)
- enddo
+!do ik_bz=1,QP_nk
+!write(filename,'(i0)') ik_bz
+!open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
+!do i_fks=FL_states(1),FL_states(2)
+!write(111,*) FL_Ho_plus_Sigma(i_fks,:,ik_bz,1)
+!enddo
+!close(111)
+!enddo
  !aim137 END DEBUG
 end subroutine FL_Hamiltonian

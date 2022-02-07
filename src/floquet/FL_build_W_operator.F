@@ -59,7 +59,6 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
- integer :: l_E_plus,l_E_minus
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
@@ -108,31 +107,35 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                    if (abs(i_shift_comb_fl) > max_fl_mode+1) cycle !the +1 ensures both +1 & -1 are out of bounds
                    i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
                    !
-                   if (abs(i_shift_comb_fl) > max_fl_mode+1) then
+                   if (abs(i_shift_comb_fl) > max_fl_mode-1) then
                      !
                      if (i_shift_comb_fl > 0) then
-                       l_E_plus = 0  !logical
-                       l_E_minus = 1 ! logical
+                       do i_m=1,en%nbf 
+                         Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only plus exponential
+                                                  & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * &
+                                                  & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
+                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
+                       enddo
                      else
-                       l_E_plus = -1 !logical
-                       l_E_minus = 0 ! logical
+                       do i_m=1,en%nbf 
+                         Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only minus exponential
+                                             & (-1)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
+                                                  & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
+                                                  &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
+                       enddo
                      endif
                    else
-                     l_E_plus = -1 !logical
-                     l_E_minus = 1 ! logical
+                     do i_m=1,en%nbf 
+                       Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !both exponentials
+                                                & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * & !plus exp
+                                                & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
+                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))) + &
+                                           & (-1)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * & !minus exp
+                                                & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
+                                                &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
+                     enddo
                    endif
-                     !
-                   do i_m=1,en%nbf !Adapt this equation to accomodato both signs.
-                     !
-                     Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + &
-                                 &  l_E_plus*(conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * &
-                                              & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                              &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))) + &
-                                 & l_E_minus*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
-                                              & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
-                                              &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
-                     !
-                   enddo
+                   !
                  enddo ! i4_fl
                enddo ! i3_fl
                !

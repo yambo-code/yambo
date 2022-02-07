@@ -226,7 +226,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
-     call FL_diagonalization
+     call FL_diagonalization(E,k,FL_V_bands)
      !
      call live_timing(steps=1)
      !

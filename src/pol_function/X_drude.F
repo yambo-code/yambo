@@ -31,7 +31,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use R_lattice,     ONLY:bz_samp,q_norm,RIM_W_for_graph
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
  use parser_m,      ONLY:parser
- use drivers,       ONLY:l_mpa !DALV: needed for the complex sampling in MPA
+ use drivers,       ONLY:l_ppa,l_mpa !DALV: needed for the complex sampling in MPA
  !
  implicit none
  !
@@ -122,10 +122,10 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !
    !DALV: generalization for the complex sampling in MPA
    !
-   if(l_mpa) then
+   if(lppa.or.l_mpa) then
      !
      if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(Xw%p(iw),Wd,q_norm(1))
-     if(l_Classical) drude_GreenF(iw)=Classical_drude(Xw%p(iw),Wd,q_norm(1))
+     if(l_Classical) drude_GreenF(iw)=Classical_drude_T(Xw%p(iw),Wd,q_norm(1))
      !
    else
      !
@@ -208,10 +208,36 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    ! X_D(w)=-q^2/(4pi) eps_D(w)
    Classical_drude =  -Classical_drude* ( q0_norm**2/(4._SP*pi) )
    !
- end function Classical_drude
- !
- !
- function Graphene_drude(Wd,q0_norm)
+  end function Classical_drude
+  !
+  !
+  function Classical_drude_T(W,Wd,q0_norm)
+   !
+   !
+   use pars,  ONLY:SP,pi,cI,cZERO
+   !
+   implicit none
+   !
+   real(SP)    :: q0_norm !DALV: W,W_ are in general complex for the sampling in MPA
+   complex(SP) :: Wd,W
+   !
+   ! Work Space
+   !
+   complex(SP) :: W_,xi1,Classical_drude_T
+   !
+   W_=W
+   if (abs(real(W_))<=1.E-8) W_=1.E-8 + CI*aimag(W_)
+   !
+   ! eps_D(w)= -w_p^2/(W*(i*g_p-W)) with Wd=(w_p,g_p)
+   Classical_drude_T =real(Wd)*(real(Wd)-CI*aimag(Wd))/(W_**2)
+   !
+   ! X_D(w)=-q^2/(4pi) eps_D(w)
+   Classical_drude_T =  -Classical_drude_T* ( q0_norm**2/(4._SP*pi) )
+   !
+  end function Classical_drude_T
+  !
+  !
+  function Graphene_drude(Wd,q0_norm)
    !
    use pars,       ONLY:SP,pi
    use R_lattice,  ONLY:idir
@@ -231,6 +257,6 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    !real(Wd) = 1/(4*vf)
    Graphene_drude = -real(Wd)*q0_norm/lcut
    !
- end function Graphene_drude
- !
+  end function Graphene_drude
+  !
 end subroutine

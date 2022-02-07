@@ -33,7 +33,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,l_EXCPH_gkkp,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,l_EXCPH_Sigma
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,      &
+&                         l_EXCPH_optics,l_EXCPH_lifetime
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -366,15 +367,16 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
          endif
          !
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam').and.io_ELPH_err(1)==0
-         l_EXCPH_Sigma=runlevel_is_on('ExcPhSigma')
+         l_EXCPH_optics    =runlevel_is_on('ExcPhOptics')
+         l_EXCPH_lifetime  =runlevel_is_on('ExcPhLifeT')
        else
          l_elph_corr=runlevel_is_on('el_ph_corr')
          l_elph_Hamiltonian=runlevel_is_on('ElPhHam')
-         l_EXCPH_Sigma=runlevel_is_on('ExcPhSigma')
          l_phel_corr=runlevel_is_on('ph_el_corr')
+         l_EXCPH_optics    =runlevel_is_on('ExcPhOptics')
+         l_EXCPH_lifetime  =runlevel_is_on('ExcPhLifeT')
        endif
        l_elel_corr=runlevel_is_on('el_el_corr')
-       l_EXCPH_gkkp=runlevel_is_on('ExcGkkp')
 #endif
 #if defined  _QED
        l_elel_corr    =runlevel_is_on('el_el_corr')
@@ -441,7 +443,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) l_elel_corr=.true.
 #if defined _ELPH
      elph_nQ_used=elph_nQ
-     if(l_EXCPH_Sigma) call initactivate(1,'ExcGkkp') 
+     if(l_EXCPH_optics.or.l_EXCPH_lifetime) call initactivate(1,'ExcGkkp') 
+     if(l_EXCPH_optics)                     call initactivate(1,'ExcPhOptics') 
+     if(l_EXCPH_lifetime)                   call initactivate(1,'ExcPhLifeT') 
 #endif
 #if defined _PHEL
      PH_Q=(/1,elph_nQ/)

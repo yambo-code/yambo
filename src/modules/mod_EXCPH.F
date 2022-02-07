@@ -66,4 +66,8 @@ module EXCPH
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c(:,:,:)
  !
+ ! Luminescence
+ !
+ real(SP) :: Exc_temp
+ !
 end module EXCPH

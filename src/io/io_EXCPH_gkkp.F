@@ -29,7 +29,8 @@ integer function io_EXCPH_gkkp(ID)
 &                         def_variable_bulk,io_variable_bulk,io_fragment
  use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
 &                         BS_E_in,BS_Sat_E,BS_Sat_WEIGHT,BS_EXCPH_E,ph_EXCPH_E,&
-&                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,L_kind_in,L_kind_out
+&                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,L_kind_in,L_kind_out,Sat_alloc, &
+&                         EXCPH_gkkp_alloc
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  use ELPH,           ONLY:ph_modes,elph_branches
  use stderr,         ONLY:intc
@@ -121,9 +122,9 @@ integer function io_EXCPH_gkkp(ID)
  ! Excitonic Gkkp (and SE) fragments
  !=========================
  !
- if (read_is_on(ID).and..not.allocated(EXCPH_gkkp)) then
-   YAMBO_ALLOC(EXCPH_gkkp,(ph_modes,EXCPH_sum(2),EXCPH_states(2)))
-   YAMBO_ALLOC(EXCPH_gkkp_sq,(ph_modes,EXCPH_sum(2),EXCPH_states(2)))
+ if (read_is_on(ID)) then
+   if(.not.allocated(EXCPH_gkkp)) call EXCPH_gkkp_alloc()
+   if(.not.allocated(BS_Sat_E))   call Sat_alloc()
  endif
  !
  VAR_name="EXCITON_PH_GKKP_Q"//trim(intc(iq))
@@ -137,6 +138,22 @@ integer function io_EXCPH_gkkp(ID)
  dim_names_sq = [character(schlen) :: 'PH_modes','N_exc_sum','N_exc_states']
  call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
  call io_variable_bulk(ID_frag,1,R3=EXCPH_gkkp_sq)
+ !
+ VAR_name="EXCITON_SATELLITE_ENERGY_Q"//trim(intc(iq))
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
+ call io_variable_bulk(ID_frag,1,C3=BS_Sat_E)
+ !
+ VAR_name="EXCITON_SATELLITE_ENERGY_ph_abs_Q"//trim(intc(iq))
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
+ call io_variable_bulk(ID_frag,1,C3=BS_Sat_E_PH_abs)
+ !
+ VAR_name="EXCITON_SATELLITE_WEIGHT_Q"//trim(intc(iq))
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
+ call io_variable_bulk(ID_frag,1,R3=BS_Sat_WEIGHT)
+ !
+ VAR_name="EXCITON_SATELLITE_WEIGHT_ph_abs_Q"//trim(intc(iq))
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
+ call io_variable_bulk(ID_frag,1,R3=BS_Sat_WEIGHT_PH_abs)
  !
  io_EXCPH_gkkp=io_status(ID)
  !

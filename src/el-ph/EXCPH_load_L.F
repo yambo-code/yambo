@@ -68,9 +68,11 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    !
    BS_H_dim=BS_K_dim(1)
    !
-   if(EXCPH_states(2)>BSS_n_eig) call error("Number of exc. states in the excphon coupling must         <= number of BSE eigenstates")
+   if(EXCPH_states(2)>BSS_n_eig)  &
+&     call error("Number of exc. states in the excphon coupling must         <= number of BSE eigenstates")
    !
-   if(EXCPH_sum(2)>BS_H_dim)     call error("Number of virtual exc. states in the excphon coupling must <= size of the exc. Hamiltonian")
+   if(EXCPH_sum(2)>BS_H_dim)      &
+&     call error("Number of virtual exc. states in the excphon coupling must <= size of the exc. Hamiltonian")
    !
    if(iq_bse==1) then
      call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))

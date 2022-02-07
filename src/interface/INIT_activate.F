@@ -456,7 +456,6 @@ subroutine INIT_activate()
  ! Exciton-phonon Self-energy
  !
  if (l_EXCPH_gkkp)  call initactivate(1,'ELPhExcStates ELPhExcSum LoutPath FANdEtresh')
- if (l_EXCPH_Sigma) call initactivate(1,'GEnSteps GEnRnge GDmRnge')
  !
 #endif
  !

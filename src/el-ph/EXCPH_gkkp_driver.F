@@ -58,11 +58,18 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call section('*','Excitonic gkkp')
  !======================================
  !
+ ! Check if Lout and Lin are present
+ ! and read their kind
+ ! 
+ call EXCPH_load_L(1,X,'check','Lout')
+ call EXCPH_load_L(1,X,'check','Lin')
+ !
+ ! Check if exciton-phonon matrix elements have been already calculated
+ !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  !
  if(io_err==0) return
- !
  if(io_err/=0) call warning("[EXCPH] Exc-ph matrix elements not correct or missing. To be computed")
  !
  call timing('EXCPH_gkkp',OPR='start')
@@ -98,6 +105,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  call deliver_IO_error_message(io_err,"GKKP")
+ !
  if (io_err/=0) call error('El-Ph database not found')
  !
  ! Write headers
@@ -105,9 +113,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  !
- ! Check if Lout is present
- ! 
- call EXCPH_load_L(1,X,'check','Lout')
  !
  ! Main q-loop
  !
@@ -134,6 +139,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    !
  enddo
+ !
  call live_timing( )
  ! 
  call timing('EXCPH_gkkp',OPR='stop')

@@ -49,6 +49,7 @@ integer function io_EXCPH_gkkp(ID)
  call timing('io_EXCPH_gkkp',OPR='start')
  !
  ID_frag=0
+ io_EXCPH_gkkp=0
  !
  ! DB name
  !
@@ -61,16 +62,16 @@ integer function io_EXCPH_gkkp(ID)
    !
    io_EXCPH_gkkp=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=5,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
    call io_elemental(ID,&
-&       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,&
-&       VAR=" Exciton states           :",I1=EXCPH_states,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Exciton states           :",I1=EXCPH_states,CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,&
-&       VAR=" Exciton sum (scattered):",I1=EXCPH_sum,CHECK=.true.,OP=(/"=="/))
+&       VAR=" Exciton sum (scattered):",I1=EXCPH_sum,CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
@@ -93,6 +94,8 @@ integer function io_EXCPH_gkkp(ID)
    call io_variable_elemental(ID,VAR="[K] L_kind out",CH0=L_kind_in,CHECK=.true.,OP=(/"=="/))
    !
  endif
+ !
+ io_EXCPH_gkkp=io_status(ID)
  !
  iq=maxval(io_sec(ID,:))-1
  if (iq<=0) goto 1
@@ -134,6 +137,8 @@ integer function io_EXCPH_gkkp(ID)
  dim_names_sq = [character(schlen) :: 'PH_modes','N_exc_sum','N_exc_states']
  call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
  call io_variable_bulk(ID_frag,1,R3=EXCPH_gkkp_sq)
+ !
+ io_EXCPH_gkkp=io_status(ID)
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !

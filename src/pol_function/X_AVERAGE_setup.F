@@ -76,11 +76,9 @@ subroutine X_AVERAGE_setup(what,i_counter,q0)
  endif
  !
  if (what=="Q-LOOP") then
-   if (i_counter==1) then
-     n_OPTICAL_dir_to_eval=max(count(OPTICAL_do_average/=0),1)
-   else
-     n_OPTICAL_dir_to_eval=1
-   endif
+   n_OPTICAL_dir_to_eval=1
+   if (i_counter>1) return
+   n_OPTICAL_dir_to_eval=max(count(OPTICAL_do_average/=0),1)
    return
  endif
  !

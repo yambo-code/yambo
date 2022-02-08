@@ -23,7 +23,7 @@
 !
 subroutine symmetries_driver(E,Xk)
  !
- use pars,                ONLY:SP
+ use pars,                ONLY:SP,lchlen
  use xc_functionals,      ONLY:magn
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
@@ -53,6 +53,10 @@ subroutine symmetries_driver(E,Xk)
  logical               :: S_contains_TR(nsym),l_keep_k_grid
  !
  integer               :: action_kind,old_nkpt
+ !
+#if defined _YPP_ELPH
+ character(lchlen)  :: filename,infile,outfile
+#endif
  !
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
  !
@@ -137,6 +141,31 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Rotate atomic projections
  call fix_ATOMPROJs(E,Xk,Xk_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
+ !
+#if defined _YPP_PH
+ !
+ ! Copy gkkp_expanded if presents
+ !
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+ !
+ if(io_err==0) then
+   !      
+   call msg('s','Gkkp dbs found, they will be copied in the new folder')
+   !
+   filename ='ndb.elph_gkkp_expanded'
+   if (trim(jobstr)/='') then
+      infile =trim(jobstr)//"/"//trim(filename)
+   else
+      infile='SAVE/'//trim(filename)
+   endif
+   !
+   outfile="./"//trim(more_io_path)//"/FixSymm/SAVE/"//trim(filename)
+   call cp_file(trim(infile),trim(outfile),io_err)
+   !
+ endif
+ !
+#endif
  !
  ! CLEAN
  !=======

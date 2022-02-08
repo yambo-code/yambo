@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM FP AC
+! Authors (see AUTHORS file for details): AC
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,9 +21,35 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-!> @brief Calculate phonon-assisted absorption and emission (see PRL 122, 187401 )
+!> @brief Calculate X(w) including ph-assisted transitions
 !!
-subroutine EXCPH_X_phass()
-     !
-     !
+subroutine EXCPH_X_phass(Epsilon_ii,PL_ii,wv)
+  !
+  use frequency,     ONLY:w_samp
+  use pars,          ONLY:SP,cZERO
+  use functions,     ONLY:Lorentzian_func
+  !
+#include<memory.h>
+  !
+  complex(SP),  intent(out) :: Epsilon_ii(wv%n_freq,1),PL_ii(wv%n_freq,2)
+  type(bz_samp),intent(in)  :: wv
+  !
+  ! Work space
+  !
+  complex(SP) :: pole,W
+  complex(SP), external :: Lorentzian_FT
+  !
+  Epsilon_ii=cZERO
+  PL_ii     =cZERO
+  !
+  do iw=1,Xw%n_freqs
+    !
+    W=wv%p(iw)
+    pole=0.0
+    !
+    Epsilon_ii(iw)=Epsilon_ii(iw) + Lorentzian_FT(W,pole,'r')
+    PL_ii(iw,1)   =
+    PL_ii(iw,2)   =
+  enddo   
+  !
 end subroutine EXCPH_X_phass

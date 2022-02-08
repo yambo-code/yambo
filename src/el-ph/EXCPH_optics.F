@@ -46,17 +46,16 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Work space
  !
- logical  :: l_eval_pl
- complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
+ complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:)
  real(SP)         :: output_data(5)
- integer          :: iw,n_output
+ integer          :: iw
  !
- call parser('PlotLum', l_eval_pl)
+ call section('*','EXCPH-Optics')
  !
  call X_setup_file_names(1,'bse ','phass',' ') 
  !
  call of_open_close(eps_file_name,'ot')
- if(l_eval_pl) call of_open_close(pl_file_name,'ot')
+ call of_open_close(pl_file_name,'ot')
  !
  call X_write_q_plus_G(1,(/0.0,0.0,0.0/))
  !
@@ -64,36 +63,33 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
  call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
  !
- n_output=5
+ ! Calculate X(w) include phonon assisted transitions
+ !
+ call EXCPH_X_phass(Epsilon_ii,PL_ii,wv)
  !
  do iw=1,wv%n_freqs
      !
+     !
      ! Eps
      !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
-&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     call msg('o eps_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
+     output_data(1:3)=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw)),real(Epsilon_ii(iw))/)
+     call msg('o eps_q','',output_data(:3),INDENT=-2,USE_TABS=.true.)
      !
-     if(l_eval_pl) then
-       !
-       ! Luminescence
-       !
-       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),&
+     ! Luminescence
+     !
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),&
 &                  aimag(PL_ii(iw,1)),real(PL_ii(iw,1))/)
-       call msg('o pl_q','',output_data(:n_output),INDENT=-2,USE_TABS=.true.)
-       !
-     endif
+     !
+     call msg('o pl_q','',output_data(:5),INDENT=-2,USE_TABS=.true.)
      !
  enddo
  !
  ! Clsoe files
  !
- call of_open_close(eps_file_name)
  YAMBO_FREE(Epsilon_ii)
- if(l_eval_pl) then
-   call of_open_close(pl_file_name)
-   YAMBO_FREE(PL_ii)
- endif
+ YAMBO_FREE(PL_ii)
+ call of_open_close(eps_file_name)
+ call of_open_close(pl_file_name)
  call FREQUENCIES_reset(wv,"all")
  !
 end subroutine

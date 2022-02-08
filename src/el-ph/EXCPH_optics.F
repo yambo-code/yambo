@@ -69,7 +69,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  do iw=1,wv%n_freqs
      !
-     !
      ! Eps
      !
      output_data(1:3)=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw)),real(Epsilon_ii(iw))/)

@@ -23,33 +23,64 @@
 !
 !> @brief Calculate X(w) including ph-assisted transitions
 !!
-subroutine EXCPH_X_phass(Epsilon_ii,PL_ii,wv)
-  !
-  use frequency,     ONLY:w_samp
-  use pars,          ONLY:SP,cZERO
-  use functions,     ONLY:Lorentzian_func
-  !
+subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii)
+ !
+ use frequency,     ONLY:w_samp
+ use pars,          ONLY:SP,cZERO
+ use functions,     ONLY:Lorentzian_func
+ use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
+ use IO_int,        ONLY:io_control
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm 
+ use ELPH,          ONLY:elph_branches
+ !
 #include<memory.h>
-  !
-  complex(SP),  intent(out) :: Epsilon_ii(wv%n_freq,1),PL_ii(wv%n_freq,2)
-  type(bz_samp),intent(in)  :: wv
-  !
-  ! Work space
-  !
-  complex(SP) :: pole,W
-  complex(SP), external :: Lorentzian_FT
-  !
-  Epsilon_ii=cZERO
-  PL_ii     =cZERO
-  !
-  do iw=1,Xw%n_freqs
-    !
-    W=wv%p(iw)
-    pole=0.0
-    !
-    Epsilon_ii(iw)=Epsilon_ii(iw) + Lorentzian_FT(W,pole,'r')
-    PL_ii(iw,1)   =
-    PL_ii(iw,2)   =
-  enddo   
-  !
+ !
+ type(w_samp), intent(in)  :: wv
+ complex(SP),  intent(out) :: Epsilon_ii(wv%n_freqs,1),PL_ii(wv%n_freqs,2)
+ !
+ ! Work space
+ !
+ complex(SP) :: pole,W,Satellites_alpha
+ complex(SP), external :: Lorentzian_FT
+ integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp
+ integer, external :: io_EXCPH_gkkp
+ !
+ Epsilon_ii=cZERO
+ PL_ii     =cZERO
+ !
+ !
+ ! Load the Exciton-phonon elements
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
+ if(io_err/=0) call error("Error loading the gkkp matrix elements!! ")
+ !
+ do iw=1,wv%n_freqs
+   !
+   W=wv%p(iw)
+   !
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
+     !
+     !pole=BS_E(i_alpha)
+     !
+     ! Main peak
+     !
+     Epsilon_ii(iw,1)=Epsilon_ii(iw,1) + (1._SP-EXCPH_Renorm(i_alpha))*Lorentzian_FT(W,pole,'r')
+     !
+     ! Satellites
+     !
+     Satellites_alpha=cZERO
+     do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+       do il=elph_branches(1),elph_branches(2)
+!         pole=BS_Sat_E(il,i_beta,i_alpha)
+         Satellites_alpha=Satellites_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)*Lorentzian_FT(W,pole,'r')    
+       enddo
+     enddo
+     !
+     Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+EXCPH_Renorm(i_alpha)*Satellites_alpha
+     !
+   enddo   
+   !
+ enddo   
+ !
 end subroutine EXCPH_X_phass

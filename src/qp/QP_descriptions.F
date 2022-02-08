@@ -114,7 +114,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      !
    endif
    !
-   if (ver_is_gt_or_eq(-1,(/5,1,0/))) then
+   if (ver_is_gt_or_eq(-1,(/5,1,1/))) then
      !
      call IO_desc_add(qp%desc,str='X Optical Averaged directions',kind='s',S=OPTICAL_averaged_dirs_string)
      !

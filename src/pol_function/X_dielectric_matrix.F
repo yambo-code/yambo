@@ -25,12 +25,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
-&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
+&                        n_OPTICAL_dir_to_eval,X_par_average
+ use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -45,7 +47,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use matrix,        ONLY:MATRIX_reset,PAR_matrix
+ use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
 #include<memory.h>
  !
@@ -62,16 +64,18 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! Work Space
  !
- type(PAR_matrix)     :: X_par_tmp
- integer              :: iq,iq_dir,nq_dir_average,nq_dir_now,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
- real(SP)             :: minmax_ehe(2),q0_save(3),qdirs(3,3)
+ integer              :: iq,iq_dir,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ real(SP)             :: minmax_ehe(2)
  character(1)         :: sec_mode
+ character(schlen)    :: X_what
  !
  ! logicals and control
  !
  self_detect_E_range=.false.
  !
- call X_check_average_directions(X%q0,nq_dir_average,qdirs)
+ ! Check if there is a Efield directions average to be done
+ !
+ call X_AVERAGE_setup("INIT",-1,X%q0)
  !
  ! Some check
  !
@@ -246,6 +250,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
+   ! Average setup
+   !
+   call X_AVERAGE_setup("Q-LOOP",iq,X%q0)
+   !
    if (iq/=1) then
      !
      ! TDDFT setup
@@ -269,33 +277,35 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    ! Allocation
-   !
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
+   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   nq_dir_now=1
-   if (iq==1.and.nq_dir_average>1) then
-     nq_dir_now=nq_dir_average
-     q0_save=X%q0
-   endif
+   ! Optical direction average?
+   if (n_OPTICAL_dir_to_eval>1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
    !
-   do iq_dir=1,nq_dir_now
+   ! Live timing string
+   X_what=" "
+   !
+   do iq_dir=1,n_OPTICAL_dir_to_eval
      !
-     if(iq==1 .and. nq_dir_average>1) X%q0=qdirs(:,iq_dir)
+     if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
+     if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
      !
-     call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
-     !
-     call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+     call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
      ! When X%whoami == 1 X is Xo (ACFDT). 
      !
-     if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
+     if (X%whoami/=1) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
      !
-     if( iq==1 .and. nq_dir_average>1) call X_par_average(iq_dir,nq_dir_average,X%ng,Xw%n_freqs,X_par_tmp,X_par(iq_mem))
+     if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
      !
    enddo
    !
-   if(iq==1 .and. nq_dir_average>1) X%q0=q0_save
+   if (n_OPTICAL_dir_to_eval>1) then
+     call X_AVERAGE_do_it("DUMP",X_par(iq_mem))
+     call X_AVERAGE_setup("CLOSE",iq,X%q0)
+   endif
    !
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
@@ -336,7 +346,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
    ! database is not written on disk
-   !
    if (.not.io_RESPONSE.and.l_life) then
      call FREQUENCIES_reset(Xw,"coarse_grid")
    else
@@ -344,11 +353,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    ! CLEAN (2)
-   !
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
-   !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -375,120 +382,3 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
 end function X_dielectric_matrix
-!
-!
-!
-!> @brief Check which directions are periodic to perform the average
-!!
-!! @param[in]       q0(3)               direction to check
-!!
-!! @param[out]      qdirs(3,3)
-!! @param[out]      nq_dir_average      number of direction to average
-!
-subroutine X_check_average_directions(q0,nq_dir_average,qdirs)
- !
- use pars,          ONLY:SP
- use vec_operate,   ONLY:v_norm
- use com,           ONLY:msg
- use R_lattice,     ONLY:q0_def_norm
- !
- implicit none
- !
- real(SP),intent(inout) :: q0(3)
- integer, intent(out)   :: nq_dir_average
- real(SP),intent(out)   :: qdirs(3,3)
- !
- nq_dir_average=count(abs(q0+99._SP)<1.E-5_SP)
- !
- ! The folowing is not really needed since X_irredux does again the same operation
- ! However it is kept for back compatibility of old databases, since I've removed
- ! this operation from INIT.F
- !
- if (nq_dir_average< 2) then
-   q0(:)=q0/v_norm(q0)*q0_def_norm
-   return
- endif
- !
- call msg('rs','[X] Number of directions used for q0 term average ',nq_dir_average)
- !
- qdirs=0._SP
- if      (nq_dir_average==3) then
-   qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-   qdirs(:,2)=(/0._SP,1._SP,0._SP/)
-   qdirs(:,3)=(/0._SP,0._SP,1._SP/)
- else if (nq_dir_average==2) then
-   if     (abs(q0(1)+99._SP)<1.E-5_SP.and.abs(q0(2)+99._SP)<1.E-5_SP) then
-     qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-     qdirs(:,2)=(/0._SP,1._SP,0._SP/)
-     q0(3)=0._SP
-   else if(abs(q0(1)+99._SP)<1.E-5_SP.and.abs(q0(3)+99._SP)<1.E-5_SP) then
-     qdirs(:,1)=(/1._SP,0._SP,0._SP/)
-     qdirs(:,2)=(/0._SP,0._SP,1._SP/)
-     q0(2)=0._SP
-   else if(abs(q0(2)+99._SP)<1.E-5_SP.and.abs(q0(3)+99._SP)<1.E-5_SP) then
-     qdirs(:,1)=(/0._SP,1._SP,0._SP/)
-     qdirs(:,2)=(/0._SP,0._SP,1._SP/)
-     q0(1)=0._SP
-   endif
- endif
- !
-end subroutine X_check_average_directions
-!
-!
-!
-!> @brief Calculate the average of the X at q=0
-!!
-!! @param[in]       iq_dir              cartesian direction index
-!! @param[in]       nq_dir_average      number of direction to average
-!! @param[in]       ng                  number of plane-waves
-!! @param[in]       nw                  number of frequencies
-!!
-!! @param[out]      X_par_tmp           temporary array to store the average 
-!! @param[inout]    X_par               X in the different direction, that is replace with the average
-!
-subroutine X_par_average(iq_dir,nq_dir_average,ng,nw,X_par_tmp,X_par)
- !
- use pars,          ONLY:SP,cZERO
- use cuda_m,        ONLY:have_cuda
- use matrix,        ONLY:MATRIX_reset,PAR_matrix
- !
- implicit none
- !
- integer,          intent(in)     :: iq_dir,nq_dir_average,ng,nw
- type(PAR_matrix), intent(inout)  :: X_par_tmp,X_par
- !
- if (iq_dir==1) then
-   !
-   ! Note. DS. 2021/12/29
-   ! X_par(iq_mem) is first allocated with Xup structure
-   ! and later stored somewhere and re-allocated with X,CPU_ONLY
-   ! if X_par(iq_mem)%INTER_comm%n_CPU>1
-   ! I need to mimic this for X_par_tmp
-   !
-   call X_PARALLEL_alloc(X_par_tmp,ng,nw,"XUP")
-   !
-   if (X_par_tmp%INTER_comm%n_CPU>1) then
-     call MATRIX_reset(X_par_tmp)
-     call X_PARALLEL_alloc(X_par_tmp,ng,nw,"X,CPU_ONLY")
-   endif
-   !
- endif
- !
- ! average over the three directions
- X_par_tmp%blc=X_par_tmp%blc+X_par%blc*1._SP/real(nq_dir_average,SP)
- X_par%blc=cZERO
- if (have_cuda) then
-   X_par_tmp%blc_d=X_par_tmp%blc_d+X_par%blc_d*1._SP/real(nq_dir_average,SP)
-   X_par%blc_d=cZERO
- endif
- !
- if(iq_dir<nq_dir_average) call MATRIX_reset(X_par)
- !
- if(iq_dir==nq_dir_average) then
-   ! store back the average
-   X_par%blc=X_par_tmp%blc
-   if (have_cuda) X_par%blc_d=X_par_tmp%blc_d
-   call X_PARALLEL_alloc(X_par_tmp,0,0,"CLEAN")
- endif
- !
-end subroutine X_par_average

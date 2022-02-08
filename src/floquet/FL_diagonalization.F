@@ -98,6 +98,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
          !
          trial_projection = Vstar_dot_V(FL_states(2)-FL_states(1)+1,&
                          &  ref_vec,FL_eigenvectors(:,i2_fks))
+         if (real(trial_projection) < 0) then
+                 trial_projection = trial_projection*(-1._SP)
+                 FL_eigenvectors(:,i2_fks) = FL_eigenvectors(:,i2_fks)*(-1._SP)
+         endif
          if ((1-real(trial_projection)) < min_projection) then
            min_projection = 1-real(trial_projection)
            trial_vec = FL_eigenvectors(:,i2_fks)
@@ -122,14 +126,15 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
        ! Check eigenvectors
        ! ===================
        !
+       Vzero=cZERO
        size_Hamiltonian = FL_states(2) - FL_states(1) + 1
        call M_by_V('N',size_Hamiltonian,size_Hamiltonian,cONE,&
                &   FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is),&
-               &   size_Hamiltonian,FL_eigenvectors(:,FL_chosen_bands(i_m)),1,cONE,&
-               &   Vzero(FL_states(1):FL_states(2)),1)
+               &   size_Hamiltonian,FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)),&
+               &   1,cONE,Vzero(FL_states(1):FL_states(2)),1)
        !
-       call V_plus_alpha_V(size(Vtmp,dim=1), -FL_QE(i_m,ik_bz,is)*cONE, &
-               &           FL_eigenvectors(:,FL_chosen_bands(i_m)), Vzero)
+       call V_plus_alpha_V(size_Hamiltonian, -FL_QE(i_m,ik_bz,is)*cONE, &
+               &           FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)), Vzero(FL_states(1):FL_states(2)))
        !
        ! Check that Vzero is actually zero
        if (sum(real(Vzero)) > 0.001) call error('Diagonalization in FL-KS space failed')
@@ -140,13 +145,24 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
    enddo
    !
  enddo
-end subroutine
-!
-! !aim137 DEBUG
+ !
+!!aim137 DEBUG
+!do ik_bz=1,QP_nk
+!do is=1,n_sp_pol
 !write(filename,'(i0)') ik_bz
 !open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
-!do i_fks=FL_states(1),FL_states(2)
-!write(111,*) FL_Ho_plus_Sigma(:,i_fks,ik_bz,1)
+!do i_m=NL_bands(1),E%nbf
+!write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
+!write(111,*) 'Real and imaginary parts of eigenvector:'
+!do i1_fks=FL_states(1),FL_states(2)
+!write(111,'(2(1f10.7))') FL_eigenvectors(i1_fks,FL_chosen_bands(i_m))
+!enddo
+!write(111,*) ''
 !enddo
 !close(111)
-! !aim137 END DEBUG
+!enddo
+!enddo
+!print*, FL_eigenvectors(FL_states(1)+0*n_tot_fl_modes+max_fl_mode,FL_chosen_bands(2)), FL_QE(2,36,1)
+!!aim137 END DEBUG
+ !
+end subroutine

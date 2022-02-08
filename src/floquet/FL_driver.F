@@ -233,7 +233,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization
      !
      !aim137: preliminary criterion to avoid infinit loop
-     l_selfconsistency_reached = (FL_iteration>=4)
+     l_selfconsistency_reached = (FL_iteration>=14)
      !aim137: preliminary skipping Duffin
      l_Duffin = .true.
      !

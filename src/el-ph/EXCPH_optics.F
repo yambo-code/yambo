@@ -30,12 +30,12 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use X_m,            ONLY:X_t
- use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers, &
-&                         X_write_q_plus_G         
+ use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use BS_Solvers,     ONLY:BSS_n_eig
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
+&                         EXCPH_Renorm,EXCPH_Renorm_PH_abs
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -47,8 +47,9 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Work space
  !
- complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:)
- real(SP)         :: output_data(5)
+ complex(SP), allocatable :: PL_ii(:),Epsilon_ii(:)
+ integer, parameter  :: n_output=3
+ real(SP)         :: output_data(n_output)
  integer          :: iw,iq
  !
  call section('*','EXCPH-Optics')
@@ -58,8 +59,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call of_open_close(eps_file_name,'ot')
  call of_open_close(pl_file_name,'ot')
  !
- call X_write_q_plus_G(1,(/0.0,0.0,0.0/))
- !
  call msg('o eps_q pl_q','# EXCITON PHONON')    
  call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
  call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
@@ -67,44 +66,58 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Load excitonic energies 
  !
  if(L_kind_in/=L_kind_out) &
-&     call warning(' Lkind_in /= Lkind_out this can generate inconsistencies in the luminescence and double-grid! ')
+&     call warning(' Lkind_in /= Lkind_out this can generate inconsistencies in the luminescence! ')
  !
  call EXCPH_load_L(1,X,'check','Lout')
- ! 
+ !
+ ! Allocations 
+ !
  YAMBO_ALLOC(BS_E,(BSS_n_eig))
+ YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
  YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
+ YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
+ YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
+ !
+ call EXCPH_load_L(1,X,'eigenvalues','Lin')
+ BS_E_in(:)=BS_E(:) 
+ !
  do iq=1,q%nibz
-   call EXCPH_load_L(iq,X,'eivenvalues','Lout')
+   call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
  !
  ! Calculate X(w) include phonon assisted transitions
  !
  call FREQUENCIES_setup(wv)
- call EXCPH_X_phass(Epsilon_ii,PL_ii,wv,q)
+ YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs))
+ YAMBO_ALLOC(PL_ii,(wv%n_freqs))
+ call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  do iw=1,wv%n_freqs
      !
      ! Eps
      !
-     output_data(1:3)=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw)),real(Epsilon_ii(iw))/)
-     call msg('o eps_q','',output_data(:3),INDENT=-2,USE_TABS=.true.)
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw)),real(Epsilon_ii(iw))/)
+     call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
      !
      ! Luminescence
      !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),&
-&                  aimag(PL_ii(iw,1)),real(PL_ii(iw,1))/)
-     !
-     call msg('o pl_q','',output_data(:5),INDENT=-2,USE_TABS=.true.)
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw)),real(PL_ii(iw))/)
+     call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
      !
  enddo
  !
- ! Clsoe files
+ ! Deallocations
  !
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)
  YAMBO_FREE(BS_E)
  YAMBO_FREE(BS_all_E)
+ YAMBO_FREE(EXCPH_Renorm)
+ YAMBO_FREE(EXCPH_Renorm_PH_abs)
+ !
+ ! Clsoe files
+ !
  call of_open_close(eps_file_name)
  call of_open_close(pl_file_name)
  call FREQUENCIES_reset(wv,"all")

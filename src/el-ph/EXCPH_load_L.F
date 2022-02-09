@@ -97,6 +97,8 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E)
    if(io_err/=0) call error(" Error loading "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
    !
+ else
+   call error(" Wrong call to the EXCPH_load_L function! ")
  endif
  !
  if(index(Ltype,'Lout')>0.and.Lout_path/='none') then

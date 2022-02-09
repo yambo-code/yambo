@@ -23,16 +23,16 @@
 !
 !> @brief Calculate X(w) including ph-assisted transitions
 !!
-subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
+subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  use frequency,     ONLY:w_samp
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,rZERO
  use units,         ONLY:HA2EV
  use functions,     ONLY:Lorentzian_func
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,&
-&                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs
+&                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs
  use ELPH,          ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
@@ -42,7 +42,7 @@ subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
  !
  type(w_samp),  intent(in)  :: wv
  type(bz_samp), intent(in)  :: q
- complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,1),PL_ii(wv%n_freqs,2)
+ complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs),PL_ii(wv%n_freqs)
  !
  ! Work space
  !
@@ -64,25 +64,10 @@ subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  !
- Epsilon_ii=cZERO
- PL_ii     =cZERO
- !
- ! The term without satellites
- !
- do iw=1,wv%n_freqs
-   !
-   W=wv%p(iw)
-   !
-   do i_alpha=EXCPH_states(1),EXCPH_states(2)
-     !
-     exc_E=BS_all_E(i_alpha,1)-min_E
-     pole =BS_all_E(i_alpha,1)
-     Epsilon_ii(iw,1)=Epsilon_ii(iw,1) + (1._SP-EXCPH_Renorm(i_alpha))*Lorentzian_FT(W,pole,'r')
-     PL_ii(iw,1)     =PL_ii(iw,1)      + (1._SP-EXCPH_Renorm(i_alpha))*Lorentzian_FT(W,pole,'r')*boltzman_f(exc_E)
-     !
-   enddo
-   !
- enddo
+ Epsilon_ii         =cZERO
+ PL_ii              =cZERO
+ EXCPH_Renorm       =rZERO
+ EXCPH_Renorm_PH_abs=rZERO
  !
  ! The satellites
  !
@@ -93,6 +78,17 @@ subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+   !
+   do il=elph_branches(1),elph_branches(2)
+     ph_E=sqrt(PH_freqs_sq(iq,il))
+     bose_factor=bose_f(PH_E)
+     do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+       forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+         EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
+         EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
+       end forall
+     enddo
+   enddo
    !
    do iw=1,wv%n_freqs
      !
@@ -119,17 +115,25 @@ subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
            !
            exc_E=BS_all_E(i_beta,1)-min_E
            !
-           ! Phonon emission
-           !
            pole=BS_Sat_E(il,i_beta,i_alpha)
+           !
+           ! Phonon emission in absorption
+           !
            Satells_alpha   =Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)*Lorentzian_FT(W,pole,'r')*(1._SP+bose_factor)
+           !
+           ! Phonon emission in luminescence
+           !
            Satells_alpha_PL=Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha) &
 &                   *Lorentzian_FT(W,pole,'r')*bose_factor*boltzman_f(exc_E)
            !
-           ! Phonon absorption
-           !
            pole=BS_Sat_E_PH_abs(il,i_beta,i_alpha)
+           !
+           ! Phonon absorption in absorption
+           !
            Satells_alpha   =Satells_alpha   +BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*Lorentzian_FT(W,pole,'r')*bose_factor 
+           ! 
+           ! Phonon absorption in luminescence
+           !
            Satells_alpha_PL=Satells_alpha_PL+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha) &
 &                   *Lorentzian_FT(W,pole,'r')*(1._SP+bose_factor)*boltzman_f(exc_E) 
            !
@@ -139,13 +143,39 @@ subroutine EXCPH_X_phass(wv,Epsilon_ii,PL_ii,q)
        !
        ! Add the satellites to the dielectric constant and luminescence
        !
-       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha
-       PL_ii(iw,1)=PL_ii(iw,1)          +Satells_alpha_PL
+       Epsilon_ii(iw)=Epsilon_ii(iw)+Satells_alpha
+       PL_ii(iw)     =PL_ii(iw)     +Satells_alpha_PL
        !
      enddo   
      !
    enddo   
    !
  enddo   
+ !
+ EXCPH_Renorm       = EXCPH_Renorm/real(q%nbz,SP)
+ EXCPH_Renorm_PH_abs= EXCPH_Renorm_PH_abs/real(q%nbz,SP)
+ !
+ ! The term without satellites
+ !
+ do iw=1,wv%n_freqs
+   !
+   W=wv%p(iw)
+   !
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
+     !
+     pole =BS_E_in(i_alpha)
+     Epsilon_ii(iw)=Epsilon_ii(iw) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*Lorentzian_FT(W,pole,'r')
+     !
+     ! The pole of luminescence cannot be the BS_E_in 
+     ! otherwise we are inconsistend with the Boltzman function (to be discussed)
+     !
+     exc_E=BS_all_E(i_alpha,1)-min_E
+     pole =BS_all_E(i_alpha,1)          
+     PL_ii(iw)     =PL_ii(iw)      + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*Lorentzian_FT(W,pole,'r') &
+ &                                   *boltzman_f(exc_E)
+     !
+   enddo
+   !
+ enddo
  !
 end subroutine EXCPH_X_phass

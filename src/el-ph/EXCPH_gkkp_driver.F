@@ -52,7 +52,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free, &
-&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free
+&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -109,6 +109,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call EXCPH_gkkp_alloc()
  YAMBO_ALLOC(max_Sat_weight,(EXCPH_states(1):EXCPH_states(2)))
  YAMBO_ALLOC(max_Sat_pos,(EXCPH_states(1):EXCPH_states(2),3))
+ YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
+ YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
+ !
+ EXCPH_Renorm       =rZERO
+ EXCPH_Renorm_PH_abs=rZERO
  max_Sat_weight=rZERO
  max_Sat_pos   =0
  !
@@ -195,6 +200,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call EXCPH_gkkp_report()
  YAMBO_FREE(max_Sat_weight)
+ YAMBO_FREE(max_Sat_pos)
+ YAMBO_FREE(EXCPH_Renorm)
+ YAMBO_FREE(EXCPH_Renorm_PH_abs)
  ! 
  call Sat_free()
  !

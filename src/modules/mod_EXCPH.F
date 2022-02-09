@@ -81,13 +81,7 @@ module EXCPH
      YAMBO_ALLOC(BS_Sat_E_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(BS_Sat_WEIGHT,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(BS_Sat_WEIGHT_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(1):EXCPH_states(2)))
      !
-     EXCPH_Renorm        =rZERO
-     EXCPH_Renorm_PH_abs =rZERO
-     EXCPH_gkkp          =cZERO
-     EXCPH_gkkp_sq       =rZERO
      BS_Sat_E            =rZERO
      BS_Sat_E_PH_abs     =rZERO
      BS_Sat_WEIGHT       =rZERO
@@ -101,8 +95,6 @@ module EXCPH
      YAMBO_FREE(BS_Sat_E_PH_abs)
      YAMBO_FREE(BS_Sat_WEIGHT)
      YAMBO_FREE(BS_Sat_WEIGHT_PH_abs)
-     YAMBO_FREE(EXCPH_Renorm)
-     YAMBO_FREE(EXCPH_Renorm_PH_abs)
    end subroutine Sat_free
    !
    subroutine EXCPH_gkkp_alloc()
@@ -110,6 +102,8 @@ module EXCPH
      YAMBO_ALLOC(EXCPH_Gkkp,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(EXCPH_Gkkp_sq,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(Xi,(BS_H_dim,EXCPH_sum(1):EXCPH_sum(2),2))    
+     EXCPH_gkkp          =cZERO
+     EXCPH_gkkp_sq       =rZERO
    end subroutine EXCPH_gkkp_alloc   
    !
    subroutine EXCPH_gkkp_free

@@ -32,7 +32,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,&
-&                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs
+&                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free
  use ELPH,          ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
@@ -63,6 +63,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+ !
+ YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
+ YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
  !
  Epsilon_ii         =cZERO
  PL_ii              =cZERO
@@ -177,5 +180,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    enddo
    !
  enddo
+ !
+ ! Free
+ !
+ call Sat_free()
+ YAMBO_FREE(EXCPH_Renorm)
+ YAMBO_FREE(EXCPH_Renorm_PH_abs)
  !
 end subroutine EXCPH_X_phass

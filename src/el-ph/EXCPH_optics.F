@@ -34,8 +34,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use BS_Solvers,     ONLY:BSS_n_eig
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         EXCPH_Renorm,EXCPH_Renorm_PH_abs
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in 
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -75,8 +74,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_ALLOC(BS_E,(BSS_n_eig))
  YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
  YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
- YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
- YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
  !
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
  BS_E_in(:)=BS_E(:) 
@@ -113,8 +110,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_FREE(PL_ii)
  YAMBO_FREE(BS_E)
  YAMBO_FREE(BS_all_E)
- YAMBO_FREE(EXCPH_Renorm)
- YAMBO_FREE(EXCPH_Renorm_PH_abs)
  !
  ! Clsoe files
  !

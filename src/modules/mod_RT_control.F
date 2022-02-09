@@ -220,6 +220,8 @@ module RT_control
      !
      if(trim(what)=="times" .or. trim(what)=="all") then
        !
+       if (allocated(OBS_RT_IO_t%Time)) return
+       !
        YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
        OBS_RT_IO_t%Time=rZERO
        !

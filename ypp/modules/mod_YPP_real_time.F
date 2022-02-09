@@ -158,21 +158,12 @@ module YPP_real_time
    complex(SP), allocatable :: W(:)
  end type OBS_el
  !
- type(OBS_el) :: Pol 
- type(OBS_el) :: Curr 
- type(OBS_el) :: ElField 
+ type(OBS_el), allocatable :: Pol(:)
+ type(OBS_el), allocatable :: Curr(:)
+ type(OBS_el) :: ElField
  type(OBS_el) :: GreenF_T_and_W
  !
  interface
-   !
-   subroutine  RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
-     use electrons,     ONLY:levels
-     implicit none
-     character,    optional :: what
-     logical,      optional :: IO_error,first_sec_only,G_lesser_only
-     integer,      optional :: COM_
-     character(*), optional :: mesg
-   end subroutine
    !
    subroutine RT_IO_carriers(Time,imposed_COM)
      use pars,       ONLY:SP
@@ -181,8 +172,8 @@ module YPP_real_time
    end subroutine RT_IO_carriers
    !
  end interface
-   !
-   contains 
+ !
+ contains 
    !
    subroutine RT_conf_duplicate(Cin,Cout)
      type(RT_ctl) :: Cin,Cout
@@ -199,7 +190,7 @@ module YPP_real_time
      Cout%damping=Cin%damping   
    end subroutine
    !
-   subroutine FT_free(FT)
+   subroutine OBS_el_free(FT)
      type(OBS_el) :: FT
      YAMBO_FREE(FT%F_w)
      YAMBO_FREE(FT%F_t)

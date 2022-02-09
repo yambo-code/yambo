@@ -27,7 +27,7 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,FT_free,X_kind
+ use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,OBS_el_free,X_kind
  use pars,           ONLY:SP,pi,cI,cZERO,schlen
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
@@ -68,9 +68,9 @@ subroutine RT_X_LRR_real_field(en)
  !--------------
  call RT_1D_Fourier_setup(ElField,RT_conf,n_fields) 
  if (trim(X_kind)=="rhorho") then
-   call RT_1D_Fourier_setup(Pol,RT_conf,3) 
+   call RT_1D_Fourier_setup(Pol(1),RT_conf,3) 
  else if(trim(X_kind)=="jj") then
-   call RT_1D_Fourier_setup(Curr,RT_conf,3) 
+   call RT_1D_Fourier_setup(Curr(1),RT_conf,3) 
  else
    call error(" wrong Xkind in input")
  endif
@@ -142,8 +142,8 @@ subroutine RT_X_LRR_real_field(en)
  if (l_rm_asympt_limit) then
    call msg("s","Removing asymptotic limit")
    do i_p_dir=1,3
-     if (trim(X_kind)=="rhorho") Pol%F_t(:,i_p_dir) =  Pol%F_t(:,i_p_dir)- Pol%F_t(RT_conf%T_n_steps,i_p_dir)
-     if (trim(X_kind)=="jj")     Curr%F_t(:,i_p_dir)= Curr%F_t(:,i_p_dir)-Curr%F_t(RT_conf%T_n_steps,i_p_dir)
+     if (trim(X_kind)=="rhorho") Pol(1)%F_t(:,i_p_dir) =  Pol(1)%F_t(:,i_p_dir)- Pol(1)%F_t(RT_conf%T_n_steps,i_p_dir)
+     if (trim(X_kind)=="jj")     Curr(1)%F_t(:,i_p_dir)= Curr(1)%F_t(:,i_p_dir)-Curr(1)%F_t(RT_conf%T_n_steps,i_p_dir)
    enddo
  endif
  !
@@ -152,11 +152,11 @@ subroutine RT_X_LRR_real_field(en)
  !--------
  !
  if (trim(X_kind)=="rhorho") then
-   Pol%title="PolFFT"
-   call RT_1D_Fourier_Transform('T2W',Pol,RT_conf,1)
+   Pol(1)%title="PolFFT"
+   call RT_1D_Fourier_Transform('T2W',Pol(1),RT_conf,1)
  else if(trim(X_kind)=="jj") then
-   Curr%title="CurrFFT"
-   call RT_1D_Fourier_Transform('T2W',Curr,RT_conf,1)
+   Curr(1)%title="CurrFFT"
+   call RT_1D_Fourier_Transform('T2W',Curr(1),RT_conf,1)
  endif
  !
  ! a) If the induced field is     computed: E_input=E_ext
@@ -223,14 +223,15 @@ subroutine RT_X_LRR_real_field(en)
    !
    if(Efield(i_Probe)%ef_pol=="circular") then
      E_w_SP = cZERO
-     E_w_SP = Efield(i_Probe)%versor*cmplx(ElField%F_w(i_w,1),kind=SP)+Efield(i_Probe)%versor_circ*cmplx(ElField%F_w(i_w,2),kind=SP)
+     E_w_SP = Efield(i_Probe)%versor*cmplx(ElField%F_w(i_w,1),kind=SP)+&
+&             Efield(i_Probe)%versor_circ*cmplx(ElField%F_w(i_w,2),kind=SP)
      E_ver(:,1)=abs(E_w_SP/v_norm(abs(E_w_SP)))
    endif
    !
    do i_p_dir=1,3
      !
-     if(trim(X_kind)=="rhorho") OBS_vec=cmplx( Pol%F_w(i_w,:),kind=SP)
-     if(trim(X_kind)=="jj")     OBS_vec=cmplx(Curr%F_w(i_w,:),kind=SP)/ElField%W(i_w)**2
+     if(trim(X_kind)=="rhorho") OBS_vec=cmplx( Pol(1)%F_w(i_w,:),kind=SP)
+     if(trim(X_kind)=="jj")     OBS_vec=cmplx(Curr(1)%F_w(i_w,:),kind=SP)/ElField%W(i_w)**2
      !
      OBS_proj=dot_product(E_ver(:,i_p_dir),OBS_vec)
      if(Efield(i_Probe)%ef_pol=="circular") Field=dot_product(E_ver(:,i_p_dir),E_w_SP )
@@ -256,7 +257,7 @@ subroutine RT_X_LRR_real_field(en)
    !
    E_w_SP = cZERO
    if(Efield(i_Probe)%ef_pol=="linear"  ) E_w_SP=Efield(i_Probe)%versor*cmplx(ElField%F_w(i_w,1),kind=SP)
-   if(Efield(i_Probe)%ef_pol=="circular") E_w_SP=Efield(i_Probe)%versor     *cmplx(ElField%F_w(i_w,1),kind=SP) &
+   if(Efield(i_Probe)%ef_pol=="circular") E_w_SP=Efield(i_Probe)%versor*cmplx(ElField%F_w(i_w,1),kind=SP) &
 &                                               +Efield(i_Probe)%versor_circ*cmplx(ElField%F_w(i_w,2),kind=SP)
    !
 #if defined _YPP_NL
@@ -306,8 +307,8 @@ subroutine RT_X_LRR_real_field(en)
  YAMBO_FREE(EELS)
  YAMBO_FREE(EPS)
  !
- if (trim(X_kind)=="rhorho") call FT_free(Pol)
- if (trim(X_kind)=="jj")     call FT_free(Curr)
- call FT_free(ElField)
+ if (trim(X_kind)=="rhorho") call OBS_el_free(Pol(1))
+ if (trim(X_kind)=="jj")     call OBS_el_free(Curr(1))
+ call OBS_el_free(ElField)
  !
 end subroutine

@@ -27,6 +27,21 @@ module YPP_interfaces
  !
  interface
    !
+#if defined _YPP_RT
+   !
+   subroutine  RT_OBSERVABLES_IO(what,J,P,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+     use YPP_real_time,  ONLY:OBS_el
+     use electrons,      ONLY:levels
+     implicit none
+     character(*)           :: what
+     type(OBS_el), optional :: J,P
+     logical,      optional :: IO_error,first_sec_only,G_lesser_only
+     integer,      optional :: COM_
+     character(*), optional :: mesg
+   end subroutine
+   !
+#endif
+   !
    subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels,n_spin

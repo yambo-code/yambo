@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
  !
- use YPP_real_time,  ONLY:RT_conf,Pol,Curr
+ use YPP_real_time,  ONLY:RT_conf,OBS_el
  use pars,           ONLY:DP,schlen,cZERO_DP,cZERO
  use R_lattice,      ONLY:nkibz
  use IO_int,         ONLY:io_control
@@ -35,14 +35,15 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
 #include<memory.h>
  !
- character(*), optional :: what
+ character(*)           :: what
+ type(OBS_el), optional :: Curr,Pol
  logical,      optional :: IO_error,first_sec_only,G_lesser_only
  integer,      optional :: COM_
  character(*), optional :: mesg
  !
  ! Work Space
  !
- integer            :: io_OBS,ID,ID_REF,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
+ integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
  integer, external  :: io_RT_components
  character(schlen)  :: mesg_
  !
@@ -59,7 +60,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  mesg_=" "
  if (present(mesg)) mesg_="["//trim(mesg)//"]"
- !=======================================================================
+ !=============================================
  !
  if (present(G_lesser_only)) then
    !
@@ -100,7 +101,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! Check for saved current and polarization database
  !---------------------------------------------------
- !
  if (present(IO_error)) IO_error=.FALSE.
  !
  NE_i_time=1
@@ -113,7 +113,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! Only first section I/O
  !------------------------
- !
  if (present(first_sec_only)) then
    if (first_sec_only) then
      call RT_control_alloc("times")
@@ -125,10 +124,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
  !
  ! I/O of OBSERVABLES
  !====================
- !
- Pol%title    ="Polarization"
- Curr%title   ="Current"
- !
  Pol%N    =3
  Curr%N   =3
  !
@@ -153,24 +148,6 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
        Pol%F_t(it,i_dir) =cmplx(P_cache(i_dir,it_now),kind=DP)
      enddo
    enddo
-   !
-   call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID_REF)
-   io_OBS=io_RT_components("JP_REF",ID_REF)
-   !
-   if(io_OBS==0) then
-     call warning("removing reference polarization/current")
-     J_cache=cZERO
-     P_cache=cZERO
-     call io_control(ACTION=RD_CL,COM=COM_here,MODE=DUMP,SEC=(/3/),ID=ID_REF)
-     io_OBS=io_RT_components("JP_REF",ID_REF)
-     do i_dir=1,3
-       do it=1,RT_conf%T_n_steps
-         it_now=it+RT_conf%T_n_range(1)-1
-         Curr%F_t(it,i_dir)=Curr%F_t(it,i_dir)-cmplx(J_cache(i_dir,it_now),kind=DP)
-         Pol%F_t(it,i_dir) =Pol%F_t(it,i_dir) -cmplx(P_cache(i_dir,it_now),kind=DP)
-       enddo
-     enddo
-   endif
    !
    call RT_control_free("cache")
    !

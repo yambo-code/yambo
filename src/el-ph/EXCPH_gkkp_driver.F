@@ -303,7 +303,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    subroutine EXCPH_gkkp_report()
      use stderr,        ONLY:intc
      use EXCPH,         ONLY:EXCPH_Renorm_PH_abs,EXCPH_Renorm
-     use units,         ONLY:HA2CMm1
+     use units,         ONLY:HA2EV
      use ELPH,          ONLY:ph_freqs_sq
      implicit none
      !
@@ -325,7 +325,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
         write(message,*) 'Exciton '//trim(intc(i1))//': max(W_sat)=',max_Sat_weight(i1)
         call msg('sr',message)
         write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
-&                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2CMm1,'cm^-1'
+&                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
         call msg('sr',message)
      enddo
      !

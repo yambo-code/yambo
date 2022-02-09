@@ -36,12 +36,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:boltzman_f,bose_f
+ use LIVE_t,        ONLY:live_timing
  !
 #include<memory.h>
  !
  type(w_samp),  intent(in)  :: wv
  type(bz_samp), intent(in)  :: q
- complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs),PL_ii(wv%n_freqs)
+ complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,2),PL_ii(wv%n_freqs)
  !
  ! Work space
  !
@@ -71,6 +72,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  EXCPH_Renorm_PH_abs=rZERO
  !
  ! The satellites
+ !
+ call live_timing('Satellites',q%nibz)
  !
  do iq=1,q%nibz
    !
@@ -143,14 +146,18 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Add the satellites to the dielectric constant and luminescence
        !
-       Epsilon_ii(iw)=Epsilon_ii(iw)+Satells_alpha
-       PL_ii(iw)     =PL_ii(iw)     +Satells_alpha_PL
+       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha
+       PL_ii(iw)       =PL_ii(iw)     +Satells_alpha_PL
        !
      enddo   
      !
    enddo   
    !
+   call live_timing(steps=1)
+   !
  enddo   
+ !
+ call live_timing( )
  !
  EXCPH_Renorm       = EXCPH_Renorm/real(q%nbz,SP)
  EXCPH_Renorm_PH_abs= EXCPH_Renorm_PH_abs/real(q%nbz,SP)
@@ -164,7 +171,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      pole =BS_E_in(i_alpha)
-     Epsilon_ii(iw)=Epsilon_ii(iw) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
+     Epsilon_ii(iw,:)=Epsilon_ii(iw,:) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
      !
      ! The pole of luminescence cannot be the BS_E_in 
      ! otherwise we are inconsistend with the Boltzman function (to be discussed)
@@ -178,7 +185,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
  enddo
  !
- Epsilon_ii(:)=1._SP+Epsilon_ii(:)
+ ! Eps(w)=1._SP - X(w)
+ !
+ Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
  !
  ! Free
  !

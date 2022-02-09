@@ -46,8 +46,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Work space
  !
- complex(SP), allocatable :: PL_ii(:),Epsilon_ii(:)
- integer, parameter  :: n_output=3
+ complex(SP), allocatable :: PL_ii(:),Epsilon_ii(:,:)
+ integer, parameter  :: n_output=5
  real(SP)         :: output_data(n_output)
  integer          :: iw,iq
  !
@@ -86,7 +86,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Frequencies and damping setup
  !
  call FREQUENCIES_setup(wv)
- YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs))
+ YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
  YAMBO_ALLOC(PL_ii,(wv%n_freqs))
  !
  ! Calculate X(w) include phonon assisted transitions
@@ -97,13 +97,14 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      !
      ! Eps
      !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw)),real(Epsilon_ii(iw))/)
+     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
+&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
      call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
      !
      ! Luminescence
      !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw)),real(PL_ii(iw))/)
-     call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
+     output_data(1:3)=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw)),real(PL_ii(iw))/)
+     call msg('o pl_q','',output_data(1:3),INDENT=-2,USE_TABS=.true.)
      !
  enddo
  !

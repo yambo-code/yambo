@@ -41,6 +41,7 @@ module D_lattice
  real(SP) :: T_elecs
  real(SP) :: T_holes
  real(SP) :: Bose_Temp
+ real(SP) :: Boltz_Temp
  real(SP) :: input_GS_Tel
  logical  :: input_Tel_is_negative
  !

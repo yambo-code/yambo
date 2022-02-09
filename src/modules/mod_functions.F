@@ -214,11 +214,11 @@ module functions
    !
    pure function boltzman_f(Eb)
      !
-     use D_lattice, ONLY:Bose_Temp
+     use D_lattice, ONLY:Boltz_Temp
      real(SP), intent(in):: Eb
      real(SP)            :: boltzman_f
      !
-     boltzman_f=exp(-Eb/Bose_Temp)
+     boltzman_f=exp(-Eb/Boltz_Temp)
      !
    end function
 

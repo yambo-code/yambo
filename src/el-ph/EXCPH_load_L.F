@@ -85,6 +85,12 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
      endif
    endif
    !
+ elseif(index(what,'eigenvalues')>0) then
+   !      
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID_BS)
+   io_err=io_BSS_diago(iq_bse,1,ID_BS,X,bsE=BS_E)
+   if(io_err/=0) call error(" Error loading "//trim(Ltype)//" for q = "//trim(intc(iq_bse)))
+   !
  elseif(index(what,'load')>0) then
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2,3/),ID=ID_BS)

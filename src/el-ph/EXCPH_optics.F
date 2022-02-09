@@ -34,8 +34,9 @@ subroutine EXCPH_optics(E,k,q,X,wv)
 &                         X_write_q_plus_G         
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states
- use frequency,     ONLY:w_samp
+ use BS_Solvers,     ONLY:BSS_n_eig
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E
+ use frequency,      ONLY:w_samp
  !
 #include<memory.h>
  !
@@ -48,7 +49,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:)
  real(SP)         :: output_data(5)
- integer          :: iw
+ integer          :: iw,iq
  !
  call section('*','EXCPH-Optics')
  !
@@ -63,9 +64,24 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
  call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
  !
+ ! Load excitonic energies 
+ !
+ if(L_kind_in/=L_kind_out) &
+&     call warning(' Lkind_in /= Lkind_out this can generate inconsistencies in the luminescence and double-grid! ')
+ !
+ call EXCPH_load_L(1,X,'check','Lout')
+ ! 
+ YAMBO_ALLOC(BS_E,(BSS_n_eig))
+ YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
+ do iq=1,q%nibz
+   call EXCPH_load_L(iq,X,'eivenvalues','Lout')
+   BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+ enddo
+ !
  ! Calculate X(w) include phonon assisted transitions
  !
- call EXCPH_X_phass(Epsilon_ii,PL_ii,wv)
+ call FREQUENCIES_setup(wv)
+ call EXCPH_X_phass(Epsilon_ii,PL_ii,wv,q)
  !
  do iw=1,wv%n_freqs
      !
@@ -87,6 +103,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)
+ YAMBO_FREE(BS_E)
+ YAMBO_FREE(BS_all_E)
  call of_open_close(eps_file_name)
  call of_open_close(pl_file_name)
  call FREQUENCIES_reset(wv,"all")

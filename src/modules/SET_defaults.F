@@ -50,7 +50,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position
+&                     molecule_position,Boltz_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
@@ -84,7 +84,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
- use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,EXC_Temp
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -268,6 +268,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ Boltz_Temp=0._SP
  !
  ! R_lattice
  !
@@ -538,7 +539,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Lout_path='none'
  EXCPH_states=(/1,1/)
  EXCPH_sum=(/1,1/)
- EXC_Temp=0._SP
  !
 #endif
  !

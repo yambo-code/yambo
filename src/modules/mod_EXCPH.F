@@ -56,6 +56,7 @@ module EXCPH
  complex(SP),allocatable  :: A_rot(:,:),Xi(:,:,:)
  integer,    allocatable  :: BSS_eh_table_m1(:,:,:),BSS_eh_table_m1_in(:,:,:),k_plus_q_table(:,:)
  complex(SP), allocatable :: BS_E_in(:),BS_E(:)
+ real(SP),    allocatable :: BS_all_E(:,:)
  complex(SP), allocatable :: BS_mat_in(:,:)
  integer,     allocatable :: BSS_eh_table_in(:,:)
  !
@@ -71,10 +72,6 @@ module EXCPH
  real(SP),    allocatable :: ph_EXCPH_E(:)
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c(:,:,:)
- !
- ! Luminescence
- !
- real(SP) :: Exc_temp
  !
  contains
    !      

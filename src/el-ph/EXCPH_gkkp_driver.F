@@ -71,6 +71,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
  !
+ ! Symmetries check
+ ! =================
+ !
+ if(q%nibz/=q%nbz) call error("Symmetries not implemented yet!!! ")
+ !
  call section('*','Excitonic gkkp')
  !======================================
  !
@@ -83,7 +88,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Check if exciton-phonon matrix elements have been already calculated
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
  !
  if(io_err==0) return
  if(io_err/=0) call warning("[EXCPH] Exc-ph matrix elements not correct or missing. To be computed")
@@ -133,7 +138,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Write headers
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
  !
  call Sat_alloc()
  !
@@ -177,7 +182,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    ! I/O
    !=====
    call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_gkkp)
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
    !
  enddo
  !

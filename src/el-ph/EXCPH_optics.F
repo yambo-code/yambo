@@ -76,18 +76,21 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
  !
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
- BS_E_in(:)=BS_E(:) 
+ BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
  !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
  !
- ! Calculate X(w) include phonon assisted transitions
+ ! Frequencies and damping setup
  !
  call FREQUENCIES_setup(wv)
  YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs))
  YAMBO_ALLOC(PL_ii,(wv%n_freqs))
+ !
+ ! Calculate X(w) include phonon assisted transitions
+ !
  call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  do iw=1,wv%n_freqs
@@ -110,11 +113,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_FREE(PL_ii)
  YAMBO_FREE(BS_E)
  YAMBO_FREE(BS_all_E)
+ call FREQUENCIES_reset(wv,"all")
  !
  ! Clsoe files
  !
  call of_open_close(eps_file_name)
  call of_open_close(pl_file_name)
- call FREQUENCIES_reset(wv,"all")
  !
 end subroutine

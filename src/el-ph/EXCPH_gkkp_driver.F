@@ -86,6 +86,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call EXCPH_load_L(1,X,'check','Lin')
  !
  ! Check if exciton-phonon matrix elements have been already calculated
+ ! and are consistent with the Lin and Lout specified in input
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')

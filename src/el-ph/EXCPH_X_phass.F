@@ -28,7 +28,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use frequency,     ONLY:w_samp
  use pars,          ONLY:SP,cZERO,rZERO
  use units,         ONLY:HA2EV
- use functions,     ONLY:Lorentzian_func
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,&
@@ -47,7 +46,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP) :: pole,W,Satells_alpha,Satells_alpha_PL
- complex(SP), external :: Lorentzian_FT
  real(SP) :: min_E,exc_E
  integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp
  integer, external :: io_EXCPH_gkkp,io_ELPH
@@ -122,23 +120,22 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            !
            ! Phonon emission in absorption
            !
-           Satells_alpha   =Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)*Lorentzian_FT(W,pole,'r')*(1._SP+bose_factor)
+           Satells_alpha   =Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
            !
            ! Phonon emission in luminescence
            !
-           Satells_alpha_PL=Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha) &
-&                   *Lorentzian_FT(W,pole,'r')*bose_factor*boltzman_f(exc_E)
+           Satells_alpha_PL=Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
            !
            pole=BS_Sat_E_PH_abs(il,i_beta,i_alpha)
            !
            ! Phonon absorption in absorption
            !
-           Satells_alpha   =Satells_alpha   +BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*Lorentzian_FT(W,pole,'r')*bose_factor 
+           Satells_alpha   =Satells_alpha   +BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
            ! 
            ! Phonon absorption in luminescence
            !
            Satells_alpha_PL=Satells_alpha_PL+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha) &
-&                   *Lorentzian_FT(W,pole,'r')*(1._SP+bose_factor)*boltzman_f(exc_E) 
+&                   /(W-pole)*(1._SP+bose_factor)*boltzman_f(exc_E) 
            !
          enddo
          !
@@ -167,19 +164,21 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      pole =BS_E_in(i_alpha)
-     Epsilon_ii(iw)=Epsilon_ii(iw) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*Lorentzian_FT(W,pole,'r')
+     Epsilon_ii(iw)=Epsilon_ii(iw) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
      !
      ! The pole of luminescence cannot be the BS_E_in 
      ! otherwise we are inconsistend with the Boltzman function (to be discussed)
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw)     =PL_ii(iw)      + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*Lorentzian_FT(W,pole,'r') &
+     PL_ii(iw)     =PL_ii(iw)      + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole) &
  &                                   *boltzman_f(exc_E)
      !
    enddo
    !
  enddo
+ !
+ Epsilon_ii(:)=1._SP+Epsilon_ii(:)
  !
  ! Free
  !

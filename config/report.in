@@ -29,6 +29,7 @@
 # [@CUDA_check@] CUDA
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
+# [@PARIO_check@] PARALLEL-IO
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
@@ -81,4 +82,6 @@
 # [ F77 ] @F77@ @FFLAGS@ @CUDA_FLAGS@
 # [ F77U] @FUFLAGS@ @CUDA_FLAGS@
 # [Cmain] @FCMFLAG@
+#
+# You can modify compilers and flags by editing the file "config/setup"
 #

@@ -5,7 +5,7 @@
 module dev_memory_m
   !====================
   use iso_c_binding
-  use deviceXlib_m
+  use pars,   ONLY:SP
   implicit none
   private
 
@@ -28,7 +28,7 @@ contains
   !
   subroutine dev_mem_alloc_r1(var,N,ierr)
     implicit none
-    real(c_float), allocatable DEV_ATTR :: var(:)
+    real(SP), allocatable DEV_ATTR :: var(:)
     integer      :: N
     integer      :: ierr
     !
@@ -43,7 +43,7 @@ contains
   !
   subroutine dev_mem_free_r1(var,ierr)
     implicit none
-    real(c_float), allocatable DEV_ATTR :: var(:)
+    real(SP), allocatable DEV_ATTR :: var(:)
     integer      :: ierr
     !
     ierr=0

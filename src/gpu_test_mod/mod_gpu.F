@@ -3,9 +3,10 @@
 module gpu_m
   !=================
   !
+  use cusolverdn_y
 #if defined _CUDAF
   use cublas
-#elif defined _GPU
+#elif defined _OPENACC
   use cublas_m
   use cublas_core_m
 #endif
@@ -38,7 +39,6 @@ module gpu_m
   !
 #if defined _GPU
   type(cuBlasHandle) :: cublas_h
-  !type(c_ptr) :: cublas_h
   public :: cublas_h
 #endif
 
@@ -59,8 +59,8 @@ contains
     if(istat/=0) stop 'cublasInit failed'
     istat =  cublasCreate(cublas_h)
     if(istat/=0) stop 'creating cublas handle'
-    !istat = cusolverDnCreate(cusolv_h)
-    !if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
+    istat = cusolverDnCreate(cusolv_h)
+    if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
     !
 #endif
     cuda_linalg_init=.true.

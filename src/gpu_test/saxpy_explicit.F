@@ -5,9 +5,10 @@
 subroutine saxpy_cpu(N, a, x, y) 
   !================================
   use iso_c_binding
+  use pars,   ONLY:SP
   implicit none
     integer  :: N
-    real(c_float) :: a, x(N), y(N)
+    real(SP) :: a, x(N), y(N)
     integer i
     !$omp parallel do default(shared), private(i)
     do i = 1, N
@@ -21,10 +22,11 @@ subroutine saxpy_cpu(N, a, x, y)
 subroutine saxpy_explicit(N, a, x, y) 
   !================================
   use iso_c_binding
+  use pars,   ONLY:SP
   implicit none
     integer  :: N
-    real(c_float) :: a
-    real(c_float) DEV_ATTR :: x(N), y(N)
+    real(SP) :: a
+    real(SP) DEV_ATTR :: x(N), y(N)
     integer i
     !
     !DEV_CUF kernel do

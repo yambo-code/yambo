@@ -5,15 +5,16 @@
 module data_m
   !====================
   use iso_c_binding
-  use dev_memory_m
+  use dev_memory_m,    ONLY:dev_mem_alloc,dev_mem_free
+  use pars,            ONLY:SP
   implicit none
 
 type data_t 
   integer :: N
-  real(c_float), allocatable :: x(:)
-  real(c_float), allocatable :: y(:)
-  real(c_float), allocatable DEV_ATTR :: x_d(:)
-  real(c_float), allocatable DEV_ATTR :: y_d(:)
+  real(SP), allocatable :: x(:)
+  real(SP), allocatable :: y(:)
+  real(SP), allocatable DEV_ATTR :: x_d(:)
+  real(SP), allocatable DEV_ATTR :: y_d(:)
   !
   logical             :: alloc=.false.
   logical             :: alloc_gpu=.false.

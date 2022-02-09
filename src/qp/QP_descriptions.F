@@ -58,6 +58,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! Work Space
  !
+ integer           :: id
  integer, save     :: n_descs_save
  !
  if (.not.Update) n_descs_save=qp%desc%n
@@ -230,6 +231,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='[GF] Damping',term='ev',SZ=2,kind='r',R=QP_G_dr*HA2EV)
    !
  endif
+ !
+ ! Force all desc components to be checked at the I/O time
+ !
+ do id=1,qp%desc%n
+   qp%desc%ops(1,id)="=="
+   qp%desc%check(id)=.TRUE.
+ enddo
  !
  ! QP states
  !

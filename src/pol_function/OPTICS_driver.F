@@ -250,7 +250,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! CLEAN (each q)
    call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
-   call X_ALLOC_parallel(X_par(1),0,0,"CLEAN")
+   call MATRIX_reset(X_par(1))
    YAMBO_FREE(X_par_lower_triangle%blc)
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -261,7 +261,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
- call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
  call WF_free(WF)

@@ -25,12 +25,14 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
-&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
+&                        n_OPTICAL_dir_to_eval,X_par_average
+ use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -44,7 +46,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use matrix,        ONLY:MATRIX_reset
+ use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
 #include<memory.h>
  !
@@ -55,17 +57,25 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  type(w_samp)  ::Xw
  logical       ::SILENT_MODE
  !
+ ! External
+ !
+ integer, external    :: io_X,X_eh_setup
+ !
  ! Work Space
  !
  integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
-&                        X_MEM_n_tot_freqs,n_poles
+&                        X_MEM_n_tot_freqs,n_poles,iq_dir
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
+ character(schlen)    :: X_what
  !
  ! logicals and control
  !
  self_detect_E_range=.false.
+ !
+ ! Check if there is a Efield directions average to be done
+ !
+ call X_AVERAGE_setup("INIT",-1,X%q0)
  !
  ! Some check
  !
@@ -241,6 +251,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
+   ! Average setup
+   !
+   call X_AVERAGE_setup("Q-LOOP",iq,X%q0)
+   !
    if (iq/=1) then
      !
      ! TDDFT setup
@@ -263,20 +277,38 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   ! Allocation
-   !
+   ! Allocation Index
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+   ! Live timing string
+   X_what=" "
    !
-   if (l_write_disk_Xo) then
-     call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
-     call elemental_IO( iq , .TRUE. )
+   do iq_dir=1,n_OPTICAL_dir_to_eval
+     !
+     call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+     !
+     if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
+     if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
+     !
+     call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+     !
+     if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
+       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
+       call elemental_IO( iq , .TRUE. )
+     endif
+     !
+     if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
+     !
+     if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
+     if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
+     !
+   enddo
+   !
+   if (n_OPTICAL_dir_to_eval>1) then
+     call X_AVERAGE_do_it("DUMP",X_par(iq_mem))
+     call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
-   !
-   if (.not.l_rpa_IP) call X_redux(iq,X_par(iq_mem),Xw,X)
    !
    ! X_par => X_mat
    !
@@ -295,8 +327,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    ! CLEAN (2)
-   !
-   if (io_RESPONSE) call X_ALLOC_parallel(X_par(iq_mem),0,0,"CLEAN")
+   if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
    !

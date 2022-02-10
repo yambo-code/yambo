@@ -86,14 +86,18 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    do il=elph_branches(1),elph_branches(2)
+     !
      ph_E=sqrt(PH_freqs_sq(iq,il))
      bose_factor=bose_f(PH_E)
+     if(ph_E<FAN_deltaE_treshold) cycle
+     !
      do i_beta=EXCPH_sum(1),EXCPH_sum(2)
        forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
          EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
          EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
        end forall
      enddo
+     !
    enddo
    !
    do iw=1,wv%n_freqs
@@ -121,7 +125,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
-           exc_E=BS_all_E(i_beta,1)-min_E
+           exc_E=BS_all_E(i_beta,iq)-min_E
            !
            pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
            !
@@ -189,7 +193,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      pole =BS_all_E(i_alpha,1)          
      PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole) &
 &                                      *boltzman_f(exc_E)
-        write(*,*) i_alpha,'aaaaaaa',exc_E,boltzman_f(exc_E)
      !
    enddo
    !

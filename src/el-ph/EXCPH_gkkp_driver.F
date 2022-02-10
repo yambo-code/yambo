@@ -313,16 +313,16 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      real(SP)          :: ph_E
      integer           :: iq_bz
      !
-     call msg('sr',' Excitons renormalizations: ')
+     call msg('sr',' Excitons renormalizations  (without Bose factor): ')
      do i1=EXCPH_states(1),EXCPH_states(2)
         write(message,*) 'Exciton '//trim(intc(i1))//': R =',EXCPH_Renorm(i1),'    R_abs =',EXCPH_Renorm_PH_abs(i1)
         call msg('sr',message)
      enddo
-     call msg('sr',' Max satellite weight (without Bose factor): ')
+     call msg('sr',' Max satellite weight: ')
      do i1=EXCPH_states(1),EXCPH_states(2)
         iq_bz = q%k_table(max_Sat_pos(i1,1), 1)
         ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos(i1,2))))
-        write(message,*) 'Exciton '//trim(intc(i1))//': max(W_sat)=',max_Sat_weight(i1)
+        write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight(i1)
         call msg('sr',message)
         write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'

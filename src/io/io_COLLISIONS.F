@@ -80,7 +80,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    !
    io_COLLISIONS=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.)
    !
-   if (ver_is_gt_or_eq(ID,revision=5453)) then
+   if (.not.ver_is_gt_or_eq(ID,revision=5453)) then
      io_COLLISIONS=IO_OUTDATED_DB
      goto 1
    endif

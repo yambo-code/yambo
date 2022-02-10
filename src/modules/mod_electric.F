@@ -44,7 +44,7 @@ module electric
  !
  ! Polarization
  !
- logical :: l_no_P_periodic=.FALSE. ! Do not enforce periodicity in the polarization
+ logical :: l_no_P_periodic ! Do not enforce periodicity in the polarization
  !
  contains
    !

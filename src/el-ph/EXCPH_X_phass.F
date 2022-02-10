@@ -37,23 +37,25 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
+ use stderr,        ONLY:intc
  !
 #include<memory.h>
  !
  type(w_samp),  intent(in)  :: wv
  type(bz_samp), intent(in)  :: q
- complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,2),PL_ii(wv%n_freqs)
+ complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,2),PL_ii(wv%n_freqs,2)
  !
  ! Work space
  !
  complex(SP) :: pole,W,Satells_alpha,Satells_alpha_PL
- real(SP) :: min_E,exc_E
- integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp
+ real(SP) :: min_E,exc_E,E_alpha
+ integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  real(SP) :: bose_factor,PH_E
  !
- min_E=minval(BS_all_E(1,:))
- call msg('rs','Minimum excitonic energy : ',min_E*HA2EV,' eV ')
+ min_E  =minval(BS_all_E(1,:))
+ min_pos=minloc(BS_all_E(1,:))
+ call msg('rs','Minimum excitonic energy : ',min_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  !
  ! Load the Exciton-phonon elements and phonon energies
  !
@@ -115,11 +117,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
          bose_factor=bose_f(PH_E)
          !
+         E_alpha=BS_E_in(i_alpha)
+         !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
            exc_E=BS_all_E(i_beta,1)-min_E
            !
-           pole=BS_Sat_E(il,i_beta,i_alpha)
+           pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
            !
            ! Phonon emission in absorption
            !
@@ -127,9 +131,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            !
            ! Phonon emission in luminescence
            !
-           Satells_alpha_PL=Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
+           Satells_alpha_PL=Satells_alpha_PL+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
            !
-           pole=BS_Sat_E_PH_abs(il,i_beta,i_alpha)
+           pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
            !
            ! Phonon absorption in absorption
            !
@@ -147,7 +151,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        ! Add the satellites to the dielectric constant and luminescence
        !
        Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha
-       PL_ii(iw)       =PL_ii(iw)     +Satells_alpha_PL
+       PL_ii(iw,1)     =PL_ii(iw,1)     +Satells_alpha_PL
        !
      enddo   
      !
@@ -162,6 +166,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  EXCPH_Renorm       = EXCPH_Renorm/real(q%nbz,SP)
  EXCPH_Renorm_PH_abs= EXCPH_Renorm_PH_abs/real(q%nbz,SP)
  !
+ call msg('sr','Renormalization factors at finite temperature:')
+ do i_alpha=EXCPH_states(1),EXCPH_states(2)
+   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm,EXCPH_Renorm_PH_abs/))
+ enddo
+ !
  ! The term without satellites
  !
  do iw=1,wv%n_freqs
@@ -171,15 +180,16 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      pole =BS_E_in(i_alpha)
-     Epsilon_ii(iw,:)=Epsilon_ii(iw,:) + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
+     Epsilon_ii(iw,:)=Epsilon_ii(iw,:)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
      !
-     ! The pole of luminescence cannot be the BS_E_in 
-     ! otherwise we are inconsistend with the Boltzman function (to be discussed)
+     ! The pole of luminescence should be the pole of BS_E_in 
+     ! but I think this is not consistent with the Boltzman weight, I use always Lout. Point to be discussed
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw)     =PL_ii(iw)      + (1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole) &
- &                                   *boltzman_f(exc_E)
+     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole) &
+&                                      *boltzman_f(exc_E)
+        write(*,*) i_alpha,'aaaaaaa',exc_E,boltzman_f(exc_E)
      !
    enddo
    !
@@ -188,6 +198,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Eps(w)=1._SP - X(w)
  !
  Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
+ PL_ii=-PL_ii ! I miss a minus sign
  !
  ! Free
  !

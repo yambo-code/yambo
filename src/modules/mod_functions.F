@@ -212,13 +212,21 @@ module functions
    ! Boltzman function
    !----------------
    !
-   pure function boltzman_f(Eb)
+   function boltzman_f(Eb)
      !
      use D_lattice, ONLY:Boltz_Temp
      real(SP), intent(in):: Eb
      real(SP)            :: boltzman_f
      !
-     boltzman_f=exp(-Eb/Boltz_Temp)
+     if(abs(Eb)>epsilon(1.).and.abs(Boltz_Temp)>epsilon(1.)) then
+       boltzman_f=exp(-Eb/Boltz_Temp)  ! Normal case
+     elseif(abs(Eb)>epsilon(1.).and.abs(Boltz_Temp)<=epsilon(1.)) then
+       boltzman_f=0._SP  ! Case  E>0 but T=0
+     elseif(abs(Eb)<epsilon(1.).and.abs(Boltz_Temp)<epsilon(1.)) then
+       boltzman_f=1._SP  ! Limit E->0 T->0
+     elseif(abs(Eb)<epsilon(1.).and.abs(Boltz_Temp)>epsilon(1.)) then
+       boltzman_f=1._SP  ! Case E=0 T->0
+     endif
      !
    end function
 

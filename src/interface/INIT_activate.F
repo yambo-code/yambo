@@ -334,6 +334,7 @@ subroutine INIT_activate()
    endif
    call initactivate(1,'XTermKind')
    call initactivate(1,'XTermEn')
+   call initactivate(1,'OptDipAverage')
  endif
  !
  ! ACFDT

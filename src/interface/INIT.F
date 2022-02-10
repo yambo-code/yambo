@@ -511,10 +511,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! q0 renormalization
      !
      BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
-     X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
-     X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
-     X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
-     X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
      if (STRING_same(trim(BSE_mode),"causal") ) BSE_mode="retarded"

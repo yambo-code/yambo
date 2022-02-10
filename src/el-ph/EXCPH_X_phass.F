@@ -30,7 +30,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,&
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
 &                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free
  use ELPH,          ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold
  use com,           ONLY:msg
@@ -154,8 +154,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Add the satellites to the dielectric constant and luminescence
        !
-       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha
-       PL_ii(iw,1)     =PL_ii(iw,1)     +Satells_alpha_PL
+       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha   *BS_R(i_alpha)
+       PL_ii(iw,1)     =PL_ii(iw,1)     +Satells_alpha_PL*BS_R(i_alpha)
        !
      enddo   
      !
@@ -172,7 +172,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call msg('sr','Renormalization factors at finite temperature:')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm,EXCPH_Renorm_PH_abs/))
+   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm(i_alpha),EXCPH_Renorm_PH_abs(i_alpha)/))
  enddo
  !
  ! The term without satellites
@@ -184,24 +184,24 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      pole =BS_E_in(i_alpha)
-     Epsilon_ii(iw,:)=Epsilon_ii(iw,:)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole)
+     Epsilon_ii(iw,:)=Epsilon_ii(iw,:)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha)/(W-pole)
      !
      ! The pole of luminescence should be the pole of BS_E_in 
      ! but I think this is not consistent with the Boltzman weight, I use always Lout. Point to be discussed
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))/(W-pole) &
-&                                      *boltzman_f(exc_E)
+     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha) &
+&                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
    !
  enddo
  !
- ! Eps(w)=1._SP - X(w)
+ ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
  Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
- PL_ii=-PL_ii ! I miss a minus sign
+ PL_ii         =-PL_ii
  !
  ! Free
  !

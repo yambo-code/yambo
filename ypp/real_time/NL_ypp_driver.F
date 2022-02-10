@@ -23,8 +23,7 @@
 !
 subroutine NL_ypp_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
-&                         l_skip_OBS_IO
+ use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO
  use pars,           ONLY:SP,pi,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
@@ -224,16 +223,18 @@ subroutine NL_ypp_driver(en,k)
      !
   case ('DELTA','PULSE')
     !
-    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
-    Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    Pol%title="Polarization"
-    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
-    call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,.FALSE.)
+    allocate(Pol(1))
+    YAMBO_ALLOC(Pol(1)%F_t,(RT_conf%T_n_steps,3))
+    Pol(1)%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+    Pol(1)%title="Polarization"
+    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol(1)%F_t,3)
+    call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,.FALSE.)
     call RT_X_LRR_real_field(en)
-    YAMBO_FREE(Pol%F_t)
-     !
-     ! OTHER CASES NOT YET WORKING
-     !
+    YAMBO_FREE(Pol(1)%F_t)
+    deallocate(Pol)
+    !
+    ! OTHER CASES NOT YET WORKING
+    !
   case default 
     call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
   end select

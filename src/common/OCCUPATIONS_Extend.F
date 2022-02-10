@@ -39,7 +39,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::Xe,E
  type(bz_samp)   ::k

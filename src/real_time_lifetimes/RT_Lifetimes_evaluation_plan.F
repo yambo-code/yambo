@@ -30,7 +30,7 @@ integer function RT_Lifetimes_evaluation_plan( )
  use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_lifetimes_extrapolation,Life_MEM_steps
  use real_time,      ONLY:RT_TIME_status,NE_steps,RT_dyn_step,NE_i_time
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

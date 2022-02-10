@@ -31,7 +31,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
  integer          :: NG,NW

@@ -25,7 +25,7 @@ module electrons
  !
  use pars,  ONLY:SP,rZERO
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  real(SP) :: nel
  real(SP) :: default_nel

@@ -40,7 +40,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use cuda_m_y,     ONLY:have_cuda
  use timing_m,     ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: iG,iGo
  type(yMPI_comm), optional :: COMM

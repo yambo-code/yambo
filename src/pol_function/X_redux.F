@@ -55,7 +55,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use deviceXlib_m
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
  type(X_t)        :: X

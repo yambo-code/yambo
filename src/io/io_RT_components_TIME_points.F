@@ -34,7 +34,7 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_rest_info,unlim,l_G,TYP)
  use IO_m,           ONLY:write_is_on,read_is_on
  use IO_int,         ONLY:def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)    :: ID,VAR_SZ
  logical,       intent(in)    :: load_rest_info,unlim,l_G

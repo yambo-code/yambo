@@ -45,7 +45,7 @@ integer function io_ELPH(ID,what)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_reset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer      ::ID
  character(*) ::what

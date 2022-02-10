@@ -33,7 +33,7 @@ subroutine RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mes
 &                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*), optional :: what
  logical,      optional :: IO_error,first_sec_only,G_lesser_only

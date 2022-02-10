@@ -68,7 +68,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  use RT_control,   ONLY:EQ_Transitions,EQ_NoOcc
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(1)   :: mode ! "K" for k-resolved, "T" for transitions groups
  type(levels)   :: Ken

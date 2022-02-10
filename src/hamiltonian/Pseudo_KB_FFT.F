@@ -31,7 +31,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table,pp_kbv_table
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP)             :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo),kbv_real_space(fft_size,n_spinor,pp_kbv_dim_yambo)
  real(SP)                :: kpt(3)

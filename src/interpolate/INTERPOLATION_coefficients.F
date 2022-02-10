@@ -34,7 +34,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
 &                            INTERPOLATE_use_symm         
  use interpolate_tools, ONLY:get_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)           :: k
  real(SP),      intent(in), optional :: R1D(:,:),R2D(:,:,:)

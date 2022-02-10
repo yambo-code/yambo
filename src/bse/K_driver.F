@@ -43,7 +43,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  use D_lattice,      ONLY:l_1D,l_2D
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q

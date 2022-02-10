@@ -118,7 +118,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use cuda_m_y,      ONLY:GPU_test_dim
  use PHOTOLUM,      ONLY:PL_weights
 #if defined _MEM_CHECK
- use memory,        ONLY:MEM_treshold
+ use y_memory,        ONLY:MEM_treshold
 #endif
 #if defined _PHEL
  use PHEL,          ONLY:PH_Self_Energy_mode,PH_DbGd_points,PH_Q,PHEL_broad_factor

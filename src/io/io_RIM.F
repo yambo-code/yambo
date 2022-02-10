@@ -30,7 +30,7 @@ integer function io_RIM(ID)
  use IO_m,           ONLY:io_sec,read_is_on,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
-#include <memory.h>
+#include <y_memory.h>
  integer :: ID
  ! 
  ! Work Space
@@ -98,7 +98,7 @@ integer function io_RIM_W(ID,mode)
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
  use cuda_m_y,       ONLY:have_cuda
-#include <memory.h>
+#include <y_memory.h>
  !
  integer :: ID
  character(3) :: mode

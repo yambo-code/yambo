@@ -42,7 +42,7 @@ subroutine PHEL_driver(E,k,q)
  use frequency,      ONLY:W_reset
  use parallel_m,     ONLY:PARs_PH_Q_ibz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ,intent(in) :: E
  type(bz_samp),intent(in) :: k,q

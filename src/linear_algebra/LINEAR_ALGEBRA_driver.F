@@ -49,7 +49,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use timing_m,      ONLY:timing
  use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer                    :: idriver
  integer,          optional :: lib_in

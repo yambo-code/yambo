@@ -32,7 +32,7 @@ subroutine WF_alloc(WF)
  use deviceXlib_m
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(WAVEs)           :: WF
  !

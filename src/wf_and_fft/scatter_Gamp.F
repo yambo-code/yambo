@@ -42,7 +42,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use deviceXlib_m
  use timing_m
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(elemental_collision), target::isc
  character(1) ::mode

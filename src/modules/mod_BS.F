@@ -28,7 +28,7 @@ module BS
  use cuda_m_y,      ONLY: have_cuda
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Modes and logicals
  !====================

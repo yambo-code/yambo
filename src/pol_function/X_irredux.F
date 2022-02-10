@@ -71,7 +71,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use timing_m,      ONLY:timing
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PAR_matrix), target :: X_par
  type(levels)         :: Xen

@@ -39,7 +39,7 @@ subroutine fft_free()
 #endif
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: ierr
  !

@@ -192,8 +192,9 @@ if test x"$enable_openacc" != "xno" ; then
       ;;
     *GNU* | *gnu*)
       GPU_FLAGS="-fopenacc -foffload=-lm  -foffload=-lgfortran" 
-      # -foffload=amdgcn-amdhsa  -foffload=-march=gfx908" 
-      # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}"
+      # -foffload=nvptx-none
+      # -foffload=amdgcn-amdhsa  -foffload=-march=gfx908 
+      # -gpu=cc${with_cuda_cc},cuda${with_cuda_runtime}
    esac
    #
 fi

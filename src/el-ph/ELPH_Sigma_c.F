@@ -60,7 +60,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use stderr,        ONLY:STRING_same
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::en
  type(bz_samp) ::k,q

@@ -43,7 +43,7 @@ subroutine K_blocks( )
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res,BS_K_anti_resonant
  use com,          ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! YAMBO_PAR_ALLOC
  !

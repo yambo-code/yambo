@@ -54,7 +54,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp) :: W
  integer      :: iq

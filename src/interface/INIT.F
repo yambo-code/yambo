@@ -77,7 +77,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::en
  type(bz_samp)   ::q,k

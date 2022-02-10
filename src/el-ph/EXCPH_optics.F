@@ -30,12 +30,16 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,&
+&                         OP_WR_CL,OP_APP_CL,DUMP
  use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use BS_Solvers,     ONLY:BSS_n_eig
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R
+ use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -49,19 +53,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=5
- real(SP)         :: output_data(n_output)
- integer          :: iw,iq,i_alpha
+ real(SP)            :: output_data(n_output)
+ integer             :: iw,iq,i_alpha,ID_DG,io_err
+ integer, external   :: io_Double_Grid
  !
  call section('*','EXCPH-Optics')
- !
- call X_setup_file_names(1,'bse ','phass',' ') 
- !
- call of_open_close(eps_file_name,'ot')
- call of_open_close(pl_file_name,'ot')
- !
- call msg('o eps_q pl_q','# EXCITON PHONON')    
- call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
- call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
  !
  ! Load excitonic energies 
  !
@@ -109,22 +105,45 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
- do iw=1,wv%n_freqs
-     !
-     ! Eps
-     !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
-&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
-     call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
-     !
-     ! Luminescence
-     !
-     output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
-&             aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
-     call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
-     !
- enddo
+ call X_setup_file_names(1,'bse ','phass',' ') 
  !
+ call print_output()
+ !
+ ! **** DOUBLE GRID PART *****
+ !
+ ! Fill the PH_freqs array
+ ! This structure will contains the phonon frequencies and the
+ ! double-grid phonon frequencies calculated with matdyn.x
+ !
+ PH_freqs%nk=q%nibz
+ PH_freqs%nb=ph_modes
+ YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
+ !
+ ! Check if double-grid is present and use it
+ !
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
+ io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+ !
+ if(io_err==0) then
+   !     
+   use_PH_DbGd=.TRUE.
+   !
+   call msg('sr','Using PH-double-grid ')
+   !
+   ! Calculate X(w) using Double-Grid
+   !
+!   call EXCPH_X_dbgrid_phass(wv,q,PH_freqs,Epsilon_ii,PL_ii)
+   !
+   ! New output files for the double-grid calculations
+   ! 
+   call X_setup_file_names(1,'bse ','phass','DbGd') 
+   !
+   ! Write output on file
+   !
+   call print_output()
+   !
+ endif
+ ! 
  ! Deallocations
  !
  YAMBO_FREE(Epsilon_ii)
@@ -136,9 +155,47 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_FREE(BS_R)
  call FREQUENCIES_reset(wv,"all")
  !
- ! Clsoe files
- !
- call of_open_close(eps_file_name)
- call of_open_close(pl_file_name)
- !
+ contains
+   !
+   subroutine print_output()
+     use X_output,      ONLY:X_write_messages_before_headers,X_write_q_plus_G
+     implicit none
+     !
+     call of_open_close(eps_file_name,'ot')
+     call of_open_close(pl_file_name,'ot')
+     !
+     call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
+     !
+     call X_write_q_plus_G(1,(/0.0,0.0,0.0/),1)
+     !
+     call msg('o eps_q pl_q','# EXCITON PHONON')    
+     call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     call msg('o eps_q pl_q','#')
+     !
+     ! Write output on file
+     !
+     do iw=1,wv%n_freqs
+       !
+       ! Eps
+       !
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
+&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
+       call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
+       !
+       ! Luminescence
+       !
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
+&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
+       call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
+       !
+     enddo
+     !
+     ! Close files
+     !
+     call of_open_close(eps_file_name)
+     call of_open_close(pl_file_name)
+     !
+   end subroutine print_output
+   !
 end subroutine

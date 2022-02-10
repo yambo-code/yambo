@@ -21,10 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
+subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only,COM_)
  !
  use YPP_real_time,  ONLY:RT_conf,OBS_el
- use pars,           ONLY:DP,schlen,cZERO_DP,cZERO
+ use pars,           ONLY:DP,cZERO_DP,cZERO
  use R_lattice,      ONLY:nkibz
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD,RD_CL,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
@@ -39,28 +39,16 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
  type(OBS_el), optional :: Curr,Pol
  logical,      optional :: IO_error,first_sec_only,G_lesser_only
  integer,      optional :: COM_
- character(*), optional :: mesg
  !
  ! Work Space
  !
  integer            :: io_OBS,ID,IO_ACT,i_f,io_G,COM_here,ik,NE_steps_save,i_dir,it,it_now
  integer, external  :: io_RT_components
- character(schlen)  :: mesg_
  !
  NE_steps_save=NE_steps
  !
  COM_here=LOG
  if (present(COM_)) COM_here=COM_
- !
- if (COM_here==LOG) then
-   if (what=="JP") mesg_='Current and Polarization'
-   if (what=="D" ) mesg_='Phonon Displacement Field'
-   call section("+",trim(mesg_)//' Database')
- endif
- !
- mesg_=" "
- if (present(mesg)) mesg_="["//trim(mesg)//"]"
- !=============================================
  !
  if (present(G_lesser_only)) then
    !
@@ -88,12 +76,10 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
    !
  else
    !
-   call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
    io_G=io_RT_components('G_lesser_RESTART',ID)
    !
  endif
- !
- COM_here=NONE
  !
  ! Use Core value for dynamical step 
  !-----------------------------------
@@ -154,7 +140,7 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
  endif
  !
  ! Define Efield amplitude
- !
+ !-------------------------
  do i_f=1,n_ext_fields
    Efield(i_f)%amplitude=Efield_strength(Efield(i_f)%intensity,'AU')
  enddo

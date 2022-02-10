@@ -26,11 +26,14 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
  use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,&
 &                         N_pumps,N_probes,N_probe_frequencies
+ use RT_output_m,    ONLY:RT_desc
  use com,            ONLY:core_io_path,msg,jobstr
  use IO_m,           ONLY:NONE
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,n_ext_fields
  use stderr,         ONLY:STRING_split,cstr,intc,STRING_same
  use electrons,      ONLY:levels
+ use interfaces,     ONLY:DESC_compare
+ use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
  !
  implicit none
  !
@@ -39,19 +42,19 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
  ! Work Space
  !
- integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump
+ integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump,i_d,i_desc_err(2)
  logical           :: IO_error
  character(10*max_n_of_paths) :: folder_list
- !
+ type(IO_desc)     :: Pump_RT_desc
  logical, external :: file_exists
  !
  i_Probe=1
  i_Pump =2
  !
+ call section("+",'Pump and Probe(s)')
+ !====================================
+ !
  if (.not.STRING_same(Pump_Keyword,"none").or..not.STRING_same(Probe_Keyword,"none")) then
-   !
-   call section("=",'Checking for Probe and Pump paths')
-   !====================================================
    !
    N_pumps =0
    !
@@ -104,23 +107,6 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      !
    enddo
    !
-   ! Jobstring/dirs re-direction
-   !
-   call IO_temporary_jobdir_and_strings("ALL","SAVE")
-   !
-   ! Probe Databases
-   !=================
-   !
-   do i_f=1,N_probes
-     call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(i_f))
-     call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
-     N_probe_frequencies= Efield(i_Probe)%n_frequencies
-   enddo
-   !
-   ! In case of several probe_frequencies only one probe is supported
-   !
-   if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
-   !
    ! If no Probes using the Keyword try using jobstr
    !
    if (N_probes==0) then
@@ -128,19 +114,45 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      Probe_path(1)="default"
    endif
    !
-   ! Pump only
-   !===========
+   ! Jobstring/dirs re-direction
    !
+   call IO_temporary_jobdir_and_strings("ALL","SAVE")
+   !
+   ! Pump 
+   !======
    if (N_pumps==1) then
      call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      if (.not.IO_error) then
        N_pump_frequencies= Efield(i_Pump)%n_frequencies
+       call IO_desc_reset(Pump_RT_desc)
+       call IO_desc_duplicate(RT_desc,Pump_RT_desc)
        if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
      else
        N_pumps=0
      endif
    endif
+   !
+   ! Probe Databases
+   !=================
+   do i_f=1,N_probes
+     if (.not.STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(i_f))
+     if (     STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
+     call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+     N_probe_frequencies= Efield(i_Probe)%n_frequencies
+   enddo
+   !
+   ! Pump & Probe comparison
+   !
+   if (N_pumps>0) then
+     call DESC_compare(RT_desc,Pump_RT_desc,i_desc_err,exclude="FIELDs")
+     if (any(i_desc_err/=0)) call error("Probe and Pump runs are not compatible")
+     if (n_ext_fields/=2) call warning("Probe run has only one field. Pump ignored")
+   endif
+   !
+   ! In case of several probe_frequencies only one probe is supported
+   !
+   if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
    !
    call IO_temporary_jobdir_and_strings("ALL","RESTORE")
    !
@@ -151,8 +163,8 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    !
  endif
  !
- ! Single Probe 
- !=============
+ ! No pump & Probe passed by -J strings
+ !======================================
  if (N_probes==0.and.N_pumps==0) then
    !
    call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)

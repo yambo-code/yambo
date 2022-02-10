@@ -27,7 +27,8 @@
 !
 subroutine RT_X_LRR_real_field(en)
  !
- use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,OBS_el_free,X_kind
+ use YPP_real_time,  ONLY:RT_conf,Use_FFT,l_force_min_damp,RT_time,Pol,Curr,ElField,&
+&                         OBS_el_free,X_kind,N_pumps
  use pars,           ONLY:SP,pi,cI,cZERO,schlen
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels
@@ -63,6 +64,15 @@ subroutine RT_X_LRR_real_field(en)
  i_Probe=1
  if(trim(Efield(i_Probe)%ef_pol)=="linear"  ) n_fields=1
  if(trim(Efield(i_Probe)%ef_pol)=="circular") n_fields=2
+ !
+ ! Pump removal (if any)
+ !-----------------------
+ if (N_pumps==1) then
+   do i_t=1,RT_conf%T_n_steps
+     Curr(i_Probe)%F_t(i_t,:)=Curr(i_Probe)%F_t(i_t,:)-Curr(i_Probe+1)%F_t(i_t,:)
+     Pol(i_Probe)%F_t(i_t,:)=Pol(i_Probe)%F_t(i_t,:)-Pol(i_Probe+1)%F_t(i_t,:)
+   enddo
+ endif
  !
  ! 1D FFT setup
  !--------------

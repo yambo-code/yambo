@@ -39,6 +39,14 @@ module interfaces
  !
  interface
    !
+   subroutine DESC_compare(D1,D2,i_err,exclude,only)
+     use descriptors,ONLY:IO_desc
+     type(IO_desc),          intent(in) :: D1,D2
+     integer                            :: i_err(2)
+     character(*), optional, intent(in) :: exclude
+     character(*), optional, intent(in) :: only
+   end subroutine
+   !
    subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      use descriptors,ONLY:IO_desc
      character(*),           intent(in) :: dest

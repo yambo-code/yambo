@@ -44,7 +44,7 @@ subroutine RT_X_response(en,k,q)
  !
  integer           :: Ndefs,i_o
  character(schlen) :: probe_defs(3)
- logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
+ logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin,IO_error
  !
  call RT_OBSERVABLES_IO_paths('JP',en)
  !
@@ -70,6 +70,8 @@ subroutine RT_X_response(en,k,q)
  !=========================
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
+   call section("=",'Pump and Probe(s) databases I/O')
+   !--------------------------------------------------
    ! Database
    !
    allocate(Pol(N_pumps+N_probes))
@@ -77,32 +79,28 @@ subroutine RT_X_response(en,k,q)
    !
    call IO_temporary_jobdir_and_strings("ALL","SAVE")
    !
-   Pol(1)%title ="probe-polarization"
-   Curr(1)%title="probe-current"
    if (N_pumps==0) then
      Pol(1)%title ="polarization"
      Curr(1)%title="current"
+   else
+     Pol(1)%title ="probe-polarization"
+     Curr(1)%title="probe-current"
+     Pol(2)%title ="pump-polarization"
+     Curr(2)%title="pump-current"
+     if (.not.STRING_same(Pump_path,"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
+     call RT_OBSERVABLES_IO( what='JP',J=Curr(2),P=Pol(2),IO_error=IO_error)
+     if (.not.allocated(Curr(2)%F_t)) call error('Pump databases missing/corrupt')
    endif
-   if (.not.allocated(Curr(1)%F_t)) then
-     if (.not.STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(1))
-     call RT_OBSERVABLES_IO( what='JP',J=Curr(1),P=Pol(1),mesg=trim(Probe_path(1)))
-   endif
-   if (.not.allocated(Curr(1)%F_t)) call error('J and P probe databases not found')
    !
-   if (N_pumps>0) then
-     if (.not.allocated(Curr(N_probes+1)%F_t)) then
-       Pol(2)%title ="pump-polarization"
-       Curr(2)%title="pump-current"
-       if (.not.STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
-       call RT_OBSERVABLES_IO( what='JP',J=Curr(2),P=Pol(2),mesg=trim(Pump_path))
-       if (.not.allocated(Curr(2)%F_t)) call error('J and P pump databases not found')
-     endif
-   endif
+   if (     STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
+   if (.not.STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(1))
+   call RT_OBSERVABLES_IO( what='JP',J=Curr(1),P=Pol(1),IO_error=IO_error)
+   if (.not.allocated(Curr(1)%F_t)) call error('Probe databases missing/corrupt')
    !
    call IO_temporary_jobdir_and_strings("ALL","RESTORE")
    !
-   !  Initialization 
-   !
+   !  Damping and output 
+   !---------------------
    call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,l_skip_OBS_IO)
    call RT_OBSERVABLES_damp_and_write(Curr(1),RT_conf,l_skip_OBS_IO)
    if (N_pumps>0) then

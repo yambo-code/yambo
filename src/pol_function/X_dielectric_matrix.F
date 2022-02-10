@@ -276,18 +276,16 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   ! Allocation
+   ! Allocation Index
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
-   !
-   ! Optical direction average?
-   if (n_OPTICAL_dir_to_eval>1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
    !
    ! Live timing string
    X_what=" "
    !
    do iq_dir=1,n_OPTICAL_dir_to_eval
+     !
+     call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
      !
      if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
@@ -298,7 +296,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      if (X%whoami/=1) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
      !
-     if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
+     if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
+     if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
      !
    enddo
    !

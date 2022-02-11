@@ -45,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,FL_states,FL_Ho_plus_Sigma
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
@@ -78,29 +78,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! aim137: deleted beyond-IPA stuff
  !
- ! Evaluate the Polarization 
- ! ===================================================================
- !
- ! aim137: deleted call to Build_berry_polarization_NEQ
- ! aim137: Sm1_plus,Sm1_minus and All_S_det matrices were updated here as well
- !
- ! Evaluate Floquet Overlaps
- ! ===================================================================
- !
- FL_S_minus=cZERO
- FL_S_plus =cZERO
- !
- do ik_bz=1,QP_nk
-   !
-   !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
-   !
-   do is=1,n_sp_pol
-     !
-     call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),FL_S_minus(:,:,:,:,ik_bz,is)) 
-     !
-   enddo
-   !
- enddo
  !
  ! Evaluate the external/total field
  !=================================

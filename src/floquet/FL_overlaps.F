@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
+subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_S_det)
  !
  ! Build Floquet overlaps between valence bands
  ! Structure taken from Build_Overlaps_det_NEQ
@@ -47,6 +47,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
  complex(SP),  intent(in) :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes,6)
  complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_extra_modes,6)
+ complex(SP), intent(inout) :: FL_S_det(n_tot_extra_modes,6)
  !
  ! Work Space
  !
@@ -246,6 +247,10 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus)
          enddo
        enddo
        !
+       !aim137 calculate determinant - preliminarily = 1
+       do i1_extra=1,n_tot_extra_modes
+         FL_S_det(i1_extra,id+(istep-1)*3) = cONE
+       enddo
        !
      enddo  
      !

@@ -42,7 +42,8 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
- use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin,&
+&                         FL_S_plus,FL_S_minus,FL_S_det
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -67,6 +68,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  logical           :: l_selfconsistency_reached
  real(SP)          :: Time
  complex(SP)       :: All_S_mat_EQ(E%nbm,E%nbm,6,k%nbz,n_sp_pol)
+ complex(SP)       :: FL_pol(3)
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -174,11 +176,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! aim137 creo que no necesito esto al final. Mis S^0 ya estan en DIP_S
  ! Calculate Overlap matrices in EQ (no inversion nor determinant)
  ! ===============================================================
-!do i_sp_pol=1,n_sp_pol
-!  do i_k_bz=1,k%nbz
-!    call FL_Build_Overlaps_Mat_EQ(E,i_sp_pol,i_k_bz,All_S_mat_EQ(:,:,:,i_k_bz,i_sp_pol))
-!  enddo
-!enddo
  !
  do i_f=1,n_frequencies
    !
@@ -207,6 +204,19 @@ subroutine FL_driver(E,X,k,q,Dip)
    enddo
    !aim137 END DEBUG
    !
+   FL_S_minus=cZERO
+   FL_S_plus =cZERO
+   FL_S_det =cZERO
+   !
+   do i_sp_pol=1,n_sp_pol
+     do i_k_bz=1,k%nbz
+       !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+       call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands,FL_S_plus(:,:,:,:,i_k_bz,i_sp_pol),&
+                                                   &   FL_S_minus(:,:,:,:,i_k_bz,i_sp_pol),&
+                                                   &   FL_S_det(:,:,i_k_bz,i_sp_pol)) 
+     enddo
+   enddo
+   !
    l_selfconsistency_reached = .false.
    l_Duffin = .false.
    FL_iteration = 0
@@ -230,10 +240,10 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call live_timing(steps=1)
      !
-     call FL_polarization
+     call FL_polarization(E,k,FL_V_bands,FL_pol)
      !
      !aim137: preliminary criterion to avoid infinit loop
-     l_selfconsistency_reached = (FL_iteration>=14)
+     l_selfconsistency_reached = (FL_iteration>=4)
      !aim137: preliminary skipping Duffin
      l_Duffin = .true.
      !

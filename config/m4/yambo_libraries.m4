@@ -27,6 +27,8 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
+ylib_branch=devel-gpuhack21
+
 cd $srcdir
 
 if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
@@ -37,9 +39,10 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   AC_MSG_CHECKING([the yambo-libraries git repository])
   if ! test -d "yambo/driver/src"; then
     git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
+    git checkout $ylib_branch >& /dev/null
   else
     cd yambo
-    git checkout master >& /dev/null
+    git checkout $ylib_branch >& /dev/null
     git pull >& /dev/null
     cd ../
   fi

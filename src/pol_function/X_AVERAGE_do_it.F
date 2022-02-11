@@ -24,7 +24,7 @@
 subroutine X_AVERAGE_do_it(what,X_par)
  !
  use pars,          ONLY:cZERO,SP
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  use X_m,           ONLY:X_par_average,n_OPTICAL_dir_to_eval
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  !

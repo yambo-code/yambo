@@ -156,13 +156,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
-   call X_irredux(iq,X_par(1),Xen,Xk,wv,X,Dip)
+   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF eps
    if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
-   if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
+   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
    !
    if (Macroscopic_CPU) then
      !

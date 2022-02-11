@@ -644,6 +644,7 @@ ETSF_str
 IOTK_str
 FUTILE_str
 YAML_str
+PARIO_check
 OPENMP_check
 MPI_check
 MEM_profile_check
@@ -682,6 +683,7 @@ def_yaml
 enable_netcdf_par_io
 enable_netcdf_v3
 enable_netcdf_classic
+parallel_io
 PNETCDF_INCS
 PNETCDF_LIBS
 NETCDFF_INCS
@@ -7057,7 +7059,12 @@ ia64*linux* )
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;
-      *17* | *18* | *19* )
+      *19* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99 -no-multibyte-chars"
+       ;;
+      *17* | *18* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        CFLAGS="-O2 -std=gnu99"
@@ -13295,12 +13302,15 @@ fi
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
+    parallel_io="HDF5";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
+    parallel_io="NetCDF";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+    parallel_io="COMPRESS-HDF5";
 fi
 #
 
@@ -13432,6 +13442,10 @@ if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_hdf5=no  ; fi
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
+#
+if test x"$enable_hdf5_par_io" = "xyes"  &&  test x"$enable_netcdf_par_io" = "xyes" ; then
+  as_fn_error $? "Select hdf5-par-io or netcdf-par-io, not both!!" "$LINENO" 5 ;
+fi
 #
 if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
@@ -13767,17 +13781,22 @@ fi
 #
 # NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
 #
+parallel_io="-" ;
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
+    parallel_io="HDF5";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
+    parallel_io="NetCDF";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+    parallel_io="COMPRESS-HDF5";
 fi
 #
+
 
 
 
@@ -14723,6 +14742,7 @@ if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
+PARIO_check="$parallel_io"
 #
 # - LIBRARIES -
 #
@@ -14877,6 +14897,7 @@ fi
 
 
 #
+
 
 
 #

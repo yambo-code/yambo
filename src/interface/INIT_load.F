@@ -85,7 +85,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use RT_occupations,ONLY:RT_RTA_temp,RT_RTA_chem
  use RT_lifetimes,  ONLY:RT_life_extrap_times_INPUT
  use real_time,     ONLY:RT_step, Integrator_name, RAD_LifeTime, Phase_LifeTime, &
-&                        NE_tot_time,RT_bands,RT_deph_Range,                     &
+&                        NE_tot_time,RT_bands,RT_deph_range,                     &
 &                        RT_ave_dephasing,RT_eh_en,RT_scatt_tresh,Gr_kind,       &
 &                        NE_MEM_treshold,NE_time_step_update_jump_INPUT,         &
 &                        two_alpha,DbGd_EE_percent,NE_time_step_update_jump,     &
@@ -352,6 +352,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'PF_alpha','[TDDFT] PF alpha factor approximation: CUR/EMP/RBO/JGM',FXC_PF_alpha)
  call it(defs,'LRC_beta', '[TDDFT] LRC beta factor',FXC_LRC_beta,verb_level=V_resp)
  !
+ ! Optics: Q=0 directions average
+ !
+ call it('f',defs,'OptDipAverage', '[Xd] Average Xd along the non-zero Electric Field directions',verb_level=V_resp)
+ !
  ! Optics: large Q momenta
  !
  call it(defs,'Qdirection', '[Xd] Transferred momentum direction (iku)',q_plus_G_direction,verb_level=V_resp)
@@ -378,8 +382,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! RIM
  !
- call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix',&
-&                         RIM_epsm1,verb_level=V_RL)
+ call it(defs,'Em1Anys', '[RIM] X Y Z Static Inverse dielectric matrix Anysotropy',RIM_epsm1,verb_level=V_RL)
  call it(defs,'IDEm1Ref','[RIM] Dielectric matrix reference component 1(x)/2(y)/3(z)',&
 &                         RIM_id_epsm1_reference,verb_level=V_RL)
  call it(defs,'RandQpts','[RIM] Number of random q-points in the BZ',RIM_n_rand_pts)

@@ -318,7 +318,12 @@ ia64*linux* )
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;
-      *17* | *18* | *19* )
+      *19* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99 -no-multibyte-chars"
+       ;;
+      *17* | *18* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        CFLAGS="-O2 -std=gnu99"

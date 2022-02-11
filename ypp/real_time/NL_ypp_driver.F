@@ -226,7 +226,7 @@ subroutine NL_ypp_driver(en,k)
     allocate(Pol(1))
     YAMBO_ALLOC(Pol(1)%F_t,(RT_conf%T_n_steps,3))
     Pol(1)%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    Pol(1)%title="Polarization"
+    Pol(1)%title="polarization"
     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol(1)%F_t,3)
     call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,.FALSE.)
     call RT_X_LRR_real_field(en)

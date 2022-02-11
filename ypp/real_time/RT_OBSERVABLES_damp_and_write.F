@@ -71,7 +71,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  call RT_output(what="open "//trim(OBS%title))
  do i_t=1,RT%T_n_steps
    if (STRING_match(OBS%title,"polarization")) RT_P=OBS%F_t(i_t,1:3)
-   if (STRING_match(OBS%title,"current")) RT_ind_J=OBS%F_t(i_t,1:3)
+   if (STRING_match(OBS%title,"current")     ) RT_ind_J=OBS%F_t(i_t,1:3)
    call RT_output(trim(OBS%title),TIME=RT_time(i_t)*AUT2FS)
  enddo
  call RT_output(what="close "//trim(OBS%title))

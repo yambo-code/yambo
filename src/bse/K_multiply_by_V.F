@@ -31,7 +31,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  use pars,           ONLY:SP,cONE,cZERO,cI
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_T_Haydock,PAR_COM_T_Haydock
- use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_uses_DbGd
+ use BS_solvers,     ONLY:Haydock_vector,BSS_Slepc_double_grp,BSS_uses_DbGd,FG_factor,BSS_uses_FKE
  use BS,             ONLY:BS_nT_grps,BS_blk,n_BS_blks,BS_T_grp,l_BS_ares_from_res
  use wrapper,        ONLY:M_by_V
  !
@@ -44,9 +44,15 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
  !
  integer         ::i_B,i_Tk,i_Tp,i_g,i_ColFG,ColsFG_Tk,ColsFG_Tp
  complex(SP)     ::alpha
+ complex(SP)     ::FG_factor_c
+ complex(SP),allocatable     ::vtmp_fke(:)
+ ! 
+ BSS_uses_FKE = .false.
  ! 
  if(.not.BSS_Slepc_double_grp) alpha=-real(iter_par,SP)*cI
  if(     BSS_Slepc_double_grp) alpha=-real(iter_par,SP)
+ !
+ if(BSS_uses_FKE) FG_factor_c = cmplx(FG_factor,0._SP)
  !
  forall(i_g=1:BS_nT_grps,PAR_IND_T_Haydock%element_1D(i_g)) Vo(i_g)%fragment = cZERO
  !
@@ -60,27 +66,63 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
    select case(BS_blk(i_B)%mode)
    case("R")
      !
-     ! Resonant part 
-     !
-     do i_ColFG=1,ColsFG_Tk
-       if ( i_ColFG .gt. ColsFG_Tp ) cycle
-       call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-       &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-       &                        Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
-       &                        Vo(i_Tk)%fragment(:,i_ColFG),1)
-     enddo
-     !
-     ! Resonant part is hermitian
-     !
-     if (i_Tk.ne.i_Tp) then
-       do i_ColFG=1,ColsFG_Tp
-         if ( i_ColFG .gt. ColsFG_Tk ) cycle
-         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     if (.not. BSS_uses_FKE) then !Diagonal Kernel Extension
+       !
+       ! Resonant part 
+       !
+       do i_ColFG=1,ColsFG_Tk
+         if ( i_ColFG .gt. ColsFG_Tp ) cycle
+         call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
          &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                        Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
-         &                        Vo(i_Tp)%fragment(:,i_ColFG),1)
+         &                        Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
+         &                        Vo(i_Tk)%fragment(:,i_ColFG),1)
        enddo
-     end if
+       !
+       ! Resonant part is hermitian
+       !
+       if (i_Tk.ne.i_Tp) then
+         do i_ColFG=1,ColsFG_Tp
+           if ( i_ColFG .gt. ColsFG_Tk ) cycle
+           call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+           &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+           &                        Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+           &                        Vo(i_Tp)%fragment(:,i_ColFG),1)
+         enddo
+       end if
+       !
+     else !Full kernel extension
+       !
+       ! Resonant part 
+       !
+       allocate(vtmp_fke(BS_blk(i_B)%size(1)))
+       vtmp_fke = cZERO
+       call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),FG_factor_c,&
+       &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                        sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+       &                        vtmp_fke,1)
+       ! 
+       do i_ColFG=1,ColsFG_Tk
+         Vo(i_Tk)%fragment(:,i_ColFG) = Vo(i_Tk)%fragment(:,i_ColFG) + vtmp_fke
+       enddo
+       deallocate(vtmp_fke)
+       ! 
+       ! Resonant part is hermitian 
+       ! 
+       if (i_Tk.ne.i_Tp) then
+         allocate(vtmp_fke(BS_blk(i_B)%size(2)))
+         vtmp_fke = cZERO
+         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),FG_factor_c,&
+         &                        BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+         &                        sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
+         &                        vtmp_fke,1)
+         !
+         do i_ColFG=1,ColsFG_Tp
+           Vo(i_Tp)%fragment(:,i_ColFG) = Vo(i_Tp)%fragment(:,i_ColFG) + vtmp_fke
+         enddo
+         deallocate(vtmp_fke)
+       end if
+       !
+     endif
      !
      ! Add the energy diffs on the diagonal
      !
@@ -151,27 +193,65 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
      !
    case("A")
      !
-     ! Anti-Resonant part 
-     !
-     do i_ColFG=1,ColsFG_Tk
-       if ( i_ColFG .gt. ColsFG_Tp ) cycle
-         call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
-         &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
-         &                       Vo(i_Tk)%fragment(:,i_ColFG),1)
-     enddo
-     !
-     ! Anti-Resonant part is hermitian
-     !
-     if (i_Tk.ne.i_Tp) then
-       do i_ColFG=1,ColsFG_Tp
-         if ( i_ColFG .gt. ColsFG_Tk ) cycle
-         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+     if (.not. BSS_uses_FKE) then !Diagonal Kernel Extension
+       !
+       ! Anti-Resonant part 
+       !
+       do i_ColFG=1,ColsFG_Tk
+         if ( i_ColFG .gt. ColsFG_Tp ) cycle
+           call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+           &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+           &                       Vi(i_Tp)%fragment(:,i_ColFG),1,cONE,&
+           &                       Vo(i_Tk)%fragment(:,i_ColFG),1)
+       enddo
+       !
+       ! Anti-Resonant part is hermitian
+       !
+       if (i_Tk.ne.i_Tp) then
+         do i_ColFG=1,ColsFG_Tp
+           if ( i_ColFG .gt. ColsFG_Tk ) cycle
+           call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),cONE,&
+           &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+           &                       Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+           &                       Vo(i_Tp)%fragment(:,i_ColFG),1)
+         enddo
+       end if
+       !
+     else !Full Kernel Extension
+       !
+       ! Anti-Resonant part 
+       !
+       allocate(vtmp_fke(BS_blk(i_B)%size(1)))
+       vtmp_fke = cZERO
+       call M_by_V('n',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),FG_factor_c,&
+       &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
+       &                       sum(Vi(i_Tp)%fragment,dim=2),1,cONE,&
+       &                       vtmp_fke,1)
+       !
+       do i_ColFG=1,ColsFG_Tk
+         Vo(i_Tk)%fragment(:,i_ColFG) = Vo(i_Tk)%fragment(:,i_ColFG) + vtmp_fke
+       enddo
+       deallocate(vtmp_fke)
+       !
+       ! Anti-Resonant part is hermitian
+       !
+       if (i_Tk.ne.i_Tp) then
+         !
+         allocate(vtmp_fke(BS_blk(i_B)%size(2)))
+         vtmp_fke = cZERO
+         call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),FG_factor_c,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
          &                       Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
-         &                       Vo(i_Tp)%fragment(:,i_ColFG),1)
-       enddo
-     end if
+         &                       vtmp_fke,1)
+         !
+         do i_ColFG=1,ColsFG_Tp
+           Vo(i_Tp)%fragment(:,i_ColFG) = Vo(i_Tp)%fragment(:,i_ColFG) + vtmp_fke
+         enddo
+         deallocate(vtmp_fke)
+         !
+       end if
+       !
+     endif
      !
      ! Add the energy diffs on the diagonal
      !

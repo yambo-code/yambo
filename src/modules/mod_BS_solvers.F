@@ -100,6 +100,8 @@ module BS_solvers
  integer  :: Haydock_iterMAX
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
+ real(SP) :: FG_factor
+ logical  :: BSS_uses_FKE
  !
  ! Solvers (Slepc)
  !=========

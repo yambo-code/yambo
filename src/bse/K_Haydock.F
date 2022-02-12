@@ -30,7 +30,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
  use com,            ONLY:msg,isec
  use BS_solvers,     ONLY:BSS_desc,Haydock_threshold,io_BSS_Haydock,&
 &                         Haydock_vector,BS_HAYVEC_alloc,BS_HAYVEC_free,Haydock_terminator,Haydock_v0_mod, &
-&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd
+&                         Haydock_iterIO,Haydock_iterMAX,HAYVEC_size,BSS_uses_DbGd,FG_factor
  use BS,             ONLY:BS_K_Coupling,BS_Blocks_symmetrize_K,BS_T_grp,BS_nT_grps,BS_K_dim,&
 &                         l_BS_ares_from_res,BS_H_dim,BS_res_ares_n_mat,BS_nkFGbz_in_Tgrp
  use LIVE_t,         ONLY:LIVE_message
@@ -63,7 +63,6 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  type(Haydock_vector),allocatable :: W0(:)
  integer    :: i_ColFG,i_T,i_k_bz,ik
- real(SP)   :: FG_factor
  !
  real(SP)           ::reached_threshold
  real(SP)           ::Bf(Haydock_iterMAX+1),Af(Haydock_iterMAX)
@@ -112,7 +111,7 @@ subroutine K_Haydock(iq,W,mode,Xk)
    if(     BS_K_coupling) HAYVEC_size = BS_H_dim
  endif
  !
- if (     BSS_uses_DbGd) then
+ if (BSS_uses_DbGd) then
    call msg('r','Using Double Grid method') 
    call msg('r','Number of Coarse grid BZ kpts : '//trim(intc(Xk%nbz))) 
    call msg('r','Number of Fine grid BZ kpts   : '//trim(intc(Xk%FGbz%N))) 
@@ -123,12 +122,10 @@ subroutine K_Haydock(iq,W,mode,Xk)
  !
  ! Allocate Haydock vectors:
  !
- if (.not.BSS_uses_DbGd) FG_factor=1._SP
- if (     BSS_uses_DbGd) then
+ if (BSS_uses_DbGd) then
    do i_g=1,BS_nT_grps
    HAYVEC_size = HAYVEC_size + BS_T_grp(i_g)%size * (BS_nkFGbz_in_Tgrp(i_g)-1)
    enddo
-   FG_factor=real(Xk%nbz)/real(Xk%FGbz%N)
  end if
  !
  allocate(V0(BS_nT_grps))

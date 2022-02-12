@@ -36,7 +36,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        X_drude_term,global_gauge,   &
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,&
-&                        BSS_uses_DbGd
+&                        BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
@@ -67,7 +67,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used,Z_eh,E_eh
  !
- real(SP)      :: FG_factor
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !

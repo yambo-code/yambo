@@ -4,25 +4,26 @@
 
 subroutine GPU_test(N)
   use iso_c_binding
-  use cuda_m,           ONLY: GPU_test_dim
+  use cuda_m_y,         ONLY: GPU_test_dim, cuda_devsync
   use gpu_m,            ONLY: have_device
-  use dev_memory_m,     ONLY: dev_memcpy_d2h, dev_memcpy_h2d
+  use device_memcpy_m,  ONLY: dev_memcpy_d2h, dev_memcpy_h2d
   use dev_linalg_m,     ONLY: dev_saxpy
   use data_m,           ONLY: data_t, data_alloc, data_free
+  use pars,             ONLY: SP
   implicit none
 
   integer, intent(in) :: N
-  real(c_float), parameter :: eps=1.0e-6
+  real(SP), parameter :: eps=1.0e-6
   !
-  real(c_float) :: a
+  real(SP) :: a
   !
   ! prototypes of a standard (and simple) F datastructure
   !
   type(data_t) :: var_ref
   type(data_t) :: var_cpu
   type(data_t), target :: var_gpu
-  real(c_float), pointer DEV_ATTR :: var_x_p(:)
-  real(c_float), pointer DEV_ATTR :: var_y_p(:)
+  real(SP), pointer DEV_ATTR :: var_x_p(:)
+  real(SP), pointer DEV_ATTR :: var_y_p(:)
   !
   character(64) :: device_str
   real(c_double)  :: t0,t1,t_g0,t_g1
@@ -109,19 +110,21 @@ subroutine GPU_test(N)
   !
   ! data transfer host2dev
   !
-  write(*,*) "Memcpy host2dev"
+  write(*,*) "Memcpy host2dev",cuda_devsync()
   call dev_memcpy_h2d(var_x_p,var_gpu%x)
   call dev_memcpy_h2d(var_y_p,var_gpu%y)
   !
   ! running on GPUs
   !
-  write(*,*) "Compute EXPLICIT"
+  write(*,*) "Compute EXPLICIT",cuda_devsync()
   t0=qe_cclock()
   !
+  write(*,*) "saxpy EXPLICIT",cuda_devsync()
   call saxpy_explicit(var_gpu%N, a, var_x_p, var_y_p)
+  write(*,*) "saxpy EXPLICIT done",cuda_devsync()
   !
   t1=qe_cclock()
-  write(*,*) "Timing ("//trim(device_str)//"_EXPL): ", t1-t0
+  write(*,*) "Timing ("//trim(device_str)//"_EXPL): ", t1-t0,cuda_devsync()
   !
   ! data transfer dev2host
   !
@@ -129,7 +132,7 @@ subroutine GPU_test(N)
   !
   ! Check
   !
-  write(*,*) "Results EXPLICIT"
+  write(*,*) "Results EXPLICIT",cuda_devsync()
   write(*,"(8f15.9)") var_gpu%y(1:16)
   !
   if ( any( abs(var_gpu%y(:)-var_cpu%y(:))>eps ) ) then

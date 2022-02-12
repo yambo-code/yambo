@@ -115,7 +115,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _SCALAPACK
  use SLK_m,         ONLY:SLK_test_H_dim
 #endif
- use cuda_m,        ONLY:GPU_test_dim
+ use cuda_m_y,      ONLY:GPU_test_dim
  use PHOTOLUM,      ONLY:PL_weights
 #if defined _MEM_CHECK
  use memory,        ONLY:MEM_treshold

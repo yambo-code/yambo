@@ -1,11 +1,9 @@
 
 #include<dev_defs.h>
 !
-module cufft_m
+module cufft_m_y
   use iso_c_binding
-#ifdef _OPENACC
-  use openacc
-#endif
+  use dev_openacc_m
   implicit none
 
   integer(c_int), parameter :: CUFFT_FORWARD = -1
@@ -78,4 +76,4 @@ module cufft_m
 
   end interface
 
-end module cufft_m
+end module cufft_m_y

@@ -39,7 +39,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
 &                            PAR_IND_OVLPk_ibz,PAR_COM_DIPk_ibz_INDEX
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
  use interfaces,        ONLY:WF_shift_kpoint,DEV_SUB(WF_symm_kpoint),eval_G_minus_G,WF_load,WF_free
- use cuda_m,            ONLY:have_openacc
+ use cuda_m_y,          ONLY:have_openacc
  use timing_m,          ONLY:timing
  !
 #include<memory.h>

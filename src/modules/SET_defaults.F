@@ -133,7 +133,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m,      ONLY:cuda_setup,have_cuda
+ use cuda_m_y,    ONLY:cuda_setup,have_cuda
  !
  implicit none
  !

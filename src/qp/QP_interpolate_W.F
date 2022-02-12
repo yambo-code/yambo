@@ -38,7 +38,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  use stderr,        ONLY:intc,STRING_pack,gen_fmt
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  use parallel_m,    ONLY:master_cpu
  !
 #include<memory.h>

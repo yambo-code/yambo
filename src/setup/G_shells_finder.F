@@ -42,7 +42,7 @@ subroutine G_shells_finder()
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
- use cuda_m,       ONLY:have_cuda
+ use cuda_m_y,     ONLY:have_cuda
  !
 #include<memory.h>
  !

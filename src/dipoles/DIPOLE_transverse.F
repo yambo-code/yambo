@@ -44,7 +44,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
- use cuda_m,              ONLY:have_cuda
+ use cuda_m_y,            ONLY:have_cuda
  use deviceXlib_m,        ONLY:dev_memcpy_h2d,dev_memset
  !
 #include<memory.h>

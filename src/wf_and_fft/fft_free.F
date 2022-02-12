@@ -35,7 +35,7 @@ subroutine fft_free()
 #if defined _CUDAF
  use cufft
 #else
- use cufft_m
+ use cufft_m_y
 #endif
 #endif
  !

@@ -22,23 +22,21 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !================
-module cuda_m
+module cuda_m_y
   !================
   !
   use dev_openacc_m
   ! 2022-02-02 DS and AF TO BE FIXED
-  !use dev_cudafor_m
+  use dev_cudafor_m
   use dev_cublas_m
   use device_memcpy_m
   use cusolverdn_y
 # if defined _CUDAF
-  use cudafor
-  !use cublas
   use cufft
   !use cusolverdn_y
 # elif defined _OPENACC
-  use cudafor_m
-  use cufft_m
+  use cudafor_m_y
+  use cufft_m_y
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
   use iso_c_binding
@@ -206,7 +204,7 @@ contains
     return
   end function
   
-end module cuda_m
+end module cuda_m_y
 
 
 !=========================
@@ -221,7 +219,7 @@ module nvtx
   use cudafor
 #endif
 #if defined _OPENACC || defined _OPENMP5
-  use cudafor_m
+  use cudafor_m_y
 #endif
   implicit none
 

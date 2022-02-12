@@ -33,7 +33,7 @@ subroutine scatter_ModScr(isc,mu)
  use R_lattice,      ONLY:bare_qpg,d3q_factor
  use global_XC,      ONLY:WF_xc_functional
  use xc_functionals, ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  use deviceXlib_m,   ONLY:dev_memcpy_h2d
  !
  implicit none

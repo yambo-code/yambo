@@ -50,7 +50,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda, cuda_devsync, cuda_getstat
+ use cuda_m_y,      ONLY:have_cuda, cuda_devsync, cuda_getstat
  use deviceXlib_m
  !
 #include<memory.h>

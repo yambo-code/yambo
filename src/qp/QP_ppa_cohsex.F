@@ -61,7 +61,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use SC,            ONLY:it_now,it_to_start
 #endif
  use deviceXlib_m,  ONLY:dev_memcpy,dev_memcpy_h2d,dev_memcpy_d2h
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
 #ifdef _CUDA
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp

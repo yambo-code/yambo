@@ -34,7 +34,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 &                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr,&
 &                        l_slk_test,l_gpu_test
- use cuda_m,        ONLY:GPU_test_dim
+ use cuda_m_y,      ONLY:GPU_test_dim
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif

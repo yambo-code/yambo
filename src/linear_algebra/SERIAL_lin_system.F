@@ -77,7 +77,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
- use cuda_m
+ use cuda_m_y
 #include<dev_defs.h>
 #include<memory.h>
  !
@@ -117,7 +117,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  WS%i_fail = cusolverDnZgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf failed')
  !
- WS%i_fail = cusolverDnZgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,dEV_VAR(WS%v_int),B_d,WS%dim,DEV_VAR(WS%vp_int))
+ WS%i_fail = cusolverDnZgetrs(cusolv_h,CUBLAS_OP_N,WS%dim,nrhs,A_d,WS%dim,DEV_VAR(WS%v_int),B_d,WS%dim,DEV_VAR(WS%vp_int))
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrs failed')
  !
 #else

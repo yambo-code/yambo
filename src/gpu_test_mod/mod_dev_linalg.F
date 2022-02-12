@@ -6,12 +6,12 @@ module dev_linalg_m
   !====================
   use iso_c_binding
   use gpu_m
+  use pars,   ONLY:SP
   !
 #if defined _CUDAF
   use cublas
 #endif
 #if defined _OPENACC || defined _OPENMP5
-  use cublas_m
   use cublas_m
 #endif
   !
@@ -22,7 +22,7 @@ contains
   subroutine saxpy_cpu(N, a, x, y) 
   implicit none
     integer  :: N
-    real(c_float) :: a, x(N), y(N)
+    real(SP) :: a, x(N), y(N)
     integer i
     !$omp parallel do default(shared), private(i)
     do i = 1, N
@@ -35,8 +35,8 @@ contains
   subroutine saxpy_gpu(N, a, x, y) 
   implicit none
     integer  :: N
-    real(c_float) :: a
-    real(c_float) DEV_ATTR :: x(N), y(N)
+    real(SP) :: a
+    real(SP) DEV_ATTR :: x(N), y(N)
     integer i
     !
     !DEV_CUF kernel do
@@ -56,8 +56,8 @@ contains
   subroutine dev_saxpy(N,a,x,inc_x,y,inc_y)
   implicit none
     integer  :: N, inc_x, inc_y
-    real(c_float) :: a
-    real(c_float)  DEV_ATTR :: x(N), y(N)
+    real(SP) :: a
+    real(SP)  DEV_ATTR :: x(N), y(N)
     integer  :: istat
     !
 #if defined _CUDAF || defined _OPENACC || defined _OPENMP5

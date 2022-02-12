@@ -17,7 +17,7 @@ RT_objects_pre   = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
 #endif
 #if defined _OPENACC || defined _OPENMP5
-DEV_objects_EXTRA = mod_cudafor.o mod_cublas.o mod_cublas_core.o mod_cufft.o
+DEV_objects_EXTRA = mod_cudafor.o mod_cufft.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \

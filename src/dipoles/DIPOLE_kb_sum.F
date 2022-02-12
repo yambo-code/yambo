@@ -35,7 +35,7 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  use wave_func,     ONLY:WF,wf_ng
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_allocated
  use DIPOLES,       ONLY:XXv=>DIP_work_XXv,XXc=>DIP_work_XXc,&
 &                        WFv=>DIP_work_WFv,WFc=>DIP_work_WFc,&

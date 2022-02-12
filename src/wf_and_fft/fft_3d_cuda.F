@@ -49,14 +49,14 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
  use dev_openacc_m
- use dev_cudafor_m
 #if defined _CUDAF
  use cufft
 #endif
 #if defined _OPENACC
- use cufft_m
+ use cudafor_m_y
+ use cufft_m_y
 #endif
- use cuda_m,  only: cuda_devsync !,stream_default
+ use cuda_m_y,  only: cuda_devsync
  !
 #include<memory.h> 
  !

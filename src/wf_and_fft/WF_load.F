@@ -53,7 +53,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use cuda_m_y,      ONLY:have_cuda, cuda_devsync, cuda_getstat
  use deviceXlib_m
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF

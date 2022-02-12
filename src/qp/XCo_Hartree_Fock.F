@@ -54,7 +54,7 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use qe_pseudo_m,   ONLY:beccopy
  use deviceXlib_m,  ONLY:dev_memcpy
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q

@@ -28,7 +28,7 @@ module PHEL
  use QP_m,                ONLY:QP_Sc_steps
  use ELPH,                ONLY:elph_branches
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! ... Kind
  character(schlen):: PH_Self_Energy_mode="dressed-dressed" ! "bare-dressed" (="dressed-bare") / "bare-bare"

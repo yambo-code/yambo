@@ -44,7 +44,7 @@ subroutine K_Haydock(iq,W,mode)
  use timing_m,       ONLY:timing
  use descriptors,    ONLY:IO_desc_add
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(w_samp), intent(in) :: W
  integer,      intent(in) :: iq

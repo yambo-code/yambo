@@ -61,7 +61,7 @@ integer function io_DB1(E,k,ID)
 #endif
  use cuda_m_y,         ONLY:cuda_devsync
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: E
  type(bz_samp) :: k

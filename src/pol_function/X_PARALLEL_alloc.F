@@ -31,7 +31,7 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
  integer          :: NG,NW
@@ -47,20 +47,9 @@ subroutine X_PARALLEL_alloc(X_par,NG,NW,mode)
  !
  ! Type of allocation....
  !
- !l_XUP        =mode=="XUP"
- !l_PAR        =mode=="X"
  l_XUP      = index(mode,"XUP")>0
  l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
  l_CPU_ONLY = index(mode,"CPU_ONLY")>0
- !
- ! Clean-up
- !
- if (mode=="CLEAN") then
-   YAMBO_FREE(X_par%blc)
-   YAMBO_FREE(X_par%blc_d)
-   call MATRIX_reset(X_par)
-   return
- endif
  !
  ! Initialization
  !

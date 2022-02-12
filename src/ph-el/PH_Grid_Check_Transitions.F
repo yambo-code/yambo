@@ -48,7 +48,7 @@ subroutine PH_Grid_Check_Transitions(iq,k,q,bands,k_FG,E_FG)
  use X_m,            ONLY:X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),     intent(in)    :: k,q
  integer,           intent(in)    :: bands(2),iq

@@ -41,7 +41,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use cuda_m_y,       ONLY:have_cuda
  use deviceXlib_m,   ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_memset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE

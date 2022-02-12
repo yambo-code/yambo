@@ -37,7 +37,7 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use stderr,              ONLY:intc
  use LIVE_t,              ONLY:live_timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::k,q
  type(levels)  ::E

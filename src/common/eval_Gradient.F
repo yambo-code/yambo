@@ -44,7 +44,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use cuda_m_y,      ONLY:have_cuda,have_openacc
  use timing_m
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,          intent(in) ::spinor_size
  complex(SP),      intent(in) ::f(fft_size,spinor_size)

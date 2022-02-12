@@ -41,7 +41,7 @@ subroutine PARALLEL_global_Response_T_base(Xk)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_Kk_ibz_ID,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)        :: Xk
  !
@@ -107,7 +107,7 @@ subroutine PARALLEL_global_Response_T_transitions(Xk)
  ! ID's
  use parallel_m,    ONLY:PAR_IND_CON_BANDS_DIP_ID,PAR_IND_VAL_BANDS_DIP_ID
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)        :: Xk
  !

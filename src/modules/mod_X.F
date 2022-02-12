@@ -30,7 +30,7 @@ module X_m
  use cuda_m_y,       ONLY:have_cuda
  !
 #include <dev_defs.h>
-#include <memory.h>
+#include <y_memory.h>
  !
  ! Polarizability
  !
@@ -43,6 +43,13 @@ module X_m
  ! Main Gauge
  !
  character(schlen)        :: global_gauge
+ !
+ ! Average along the non-zero optical directions
+ !
+ integer                  :: n_OPTICAL_dir_to_eval=1
+ integer                  :: OPTICAL_do_average(3)=0
+ character(schlen)        :: OPTICAL_averaged_dirs_string=""
+ type(PAR_matrix)         :: X_par_average
  !
  ! Velocity gauge specific variables
  !

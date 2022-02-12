@@ -44,7 +44,7 @@ subroutine G_shells_finder()
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  use cuda_m_y,     ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

@@ -29,7 +29,7 @@ module DIPOLES
  use cuda_m_y,      ONLY:have_cuda,have_openacc
  !
 #include <dev_defs.h>
-#include <memory.h>
+#include <y_memory.h>
  !
  ! Logicals
  !

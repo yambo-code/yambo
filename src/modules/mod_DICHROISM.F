@@ -26,7 +26,7 @@ module DICHROISM
  use pars,    ONLY:SP
  use BS,      ONLY:l_BS_dichroism
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP), allocatable :: BSS_dipoles_dich(:,:)
  !

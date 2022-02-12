@@ -30,7 +30,7 @@ subroutine PARALLEL_global_Phonon_Self_Energy( )
  use parallel_m,    ONLY:COMM_copy,PARs_PH_eh_bands,PARs_PH_Q_ibz,PARs_PH_K_bz,PAR_n_bands,&
 &                        PAR_K_range,PAR_Q_ibz_range
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  CALL PARALLEL_structure(3,(/"q","k","b"/))
  !

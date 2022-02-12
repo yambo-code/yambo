@@ -28,7 +28,7 @@ module wave_func
  use devicexlib_m
  !
 #include <dev_defs.h>
-#include <memory.h>
+#include <y_memory.h>
  !
  type WAVEs 
    integer              :: b(2)      ! band range 

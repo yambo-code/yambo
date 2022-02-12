@@ -68,7 +68,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use real_time,     ONLY:RTibz
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k
  type(levels) ::E       

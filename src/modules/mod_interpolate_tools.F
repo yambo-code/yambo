@@ -29,7 +29,7 @@ module interpolate_tools
 &                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
  !
-#include<memory.h>
+#include<y_memory.h>
  !  
  contains
    !

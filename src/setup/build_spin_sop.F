@@ -33,7 +33,7 @@ subroutine build_spin_sop()
  use electrons,      ONLY:n_spinor
  use cuda_m_y,       ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  complex(SP)    ::t_rev(2,2)
  complex(SP)    ::spin_RX_delta(2,2),spin_RY_beta(2,2),spin_RZ_alpha(2,2)

@@ -34,7 +34,7 @@ integer function io_GROT(io_db)
  use timing_m,       ONLY:timing
  use cuda_m_y,       ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: io_db,nsym_db
  !

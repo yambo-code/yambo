@@ -47,7 +47,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use cuda_m_y,            ONLY:have_cuda
  use deviceXlib_m,        ONLY:dev_memcpy_h2d,dev_memset
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen

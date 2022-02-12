@@ -28,7 +28,7 @@ module D_lattice
  use deviceXlib_m
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Non periodic directions
  !

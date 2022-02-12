@@ -58,7 +58,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 #endif
  use cuda_m_y,  only: cuda_devsync
  !
-#include<memory.h> 
+#include<y_memory.h> 
  !
  integer   :: fft_sign,n(3)
  integer   :: cufft_plan

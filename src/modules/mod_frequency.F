@@ -26,7 +26,7 @@ module frequency
  use pars,  ONLY:SP
  use units, ONLY:HA2EV
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Bare 2 Coarse grid
  !

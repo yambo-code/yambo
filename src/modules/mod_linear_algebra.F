@@ -26,7 +26,7 @@ module linear_algebra
  use pars,       ONLY:SP,schlen
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, parameter :: USE_LK=1
  integer, parameter :: USE_SLK=2

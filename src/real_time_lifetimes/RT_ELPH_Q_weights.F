@@ -29,7 +29,7 @@ subroutine RT_ELPH_Q_weights(q)
  use RT_lifetimes,   ONLY:q_weight_RT,l_RT_skip_ph_abs_lifetimes
  use R_lattice,      ONLY:RIM_n_rand_pts
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp),intent(in) :: q
  !

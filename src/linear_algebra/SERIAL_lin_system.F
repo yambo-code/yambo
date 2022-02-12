@@ -32,7 +32,7 @@ subroutine SERIAL_lin_system(n,nrhs,A,B)
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer     :: n,nrhs
  complex(SP) :: A(n,n),B(n,nrhs)
@@ -79,7 +79,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use timing_m,       ONLY:timing
  use cuda_m_y
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer     :: n,nrhs
  complex(SP) DEV_ATTR :: A_d(n,n),B_d(n,nrhs)

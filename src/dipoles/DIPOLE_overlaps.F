@@ -42,7 +42,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use cuda_m_y,          ONLY:have_openacc
  use timing_m,          ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: Xk 
  type(DIPOLE_t),intent(in)    :: Dip

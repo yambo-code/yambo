@@ -30,7 +30,7 @@ subroutine RT_ELPH_iterative_init()
  use real_time,      ONLY:RT_bands
  use ELPH,           ONLY:ph_modes
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

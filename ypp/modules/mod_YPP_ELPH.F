@@ -27,7 +27,7 @@ module YPP_ELPH
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:nkbz
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  logical :: l_phonons
  logical :: l_eliashberg

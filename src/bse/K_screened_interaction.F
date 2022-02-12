@@ -40,7 +40,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use cuda_m_y,     ONLY:have_cuda
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) ::q
  type(X_t)     ::X

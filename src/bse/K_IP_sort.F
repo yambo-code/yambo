@@ -31,7 +31,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)  ::what
  integer       ::I,N(2)

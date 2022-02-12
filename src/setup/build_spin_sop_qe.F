@@ -8,7 +8,7 @@ subroutine build_spin_sop()
  use electrons,      ONLY:n_spinor
  !
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  real(SP) :: s(3,3)
  complex(SP) :: u(2,2)

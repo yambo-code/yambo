@@ -29,7 +29,7 @@ subroutine WF_free(WF,keep_fft)
  use deviceXlib_m, ONLY:dev_allocated
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(WAVEs)       :: WF
  logical, optional :: keep_fft 

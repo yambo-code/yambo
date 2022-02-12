@@ -35,7 +35,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use BS_solvers,     ONLY:Co_factor,K_INV_EPS,BSS_dipoles_opt,Co_factor,K_inv_slk,K_slk,K_INV_PL
  use PHOTOLUM,       ONLY:PL,PL_prefactor,BSS_dipoles_PL
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(3)     :: what
  integer          :: iw_2start,iw_2do,iq,Lo_dim,Lo_n_loop

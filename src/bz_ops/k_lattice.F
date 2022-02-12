@@ -39,7 +39,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  use parser_m,       ONLY:parser
  use drivers,        ONLY:l_RIM_W
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp)::k,Xk
  integer      ::G_shell

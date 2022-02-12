@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-module memory
+module y_memory
  !
  use pars,          ONLY:SP,schlen,IP,IPL,DP,LP,N_MEM_max,N_MEM_SAVE_max,&
 &                        N_MEM_shelf_max,N_MEM_LIBs_max,N_MEM_max_element_components
@@ -525,4 +525,4 @@ module memory
      logical     ::l(:,:,:,:,:,:)
      call MEM_manager_alloc(name,size(l,KIND=IPL),kind(l(1,1,1,1,1,1)),HOST_)
    end subroutine
-end module memory
+end module y_memory

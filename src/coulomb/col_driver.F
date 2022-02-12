@@ -63,7 +63,7 @@ subroutine col_driver(bare_NG,q)
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
  use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer       :: bare_NG
  type(bz_samp) :: q

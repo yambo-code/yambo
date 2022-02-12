@@ -34,7 +34,7 @@ subroutine eval_minus_G()
  use R_lattice,    ONLY:DEV_VAR(minus_G)
  use cuda_m_y,     ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

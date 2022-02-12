@@ -33,7 +33,7 @@ subroutine K_observables(WHAT,W)
  use BS,            ONLY:l_BS_kerr,l_BS_magnons,l_BS_anomalous_Hall,l_BS_dichroism,l_BS_photolum
  use X_m,           ONLY:Epsilon_ij,X_magnons,X_dichroism
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*) :: WHAT
  type(w_samp) :: W

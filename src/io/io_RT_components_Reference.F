@@ -35,7 +35,7 @@ subroutine io_RT_components_Reference(ID)
  use ELPH,           ONLY:elph_branches
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, intent(in)  :: ID
  !

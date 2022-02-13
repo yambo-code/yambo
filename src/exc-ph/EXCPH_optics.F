@@ -133,7 +133,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    !
    ! Calculate X(w) using Double-Grid
    !
-   call EXCPH_X_dbgrid_phass(wv,q,PH_freqs,Epsilon_ii,PL_ii)
+   call EXCPH_X_phass_DBGrid(wv,q,PH_freqs,Epsilon_ii,PL_ii)
    !
    ! New output files for the double-grid calculations
    ! 

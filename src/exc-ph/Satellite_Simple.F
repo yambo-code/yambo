@@ -1,0 +1,90 @@
+!
+!        Copyright (C) 2000-2021 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): AC
+!
+! This file is distributed under the terms of the GNU
+! General Public License. You can redistribute it and/or
+! modify it under the terms of the GNU General Public
+! License as published by the Free Software Foundation;
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will
+! be useful, but WITHOUT ANY WARRANTY; without even the
+! implied warranty of MERCHANTABILITY or FITNESS FOR A
+! PARTICULAR PURPOSE.  See the GNU General Public License
+! for more details.
+!
+! You should have received a copy of the GNU General Public
+! License along with this program; if not, write to the Free
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+!> @brief Calculate the phonon-assisted satellite for absorption and emission
+!
+! @param[in]       iq                  q-point
+! @param[in]       il                  phonon branch
+! @param[in]       i_alpha             incoming exciton
+! @param[in]       i_beta              outgoing exciton
+! @param[in]       W                   photon energy and damping factor
+!
+! @param[out]      Sat_absorption      Satellite in absorption
+! @param[out]      Sat_emission        Satellite in emission
+!!
+subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
+ !
+ use frequency,     ONLY:w_samp
+ use R_lattice,     ONLY:bz_samp
+ use pars,          ONLY:SP,cZERO,rZERO
+ use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in
+ use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
+ !
+#include<memory.h>
+ !
+ integer        intent(in)  :: il,iq,i_alpha,i_beta
+ complex(SP),   intent(in)  :: W
+ complex(SP),   intent(out) :: Sat_absorption, Sat_emission
+ !
+ ! Work Space
+ !
+ real(SP) :: PH_E,bose_factor,E_alpha,boltz_factor
+ !
+ Sat_absorption=cZERO
+ Sat_emission  =cZERO
+ !
+ ph_E=sqrt(PH_freqs_sq(iq,il))
+ !
+ if(ph_E<FAN_deltaE_treshold) return
+ !
+ ! Bose function for the phonons
+ !
+ bose_factor=bose_f(PH_E)
+ !
+ E_alpha=BS_E_in(i_alpha)
+ !
+ ! Boltzman factor for the luminescence
+ !
+ boltz_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
+ !
+ pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
+ !
+ ! Phonon emission in absorption
+ !
+ Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
+ !
+ ! Phonon emission in luminescence
+ !
+ Sat_emissions=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
+ !
+ pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
+ !
+ ! Phonon absorption in absorption
+ !
+ Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+ ! 
+ ! Phonon absorption in luminescence
+ !
+ Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzman_f(exc_E) 
+ !
+end subroutine Satellite_Simple 

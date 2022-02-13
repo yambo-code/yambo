@@ -42,9 +42,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_E,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
-&                        BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free
- use ELPH,          ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
+&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E
+ use ELPH,          ONLY:elph_branches,use_PH_DbGd
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:boltzman_f,bose_f
@@ -65,9 +65,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  real(SP) :: bose_factor,PH_E
  !
- min_E  =minval(BS_all_E(1,:))
- min_pos=minloc(BS_all_E(1,:))
- call msg('rs','Minimum excitonic energy : ',min_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
+ min_EXC_E=minval(BS_all_E(1,:))
+ min_pos  =minloc(BS_all_E(1,:))
+ call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  !
  ! Load the Exciton-phonon elements and phonon energies
  !
@@ -120,45 +120,15 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Satellites for the alpha exciton
        !
-       Satells_alpha   =cZERO
-       Satells_alpha_PL=cZERO
-       !
        do il=elph_branches(1),elph_branches(2)
-         !
-         ph_E=sqrt(PH_freqs_sq(iq,il))
-         !
-         if(ph_E<FAN_deltaE_treshold) cycle
-         !
-         ! Bose function for the phonons
-         !
-         bose_factor=bose_f(PH_E)
-         !
-         E_alpha=BS_E_in(i_alpha)
          !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
-           exc_E=BS_all_E(i_beta,iq)-min_E
-           !
-           pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
-           !
-           ! Phonon emission in absorption
-           !
-           Satells_alpha   =Satells_alpha+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
-           !
-           ! Phonon emission in luminescence
-           !
-           Satells_alpha_PL=Satells_alpha_PL+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
-           !
-           pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
-           !
-           ! Phonon absorption in absorption
-           !
-           Satells_alpha   =Satells_alpha   +BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
-           ! 
-           ! Phonon absorption in luminescence
-           !
-           Satells_alpha_PL=Satells_alpha_PL+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha) &
-&                   /(W-pole)*(1._SP+bose_factor)*boltzman_f(exc_E) 
+           if(use_ELPH_DbGd) then
+!             call Satellite_DbGd(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+           else
+             call Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+           endif
            !
          enddo
          !
@@ -166,8 +136,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Add the satellites to the dielectric constant and luminescence
        !
-       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Satells_alpha   *BS_R(i_alpha)
-       PL_ii(iw,1)     =PL_ii(iw,1)     +Satells_alpha_PL*BS_R(i_alpha)
+       Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs  *BS_R(i_alpha)
+       PL_ii(iw,1)     =PL_ii(iw,1)     +Sat_alpha_emiss*BS_R(i_alpha)
        !
      enddo   
      !
@@ -201,7 +171,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      ! The pole of luminescence should be the pole of BS_E_in 
      ! but I think this is not consistent with the Boltzman weight, I use always Lout. Point to be discussed
      !
-     exc_E=BS_all_E(i_alpha,1)-min_E
+     exc_E=BS_all_E(i_alpha,1)-min_EXC_E
      pole =BS_all_E(i_alpha,1)          
      PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)

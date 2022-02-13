@@ -75,6 +75,10 @@ module EXCPH
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c(:,:,:)
  !
+ ! Minimum excitonic energy
+ !
+ real(SP) :: min_EXC_E
+ !
  contains
    !      
    subroutine Sat_alloc()

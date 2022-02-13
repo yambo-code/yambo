@@ -21,8 +21,20 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+! This subroutine is a simple version do not use double-grid
+! neigther better integrations at gamma
+! 
 !> @brief Calculate X(w) including ph-assisted transitions
-!!
+!
+! @param[in]       wv                  frequencies range
+! @param[in]       EXCPH_gkkp          read from file
+! @param[in]       PH_E                read from file
+! @param[in]       Bose_Temp           Bose temperature for phonons
+! @param[in]       Boltz_Temp          Boltz temperature for excitons
+!
+! @param[out]      Epsilon_ii          Phonon-assisted dielectric constant
+! @param[out]      PL_ii               Phonon-assisted luminescence
+!
 subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  use frequency,     ONLY:w_samp

@@ -120,6 +120,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
  !
  ! Check if double-grid is present and use it
+ ! load the double-grid phonon energies in PH_freqs
  !
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
  io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
@@ -132,7 +133,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    !
    ! Calculate X(w) using Double-Grid
    !
-!   call EXCPH_X_dbgrid_phass(wv,q,PH_freqs,Epsilon_ii,PL_ii)
+   call EXCPH_X_dbgrid_phass(wv,q,PH_freqs,Epsilon_ii,PL_ii)
    !
    ! New output files for the double-grid calculations
    ! 

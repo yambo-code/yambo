@@ -20,8 +20,8 @@ BASIC_LIBS_LD= tools memory communicate modules matrices linear_algebra bz_ops p
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 MAIN_LIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
 
-PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse real_time_initialize ph-el
-PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph qp acfdt bse real_time_initialize ph-el
+PJ_PHLIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function el-ph exc-ph qp acfdt bse real_time_initialize ph-el
+PJ_PHLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft dipoles pol_function el-ph exc-ph qp acfdt bse real_time_initialize ph-el
 
 PJ_SCLIBS    = $(MAIN_LIBS) collisions hamiltonian sc
 PJ_SCLIBS_LD = $(MAIN_LIBS_LD) hamiltonian collisions sc
@@ -67,8 +67,8 @@ YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits elec
 YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
-YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph excitons
-YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph excitons
+YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph exc-ph excitons
+YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph exc-ph excitons
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) el-ph real_time excitons
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #

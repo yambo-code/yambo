@@ -196,21 +196,18 @@
 #define YAMBO_ALLOC_GPU(x,SIZE) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC(x,SIZE) NEWLINE \
   endif NEWLINE \
-  !DEV_ACC enter data create(CAT(x,SIZE)) NEWLINE \
-  !DEV_OMP5 target enter data map(alloc:CAT(x,SIZE)) NEWLINE \
+  call dev_malloc(x) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_SOURCE(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_SOURCE(x,y) NEWLINE \
   endif NEWLINE \
-  !DEV_ACC enter data create( x ) NEWLINE \
-  !DEV_OMP5 target enter data map(alloc: x ) NEWLINE \
+  call dev_malloc(x) NEWLINE \
   call dev_memcpy_h2d(x,y) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_MOLD(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_MOLD(x,y) NEWLINE \
   endif NEWLINE \
-  !DEV_ACC enter data create( x ) NEWLINE \
-  !DEV_OMP5 target enter data map(alloc: x ) NEWLINE \
+  call dev_malloc(x) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 
 #define YAMBO_FREE_GPU(x) \

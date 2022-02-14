@@ -241,7 +241,7 @@ subroutine K_multiply_by_V(Vi,Vo,iter_par)
          vtmp_fke = cZERO
          call M_by_V('c',BS_blk(i_B)%size(1),BS_blk(i_B)%size(2),FG_factor_c,&
          &                       BS_blk(i_B)%mat,BS_blk(i_B)%size(1),&
-         &                       Vi(i_Tk)%fragment(:,i_ColFG),1,cONE,&
+         &                       sum(Vi(i_Tk)%fragment,dim=2),1,cONE,&
          &                       vtmp_fke,1)
          !
          do i_ColFG=1,ColsFG_Tp

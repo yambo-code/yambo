@@ -22,6 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !> @brief Calculate the phonon-assisted satellite for absorption and emission
+!         using double-grid
 !
 ! @param[in]       iq                  q-point
 ! @param[in]       il                  phonon branch
@@ -37,18 +38,21 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
- use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in
+ use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
+&                        min_EXC_E
  use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
+ use functions,     ONLY:bose_f,boltzman_f
  !
 #include<memory.h>
  !
- integer        intent(in)  :: il,iq,i_alpha,i_beta
+ integer,       intent(in)  :: il,iq,i_alpha,i_beta
  complex(SP),   intent(in)  :: W
  complex(SP),   intent(out) :: Sat_absorption, Sat_emission
  !
  ! Work Space
  !
- real(SP) :: PH_E,bose_factor,E_alpha,boltz_factor
+ real(SP)    :: PH_E,bose_factor,E_alpha,boltzm_factor
+ complex(SP) :: pole
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
@@ -65,7 +69,7 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Boltzman factor for the luminescence
  !
- boltz_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
+ boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !
@@ -75,7 +79,7 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Phonon emission in luminescence
  !
- Sat_emissions=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzman_f(exc_E)
+ Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
  !
  pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
  !
@@ -85,6 +89,6 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  ! 
  ! Phonon absorption in luminescence
  !
- Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzman_f(exc_E) 
+ Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
  !
-end subroutine Satellite_Simple 
+end subroutine Satellite_Simple

@@ -56,6 +56,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  real(SP)            :: output_data(n_output)
  integer             :: iw,iq,i_alpha,ID_DG,io_err
  integer, external   :: io_Double_Grid
+ character(schlen)   :: dbgd_string
  !
  call section('*','EXCPH-Optics')
  !
@@ -95,20 +96,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
- ! Frequencies and damping setup
- !
- call FREQUENCIES_setup(wv)
- YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
- YAMBO_ALLOC(PL_ii,(wv%n_freqs,2))
- !
- ! Calculate X(w) include phonon assisted transitions
- !
- call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
- !
- call X_setup_file_names(1,'bse ','phass',' ') 
- !
- call print_output()
- !
  ! **** DOUBLE GRID PART *****
  !
  ! Fill the PH_freqs array
@@ -125,27 +112,30 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
  io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
  !
+ dbgd_string=''
  if(io_err==0) then
    !     
    use_PH_DbGd=.TRUE.
-   !
    call msg('sr','Using PH-double-grid ')
-   !
-   ! Calculate X(w) using Double-Grid
-   !
-   call EXCPH_X_phass_DBGrid(wv,q,PH_freqs,Epsilon_ii,PL_ii)
-   !
-   ! New output files for the double-grid calculations
-   ! 
-   call X_setup_file_names(1,'bse ','phass','DbGd') 
-   !
-   ! Write output on file
-   !
-   call print_output()
+   dbgd_string='DbGd'
    !
  endif
- ! 
- ! Deallocations
+ !
+ ! Frequencies and damping setup
+ !
+ call FREQUENCIES_setup(wv)
+ YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
+ YAMBO_ALLOC(PL_ii,(wv%n_freqs,2))
+ !
+ ! Calculate X(w) include phonon assisted transitions
+ !
+ call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
+ !
+ call X_setup_file_names(1,'bse ','phass',dbgd_string) 
+ !
+ call print_output()
+ !
+ ! ! Deallocations
  !
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)

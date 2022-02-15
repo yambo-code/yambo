@@ -44,7 +44,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E
- use ELPH,          ONLY:elph_branches,use_PH_DbGd
+ use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches
+ use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
+&                        INTERPOLATE_is_quiet
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:boltzman_f,bose_f
@@ -59,10 +61,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  ! Work space
  !
- complex(SP) :: pole,W,Satells_alpha,Satells_alpha_PL
+ complex(SP) :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP) :: min_E,exc_E,E_alpha
  integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer, external :: io_EXCPH_gkkp,io_ELPH
+ integer :: ID_E_kpq,ID_E_kpq_obj,ID_DG
+ integer, external :: io_EXCPH_gkkp,io_ELPH,io_Double_Grid
  real(SP) :: bose_factor,PH_E
  !
  min_EXC_E=minval(BS_all_E(1,:))
@@ -80,12 +83,24 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
  YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
  !
+ if(use_PH_DbGd) then
+   !      
+   call msg('sr','EXC_E(k+q) calculated using a smooth Fourier interpolation')
+   INTERPOLATE_is_serial=.TRUE.
+   INTERPOLATE_is_quiet =.TRUE.
+   INTERP_shell_factor  =E_kpq_sh_fact
+   call INTERPOLATION_BZ_setup(q)
+   INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
+   call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+ endif
+ !
+ ! The satellites
+ !
  Epsilon_ii         =cZERO
  PL_ii              =cZERO
  EXCPH_Renorm       =rZERO
  EXCPH_Renorm_PH_abs=rZERO
- !
- ! The satellites
  !
  call live_timing('Satellites',q%nibz)
  !
@@ -97,20 +112,14 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
-   do il=elph_branches(1),elph_branches(2)
-     !
-     ph_E=sqrt(PH_freqs_sq(iq,il))
-     bose_factor=bose_f(PH_E)
-     if(ph_E<FAN_deltaE_treshold) cycle
-     !
-     do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-       forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
-         EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
-         EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
-       end forall
-     enddo
-     !
-   enddo
+   ! Add the contribution of q-point transition to the renormalization factors
+   ! for all excionts i_alpha
+   !
+   if(use_PH_DbGd) then
+!     call Eval_Renorm_Factor(iq)
+   else
+     call Eval_Renorm_Factor(iq)
+   endif
    !
    do iw=1,wv%n_freqs
      !
@@ -120,12 +129,15 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Satellites for the alpha exciton
        !
+       Sat_alpha_abs  =cZERO
+       Sat_alpha_emiss=cZERO
+       !
        do il=elph_branches(1),elph_branches(2)
          !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
-           if(use_ELPH_DbGd) then
-!             call Satellite_DbGd(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+           if(use_PH_DbGd) then
+             call Satellite_DbGrid(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
            else
              call Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
            endif
@@ -190,5 +202,29 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  call Sat_free()
  YAMBO_FREE(EXCPH_Renorm)
  YAMBO_FREE(EXCPH_Renorm_PH_abs)
+ !
+ contains 
+   !
+   subroutine Eval_Renorm_Factor(iq_in)
+     use ELPH,          ONLY:FAN_deltaE_treshold,PH_freqs_sq
+     implicit none
+     integer, intent(in) :: iq_in
+     !
+     do il=elph_branches(1),elph_branches(2)
+       !
+       ph_E=sqrt(PH_freqs_sq(iq_in,il))
+       bose_factor=bose_f(PH_E)
+       if(ph_E<FAN_deltaE_treshold) cycle
+       !
+       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+         forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+           EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
+           EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
+         end forall
+       enddo
+       !
+     enddo
+     !
+   end subroutine
  !
 end subroutine EXCPH_X_phass

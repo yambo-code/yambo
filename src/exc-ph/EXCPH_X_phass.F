@@ -92,6 +92,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call INTERPOLATION_BZ_setup(q)
    INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
    call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   EXC_DbGd%nb=EXCPH_states(2)
+   EXC_DbGd%nk=q%FGbz%N
+   YAMBO_ALLOC(EXC_DbGd%E,(EXC_DbGd%nb,EXC_DbGd%nk,1))
+   call INTERPOLATION_BZ(K=k_plus_q,NK=EXC_DbGd%nk,ID=ID_E_kpq,E=E_kpq)
    !
  endif
  !
@@ -115,11 +119,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ! Add the contribution of q-point transition to the renormalization factors
    ! for all excionts i_alpha
    !
-   if(use_PH_DbGd) then
-!     call Eval_Renorm_Factor(iq)
-   else
-     call Eval_Renorm_Factor(iq)
-   endif
+   call Eval_Renorm_Factor(iq)
    !
    do iw=1,wv%n_freqs
      !

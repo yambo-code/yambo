@@ -42,7 +42,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E
  use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
@@ -68,8 +68,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer, external :: io_EXCPH_gkkp,io_ELPH,io_Double_Grid
  real(SP) :: bose_factor,PH_E
  !
- min_EXC_E=minval(BS_all_E(1,:))
  min_pos  =minloc(BS_all_E(1,:))
+ min_EXC_E=minval(BS_all_E(1,:))
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  !
  ! Load the Exciton-phonon elements and phonon energies
@@ -91,11 +91,14 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    INTERP_shell_factor  =E_kpq_sh_fact
    call INTERPOLATION_BZ_setup(q)
    INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
-   call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_EXC,ID_obj=ID_EXC_obj)
    EXC_DbGd%nb=EXCPH_states(2)
    EXC_DbGd%nk=q%FGbz%N
    YAMBO_ALLOC(EXC_DbGd%E,(EXC_DbGd%nb,EXC_DbGd%nk,1))
-   call INTERPOLATION_BZ(K=k_plus_q,NK=EXC_DbGd%nk,ID=ID_E_kpq,E=E_kpq)
+   call INTERPOLATION_BZ(K=k_plus_q,NK=EXC_DbGd%nk,ID=ID_E_kpq,E=EXC_DbGd)
+   !
+   min_EXC_E_DbGd=minval(EXC_DbGd%E(1,:,1))
+   call msg('rs','Minimum excitonic energy with DbGrid: ',min_EXC_E_DbGd*HA2EV,' eV')
    !
  endif
  !

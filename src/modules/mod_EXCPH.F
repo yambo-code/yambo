@@ -79,6 +79,11 @@ module EXCPH
  !
  real(SP) :: min_EXC_E
  !
+ ! Double-grid
+ !
+ integer  :: ID_EXC,ID_EXC_odj
+ real(SP) :: min_EXC_E_DbGd
+ !
  contains
    !      
    subroutine Sat_alloc()

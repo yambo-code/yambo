@@ -40,10 +40,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
  use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
- use R_lattice,     ONLY:G_m_G_d,g_rot_d,Xo_graph_wings
+ use R_lattice,     ONLY:G_m_G_d,g_rot_d!,Xo_graph_wings
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use com,           ONLY:depth,msg
+ use com,           ONLY:depth
  use deviceXlib_m
  !
 #include<dev_defs.h>
@@ -85,7 +85,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  n_poles   = sum(bare_grid_N(1:i_cg-1))
  Xo_res    = cZERO
  Z_        = cONE
- Xo_graph_wings = cZERO
+ !Xo_graph_wings = cZERO
  !
  ngrho     = Xo_scatt%ngrho
  !
@@ -101,12 +101,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    ic     = X_poles_tab(n_poles,3)
    i_spin = X_poles_tab(n_poles,4)
    !
-   if(i_cg == 1 .and. iq == 1) then
-     call msg("r","ikbz",ikbz)
-     call msg("r","iv",iv)
-     call msg("r","ic",ic)
-     call msg("r","i_spin",i_spin)
-   endif
+   !if(i_cg == 1 .and. iq == 1) then
+   !  call msg("r","ikbz",ikbz)
+   !  call msg("r","iv",iv)
+   !  call msg("r","ic",ic)
+   !  call msg("r","i_spin",i_spin)
+   !endif
    !
    ikpbz  = qindx_X(iq,ikbz,1)
    !
@@ -204,12 +204,12 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !$cuf kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      !
-     Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt_rhotw_p(ig2)
+     !Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt_rhotw_p(ig2)
      !
      do ig1=X_rows(1),X_rows(2)
        if (ig1 <= ig2) then
          Xo_res(ig1,ig2) = Xo_res(ig1,ig2) + Z_eh_occ*Xo_scatt_rhotw_p(ig2) &
-&                                          * conjg(Xo_scatt_rhotw_p(ig1)) 
+&                                          * conjg(Xo_scatt_rhotw_p(ig1))
        endif
      enddo
    enddo
@@ -217,9 +217,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !$omp parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
      !
-     if(iv /= ic) then
-       Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt%rhotw(ig2)
-     endif
+     !if(iv /= ic) then
+     !  Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt%rhotw(ig2)
+     !endif
      !
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
@@ -291,9 +291,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    !
  enddo loop_bare_grid
  !
- !if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
- !   ctmp=Xo_res(1,1)
- !   Xo_res(1,1)=ctmp/real(drude_n_states,SP)
- !endif
+ if (iq==1.and.abs(coarse_grid_Pt(i_cg))<Dip%Energy_treshold) then
+    ctmp=Xo_res(1,1)
+    Xo_res(1,1)=ctmp/real(drude_n_states,SP)
+ endif
  !
 end subroutine X_irredux_residuals

@@ -56,7 +56,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph,Xo_graph_wings,RL_vol
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph!,Xo_graph_wings,RL_vol
  use D_lattice,     ONLY:i_space_inv,alat
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
@@ -107,7 +107,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !===================
  GreenF                           = cZERO
  drude_GreenF                     = cZERO
- Xo_graph_wings                   = cZERO
+ !Xo_graph_wings                   = cZERO
  !
  X_rows1=X_par%rows(1)
  X_rows2=X_par%rows(2)
@@ -253,27 +253,27 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term
  !
- !if (iq==1.and.master_thread.and.drude_n_states>0) then
- !  do i_cg = 1,coarse_grid_N
- !    Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
- !    if(.not.Drude_pole) cycle
- !    if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
- !    !
- !    call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
- !    !
- !    ctmp = DEV_VAR(Xo_res)(1,1)
- !    !
- !    X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
- !    !
- !    if (have_cuda) then
- !      do iw=1,Xw%n_freqs
- !        X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
- !      enddo
- !    endif
- !    !
- !    exit
- !  enddo
- !endif
+ if (iq==1.and.master_thread.and.drude_n_states>0) then
+   do i_cg = 1,coarse_grid_N
+     Drude_pole= (iq==1) .and. abs(coarse_grid_Pt(i_cg))<1.E-5
+     if(.not.Drude_pole) cycle
+     if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
+     !
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
+     !
+     ctmp = DEV_VAR(Xo_res)(1,1)
+     !
+     X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
+     !
+     if (have_cuda) then
+       do iw=1,Xw%n_freqs
+         X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+       enddo
+     endif
+     !
+     exit
+   enddo
+ endif
  !
  !Graphene intraband term
  !

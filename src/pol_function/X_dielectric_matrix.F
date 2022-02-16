@@ -32,7 +32,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
  use frequency,     ONLY:w_samp
- use R_lattice,     ONLY:bz_samp,nqibz,RIM_W_for_graph,Xo_graph_wings
+ use R_lattice,     ONLY:bz_samp,nqibz,RIM_W_for_graph!,Xo_graph_wings
  use electrons,     ONLY:levels
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
@@ -88,7 +88,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call parser('RIM_W_graph',RIM_W_for_graph)
  call msg('r','RIM_W_graph', RIM_W_for_graph)
- YAMBO_ALLOC(Xo_graph_wings,(X%ng))
+ !YAMBO_ALLOC(Xo_graph_wings,(X%ng))
  !
  ! Sectioning
  !

@@ -461,7 +461,7 @@ subroutine interpolate_W(X,Xw,q,mode)
    do ig2=1,RIM_W_ng
      do ig1=1,RIM_W_ng
        !
-       if(ig1==1.and.ig2==1.and.(.not. RIM_W_for_graph)) then
+       if(ig1==1.and.ig2==1) then
          dummy(:) = f_coeff(1,1,1,1,:)
          if (RIM_id_epsm1_reference/=0) then
            dummy(1) = dummy(1)*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))

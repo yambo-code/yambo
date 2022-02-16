@@ -64,6 +64,9 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  call io_variable_elemental(ID,&
 &     VAR="X band range",I1=tmp_ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+ !
+ if (read_is_on(ID).and..not.EM1S_NOSOC) X%ib=tmp_ib
+ !
  call io_variable_elemental(ID,UNIT=HA2EV,&
 &     VAR="X e/h energy range ",TERMINATOR="[eV]",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
  !

@@ -48,8 +48,9 @@ subroutine NL_ypp_driver(en,k)
  ! Working Space
  !
  integer, external::io_NL
- integer  :: io_Nonlinear,ID,i_Probe
+ integer  :: io_Nonlinear,io_Nonlinear_REF,ID,ID_REF,i_Probe
  integer  :: i_f,i_d,i_order
+ character(9) :: dbname
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
@@ -59,6 +60,8 @@ subroutine NL_ypp_driver(en,k)
  !
  call section("*",'NL Post Processing')
  !
+ dbname="Nonlinear"
+ !
  call RT_output_INIT( )
  !
  call parser('PrtPwrSpec',l_print_pwr_spectrum)
@@ -66,8 +69,12 @@ subroutine NL_ypp_driver(en,k)
  ! Input/Output
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_Nonlinear=io_NL(ID)
+ io_Nonlinear=io_NL(dbname,ID)
  if(io_Nonlinear/=0) call error("Error reading NonLinear database")
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
+ io_Nonlinear_REF=io_NL(dbname//"_REF",ID_REF)
+ !
  l_skip_OBS_IO=.false.
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
@@ -85,7 +92,7 @@ subroutine NL_ypp_driver(en,k)
  !
  do i_f=1,n_frequencies
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
-   io_Nonlinear=io_NL(ID)
+   io_Nonlinear=io_NL(dbname,ID)
    !
    if(io_Nonlinear/=0) then
      runs_ok(i_f)=.false.
@@ -108,6 +115,16 @@ subroutine NL_ypp_driver(en,k)
    enddo
    !
    Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
+   !
+   if(io_Nonlinear_REF==0) then
+     call warning("removing reference polarization/current")
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
+     io_Nonlinear=io_NL(dbname//"_REF",ID_REF)
+     do i_d=1,3
+       RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
+     enddo
+   endif
+
    !
  enddo
  !
@@ -209,7 +226,9 @@ subroutine NL_ypp_driver(en,k)
     !
     YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
     Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+    Pol%title="Polarization"
     call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
+    call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,.FALSE.)
     call RT_X_LRR_real_field(en)
     YAMBO_FREE(Pol%F_t)
      !

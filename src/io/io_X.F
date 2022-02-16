@@ -65,7 +65,7 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
- ! I assume that he RL ordering used to build X is not different
+ ! I assume that the RL ordering used to build X is not different
  ! from the one in DB1
  !
  different_db_RL_order=.false.
@@ -76,6 +76,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
+ if (X%whoami==5) db_desc='Xmpa'
  !
 #if defined _PAR_IO
  perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
@@ -96,6 +97,7 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
+   if (X%whoami==5) local_XC_KIND="Xm"
    io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,TEMP=.true.,XC_KIND=local_XC_KIND,&
 &                    CUTOFF=.true.,GAUGE=.TRUE.,FRAG=frag_RESPONSE)
    if (io_X/=0) goto 1
@@ -141,17 +143,19 @@ integer function io_X(X,Xw,ID)
    endif
  endif
  !
+ iq=0
  do i1=1,size(io_sec(ID,:))
    if (io_sec(ID,i1)==0) cycle
    iq=io_sec(ID,i1)/2
  enddo
  !
- if (iq==0) goto 1
+ if (iq==0 ) goto 1
+ if (iq==-1) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
  if (io_err/=0) goto 1
  !
- !  type(X_t)    ::X(4)  x s d p
+ !  type(X_t)    ::X(5)  x s d p m
  !
  if (any((/io_sec(ID,:)==2*iq/)) ) then
    !

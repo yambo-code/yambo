@@ -47,6 +47,7 @@ module drivers
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
  logical :: l_nl_optics          =.FALSE.
+ logical :: l_nl_p_and_p         =.FALSE.
  !
  ! The self-energy correlation "kind"
  !
@@ -72,6 +73,7 @@ module drivers
  logical :: l_life               =.FALSE.
  logical :: l_gw0                =.FALSE.
  logical :: l_ppa                =.FALSE.
+ logical :: l_mpa                =.FALSE.
  logical :: l_cohsex             =.FALSE.
  !
  ! The optical runlevels ...

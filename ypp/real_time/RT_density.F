@@ -37,7 +37,7 @@ subroutine RT_density(en,kpt,qpt)
  use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
  use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,G_MEM_steps
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
-&                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
+&                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
@@ -121,8 +121,6 @@ subroutine RT_density(en,kpt,qpt)
  nr_tot = fft_size
  nr     = fft_dim
  YAMBO_ALLOC(v2plot,(nr_tot))
- !
- l_norm_to_one=.false.
  !
  call plot_check_and_launch(.true.)
  !

@@ -38,17 +38,18 @@
 subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  use frequency,     ONLY:w_samp
- use pars,          ONLY:SP,cZERO,rZERO
+ use vec_operate,   ONLY:c2a
+ use pars,          ONLY:SP,cZERO,rZERO,schlen
  use units,         ONLY:HA2EV
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,&
-&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E
+&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd
  use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
-&                        INTERPOLATE_is_quiet
+&                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -61,12 +62,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  ! Work space
  !
- complex(SP) :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP) :: min_E,exc_E,E_alpha
- integer :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer :: ID_E_kpq,ID_E_kpq_obj,ID_DG
- integer, external :: io_EXCPH_gkkp,io_ELPH,io_Double_Grid
- real(SP) :: bose_factor,PH_E
+ complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
+ real(SP)      :: min_E,exc_E,E_alpha,bose_factor,PH_E,v(3)
+ type(bz_samp) :: q_DbGd
+ integer       :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
+ integer       :: ID_E_kpq,ID_E_kpq_obj,ID_DG,min_pos_E_DbGd(1)
+ integer, external :: io_EXCPH_gkkp,io_ELPH
+ character(schlen) :: q_point
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))
@@ -92,13 +94,21 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call INTERPOLATION_BZ_setup(q)
    INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
    call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_EXC,ID_obj=ID_EXC_obj)
-   EXC_DbGd%nb=EXCPH_states(2)
-   EXC_DbGd%nk=q%FGbz%N
-   YAMBO_ALLOC(EXC_DbGd%E,(EXC_DbGd%nb,EXC_DbGd%nk,1))
-   call INTERPOLATION_BZ(K=k_plus_q,NK=EXC_DbGd%nk,ID=ID_E_kpq,E=EXC_DbGd)
    !
-   min_EXC_E_DbGd=minval(EXC_DbGd%E(1,:,1))
+   call bz_samp_reset(q_DbGd)
+   q_DbGd%nibz=q%FGbz%N
+   YAMBO_ALLOC(q_DbGd%pt,(q_DbGd%nibz,3))
+   q_DbGd%pt=q%FGbz%pt
+   !
+   YAMBO_ALLOC(EXC_E_DbGd,(EXCPH_states(2),q%FGbz%N))
+   call INTERPOLATION_BZ(K=q_DbGd,NK=q%FGbz%N,ID=ID_E_kpq,R1D=EXC_E_DbGd)
+   !
+   min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
+   min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
+   call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
    call msg('rs','Minimum excitonic energy with DbGrid: ',min_EXC_E_DbGd*HA2EV,' eV')
+   write(q_point,'(3f12.6,a)') v(:),' [rlu] '
+   call msg('rs','Minimum q-point in the DbGrid : '//q_point)
    !
  endif
  !

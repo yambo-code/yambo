@@ -1,5 +1,5 @@
 #if defined _ELPH && !defined _YPP_ELPH
-EQ_objs = EXCPH_gkkp_eval.o EXCPH_gkkp_driver.o EXCPH_load_L.o \ 
+EQ_objs = EXCPH_gkkp_eval.o EXCPH_gkkp_driver.o EXCPH_load_L.o \
 	  EXCPH_eval_sat.o EXCPH_optics.o EXCPH_X_phass.o Satellite_Simple.o Satellite_DbGrid.o 
 #endif
 objs = ${EQ_objs} 

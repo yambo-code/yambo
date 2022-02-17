@@ -30,9 +30,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
- use IO_int,         ONLY:io_control
- use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,OP_WR,WR,WR_CL,&
-&                         OP_WR_CL,OP_APP_CL,DUMP
  use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
@@ -54,8 +51,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=5
  real(SP)            :: output_data(n_output)
- integer             :: iw,iq,i_alpha,ID_DG,io_err
- integer, external   :: io_Double_Grid
+ integer             :: iw,iq,i_alpha,ID_DG
  character(schlen)   :: dbgd_string
  !
  call section('*','EXCPH-Optics')
@@ -96,33 +92,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
- ! **** DOUBLE GRID PART *****
- !
- ! Fill the PH_freqs array
- ! This structure will contains the phonon frequencies and the
- ! double-grid phonon frequencies calculated with matdyn.x
- !
- PH_freqs%nk=q%nibz
- PH_freqs%nb=ph_modes
- YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
- !
- ! Check if double-grid is present and use it
- ! load the double-grid phonon energies in PH_freqs
- !
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
- io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
- !
- dbgd_string=''
- if(io_err==0) then
-   !     
-   use_PH_DbGd=.TRUE.
-   call msg('sr','Using PH-double-grid ')
-   dbgd_string='DbGd'
-   !
- endif
+ ! Turn on double-grid if presents
+ call DoubleGrid_setup()
  !
  ! Frequencies and damping setup
- !
  call FREQUENCIES_setup(wv)
  YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
  YAMBO_ALLOC(PL_ii,(wv%n_freqs,2))
@@ -188,5 +161,38 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      call of_open_close(pl_file_name)
      !
    end subroutine print_output
+   !
+   subroutine DoubleGrid_setup()
+     use IO_int,         ONLY:io_control
+     use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
+     implicit none
+     !
+     integer, external   :: io_Double_Grid
+     integer :: io_err
+     !
+     ! Fill the PH_freqs array
+     ! This structure will contains the phonon frequencies and the
+     ! double-grid phonon frequencies calculated with matdyn.x
+     !
+     PH_freqs%nk=q%nibz
+     PH_freqs%nb=ph_modes
+     YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
+     !
+     ! Check if double-grid is present and use it
+     ! load the double-grid phonon energies in PH_freqs
+     !
+     call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
+     io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
+     !
+     dbgd_string=''
+     if(io_err==0) then
+       !     
+       use_PH_DbGd=.TRUE.
+       call msg('sr','Using PH-double-grid ')
+       dbgd_string='DbGd'
+       !
+     endif
+     !
+   end subroutine DoubleGrid_setup
    !
 end subroutine

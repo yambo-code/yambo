@@ -150,7 +150,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
            if(use_PH_DbGd) then
-             call Satellite_DbGrid(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_DbGrid(iq,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
            else
              call Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
            endif

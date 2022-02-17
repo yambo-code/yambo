@@ -33,62 +33,85 @@
 ! @param[out]      Sat_absorption      Satellite in absorption
 ! @param[out]      Sat_emission        Satellite in emission
 !!
-subroutine Satellite_DbGrid(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
+subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emission)
  !
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
- use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
-&                        min_EXC_E
- use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
+ use EXCPH,         ONLY:BS_Sat_WEIGHT,BS_all_E,BS_Sat_WEIGHT_PH_abs,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd 
+ use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold
  use functions,     ONLY:bose_f,boltzman_f
  !
 #include<memory.h>
  !
- integer,       intent(in)  :: il,iq,i_alpha,i_beta
+ integer,       intent(in)  :: il,iq_bz,i_alpha,i_beta
  complex(SP),   intent(in)  :: W
  complex(SP),   intent(out) :: Sat_absorption, Sat_emission
+ type(bz_samp), intent(in)  :: q
  !
  ! Work Space
  !
- real(SP)    :: PH_E,bose_factor,E_alpha,boltzm_factor
+ real(SP)    :: PH_E,bose_factor,E_alpha,boltzm_factor,weight_dbg,E_beta
+ complex(SP) :: BS_Sat_E_DbGd,BS_Sat_E_DbGd_PH_abs
+ integer     :: nq_around,iq_fg,iE_fg
  complex(SP) :: pole
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
  !
- ph_E=sqrt(PH_freqs_sq(iq,il))
+ nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
+ weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
  !
- if(ph_E<FAN_deltaE_treshold) return
+ do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+   !
+   iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+   ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+   !
+   if(ph_E<FAN_deltaE_treshold) cycle
+   !
+   ! Bose function for the phonons
+   !
+   bose_factor=bose_f(PH_E)
+   !
+   ! Excitonic energies in the double-grid
+   !
+   E_beta  =EXC_E_DbGd(i_beta,iq_fg)
+   E_alpha =BS_E_in(i_alpha)
+   !
+   ! Boltzman factor for the luminescence
+   !
+   boltzm_factor=boltzman_f(E_beta-min_EXC_E_DbGd)
+   !
+   ! Evaluate BS_Sat energies in the double-grid
+   ! 
+   BS_Sat_E_DbGd       =E_beta-BS_E_in(i_alpha)+ph_E
+   BS_Sat_E_DbGd_PH_abs=E_beta-BS_E_in(i_alpha)-ph_E
+   !
+   pole=E_alpha+BS_Sat_E_DbGd
+   !
+   ! Phonon emission in absorption
+   !
+   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
+   !
+   ! Phonon emission in luminescence
+   !
+   Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
+   !
+   pole=E_alpha+BS_Sat_E_DbGd_PH_abs
+   !
+   ! Phonon absorption in absorption
+   !
+   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+   ! 
+   ! Phonon absorption in luminescence
+   !
+   Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
+   !
+ enddo
  !
- ! Bose function for the phonons
- !
- bose_factor=bose_f(PH_E)
- !
- E_alpha=BS_E_in(i_alpha)
- !
- ! Boltzman factor for the luminescence
- !
- boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
- !
- pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
- !
- ! Phonon emission in absorption
- !
- Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
- !
- ! Phonon emission in luminescence
- !
- Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
- !
- pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
- !
- ! Phonon absorption in absorption
- !
- Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+ ! Average on the q%FGbz points around iq_bz
  ! 
- ! Phonon absorption in luminescence
- !
- Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
+ Sat_emission  =Sat_emission/weight_dbg
+ Sat_absorption=Sat_absorption/weight_dbg
  !
 end subroutine Satellite_DbGrid

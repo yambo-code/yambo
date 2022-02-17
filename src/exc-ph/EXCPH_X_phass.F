@@ -69,6 +69,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer       :: ID_E_kpq,ID_E_kpq_obj,ID_DG,min_pos_E_DbGd(1)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  character(schlen) :: q_point
+ logical           :: l_DbGd_Sigma_Only
+ !
+ call parser('DBGSigmaOnly',l_DbGd_Sigma_Only)
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))
@@ -131,6 +134,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    ! Add the contribution of q-point transition to the renormalization factors
    ! for all excionts i_alpha
+   !
+   if(use_PH_DbGd.and..not.l_DbGd_Sigma_Only) then
+     call Eval_Sat_Weights_DbGd(iq)
+   else
+     BS_Sat_WEIGHT_DbGd       =BS_Sat_WEIGHT
+     BS_Sat_WEIGHT_DbGd_PH_abs=BS_Sat_WEIGHT_PH_abs
+   endif
    !
    call Eval_Renorm_Factor(iq)
    !
@@ -218,6 +228,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  contains 
    !
+   subroutine Eval_Sat_Weights_DbGd(iq)
+     implicit none
+   end subroutine
+
+   !
    subroutine Eval_Renorm_Factor(iq_in)
      use ELPH,          ONLY:FAN_deltaE_treshold,PH_freqs_sq
      implicit none
@@ -225,9 +240,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      do il=elph_branches(1),elph_branches(2)
        !
-       ph_E=sqrt(PH_freqs_sq(iq_in,il))
        bose_factor=bose_f(PH_E)
-       if(ph_E<FAN_deltaE_treshold) cycle
        !
        do i_beta=EXCPH_sum(1),EXCPH_sum(2)
          forall(i_alpha=EXCPH_states(1):EXCPH_states(2))

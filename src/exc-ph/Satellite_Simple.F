@@ -40,7 +40,6 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
 &                        min_EXC_E
- use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
  use functions,     ONLY:bose_f,boltzman_f
  !
 #include<memory.h>
@@ -56,10 +55,6 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
- !
- ph_E=sqrt(PH_freqs_sq(iq,il))
- !
- if(ph_E<FAN_deltaE_treshold) return
  !
  ! Bose function for the phonons
  !

@@ -57,7 +57,7 @@ subroutine EXCPH_eval_sat(iq,il,q)
      BS_Sat_E       (il,i_beta,i_alpha)=BS_E(i_beta)-BS_E_in(i_alpha)+ph_E
      BS_Sat_E_PH_abs(il,i_beta,i_alpha)=BS_E(i_beta)-BS_E_in(i_alpha)-ph_E
      !
-     if(i_alpha==i_beta.and.ph_E<FAN_deltaE_treshold) cycle
+     if(abs(BS_Sat_E(il,i_beta,i_alpha))<FAN_deltaE_treshold.or.abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))<FAN_deltaE_treshold) cycle
      !
      BS_Sat_WEIGHT(il,i_beta,i_alpha)       =EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E(il,i_beta,i_alpha))**2
      BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2

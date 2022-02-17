@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
+subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
@@ -55,7 +55,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
 #include<dev_defs.h>
 #include<memory.h>
  !
- integer,       intent(in)  :: iq,i_block,qindx_ID
+ integer,       intent(in)  :: iq,i_block,qindx_ID_frag
  type(bz_samp), intent(in)  :: Xk,q
  !
  ! Work Space
@@ -184,7 +184,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 
@@ -275,7 +275,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 
@@ -391,7 +391,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 
@@ -492,7 +492,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID,Xk,q)
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
              !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID) 
+             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
              !$omp end critical 

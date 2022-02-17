@@ -79,7 +79,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  integer      ::GW_iter
  !
  ! DALV: this is the frequency grid for Sc,
- !        now set in the solvers('n','s','g')
+ !       now set in the solvers('n','s','g')
  !
  real(SP),intent(in) ::W(QP_dSc_steps)
  !
@@ -566,7 +566,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                else
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
-               !
 
                !
                ! inline bose_f function

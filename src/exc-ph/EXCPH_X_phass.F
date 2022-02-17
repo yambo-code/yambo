@@ -142,7 +142,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      BS_Sat_WEIGHT_DbGd_PH_abs=BS_Sat_WEIGHT_PH_abs
    endif
    !
-   call Eval_Renorm_Factor(iq)
+   call Eval_Renorm_Factor()
    !
    do iw=1,wv%n_freqs
      !
@@ -228,15 +228,33 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  contains 
    !
-   subroutine Eval_Sat_Weights_DbGd(iq)
+   subroutine Eval_Sat_Weights_DbGd()
      implicit none
+     !
+     nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
+     weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
+     !
+     E_alpha =BS_E_in(i_alpha)
+     !
+     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+       !
+       iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+       ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+       !
+       ! Excitonic energies in the double-grid
+       !
+       E_beta  =EXC_E_DbGd(i_beta,iq_fg)
+       !
+       ! TO BE CONTINUED 
+       !
+     enddo
+     !
    end subroutine
 
    !
-   subroutine Eval_Renorm_Factor(iq_in)
+   subroutine Eval_Renorm_Factor()
      use ELPH,          ONLY:FAN_deltaE_treshold,PH_freqs_sq
      implicit none
-     integer, intent(in) :: iq_in
      !
      do il=elph_branches(1),elph_branches(2)
        !

@@ -108,15 +108,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  call print_output()
  !
- ! ! Deallocations
+ ! Deallocations
  !
- YAMBO_FREE(Epsilon_ii)
- YAMBO_FREE(PL_ii)
- YAMBO_FREE(BS_E)
- YAMBO_FREE(BS_all_E)
- YAMBO_FREE_P(BS_R_left)
- YAMBO_FREE_P(BS_R_right)
- YAMBO_FREE(BS_R)
+ call Free_EXCPH()
+ !
  call FREQUENCIES_reset(wv,"all")
  !
  contains
@@ -191,8 +186,32 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        call msg('sr','Using PH-double-grid ')
        dbgd_string='DbGd'
        !
+       YAMBO_ALLOC(BS_Sat_WEIGHT_DbGd,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+       YAMBO_ALLOC(BS_Sat_WEIGHT_DbGd_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+       !
+       BS_Sat_WEIGHT_DbGd       =rZERO
+       BS_Sat_WEIGHT_DbGd_PH_abs=rZERO
+       !
      endif
      !
    end subroutine DoubleGrid_setup
+   !
+   subroutine FREE_EXCPH()
+     implicit none
+     !
+     YAMBO_FREE(Epsilon_ii)
+     YAMBO_FREE(PL_ii)
+     YAMBO_FREE(BS_E)
+     YAMBO_FREE(BS_all_E)
+     YAMBO_FREE_P(BS_R_left)
+     YAMBO_FREE_P(BS_R_right)
+     YAMBO_FREE(BS_R)
+     !
+     if(use_PH_DbGd) then
+       YAMBO_FREE(BS_Sat_WEIGHT_DbGd)
+       YAMBO_FREE(BS_Sat_WEIGHT_DbGd_PH_abs)
+     endif
+     !
+   end subroutine FREE_EXCPH
    !
 end subroutine

@@ -360,7 +360,7 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_e
  do i_t=1,time_samples
    !
    w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-   time = 1/(w0_sm1) * i_t/time_samples
+   time = 1/(w0_sm1) * i_t/time_samples !aim137 possible bug - this may need to be (i_t-1)
    !
    do i1_fl=1,n_tot_extra_modes
      i1_shifted_fl = i1_fl -(max_extra_mode+1)

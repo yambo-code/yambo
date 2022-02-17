@@ -43,7 +43,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin,&
-&                         FL_S_plus,FL_S_minus,FL_S_det
+&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -68,7 +68,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  logical           :: l_selfconsistency_reached
  real(SP)          :: Time
  complex(SP)       :: All_S_mat_EQ(E%nbm,E%nbm,6,k%nbz,n_sp_pol)
- complex(SP)       :: FL_pol(3)
+ complex(SP)       :: FL_pol(3,2) !second dimension for previous iteration
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -206,20 +206,21 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    FL_S_minus=cZERO
    FL_S_plus =cZERO
-   FL_S_det =cZERO
+   FL_time_S_det =cZERO
    !
    do i_sp_pol=1,n_sp_pol
      do i_k_bz=1,k%nbz
        !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
        call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands,FL_S_plus(:,:,:,:,i_k_bz,i_sp_pol),&
                                                    &   FL_S_minus(:,:,:,:,i_k_bz,i_sp_pol),&
-                                                   &   FL_S_det(:,:,i_k_bz,i_sp_pol)) 
+                                                   &   FL_time_S_det(:,:,i_k_bz,i_sp_pol),.false.) 
      enddo
    enddo
    !
    l_selfconsistency_reached = .false.
    l_Duffin = .false.
    FL_iteration = 0
+   FL_pol = cZERO
    !
    ! Efield
    ! ================
@@ -228,6 +229,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    do while(.not.l_selfconsistency_reached)
      !
      FL_iteration=FL_iteration+1
+     FL_pol(:,2) = FL_pol(:,1) !keep previous iteration
      !
      ! aim137:
      ! do i_k_bz=1,k%nbz ! I do the k-loops inside Hamiltonian and Diagonalization,
@@ -240,11 +242,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call live_timing(steps=1)
      !
-     call FL_polarization(E,k,FL_V_bands,FL_pol)
+     call FL_polarization(E,k,FL_V_bands,FL_pol(:,1))
      !
      !aim137: preliminary criterion to avoid infinit loop
-     l_selfconsistency_reached = (FL_iteration>=4)
-     !aim137: preliminary skipping Duffin
+     !l_selfconsistency_reached = (FL_iteration>=4)
+     call FL_check_convergence(FL_pol,l_selfconsistency_reached)
+     !
      l_Duffin = .true.
      !
    enddo
@@ -271,3 +274,34 @@ subroutine FL_driver(E,X,k,q,Dip)
  call DIP_alloc('DIP_v')
  !
 end subroutine FL_driver
+! 
+subroutine FL_check_convergence(FL_pol,l_sc_reached)
+ !
+ use pars,           ONLY:SP
+ use fl_optics,      ONLY:FL_threshold
+ !
+ complex(SP), intent(in) :: FL_pol(3,2) !second dimension for previous iteration
+ logical,intent(out) :: l_sc_reached
+ !
+ ! Work Space
+ integer :: id
+ real :: diff_real,diff_complex
+ !
+ !
+ do id=1,2!aim137 change to 3
+   !
+   !aim137 add condition - if direction non periodic --> cycle
+   !
+   diff_real    =  abs(( real(FL_pol(id,1))- real(FL_pol(id,2)))/ real(FL_pol(id,1)))
+   diff_complex =  abs((aimag(FL_pol(id,1))-aimag(FL_pol(id,2)))/aimag(FL_pol(id,1)))
+   !
+   if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then
+     l_sc_reached = .true.
+   else
+     l_sc_reached = .false.
+     exit !if one direction is not converged, then FL_pol is not converged
+   endif
+   !
+ enddo
+ !
+end subroutine FL_check_convergence

@@ -31,14 +31,14 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_pol)
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_S_det
+&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k
  complex(SP),   intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
- complex(SP),   intent(out) :: FL_pol(3)  ! In reduced coordinates
+ complex(SP),   intent(out) :: FL_pol(3)  ! In cartesian? coordinates --> check
  !
  ! Work Space
  !
@@ -53,7 +53,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_pol)
  !
  FL_S_minus=cZERO
  FL_S_plus =cZERO
- FL_S_det  =cZERO
+ FL_time_S_det =cONE
  !
  do ik_bz=1,QP_nk
    !
@@ -63,7 +63,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_pol)
      !
      call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),&
                                            &  FL_S_minus(:,:,:,:,ik_bz,is),&
-                                           &  FL_S_det(:,:,ik_bz,is))
+                                           &  FL_time_S_det(:,:,ik_bz,is),.true.)
      !
    enddo
    !

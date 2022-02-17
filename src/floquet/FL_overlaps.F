@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_S_det)
+subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S_det,l_eval_det)
  !
  ! Build Floquet overlaps between valence bands
  ! Structure taken from Build_Overlaps_det_NEQ
@@ -45,9 +45,10 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_S_det)
  type(levels), intent(in) :: en
  type(bz_samp),intent(in) :: Xk
  complex(SP),  intent(in) :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ logical,      intent(in) :: l_eval_det
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes,6)
  complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_extra_modes,6)
- complex(SP), intent(inout) :: FL_S_det(n_tot_extra_modes,6)
+ complex(SP), intent(inout) :: FL_time_S_det(n_tot_fl_modes,6)
  !
  ! Work Space
  !
@@ -61,6 +62,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_S_det)
  !
  FL_S_plus =cZERO
  FL_S_minus=cZERO
+ FL_time_S_det=cZERO
  !
  ! I split the construction of the FL_S_minus(Sm1_plus) matrix in four parts
  !
@@ -247,10 +249,12 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_S_det)
          enddo
        enddo
        !
-       !aim137 calculate determinant - preliminarily = 1
-       do i1_extra=1,n_tot_extra_modes
-         FL_S_det(i1_extra,id+(istep-1)*3) = cONE
-       enddo
+       !
+       if (l_eval_det) then
+         !
+         call FL_determinants(en,FL_S_plus(:,:,:,id+(istep-1)*3),FL_time_S_det(:,id+(istep-1)*3))
+         !
+       endif
        !
      enddo  
      !

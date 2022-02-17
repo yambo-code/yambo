@@ -33,7 +33,7 @@ module fl_optics
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
- complex(SP), allocatable :: FL_S_det(:,:,:,:)  ! Floquet overlaps determinant
+ complex(SP), allocatable :: FL_time_S_det(:,:,:,:)  ! Floquet overlaps determinant
  complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
  !
  !aim137 new variables
@@ -45,6 +45,7 @@ module fl_optics
  integer :: n_tot_duffin_modes
  integer :: FL_space_dim,FL_states(2)
  logical :: l_Duffin
+ real(SP):: FL_threshold = 0.001
  !
  contains
    subroutine FL_alloc(en)
@@ -94,7 +95,7 @@ module fl_optics
      !
      YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_S_det,(n_tot_extra_modes,6,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_time_S_det,(n_tot_fl_modes,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
      !
      ! Reference energies
      !

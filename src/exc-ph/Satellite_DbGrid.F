@@ -38,7 +38,8 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
- use EXCPH,         ONLY:BS_Sat_WEIGHT_DbG,BS_all_E,BS_Sat_WEIGHT_DbG_PH_abs,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd 
+ use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd, &
+&                        BS_Sat_WEIGHT_DbGd,BS_Sat_WEIGHT_DbGd_PH_abs 
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold
  use functions,     ONLY:bose_f,boltzman_f
  !

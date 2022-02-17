@@ -38,7 +38,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
- use EXCPH,         ONLY:BS_Sat_WEIGHT,BS_all_E,BS_Sat_WEIGHT_PH_abs,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd 
+ use EXCPH,         ONLY:BS_Sat_WEIGHT_DbG,BS_all_E,BS_Sat_WEIGHT_DbG_PH_abs,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd 
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold
  use functions,     ONLY:bose_f,boltzman_f
  !
@@ -91,21 +91,21 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
    ! Phonon emission in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
+   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_DbGd(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
    !
    ! Phonon emission in luminescence
    !
-   Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
+   Sat_emission=Sat_emission+BS_Sat_WEIGHT_DbGd(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
    !
    pole=E_alpha+BS_Sat_E_DbGd_PH_abs
    !
    ! Phonon absorption in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+   Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_DbGd_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
    ! 
    ! Phonon absorption in luminescence
    !
-   Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
+   Sat_emission=Sat_emission+BS_Sat_WEIGHT_DbGd_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
    !
  enddo
  !

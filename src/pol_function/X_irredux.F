@@ -261,8 +261,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
      ctmp = DEV_VAR(Xo_res)(1,1)
-     ! !DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
-       !      once to avoid an inconsistency with the Drude frequency given by input
+     !
+     ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
+     !       once to avoid an inconsistency with the Drude frequency given by input
+     !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
      if (have_cuda) then

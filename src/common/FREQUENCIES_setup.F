@@ -43,13 +43,6 @@ subroutine FREQUENCIES_setup(W)
  !If %p is associated and consitent with %er/%dr return
  !
  if (allocated(W%p)) then
-write(*,*)
-write(*,*)W%er
-write(*,*)W%ir
-write(*,*)W%dr
-write(*,*)
-write(*,*) W%p(1), W%p(W%n_freqs)
-write(*,*)
    if (size(W%p)==W%n_freqs.and.&
 &      abs(  real(W%p(1))-W%er(1) )<1.E-5.and.&
 &      abs( aimag(W%p(1))-W%dr(1) )<1.E-5.and.&

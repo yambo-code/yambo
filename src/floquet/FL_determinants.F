@@ -26,23 +26,19 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
-!use D_lattice,      ONLY:a,DL_vol
-!use R_lattice,      ONLY:bz_samp,k_map,bz_map
-!use vec_operate,    ONLY:get_id_perpendicular
-!use QP_m,           ONLY:QP_nk
  use fields,         ONLY:Efield
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,n_tot_extra_modes
  !
  implicit none
  !
- type(levels), intent(in) :: en
+ type(levels), intent(in)   :: en
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
- complex(SP), intent(inout) :: FL_time_S_det(n_tot_fl_modes)
+ complex(DP), intent(inout) :: FL_time_S_det(n_tot_fl_modes)
  !
  ! Work Space
  !
- complex(SP) :: FL_time_S_plus(en%nbf,en%nbf,n_tot_fl_modes)
+ complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_fl_modes)
  integer       :: i_t,i1_extra,i1_shifted_fl
  real(SP)      :: time,w0_sm1
  !
@@ -63,7 +59,8 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
      i1_shifted_fl = i1_extra -(max_extra_mode+1)
      !
      FL_time_S_plus(:,:,i_t)  = FL_time_S_plus(:,:,i_t) &
-                            & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes) * FL_S_plus(:,:,i1_extra)
+                            & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes) &
+                            & * FL_S_plus(:,:,i1_extra)
      !
    enddo
    !

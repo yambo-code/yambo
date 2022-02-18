@@ -26,7 +26,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
  ! Build Floquet overlaps between valence bands
  ! Structure taken from Build_Overlaps_det_NEQ
  !
- use pars,           ONLY:SP,cZERO,cONE
+ use pars,           ONLY:SP,DP,cZERO,cONE
  use electrons,      ONLY:levels,n_sp_pol
  use hamiltonian,    ONLY:H_ref_bands
  use R_lattice,      ONLY:k_map,bz_samp
@@ -48,7 +48,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
  logical,      intent(in) :: l_eval_det
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes,6)
  complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_extra_modes,6)
- complex(SP), intent(inout) :: FL_time_S_det(n_tot_fl_modes,6)
+ complex(DP), intent(inout) :: FL_time_S_det(n_tot_fl_modes,6)
  !
  ! Work Space
  !
@@ -250,7 +250,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        enddo
        !
        !
-       if (l_eval_det) then
+       if (l_eval_det) then !aim137 I can add (.and. istep == 1) here. And make FL_time_S_det(3), not 6.
          !
          call FL_determinants(en,FL_S_plus(:,:,:,id+(istep-1)*3),FL_time_S_det(:,id+(istep-1)*3))
          !

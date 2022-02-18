@@ -35,6 +35,7 @@ module fl_optics
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_time_S_det(:,:,:,:)  ! Floquet overlaps determinant
  complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
+ complex(SP), allocatable :: FL_Chi_pol(:,:,:) !second dimension for previous iteration
  !
  !aim137 new variables
  integer :: max_fl_mode
@@ -97,6 +98,10 @@ module fl_optics
      YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_time_S_det,(n_tot_fl_modes,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
      !
+     ! Polarization
+     ! 
+     YAMBO_ALLOC(FL_Chi_pol,(3,n_tot_fl_modes,2)) 
+     ! 
      ! Reference energies
      !
      YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))

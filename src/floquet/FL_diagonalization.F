@@ -162,7 +162,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
 !close(111)
 !enddo
 !enddo
- print*, FL_eigenvectors(FL_states(1)+0*n_tot_fl_modes+max_fl_mode,FL_chosen_bands(2)), FL_QE(2,36,1)
+!print*, FL_eigenvectors(FL_states(1)+0*n_tot_fl_modes+max_fl_mode,FL_chosen_bands(2)), FL_QE(2,36,1)
+!aim137 The eigenvectors keep rotating, should I defined them between -pi and pi?
 !!aim137 END DEBUG
  !
 end subroutine

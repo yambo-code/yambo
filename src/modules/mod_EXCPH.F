@@ -66,8 +66,8 @@ module EXCPH
  !
  complex(SP), allocatable :: BS_Sat_E(:,:,:)
  complex(SP), allocatable :: BS_Sat_E_PH_abs(:,:,:)
- real(SP),    allocatable :: BS_Sat_WEIGHT(:,:,:)
- real(SP),    allocatable :: BS_Sat_WEIGHT_PH_abs(:,:,:)
+ real(SP),    target, allocatable :: BS_Sat_WEIGHT(:,:,:)
+ real(SP),    target, allocatable :: BS_Sat_WEIGHT_PH_abs(:,:,:)
  real(SP),    allocatable :: EXCPH_Renorm(:)
  real(SP),    allocatable :: EXCPH_Renorm_PH_abs(:)
  complex(SP), allocatable :: BS_EXCPH_E(:)
@@ -84,8 +84,8 @@ module EXCPH
  integer  :: ID_EXC,ID_EXC_obj
  real(SP) :: min_EXC_E_DbGd
  real(SP), allocatable :: EXC_E_DbGd(:,:)
- real(SP), allocatable :: BS_Sat_W_DG(:,:,:)
- real(SP), allocatable :: BS_Sat_W_DG_PH_abs(:,:,:)
+ real(SP), target, allocatable :: BS_Sat_W_DG(:,:,:)
+ real(SP), target, allocatable :: BS_Sat_W_DG_PH_abs(:,:,:)
  !
  contains
    !      

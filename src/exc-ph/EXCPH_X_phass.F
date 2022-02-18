@@ -43,9 +43,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,&
-&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd
- use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches,PH_freqs
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,BS_Sat_W_DG,&
+&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
+&                        BS_Sat_W_DG_PH_abs
+ use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches,PH_freqs,FAN_deltaE_treshold
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
  use com,           ONLY:msg
@@ -53,6 +54,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
+ use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
@@ -65,7 +67,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,E_alpha,bose_factor,PH_E,v(3)
  type(bz_samp) :: q_DbGd
- integer       :: i_alpha,i_beta,il,iq,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
+ integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: ID_E_kpq,ID_E_kpq_obj,ID_DG,min_pos_E_DbGd(1)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  character(schlen) :: q_point
@@ -75,6 +77,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))
+ !
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  !
  ! Load the Exciton-phonon elements and phonon energies
@@ -124,22 +127,22 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call live_timing('Satellites',q%nibz)
  !
- do iq=1,q%nibz
+ do iq_bz=1,q%nbz
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq/),MODE=DUMP,ID=ID_exc_gkkp)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq/),MODE=DUMP,ID=ID_gkkp)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    ! Add the contribution of q-point transition to the renormalization factors
    ! for all excionts i_alpha
    !
    if(use_PH_DbGd.and..not.l_DbGd_Sigma_Only) then
-     call Eval_Sat_Weights_DbGd(iq)
+     call Eval_Sat_Weights_DbGd()
    else
-     BS_Sat_WEIGHT_DbGd       =BS_Sat_WEIGHT
-     BS_Sat_WEIGHT_DbGd_PH_abs=BS_Sat_WEIGHT_PH_abs
+     BS_Sat_W_DG       =BS_Sat_WEIGHT
+     BS_Sat_W_DG_PH_abs=BS_Sat_WEIGHT_PH_abs
    endif
    !
    call Eval_Renorm_Factor()
@@ -160,9 +163,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
            if(use_PH_DbGd) then
-             call Satellite_DbGrid(iq,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
            else
-             call Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
            endif
            !
          enddo
@@ -229,45 +232,89 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  contains 
    !
    subroutine Eval_Sat_Weights_DbGd()
+     use EXCPH,     ONLY:BS_Sat_E,BS_Sat_E_PH_abs
      implicit none
+     !
+     real(SP) :: E_beta,weight_dbg,W_det,W_PH_abs_det,bose_factor
+     integer  :: iE_fg,iq_fg,nq_around
      !
      nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
      weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
      !
-     E_alpha =BS_E_in(i_alpha)
-     !
-     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+     do i_alpha=EXCPH_states(1),EXCPH_states(2)
        !
-       iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-       ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+       E_alpha =BS_E_in(i_alpha)
        !
-       ! Excitonic energies in the double-grid
-       !
-       E_beta  =EXC_E_DbGd(i_beta,iq_fg)
-       !
-       ! TO BE CONTINUED 
-       !
+       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+         !
+         do il=elph_branches(1),elph_branches(2)
+           !
+           W_det       =rZERO
+           W_PH_abs_det=rZERO
+           !
+           ! Sum on the double-grid
+           ! 
+           do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+             !
+             iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+             ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+             bose_factor=bose_f(PH_E)
+             !
+             ! Excitonic energies in the double-grid
+             !
+             E_beta  =EXC_E_DbGd(i_beta,iq_fg)
+             !
+             if(abs(E_beta-BS_E_in(i_alpha)+ph_E)>FAN_deltaE_treshold) &
+&                W_det=W_det+(bose_factor+1._SP)/abs(E_beta-BS_E_in(i_alpha)+ph_E)**2
+             if(abs(E_beta-BS_E_in(i_alpha)-ph_E)>FAN_deltaE_treshold) &
+                 W_PH_abs_det=W_PH_abs_det+bose_factor/abs(E_beta-BS_E_in(i_alpha)-ph_E)**2
+             ! 
+           enddo
+           !
+           W_det       =W_det/weight_dbg
+           W_PH_abs_det=W_PH_abs_det/weight_dbg
+           !
+           BS_Sat_W_DG(il,i_beta,i_alpha)       =BS_Sat_WEIGHT(il,i_beta,i_alpha) &
+ &                                         *abs(BS_Sat_E(il,i_beta,i_alpha))**2*W_det
+           BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha) &
+&                                         *abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2*W_PH_abs_det
+         enddo
+       enddo
      enddo
      !
    end subroutine
-
    !
    subroutine Eval_Renorm_Factor()
-     use ELPH,          ONLY:FAN_deltaE_treshold,PH_freqs_sq
+     use ELPH,          ONLY:elph_branches,PH_freqs_sq
      implicit none
+     real(SP), pointer :: BS_S_W(:,:,:),BS_S_W_PH_abs(:,:,:)
      !
-     do il=elph_branches(1),elph_branches(2)
-       !
-       bose_factor=bose_f(PH_E)
-       !
-       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-         forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
-           EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
-           EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
-         end forall
+     if(use_PH_DbGd) then
+       !      
+       !  In the double-grid case the bose factor is included in the weights
+       ! 
+       do il=elph_branches(1),elph_branches(2)
+         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+           forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_W_DG(il,i_beta,i_alpha)
+             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)
+           end forall
+         enddo
+       enddo
+     else
+       !      
+       do il=elph_branches(1),elph_branches(2)
+         ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+         bose_factor=bose_f(PH_E)
+         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+           forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
+             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
+           end forall
+         enddo
        enddo
        !
-     enddo
+     endif
      !
    end subroutine
  !

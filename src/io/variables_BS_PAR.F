@@ -34,7 +34,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                        BS_K_is_ALDA,BS_cpl_K_exchange,BSE_L_kind,&
 &                        BS_cpl_K_corr,BSqpts,BS_perturbative_SOC
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
- use IO_int,        ONLY:def_variable_elemental,io_variable_elemental
+ use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use parallel_m,    ONLY:master_cpu
 #if defined _PAR_IO

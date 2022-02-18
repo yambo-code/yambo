@@ -23,7 +23,7 @@ AUXFLAGS=--prefix="$(LIBPATH)" \
          --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=0 \
-         --with-blas-lapack-lib="$(llapack) $(lblas)" \
+         --with-blaslapack-lib="$(llapack) $(lblas)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}"
 
@@ -43,7 +43,7 @@ configure-stamp: uncompress-stamp
 	  cd $(PACKAGE);  \
 	  unset PETSC_DIR; \
 	  unset PETSC_ARCH; \
-	  python2 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
+	  python3 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
 	fi
 	touch configure-stamp
 	

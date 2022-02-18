@@ -35,8 +35,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use com,            ONLY:msg,of_open_close
  use BS_Solvers,     ONLY:BSS_n_eig
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R
- use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd
+&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs
+ use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -186,11 +186,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        call msg('sr','Using PH-double-grid ')
        dbgd_string='DbGd'
        !
-       YAMBO_ALLOC(BS_Sat_WEIGHT_DbGd,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-       YAMBO_ALLOC(BS_Sat_WEIGHT_DbGd_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+       YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+       YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
        !
-       BS_Sat_WEIGHT_DbGd       =rZERO
-       BS_Sat_WEIGHT_DbGd_PH_abs=rZERO
+       BS_Sat_W_DG       =rZERO
+       BS_Sat_W_DG_PH_abs=rZERO
        !
      endif
      !
@@ -208,8 +208,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      YAMBO_FREE(BS_R)
      !
      if(use_PH_DbGd) then
-       YAMBO_FREE(BS_Sat_WEIGHT_DbGd)
-       YAMBO_FREE(BS_Sat_WEIGHT_DbGd_PH_abs)
+       YAMBO_FREE(BS_Sat_W_DG)
+       YAMBO_FREE(BS_Sat_W_DG_PH_abs)
      endif
      !
    end subroutine FREE_EXCPH

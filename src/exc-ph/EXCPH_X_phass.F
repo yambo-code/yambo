@@ -45,7 +45,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd
- use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches
+ use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches,PH_freqs
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
  use com,           ONLY:msg

@@ -49,6 +49,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  real(SP)  :: COLLISIONS_max
  !
 #if defined _PAR_IO
+ integer, external :: io_COLLs_header
 #endif
  !
  if (i_coll==0) then

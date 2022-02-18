@@ -61,6 +61,7 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  logical            :: l_use_scatt_collisions,l_warning,l_error,l_use_P_collisions
  !
 #if defined _PAR_IO
+ integer, external :: io_COLLs_header
 #endif
  !
  io_err      =0

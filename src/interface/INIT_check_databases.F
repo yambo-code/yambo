@@ -72,6 +72,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
 #if defined _PAR_IO
+ integer, external :: io_COLLs_header
 #endif
  !
  logical           :: OSTNTS_Vnl_included

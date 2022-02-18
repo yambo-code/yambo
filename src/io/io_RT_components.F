@@ -93,7 +93,7 @@ integer function io_RT_components(what,ID)
  ! Work Space
  character(schlen)     ::db_name
  integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag,local_COMM
- logical               ::loading_carr_before_neq,par_IO
+ logical               ::loading_carr_before_neq
  integer, external     :: variables_RT_dynamic
  !
  ! Work to be done
@@ -113,20 +113,12 @@ integer function io_RT_components(what,ID)
  !
  loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
  !
- par_IO=.false.
-#if defined _PAR_IO
- if (l_G) then
-   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
-   if ( read_is_on(ID)) local_COMM=mpi_comm_world
-   par_IO=.true.
- endif
-#endif
- !
  ! ACTION
  !========
- !
  if(RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
+   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
+   if ( read_is_on(ID)) local_COMM=mpi_comm_world
    io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_kind,ID=ID,COMM=local_COMM)
 #else
    io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID,FORCE_READ_MODE=.true.)

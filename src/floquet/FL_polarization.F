@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol,FL_Chi_order)
+subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
@@ -33,26 +33,25 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol,FL_Chi_order)
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det
+&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order
  !
  implicit none
  !
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k
  complex(SP),   intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
- complex(DP),   intent(inout) :: FL_Chi_pol(3,n_tot_fl_modes)  ! In cartesian coordinates
- integer,       intent(inout) :: FL_Chi_order
+ complex(DP),   intent(inout) :: FL_Chi_pol(3,FL_Chi_order+1)  ! In cartesian coordinates
  !
  ! Work Space
  !
- complex(DP) :: FL_time_P_Berry_RED(3,n_tot_fl_modes)  ! In reduced coordinates
- complex(DP) :: FL_time_P_Berry_CART(3,n_tot_fl_modes) ! In cartesian coordinates
- complex(DP) :: FL_Pi_pol(3,n_tot_fl_modes)
- integer :: ik_bz,is,i_t
- integer       :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id
- complex(DP)   :: zeta
- real(DP)      :: imag_zeta
- real(SP)      :: time,w0_sm1
+ complex(DP)  :: FL_time_P_Berry_RED(3,n_tot_fl_modes)  ! In reduced coordinates
+ complex(DP)  :: FL_time_P_Berry_CART(3,n_tot_fl_modes) ! In cartesian coordinates
+ complex(DP)  :: FL_Pi_pol(3,n_tot_fl_modes)
+ integer      :: ik_bz,is,i_t,i_order,i1_fl
+ integer      :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id
+ complex(DP)  :: zeta
+ real(DP)     :: imag_zeta
+ real(SP)     :: time,w0_sm1
  !
  ! Update Floquet Overlaps and determinant
  ! ===================================================================
@@ -146,7 +145,13 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol,FL_Chi_order)
    !
  enddo
  !
- FL_Chi_pol = FL_Pi_pol * (-1)*(cI*2/Efield(1)%amplitude)**FL_Chi_order
+ do i_order=0,FL_Chi_order
+   !
+   i1_fl = i_order + (max_fl_mode+1)
+   !
+   FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * (-1)*(cI*2/Efield(1)%amplitude)**i_order
+   !
+ enddo
  !
  !aim137 DEBUG
  !

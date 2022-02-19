@@ -67,6 +67,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
    ! Calculate determinant as a function of time
    ! ============================================
    !
+   !aim137 prelim
    !aim137: for now I am doing inversion, but I should really write a subroutine to just get the det
    call SERIAL_inversion(en%nbf,FL_time_S_plus(:,:,i_t),FL_time_S_det(i_t),.true.)
    !

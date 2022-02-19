@@ -44,7 +44,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin,&
-&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol
+&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,FL_Chi_order
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -67,7 +67,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
  integer  :: FL_iteration,fl_shifted_zero_mode
  logical  :: l_FL_sc_reached
- integer  :: FL_Chi_order = 2 ! tie this to an input variable
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -147,10 +146,12 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  ! Allocation
  ! ==================
- !aim137: newly written subroutines - under review
   call FL_alloc(E) 
- !aim137: this populated the variable FL_space_dim
+ !aim137: next subroutine is unchanged - check
   call FL_alloc_k_distributed(E)
+ !
+ if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
+ if (FL_Chi_order > max_fl_mode) call error('    [FL] Probe order greater than max Floquet mode')
  !
  ! Initialization
  ! ==================
@@ -216,7 +217,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    l_FL_sc_reached = .false.
    l_Duffin = .false.
    FL_iteration = 0
-   FL_Chi_pol = cZERO
+   FL_Chi_pol(i_f,:,:,:) = cZERO
    !
    ! Efield
    ! ================
@@ -225,12 +226,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
-     FL_Chi_pol(:,:,2) = FL_Chi_pol(:,:,1)
-     !
-     ! aim137:
-     ! do i_k_bz=1,k%nbz ! I do the k-loops inside Hamiltonian and Diagonalization,
-     ! because that is how it's done in NL, but I don't understand the benefits. If
-     ! anything, I think it would be worse for memory.
+     FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
@@ -238,13 +234,10 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call live_timing(steps=1)
      !
-     call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(:,:,1),FL_Chi_order)
+     call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
-     !print*, FL_iteration!,real(FL_Chi_pol(1,6,1)),aimag(FL_Chi_pol(1,6,1))
-     !
-     !aim137: preliminary criterion to avoid infinit loop
-     call FL_check_convergence(FL_Chi_pol,FL_Chi_order,l_FL_sc_reached)
-     l_FL_sc_reached = (FL_iteration>=4)
+     call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
+     l_FL_sc_reached = (FL_iteration>=14)
      !
      l_Duffin = .true.
      !
@@ -252,8 +245,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    !aim137 it's crashing here
 !  call NL_databases_IO(i_f,'write')
-   write(*,*) Efield(1)%frequency(1)*HA2EV, sqrt(real(FL_Chi_pol(1,6,1))**2 &
-                                 & +aimag(FL_Chi_pol(1,6,1))**2)
    !
  enddo
  !
@@ -275,21 +266,21 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
 end subroutine FL_driver
 ! 
-subroutine FL_check_convergence(FL_pol,Chi_order,l_sc_reached)
+subroutine FL_check_convergence(FL_pol,l_sc_reached)
  !
  use pars,           ONLY:SP
- use fl_optics,      ONLY:FL_threshold,n_tot_fl_modes,max_fl_mode
+ use fl_optics,      ONLY:FL_threshold,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
- complex(SP), intent(inout) :: FL_pol(3,n_tot_fl_modes,2) !second dimension for previous iteration
- integer, intent(in)     :: Chi_order
+ complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
  !
  ! Work Space
  integer :: id,FL_Pi_order
  real :: diff_real,diff_complex
  !
- FL_Pi_order = Chi_order + (max_fl_mode+1)
+ FL_Pi_order = FL_Chi_order + 1
  !
+ !aim137 prelim
  do id=1,2!aim137 change to 3
    !
    !aim137 add condition - if direction non periodic --> cycle

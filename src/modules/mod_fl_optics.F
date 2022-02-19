@@ -35,18 +35,19 @@ module fl_optics
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_time_S_det(:,:,:,:)  ! Floquet overlaps determinant
  complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
- complex(SP), allocatable :: FL_Chi_pol(:,:,:) !second dimension for previous iteration
+ complex(SP), allocatable :: FL_Chi_pol(:,:,:,:) !freq,dir,order,previous
  !
  !aim137 new variables
- integer :: max_fl_mode
- integer :: max_extra_mode
- integer :: max_duffin_mode
- integer :: n_tot_fl_modes
- integer :: n_tot_extra_modes
- integer :: n_tot_duffin_modes
- integer :: FL_space_dim,FL_states(2)
- logical :: l_Duffin
- real(SP):: FL_threshold = 0.001
+ integer  :: max_fl_mode
+ integer  :: max_extra_mode
+ integer  :: max_duffin_mode
+ integer  :: n_tot_fl_modes
+ integer  :: n_tot_extra_modes
+ integer  :: n_tot_duffin_modes
+ integer  :: FL_space_dim,FL_states(2)
+ logical  :: l_Duffin
+ real(SP) :: FL_threshold = 0.001 ! tie this to an input variable
+ integer  :: FL_Chi_order = 2 ! tie this to an input variable
  !
  contains
    subroutine FL_alloc(en)
@@ -60,7 +61,7 @@ module fl_optics
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
      use drivers,        ONLY:l_use_Hxc_collisions
-     use nl_optics,      ONLY:V_bands
+     use nl_optics,      ONLY:V_bands,n_frequencies
      !
      implicit none
      !
@@ -100,7 +101,7 @@ module fl_optics
      !
      ! Polarization
      ! 
-     YAMBO_ALLOC(FL_Chi_pol,(3,n_tot_fl_modes,2)) 
+     YAMBO_ALLOC(FL_Chi_pol,(n_frequencies,3,FL_Chi_order+1,2)) 
      ! 
      ! Reference energies
      !

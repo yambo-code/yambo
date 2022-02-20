@@ -36,6 +36,8 @@ module fl_optics
  complex(SP), allocatable :: FL_time_S_det(:,:,:,:)  ! Floquet overlaps determinant
  complex(SP), allocatable :: FL_Ho_plus_Sigma(:,:,:,:)  ! Floquet Hamiltonian
  complex(SP), allocatable :: FL_Chi_pol(:,:,:,:) !freq,dir,order,previous
+ complex(SP), allocatable :: FL_FT_extra_M(:,:)
+ complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -98,6 +100,11 @@ module fl_optics
      YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_time_S_det,(n_tot_fl_modes,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
+     !
+     ! FL FT matrices
+     !
+     YAMBO_ALLOC(FL_FT_extra_M,  (n_tot_extra_modes,n_tot_extra_modes))
+     YAMBO_ALLOC(FL_FT_extra_Mm1,(n_tot_extra_modes,n_tot_extra_modes))
      !
      ! Polarization
      ! 
@@ -164,5 +171,37 @@ module fl_optics
      endif
      !
    end subroutine FL_free
+ !
+   subroutine FL_FT_matrices
+     !
+     use pars,           ONLY:SP,cI,pi
+     !
+     implicit none
+     !
+     complex(SP)  :: dummy_det
+     integer      :: i_t,i1_extra,i1_shift_extra
+     !
+     do i_t=1,n_tot_extra_modes ! loop on time
+       do i1_extra=1,n_tot_extra_modes
+         !
+         i1_shift_extra = i1_extra -(max_extra_mode+1)
+         !
+         FL_FT_extra_M(i_t,i1_extra) = exp(-1*cI*i1_shift_extra*2*pi*(i_t-1)/n_tot_extra_modes)
+         !
+       enddo
+     enddo ! loop on time
+     !
+     FL_FT_extra_Mm1 = FL_FT_extra_M
+     call SERIAL_inversion(n_tot_extra_modes,FL_FT_extra_Mm1,dummy_det,.false.)     !
+     !
+     !
+     !aim137 DEBUG
+     !do i_t=1,n_tot_extra_modes ! loop on time
+     !  print*, sum(FL_FT_extra_M(i_t,:)*FL_FT_extra_Mm1(:,i_t))
+     !enddo
+     !aim137 prelim - is this ok?
+     !aim137 DEBUG this gives some terms 1.d-16
+     !
+   end subroutine FL_FT_matrices
  !
 end module

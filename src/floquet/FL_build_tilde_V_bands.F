@@ -54,6 +54,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  integer     :: ikm_ibz,ikp_ibz
  complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf,n_tot_fl_modes),tmp_Vm(H_ref_bands(2),en%nbf,n_tot_fl_modes)
  integer     :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
+ integer     :: i1_extra,i2_extra
  complex(SP) :: FL_Sm1_minus(en%nbf,en%nbf,n_tot_duffin_modes)
  complex(SP) :: FL_Sm1_plus(en%nbf,en%nbf,n_tot_duffin_modes)
  complex(SP) :: dummy_det
@@ -88,6 +89,12 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
      !
    case("N") !Numerical approach
      !
+     i1_extra = -max_extra_mode + (max_duffin_mode+1) 
+     i2_extra = +max_extra_mode + (max_duffin_mode+1)
+     call FL_S_numerical_inversion(en,Xk,&
+                                &   FL_Sm1_plus(:,:,i1_extra:i2_extra),&
+                                &  FL_Sm1_minus(:,:,i1_extra:i2_extra),&
+                                &  id_red,istep,i_sp,ikbz)
      !
    case("P") !Perturbative approach
      !

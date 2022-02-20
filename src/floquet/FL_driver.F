@@ -43,9 +43,9 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
- use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,&
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
-&                         FL_Chi_order,FL_S_inv_mode
+&                         FL_Chi_order,FL_S_inv_mode,FL_space_dim
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -150,6 +150,7 @@ subroutine FL_driver(E,X,k,q,Dip)
   call FL_alloc(E) 
  !aim137: next subroutine is unchanged - check
   call FL_alloc_k_distributed(E)
+  call FL_FT_matrices
  !
  if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
  if (FL_Chi_order > max_fl_mode) call error('    [FL] Probe order greater than max Floquet mode')
@@ -177,6 +178,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  do i_f=1,n_frequencies
    !
+   print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -218,7 +220,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    l_FL_sc_reached = .false.
    FL_iteration = 0
    FL_Chi_pol(i_f,:,:,:) = cZERO
-   !FL_S_inv_mode has been initialized to "0"
+   FL_S_inv_mode = "0" !for first iteration
    !
    ! Efield
    ! ================
@@ -238,9 +240,9 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
-     l_FL_sc_reached = (FL_iteration>=14)
+     if (FL_iteration>20) l_FL_sc_reached = .true.
      !
-     FL_S_inv_mode = "D" ! D=Duffin / N=numerical / P=perturbative
+     FL_S_inv_mode = "N" ! D=Duffin / N=numerical / P=perturbative
      !
    enddo
    !
@@ -277,7 +279,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached)
  !
  ! Work Space
  integer :: id,FL_Pi_order
- real :: diff_real,diff_complex
+ real :: diff_real,diff_complex,diff_mod
  !
  FL_Pi_order = FL_Chi_order + 1
  !
@@ -293,9 +295,16 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached)
                      & -aimag(FL_pol(id,FL_Pi_order,2))) &
                      & /aimag(FL_pol(id,FL_Pi_order,1)))
    !
-   !print*, diff_real, diff_complex
+   diff_mod =  abs((FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1)) &
+                & -(FL_pol(id,FL_Pi_order,2)+conjg(FL_pol(id,FL_Pi_order,2)))) &
+                 & /(FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1))))
    !
-   if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then
+   !print*, diff_real, diff_complex
+   print*, 'Relative error in mod(Chi) = ',diff_mod
+   !
+   !aim137 prelim - choose what condition to use
+   !if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then
+   if (diff_mod < FL_threshold) then
      l_sc_reached = .true.
    else
      l_sc_reached = .false.

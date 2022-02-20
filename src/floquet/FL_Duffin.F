@@ -308,9 +308,10 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  endif
  !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
  !
- call FL_check_Duffin_inverse(&
+ call FL_check_S_inversion(&
          &     FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
-         &     FL_Sm1_Duffin_plus,en%nbf,diagonal_elements,sum_minus_trace,100,l_debug_printouts)
+         &     FL_Sm1_Duffin_plus,en%nbf,n_tot_extra_modes,n_tot_duffin_modes,&
+         &     diagonal_elements,sum_minus_trace,100,l_debug_printouts)
  !
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  !print*, ''
@@ -328,20 +329,21 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
 end subroutine FL_Duffin
 !
 !
-subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_elements,&
-                &sum_minus_trace,time_samples,l_debug_printouts)
+subroutine FL_check_S_inversion(FL_matrix,FL_inverse,dim_of_matrix,n_modes_M,n_modes_Mm1,&
+                &diagonal_elements,sum_minus_trace,time_samples,l_debug_printouts)
  !
  use pars,           ONLY:SP,cZERO,cONE,cI,pi
  use units,          ONLY:HA2FSm1
  use fields,         ONLY:Efield
- use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,n_tot_duffin_modes,max_duffin_mode,n_tot_extra_modes,max_extra_mode
+
  use wrapper_omp,    ONLY:M_by_M_omp
  !
  implicit none
  !
- complex(SP), intent(in) :: FL_matrix(dim_of_matrix,dim_of_matrix,n_tot_extra_modes)
- complex(SP), intent(in) :: FL_inverse(dim_of_matrix,dim_of_matrix,n_tot_duffin_modes)
+ complex(SP), intent(in) :: FL_matrix(dim_of_matrix,dim_of_matrix,n_modes_M)
+ complex(SP), intent(in) :: FL_inverse(dim_of_matrix,dim_of_matrix,n_modes_Mm1)
  integer,     intent(in) :: dim_of_matrix
+ integer,     intent(in) :: n_modes_M,n_modes_Mm1
  complex(SP), intent(out) :: diagonal_elements(dim_of_matrix), sum_minus_trace 
  logical,     intent(in) :: l_debug_printouts
  !
@@ -351,26 +353,30 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_e
  complex(SP)  :: identity_at_t(dim_of_matrix,dim_of_matrix,time_samples)
  complex(SP)  :: trace
  integer      :: i1,i2,i1_fl,i_t,i1_shifted_fl,time_samples
+ integer      :: max_mode_M,max_mode_Mm1
  real(SP)     :: time,w0_sm1
  !
  matrix_at_t = cZERO
  inverse_at_t = cZERO
  identity_at_t = cZERO
  !
+ max_mode_M = int((n_modes_M-1)/2)
+ max_mode_Mm1 = int((n_modes_Mm1-1)/2)
+ !
  do i_t=1,time_samples
    !
    w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
    time = 1/(w0_sm1) * i_t/time_samples !aim137 possible bug - this may need to be (i_t-1)
    !
-   do i1_fl=1,n_tot_extra_modes
-     i1_shifted_fl = i1_fl -(max_extra_mode+1)
-     !if (abs(i1_shifted_fl) > max_extra_mode) cycle
+   do i1_fl=1,n_modes_M
+     i1_shifted_fl = i1_fl -(max_mode_M+1)
+     !if (abs(i1_shifted_fl) > max_mode_M) cycle
      matrix_at_t(:,:,i_t)  = matrix_at_t(:,:,i_t)  + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_matrix(:,:,i1_fl)
    enddo
    !
-   do i1_fl=1,n_tot_duffin_modes
-     i1_shifted_fl = i1_fl -(max_duffin_mode+1)
-     !if (abs(i1_shifted_fl) > max_extra_mode) cycle
+   do i1_fl=1,n_modes_Mm1
+     i1_shifted_fl = i1_fl -(max_mode_Mm1+1)
+     !if (abs(i1_shifted_fl) > max_mode_M) cycle
      inverse_at_t(:,:,i_t) = inverse_at_t(:,:,i_t) + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_inverse(:,:,i1_fl)
    enddo
     
@@ -435,4 +441,4 @@ subroutine FL_check_Duffin_inverse(FL_matrix,FL_inverse,dim_of_matrix,diagonal_e
  endif
  !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
  ! 
-end subroutine FL_check_Duffin_inverse
+end subroutine FL_check_S_inversion

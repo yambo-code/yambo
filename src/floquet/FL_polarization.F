@@ -199,6 +199,7 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
      i1_shifted_fl = i1_fl -(max_fl_mode+1)
      !
      FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes)
+     !aim137 prelim - move the generation of the FT matrix to the module
      !
    enddo
    !

@@ -39,8 +39,8 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  integer,       intent(in) :: i_sp
  integer,       intent(in) :: ikbz
  !
- complex(SP),  intent(out) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_fl_modes)
- complex(SP),  intent(out) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_fl_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_duffin_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_duffin_modes)
  !
  ! Work space
  !

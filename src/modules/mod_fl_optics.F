@@ -45,9 +45,9 @@ module fl_optics
  integer  :: n_tot_extra_modes
  integer  :: n_tot_duffin_modes
  integer  :: FL_space_dim,FL_states(2)
- logical  :: l_Duffin
  real(SP) :: FL_threshold = 0.001 ! tie this to an input variable
  integer  :: FL_Chi_order = 2 ! tie this to an input variable
+ character(1) :: FL_S_inv_mode
  !
  contains
    subroutine FL_alloc(en)
@@ -102,6 +102,8 @@ module fl_optics
      ! Polarization
      ! 
      YAMBO_ALLOC(FL_Chi_pol,(n_frequencies,3,FL_Chi_order+1,2)) 
+     !
+     FL_S_inv_mode = "0" !for first iteration
      ! 
      ! Reference energies
      !

@@ -43,8 +43,9 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
- use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,l_Duffin,&
-&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,FL_Chi_order
+ use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_free,FL_V_bands,FL_space_dim,&
+&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
+&                         FL_Chi_order,FL_S_inv_mode
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -215,9 +216,9 @@ subroutine FL_driver(E,X,k,q,Dip)
    enddo
    !
    l_FL_sc_reached = .false.
-   l_Duffin = .false.
    FL_iteration = 0
    FL_Chi_pol(i_f,:,:,:) = cZERO
+   !FL_S_inv_mode has been initialized to "0"
    !
    ! Efield
    ! ================
@@ -239,7 +240,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
      l_FL_sc_reached = (FL_iteration>=14)
      !
-     l_Duffin = .true.
+     FL_S_inv_mode = "D" ! D=Duffin / N=numerical / P=perturbative
      !
    enddo
    !

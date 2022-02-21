@@ -67,11 +67,9 @@ integer function io_RT_components(what,ID)
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
- use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
-&                         def_variable_bulk,io_variable_bulk
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,def_variable_bulk,io_variable_bulk
  use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
- use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
-&                         RT_carriers,RT_nbands,G_MEM_steps
+ use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
 &                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
 &                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
@@ -115,7 +113,7 @@ integer function io_RT_components(what,ID)
  !
  ! ACTION
  !========
- if(RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
+ if (RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
 #if defined _PAR_IO
    if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
    if ( read_is_on(ID)) local_COMM=mpi_comm_world
@@ -186,7 +184,6 @@ integer function io_RT_components(what,ID)
  !
  ! 3rd SECTION
  !=============
- ID_frag=0
  if (RT_do_IO("K_SECTION")) then
 #if defined _PAR_IO
    ID_frag=ID
@@ -211,7 +208,7 @@ integer function io_RT_components(what,ID)
  !
 #endif
  !
- ! lesser Green Function
+ ! Lesser Green Function
  !=======================
  if (RT_do_IO("ANY_G")) call io_RT_components_G_lesser(ID_frag,T_size)
  !

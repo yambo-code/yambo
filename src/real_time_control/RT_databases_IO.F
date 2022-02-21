@@ -214,14 +214,12 @@ subroutine RT_databases_IO(E,DO_IT)
      call IO_and_Messaging_switch("+io_out",CONDITION=HEAD_k_cpu)
      !
 #if defined _PAR_IO
-     !
      if(PAR_G_k_range(1)>0.and.HEAD_k_CPU) then
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=RT_DB_ID(i_db),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
        io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
        if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/3/),ID=RT_DB_ID(i_db_p),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
        if (SAVE_G_history) io_G=io_RT_components('G_lesser',RT_DB_ID(i_db_p))
      endif
-     !
 #else
      !
      do i_cpu=1,ncpu

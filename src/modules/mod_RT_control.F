@@ -36,7 +36,7 @@ module RT_control
  integer                  :: CACHE_OBS_steps_now 
  !
  integer       ,parameter :: N_RT_databases=9 
- integer                  :: RT_DB_ID(N_RT_databases) ! (/4 OBS,5 G_lesser,6 OCC,7 THETA,8 REF, 9 G_lesser_history)
+ integer                  :: RT_DB_ID(N_RT_databases)  
  integer                  :: RT_current_DB_identifier ! \in [1,9] pointing to the DB under I/O
  character(lchlen)        :: RT_DB_file_name(N_RT_databases) = " "
  character(schlen)        :: RT_DB_name(N_RT_databases)      = " "

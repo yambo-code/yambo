@@ -182,6 +182,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        ! Sm1_plus(l,m; k, k + delta) = \sum_{i,j} V*(l,i; k) S(i,j; k-delta, k) V(m,j ;k + delta)
        !
        ikp_ibz=Xk%sstar(ikp,1)
+       if (ikp-ikp_ibz .ne. 0) call error('BZ or IBZ!')
        !
        ! Matrix head
        !
@@ -253,7 +254,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        !aim137 prelim
        if (l_eval_det) then !aim137 I can add (.and. istep == 1) here. And make FL_time_S_det(3), not 6.
          !
-         call FL_determinants(en,FL_S_plus(:,:,:,id+(istep-1)*3),FL_time_S_det(:,id+(istep-1)*3))
+         call FL_determinants(en,FL_S_plus(:,:,:,id+(istep-1)*3),FL_time_S_det(:,id+(istep-1)*3),ikbz,ikp)
          !
        endif
        !

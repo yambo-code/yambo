@@ -178,7 +178,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  do i_f=1,n_frequencies
    !
-   print*, 'Frequency step = ',i_f,' of ',n_frequencies
+    print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -208,6 +208,10 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_S_plus =cZERO
    FL_time_S_det =cZERO
    !
+   ! aim137 prelim - I probably can do this just once outside the freq loop
+   ! aim137 and store it in a variable FL_S0_plus. Then, inside the freq loop,
+   ! aim137 do just FL_S_plus = FL_S0_plus. Would be faster but need more mem.
+   ! aim137 or put in a logical variable to calculate all overlaps as heads!
    do i_sp_pol=1,n_sp_pol
      do i_k_bz=1,k%nbz
        !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
@@ -240,7 +244,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
-     if (FL_iteration>20) l_FL_sc_reached = .true.
+     if (FL_iteration>6) l_FL_sc_reached = .true.
      !
      FL_S_inv_mode = "N" ! D=Duffin / N=numerical / P=perturbative
      !
@@ -299,8 +303,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached)
                 & -(FL_pol(id,FL_Pi_order,2)+conjg(FL_pol(id,FL_Pi_order,2)))) &
                  & /(FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1))))
    !
-   !print*, diff_real, diff_complex
-   print*, 'Relative error in mod(Chi) = ',diff_mod
+    print*, 'Relative error in mod(Chi) = ',diff_mod
    !
    !aim137 prelim - choose what condition to use
    !if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then

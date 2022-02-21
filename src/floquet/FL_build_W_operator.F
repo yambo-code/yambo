@@ -156,7 +156,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
            !
          enddo
        enddo
-       !$omp end parallel do
+       ! $omp end parallel do
        !
      enddo
      !
@@ -208,15 +208,15 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !$omp end parallel do
  !
  !$omp parallel do default(shared), private(i1,id)
- do i1=H_ref_bands(1),H_ref_bands(2)
-   do i1_fl=1,n_tot_fl_modes
-     i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-     do id=1,3
-       H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
-&      Efield(1)%amplitude*Efield(1)%versor(id)*Wk(id,i1,:) !I need amplitude and direction here
-     enddo
-   enddo
- enddo
+! do i1=H_ref_bands(1),H_ref_bands(2)
+!   do i1_fl=1,n_tot_fl_modes
+!     i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+!     do id=1,3
+!       H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
+!&      Efield(1)%amplitude*Efield(1)%versor(id)*Wk(id,i1,:) !I need amplitude and direction here
+!     enddo
+!   enddo
+! enddo
  !$omp end parallel do
  !
 end subroutine FL_build_W_operator

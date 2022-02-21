@@ -21,26 +21,28 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
+subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use fields,         ONLY:Efield
  use nl_optics,      ONLY:NL_bands
- use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,n_tot_extra_modes
+ use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
+&                         n_tot_extra_modes,FL_QE
  !
  implicit none
  !
  type(levels), intent(in)   :: en
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
  complex(DP), intent(inout) :: FL_time_S_det(n_tot_fl_modes)
+ integer,     intent(in)    :: ikbz,ikp
  !
  ! Work Space
  !
  complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_fl_modes)
- integer       :: i_t,i1_extra,i1_shifted_fl
- real(SP)      :: time,w0_sm1
+ integer       :: i_t,i1_extra,i1_shifted_fl,i1,i2
+ real(SP)      :: time,w0
  !
  !
  FL_time_S_plus =cZERO 
@@ -51,8 +53,8 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
  !
  do i_t=1,n_tot_fl_modes
    !
-   w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-   time = 1/(w0_sm1) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0
+   w0 = Efield(1)%frequency(1) ! in Ha
+   time = 1/(w0) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0; in 1/Ha
    !
    do i1_extra=1,n_tot_extra_modes
      !
@@ -61,6 +63,21 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det)
      FL_time_S_plus(:,:,i_t)  = FL_time_S_plus(:,:,i_t) &
                             & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes) &
                             & * FL_S_plus(:,:,i1_extra)
+     !
+   enddo
+   !
+   ! Add Quasi-energies exponentials
+   ! ================================
+   do i1=1,en%nbf
+     !
+     do i2=1,en%nbf
+       !
+       FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
+                               &  * exp(+cI*FL_QE(i1,ikbz,1)*time) &
+                               &  * exp(-cI*FL_QE(i2,ikp ,1)*time)  
+
+       !
+     enddo
      !
    enddo
    !

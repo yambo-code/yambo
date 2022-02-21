@@ -244,8 +244,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if(driver_now) call EXCPH_optics(Ken,Xk,q,X(i_X_kind),Xw(3))
  !
  driver_now=l_EXCPH_lifetime
- if(driver_now)   call error("Not implemented yet")
- !
+ if(driver_now)  call EXCPH_optics(Ken,Xk,q,X(i_X_kind))
 #endif
  !
  !

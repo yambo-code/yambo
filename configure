@@ -650,6 +650,7 @@ MPI_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
+MOL_check
 DP_check
 CUDA_FLAGS
 def_cuda
@@ -826,6 +827,8 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
+def_mol
+enable_mol
 build_precision
 def_dp
 enable_dp
@@ -886,6 +889,7 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
+enable_mol
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1618,6 +1622,7 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
+  --enable-mol            Molecules build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -3065,6 +3070,19 @@ def_dp=""
 if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 
+
+
+#
+# ============================================================================
+# VERSION for molecules
+# Check whether --enable-mol was given.
+if test "${enable_mol+set}" = set; then :
+  enableval=$enable_mol;
+fi
+
+def_mol=""
+if test x"$enable_mol" = "x";    then enable_mol="no";   fi
+if test x"$enable_mol" = "xyes"; then def_mol="-D_MOL";  fi
 
 
 #
@@ -14725,6 +14743,9 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
+MOL_check="-"
+if test "$enable_mol" = "yes" ; then MOL_check="X"; fi
+#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -14892,6 +14913,7 @@ if test "$mpibuild" = "yes" ; then
   fi
 fi
 #
+
 
 
 

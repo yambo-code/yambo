@@ -110,6 +110,43 @@ if test $acx_blas_ok = no; then
                         [], [-lblas $FLIBS])])
 fi
 
+# BLAS in Intel MKL library?
+if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
+	# MKL for gfortran
+	mkl_libdir="${MKLROOT}/lib"
+	case "${FCKIND}" in
+	*gfortran* )
+		case "${host}" in
+		*x86*64*)
+			AC_CHECK_LIB(mkl_gf_lp64, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"],,
+				[-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl])
+		;;
+		i?86*linux*)
+			AC_CHECK_LIB(mkl_gf, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread"],,
+				[-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread])
+		;;
+		esac
+	;;
+	# MKL for other compilers (Intel, PGI, ...?)
+	*intel* | *nvfortran* | *pgi* )
+		# 64 bit
+		case "${host}" in
+		*x86*64*)
+			AC_CHECK_LIB(mkl_intel_lp64, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"],,
+				[-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl])
+		;;
+		i?86*linux*)
+			AC_CHECK_LIB(mkl_intel, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread"],,
+				[-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread])
+		;;
+		esac
+	esac
+fi
+
 # Generic BLAS library?
 if test $acx_blas_ok = no; then
         AC_CHECK_LIB(blas, $caxpy, [acx_blas_ok=yes; BLAS_LIBS="-lblas"])

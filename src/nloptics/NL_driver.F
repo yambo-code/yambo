@@ -24,10 +24,12 @@
 subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
+ use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
+ use collision_ext,  ONLY:COLLISIONS_CV_only 
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
@@ -38,7 +40,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,l_pump_and_probe, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
@@ -75,9 +77,13 @@ subroutine NL_driver(E,X,k,q,Dip)
  call section('*','NL Initialization')
  !#################################
  !
+ ! QP-corrections 
+ !================
+ call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
+ !
  ! Initialize
  !=========
- call NL_initialize(E,k,q)
+ call NL_initialize(E,k)
  !
  ! Switch 
  !========
@@ -153,15 +159,13 @@ subroutine NL_driver(E,X,k,q,Dip)
      endif
    endif
    !
+   if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
+   !
  endif
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
    call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  endif
- !
- ! QP-corrections 
- !================
- call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
  !
  ! Load Collisions if necessary
  ! ============================
@@ -215,7 +219,7 @@ subroutine NL_driver(E,X,k,q,Dip)
    !
    ! Efield
    ! ================
-   Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
+   if(.not.l_pump_and_probe) Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
    !
    l_dynamics_is_over=.false.
    !

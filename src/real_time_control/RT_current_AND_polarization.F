@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current_AND_polarization(k,E,G_input,A_input)
+subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  ! Evalute current and polarization.
  ! The current includes the diamagnetic contribution only in the velocity gauge.
@@ -35,7 +35,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !  each time step. When devel-dipoles will be finally merged inside the master
  !  this will be avoided by expanding the dipoles once for all
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
@@ -46,6 +46,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
+ use RT_control,     ONLY:l_project_spin_dipoles
  use RT_operations,  ONLY:RT_average_operator
  !
  implicit none
@@ -54,6 +55,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  type(gauge_field), intent(in) :: A_input
+ real(SP),          intent(in) :: Ncarr(3)
  !
  ! Work Space
  !
@@ -105,39 +107,54 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !
  if(n_spin>1) then
    !
+   RT_spin_magn=cZERO
+   !
    ! C : Spin magnetization
    !
-   call RT_average_operator(N_V=3,V_VALUE=RT_spin_magn,PV_MATRIX=DIP_spin(:,:,:,:,:),&
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+   RT_spin_magn(:,1)=RT_M_tmp
+   !
+   if (l_project_spin_dipoles) then
+     if(Ncarr(2)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,2),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,2)=RT_M_tmp/Ncarr(2)
+     endif
+     !
+     if(Ncarr(3)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,3),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,3)=RT_M_tmp/Ncarr(3)
+     endif
+   endif
    !
    if(NE_i_time==1) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:),&
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
-   !
-   if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
    !
    ! D : Orbital magentization (local and itinerant contributions)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,1)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,1)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Orbital_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,2)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Itinerant_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    ! 
  endif

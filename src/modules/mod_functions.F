@@ -215,16 +215,20 @@ module functions
    function boltzman_f(Eb)
      !
      use D_lattice, ONLY:Boltz_Temp
+     use units,     ONLY:HA2EV,HA2KEL
      real(SP), intent(in):: Eb
      real(SP)            :: boltzman_f
      !
-     if(abs(Eb)>epsilon(1.).and.abs(Boltz_Temp)>epsilon(1.)) then
+     real(SP) :: E_small=0.002/HA2EV  ! Threashold for degenerate excitons
+     real(SP) :: T_small=1._SP/HA2KEL
+     !
+     if(abs(Eb)>E_small.and.abs(Boltz_Temp)>T_small) then
        boltzman_f=exp(-Eb/Boltz_Temp)  ! Normal case
-     elseif(abs(Eb)>epsilon(1.).and.abs(Boltz_Temp)<=epsilon(1.)) then
+     elseif(abs(Eb)>E_small.and.abs(Boltz_Temp)<=T_small) then
        boltzman_f=0._SP  ! Case  E>0 but T=0
-     elseif(abs(Eb)<epsilon(1.).and.abs(Boltz_Temp)<epsilon(1.)) then
+     elseif(abs(Eb)<E_small.and.abs(Boltz_Temp)<T_small) then
        boltzman_f=1._SP  ! Limit E->0 T->0
-     elseif(abs(Eb)<epsilon(1.).and.abs(Boltz_Temp)>epsilon(1.)) then
+     elseif(abs(Eb)<E_small.and.abs(Boltz_Temp)>T_small) then
        boltzman_f=1._SP  ! Case E=0 T->0
      endif
      !

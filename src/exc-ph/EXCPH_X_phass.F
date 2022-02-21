@@ -84,9 +84,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
+ if(io_err/=0) call error('excph_gkkp databases not found!')
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+ if(io_err/=0) call error('gkkp_expanded databases not found!')
  !
  YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
  YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))

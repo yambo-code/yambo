@@ -27,7 +27,7 @@ subroutine symmetries_driver(E,Xk)
  use xc_functionals,      ONLY:magn
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
- use IO_m,                ONLY:rm_file,cp_file,OP_RD_CL,REP
+ use IO_m,                ONLY:rm_file,cp_file,OP_RD_CL,NONE,DUMP
  use IO_int,              ONLY:ver_is_gt_or_eq,io_control
  use com,                 ONLY:msg,core_io_path,more_io_path,jobstr
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate,nqbz
@@ -149,13 +149,13 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Copy gkkp_expanded if presents
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),ID=ID_gkkp)
+ call section('=',"GKKP-databases")
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') 
  !
  if(io_err==0) then
    !      
-   call msg('s','Gkkp dbs found, they will be copied in the new folder')
-   !
     if (trim(jobstr)/='') then
       in_path =trim(jobstr)//"/"
    else
@@ -171,10 +171,11 @@ subroutine symmetries_driver(E,Xk)
      else
        filename ='ndb.elph_gkkp_expanded_fragment_'//trim(intc(iq))
      endif
-     infile=in_path//trim(filename)
+     infile=trim(in_path)//trim(filename)
      !
-     outfile="./"//trim(more_io_path)//"/FixSymm/SAVE/"//trim(filename)
+     outfile="./"//trim(more_io_path)//"/SAVE/"//trim(filename)
      call cp_file(trim(infile),trim(outfile),io_err)
+     if(io_err/=0) call error(' Error copying the gkkp_expanded files')
      !
      call live_timing(steps=1)
      !
@@ -182,6 +183,8 @@ subroutine symmetries_driver(E,Xk)
    !
    call live_timing()
    !
+ else
+   call msg('s','Electron-phonon DBs not present')
  endif
  !
 #endif

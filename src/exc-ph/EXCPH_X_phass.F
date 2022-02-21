@@ -165,7 +165,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            if(use_PH_DbGd) then
              call Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
            else
-             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
            endif
            !
          enddo
@@ -288,33 +288,41 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      use ELPH,          ONLY:elph_branches,PH_freqs_sq
      implicit none
      real(SP), pointer :: BS_S_W(:,:,:),BS_S_W_PH_abs(:,:,:)
-     !
+     real(SP) :: one_plus_bose_f,bose_factor
+     ! 
      if(use_PH_DbGd) then
-       !      
-       !  In the double-grid case the bose factor is included in the weights
-       ! 
-       do il=elph_branches(1),elph_branches(2)
-         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-           forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
-             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_W_DG(il,i_beta,i_alpha)
-             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)
-           end forall
-         enddo
-       enddo
+       BS_S_W       =>BS_Sat_W_DG
+       BS_S_W_PH_abs=>BS_Sat_W_DG_PH_abs
      else
-       !      
-       do il=elph_branches(1),elph_branches(2)
+       BS_S_W       =>BS_Sat_WEIGHT
+       BS_S_W_PH_abs=>BS_Sat_WEIGHT_PH_abs
+     endif
+     !
+     do il=elph_branches(1),elph_branches(2)
+       !
+       if(.not.use_PH_DbGd) then
          ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
          bose_factor=bose_f(PH_E)
-         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-           forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
-             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+bose_factor)
-             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*bose_factor
-           end forall
-         enddo
-       enddo
+         one_plus_bose_f=1._SP+bose_factor
+       else
+         !      
+         !  In the double-grid case the bose factor is included in the weights
+         !
+         bose_factor=1._SP
+         one_plus_bose_f=1._SP
+         !
+       endif
        !
-     endif
+       if(iq_bz==1) then
+       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+         forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+           EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_S_W(il,i_beta,i_alpha)*one_plus_bose_f
+           EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_S_W_PH_abs(il,i_beta,i_alpha)*bose_factor
+         end forall
+       enddo
+       endif
+       !
+     enddo
      !
    end subroutine
  !

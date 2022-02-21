@@ -457,7 +457,9 @@ subroutine INIT_activate()
  ! Exciton-phonon Self-energy
  !
  if (l_EXCPH_gkkp)   call initactivate(1,'ELPhExcStates ELPhExcSum LoutPath FANdEtresh EkpqShFact')
- if (l_EXCPH_optics) call initactivate(1,'BoseTemp EXCTemp PlotLum DiagExcph DBGSigmaOnly EnRngeXd DmRngeXd ETStpsXd')
+ if (l_EXCPH_lifeT.or.l_EXCPH_optics)  call initactivate(1,'BoseTemp DiagExcph')
+ if (l_EXCPH_optics) call initactivate(1,'EXCTemp PlotLum DBGSigmaOnly EnRngeXd DmRngeXd ETStpsXd')
+! if (l_EXCPH_lifeT)  call initactivate(1,'BoseTemp EXCTemp PlotLum DiagExcph DBGSigmaOnly EnRngeXd DmRngeXd ETStpsXd')
  !
 #endif
  !

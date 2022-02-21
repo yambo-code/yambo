@@ -324,15 +324,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
    endif
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   if(l_BS_magnons) then
-     ! In principle here there is a factor 4 between thei energy cutoff on the potential and the one of the kernel
-     ! The following line, or something similar, should be used here and before
-     !QP_nG=G_index_energy_factor(BS_n_g_fxc,0.25_SP)
-     ! However in practice the one on the kernel is never set 4 the potential, i.e. 16 times the one onf the WFs
-     QP_ng_Vxc=BS_n_g_fxc
-     YAMBO_ALLOC(V_xc,(fft_size,n_spin))
-     V_xc=0._SP
-   endif
+   !
+   QP_ng_Vxc=BS_n_g_fxc
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+   V_xc=0._SP
+   !
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif

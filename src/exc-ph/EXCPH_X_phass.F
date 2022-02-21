@@ -40,7 +40,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use frequency,     ONLY:w_samp
  use vec_operate,   ONLY:c2a
  use pars,          ONLY:SP,cZERO,rZERO,schlen
- use units,         ONLY:HA2EV
+ use units,         ONLY:HA2EV,HA2CMm1
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,BS_Sat_W_DG,&
@@ -79,6 +79,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  min_EXC_E=minval(BS_all_E(1,:))
  !
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
+ call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
  !
  ! Load the Exciton-phonon elements and phonon energies
  !
@@ -303,9 +304,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      do il=elph_branches(1),elph_branches(2)
        !
        if(.not.use_PH_DbGd) then
+         !      
          ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+         if(ph_E<FAN_deltaE_treshold) cycle
+         !
          bose_factor=bose_f(PH_E)
          one_plus_bose_f=1._SP+bose_factor
+         !
        else
          !      
          !  In the double-grid case the bose factor is included in the weights

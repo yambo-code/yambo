@@ -313,14 +313,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
        endif
        !
-       if(iq_bz==1) then
-       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-         forall(i_alpha=EXCPH_states(1):EXCPH_states(2))
+       do i_alpha=EXCPH_states(1),EXCPH_states(2)
+         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_S_W(il,i_beta,i_alpha)*one_plus_bose_f
            EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_S_W_PH_abs(il,i_beta,i_alpha)*bose_factor
-         end forall
+         enddo
        enddo
-       endif
        !
      enddo
      !

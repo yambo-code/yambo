@@ -113,8 +113,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
  YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
  !
- EXCPH_Renorm       =rZERO
- EXCPH_Renorm_PH_abs=rZERO
  max_Sat_weight=rZERO
  max_Sat_pos   =0
  !
@@ -152,6 +150,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call live_timing('Excitonic Gkkp',q%nibz*(elph_branches(2)-elph_branches(1)+1))
  !
+ EXCPH_Renorm       =rZERO
+ EXCPH_Renorm_PH_abs=rZERO
+ !
  do iq=1,q%nibz
    ! 
    if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
@@ -169,11 +170,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      call  EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
      !
-     call  EXCPH_eval_sat(iq,il,q)
-     !
      call live_timing(steps=1)
      !
    enddo
+   !
+   ! Add the WEIGHTs factor to calculate the renormalization factors
+   !
+   call  EXCPH_eval_sat(iq,q)
    !
    ! Find the maximum weight of the satellites
    ! 

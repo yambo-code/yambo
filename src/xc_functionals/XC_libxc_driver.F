@@ -60,17 +60,18 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ! Work Space
  !
- integer  :: i1,i2,is_xc,is1,is2,ixc,ifft
+ logical  :: l_Fxc_from_Vxc
+ integer  :: i1,i2,is_xc,is1,is2,ixc,ifft,ORDER_NOW
  integer(IPL) :: size_IPL
  real(SP) :: mod_magn
  real(SP) :: local_exx_fraction 
- real(DP) :: exsr
+ real(DP) :: exsr,PERT_FAC
  !
  ! XC routines arrays
  !
  real(SP) :: spin_rho_SP(fft_size,n_spin),rho(fft_size)
  real(DP) :: spin_rho_DP(n_spin,fft_size),rspts(fft_size)
- real(SP),allocatable:: drho(:,:,:),drho_tmp(:,:)
+ real(SP),allocatable:: drho(:,:,:),drho_tmp(:,:),V_xc_pert(:,:)
  real(DP),allocatable:: sigma(:,:)
  complex(SP), allocatable:: drho_cmplx(:,:)
  complex(SP), allocatable:: spin_rho_SP_cmplx(:)
@@ -90,6 +91,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !=============================== 
  ! Convert and Initialize
  !===============================
+ !
+ l_Fxc_from_Vxc=.true.
  !
  exsr=0._DP
  FUNCTIONALTMP=0
@@ -169,7 +172,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    YAMBO_ALLOC(v1rho,(n_spin,fft_size))
    v1rho=0._DP
  endif
- if (ORDER==2) then
+ if (ORDER==2.and..not.l_Fxc_from_Vxc) then
    YAMBO_ALLOC(v2rho2,(xc_spin(1),fft_size))
    v2rho2=0._DP
  endif
@@ -182,7 +185,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      YAMBO_ALLOC(v1sigma,(xc_spin(1),fft_size))
      v1sigma=0._DP
    endif
-   if (ORDER==2) then
+   if (ORDER==2.and..not.l_Fxc_from_Vxc) then
      YAMBO_ALLOC(v2rhosigma,(xc_spin(1)*n_spin,fft_size))
      YAMBO_ALLOC(v2sigma2,(xc_spin(1)*n_spin,fft_size))
      v2rhosigma=0._DP
@@ -195,9 +198,6 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      vx2=0._DP
    endif 
    !
-   ! DS. To do: compute a more precise drho also in the case n_spin>1
-   !     This is particularly important for the case order=2
-   !
    if (n_spin>1 .or. order<2) then
      YAMBO_ALLOC(drho_cmplx,(fft_size,3))
      YAMBO_ALLOC(spin_rho_SP_cmplx,(fft_size))
@@ -209,6 +209,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      YAMBO_FREE(drho_cmplx)
      YAMBO_FREE(spin_rho_SP_cmplx)
    else
+     ! DS: This procedure computes a more precise drho (much less noise)
+     !     This is particularly important for the case order=2
+     ! To do: Extend the procedure to the case n_spin>1
      YAMBO_ALLOC(drho_tmp,(fft_size,3))
      call el_density_and_current(en,Xk,drho=drho_tmp)
      drho(:,1,:) = drho_tmp(:,:)
@@ -254,16 +257,29 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  size_IPL=int(fft_size,kind=IPL)
  !
+ ORDER_NOW=ORDER
+ if (l_Fxc_from_Vxc.and.ORDER==2) then
+   PERT_FAC=1.000001_DP
+   ORDER_NOW=1
+   YAMBO_ALLOC(V_xc_pert,(fft_size,n_spin))
+   V_xc_pert=0._SP
+ endif
  do ixc = 1,2
    if (fnctl(ixc)%id == 0) cycle
    if (fnctl(ixc)%family==XC_FAMILY_LDA) then 
-     select case(ORDER)
+     select case(ORDER_NOW)
        case(0)
          call xc_f03_lda_exc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
        case(1)
          call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
          forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
+         if (l_Fxc_from_Vxc.and.ORDER==2) then
+           spin_rho_DP=spin_rho_DP*PERT_FAC
+           call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
+           forall(i1=1:fft_size,i2=1:n_spin) V_xc_pert(i1,i2) = V_xc_pert(i1,i2) + real(v1rho(i2,i1),SP)
+           spin_rho_DP=spin_rho_DP/PERT_FAC
+         endif
        case(2)
          if( l_BS_magnons) then
            call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
@@ -276,7 +292,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
         !GAUPBE short range x-energy  and potentials part
         if(FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call XC_eval_pbegaux(spin_rho_DP(1,1), sigma(1,1), exsr,vx1(1,1),vx2(1,1))
-     select case(ORDER)
+     select case(ORDER_NOW)
        case(0)
          call xc_f03_gga_exc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), tmp_exc(1))
          E_xc = E_xc + real(tmp_exc,SP)    
@@ -289,13 +305,21 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
            v1sigma=v1sigma-(EXX_FRACTION*vx2)/2._DP
          endif
          ! Yambo internal for V_xc
-         call XC_eval_gga_potential(v1rho,v1sigma,drho)
+         call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
+         if (l_Fxc_from_Vxc.and.ORDER==2) then
+           spin_rho_DP=spin_rho_DP*PERT_FAC
+           sigma      =sigma      *PERT_FAC
+           call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
+           call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc_pert)
+           spin_rho_DP=spin_rho_DP/PERT_FAC
+           sigma      =sigma      /PERT_FAC
+         endif
        case(2)
          if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) call error(' Fxc not coded for GAU-PBEP')
          if( l_BS_magnons) then
            call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
            ! Yambo internal for V_xc
-           if(n_spinor==2) call XC_eval_gga_potential(v1rho,v1sigma,drho)
+           if(n_spinor==2) call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
          endif
          call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
          ! Yambo internal for Kxc
@@ -308,6 +332,14 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  if (order==0) then
    E_xc_val = V_dot_V(fft_size,rho,E_xc(:))
    if (FUNCTIONAL==XC_HYB_GGA_XC_GAUPBE*XC_FACTOR)  E_xc_val= E_xc_val-EXX_FRACTION*real(exsr,SP)
+ endif
+ !
+ if (l_Fxc_from_Vxc.and.ORDER==2) then
+   if (n_spin>1) call error("not coded for n_spin>1")
+   do ifft=1,fft_size
+     if (abs(spin_rho_DP(1,ifft))<1.E-7_DP) cycle
+     F_xc(ifft,1,1)=real( real(V_xc_pert(ifft,1)-V_xc(ifft,1),DP)/spin_rho_DP(1,ifft) ,SP)
+   enddo
  endif
  !
  if (EvaluateDGradient) then

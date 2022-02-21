@@ -41,6 +41,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use stderr,       ONLY:intc
  use LIVE_t,       ONLY:live_timing
  use X_m,          ONLY:X_t
+ use QP_m,         ONLY:QP_ng_Vxc
  use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                       BS_res_K_exchange,BS_Block_size,BS_q,&
 &                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
@@ -270,6 +271,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    YAMBO_ALLOC(V_xc,(fft_size,n_spin))
    V_xc=0._SP
+   QP_ng_Vxc=BS_n_g_fxc
    if(n_spin>1) then
      YAMBO_ALLOC(magn,(fft_size,3))
    endif

@@ -75,21 +75,21 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !
- ! Phonon emission in absorption
+ ! Phonon emission in absorption [photon absorption / phonon emission]
  !
  Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
  !
- ! Phonon emission in luminescence
+ ! Phonon absorption in luminescence [photon emission / phonon absorption]
  !
  Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
  !
  pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
  !
- ! Phonon absorption in absorption
+ ! Phonon absorption in absorption [photon absorption / phonon absorption]
  !
  Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
  ! 
- ! Phonon absorption in luminescence
+ ! Phonon emission in luminescence [photon emission / phonon emission]
  !
  Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
  !

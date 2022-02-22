@@ -199,7 +199,6 @@ integer function io_ELPH(ID,what)
  ! Allocation
  !
  if (read_is_on(ID)) then
-         write(*,*) 'passo qui ',l_no_matrix_elements,iq
    if (.not.l_no_matrix_elements) then
      call ELPH_alloc("LEVELS dV DW",GKKP=GKKP)
      if (l_GKKP_hosts_bare_dV) call ELPH_alloc("dV_bare",GKKP=GKKP_bare)

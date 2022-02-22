@@ -671,7 +671,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it('f',defs,'DiagExcph'   , '[EXCPH] Use only Diagonal Exciton-phonon matrix elements')
  call it('f',defs,'DBGSigmaOnly', '[EXCPH] Double-grid only for Sigma')
- call it('f',defs,'PlotLum', '[EXCPH] Plot luminescence spectra')
  !
  ! GPL_EXCLUDE_START
  !

@@ -58,17 +58,17 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
 #include<memory.h>
  !
- type(w_samp),  intent(in)  :: wv
  type(bz_samp), intent(in)  :: q
+ type(w_samp),  intent(in)  :: wv
  complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,2),PL_ii(wv%n_freqs,2)
  !
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,E_alpha,bose_factor,PH_E,v(3)
+ real(SP)      :: min_E,exc_E,E_alpha,PH_E,v(3)
  type(bz_samp) :: q_DbGd
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: ID_DG,min_pos_E_DbGd(1)
+ integer       :: min_pos_E_DbGd(1)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  character(schlen) :: q_point
  logical           :: l_DbGd_Sigma_Only
@@ -104,20 +104,20 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ID_EXC    =1
    call INTERPOLATION_BZ_setup(q)
    INTERP_obj(ID_EXC_obj)%what="EXC_E(k+q)"
-   call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_EXC,ID_obj=ID_EXC_obj)
+   call INTERPOLATION_coefficients(R1D=BS_all_E(:EXCPH_sum(2),:),k=q,NK=q%nibz,ID=ID_EXC,ID_obj=ID_EXC_obj)
    !
    call bz_samp_reset(q_DbGd)
    q_DbGd%nibz=q%FGbz%N
    YAMBO_ALLOC(q_DbGd%pt,(q_DbGd%nibz,3))
    q_DbGd%pt=q%FGbz%pt
    !
-   YAMBO_ALLOC(EXC_E_DbGd,(EXCPH_states(2),q%FGbz%N))
-   call INTERPOLATION_BZ(K=q_DbGd,NK=q%FGbz%N,ID=ID_EXC,R1D=EXC_E_DbGd)
+   YAMBO_ALLOC(EXC_E_DbGd,(EXCPH_sum(2),q_DbGd%nibz))
+   call INTERPOLATION_BZ(K=q_DbGd,NK=q_DbGd%nibz,ID=ID_EXC,R1D=EXC_E_DbGd)
    !
    min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
    min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
    call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
-   call msg('rs','Minimum excitonic energy with DbGrid: ',min_EXC_E_DbGd*HA2EV,' eV')
+   call msg('rs','Minimum exctonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
    write(q_point,'(3f12.6,a)') v(:),' [rlu] '
    call msg('rs','Minimum q-point in the DbGrid : '//q_point)
   !
@@ -167,10 +167,16 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
+           ! Calcualte the Satellite on the course q-grid
+           !
+           call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
+           !
            if(use_PH_DbGd) then
+             !      
+             ! Add all q-point of the fine grid      
+             !
              call Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
-           else
-             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
+             !
            endif
            !
          enddo
@@ -202,6 +208,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  ! The term without satellites
  !
+ min_E=min_EXC_E
+ if(use_PH_DbGd) min_E=min_EXC_E_DbGd
+ !
  do iw=1,wv%n_freqs
    !
    W=wv%p(iw)
@@ -214,7 +223,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      ! The pole of luminescence should be the pole of BS_E_in 
      ! but I think this is not consistent with the Boltzman weight, I use always Lout. Point to be discussed
      !
-     exc_E=BS_all_E(i_alpha,1)-min_EXC_E
+     exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
      PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
@@ -238,6 +247,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    subroutine Eval_Sat_Weights_DbGd()
      use EXCPH,     ONLY:BS_Sat_E,BS_Sat_E_PH_abs
+     use ELPH,      ONLY:PH_freqs_sq
      implicit none
      !
      real(SP) :: E_beta,weight_dbg,W_det,W_PH_abs_det,bose_factor
@@ -261,18 +271,33 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            ! 
            do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
              !
-             iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-             ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-             bose_factor=bose_f(PH_E)
+             if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+               !      
+               ! the first point correspond to the point in the course grid
+               !
+               ph_E   =sqrt(abs(PH_freqs_sq(iq_bz,il)))
+               !
+               !  if iq==1 
+               !  I read ph-energies calculated with matdyn.x 
+               !  that includes the LO-TO splitting and the acustic sum rule
+               !
+               if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)  
+               !
+             else
+               iE_fg  =q%FGbz%E_map(iq_fg)                ! Map w(q) from BZ to IBZ
+               ph_E   =PH_freqs%FG%E(il,iE_fg,1)          ! w(q_db) phonon energy in the D-Grid
+             endif
              !
+             bose_factor=bose_f(PH_E)
+             !  
              ! Excitonic energies in the double-grid
              !
              E_beta  =EXC_E_DbGd(i_beta,iq_fg)
              !
-             if(abs(E_beta-BS_E_in(i_alpha)+ph_E)>FAN_deltaE_treshold) &
-&                W_det=W_det+(bose_factor+1._SP)/abs(E_beta-BS_E_in(i_alpha)+ph_E)**2
-             if(abs(E_beta-BS_E_in(i_alpha)-ph_E)>FAN_deltaE_treshold) &
-                 W_PH_abs_det=W_PH_abs_det+bose_factor/abs(E_beta-BS_E_in(i_alpha)-ph_E)**2
+             if(ph_E<FAN_deltaE_treshold) cycle
+             !
+             W_det=W_det+(bose_factor+1._SP)/abs(E_beta-E_alpha+ph_E)**2
+             W_PH_abs_det=W_PH_abs_det+bose_factor/abs(E_beta-E_alpha-ph_E)**2
              ! 
            enddo
            !

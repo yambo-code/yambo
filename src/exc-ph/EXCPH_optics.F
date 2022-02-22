@@ -192,6 +192,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        BS_Sat_W_DG       =rZERO
        BS_Sat_W_DG_PH_abs=rZERO
        !
+       call msg('rs','Double grid number of q-points ',q%FGbz%N)
+       !
      endif
      !
    end subroutine DoubleGrid_setup

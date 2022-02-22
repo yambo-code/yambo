@@ -57,15 +57,12 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  integer     :: nq_around,iq_fg,iE_fg
  complex(SP) :: pole
  !
- Sat_absorption=cZERO
- Sat_emission  =cZERO
- !
  nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
  weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
  !
  E_alpha =BS_E_in(i_alpha)
  !
- do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+ do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
    !
    iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
    ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid

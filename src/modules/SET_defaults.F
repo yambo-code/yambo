@@ -124,6 +124,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     NL_verb_name,NL_bands,n_order,NL_desc
  use fields,     ONLY:Efield,Efield_reset
 #endif
+#if defined _FL
+ use fl_optics,  ONLY:FL_Chi_order,FL_threshold,FL_S_inv_mode
+#endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
@@ -673,6 +676,14 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  NL_verb_name='high'
  !
  call IO_desc_reset(NL_desc)
+ !
+#endif
+ !
+#if defined _FL
+ !
+ FL_Chi_order  = 2
+ FL_threshold  = 0.0001
+ FL_S_inv_mode = "N"
  !
 #endif
  !

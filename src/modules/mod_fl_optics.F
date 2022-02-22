@@ -48,9 +48,9 @@ module fl_optics
  integer  :: n_tot_extra_modes
  integer  :: n_tot_duffin_modes
  integer  :: FL_space_dim,FL_states(2)
- real(SP) :: FL_threshold = 0.501 ! tie this to an input variable
- integer  :: FL_Chi_order = 2 ! tie this to an input variable
- character(1) :: FL_S_inv_mode
+ real(SP) :: FL_threshold
+ integer  :: FL_Chi_order
+ character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode
  !
  contains
    subroutine FL_alloc(en)
@@ -70,7 +70,7 @@ module fl_optics
      !
      type(levels), intent(in) :: en
      !
-     max_fl_mode=3 ! momentaneamente fijo
+     max_fl_mode=FL_Chi_order+1
      max_extra_mode  = 2*max_fl_mode
      max_duffin_mode = 4*max_fl_mode
      !
@@ -111,11 +111,8 @@ module fl_optics
      ! 
      YAMBO_ALLOC(FL_Chi_pol,(n_frequencies,3,FL_Chi_order+1,2)) 
      !
-     FL_S_inv_mode = "0" !for first iteration
-     ! 
      ! Reference energies
      !
-     print*, E_full
      YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))
      !
      ! Floquet Quasi energies

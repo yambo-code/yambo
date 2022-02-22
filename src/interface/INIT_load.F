@@ -31,7 +31,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use it_tools,      ONLY:it,runlevel_is_on
  use it_m,          ONLY:initdefs,E_unit,G_unit,T_unit,Bfield_unit,MEM_unit,&
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
-&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
+&                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics,&
+&                        V_fl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
 &                        global_gauge,Chi_linalg_mode, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
@@ -97,6 +98,11 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use nl_optics,     ONLY:NL_bands,NL_damping,NL_correlation,NL_er,n_frequencies,NL_LRC_alpha, &
 &                        NL_verb_name,n_order
 #endif 
+!aim137 prelim
+#if defined _FL
+ use fl_optics,     ONLY:FL_threshold,FL_Chi_order,FL_S_inv_mode
+#endif 
+!aim137
 #if defined _NL | defined _SC
  use fields,        ONLY:Efield
 #endif 
@@ -534,6 +540,21 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'NLSampleWF',  '[NL] Sample the WFs (sampling NL order)',n_order,verb_level=V_nl_optics)
  !
 #endif
+ !
+ !aim137
+ !
+#if defined _FL
+ !
+ ! Floquet optics
+ !
+ !FL_threshold,FL_Chi_order,FL_S_inv_mode
+ !
+ call it(defs,'Xorder',     '[FL] Max order of the response/exc functions',FL_Chi_order)
+ call it(defs,'Xthreshold', '[FL] Self-consistent threshold on response function',FL_threshold)
+ call it(defs,'S_inv_mode', '[FL] Inversion method ("NUMERICAL/DUFFIN/PERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
+ !
+#endif
+ !aim137
  !
 #if defined _SC
  call it(defs,'ExtF_Dir',             '[NL ExtF] Versor',Efield(1)%versor)

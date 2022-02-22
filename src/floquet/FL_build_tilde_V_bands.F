@@ -35,7 +35,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  use DIPOLES,        ONLY:DIP_S
  use wrapper_omp,    ONLY:M_by_M_omp
  use fl_optics,      ONLY:n_tot_fl_modes,max_fl_mode,FL_space_dim,FL_states,n_tot_duffin_modes,&
-&                         FL_S_plus,FL_S_minus,max_duffin_mode,max_extra_mode,FL_S_inv_mode
+&                         FL_S_plus,FL_S_minus,max_duffin_mode,max_extra_mode,FL_loc_S_inv_mode
  !
  implicit none
  !
@@ -81,7 +81,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  FL_Sm1_plus = cZERO
  FL_Sm1_minus = cZERO
  !
- select case(FL_S_inv_mode)
+ select case(FL_loc_S_inv_mode)
    !
    case("D") !Duffin approach
      !

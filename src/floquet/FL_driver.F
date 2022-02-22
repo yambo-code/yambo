@@ -45,7 +45,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
-&                         FL_Chi_order,FL_S_inv_mode,FL_space_dim
+&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -224,7 +224,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    l_FL_sc_reached = .false.
    FL_iteration = 0
    FL_Chi_pol(i_f,:,:,:) = cZERO
-   FL_S_inv_mode = "0" !for first iteration
+   FL_loc_S_inv_mode = "0" !for first iteration
    !
    ! Efield
    ! ================
@@ -246,12 +246,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
      if (FL_iteration>6) l_FL_sc_reached = .true.
      !
-     FL_S_inv_mode = "N" ! D=Duffin / N=numerical / P=perturbative
+     FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
    enddo
    !
    !aim137 it's crashing here
-!  call NL_databases_IO(i_f,'write')
+   call NL_databases_IO(i_f,'write')
    !
  enddo
  !

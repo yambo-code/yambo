@@ -163,7 +163,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      implicit none
      !
      integer, external   :: io_Double_Grid
-     integer :: io_err
+     integer :: io_err,max_filling
      !
      ! Fill the PH_freqs array
      ! This structure will contains the phonon frequencies and the
@@ -185,9 +185,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        use_PH_DbGd=.TRUE.
        call msg('sr','Using PH-double-grid ')
        dbgd_string='DbGd'
-       !
-       YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-       YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+       ! 
+       max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
+       YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
+       YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
        !
        BS_Sat_W_DG       =rZERO
        BS_Sat_W_DG_PH_abs=rZERO

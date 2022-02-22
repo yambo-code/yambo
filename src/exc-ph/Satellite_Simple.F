@@ -59,8 +59,8 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  real(SP)    :: min_E
  !
  if(use_PH_DbGd) then
-   BS_S_W       =>BS_Sat_W_DG
-   BS_S_W_PH_abs=>BS_Sat_W_DG_PH_abs
+   BS_S_W       =>BS_Sat_W_DG(:,:,:,1)
+   BS_S_W_PH_abs=>BS_Sat_W_DG_PH_abs(:,:,:,1)
    min_E        =min_EXC_E_DbGd
  else
    BS_S_W       =>BS_Sat_WEIGHT

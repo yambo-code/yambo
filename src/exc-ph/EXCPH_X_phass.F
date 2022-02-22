@@ -72,6 +72,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  character(schlen) :: q_point
  logical           :: l_DbGd_Sigma_Only
+ integer       :: iq_fg,iq_idx
  !
  call parser('DBGSigmaOnly',l_DbGd_Sigma_Only)
  !
@@ -146,8 +147,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    if(use_PH_DbGd.and..not.l_DbGd_Sigma_Only) then
      call Eval_Sat_Weights_DbGd()
    else
-     BS_Sat_W_DG       =BS_Sat_WEIGHT
-     BS_Sat_W_DG_PH_abs=BS_Sat_WEIGHT_PH_abs
+     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+       iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
+       BS_Sat_W_DG(:,:,:,iq_idx)=BS_Sat_WEIGHT
+       BS_Sat_W_DG_PH_abs(:,:,:,iq_idx)=BS_Sat_WEIGHT_PH_abs
+     enddo
    endif
    !
    call Eval_Renorm_Factor()
@@ -250,11 +254,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      use ELPH,      ONLY:PH_freqs_sq
      implicit none
      !
-     real(SP) :: E_beta,weight_dbg,W_det,W_PH_abs_det,bose_factor
-     integer  :: iE_fg,iq_fg,nq_around
+     real(SP) :: E_beta,bose_factor,EXC_gkkp_sq
+     integer  :: iE_fg,iq_fg,iq_idx
      !
-     nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
-     weight_dbg=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
+     BS_Sat_W_DG       =rZERO
+     BS_Sat_W_DG_PH_abs=rZERO
      !
      do i_alpha=EXCPH_states(1),EXCPH_states(2)
        !
@@ -264,18 +268,19 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
          do il=elph_branches(1),elph_branches(2)
            !
-           W_det       =rZERO
-           W_PH_abs_det=rZERO
-           !
-           ! Sum on the double-grid
+           ! calculate for all point of the double-grid
+           ! 
+           EXC_gkkp_sq=BS_Sat_WEIGHT(il,i_beta,i_alpha)*abs(BS_Sat_E(il,i_beta,i_alpha))
            ! 
            do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+             !
+             iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
              !
              if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
                !      
                ! the first point correspond to the point in the course grid
                !
-               ph_E   =sqrt(abs(PH_freqs_sq(iq_bz,il)))
+               ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
                !
                !  if iq==1 
                !  I read ph-energies calculated with matdyn.x 
@@ -296,65 +301,68 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              if(ph_E<FAN_deltaE_treshold) cycle
              !
-             W_det=W_det+(bose_factor+1._SP)/abs(E_beta-E_alpha+ph_E)**2
-             W_PH_abs_det=W_PH_abs_det+bose_factor/abs(E_beta-E_alpha-ph_E)**2
+             BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)       =EXC_gkkp_sq*(bose_factor+1._SP)/abs(E_beta-E_alpha+ph_E)**2
+             BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)=EXC_gkkp_sq*bose_factor/abs(E_beta-E_alpha-ph_E)**2
              ! 
            enddo
            !
-           W_det       =W_det*weight_dbg
-           W_PH_abs_det=W_PH_abs_det*weight_dbg
-           !
-           BS_Sat_W_DG(il,i_beta,i_alpha)       =BS_Sat_WEIGHT(il,i_beta,i_alpha) &
- &                                         *abs(BS_Sat_E(il,i_beta,i_alpha))**2*W_det
-           BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha) &
-&                                         *abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2*W_PH_abs_det
-         enddo
-       enddo
-     enddo
+         enddo  ! il
+       enddo  ! i_beta
+     enddo ! i_alpha
      !
    end subroutine
    !
    subroutine Eval_Renorm_Factor()
      use ELPH,          ONLY:elph_branches,PH_freqs_sq
      implicit none
-     real(SP), pointer :: BS_S_W(:,:,:),BS_S_W_PH_abs(:,:,:)
-     real(SP) :: one_plus_bose_f,bose_factor
-     ! 
-     if(use_PH_DbGd) then
-       BS_S_W       =>BS_Sat_W_DG
-       BS_S_W_PH_abs=>BS_Sat_W_DG_PH_abs
-     else
-       BS_S_W       =>BS_Sat_WEIGHT
-       BS_S_W_PH_abs=>BS_Sat_WEIGHT_PH_abs
-     endif
      !
-     do il=elph_branches(1),elph_branches(2)
+     integer  :: iq_idx,iq_fg,nq_around
+     real(SP) :: N_bose,weight_dbgd
+     ! 
+     if(.not.use_PH_DbGd) then
        !
-       if(.not.use_PH_DbGd) then
+       do il=elph_branches(1),elph_branches(2)
          !      
          ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+         !
          if(ph_E<FAN_deltaE_treshold) cycle
          !
-         bose_factor=bose_f(PH_E)
-         one_plus_bose_f=1._SP+bose_factor
+         N_bose=bose_f(PH_E)
          !
-       else
-         !      
-         !  In the double-grid case the bose factor is included in the weights
+         do i_alpha=EXCPH_states(1),EXCPH_states(2)
+           do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+N_bose)
+             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*N_bose
+           enddo
+         enddo
          !
-         bose_factor=1._SP
-         one_plus_bose_f=1._SP
-         !
-       endif
+       enddo
        !
+     else
+       !      
        do i_alpha=EXCPH_states(1),EXCPH_states(2)
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-           EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_S_W(il,i_beta,i_alpha)*one_plus_bose_f
-           EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_S_W_PH_abs(il,i_beta,i_alpha)*bose_factor
+           do il=elph_branches(1),elph_branches(2)
+             !      
+             nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
+             weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the DbGd including the iq_bz
+             !
+             do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+               !
+               iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
+               !
+               EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx) &
+               &                                                            *weight_dbgd
+               EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx) &
+               &                                                            *weight_dbgd
+               !
+             enddo
+             !
+           enddo
          enddo
        enddo
        !
-     enddo
+     endif
      !
    end subroutine
  !

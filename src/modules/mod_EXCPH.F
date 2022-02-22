@@ -84,8 +84,8 @@ module EXCPH
  integer  :: ID_EXC,ID_EXC_obj
  real(SP) :: min_EXC_E_DbGd
  real(SP), allocatable :: EXC_E_DbGd(:,:)
- real(SP), target, allocatable :: BS_Sat_W_DG(:,:,:)
- real(SP), target, allocatable :: BS_Sat_W_DG_PH_abs(:,:,:)
+ real(SP), target, allocatable :: BS_Sat_W_DG(:,:,:,:)
+ real(SP), target, allocatable :: BS_Sat_W_DG_PH_abs(:,:,:,:)
  !
  contains
    !      

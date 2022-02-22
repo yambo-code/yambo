@@ -52,13 +52,13 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  ! Work Space
  !
- real(SP)    :: PH_E,bose_factor,E_alpha,boltzm_factor,weight_dbg,E_beta
+ real(SP)    :: PH_E,E_alpha,boltzm_factor,weight_dbgd,E_beta
  complex(SP) :: BS_Sat_E_DbGd,BS_Sat_E_DbGd_PH_abs
- integer     :: nq_around,iq_fg,iE_fg
+ integer     :: nq_around,iq_fg,iE_fg,iq_idx
  complex(SP) :: pole
  !
- nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
- weight_dbg=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
+ nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
+ weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
  !
  E_alpha =BS_E_in(i_alpha)
  !
@@ -66,10 +66,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
    iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
    ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-   !
-   ! Bose function for the phonons
-   !
-   bose_factor=bose_f(PH_E)
+   iq_idx =iq_fg-q%FGbz%k_range(iq_bz,1)+1
    !
    ! Excitonic energies in the double-grid
    !
@@ -86,29 +83,31 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
    pole=E_alpha+BS_Sat_E_DbGd
    !
+   ! Bose factor already included in BS_Sat_W_DG and BS_Sat_W_DG_PH_abs
+   !
    ! Phonon emission in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_W_DG(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
+   Sat_absorption=Sat_absorption+BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)/(W-pole)
    !
    ! Phonon emission in luminescence
    !
-   Sat_emission  =Sat_emission  +BS_Sat_W_DG(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
+   Sat_emission  =Sat_emission  +BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)/(W-pole)*boltzm_factor
    !
    pole=E_alpha+BS_Sat_E_DbGd_PH_abs
    !
    ! Phonon absorption in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+   Sat_absorption=Sat_absorption+BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)/(W-pole)
    ! 
    ! Phonon absorption in luminescence
    !
-   Sat_emission=Sat_emission    +BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
+   Sat_emission=Sat_emission    +BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)/(W-pole)*boltzm_factor
    !
  enddo
  !
- ! Average on the q%FGbz points around iq_bz
+ ! Average on the q%FGbz points around iq_bz including the point calculated in Satellite_Simple
  ! 
- Sat_emission  =Sat_emission*weight_dbg
- Sat_absorption=Sat_absorption*weight_dbg
+ Sat_emission  =Sat_emission*weight_dbgd
+ Sat_absorption=Sat_absorption*weight_dbgd
  !
 end subroutine Satellite_DbGrid

@@ -83,11 +83,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  ! Load the Exciton-phonon elements and phonon energies
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
  if(io_err/=0) call error('excph_gkkp databases not found!')
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  !
@@ -120,7 +120,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call msg('rs','Minimum excitonic energy with DbGrid: ',min_EXC_E_DbGd*HA2EV,' eV')
    write(q_point,'(3f12.6,a)') v(:),' [rlu] '
    call msg('rs','Minimum q-point in the DbGrid : '//q_point)
-   !
+  !
  endif
  !
  ! The satellites
@@ -134,10 +134,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  do iq_bz=1,q%nbz
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    ! Add the contribution of q-point transition to the renormalization factors

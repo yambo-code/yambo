@@ -253,8 +253,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      real(SP) :: E_beta,weight_dbg,W_det,W_PH_abs_det,bose_factor
      integer  :: iE_fg,iq_fg,nq_around
      !
-     nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
-     weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
+     nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
+     weight_dbg=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
      !
      do i_alpha=EXCPH_states(1),EXCPH_states(2)
        !
@@ -301,8 +301,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              ! 
            enddo
            !
-           W_det       =W_det/weight_dbg
-           W_PH_abs_det=W_PH_abs_det/weight_dbg
+           W_det       =W_det*weight_dbg
+           W_PH_abs_det=W_PH_abs_det*weight_dbg
            !
            BS_Sat_W_DG(il,i_beta,i_alpha)       =BS_Sat_WEIGHT(il,i_beta,i_alpha) &
  &                                         *abs(BS_Sat_E(il,i_beta,i_alpha))**2*W_det

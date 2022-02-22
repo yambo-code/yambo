@@ -57,8 +57,8 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  integer     :: nq_around,iq_fg,iE_fg
  complex(SP) :: pole
  !
- nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1  ! Number of fine q-points around iq_bz
- weight_dbg=1._SP/real(nq_around,SP)                           ! Total weight of the Db-grid points including the iq_bz
+ nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
+ weight_dbg=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
  !
  E_alpha =BS_E_in(i_alpha)
  !
@@ -108,7 +108,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  ! Average on the q%FGbz points around iq_bz
  ! 
- Sat_emission  =Sat_emission/weight_dbg
- Sat_absorption=Sat_absorption/weight_dbg
+ Sat_emission  =Sat_emission*weight_dbg
+ Sat_absorption=Sat_absorption*weight_dbg
  !
 end subroutine Satellite_DbGrid

@@ -178,7 +178,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  do i_f=1,n_frequencies
    !
-    print*, 'Frequency step = ',i_f,' of ',n_frequencies
+   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -303,7 +303,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached)
                 & -(FL_pol(id,FL_Pi_order,2)+conjg(FL_pol(id,FL_Pi_order,2)))) &
                  & /(FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1))))
    !
-    print*, 'Relative error in mod(Chi) = ',diff_mod
+   !print*, 'Relative error in mod(Chi) = ',diff_mod
    !
    !aim137 prelim - choose what condition to use
    !if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then

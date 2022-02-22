@@ -136,8 +136,8 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
    do iv1=1,en%nbf
      do i1_fl=1,n_tot_fl_modes
        do i2_fl=1,n_tot_duffin_modes
-         FL_V_tilde(i2,i1_fl,i2_fl,iv1,1)=sum( FL_Sm1_plus(iv1,:,i2_fl)*tmp_Vp(i2,:,i1_fl)) 
-         FL_V_tilde(i2,i1_fl,i2_fl,iv1,2)=sum(FL_Sm1_minus(iv1,:,i2_fl)*tmp_Vm(i2,:,i1_fl))
+         FL_V_tilde(i2,i1_fl,i2_fl,iv1,1)=sum( FL_Sm1_plus(:,iv1,i2_fl)*tmp_Vp(i2,:,i1_fl)) 
+         FL_V_tilde(i2,i1_fl,i2_fl,iv1,2)=sum(FL_Sm1_minus(:,iv1,i2_fl)*tmp_Vm(i2,:,i1_fl))
                                                !aim137: en ^, como elijo aca una columna y no la otra?
        enddo
      enddo

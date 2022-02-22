@@ -55,8 +55,8 @@ subroutine interpolate_W(X,Xw,q,mode)
  integer           :: nn,idm,igr,igc,ig2max,iomega
  integer           :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  real(SP)          :: dummy(2),anis_factor,em1_anis(3)
- real(DP)          :: f_func(5),dp_dummy(5)
- complex(SP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
+ complex(DP)       :: f_func(5),dp_dummy(5)
+ complex(DP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,Xw%n_freqs)
  real(SP)          :: v1(3),r_dum(2)
  real(SP)          :: q_grid_b_rlu(3,2),q_grid_b_iku(3,2),q_grid_b_cc(3,2)
  integer           :: ID, io_err, ng_save,G_max_ibz(q%nibz)
@@ -105,7 +105,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  !Check if RIM-W has been alreay calculated
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_RIM_W(ID,mode)
+ io_err=io_RIM_W(ID,mode,Xw)
  !
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
@@ -138,10 +138,11 @@ subroutine interpolate_W(X,Xw,q,mode)
    enddo
  enddo
  !
- if(maxval(G_max_ibz) > X%ng) call error('G_max for RIM-W is higher than G_max of vX')
+ if(maxval(G_max_ibz) > X%ng) call error('G_max of RIM-W is higher than G_max of vX')
  !
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
+ call msg('r', 'Number of interpolated frequencies', Xw%n_freqs)
  call msg('r','')
  do iq=1,q%nibz
    !
@@ -219,7 +220,7 @@ subroutine interpolate_W(X,Xw,q,mode)
         ig2 = idx_G(igc,iq1,nn)
         !
         f_func(nn) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&                    real(vX_nn(nn,iq1,igr,igc,iomega),kind=DP)/(real(vX_nn(nn,iq1,igr,igc,iomega),kind=DP)+1._DP)
+&                    vX_nn(nn,iq1,igr,igc,iomega)/(vX_nn(nn,iq1,igr,igc,iomega)+1._DP)
         !
       enddo
       !
@@ -247,9 +248,12 @@ subroutine interpolate_W(X,Xw,q,mode)
             !
           enddo
           !
-          call msg('r',"f_coeff", real(f_coeff(1,igr,igc,iq1,iomega)))
-          call msg('r',"f_coeff", real(f_coeff(2,igr,igc,iq1,iomega)))
-          call msg('r',"f_coeff", real(f_coeff(3,igr,igc,iq1,iomega)))
+          !call msg('r',"Re[f_coeff(1)]", real(f_coeff(1,igr,igc,iq1,iomega)))
+          !call msg('r',"Im[f_coeff(1)]",aimag(f_coeff(1,igr,igc,iq1,iomega)))
+          !call msg('r',"Re[f_coeff(2)]", real(f_coeff(2,igr,igc,iq1,iomega)))
+          !call msg('r',"Im[f_coeff(2)]",aimag(f_coeff(2,igr,igc,iq1,iomega)))
+          !call msg('r',"Re[f_coeff(3)]", real(f_coeff(3,igr,igc,iq1,iomega)))
+          !call msg('r',"Im[f_coeff(3)]",aimag(f_coeff(3,igr,igc,iq1,iomega)))
           !
         else
           !
@@ -320,7 +324,7 @@ subroutine interpolate_W(X,Xw,q,mode)
           call msg('r','igc_nnn =',ig2)
           !
           f_func(4) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&         real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
+&                     vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega)/(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega)+1._DP)
           !
           !Find nearest 1 --> 3
           !
@@ -343,7 +347,7 @@ subroutine interpolate_W(X,Xw,q,mode)
           call msg('r','igc_nnn =',ig2)
           !
           f_func(5) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&         real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)/(real(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega),kind=DP)+1._DP)
+&                     vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega)/(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega)+1._DP)
           !
           !
           !Coefficients in rlu
@@ -397,7 +401,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !Calculation of RIM-W integrals
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
- call rim('c')
+ call rim('c',Xw)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Debugging output
@@ -415,7 +419,7 @@ subroutine interpolate_W(X,Xw,q,mode)
          ch_dum=' < -Wc [Q = '//trim(intc(iq2))//'] >'
          if (iq1/=iq2) ch_dum=' * < -Wc [Q = '//trim(intc(iq2))//'] >'
          !
-         r_dum(1)= -RIM_W(iq2,1,1)*2._SP*pi
+         r_dum(1)= -RIM_W(1,iq2,1,1)*2._SP*pi
          r_dum(2)= -vX_nn(1,iq2,1,1,1)*RIM_qpg(iq2,1,1)*2_SP*pi
          !
          fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
@@ -437,7 +441,7 @@ subroutine interpolate_W(X,Xw,q,mode)
          ch_dum=' < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
          if (ig1/=ig2) ch_dum=' * < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
          !
-         r_dum(1)= -RIM_W(1,ig2,1)*2._SP*pi
+         r_dum(1)= -RIM_W(1,1,ig2,1)*2._SP*pi
          r_dum(2)= -vX_nn(1,1,ig2,1,1)*RIM_qpg(1,ig2,1)*2_SP*pi
          !
          fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
@@ -496,7 +500,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  if (master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=io_RIM_W(ID,mode)
+   io_err=io_RIM_W(ID,mode,Xw)
  endif
  !
  if (have_cuda) then

@@ -567,7 +567,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
+                 PPA_R=-cmplx(real(RIM_W_d(1,iqibz,ig1,ig2)/2._SP), &
 &                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
                else
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
@@ -626,7 +626,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then
-                 PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP, &
+                 PPA_R=-cmplx(real(RIM_W(1,iqibz,ig1,ig2)/2._SP), &
 &                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
                else
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)

@@ -88,7 +88,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call parser('RIM_W_graph',RIM_W_for_graph)
  call msg('r','RIM_W_graph', RIM_W_for_graph)
- !YAMBO_ALLOC(Xo_graph_wings,(X%ng))
  !
  ! Sectioning
  !

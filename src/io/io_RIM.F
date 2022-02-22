@@ -88,7 +88,7 @@ integer function io_RIM(ID)
  !
 end function
 !
-integer function io_RIM_W(ID,mode)
+integer function io_RIM_W(ID,mode,Xw)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_W_ng,RIM_n_rand_pts,RIM_W_is_diagonal,RL_vol,RIM_RL_vol,&
@@ -98,9 +98,12 @@ integer function io_RIM_W(ID,mode)
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
  use cuda_m,         ONLY:have_cuda
+ use frequency,     ONLY:w_samp
+ use com,           ONLY:msg
 #include <memory.h>
  !
  integer :: ID
+ type(w_samp) :: Xw
  character(3) :: mode
  !
  ! Work Space
@@ -150,12 +153,15 @@ integer function io_RIM_W(ID,mode)
  if (any((/io_sec(ID,:)==2/))) then
    !
    if (read_is_on(ID)) then
-     YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+     YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
      if(l_PPA_E) YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    endif
    !
-   call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/shape(RIM_W)/))
-   call io_bulk(ID,R3=RIM_W)
+   !call msg("r","shape(RIM_W)", shape(RIM_W))
+   !call msg("r","shape(RIM_W)_2", (/Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng/) )
+   !
+   call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/2,Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng/))
+   call io_bulk(ID,C4=RIM_W)
    !
    if(l_PPA_E) then
      call io_bulk(ID,VAR="RIM_W_E",VAR_SZ=(/shape(RIM_W_E)/))

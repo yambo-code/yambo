@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine rim(mode)
+subroutine rim(mode,Xw)
  !
  use pars,          ONLY:SP,pi,DP,schlen
  use com,           ONLY:msg
@@ -36,6 +36,7 @@ subroutine rim(mode)
 &                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
+ use frequency,     ONLY:w_samp
  !
 #include<memory.h>
  !
@@ -43,9 +44,10 @@ subroutine rim(mode)
  !
  ! Work Space
  !
- type(PP_indexes)::px
- integer   :: iq
- real(SP)  :: em1_anis(3),G_radii,G_circ
+ type(PP_indexes)      ::px
+ type(w_samp),optional :: Xw
+ integer               :: iq
+ real(SP)              :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -179,7 +181,7 @@ subroutine rim(mode)
    YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    RIM_qpg=0._SP
  else if (mode == "c") then
-   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
  end if
  !
@@ -205,7 +207,7 @@ subroutine rim(mode)
      !
    else
      !
-     call rim_integrate_w(iq,qr,N_out,em1_anis)
+     call rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
      !
    endif
    call live_timing(steps=1)

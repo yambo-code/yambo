@@ -44,7 +44,7 @@ module parallel_int
    module procedure l1share,                                           &
 &                   i1share, i2share, i3share,                         &
 &                   i81share,                                          &
-&                   r0share, r1share, r2share,r3share,                 &
+&                   r0share, r1share, r2share,r3share,r4share,         &
 &                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
 &                   d0share, d1share, d2share,d3share,                 &
@@ -463,6 +463,37 @@ module parallel_int
      allocate(larray(dimension))
      larray=0.
      call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine r4share(array,COMM)
+     real(SP):: array(:,:,:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(4),dimension,LOCAL_COMM  ! Work Space
+     real(SP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0.
+     call mpi_allreduce(array(1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)

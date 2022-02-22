@@ -162,9 +162,10 @@ module R_lattice
  integer :: RIM_W_ng
  integer :: RIM_W_n_rand_pts
  logical :: RIM_W_is_diagonal
- real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
- real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
- real(DP),   allocatable :: f_coeff(:,:,:,:,:)
+ real(SP),   allocatable          :: RIM_W_E(:,:)
+ complex(SP),allocatable          :: RIM_W  (:,:,:,:)
+ complex(SP),allocatable DEV_ATTR :: RIM_W_d(:,:,:,:)
+ complex(DP),allocatable :: f_coeff(:,:,:,:,:)
  logical :: RIM_W_for_graph
  !complex(SP),   allocatable :: Xo_graph_wings(:)
  !real(SP):: v_fermi

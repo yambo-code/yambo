@@ -32,7 +32,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:l_sc_run
+ use drivers,       ONLY:l_sc_run,l_RIM_W
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
 use parser_m,       ONLY:parser
@@ -48,7 +48,7 @@ use parser_m,       ONLY:parser
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -80,7 +80,7 @@ use parser_m,       ONLY:parser
  type(elemental_collision):: isc,iscp
  character(schlen):: ch,SECTION_name
  !
- logical          :: X_is_TR_rotated,l_X_alloc
+ logical          :: X_is_TR_rotated,l_X_alloc,l_RIM_W_g
  real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol)
  complex(SP)      :: local_rhotw(X%ng),pre_factor
  complex(DP)      :: dp_dummy,ctmp
@@ -249,7 +249,12 @@ use parser_m,       ONLY:parser
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)! DALV: Differently from PPA the factor isc%gamp(ig1,ig2) is included later
+         l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+         if(l_RIM_W_g) then
+           MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
+         else
+           MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)*isc%gamp(ig1,ig2)
+         endif
          MPred=.false.
          PPcond_rate=0._SP
          MP_err=0._SP
@@ -384,8 +389,7 @@ use parser_m,       ONLY:parser
                  endif
                endif
                !
-               ! DALV: the factor isc%gamp(ig1,ig2) is included here
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2)) *isc%gamp(ig1,ig2)  *&
+               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))  *&
 &                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
 &                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&

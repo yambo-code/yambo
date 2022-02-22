@@ -68,7 +68,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  real(SP)      :: min_E,exc_E,E_alpha,bose_factor,PH_E,v(3)
  type(bz_samp) :: q_DbGd
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: ID_E_kpq,ID_E_kpq_obj,ID_DG,min_pos_E_DbGd(1)
+ integer       :: ID_DG,min_pos_E_DbGd(1)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  character(schlen) :: q_point
  logical           :: l_DbGd_Sigma_Only
@@ -101,8 +101,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    INTERPOLATE_is_quiet =.TRUE.
    INTERP_shell_factor  =E_kpq_sh_fact
    ID_EXC_obj=1
+   ID_EXC    =1
    call INTERPOLATION_BZ_setup(q)
-   INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
+   INTERP_obj(ID_EXC_obj)%what="EXC_E(k+q)"
    call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_EXC,ID_obj=ID_EXC_obj)
    !
    call bz_samp_reset(q_DbGd)
@@ -111,7 +112,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    q_DbGd%pt=q%FGbz%pt
    !
    YAMBO_ALLOC(EXC_E_DbGd,(EXCPH_states(2),q%FGbz%N))
-   call INTERPOLATION_BZ(K=q_DbGd,NK=q%FGbz%N,ID=ID_E_kpq,R1D=EXC_E_DbGd)
+   call INTERPOLATION_BZ(K=q_DbGd,NK=q%FGbz%N,ID=ID_EXC,R1D=EXC_E_DbGd)
    !
    min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
    min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))

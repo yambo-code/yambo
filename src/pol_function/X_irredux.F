@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
+subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Non interacting Xo
  !
@@ -82,6 +82,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  type(DIPOLE_t)       :: Dip
  type(w_samp)         :: Xw
  integer              :: iq
+ character(*)         :: what
  !
  ! Work Space
  !
@@ -140,7 +141,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
- call timing('Xo (procedure)',OPR='start')
+ call timing(what//' (procedure)',OPR='start')
  !
  ! Poles tabulation
  !==================
@@ -217,10 +218,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Timing
  !========
- live_t_string='Xo@q['//trim(intc(iq))//'] '
+ live_t_string=what//'@q['//trim(intc(iq))//'] '
  !
 #if defined _SC 
- if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
+ if (l_sc_run.and..not.l_eval_collisions) live_t_string=what//'@it['//trim(intc(it_now))//'] '
 #endif
  !
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
@@ -263,8 +264,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
      call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt)
      !
      ctmp = DEV_VAR(Xo_res)(1,1)
-     ! !DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
-       !      once to avoid an inconsistency with the Drude frequency given by input
+     !
+     ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
+     !       once to avoid an inconsistency with the Drude frequency given by input
+     !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
      if (have_cuda) then
@@ -541,8 +544,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  current_iq=iq
  n_threads_FFT=0
  !
- call timing('Xo (procedure)',OPR='stop')
- call timing('Xo (REDUX)',OPR='start')
+ call timing(what//' (procedure)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='start')
  !
  if (have_cuda) then
    X_par%blc=X_par%blc_d
@@ -556,7 +559,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    if (X_lower_triangle_matrix_in_use) call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  enddo
  !
- call timing('Xo (REDUX)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='stop')
  !
  ! Populate the lower triangle/piece of Xo 
  !=========================================

@@ -206,11 +206,8 @@ contains
    call cgelsd(2*np,npr,1,A,2*np,B,2*np,S,rcond,rank,work,lwork,rwork,iwork,info)
 #endif
    !
-   R=B(1:npr)
-   !
-   do i=np,npr+1,-1
-     R(i)=0._SP
-   enddo
+   R(1:npr)=B(1:npr)
+   if (npr<np) R(npr+1:)=0.0_SP
    !
  end subroutine mpa_R_fit
  !

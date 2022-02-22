@@ -155,7 +155,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (l_ppa) then
    !
    call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="PPA",check=.TRUE.,ops=(/"=="/))
-   !
    call IO_desc_add(qp%desc,kind="r",str='PPA imaginary Energy',R=(/X%ppaE*HA2EV/),check=.TRUE.,ops=(/"=="/),term="ev")
    !
    QP_DB_kind=QP_SE_GoWo_PPA
@@ -166,7 +165,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (l_mpa) then
    !
    call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="MPA",check=.TRUE.,ops=(/"=="/))
-   !
    call IO_desc_add(qp%desc,kind="r",str='MPA number of poles',I=(/X%mpa_npoles/),check=.TRUE.,ops=(/"=="/))
    !
    QP_DB_kind=QP_SE_GoWo_PPA

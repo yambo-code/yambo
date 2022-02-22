@@ -36,8 +36,8 @@ pkgname_libxc=libxc-5.1.5
 pkgname_lapack=lapack-3.9.1
 pkgname_blacs=blacs
 pkgname_scalapack=scalapack-2.1.0
-pkgname_petsc=petsc-3.13.4
-pkgname_slepc=slepc-3.13.3
+pkgname_petsc=petsc-3.14.6
+pkgname_slepc=slepc-3.14.2
 pkgname_fftw=fftw-3.3.6-pl1
 pkgname_fftqe=fftqe
 pkgname_yaml=yaml-0.2.2
@@ -67,6 +67,8 @@ tarball_futile=$(pkgname_futile).tar.gz
 #
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
 url_libxc=https://www.tddft.org/programs/libxc/down/5.1.5/$(tarball_libxc)
+url_petsc=https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/$(tarball_petsc)
+url_slepc=https://slepc.upv.es/download/distrib/$(tarball_slepc)
 #
 # Intenrnal URL's
 #
@@ -81,8 +83,6 @@ url_iotk=$(base_url)/$(tarball_iotk)
 url_etsf_io=$(base_url)/$(tarball_etsf_io)
 url_blacs=$(base_url)/$(tarball_blacs)
 url_scalapack=$(base_url)/$(tarball_scalapack)
-url_petsc=$(base_url)/$(tarball_petsc)
-url_slepc=$(base_url)/$(tarball_slepc)
 url_fftw=$(base_url)/$(tarball_fftw)
 url_fftqe=$(base_url)/$(tarball_fftqe)
 url_yaml=$(base_url)/$(tarball_yaml)

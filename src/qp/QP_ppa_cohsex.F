@@ -1,4 +1,4 @@
-!rr
+!
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
@@ -79,7 +79,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  integer      ::GW_iter
  !
  ! DALV: this is the frequency grid for Sc,
- !        now set in the solvers('n','s','g')
+ !       now set in the solvers('n','s','g')
  !
  real(SP),intent(in) ::W(QP_dSc_steps)
  !
@@ -531,7 +531,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
            !$omp end parallel do
          endif
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
+         ! DALV: here the grid is center in E0
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -572,7 +573,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                else
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
-               !
 
                !
                ! inline bose_f function
@@ -698,7 +698,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      !
      if(l_GW_terminator) then
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp ! DALV: here the grid is center in E0
+       ! DALV: here the grid is center in E0
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
        !
        do i_w=1,QP_dSc_steps
          !

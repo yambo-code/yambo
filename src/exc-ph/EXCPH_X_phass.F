@@ -100,6 +100,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    INTERPOLATE_is_serial=.TRUE.
    INTERPOLATE_is_quiet =.TRUE.
    INTERP_shell_factor  =E_kpq_sh_fact
+   ID_EXC_obj=1
    call INTERPOLATION_BZ_setup(q)
    INTERP_obj(ID_E_kpq_obj)%what="EXC_E(k+q)"
    call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,ID=ID_EXC,ID_obj=ID_EXC_obj)

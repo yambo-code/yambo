@@ -67,7 +67,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  io_extension(ID)='dipoles'
  !
- io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_DIP)
+ io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=.not.any((/io_sec(ID,:)==1/)).and.frag_DIP)
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

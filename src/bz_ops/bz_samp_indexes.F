@@ -491,7 +491,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  if(l_setup.and.fat_log) call print_q_indirect( )
  !
  if(master_cpu) then
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3,4,6/),ID=io_db,COMM=PAR_K_scheme%COM_ibz_index%COMM)
    io_err=io_QINDX(Xk,q,io_db)
  endif
  !
@@ -506,7 +506,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 #endif
  !
  if (do_qindx_B) then
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db,COMM=PAR_K_scheme%COM_ibz_index%COMM)
    io_err=io_QINDX(Xk,q,io_db)
  endif
  !

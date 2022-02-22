@@ -26,8 +26,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  use pars,          ONLY:schlen,IP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLL_bands,COLLISIONS_group
- use IO_m,          ONLY:io_status,IO_OUTDATED_DB,read_is_on,&
-&                        io_raw_extension
+ use IO_m,          ONLY:io_status,IO_OUTDATED_DB,read_is_on
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED,&
@@ -159,14 +158,13 @@ integer function io_COLLISIONS_header(ID,COLL)
  !
 end function io_COLLISIONS_header
 !
-!
-integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
+integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  use pars,          ONLY:schlen,IP,SP
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
-&                        VERIFY,io_extension,io_raw_extension,write_is_on,nf90_sync,netcdf_call
+&                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
 &                        io_variable_bulk,def_variable_bulk,io_disconnect
  use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
@@ -182,7 +180,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  integer, intent(inout)            ::ID
  type(COLLISIONS_group)            ::COLL
  type(COLLISIONS_element),optional, target :: COLL_element
- integer, intent(in)     ,optional         :: i_coll_,COMM
+ integer, intent(in)     ,optional         :: i_coll_
  !
  real(SP),   pointer :: tmp_link_real(:,:)
  complex(SP),pointer :: tmp_link_complex(:,:)
@@ -202,12 +200,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  call get_collisions_dbname(COLL%kind,db_name)
  !
- if(any(io_sec(ID,:)==1).and.write_is_on(ID)) then
-   if(.not.present(COMM)) call error(" [IO COLLs] Parallel I/O requires COMM for initialization")
-   io_COLLISIONS=io_connect(desc=trim(db_name),type=2,ID=ID,COMM=COMM)
- else
-   io_COLLISIONS=io_connect(desc=trim(db_name),type=2,ID=ID)
- endif
+ io_COLLISIONS=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
  if(io_COLLISIONS/=0) goto 1
  !

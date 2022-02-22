@@ -132,12 +132,12 @@ module RT_control
    !
    subroutine RT_DB_init()
      RT_DB_name(1:3)= "none"
-     RT_DB_name(4)= "OBSERVABLES"
-     RT_DB_name(5)= "G_lesser_RESTART"
-     RT_DB_name(6)= "G_lesser"
-     RT_DB_name(7)= "carriers"
-     RT_DB_name(8)= "THETA"
-     RT_DB_name(9)= "REFERENCE"
+     RT_DB_name(4) = "OBSERVABLES"
+     RT_DB_name(5) = "G_lesser_RESTART"
+     RT_DB_name(6) = "G_lesser"
+     RT_DB_name(7) = "carriers"
+     RT_DB_name(8) = "THETA"
+     RT_DB_name(9) = "REFERENCE"
    end subroutine
    !
    integer function RT_return_db_ID(what)

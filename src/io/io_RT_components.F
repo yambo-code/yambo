@@ -68,13 +68,13 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
  use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,def_variable_bulk,io_variable_bulk
- use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
+ use IO_m!,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
 &                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
 &                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
+ use parallel_m
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
 #if defined _ELPH_ITERATIVE
  use RT_iterative,   ONLY:THETA_matrix
@@ -90,7 +90,7 @@ integer function io_RT_components(what,ID)
  !
  ! Work Space
  character(schlen)     ::db_name
- integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag,local_COMM
+ integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
  logical               ::loading_carr_before_neq
  integer, external     :: variables_RT_dynamic
  !
@@ -113,14 +113,12 @@ integer function io_RT_components(what,ID)
  !
  ! ACTION
  !========
- if (RT_do_IO("ANY_G").and.any((/io_sec(ID,:)>=3/))) then
-#if defined _PAR_IO
-   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
-   if ( read_is_on(ID)) local_COMM=mpi_comm_world
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier))//"_PAR",type=db_kind,ID=ID,COMM=local_COMM)
-#else
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID,FORCE_READ_MODE=.true.)
+ if (RT_do_IO("ANY_G")) then 
+   io_RT_components=io_connect(desc=trim(db_name),type=db_kind,ID=ID&
+#if !defined _PAR_IO
+!&                              ,FORCE_READ_MODE=.true.&
 #endif
+&                             )
    if (io_RT_components/=0) goto 1
  else
    if (db_kind>0) db_name="RT_"//trim(RT_DB_name(RT_current_DB_identifier))
@@ -230,12 +228,12 @@ integer function io_RT_components(what,ID)
  !==========================
  if (RT_do_IO("OBSERVABLES")) call io_RT_components_OBS(ID,"FILL")
  !
+ ! End
+ !=====
 #if !defined _PAR_IO
  if (RT_do_IO("K_SECTION")) call io_fragment_disconnect(ID,ID_frag)
 #endif
- !
 1 call io_disconnect(ID=ID)
- !
  call timing('io_RT_components',OPR='stop')
  !
 end function

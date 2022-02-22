@@ -59,7 +59,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,MPI_COMM_WORLD
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
@@ -109,8 +109,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! I/O
  !
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,qindx_ID_frag,ID,ID_head,ID_compr,io_QINDX_err
- integer, external ::io_BS,io_BS_header,io_BS_PAR_init
+ integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
+ integer, external ::io_BS_PAR_init
  !
  ! Timing and restart
  !
@@ -302,11 +303,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,COMM=MPI_COMM_WORLD)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID)
- io_BS_err=io_BS_PAR_INIT(iq,ID,"full")
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID,COMM=MPI_COMM_WORLD)
+ io_BS_err=io_BS_PAR_init(iq,ID,"full")
  !
 #else
  call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)

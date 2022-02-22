@@ -31,7 +31,6 @@ integer function io_Overlaps(Dip,ID)
 &                        IO_NOT_ALLOWED,io_DIP
  use IO_int,        ONLY:io_connect,io_disconnect,def_variable_bulk,&
 &                        io_variable_bulk,io_header
- use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -65,11 +64,7 @@ integer function io_Overlaps(Dip,ID)
  !
  io_extension(ID)='Overlap'
  !
- if (any((/io_sec(ID,:)==1/))) then
-   io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
- else
-   io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
- endif
+ io_Overlaps=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_Overlaps/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

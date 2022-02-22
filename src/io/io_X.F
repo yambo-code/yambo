@@ -36,7 +36,6 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:PAR_COM_X_WORLD
 #if defined _PAR_IO
  use X_m,           ONLY:X_par
 #endif
@@ -50,7 +49,7 @@ integer function io_X(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
- logical             ::different_db_RL_order,perform_IO
+ logical             ::different_db_RL_order
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
@@ -78,18 +77,10 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==4) db_desc='pp'
  if (STRING_same(X%KERNEL,"IP")) db_desc='Xo'
  !
-#if defined _PAR_IO
- perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
-#else
- perform_IO=.true.
-#endif
+ io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
+ if (io_X/=0) goto 1
  !
- if(perform_IO) then
-   io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
-   if (io_X/=0) goto 1
- endif
- !
- if (any((/io_sec(ID,:)==1/)).and.perform_IO) then
+ if (any((/io_sec(ID,:)==1/))) then
    !
    ! Header
    !
@@ -151,7 +142,7 @@ integer function io_X(X,Xw,ID)
  if (iq==0 ) goto 1
  if (iq==-1) goto 1
  !
- call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err)
  io_X=io_err
  if (io_err/=0) goto 1
  !
@@ -171,17 +162,14 @@ integer function io_X(X,Xw,ID)
    if (iq>2 .and. trim(db_desc)/="em1d") io_com(ID_frag)=NONE
    call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
-   if (perform_IO) then
-     if (X%whoami==4) then
-       call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="eV",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
-     endif
-     if (X%whoami/=4) then
-       call io_variable_elemental(ID_frag,           VAR="Current Q-pt index      ",I0=iq)
-       call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X energy range", TERMINATOR="eV ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X damping range",TERMINATOR="eV",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
-       call io_variable_elemental(ID_frag,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
-     endif
-     !
+   if (X%whoami==4) then
+     call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="PPA Im  energy",TERMINATOR="eV",   R0=X%ppaE,    CHECK=.true.,OP=(/"=="/))
+   endif
+   if (X%whoami/=4) then
+     call io_variable_elemental(ID_frag,           VAR="Current Q-pt index      ",I0=iq)
+     call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X energy range", TERMINATOR="eV ",R1=Xw%er,WARN =.true.,OP=(/"==","=="/))
+     call io_variable_elemental(ID_frag,UNIT=HA2EV,VAR="X damping range",TERMINATOR="eV",R1=Xw%dr,CHECK=.true.,OP=(/"==","=="/))
+     call io_variable_elemental(ID_frag,           VAR="Number of frequencies   ",I0=Xw%n_freqs,CHECK=.true.,OP=(/"=="/))
    endif
    !
    call def_variable_elemental(ID_frag,"",0,0,1)
@@ -204,7 +192,7 @@ integer function io_X(X,Xw,ID)
    !
    ch="FREQ_sec_iq"//trim(intc(iq))
    call def_variable_bulk(ID_frag,trim(ch),1,(/2,Xw%n_freqs/),SP,par_io_kind='independent')
-   if(perform_IO) call io_variable_bulk(ID_frag,1,C1=Xw%p)
+   call io_variable_bulk(ID_frag,1,C1=Xw%p)
    !
    ! X_mat @iq
    !

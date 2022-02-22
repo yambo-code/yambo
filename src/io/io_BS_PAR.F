@@ -128,11 +128,9 @@ integer function io_BS_header(iq,X,ID,mode)
  !
 end function io_BS_header
 !
-!
 integer function io_BS_PAR_init(iq,ID,mode)
  !
  use stderr,        ONLY:intc,real2ch
- use parallel_m,    ONLY:MPI_COMM_WORLD
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
@@ -165,7 +163,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  ! If I'm in compressed_check mode I skip the definition of variables
  !
- io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
+ io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
  if(write_is_on(ID).and.io_BS_PAR_init/=0)  return ! here it should give error
  !

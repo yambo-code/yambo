@@ -72,13 +72,12 @@ module IO_int
      !
    end subroutine
    !
-   integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID,COMM)
+   integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID)
      character(*)           :: desc
      integer,      optional :: type,ID
      character(*), optional :: subfolder
      logical,      optional :: no_full_RESET
      logical,      optional :: FORCE_READ_MODE
-     integer,      optional :: COMM
    end function
    !
    subroutine io_disconnect(ID,FORCE)
@@ -88,12 +87,13 @@ module IO_int
      !
    end subroutine io_disconnect
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,WHO)
      !
      integer,intent(in)    :: ACTION
      integer,intent(inout) :: ID
      integer,optional,intent(in) :: MODE,COM,SEC(:)
      integer,optional,intent(in) :: COMM
+     logical,optional,intent(in) :: WHO
      !
    end subroutine io_control
    !
@@ -189,10 +189,10 @@ module IO_int
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
+   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,cpu_id)
      integer, intent(in)   :: ID
      integer, intent(out)  :: ID_frag
-     integer, optional :: i_fragment,j_fragment,ierr,COMM,cpu_id
+     integer, optional :: i_fragment,j_fragment,ierr,cpu_id
    end subroutine
 #endif
    !

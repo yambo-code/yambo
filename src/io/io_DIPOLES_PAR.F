@@ -30,8 +30,7 @@ integer function io_DIPOLES(Dip,ID)
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
 &                        nf90_sync,write_is_on,io_unit,netcdf_call
  use IO_int,        ONLY:io_connect,io_disconnect,io_variable_bulk,def_variable_bulk,io_header
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital, &
-&                        compute_Orb_dipoles,compute_Spin_dipoles
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital, compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
@@ -78,11 +77,7 @@ integer function io_DIPOLES(Dip,ID)
  !
  io_extension(ID)='dipoles'
  !
- if (any((/io_sec(ID,:)==1/))) then
-   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
- else
-   io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM)
- endif
+ io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
@@ -104,7 +99,6 @@ integer function io_DIPOLES(Dip,ID)
    goto 1
  endif
  ! 
- !
  if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik)
  !
  ! Reading size and position

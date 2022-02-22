@@ -40,7 +40,6 @@ integer function io_QINDX(Xk,q,io_db)
  !
  type(bz_samp)::q,Xk
  integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
- logical      ::PAR_IO
  !
  ! Work Space
  !
@@ -48,13 +47,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  call timing('io_QINDX',OPR='start')
  !
- PAR_IO=.false.
-#if defined _PAR_IO
- PAR_IO=any((/io_sec(io_db,:)==5/)).and.write_is_on(io_db)
-#endif
- !
- if (     PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db,COMM=PAR_K_scheme%COM_ibz_index%COMM)
- if (.not.PAR_IO) io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
+ io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
  !
  if (any((/io_sec(io_db,:)==1/))) then
@@ -167,7 +160,7 @@ integer function io_QINDX(Xk,q,io_db)
      !
      io_extension(io_db)='kindx'
 #if defined _PAR_IO
-     call io_fragment(io_db,id_frag,i_fragment=3,COMM=PAR_K_scheme%COM_ibz_index%COMM)
+     call io_fragment(io_db,id_frag,i_fragment=3)
      call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
 #else
      call io_fragment(io_db,id_frag,i_fragment=3)
@@ -224,7 +217,6 @@ integer function io_QINDX(Xk,q,io_db)
  !
 end function io_QINDX
 !
-!
 integer function qindx_B_init(ID,ID_frag)
  !
  use pars,       ONLY:IP
@@ -247,7 +239,6 @@ integer function qindx_B_init(ID,ID_frag)
  qindx_B_init=io_status(ID_frag)
  !
 end function qindx_B_init
-!
 !
 integer function qindx_B_close(ID,ID_frag)
  !

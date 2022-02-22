@@ -40,7 +40,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
- use IO_int,        ONLY:io_control
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
  use com,           ONLY:depth
  use TDDFT,         ONLY:F_xc_gspace
@@ -383,14 +383,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        X%KERNEL="IP"
      endif
      !
-     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/1/),ID=ID(idb))
-     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb))
+     call IO_and_Messaging_switch("SAVE")
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+     !
+     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/1/),ID=ID(idb),COMM=PAR_COM_X_WORLD%COMM)
+     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb),COMM=PAR_COM_X_WORLD%COMM)
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then
        X%whoami=whoami_save
        X%KERNEL=KERNEL_save
      endif
+     !
+     call IO_and_Messaging_switch("RESTORE")
      !
    end subroutine
    !

@@ -152,9 +152,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//")"
    !
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//" (Coupling"
-   if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
-   if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
-   if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
+   !if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
+   !if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
+   !if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//")"
    !
  endif

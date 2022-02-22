@@ -40,10 +40,10 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
-&                        min_EXC_E,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,min_EXC_E_DbGd
+&                        min_EXC_E
  use functions,     ONLY:bose_f,boltzman_f
  use units,         ONLY:HA2CMm1
- use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold,use_PH_DbGd,PH_freqs
+ use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
  !
 #include<memory.h>
  !
@@ -55,33 +55,13 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  real(SP)    :: PH_E,bose_factor,boltzm_factor
  complex(SP) :: pole,E_alpha
- real(SP), pointer :: BS_S_W(:,:,:),BS_S_W_PH_abs(:,:,:)
- real(SP)    :: min_E
  !
- if(use_PH_DbGd) then
-   BS_S_W       =>BS_Sat_W_DG(:,:,:,1)
-   BS_S_W_PH_abs=>BS_Sat_W_DG_PH_abs(:,:,:,1)
-   min_E        =min_EXC_E_DbGd
- else
-   BS_S_W       =>BS_Sat_WEIGHT
-   BS_S_W_PH_abs=>BS_Sat_WEIGHT_PH_abs
-   min_E        =min_EXC_E
- endif
- !    
  Sat_absorption=cZERO
  Sat_emission  =cZERO
  !
  ! Bose function for the phonons
  !
- if(use_PH_DbGd.and.iq==1) then
-    !     
-    ! Use the phonon-energies calculated with matdyn.x that include
-    ! LO-TO splitting and acustic sum rule
-    !    
-    ph_E=PH_freqs%E(iq,il,1)
- else
-    ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
- endif
+ ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
  !
  if(ph_E<FAN_deltaE_treshold) return
  !
@@ -91,26 +71,26 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Boltzman factor for the luminescence
  !
- boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_E)
+ boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !
  ! Phonon emission in absorption
  !
- Sat_absorption=Sat_absorption+BS_S_W(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
+ Sat_absorption=Sat_absorption+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)
  !
  ! Phonon emission in luminescence
  !
- Sat_emission=Sat_emission+BS_S_W(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
+ Sat_emission=Sat_emission+BS_Sat_WEIGHT(il,i_beta,i_alpha)/(W-pole)*bose_factor*boltzm_factor
  !
  pole=E_alpha+BS_Sat_E_PH_abs(il,i_beta,i_alpha)
  !
  ! Phonon absorption in absorption
  !
- Sat_absorption=Sat_absorption+BS_S_W_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
+ Sat_absorption=Sat_absorption+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*bose_factor 
  ! 
  ! Phonon absorption in luminescence
  !
- Sat_emission=Sat_emission+BS_S_W_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
+ Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
  !
 end subroutine Satellite_Simple

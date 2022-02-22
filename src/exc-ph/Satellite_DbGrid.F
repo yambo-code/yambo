@@ -40,7 +40,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd, &
 &                        BS_Sat_W_DG,BS_Sat_W_DG_PH_abs 
- use ELPH,          ONLY:PH_freqs
+ use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq
  use functions,     ONLY:bose_f,boltzman_f
  !
 #include<memory.h>
@@ -52,7 +52,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  ! Work Space
  !
- real(SP)    :: PH_E,E_alpha,boltzm_factor,weight_dbgd,E_beta
+ real(SP)    :: PH_E,E_alpha,boltzm_factor,weight_dbgd,E_beta,BS_ave_W,BS_ave_W_PH_abs,bose_factor
  complex(SP) :: BS_Sat_E_DbGd,BS_Sat_E_DbGd_PH_abs
  integer     :: nq_around,iq_fg,iE_fg,iq_idx
  complex(SP) :: pole
@@ -60,13 +60,73 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
  weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
  !
+ ! Calculate the Satellite Weight
+ !
+ BS_ave_W=rZERO
+ BS_ave_W_PH_abs=rZERO
+ !
+ do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+   !
+   if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+     !      
+     ! the first point correspond to the point in the course grid
+     !
+     ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+     !
+     !  if iq==1 
+     !  I read ph-energies calculated with matdyn.x 
+     !  that includes the LO-TO splitting and the acustic sum rule
+     !
+     if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
+   else
+     !      
+     ! Double-grid energies
+     !
+     iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+     ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     !
+   endif
+   !
+   iq_idx =iq_fg-q%FGbz%k_range(iq_bz,1)+1
+   !
+   BS_ave_W       =BS_ave_W+BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)
+   BS_ave_W_PH_abs=BS_ave_W_PH_abs+BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)
+   !
+ enddo
+ !
+ BS_ave_W       =BS_ave_W*weight_dbgd
+ BS_ave_W_PH_abs=BS_ave_W_PH_abs*weight_dbgd
+ !
+ Sat_absorption=cZERO
+ Sat_emission  =cZERO
+ !
  E_alpha =BS_E_in(i_alpha)
  !
  do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
    !
-   iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-   ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-   iq_idx =iq_fg-q%FGbz%k_range(iq_bz,1)+1
+   if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+     !
+     ! the first point correspond to the point in the course grid
+     !
+     ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+     !
+     !  if iq==1
+     !  I read ph-energies calculated with matdyn.x
+     !  that includes the LO-TO splitting and the acustic sum rule
+     !
+     if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
+   else
+     !
+     ! Double-grid energies
+     !
+     iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+     ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     !
+   endif
+   !
+   if(ph_E<FAN_deltaE_treshold) cycle
+   !
+   bose_factor=bose_f(ph_E)
    !
    ! Excitonic energies in the double-grid
    !
@@ -87,21 +147,21 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
    ! Phonon emission in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)/(W-pole)
+   Sat_absorption=Sat_absorption+BS_ave_W/(W-pole)*(1._SP+bose_factor)
    !
    ! Phonon emission in luminescence
    !
-   Sat_emission  =Sat_emission  +BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)/(W-pole)*boltzm_factor
+   Sat_emission  =Sat_emission  +BS_ave_W/(W-pole)*boltzm_factor*boltzm_factor
    !
    pole=E_alpha+BS_Sat_E_DbGd_PH_abs
    !
    ! Phonon absorption in absorption
    !
-   Sat_absorption=Sat_absorption+BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)/(W-pole)
+   Sat_absorption=Sat_absorption+BS_ave_W_PH_abs/(W-pole)*bose_factor
    ! 
    ! Phonon absorption in luminescence
    !
-   Sat_emission=Sat_emission    +BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)/(W-pole)*boltzm_factor
+   Sat_emission=Sat_emission    +BS_ave_W_PH_abs/(W-pole)*boltzm_factor*(1._SP+bose_factor)
    !
  enddo
  !

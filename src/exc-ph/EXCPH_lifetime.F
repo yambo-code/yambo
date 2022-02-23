@@ -23,9 +23,9 @@
 !
 !> @brief Calculate exciton non-radiative life-time induced by phonon-scattering
 !!
-subroutine EXCPH_lifetime(E,k,q,X)
+subroutine EXCPH_lifetime(E,k,q,X,wv)
  !
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,HA2CMm1
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
  use electrons,      ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,      ONLY:bz_samp
@@ -36,20 +36,24 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         alloc_EXC,free_EXC         
- use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq 
+ use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
+ use frequency,      ONLY:w_samp
+ use stderr,         ONLY:intc
  !
 #include<memory.h>
  !
  type(levels)  ::E
  type(bz_samp) ::k,q
  type(X_t)     ::X
+ type(w_samp)  :: wv 
  !
  ! Work space
  !
  integer :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
  integer :: iq_bz,i_alpha,i_beta,il
+ integer :: min_pos(1)
  !
  call section('*','EXCPH-LifTime')
  !
@@ -81,7 +85,19 @@ subroutine EXCPH_lifetime(E,k,q,X)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  !
+ ! Info on excitons
+ ! 
+ min_pos  =minloc(BS_all_E(1,:))
+ min_EXC_E=minval(BS_all_E(1,:))
+ !
+ call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
+ call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
+ call msg('rs','Self-energy broadening : ',wv%dr(1)*HA2EV/1000._SP,'meV')
+ !
  ! Calculate the life-times
+ !
+ YAMBO_ALLOC(EXC_LifeTime,(EXCPH_states(1):EXCPH_states(2)))
+ EXC_LifeTime=rZERO
  !
  do iq_bz=1,q%nbz
    !
@@ -90,10 +106,11 @@ subroutine EXCPH_lifetime(E,k,q,X)
    !
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
-     do il=elph_branches(1),elph_branches(2)
+     do i_beta=EXCPH_sum(1),EXCPH_sum(2)
        !
-       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+       do il=elph_branches(1),elph_branches(2)
          !
+         EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*Simple_pole()
          !
        enddo
        !
@@ -103,8 +120,47 @@ subroutine EXCPH_lifetime(E,k,q,X)
    !
  enddo
  !
+ EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz)
+ !
+ ! Output
+ !
+ call msg('rs','Exciton lifetimes:')
+ do i_alpha=EXCPH_states(1),EXCPH_states(2)
+   call msg('rs','Exciton '//intc(i_alpha)//' lifetime: ',EXC_LifeTime(i_alpha)*HA2EV/1000._SP,'meV')
+ enddo
+ !
  ! Deallocations
  !
+ YAMBO_FREE(EXC_LifeTime)
  call free_EXC()
  !
+ contains
+  !
+  function Simple_pole()
+    use EXCPH,          ONLY:min_EXC_E,EXCPH_Gkkp_sq
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
+    use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
+    implicit none
+    !
+    real(SP) :: Simple_pole
+    real(SP) :: E_alpha,E_beta
+    real(SP) :: ph_E,N_bose,F_boltz
+    !
+    Simple_pole=rZERO
+    !
+    E_alpha=real(BS_E_in(i_alpha),SP)
+    E_beta =BS_all_E(i_beta,iq_bz)
+    !
+    ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+    if(ph_E<FAN_deltaE_treshold) return
+    !
+    N_bose  =bose_f(ph_E)
+    !
+    F_boltz=boltzman_f(E_beta-min_EXC_E)  ! Bose function? Boltzman function?
+    !
+    Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,wv%dr(1)) &
+&                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,wv%dr(1))
+    !
+  end function Simple_Pole
+  !
 end subroutine

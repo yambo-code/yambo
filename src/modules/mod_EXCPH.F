@@ -89,6 +89,10 @@ module EXCPH
  real(SP), target, allocatable :: BS_Sat_W_DG(:,:,:,:)
  real(SP), target, allocatable :: BS_Sat_W_DG_PH_abs(:,:,:,:)
  !
+ ! Life Times
+ !
+ real(SP), allocatable :: EXC_Lifetime(:)
+ !
  contains
    !      
    subroutine Sat_alloc()

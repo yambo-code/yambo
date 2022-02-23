@@ -146,7 +146,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    if(use_PH_DbGd.and..not.l_DbGd_Sigma_Only) then
      call Eval_Sat_Weights_DbGd()
-   else
+   elseif(use_PH_DbGd.and.l_DbGd_Sigma_Only) then
      do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
        iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
        BS_Sat_W_DG(:,:,:,iq_idx)=BS_Sat_WEIGHT
@@ -254,7 +254,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      implicit none
      !
      real(SP) :: E_beta,bose_factor,EXC_gkkp_sq
-     integer  :: iE_fg,iq_fg,iq_idx
+     integer  :: iq_fg,iq_idx
+     real(SP), external :: get_ph_E_DbGd
      !
      BS_Sat_W_DG       =rZERO
      BS_Sat_W_DG_PH_abs=rZERO
@@ -273,24 +274,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            ! 
            do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
              !
-             iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
+             ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
              !
-             if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-               !      
-               ! the first point correspond to the point in the course grid
-               !
-               ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
-               !
-               !  if iq==1 
-               !  I read ph-energies calculated with matdyn.x 
-               !  that includes the LO-TO splitting and the acustic sum rule
-               !
-               if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)  
-               !
-             else
-               iE_fg  =q%FGbz%E_map(iq_fg)                ! Map w(q) from BZ to IBZ
-               ph_E   =PH_freqs%FG%E(il,iE_fg,1)          ! w(q_db) phonon energy in the D-Grid
-             endif
+             iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
              !
              bose_factor=bose_f(PH_E)
              !  
@@ -300,8 +286,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              if(ph_E<FAN_deltaE_treshold) cycle
              !
-             BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)       =EXC_gkkp_sq*(bose_factor+1._SP)/abs(E_beta-E_alpha+ph_E)**2
-             BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)=EXC_gkkp_sq*bose_factor/abs(E_beta-E_alpha-ph_E)**2
+             if(abs(E_beta-E_alpha+ph_E)>FAN_deltaE_treshold) &
+&                  BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)       =EXC_gkkp_sq/abs(E_beta-E_alpha+ph_E)**2
+             !
+             if(abs(E_beta-E_alpha-ph_E)>FAN_deltaE_treshold) &
+&                  BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)=EXC_gkkp_sq/abs(E_beta-E_alpha-ph_E)**2
              ! 
            enddo
            !
@@ -315,8 +304,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      use ELPH,          ONLY:elph_branches,PH_freqs_sq
      implicit none
      !
-     integer  :: iq_idx,iq_fg,iE_fg,nq_around
+     integer  :: iq_idx,iq_fg,nq_around
      real(SP) :: N_bose,weight_dbgd
+     real(SP), external :: get_ph_E_DbGd
      ! 
      if(.not.use_PH_DbGd) then
        !
@@ -348,33 +338,21 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
                !
-               if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-                 !
-                 ! the first point correspond to the point in the course grid
-                 !
-                 ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
-                 !
-                 !  if iq==1
-                 !  I read ph-energies calculated with matdyn.x
-                 !  that includes the LO-TO splitting and the acustic sum rule
-                 !
-                 if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
-                 !
-               else
-                 iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-                 ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-               endif
-               !
+               ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
                iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
                !
                if(ph_E<FAN_deltaE_treshold) cycle
                !
                N_bose=bose_f(PH_E)
                !
-               EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx) &
+               ! In the double grid case
+               !
+               ! BS_Sat_W_DG = Gkk^2/(E_a-E_b-w)^2
+               !
+               EXCPH_Renorm(i_alpha)       =EXCPH_Renorm(i_alpha)       +BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)        &
                &                                                            *(1._SP+N_bose)*weight_dbgd
-               EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx) &
-               &                                                            *N_bose*weight_dbgd
+               EXCPH_Renorm_PH_abs(i_alpha)=EXCPH_Renorm_PH_abs(i_alpha)+BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx) &
+               &                                                           *N_bose*weight_dbgd
                !
              enddo
              !

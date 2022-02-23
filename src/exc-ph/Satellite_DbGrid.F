@@ -54,8 +54,9 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  real(SP)    :: PH_E,E_alpha,boltzm_factor,weight_dbgd,E_beta,BS_ave_W,BS_ave_W_PH_abs,bose_factor
  complex(SP) :: BS_Sat_E_DbGd,BS_Sat_E_DbGd_PH_abs
- integer     :: nq_around,iq_fg,iE_fg,iq_idx
+ integer     :: nq_around,iq_fg,iq_idx
  complex(SP) :: pole
+ real(SP), external :: get_ph_E_DbGd
  !
  nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
  weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the Db-grid points including the iq_bz
@@ -65,27 +66,11 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  BS_ave_W=rZERO
  BS_ave_W_PH_abs=rZERO
  !
+ ! Calculate
+ !
+ ! BS_ave_W=\sum_{\tilde q } | G |/(E_a-E_b +- w_q)
+ !
  do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
-   !
-   if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-     !      
-     ! the first point correspond to the point in the course grid
-     !
-     ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
-     !
-     !  if iq==1 
-     !  I read ph-energies calculated with matdyn.x 
-     !  that includes the LO-TO splitting and the acustic sum rule
-     !
-     if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
-   else
-     !      
-     ! Double-grid energies
-     !
-     iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-     ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-     !
-   endif
    !
    iq_idx =iq_fg-q%FGbz%k_range(iq_bz,1)+1
    !
@@ -94,8 +79,13 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
  enddo
  !
+ ! Multiply for 1/N_{\tilde q}
+ !
  BS_ave_W       =BS_ave_W*weight_dbgd
  BS_ave_W_PH_abs=BS_ave_W_PH_abs*weight_dbgd
+ !
+ BS_ave_W=BS_ave_W**2
+ BS_ave_W_PH_abs=BS_ave_W_PH_abs**2
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
@@ -104,25 +94,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
    !
-   if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-     !
-     ! the first point correspond to the point in the course grid
-     !
-     ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
-     !
-     !  if iq==1
-     !  I read ph-energies calculated with matdyn.x
-     !  that includes the LO-TO splitting and the acustic sum rule
-     !
-     if(iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
-   else
-     !
-     ! Double-grid energies
-     !
-     iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-     ph_E   =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
-     !
-   endif
+   ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
    !
    if(ph_E<FAN_deltaE_treshold) cycle
    !

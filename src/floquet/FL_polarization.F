@@ -26,14 +26,15 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,Divide_by_Field
  use D_lattice,      ONLY:a,DL_vol
  use R_lattice,      ONLY:bz_samp,k_map,bz_map
  use vec_operate,    ONLY:get_id_perpendicular
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order
+&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order,&
+&                         max_time_step,n_tot_time_steps
  !
  implicit none
  !
@@ -44,9 +45,9 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  ! Work Space
  !
- complex(DP)  :: FL_time_P_Berry_RED(3,n_tot_fl_modes)  ! In reduced coordinates
- complex(DP)  :: FL_time_P_Berry_CART(3,n_tot_fl_modes) ! In cartesian coordinates
- complex(DP)  :: FL_Pi_pol(3,n_tot_fl_modes)
+ complex(DP)  :: FL_time_P_Berry_RED(3,n_tot_time_steps)  ! In reduced coordinates
+ complex(DP)  :: FL_time_P_Berry_CART(3,n_tot_time_steps) ! In cartesian coordinates
+ complex(DP)  :: FL_Pi_pol(3,n_tot_time_steps)
  integer      :: ik_bz,is,i_t,i_order,i1_fl
  integer      :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id
  complex(DP)  :: zeta
@@ -83,7 +84,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
    Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)
    !
-   do i_t=1,n_tot_fl_modes
+   do i_t=1,n_tot_time_steps
      !
      do i2=1,k_map%max_kdir(id2)
        do i3=1,k_map%max_kdir(id3)
@@ -123,7 +124,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  do id=1,3
    !
-   do i_t=1,n_tot_fl_modes
+   do i_t=1,n_tot_time_steps
      !
      FL_time_P_Berry_CART(id,i_t)=sum(FL_time_P_Berry_RED(:,i_t)*a(:,id))/DL_vol
      !
@@ -147,9 +148,23 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  do i_order=0,FL_Chi_order
    !
-   i1_fl = i_order + (max_fl_mode+1)
+   i1_fl = i_order + (max_time_step+1)
+   !es aca
    !
-   FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * (-1)*(cI*2/Efield(1)%amplitude)**i_order
+   if (i_order == 1) then
+     !
+     !
+     FL_Chi_pol(1,i_order+1) = 4._SP*pi*dot_product(Efield(1)%versor(:),FL_Pi_pol(:,i1_fl)) &
+                                           &      * Divide_by_Field(Efield(1),i_order)
+     !
+   else
+     !
+     !FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * (-1)*(cI*2/Efield(1)%amplitude)**i_order
+     FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * Divide_by_Field(Efield(1),i_order)
+     !aim137 prelim check the (-1) that appears in that equation. In my eqs, it is not 
+     !aim137 elevated to the power of i_order. but in Divide_by_Field, it is...
+     !
+   endif
    !
  enddo
  !
@@ -168,16 +183,16 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  use fields,         ONLY:Efield
  use wrapper,        ONLY:M_by_V
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det
+&                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,n_tot_time_steps,max_time_step
  !
  implicit none
  !
- complex(DP), intent(inout) :: FL_time_pol(n_tot_fl_modes)
- complex(DP), intent(inout) :: FL_floquet_pol(n_tot_fl_modes)
+ complex(DP), intent(inout) :: FL_time_pol(n_tot_time_steps)
+ complex(DP), intent(inout) :: FL_floquet_pol(n_tot_time_steps)
  !
  ! Work Space
  !
- complex(DP) :: FL_FT_Mat(n_tot_fl_modes,n_tot_fl_modes)
+ complex(DP) :: FL_FT_Mat(n_tot_time_steps,n_tot_time_steps)
  complex(DP) :: tmp_P_t
  complex(SP) :: dummy_det
  integer     :: i_t,i1_fl,i1_shifted_fl
@@ -189,16 +204,16 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  FL_FT_Mat = cZERO
  FL_floquet_pol = cZERO
  !
- do i_t=1,n_tot_fl_modes
+ do i_t=1,n_tot_time_steps
    !
    w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-   time = 1/(w0_sm1) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0
+   time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
    !
-   do i1_fl=1,n_tot_fl_modes
+   do i1_fl=1,n_tot_time_steps
      !
-     i1_shifted_fl = i1_fl -(max_fl_mode+1)
+     i1_shifted_fl = i1_fl -(max_time_step+1)
      !
-     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes)
+     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_time_steps)
      !aim137 prelim - move the generation of the FT matrix to the module
      !
    enddo
@@ -208,13 +223,13 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  ! Invert Matrix for Fourier Transform
  ! ===================================================================
  !
- call SERIAL_inversion(n_tot_fl_modes,FL_FT_Mat,dummy_det,.false.)
+ call SERIAL_inversion(n_tot_time_steps,FL_FT_Mat,dummy_det,.false.)
  !
  ! Calculate FL_floquet_pol
  ! ===================================================================
  !
- call M_by_V('N',n_tot_fl_modes,n_tot_fl_modes,cONE,FL_FT_Mat,&
-        &   n_tot_fl_modes,FL_time_pol,1,cONE,FL_floquet_pol,1)
+ call M_by_V('N',n_tot_time_steps,n_tot_time_steps,cONE,FL_FT_Mat,&
+        &   n_tot_time_steps,FL_time_pol,1,cONE,FL_floquet_pol,1)
  !
  !
 !!aim137 DEBUG

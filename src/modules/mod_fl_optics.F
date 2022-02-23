@@ -44,9 +44,11 @@ module fl_optics
  integer  :: max_fl_mode
  integer  :: max_extra_mode
  integer  :: max_duffin_mode
+ integer  :: max_time_step
  integer  :: n_tot_fl_modes
  integer  :: n_tot_extra_modes
  integer  :: n_tot_duffin_modes
+ integer  :: n_tot_time_steps
  integer  :: FL_space_dim,FL_states(2)
  real(SP) :: FL_threshold
  integer  :: FL_Chi_order
@@ -70,10 +72,13 @@ module fl_optics
      !
      type(levels), intent(in) :: en
      !
-     max_fl_mode=FL_Chi_order+1
+     !max_fl_mode=FL_Chi_order+1 !aim137 removed for debug
+     max_fl_mode=3 !aim137 remove after DEBUG
      max_extra_mode  = 2*max_fl_mode
      max_duffin_mode = 4*max_fl_mode
+     max_time_step   = FL_Chi_order
      !
+     n_tot_time_steps   = 2*max_time_step+1
      n_tot_fl_modes     = 2*max_fl_mode+1
      n_tot_extra_modes  = 2*max_extra_mode+1
      n_tot_duffin_modes = 2*max_duffin_mode+1
@@ -100,7 +105,7 @@ module fl_optics
      !
      YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_time_S_det,(n_tot_fl_modes,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
+     YAMBO_ALLOC(FL_time_S_det,(n_tot_time_steps,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
      !
      ! FL FT matrices
      !

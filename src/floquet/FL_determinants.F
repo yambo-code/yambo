@@ -29,13 +29,13 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  use fields,         ONLY:Efield
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
-&                         n_tot_extra_modes,FL_QE
+&                         n_tot_extra_modes,FL_QE,n_tot_time_steps
  !
  implicit none
  !
  type(levels), intent(in)   :: en
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
- complex(DP), intent(inout) :: FL_time_S_det(n_tot_fl_modes)
+ complex(DP), intent(inout) :: FL_time_S_det(n_tot_time_steps)
  integer,     intent(in)    :: ikbz,ikp
  !
  ! Work Space
@@ -51,10 +51,10 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  ! Calculate S plus as a function of time
  ! ======================================
  !
- do i_t=1,n_tot_fl_modes
+ do i_t=1,n_tot_time_steps
    !
    w0 = Efield(1)%frequency(1) ! in Ha
-   time = 1/(w0) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0; in 1/Ha
+   time = 2*pi/(w0) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0; in 1/Ha
    !
    do i1_extra=1,n_tot_extra_modes
      !

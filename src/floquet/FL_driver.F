@@ -25,6 +25,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,DP,cZERO,cONE
  use units,          ONLY:HA2EV
+ use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY:QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
@@ -68,6 +69,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
  integer  :: FL_iteration,fl_shifted_zero_mode
  logical  :: l_FL_sc_reached
+ real(DP) :: rel_error
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -168,7 +170,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! Initialize IO
  ! ==================
  !aim137: we'll need to add FL_databases
-  call NL_databases_IO(0,'write')
+ !call NL_databases_IO(0,'write')
  ! i_k_bz
  ! Start-Up & Timing
  !===================
@@ -176,6 +178,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
  !
  !
+ call section('r','FL self-consistency')
  do i_f=1,n_frequencies
    !
    !print*, 'Frequency step = ',i_f,' of ',n_frequencies
@@ -229,6 +232,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
+   !print*, Efield(1)%frequency*HA2EV
    !
    do while(.not.l_FL_sc_reached)
      !
@@ -243,15 +247,19 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
-     call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached)
+     call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,rel_error)
      if (FL_iteration>6) l_FL_sc_reached = .true.
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
    enddo
    !
+   call msg('r','Frequency step    :',i_f)
+   call msg('r','No. of iterations :',FL_iteration)
+   call msg('r','Relative error    :', rel_error)
+   call msg('r','------------------------------------')
    !aim137 it's crashing here
-   call NL_databases_IO(i_f,'write')
+   !call NL_databases_IO(i_f,'write')
    !
  enddo
  !
@@ -273,17 +281,18 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
 end subroutine FL_driver
 ! 
-subroutine FL_check_convergence(FL_pol,l_sc_reached)
+subroutine FL_check_convergence(FL_pol,l_sc_reached,diff_mod)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,DP
  use fl_optics,      ONLY:FL_threshold,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
  complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
+ real(DP),intent(out)    :: diff_mod
  !
  ! Work Space
  integer :: id,FL_Pi_order
- real :: diff_real,diff_complex,diff_mod
+ real :: diff_real,diff_complex
  !
  FL_Pi_order = FL_Chi_order + 1
  !
@@ -292,16 +301,18 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached)
    !
    !aim137 add condition - if direction non periodic --> cycle
    !
-   diff_real    =  abs(( real(FL_pol(id,FL_Pi_order,1)) &
-                     & - real(FL_pol(id,FL_Pi_order,2))) &
-                     & / real(FL_pol(id,FL_Pi_order,1)))
-   diff_complex =  abs((aimag(FL_pol(id,FL_Pi_order,1)) &
-                     & -aimag(FL_pol(id,FL_Pi_order,2))) &
-                     & /aimag(FL_pol(id,FL_Pi_order,1)))
+  !diff_real    =  abs(( real(FL_pol(id,FL_Pi_order,1)) &
+  !                  & - real(FL_pol(id,FL_Pi_order,2))) &
+  !                  & / real(FL_pol(id,FL_Pi_order,1)))
+  !diff_complex =  abs((aimag(FL_pol(id,FL_Pi_order,1)) &
+  !                  & -aimag(FL_pol(id,FL_Pi_order,2))) &
+  !                  & /aimag(FL_pol(id,FL_Pi_order,1)))
    !
-   diff_mod =  abs((FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1)) &
-                & -(FL_pol(id,FL_Pi_order,2)+conjg(FL_pol(id,FL_Pi_order,2)))) &
-                 & /(FL_pol(id,FL_Pi_order,1)+conjg(FL_pol(id,FL_Pi_order,1))))
+   if ( FL_Chi_order == 1 .and. id > 1 ) cycle
+   !
+   diff_mod =  abs((FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1)) &
+                & -(FL_pol(id,FL_Pi_order,2)*conjg(FL_pol(id,FL_Pi_order,2)))) &
+                 & /(FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1))))
    !
    !print*, 'Relative error in mod(Chi) = ',diff_mod
    !

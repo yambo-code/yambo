@@ -36,7 +36,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
  use wrapper,        ONLY:Vstar_dot_V
  use QP_m,           ONLY:QP_nk
  use electric,       ONLY:l_force_SndOrd
- use fl_optics,      ONLY:max_fl_mode,max_extra_mode,FL_space_dim,n_tot_fl_modes,n_tot_extra_modes
+ use fl_optics,      ONLY:max_fl_mode,max_extra_mode,FL_space_dim,n_tot_fl_modes,n_tot_extra_modes,&
+&                         n_tot_time_steps
  !
  implicit none
  !
@@ -48,7 +49,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
  logical,      intent(in) :: l_eval_det
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes,6)
  complex(SP), intent(inout) :: FL_S_minus(en%nbf,en%nbf,n_tot_extra_modes,6)
- complex(DP), intent(inout) :: FL_time_S_det(n_tot_fl_modes,6)
+ complex(DP), intent(inout) :: FL_time_S_det(n_tot_time_steps,6)
  !
  ! Work Space
  !

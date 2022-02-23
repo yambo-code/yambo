@@ -12,7 +12,8 @@ use Net::Domain qw(hostname hostfqdn hostdomain domainname);
 #
 # CMD line
 &GetOptions("help"     => \$help,
-            "f=s"      => \$file
+            "f=s"      => \$file,
+            "c"        => \$check
 ) or die;
 
 sub usage {
@@ -24,6 +25,7 @@ sub usage {
    where [ARGS] must include at least one of:
                    -h               This help
                    -f  <file>       File
+                   -c               Just check
 
 EndOfUsage
   ;
@@ -34,11 +36,11 @@ if (not $file) {usage};
 
 undef $start;
 undef $end;
+undef $title;
 open($fin, '<', $file) ;
 while (my $row = <$fin>) {
  chomp $row;
  $line=$row;
- undef $title;
  if ($row =~ /^[a-zA-Z]/) {
    $char=substr($row, 0, 3);
    if ( substr($row, 0, 3) eq "end" ) 
@@ -52,19 +54,24 @@ while (my $row = <$fin>) {
     $row =~ s/\)/ /g;
     if ($row =~ /subroutine/) {$title=(split(/\s+/,(split("subroutine",$row))[1]))[1] };
     if ($row =~ /function/) {$title=(split(/\s+/,(split("function",$row))[1]))[1] };
-    open($fout, '>', $title.".F") ;
-    for (@HEADER){print  $fout "$_\n"};
+    if (not $check) {
+     print  $title.".o ";
+     open($fout, '>', $title.".F");
+     for (@HEADER){print  $fout "$_\n"};
+    }
    };
-   if ($start) {print "START: $title\n"};
+   if ($start and $check) {print "MODULE: $title\n"};
    if ($end) {
-    print "END: $title\n";
     undef($start);
-    print $fout $line."\n";
-    close($fout);
+    undef $title;
+    if (not $check) {
+     print $fout $line."\n";
+     close($fout);
+    }
    };
  }
  if (not $start and not $end) {push(@HEADER, $row)};
- if ($start) {print $fout $line."\n"};
+ if ($start and not $check) {print $fout $line."\n"};
 }
 close($fin);
 

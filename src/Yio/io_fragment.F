@@ -27,7 +27,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  use pars,        ONLY:schlen
  use IO_int,      ONLY:io_connect,io_control
- use IO_m,        ONLY:io_file,io_mode,io_com,io_PAR_comm,&
+ use IO_m,        ONLY:io_file,io_mode,io_com,io_PAR_comm,io_PAR_cpu,&
 &                      io_sec,io_extension,read_is_on,write_is_on,&
 &                      OP_RD_CL,OP_APP_CL,io_type,io_folder,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
@@ -102,6 +102,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  io_sec(ID_frag,:)=io_sec(ID,:)
  io_PAR_comm(ID_frag)=io_PAR_comm(ID)
+ io_PAR_cpu(ID_frag)=io_PAR_cpu(ID)
  !
  ! io_file is redefined by io_connect
  !

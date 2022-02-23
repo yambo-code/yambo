@@ -50,7 +50,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  !
  call timing('io_COLLISIONS',OPR='start')
  !
- call get_collisions_dbname(COLL%kind,db_name)
+ call COLLISIONS_dbname(COLL%kind,db_name)
  !
  io_COLLISIONS_header=io_connect(desc=trim(db_name)//"_header",type=2,ID=ID)
  if(io_COLLISIONS_header/=0) goto 1
@@ -198,7 +198,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  if (present(COLL_element)) i_coll=COLL_element%I
  if (present(i_coll_))      i_coll=i_coll_
  !
- call get_collisions_dbname(COLL%kind,db_name)
+ call COLLISIONS_dbname(COLL%kind,db_name)
  !
  io_COLLISIONS=io_connect(desc=trim(db_name),type=2,ID=ID)
  !
@@ -273,7 +273,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
 end function io_COLLISIONS
 !
 !
-subroutine get_collisions_dbname(coll_kind,db_name)
+subroutine COLLISIONS_dbname(coll_kind,db_name)
  !
  use pars,          ONLY:schlen
  use xc_functionals,ONLY:GS_xc_kind
@@ -298,4 +298,4 @@ subroutine get_collisions_dbname(coll_kind,db_name)
    call error("COLLISIONS I/O : Unknown database type ")
  endif
  !
-end subroutine get_collisions_dbname
+end subroutine COLLISIONS_dbname

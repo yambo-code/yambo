@@ -362,9 +362,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      use IO_m,          ONLY:NONE
      use pars,          ONLY:schlen
-     use parallel_m,    ONLY:PAR_COM_RL_A2A
+     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
      !
-     integer :: iq_,whoami_save,idb,COM
+     integer :: iq_,whoami_save,idb,COM,SEC(2)
      logical :: this_is_Xo
      character(schlen) :: KERNEL_save
      !
@@ -389,10 +389,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
 #endif
      !
-     if (iq_==0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/1/),ID=ID(idb),&
-&                                COMM=PAR_COM_RL_A2A%COMM,PAR_COM_RL_A2A%CPU_id==0)
-     if (iq_> 0) call io_control(ACTION=OP_APP_CL,COM=COM,SEC=(/2*iq_,2*iq_+1/),ID=ID(idb),&
-&                                COMM=PAR_COM_RL_A2A%COMM,PAR_COM_RL_A2A%CPU_id==0)
+     SEC           =(/1,1/)
+     if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
+     !
+     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX%COMM,WHO=PAR_COM_RL_A2A%CPU_id==0)
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then

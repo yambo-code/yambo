@@ -68,13 +68,16 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,WHO)
  ! Define the parallel COMM needed to perform parallel I/O
  !                    ------
  if (starting_up) then
-   io_PAR_comm(ID)=mpi_comm_null
 #if defined _PAR_IO
    if (present(COMM)) then
      call PP_bcast(ID,         0,COMM)
      call PP_bcast(io_unit(ID),0,COMM)
      ! This MUST be after the BCAST
      io_PAR_comm(ID)=COMM
+   else
+#endif
+     io_PAR_comm(ID)=mpi_comm_null
+#if defined _PAR_IO
    endif
 #endif
  endif

@@ -69,10 +69,13 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
-&                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+#if !defined _PAR_IO
+ integer, external :: io_BS
+#endif
 #if defined _PAR_IO
- integer, external :: io_COLLs_header
+ integer, external :: io_COLLs_header,io_BS_header
 #endif
  !
  logical           :: OSTNTS_Vnl_included
@@ -235,16 +238,25 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! BS
  !
+ !
  if (nqibz>0) then
    YAMBO_ALLOC(BSqpts,(3,nqibz))
    do i_io=1,nqibz
      call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+     io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
      io_BS_err=io_BS(i_io,Xbsk,io_ID)
+#endif
    enddo
    YAMBO_FREE(BSqpts)
  else
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+   io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
    io_BS_err=io_BS(1,Xbsk,io_ID)
+#endif
  endif
  !
  ! When a PPA screen is used to build the kernel the %ppaE component of Xbsk must be overwritten.

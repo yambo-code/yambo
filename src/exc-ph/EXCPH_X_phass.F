@@ -45,7 +45,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
-&                        BS_Sat_W_DG_PH_abs
+&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs
  use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches,PH_freqs,FAN_deltaE_treshold
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
@@ -94,6 +94,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
  YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
+ YAMBO_ALLOC(EXCPH_Renorm_PL,(EXCPH_states(2)))
+ YAMBO_ALLOC(EXCPH_Renorm_PL_PH_abs,(EXCPH_states(2)))
  !
  if(use_PH_DbGd) then
    !      
@@ -126,10 +128,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  ! The satellites
  !
- Epsilon_ii         =cZERO
- PL_ii              =cZERO
- EXCPH_Renorm       =rZERO
- EXCPH_Renorm_PH_abs=rZERO
+ Epsilon_ii            =cZERO
+ PL_ii                 =cZERO
+ EXCPH_Renorm          =rZERO
+ EXCPH_Renorm_PH_abs   =rZERO
+ ! Locally defined variable for RS-PL renorm. factor
+ EXCPH_Renorm_PL       =rZERO
+ EXCPH_Renorm_PL_PH_abs=rZERO
  !
  call live_timing('Satellites',q%nibz)
  !
@@ -223,12 +228,14 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      pole =BS_E_in(i_alpha)
      Epsilon_ii(iw,:)=Epsilon_ii(iw,:)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha)/(W-pole)
      !
-     ! The pole of luminescence should be the pole of BS_E_in 
-     ! but I think this is not consistent with the Boltzman weight, I use always Lout. Point to be discussed
+     ! [CA] The pole of luminescence should be the pole of BS_E_in 
+     !      but I think this is not consistent with the Boltzman weight, I use always Lout.
+     ! [FP] Luminescence in RS (detailed balance) assumption requires Lin=Lout.
+     !      Maybe put a check/logical enforcing this for PL? 
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha) &
+     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
@@ -245,6 +252,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  call Sat_free()
  YAMBO_FREE(EXCPH_Renorm)
  YAMBO_FREE(EXCPH_Renorm_PH_abs)
+ YAMBO_FREE(EXCPH_Renorm_PL)
+ YAMBO_FREE(EXCPH_Renorm_PL_PH_abs)     
  !
  contains 
    !
@@ -320,8 +329,23 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          !
          do i_alpha=EXCPH_states(1),EXCPH_states(2)
            do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-             EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+N_bose)
-             EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*N_bose
+              !
+              ! Phonon emission in absorption [photon absorption / phonon emission]
+              !
+             EXCPH_Renorm(i_alpha)           = EXCPH_Renorm(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+N_bose)
+             !
+             ! Phonon absorption in luminescence [photon emission / phonon absorption]
+             !
+             EXCPH_Renorm_PL_PH_abs(i_alpha) = EXCPH_Renorm_PL_PH_abs(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*N_bose
+             !
+             ! Phonon absorption in absorption [photon absorption / phonon absorption]
+             !
+             EXCPH_Renorm_PH_abs(i_alpha)    = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*N_bose
+             !
+             ! Phonon emission in luminescence [photon emission / phonon emission]
+             !
+             EXCPH_Renorm_PL_abs(i_alpha)    = EXCPH_Renorm_PL_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
+             !
            enddo
          enddo
          !

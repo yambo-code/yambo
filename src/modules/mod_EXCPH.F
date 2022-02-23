@@ -70,6 +70,8 @@ module EXCPH
  real(SP),    target, allocatable :: BS_Sat_WEIGHT_PH_abs(:,:,:)
  real(SP),    allocatable :: EXCPH_Renorm(:)
  real(SP),    allocatable :: EXCPH_Renorm_PH_abs(:)
+ real(SP),    allocatable :: EXCPH_Renorm_PL(:)
+ real(SP),    allocatable :: EXCPH_Renorm_PL_PH_abs(:) 
  complex(SP), allocatable :: BS_EXCPH_E(:)
  real(SP),    allocatable :: ph_EXCPH_E(:)
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)

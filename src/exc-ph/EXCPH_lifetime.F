@@ -27,17 +27,16 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  !
  use units,          ONLY:HA2EV,HA2CMm1
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
- use electrons,      ONLY:levels,n_sp_pol,spin_occ
+ use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
- use BS_Solvers,     ONLY:BSS_n_eig
  use X_m,            ONLY:X_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in, &
 &                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq 
- use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
+ use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
  !
@@ -94,6 +93,9 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
  call msg('rs','Self-energy broadening : ',wv%dr(1)*HA2EV/1000._SP,'meV')
  !
+ ! Turn on double-grid if presents
+ call EXCPH_double_grid_setup(q)
+ !
  ! Calculate the life-times
  !
  YAMBO_ALLOC(EXC_LifeTime,(EXCPH_states(1):EXCPH_states(2)))
@@ -110,7 +112,11 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
        !
        do il=elph_branches(1),elph_branches(2)
          !
-         EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*Simple_pole()
+         if(use_PH_DbGd) then
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*DbGrid_pole()
+         else
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*Simple_pole()
+         endif
          !
        enddo
        !
@@ -137,7 +143,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  contains
   !
   function Simple_pole()
-    use EXCPH,          ONLY:min_EXC_E,EXCPH_Gkkp_sq
+    use EXCPH,          ONLY:min_EXC_E
     use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
@@ -162,5 +168,44 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
 &                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,wv%dr(1))
     !
   end function Simple_Pole
+  !
+  function DbGrid_pole()
+    use EXCPH,          ONLY:min_EXC_E_DbGd,EXC_E_DbGd
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
+    use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
+    implicit none
+    !
+    real(SP) :: DbGrid_pole
+    real(SP) :: E_alpha,E_beta
+    real(SP) :: ph_E,N_bose,F_boltz
+    integer  :: nq_around,iq_fg
+    real(SP) :: weight_dbgd
+    real(SP), external :: get_ph_E_DbGd
+    !
+    DbGrid_pole=rZERO
+    !
+    E_alpha=real(BS_E_in(i_alpha),SP)
+    !
+    nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) 
+    weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  
+    !
+    do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
+      !
+      ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
+      if(ph_E<FAN_deltaE_treshold) cycle
+      !
+      N_bose  =bose_f(ph_E)
+      !
+      E_beta=EXC_E_DbGd(i_beta,iq_fg)
+      F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?
+      !
+      DbGrid_pole=DbGrid_pole+(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,wv%dr(1)) &
+&                                  +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,wv%dr(1))
+      !
+    enddo
+    !
+    DbGrid_pole=DbGrid_pole*weight_dbgd
+    !
+  end function DbGrid_pole
   !
 end subroutine

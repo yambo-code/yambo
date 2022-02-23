@@ -27,16 +27,15 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
- use electrons,      ONLY:levels,n_sp_pol,spin_occ
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
  use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
- use BS_Solvers,     ONLY:BSS_n_eig
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC
- use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches
+ use ELPH,           ONLY:use_PH_DbGd,elph_branches
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -51,7 +50,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=5
  real(SP)            :: output_data(n_output)
- integer             :: iw,iq,i_alpha,ID_DG
+ integer             :: iw,iq,i_alpha,max_filling
  character(schlen)   :: dbgd_string
  !
  call section('*','EXCPH-Optics')
@@ -81,14 +80,24 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  BS_R=rZERO
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   BS_R(i_alpha)=abs(BS_R_left(i_alpha)*BS_R_right(i_alpha))
+   BS_R(i_alpha)=real(abs(BS_R_left(i_alpha)*BS_R_right(i_alpha)),SP)
  enddo
  !
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
  ! Turn on double-grid if presents
- call DoubleGrid_setup()
+ call EXCPH_double_grid_setup(q)
+ !
+ dbgd_string=''
+ if(use_PH_DbGd) then
+   dbgd_string='DbGd'
+   max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
+   YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
+   YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
+   BS_Sat_W_DG       =rZERO
+   BS_Sat_W_DG_PH_abs=rZERO
+ endif
  !
  ! Frequencies and damping setup
  call FREQUENCIES_setup(wv)
@@ -157,47 +166,5 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      call of_open_close(pl_file_name)
      !
    end subroutine print_output
-   !
-   subroutine DoubleGrid_setup()
-     use IO_int,         ONLY:io_control
-     use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
-     implicit none
-     !
-     integer, external   :: io_Double_Grid
-     integer :: io_err,max_filling
-     !
-     ! Fill the PH_freqs array
-     ! This structure will contains the phonon frequencies and the
-     ! double-grid phonon frequencies calculated with matdyn.x
-     !
-     PH_freqs%nk=q%nibz
-     PH_freqs%nb=ph_modes
-     YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
-     !
-     ! Check if double-grid is present and use it
-     ! load the double-grid phonon energies in PH_freqs
-     !
-     call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
-     io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
-     !
-     dbgd_string=''
-     if(io_err==0) then
-       !     
-       use_PH_DbGd=.TRUE.
-       call msg('sr','Using PH-double-grid ')
-       dbgd_string='DbGd'
-       ! 
-       max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
-       YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
-       YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
-       !
-       BS_Sat_W_DG       =rZERO
-       BS_Sat_W_DG_PH_abs=rZERO
-       !
-       call msg('rs','Double grid number of q-points ',q%FGbz%N)
-       !
-     endif
-     !
-   end subroutine DoubleGrid_setup
    !
 end subroutine

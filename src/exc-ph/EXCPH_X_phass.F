@@ -43,12 +43,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV,HA2CMm1
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,ID_EXC,ID_EXC_obj,BS_Sat_W_DG,&
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
 &                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free
- use ELPH,          ONLY:use_PH_DbGd,E_kpq_sh_fact,elph_branches,PH_freqs,FAN_deltaE_treshold
- use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
-&                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
+ use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
@@ -65,14 +63,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,E_alpha,PH_E,v(3)
- type(bz_samp) :: q_DbGd
+ real(SP)      :: min_E,exc_E,E_alpha,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: min_pos_E_DbGd(1)
- integer, external :: io_EXCPH_gkkp,io_ELPH
- character(schlen) :: q_point
- logical           :: l_DbGd_Sigma_Only
+ logical       :: l_DbGd_Sigma_Only
  integer       :: iq_fg,iq_idx
+ integer, external :: io_EXCPH_gkkp,io_ELPH
  !
  call parser('DBGSigmaOnly',l_DbGd_Sigma_Only)
  !
@@ -91,35 +86,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  if(io_err/=0) call error('gkkp_expanded databases not found!')
- !
- if(use_PH_DbGd) then
-   !      
-   call msg('sr','EXC_E(k+q) calculated using a smooth Fourier interpolation')
-   INTERPOLATE_is_serial=.TRUE.
-   INTERPOLATE_is_quiet =.TRUE.
-   INTERP_shell_factor  =E_kpq_sh_fact
-   ID_EXC_obj=1
-   ID_EXC    =1
-   call INTERPOLATION_BZ_setup(q)
-   INTERP_obj(ID_EXC_obj)%what="EXC_E(k+q)"
-   call INTERPOLATION_coefficients(R1D=BS_all_E(:EXCPH_sum(2),:),k=q,NK=q%nibz,ID=ID_EXC,ID_obj=ID_EXC_obj)
-   !
-   call bz_samp_reset(q_DbGd)
-   q_DbGd%nibz=q%FGbz%N
-   YAMBO_ALLOC(q_DbGd%pt,(q_DbGd%nibz,3))
-   q_DbGd%pt=q%FGbz%pt
-   !
-   YAMBO_ALLOC(EXC_E_DbGd,(EXCPH_sum(2),q_DbGd%nibz))
-   call INTERPOLATION_BZ(K=q_DbGd,NK=q_DbGd%nibz,ID=ID_EXC,R1D=EXC_E_DbGd)
-   !
-   min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
-   min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
-   call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
-   call msg('rs','Minimum exctonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
-   write(q_point,'(3f12.6,a)') v(:),' [rlu] '
-   call msg('rs','Minimum q-point in the DbGrid : '//q_point)
-  !
- endif
  !
  ! The satellites
  !
@@ -247,8 +213,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  contains 
    !
    subroutine Eval_Sat_Weights_DbGd()
-     use EXCPH,     ONLY:BS_Sat_E,BS_Sat_E_PH_abs
-     use ELPH,      ONLY:PH_freqs_sq
+     use EXCPH,     ONLY:BS_Sat_E
      implicit none
      !
      real(SP) :: E_beta,bose_factor,EXC_gkkp_sq

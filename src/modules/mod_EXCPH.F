@@ -113,6 +113,28 @@ module EXCPH
      YAMBO_FREE(BS_Sat_WEIGHT_PH_abs)
    end subroutine Sat_free
    !
+   subroutine Renorm_alloc()
+     implicit none
+     YAMBO_ALLOC(EXCPH_Renorm,(EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Renorm_PH_abs,(EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Renorm_PL,(EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Renorm_PL_PH_abs,(EXCPH_states(2)))
+     !
+     EXCPH_Renorm       =rZERO
+     EXCPH_Renorm_PH_abs=rZERO
+     EXCPH_Renorm_PL       =rZERO
+     EXCPH_Renorm_PL_PH_abs=rZERO
+     !
+   end subroutine Renorm_alloc
+   !
+   subroutine Renorm_free()
+     implicit none
+     YAMBO_FREE(EXCPH_Renorm)
+     YAMBO_FREE(EXCPH_Renorm_PH_abs)
+     YAMBO_FREE(EXCPH_Renorm_PL)
+     YAMBO_FREE(EXCPH_Renorm_PL_PH_abs)
+   end subroutine Renorm_free
+   !
    subroutine EXCPH_gkkp_alloc()
      implicit none
      YAMBO_ALLOC(EXCPH_Gkkp,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))

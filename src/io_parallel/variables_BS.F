@@ -36,7 +36,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  use IO_m,          ONLY:io_status,variable_exist,write_is_on
  use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
  use descriptors,   ONLY:IO_desc,IO_desc_reset
- use parallel_m,    ONLY:master_cpu
 #if defined _PAR_IO
  use BS,            ONLY:BSK_IO_mode
 #endif
@@ -54,10 +53,6 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
 &                      cpl_corr_disk,cpl_exch_disk,td_hf_disk,local_long_gauge
  !
  variables_BS=0
- !
-#if defined _PAR_IO
- if (write_is_on(ID).and..not.master_cpu) return
-#endif
  !
  call IO_desc_reset(desc)
  !

@@ -95,7 +95,7 @@ subroutine COLLISIONS_momentum(E,k,q)
  !
  ! Write Database Header 
  !
- call COLLISIONS_linearize_and_IO("Momentum",0,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX%COMM)
+ call COLLISIONS_linearize_and_IO("Momentum",0,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX)
  !
  call live_timing("Collisions",PAR_NC_local*PAR_nQ_bz)
  !
@@ -155,7 +155,7 @@ subroutine COLLISIONS_momentum(E,k,q)
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
    call PP_redux_wait(P_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
    !
-   call COLLISIONS_linearize_and_IO("Momentum",i_coll,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX%COMM)
+   call COLLISIONS_linearize_and_IO("Momentum",i_coll,last_coll,P_collisions,P_COLL_element,ID_P,PAR_COM_G_b_INDEX)
    !
  enddo QP_loop
  !

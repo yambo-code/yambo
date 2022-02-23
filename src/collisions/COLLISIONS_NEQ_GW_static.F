@@ -132,7 +132,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Write Database Header 
  !
  if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,last_coll,GW_NEQ_collisions,&
-         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
+         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -303,7 +303,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    endif
    !
    if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_coll1,last_coll,GW_NEQ_collisions,&
-   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
+   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global)
    !
  enddo
  !

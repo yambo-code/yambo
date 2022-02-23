@@ -25,7 +25,6 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_m,    ONLY:master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use com,           ONLY:msg
  use pars,          ONLY:schlen,lchlen
@@ -74,8 +73,6 @@ integer function io_BS_header(iq,X,ID,mode)
    call PP_redux_wait()
    !
  endif
- !
- if(write_is_on(ID).and..not.master_cpu)  return
  !
  db_name='BS_head_Q'//trim(intc(iq))
  !

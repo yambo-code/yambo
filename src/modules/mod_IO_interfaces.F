@@ -87,13 +87,13 @@ module IO_int
      !
    end subroutine io_disconnect
    !
-   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,WHO)
-     !
-     integer,intent(in)    :: ACTION
-     integer,intent(inout) :: ID
-     integer,optional,intent(in) :: MODE,COM,SEC(:)
-     integer,optional,intent(in) :: COMM
-     logical,optional,intent(in) :: WHO
+   subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
+     use parallel_m,        ONLY:yMPI_comm
+     integer,intent(in)                  :: ACTION
+     integer,intent(inout)               :: ID
+     integer,optional,intent(in)         :: MODE,COM,SEC(:)
+     type(yMPI_comm),optional,intent(in) :: COMM
+     logical,optional,intent(in)         :: DO_IT
      !
    end subroutine io_control
    !

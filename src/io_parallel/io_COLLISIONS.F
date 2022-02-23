@@ -36,7 +36,6 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  use X_m,           ONLY:X_desc
  use drivers,       ONLY:l_elel_scatt,l_elphoton_scatt
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:master_cpu
  !
 #include<memory.h>
  !
@@ -79,7 +78,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    if (write_is_on(ID)) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
  endif
  !
- if (io2 .and. ((write_is_on(ID).and.master_cpu).or.read_is_on(ID))) then     
+ if (io2 .and. (write_is_on(ID).or.read_is_on(ID))) then     
    call io_variable_bulk(ID,1,I0=COLL_element%N)
  endif
  !

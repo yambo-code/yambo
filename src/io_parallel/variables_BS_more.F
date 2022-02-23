@@ -24,7 +24,6 @@
 integer function variables_BS_more(ID,mode)
  !
  use pars,       ONLY:IP,SP,LP,schlen
- use parallel_m, ONLY:master_cpu
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
 &                     variable_exist,NF90_unlimited,netcdf_dim_size
@@ -43,8 +42,6 @@ integer function variables_BS_more(ID,mode)
  character(schlen) :: kernel_dim_name(1)
  !
  variables_BS_more=0
- !
- if (write_is_on(ID).and..not.master_cpu) return
  !
  if ((write_is_on(ID).and.trim(mode)=="end").or.variable_exist(ID,"BSE_KERNEL_MAXVAL")) then
    call def_variable_elemental(ID,"BSE_KERNEL_MAXVAL",1,SP,0)

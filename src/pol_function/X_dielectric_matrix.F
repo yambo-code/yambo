@@ -392,7 +392,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      SEC           =(/1,1/)
      if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
      !
-     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX%COMM,WHO=PAR_COM_RL_A2A%CPU_id==0)
+     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0)
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then

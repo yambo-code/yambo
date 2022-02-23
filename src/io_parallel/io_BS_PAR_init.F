@@ -31,6 +31,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
 &                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_n_eh_spaces
  use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
  use IO_int,        ONLY:io_connect,def_variable_bulk
+ use parallel_m
  !
  implicit none
  !

@@ -148,7 +148,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
 #if defined _PAR_IO
  IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
- call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID,COMM=PAR_K_scheme%COM_ibz_index%COMM,WHO=IO_do_it)
+ call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID,COMM=PAR_K_scheme%COM_ibz_index,DO_IT=IO_do_it)
  io_err=io_DIPOLES(Dip,ID)
  IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
@@ -176,7 +176,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if(use_covariant_approach) then
 #if defined _PAR_IO
    IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_ibz_index%COMM,WHO=IO_do_it)
+   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_ibz_index,DO_IT=IO_do_it)
    io_err=io_Overlaps(Dip,ID_S)
    IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif

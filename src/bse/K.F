@@ -25,44 +25,44 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1
  !
- use pars,         ONLY:SP,schlen,pi,cZERO,cI
- use stderr,       ONLY:intc
- use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_tddft,l_RIM_W
- use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin
- use FFT_m,        ONLY:fft_size
- use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,&
-&                       qindx_X,qindx_B_max,qindx_B_load,&
-&                       RIM_ng,RIM_W_is_diagonal,RIM_W_ng
- use com,          ONLY:msg
- use stderr,       ONLY:intc
- use LIVE_t,       ONLY:live_timing
- use X_m,          ONLY:X_t
- use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_Block_size,&
-&                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
-&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
-&                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
-&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
- use collision_el, ONLY:elemental_collision_free
- use IO_int,       ONLY:io_control
- use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
+ use pars,          ONLY:SP,schlen,pi,cZERO,cI
+ use stderr,        ONLY:intc
+ use LOGO,          ONLY:pickup_a_random
+ use drivers,       ONLY:l_bs_fxc,l_tddft,l_RIM_W
+ use frequency,     ONLY:w_samp
+ use electrons,     ONLY:levels,spin_occ,spin,n_spin
+ use FFT_m,         ONLY:fft_size
+ use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
+ use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
+ use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,&
+&                        qindx_X,qindx_B_max,qindx_B_load,&
+&                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
+ use com,           ONLY:msg
+ use stderr,        ONLY:intc
+ use LIVE_t,        ONLY:live_timing
+ use X_m,           ONLY:X_t
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
+&                        BS_res_K_exchange,BS_Block_size,&
+&                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
+&                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
+&                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
+&                        BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
+&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
+&                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+ use collision_el,  ONLY:elemental_collision_free
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc,ALDA_cut_scheme
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,MPI_COMM_WORLD
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
  use parallel_int,  ONLY:PP_redux_wait
- use MAGNONS,        ONLY:BSS_MAGN_free
- use PHOTOLUM,       ONLY:BSS_PL_free
+ use MAGNONS,       ONLY:BSS_MAGN_free
+ use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
 #include<memory.h>
@@ -303,10 +303,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,COMM=MPI_COMM_WORLD)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID,COMM=MPI_COMM_WORLD)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)
  io_BS_err=io_BS_PAR_init(iq,ID,"full")
  !
 #else

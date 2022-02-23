@@ -94,6 +94,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
    !
  endif
  !
+ call error(' This part is not coded yet!!')
+ !
  ! Deallocations
  !
  call Free_EXCPH()

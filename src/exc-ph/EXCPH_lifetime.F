@@ -47,8 +47,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  ! Work space
  !
- integer, external   :: io_Double_Grid
- integer :: io_err,iq,ID_DG
+ integer :: ID_exc_gkkp,ID_gkkp,io_err
+ integer, external :: io_EXCPH_gkkp,io_ELPH
+ integer :: iq_bz,i_alpha,i_beta,il
  !
  call section('*','EXCPH-LifTime')
  !
@@ -65,9 +66,41 @@ subroutine EXCPH_lifetime(E,k,q,X)
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
  BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
  !
- do iq=1,q%nibz
-   call EXCPH_load_L(iq,X,'eigenvalues','Lout')
-   BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+ do iq_bz=1,q%nibz
+   call EXCPH_load_L(iq_bz,X,'eigenvalues','Lout')
+   BS_all_E(:,iq_bz)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+ enddo
+ !
+ ! Load the Exciton-phonon elements and phonon energies
+ !
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
+ if(io_err/=0) call error('excph_gkkp databases not found!')
+ !
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+ if(io_err/=0) call error('gkkp_expanded databases not found!')
+ !
+ ! Calculate the life-times
+ !
+ do iq_bz=1,q%nbz
+   !
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
+   !
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
+     !
+     do il=elph_branches(1),elph_branches(2)
+       !
+       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+         !
+         !
+       enddo
+       !
+     enddo
+     !
+   enddo
+   !
  enddo
  !
  ! Deallocations

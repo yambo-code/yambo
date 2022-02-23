@@ -129,4 +129,27 @@ module EXCPH
      YAMBO_FREE(Xi)    
    end subroutine EXCPH_gkkp_free
    !
+   subroutine free_EXC()
+     implicit none
+     !
+     YAMBO_FREE(BS_E)
+     YAMBO_FREE(BS_all_E)
+     YAMBO_FREE_P(BS_R_left)
+     YAMBO_FREE_P(BS_R_right)
+     YAMBO_FREE(BS_R)
+     !
+   end subroutine free_EXC
+   !
+   subroutine alloc_EXC(q)
+     use R_lattice,      ONLY:bz_samp
+     implicit none
+     type(bz_samp) ::q
+     YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
+     YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
+     YAMBO_ALLOC(BS_R,(BSS_n_eig))
+     YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
+     YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
+   end subroutine alloc_EXC
+   !
 end module EXCPH

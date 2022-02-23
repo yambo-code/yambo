@@ -344,7 +344,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              ! Phonon emission in luminescence [photon emission / phonon emission]
              !
-             EXCPH_Renorm_PL_abs(i_alpha)    = EXCPH_Renorm_PL_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
+             EXCPH_Renorm_PL(i_alpha)    = EXCPH_Renorm_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
              !
            enddo
          enddo

@@ -35,7 +35,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use com,            ONLY:msg,of_open_close
  use BS_Solvers,     ONLY:BSS_n_eig
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs
+&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC
  use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches
  use frequency,      ONLY:w_samp
  !
@@ -65,12 +65,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Allocations 
  !
- YAMBO_ALLOC(BS_E,(BSS_n_eig))
- YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
- YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
- YAMBO_ALLOC(BS_R,(BSS_n_eig))
- YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
- YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
+ call alloc_EXC(q)
  !
  ! Load excitonic energies and residuals
  !
@@ -110,7 +105,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Deallocations
  !
- call Free_EXCPH()
+ call free_EXC()
+ YAMBO_FREE(Epsilon_ii)
+ YAMBO_FREE(PL_ii)
+ if(use_PH_DbGd) then
+   YAMBO_FREE(BS_Sat_W_DG)
+   YAMBO_FREE(BS_Sat_W_DG_PH_abs)
+ endif
  !
  call FREQUENCIES_reset(wv,"all")
  !
@@ -198,23 +199,5 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      endif
      !
    end subroutine DoubleGrid_setup
-   !
-   subroutine FREE_EXCPH()
-     implicit none
-     !
-     YAMBO_FREE(Epsilon_ii)
-     YAMBO_FREE(PL_ii)
-     YAMBO_FREE(BS_E)
-     YAMBO_FREE(BS_all_E)
-     YAMBO_FREE_P(BS_R_left)
-     YAMBO_FREE_P(BS_R_right)
-     YAMBO_FREE(BS_R)
-     !
-     if(use_PH_DbGd) then
-       YAMBO_FREE(BS_Sat_W_DG)
-       YAMBO_FREE(BS_Sat_W_DG_PH_abs)
-     endif
-     !
-   end subroutine FREE_EXCPH
    !
 end subroutine

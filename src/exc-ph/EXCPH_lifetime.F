@@ -35,7 +35,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use X_m,            ONLY:X_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
+&                         alloc_EXC,free_EXC         
  use ELPH,           ONLY:PH_freqs,ph_modes,use_PH_DbGd,elph_branches
  !
 #include<memory.h>
@@ -57,9 +58,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  ! Allocations 
  !
- YAMBO_ALLOC(BS_E,(BSS_n_eig))
- YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
- YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
+ call alloc_EXC(q)
  !
  ! Load excitonic energies 
  !
@@ -71,43 +70,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
  !
- ! Turn on double-grid if presents
- !
- ! Fill the PH_freqs array
- ! This structure will contains the phonon frequencies and the
- ! double-grid phonon frequencies calculated with matdyn.x
- !
- PH_freqs%nk=q%nibz
- PH_freqs%nb=ph_modes
- YAMBO_ALLOC(PH_freqs%E,(q%nibz,ph_modes,1))
- !
- ! Check if double-grid is present and use it
- ! load the double-grid phonon energies in PH_freqs
- !
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1,2/),ID=ID_DG)
- io_err=io_Double_Grid(PH_freqs,q,ID_DG,'phonons')
- !
- if(io_err==0) then
-   !     
-   use_PH_DbGd=.TRUE.
-   call msg('sr','Using PH-double-grid ')
-   !
- endif
- !
- call error(' This part is not coded yet!!')
- !
  ! Deallocations
  !
- call Free_EXCPH()
+ call free_EXC()
  !
- contains
-   !
-   subroutine FREE_EXCPH()
-     implicit none
-     !
-     YAMBO_FREE(BS_E)
-     YAMBO_FREE(BS_all_E)
-     !
-   end subroutine FREE_EXCPH
-   !
 end subroutine

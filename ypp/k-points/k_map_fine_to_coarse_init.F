@@ -39,7 +39,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file,ELPH_databases_IO_freqs,ELPH_databases_IO_modes
  use stderr,              ONLY:STRING_same
- use vec_operate,         ONLY:c2a
+ use vec_operate,         ONLY:c2a,v_is_zero
 #endif
  !
 #include<memory.h>
@@ -174,6 +174,9 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    do i_q=1,FineGd_io_k(1)%nibz
      call c2a(v_in=FineGd_io_k(1)%pt(i_q,:),mode="kc2i")
    enddo
+   !
+   if(.not.v_is_zero(FineGd_io_k(1)%pt(1,:))) &
+           &    call error("The first point of the PH double-grid should be Gamma")
    !
 #endif
    !

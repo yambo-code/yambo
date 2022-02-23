@@ -63,7 +63,7 @@ function get_ph_E_DbGd(il,iq_fg,iq_bz,q)
    ! Double-grid energies
    !
    iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-   get_ph_E_DbGd =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+   get_ph_E_DbGd =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
    !
  endif
  !

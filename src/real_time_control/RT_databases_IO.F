@@ -205,7 +205,7 @@ subroutine RT_databases_IO(E,DO_IT)
 #if defined _PAR_IO
      call elemental_G_lesser_IO(WR,WR,2)
 #else
-     call elemental_G_lesser_IO(WR_CL,WR_CL)
+     call elemental_G_lesser_IO(WR_CL,WR_CL,2)
 #endif
      !
      ! Parallel I/O of k-SECTION 

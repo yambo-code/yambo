@@ -48,7 +48,7 @@ use parser_m,       ONLY:parser
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W,RIM_W_for_graph
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -389,12 +389,22 @@ use parser_m,       ONLY:parser
                  endif
                endif
                !
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))  *&
+               if(ig1==1.and.ig2==1.and.iqbz==1.and.i_w==2.and.RIM_W_for_graph) then
+                 ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))  *&
+&                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
+&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(1)-E_kmq &
+&                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_PPA_E)/(conjg(W_(1))-E_kmq   &
+&                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
+
+               else
+                 ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))  *&
 &                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
 &                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_(i_w))-E_kmq   &
 &                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
+               endif
                !
                dp_dummy=dp_dummy+ctmp
                !

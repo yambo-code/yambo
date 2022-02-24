@@ -62,10 +62,9 @@ integer function io_BS_header(iq,X,ID,mode)
    !
    if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart.and.io_mode(ID)/=DUMP) then
      if (.not.file_exists(trim(full_db_name))) then
-       call msg("s","BSE file not found. Creating an empty one.")
        l_BSE_restart=.false.
      else if(trim(mode)=="full") then
-       call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
+       call msg("s","Partial BSE file found in "//trim(full_db_name)//" used as restart.")
        l_BSE_restart = .true.
      endif
    endif

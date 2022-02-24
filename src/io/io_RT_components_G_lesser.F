@@ -38,7 +38,6 @@ subroutine io_RT_components_G_lesser(ID,T_size)
 #if defined _PAR_IO
  use parallel_m,     ONLY:PAR_G_k_range
 #endif
- use parallel_m
  !
  implicit none
  !

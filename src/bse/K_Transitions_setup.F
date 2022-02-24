@@ -54,7 +54,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
 &                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
  ! mode ="K"
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,  &
-&                       l_BS_ares_from_res,BS_n_eh_spaces,BS_res_ares_n_mat
+&                       l_BS_ares_from_res,BS_res_ares_n_mat
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset

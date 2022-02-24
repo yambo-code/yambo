@@ -302,7 +302,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
 #if defined _SC
  !
  if (trim(SC_neq_kind)=="constrained-occ") then
-   write(*,*) n_carr
    do is=1,n_sp_pol
      do ik=1,E%nk
        do ib=1,nb_here

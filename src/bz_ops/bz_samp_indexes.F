@@ -249,7 +249,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  ! Parallelization with Memory distribution
  !==========================================
-write (*,*) X_scattering,Xk_grid_is_uniform,bse_scattering
  if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) then
    call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
    call PARALLEL_SETUP_K_scheme("BZINDX")

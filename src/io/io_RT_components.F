@@ -73,7 +73,6 @@ integer function io_RT_components(what,ID)
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
 &                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
 &                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
- use parallel_m
 #if defined _PAR_IO
 #endif
 #if defined _ELPH_ITERATIVE

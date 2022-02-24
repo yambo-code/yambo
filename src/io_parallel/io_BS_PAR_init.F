@@ -31,7 +31,6 @@ integer function io_BS_PAR_init(iq,ID,mode)
 &                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_n_eh_spaces
  use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
  use IO_int,        ONLY:io_connect,def_variable_bulk
- use parallel_m
  !
  implicit none
  !
@@ -121,7 +120,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
      do i2=1,n_vars
        i1=i2+n_vars*(i_rep-1)
        i_var=i2
-       if(i2==2 .and. BS_res_ares_n_mat==2) then; i_var=3; endif
+       if (i2==2 .and. BS_res_ares_n_mat==2) i_var=3
        ch(i_var,i_rep)=trim(ch(i_var,i_rep))//trim(ch_tmp)//trim(intc(i_rep))
      enddo
    enddo
@@ -157,16 +156,16 @@ integer function io_BS_PAR_init(iq,ID,mode)
      i_var=i2
      if(i2==2 .and. BS_res_ares_n_mat==2) then; i_var=3; endif
      if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed_mat".or.trim(BSK_IO_local)=="compressed_head") &
-     &   .and.i_rep==n_replica.and.i_rep>1) then
+&        .and.i_rep==n_replica.and.i_rep>1) then
        dim_names(2,i_var)=dim_names(3,i_var)
        BS_IO_dim(1,i_var)=BS_IO_dim(2,i_var)
      endif
      if(trim(mode)=="full" .or. trim(mode)=="compressed_mat") &
-     &  call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
-     &               [2,BS_IO_dim(1:BSK_n_dims,i_var)],SP,dim_names(1:BSK_n_dims+1,i_var),par_io_kind='independent')
+&           call def_variable_bulk(ID,trim(ch(i_var,i_rep)),         1+(i_var-1)*2+(i_rep-1)*8,&
+&                [2,BS_IO_dim(1:BSK_n_dims,i_var)],SP,dim_names(1:BSK_n_dims+1,i_var),par_io_kind='independent')
      if(                        trim(mode)=="compressed_head") &
-     &  call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
-     &                  BS_IO_dim(1:BSK_n_dims,i_var) , 0,dim_names(2:BSK_n_dims+1,i_var),par_io_kind='independent')
+&           call def_variable_bulk(ID,trim(ch(i_var,i_rep))//"_DONE",2+(i_var-1)*2+(i_rep-1)*8,&
+&                BS_IO_dim(1:BSK_n_dims,i_var) , 0,dim_names(2:BSK_n_dims+1,i_var),par_io_kind='independent')
    enddo
  enddo
  !

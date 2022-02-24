@@ -29,7 +29,7 @@ subroutine K_observables( )
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_ares_from_res
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -57,9 +57,6 @@ subroutine K_observables( )
  !
  ! Consequences which overwrites the kernel_init definitions...
  !--------------------------------------------------------------
- if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- !
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
    l_BS_kerr   = .false.

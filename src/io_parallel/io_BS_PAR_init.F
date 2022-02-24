@@ -156,7 +156,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
      i_var=i2
      if(i2==2 .and. BS_res_ares_n_mat==2) then; i_var=3; endif
      if( (trim(BSK_IO_local)=="1D_linear".or.trim(BSK_IO_local)=="compressed_mat".or.trim(BSK_IO_local)=="compressed_head") &
-&        .and.i_rep==n_replica.and.i_rep>1) then
+&      .and.i_rep==n_replica.and.i_rep>1) then
        dim_names(2,i_var)=dim_names(3,i_var)
        BS_IO_dim(1,i_var)=BS_IO_dim(2,i_var)
      endif

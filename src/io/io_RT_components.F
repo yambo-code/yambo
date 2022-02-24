@@ -68,7 +68,7 @@ integer function io_RT_components(what,ID)
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
  use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,def_variable_bulk,io_variable_bulk
- use IO_m!,           ONLY:io_sec,read_is_on,write_is_on,io_file
+ use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
  use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
  use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
 &                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
@@ -113,7 +113,7 @@ integer function io_RT_components(what,ID)
  ! ACTION
  !========
  if (RT_do_IO("ANY_G")) then 
-   io_RT_components=io_connect(desc=trim(db_name),type=db_kind,ID=ID&
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID&
 #if !defined _PAR_IO
 !&                              ,FORCE_READ_MODE=.true.&
 #endif

@@ -192,7 +192,7 @@ subroutine RT_start_and_restart(E,k,q)
    do ik=PAR_G_k_range(1),PAR_G_k_range(2)
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=RT_DB_ID(i_db))
-     io_err(i_db)=io_RT_components('G_lesser_RESTART',RT_DB_ID(RT_return_db_ID("G_lesser_RESTART")))
+     io_err(i_db)=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
    enddo
 #endif
    !

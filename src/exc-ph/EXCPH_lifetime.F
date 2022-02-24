@@ -105,9 +105,11 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
+   if(io_err/=0) call error('excph_gkkp databases not found!')
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+   if(io_err/=0) call error('gkkp_expanded databases not found!')
    !
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !

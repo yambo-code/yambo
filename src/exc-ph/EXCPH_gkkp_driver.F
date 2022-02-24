@@ -47,7 +47,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
  use ELPH,           ONLY:elph_branches
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
-&                         REP,VERIFY,WR_CL
+&                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi, &
@@ -139,7 +139,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Write headers
  !
- call io_control(ACTION=OP_WR_CL,SEC=(/1/),ID=ID_exc_gkkp)
+ call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
  !
  call Sat_alloc()
@@ -186,7 +186,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    !
    ! I/O
    !=====
-   call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID_exc_gkkp)
+   call io_control(ACTION=WR_CL_IF_END,SEC=(/iq+1/),ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
    !
  enddo

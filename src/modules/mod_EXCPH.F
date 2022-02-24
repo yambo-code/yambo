@@ -151,7 +151,7 @@ module EXCPH
    subroutine EXCPH_gkkp_free
      implicit none
      YAMBO_FREE(EXCPH_Gkkp)
-     YAMBO_FREE(EXCPH_Gkkp)
+     YAMBO_FREE(EXCPH_Gkkp_sq)
      YAMBO_FREE(Xi)    
    end subroutine EXCPH_gkkp_free
    !

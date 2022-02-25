@@ -40,7 +40,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  !
  ! Work Space
  !
- complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_fl_modes)
+ complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_time_steps)
  integer       :: i_t,i1_extra,i1_shifted_fl,i1,i2
  real(SP)      :: time,w0
  !
@@ -54,16 +54,19 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  do i_t=1,n_tot_time_steps
    !
    w0 = Efield(1)%frequency(1) ! in Ha
-   time = 2*pi/(w0) * (i_t-1)/n_tot_fl_modes ! when i_t=1, time = 0; in 1/Ha
+   time = 2*pi/(w0) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0; in 1/Ha
    !
    do i1_extra=1,n_tot_extra_modes
      !
      i1_shifted_fl = i1_extra -(max_extra_mode+1)
      !
      FL_time_S_plus(:,:,i_t)  = FL_time_S_plus(:,:,i_t) &
-                            & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_fl_modes) &
+                            & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_time_steps) &
                             & * FL_S_plus(:,:,i1_extra)
      !
+    !print*, '------------------'
+    !print*, i1_shifted_fl
+    !print*, FL_S_plus(:,:,i1_extra)
    enddo
    !
    ! Add Quasi-energies exponentials

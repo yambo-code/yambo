@@ -31,7 +31,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  use R_lattice,      ONLY:bz_samp,k_map,bz_map
  use vec_operate,    ONLY:get_id_perpendicular
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:NL_bands
+ use nl_optics,      ONLY:NL_bands,NL_initial_P
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order,&
 &                         max_time_step,n_tot_time_steps
@@ -126,9 +126,11 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
    do i_t=1,n_tot_time_steps
      !
-     FL_time_P_Berry_CART(id,i_t)=sum(FL_time_P_Berry_RED(:,i_t)*a(:,id))/DL_vol
+     FL_time_P_Berry_CART(id,i_t)=sum(FL_time_P_Berry_RED(:,i_t)*a(:,id))/DL_vol-NL_initial_P(id)
      !
    enddo
+   !aim137 parche - adjust everything to 0 at time 0
+   !FL_time_P_Berry_CART(id,:)=FL_time_P_Berry_CART(id,:)-FL_time_P_Berry_CART(id,1)
    !
  enddo
  !
@@ -149,20 +151,15 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  do i_order=0,FL_Chi_order
    !
    i1_fl = i_order + (max_time_step+1)
-   !es aca
    !
    if (i_order == 1) then
-     !
      !
      FL_Chi_pol(1,i_order+1) = 4._SP*pi*dot_product(Efield(1)%versor(:),FL_Pi_pol(:,i1_fl)) &
                                            &      * Divide_by_Field(Efield(1),i_order)
      !
    else
      !
-     !FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * (-1)*(cI*2/Efield(1)%amplitude)**i_order
      FL_Chi_pol(:,i_order+1) = FL_Pi_pol(:,i1_fl) * Divide_by_Field(Efield(1),i_order)
-     !aim137 prelim check the (-1) that appears in that equation. In my eqs, it is not 
-     !aim137 elevated to the power of i_order. but in Divide_by_Field, it is...
      !
    endif
    !
@@ -182,6 +179,8 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  use units,          ONLY:HA2FSm1
  use fields,         ONLY:Efield
  use wrapper,        ONLY:M_by_V
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver
+ use linear_algebra,  ONLY:INV
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,n_tot_time_steps,max_time_step
  !
@@ -223,13 +222,26 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  ! Invert Matrix for Fourier Transform
  ! ===================================================================
  !
- call SERIAL_inversion(n_tot_time_steps,FL_FT_Mat,dummy_det,.false.)
+ !call SERIAL_inversion(n_tot_time_steps,FL_FT_Mat,dummy_det,.false.)
+ call LINEAR_ALGEBRA_driver(INV,M=FL_FT_Mat)
  !
  ! Calculate FL_floquet_pol
  ! ===================================================================
  !
- call M_by_V('N',n_tot_time_steps,n_tot_time_steps,cONE,FL_FT_Mat,&
-        &   n_tot_time_steps,FL_time_pol,1,cONE,FL_floquet_pol,1)
+ !aim137 DEGUB - I change this for ypp's approach
+  call M_by_V('N',n_tot_time_steps,n_tot_time_steps,cONE,FL_FT_Mat,&
+         &   n_tot_time_steps,FL_time_pol,1,cONE,FL_floquet_pol,1)
+ !
+ !aim137 DEBUG - ypp's approach
+ !FL_floquet_pol(max_time_step+1) = FL_time_pol(1)
+ !do i1_fl=(max_time_step+2),n_tot_time_steps
+ !  do i_t=1,n_tot_time_steps
+ !  !
+ !  FL_floquet_pol(i1_fl)=FL_floquet_pol(i1_fl)+&
+ !          &             FL_FT_Mat(i1_fl,i_t)*FL_time_pol(i_t)
+ !  !
+ !  enddo
+ !enddo
  !
  !
 !!aim137 DEBUG

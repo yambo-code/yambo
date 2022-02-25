@@ -190,7 +190,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
 !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
 !write(111,*) 'Real and imaginary parts of eigenvector:'
 !do i1_fks=FL_states(1),FL_states(2)
-!write(111,'(2(1f10.7))') FL_eigenvectors(i1_fks,FL_chosen_bands(i_m))
+!write(111,'(2(1f20.17))') FL_eigenvectors(i1_fks,FL_chosen_bands(i_m))
 !enddo
 !write(111,*) ''
 !enddo

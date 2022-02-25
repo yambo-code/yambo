@@ -135,24 +135,23 @@ subroutine FL_start_and_restart(E,k,Dip)
  FL_QE = E_full
  !
 !!
-!! aim137
-!! Evaluate Initial Polarization       ---- No creo que necesite esto...
-!! ====================================
-!!
-!if(.not.l_use_DIPOLES) then
-!  call POLARIZATION_output(E,k,Dip)
-!endif
-!!
-!call DIP_polarization(E,k,V_bands,NL_initial_P(4:6))
-!!
-!if(.not.l_use_DIPOLES) then
-!  !   
-!  ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
-!  call Berry_Polarization_NEQ(E,k,V_bands,NL_initial_P(1:3))
-!  !
-!else
-!  NL_initial_P(1:3)=NL_initial_P(4:6)
-!endif
+! Evaluate Initial Polarization 
+! ====================================
+!
+if(.not.l_use_DIPOLES) then
+  call POLARIZATION_output(E,k,Dip)
+endif
+!
+call DIP_polarization(E,k,V_bands,NL_initial_P(4:6))
+!
+if(.not.l_use_DIPOLES) then
+  !   
+  ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
+  call Berry_Polarization_NEQ(E,k,V_bands,NL_initial_P(1:3))
+  !
+else
+  NL_initial_P(1:3)=NL_initial_P(4:6)
+endif
 !!
 !if(l_eval_CURRENT) call NL_current(k,E,V_bands,NL_initial_J)
 !!

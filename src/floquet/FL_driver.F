@@ -247,7 +247,8 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
-     call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,rel_error)
+     if (FL_iteration>1)&
+&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,rel_error)
      if (FL_iteration>6) l_FL_sc_reached = .true.
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
@@ -301,24 +302,29 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,diff_mod)
    !
    !aim137 add condition - if direction non periodic --> cycle
    !
-  !diff_real    =  abs(( real(FL_pol(id,FL_Pi_order,1)) &
-  !                  & - real(FL_pol(id,FL_Pi_order,2))) &
-  !                  & / real(FL_pol(id,FL_Pi_order,1)))
-  !diff_complex =  abs((aimag(FL_pol(id,FL_Pi_order,1)) &
-  !                  & -aimag(FL_pol(id,FL_Pi_order,2))) &
-  !                  & /aimag(FL_pol(id,FL_Pi_order,1)))
+   if ( FL_Pi_order == 2 .and. id > 1 ) cycle
    !
-   if ( FL_Chi_order == 1 .and. id > 1 ) cycle
+   diff_real    =  abs(( real(FL_pol(id,FL_Pi_order,1)) &
+                     & - real(FL_pol(id,FL_Pi_order,2))) &
+                     & / real(FL_pol(id,FL_Pi_order,1)))
+   diff_complex =  abs((aimag(FL_pol(id,FL_Pi_order,1)) &
+                     & -aimag(FL_pol(id,FL_Pi_order,2))) &
+                     & /aimag(FL_pol(id,FL_Pi_order,1)))
    !
-   diff_mod =  abs((FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1)) &
-                & -(FL_pol(id,FL_Pi_order,2)*conjg(FL_pol(id,FL_Pi_order,2)))) &
-                 & /(FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1))))
    !
+   diff_mod=diff_complex
+  !diff_mod =  abs((FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1)) &
+  !             & -(FL_pol(id,FL_Pi_order,2)*conjg(FL_pol(id,FL_Pi_order,2)))) &
+  !              & /(FL_pol(id,FL_Pi_order,1)*conjg(FL_pol(id,FL_Pi_order,1))))
+   !
+   !print*, id,'--------------------'
+   !print*, FL_pol(id,FL_Pi_order,1)
+   !print*, FL_pol(id,FL_Pi_order,2)
    !print*, 'Relative error in mod(Chi) = ',diff_mod
    !
    !aim137 prelim - choose what condition to use
-   !if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then
-   if (diff_mod < FL_threshold) then
+   if (diff_real < FL_threshold .and. diff_complex < FL_threshold) then
+   !if (diff_mod < FL_threshold) then
      l_sc_reached = .true.
    else
      l_sc_reached = .false.

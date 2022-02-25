@@ -159,10 +159,10 @@ module RT_control
      RT_do_IO=.FALSE.
      !
      if (what=="ANY".and.RT_current_DB_identifier/=0) RT_do_IO=.TRUE.
-     if (what=="JP".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
-     if (what=="P".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
-     if (what=="J".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
-     if (what=="M".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
+     if (what=="JP".and.RT_current_DB_identifier==4 ) RT_do_IO=.TRUE.
+     if (what=="P".and.RT_current_DB_identifier==4  ) RT_do_IO=.TRUE.
+     if (what=="J".and.RT_current_DB_identifier==4  ) RT_do_IO=.TRUE.
+     if (what=="M".and.RT_current_DB_identifier==4  ) RT_do_IO=.TRUE.
      if (what=="OBSERVABLES".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
      !
      if (what=="G_lesser_RESTART".and.RT_current_DB_identifier==5) RT_do_IO=.TRUE.

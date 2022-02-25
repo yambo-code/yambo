@@ -188,15 +188,11 @@ subroutine RT_databases_IO(E,DO_IT)
        endif
      endif
      !
-     ! Serial I/O of SECTION 2 
-     !
-#if defined _PAR_IO
+     ! SECTION 2 
+     ! 
      call elemental_G_lesser_IO(WR,WR,2)
-#else
-     call elemental_G_lesser_IO(WR_CL,WR_CL,2)
-#endif
      !
-     ! Parallel I/O of k-SECTION 
+     ! k-SECTION 3
      !
 #if defined _PAR_IO
      if (NE_i_time< NE_steps) call elemental_G_lesser_IO(WR,WR,3)
@@ -216,9 +212,11 @@ subroutine RT_databases_IO(E,DO_IT)
          !
          if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
          !
-         IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
-         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_G_db))
-         io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_db))
+         IO_ACT=WR
+         if (NE_i_time==NE_steps.and.ik==PAR_G_k_range(2)) io_ACT=WR_CL
+         !
+         call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_G_RESTART_db))
+         io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
          !
          if (SAVE_G_history) call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_G_db))
          if (SAVE_G_history) io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
@@ -263,10 +261,8 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  if (RT_do_it('OBS').or.DO_IT ) call PP_bcast( OBS_RT_IO_t%last_point,0)
  if (RT_do_it('CARR').or.DO_IT) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if (RT_do_it('G').or.DO_IT) then
-   call PP_bcast(Gless_RESTART_RT_IO_t%last_point,0)
-   call PP_bcast(Gless_RT_IO_t%last_point,0)
- endif
+ if (RT_do_it('G').or.DO_IT)    call PP_bcast(Gless_RESTART_RT_IO_t%last_point,0)
+ if (RT_do_it('G').or.DO_IT)    call PP_bcast(Gless_RT_IO_t%last_point,0)
  !
  call timing('RT databases IO',OPR='stop')
  !

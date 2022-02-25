@@ -91,7 +91,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  !
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
- call msg('rs','Self-energy broadening : ',wv%dr(1)*HA2EV/1000._SP,'meV')
+ call msg('rs','Self-energy broadening : ',wv%dr(1)*HA2EV*1000._SP,'meV')
  !
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
@@ -133,12 +133,9 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz)
  !
- ! Output
+ ! Print output and write on file
  !
- call msg('rs','Exciton lifetimes:')
- do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   call msg('rs','Exciton '//intc(i_alpha)//' lifetime: ',EXC_LifeTime(i_alpha)*HA2EV/1000._SP,'meV')
- enddo
+ call print_and_write()
  !
  ! Deallocations
  !
@@ -212,5 +209,45 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
     DbGrid_pole=DbGrid_pole*weight_dbgd
     !
   end function DbGrid_pole
+  !
+  subroutine print_and_write()
+    use pars,           ONLY:schlen
+    use OUTPUT_simple,  ONLY:OUTPUT_add_column
+    use stderr,         ONLY:real2ch,intc,log2ch
+    !
+    implicit none
+    !
+    character(schlen) :: what='exc_QP'
+    !
+    call OUTPUT_add_column(what,action="reset")
+    call OUTPUT_add_column(what,action="open")
+    call OUTPUT_add_column(what,ORDER=(/"Eo"/))
+    call OUTPUT_add_column(what,ORDER=(/"Width [me"/))
+    !
+    call msg('rs','Exciton lifetimes:')
+    !
+    call msg('o '//what,'#')    
+    call msg('o '//what,'# === Exciton LifeTimes === ')    
+    call msg('o '//what,'#')    
+    call msg('o '//what,'# Exciton Sum                  : '//trim(intc(EXCPH_sum(1)))//' - '//trim(intc(EXCPH_sum(2))))    
+    call msg('o '//what,'# Exciton States               : '//trim(intc(EXCPH_states(1)))//' - '//trim(intc(EXCPH_states(2))))    
+    call msg('o '//what,'# Self-Energy broadening       :'//trim(real2ch(wv%dr(1)*HA2EV*1000._SP))//' meV')    
+    call msg('o '//what,'# FAN treshold                 :'//trim(real2ch(FAN_deltaE_treshold*HA2EV*1000._SP))//' meV')    
+    call msg('o '//what,'# PH Doble-Grid                : '//log2ch(use_PH_DbGd))    
+    !
+    do i_alpha=EXCPH_states(1),EXCPH_states(2)
+      !
+      call OUTPUT_add_column(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
+      call OUTPUT_add_column(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
+      call OUTPUT_add_column(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
+      call OUTPUT_add_column(what,action="write")
+      !
+      call msg('rs','Exciton ['//trim(intc(i_alpha))//'] Lifetime: ',EXC_LifeTime(i_alpha)*HA2EV*1000._SP,'meV')
+      !
+    enddo  
+    !
+    call OUTPUT_add_column(what,action="close")
+    !
+  end subroutine 
   !
 end subroutine

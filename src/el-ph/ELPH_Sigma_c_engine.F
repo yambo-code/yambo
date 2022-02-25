@@ -66,11 +66,12 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
  ! Work Space
  !
  integer  :: iw
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
+ integer  :: ik,ik_bz,ib,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
  real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight,DW_weight
+ real(SP), external :: get_ph_E_DbGd
  !
  logical  :: eval_DW
  !
@@ -206,8 +207,7 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
    do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
      !
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
-     iE_fg =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-     ph_E  =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     ph_E  =get_ph_E_DbGd(il,iq_fg,iq_bz,q)                     ! w(q_db) phonon energy in the D-Grid
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
      f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik,1,iq_idx)/spin_occ

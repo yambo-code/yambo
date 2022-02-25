@@ -69,7 +69,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Temperature
  !=============
- call RT_temperature(TFit,EfFit)
+ call RT_carriers_temperature(TFit,EfFit)
  !
  ! Energy
  !========

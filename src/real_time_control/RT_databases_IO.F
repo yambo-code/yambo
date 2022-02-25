@@ -56,7 +56,6 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  ! Work Space
  !
- logical           :: write_OBS,write_G,write_CARR
  integer           :: i_mem,ik,G_IO_steps,io_G,io_OBS,io_carr,IO_ACT,i_time,i_cpu,i_db,i_G_db,i_G_RESTART_db
  integer, external :: io_RT_components
  logical, external :: RT_do_it
@@ -65,11 +64,6 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  ! Observables (J, P, M ...)
  !===========================
- !
- write_OBS =.false.
- write_CARR=.false.
- write_G   =.false.
- !
  if (io_OBSERVABLES) then
    !
    i_db=RT_return_db_ID("OBSERVABLES")
@@ -80,8 +74,6 @@ subroutine RT_databases_IO(E,DO_IT)
      CACHE_OBS_last_point=OBS_RT_IO_t%last_point
      if (NE_i_time>1) OBS_RT_IO_t%N=OBS_RT_IO_t%N-1
    endif
-   !
-   write_OBS=RT_do_it('OBS').or.DO_IT
    !
    if (RT_do_it('OBS_cache').or.DO_IT) then
      !
@@ -105,7 +97,7 @@ subroutine RT_databases_IO(E,DO_IT)
        A_cache(1:3,3,CACHE_OBS_steps_now)=A_tot%vecpot_acc
      endif
      !
-     if (write_OBS) then
+     if (RT_do_it('OBS').or.DO_IT) then
        !
        IO_ACT=manage_action(WR_CL_IF_END,NE_i_time,NE_i_start_time,NE_steps)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2,3/),ID=RT_DB_ID(i_db))
@@ -131,9 +123,7 @@ subroutine RT_databases_IO(E,DO_IT)
      if (NE_i_time>1) CARR_RT_IO_t%N=CARR_RT_IO_t%N-1
    endif
    !
-   write_CARR=RT_do_it('CARR').or.DO_IT
-   !
-   if (write_CARR) then
+   if (RT_do_it('CARR').or.DO_IT) then
      !
      if (NE_i_time>CARR_RT_IO_t%last_point) then
        CARR_RT_IO_t%N=CARR_RT_IO_t%N+1
@@ -161,7 +151,7 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      ! Parallel OPEN
      !
-     call elemental_G_lesser_IO(OP_WR,OP_APP,0)
+     call elemental_G_lesser_IO(OP_WR,OP_APP,-1)
      !
      ! Serial SECTION 1 
      !
@@ -176,9 +166,7 @@ subroutine RT_databases_IO(E,DO_IT)
      !
    endif
    !
-   write_G=RT_do_it('G').or.DO_IT
-   !
-   if (write_G) then
+   if (RT_do_it('G').or.DO_IT) then
      !
      if (NE_i_time==1) then
        Gless_RESTART_RT_IO_t%N=1
@@ -273,11 +261,11 @@ subroutine RT_databases_IO(E,DO_IT)
    !
  endif
  !
- if (write_OBS)  call PP_bcast( OBS_RT_IO_t%last_point,0)
- if (write_CARR) call PP_bcast(CARR_RT_IO_t%last_point,0)
- if (write_G) then
-                 call PP_bcast(  Gless_RESTART_RT_IO_t%last_point,0)
-                 call PP_bcast(  Gless_RT_IO_t%last_point,0)
+ if (RT_do_it('OBS').or.DO_IT ) call PP_bcast( OBS_RT_IO_t%last_point,0)
+ if (RT_do_it('CARR').or.DO_IT) call PP_bcast(CARR_RT_IO_t%last_point,0)
+ if (RT_do_it('G').or.DO_IT) then
+   call PP_bcast(Gless_RESTART_RT_IO_t%last_point,0)
+   call PP_bcast(Gless_RT_IO_t%last_point,0)
  endif
  !
  call timing('RT databases IO',OPR='stop')
@@ -297,7 +285,7 @@ subroutine RT_databases_IO(E,DO_IT)
        io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
      endif
 #else
-     call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db))
+     call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_RESTART_db))
      io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
      if (SAVE_G_history)  then
        call io_control(ACTION=G_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db))

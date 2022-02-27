@@ -31,11 +31,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
  use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
- use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC
- use ELPH,           ONLY:use_PH_DbGd,elph_branches
+ use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use frequency,      ONLY:w_samp
  !
 #include<memory.h>
@@ -93,8 +92,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  if(use_PH_DbGd) then
    dbgd_string='DbGd'
    max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
-   YAMBO_ALLOC(BS_Sat_W_DG,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
-   YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(elph_branches(2),EXCPH_sum(2),EXCPH_states(2),max_filling))
+   YAMBO_ALLOC(BS_Sat_W_DG,(ph_modes,EXCPH_sum(2),EXCPH_states(2),max_filling))
+   YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(ph_modes,EXCPH_sum(2),EXCPH_states(2),max_filling))
    BS_Sat_W_DG       =rZERO
    BS_Sat_W_DG_PH_abs=rZERO
  endif

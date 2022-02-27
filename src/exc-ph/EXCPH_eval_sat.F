@@ -56,10 +56,10 @@ subroutine EXCPH_eval_sat(iq,q)
        BS_Sat_E       (il,i_beta,i_alpha)=BS_E(i_beta)-BS_E_in(i_alpha)+ph_E
        BS_Sat_E_PH_abs(il,i_beta,i_alpha)=BS_E(i_beta)-BS_E_in(i_alpha)-ph_E
        !
-       if(abs(BS_Sat_E(il,i_beta,i_alpha))<FAN_deltaE_treshold.or.abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))<FAN_deltaE_treshold) cycle
-       !
-       BS_Sat_WEIGHT(il,i_beta,i_alpha)       =EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E(il,i_beta,i_alpha))**2
-       BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2
+       if(abs(BS_Sat_E(il,i_beta,i_alpha))>FAN_deltaE_treshold) &
+&         BS_Sat_WEIGHT(il,i_beta,i_alpha)       =EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E(il,i_beta,i_alpha))**2
+       if(abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))>FAN_deltaE_treshold) &
+&         BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2
        !
        EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)/real(q%nbz,SP)
        EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/real(q%nbz,SP)

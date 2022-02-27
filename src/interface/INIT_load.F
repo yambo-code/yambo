@@ -670,7 +670,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it('f',defs,'DiagExcph'   , '[EXCPH] Use only Diagonal Exciton-phonon matrix elements')
- call it('f',defs,'DBGSigmaOnly', '[EXCPH] Double-grid only for Sigma')
+ call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid for satellite weights and renormalization too')
  !
  ! GPL_EXCLUDE_START
  !

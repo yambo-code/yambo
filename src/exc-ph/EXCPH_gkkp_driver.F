@@ -45,7 +45,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
- use ELPH,           ONLY:elph_branches
+ use ELPH,           ONLY:ph_modes,elph_branches
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
@@ -67,7 +67,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp
  integer  :: ID_gkkp,ID_exc_gkkp,io_err
- integer  :: il,iq,i1
+ integer  :: il,iq,i1,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
  !
@@ -131,9 +131,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Check if gkkp_expanded is present
  !
- call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID_gkkp)
+ elph_branches_save  =elph_branches
+ !
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  call deliver_IO_error_message(io_err,"GKKP")
+ !
+ elph_branches =elph_branches_save
  !
  if (io_err/=0) call error('El-Ph database not found')
  !
@@ -147,7 +151,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Main q-loop
  !
- call live_timing('Excitonic Gkkp',q%nibz*(elph_branches(2)-elph_branches(1)+1))
+ call live_timing('Excitonic Gkkp',q%nibz*ph_modes)
  !
  do iq=1,q%nibz
    ! 
@@ -162,7 +166,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    BS_Sat_WEIGHT       =rZERO
    BS_Sat_WEIGHT_PH_abs=rZERO
    !
-   do il=elph_branches(1),elph_branches(2)
+   do il=1,ph_modes
      !
      call  EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
      !

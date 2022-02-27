@@ -52,6 +52,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  integer :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
  integer :: iq_bz,i_alpha,i_beta,il
+ integer :: elph_branches_save(2)
  integer :: min_pos(1)
  !
  call section('*','EXCPH-LifTime')
@@ -80,8 +81,10 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
  if(io_err/=0) call error('excph_gkkp databases not found!')
  !
+ elph_branches_save = elph_branches
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
+ elph_branches = elph_branches_save
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  !
  ! Info on excitons

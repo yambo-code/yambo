@@ -32,7 +32,7 @@ integer function io_EXCPH_gkkp(ID,what)
 &                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,L_kind_in,L_kind_out,Sat_alloc, &
 &                         EXCPH_gkkp_alloc
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_branches
+ use ELPH,           ONLY:ph_modes
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:nqibz
  use timing_m,       ONLY:timing
@@ -74,10 +74,7 @@ integer function io_EXCPH_gkkp(ID,what)
    !
    io_EXCPH_gkkp=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
-   !
-   call io_elemental(ID,&
-&       VAR=" Phonon modes           :",I0=ph_modes,CHECK=.true.,OP=(/"==","=="/))
+   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
    !
    call io_elemental(ID,&
 &       VAR=" Exciton states           :",I1=EXCPH_states,CHECK=.true.,OP=(/"==","=="/))
@@ -89,9 +86,6 @@ integer function io_EXCPH_gkkp(ID,what)
    !
    io_EXCPH_gkkp=io_status(ID)
    if (io_EXCPH_gkkp/=0) goto 1
-   !
-   call io_bulk(ID,VAR="PH_BRANCHES",VAR_SZ=(/2/))
-   call io_bulk(ID,I1=elph_branches)
    !
    call io_bulk(ID,VAR="EXCITON_STATES",VAR_SZ=(/2/))
    call io_bulk(ID,I1=EXCPH_states)

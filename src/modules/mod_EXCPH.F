@@ -26,7 +26,7 @@ module EXCPH
  use pars,           ONLY:SP,schlen,lchlen,cZERO,rZERO
  use BS_solvers,     ONLY:BSS_n_eig
  use BS,             ONLY:BS_H_dim
- use ELPH,           ONLY:elph_branches
+ use ELPH,           ONLY:ph_modes
  !
 #include<memory.h>
  !
@@ -97,10 +97,10 @@ module EXCPH
    !      
    subroutine Sat_alloc()
      implicit none
-     YAMBO_ALLOC(BS_Sat_E,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(BS_Sat_E_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(BS_Sat_WEIGHT,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(BS_Sat_WEIGHT_PH_abs,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(BS_Sat_E,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(BS_Sat_E_PH_abs,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(BS_Sat_WEIGHT,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(BS_Sat_WEIGHT_PH_abs,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      !
      BS_Sat_E            =rZERO
      BS_Sat_E_PH_abs     =rZERO
@@ -141,8 +141,8 @@ module EXCPH
    !
    subroutine EXCPH_gkkp_alloc()
      implicit none
-     YAMBO_ALLOC(EXCPH_Gkkp,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
-     YAMBO_ALLOC(EXCPH_Gkkp_sq,(elph_branches(1):elph_branches(2),EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Gkkp,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
+     YAMBO_ALLOC(EXCPH_Gkkp_sq,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(Xi,(BS_H_dim,EXCPH_sum(1):EXCPH_sum(2),2))    
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO

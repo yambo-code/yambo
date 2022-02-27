@@ -236,7 +236,7 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
    if (eval_DW) then  
      !      
      ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
-     if(use_PH_DbGd.and.iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
+   !  if(use_PH_DbGd.and.iq_bz==1) ph_E=PH_freqs%FG%E(1,il,1)
      !
      do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around  ! Numbere of q-points around Gamma
        !

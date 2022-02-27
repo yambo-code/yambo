@@ -46,7 +46,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
 &                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free
- use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold
+ use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
@@ -65,11 +65,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,E_alpha,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- logical       :: l_DbGd_Sigma_Only
+ logical       :: l_DbGd_WEIGHTs
  integer       :: iq_fg,iq_idx
+ integer       :: elph_branches_save(2)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  !
- call parser('DBGSigmaOnly',l_DbGd_Sigma_Only)
+ call parser('DbGdWEIGHTs',l_DbGd_WEIGHTs)
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))
@@ -83,9 +84,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
  if(io_err/=0) call error('excph_gkkp databases not found!')
  !
+ elph_branches_save=elph_branches
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  if(io_err/=0) call error('gkkp_expanded databases not found!')
+ elph_branches=elph_branches_save
  !
  ! The satellites
  !
@@ -107,9 +110,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ! Add the contribution of q-point transition to the renormalization factors
    ! for all excionts i_alpha
    !
-   if(use_PH_DbGd.and..not.l_DbGd_Sigma_Only) then
+   if(use_PH_DbGd.and.l_DbGd_WEIGHTs) then
      call Eval_Sat_Weights_DbGd()
-   elseif(use_PH_DbGd.and.l_DbGd_Sigma_Only) then
+   elseif(use_PH_DbGd.and..not.l_DbGd_WEIGHTs) then
      do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
        iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
        BS_Sat_W_DG(:,:,:,iq_idx)=BS_Sat_WEIGHT
@@ -164,12 +167,18 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call live_timing( )
  !
- EXCPH_Renorm       = EXCPH_Renorm/real(q%nbz,SP)
- EXCPH_Renorm_PH_abs= EXCPH_Renorm_PH_abs/real(q%nbz,SP)
+ EXCPH_Renorm          = EXCPH_Renorm/real(q%nbz,SP)
+ EXCPH_Renorm_PH_abs   = EXCPH_Renorm_PH_abs/real(q%nbz,SP)
+ EXCPH_Renorm_PL       = EXCPH_Renorm_PL/real(q%nbz,SP)
+ EXCPH_Renorm_PL_PH_abs= EXCPH_Renorm_PL_PH_abs/real(q%nbz,SP)
  !
- call msg('sr','Renormalization factors at finite temperature:')
+ call msg('sr','Renormalization factors at finite temperature [Absorption]:')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
    call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm(i_alpha),EXCPH_Renorm_PH_abs(i_alpha)/))
+ enddo
+ call msg('sr','Renormalization factors at finite temperature [Emission]:')
+ do i_alpha=EXCPH_states(1),EXCPH_states(2)
+   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm_PL(i_alpha),EXCPH_Renorm_PL_PH_abs(i_alpha)/))
  enddo
  !
  ! The term without satellites
@@ -298,7 +307,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              ! Phonon emission in luminescence [photon emission / phonon emission]
              !
-             EXCPH_Renorm_PL(i_alpha)    = EXCPH_Renorm_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
+             EXCPH_Renorm_PL(i_alpha)        = EXCPH_Renorm_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
              !
            enddo
          enddo

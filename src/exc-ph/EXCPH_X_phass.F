@@ -256,7 +256,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !
              E_beta  =EXC_E_DbGd(i_beta,iq_fg)
              !
-             if(ph_E<FAN_deltaE_treshold) cycle
+             if(ph_E<FAN_deltaE_treshold) cycle ! exclude addition phonon modes with low energy in the DbGd
              !
              if(abs(E_beta-E_alpha+ph_E)>FAN_deltaE_treshold) &
 &                  BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)       =EXC_gkkp_sq/abs(E_beta-E_alpha+ph_E)**2
@@ -285,7 +285,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        do il=elph_branches(1),elph_branches(2)
          !      
          ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
-         !
          if(ph_E<FAN_deltaE_treshold) cycle
          !
          N_bose=bose_f(PH_E)

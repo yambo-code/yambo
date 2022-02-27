@@ -108,7 +108,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping
  use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
@@ -670,7 +670,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it('f',defs,'DiagExcph'   , '[EXCPH] Use only Diagonal Exciton-phonon matrix elements')
- call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid for satellite weights and renormalization too')
+ call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
+ call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
  !
  ! GPL_EXCLUDE_START
  !

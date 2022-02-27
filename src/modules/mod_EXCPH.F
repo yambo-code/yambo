@@ -76,6 +76,7 @@ module EXCPH
  real(SP),    allocatable :: ph_EXCPH_E(:)
  complex(SP), allocatable :: EXCPH_Sigma_c_diag(:,:)
  complex(SP), allocatable :: EXCPH_Sigma_c(:,:,:)
+ real(SP) :: L_damping
  !
  ! Minimum excitonic energy
  !

@@ -23,7 +23,7 @@
 !
 !> @brief Calculate exciton non-radiative life-time induced by phonon-scattering
 !!
-subroutine EXCPH_lifetime(E,k,q,X,wv)
+subroutine EXCPH_lifetime(E,k,q,X)
  !
  use units,          ONLY:HA2EV,HA2CMm1
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
@@ -34,7 +34,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  use X_m,            ONLY:X_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in, &
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
 &                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq 
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
  use frequency,      ONLY:w_samp
@@ -45,7 +45,6 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  type(levels)  ::E
  type(bz_samp) ::k,q
  type(X_t)     ::X
- type(w_samp)  :: wv 
  !
  ! Work space
  !
@@ -94,7 +93,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
  !
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
- call msg('rs','Self-energy broadening : ',wv%dr(1)*HA2EV*1000._SP,'meV')
+ call msg('rs','Self-energy broadening : ',L_damping*HA2EV*1000._SP,'meV')
  !
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
@@ -169,8 +168,8 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
     !
     F_boltz=boltzman_f(E_beta-min_EXC_E)  ! Bose function? Boltzman function?
     !
-    Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,wv%dr(1)) &
-&                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,wv%dr(1))
+    Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &
+&                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
     !
   end function Simple_Pole
   !
@@ -204,8 +203,8 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
       E_beta=EXC_E_DbGd(i_beta,iq_fg)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?
       !
-      DbGrid_pole=DbGrid_pole+(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,wv%dr(1)) &
-&                                  +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,wv%dr(1))
+      DbGrid_pole=DbGrid_pole+(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &
+&                                  +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
       !
     enddo
     !
@@ -234,7 +233,7 @@ subroutine EXCPH_lifetime(E,k,q,X,wv)
     call msg('o '//what,'#')    
     call msg('o '//what,'# Exciton Sum                  : '//trim(intc(EXCPH_sum(1)))//' - '//trim(intc(EXCPH_sum(2))))    
     call msg('o '//what,'# Exciton States               : '//trim(intc(EXCPH_states(1)))//' - '//trim(intc(EXCPH_states(2))))    
-    call msg('o '//what,'# Self-Energy broadening       :'//trim(real2ch(wv%dr(1)*HA2EV*1000._SP))//' meV')    
+    call msg('o '//what,'# Self-Energy broadening       :'//trim(real2ch(L_damping*HA2EV*1000._SP))//' meV')    
     call msg('o '//what,'# FAN treshold                 :'//trim(real2ch(FAN_deltaE_treshold*HA2EV*1000._SP))//' meV')    
     call msg('o '//what,'# PH Doble-Grid                : '//log2ch(use_PH_DbGd))    
     !

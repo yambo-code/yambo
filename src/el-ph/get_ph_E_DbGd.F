@@ -56,7 +56,7 @@ function get_ph_E_DbGd(il,iq_fg,iq_bz,q)
    !  I read ph-energies calculated with matdyn.x 
    !  that includes the LO-TO splitting and the acustic sum rule
    !
-   if(iq_bz==1) get_ph_E_DbGd=PH_freqs%FG%E(1,il,1)
+   if(iq_bz==1) get_ph_E_DbGd=PH_freqs%FG%E(il,1,1)
    !
  else
    !      

@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
- use wave_func,           ONLY:wf_ng,WF
+ use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
  use cuda_m,              ONLY:have_cuda
@@ -109,10 +109,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    endif
    !
    if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-     YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_kbv_dim_yambo))
+     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
      ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
      if (have_cuda) then
-       YAMBO_ALLOC(kbv_d,(wf_ng,n_spinor,4,max(pp_kbv_dim_yambo,1)))
+       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,max(pp_kbv_dim_yambo,1)))
        kbv_d=cZERO
      endif
    endif
@@ -175,7 +175,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      ! WF load
      !
-     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='G',&
+     call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='C',&
 &                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
      if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
@@ -235,8 +235,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !================================
          if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5_SP*real(n_spinor,SP)
          !
-         if (io_KB_abinit_err==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VAR(kbv))
-         if (io_KB_pwscf_err ==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VAR(kbv))
+         if (io_KB_abinit_err==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,DEV_VAR(kbv))
+         if (io_KB_pwscf_err ==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,DEV_VAR(kbv))
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)

@@ -82,6 +82,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
+ L_kind=trim(L_kind)
+ if (L_kind(1:1)/='L') L_kind="L"//L_kind
  call msg('s','[BSE] Response kind is ',trim(L_kind))
  !
  ! Energy points
@@ -148,7 +150,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
    if (l_col_cut.and.(l_1D.or.l_2D)) then
      if(iq==1) BSS_eels_to_eps=.false.
-     if(iq/=1) BSS_eels_to_eps=trim(L_kind)=="Lfull"
+     if(iq/=1) BSS_eels_to_eps=(index(L_kind,"full")>0)
    endif
    !
    ! BSS output arrays

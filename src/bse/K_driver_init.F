@@ -61,12 +61,10 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! L_kind check
  !==============
- if (trim(L_kind(1:1))/='L') L_kind="L"//trim(L_kind)
- if (trim(L_kind)/="Lbar".and.trim(L_kind)/="Lfull".and.trim(L_kind)/="Ltilde") then
-   call error('set Lkind = Lbar or Lfull or Ltilde ')
- endif
+ if (index(L_kind,"Lbar")==0.and.index(L_kind,"full")==0.and.index(L_kind,"Ltilde")==0) &
+&         call error('set Lkind = Lbar or Lfull or Ltilde')
  !
- if (trim(L_kind)=="Lfull".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+ if (index(L_kind,"full")>0.and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
    call warning(' Lkind=Lfull with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
    BSE_mode="resonant"
  endif
@@ -154,7 +152,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  ! Remove exchange if computing the irreducible response
- if (trim(L_kind)=="Ltilde") then
+ if (index(L_kind,"Ltilde")>0) then
    BS_res_K_exchange=.FALSE.
    BS_cpl_K_exchange=.FALSE.
  endif

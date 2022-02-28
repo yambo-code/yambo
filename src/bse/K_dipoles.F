@@ -225,7 +225,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  !
  call live_timing()
  !
- if (trim(L_kind)=="full") then
+ if (index(L_kind,"full")>0) then
    do i_T_g=1,BS_nT_grps
      if (.not.allocated(BS_T_grp(i_T_g)%dipoles_opt) ) then
        YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,2/BS_n_eh_spaces))

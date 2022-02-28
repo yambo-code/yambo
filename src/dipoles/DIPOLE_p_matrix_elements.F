@@ -34,6 +34,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:g_vec,bz_samp
 #ifdef _CUDA
+ use wave_func,     ONLY:wf_igk_d
  use R_lattice,     ONLY:g_vec_d
 #endif
 #if defined _RT
@@ -59,6 +60,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  complex(SP)  :: rho_acc
  real(SP)     :: rho_acc_r,rho_acc_i
  real(SP)     :: alat_i1,xk_i1
+ integer      :: wf_nc_ik
 #endif
  !
  rho=cZERO
@@ -79,6 +81,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    WF_c_d => WF%c_d
    xk_i1=Xk%pt(ik,i1)
    alat_i1=alat(i1)
+   wf_nc_ik=wf_nc_k(ik)
    !
    if(eval_spinor_matrix) then
      !
@@ -89,8 +92,8 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          rho_acc_i=0.0_SP
          !
          !$cuf kernel do(1)
-         do ic=1,wf_nc_k(ik)
-           ig=wf_igk(ic,ik)
+         do ic=1,wf_nc_ik
+           ig=wf_igk_d(ic,ik)
            rho_acc= conjg(WF_c_d(ic,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
 &                         WF_c_d(ic,j_spinor,ic_wf)
            rho_acc_r=rho_acc_r + real(rho_acc,SP)
@@ -109,8 +112,8 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      ! 
      !$cuf kernel do(2)
      do i_spinor=1,n_spinor
-     do ic=1,wf_nc_k(ik)
-        ig=wf_igk(ic,ik)
+     do ic=1,wf_nc_ik
+        ig=wf_igk_d(ic,ik)
         rho_acc= conjg(WF_c_d(ic,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
 &                      WF_c_d(ic,i_spinor,ic_wf)
         rho_acc_r=rho_acc_r + real(rho_acc,SP)

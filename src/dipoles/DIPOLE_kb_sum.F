@@ -58,29 +58,36 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,kbv)
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
  !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
 #ifdef _CUDA
- complex(SP) DEV_ATTR :: WF_v(wf_ncx,n_spinor),WF_c(wf_ncx,n_spinor)
+ complex(SP) DEV_ATTR :: WF_v(wf_nc_k(ik),n_spinor),WF_c(wf_nc_k(ik),n_spinor)
  complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
+ !complex(SP) DEV_ATTR, target, contiguous :: kbv_ik(wf_nc_k(ik),n_spinor,4,pp_kbv_dim_yambo)
 #endif
  !
  if (pp_kbv_dim_yambo==0) return
  !
  dim_flat=n_spinor*4*pp_kbv_dim_yambo
- N=wf_nc_k(ik)
  !
  ! This works since WF has the target attribute in mod_wave_function 
  !
 #if defined _CUDA
+ N=wf_ncx
+ !N=wf_nc_k(ik)
+ !
+ !WF_p => WF%c
+ call dev_memcpy(WF_v,WF%c(:N,:,iv_wf))
+ call dev_memcpy(WF_c,WF%c(:N,:,ic_wf))
+ !call dev_memcpy(kbv_ik,kbv(:N,:,:,:))
+ !
  call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ !call C_F_POINTER(C_DEVLOC(kbv_ik), kbv_p,(/N,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
- !WF_p => WF%c
- call dev_memcpy(WF_v,WF%c(:,:,iv_wf))
- call dev_memcpy(WF_c,WF%c(:,:,ic_wf))
- !
- call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_v(:N,:), N, kbv_p(:N,:), N, cZERO, XXv_p, n_spinor)
- call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_c(:N,:), N, kbv_p(:N,:), N, cZERO, XXc_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_v, N, kbv_p, N, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_c, N, kbv_p, N, cZERO, XXc_p, n_spinor)
 #else
+ N=wf_nc_k(ik)
+ !
  call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
  call C_F_POINTER(C_LOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
  call C_F_POINTER(C_LOC(XXc), XXc_p, (/n_spinor,dim_flat/) )

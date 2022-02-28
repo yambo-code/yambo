@@ -82,8 +82,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    global_gauge="length"
  endif
  !
- L_kind=trim(L_kind)
- if (L_kind(1:1)/='L') L_kind="L"//L_kind
+ if (index(L_kind,'L')==0) L_kind="L"//trim(L_kind)
  call msg('s','[BSE] Response kind is ',trim(L_kind))
  !
  ! Energy points

@@ -37,6 +37,7 @@ configure-stamp: uncompress-stamp
 	      CPP="$(cpp)" \
 	      CXX="$(cc)" \
 	      CXXCPP="$(cpp)" \
+              CFLAGS="$(cflags)" \
 	      FC="$(fc)" \
               --enable-build-mode=$(hdf5_mode) \
 	      CPPFLAGS="$(netcdf_aux)" ); \

@@ -71,21 +71,30 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,kbv)
  ! This works since WF has the target attribute in mod_wave_function 
  !
 #if defined _CUDA
- N=wf_ncx
  !N=wf_nc_k(ik)
  !
  !WF_p => WF%c
- call dev_memcpy(WF_v,WF%c(:N,:,iv_wf))
- call dev_memcpy(WF_c,WF%c(:N,:,ic_wf))
+ !call dev_memcpy(WF_v,WF%c(:N,:,iv_wf))
+ !call dev_memcpy(WF_c,WF%c(:N,:,ic_wf))
  !call dev_memcpy(kbv_ik,kbv(:N,:,:,:))
  !
- call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
  !call C_F_POINTER(C_DEVLOC(kbv_ik), kbv_p,(/N,dim_flat/) )
+ !call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
+ !call C_F_POINTER(C_DEVLOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
+ !
+ !call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_v, N, kbv_p, N, cZERO, XXv_p, n_spinor)
+ !call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_c, N, kbv_p, N, cZERO, XXc_p, n_spinor)
+ !
+ call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XXv), XXv_p, (/n_spinor,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XXc), XXc_p, (/n_spinor,dim_flat/) )
  !
- call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_v, N, kbv_p, N, cZERO, XXv_p, n_spinor)
- call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_c, N, kbv_p, N, cZERO, XXc_p, n_spinor)
+ !WF_p => WF%c
+ call dev_memcpy(WF_v,WF%c(:,:,iv_wf))
+ call dev_memcpy(WF_c,WF%c(:,:,ic_wf))
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ncx, cONE, WF_v, wf_ncx, kbv_p, wf_ncx, cZERO, XXv_p, n_spinor)
+ call M_by_M('T','N', n_spinor, dim_flat, wf_ncx, cONE, WF_c, wf_ncx, kbv_p, wf_ncx, cZERO, XXc_p, n_spinor)
 #else
  N=wf_nc_k(ik)
  !

@@ -260,12 +260,31 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    !
    subroutine build_k_plus_q_table()
      !      
-     integer, external ::qindx_B_init,qindx_B_close 
-     integer :: qindx_ID,qindx_ID_frag,qindx_tmp(2)
+     use parallel_int,        ONLY:PARALLEL_global_indexes
+     use R_lattice,           ONLY:bse_scattering
+     !
+     integer, external ::qindx_B_init,qindx_B_close,io_QINDX 
+     integer :: qindx_ID,qindx_ID_frag,qindx_tmp(2),ID,io_err
      integer :: ik_bz,iq_bz,ip_bz
      !
+     if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
+     !
+     call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
+     call PARALLEL_SETUP_K_scheme("BZINDX")
+     !
+     ! here qindx_B is allocated
+     !
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,5/),ID=ID)
+     io_err=io_QINDX(k,q,ID)
+     if (io_err/=0) then
+       call msg('s',"Missing k/q scattering database")
+       call error("Please run a setup with the BSEscatt flag activated")
+     endif
+     !
+     io_err=qindx_B_init(qindx_ID,qindx_ID_frag)
+     if(io_err/=0) call error("Error reading qindx_B")
+     !
      call live_timing('K plus q table',k%nbz)
-     qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag)
      do ik_bz=1,k%nbz
        call live_timing(steps=1)
        IQ_bz_loop: do iq_bz=1,q%nbz

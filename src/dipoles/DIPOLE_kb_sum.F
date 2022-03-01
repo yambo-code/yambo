@@ -58,8 +58,9 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,kbv)
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
  !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
 #ifdef _CUDA
- complex(SP) DEV_ATTR :: WF_v(wf_nc_k(ik),n_spinor),WF_c(wf_nc_k(ik),n_spinor)
+ complex(SP) DEV_ATTR :: WF_v(wf_ncx,n_spinor),WF_c(wf_ncx,n_spinor)
  complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
+ !complex(SP) DEV_ATTR :: WF_v(wf_nc_k(ik),n_spinor),WF_c(wf_nc_k(ik),n_spinor)
  !complex(SP) DEV_ATTR, target, contiguous :: kbv_ik(wf_nc_k(ik),n_spinor,4,pp_kbv_dim_yambo)
 #endif
  !

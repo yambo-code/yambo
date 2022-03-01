@@ -219,7 +219,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     !
     implicit none
     !
-    character(schlen) :: what='exc_QP'
+    character(schlen) :: what='QP'
     !
     call OUTPUT_add_column(what,action="reset")
     call OUTPUT_add_column(what,action="open")

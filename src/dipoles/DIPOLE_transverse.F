@@ -32,7 +32,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
- use pseudo,              ONLY:PP_free,pp_table,Vnl,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
+ use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
@@ -58,17 +58,18 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
  !I/O and external functions
  !
- integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err
- integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
+ integer                      :: ID,IO_ACT_NOW,io_err(3),io_KB_abinit_err,io_KB_pwscf_err
+ integer, external            :: io_KB_abinit,io_KB_pwscf
  !
  call timing('DIPOLE_transverse',OPR='start')
  !
@@ -92,7 +93,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    io_KB_abinit_err= io_err(1)
    io_KB_pwscf_err = io_err(2)
-   io_Vnl_err      = io_err(3)
    !
    ! Define pp_kbv_dim_yambo and pp_kbv_table
    !
@@ -108,11 +108,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      call DIPOLE_kb_abinit_def_dim()
    endif
    !
-   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
+   l_use_comm=l_use_comm.and.(io_KB_abinit_err==0.or.io_KB_pwscf_err==0).and.pp_kbv_dim_yambo>0
+   !
+   if(l_use_comm) then
+     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_kbv_dim_yambo,Dip%ib(1):Dip%ib(2)))
      YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
-     ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
      if (have_cuda) then
-       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,max(pp_kbv_dim_yambo,1)))
+       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
        kbv_d=cZERO
      endif
    endif
@@ -178,11 +180,19 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      call WF_load(WF,0,1,Dip%ib,(/ik,ik/),sp_pol_to_load=(/i_sp_pol,i_sp_pol/),space='C',&
 &                 title='-Oscillators/G space/Transverse '//spin_string(i_sp_pol),force_WFo=l_sc_run,keep_states_to_load=.TRUE.)
      !
-     if (io_KB_abinit_err==0.and.l_use_comm) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
-     if (io_KB_pwscf_err ==0.and.l_use_comm) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
-     !
-     if (have_cuda .and. (io_KB_abinit_err==0.or.io_KB_pwscf_err ==0) &
-&                  .and. l_use_comm.and.size(kbv)>0) call dev_memcpy(kbv_d,kbv)
+     if (l_use_comm) then
+       !
+       if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
+       if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
+       !
+       if (have_cuda) call dev_memcpy(kbv_d,kbv)
+       !
+       do ib=Dip%ib(1),Dip%ib(2)
+         i_wf=WF%index(ib,ik,i_sp_pol)
+         call DIPOLE_kb_project(ik,i_wf,DEV_VAR(kbv),XX(:,:,:,:,ib))
+       enddo
+       !
+     endif
      !
      do iv=Dip%ib(1),Dip%ib_lim(1) 
        !
@@ -233,10 +243,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
-         if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5_SP*real(n_spinor,SP)
-         !
-         if (io_KB_abinit_err==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,DEV_VAR(kbv))
-         if (io_KB_pwscf_err ==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,ik,rho,DEV_VAR(kbv))
+         if (l_use_comm) call DIPOLE_kb_sum(rho,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)
@@ -293,7 +300,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! CLEAN
  !
- if (io_KB_pwscf_err==0.or.io_KB_abinit_err==0) then
+ if (l_use_comm) then
+   YAMBO_FREE(XX)
    YAMBO_FREE(kbv)
    YAMBO_FREE(kbv_d)
    YAMBO_FREE(pp_n_l_comp)
@@ -301,8 +309,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    YAMBO_FREE(pp_kbv_table)
    YAMBO_FREE(pp_factor)
    call PP_free()
- else if (io_Vnl_err==0) then
-   YAMBO_FREE(Vnl)
  endif
  YAMBO_FREE(g_vec_d)
  !

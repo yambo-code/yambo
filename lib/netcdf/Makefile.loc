@@ -48,7 +48,7 @@ configure-stamp: uncompress-stamp
 	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
-	      LIBS="$(lhdf5)" \
+	      LIBS="$(lpnetcdf) $(lhdf5)" \
 	      F77="$(f77)" ); \
 	fi
 #	      LDFLAGS="-L${LIBPATH}/lib -lpnetcdf" \#

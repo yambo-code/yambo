@@ -25,11 +25,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_kb_project(ik,i_wf,kbv,XX)
+subroutine DIPOLE_kb_project(ncomp,WF_ib,kbv,XX)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use wrapper,       ONLY:M_by_M
- use wave_func,     ONLY:WF,wf_ncx,wf_nc_k
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use deviceXlib_m,  ONLY:dev_memcpy
@@ -44,53 +43,27 @@ subroutine DIPOLE_kb_project(ik,i_wf,kbv,XX)
  !
  implicit none
  !
- integer     :: ik,i_wf
- complex(SP) DEV_ATTR, target, intent(in)  :: kbv(wf_ncx,n_spinor,4,pp_kbv_dim_yambo)
+ integer,                      intent(in)  :: ncomp
+ complex(SP) DEV_ATTR,         intent(in)  :: WF_ib(ncomp,n_spinor)
+ complex(SP) DEV_ATTR, target, intent(in)  :: kbv(ncomp,n_spinor,4,pp_kbv_dim_yambo)
  complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
- integer     :: dim_flat,N
- !
+ integer     :: dim_flat
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
- !complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
-#ifdef _CUDA
- complex(SP) DEV_ATTR :: WF_ib(wf_ncx,n_spinor)
- !complex(SP) DEV_ATTR :: WF_ib(wf_nc_k(ik),n_spinor),WF_c(wf_nc_k(ik),n_spinor)
- !complex(SP) DEV_ATTR, target, contiguous :: kbv_ik(wf_nc_k(ik),n_spinor,4,pp_kbv_dim_yambo)
-#endif
  !
  dim_flat=n_spinor*4*pp_kbv_dim_yambo
  !
 #if defined _CUDA
- !N=wf_nc_k(ik)
- !
- !! This works since WF has the target attribute in mod_wave_function 
- !WF_p => WF%c
- !
- !call dev_memcpy(WF_ib,WF%c(:N,:,i_wf))
- !call dev_memcpy(kbv_ik,kbv(:N,:,:,:))
- !
- !call C_F_POINTER(C_DEVLOC(kbv_ik), kbv_p,(/N,dim_flat/) )
- !call C_F_POINTER(C_DEVLOC(XX), XX_p, (/n_spinor,dim_flat/) )
- !
- !call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF_ib, N, kbv_p, N, cZERO, XX_p, n_spinor)
- !
- call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/ncomp,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat/) )
- !
- !WF_p => WF%c
- call dev_memcpy(WF_ib,WF%c(:,:,i_wf))
- !
- call M_by_M('T','N', n_spinor, dim_flat, wf_ncx, cONE, WF_ib, wf_ncx, kbv_p, wf_ncx, cZERO, XX_p, n_spinor)
 #else
- N=wf_nc_k(ik)
- !
- call C_F_POINTER(C_LOC(kbv), kbv_p, (/wf_ncx,dim_flat/) )
+ call C_F_POINTER(C_LOC(kbv), kbv_p, (/ncomp,dim_flat/) )
  call C_F_POINTER(C_LOC(XX),  XX_p, (/n_spinor,dim_flat/) )
- !
- call M_by_M('T','N', n_spinor, dim_flat, N, cONE, WF%c(:N,:,i_wf), N, kbv_p(:N,:), N, cZERO, XX_p, n_spinor)
 #endif
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
  !
 end subroutine DIPOLE_kb_project
 !

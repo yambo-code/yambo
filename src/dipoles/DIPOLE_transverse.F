@@ -40,7 +40,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
- use wave_func,           ONLY:wf_ncx,WF
+ use wave_func,           ONLY:wf_ncx,wf_nc_k,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
  use cuda_m,              ONLY:have_cuda
@@ -58,7 +58,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
@@ -187,9 +187,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
        !
        if (have_cuda) call dev_memcpy(kbv_d,kbv)
        !
+       !nc=wf_nc_k(ik)
+       nc=wf_ncx
        do ib=Dip%ib(1),Dip%ib(2)
          i_wf=WF%index(ib,ik,i_sp_pol)
-         call DIPOLE_kb_project(ik,i_wf,DEV_VAR(kbv),XX(:,:,:,:,ib))
+         !call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
+         call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv),XX(:,:,:,:,ib))
        enddo
        !
      endif

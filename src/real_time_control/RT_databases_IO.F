@@ -151,11 +151,17 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      ! Parallel OPEN
      !
+#if defined _PAR_IO
      call elemental_G_lesser_IO(OP_WR,OP_APP,-1)
+#endif
      !
      ! Serial SECTION 1 
      !
+#if defined _PAR_IO
      call elemental_G_lesser_IO(WR,WR,1)
+#else
+     call elemental_G_lesser_IO(OP_WR_CL,OP_WR_CL,1)
+#endif
      !
 #if defined _ELPH_ITERATIVE
      !if (l_RT_iterative_ELPH_lifetimes) then
@@ -190,7 +196,11 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      ! SECTION 2 
      ! 
+#if defined _PAR_IO
      call elemental_G_lesser_IO(WR,WR,2)
+#else
+     call elemental_G_lesser_IO(OP_APP_CL,OP_APP_CL,2)
+#endif
      !
      ! k-SECTION 3
      !
@@ -212,8 +222,7 @@ subroutine RT_databases_IO(E,DO_IT)
          !
          if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
          !
-         IO_ACT=WR
-         if (NE_i_time==NE_steps.and.ik==PAR_G_k_range(2)) io_ACT=WR_CL
+         IO_ACT=manage_action(OP_IF_START_APP_CL_IF_END,ik,FIRST=PAR_G_k_range(1),LAST=PAR_G_k_range(2))
          !
          call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=RT_DB_ID(i_G_RESTART_db))
          io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))

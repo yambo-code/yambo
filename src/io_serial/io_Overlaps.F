@@ -84,7 +84,7 @@ integer function io_Overlaps(Dip,ID)
  ! Fragmentation
  !
  call io_fragment(ID,ID_frag,i_fragment=i_fragment,ierr=io_Overlaps)
- if(io_Overlaps/=0) goto 1
+ if (io_Overlaps/=0) goto 1
  !
  ! DIP_S
  !

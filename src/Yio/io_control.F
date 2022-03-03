@@ -114,7 +114,7 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  !
  io_action(ID)=ACTION
  if (present(MODE)) io_mode(ID)=MODE
- if (present(COMM)) io_com(ID) =COMM%COMM
+ if (present(COM))  io_com(ID) =COM
  if (present(SEC)) then
    io_sec(ID,:)=0
    io_sec(ID,:size(SEC))=SEC

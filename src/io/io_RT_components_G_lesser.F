@@ -45,7 +45,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  logical           :: l_H_rot,l_H_sig,l_H_EQ
  integer           :: ib,ik,ikibz,i_sp_pol,i_mem,i_mem_sorted,G_IO_steps,VAR_SZ(5),IPOS(5),G_IPOS(5),&
-&                     PAR_G_k_range_ibz(2),k_range(2),ip
+&                     PAR_G_k_range_ibz(2),k_range(2),ip,TMP_VAR_SZ
  character(schlen) :: dim_names(5),dim_name_ibz,G_var_name,Sigma_var_name,H_var_name,ROT_var_name
  complex(SP), allocatable ::Delta_Sigma(:,:,:,:)
  !
@@ -115,13 +115,12 @@ subroutine io_RT_components_G_lesser(ID,T_size)
    call def_variable_bulk(ID,"dG_lesser", 4,VAR_SZ,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
  endif
  if (.not.variable_exist(ID,trim(Sigma_var_name)).and.l_H_sig) then
-#if defined _PAR_IO
-   call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),nkibz,VAR_SZ(5)/),SP,&
-&                         dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
-#else
-   call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),1,VAR_SZ(5)/),SP,&
-&                         dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
+   TMP_VAR_SZ=1
+#if defined _PAR_IO 
+   TMP_VAR_SZ=nkibz
 #endif
+   call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),TMP_VAR_SZ,VAR_SZ(5)/),SP,&
+&                         dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
  endif
  if (.not.variable_exist(ID,trim(ROT_var_name)).and.l_H_rot) then
    call def_variable_bulk(ID,trim(ROT_var_name),6,VAR_SZ(1:4),SP,&
@@ -171,7 +170,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !
  if (l_H_rot) call io_variable_bulk(ID,6,C3=H_rotation(:,:,k_range(1):k_range(2),1),IPOS=IPOS(1:4))
  !
- !if (l_H_EQ) call io_variable_bulk(ID,7,C3=H_EQ(:,:,k_range(1):k_range(2),1),IPOS=IPOS(1:4))
+ if (l_H_EQ) call io_variable_bulk(ID,7,C3=H_EQ(:,:,k_range(1):k_range(2),1),IPOS=IPOS(1:4))
  !
  ! In case of frequent I/O this gives a significant slowdown of the simulation
  if (G_IO_steps>=10) call netcdf_call(nf90_sync(io_unit(ID)),ID)

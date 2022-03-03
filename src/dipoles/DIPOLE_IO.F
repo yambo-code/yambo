@@ -176,7 +176,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    do ik=1,Xk%nibz
      i_fragment=ik+(i_sp_pol-1)*Xk%nibz
 #if !defined _PAR_IO
-     if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
+     if (.not.IO_par_index%element_1D(i_fragment)            ) cycle
+     if (.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing ) cycle
      IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,IO_par_index)
 #endif
      call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
@@ -221,7 +222,8 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      do ik=1,Xk%nbz
        i_fragment=ik+(i_sp_pol-1)*Xk%nbz
 #if !defined _PAR_IO
-       if ((.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0).and.writing ) cycle
+       if (.not.IO_par_index%element_1D(i_fragment).and.writing) cycle
+       if (.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0 .and.writing) cycle
        if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,IO_par_index)
        if (reading) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol)
 #endif

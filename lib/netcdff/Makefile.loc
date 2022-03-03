@@ -43,8 +43,6 @@ configure-stamp: uncompress-stamp
 	      CC="$(cc)" \
 	      CFLAGS="$(cflags)" \
 	      CPP="$(cpp)" \
-	      CXX="$(cc)" \
-	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf) $(inetcdf)" \
 	      LIBS="$(lnetcdf) $(lpnetcdf) $(lhdf5)" \

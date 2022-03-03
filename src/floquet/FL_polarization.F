@@ -126,17 +126,19 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
    do i_t=1,n_tot_time_steps
      !
-     FL_time_P_Berry_CART(id,i_t)=sum(FL_time_P_Berry_RED(:,i_t)*a(:,id))/DL_vol-NL_initial_P(id)
+     FL_time_P_Berry_CART(id,i_t)=sum(FL_time_P_Berry_RED(:,i_t)&
+             &                   *a(:,id))/(DL_vol*2._SP*pi)*spin_occ&
+             &                   -NL_initial_P(id)
      !
    enddo
-   !aim137 parche - adjust everything to 0 at time 0
-   !FL_time_P_Berry_CART(id,:)=FL_time_P_Berry_CART(id,:)-FL_time_P_Berry_CART(id,1)
    !
  enddo
  !
  !aim137 DEBUG
- !
- !print*, real(FL_time_P_Berry_CART(1,:))
+ !print*, 'NL_initial_P:'
+ !print*, real(NL_initial_P(:))
+ !print*, 'FL_time_P_Berry_CART at t=0'
+ !print*, real(FL_time_P_Berry_CART(:,1))
  !aim137 DEBUG
  !
  FL_Chi_pol = cZERO
@@ -212,7 +214,7 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
      !
      i1_shifted_fl = i1_fl -(max_time_step+1)
      !
-     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_time_steps)
+     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2._SP*pi*(i_t-1)/n_tot_time_steps)
      !aim137 prelim - move the generation of the FT matrix to the module
      !
    enddo

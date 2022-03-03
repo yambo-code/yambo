@@ -68,6 +68,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
     !print*, i1_shifted_fl
     !print*, FL_S_plus(:,:,i1_extra)
    enddo
+ ! print*, exp(-1*cI*2*pi*(i_t-1)/n_tot_time_steps)
    !
    ! Add Quasi-energies exponentials
    ! ================================

@@ -229,10 +229,17 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_Chi_pol(i_f,:,:,:) = cZERO
    FL_loc_S_inv_mode = "0" !for first iteration
    !
+   !
+   !aim137 debug
+   !
+   call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
+   !
+   !aim137 debug
+   !
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, Efield(1)%frequency*HA2EV
+   !print*, 'Frequency [eV] = ',Efield(1)%frequency*HA2EV
    !
    do while(.not.l_FL_sc_reached)
      !

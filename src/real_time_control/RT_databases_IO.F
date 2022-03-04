@@ -151,17 +151,13 @@ subroutine RT_databases_IO(E,DO_IT)
      !
      ! Parallel OPEN
      !
-#if defined _PAR_IO
-     call elemental_G_lesser_IO(OP_WR,OP_APP,-1)
-#endif
+!#if defined _PAR_IO
+!     call elemental_G_lesser_IO(OP_WR,OP_APP,-1)
+!#endif
      !
      ! Serial SECTION 1 
      !
-#if defined _PAR_IO
-     call elemental_G_lesser_IO(WR,WR,1)
-#else
-     call elemental_G_lesser_IO(OP_WR_CL,OP_WR_CL,1)
-#endif
+     call elemental_G_lesser_IO(OP_WR_CL,OP_WR_CL,1,MODE="SER")
      !
 #if defined _ELPH_ITERATIVE
      !if (l_RT_iterative_ELPH_lifetimes) then
@@ -194,19 +190,14 @@ subroutine RT_databases_IO(E,DO_IT)
        endif
      endif
      !
-     ! SECTION 2 
+     ! SERIAL SECTION 2 
      ! 
-#if defined _PAR_IO
-     call elemental_G_lesser_IO(WR,WR,2)
-#else
-     call elemental_G_lesser_IO(OP_APP_CL,OP_APP_CL,2)
-#endif
+     call elemental_G_lesser_IO(OP_APP_CL,OP_APP_CL,2,MODE="SER")
      !
-     ! k-SECTION 3
+     ! PARALLEL k-SECTION 3
      !
 #if defined _PAR_IO
-     if (NE_i_time< NE_steps) call elemental_G_lesser_IO(WR,WR,3)
-     if (NE_i_time==NE_steps) call elemental_G_lesser_IO(WR_CL,WR_CL,3)
+     call elemental_G_lesser_IO(OP_WR_CL,OP_WR_CL,3,"PAR")
 #else
      !
      ! I/O parallel permissions
@@ -277,24 +268,31 @@ subroutine RT_databases_IO(E,DO_IT)
  !
  contains
    !
-   subroutine elemental_G_lesser_IO(G_RESTART_ACTION,G_ACTION,SEC_)
-     integer :: G_RESTART_ACTION,G_ACTION,SEC_
+   subroutine elemental_G_lesser_IO(G_RESTART_ACTION,G_ACTION,SEC_,MODE)
+     integer      :: G_RESTART_ACTION,G_ACTION,SEC_
+     character(*) :: MODE
      !  
 #if defined _PAR_IO
-     call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_RESTART_db),&
-&                    COMM=PAR_COM_Xk_ibz_INDEX,DO_IT=HEAD_k_CPU)
-     io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
-     if (SAVE_G_history)  then
-       call io_control(ACTION=G_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db),&
+     if (MODE=="PAR") then
+       call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_RESTART_db),&
 &                      COMM=PAR_COM_Xk_ibz_INDEX,DO_IT=HEAD_k_CPU)
-       io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
-     endif
-#else
-     call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_RESTART_db))
-     io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
-     if (SAVE_G_history)  then
-       call io_control(ACTION=G_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db))
-       io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
+       io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
+       if (SAVE_G_history)  then
+         call io_control(ACTION=G_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db),&
+&                        COMM=PAR_COM_Xk_ibz_INDEX,DO_IT=HEAD_k_CPU)
+         io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
+       endif
+     else
+#endif
+       !
+       call io_control(ACTION=G_RESTART_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_RESTART_db))
+       io_G=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_G_RESTART_db))
+       if (SAVE_G_history)  then
+         call io_control(ACTION=G_ACTION,COM=NONE, SEC=(/SEC_/),ID=RT_DB_ID(i_G_db))
+         io_G=io_RT_components('G_lesser',RT_DB_ID(i_G_db))
+       endif
+       !
+#if defined _PAR_IO
      endif
 #endif
    end subroutine

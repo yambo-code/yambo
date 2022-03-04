@@ -231,19 +231,18 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  ! ===================================================================
  !
  !aim137 DEGUB - I change this for ypp's approach
-  call M_by_V('N',n_tot_time_steps,n_tot_time_steps,cONE,FL_FT_Mat,&
-         &   n_tot_time_steps,FL_time_pol,1,cONE,FL_floquet_pol,1)
+ !call M_by_V('N',n_tot_time_steps,n_tot_time_steps,cONE,FL_FT_Mat,&
+ !       &   n_tot_time_steps,FL_time_pol,1,cONE,FL_floquet_pol,1)
  !
  !aim137 DEBUG - ypp's approach
- !FL_floquet_pol(max_time_step+1) = FL_time_pol(1)
- !do i1_fl=(max_time_step+2),n_tot_time_steps
- !  do i_t=1,n_tot_time_steps
- !  !
- !  FL_floquet_pol(i1_fl)=FL_floquet_pol(i1_fl)+&
- !          &             FL_FT_Mat(i1_fl,i_t)*FL_time_pol(i_t)
- !  !
- !  enddo
- !enddo
+  do i1_fl=(max_time_step+1),n_tot_time_steps
+    do i_t=1,n_tot_time_steps
+    !
+    FL_floquet_pol(i1_fl)=FL_floquet_pol(i1_fl)+&
+            &             FL_FT_Mat(i1_fl,i_t)*FL_time_pol(i_t)
+    !
+    enddo
+  enddo
  !
  !
 !!aim137 DEBUG

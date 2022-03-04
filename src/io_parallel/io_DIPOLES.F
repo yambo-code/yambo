@@ -28,7 +28,7 @@ integer function io_DIPOLES(Dip,ID)
  use electrons,     ONLY:n_spin,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
-&                        nf90_sync,io_unit,netcdf_call,write_is_on
+&                        nf90_sync,io_unit,netcdf_call,io_PAR_cpu
  use IO_int,        ONLY:io_connect,io_disconnect,io_variable_bulk,def_variable_bulk,io_header
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital, compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
@@ -90,7 +90,7 @@ integer function io_DIPOLES(Dip,ID)
    !
  endif
  !
- if (i_fragment<=0)               goto 1
+ if (i_fragment==0)               goto 1
  if (i_fragment> n_sp_pol*nXkibz) then
    if(io_PAR_cpu(ID)==1) then
      stat = nf90_sync(io_unit(ID))
@@ -99,6 +99,7 @@ integer function io_DIPOLES(Dip,ID)
    goto 1
  endif
  ! 
+                    ik_mem=0
  if (i_fragment>=1) ik_mem=PAR_K_scheme%ibz_index(ik)
  !
  ! Reading size and position

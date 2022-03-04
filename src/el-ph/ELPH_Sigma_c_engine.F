@@ -32,7 +32,7 @@
 !! @param[in]       elph_gkkp_sq        electron-phonon matrix elements squares <ib,k | \partial V /\partial u_il | ob, k-q>
 !!
 !! @param[out]      gsqF_fan            Fan self-energy, real-part
-!! @param[out]      gsqF_dw             Debye-Waller sefl-energy
+!! @param[out]      gsqF_dw             Debye-Waller self-energy
 !! @param[out]      gsqF_ca_corr        Additional term in Fan self-energy for metals [A. Marini]
 !! @param[out]      gsqF_life_bose      Imaginary part Fan self-energy Bose part
 !! @param[out]      gsqF_life_f         Imaginary part Fan self-energy Fermi part

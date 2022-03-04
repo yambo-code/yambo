@@ -72,6 +72,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      enddo
    enddo
    !
+   if(any(local_K_found==.FALSE.)) call error('Error expanding GKKP please check if force_symmorphic=.true. ')
+   !
  endif
  !
  if (.not.mode=="Q") return

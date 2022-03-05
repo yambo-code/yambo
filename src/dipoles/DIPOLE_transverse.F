@@ -112,6 +112,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    if(l_use_comm) then
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_kbv_dim_yambo,Dip%ib(1):Dip%ib(2)))
+     XX=cZERO
      YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
      if (have_cuda) then
        YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
@@ -190,6 +191,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
        !nc=wf_nc_k(ik)
        nc=wf_ncx
        do ib=Dip%ib(1),Dip%ib(2)
+         if( .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib)) ) cycle
          i_wf=WF%index(ib,ik,i_sp_pol)
          !call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
          call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv),XX(:,:,:,:,ib))

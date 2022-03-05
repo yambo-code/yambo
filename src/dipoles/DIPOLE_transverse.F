@@ -56,7 +56,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! Work Space
  !
  character(schlen)            :: live_t_string
- logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm
+ logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
 &                                i_sp_pol,n_LT_steps,ik_mem,ic_min
@@ -191,7 +191,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
        !nc=wf_nc_k(ik)
        nc=wf_ncx
        do ib=Dip%ib(1),Dip%ib(2)
-         if( .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib)) ) cycle
+         if( ib<=Dip%ib_lim(1) ) then
+           l_check= .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib))
+         else
+           l_check= .not.PAR_IND_CON_BANDS_DIP%element_1D(ib)
+         endif
+         if ( l_check ) cycle
          i_wf=WF%index(ib,ik,i_sp_pol)
          !call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
          call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv),XX(:,:,:,:,ib))

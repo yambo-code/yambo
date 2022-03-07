@@ -137,12 +137,12 @@ subroutine RT_density(en,kpt,qpt)
      !
 #if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
-     io_err=io_RT_components('G_lesser',ID)
+     io_err=io_RT_components('G_lesser_K_section',ID)
 #else
      do ik = 1, RT_nk 
        IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G_lesser',ID)
+       io_err=io_RT_components('G_lesser_K_section',ID)
      enddo
 #endif
      !

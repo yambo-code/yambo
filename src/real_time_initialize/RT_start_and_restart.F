@@ -73,7 +73,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(9),COM_MODE,ib,iE_fg,ik_RT
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(N_RT_databases),COM_MODE,ib,iE_fg,ik_RT
  integer, external :: io_RT_components
  integer, external :: RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -134,6 +134,7 @@ subroutine RT_start_and_restart(E,k,q)
  RESTART=.FALSE.
  do i_db=1,N_RT_databases
    COM_MODE=NONE
+   if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
    if (i_db==RT_return_db_ID("G_lesser_RESTART")) COM_MODE=REP
    call io_control(ACTION=OP_RD_CL,COM=COM_MODE,SEC=(/1/),MODE=VERIFY,ID=RT_DB_ID(i_db))
    io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
@@ -169,6 +170,7 @@ subroutine RT_start_and_restart(E,k,q)
    call PP_redux_wait()
    !
    do i_db=1,N_RT_databases
+     if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=RT_DB_ID(i_db))
      io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
    enddo
@@ -183,16 +185,16 @@ subroutine RT_start_and_restart(E,k,q)
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
-   i_db=RT_return_db_ID("G_lesser_RESTART")
+   i_db=RT_return_db_ID("G_lesser_RESTART_K_section")
    !
 #if defined _PAR_IO
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=RT_DB_ID(i_db))
-   io_err(i_db)=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
+   io_err(i_db)=io_RT_components('G_lesser_RESTART_K_section',RT_DB_ID(i_db))
 #else
    do ik=PAR_G_k_range(1),PAR_G_k_range(2)
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
      call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=RT_DB_ID(i_db))
-     io_err(i_db)=io_RT_components('G_lesser_RESTART',RT_DB_ID(i_db))
+     io_err(i_db)=io_RT_components('G_lesser_RESTART_K_section',RT_DB_ID(i_db))
    enddo
 #endif
    !

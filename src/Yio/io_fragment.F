@@ -33,8 +33,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
                        frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_DG
  use stderr,      ONLY:intc,write_fragments_IO_log,logfile
- use parallel_int,ONLY:PP_bcast,PP_redux_wait
- use parallel_m,  ONLY:ncpu,mpi_comm_null 
+ use parallel_m,  ONLY:ncpu 
 #if ! defined _io_lib
  use parallel_int,ONLY:PARALLEL_live_message
  use timing_m,    ONLY:timing
@@ -42,26 +41,18 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  implicit none
  !
- integer, intent(in)  :: ID
- integer, intent(out) :: ID_frag
- integer, optional :: i_fragment,j_fragment,ierr
+ integer, intent(in)   :: ID
+ integer, intent(out)  :: ID_frag
+ integer, optional     :: i_fragment
+ integer, optional     :: j_fragment
+ integer, optional     :: ierr
  !
  ! Work Space
  !
  integer           :: ierr_,i_frag,ACT_NOW
- logical           :: par_IO
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
- !
- par_IO=io_PAR_comm(ID)/=mpi_comm_null.and.ncpu>1.and.write_is_on(ID)
- !
- if (par_IO) then
-   call PP_bcast(io_raw_extension(ID),0,COMM=io_PAR_comm(ID))
-   call PP_bcast(    io_extension(ID),0,COMM=io_PAR_comm(ID))
-   call PP_bcast(       io_folder(ID),0,COMM=io_PAR_comm(ID))
-   call PP_bcast(         io_type(ID),0,COMM=io_PAR_comm(ID))
- endif
  !
  ID_frag=ID
  !
@@ -100,9 +91,9 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
  !
  call io_control(ACTION=ACT_NOW,SEC=(/i_frag/),COM=io_com(ID),MODE=io_mode(ID),ID=ID_frag)
  !
- io_sec(ID_frag,:)=io_sec(ID,:)
+ io_sec(ID_frag,:)   =io_sec(ID,:)
  io_PAR_comm(ID_frag)=io_PAR_comm(ID)
- io_PAR_cpu(ID_frag)=io_PAR_cpu(ID)
+ io_PAR_cpu(ID_frag) =io_PAR_cpu(ID)
  !
  ! io_file is redefined by io_connect
  !
@@ -114,8 +105,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
 &                    //"_fragments_"//trim(intc(i_frag))//"_"//trim(intc(j_fragment))
  endif
  !
- if(     par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID_frag)
- if(.not.par_IO) ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID_frag)
+ ierr_=io_connect(fragment_filename,type=io_type(ID),subfolder=trim(io_folder(ID)),ID=ID_frag)
  if (present(ierr)) ierr=ierr_
  !
 #if ! defined _io_lib
@@ -124,9 +114,6 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
    if (read_is_on(ID_frag) ) call PARALLEL_live_message("Reading "//trim(fragment_filename))
  endif
 #endif
- !
- ! Ensures that every MPI task has opened the fragment before writing
- if (par_IO) call PP_redux_wait(COMM=io_PAR_comm(ID))
  !
 #if ! defined _io_lib
  call timing('io_fragment',OPR='stop')

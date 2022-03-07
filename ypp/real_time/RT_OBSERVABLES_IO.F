@@ -27,10 +27,9 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
  use pars,           ONLY:DP,cZERO_DP,cZERO
  use R_lattice,      ONLY:nkibz
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:OP_RD,RD_CL,OP_RD_CL,manage_action,NONE,DUMP,LOG,RD_CL_IF_END
+ use IO_m,           ONLY:OP_RD,RD_CL,OP_RD_CL,manage_action,NONE,DUMP,LOG,OP_IF_START_RD_CL_IF_END
  use RT_control,     ONLY:RT_control_alloc,RT_control_free,J_cache,P_cache,CACHE_OBS_steps,CACHE_OBS_steps_now
- use real_time,      ONLY:NE_steps,NE_i_time,&
-&                         G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
+ use real_time,      ONLY:NE_steps,NE_i_time,G_lesser,G_lesser_reference,RT_bands,RT_dyn_step,RT_step
  use fields,         ONLY:Efield,n_ext_fields,Efield_strength
  !
 #include<memory.h>
@@ -58,16 +57,16 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
      !
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nkibz))
      !
-     call io_control(ACTION=OP_RD,COM=COM_here,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+     call io_control(ACTION=OP_RD_CL,COM=COM_here,MODE=DUMP,SEC=(/1,2/),ID=ID) 
      io_G=io_RT_components('G_lesser_RESTART',ID)
      !
      if (present(IO_error)) IO_error=io_G/=0
      if (io_G/=0) return
      !
      do ik=1,nkibz
-       IO_ACT=manage_action(RD_CL_IF_END,ik,1,nkibz)
-       call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/2,ik+2/),MODE=DUMP,ID=ID)
-       io_G=io_RT_components('G_lesser_RESTART',ID)
+       IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,nkibz)
+       call io_control(ACTION=IO_ACT,COM=COM_here,SEC=(/ik+2/),MODE=DUMP,ID=ID)
+       io_G=io_RT_components('G_lesser_RESTART_K_section',ID)
      enddo
      !
    endif
@@ -76,7 +75,7 @@ subroutine RT_OBSERVABLES_IO(what,Curr,Pol,IO_error,first_sec_only,G_lesser_only
    !
  else
    !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) 
    io_G=io_RT_components('G_lesser_RESTART',ID)
    !
  endif

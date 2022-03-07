@@ -66,7 +66,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
 #endif
  VAR_SZ(5)    = G_MEM_steps
  dim_names(5) ='G_MEM_steps'
- if (RT_do_IO("G_lesser")) then
+ if (RT_do_IO("G_lesser_K_section")) then
    VAR_SZ(5)    = NF90_UNLIMITED
    dim_names(5) ='G_IO_time_step'
  endif
@@ -99,7 +99,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  ! H_sig/H_rot...
  !----------------
  l_H_sig= variable_exist(ID,trim(Sigma_var_name)) .and. allocated(Ho_plus_sigma)
- if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) l_H_sig= G_IO_steps==1 .and. RT_do_IO("G_lesser")
+ if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) l_H_sig= G_IO_steps==1 .and. RT_do_IO("G_lesser_K_section")
  !
  l_H_EQ= variable_exist(ID,trim(H_var_name)) .and. allocated(H_EQ)
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) l_H_EQ=  l_H_sig
@@ -135,8 +135,8 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  !-----------------
  if (l_real_time) then
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
-     if (RT_do_IO("G_lesser"))         IPOS(5)=Gless_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
-     if (RT_do_IO("G_lesser_RESTART")) IPOS(5)=         T_size+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser_K_section"))         IPOS(5)=Gless_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
+     if (RT_do_IO("G_lesser_RESTART_K_section")) IPOS(5)=         T_size+(i_mem_sorted-G_MEM_steps)
      if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
      if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
      if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old

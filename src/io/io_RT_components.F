@@ -91,14 +91,18 @@ integer function io_RT_components(what,ID)
  character(schlen)     ::db_name
  integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
  logical               ::loading_carr_before_neq
- integer, external     :: variables_RT_dynamic
- !
- ! Work to be done
- !=================
- call RT_define_the_IO_DB_identifier(what)
+ integer, external     ::variables_RT_dynamic
  !
  call timing('io_RT_components',OPR='start')
  !
+ ! Datbase Name and identifier 
+ !=============================
+ ! .. at this point it is crucial to define the RT_current_DB_identifier 
+ !
+ !... using what
+ call RT_define_the_IO_DB_identifier(what)
+ !
+ !... carriers specific procedure (RT_apply related)
  db_kind=2
  if (.not.RT_do_IO("ANY")) then
    if (index(what,"_carriers")>0) then
@@ -107,17 +111,12 @@ integer function io_RT_components(what,ID)
    endif
    db_kind=-3
  endif
- !
  loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
  !
  ! ACTION
  !========
  if (RT_do_IO("ANY_G")) then 
-   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID&
-#if !defined _PAR_IO
-!&                              ,FORCE_READ_MODE=.true.&
-#endif
-&                             )
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID)
    if (io_RT_components/=0) goto 1
  else
    if (db_kind>0) db_name="RT_"//trim(RT_DB_name(RT_current_DB_identifier))
@@ -155,8 +154,8 @@ integer function io_RT_components(what,ID)
  T_size=1
  if ((write_is_on(ID).or.l_real_time).and. RT_do_IO("ANY_G") ) then
    G_IO_steps=Gless_RESTART_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-   if(NE_i_time> 1 .and. RT_do_IO("G_lesser_RESTART")) T_size= G_MEM_steps
-   if(NE_i_time> 1 .and. RT_do_IO("G_lesser")        ) T_size= 1
+   if(NE_i_time> 1 .and. (RT_do_IO("G_lesser_RESTART").or.RT_do_IO("G_lesser_RESTART_K_section"))) T_size= G_MEM_steps
+   if(NE_i_time> 1 .and. (RT_do_IO("G_lesser")        .or.RT_do_IO("G_lesser_K_section")        )) T_size= 1
  endif
  if(RT_do_IO("OBSERVABLES") .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
  !

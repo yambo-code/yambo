@@ -35,9 +35,9 @@ module RT_control
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now 
  !
- integer       ,parameter :: N_RT_databases=9 
- integer                  :: RT_DB_ID(N_RT_databases)  
- integer                  :: RT_current_DB_identifier ! \in [1,9] pointing to the DB under I/O
+ integer       ,parameter :: N_RT_databases=11 
+ integer                  :: RT_DB_ID(N_RT_databases)= 0
+ integer                  :: RT_current_DB_identifier ! \in [1,...] pointing to the DB under I/O
  character(lchlen)        :: RT_DB_file_name(N_RT_databases) = " "
  character(schlen)        :: RT_DB_name(N_RT_databases)      = " "
  integer                  :: NE_i_start_time    = 1   ! restart point
@@ -132,12 +132,14 @@ module RT_control
    !
    subroutine RT_DB_init()
      RT_DB_name(1:3)= "none"
-     RT_DB_name(4) = "OBSERVABLES"
-     RT_DB_name(5) = "G_lesser_RESTART"
-     RT_DB_name(6) = "G_lesser"
-     RT_DB_name(7) = "carriers"
-     RT_DB_name(8) = "THETA"
-     RT_DB_name(9) = "REFERENCE"
+     RT_DB_name(4)  = "OBSERVABLES"
+     RT_DB_name(5)  = "G_lesser_RESTART"
+     RT_DB_name(6)  = "G_lesser"
+     RT_DB_name(7)  = "carriers"
+     RT_DB_name(8)  = "THETA"
+     RT_DB_name(9)  = "REFERENCE"
+     RT_DB_name(10) = "G_lesser_RESTART_K_section"
+     RT_DB_name(11) = "G_lesser_K_section"
    end subroutine
    !
    integer function RT_return_db_ID(what)
@@ -152,6 +154,8 @@ module RT_control
      if (what=="carriers") RT_return_db_ID=7
      if (what=="THETA") RT_return_db_ID=8
      if (what=="REFERENCE") RT_return_db_ID=9
+     if (what=="G_lesser_RESTART_K_section") RT_return_db_ID=10
+     if (what=="G_lesser_K_section") RT_return_db_ID=11
    end function
    !
    logical function RT_do_IO(what)
@@ -165,16 +169,22 @@ module RT_control
      if (what=="M".and.RT_current_DB_identifier==4  ) RT_do_IO=.TRUE.
      if (what=="OBSERVABLES".and.RT_current_DB_identifier==4) RT_do_IO=.TRUE.
      !
-     if (what=="G_lesser_RESTART".and.RT_current_DB_identifier==5) RT_do_IO=.TRUE.
-     if (what=="G_lesser".and.RT_current_DB_identifier==6) RT_do_IO=.TRUE.
      if (what=="carriers".and.RT_current_DB_identifier==7) RT_do_IO=.TRUE.
      if (what=="THETA".and.RT_current_DB_identifier==8) RT_do_IO=.TRUE.
      if (what=="REFERENCE".and.RT_current_DB_identifier==9) RT_do_IO=.TRUE.
      !
-     if (what=="ANY_G".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6)) RT_do_IO=.TRUE.
      if (what=="DYN_VARS".and.(RT_current_DB_identifier>=4.and.RT_current_DB_identifier<=8)) RT_do_IO=.TRUE.
+     if (what=="DYN_VARS".and.(RT_current_DB_identifier==10.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
      if (what=="K_SECTION".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6&
-&                               .or.RT_current_DB_identifier==8)) RT_do_IO=.TRUE.
+&                               .or.RT_current_DB_identifier==8.or.RT_current_DB_identifier==10&
+&                               .or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
+     !
+     if (what=="ANY_G".and.(RT_current_DB_identifier==5.or.RT_current_DB_identifier==6)) RT_do_IO=.TRUE.
+     if (what=="ANY_G".and.(RT_current_DB_identifier==10.or.RT_current_DB_identifier==11)) RT_do_IO=.TRUE.
+     if (what=="G_lesser_RESTART".and.RT_current_DB_identifier==5) RT_do_IO=.TRUE.
+     if (what=="G_lesser".and.        RT_current_DB_identifier==6) RT_do_IO=.TRUE.
+     if (what=="G_lesser_RESTART_K_section".and.RT_current_DB_identifier==10) RT_do_IO=.TRUE.
+     if (what=="G_lesser_K_section".and.        RT_current_DB_identifier==11) RT_do_IO=.TRUE.
      !
    end function
    !
@@ -184,11 +194,13 @@ module RT_control
      if ( (what=="JP".or.what=="OBSERVABLES") .or. &
           (what=="M" .or.what=="OBSERVABLES") .or. &
           (what=="D" .or.what=="OBSERVABLES") ) RT_current_DB_identifier=4
-     if (what=="G_lesser_RESTART")  RT_current_DB_identifier=5
+     if (what=="G_lesser_RESTART")              RT_current_DB_identifier=5
      if (what=="G_lesser")  RT_current_DB_identifier=6
      if (what=="carriers")  RT_current_DB_identifier=7
      if (what=="THETA")     RT_current_DB_identifier=8
      if (what=="REFERENCE") RT_current_DB_identifier=9
+     if (what=="G_lesser_RESTART_K_section")     RT_current_DB_identifier=10
+     if (what=="G_lesser_K_section")             RT_current_DB_identifier=11
    end subroutine
    !
    subroutine RT_control_alloc(what)

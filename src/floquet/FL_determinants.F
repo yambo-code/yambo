@@ -26,7 +26,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,EtoT
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
 &                         n_tot_extra_modes,FL_QE,n_tot_time_steps
@@ -42,7 +42,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  !
  complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_time_steps)
  integer       :: i_t,i1_extra,i1_shifted_fl,i1,i2
- real(SP)      :: time,w0
+ real(SP)      :: time,w0,T_period,t_samples(n_tot_time_steps)
  !
  !
  FL_time_S_plus =cZERO 
@@ -51,18 +51,20 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  ! Calculate S plus as a function of time
  ! ======================================
  !
+ w0 = Efield(1)%frequency(1) ! in Ha
+ T_period = EtoT(w0)
+ forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1)/n_tot_time_steps
+ !
  do i_t=1,n_tot_time_steps
-   !
-   w0 = Efield(1)%frequency(1) ! in Ha
-   time = 2*pi/(w0) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0; in 1/Ha
    !
    do i1_extra=1,n_tot_extra_modes
      !
      i1_shifted_fl = i1_extra -(max_extra_mode+1)
      !
      FL_time_S_plus(:,:,i_t)  = FL_time_S_plus(:,:,i_t) &
-                            & + exp(-1*cI*i1_shifted_fl*2*pi*(i_t-1)/n_tot_time_steps) &
+                            & + exp(-1*cI*real(i1_shifted_fl,SP)*w0*t_samples(i_t)) &
                             & * FL_S_plus(:,:,i1_extra)
+                            !& + exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_time_steps) &
      !
     !print*, '------------------'
     !print*, i1_shifted_fl
@@ -77,8 +79,8 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
      do i2=1,en%nbf
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
-                               &  * exp(+cI*FL_QE(i1,ikbz,1)*time) &
-                               &  * exp(-cI*FL_QE(i2,ikp ,1)*time)  
+                               &  * exp(+cI*FL_QE(i1,ikbz,1)*t_samples(i_t)) &
+                               &  * exp(-cI*FL_QE(i2,ikp ,1)*t_samples(i_t))  
 
        !
      enddo

@@ -31,7 +31,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  use R_lattice,      ONLY:bz_samp,k_map,bz_map
  use vec_operate,    ONLY:get_id_perpendicular
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:NL_bands,NL_initial_P
+ use nl_optics,      ONLY:NL_bands,NL_initial_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order,&
 &                         max_time_step,n_tot_time_steps
@@ -141,6 +141,11 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !print*, real(FL_time_P_Berry_CART(:,1))
  !aim137 DEBUG
  !
+ ! Damping
+ !
+ call FL_damping("LORENTZIAN",NL_damping,FL_time_P_Berry_CART)
+ !
+ !
  FL_Chi_pol = cZERO
  FL_Pi_pol = cZERO
  !
@@ -169,6 +174,10 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  !aim137 DEBUG
  !
+ !print*, '-------------'
+ !do i_t=1,n_tot_time_steps
+ !write(*,*) i_t, real(FL_time_P_Berry_CART(1,i_t))
+ !enddo
  !
  !
  !aim137 DEBUG
@@ -214,7 +223,7 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
      !
      i1_shifted_fl = i1_fl -(max_time_step+1)
      !
-     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*i1_shifted_fl*2._SP*pi*(i_t-1)/n_tot_time_steps)
+     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_time_steps)
      !aim137 prelim - move the generation of the FT matrix to the module
      !
    enddo
@@ -258,3 +267,41 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
 !enddo
 !!aim137 DEBUG - works ok
 end subroutine FL_FT_polarization
+!
+subroutine FL_damping(damp_type,damp_factor,ft)
+ !
+ use pars,           ONLY:SP,DP
+ use fields,         ONLY:Efield,EtoT
+ use fl_optics,      ONLY:n_tot_time_steps
+ !
+ implicit none
+ !
+ real(SP),     intent(in)      :: damp_factor
+ complex(DP),  intent(inout)   :: ft(3,n_tot_time_steps)
+ character(*), intent(in)      :: damp_type
+ !
+ ! Work Space
+ !
+ integer  :: i_t
+ real(SP) :: damp_function(n_tot_time_steps)
+ real(SP) :: w0,T_period,t_samples(n_tot_time_steps)
+ !
+ w0 = Efield(1)%frequency(1) ! in Ha
+ T_period = EtoT(w0)
+ forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1)/n_tot_time_steps
+ !
+ select case ( trim(damp_type) )
+   case("LORENTZIAN")
+     forall(i_t=1:n_tot_time_steps) damp_function(i_t) = exp(-abs(t_samples(i_t)*damp_factor))
+   case("GAUSSIAN")
+     forall(i_t=1:n_tot_time_steps) damp_function(i_t) = exp(-t_samples(i_t)**2*damp_factor**2)
+   case("NONE")
+     forall(i_t=1:n_tot_time_steps) damp_function(i_t) = 1._SP
+   case default
+     call error(" Unknown damping! ")
+     return
+ end select
+ !
+ forall(i_t=1:n_tot_time_steps)  ft(:,i_t)=ft(:,i_t)*damp_function(i_t)
+ !
+end subroutine FL_damping

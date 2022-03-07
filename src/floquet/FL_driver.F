@@ -256,7 +256,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
-     !if (FL_iteration>6) l_FL_sc_reached = .true.
+     if (FL_iteration>6) l_FL_sc_reached = .true.
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !

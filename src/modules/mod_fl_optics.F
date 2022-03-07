@@ -73,7 +73,7 @@ module fl_optics
      type(levels), intent(in) :: en
      !
      max_fl_mode=FL_Chi_order+1 !aim137 removed for debug
-     !max_fl_mode=3 !aim137 remove after DEBUG
+     !max_fl_mode=5 !aim137 remove after DEBUG
      max_extra_mode  = 2*max_fl_mode
      max_duffin_mode = 4*max_fl_mode
      max_time_step   = FL_Chi_order

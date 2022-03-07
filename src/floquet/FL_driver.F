@@ -69,7 +69,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
  integer  :: FL_iteration,fl_shifted_zero_mode
  logical  :: l_FL_sc_reached
- real(DP) :: rel_error
+ real(DP) :: accuracy
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -255,8 +255,8 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
-&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,rel_error)
-     if (FL_iteration>6) l_FL_sc_reached = .true.
+&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
+     !if (FL_iteration>6) l_FL_sc_reached = .true.
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
@@ -264,7 +264,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    call msg('r','Frequency step    :',i_f)
    call msg('r','No. of iterations :',FL_iteration)
-   call msg('r','Relative error    :', rel_error)
+   call msg('r','Absolute error    :', accuracy)
    call msg('r','------------------------------------')
    !aim137 it's crashing here
    !call NL_databases_IO(i_f,'write')

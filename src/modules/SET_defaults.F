@@ -682,7 +682,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _FL
  !
  FL_Chi_order  = 2
- FL_threshold  = 0.0001
+ FL_threshold  = 1.E-3_SP
  FL_S_inv_mode = "N"
  !
 #endif

@@ -108,21 +108,25 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  ! 
  ! Variable Definitions...
  !-------------------------
+#if defined _PAR_IO 
  if( NE_i_time==NE_i_start_time.or..not.l_real_time) then
+#endif
    call def_variable_bulk(ID,trim(G_var_name),4,VAR_SZ,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
    if (l_H_sig) then
      TMP_VAR_SZ=1
 #if defined _PAR_IO 
      TMP_VAR_SZ=nkibz
 #endif
-     call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),TMP_VAR_SZ,VAR_SZ(5)/),SP,&
+     call def_variable_bulk(ID,trim(Sigma_var_name),5,(/VAR_SZ(:3),TMP_VAR_SZ,VAR_SZ(5)/),SP,&
 &                           dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
    endif
    if (l_H_rot) call def_variable_bulk(ID,trim(ROT_var_name),6,VAR_SZ(1:4),SP,&
 &                                      dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
    if (l_H_EQ) call def_variable_bulk(ID,trim(H_var_name),7,VAR_SZ(1:4),SP,&
 &                                     dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
+#if defined _PAR_IO 
  endif
+#endif
  !
  ! Variable I/O...
  !-----------------

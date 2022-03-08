@@ -23,14 +23,14 @@
 !
 subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
  !
- use pars,           ONLY:IP,SP
+ use pars,           ONLY:IP,SP,LP
  use R_lattice,      ONLY:nqbz
  use IO_int,         ONLY:io_header,def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
  use IO_m,           ONLY:io_status,frag_RT,read_is_on
  use RT_lifetimes,   ONLY:q_weight_RT
  use real_time,      ONLY:RT_carriers,RT_obj_alloc
- use RT_control,     ONLY:RT_do_IO,RT_current_DB_identifier,RT_DB_name
+ use RT_control,     ONLY:RT_do_IO,RT_current_DB_identifier,RT_DB_name,SAVE_G_history
  !
  implicit none
  !
@@ -74,6 +74,11 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_compone
    call def_variable_bulk(ID,"RT_table",6,(/RT_carriers%nstates,4/),IP+100)
    call  io_variable_bulk(ID,6,I2=RT_carriers%table)
    !
+ endif
+ !
+ if (RT_do_IO("ANY_G")) then
+   call def_variable_elemental(ID,"Save_G_history",1,LP+100,0) 
+   call  io_variable_elemental(ID,L0=SAVE_G_history)
  endif
  !
  io_RT_components=io_status(ID)

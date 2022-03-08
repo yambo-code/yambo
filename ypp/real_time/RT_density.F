@@ -129,8 +129,6 @@ subroutine RT_density(en,kpt,qpt)
    !
    call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
-   Gless_RT_IO_t%iN_IO=Gless_RT_IO_t%N
-   !
    if (load_G_history) then
      !
      call gimme_a_G_Time_Point(i_T)

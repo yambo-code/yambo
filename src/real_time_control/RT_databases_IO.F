@@ -119,7 +119,7 @@ subroutine RT_databases_IO(E,DO_IT)
    !
    i_db=RT_return_db_ID("carriers")
    !
-   if(NE_i_time==NE_i_start_time) then
+   if (NE_i_time==NE_i_start_time) then
      call io_control(ACTION=OP_APP,COM=NONE,SEC=(/1/),ID=RT_DB_ID(i_db)) 
      io_carr=io_RT_components('carriers',RT_DB_ID(i_db))
      if (NE_i_time>1) CARR_RT_IO_t%N=CARR_RT_IO_t%N-1

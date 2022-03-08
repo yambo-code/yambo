@@ -211,16 +211,18 @@ module YPP_real_time
    subroutine gimme_a_G_Time_Point(i_T)
      use real_time,  ONLY:G_MEM_steps
      use RT_control, ONLY:Gless_RT_IO_t
-     integer            ::i_T,i_Tp
+     integer            ::i_T,i_Tp,Nt
      real(SP)           ::TIME_diff,REF_diff
      !
-     REF_diff=Gless_RT_IO_t%Time(Gless_RT_IO_t%N)-Gless_RT_IO_t%Time(Gless_RT_IO_t%N-G_MEM_steps)
+     Nt=size(Gless_RT_IO_t%Time)
      !
-     do i_Tp=1,Gless_RT_IO_t%N
+     REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
+     !
+     do i_Tp=1,Nt
        TIME_diff= abs ( Gless_RT_IO_t%Time(i_Tp) - RT_time(i_T) )
        if (abs(TIME_diff)<REF_diff ) then 
          REF_diff=TIME_diff
-         Gless_RT_IO_t%iN_IO=i_Tp
+         Gless_RT_IO_t%N=i_Tp
        endif
      enddo
    end subroutine

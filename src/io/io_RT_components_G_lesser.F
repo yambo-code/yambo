@@ -44,7 +44,7 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  integer, intent(in)  :: ID,T_size
  !
  logical           :: l_H_rot,l_H_sig,l_H_EQ
- integer           :: ib,ik,ikibz,i_sp_pol,i_mem,i_mem_sorted,G_IO_steps,VAR_SZ(5),IPOS(5),G_IPOS(5),&
+ integer           :: ib,ik,ikibz,i_sp_pol,i_mem,i_mem_sorted,G_IO_steps,VAR_SZ(5),IPOS(5),&
 &                     PAR_G_k_range_ibz(2),k_range(2),ip,TMP_VAR_SZ
  character(schlen) :: dim_names(5),dim_name_ibz,G_var_name,Sigma_var_name,H_var_name,ROT_var_name
  complex(SP), allocatable ::Delta_Sigma(:,:,:,:)
@@ -104,31 +104,24 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  l_H_EQ= variable_exist(ID,trim(H_var_name)) .and. allocated(H_EQ)
  if ( NE_i_time==NE_i_start_time .and. write_is_on(ID)) l_H_EQ=  l_H_sig
  !
- ! AM. Debug. I am not able to make the H_EQ I/O to work
- l_H_EQ=.FALSE.
- !
  l_H_rot=l_RT_rotate_DM .and. (variable_exist(ID,trim(ROT_var_name)).or.write_is_on(ID))
  ! 
  ! Variable Definitions...
  !-------------------------
- if (.not.variable_exist(ID,trim(G_var_name))) then
-   call def_variable_bulk(ID,"dG_lesser", 4,VAR_SZ,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
- endif
- if (.not.variable_exist(ID,trim(Sigma_var_name)).and.l_H_sig) then
-   TMP_VAR_SZ=1
+ if( NE_i_time==NE_i_start_time.or..not.l_real_time) then
+   call def_variable_bulk(ID,trim(G_var_name),4,VAR_SZ,SP,dim_names=dim_names,par_io_kind='collective',silent=.true.)
+   if (l_H_sig) then
+     TMP_VAR_SZ=1
 #if defined _PAR_IO 
-   TMP_VAR_SZ=nkibz
+     TMP_VAR_SZ=nkibz
 #endif
-   call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),TMP_VAR_SZ,VAR_SZ(5)/),SP,&
-&                         dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
- endif
- if (.not.variable_exist(ID,trim(ROT_var_name)).and.l_H_rot) then
-   call def_variable_bulk(ID,trim(ROT_var_name),6,VAR_SZ(1:4),SP,&
-&                         dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
- endif
- if (.not.variable_exist(ID,trim(H_var_name)).and.l_H_EQ) then
-   call def_variable_bulk(ID,trim(H_var_name),7,VAR_SZ(1:4),SP,&
-&                         dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
+     call def_variable_bulk(ID,"Delta_Sigma",5,(/VAR_SZ(:3),TMP_VAR_SZ,VAR_SZ(5)/),SP,&
+&                           dim_names=(/dim_names(:3),dim_name_ibz,dim_names(5)/),par_io_kind='collective',silent=.true.)   
+   endif
+   if (l_H_rot) call def_variable_bulk(ID,trim(ROT_var_name),6,VAR_SZ(1:4),SP,&
+&                                      dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
+   if (l_H_EQ) call def_variable_bulk(ID,trim(H_var_name),7,VAR_SZ(1:4),SP,&
+&                                     dim_names=dim_names(1:4),par_io_kind='collective',silent=.true.)
  endif
  !
  ! Variable I/O...
@@ -137,30 +130,32 @@ subroutine io_RT_components_G_lesser(ID,T_size)
    do i_mem_sorted=G_MEM_steps-T_size+1,G_MEM_steps
      if (RT_do_IO("G_lesser_K_section"))         IPOS(5)=Gless_RT_IO_t%N+(i_mem_sorted-G_MEM_steps)
      if (RT_do_IO("G_lesser_RESTART_K_section")) IPOS(5)=         T_size+(i_mem_sorted-G_MEM_steps)
-     if(i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
-     if(i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
-     if(i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
+     if (i_mem_sorted==G_MEM_steps  ) i_mem=i_MEM_now
+     if (i_mem_sorted==G_MEM_steps-1) i_mem=i_MEM_prev
+     if (i_mem_sorted==G_MEM_steps-2) i_mem=i_MEM_old
      call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),i_mem:i_mem),IPOS=IPOS)
    enddo
  else
-   IPOS(5)=Gless_RT_IO_t%iN_IO
+   IPOS(5)=Gless_RT_IO_t%N
    call io_variable_bulk(ID,4,C4=dG_lesser(:,:,k_range(1):k_range(2),1:1),IPOS=IPOS)
  endif
  !
  if (l_H_sig) then
    PAR_G_k_range_ibz(1)=RTibz%k_map(k_range(1))
    PAR_G_k_range_ibz(2)=RTibz%k_map(k_range(2))
-   allocate(Delta_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),k_range(1):k_range(2),1))
+   allocate(Delta_Sigma(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range_ibz(1):PAR_G_k_range_ibz(2),1))
    if(write_is_on(ID)) then
-     do ikibz=k_range(1),k_range(2)
+     do ikibz=PAR_G_k_range_ibz(1),PAR_G_k_range_ibz(2)
        ik=RTibz%k_range(ikibz,1)
        if(     l_RT_RWA) Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)
        if(.not.l_RT_RWA) Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)-H_EQ(:,:,ik,1:1)
      enddo
    endif
+   IPOS(4)=PAR_G_k_range_ibz(1)
    call io_variable_bulk(ID,5,C4=Delta_Sigma,IPOS=IPOS)
+   IPOS(4)=PAR_G_k_range(1)
    if(read_is_on(ID)) then
-     do ip=k_range(1),k_range(2)
+     do ip=PAR_G_k_range_ibz(1),PAR_G_k_range_ibz(2)
        ikibz=RTibz%k_map(ip)
        Ho_plus_sigma(:,:,ip,1:1)=Delta_Sigma(:,:,ikibz,1:1)
      enddo

@@ -92,9 +92,8 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  ! I/O
  !=====
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
- io_err=io_RT_components('G',ID)
- if(.not.SAVE_G_history) &
-   &  call error(" History of rho not found. Two times function cannot be computed")
+ io_err=io_RT_components('G_lesser',ID)
+ if(.not.SAVE_G_history) call error(" History of rho not found. Two times function cannot be computed")
  !
  RT_dyn_step=RT_step
  call RT_time_configuration_setup("Glesser",Gless_RT_IO_t)
@@ -170,12 +169,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
 #if defined _PAR_IO
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
- io_err=io_RT_components('G',ID)
+ io_err=io_RT_components('G_lesser_K_section',ID)
 #else
  do ik = 1, RT_nk
    IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
    call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID)
-   io_err=io_RT_components('G',ID)
+   io_err=io_RT_components('G_lesser_K_section',ID)
  enddo
 #endif
  !
@@ -265,12 +264,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
 #if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
-     io_err=io_RT_components('G',ID)
+     io_err=io_RT_components('G_lesser_K_section',ID)
 #else
      do ik = 1, RT_nk 
        IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G',ID)
+       io_err=io_RT_components('G_lesser_K_section',ID)
      enddo
 #endif
      ! exp(-abs(RT_time(i_t)*damp_factor))

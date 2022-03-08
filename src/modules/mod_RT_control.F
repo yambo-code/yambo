@@ -35,11 +35,22 @@ module RT_control
  integer                  :: CACHE_OBS_steps
  integer                  :: CACHE_OBS_steps_now 
  !
- integer       ,parameter :: N_RT_databases=11 
- integer                  :: RT_DB_ID(N_RT_databases)= 0
- integer                  :: RT_current_DB_identifier ! \in [1,...] pointing to the DB under I/O
- character(lchlen)        :: RT_DB_file_name(N_RT_databases) = " "
- character(schlen)        :: RT_DB_name(N_RT_databases)      = " "
+ integer,parameter :: N_RT_databases=11 
+ integer           :: RT_DB_ID(N_RT_databases)= 0
+ integer           :: RT_current_DB_identifier ! \in [1,...] pointing to the DB under I/O
+ character(lchlen) :: RT_DB_file_name(N_RT_databases) = " "
+ character(schlen) :: RT_DB_name(N_RT_databases) = (/&
+                                                     "none                      ",&
+                                                     "none                      ",&
+                                                     "none                      ",&
+                                                     "OBSERVABLES               ",&
+                                                     "G_lesser_RESTART          ",&
+                                                     "G_lesser                  ",&
+                                                     "carriers                  ",&
+                                                     "THETA                     ",&
+                                                     "REFERENCE                 ",&
+                                                     "G_lesser_RESTART_K_section",&
+                                                     "G_lesser_K_section        "/)
  integer                  :: NE_i_start_time    = 1   ! restart point
  integer                  :: last_it_evaluated  = 0   ! When RT_dynamics_jumps are non zero this is 
  !                                                    ! the last evaluated point
@@ -49,7 +60,6 @@ module RT_control
  type RT_IO_t
    character(schlen)     :: name
    integer               :: N
-   integer               :: iN_IO ! Current IO point
    integer               :: INTERVAL_steps=0
    integer               :: last_point
    logical               :: first_IO(3)=.TRUE. ! Sec #1, #2 and #3
@@ -129,18 +139,6 @@ module RT_control
  end interface
  !
  contains
-   !
-   subroutine RT_DB_init()
-     RT_DB_name(1:3)= "none"
-     RT_DB_name(4)  = "OBSERVABLES"
-     RT_DB_name(5)  = "G_lesser_RESTART"
-     RT_DB_name(6)  = "G_lesser"
-     RT_DB_name(7)  = "carriers"
-     RT_DB_name(8)  = "THETA"
-     RT_DB_name(9)  = "REFERENCE"
-     RT_DB_name(10) = "G_lesser_RESTART_K_section"
-     RT_DB_name(11) = "G_lesser_K_section"
-   end subroutine
    !
    integer function RT_return_db_ID(what)
      character(*) :: what

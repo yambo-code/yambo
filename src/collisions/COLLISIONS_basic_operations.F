@@ -38,6 +38,7 @@ subroutine COLLISIONS_basic_operations( what, COLL )
  use electrons,     ONLY:n_sp_pol,n_full_bands,n_met_bands
  use wave_func,     ONLY:states_to_load
  use IO_m,          ONLY:io_COLLs
+ !
 #include<memory.h>
  !
  character(*)           :: what

@@ -151,9 +151,13 @@ subroutine io_RT_components_G_lesser(ID,T_size)
        if(.not.l_RT_RWA) Delta_Sigma(:,:,ikibz,1:1)=Ho_plus_sigma(:,:,ik,1:1)-H_EQ(:,:,ik,1:1)
      enddo
    endif
+#if defined _PAR_IO
    IPOS(4)=PAR_G_k_range_ibz(1)
+#endif
    call io_variable_bulk(ID,5,C4=Delta_Sigma,IPOS=IPOS)
+#if defined _PAR_IO
    IPOS(4)=PAR_G_k_range(1)
+#endif
    if(read_is_on(ID)) then
      do ip=PAR_G_k_range_ibz(1),PAR_G_k_range_ibz(2)
        ikibz=RTibz%k_map(ip)

@@ -73,7 +73,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
    enddo
    !
    if(any(local_K_found.eqv..FALSE.)) &
-&     call error('Error expanding GKKP: please set force_symmorphic=.true. in NSCF and nk=1 in DVSCF calculation ')
+&     call error(' Error expanding GKKP: please set force_symmorphic=.true. in NSCF and nk=1 in DVSCF calculation ')
    !
  endif
  !

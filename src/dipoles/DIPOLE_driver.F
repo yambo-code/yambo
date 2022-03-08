@@ -62,7 +62,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use DIPOLES,        ONLY:P_square
 #endif
  use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
-
  use timing_m,       ONLY:timing
  !
  implicit none

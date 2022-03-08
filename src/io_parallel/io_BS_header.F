@@ -76,8 +76,8 @@ integer function io_BS_header(iq,X,ID,mode)
  db_name='BS_head_Q'//trim(intc(iq))
  !
  io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID)
- if(io_BS_header/=0)       return
- if(trim(mode)=="connect") return
+ if (io_BS_header/=0)       return
+ if (trim(mode)=="connect") return
  !
  ! Check if the file already contains data and it is consistent
  ! DS: warning. This is potentially dangerous since all MPI tasts are all writing
@@ -86,7 +86,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !              go through the definition of the variables (see similar issue in io_X.F)
  !
  io_BS_header=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,&
- &                      IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
+&                       IMPOSE_SN=.true.,XC_KIND="K_WF force Xs",CUTOFF=.true.,FRAG=frag_BS_K)
  !
  io_BS_header=variables_BS(ID,iq,local_desc,.TRUE.,X=X)
  !
@@ -115,7 +115,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  call io_disconnect(ID)
  !
- if(read_is_on(ID)) call PP_redux_wait()
+ if (read_is_on(ID)) call PP_redux_wait()
  !
  ! Descriptions transfer
  !   

@@ -24,7 +24,7 @@
 subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
- use units,          ONLY:HA2FSm1
+ use units,          ONLY:HA2FSm1,HA2EV
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use fields,         ONLY:Efield,Divide_by_Field
  use D_lattice,      ONLY:a,DL_vol
@@ -53,6 +53,8 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  complex(DP)  :: zeta
  real(DP)     :: imag_zeta
  real(SP)     :: time,w0_sm1
+ character(4) :: filename
+ integer,allocatable :: phase_correction(:,:)
  !
  ! Update Floquet Overlaps and determinant
  ! ===================================================================
@@ -84,6 +86,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
    Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)
    !
+   allocate(phase_correction(k_map%max_kdir(id2),k_map%max_kdir(id3)))
    do i_t=1,n_tot_time_steps
      !
      do i2=1,k_map%max_kdir(id2)
@@ -108,7 +111,8 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
          ! Do we miss a factor 2?
          !
          imag_zeta=aimag(log(zeta))
-         imag_zeta=imag_zeta-1._DP*pi*nint(imag_zeta/(1._DP*pi))
+         if (i_t == 1) phase_correction(i2,i3) = nint(imag_zeta/(1._DP*pi))
+         imag_zeta=imag_zeta-1._DP*pi*phase_correction(i2,i3)
          !
          FL_time_P_Berry_RED(id_in,i_t)=FL_time_P_Berry_RED(id_in,i_t)+imag_zeta
          !
@@ -118,6 +122,8 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
      FL_time_P_Berry_RED(id_in,i_t)=-FL_time_P_Berry_RED(id_in,i_t)/real(Nperpend,SP)
      !
    enddo
+   !
+   deallocate(phase_correction)
    !
  enddo
  !
@@ -139,11 +145,13 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !print*, real(NL_initial_P(:))
  !print*, 'FL_time_P_Berry_CART at t=0'
  !print*, real(FL_time_P_Berry_CART(:,1))
+ !or for 1st order
+ !print*, dot_product(real(FL_time_P_Berry_CART(:,1)),Efield(1)%versor(:))
  !aim137 DEBUG
  !
  ! Damping
  !
- call FL_damping("LORENTZIAN",NL_damping,FL_time_P_Berry_CART)
+  call FL_damping("GAUSSIAN",NL_damping,FL_time_P_Berry_CART)
  !
  !
  FL_Chi_pol = cZERO
@@ -172,15 +180,18 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
  enddo
  !
- !aim137 DEBUG
- !
- !print*, '-------------'
- !do i_t=1,n_tot_time_steps
- !write(*,*) i_t, real(FL_time_P_Berry_CART(1,i_t))
- !enddo
- !
- !
- !aim137 DEBUG
+ !aim137 DEBUG <
+  write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV
+  w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
+  open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
+  write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
+  write(111,*) 't_step  time   Pol_x   Pol_y'
+  do i_t=1,n_tot_time_steps
+  time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
+  write(111,*) i_t, time, real(FL_time_P_Berry_CART(1,i_t)),real(FL_time_P_Berry_CART(2,i_t))
+  enddo
+  close(111)
+ !aim137 DEBUG >
 end subroutine
 !
 !

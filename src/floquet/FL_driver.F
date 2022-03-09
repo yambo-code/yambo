@@ -155,7 +155,7 @@ subroutine FL_driver(E,X,k,q,Dip)
   call FL_FT_matrices
  !
  if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
- if (FL_Chi_order > max_fl_mode) call error('    [FL] Probe order greater than max Floquet mode')
+ if (FL_Chi_order > max_fl_mode) call warning('    [FL] Probe order greater than max Floquet mode')
  !
  ! Initialization
  ! ==================
@@ -231,9 +231,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    !
    !aim137 debug
-   !
-   call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
-   !
+   !call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
    !aim137 debug
    !
    ! Efield
@@ -256,7 +254,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
-     if (FL_iteration>6) l_FL_sc_reached = .true.
+     if (FL_iteration>26) l_FL_sc_reached = .true.
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !

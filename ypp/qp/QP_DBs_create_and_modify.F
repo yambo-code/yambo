@@ -60,8 +60,8 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  do i_u=1,size(QP_user_corrections,1)
    do is=1,n_sp_pol
-     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
-       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
+     do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+       do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
          QP_state(ib,ik)=.TRUE.
          QP_nb=max(QP_nb,ib)
          QP_nk=max(QP_nk,ib)
@@ -88,15 +88,15 @@ subroutine QP_DBs_create_and_modify(en,k)
  ic=1
  do i_u=1,size(QP_user_corrections,1)
    !
-   if (QP_user_corrections(i_u,7)<epsilon(1._SP)) QP_user_corrections(i_u,7)=1.
+   if (QP_user_corrections(i_u,8)<epsilon(1._SP)) QP_user_corrections(i_u,7)=1._SP
    !
-   do is=1,n_sp_pol
-     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
-       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
+   do is=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,1))
+     do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+       do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
          !
          qp%E_bare(ic) =en%E(ib,ik,is)
-         qp%E(ic)      =cmplx(QP_user_corrections(i_u,5)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,6)/HA2EV,kind=SP)
-         qp%Z(ic)      =cmplx(QP_user_corrections(i_u,7),0.,kind=SP)
+         qp%E(ic)      =cmplx(QP_user_corrections(i_u,6)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,7)/HA2EV,kind=SP)
+         qp%Z(ic)      =cmplx(QP_user_corrections(i_u,8),0._SP,kind=SP)
          qp%table(ic,1)=ib
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik

@@ -88,7 +88,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  ic=1
  do i_u=1,size(QP_user_corrections,1)
    !
-   if (QP_user_corrections(i_u,8)<epsilon(1._SP)) QP_user_corrections(i_u,7)=1._SP
+   if (QP_user_corrections(i_u,8)<epsilon(1._SP)) QP_user_corrections(i_u,8)=1._SP
    !
    do is=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,1))
      do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))

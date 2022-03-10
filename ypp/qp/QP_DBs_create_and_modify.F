@@ -101,7 +101,6 @@ subroutine QP_DBs_create_and_modify(en,k)
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik
          if(n_sp_pol==2) qp%table(ic,4)=is
-         qp%k(qp%table(ic,3),:)  =k%pt(qp%table(ic,3),:)
          !
          if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
          !
@@ -111,6 +110,10 @@ subroutine QP_DBs_create_and_modify(en,k)
        enddo
      enddo
    enddo
+ enddo
+ !
+ do ik=1,qp%nk
+   qp%k(ik,:)  =k%pt(ik,:)
  enddo
  !
  YAMBO_FREE(QP_done)

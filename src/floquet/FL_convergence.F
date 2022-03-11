@@ -31,9 +31,9 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  real(DP),intent(out)    :: accuracy
  !
  ! Work Space
- integer :: id,FL_Pi_order
- logical :: l_1order_sc_reached,l_2order_sc_reached
- real :: diff_real,diff_imag,diff_complex
+ integer  :: id,FL_Pi_order
+ logical  :: l_1order_sc_reached,l_2order_sc_reached
+ real(SP) :: diff_real,diff_imag,diff_complex
  !
  FL_Pi_order = FL_Chi_order + 1
  !
@@ -47,6 +47,8 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
                  & - real(FL_pol(1,2,2)))
  diff_imag  =  abs( aimag(FL_pol(1,2,1)) &
                  & -aimag(FL_pol(1,2,2)))
+
+ !print*, 'diff_real =',diff_real ,'diff_imag =',diff_imag 
  if (diff_real < FL_threshold .and. diff_imag < FL_threshold) then
    l_1order_sc_reached = .true.
  else

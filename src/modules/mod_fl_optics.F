@@ -194,7 +194,7 @@ module fl_optics
          !
          i1_shift_extra = i1_extra -(max_extra_mode+1)
          !
-         FL_FT_extra_M(i_t,i1_extra) = exp(-1*cI*i1_shift_extra*2*pi*(i_t-1)/n_tot_extra_modes)
+         FL_FT_extra_M(i_t,i1_extra) = exp(-1._SP*cI*i1_shift_extra*2._SP*pi*(i_t-1._SP)/n_tot_extra_modes)
          !
        enddo
      enddo ! loop on time
@@ -205,7 +205,9 @@ module fl_optics
      !
      !aim137 DEBUG
      !do i_t=1,n_tot_extra_modes ! loop on time
-     !  print*, sum(FL_FT_extra_M(i_t,:)*FL_FT_extra_Mm1(:,i_t))
+     !do i1_extra=1,n_tot_extra_modes ! loop on time
+     !  print*, sum(FL_FT_extra_M(i_t,:)*FL_FT_extra_Mm1(:,i1_extra))
+     !enddo
      !enddo
      !aim137 prelim - is this ok?
      !aim137 DEBUG this gives some terms 1.d-16

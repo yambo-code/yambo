@@ -81,11 +81,11 @@ subroutine FL_S_numerical_inversion(en,Xk,FL_Sm1_num_plus,FL_Sm1_num_minus,id_re
      i1_shift_extra = i1_extra -(max_extra_mode+1)
      !
      FL_S_t_plus(:,:,i_t)  = FL_S_t_plus(:,:,i_t) &
-                  &        + exp(-1*cI*i1_shift_extra*2*pi*(i_t-1)/n_tot_extra_modes) &
+                  &        + exp(-1._SP*cI*i1_shift_extra*2._SP*pi*(i_t-1._SP)/n_tot_extra_modes) &
                   &        * FL_S_plus(:,:,i1_extra,id_red+(istep-1)*3,ikbz,i_sp)
      !
      FL_S_t_minus(:,:,i_t) = FL_S_t_minus(:,:,i_t) &
-                  &        + exp(-1*cI*i1_shift_extra*2*pi*(i_t-1)/n_tot_extra_modes) &
+                  &        + exp(-1._SP*cI*i1_shift_extra*2._SP*pi*(i_t-1._SP)/n_tot_extra_modes) &
                   &        * FL_S_minus(:,:,i1_extra,id_red+(istep-1)*3,ikbz,i_sp)
      !
    enddo

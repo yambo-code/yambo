@@ -81,7 +81,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      do istep=1,max_step
        !
        call FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
-       ! aim137 forn now:
+       ! aim137 :
        ! FL_V_tilde = cZERO
        !
        ! Build the W operator as
@@ -119,7 +119,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                      else
                        do i_m=1,en%nbf 
                          Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only minus exponential
-                                             & (-1)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
+                                         & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
                                                   & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                   &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                        enddo
@@ -130,7 +130,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                                                 & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * & !plus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                 &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2))) + &
-                                           & (-1)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * & !minus exp
+                                       & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * & !minus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                 &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))
                      enddo

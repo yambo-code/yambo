@@ -371,13 +371,13 @@ subroutine FL_check_S_inversion(FL_matrix,FL_inverse,dim_of_matrix,n_modes_M,n_m
    do i1_fl=1,n_modes_M
      i1_shifted_fl = i1_fl -(max_mode_M+1)
      !if (abs(i1_shifted_fl) > max_mode_M) cycle
-     matrix_at_t(:,:,i_t)  = matrix_at_t(:,:,i_t)  + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_matrix(:,:,i1_fl)
+     matrix_at_t(:,:,i_t)  = matrix_at_t(:,:,i_t)  + exp(-1._SP*cI*i1_shifted_fl*2._SP*pi*i_t/time_samples)*FL_matrix(:,:,i1_fl)
    enddo
    !
    do i1_fl=1,n_modes_Mm1
      i1_shifted_fl = i1_fl -(max_mode_Mm1+1)
      !if (abs(i1_shifted_fl) > max_mode_M) cycle
-     inverse_at_t(:,:,i_t) = inverse_at_t(:,:,i_t) + exp(-1*cI*i1_shifted_fl*2*pi*i_t/time_samples)*FL_inverse(:,:,i1_fl)
+     inverse_at_t(:,:,i_t) = inverse_at_t(:,:,i_t) + exp(-1._SP*cI*i1_shifted_fl*2._SP*pi*i_t/time_samples)*FL_inverse(:,:,i1_fl)
    enddo
     
    call M_by_M_omp('N','N',dim_of_matrix,dim_of_matrix,dim_of_matrix,cONE, &

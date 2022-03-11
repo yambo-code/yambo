@@ -140,14 +140,14 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    !
  enddo
  !
- !aim137 DEBUG
+ !aim137 DEBUG <
  !print*, 'NL_initial_P:'
  !print*, real(NL_initial_P(:))
  !print*, 'FL_time_P_Berry_CART at t=0'
  !print*, real(FL_time_P_Berry_CART(:,1))
  !or for 1st order
  !print*, dot_product(real(FL_time_P_Berry_CART(:,1)),Efield(1)%versor(:))
- !aim137 DEBUG
+ !aim137 DEBUG >
  !
  ! Damping
  !
@@ -181,16 +181,16 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  enddo
  !
  !aim137 DEBUG <
-  write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV
-  w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-  open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
-  write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
-  write(111,*) 't_step  time   Pol_x   Pol_y'
-  do i_t=1,n_tot_time_steps
-  time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
-  write(111,*) i_t, time, real(FL_time_P_Berry_CART(1,i_t)),real(FL_time_P_Berry_CART(2,i_t))
-  enddo
-  close(111)
+ !write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV
+ !w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
+ !open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
+ !write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
+ !write(111,*) 't_step  time   Pol_x   Pol_y'
+ !do i_t=1,n_tot_time_steps
+ !time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
+ !write(111,*) i_t, time, real(FL_time_P_Berry_CART(1,i_t)),real(FL_time_P_Berry_CART(2,i_t))
+ !enddo
+ !close(111)
  !aim137 DEBUG >
 end subroutine
 !
@@ -228,13 +228,13 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  do i_t=1,n_tot_time_steps
    !
    w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-   time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
+   time = 1._SP/(w0_sm1) * (i_t-1._SP)/n_tot_time_steps ! when i_t=1, time = 0
    !
    do i1_fl=1,n_tot_time_steps
      !
      i1_shifted_fl = i1_fl -(max_time_step+1)
      !
-     FL_FT_Mat(i_t,i1_fl) =  exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_time_steps)
+     FL_FT_Mat(i_t,i1_fl) =  exp(-1._SP*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1._SP)/n_tot_time_steps)
      !aim137 prelim - move the generation of the FT matrix to the module
      !
    enddo
@@ -299,7 +299,7 @@ subroutine FL_damping(damp_type,damp_factor,ft)
  !
  w0 = Efield(1)%frequency(1) ! in Ha
  T_period = EtoT(w0)
- forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1)/n_tot_time_steps
+ forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1._SP)/n_tot_time_steps
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")

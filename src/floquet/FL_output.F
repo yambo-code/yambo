@@ -35,12 +35,12 @@ subroutine FL_output
  !
  ! Work space
  !
- integer        :: i_f,i_order,n_headings=7
- character(22)  :: Chi_filename
- character(2)   :: title_mode
- real           :: w_probe,Unit_of_Measure
+ integer           :: i_f,i_order,n_headings=7
+ character(22)     :: Chi_filename
+ character(2)      :: title_mode
+ real(SP)          :: w_probe,Unit_of_Measure
  character(schlen) :: headings(11)
- real(SP)       :: Chi_plot(7)
+ real(SP)          :: Chi_plot(7)
  !
  title_mode='ot'
  !
@@ -85,17 +85,5 @@ subroutine FL_output
    !
    !
  enddo
- !
- !
- !
- !
- !
- !
- !
- !
- !
- !
- !
- !
  !
 end subroutine

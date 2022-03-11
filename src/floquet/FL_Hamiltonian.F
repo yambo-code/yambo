@@ -65,11 +65,11 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! Working Space
  !
- integer     :: ik_bz,i_sp_pol,is,i1,ik_mem
+ integer      :: ik_bz,i_sp_pol,is,i1,ik_mem
  !aim137
- integer     :: i_fl,i_fks,i_shifted_fl
- complex(SP) :: E_vec_pot(3),E_xc_pot(3)
- real :: alpha_
+ integer      :: i_fl,i_fks,i_shifted_fl
+ complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
+ real(SP)     :: alpha_
  character(4) :: filename
  !
 #if defined _TIMING

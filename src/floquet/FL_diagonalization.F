@@ -89,7 +89,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
        do i1=NL_bands(1),NL_bands(2)
          do i1_fl=1,n_tot_fl_modes
            !
-           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
            ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
            !
          enddo

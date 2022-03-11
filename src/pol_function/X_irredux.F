@@ -125,7 +125,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Drude term  !DALV: this should be move to point ### for avoiding a shift of the frequency grid in FF real-axis GW calculations 
  !============
- if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
+ !if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF)
  !
  ! Dipoles
  !=========
@@ -183,6 +183,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  endif
  !
  !DALV: ### the call to X_drude should be moved here, after redefining the frequency grid
+ if (iq==1) call X_Drude(iq,Xen,Xk,Xw,X%Wd,drude_GreenF) ! DALV: added
+ !
 #if defined _ELPH
  !
  ! Green Functions must be all mapped to the Xw range so to be easily convoluted
@@ -298,13 +300,13 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      !
      call parser('v_fermi',v_fermi)
      !
-     call msg('r', 'Fermi vellocity (10^6 m/s)', v_fermi)
+     call msg('r', 'Fermi velocity (10^6 m/s)', v_fermi)
      !
      !From 10^6 m/s to a.u.
      !
      v_fermi = v_fermi/2.187691_SP
      !
-     call msg('r', 'Fermi vellocity (a.u.)', v_fermi)
+     call msg('r', 'Fermi velocity (a.u.)', v_fermi)
      !
      X_Dirac = -q_norm(1)/(4._SP*v_fermi*lcut)
      !

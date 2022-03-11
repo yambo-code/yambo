@@ -146,6 +146,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call X_pre_setup(Xen,Xk,X) !DALV: in here the time ordering is changed to 'R' for metals
                             !      this could be problematic for FF real-axis GW calculations
+ if(X%whoami==3) X%ordering='T'  !DALV: solved here
  !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)

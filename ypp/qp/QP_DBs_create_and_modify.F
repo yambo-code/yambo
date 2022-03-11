@@ -39,7 +39,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is
+ integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ib_qp,ik_qp
  integer, external    :: io_QP_and_GF
  logical, allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
@@ -59,20 +59,21 @@ subroutine QP_DBs_create_and_modify(en,k)
  ! ...mark the states to correct
  !
  do i_u=1,size(QP_user_corrections,1)
-   do is=1,n_sp_pol
-     do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
-       do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
-         QP_state(ib,ik)=.TRUE.
-         QP_nb=max(QP_nb,ib)
-         QP_nk=max(QP_nk,ib)
-       enddo
+   do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+     do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
+       QP_state(ib,ik)=.TRUE.
      enddo
    enddo
  enddo
  !
- ! ... not turn QP_state into QP_table
+ QP_nk=maxval(QP_user_corrections(:,3))
+ QP_nb=maxval(QP_user_corrections(:,5))
+ !
+ ! ... now turn QP_state into QP_table
  !
  call QP_state_table_setup(en)
+ QP_nk=maxval(QP_user_corrections(:,3))-minval(QP_user_corrections(:,2))+1
+ QP_nb=maxval(QP_user_corrections(:,5))-minval(QP_user_corrections(:,4))+1
  !
  qp%n_states=QP_n_states
  qp%nb      =QP_nb
@@ -92,7 +93,9 @@ subroutine QP_DBs_create_and_modify(en,k)
    !
    do is=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,1))
      do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+       ik_qp=ik-QP_user_corrections(i_u,2)+1
        do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
+         ib_qp=ib-QP_user_corrections(i_u,4)+1
          !
          qp%E_bare(ic) =en%E(ib,ik,is)
          qp%E(ic)      =cmplx(QP_user_corrections(i_u,6)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,7)/HA2EV,kind=SP)
@@ -101,19 +104,16 @@ subroutine QP_DBs_create_and_modify(en,k)
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik
          if(n_sp_pol==2) qp%table(ic,4)=is
+         qp%k(ik_qp,:)  =k%pt(ik,:)
          !
-         if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
+         if(QP_done(ib_qp,ib_qp,ik_qp,is)) call error("Duplicated quasi-particle index found")
          !
-         QP_done(ib,ib,ik,is)=.TRUE.
+         QP_done(ib_qp,ib_qp,ik_qp,is)=.TRUE.
          ic=ic+1   
          !
        enddo
      enddo
    enddo
- enddo
- !
- do ik=1,qp%nk
-   qp%k(ik,:)  =k%pt(ik,:)
  enddo
  !
  YAMBO_FREE(QP_done)

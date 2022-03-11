@@ -66,6 +66,7 @@ module QP_m
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_G_er(2)
+ real(SP)          :: QP_G_ir(2) !DALV: for Sigma_mpa
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
  character(schlen) :: GW_terminator_Kind="none"

@@ -40,7 +40,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
-&                        QP_G_er,QP_G_dr,QP_Sc_steps,GWo_iterations,GW_iterations,&
+&                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,GWo_iterations,GW_iterations,& !DALV
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
@@ -272,6 +272,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g")',QP_solver,protect=.FALSE.,case="a")
  call it(defs,'GEnSteps', '[GW] Green`s Function (GF) energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
+ call it(defs,'GImRnge',  '[GW] GF imaginary range',QP_G_ir,E_unit)
  call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
 &        GF_energy_range_mode,verb_level=V_qp)
  call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', GW_terminator_Kind)

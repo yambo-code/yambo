@@ -41,7 +41,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
-&                     QP_Sc_steps,QP_G_er,QP_G_ir,QP_G_dr,SC_band_mixing,& !DALV
+&                     QP_G_solver,QP_Sc_steps,QP_G_er,QP_G_ir,QP_G_dr,SC_band_mixing,& !DALV
 &                     GWo_SC_done,GWo_iterations,GW_iterations,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
@@ -390,6 +390,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
  QP_dSc_delta=0.1/HA2EV
+ QP_G_solver='ra'
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_ir=(/0._SP/HA2EV,0._SP/HA2EV/) !DALV
  QP_G_dr=0.1/HA2EV

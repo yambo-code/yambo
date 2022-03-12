@@ -65,8 +65,9 @@ module QP_m
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_dSc_delta
+ character(2)      :: QP_G_solver !DALV: for G&Sigma_mpa
  real(SP)          :: QP_G_er(2)
- real(SP)          :: QP_G_ir(2) !DALV: for Sigma_mpa
+ real(SP)          :: QP_G_ir(2) !DALV: for G&Sigma_mpa
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
  character(schlen) :: GW_terminator_Kind="none"

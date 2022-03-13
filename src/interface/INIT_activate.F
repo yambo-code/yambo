@@ -367,7 +367,7 @@ subroutine INIT_activate()
      if (l_gw0) then
        call initactivate(1,'FFTGvecs RandQpts QEDRLvcs GbndRnge GDamping dScStep DysSolver') 
        if (trim(QP_solver)=="g") then
-         call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+         call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
          call initactivate(1,'GWoIter GWIter SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
@@ -424,7 +424,7 @@ subroutine INIT_activate()
      call initactivate(1,'ExtendOut')
      if (l_gw0) then
        call initactivate(1,'DysSolver OnMassShell')
-       if (trim(QP_solver)=="g") call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge') 
+       if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge')
      else
        call initactivate(1,'GDamping PHELTrans') 
      endif
@@ -439,7 +439,7 @@ subroutine INIT_activate()
      call initactivate(1,'GkkpDB WRgFsq NewtDchk OnMassShell')
    endif
    if (trim(QP_solver)=="g".and.l_elph_corr) then
-     call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+     call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
      call initactivate(-1,'WRgFsq NewtDchk GDamping ExtendOut OnMassShell')
    endif
    !

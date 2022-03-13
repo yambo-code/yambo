@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
@@ -44,8 +44,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
-&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
+&                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,QP_solver,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
@@ -78,11 +78,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
- ! DALV: this is the frequency grid for Sc,
- !       now set in the solvers('n','s','g')
- !
- real(SP),intent(in) ::W(QP_dSc_steps)
- !
  ! Work Space
  !
  integer      ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
@@ -90,6 +85,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
+ type(w_samp)     ::Sc_W(qp%n_states) !DALV: for G & Sigma
  character(schlen)::ch,SECTION_name,W_name
  !
  logical      ::X_is_TR_rotated,l_X_alloc,l_RIM_W_g
@@ -121,6 +117,25 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ !
+ ! !DALV: for G & Sigma
+ ! Sc Energy points (1 type each QP state !)
+ !-------------------------------------------
+ if (trim(QP_solver)=='n') then
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs=QP_dSc_steps
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
+     forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+   enddo
+ else if (trim(QP_solver)=='g') then
+   !
+   QP_dSc_steps=QP_Sc_steps
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs =QP_Sc_steps
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
+     QP_Sc_steps=Sc_W(i_qp)%n_freqs
+   enddo
+ endif
  !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
@@ -532,7 +547,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
          endif
          !
          ! DALV: here the grid is center in E0
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -641,20 +656,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
                end if
-               !if(ig1==1.and.ig2==1.and.(iqbz==1.or.iqbz==2.or.iqbz==92)) then
-               !  call msg("r","iq",iqbz)
-               !  call msg("r","isc%rhotw(ig1)",real(isc%rhotw(ig1),SP))
-               !  call msg("r","isc%rhotw(ig2)",real(isc%rhotw(ig2),SP))
-               !  call msg("r","PPA_E",real(PPA_E,SP))
-               !  call msg("r","Re[PPA_R]",real(PPA_R,SP))
-               !  call msg("r","Im[PPA_R]",aimag(PPA_R))
-               !  call msg("r","occ_res", real(spin_occ-f_kmq+bose_f(PPA_E),SP))
-               !  call msg("r","occ_ares", real(f_kmq+bose_f(PPA_E),SP))
-               !  call msg("r","Re[W_(1)-E_kmq-PPA_E]",real(W_(1)-E_kmq-PPA_E,SP))
-               !  call msg("r","Im[W_(1)-E_kmq-PPA_E]",aimag(W_(1)-E_kmq-PPA_E))
-               !  call msg("r","Re[So(iq=ig1=ig2=0)] = ",  real(ctmp,SP))
-               !  call msg("r","Im[So(iq=ig1=ig2=0)] = ", aimag(cmplx(ctmp,kind=SP)))
-               !endif
+               !
                dp_dummy=dp_dummy+ctmp
                !
              enddo
@@ -699,7 +701,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      if(l_GW_terminator) then
        !
        ! DALV: here the grid is center in E0
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
        !
        do i_w=1,QP_dSc_steps
          !

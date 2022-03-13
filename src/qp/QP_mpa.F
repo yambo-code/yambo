@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 ! 
-subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
+subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Multipole approximation to the Correlation Self-Energy
  !
@@ -44,7 +44,7 @@ use parser_m,       ONLY:parser
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_alloc,X_mat,X_t
  use wave_func,     ONLY:WF
@@ -67,7 +67,6 @@ use parser_m,       ONLY:parser
  type(X_t)           ::X
  type(QP_t)          ::qp
  type(w_samp)        ::Xw
- real(SP),intent(in) ::W(QP_dSc_steps) ! DALV: this is the frequency grid for Sc now set in the solvers('n','s','g')
  integer             ::GW_iter
  !
  ! Work Space
@@ -78,6 +77,7 @@ use parser_m,       ONLY:parser
  !
  complex(SP), allocatable :: W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision):: isc,iscp
+ type(w_samp)     ::Sc_W(qp%n_states) !DALV: for G & Sigma
  character(schlen):: ch,SECTION_name
  !
  logical          :: X_is_TR_rotated,l_X_alloc,l_RIM_W_g
@@ -102,6 +102,25 @@ use parser_m,       ONLY:parser
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ !
+ ! !DALV: for G & Sigma
+ ! Sc Energy points (1 type each QP state !)
+ !-------------------------------------------
+ if (trim(QP_solver)=='n') then
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs=QP_dSc_steps
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
+     forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+   enddo
+ else if (trim(QP_solver)=='g') then
+   !
+   QP_dSc_steps=QP_Sc_steps
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs =QP_Sc_steps
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
+     QP_Sc_steps=Sc_W(i_qp)%n_freqs
+   enddo
+ endif
  !
  ! Section
  !
@@ -341,7 +360,7 @@ use parser_m,       ONLY:parser
      iscp%qs=isc%qs
      !
      ! DALV: here the grid is center in E0
-     forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp
+     forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !

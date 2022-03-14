@@ -39,7 +39,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ib_qp,ik_qp
+ integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ik_qp
  integer, external    :: io_QP_and_GF
  logical, allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
@@ -95,7 +95,6 @@ subroutine QP_DBs_create_and_modify(en,k)
      do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
        ik_qp=ik-QP_user_corrections(i_u,2)+1
        do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
-         ib_qp=ib-QP_user_corrections(i_u,4)+1
          !
          qp%E_bare(ic) =en%E(ib,ik,is)
          qp%E(ic)      =cmplx(QP_user_corrections(i_u,6)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,7)/HA2EV,kind=SP)
@@ -106,9 +105,9 @@ subroutine QP_DBs_create_and_modify(en,k)
          if(n_sp_pol==2) qp%table(ic,4)=is
          qp%k(ik_qp,:)  =k%pt(ik,:)
          !
-         if(QP_done(ib_qp,ib_qp,ik_qp,is)) call error("Duplicated quasi-particle index found")
+         if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
          !
-         QP_done(ib_qp,ib_qp,ik_qp,is)=.TRUE.
+         QP_done(ib,ib,ik,is)=.TRUE.
          ic=ic+1   
          !
        enddo

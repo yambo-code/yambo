@@ -17,7 +17,7 @@ TARBALL=$(tarball_hdf5)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --enable-fortran --disable-shared --enable-static --without-pic $(hdf5_opt)
+         --enable-fortran --disable-shared --enable-static --without-pic --disable-cxx $(hdf5_opt)
 
 #
 # MAIN target
@@ -35,8 +35,7 @@ configure-stamp: uncompress-stamp
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
 	      CPP="$(cpp)" \
-	      CXX="$(cc)" \
-	      CXXCPP="$(cpp)" \
+              CFLAGS="$(cflags)" \
 	      FC="$(fc)" \
               --enable-build-mode=$(hdf5_mode) \
 	      CPPFLAGS="$(netcdf_aux)" ); \

@@ -194,11 +194,14 @@ subroutine ELPH_databases(k,E,q)
  DB_Q_map=0
  do idb=1,DB_nq
    do iq=1,nqibz
-     v=DB_PH_qpt(iabs(IDB),:)
-     if (v_is_zero(v+q%pt(iq,:),zero_=k_iku_zero)) DB_Q_map(iabs(IDB))=iq
+     v=DB_PH_qpt(idb,:)
+     if (v_is_zero(v+q%pt(iq,:),zero_=k_iku_zero)) DB_Q_map(idb)=iq
    enddo
  enddo
- elph_use_q_grid=all((/DB_Q_map/=0/))
+ !
+ elph_use_q_grid=.FALSE.
+ if(DB_nq==nqibz.and.all(DB_Q_map/=0)) elph_use_q_grid=.TRUE.
+ !
  if (.not.elph_use_q_grid) then
    if (DB_Q_map(1)/=1) call error("First qpt must be Gamma.")
    do idb=1,DB_nq

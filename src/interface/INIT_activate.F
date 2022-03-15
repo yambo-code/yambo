@@ -331,7 +331,7 @@ subroutine INIT_activate()
    endif
    if (l_mpa) then
      call X_activate('Xm',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                           'EhEngy','LongDr','EnSamp','EnRnge','ImRnge','DmRnge','ETStps','IntSol'/))
+&                           'EhEngy','LongDr','EnSamp','EnGrid','EnRnge','ImRnge','DmRnge','ETStps','IntSol'/))
      call initactivate(1,'mpERdb')
    endif
    if (l_cohsex) then

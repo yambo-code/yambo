@@ -830,31 +830,32 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      ! Work Space
      ! 
      integer           ::i1,V_iq,V_DmRnge
-     integer,parameter ::n_des=17
+     integer,parameter ::n_des=18
      character(8)      ::nms(n_des),sfx
      character(100)    ::des(n_des)
      character(schlen) ::lch1,lch2
      !
-     nms=(/'GrFnTp','EnSamp','EnRnge','ImRnge','DmRnge','CGrdSp','ETStps','IntSol','EMStps',&
+     nms=(/'GrFnTp','EnSamp','EnGrid','EnRnge','ImRnge','DmRnge','CGrdSp','ETStps','IntSol','EMStps',&
 &          'DrudeW','LongDr','EhEngy','PPAPnt',&
 &          'NGsBlk','QpntsR','BndsRn','DmERef'/)
      des(1) ='Green`s function (T)ordered,(R)etarded,(r)senant,(a)ntiresonant [T, R, r, Ta, Ra]'
      des(2) ='Frequency sampling in the complex plane ("1l" one line, "2l" two lines)'
-     des(3) ='Energy range'
-     des(4) ='Imaginary range'
-     des(5) ='Damping range'
-     des(6) ='[o/o] Coarse grid controller'
-     des(7) ='Total Energy steps'
-     des(8) ='MPA interpolation solver ("LA" linear algebra, "PT" Pade-Thiele)'
-     des(9) ='[o/o] Memory Energy steps'
-     des(10)='Drude plasmon'
-     des(11)='[cc] Electric Field'
-     des(12)='Electron-hole energy range'
-     des(13)='PPA imaginary energy'
-     des(14)='Response block size'
-     des(15)='Transferred momenta'
-     des(16)='Polarization function bands'
-     des(17)='Damping reference energy'
+     des(3) ='Partition along the real axis ("ho" homogeneous, "lP" linear, "qP" quadratic, "cP" cubic)'
+     des(4) ='Energy range'
+     des(5) ='Imaginary range'
+     des(6) ='Damping range'
+     des(7) ='[o/o] Coarse grid controller'
+     des(8) ='Total Energy steps'
+     des(9) ='MPA interpolation solver ("LA" linear algebra, "PT" Pade-Thiele)'
+     des(10)='[o/o] Memory Energy steps'
+     des(11)='Drude plasmon'
+     des(12)='[cc] Electric Field'
+     des(13)='Electron-hole energy range'
+     des(14)='PPA imaginary energy'
+     des(15)='Response block size'
+     des(16)='Transferred momenta'
+     des(17)='Polarization function bands'
+     des(18)='Damping reference energy'
      !
      do i1=1,n_des
        lch1=des(i1);lch2=nms(i1)
@@ -876,22 +877,23 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      endif
      !
      call it(defs,nms( 1),des( 1),X%ordering,verb_level=V_resp)
-     call it(defs,nms( 2),des( 2),wv%samp_type,verb_level=0) 
-     call it(defs,nms( 3),des( 3),wv%er,E_unit,verb_level=0) 
-     call it(defs,nms( 4),des( 4),wv%ir,E_unit,verb_level=0) 
-     call it(defs,nms( 5),des( 5),wv%dr,E_unit,verb_level=V_DmRnge)
-     call it(defs,nms( 6),des( 6),X%cg_percentual,verb_level=V_resp)
-     call it(defs,nms( 7),des( 7),wv%n_freqs,verb_level=0)
-     call it(defs,nms( 8),des( 8),wv%mpa_solver,verb_level=0) 
-     call it(defs,nms( 9),des( 9),wv%per_memstps,verb_level=V_resp)
-     call it(defs,nms(10),des(10),X%Wd,E_unit,verb_level=V_resp)
-     call it(defs,nms(11),des(11),X%q0,verb_level=0)
-     call it(defs,nms(12),des(12),X%ehe,E_unit,verb_level=V_resp)
-     call it(defs,nms(13),des(13),X%ppaE,E_unit,verb_level=0)
-     call it(defs,nms(14),des(14),X%ng,G_unit,verb_level=0)
-     call it(defs,nms(15),des(15),X%iq,verb_level=V_iq)
-     call it(defs,nms(16),des(16),X%ib,verb_level=0)
-     call it(defs,nms(17),des(17),wv%damp_reference,E_unit,verb_level=V_resp)
+     call it(defs,nms( 2),des( 2),wv%samp_type,verb_level=0)
+     call it(defs,nms( 3),des( 3),wv%samp_grid,verb_level=0) 
+     call it(defs,nms( 4),des( 4),wv%er,E_unit,verb_level=0) 
+     call it(defs,nms( 5),des( 5),wv%ir,E_unit,verb_level=0) 
+     call it(defs,nms( 6),des( 6),wv%dr,E_unit,verb_level=V_DmRnge)
+     call it(defs,nms( 7),des( 7),X%cg_percentual,verb_level=V_resp)
+     call it(defs,nms( 8),des( 8),wv%n_freqs,verb_level=0)
+     call it(defs,nms( 9),des( 9),wv%mpa_solver,verb_level=0) 
+     call it(defs,nms(10),des(10),wv%per_memstps,verb_level=V_resp)
+     call it(defs,nms(11),des(11),X%Wd,E_unit,verb_level=V_resp)
+     call it(defs,nms(12),des(12),X%q0,verb_level=0)
+     call it(defs,nms(13),des(13),X%ehe,E_unit,verb_level=V_resp)
+     call it(defs,nms(14),des(14),X%ppaE,E_unit,verb_level=0)
+     call it(defs,nms(15),des(15),X%ng,G_unit,verb_level=0)
+     call it(defs,nms(16),des(16),X%iq,verb_level=V_iq)
+     call it(defs,nms(17),des(17),X%ib,verb_level=0)
+     call it(defs,nms(18),des(18),wv%damp_reference,E_unit,verb_level=V_resp)
      !
    end subroutine
    !

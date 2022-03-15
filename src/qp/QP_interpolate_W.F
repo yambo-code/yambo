@@ -475,11 +475,11 @@ subroutine interpolate_W(X,Xw,q,mode)
          dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-5*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
 &                                          +1.E-5*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
                                            +2._SP*f_coeff(5,ig1,ig2,1,:)))
-         call msg("r","dummy",real(dummy)) 
+         !call msg("r","dummy",real(dummy)) 
          dummy(:) = dummy(:)*4._SP*pi/(bare_qpg(1,ig1)*bare_qpg(1,ig2))
-         call msg("r","dummy",real(dummy))
+         !call msg("r","dummy",real(dummy))
          dummy(:) = dummy/(1._SP-dummy)
-         call msg("r","dummy",real(dummy))
+         !call msg("r","dummy",real(dummy)) !DALV
        endif
        !
        if (dummy(1)/dummy(2)<=1._SP) then
@@ -489,7 +489,7 @@ subroutine interpolate_W(X,Xw,q,mode)
        endif
        !
        dummy(1) = 1/RIM_W_E(ig1,ig2)
-       call msg('r','PPA_E', real(dummy(1)))
+       !call msg('r','PPA_E', real(dummy(1))) !DALV
        !
      end do
    end do

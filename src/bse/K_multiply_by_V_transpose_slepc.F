@@ -46,7 +46,7 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
  implicit none
  !
  PetscFortranComplex  :: tmp_value(1)
- PetscFortranInt      :: H_pos(1)
+ PetscInt             :: H_pos(1)
  PetscErrorCode       :: ierr
  !
  VecScatter           :: ctx

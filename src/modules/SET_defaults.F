@@ -336,7 +336,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  wf_norm_test=.TRUE.
  wf_nb_io=0
  wf_nb_io_groups=1
-#if defined _MOL
+#if defined _GAMMA_ONLY
  rho_map_thresh=1.E-7_SP
 #else
  rho_map_thresh=0._SP

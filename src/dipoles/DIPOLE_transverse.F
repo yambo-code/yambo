@@ -32,7 +32,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
- use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor
+ use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
+ use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
@@ -59,7 +60,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
-&                                i_sp_pol,n_LT_steps,ik_mem,ic_min
+&                                i_sp_pol,n_LT_steps,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
@@ -112,9 +113,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    if(l_use_comm) then
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_kbv_dim_yambo,Dip%ib(1):Dip%ib(2)))
-     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
+     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
      if (have_cuda) then
-       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_yambo))
+       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
        kbv_d=cZERO
      endif
    endif
@@ -182,24 +183,38 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      if (l_use_comm) then
        !
-       if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
-       if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
-       !
-       if (have_cuda) call dev_memcpy(kbv_d,kbv)
-       !
-       !nc=wf_nc_k(ik)
-       nc=wf_ncx
+       npp_tab=0
+       pp_range(2)=0
        XX=cZERO
-       do ib=Dip%ib(1),Dip%ib(2)
-         if( ib<=Dip%ib_lim(1) ) then
-           l_check= .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib))
-         else
-           l_check= .not.PAR_IND_CON_BANDS_DIP%element_1D(ib)
-         endif
-         if ( l_check ) cycle
-         i_wf=WF%index(ib,ik,i_sp_pol)
-         !call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
-         call DIPOLE_kb_project(nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv),XX(:,:,:,:,ib))
+       do is = 1,n_atomic_species
+         do ia = 1,n_atoms_species(is)
+           !
+           pp_range(1)=pp_range(2)+1
+           !
+           if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(npp,npp_tab,ia,is,ik,i_sp_pol,Xk,kbv)
+           if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(npp,npp_tab,ia,is,ik,Xk,kbv)
+           !
+           if (npp==0) cycle
+           !
+           pp_range(2)=pp_range(1)+npp-1
+           !
+           if (have_cuda) call dev_memcpy(kbv_d,kbv)
+           !
+           !nc=wf_nc_k(ik)
+           nc=wf_ncx
+           do ib=Dip%ib(1),Dip%ib(2)
+             if( ib<=Dip%ib_lim(1) ) then
+               l_check= .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib))
+             else
+               l_check= .not.PAR_IND_CON_BANDS_DIP%element_1D(ib)
+             endif
+             if ( l_check ) cycle
+             i_wf=WF%index(ib,ik,i_sp_pol)
+             !call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
+             call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv(:,:,:,:npp)),XX(:,:,:,pp_range(1):pp_range(2),ib))
+           enddo
+           !
+         enddo
        enddo
        !
      endif

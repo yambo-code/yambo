@@ -39,13 +39,16 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ik_qp
+ integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ik_qp,nk_lim(2),nb_lim(2)
  integer, external    :: io_QP_and_GF
  logical, allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
  call section("=",'QP databases creation')
  !========================================
+ !
+ nk_lim=(/minval(QP_user_corrections(:,2)),maxval(QP_user_corrections(:,3))/)
+ nb_lim=(/minval(QP_user_corrections(:,4)),maxval(QP_user_corrections(:,5))/)
  !
  ! ...resets
  !
@@ -66,14 +69,15 @@ subroutine QP_DBs_create_and_modify(en,k)
    enddo
  enddo
  !
- QP_nk=maxval(QP_user_corrections(:,3))
- QP_nb=maxval(QP_user_corrections(:,5))
+ QP_nk=nk_lim(2)
+ QP_nb=nb_lim(2)
  !
  ! ... now turn QP_state into QP_table
  !
  call QP_state_table_setup(en)
- QP_nk=maxval(QP_user_corrections(:,3))-minval(QP_user_corrections(:,2))+1
- QP_nb=maxval(QP_user_corrections(:,5))-minval(QP_user_corrections(:,4))+1
+ !
+ QP_nk=nk_lim(2)-nk_lim(1)+1
+ QP_nb=nb_lim(2)-nb_lim(1)+1
  !
  qp%n_states=QP_n_states
  qp%nb      =QP_nb
@@ -81,7 +85,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  ! 
  call QP_alloc(qp)
  !
- YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
+ YAMBO_ALLOC(QP_done,(nb_lim(1):nb_lim(2),nb_lim(1):nb_lim(2),nk_lim(1):nk_lim(2),n_sp_pol))
  QP_done=.FALSE.
  !
  ! ...let's fill now

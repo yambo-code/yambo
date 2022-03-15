@@ -650,6 +650,7 @@ MPI_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
+GAMMA_ONLY_check
 DP_check
 CUDA_FLAGS
 def_cuda
@@ -826,6 +827,8 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
+def_gamma_only
+enable_gamma_only
 build_precision
 def_dp
 enable_dp
@@ -858,6 +861,7 @@ infodir
 docdir
 oldincludedir
 includedir
+runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -885,6 +889,7 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
+enable_gamma_only
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1026,6 +1031,7 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
+runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1278,6 +1284,15 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
+  -runstatedir | --runstatedir | --runstatedi | --runstated \
+  | --runstate | --runstat | --runsta | --runst | --runs \
+  | --run | --ru | --r)
+    ac_prev=runstatedir ;;
+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
+  | --run=* | --ru=* | --r=*)
+    runstatedir=$ac_optarg ;;
+
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1415,7 +1430,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir
+		libdir localedir mandir runstatedir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1568,6 +1583,7 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -1606,6 +1622,7 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
+  --enable-gamma-only     Gamma only build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -3053,6 +3070,19 @@ def_dp=""
 if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 
+
+
+#
+# ============================================================================
+# VERSION for gamma only case
+# Check whether --enable-gamma_only was given.
+if test "${enable_gamma_only+set}" = set; then :
+  enableval=$enable_gamma_only;
+fi
+
+def_gamma_only=""
+if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
+if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
 
 
 #
@@ -14717,6 +14747,9 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
+GAMMA_ONLY_check="-"
+if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
+#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -14884,6 +14917,7 @@ if test "$mpibuild" = "yes" ; then
   fi
 fi
 #
+
 
 
 

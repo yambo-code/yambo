@@ -25,12 +25,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_kb_project(ncomp,WF_ib,kbv,XX)
+subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use wrapper,       ONLY:M_by_M
  use electrons,     ONLY:n_spinor
- use pseudo,        ONLY:pp_kbv_dim_yambo
  use deviceXlib_m,  ONLY:dev_memcpy
  use iso_c_binding, ONLY:C_F_POINTER
 #if defined _CUDA
@@ -43,17 +42,17 @@ subroutine DIPOLE_kb_project(ncomp,WF_ib,kbv,XX)
  !
  implicit none
  !
- integer,                      intent(in)  :: ncomp
- complex(SP) DEV_ATTR,         intent(in)  :: WF_ib(ncomp,n_spinor)
- complex(SP) DEV_ATTR, target, intent(in)  :: kbv(ncomp,n_spinor,4,pp_kbv_dim_yambo)
- complex(SP) DEV_ATTR, target, intent(out) :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ integer,                      intent(in)    :: pp_range(2),npp,ncomp
+ complex(SP) DEV_ATTR,         intent(in)    :: WF_ib(ncomp,n_spinor)
+ complex(SP) DEV_ATTR, target, intent(in)    :: kbv(ncomp,n_spinor,4,npp)
+ complex(SP) DEV_ATTR, target, intent(out)   :: XX(n_spinor,n_spinor,4,pp_range(1):pp_range(1))
  ! 
  ! Work Space
  !
  integer     :: dim_flat
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
  !
- dim_flat=n_spinor*4*pp_kbv_dim_yambo
+ dim_flat=n_spinor*4*npp
  !
 #if defined _CUDA
  call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/ncomp,dim_flat/) )

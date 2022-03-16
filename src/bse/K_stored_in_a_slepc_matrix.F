@@ -52,8 +52,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
  !
- integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
- PetscFortranComplex :: Mij
+ integer             :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
+ PetscScalar         :: Mij
  PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !

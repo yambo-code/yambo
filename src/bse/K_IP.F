@@ -161,6 +161,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(l_BS_abs) then
        res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
+       if(l_BS_kerr_asymm) res_abs=(res_abs+ &
+       &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)) )/2._SP
        if(l_BS_trace) then
          do i_dip=2,BS_dip_size
            res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1))

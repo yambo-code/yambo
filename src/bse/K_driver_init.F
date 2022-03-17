@@ -208,7 +208,10 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif
- if (l_BS_photolum) l_BS_trace  = .false.
+ if ((l_BS_photolum.or.l_BS_kerr).and.l_BS_trace) then
+   call warning(" Trace not compatible with kerr or pl. Switching it off")
+   l_BS_trace  = .false.
+ endif
  if (l_BS_trace   ) BS_dip_size = 3
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum

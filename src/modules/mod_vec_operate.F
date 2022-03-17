@@ -183,11 +183,17 @@ module vec_operate
      !
      select case(plane)
        case('xy')
-         M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+         M=reshape((/cos(t),-sin(t),rZERO, sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+       case('yx')
+         M=reshape((/cos(t), sin(t),rZERO,-sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
        case('xz')
-         M=reshape((/cos(t),rZERO,-sin(t),sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+         M=reshape((/cos(t),rZERO,-sin(t), sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+       case('zx')
+         M=reshape((/cos(t),rZERO, sin(t),-sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
        case('yz')
-         M=reshape((/rZERO,cos(t),-sin(t),rZERO,sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+         M=reshape((/rZERO,cos(t),-sin(t),rZERO, sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+       case('zy')
+         M=reshape((/rZERO,cos(t), sin(t),rZERO,-sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
      end select
      !
      v_loc=matmul(M,v_in)

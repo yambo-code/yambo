@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_nT_grps,BS_perturbative_SOC,&
-&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,&
+&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,l_BS_kerr_asymm,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
@@ -160,10 +160,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Residuals DIP_cv * DIP_vc
      !
      if(l_BS_abs) then
-       res_abs=abs(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))**2
+       res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
        if(l_BS_trace) then
          do i_dip=2,BS_dip_size
-           res_abs=res_abs+abs(BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1))**2
+           res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1))
          enddo
          res_abs=res_abs/real(BS_dip_size,SP)
        endif
@@ -173,6 +173,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
+       if(l_BS_kerr_asymm) res_kerr=(res_kerr- &
+       &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)) )/2._SP
        res_kerr=res_kerr*Z_eh*E_eh*f_eh
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_kerr,vtmpC)
      endif

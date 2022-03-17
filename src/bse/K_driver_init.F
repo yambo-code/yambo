@@ -31,7 +31,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp
  use BS,           ONLY:L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
-&                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
+&                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_kerr_asymm,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
@@ -203,7 +203,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
  endif
  if (l_BS_kerr) then
-   call parser('AnHall',l_BS_anomalous_Hall)
+   l_BS_anomalous_Hall = STRING_match(BSE_prop,'anHall')
+   l_BS_kerr_asymm     = STRING_match(BSE_prop,'asymm')
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif

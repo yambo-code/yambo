@@ -36,7 +36,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands,&
-&                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
+&                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,l_BS_kerr_asymm,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
@@ -55,6 +55,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  !
  ! Work space
  !
+ logical           ::geometry_ok
  integer           ::ik_bz,ok_bz,ik,ok,isymm,osymm,iGo,iv,ic,i_sp_pol_c,i_sp_pol_v,i_T_g,i_T,&
 &                    io_err,i_res_ares,i_dip
  complex(SP)       ::DIP_Splus,DIP_Smins,DIP_projected(BS_dip_size),DIP_expanded(3)
@@ -93,13 +94,26 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
      BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
      BS_field_direction(:,2)=(/0._SP,1._SP,0._SP/)
      BS_field_direction(:,3)=(/0._SP,0._SP,1._SP/)
-   else if (trim(BSE_dipole_geometry)/='none'.and.l_BS_kerr) then
+   endif
+   !
+   if (l_BS_kerr) then
+     geometry_ok=( trim(BSE_dipole_geometry)=='xy'.or.trim(BSE_dipole_geometry)=='xz'.or.trim(BSE_dipole_geometry)=='yz' ) &
+     &      .or. ( trim(BSE_dipole_geometry)=='yx'.or.trim(BSE_dipole_geometry)=='zx'.or.trim(BSE_dipole_geometry)=='zy' )
+     if(geometry_ok) then
+       if (BSE_dipole_geometry(1:1)=='x') BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
+       if (BSE_dipole_geometry(1:1)=='y') BS_field_direction(:,1)=(/0._SP,1._SP,0._SP/)
+       if (BSE_dipole_geometry(1:1)=='z') BS_field_direction(:,1)=(/0._SP,0._SP,1._SP/)
+     else
+       call warning(" No or wrong kerr geometry specified in input file. Assuming xy")
+       BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
+       BSE_dipole_geometry="xy"
+     endif
      call v_rotate(trim(BSE_dipole_geometry),-pi/2._SP,BS_field_direction(:,1),v_out=BS_field_direction(:,2))
    endif
    !
+   if (trim(global_gauge)=='length'  ) BS_field_direction=BS_field_direction*q0_def_norm
+   !
  endif
- !
- if (trim(global_gauge)=='length'  ) BS_field_direction=BS_field_direction*q0_def_norm
  !
  call live_timing('BSE dipoles',PAR_BS_nT_col_grps)
  !

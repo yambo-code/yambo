@@ -57,6 +57,7 @@ module BS
  logical :: l_BS_trace
  logical :: l_BS_abs
  logical :: l_BS_kerr
+ logical :: l_BS_kerr_asymm
  logical :: l_BS_photolum
  logical :: l_BS_magnons
  logical :: l_BS_dichroism

@@ -91,7 +91,7 @@ module X_output
      real(SP)           :: Q_plus_G_pt(3)
      character(msg_len) :: message(13)
      character(schlen)  :: unit_msg
-     integer,  optional :: ig
+     integer            :: ig
      real(SP), optional :: Qprime(3)
      !
      if (iq==1.and.ig==1) then

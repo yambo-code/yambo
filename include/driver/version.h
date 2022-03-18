@@ -27,4 +27,3 @@
 #define YAMBO_PATCHLEVEL 1
 #define YAMBO_REVISION 21307
 #define YAMBO_HASH "a1c3037f1" 
-

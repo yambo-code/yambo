@@ -129,9 +129,12 @@ if test x"$enable_hdf5" = "xyes"; then
   if test "x$hdf5" = xyes; then
     HDF5_LIBS="$try_HDF5_LIBS" ;
     HDF5_INCS="$try_HDF5_INCS" ;
-    #if test $IO_LIB_VER = "parallel"; then AC_MSG_RESULT([yes - parallel lib found]) ; fi
-    #if test $IO_LIB_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
-    AC_MSG_RESULT([yes]) ;
+    if test $IO_LIB_VER = "parallel"; then 
+       AC_MSG_RESULT([yes - parallel lib found]) ; 
+       HDF5_OPT="--enable-parallel"  ; 
+    fi
+    if test $IO_LIB_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
+    # AC_MSG_RESULT([yes]) ;
     IO_LIB_VER="unknown"
   fi
   #
@@ -216,12 +219,15 @@ fi
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
+    parallel_io="HDF5";    
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
+    parallel_io="NetCDF";    
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
+    parallel_io="COMPRESS-HDF5";    
 fi
 #
 AC_SUBST(HDF5_LIBS)

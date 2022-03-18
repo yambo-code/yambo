@@ -26,7 +26,7 @@ integer function variables_X(ID,local_desc,X)
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc,IO_desc_reset
  use pars,          ONLY:SP,IP,schlen
- use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual
+ use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual,OPTICAL_averaged_dirs_string
  use IO_m,          ONLY:io_status,read_is_on,variable_exist
  use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
  !
@@ -109,6 +109,12 @@ integer function variables_X(ID,local_desc,X)
      call io_variable_elemental(ID,&
 &         VAR="BZ Q point size factor  ",R0=X_DbGd_percentual,WARN=.true.,OP=(/"=="/),DESCRIPTOR=local_desc)
    endif
+ endif
+ !
+ if (ver_is_gt_or_eq(ID,revision=21155)) then
+   call def_variable_elemental(ID,trim(X_label)//"OPTICAL_AVERAGE",1,0,0)
+   call io_variable_elemental(ID,VAR="X Optical Averaged directions",CH0=OPTICAL_averaged_dirs_string,&
+&                                CHECK=.true.,DESCRIPTOR=local_desc)
  endif
  !
  variables_X=io_status(ID)

@@ -46,6 +46,7 @@ if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
+PARIO_check="$parallel_io"
 #
 # - LIBRARIES -
 #
@@ -202,6 +203,7 @@ AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
+AC_SUBST(PARIO_check)
 #
 AC_SUBST(YAML_str)
 AC_SUBST(FUTILE_str)

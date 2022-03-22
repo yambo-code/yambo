@@ -108,7 +108,10 @@ subroutine electrons_bands(Xk,Xen)
  !====================
  call k_special( )
  call k_circuit_driver( BANDS_path, BANDS_steps )
- if(CIRCUIT_k%nbz==0.and..not.GRID_interpolate) call error('No BZ circuit defined in input')
+ if (CIRCUIT_k%nbz==0.and..not.GRID_interpolate) then
+   call k_special(.TRUE.)
+   call error('No BZ circuit defined in input')
+ endif
  !
  if (BANDS_interpolated.or.l_PROJECT_plane) then
    !

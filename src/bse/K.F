@@ -330,7 +330,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #ifdef _PAR_IO
  if (l_BSE_restart) then
    !
-   if(m_steps>0) call live_timing("Loading partial kernel",m_steps)
+   if (m_steps>0) call live_timing("Loading partial kernel",m_steps)
    !
    do i_block=1,n_BS_blks
      !
@@ -375,7 +375,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.l_bs_fxc) section_title='Kernel'
  if (     l_bs_fxc) section_title='Kernel->Fxc'
  !
- if(m_steps>0) call live_timing(trim(section_title),m_steps)
+ if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
  !------------------
  ! LOOP over blocks

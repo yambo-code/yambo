@@ -259,7 +259,7 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call EPSGetConverged(eps,nconv,ierr)
  call msg( 'srn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
-   call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(nconv))//' eigenvalues')
+   call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(int(nconv,4)))//' eigenvalues')
    n_eig = nconv
  endif
  !
@@ -397,8 +397,8 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  endif
  !
  ! write the number of converged eigenvalues
- call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
-&           // trim(intc(nconv)) //' - error ', maxerror)
+ call msg('s', '[SLEPC] Iteration #'// trim(intc(int(its,4)))// ' - converged States '&
+&           // trim(intc(int(nconv,4))) //' - error ', maxerror)
  !
  !Slepc_v%it=0 !Slepc_v%it+1 !its
  !

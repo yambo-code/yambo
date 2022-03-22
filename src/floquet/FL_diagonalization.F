@@ -27,10 +27,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
+ use fields,         ONLY:Efield
  use linear_algebra, ONLY:DIAGO
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
- use nl_optics,      ONLY:NL_bands
+ use nl_optics,      ONLY:NL_bands,E_full
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_QE
  !
@@ -50,12 +51,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):E%nbf)
  character(4) :: filename
+ integer     :: line_counter
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
  complex(SP) :: ref_vec(FL_states(1):FL_states(2)),trial_vec(FL_states(1):FL_states(2))
  complex(SP) :: Mtmp(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  !
  FL_eigenvalues = 0._SP
- FL_QE = 0._SP
+ !FL_QE = 0._SP !aim137 this was wrong, they are initialised as E_full
  !
  do ik_bz=1,QP_nk
    !
@@ -154,6 +156,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
            !print*, FL_V_bands(i1,:,i_m,ik_bz,is)
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
+       !aim137 debug - avoid flipping
+       !if (FL_QE(i_m,ik_bz,is)-E_full(i_m,ik_bz,is) < 0) &
+       !        & FL_QE(i_m,ik_bz,is) = E_full(i_m,ik_bz,is) - (trial_val-E_full(i_m,ik_bz,is))
+       !aim137 debug
        !
     !  ! Optional: Check eigenvectors
     !  ! =============================

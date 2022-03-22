@@ -150,8 +150,9 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !aim137 DEBUG >
  !
  ! Damping
- !
-  call FL_damping("GAUSSIAN",NL_damping,FL_time_P_Berry_CART)
+ ! aim137: there are no physical grounds for this damping
+ ! aim137: hence, it is commented out
+ !call FL_damping("LORENTZIAN",NL_damping,FL_time_P_Berry_CART)
  !
  !
  FL_Chi_pol = cZERO

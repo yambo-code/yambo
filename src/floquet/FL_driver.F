@@ -40,13 +40,13 @@ subroutine FL_driver(E,X,k,q,Dip)
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
-&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P, &
+&                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,E_full, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
-&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim
+&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -70,6 +70,8 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer  :: FL_iteration,fl_shifted_zero_mode
  logical  :: l_FL_sc_reached
  real(DP) :: accuracy
+ character(4) :: filename
+ integer     :: line_counter,i_m
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -248,8 +250,6 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_diagonalization(E,k,FL_V_bands)
      !
-     call live_timing(steps=1)
-     !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
@@ -260,12 +260,51 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
    enddo
    !
+   call live_timing(steps=1)
+   !
    call msg('r','Frequency step    :',i_f)
    call msg('r','No. of iterations :',FL_iteration)
    call msg('r','Absolute error    :', accuracy)
    call msg('r','------------------------------------')
    !aim137 it's crashing here
    !call NL_databases_IO(i_f,'write')
+   !
+   !aim137 DEBUG
+   !do i_sp_pol=1,n_sp_pol
+   !do i_k_bz=1,k%nbz
+   !write(filename,'(i0)') i_k_bz
+   !open(111,file='FL_quasienergies'//trim(adjustl(filename))//'.dat')
+   !line_counter=0
+   !do while (.true.)
+   !read(111,*,end=11)
+   !line_counter = line_counter+1
+   !enddo
+   !11 rewind(111)
+   !do i_m=1,line_counter
+   !read(111,*)
+   !enddo
+   !write(111,*) Efield(1)%frequency(1)*HA2EV, &
+   !          & ((FL_QE(i_m,i_k_bz,i_sp_pol)-E_full(i_m,i_k_bz,i_sp_pol))*HA2EV, i_m=1, NL_bands(2))
+   !close(111)
+   !enddo
+   !enddo
+   !print*, 'kpoint 4'
+   !print*, FL_V_bands(:,1,4,4,1)
+   !print*, FL_V_bands(:,2,4,4,1)
+   !print*, FL_V_bands(:,3,4,4,1)
+   !print*, FL_V_bands(:,4,4,4,1)
+   !print*, FL_V_bands(:,5,4,4,1)
+   !print*, FL_V_bands(:,6,4,4,1)
+   !print*, FL_V_bands(:,7,4,4,1)
+   !print*, 'kpoint 15'
+   !print*, FL_V_bands(:,1,4,15,1)
+   !print*, FL_V_bands(:,2,4,15,1)
+   !print*, FL_V_bands(:,3,4,15,1)
+   !print*, FL_V_bands(:,4,4,15,1)
+   !print*, FL_V_bands(:,5,4,15,1)
+   !print*, FL_V_bands(:,6,4,15,1)
+   !print*, FL_V_bands(:,7,4,15,1)
+   !aim137 END DEBUG
    !
  enddo
  !

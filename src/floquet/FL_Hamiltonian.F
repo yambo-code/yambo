@@ -28,8 +28,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! Add diagonal part
  !                                        
- use pars,           ONLY:SP,cZERO,pi,cONE
- use units,          ONLY:SPEED_OF_LIGHT
+ use pars,           ONLY:SP,cZERO,pi,cONE,cI
+ use units,          ONLY:SPEED_OF_LIGHT,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
@@ -44,7 +44,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use xc_functionals, ONLY:V_xc,XC_potential_driver
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
-&                         NL_bands,VAL_BANDS,NL_P
+&                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
@@ -129,7 +129,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
-&            - real(i_shifted_fl,SP) * w0  !aim137: w0 is in Hartree
+&            - real(i_shifted_fl,SP) * w0 & !aim137: w0 is in Hartree
+&            + cI * NL_damping
        !
      enddo
    enddo

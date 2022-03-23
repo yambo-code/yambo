@@ -46,6 +46,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
 !real(SP)    :: FL_QE(NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  real(SP)    :: min_projection,trial_projection,trial_val,trial_proj
+ real(SP)    :: energy_difference(FL_states(1):FL_states(2))
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
@@ -61,6 +62,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  !
  do ik_bz=1,QP_nk
    !
+   !print*, '------ k points=',ik_bz
    !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
    !
    do is=1,n_sp_pol
@@ -68,7 +70,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
      ! Diagonalization
      ! ===============
      !
-     FL_eigenvectors = FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
+      FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
+&    FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
      call LINEAR_ALGEBRA_driver(DIAGO,&
                               & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
                               & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
@@ -80,71 +83,108 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
      ! ===================
      !
      do i_m=NL_bands(1),E%nbf ! band I want to update
+       !print*, '--- band =',i_m
        !
        ! ref_vec is FL_V_band from previous iteration
        !
       !print*, ''
       !print*, '------',i_m,ik_bz,is
        !
-       ref_vec = cZERO
        !
-       do i1=NL_bands(1),NL_bands(2)
-         do i1_fl=1,n_tot_fl_modes
+       ! try with quasi-energy
+       do i1_fks=FL_states(1),FL_states(2)
+       energy_difference(i1_fks) = &
+                    &   abs(FL_eigenvalues(i1_fks,ik_bz,is) &
+                    & - E_full(i_m,ik_bz,is))
+       enddo
+       !
+       if (minval(energy_difference) < 1.E-4) then
+         !
+         FL_chosen_bands(i_m) = minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
+         trial_vec(FL_states(1):FL_states(2)) = &
+                      & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
+         trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
+         !
+       else 
+         !
+         print*, 'going through eigenvector route'
+         ref_vec = cZERO
+         !
+         do i1=NL_bands(1),NL_bands(2)
+           do i1_fl=1,n_tot_fl_modes
+             !
+             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
+             ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
+             !
+           enddo
+        !  print*, FL_V_bands(i1,:,i_m,ik_bz,is)
+         enddo
+         !
+         ! aim137 - prelim
+         ! aim137: podria directamente multiplicar toda la matriz 
+         ! aim137  FL_eigenvectors aca por el valor que anula la fase
+         ! aim137  y ahi tomar el eigenvector que tenga un 1 en el
+         ! aim137  lugar correcto... luego chequeo con un dot prod y
+         ! aim137  si no da ~1, ahi entro al loop este...
+         ! Find maximum inner product with ref_vec
+         !
+         min_projection = 1._SP
+         trial_vec = cZERO
+         trial_val = 0._SP
+         do i2_fks=FL_states(1),FL_states(2)
            !
-           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
-           ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
+           trial_projection = Vstar_dot_V(FL_states(2)-FL_states(1)+1,&
+                           &  ref_vec(FL_states(1):FL_states(2)),&
+                           &  FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
+          !trial_projection = dot_product(&
+          !            &      conjg(ref_vec(FL_states(1):FL_states(2))),&
+          !            &    FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
+           if (real(trial_projection) < 0) then
+                   trial_projection = trial_projection*(-1._SP)
+               !aim137 check - I don't know whether I need to do this or not
+               !aim137 it did not change anything anyway
+               !   FL_eigenvectors(FL_states(1):FL_states(2),i2_fks) = &
+               ! & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)*(-1._SP)
+           endif
+           !
+           if ((1-real(trial_projection)) < min_projection) then
+             min_projection = 1-real(trial_projection)
+             trial_vec(FL_states(1):FL_states(2)) = &
+                     & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)
+             trial_val = FL_eigenvalues(i2_fks,ik_bz,is)
+             FL_chosen_bands(i_m) = i2_fks
+             trial_proj = real(trial_projection)
+           endif
            !
          enddo
-      !  print*, FL_V_bands(i1,:,i_m,ik_bz,is)
-       enddo
-       !
-       ! aim137 - prelim
-       ! aim137: podria directamente multiplicar toda la matriz 
-       ! aim137  FL_eigenvectors aca por el valor que anula la fase
-       ! aim137  y ahi tomar el eigenvector que tenga un 1 en el
-       ! aim137  lugar correcto... luego chequeo con un dot prod y
-       ! aim137  si no da ~1, ahi entro al loop este...
-       ! Find maximum inner product with ref_vec
-       !
-       min_projection = 1._SP
-       trial_vec = cZERO
-       trial_val = 0._SP
-       do i2_fks=FL_states(1),FL_states(2)
          !
-         trial_projection = Vstar_dot_V(FL_states(2)-FL_states(1)+1,&
-                         &  ref_vec(FL_states(1):FL_states(2)),&
-                         &  FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
-         if (real(trial_projection) < 0) then
-                 trial_projection = trial_projection*(-1._SP)
-                 FL_eigenvectors(FL_states(1):FL_states(2),i2_fks) = &
-               & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)*(-1._SP)
-         endif
-         if ((1-real(trial_projection)) < min_projection) then
-           min_projection = 1-real(trial_projection)
-           trial_vec(FL_states(1):FL_states(2)) = &
-                   & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)
-           trial_val = FL_eigenvalues(i2_fks,ik_bz,is)
-           FL_chosen_bands(i_m) = i2_fks
-           trial_proj = real(trial_projection)
-         endif
+         !aim137 check < 
+         !aim137 is it correct to do this? why don't I just leave this phase?
+         !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+         !trial_vec = trial_vec * conjg(trial_vec(i1_fks))
+         !aim137 check >
          !
-     !   print*, real(trial_projection),trial_proj
-       enddo
-       !
-       i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       trial_vec = trial_vec * conjg(trial_vec(i1_fks))
-       !
-       !aim137 debug
-       !print*, '-------------------'
-       !print*, trial_proj
-       !print*, ''
-       !print*, ref_vec(FL_states(1):FL_states(2))
-       !print*, ''
-       !print*, trial_vec(FL_states(1):FL_states(2))
-       !call error('paro aca')
-       !aim137 debug
+         !aim137 debug
+         !print*, '-------------------'
+         !print*, trial_proj
+         !print*, ''
+         !print*, ref_vec(FL_states(1):FL_states(2))
+         !print*, ''
+         !print*, trial_vec(FL_states(1):FL_states(2))
+         !call error('paro aca')
+         !aim137 debug
+       endif
        !
        ! Overwrite FL_V_band with new result
+       !
+       !aim137 check < which band has it chosen?
+       !if (ik_bz == 4 .and. i_m ==4 ) then
+       !print*, FL_chosen_bands(i_m), (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+       !print*, 'energy diff with KS energy =', trial_val - E_full(i_m,ik_bz,is)
+       !print*, 'eigenvector highest component (abs)',abs(trial_vec((i_m-1)*n_tot_fl_modes + (max_fl_mode+1)))
+       !print*, trial_vec(FL_chosen_bands(i_m)),trial_vec((i_m-1)*n_tot_fl_modes + (max_fl_mode+1))
+       !endif
+       !aim137 check >
        !
        do i1=NL_bands(1),NL_bands(2)
          do i1_fl=1,n_tot_fl_modes

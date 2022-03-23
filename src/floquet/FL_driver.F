@@ -183,7 +183,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  call section('r','FL self-consistency')
  do i_f=1,n_frequencies
    !
-   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
+   print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -201,12 +201,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
    enddo
    !aim137 DEBUG test mixing
-   do i1=NL_bands(1),E%nbf
+   !do i1=NL_bands(1),E%nbf
     !FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
     !FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=-cONE*0.1
     !FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=-cONE*0.1
     !FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
-   enddo
+   !enddo
    !aim137 END DEBUG
    !
    FL_S_minus=cZERO
@@ -285,6 +285,25 @@ subroutine FL_driver(E,X,k,q,Dip)
    !enddo
    !write(111,*) Efield(1)%frequency(1)*HA2EV, &
    !          & ((FL_QE(i_m,i_k_bz,i_sp_pol)-E_full(i_m,i_k_bz,i_sp_pol))*HA2EV, i_m=1, NL_bands(2))
+   !close(111)
+   !enddo
+   !enddo
+   !
+   !do i_sp_pol=1,n_sp_pol
+   !do i_k_bz=1,k%nbz
+   !write(filename,'(i0)') i_k_bz
+   !open(111,file='FL_eigensolution'//trim(adjustl(filename))//'.dat')
+   !line_counter=0
+   !do while (.true.)
+   !read(111,*,end=11)
+   !line_counter = line_counter+1
+   !enddo
+   !11 rewind(111)
+   !do i_m=1,line_counter
+   !read(111,*)
+   !enddo
+   !write(111,*) Efield(1)%frequency(1)*HA2EV, &
+   !          & (abs(FL_V_bands(i_m,fl_shifted_zero_mode-1,i_m,i_k_bz,i_sp_pol)), i_m=1, E%nbf)
    !close(111)
    !enddo
    !enddo

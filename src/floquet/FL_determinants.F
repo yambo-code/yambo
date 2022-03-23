@@ -52,7 +52,11 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  ! ======================================
  !
  w0 = Efield(1)%frequency(1) ! in Ha
- T_period = EtoT(w0)
+ T_period = EtoT(E=w0)
+ !aim137 debug < 
+ !aim137 checked this is (0.99999999999999456,1.04166271807523226E-007)
+ !print*, w0, T_period, exp(cI*w0*T_period)
+ !aim137 debug >
  forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1._SP)/n_tot_time_steps
  !
  do i_t=1,n_tot_time_steps
@@ -62,9 +66,10 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
      i1_shifted_fl = i1_extra -(max_extra_mode+1)
      !
      FL_time_S_plus(:,:,i_t)  = FL_time_S_plus(:,:,i_t) &
-                            & + exp(-1._SP*cI*i1_shifted_fl*w0*t_samples(i_t)) &
+                            & + exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_time_steps) &
                             & * FL_S_plus(:,:,i1_extra)
-                            !& + exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_time_steps) &
+                           !& + exp(-1._SP*cI*i1_shifted_fl*w0*t_samples(i_t)) &
+                           !aim137 I compared these two, and the former is better numerically
      !
     !print*, '------------------'
     !print*, i1_shifted_fl

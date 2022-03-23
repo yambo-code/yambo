@@ -200,7 +200,7 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1
- use fields,         ONLY:Efield
+ use fields,         ONLY:Efield,EtoT
  use wrapper,        ONLY:M_by_V
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver
  use linear_algebra,  ONLY:INV
@@ -228,8 +228,10 @@ subroutine FL_FT_polarization(FL_time_pol,FL_floquet_pol)
  !
  do i_t=1,n_tot_time_steps
    !
-   w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
-   time = 1._SP/(w0_sm1) * (i_t-1._SP)/n_tot_time_steps ! when i_t=1, time = 0
+   !aim137 this is not needed
+   !w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
+   !time = 1._SP/(w0_sm1) * (i_t-1._SP)/n_tot_time_steps ! when i_t=1, time = 0
+   !print*, time, EtoT(E=Efield(1)%frequency(1))
    !
    do i1_fl=1,n_tot_time_steps
      !
@@ -299,7 +301,7 @@ subroutine FL_damping(damp_type,damp_factor,ft)
  real(SP) :: w0,T_period,t_samples(n_tot_time_steps)
  !
  w0 = Efield(1)%frequency(1) ! in Ha
- T_period = EtoT(w0)
+ T_period = EtoT(E=w0)
  forall(i_t=1:n_tot_time_steps) t_samples(i_t)=T_period*(i_t-1._SP)/n_tot_time_steps
  !
  select case ( trim(damp_type) )

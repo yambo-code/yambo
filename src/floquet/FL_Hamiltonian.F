@@ -132,6 +132,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 &            - real(i_shifted_fl,SP) * w0 & !aim137: w0 is in Hartree
 &            + cI * NL_damping
        !
+!&            - real(i_shifted_fl,SP) * (w0-cI*NL_damping) & !aim137: I tried this but didn't help
      enddo
    enddo
 ! $omp end parallel do

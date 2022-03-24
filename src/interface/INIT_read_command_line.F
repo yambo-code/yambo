@@ -137,7 +137,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! V_real_time=8
      ! V_parallel=9
      ! V_nl_optics=10
-     ! V_ph=10
+     ! V_ph=11
      ! V_all=99
      !
      if ( trim(rstr_piece(i1)) == 'infver' ) then

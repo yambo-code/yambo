@@ -129,9 +129,12 @@ if test x"$enable_hdf5" = "xyes"; then
   if test "x$hdf5" = xyes; then
     HDF5_LIBS="$try_HDF5_LIBS" ;
     HDF5_INCS="$try_HDF5_INCS" ;
-    #if test $IO_LIB_VER = "parallel"; then AC_MSG_RESULT([yes - parallel lib found]) ; fi
-    #if test $IO_LIB_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
-    AC_MSG_RESULT([yes]) ;
+    if test $IO_LIB_VER = "parallel"; then 
+       AC_MSG_RESULT([yes - parallel lib found]) ; 
+       HDF5_OPT="--enable-parallel"  ; 
+    fi
+    if test $IO_LIB_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
+    # AC_MSG_RESULT([yes]) ;
     IO_LIB_VER="unknown"
   fi
   #

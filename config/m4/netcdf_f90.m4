@@ -240,7 +240,7 @@ if test x"$enable_hdf5" = "xno"; then
     NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
     NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a" ;
+    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a -L${NETCDF_HDF5_PATH}/lib" ;
     PNETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi

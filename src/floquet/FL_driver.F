@@ -172,7 +172,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! Initialize IO
  ! ==================
  !aim137: we'll need to add FL_databases
- !call NL_databases_IO(0,'write')
+ call NL_databases_IO(0,'write')
  ! i_k_bz
  ! Start-Up & Timing
  !===================
@@ -266,8 +266,11 @@ subroutine FL_driver(E,X,k,q,Dip)
    call msg('r','No. of iterations :',FL_iteration)
    call msg('r','Absolute error    :', accuracy)
    call msg('r','------------------------------------')
-   !aim137 it's crashing here
-   !call NL_databases_IO(i_f,'write')
+   !
+   !
+   call FL_time_dep_variables(E,k,FL_V_bands)
+   !
+   call NL_databases_IO(i_f,'write')
    !
    !aim137 DEBUG
    !do i_sp_pol=1,n_sp_pol

@@ -61,12 +61,12 @@ module fl_optics
      use FFT_m,          ONLY:fft_size
      use electrons,      ONLY:levels,n_spin,n_sp_pol
      use hamiltonian,    ONLY:FL_H_alloc
-     use real_time,      ONLY:rho_reference,RT_Vnl_xc
+     use real_time,      ONLY:rho_reference,RT_Vnl_xc,NE_steps
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
      use drivers,        ONLY:l_use_Hxc_collisions
-     use nl_optics,      ONLY:V_bands,n_frequencies
+     use nl_optics,      ONLY:V_bands,n_frequencies,NL_P_t
      !
      implicit none
      !
@@ -128,6 +128,7 @@ module fl_optics
        call  ELECTRIC_alloc(en)
      endif
      !
+     YAMBO_ALLOC(NL_P_t,(NE_steps,3))
    end subroutine FL_alloc
    !
    subroutine FL_alloc_k_distributed(en) !aim137 still need to modify this subroutine

@@ -52,7 +52,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  Mat,     intent(out) :: slepc_mat
  !
  integer          :: i_B, i_r, i_c, i_Tk, i_Tp, grp_fac
- PetscFortranInt  :: SL_H_dim,SL_K_dim
+ PetscInt         :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
  external K_multiply_by_V_transpose_slepc

@@ -112,7 +112,7 @@ if test "$hdf5" = "yes" ; then
   else
     NETCDF_info="(NETCDF4:";
     HDF5_info="HDF5-IO format";
-    if test "$enable_hdf5_ser_io" = "yes"; then
+    if test "$enable_hdf5_par_io" = "no"; then
       HDF5_info="${HDF5_info}, serial IO"   ;
       if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib  " ; fi
     else

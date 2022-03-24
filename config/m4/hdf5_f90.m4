@@ -57,7 +57,6 @@ NETCDF_VER="v4"
 if test "$mpibuild" = "yes" ; then
   HDF5_OPT="--enable-parallel";
   IO_LIB_VER="parallel";
-  enable_hdf5_par_io="yes";
 else
   HDF5_OPT="--disable-parallel";
   IO_LIB_VER="serial";

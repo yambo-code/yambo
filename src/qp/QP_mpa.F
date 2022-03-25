@@ -408,7 +408,9 @@ use parser_m,       ONLY:parser
                  endif
                endif
                !
-               if(ig1==1.and.ig2==1.and.iqbz==1.and.i_w==2.and.RIM_W_for_graph) then
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng) !DALV
+               !
+               if(l_RIM_W_g) then
                  ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))  *&
 &                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(1)-E_kmq &

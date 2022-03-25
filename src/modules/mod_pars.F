@@ -64,7 +64,8 @@ module pars
  integer,parameter  :: logfile_index=1002
  !
  !...I/O
- integer, parameter :: max_io_units=20
+ integer, parameter :: max_io_units=40
+ integer, parameter :: io_units_shift=max_io_units+20 ! io_units for netcdf
  integer, parameter :: max_io_vars_open=500
  integer, parameter :: max_active_sections=10
  !

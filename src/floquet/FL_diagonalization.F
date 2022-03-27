@@ -98,7 +98,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
                     & - E_full(i_m,ik_bz,is))
        enddo
        !
-       if (minval(energy_difference) < 1.E-4) then
+       if (minval(energy_difference) < 1.E-3) then
          !
          FL_chosen_bands(i_m) = minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
          trial_vec(FL_states(1):FL_states(2)) = &
@@ -158,12 +158,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
            !
          enddo
          !
-         !aim137 check < 
-         !aim137 is it correct to do this? why don't I just leave this phase?
-         !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-         !trial_vec = trial_vec * conjg(trial_vec(i1_fks))
-         !aim137 check >
-         !
          !aim137 debug
          !print*, '-------------------'
          !print*, trial_proj
@@ -174,6 +168,12 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
          !call error('paro aca')
          !aim137 debug
        endif
+       !
+       !aim137 check < 
+       !aim137 is it correct to do this? why don't I just leave this phase?
+       i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+       trial_vec = trial_vec * conjg(trial_vec(i1_fks))
+       !aim137 check >
        !
        ! Overwrite FL_V_band with new result
        !
@@ -191,11 +191,20 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
            !
            i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
            FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
+           ! aim137 try mixing beta here
+           ! aim137 mixing beta - it did dampen the oscillations
+           ! in the accuracy, but not even 0.95 solved it
+           !   FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
+           !&  FL_V_bands(i1,i1_fl,i_m,ik_bz,is) * 0.9_SP +&
+           !&  trial_vec(i1_fks) * 0.1_SP
            !
          enddo
            !print*, FL_V_bands(i1,:,i_m,ik_bz,is)
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
+       !aim137 try mixing beta here
+       !FL_QE(i_m,ik_bz,is) = FL_QE(i_m,ik_bz,is) * 0.9_SP + trial_val * 0.1_SP
+       !
        !aim137 debug - avoid flipping
        !if (FL_QE(i_m,ik_bz,is)-E_full(i_m,ik_bz,is) < 0) &
        !        & FL_QE(i_m,ik_bz,is) = E_full(i_m,ik_bz,is) - (trial_val-E_full(i_m,ik_bz,is))

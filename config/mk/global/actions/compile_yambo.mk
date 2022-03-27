@@ -12,17 +12,8 @@ else ifneq (,$(findstring yambo_rt_iterative,$(MAKECMDGOALS)))
  PRECMP=-D_RT -D_RT_SCATT -D_ELPH -D_PHEL -D_ELPH_ITERATIVE
  SRC_LIBS=$(PJ_RTITLIBS)
  EXE_LIBS=$(PJ_RTITLIBS_LD)
-<<<<<<< HEAD
 else ifneq (,$(findstring yambo_rt,$(MAKECMDGOALS)))
  PRECMP=-D_RT 
-=======
-else ifneq (,$(findstring yambo_rt_gpl,$(MAKECMDGOALS)))
- PRECMP=-D_RT 
- SRC_LIBS=$(PJ_RT_GPL_LIBS)
- EXE_LIBS=$(PJ_RT_GPL_LIBS_LD)
-else ifneq (,$(findstring yambo_rt,$(MAKECMDGOALS)))
- PRECMP=-D_RT -D_RT_SCATT -D_ELPH -D_PHEL
->>>>>>> develop/master
  SRC_LIBS=$(PJ_RTLIBS)
  EXE_LIBS=$(PJ_RTLIBS_LD)
 else ifneq (,$(findstring yambo_ph,$(MAKECMDGOALS)))
@@ -33,22 +24,11 @@ else ifneq (,$(findstring yambo_nl,$(MAKECMDGOALS)))
  PRECMP=-D_NL -D_RT -D_DOUBLE
  SRC_LIBS=$(PJ_NLLIBS)
  EXE_LIBS=$(PJ_NLLIBS_LD)
-<<<<<<< HEAD
-=======
-else ifneq (,$(findstring yambo_qed,$(MAKECMDGOALS)))
- PRECMP=-D_QED -D_RT -D_RT_SCATT -D_ELPH
- SRC_LIBS=$(PJ_RTLIBS)
- EXE_LIBS=$(PJ_RTLIBS_LD)
->>>>>>> develop/master
 endif
 #
 # Compilation
 #
-<<<<<<< HEAD
 yambo yambo_ph yambo_sc yambo_rt yambo_nl: 
-=======
-yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed: 
->>>>>>> develop/master
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@touch config/stamps_and_lists/compiling_$@.stamp
 	@$(call todo_precision,$(PRECMP))

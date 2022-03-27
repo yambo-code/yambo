@@ -62,11 +62,12 @@ integer function io_BS_header(iq,X,ID,mode)
    ! If l_BSE_restart true at this point, I'm already re-starting from a compressed kernel
    !
    if (write_is_on(ID).and.io_BS_K.and..not.l_BSE_restart.and.io_mode(ID)/=DUMP) then
+     call msg("s","Looking for "//trim(full_db_name)//".")
      if (.not.file_exists(trim(full_db_name))) then
        call msg("s","BSE file not found. Creating an empty one.")
        l_BSE_restart=.false.
      else if(trim(mode)=="full") then
-       call msg("s","Partial BSE file found in "//trim(full_db_name)//". Using for restart.")
+       call msg("s","Partial BSE file found. Using for restart.")
        l_BSE_restart = .true.
      endif
    endif
@@ -75,12 +76,19 @@ integer function io_BS_header(iq,X,ID,mode)
    !
  endif
  !
- if(write_is_on(ID).and..not.master_cpu)  return
+ if(write_is_on(ID).and..not.master_cpu) then
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
  !
  db_name='BS_head_Q'//trim(intc(iq))
  !
  io_BS_header=io_connect(desc=trim(db_name),type=2,ID=ID)
- if(io_BS_header/=0)       return
+ if(io_BS_header/=0) then
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
+ !
  if(trim(mode)=="connect") return
  !
  !
@@ -139,7 +147,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
 &                        BSK_IO_mode,MAX_BSK_LIN_size,BS_lin_size_compressed,BS_K_cutoff,     &
 &                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_n_eh_spaces
  use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
- use IO_int,        ONLY:io_connect,def_variable_bulk
+ use IO_int,        ONLY:io_connect,def_variable_bulk,io_disconnect
  !
  implicit none
  !
@@ -156,9 +164,10 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  io_BS_PAR_init=-1
  !
- if(.not.io_BS_K .and. (.not.BS_K_cutoff>0._SP)) return
- !
- if(.not.io_BS_K .and. trim(mode)=="full" )      return
+ if(.not.io_BS_K .and. ((.not.BS_K_cutoff>0._SP) .or. trim(mode)=="full" )) then
+   call io_disconnect(ID,FORCE=.TRUE.)
+   return
+ endif
  !
  if( trim(mode)=="full"        ) db_name='BS_PAR_Q'//trim(intc(iq))
  if(index(mode,"compressed")/=0) db_name='BS_COMPRESS'//trim(adjustl(real2ch(BS_K_cutoff)))//'_Q'//trim(intc(iq))
@@ -167,7 +176,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  !
  io_BS_PAR_init=io_connect(desc=trim(db_name),type=2,ID=ID,comm=MPI_COMM_WORLD)
  !
- if(write_is_on(ID).and.io_BS_PAR_init/=0)  return ! here it should give error
+ if(write_is_on(ID).and.io_BS_PAR_init/=0) return ! here it should give error
  !
  if( read_is_on(ID).and.index(mode,"compressed")/=0) then
    ch_tmp="Compressed BSE file found"

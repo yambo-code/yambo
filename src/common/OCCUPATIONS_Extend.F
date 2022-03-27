@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,31 +21,30 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Extend(Xe,E)
+subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
- ! The occupation of E levels are decided using 
- ! the Fermi "Levels" of Xe.
+ ! The occupation of E levels are decided using the Fermi "Levels" of Xe.
  !
- ! Also the Double Grid levels/occ.s are shifted/defined accordingly.
- ! Note that to check if the Double Grid is present the Xe%E_FineGd pointer
- ! is checked. 
+ ! The Double Grid levels/occ.s are shifted/defined accordingly.
+ ! To check if the Double Grid is present the Xe%FG%E pointer is checked. 
  !
- ! This s.r. takes care that E keeps the same electronic character
- ! if the Xe grid.
+ ! This s.r. takes care that E keeps the same electronic character if the Xe grid.
  ! If this is not possible a warning message is reported. 
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
  use electrons,  ONLY:levels,n_sp_pol,spin_occ
- use D_lattice,  ONLY:Tel
+ use R_lattice,  ONLY:bz_samp
+ use D_lattice,  ONLY:T_elecs,T_holes
  use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
 #include<memory.h>
  !
- type(levels)::Xe,E
+ type(levels)    ::Xe,E
+ type(bz_samp)   ::k
  !
- !Work Space
+ ! Work Space
  !
  real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
@@ -60,15 +59,17 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  call f_build(Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
+ ! FineGd
+ call OCCUPATIONS_Extend_Double_Grid("E",E,k)
+ !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
  ! in the Fermi routine)
  !
- if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
+ if (all(E%nbf==Xe%nbf).and.all(E%nbm==Xe%nbm)) then
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
-   if (allocated(E%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
    return
  endif
  !
@@ -80,7 +81,7 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  do while(Ef_test<minval(Xe%E_CBm(:n_sp_pol)))
    call f_build(Ef_test)
    call OCCUPATIONS_Gaps(E)
-   if (E%nbf==Xe%nbf.and.E%nbm==Xe%nbm) then
+   if (all(E%nbf==Xe%nbf).and.all(E%nbm==Xe%nbm)) then
      E%E_Fermi=Ef_test
      exit
    endif
@@ -90,9 +91,8 @@ subroutine OCCUPATIONS_Extend(Xe,E)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
- if (allocated(Xe%FG%E)) E%FG%E =E%FG%E -E%E_Fermi
  !
- if (E%nbf/=Xe%nbf.or.E%nbm/=Xe%nbm) then
+ if (any(E%nbf/=Xe%nbf).or.any(E%nbm/=Xe%nbm)) then
    call warning('Global and response function energy levels have different metallic character')
  endif
  !
@@ -106,20 +106,11 @@ subroutine OCCUPATIONS_Extend(Xe,E)
      do i1=1,E%nb
        do i2=1,E%nk
          do is=1,n_sp_pol
-           E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,Tel)
+           if((E%E(i1,i2,is)-Ef)<=0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_holes)
+           if((E%E(i1,i2,is)-Ef)> 0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_elecs)
          enddo
        enddo 
      enddo
-     if (allocated(E%FG%E)) then
-       do i1=1,E%FG%nb
-         do i2=1,E%FG%nk
-           do is=1,n_sp_pol
-             E%FG%f(i1,i2,is) =spin_occ*Fermi_fnc(E%FG%E(i1,i2,is)-Ef,Tel)
-             Xe%FG%f(i1,i2,is)=E%FG%f(i1,i2,is)
-           enddo
-         enddo 
-       enddo
-     endif
    end subroutine
    !
 end subroutine

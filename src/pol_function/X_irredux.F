@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -23,7 +23,7 @@
 !
 !> @callgraph
 !> @callergraph
-subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
+subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Non interacting Xo
  !
@@ -40,7 +40,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  use drivers,       ONLY:l_life
  use IO_m,          ONLY:io_RESPONSE,io_DIP
  use pars,          ONLY:SP,cZERO,schlen
- use wrapper,       ONLY:V_by_V_plus_V
+ use wrapper,       ONLY:V_plus_alpha_V,vv_caxpy
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use matrix,        ONLY:PAR_matrix
@@ -81,6 +81,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  type(DIPOLE_t)       :: Dip
  type(w_samp)         :: Xw
  integer              :: iq
+ character(*)         :: what
  !
  ! Work Space
  !
@@ -97,6 +98,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  complex(SP),pointer     DEV_ATTR :: X_par_lowtri_blc_d(:,:,:)
  complex(SP)              :: GreenF_iw
  integer                  :: PAR_COM_RL_INDEX_n_CPU
+ integer                  :: lda
  !
  integer,    external     :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
@@ -137,7 +139,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  if(.not.skip_WF_load) call WF_load(WF,ngrho,maxval(qindx_X(:,:,2)),X%ib,(/1,Xk%nibz/),title='-X')
  !
- call timing('Xo (procedure)',OPR='start')
+ call timing(what//' (procedure)',OPR='start')
  !
  ! Poles tabulation
  !==================
@@ -213,10 +215,10 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Timing
  !========
- live_t_string='Xo@q['//trim(intc(iq))//'] '
+ live_t_string=what//'@q['//trim(intc(iq))//'] '
  !
 #if defined _SC 
- if (l_sc_run.and..not.l_eval_collisions) live_t_string='Xo @it['//trim(intc(it_now))//'] '
+ if (l_sc_run.and..not.l_eval_collisions) live_t_string=what//'@it['//trim(intc(it_now))//'] '
 #endif
  !
  if (coarse_grid_N>=n_out_threads) call live_timing(trim(live_t_string),coarse_grid_N/n_out_threads)
@@ -342,7 +344,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
        X_rows2_l = min(ig_col,X_rows2)
        X_nrows_l = X_rows2_l-X_rows1_l+1 
        !
-       call V_by_V_plus_V(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
+       call V_plus_alpha_V(X_nrows_l,GreenF(iw),Xo_res(X_rows1_l:X_rows2_l,ig_col),X_par%blc(X_rows1_l:X_rows2_l,ig_col,iw))
        !
 #  if defined _OPENMP
        if(n_threads_X>1) call omp_unset_lock(omp_locks(mutexid))
@@ -409,13 +411,13 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
          X_cols_transp = (/X_rows1_l,X_rows2_l/)
          !
          if (PAR_COM_RL_INDEX_n_CPU>1) then
-           call V_by_V_plus_V(X_nrows_l,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
-&                             X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+           lda=size(X_par_lower_triangle%blc(:,1,1))
+           call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, & 
+                   & X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          else
-           call V_by_V_plus_V(X_nrows_l,GreenF(iw),&
-&                             conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),&
-&                             X_par%blc(ig_row_transp,X_cols_transp(1):X_cols_transp(2),iw))
+           lda=size(X_par%blc(:,1,1))
+           call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, &
+&                             X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          endif
          !
 #  if defined _OPENMP
@@ -466,8 +468,8 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
  current_iq=iq
  n_threads_FFT=0
  !
- call timing('Xo (procedure)',OPR='stop')
- call timing('Xo (REDUX)',OPR='start')
+ call timing(what//' (procedure)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='start')
  !
  if (have_cuda) then
    X_par%blc=X_par%blc_d
@@ -481,7 +483,7 @@ subroutine X_irredux(iq,X_par,Xen,Xk,Xw,X,Dip)
    if (X_lower_triangle_matrix_in_use) call PP_redux_wait(X_par_lower_triangle%blc(:,:,iw),COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  enddo
  !
- call timing('Xo (REDUX)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='stop')
  !
  ! Populate the lower triangle/piece of Xo 
  !=========================================

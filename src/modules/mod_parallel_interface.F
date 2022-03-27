@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -78,7 +78,7 @@ module parallel_int
    !
    subroutine PARALLEL_assign_chains_and_COMMs(n_elements,COMM_index_1,COMM_index_2,COMM_index_3,&
 &                                              COMM_index_4,COMM_index_5,COMM_A2A_1,COMM_A2A_2,&
-&                                              COMM_A2A_3,COMM_A2A_4)
+&                                              COMM_A2A_3,COMM_A2A_4,COMM_index_global_2)
      use parallel_m,    ONLY:yMPI_comm
      integer                 :: n_elements
      type(yMPI_comm)          :: COMM_index_1
@@ -90,6 +90,7 @@ module parallel_int
      type(yMPI_comm),optional :: COMM_A2A_2
      type(yMPI_comm),optional :: COMM_A2A_3
      type(yMPI_comm),optional :: COMM_A2A_4
+     type(yMPI_comm),optional :: COMM_index_global_2
    end subroutine
    !
    subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES,MASK)
@@ -119,7 +120,7 @@ module parallel_int
      type(yMPI_comm), optional :: COMM
    end subroutine
    !
-   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET)
+   subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
      use X_m,           ONLY:X_t
      use DIPOLES,       ONLY:DIPOLE_t
      use electrons,     ONLY:levels
@@ -130,7 +131,7 @@ module parallel_int
      character(*)             ::ENVIRONMENT
      type(X_t),       optional::X
      type(DIPOLE_t),  optional::Dip
-     logical,         optional::RESET
+     logical,         optional::RESET,Dip_limits_pre_defined
    end subroutine
    !
    subroutine PARALLEL_check_phase_space( N_PAR_elements,WORLD,WORLD_size,MSG )

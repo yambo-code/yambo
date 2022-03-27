@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM, DS
@@ -54,7 +54,6 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
  !
- complex(SP)          :: norm
  integer              :: fac
  integer              :: n, i_g, i_g_start, i_c, start_index, start_index_dg
  !

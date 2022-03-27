@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,11 +25,12 @@ subroutine of_open_close(of_name_extension,mode)
  !
  use pars,            ONLY:lchlen
  use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
- use IO_m,            ONLY:get_name
+ use IO_int,          ONLY:get_name
 #if defined _NC_OUTPUT
  use stderr,          ONLY:STRING_remove
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
- use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
+ use IO_int,          ONLY:io_control,io_connect,io_disconnect
+ use IO_m,            ONLY:OP_WR,WR_CL,NONE
 #endif
 #if defined _YAML_OUTPUT
  use f_utils,         ONLY:f_get_free_unit

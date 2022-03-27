@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,6 +38,7 @@ subroutine DIPOLES_driver(k,E,q)
  use interfaces,     ONLY:DESC_write
  use OUTPUT_simple,  ONLY:OUTPUT_add_column
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
+ use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
  !
 #include<memory.h>
@@ -50,9 +51,12 @@ subroutine DIPOLES_driver(k,E,q)
  integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,BANDS_done(DIPs_C_bands(2))
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
+ logical     :: BAND_fields_controls(2)
  character(schlen)     :: BANDS_str
  real(SP), allocatable :: DIP_plane(:,:,:)
  integer,  external    :: PROJECTION_k_on_the_path_or_plane
+ !
+ BAND_fields_controls=.FALSE.
  !
  if (trim(DIPs_kind)=="IP") then
    !
@@ -72,17 +76,26 @@ subroutine DIPOLES_driver(k,E,q)
      call warning("Plane Projection and Interpolation not simultaneously possible. Interpolation Switched off")
      INTERP_grid=-1
    endif
+   !
    call PROJECTION_setup("DIPOLES",(/1,1/))
+   !
+   call parser('DIP_C_bands', BAND_fields_controls(1))
+   call parser('DIP_V_bands', BAND_fields_controls(2))
    !
  endif
  !
  ! ... Dimensions
- DIPs%ib    =(/DIPs_V_bands(1),DIPs_C_bands(2)/)
- DIPs%ib_lim=(/DIPs_V_bands(2),DIPs_C_bands(1)/)
+ if (all(BAND_fields_controls)) then
+   DIPs%ib    =(/DIPs_V_bands(1),DIPs_C_bands(2)/)
+   DIPs%ib_lim=(/DIPs_V_bands(2),DIPs_C_bands(1)/)
+ else
+   DIPs_V_bands=(/DIPs%ib(1),DIPs%ib_lim(1)/)
+   DIPs_C_bands=(/DIPs%ib_lim(2),DIPs%ib(2)/)
+ endif
  !
  ! ... PARALLEL setup
  call PARALLEL_global_indexes(E,k,q," ",RESET=.TRUE.)
- call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs)
+ call PARALLEL_global_indexes(E,k,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=all(BAND_fields_controls))
  !
  ! ... IO
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
@@ -108,14 +121,14 @@ subroutine DIPOLES_driver(k,E,q)
        if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
        do is=1,n_spin
          delta_E=E%E(ic,ik,is)-E%E(iv,ik,is)
-         if (DIPs_E_range(1)>0. .and. delta_E<DIPs_E_range(1)) cycle
-         if (DIPs_E_range(2)>0. .and. delta_E>DIPs_E_range(2)) cycle
+         if (DIPs_E_range(1)>0._SP .and. delta_E<DIPs_E_range(1)) cycle
+         if (DIPs_E_range(2)>0._SP .and. delta_E>DIPs_E_range(2)) cycle
          DIP_projected=dot_product(DIPs_direction,DIP_iR(:,ic,iv,ik_mem,is))
          if (trim(DIPs_kind)=="IP") then
-           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2._SP
+           DIP_accumulated(1,ik,1)=DIP_accumulated(1,ik,1)+abs(DIP_projected)**2
          endif
          if (trim(DIPs_kind)=="MASK") then
-           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2._SP
+           DIPs_mask(iv,ik,is)=DIPs_mask(iv,ik,is)+abs(DIP_projected)**2
          endif
          if (BANDS_done(ic)==0) BANDS_str=trim(BANDS_str)//" "//trim(intc(ic))
          BANDS_done(ic)=1
@@ -124,9 +137,8 @@ subroutine DIPOLES_driver(k,E,q)
    enddo
  enddo
  !
- call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
- !
  if (trim(DIPs_kind)=="MASK") then
+   call msg('s','Conduction band(s) contributing to the MASK',trim(BANDS_str))
    call PP_redux_wait( DIPs_mask )
  endif
  if (trim(DIPs_kind)=="IP") call PP_redux_wait( DIP_accumulated(1,:,1))

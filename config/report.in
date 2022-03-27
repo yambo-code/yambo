@@ -1,5 +1,5 @@
 #
-# [VER] @SVERSION@.@SSUBVERSION@.@SPATCHLEVEL@ r.@SREVISION@
+# [VER] @SVERSION@.@SSUBVERSION@
 # 
 # - GENERAL CONFIGURATIONS -
 # 
@@ -28,6 +28,7 @@
 #
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
+# [@PARIO_check@] PARALLEL-IO
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #
@@ -41,8 +42,8 @@
 #                 @IOTK_INCS@
 # [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
 #                 @ETSF_INCS@
-# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@
-#                 @NETCDFF_INCS@ @NETCDF_INCS@
+# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @PNETCDF_LIBS@
+#                 @NETCDFF_INCS@ @NETCDF_INCS@ @PNETCDF_INCS@
 # [@HDF5_str@] HDF5    : @HDF5_LIBS@
 #                 @HDF5_INCS@
 #
@@ -80,4 +81,6 @@
 # [ F77 ] @F77@ @FFLAGS@ @CUDA_FLAGS@
 # [ F77U] @FUFLAGS@ @CUDA_FLAGS@
 # [Cmain] @FCMFLAG@
+#
+# You can modify compilers and flags by editing the file "config/setup"
 #

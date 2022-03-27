@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,12 +26,12 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  use pars,          ONLY:SP,schlen,IP
  use stderr,        ONLY:intc
- use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_mat_res_ares_dim
- use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig
+ use BS,            ONLY:BS_K_dim,BS_H_dim,BSqpts,BS_perturbative_SOC,BS_res_ares_n_mat
+ use BS_solvers,    ONLY:BSS_q0,BSS_write_eig_2_db,BSS_eh_table,BS_mat,variables_BS,BSS_n_eig,BSS_desc
  use X_m,           ONLY:X_t
- use descriptors,   ONLY:IO_desc
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,&
-&                        io_elemental,io_status,io_bulk,io_header
+ use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
+ use IO_m,          ONLY:io_sec,io_status,read_is_on
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use electrons,     ONLY:n_sp_pol
  use timing_m,      ONLY:timing
  !
@@ -50,7 +50,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
  !
  call timing('io_BSS_diago',OPR='start')
  !
- if (BS_mat_res_ares_dim>1) then
+ if (BS_res_ares_n_mat>1) then
    if(i_BS_mat==1) db_name='BS_diago_Q'//trim(intc(iq))
    if(i_BS_mat==2) db_name='BS_diago_Q'//trim(intc(iq))//'_ares'
  else
@@ -77,7 +77,7 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
      if (allocated(BSqpts)) BSqpts(:,iq)=BSS_q0
    endif
    call io_elemental(ID,VAR="[BSS] Eigenstates computed     ",I0=BSS_n_eig,CHECK=.true.,OP=(/"=="/))
-   call io_elemental(ID,VAR="[BSS] Number of BSE matricies  ",I0=BS_mat_res_ares_dim,CHECK=.true.,OP=(/"=="/))
+   call io_elemental(ID,VAR="[BSS] Number of BSE matrices   ",I0=BS_res_ares_n_mat,CHECK=.true.,OP=(/"=="/))
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
    ! header return
@@ -86,6 +86,13 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    io_BSS_diago=io_status(ID)
    if (io_BSS_diago/=0) goto 1
+   !
+   ! Descriptions transfer
+   !
+   if (read_is_on(ID)) then
+     call IO_desc_reset(BSS_desc)
+     call IO_desc_duplicate(local_desc,BSS_desc)
+   endif
    !
  endif
  !

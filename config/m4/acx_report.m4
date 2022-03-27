@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -46,6 +46,7 @@ if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
+PARIO_check="$parallel_io"
 #
 # - LIBRARIES -
 #
@@ -93,6 +94,7 @@ else
 fi
 NETCDF_info="(NETCDF with large files support)"
 if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(NETCDF large files support disabled)"; fi
+if test "$enable_netcdf_par_io" = "yes";  then NETCDF_info="(NETCDF with parallel I/O and large files support)"; fi
 #
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
@@ -105,7 +107,7 @@ if test "$hdf5" = "yes" ; then
   if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
   if test "$enable_netcdf_hdf5" = "yes" ; then
     HDF5_info="(HDF5-IO format";
-    if test "$HDF5_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib " ; fi
+    if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib " ; fi
     if test "$enable_hdf5_par_io" = "yes"; then HDF5_info="${HDF5_info}, parallel IO"   ; fi
     if test "$enable_hdf5_compression" = "yes"; then
       HDF5_info="${HDF5_info}, with data compression)" ;
@@ -201,6 +203,7 @@ AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
+AC_SUBST(PARIO_check)
 #
 AC_SUBST(YAML_str)
 AC_SUBST(FUTILE_str)

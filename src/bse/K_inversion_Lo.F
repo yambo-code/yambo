@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -25,15 +25,14 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp,bare_qpg
- use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,&
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,global_gauge,l_drude,X_Double_Grid_setup,&
 &                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp,W_reset,W_duplicate
  use BS_solvers,     ONLY:Co_factor,diam_term_exact,BSS_dipoles_opt,BSS_uses_DbGd,&
-&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,&
-&                         BSS_eh_W,&
-&                         BSS_add_antiresonant,K_diago_in_BS_mat,BS_diagonal
- use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling,BSE_mode,BS_q,BS_res_ares_dim
+&                         BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,K_diago_in_BS_mat,BS_diagonal
+ use BS,             ONLY:BS_H_dim,BS_K_dim,BSE_mode,BS_q,BS_n_eh_spaces,&
+&                         BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_m,     ONLY:PAR_IND_Xk_ibz_ID,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -71,7 +70,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  ! DbGd setup
  !
- call X_Double_Grid_setup(1,k)  
+ call X_Double_Grid_setup(1,k,k%FGbz)
  !
  ! Look for the W(iw_ref) closest 0
  !==================================
@@ -116,99 +115,102 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call W_duplicate(W,W_mins)
    call W_duplicate(W,W_plus)
    !
-   do i_res_ares=1,BS_res_ares_dim
-   do i_bsk=1,BS_K_dim(i_res_ares)
-     !
-     i_res=i_bsk
-     i_cpl=i_res+BS_K_dim(1)
-     if(BS_res_ares_dim==2) i_res=i_res+BS_K_dim(1)*(i_res_ares-1)
-     !
-     ik_bz =BSS_eh_table(i_res,1)
-     iv    =BSS_eh_table(i_res,2)
-     ic    =BSS_eh_table(i_res,3)
-     i_sp_c=BSS_eh_table(i_res,4)
-     i_sp_v=BSS_eh_table(i_res,5)
-     !
-     ik_ibz=k%sstar(ik_bz,1)
-     !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle
-     !
-     i_Lo_trans=i_res
-     i_Lo      =1
-     transition=(/ik_bz,iv,ic,i_sp_c/)
-     !
-     if (BS_res_ares_dim==2) then
-       if ( i_res_ares==1) i_Lo      =1
-       if ( i_res_ares==2) i_Lo      =2
-     else
-       if ( trim(BSE_mode)=='retarded') then
-         i_Lo_trans=i_res
-         i_Lo      =2
-       else if( trim(BSE_mode)=="coupling") then
-         i_Lo_trans=i_cpl
-         i_Lo      =1
-       endif
-     endif
-     !
-     if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)
-     if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
-     !
-     if(i_loop==2) then
-       forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
-       forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
-     endif
-     !
-     if ( .not.allocated(E%GreenF) ) then
+   do i_res_ares=1,BS_n_eh_spaces
+     do i_bsk=1,BS_K_dim(i_res_ares)
        !
-       ! Analytical GFs
-       !================
-       if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r" ,"eh",.FALSE.,.FALSE.)
-       if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
-       if (BSS_add_antiresonant.or.BS_K_coupling) &
-       &                 call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
-       if (l_BS_photolum) then
-         if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r" ,"eh",.TRUE.,.FALSE.)
-         if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
-         if (BSS_add_antiresonant.or.BS_K_coupling) &
-         &                 call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
-         Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
+       i_res=i_bsk
+       i_cpl=i_res+BS_K_dim(1)
+       if(BS_n_eh_spaces==2) i_res=i_res+BS_K_dim(1)*(i_res_ares-1)
+       !
+       ik_bz =BSS_eh_table(i_res,1)
+       iv    =BSS_eh_table(i_res,2)
+       ic    =BSS_eh_table(i_res,3)
+       i_sp_c=BSS_eh_table(i_res,4)
+       i_sp_v=BSS_eh_table(i_res,5)
+       !
+       ik_ibz=k%sstar(ik_bz,1)
+       !
+       if (.not.PAR_IND_Xk_ibz%element_1D(ik_ibz)) cycle
+       !
+       i_Lo_trans=i_res
+       i_Lo      =1
+       transition=(/ik_bz,iv,ic,i_sp_c/)
+       !
+       if (BS_n_eh_spaces==2) then
+         if ( i_res_ares==1) i_Lo      =1
+         if ( i_res_ares==2) i_Lo      =2
+       else
+         if ( trim(BSE_mode)=='retarded') then
+           i_Lo_trans=i_res
+           i_Lo      =2
+         else if( trim(BSE_mode)=="coupling") then
+           i_Lo_trans=i_cpl
+           i_Lo      =1
+         endif
        endif
        !
-     else 
+       if (.not.allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)
+       if (     allocated(BSS_eh_W)) E_plus_W=BSS_eh_E(i_res)-cI*BSS_eh_W(i_res)
        !
-       ! Convoluted GFs
-       !================
-       if(i_res_ares==1) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:, 1  ),"r" )
-       if(i_res_ares==2) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra")
-       if (BSS_add_antiresonant.or.BS_K_coupling) &
-       &                 call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
-       !
-     endif
-     !
-     if(i_res_ares==1) then
-       residual=BSS_dipoles_opt(1,i_res)*conjg(BSS_dipoles_opt(1,i_res))
-       if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-       if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
-       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
-     endif     
-     !
-     if ((BSS_add_antiresonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
-       residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
-       if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
-       Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
-     endif
-     !
-     if (l_BS_photolum.and.i_loop==1) then
-       residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
-       PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
-       if ((BSS_add_antiresonant.or.BS_K_coupling).and.BS_res_ares_dim==1) then
-         PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
+       if(i_loop==2) then
+         forall(iw=1:W%n_freqs) W_mins%p(iw)=W%p(iw)-BS_diagonal(i_res)*BSS_eh_f(i_res)
+         forall(iw=1:W%n_freqs) W_plus%p(iw)=W%p(iw)+BS_diagonal(i_res)*BSS_eh_f(i_res)
        endif
-     endif
-     !
-     if (k%sstar(ik_bz,2)==1) call live_timing(steps=1)
-     !
-   enddo
+       !
+       if ( .not.allocated(E%GreenF) ) then
+         !
+         ! Analytical GFs
+         !================
+         if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,1),"r" ,"eh",.FALSE.,.FALSE.)
+         if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
+         if (BS_K_anti_resonant) then
+           call X_GreenF_analytical(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra","eh",.FALSE.,.FALSE.)
+         endif
+         if (l_BS_photolum) then
+           if(i_res_ares==1) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,1),"r" ,"eh",.TRUE.,.FALSE.)
+           if(i_res_ares==2) call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
+           if (BS_K_anti_resonant) then
+             call X_GreenF_analytical(iq,transition,W,E,k,SF(:,2),"Ra","eh",.TRUE.,.FALSE.)
+           endif
+           Lo(i_Lo_trans,:,i_Lo+Lo_n_loop)=BSS_PL_f(i_res)/BSS_eh_f(i_res)**2*aimag(W%p(1))/pi
+         endif
+         !
+       else 
+         !
+         ! Convoluted GFs
+         !================
+         if(i_res_ares==1) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:, 1  ),"r" )
+         if(i_res_ares==2) call X_GreenF_convoluted(iq,transition,W_mins,E,k,Lo(i_res,:,i_Lo),"Ra")
+         if (BS_K_anti_resonant) then
+           call X_GreenF_convoluted(iq,transition,W_plus,E,k,Lo(i_Lo_trans,:,i_Lo),"Ra")
+         endif
+         !
+       endif
+       !
+       if(i_res_ares==1) then
+         residual=BSS_dipoles_opt(1,i_res)*conjg(BSS_dipoles_opt(1,i_res))
+         if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
+         if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
+         Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-residual*Lo(i_res,:,1)
+       endif     
+       !
+       if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+         residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
+         if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
+         Epsilon_ii(:,i_eps)=Epsilon_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
+       endif
+       !
+       if (l_BS_photolum.and.i_loop==1) then
+         residual=dot_product(BSS_dipoles_PL(:,i_res),BSS_dipoles_PL(:,i_res))
+         PL(:,i_eps)=PL(:,i_eps)-PL_prefactor*residual*aimag(SF(:,1))/pi*BSS_PL_f(i_res)
+         if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
+           PL(:,i_eps)=PL(:,i_eps)+PL_prefactor*residual*aimag(SF(:,2))/pi*BSS_PL_f(i_cpl)
+         endif
+       endif
+       !
+       if (k%sstar(ik_bz,2)==1) call live_timing(steps=1)
+       !
+     enddo
    enddo
    !
    call live_timing( )

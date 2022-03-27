@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,20 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag,GKKP)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,qindx_B
+ use units,               ONLY:HA2EV
+ use electrons,           ONLY:levels
+ use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
- use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found
+ use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
  !
  implicit none
  !
  character(*)  ::mode
- integer       ::iq,iq_s
- type(bz_samp) ::k
+ integer, intent(in) :: qindx_ID,qindx_ID_frag
+ integer, intent(in) :: iq,iq_s
+ type(bz_samp), intent(in) ::k,q
  type(GKKP_me) ::GKKP
  !
  ! Work Space 
@@ -42,6 +45,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  integer       ::ik_bz,ib,ob,ok,ik_bz_gkkp,os,ik,ok_bz,is,nsmall,small(nsym)
  logical       ::local_K_found(k%nbz),l_bands_reverted
  type(GKKP_me) ::GKKP_expanded
+ integer, external ::qindx_B_init,qindx_B_close 
+ integer       :: qindx_tmp(2),iq_bz
  !
  ! "K" mode
  !==========
@@ -67,6 +72,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
      enddo
    enddo
    !
+   if(any(local_K_found.eqv..FALSE.)) &
+&     call error(' Error expanding GKKP: please set force_symmorphic=.true. in NSCF and nk=1 in DVSCF calculation ')
+   !
  endif
  !
  if (.not.mode=="Q") return
@@ -75,20 +83,38 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
  !==========
  ! GKKP m.e. rotation. Procedure copied from ELPH_Sigma_c
  !
- call ELPH_alloc("dV",GKKP=GKKP_expanded,Nq_mem=1)
+ call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
+ !
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag) 
  !
  do ik_bz=1,k%nbz
    !
    ik=k%sstar(ik_bz,1)
    is=k%sstar(ik_bz,2)
    !
-   do ok_bz=1,k%nbz
-     if (qindx_B(ik_bz,ok_bz,1)==iq) then
-       ok=k%sstar(ok_bz,1)
-       os=k%sstar(ok_bz,2)
-       exit
-     endif
-   enddo
+   if(l_use_qindxB) then
+     !
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+     enddo
+     !
+   else
+     !
+     ! Use qindx_S     
+     !
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
    !
    l_bands_reverted=.FALSE.
    ! 
@@ -130,7 +156,57 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
    enddo
  enddo
  !
+ ! For the energies E(k+q)
+ ! 
+ do ik_bz=1,k%nbz
+   ! 
+   ik=k%sstar(ik_bz,1)
+   is=k%sstar(ik_bz,2)
+   !
+   if(l_use_qindxB) then
+     !       
+     ! Use qindx_B
+     !
+     do ok_bz=1,k%nbz
+       !
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
+       iq_bz=qindx_tmp(1)
+       !
+       if (iq_bz==iq) then
+         ok=k%sstar(ok_bz,1)
+         os=k%sstar(ok_bz,2)
+         exit
+       endif
+       !
+     enddo
+     !
+   else
+     !      
+     ! Use qindx_S
+     !
+     ok_bz=qindx_S(ik,iq,1)
+     ok=k%sstar(ok_bz,1)
+     os=k%sstar(ok_bz,2)
+     !
+   endif
+   !
+   if (iq_s>nsym/(i_time_rev+1)) then
+     ik_bz_gkkp=k%k_table(ok,sop_tab(sop_inv(iq_s-nsym/2),os))
+   else
+     ik_bz_gkkp=k%k_table(ik,sop_tab(sop_inv(iq_s),is))
+   endif
+   !
+   ! Notice that the ok_bz index referees to the k-points in the Yambo order
+   ! like in the q=0 case
+   !
+   GKKP_expanded%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(1)%E(:,ok_bz,1)
+   !
+ enddo
+ !
  GKKP%dVc=GKKP_expanded%dVc
+ GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
+ !
+ if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !
@@ -142,13 +218,24 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
      use vec_operate,    ONLY:rlu_v_is_zero,c2a,k2bz
      use D_lattice,      ONLY:nsym
      use R_lattice,      ONLY:rl_sop
+     use YPP_ELPH,       ONLY:l_gkkp_expand
      use zeros,          ONLY:k_rlu_zero
+     !
      real(SP) :: r_v(3)
-     integer  :: is
+     integer  :: is,iq_db
+     !
      small=0
      nsmall=0
+     !
+     iq_db=iq  ! when this function is called iq is in the IBZ
+     !
+     if(l_gkkp_expand) then
+       iq_db=iq
+       if(iq>1) iq_db=sum(q%nstar(:iq-1))+1
+     endif
+     !
      do is=1,nsym
-       r_v=matmul(rl_sop(:,:,is),PH_qpt(iq,:)) -PH_qpt(iq,:)
+       r_v=matmul(rl_sop(:,:,is),PH_qpt(iq_db,:)) -PH_qpt(iq_db,:)
        call k2bz(r_v)
        call c2a (v_in=r_v,mode='ki2a')
        if (rlu_v_is_zero(r_v,zero_=k_rlu_zero)) then
@@ -156,6 +243,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,GKKP)
          small(nsmall)=is
        endif
      enddo
+     !
    end subroutine
    !
 end subroutine

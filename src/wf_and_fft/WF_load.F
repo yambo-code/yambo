@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -37,13 +37,12 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
-&                        DUMP,IO_and_Messaging_switch
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,&
-&                        loaded_WF_xc_string
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
@@ -72,8 +71,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                   npwk
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
- logical          ::QUIET_wf
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_,QUIET_wf,SIZE_msg
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -181,11 +179,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
- !
  QUIET_wf = .false.
  if (kpts_to_load(1)==kpts_to_load(2).and.kpts_to_load(2)>1) QUIET_wf = .true.
  if (present(quiet))                                         QUIET_wf = quiet
  if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
+ SIZE_msg=.not.QUIET_wf.and.(any((/fft_dim_loaded/=fft_dim/)).or.any((/fft_dim==0/)))
  !
  ! First WF_free then fft_setup.
  !
@@ -250,7 +248,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #endif
  !
- !
  ! Init USPP if needed
  !
  call PP_uspp_init()
@@ -282,8 +279,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
  endif
  !
- if (WF%space=='R'.and.(.not.QUIET_wf)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
-
+ if (WF%space=='R'.and.SIZE_msg) call msg('ns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
  !
  ! actual IO
  !
@@ -539,11 +535,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
      enddo
    enddo
-   !
-   if (have_cuda) then
-     call msg('rns', '[WF] Updating WF data on GPU device after SC load')
-     WF%c_d = WF%c
-   endif
    !
    call load_SC_components('WF_clean')
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA MG DS
@@ -26,9 +26,9 @@ integer function io_Overlaps(Dip,ID)
  use pars,          ONLY:schlen
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use R_lattice,     ONLY:nXkbz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,&
-&                        io_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_DIP,io_fragment,frag_DIP
+ use IO_int,        ONLY:io_connect,io_disconnect,io_fragment,io_header,io_bulk
+ use IO_m,          ONLY:io_sec,frag_DIP,read_is_on,io_extension,&
+&                        IO_NOT_ALLOWED,io_DIP,frag_DIP
  use timing_m,      ONLY:timing
  !
  implicit none
@@ -37,7 +37,7 @@ integer function io_Overlaps(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,io_err,ID_frag
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,ID_frag
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
  !

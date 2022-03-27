@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -11,7 +11,7 @@
 ! either version 2, or (at your option) any later version.
 !
 ! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
+! be useful, but WITHOUT ANY WARRANTY; without even the ,BSS_desc
 ! implied warranty of MERCHANTABILITY or FITNESS FOR A 
 ! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
@@ -34,12 +34,11 @@ integer function io_BS(iq,X,ID)
  use parallel_m,    ONLY:myid
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use BS,            ONLY:BS_blk,BS_K_has_been_calculated_loaded,BS_K_coupling,&
-&                        l_BS_ares_asymm,BS_IO_dim,n_BS_blks,BS_K_dim
+&                        l_BS_ares_from_res,BS_IO_dim,n_BS_blks
  use BS_solvers,    ONLY:BSS_desc,variables_BS
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,&
-&                        def_variable_bulk,io_variable_bulk,frag_BS_K,&
-&                        write_is_on,io_header,io_mode,VERIFY, &
-&                        io_fragment,IO_NOT_ALLOWED,io_BS_K
+ use IO_m,          ONLY:io_sec,frag_BS_K,io_BS_K,write_is_on,io_mode,VERIFY,IO_NOT_ALLOWED
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,&
+&                        def_variable_bulk,io_variable_bulk,io_header,io_fragment
  use descriptors,   ONLY:IO_desc,IO_desc_reset,IO_desc_duplicate
  use timing_m,      ONLY:timing
  !
@@ -103,8 +102,8 @@ integer function io_BS(iq,X,ID)
  !
  if (i_block==0.and..not.frag_BS_K) then
    call def_variable_bulk(ID,"BSE_RESONANT",1,(/2,BS_IO_dim(1,1)/),SP)
-   if (BS_K_coupling)   call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(1,2)/),SP)
-   if (l_BS_ares_asymm) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(1,3)/),SP)
+   if (BS_K_coupling)           call def_variable_bulk(ID,"BSE_COUPLING",2,(/2,BS_IO_dim(1,2)/),SP)
+   if (.not.l_BS_ares_from_res) call def_variable_bulk(ID,"BSE_ANTI-RESONANT",3,(/2,BS_IO_dim(1,3)/),SP)
    goto 1
  endif
  !

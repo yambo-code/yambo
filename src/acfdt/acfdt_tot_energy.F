@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,7 +42,8 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  use X_m,            ONLY:X_t,X_alloc,X_mat
  use QP_m,           ONLY:QP_nb,QP_nk,QP_n_states,QP_table,QP_state,QP_Vnl_xc,QP_Vxc
  use collision_el,   ONLY:elemental_collision,elemental_collision_free
- use IO_m,           ONLY:io_control,RD_CL_IF_END,OP_RD,manage_action
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:RD_CL_IF_END,OP_RD,manage_action
  use xc_functionals, ONLY:E_xc,XC_EXCHANGE_CORRELATION,XC_LDA_C_KP,XC_EXCHANGE,&
 &                         XC_LDA_X,XC_CORRELATION,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional
@@ -259,7 +260,7 @@ subroutine acfdt_tot_energy(Xen,Xk,En,k,q,X,Dip)
  !
  ! Exchange Energy (EXX)
  !
- QP_nb=En%nbm
+ QP_nb=maxval(En%nbm)
  QP_nk=k%nibz
  YAMBO_FREE(QP_state)
  YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))

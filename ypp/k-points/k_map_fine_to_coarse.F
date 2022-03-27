@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -58,6 +58,7 @@ subroutine k_map_fine_to_coarse(zone,Xk,FG,FineGd_k,Xen)
  !
  N_fine_max=FG%N
  allocate(TMP_map(N_fine_max))
+ TMP_map=0
  !
  if (l_BZ_FG ) call k_map_fine_to_coarse_engine(zone,FineGd_k%ptbz,FineGd_k%nbz, Xk%ptbz,Xk%nbz,TMP_map)
  if (l_IBZ_FG.or.l_E_FG) call k_map_fine_to_coarse_engine(zone,FineGd_k%pt,FineGd_k%nibz,Xk%ptbz,Xk%nbz,TMP_map)

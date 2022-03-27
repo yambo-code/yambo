@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,8 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use DIPOLES,             ONLY:DIPOLE_t
  use electrons,           ONLY:levels,n_spinor
  use com,                 ONLY:msg
- use IO_m,                ONLY:io_control,VERIFY,REP,OP_RD_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:VERIFY,REP,OP_RD_CL
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
 &                              pp_factor,pp_n_l_max

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,15 +45,14 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
  real(SP)          :: k_cc(3),k_al(3)
  integer           :: ik,is_pol,ib,i1,nb_to_print
  character(schlen) :: dumb_ch1,dumb_ch2
- real(SP)          :: E_(n_bands_,n_sp_pol)
+ real(SP)          :: E_(n_bands_)
  !
  if(l_kpoints) then
    call msg('nr','IBZ '//trim(what)//'-points ',k%nibz)
-   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    if (trim(what)/="Q".and.Xk%nibz/=k%nibz) then
-     call msg('r','K-points grids:')
-     call msg('rn','X = response function; S = self-energy')
+     call msg('r', 'IBZ K-points for X ',nXkibz)
    endif
+   call msg('rn','BZ  '//trim(what)//'-points ',k%nbz)
    call msg('r','K/Q-points units:')
    call msg('rn','rlu = crystal or reduced units; cc = cartesian coordinates; iku = interal k-units')
  endif
@@ -84,18 +83,17 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      if (fat_log) call msg('r','      :',k_cc,'[cc]')
      if (trim(what)/="Q") then
        call msg('r','      : wf components',wf_nc_k(ik) )
-       if (ik<=nXkibz) call msg('r','      : BZ grid      ',"X S")
-       if (ik> nXkibz) call msg('r','      : BZ grid      ',"S")
      endif
    endif
    !
    if (l_what) then
      !
-     nb_to_print=n_full_bands+4*int(nel)
-     if (.not.fat_log) nb_to_print=2*n_full_bands
-     !
-     E_(:,:)=E(:,ik,:)*HA2EV
      do is_pol=1,n_sp_pol
+       !
+       nb_to_print=n_full_bands(is_pol)+4*int(nel)
+       if (.not.fat_log) nb_to_print=2*n_full_bands(is_pol)
+       !
+       E_=E(:,ik,is_pol)*HA2EV
        dumb_ch2=trim(what)
        if (n_sp_pol==2) then
          if (is_pol==1) dumb_ch2=trim(what)//' [up]'
@@ -106,7 +104,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
        if (trim(what)=="E") dumb_ch1=" [eV] "
        call msg('r',trim(dumb_ch2),(/dumb_ch1/))
        do i1=1,min(n_bands_,nb_to_print),8
-         call msg('r',' ',(/(E_(ib,is_pol),ib=i1,min(i1+7,n_bands_))/))
+         call msg('r',' ',(/(E_(ib),ib=i1,min(i1+7,n_bands_))/))
        enddo
      enddo
    endif

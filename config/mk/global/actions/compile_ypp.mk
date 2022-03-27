@@ -11,27 +11,13 @@ ifneq (,$(findstring ypp_sc,$(MAKECMDGOALS)))
  YPP_PRECMP=-D_YPP_SC
  Y_SRC_LIBS=$(YPPSC_MAIN_LIBS)
  Y_EXE_LIBS=$(YPPSC_MAIN_LIBS_LD)
-<<<<<<< HEAD
 else ifneq (,$(findstring ypp_rt,$(MAKECMDGOALS)))
-=======
-else ifneq (,$(findstring ypp_rt_gpl,$(MAKECMDGOALS)))
->>>>>>> develop/master
  Y_PRECMP=-D_RT -D_YPP_RT
  YPP_PRECMP=-D_YPP_RT
  Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
  Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
  YPP_SRC_LIBS=$(YPPRT_LIBS)
  YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
-<<<<<<< HEAD
-=======
-else ifneq (,$(findstring ypp_rt,$(MAKECMDGOALS)))
- Y_PRECMP=-D_RT -D_YPP_RT -D_ELPH 
- YPP_PRECMP=-D_YPP_RT -D_ELPH -D_YPP_ELPH
- Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
- Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
- YPP_SRC_LIBS=$(YPPRT_LIBS)
- YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
->>>>>>> develop/master
 else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
  Y_PRECMP=-D_ELPH
  YPP_PRECMP=-D_YPP_ELPH

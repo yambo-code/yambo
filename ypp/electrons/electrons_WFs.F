@@ -37,7 +37,8 @@ subroutine electrons_WFs(Xen)
  use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,manage_action,DUMP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,manage_action,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
 #endif

@@ -73,10 +73,12 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz
-       if (.not.any(PAR_IND_WF_linear%element_2D(:,ik))) cycle
+       if (.not.any(PAR_IND_WF_linear%element_2D(lowest_band:RT_bands(1)-1,ik))) cycle
        call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/lowest_band,RT_bands(1)-1/),(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
-       &                                 space='R',title='-RT',keep_states_to_load=.true.)
+&                   space='R',title='-RT',keep_states_to_load=.true.)
        do ib1=lowest_band,RT_bands(1)-1
+         !
+         if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
          !
          i_wf1=WF_tmp%index(ib1,ik,i_sp_pol)
          !

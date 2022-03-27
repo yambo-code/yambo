@@ -35,6 +35,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
  use hamiltonian,    ONLY:H_rotation,H_ref_bands
+ use cuda_m,         ONLY:have_cuda
  !
  implicit none
  !
@@ -64,6 +65,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  do ib = H_ref_bands(1),H_ref_bands(2)
    !
    i_wf = WFo%index(ib,ik,i_sp_pol)
+   if (i_wf==0) cycle
    !
    !$omp parallel do default(shared), private(i_c,i_spinor)
    do i_spinor=1,n_spinor
@@ -72,6 +74,8 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
      enddo
    enddo
    !$omp end parallel do
+   !
+   if (have_cuda) WF%c_d(:,:,i_wf) = WF%c(:,:,i_wf)
    !
  enddo
  !

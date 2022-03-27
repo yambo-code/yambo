@@ -24,8 +24,8 @@
 subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
  !
  use pars,        ONLY:SP,schlen
- use IO_m,        ONLY:io_variable_bulk,def_variable_bulk,&
-&                      read_is_on,write_is_on
+ use IO_int,      ONLY:io_variable_bulk,def_variable_bulk
+ use IO_m,        ONLY:read_is_on,write_is_on
  use electrons,   ONLY:n_spin
  use real_time,   ONLY:l_NE_with_fields,NE_i_time
  use netcdf,         ONLY:NF90_UNLIMITED
@@ -53,9 +53,9 @@ subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
    endif
    !
    if(n_spin>1.and.l_M) then
-     VAR_SZ(1:3)    = (/2,3,NF90_UNLIMITED/)
-     dim_names(1:3) = [character(schlen) :: 'complex', 'xyz','time']
-     call def_variable_bulk(ID,"Spin_Magnetization",6,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
+     VAR_SZ    = (/2,3,3,NF90_UNLIMITED/)
+     dim_names = [character(schlen) :: 'complex', 'xyz','tot_c_v','time']
+     call def_variable_bulk(ID,"Spin_Magnetization",6,VAR_SZ,SP,dim_names=dim_names,silent=.true.)
      !
      VAR_SZ    = (/2,3,2,NF90_UNLIMITED/)
      dim_names = [character(schlen) :: 'complex', 'xyz','orb_itin','time']
@@ -85,7 +85,7 @@ subroutine io_RT_components_OBS(ID,l_JP,l_M,what)
    endif
    !
    if(n_spin>1.and.l_M) then
-     call io_variable_bulk(ID,6,C2=Ms_cache(:,1:CACHE_SZ),IPOS=(/1,1,IPOS/))
+     call io_variable_bulk(ID,6,C3=Ms_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
      call io_variable_bulk(ID,7,C3=Ml_cache(:,:,1:CACHE_SZ),IPOS=(/1,1,1,IPOS/))
    endif
    !

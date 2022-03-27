@@ -36,7 +36,8 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use hamiltonian,   ONLY:H_ref_bands,Hzero
  use parallel_int,  ONLY:PP_redux_wait
  use interfaces,    ONLY:WF_load,WF_free
- use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,io_control,manage_action
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,manage_action
  use timing_m,      ONLY:timing
 #if defined _SC
  use parallel_m,    ONLY:PAR_IND_QP,HEAD_QP_cpu

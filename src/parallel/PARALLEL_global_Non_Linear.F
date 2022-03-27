@@ -27,7 +27,7 @@ subroutine PARALLEL_global_Non_Linear(E,Xk,q,ENVIRONMENT)
  use R_lattice,     ONLY:bz_samp
  use collision_ext, ONLY:HXC_collisions
  use nl_optics,     ONLY:NL_bands
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_assign_chains_and_COMMs,PARALLEL_live_message
  use parallel_m,    ONLY:ncpu,COMM_copy,PAR_build_index,PAR_INDEX_copy
  ! COMMUNICATORS

@@ -42,16 +42,16 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  type(bz_samp), intent(in)  :: Xk
  type(bz_map),  intent(in)  :: k_map
  complex(SP),   intent(out) :: NL_J(3)
- complex(SP),   intent(in)  :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
  integer       :: ik,i1,iv,isp,ikbz,Nperpend,id,id2,id3,is
  integer       :: id_red,istep,max_step
  complex(SP)   :: NL_J_red(3)
- complex(SP)   :: VH_bands(NL_bands(2),en%nbf,Xk%nibz,n_sp_pol)
- complex(SP)   :: V_tilde(en%nbf,NL_bands(2),2)
- complex(SP)   :: delta_V_tilde(en%nbf,NL_bands(2),2)
+ complex(SP)   :: VH_bands(NL_bands(2),maxval(en%nbf),Xk%nibz,n_sp_pol)
+ complex(SP)   :: V_tilde(maxval(en%nbf),NL_bands(2),2)
+ complex(SP)   :: delta_V_tilde(maxval(en%nbf),NL_bands(2),2)
  !
  ! Build the < v_n | H_k | 
  !
@@ -73,6 +73,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  NL_J     = cZERO
  NL_J_red = cZERO
  !
+ if (n_sp_pol==2) call error("NL_Berry_current not coded for n_sp_pol==2")
+ !
  isp  =1
  !
  do id_red=1,3
@@ -91,18 +93,18 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
 !       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
        !
        do istep=1,max_step
-         call Build_tilde_vbands(V_bands,en,Xk,ikbz,isp,istep,id_red,V_tilde)
+         call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
          delta_V_tilde(:,:,istep)=(V_tilde(:,:,1)-V_tilde(:,:,2))/dble(istep)
        enddo
        !
        ik = Xk%sstar(ikbz,1)
        !
        if(max_step==1) then
-         do iv=1,en%nbf
+         do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*delta_V_tilde(iv,:,1))
          enddo
        elseif(max_step==2) then
-         do iv=1,en%nbf
+         do iv=1,en%nbf(isp)
            NL_J_red(id_red)=NL_J_red(id_red)+sum(VH_bands(:,iv,ik,isp)*(4._SP*delta_V_tilde(iv,:,1)-delta_V_tilde(iv,:,2)))/3._SP
          enddo
        endif

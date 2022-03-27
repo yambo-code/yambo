@@ -52,13 +52,14 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
- use IO_m,            ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
+ use IO_int,          ONLY:io_control
+ use IO_m,            ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
  use X_m,             ONLY:X_alloc,X_mat,X_t
  !
  ! I/O
  !
 #include<memory.h>
- complex(SP),intent(inout)  :: U_csx(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(inout)  :: U_csx(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in)   :: E
  type(bz_samp), intent(in)  :: k,q
  type(X_t),intent(in)       :: X  
@@ -103,10 +104,10 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  isc%qs=1
  !call scatterGamp(isc,'c') !???
  Vcoh =(0._DP,0._DP)
- call PARALLEL_index(px,(/q%nbz,E%nbm/))
+ call PARALLEL_index(px,(/q%nbz,maxval(E%nbm)/))
  call PP_redux_wait
  ch="Sigma_csX|WF>@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*k%nibz)
+ call live_timing(trim(ch),px%n_of_elements(myid+1)*maxval(E%nbm)*k%nibz)
  do iq=1,q%nbz
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    iqibz=isc%qs(2)
@@ -141,11 +142,11 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    !
    ! SX applied to the WF
    !
-   do iv1 = 1 ,E%nbm
+   do iv1 = 1 ,E%nbm(1)
      if (.not.px%element_2D(iq,iv1)) cycle
      do ik = 1,k%nibz
        is = k%sstar(ik,2)
-       do iv2 = 1 ,E%nbm
+       do iv2 = 1 ,E%nbm(1)
          u =(0._DP,0._DP)
          u_rs =(0._DP,0._DP) 
          local_u =(0._DP,0._DP)
@@ -197,7 +198,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
 ! #else
 !  call fft_3d(Vcoh_rs,fft_dim,1)
 ! #endif       
-!  do iv1 = 1 ,E%nbm
+!  do iv1 = 1 ,E%nbm(1)
 !    do ik = 1,k%nibz
 !      ifft=wf_state(iv1,ik,1)
 !      U_csx(ik,iv1,:) = U_csx(ik,iv1,:)+Vcoh_rs(:)*wf(:,ifft)     

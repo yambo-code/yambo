@@ -31,10 +31,11 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  use X_m,           ONLY:X_t,X_poles
  use BS,            ONLY:BS_bands,BS_eh_en,BS_K_dim
  use BS_solvers,    ONLY:BSS_q0
- use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
+ use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,VERIFY,REP
 #include<memory.h>
  type(X_t)   :: X
  type(w_samp):: wv
@@ -89,8 +90,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! FXC_K_diagonal has been allocated in ioFxc_err
  !
- YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
- !
+ YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
  !
  ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
  ! Note that wv%n_freqs MUST respect the FXC_n_mem_freqs value.

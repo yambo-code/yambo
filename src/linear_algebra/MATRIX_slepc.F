@@ -37,14 +37,13 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  ! This routine can be called from within Matrix_driver.F but should be kept in
  ! a separate source file for clarity.
  !
- use pars,          ONLY : SP,schlen,cI
+ use pars,          ONLY : SP,cI
  use units,         ONLY : HA2EV
  use com,           ONLY : msg
  use stderr,        ONLY : intc
- use BS,            ONLY : l_BS_ares_asymm,BS_K_dim
  use BS_solvers,    ONLY : BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_maxit,&
  &                         BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_precondition,&
- &                         BSS_slepc_approach,BSS_slepc_double_grp
+ &                         BSS_slepc_approach
  !
  use petscsys
  use petscmat
@@ -366,11 +365,9 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  ! Monitor the convergence of the iterative diagonalization
  ! 
  use pars,          ONLY:SP
- use units,         ONLY:HA2EV
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use BS,            ONLY:BS_H_dim
- use BS_solvers,    ONLY:Slepc_v
  !
  use petscsys
  use petscmat

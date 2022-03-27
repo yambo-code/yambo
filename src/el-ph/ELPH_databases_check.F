@@ -23,7 +23,8 @@
 !
 subroutine ELPH_databases_check(n_bands)
  ! 
- use IO_m,           ONLY:io_control,REP,OP_RD_CL
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:REP,OP_RD_CL
  use ELPH,           ONLY:l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nb
  !
  implicit none

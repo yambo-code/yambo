@@ -27,7 +27,8 @@ subroutine p2y_atmproj(filename,k)
  use R_lattice,             ONLY:bz_samp
  use electrons,             ONLY:n_sp_pol
  use atom_proj,             ONLY:atomic_projections,atomic_table,n_atom_wfc,n_proj_bands
- use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
+ use IO_int,                ONLY:io_control
+ use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP
  !
  use atmproj_tools_module,  ONLY:atmproj_read_ext !,nwfcx
  use qe_pseudo_m,           ONLY:nsp

@@ -24,7 +24,8 @@
 subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre_defined)
  !
  ! LOGICALS
- use parallel_m,    ONLY:l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,l_par_NL
+ use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
+&                        l_par_DIP,l_par_BZINDX,l_par_NL
 #if defined _QED
  use parallel_m,    ONLY:l_par_SC
 #endif
@@ -67,8 +68,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  ! Response function kind
  !========================
  X_type=1
- if (present(X)) X_type=X%whoami
- !
+ if (present(X))                      X_type=X%whoami
  if (ENVIRONMENT=="Response_T_space") X_type=5
  !
  MORE=""
@@ -93,6 +93,10 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  !==========
  ! Logicals
  !==========
+ !
+ l_par_BZINDX       =ENVIRONMENT=="BZ_Indexes"
+ l_par_DIP          =ENVIRONMENT=="DIPOLES"
+ l_par_X_T          =ENVIRONMENT=="Response_T_space"
  l_par_X_G_finite_q =ENVIRONMENT=="Response_G_space_and_IO"
  l_par_X_G          =ENVIRONMENT=="Response_G_space"
  l_par_SE           =ENVIRONMENT=="Self_Energy"
@@ -128,8 +132,8 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
    endif
    if (Do_dip_limits) then
      if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
-       Dip%ib_lim(1)=E%nbm
-       Dip%ib_lim(2)=E%nbf+1
+       Dip%ib_lim(1)=maxval(E%nbm)
+       Dip%ib_lim(2)=minval(E%nbf)+1
        if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
      else
        Dip%ib_lim(1)=Dip%ib(2)
@@ -155,11 +159,13 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  !
  if (index(ENVIRONMENT, "Response_G_space")>0) call PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
  !
+ if (      ENVIRONMENT=="BZ_Indexes")          call PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
+ !
  if (      ENVIRONMENT=="DIPOLES")             call PARALLEL_global_DIPOLES(E,Xk,q,ENVIRONMENT)
  !
  if (      ENVIRONMENT=="Self_Energy")         call PARALLEL_global_Self_Energy(E,Xk,q)
  !
- if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T(Xk,X_type)
+ if (      ENVIRONMENT=="Response_T_space")    call PARALLEL_global_Response_T_base(Xk)
  !
 #if defined _RT
  if (      ENVIRONMENT=="Real_Time")           call PARALLEL_global_Real_Time(E,Xk,q,X_type)

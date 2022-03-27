@@ -35,7 +35,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
 &                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  use RT_control,     ONLY:RT_output,RT_apply,RT_carriers_to_RT_k,RT_carriers_to_RT_E
@@ -140,7 +140,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    call IO_and_Messaging_switch("-log")
    !
-   call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,k,Time=RT_time(i_T),keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    call RT_carriers_to_RT_E(En,RT_E,"E")
    !

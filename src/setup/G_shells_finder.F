@@ -37,7 +37,8 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:g_rot_d,minus_G_d
 #endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
@@ -199,6 +200,7 @@ subroutine G_shells_finder()
  !
  if (n_g_shells_no_holes/=n_g_shells) then
    call warning(' Found non closed shells. Max cutoff will be reduced.')
+   call warning(' Set Gthresh>1.E-5 in input to avoid this. Too big Gthresh will pack shells together')
    call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
  endif
  !

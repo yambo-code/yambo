@@ -28,7 +28,8 @@ subroutine QP_load_DB(i_ACTION,bands,en,k)
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels
  use QP_CTL_m,      ONLY:QP_action
- use IO_m,          ONLY:io_control,OP_RD_CL,DUMP,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,DUMP,REP
  !
 #include<memory.h>
  !

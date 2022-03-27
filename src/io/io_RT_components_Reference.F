@@ -26,7 +26,8 @@ subroutine io_RT_components_Reference(ID)
  use pars,           ONLY:SP
  use drivers,        ONLY:l_elph_scatt
  use R_lattice,      ONLY:nqbz
- use IO_m,           ONLY:def_variable_bulk,io_variable_bulk,read_is_on
+ use IO_m,           ONLY:read_is_on
+ use IO_int,         ONLY:def_variable_bulk,io_variable_bulk
  use RT_lifetimes,   ONLY:RT_lifetime,RT_EE_REF_life,RT_EP_emit_REF_life,RT_EP_abs_REF_life,&
 &                         RT_PE_REF_life,RT_EH_REF_life,q_weight_RT
  use real_time,      ONLY:G_lesser_reference,RT_nk,RT_nbands,RT_is_dynamically_dephased

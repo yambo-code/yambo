@@ -32,8 +32,8 @@ module electrons
  real(SP) :: spin_occ
  real(SP) :: filled_tresh
  integer  :: n_bands
- integer  :: n_met_bands
- integer  :: n_full_bands
+ integer  :: n_met_bands(2)
+ integer  :: n_full_bands(2)
  !
  ! Spin support
  !
@@ -66,15 +66,16 @@ module electrons
    real(SP), allocatable:: W(:,:,:)
    real(SP), allocatable:: f(:,:,:)
    real(SP), allocatable:: df(:,:,:)
+   real(SP)             :: E_Fermi
  end type E_fine_grid
  !
  type levels
    !
    integer         :: nb
    integer         :: nk
-   integer         :: nbf
-   integer         :: nbm
-   integer         :: nbc(2)       ! Number of bands with NEQ carriers for yambo_rt
+   integer         :: nbf(2)             ! 1-2 refers to spin polarizations
+   integer         :: nbm(2)
+   integer         :: nbc(2)             ! Number of bands with NEQ carriers for yambo_rt
    real(SP)        :: E_Fermi
    real(SP)        :: E_dir_gap(2)       ! 1-2 refers to spin polarizations
    real(SP)        :: E_ind_gap(2)

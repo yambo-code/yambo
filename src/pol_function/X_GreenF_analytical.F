@@ -31,6 +31,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  !  \Omega_{anti-res} = -\Omega_{res}
  !
+ use units
  use pars,       ONLY:SP,cZERO,cONE
  use X_m,        ONLY:use_X_DbGd,X_t,X_term_E,X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table
  use BS_solvers, ONLY:BSS_uses_DbGd
@@ -106,11 +107,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      !
      GreenF(iw)= Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
      !
-     if (X_terminator.and.ic>Xen%nbm) then
+     if (X_terminator.and.ic>Xen%nbm(i_spin)) then
        GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac  
      endif
      !
-     if (X_terminator.and.ic<=Xen%nbm) then
+     if (X_terminator.and.ic<=Xen%nbm(i_spin)) then
        GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac 
      endif
      !
@@ -135,7 +136,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  ! because this routine is always called using the i_res \Omega. Indeed 
  !
  intra_band = .FALSE.
- if( ic <= Xen%nbf ) intra_band = .TRUE.
+ if( ic <= Xen%nbf(i_spin) ) intra_band = .TRUE.
  !
  ! 1/6/2020 CA When Terminator is on, there are v->v' transition and therefore occupation factor
  ! cg_ffac goes to zeros and gives NaN. Fixed by introducing a flag for intra-band transitions
@@ -148,7 +149,7 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
  !
  do ikbz_ikpbz_FineGd_used=1,X_DbGd_nkpt_at_q(ikbz_mem)
    !
-   ikbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
+   ikbz_FineGd =X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,1)
    ikpbz_FineGd=X_DbGd_nkpt_at_q_table(ikbz_mem, ikbz_ikpbz_FineGd_used ,2)
    !
    if(ikbz_FineGd==Xk%FGbz%k_range(ikbz,1)) then
@@ -184,11 +185,11 @@ subroutine X_GreenF_analytical(iq,transitions,Xw,Xen,Xk,GreenF,ordering,space,no
      !
      GreenF(iw)=GreenF(iw)+Lorentzian_FT(Xw%p(iw),pole,ordering)*ffac
      !
-     if (X_terminator.and.ic>Xen%nbm) then 
+     if (X_terminator.and.ic>Xen%nbm(i_spin)) then 
        GreenF(iw)= GreenF(iw) -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
      endif
      !
-     if (X_terminator.and.ic<=Xen%nbm) then
+     if (X_terminator.and.ic<=Xen%nbm(i_spin)) then
        GreenF(iw)= -Lorentzian_FT(Xw%p(iw),pole_X_term,ordering)*ffac
      endif      
      !

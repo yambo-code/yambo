@@ -75,29 +75,26 @@ module OUTPUT_simple
  !
  contains
    !
-   subroutine OUTPUT_reset(file,action)
-     character(*) :: file,action
+   subroutine OUTPUT_reset(i_f,action)
+     character(*) :: action
      integer      :: ic,i_f
-     do i_f=1,N_MAX_files
-       if (file/="all".and.index(OUT_file(i_f)%filename_short,file)==0) cycle
-       if (action=="row".or.action=="reset") then
-         do ic=1,N_MAX_columns
-           OUT_file(i_f)%COL(ic)%POS=0
-           OUT_file(i_f)%COL(ic)%title=" "
-           OUT_file(i_f)%COL(ic)%KIND=" "
-           OUT_file(i_f)%COL(ic)%I_value=0
-           OUT_file(i_f)%COL(ic)%R_value=0.
-         enddo
-         OUT_file(i_f)%N_columns = 0
-         OUT_file(i_f)%N_columns_ordered = 0
-         OUT_file(i_f)%TITLES_ordered=.FALSE.
-       endif
-       if (action=="reset") then
-         OUT_file(i_f)%TITLES_dumped=.FALSE.
-         OUT_file(i_f)%filename = " "
-         OUT_file(i_f)%filename_short= " "
-       endif
-     enddo
+     if (action=="row".or.action=="reset") then
+       do ic=1,N_MAX_columns
+         OUT_file(i_f)%COL(ic)%POS=0
+         OUT_file(i_f)%COL(ic)%title=" "
+         OUT_file(i_f)%COL(ic)%KIND=" "
+         OUT_file(i_f)%COL(ic)%I_value=0
+         OUT_file(i_f)%COL(ic)%R_value=0.
+       enddo
+       OUT_file(i_f)%N_columns = 0
+       OUT_file(i_f)%N_columns_ordered = 0
+       OUT_file(i_f)%TITLES_ordered=.FALSE.
+     endif
+     if (action=="reset") then
+       OUT_file(i_f)%TITLES_dumped=.FALSE.
+       OUT_file(i_f)%filename = " "
+       OUT_file(i_f)%filename_short= " "
+     endif
    end subroutine
  !
 end module

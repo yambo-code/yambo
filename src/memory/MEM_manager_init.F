@@ -49,6 +49,13 @@ subroutine MEM_manager_init(what,adding,Sz,i_SHELF,i_COMPONENT,i_SAVE,SHELF,TRUN
  MEM_SAVE_treshold=10 *MEM_treshold
  MEM_jump_treshold=100*MEM_treshold
  !
+ i_SHELF      =0
+ i_COMPONENT  =0
+ i_SAVE       =0
+ SHELF        =""
+ TRUNK        =""
+ just_started=.FALSE.
+ !
 #if defined _MEM_CHECK
  !
  just_started=infile_editing

@@ -51,22 +51,27 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  !
  i_f=0
  do i_t=1,N_MAX_files
-   if (STRING_same(trim(OUT_file(i_t)%filename_short),file)) i_f=i_t
+   if (index(trim(OUT_file(i_t)%filename_short),trim(file))>0) i_f=i_t
  enddo
  if (i_f==0) then
    do i_t=1,N_MAX_files
-     if (OUT_file(i_t)%N_columns==0) then
+     if (len_trim(OUT_file(i_t)%filename)==0) then
        i_f=i_t
        OUT_file(i_f)%filename      =file
        OUT_file(i_f)%filename_short=file
+       exit
      endif
    enddo
  endif
  !
  if (present(action)) then
-   if (action=="close") call of_open_close(OUT_file(i_f)%filename)
-   if (action=="open" ) call of_open_close(OUT_file(i_f)%filename,'ot')
-   if (action=="reset".or.action=="close") call OUTPUT_reset(file,"reset")
+   if (action=="close")  call of_open_close(OUT_file(i_f)%filename)
+   if (action=="open" )  call of_open_close(OUT_file(i_f)%filename,'ot')
+   if (action=="append") then
+     call of_open_close(OUT_file(i_f)%filename,'oa')
+     OUT_file(i_f)%TITLES_dumped=.TRUE.
+   endif
+   if (action=="reset".or.action=="close") call OUTPUT_reset(i_f,"reset")
  endif
  !
  if (present(TITLES)) then
@@ -156,6 +161,6 @@ subroutine OUTPUT_add_column(file,action,TITLES,I_VALUES,R_VALUES,ORDER,UNIT,KIN
  enddo
  call msg('o '//OUT_file(i_f)%filename_short,' ',MSG_string(:OUT_file(i_f)%N_columns_ordered),INDENT=-2,USE_TABS=.TRUE.)
  !
- call OUTPUT_reset(file,"row")
+ call OUTPUT_reset(i_f,"row")
  !
 end subroutine

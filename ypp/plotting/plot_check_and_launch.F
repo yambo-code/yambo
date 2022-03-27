@@ -24,10 +24,12 @@
 subroutine plot_check_and_launch(check_only)
  !
  use pars,        ONLY:SP
+ use parser_m,    ONLY:parser
  use YPPm,        ONLY:p_format,p_dir,plot_dim,use_gnuplot,use_xcrysden,use_cube,&
-&                      plot_is_1D,plot_is_2D,plot_is_3D
+&                      plot_is_1D,plot_is_2D,plot_is_3D,l_norm_to_one
  use D_lattice,   ONLY:a
  use vec_operate, ONLY:v_is_zero
+ !
  implicit none
  !
  logical :: check_only
@@ -49,6 +51,8 @@ subroutine plot_check_and_launch(check_only)
  !
  switch_to_xcrysden =.false.
  switch_to_gnuplot  =.false.
+ !
+ call parser("NormToOne",l_norm_to_one)
  !
  if (.not.use_gnuplot.and..not.use_xcrysden.and..not.use_cube) then
    p_format='g'

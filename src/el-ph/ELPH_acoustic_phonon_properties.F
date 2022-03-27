@@ -29,12 +29,12 @@ subroutine ELPH_acoustic_phonon_properties(q)
  !
  ! w_ph(i) -> \alpha(i)*|q| for |q| -> 0
  ! 
- use units,          ONLY:HA2EV
+ use units,          ONLY:HA2EV,HA2THZ
  use pars,           ONLY:schlen,rZERO,SP
  use vec_operate,    ONLY:v_norm
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:PH_freqs_sq,ph_modes,PH_acoustic_branch,PH_acoustic_speed,PH_Q_modulus,&
-&                         elph_nQ,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+&                         elph_nQ,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists,PH_W_debye
  use stderr,         ONLY:intc
  use com,            ONLY:msg
  !
@@ -75,7 +75,8 @@ subroutine ELPH_acoustic_phonon_properties(q)
    enddo
  enddo 
  !
- call msg("r","Phonon acoustic branches",trim(aco_string))
+ call msg("nr","[Ph]Phonon acoustic branches",trim(aco_string))
+ call msg('rn','[Ph] Debye energy',(/PH_W_debye*HA2EV,PH_W_debye*HA2THZ/),"[ev/ThZ]")
  !
  call k_ibz2bz(q,'i',.TRUE.)  
  !

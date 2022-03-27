@@ -116,7 +116,7 @@ subroutine QED_Sigma_c(E,k,q,qp)
  ! BASIC WF allocation (FILLED bands)
  !====================================
  !
- call LOCAL_WF_and_COLLISIONS_allocation( QP_QED_ng , n_met_bands )
+ call LOCAL_WF_and_COLLISIONS_allocation( QP_QED_ng , maxval(n_met_bands) )
  !
  ! Loop
  !======
@@ -136,12 +136,12 @@ subroutine QED_Sigma_c(E,k,q,qp)
  !=======================================
  !
  i_m_wf_load=-1
- if (PAR_IND_G_b%element_1D(n_met_bands+1)) i_m_wf_load=n_met_bands+1
- do i_m=n_met_bands+1,QP_n_G_bands(2)
+ if (PAR_IND_G_b%element_1D(maxval(n_met_bands)+1)) i_m_wf_load=maxval(n_met_bands)+1
+ do i_m=maxval(n_met_bands)+1,QP_n_G_bands(2)
    if (PAR_IND_G_b%element_1D(i_m).and.i_m_wf_load<0) i_m_wf_load=i_m
  enddo
- PAR_bands(1)=count(PAR_IND_G_b%element_1D(:n_met_bands  ))
- PAR_bands(2)=count(PAR_IND_G_b%element_1D(n_met_bands+1:))
+ PAR_bands(1)=count(PAR_IND_G_b%element_1D(:maxval(n_met_bands)  ))
+ PAR_bands(2)=count(PAR_IND_G_b%element_1D(maxval(n_met_bands)+1:))
  !
  n_lt_steps=PAR_nQP*PAR_bands(1)*PAR_nQ_ibz
  !

@@ -24,10 +24,10 @@
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:SP,schlen,LP
- use IO_m,           ONLY:io_connect,io_sec,ver_is_gt_or_eq,io_disconnect,&
-&                         io_variable_elemental,io_status,io_bulk,io_header,&
-&                         read_is_on,write_is_on,def_variable_elemental,&
-&                         io_mode,DUMP,io_fragment,frag_ELPH,IO_INCOMPATIBLE_VAR
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,&
+&                         io_mode,DUMP,frag_ELPH,IO_INCOMPATIBLE_VAR
+ use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
+&                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,&
 &                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
@@ -219,6 +219,11 @@ integer function io_ELPH(ID,what)
  ! 
  call io_bulk(ID_frag,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
  call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E)
+ !
+ if(read_is_on(ID)) then
+   GKKP%E_kpq(iq)%nb=elph_nb
+   GKKP%E_kpq(iq)%nk=nkbz
+ endif
  ! 
  if (l_no_matrix_elements) goto 1
  ! 

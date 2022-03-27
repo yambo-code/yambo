@@ -29,7 +29,8 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  use com,                 ONLY:msg
  use YPPm,                ONLY:n_FineGd_DBs
  use electrons,           ONLY:levels,FineGd_E_components_reset
- use IO_m,                ONLY:io_control,REP,OP_WR_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:REP,OP_WR_CL
  !
 #include<memory.h>
  !
@@ -58,7 +59,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  ! Initial checks
  !================
  call section('+','Double Grid initialization')
- call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded)
+ call k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,.FALSE.)
  !
  l_mix     =STRING_same(BZ_FineGd_mode,"mixed")
  l_expand  =STRING_same(BZ_FineGd_mode,"expanded")
@@ -86,7 +87,7 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
      call section('=','Double Grid K-points expansion ...')
      call k_ibz2bz(FineGd_k,'i',.true.)
      call k_map_fine_to_coarse_reduce(FineGd_k)
-     call msg('lr','found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
+     call msg('nsr',':: Found '//trim(intc(FineGd_k%nbz))//' ('//trim(intc(FineGd_k%nibz))//') points in the BZ (IBZ)')
      !
    endif
    !
@@ -144,11 +145,10 @@ subroutine k_map_fine_to_coarse_driver(Xk,Xen)
  nkibz=Xk%nibz
  !
  call io_control(ACTION=OP_WR_CL,SEC=(/1/),COM=REP,ID=ID)
- i_err=io_Double_Grid(Xen,Xk,ID)
+ i_err=io_Double_Grid(Xen,Xk,ID,'electrons')
  !
  ! CLEAN
  !========
- !
  call bz_samp_reset(FineGd_k)
  call k_ibz2bz(Xk,'d',.true.)
  call FineGd_E_components_reset(Xen,.TRUE.)

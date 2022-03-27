@@ -23,7 +23,6 @@
 !
 subroutine LEVELS_respect_degenerations(bands,E,IMPOSE)
  !
- use pars,           ONLY:SP
  use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_bands
  use R_lattice,      ONLY:nkibz
@@ -38,7 +37,7 @@ subroutine LEVELS_respect_degenerations(bands,E,IMPOSE)
  !
  ! Work Space
  !
- integer :: ik,i_n,first_el(n_bands),n_of_el(n_bands),n_deg_grp,i_g,bands_respecting(2),i_c
+ integer :: ik,first_el(n_bands),n_of_el(n_bands),n_deg_grp,i_g,bands_respecting(2),i_c
  !
  bands_respecting=bands
  !

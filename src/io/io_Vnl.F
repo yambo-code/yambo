@@ -29,9 +29,8 @@ integer function io_Vnl(Dip,Xen,ID)
  use pseudo,        ONLY:Vnl
  use R_lattice,     ONLY:nXkibz
  use matrix_operate,ONLY:mat_c2r,mat_r2c
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        read_is_on,write_is_on,io_header,io_extension,&
-&                        io_fragment,frag_WF
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,io_fragment
+ use IO_m,          ONLY:io_sec,io_status,read_is_on,write_is_on,io_extension,frag_WF
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  !
 #include<memory.h>
@@ -43,7 +42,7 @@ integer function io_Vnl(Dip,Xen,ID)
  ! Work Space
  !
  integer :: i1,ixyz,sec_size,i_spin,ID_frag
- integer :: db_nbm,db_nbf,db_nb(2)
+ integer :: db_nbm(2),db_nbf(2),db_nb(2)
  character(schlen)    :: VAR_name
  real(SP),allocatable :: Vnl_disk(:,:,:) ! complex, ic, iv
  !
@@ -61,10 +60,17 @@ integer function io_Vnl(Dip,Xen,ID)
    call io_elemental(ID,VAR="PARS",VAR_SZ=sec_size,MENU=0)
    call io_elemental(ID,DB_I1=db_nb,&
 &       VAR=" Dip band range          ",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/))
-   call io_elemental(ID,DB_I0=db_nbm,&
-&       VAR=" Metallic bands          ",I0=Xen%nbm,CHECK=.true.,OP=(/"<="/))
-   call io_elemental(ID,DB_I0=db_nbf,&
-&       VAR=" Filled bands            ",I0=Xen%nbf,CHECK=.true.,OP=(/">="/))
+   if (n_sp_pol==1) then
+     call io_elemental(ID,DB_I0=db_nbm(1),&
+&         VAR=" Metallic bands          ",I0=Xen%nbm(1),CHECK=.true.,OP=(/"<="/))
+     call io_elemental(ID,DB_I0=db_nbf(1),&
+&         VAR=" Filled bands            ",I0=Xen%nbf(1),CHECK=.true.,OP=(/">="/))
+   else
+     call io_elemental(ID,DB_I1=db_nbm,&
+&         VAR=" Metallic bands          ",I1=Xen%nbm,CHECK=.true.,OP=(/"<=","<="/))
+     call io_elemental(ID,DB_I1=db_nbf,&
+&         VAR=" Filled bands            ",I1=Xen%nbf,CHECK=.true.,OP=(/">=",">="/))
+   endif
    call io_elemental(ID,&
 &       VAR=" RL vectors in the sum   ",I0=Dip%ng,WARN=.true.,OP=(/"<="/))
    !
@@ -84,18 +90,18 @@ integer function io_Vnl(Dip,Xen,ID)
    endif
  endif
  !
- ! On disk the size is Vnl(3,db_nb(2),db_nbm,nXkibz)
+ ! On disk the size is Vnl(3,db_nb(2),maxval(db_nbm),nXkibz)
  !
- sec_size=3*db_nb(2)*db_nbm
+ sec_size=3*db_nb(2)*maxval(db_nbm)
  if (any((/io_sec(ID,:)==2/))) then
    !
-   YAMBO_ALLOC(Vnl_disk,(db_nb(2),db_nbm,2))!Allocate to exactly the sizeo on disk)
+   YAMBO_ALLOC(Vnl_disk,(db_nb(2),maxval(db_nbm),2))!Allocate to exactly the sizeo on disk)
    !
    if(read_is_on(ID)) then
       !
       ! Fill an array Vnl to size required by yambo, ignore extra elements
       !
-      YAMBO_ALLOC(Vnl,(3,Dip%ib(2),db_nbm,nXkibz,n_sp_pol))
+      YAMBO_ALLOC(Vnl,(3,Dip%ib(2),maxval(db_nbm),nXkibz,n_sp_pol))
    endif
    !
    do i1=1,nXkibz

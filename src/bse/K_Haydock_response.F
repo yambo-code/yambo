@@ -22,7 +22,7 @@
 !
 subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
  !
- use pars,           ONLY:SP,schlen,cI,cZERO,cONE,pi
+ use pars,           ONLY:SP,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
 &                         X_magnons,Epsilon_ij
  use R_lattice,      ONLY:bare_qpg
@@ -30,7 +30,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
  use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
  use BS_solvers,     ONLY:BSS_eels_to_eps,Co_factor,diam_term_exact,Haydock_v0_mod,&
  &                        Haydock_terminator,Haydock_threshold,B_Hall
- use descriptors,    ONLY:IO_desc_add
  use parser_m,       ONLY:parser
  !
  implicit none

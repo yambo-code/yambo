@@ -35,7 +35,8 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use zeros,               ONLY:k_iku_zero
  use wave_func,           ONLY:WAVEs
  use interfaces,          ONLY:WF_load,WF_free
- use IO_m,                ONLY:io_control,LOG,OP_WR_CL
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:LOG,OP_WR_CL
  use electrons,           ONLY:levels,n_sp_pol,n_spinor,n_spin
  use LIVE_t,              ONLY:live_timing
  use interfaces,          ONLY:io_DB1_selective_scan

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_redux(iq,X_par,Xw,X)
+subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
  !
@@ -49,7 +49,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+ use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use cuda_m
  use deviceXlib_m
@@ -61,6 +61,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(X_t)        :: X
  type(w_samp)     :: Xw
  integer          :: iq
+ character(*)     :: what
  !
  ! Work Space
  !
@@ -75,7 +76,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Setup 
  !
- call timing('X (procedure)',OPR='start')
+ call timing(what//' (procedure)',OPR='start')
  !
  ! Barrier... 
  !
@@ -92,7 +93,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (PAR_COM_SLK%n_CPU>=4.and.have_cuda) compute_on_gpu=.false.
  !
- if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
+ if (have_cuda) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution
  !         ========================
@@ -101,7 +102,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
  call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_SLK_INDEX_local%COMM)
  !
- if (PAR_n_freqs>0) call live_timing('X@q['//trim(intc(iq))//'] ',PAR_n_freqs)
+ if (PAR_n_freqs>0) call live_timing(what//'@q['//trim(intc(iq))//'] ',PAR_n_freqs)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
@@ -128,7 +129,7 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
    K_FXC%blc=cZERO
-   call MATRIX_transfer(M=-FXC(:,:,1),M_out=K_FXC)
+   call MATRIX_transfer(M=-F_xc_gspace(:,:,1),M_out=K_FXC)
  endif
  !
  do iw_par=1,maxval(PAR_n_freqs_global)
@@ -212,18 +213,18 @@ subroutine X_redux(iq,X_par,Xw,X)
        call error("[LA] SLK library required but not available")
 #endif
      else
-       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
-&                  FXC(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)
+       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,-cONE,Xo%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng,&
+&                  F_xc_gspace(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng)
      endif
      !
    endif
-   !
-   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    if (compute_on_gpu) then
      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
      call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
+   !
+   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
    !
@@ -295,8 +296,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_reset(Xo)
  if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
- call timing('X (procedure)',OPR='stop')
- call timing('X (REDUX)',OPR='start')
+ call timing(what//' (procedure)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='start')
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -345,7 +346,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  !
- call timing('X (REDUX)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='stop')
  !
  ! Clean-up of FREQ structure
  !==========

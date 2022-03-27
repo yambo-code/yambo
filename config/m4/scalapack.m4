@@ -25,8 +25,8 @@
 AC_DEFUN([AC_SLK_SETUP],[
 
 AC_ARG_ENABLE(par_linalg,   AC_HELP_STRING([--enable-par-linalg],         [Use parallel linear algebra. Default is no]))
-AC_ARG_WITH(blacs_libs,    [AC_HELP_STRING([--with-blacs-libs=<libs>],    [Use BLACS libraries <libs>],    [32])])
-AC_ARG_WITH(scalapack_libs,[AC_HELP_STRING([--with-scalapack-libs=<libs>],[Use SCALAPACK libraries <libs>],[32])])
+AC_ARG_WITH(blacs_libs,    [AC_HELP_STRING([--with-blacs-libs=(libs|mkl)],    [Use BLACS libraries <libs> or setup MKL],    [32])])
+AC_ARG_WITH(scalapack_libs,[AC_HELP_STRING([--with-scalapack-libs=(libs|mkl)],[Use SCALAPACK libraries <libs> or setup MKL],[32])])
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""
@@ -46,17 +46,62 @@ blacs_routine="blacs_set"
 scalapack_routine="pcheev"
 mpi_routine=MPI_Init
 #
+# Search for MKL-Scalapack
+#
+try_mkl_scalapack="no"
+#
+if test -d "${MKLROOT}" ; then
+   #
+   # Check for MPI libraries
+   #
+   mkl_libdir="${MKLROOT}/lib"
+   #
+   case "${MPIKIND}" in
+   *Sgi* | *sgi* | *SGI* )
+      lib_mkl_blacs="mkl_blacs_sgimpt_lp64" ;;
+   *OpenMPI* | *Open* )
+      lib_mkl_blacs="mkl_blacs_openmpi_lp64" ;;
+   *)
+      lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
+   esac
+   #
+   # Check for compiler
+   #
+   case "${FCKIND}" in
+   *intel* | *pgi* | *nvfortran* )
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
+      ;; 
+   *gfortran* )
+      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
+      ;;
+   esac
+fi
+#
 # Parse configure options
 #
 case $with_blacs_libs in
   yes) enable_blacs="internal" ;;
-  no) enable_blacs="no" ; enable_par_linalg="no" ;;
+  no)  enable_blacs="no" ; enable_par_linalg="no" ;;
+  mkl) 
+    if test "$try_mkl_scalapack" = "no" ; then
+       enable_blacs="no" ; enable_par_linalg="no" 
+    else
+       enable_blacs="check"; BLACS_LIBS="$try_mkl_scalapack" 
+    fi
+    ;;
   *) enable_blacs="check"; BLACS_LIBS="$with_blacs_libs" ;;
 esac
 #
 case $with_scalapack_libs in
   yes) enable_scalapack="internal" ;;
   no) enable_scalapack="no" ; enable_par_linalg="no" ;;
+  mkl) 
+    if test "$try_mkl_scalapack" = "no" ; then
+       enable_scalapack="no" ; enable_par_linalg="no" 
+    else
+       enable_scalapack="check"; SCALAPACK_LIBS="$try_mkl_scalapack" 
+    fi
+    ;; 
   *) enable_scalapack="check"; SCALAPACK_LIBS="$with_scalapack_libs" ;;
 esac
 #

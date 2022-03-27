@@ -95,7 +95,7 @@ module parser_m
      use stderr, ONLY : cstr
      implicit none
      character(*), intent(in) :: name
-     integer, intent(out)     :: res
+     integer, intent(inout)   :: res
      integer :: def           !ws
      def=res
      call iparse_int(cstr(trim(name)),def,res)

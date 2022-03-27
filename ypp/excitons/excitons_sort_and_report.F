@@ -23,7 +23,7 @@
 !
 subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
  !
- use pars,          ONLY:SP,schlen,pi
+ use pars,          ONLY:SP,schlen,pi,zero_dfl
  use units,         ONLY:HA2EV
  use electrons,     ONLY:spin_occ,spin,n_sp_pol,n_spinor
  use stderr,        ONLY:intc
@@ -132,12 +132,12 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
    if (trim(R_normalize)=='yes') then
      Rmax = maxval(Residuals)
      Residuals=Residuals/Rmax
-     write(dump_ch,'(a,1e10.5)') " Maximum Residual Value = ",Rmax
+     write(dump_ch,'(a,1e12.5)') " Maximum Residual Value = ",Rmax
    endif
    !
    if (trim(R_normalize)=='yes_deg') then
       v2sort=Residuals
-      call sort(arrin=v2sort,indx=S_indx)
+      call sort(arrin=v2sort,indx=S_indx,r_zero=zero_dfl)
       Rmax=0._SP
       do j1=BSS_n_eig,1,-1
         j2=S_indx(j1)
@@ -146,7 +146,7 @@ subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)
         Rmax=Rmax+v2sort(j1)**2
       enddo
       Rmax=sqrt(Rmax/real(BSS_n_eig-j1,SP))
-      write(dump_ch,'(a,1e10.5)') " Maximum Residual Value (summed over degenerate states) = ",Rmax
+      write(dump_ch,'(a,1e12.5)') " Maximum Residual Value (summed over degenerate states) = ",Rmax
       Residuals=Residuals/Rmax
    endif
    !

@@ -35,7 +35,8 @@ subroutine p2y_pseudo(k)
  use pseudo,                ONLY:PP_alloc_PWscf,PP_free,pp_n_l_comp,     &
 &                                pp_n_l_times_proj_max,pp_n_l_max,pp_table,&
 &                                PP_nlcc_alloc,PP_nlcc_free
- use IO_m,                  ONLY:io_control,OP_WR_CL,OP_APP_CL,REP
+ use IO_int,                ONLY:io_control
+ use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP
  use read_pseudo_mod,       ONLY:readpp
  !
  implicit none

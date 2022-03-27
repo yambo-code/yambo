@@ -27,9 +27,9 @@ integer function io_DIPOLES(Dip,ID)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,frag_DIP,io_DIP,&
-&                        io_bulk,read_is_on,io_header,io_extension,&
-&                        IO_NOT_ALLOWED,io_fragment,frag_DIP
+ use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,&
+&                        IO_NOT_ALLOWED,frag_DIP
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,io_fragment
  use DIPOLES,       ONLY:DIP_spin,DIP_orbital,&
 &                        compute_Orb_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
@@ -39,7 +39,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
 #endif
- use BS,            ONLY:l_BS_magnons,l_BS_dichroism
+ use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -180,7 +180,7 @@ integer function io_DIPOLES(Dip,ID)
    !
    write (VAR_name,'(3(a,i4.4))') 'DIP_spin_k_',ik,'_spin_',i_sp_pol
    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
-   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+   call io_bulk(ID_frag,C3=DIP_spin(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
  !

@@ -29,8 +29,9 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  use electrons,        ONLY:n_spinor
  use pseudo,           ONLY:pp_kbv_dim_yambo
  use FFT_m,            ONLY:fft_size
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec,io_fragment, &
-&                           io_elemental,io_bulk,io_header,frag_WF
+ use IO_m,             ONLY:io_sec,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect,io_fragment, &
+&                           io_elemental,io_bulk,io_header
  !
 #include<memory.h>
  !

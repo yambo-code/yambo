@@ -37,14 +37,20 @@ module interpolate
  real(SP) :: INTERP_shell_factor
  real(SP) :: metric(3,3)
  !
+ ! Roughness function parameters
+ !
+ real(DP), parameter :: R_C1=0.75_DP
+ real(DP), parameter :: R_C2=0.75_DP
+ !  
  character(schlen) :: INTERP_mode = "NN" ! NN/BOLTZ
  character(schlen) :: INTERPOLATION_name = " "
  logical           :: INTERPOLATE_initialized=.FALSE.
  logical           :: INTERPOLATE_is_quiet=.FALSE.
  logical           :: INTERPOLATE_is_serial=.FALSE.
+ logical           :: INTERPOLATE_use_symm=.TRUE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
- integer, parameter :: max_interpls=10
+ integer, parameter :: max_interpls=20
  !
  ! NN method
  !

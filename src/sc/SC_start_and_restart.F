@@ -45,7 +45,8 @@ subroutine SC_start_and_restart(X,E,Xk,Dip)
 &                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,SC_desc,  &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset

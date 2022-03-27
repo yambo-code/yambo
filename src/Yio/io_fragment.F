@@ -26,11 +26,12 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! This routine opens the fragment.
  !
  use pars,        ONLY:schlen
- use IO_m,        ONLY:close_is_on,io_connect,io_file,io_mode,io_com,&
+ use IO_int,      ONLY:io_connect,io_control
+ use IO_m,        ONLY:io_file,io_mode,io_com,&
 &                      io_sec,io_extension,read_is_on,write_is_on,&
 &                      OP_RD_CL,OP_APP_CL,io_type,io_folder,io_raw_extension
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,io_control
+                       frag_SC,frag_RT,frag_ELPH,frag_BS_K,frag_DG
  use stderr,      ONLY:intc,write_fragments_IO_log,logfile
  use parallel_int,ONLY:PP_bcast,PP_redux_wait
  use parallel_m,  ONLY:ncpu
@@ -49,15 +50,10 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  ! Work Space
  !
  integer           :: ierr_,i_frag,ACT_NOW
- logical           :: disconnect,par_IO
+ logical           :: par_IO
  character(schlen) :: fragment_filename
  !
  if (present(ierr)) ierr=0
- !
- disconnect=.true.
-#if defined _PAR_IO
- if (present(cpu_id)) disconnect=(cpu_id==0).or.read_is_on(ID)
-#endif
  !
  par_IO=.false.
 #if defined _PAR_IO
@@ -90,6 +86,8 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
      if (.not.frag_SC) return
    case("elph_gkkp","elph_gkkp_expanded","elph_gFsq")
      if (.not.frag_ELPH) return
+   case("PH_Double_Grid")
+     if (.not.frag_DG) return
  end select
  !
  if (index(trim(io_raw_extension(ID)),"BS_Q")>0 .and. .not.frag_BS_K) return
@@ -143,9 +141,9 @@ subroutine io_fragment_disconnect(ID,ID_frag)
  !
  ! This routine closes the fragment. 
  !
- use IO_m,        ONLY:io_disconnect,io_raw_extension
+ use IO_int,      ONLY:io_disconnect
  use IO_m,        ONLY:frag_WF,frag_DIP,frag_RESPONSE,frag_QINDX,frag_HF,&
-                       frag_SC,frag_RT,frag_ELPH
+                       frag_SC,frag_RT,frag_ELPH,io_raw_extension,frag_DG
  !
  implicit none
  !
@@ -170,6 +168,8 @@ subroutine io_fragment_disconnect(ID,ID_frag)
      if (.not.frag_SC) return
    case("elph_gkkp","elph_gkkp_expanded","elph_gFsq")
      if (.not.frag_ELPH) return
+   case("PH_Double_Grid")
+     if (.not.frag_DG) return
  end select
  !
  call io_disconnect(ID_frag)

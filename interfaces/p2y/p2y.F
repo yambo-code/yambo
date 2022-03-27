@@ -35,8 +35,9 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
  use mod_wf2y,            ONLY:WF_splitter
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP,&
-&                              IO_and_Messaging_switch,IO_write,IO_read
+ use IO_int,              ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,serial_number,OP_RD_CL,DUMP,&
+&                              IO_write,IO_read
  use mod_com2y,           ONLY:interface_presets,force_noWFs,verboseIO
  use stderr,              ONLY:intc
  use qexml_module

@@ -23,18 +23,10 @@
 #
 chmod u+x sbin/*
 #
-if ! test -d bin      ; then mkdir bin      ; fi
-if ! test -d include  ; then mkdir include  ; fi
-if ! test -d include/headers ; then mkdir include/headers ; fi
-if ! test -d lib      ; then mkdir lib      ; fi
-if ! test -d lib/bin  ; then mkdir lib/bin  ; fi
-#
 if   test -d include/system ; then rm -r include/system ; fi
 if ! test -d include/system ; then mkdir include/system ; fi
 #
-#
 # Copy system headers
-#
 #
 YAML_INCDIRS=`echo $YAML_INCS       | sed "s/$IFLAG/ /g"` ;                       #  
 for includedir in $YAML_INCDIRS;   do                                             #  This part
@@ -133,7 +125,7 @@ if ! test -d "$extlibs_path/${FCKIND}/${FC}/bin";     then mkdir    "$extlibs_pa
 #
 if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
  BIN_LIBRARIES=$extlibs_path/${FCKIND}/${FC}/bin/* ;
- BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${HDF5_VER}/bin/* ;
+ BIN_NETCDF=$extlibs_path/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}/bin/* ;
  BIN_SLEPC=$extlibs_path/${FCKIND}/${FC}/${build_precision}/bin/* ;
  for file in $BIN_LIBRARIES $BIN_NETCDF $BIN_SLEPC; do
   if test -f $file; then 
@@ -143,21 +135,9 @@ if  test -d "$extlibs_path/${FCKIND}/${FC}" ; then
 fi
 #
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- cp     $srcdir/Makefile $compdir/
- cp -r  $srcdir/config   $compdir/ 
  if test ! -d "$compdir/driver"     ; then mkdir "$compdir/driver"     ; fi
-
+ cp -r  $srcdir/sbin   $compdir/
  if test ! -d "$compdir/ypp"        ; then mkdir "$compdir/ypp"        ; fi
  if test ! -d "$compdir/interfaces" ; then mkdir "$compdir/interfaces" ; fi
  if test ! -d "$compdir/lib"        ; then mkdir "$compdir/lib"        ; fi
-
- for folder in ["include/driver" "include/headers/common" "include/headers/parser" "src/common"] ; do
-   cd "$srcdir/$folder" ;
-   if test ! -d "$compdir/$folder"; then mkdir "$compdir/$folder"     ; fi
-   for file in `ls *.h*` ; do
-     cp "$file" "$compdir/$folder" ;
-   done ;
-   cd $compdir
- done
-
 fi

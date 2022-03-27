@@ -26,7 +26,8 @@ integer function variables_DIPOLES(Dip,ID)
  use pars,          ONLY:SP
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use IO_m,          ONLY:io_variable_elemental,def_variable_elemental,io_status,io_elemental
+ use IO_m,          ONLY:io_status
+ use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,io_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use descriptors,   ONLY:IO_desc_reset
  !

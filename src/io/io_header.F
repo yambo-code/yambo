@@ -36,11 +36,11 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
- use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
+ use IO_int,        ONLY:io_elemental,io_bulk,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,variable_exist,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,ver_is_gt_or_eq,&
-&                        db_alat,io_code_revision,read_is_on
+&                        DUMP,VERIFY,NONE,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
 &                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string

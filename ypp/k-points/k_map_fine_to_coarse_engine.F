@@ -23,7 +23,7 @@
 !
 subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
- use pars,                ONLY:SP,zero_dfl
+ use pars,                ONLY:SP,rZERO,zero_dfl
  use R_lattice,           ONLY:k_the_nearest
  use vec_operate,         ONLY:sort
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
@@ -54,8 +54,11 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
  call live_timing(zone//' Double Grid Map',px%n_of_elements(myid+1))
  !
+ N=0
  MAP   =0
  BORDER=0
+ k_dist_index=0
+ k_dist=rZERO
  !
  ! Step #1: define the MAP and label the FG points at the BORDER point
  !
@@ -70,7 +73,7 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
    !
    if (i_err/=0.and.I_am_border) then
      Nb=0
-     call sort(k_dist,indx=k_dist_index)
+     call sort(k_dist,indx=k_dist_index,r_zero=zero_dfl)
      do i_cg=1,N_pts_cg
        if ( abs(k_dist(i_cg)-k_dist(1))<zero_dfl ) then
          Nb=Nb+1
@@ -116,7 +119,7 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
  contains
    !
-   subroutine N_update
+   subroutine N_update( )
      do i_cg=1,N_pts_cg
        N(i_cg)=count(MAP==i_cg)
      enddo

@@ -22,7 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
+&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
+&                               io_ELPH_err,io_SC_E_err)
  !
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
@@ -30,17 +31,24 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use frequency,      ONLY:w_samp
- use BS,             ONLY:BS_n_g_exch,BS_q
+ use BS,             ONLY:BS_n_g_exch,BS_n_g_fxc,BS_q
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+# if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
+# endif
 #endif
+ !
+ ! Define io_COLLs_header to handle either serial or parallel I/O
+ !
+#include<collisions.h>
  !
 #include<memory.h>
  !
@@ -63,6 +71,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
 &                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+#if defined _PAR_IO
+ integer, external  :: io_COLLISIONS_header
+#endif
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -117,6 +128,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  QP_ng_SH   =ng_closed
  QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
+ BS_n_g_fxc =ng_closed
  !
  ! kindx
  !
@@ -274,17 +286,17 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
 #endif
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
 #endif
  !
 end subroutine

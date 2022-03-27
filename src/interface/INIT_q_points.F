@@ -102,8 +102,8 @@ subroutine INIT_q_points( )
    integer function get_e_p_q_point(i_q,q_in)
      !
      use D_lattice,   ONLY:alat
-     use IO_m,        ONLY:io_control,io_connect,io_unit,OP_RD_CL,&
-&                          io_disconnect
+     use IO_m,        ONLY:io_unit,OP_RD_CL
+     use IO_int,      ONLY:io_control,io_connect,io_disconnect
      !
      integer :: i_q
      real(DP):: q_in(3)
@@ -113,7 +113,7 @@ subroutine INIT_q_points( )
      real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
-     write (dbph_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
+     write (dbph_name,'(a,i6.6)') 'SAVE/s.dbph_',iabs(i_q)
      io_err=io_connect(desc=trim(dbph_name),type=-4,ID=ID)
      get_e_p_q_point=io_err
      !

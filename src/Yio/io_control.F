@@ -27,6 +27,7 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
   use parallel_m,    ONLY:master_cpu
   use IO_m,          ONLY:io_unit,io_mode,io_com,io_action,io_sec,max_io_units, &
 &                         OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,io_reset
+  use pars,          ONLY:io_units_shift
   !
   implicit none
   !
@@ -52,7 +53,7 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM)
       if (io_unit(i1)==0) then
         ID=i1
         call io_reset(ID)
-        io_unit(ID)=40+i1  ! This is not used with netcdf since nf90_create assigns the unit
+        io_unit(ID)=io_units_shift+i1  ! This is not used with netcdf since nf90_create assigns the unit
         exit
       endif
     enddo

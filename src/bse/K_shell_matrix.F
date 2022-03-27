@@ -28,6 +28,11 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
 &                         BS_Blocks_symmetrize_K
+ !
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
+ !
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
  !
 #include <petsc/finclude/petscsys.h>
@@ -48,7 +53,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  Mat,     intent(out) :: slepc_mat
  !
  integer          :: i_B
- PetscFortranInt  :: SL_H_dim,SL_K_dim
+ PetscInt         :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
  external K_multiply_by_V_transpose_slepc
@@ -73,7 +78,6 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
- !
  ! Are the following needed ??
  !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
  !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)

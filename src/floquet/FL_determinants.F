@@ -85,8 +85,10 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
                                &  * exp(+cI*FL_QE(i1,ikbz,1)*t_samples(i_t)) &
-                               &  * exp(-cI*FL_QE(i2,ikp ,1)*t_samples(i_t)) &
-                               &  * exp(-2._SP*NL_damping*t_samples(i_t))  
+                               &  * exp(-cI*FL_QE(i2,ikp ,1)*t_samples(i_t)) !&
+                               !&  * exp(-2._SP*NL_damping*t_samples(i_t))  
+                               !aim137 this should not be here. it is in the 
+                               ! dephasing already. Doesn't change much anyway.
 
        !
      enddo

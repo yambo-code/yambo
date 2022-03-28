@@ -23,12 +23,12 @@
 !
 subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  !
- use pars,           ONLY:SP,DP
+ use pars,           ONLY:SP,DP,cI
  use fl_optics,      ONLY:FL_threshold,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
  complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
- real(DP),intent(out)    :: accuracy
+ complex(DP),intent(out)    :: accuracy
  !
  ! Work Space
  integer  :: id,FL_Pi_order
@@ -99,6 +99,6 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  ! ==================
  !
  l_sc_reached = (l_1order_sc_reached .and. l_2order_sc_reached)
- accuracy = diff_real
+ accuracy = diff_real + cI * diff_imag
  !
 end subroutine FL_check_convergence

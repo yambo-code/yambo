@@ -107,7 +107,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
          !
        else 
          !
-         print*, 'going through eigenvector route'
          ref_vec = cZERO
          !
          do i1=NL_bands(1),NL_bands(2)
@@ -174,6 +173,16 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
        i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        trial_vec = trial_vec * conjg(trial_vec(i1_fks))
        !aim137 check >
+       !
+       !aim137 DEBUG <
+      !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+      !if (ik_bz == 15 .and. i_m ==4) then
+      !  print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
+      !  print*,  abs(trial_vec(i1_fks)),abs(trial_vec(i1_fks+n_tot_fl_modes+1))
+      !  print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is), &
+      !          &FL_eigenvalues(i1_fks+n_tot_fl_modes+1,ik_bz,is)-E_full(i_m+1,ik_bz,is)
+      !endif
+       !aim137 DEBUG >
        !
        ! Overwrite FL_V_band with new result
        !

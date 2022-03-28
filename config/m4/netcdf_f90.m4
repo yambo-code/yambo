@@ -70,13 +70,14 @@ AC_ARG_ENABLE(netcdf_output,AC_HELP_STRING([--enable-netcdf-output],
              [Activate the netcdf copy for some output files. Default is no.]))
 #
 enable_hdf5="yes" ;
+enable_pnetcdf="no" ;
 compile_netcdf="no"
 compile_pnetcdf="no"
 internal_netcdf="no"
 def_netcdf=""
 NETCDF_OPT="--enable-netcdf-4"
 NETCDF_VER="v4"
-IO_LIB_VER="serial";
+IO_LIB_VER="parallel";
 #
 save_fcflags="$FCFLAGS" ;
 hdf5_libs="$HDF5_LIBS" ;
@@ -91,10 +92,10 @@ if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_h
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
 #
 if test x"$enable_hdf5_par_io" = "xyes"  &&  test x"$enable_netcdf_par_io" = "xyes" ; then
-  AC_MSG_ERROR([Select hdf5-par-io or netcdf-par-io, not both!!]) ;
+  AC_MSG_ERROR([Select --disable-hdf5-par-io with --enable-netcdf-par-io]) ;
 fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xno"    ; then IO_LIB_VER="serial"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
 #
 #

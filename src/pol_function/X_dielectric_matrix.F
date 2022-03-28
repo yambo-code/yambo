@@ -32,6 +32,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
+ use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz

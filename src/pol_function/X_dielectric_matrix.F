@@ -151,6 +151,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (i_err==0) then
      !
+     call live_timing("Loading the dielectric function",(X%iq(2)-X%iq(1)+1))
+     !
      do iq=X%iq(1),X%iq(2)
        !
        ! In the next lines Yambo will VERIFY the em1d database
@@ -168,7 +170,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=ID(1))
        io_X_done(iq)=io_X(X,Xw,ID(1))
        !
+       call live_timing(steps=1)
+       !
      enddo
+     !
+     call live_timing()
      !
    endif
    !

@@ -55,17 +55,18 @@ internal_hdf5="no"
 NETCDF_VER="v4"
 #
 if test "$mpibuild" = "yes" ; then
-  HDF5_OPT="--enable-parallel";
-  IO_LIB_VER="parallel";
+  if test x"$enable_hdf5_par_io" = "xno" ; then 
+   HDF5_OPT="--disable-parallel";
+   IO_LIB_VER="serial";
+  else
+   HDF5_OPT="--enable-parallel";
+   IO_LIB_VER="parallel";
+  fi
 else
   HDF5_OPT="--disable-parallel";
   IO_LIB_VER="serial";
   enable_hdf5_par_io="no";
 fi
-# Debug (AM)
-HDF5_OPT="--disable-parallel";
-IO_LIB_VER="serial";
-enable_hdf5_par_io="no";
 #
 # Other libs
 #
@@ -228,27 +229,6 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
   #
 fi
 #
-# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
-#
-IO_MODE="serial";
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    enable_hdf5_compression="no";
-    parallel_io="X";    
-    IO_MODE="parallel";
-elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    compile_pnetcdf=${compile_netcdf};
-    enable_hdf5_compression="no";
-    parallel_io="X";    
-    IO_MODE="parallel";
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-    parallel_io="COMPRESS-HDF5";    
-    IO_MODE="parallel";
-fi
-#
-AC_SUBST(IO_MODE)
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(HDF5_OPT)
@@ -256,8 +236,6 @@ AC_SUBST(IO_LIB_VER)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)
-AC_SUBST(compile_netcdf)
-AC_SUBST(compile_pnetcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)

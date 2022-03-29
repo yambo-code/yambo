@@ -91,6 +91,14 @@ subroutine ELPH_databases(k,E,q)
      io_err(2)=qindx_B_init(qindx_ID,qindx_ID_frag) 
      if(io_err(2)/=0) call error("Error reading qindx_B")
      !
+   else
+     ! otherwise qindx_S is allocated
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
+     io_err(1)=io_QINDX(k,q,ID)
+     if (io_err(1)/=0) then
+       call msg('s',"Missing k/q scattering database")
+       call error("Please (re)run the setup")
+     endif
    endif
    !
  endif

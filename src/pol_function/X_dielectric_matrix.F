@@ -105,6 +105,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (depth>0) sec_mode='='
  !
  X_dielectric_matrix=-1
+ Xw%grid_type="ra" !DALV
  !
  if (X%whoami==2) then
    !
@@ -140,7 +141,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    X%mpa_npoles  = Xw%n_freqs/2
    X_MEM_n_freqs =2*X%mpa_npoles
    X%ordering='t'
-   Xw%grid_type="mpa-lP"
+   Xw%grid_type="mp"
    !
  endif
  !

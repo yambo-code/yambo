@@ -77,6 +77,7 @@ module frequency
        Wo%p=Wi%p
      endif
      Wo%samp_type=Wi%samp_type
+     Wo%samp_grid=Wi%samp_grid
      Wo%mpa_solver=Wi%mpa_solver
      Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
@@ -97,7 +98,7 @@ module frequency
      W%samp_type="2l"
      W%samp_grid="lP"
      W%mpa_solver="PT"
-     W%grid_type="" ! DALV: conflict with FF real axis in FREQUENCIES_setup
+     W%grid_type="ra" !DALV: giving use to this variable
    end subroutine W_reset
    !
 end module frequency

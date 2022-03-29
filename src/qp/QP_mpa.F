@@ -28,7 +28,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp 
+ use frequency,     ONLY:w_samp,W_reset !DALV
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
@@ -116,9 +116,14 @@ use parser_m,       ONLY:parser
    !
    QP_dSc_steps=QP_Sc_steps
    do i_qp=1,qp%n_states
-     Sc_W(i_qp)%n_freqs =QP_Sc_steps
+     call W_reset(Sc_W(i_qp))
+     Sc_W(i_qp)%n_freqs=QP_Sc_steps
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
-     QP_Sc_steps=Sc_W(i_qp)%n_freqs
+     if(Sc_W(i_qp)%grid_type=="ra") then !DALV
+       Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
+     else
+       QP_G_damp=0._SP
+     endif
    enddo
  endif
  !

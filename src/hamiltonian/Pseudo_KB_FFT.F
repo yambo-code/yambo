@@ -29,7 +29,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
  use wave_func,     ONLY:wf_ng,wf_ncx,wf_igk,wf_nc_k
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table,pp_kbv_table
- use D_lattice,     ONLY:atom_pos,x_cc,a
+ use D_lattice,     ONLY:atom_pos,x_cc,a,n_atoms
  !
 #include<memory.h>
  !

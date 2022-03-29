@@ -59,94 +59,94 @@ if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 #
 # - LIBRARIES -
 #
-YAML_check=" - "
+YAML_check="-"
 if test "$internal_yaml" = "yes" ; then
-  if test "$compile_yaml" = "yes" ; then YAML_check=" Ic"; fi
-  if test "$compile_yaml" = "no"  ; then YAML_check=" If"; fi
+  if test "$compile_yaml" = "yes" ; then YAML_check="C"; fi
+  if test "$compile_yaml" = "no"  ; then YAML_check="I"; fi
 elif test "$enable_yaml" = "yes" ; then
-  YAML_check=" E "
+  YAML_check="E"
 fi
 #
-FUTILE_check=" - "
+FUTILE_check="-"
 if test "$internal_futile" = "yes" ; then
-  if test "$compile_futile" = "yes" ; then FUTILE_check=" Ic"; fi
-  if test "$compile_futile" = "no"  ; then FUTILE_check=" If"; fi
+  if test "$compile_futile" = "yes" ; then FUTILE_check="C"; fi
+  if test "$compile_futile" = "no"  ; then FUTILE_check="I"; fi
 elif test "$enable_futile" = "yes" ; then
-  FUTILE_check=" E "
+  FUTILE_check="E"
 fi
 #
-IOTK_check=" - "
+IOTK_check="-"
 if test "$compile_p2y" = "yes" ; then
-  IOTK_check=" E "
+  IOTK_check="E"
   if test "$internal_iotk" = "yes" ; then
-    if test "$compile_iotk" = "yes" ; then IOTK_check=" Ic"; fi
-    if test "$compile_iotk" = "no"  ; then IOTK_check=" If"; fi
+    if test "$compile_iotk" = "yes" ; then IOTK_check="C"; fi
+    if test "$compile_iotk" = "no"  ; then IOTK_check="I"; fi
   fi
 fi
 #
-ETSF_check=" - "
+ETSF_check="-"
 if test "$compile_e2y" = "yes" ; then
-  ETSF_check=" E "
+  ETSF_check="E"
   if test "$internal_etsf" = "yes" ; then
-    if test "$compile_etsf" = "yes" ; then ETSF_check=" Ic"; fi
-    if test "$compile_etsf" = "no"  ; then ETSF_check=" If"; fi
+    if test "$compile_etsf" = "yes" ; then ETSF_check="C"; fi
+    if test "$compile_etsf" = "no"  ; then ETSF_check="I"; fi
   fi
 fi
 #
-FFT_check=" E "
+FFT_check="E"
 if test "$internal_fft" = "yes" ; then
-  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_check=" Ic"; fi
-  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_check=" If"; fi
+  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_check="C"; fi
+  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_check="I"; fi
 else
   if test "$compile_fftqe" = "yes" ; then FFT_check="E+I"; fi
 fi
 #
-BLAS_check=" E "
+BLAS_check="E"
 if test "$internal_blas" = "yes" ; then
-  if test "$compile_blas" = "yes"; then BLAS_check=" Ic"; fi
-  if test "$compile_blas" = "no" ; then BLAS_check=" If"; fi
+  if test "$compile_blas" = "yes"; then BLAS_check="C"; fi
+  if test "$compile_blas" = "no" ; then BLAS_check="I"; fi
 fi
 #
-LAPACK_check=" E "
+LAPACK_check="E"
 if test "$internal_lapack" = "yes" ; then
-  if test "$compile_lapack" = "yes"; then LAPACK_check=" Ic"; fi
-  if test "$compile_lapack" = "no" ; then LAPACK_check=" If"; fi
+  if test "$compile_lapack" = "yes"; then LAPACK_check="C"; fi
+  if test "$compile_lapack" = "no" ; then LAPACK_check="I"; fi
 fi
 #
-SLK_check=" - "
-if test "$enable_scalapack" = "yes" ; then SLK_check=" E "; fi
+SLK_check="-"
+if test "$enable_scalapack" = "yes" ; then SLK_check="E"; fi
 if test "$internal_slk" = "yes" ; then
-  if test "$compile_slk" = "yes"; then SLK_check=" Ic"; fi
-  if test "$compile_slk" = "no" ; then SLK_check=" If"; fi
+  if test "$compile_slk" = "yes"; then SLK_check="C"; fi
+  if test "$compile_slk" = "no" ; then SLK_check="I"; fi
 fi
 #
-BLACS_check=" - "
-if test "$enable_scalapack" = "yes" ; then BLACS_check=" E "; fi
+BLACS_check="-"
+if test "$enable_scalapack" = "yes" ; then BLACS_check="E"; fi
 if test "$internal_blacs" = "yes" ; then
-  if test "$compile_blacs" = "yes"; then BLACS_check=" Ic"; fi
-  if test "$compile_blacs" = "no" ; then BLACS_check=" If"; fi
+  if test "$compile_blacs" = "yes"; then BLACS_check="C"; fi
+  if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
 fi
 #
-PETSC_check=" - "
+PETSC_check="-"
 if test "$internal_petsc" = "yes" ; then
-  if test "$compile_petsc" = "yes" ; then PETSC_check=" Ic"; fi
-  if test "$compile_petsc" = "no"  ; then PETSC_check=" If"; fi
+  if test "$compile_petsc" = "yes" ; then PETSC_check="C"; fi
+  if test "$compile_petsc" = "no"  ; then PETSC_check="I"; fi
 elif test "$enable_petsc" = "yes" ; then
-  PETSC_check=" E "
+  PETSC_check="E"
 fi
 #
-SLEPC_check=" - "
+SLEPC_check="-"
 if test "$internal_slepc" = "yes" ; then
-  if test "$compile_slepc" = "yes" ; then SLEPC_check=" Ic"; fi
-  if test "$compile_slepc" = "no"  ; then SLEPC_check=" If"; fi
+  if test "$compile_slepc" = "yes" ; then SLEPC_check="C"; fi
+  if test "$compile_slepc" = "no"  ; then SLEPC_check="I"; fi
 elif test "$enable_slepc" = "yes" ; then
-  SLEPC_check=" E "
+  SLEPC_check="E"
 fi
 #
-LIBXC_check=" E "
+LIBXC_check="E"
 if test "$internal_libxc" = "yes" ; then
-  if test "$compile_libxc" = "yes"; then LIBXC_check=" Ic"; fi
-  if test "$compile_libxc" = "no" ; then LIBXC_check=" If"; fi
+  if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
+  if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
 fi
 #
 YDB_check="-";
@@ -160,8 +160,8 @@ HDF5_PAR_IO_check="-"
 PNETCDF_check="-"
 NETCDF_check="-"
 if test "$internal_netcdf" = "yes" ; then
-  if test "$compile_netcdf" = "yes" ; then NETCDF_check="Ic"; fi
-  if test "$compile_netcdf" = "no"  ; then NETCDF_check="If"; fi
+  if test "$compile_netcdf" = "yes" ; then NETCDF_check="C"; fi
+  if test "$compile_netcdf" = "no"  ; then NETCDF_check="I"; fi
 else
   NETCDF_check="E"
 fi
@@ -186,14 +186,14 @@ fi
 HDF5_check="-"
 HDF5_PAR_IO_check="X"
 HDF5_PAR_IO_info=" "
-echo "XXX e:$enable_hdf5_par_io h:$hdf5"
 if test "$hdf5" = "yes" ; then
   if test "$internal_hdf5" = "yes" ; then
-    if test "$compile_hdf5" = "yes" ; then HDF5_check=" Ic"; fi
-    if test "$compile_hdf5" = "no"  ; then HDF5_check=" If"; fi
+    if test "$compile_hdf5" = "yes" ; then HDF5_check="C"; fi
+    if test "$compile_hdf5" = "no"  ; then HDF5_check="I"; fi
   else
-    HDF5_check=" E "
+    HDF5_check="E"
   fi
+  if test "$IO_LIB_VER" = "parallel" ; then HDF5_info="Parallel_lib" ; fi
   if ! test "$enable_netcdf_classic" = "yes"  ; then
     if test "$enable_hdf5_compression" = "yes"; then
       HDF5_PAR_IO_info="Data Compression enabled" ;
@@ -203,7 +203,6 @@ if test "$hdf5" = "yes" ; then
     if ! test "$enable_hdf5_par_io" = "yes"; then
       HDF5_PAR_IO_check="-"
       HDF5_PAR_IO_info=" "
-      if test "$IO_LIB_VER" = "parallel" ; then HDF5_PAR_IO_info="Serial, parallel_lib" ; fi
     fi
   fi
 fi
@@ -217,6 +216,7 @@ AC_SUBST(CUDA_check)
 AC_SUBST(OPENMP_check)
 AC_SUBST(PARIO_check)
 AC_SUBST(HDF5_check)
+AC_SUBST(HDF5_info)
 AC_SUBST(HDF5_PAR_IO_check)
 AC_SUBST(HDF5_PAR_IO_info)
 AC_SUBST(PNETCDF_check)

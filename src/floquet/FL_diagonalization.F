@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands)
+subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  !
- use pars,           ONLY:SP,cONE,cZERO
+ use pars,           ONLY:SP,cONE,cZERO,cI,pi
+ use units,          ONLY:HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
@@ -33,12 +34,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_bands,E_full
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_QE
+&                         FL_states,FL_Ho_plus_Sigma,FL_QE,FL_QE_hist,FL_V_bands_hist,FL_ac_phase
  !
  implicit none
  !
  type(levels),  intent(in)     :: E
  type(bz_samp), intent(in)     :: k
+ integer,       intent(in)     :: iter_num
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  !
  ! Work Space
@@ -52,10 +54,12 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):E%nbf)
  character(4) :: filename
- integer     :: line_counter
+ integer     :: line_counter,i_central_fks
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
  complex(SP) :: ref_vec(FL_states(1):FL_states(2)),trial_vec(FL_states(1):FL_states(2))
  complex(SP) :: Mtmp(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ logical     :: l_history
+ real(SP)    :: phase
  !
  FL_eigenvalues = 0._SP
  !FL_QE = 0._SP !aim137 this was wrong, they are initialised as E_full
@@ -98,7 +102,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
                     & - E_full(i_m,ik_bz,is))
        enddo
        !
-       if (minval(energy_difference) < 1.E-3) then
+       if (minval(energy_difference) < 0.1_SP) then
          !
          FL_chosen_bands(i_m) = minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
          trial_vec(FL_states(1):FL_states(2)) = &
@@ -107,6 +111,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
          !
        else 
          !
+         call error('  went through eigenvector route')
          ref_vec = cZERO
          !
          do i1=NL_bands(1),NL_bands(2)
@@ -168,19 +173,48 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
          !aim137 debug
        endif
        !
-       !aim137 check < 
-       !aim137 is it correct to do this? why don't I just leave this phase?
+       ! Set phase zero for central component of the eigenvector
+       !
        i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       trial_vec = trial_vec * conjg(trial_vec(i1_fks))
-       !aim137 check >
+       trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
+       !
+       ! Detect avoided crossing
+       !
+       i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+       do i1_fks=FL_states(1),FL_states(2)
+         !
+         if (abs(trial_vec(i1_fks)) > 0.1_SP .and. i1_fks /= i_central_fks) then
+           !
+           phase = asin(aimag(trial_vec(i1_fks))/abs(trial_vec(i1_fks)))
+           phase = abs(phase)
+           phase = phase - 1._SP*pi*nint(phase/(1._SP*pi))
+           if (phase > FL_ac_phase(i_m,ik_bz,is)) FL_ac_phase(i_m,ik_bz,is)=phase
+           trial_vec(i1_fks) = abs(trial_vec(i1_fks)) * &
+         & cmplx(cos(FL_ac_phase(i_m,ik_bz,is)),sin(FL_ac_phase(i_m,ik_bz,is)))
+           !print*, 'detected avoided crossing in kpt',ik_bz,' and band ',i_m
+           !
+         endif
+         !
+       enddo
        !
        !aim137 DEBUG <
       !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
       !if (ik_bz == 15 .and. i_m ==4) then
-      !  print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
-      !  print*,  abs(trial_vec(i1_fks)),abs(trial_vec(i1_fks+n_tot_fl_modes+1))
-      !  print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is), &
-      !          &FL_eigenvalues(i1_fks+n_tot_fl_modes+1,ik_bz,is)-E_full(i_m+1,ik_bz,is)
+      !  !print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
+      !  print*,  trial_vec(i1_fks),'---',trial_vec(i1_fks+n_tot_fl_modes+1)
+      !! print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is), &
+      !!         &FL_eigenvalues(i1_fks+n_tot_fl_modes+1,ik_bz,is)-E_full(i_m+1,ik_bz,is)
+      !  !do i1_fks=FL_states(1),FL_states(2)
+      !    !write(*,'(100(1f6.3))') FL_eigenvectors(FL_states(1):FL_states(2),i1_fks)
+      !    !print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is)
+      !  !enddo
+      ! !aim137 print avoided crossing
+      ! !energy_difference(FL_chosen_bands(i_m))=100 !pop the minimum
+      ! !print*, Efield(1)%frequency(1)*HA2EV, &
+      ! !        &(FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)-E_full(i_m,ik_bz,is))*HA2EV, &
+      ! !        &(FL_eigenvalues(&
+      ! !        &minloc(energy_difference(FL_states(1):FL_states(2))),ik_bz,is)-&
+      ! !        &E_full(i_m,ik_bz,is))*HA2EV
       !endif
        !aim137 DEBUG >
        !
@@ -195,22 +229,52 @@ subroutine FL_diagonalization(E,k,FL_V_bands)
        !endif
        !aim137 check >
        !
-       do i1=NL_bands(1),NL_bands(2)
-         do i1_fl=1,n_tot_fl_modes
-           !
-           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-           FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
-           ! aim137 try mixing beta here
-           ! aim137 mixing beta - it did dampen the oscillations
-           ! in the accuracy, but not even 0.95 solved it
-           !   FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
-           !&  FL_V_bands(i1,i1_fl,i_m,ik_bz,is) * 0.9_SP +&
-           !&  trial_vec(i1_fks) * 0.1_SP
-           !
+       l_history = .false.
+       if (iter_num > 2 .and. l_history) then
+         do i1=NL_bands(1),NL_bands(2)
+           do i1_fl=1,n_tot_fl_modes
+             !
+             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+             FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
+             ! aim137 I tried using 'history' also for eigenvectors
+             ! but it resulted in a decay of the QE towards the KS energy
+           ! i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+           ! FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) = &
+           !&FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) + trial_vec(i1_fks)
+           ! FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
+           !&FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) / real(iter_num-2,SP)
+             ! aim137 try mixing beta here
+             ! aim137 mixing beta - it did dampen the oscillations
+             ! in the accuracy, but not even 0.95 solved it
+             !   FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
+             !&  FL_V_bands(i1,i1_fl,i_m,ik_bz,is) * 0.9_SP +&
+             !&  trial_vec(i1_fks) * 0.1_SP
+             !
+           enddo
+             !print*, FL_V_bands(i1,:,i_m,ik_bz,is)
          enddo
-           !print*, FL_V_bands(i1,:,i_m,ik_bz,is)
-       enddo
-       FL_QE(i_m,ik_bz,is) = trial_val
+         !
+         FL_QE_hist(i_m,ik_bz,is) = FL_QE_hist(i_m,ik_bz,is) + trial_val
+         FL_QE(i_m,ik_bz,is) = FL_QE_hist(i_m,ik_bz,is) / real(iter_num-2,SP)
+       else
+         do i1=NL_bands(1),NL_bands(2)
+           do i1_fl=1,n_tot_fl_modes
+             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+             FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
+           enddo
+         enddo
+         FL_QE(i_m,ik_bz,is) = trial_val
+       endif
+       !
+       !aim137 DEBUG <
+       i1_fl = (max_fl_mode+1)
+       i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+       if (ik_bz == 15 .and. i_m ==4) then
+         !print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
+         !print*, FL_V_bands(i_m,i1_fl,i_m,ik_bz,is),FL_V_bands(i_m+1,i1_fl+1,i_m,ik_bz,is)
+         !print*,  iter_num,FL_QE(i_m,ik_bz,is)-E_full(i_m,ik_bz,is)
+       endif
+       !aim137 DEBUG >
        !aim137 try mixing beta here
        !FL_QE(i_m,ik_bz,is) = FL_QE(i_m,ik_bz,is) * 0.9_SP + trial_val * 0.1_SP
        !

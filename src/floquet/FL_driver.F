@@ -46,7 +46,8 @@ subroutine FL_driver(E,X,k,q,Dip)
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
-&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE
+&                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
+&                         FL_ac_phase
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
@@ -194,6 +195,8 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Re-initialization
    ! ================
    FL_V_bands=cZERO
+   FL_V_bands_hist=cZERO
+   FL_ac_phase=cZERO
    do i1=1,E%nbf 
      !
      fl_shifted_zero_mode = max_fl_mode+1
@@ -248,14 +251,14 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
-     call FL_diagonalization(E,k,FL_V_bands)
+     call FL_diagonalization(E,k,FL_V_bands,FL_iteration)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
-     if (FL_iteration>13) l_FL_sc_reached = .true.
-     !print*, FL_iteration, '----------------------------------------'!, real(accuracy), aimag(accuracy)
+     if (FL_iteration>6) l_FL_sc_reached = .true.
+     !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !

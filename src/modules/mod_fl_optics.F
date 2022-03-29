@@ -31,6 +31,7 @@ module fl_optics
 #include<memory.h>
  ! Bands in terms of Kohn-Sham orbitals
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
+ complex(SP), allocatable :: FL_V_bands_hist(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_S_minus(:,:,:,:,:,:)  ! Floquet overlaps
  complex(SP), allocatable :: FL_time_S_det(:,:,:,:)  ! Floquet overlaps determinant
@@ -38,7 +39,7 @@ module fl_optics
  complex(SP), allocatable :: FL_Chi_pol(:,:,:,:) !freq,dir,order,previous
  complex(SP), allocatable :: FL_FT_extra_M(:,:)
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
- real(SP),    allocatable :: FL_QE(:,:,:)
+ real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -93,6 +94,7 @@ module fl_optics
      YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
      ! aim137 FL_bands in FKS space broken down in bands x fl modes
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      !
      YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
@@ -123,6 +125,8 @@ module fl_optics
      ! Floquet Quasi energies
      !
      YAMBO_ALLOC(FL_QE,(1:NL_bands(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_QE_hist,(1:NL_bands(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_ac_phase,(en%nbf,QP_nk,n_sp_pol))
      !
      if(.not.l_use_DIPOLES) then
        call  ELECTRIC_alloc(en)

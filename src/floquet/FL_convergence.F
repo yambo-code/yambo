@@ -48,6 +48,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  diff_imag  =  abs( aimag(FL_pol(1,2,1)) &
                  & -aimag(FL_pol(1,2,2)))
 
+ !print*, real(FL_pol(1,2,1)),aimag(FL_pol(1,2,1))
  !print*, 'diff_real =',diff_real ,'diff_imag =',diff_imag 
  if (diff_real < FL_threshold .and. diff_imag < FL_threshold) then
    l_1order_sc_reached = .true.

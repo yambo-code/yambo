@@ -50,7 +50,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
 &                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
- use fl_optics,      ONLY:max_fl_mode,FL_QE
+ use fl_optics,      ONLY:max_fl_mode,FL_QE,FL_QE_hist
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
  use parallel_int,   ONLY:PP_redux_wait
@@ -133,6 +133,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  ! =========================
  !
  FL_QE = E_full
+ FL_QE_hist = cZERO
  !
 !!
 ! Evaluate Initial Polarization 

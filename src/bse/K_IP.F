@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd
  use BS,            ONLY:BS_T_grp,BS_nT_grps,BS_perturbative_SOC,&
-&                        BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,l_BS_kerr_asymm,&
+&                        l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,l_BS_kerr_asymm,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
@@ -60,7 +60,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Work space
  !
- integer           ::iv,ic,i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR(2),i_dip
+ integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR(2)
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
@@ -161,13 +161,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if(l_BS_abs) then
        res_abs=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))
-       if(l_BS_kerr_asymm) res_abs=(res_abs+ &
-       &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)) )/2._SP
+       if(l_BS_kerr_asymm) then
+         res_abs=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))+     &
+         &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)))/2._SP
+       endif
        if(l_BS_trace) then
-         do i_dip=2,BS_dip_size
-           res_abs=res_abs+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1))
-         enddo
-         res_abs=res_abs/real(BS_dip_size,SP)
+         res_abs=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1))+     &
+         &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))+     &
+         &        BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)))/3._SP
        endif
        res_abs=res_abs*f_eh*Z_eh*E_eh
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_abs,vtmpC)
@@ -175,8 +176,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      if (l_BS_kerr) then
        res_kerr=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))
-       if(l_BS_kerr_asymm) res_kerr=(res_kerr- &
-       &        BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)) )/2._SP
+       if(l_BS_kerr_asymm) then
+         res_kerr=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1))-     &
+         &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)))/2._SP
+       endif
        res_kerr=res_kerr*Z_eh*E_eh*f_eh
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_kerr,vtmpC)
      endif
@@ -193,13 +196,13 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Dichroism
      !
      if(l_BS_dichroism) then
-       res_dich=BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))
+       res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))+     &
+       &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1)))/2._SP
        if(l_BS_trace) then
-         do i_dip=2,BS_dip_size
-           ! x*L = DIP_x*DIP_orbital;
-           res_dich=res_dich+BS_T_grp(i_T_g)%dipoles_opt(i_dip,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(i_dip,i_T,1))
-         enddo
-         res_dich=res_dich/real(BS_dip_size,SP)
+         ! x*L = DIP_x*DIP_orbital;
+         res_dich=(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(1,i_T,1))+     &
+         &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(2,i_T,1))+     &
+         &         BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1)))/3._SP
        endif
        res_dich=res_dich*f_eh*Z_eh/(q0_def_norm)
        if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_dich,vtmpC)

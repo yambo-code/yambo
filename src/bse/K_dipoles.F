@@ -34,17 +34,17 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  use electrons,     ONLY:levels,spin
  use X_m,           ONLY:global_gauge
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
- use BS_solvers,    ONLY:BSS_Vnl_included
+ use BS_solvers,    ONLY:BSS_Vnl_included,BSS_Q_dir,BSS_E_dir
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands,&
-&                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,l_BS_kerr_asymm,&
+&                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
-&                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res
+&                        BS_field_direction,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
  use parallel_m,    ONLY:PAR_BS_nT_col_grps,PAR_COM_eh_INDEX,PAR_IND_T_groups,&
 &                        PAR_COM_Xk_ibz_INDEX
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use timing_m,      ONLY:timing
- use vec_operate,   ONLY:v_rotate
+ use vec_operate,   ONLY:cross_product
  !
 #include<memory.h>
  !
@@ -88,27 +88,17 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
    !
    ! Directions for the external field
    !
-   BS_field_direction(:,1)=Dip%q0/v_norm(Dip%q0)
+   BS_field_direction(:,1)=BSS_E_dir
+   BS_field_direction(:,2)=cross_product(BSS_Q_dir,BSS_E_dir)
+   BS_field_direction(:,3)=BSS_Q_dir
    !
-   if (l_BS_trace) then
+   geometry_ok=abs(dot_product(BSS_E_dir,BSS_Q_dir))<1.E-5_SP
+   !
+   if ( l_BS_trace .and. .not. geometry_ok ) then
+     call warning(" Propagation direction not ortogonal to field direction. Setting z for field propagation and x-y for direction")
      BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
      BS_field_direction(:,2)=(/0._SP,1._SP,0._SP/)
      BS_field_direction(:,3)=(/0._SP,0._SP,1._SP/)
-   endif
-   !
-   if (l_BS_kerr) then
-     geometry_ok=( trim(BSE_dipole_geometry)=='xy'.or.trim(BSE_dipole_geometry)=='xz'.or.trim(BSE_dipole_geometry)=='yz' ) &
-     &      .or. ( trim(BSE_dipole_geometry)=='yx'.or.trim(BSE_dipole_geometry)=='zx'.or.trim(BSE_dipole_geometry)=='zy' )
-     if(geometry_ok) then
-       if (BSE_dipole_geometry(1:1)=='x') BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
-       if (BSE_dipole_geometry(1:1)=='y') BS_field_direction(:,1)=(/0._SP,1._SP,0._SP/)
-       if (BSE_dipole_geometry(1:1)=='z') BS_field_direction(:,1)=(/0._SP,0._SP,1._SP/)
-     else
-       call warning(" No or wrong kerr geometry specified in input file. Assuming xy")
-       BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
-       BSE_dipole_geometry="xy"
-     endif
-     call v_rotate(trim(BSE_dipole_geometry),-pi/2._SP,BS_field_direction(:,1),v_out=BS_field_direction(:,2))
    endif
    !
    if (trim(global_gauge)=='length'  ) BS_field_direction=BS_field_direction*q0_def_norm

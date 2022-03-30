@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
- &                    BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+ &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
  !
  ! eps2(iw)= 1 - Sum  [BS_R_left(i)*BS_R_right(i)] / [w+i*eta - E(i)]  
  !
@@ -43,7 +43,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  use BS_solvers,     ONLY:B_Hall
  use X_m,            ONLY:Epsilon_ij,X_magnons,X_dichroism
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+ use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  !
  implicit none
  !
@@ -53,7 +53,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
  complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
  real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
  complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
- complex(SP), pointer, intent(in) :: BS_R_right_kerr(:),BS_R_right_dich(:)
+ complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
  real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
  !
  ! Work space
@@ -141,6 +141,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      !
      if(l_BS_kerr) then
        res_kerr=BS_R_left_abs(i1)*BS_R_right_kerr(i1)*ares_fac
+       if(l_BS_kerr_asymm) then
+         res_kerr=(BS_R_left_abs(i1)*BS_R_right_kerr(i1)-BS_R_left_kerr(i1)*BS_R_right_abs(i1))*ares_fac/2._SP
+       endif
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
@@ -152,7 +155,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      endif
      !
      if(l_BS_dichroism) then
-       res_dich=BS_R_left_abs(i1)*BS_R_right_dich(i1)*ares_fac/q0_def_norm
+       res_dich=(BS_R_left_abs(i1)*BS_R_right_dich(i1,1)+BS_R_left_kerr(i1)*BS_R_right_dich(i1,2))*ares_fac/q0_def_norm/2._SP
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_dich
          nVAR=nVAR+1

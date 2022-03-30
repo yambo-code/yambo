@@ -47,7 +47,6 @@ module BS
  character(schlen) :: L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
- character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  !

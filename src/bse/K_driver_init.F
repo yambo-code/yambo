@@ -195,6 +195,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! How to treat dipoles...
  !------------------------
  l_BS_trace     = STRING_match(BSE_prop,'trace')
+ l_BS_kerr_asymm= STRING_match(BSE_prop,'asymm') .and. l_BS_kerr
  !
  if (l_BS_magnons.and.n_sp_pol==2) then
    l_BS_abs    = .false.
@@ -204,7 +205,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  if (l_BS_kerr) then
    l_BS_anomalous_Hall = STRING_match(BSE_prop,'anHall')
-   l_BS_kerr_asymm     = STRING_match(BSE_prop,'asymm')
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif
@@ -212,7 +212,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    call warning(" Trace not compatible with kerr or pl. Switching it off")
    l_BS_trace  = .false.
  endif
- if (l_BS_trace   ) BS_dip_size = 3
+ if (l_BS_trace.or.l_BS_dichroism) BS_dip_size = 3
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !

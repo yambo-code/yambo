@@ -67,9 +67,10 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  !
  call live_timing(trim(mode)//' residuals ',px%n_of_elements(myid+1))
  !
- if(trim(mode)=="abs")  tmp_res=BSS_dipoles_opt(1,res_range(1):res_range(2))
- if(trim(mode)=="kerr") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
- if(trim(mode)=="dich") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="opt1") tmp_res=BSS_dipoles_opt(1,res_range(1):res_range(2))
+ if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2))
+ if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !

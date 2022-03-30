@@ -65,8 +65,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use wave_func,  ONLY:wf_ng,wf_norm_test,wf_nb_io,wf_nb_io_groups,WF,WF_buffer,WF_buffered_IO,rho_map_thresh
  use FFT_m,      ONLY:fft_dim_loaded,fft_size,fft_dim,fft_multiplier
  use IO_m,       ONLY:io_reset,max_io_units,serial_number,frag_WF
- use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
-&                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
+ use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,BSS_E_dir,BSS_Q_dir,&
+&                     Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
 &                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
  use descriptors,ONLY:IO_desc_reset
@@ -461,7 +461,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_inversion_mode='pf'
  BSS_er=(/0._SP,10._SP/)/HA2EV
  BSS_dr=0.1_SP/HA2EV
- BSS_q0=(/1._SP,0._SP,0._SP/)
+ BSS_E_dir=(/1._SP,0._SP,0._SP/)
+ BSS_Q_dir=(/0._SP,0._SP,1._SP/)
  BSS_uses_DbGd=.FALSE.
  BSS_damp_reference=0._SP
  BS_K_is_ALDA=.FALSE.

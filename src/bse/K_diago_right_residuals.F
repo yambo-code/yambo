@@ -57,7 +57,7 @@ subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
  call PARALLEL_index(px,(/BSS_n_eig/))
  !
  BS_R_right=cZERO
- velocity_correction=(trim(mode)=="abs".or.trim(mode)=="kerr").and.trim(global_gauge)=="velocity"
+ velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
  if (.not.BS_K_coupling) res_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
  if (     BS_K_coupling) res_range=(/1,BS_H_dim/)

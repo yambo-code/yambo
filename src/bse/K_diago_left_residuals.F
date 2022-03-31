@@ -38,6 +38,7 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  use BS,             ONLY:BS_H_dim,BS_K_dim,BS_K_coupling
  use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BSS_n_eig
  use MAGNONS,        ONLY:BSS_dipoles_magn
+ use DICHROISM,      ONLY:BSS_dipoles_dich
  !
  implicit none
  !
@@ -64,7 +65,7 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  if (.not.present(BS_overlap)) scheme="hermitian"
  if (     present(BS_overlap)) scheme="non-hermitian"
  !
- velocity_correction=(trim(mode)=="opti").and.(trim(global_gauge)=="velocity")
+ velocity_correction=(index(mode,"opt")>0).and.(trim(global_gauge)=="velocity")
  !
  if (.not.BS_K_coupling) res_range=(/1,BS_K_dim(i_BS_mat)/)+BS_K_dim(1)*(i_BS_mat-1)
  if (     BS_K_coupling) res_range=(/1,BS_H_dim/)
@@ -81,7 +82,10 @@ subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_over
  !
  call live_timing('EPS L residuals',px%n_of_elements(myid+1))
  !
- if(trim(mode)=="opti") tmp_res=BSS_dipoles_opt(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="opt1") tmp_res=BSS_dipoles_opt(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="opt2") tmp_res=BSS_dipoles_opt(2,res_range(1):res_range(2)) 
+ if(trim(mode)=="dic1") tmp_res=BSS_dipoles_dich(1,res_range(1):res_range(2)) 
+ if(trim(mode)=="dic2") tmp_res=BSS_dipoles_dich(2,res_range(1):res_range(2)) 
  if(trim(mode)=="mag1") tmp_res=BSS_dipoles_magn(1,res_range(1):res_range(2))
  if(trim(mode)=="mag2") tmp_res=BSS_dipoles_magn(2,res_range(1):res_range(2))
  !

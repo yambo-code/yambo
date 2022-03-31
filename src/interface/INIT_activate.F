@@ -236,7 +236,8 @@ subroutine INIT_activate()
    ! Special case: The BSE equation is used to build up the BSE_Fxc kernel.
    if (l_bs_fxc) then
      call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded FxcMEStps')
-     call initactivate(1,'EFieldDir QPropDir BEnRange BDmRange BEnSteps')
+     call initactivate(1,'BLongDir QPropDir BEnRange BDmRange BEnSteps')
+     !call initactivate(1,'EFieldDir QPropDir BEnRange BDmRange BEnSteps')
    endif
    !
  endif
@@ -275,7 +276,8 @@ subroutine INIT_activate()
  !
  if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
-   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps EFieldDir QPropDir')
+   call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir QPropDir')
+   !call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps EFieldDir QPropDir')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation

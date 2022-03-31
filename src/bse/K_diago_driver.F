@@ -65,7 +65,7 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  use BS_solvers,     ONLY:BSS_slepc_matrix,Slepc_v,BS_HAYVEC_free
 #endif
- use BS,             ONLY:l_BS_kerr,l_BS_kerr_asymm,l_BS_magnons,l_BS_photolum
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum
  use MAGNONS,        ONLY:BSS_MAGN_free
  use PHOTOLUM,       ONLY:BSS_PL_free
  !
@@ -125,6 +125,8 @@ subroutine K_diago_driver(iq,W,X_static)
 #if defined _SLEPC && !defined _NL
  l_slepc     = index(BSS_mode,'s')/=0
 #endif
+ !
+ l_dip_more=l_BS_kerr.or.l_BS_dichroism
  !
  if(l_diago) Solver="Diago"
 #if defined _SLEPC && !defined _NL
@@ -252,16 +254,14 @@ subroutine K_diago_driver(iq,W,X_static)
      !
      if(l_diago) call live_timing( )
      !
-     l_dip_more=l_BS_kerr.or.l_BS_dichroism
-     !
      ! Construct the residuals of epsilon
      !====================================
      if (K_is_not_hermitian) then
        !
        ! Right residuals
        if(l_BS_optics.or.l_BS_kerr.or.l_BS_dichroism) then
-                        call K_diago_right_residuals("abs", i_BS_mat,BS_E,BS_R_right_abs, BS_V_right)
-         if(l_dip_more) call K_diago_right_residuals("kerr",i_BS_mat,BS_E,BS_R_right_kerr,BS_V_right)
+                        call K_diago_right_residuals("opt1",i_BS_mat,BS_E,BS_R_right_abs, BS_V_right)
+         if(l_dip_more) call K_diago_right_residuals("opt2",i_BS_mat,BS_E,BS_R_right_kerr,BS_V_right)
        endif
        if(l_BS_dichroism) then
          call K_diago_right_residuals("dic1",i_BS_mat,BS_E,BS_R_right_dich(:,1),BS_V_right)
@@ -291,8 +291,8 @@ subroutine K_diago_driver(iq,W,X_static)
        !
        ! Right residuals
        if(l_BS_optics.or.l_BS_kerr.or.l_BS_dichroism) then
-                        call K_diago_right_residuals("abs", i_BS_mat,BS_E,BS_R_right_abs, BS_mat)
-         if(l_dip_more) call K_diago_right_residuals("kerr",i_BS_mat,BS_E,BS_R_right_kerr,BS_mat)
+                        call K_diago_right_residuals("opt1", i_BS_mat,BS_E,BS_R_right_abs, BS_mat)
+         if(l_dip_more) call K_diago_right_residuals("opt2",i_BS_mat,BS_E,BS_R_right_kerr,BS_mat)
        endif
        if(l_BS_dichroism) then
          call K_diago_right_residuals("dic1",i_BS_mat,BS_E,BS_R_right_dich(:,1),BS_mat)
@@ -389,7 +389,7 @@ subroutine K_diago_driver(iq,W,X_static)
        if (l_BS_kerr) then
          YAMBO_ALLOC_P(BS_R_right_kerr,(BSS_n_eig))
        endif
-       if (l_BS_kerr_asymm.or.l_BS_dichroism) then
+       if (l_dip_more) then
          YAMBO_ALLOC_P(BS_R_left_kerr,(BSS_n_eig))
        endif
        if (l_BS_dichroism) then

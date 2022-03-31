@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_magnetization(en,Xk,magn)
+subroutine el_magnetization(en,Xk,magn,bands)
  !
  ! Electronic magnetization for electronic Spinors
  !
@@ -50,10 +50,11 @@ subroutine el_magnetization(en,Xk,magn)
  type(levels), intent(in ) ::en
  type(bz_samp),intent(in ) ::Xk
  real(SP),     intent(out) ::magn(fft_size,3)
+ integer,  optional, intent(in) ::bands(2)
  !
  ! Work Space
  !
- integer :: isym,ifft,ib,ik,i_sp_pol,i_wf
+ integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,bands_range(2)
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
 #if defined _RT
@@ -67,9 +68,12 @@ subroutine el_magnetization(en,Xk,magn)
  !
  if (n_spin==1) return
  !
+ !
  do i_sp_pol=1,n_sp_pol
+   bands_range=(/1,en%nbm(i_sp_pol)/)
+   if(present(bands)) bands_range=bands
    do ik=1,Xk%nibz
-     do ib=1,en%nbm(i_sp_pol)
+     do ib=bands_range(1),bands_range(2)
        !
        if (allocated(PAR_IND_WF_linear%element_2D)) then
          if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle

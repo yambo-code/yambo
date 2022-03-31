@@ -30,7 +30,7 @@ subroutine SC_add_efield(E,k,i_sp_pol,V_bands,Pol)
  use fields,         ONLY:A_tot,A_ext,Efield
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:levels
  use electric,       ONLY:W_electric
  use SC,             ONLY:SC_bands
  !

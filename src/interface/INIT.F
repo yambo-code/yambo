@@ -33,7 +33,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_scatt,l_phel_corr,l_X,l_screen
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_X,l_screen
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -335,12 +335,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_real_time=runlevel_is_on('negf')
        l_elel_scatt =runlevel_is_on('el_el_scatt')
        l_elph_scatt=runlevel_is_on('el_ph_scatt')
-       l_phel_scatt=runlevel_is_on('ph_el_scatt')
        l_elphoton_scatt=runlevel_is_on('el_photon_scatt')
 #endif
 #if defined _SC && !defined _RT
        l_sc_run=runlevel_is_on('scrun')
        l_sc_magnetic=runlevel_is_on('magnetic')
+       l_sc_electric=runlevel_is_on('electric')
 #endif
 #if defined _SC || defined _RT
        l_eval_collisions=runlevel_is_on('collisions')
@@ -414,7 +414,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _PHEL
      PH_Q=(/1,elph_nQ/)
-     QP_G_er=(/0.,PH_W_debye/)
+     QP_G_er=(/0._SP,PH_W_debye/)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
@@ -449,6 +449,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        X(2)%ng=SC_X_size
      endif
 #endif
+#if defined _ELECTRIC
+     if (l_sc_electric) call initactivate(1,'dipoles')
+#endif
 #if defined _OPENMP
      if (l_dipoles) then
        n_threads_DIP=0
@@ -479,10 +482,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      ! q0 renormalization
      !
      BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
-     X(1)%q0(:)=X(1)%q0(:)*q0_def_norm/v_norm(X(1)%q0)
-     X(2)%q0(:)=X(2)%q0(:)*q0_def_norm/v_norm(X(2)%q0)
-     X(3)%q0(:)=X(3)%q0(:)*q0_def_norm/v_norm(X(3)%q0)
-     X(4)%q0(:)=X(4)%q0(:)*q0_def_norm/v_norm(X(4)%q0)
      !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
      if (STRING_same(trim(BSE_mode),"causal") ) BSE_mode="retarded"
@@ -522,7 +521,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
      endif
      !
-     if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
+     if ((l_gw0.or.l_life).and..not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr,l_phel_corr/))) call initactivate(1,'el_el_corr')
      !
    end subroutine LOCAL_after_input_IO
    !

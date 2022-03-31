@@ -171,7 +171,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  if(master_cpu) then
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   io_NonLinear=io_NL(ID)
+   io_NonLinear=io_NL("Nonlinear",ID)
    !
    if(io_NonLinear==0) then
      do i_f=1,n_frequencies

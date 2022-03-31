@@ -53,10 +53,7 @@ if test "$GIT_procedure" = "yes"; then
   fi
   m4_include([lib/yambo/driver/config/version.m4])
   AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
-  #AC_MSG_CHECKING([the libraries archive ])
-  #cp yambo/external/*.gz  $compdir/lib/archive
   cd ../
-  #AC_MSG_RESULT(populated)
   #
 else
   #

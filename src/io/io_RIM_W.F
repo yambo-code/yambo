@@ -25,12 +25,11 @@ integer function io_RIM_W(ID,mode)
  !
  use pars,           ONLY:SP
  use R_lattice,      ONLY:RIM_W_ng,RIM_n_rand_pts,RIM_W_is_diagonal,RL_vol,RIM_RL_vol,&
-&                         RIM_W,RIM_W_d,nqibz,RIM_W_E,&
+&                         RIM_W,nqibz,RIM_W_E,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy
  use IO_m,           ONLY:io_sec,read_is_on,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
- use cuda_m,         ONLY:have_cuda
 #include <memory.h>
  !
  integer :: ID

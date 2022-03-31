@@ -41,8 +41,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+# if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
+# endif
 #endif
+ !
+ ! Define io_COLLs_header to handle either serial or parallel I/O
+ !
+#include<collisions.h>
  !
 #include<memory.h>
  !
@@ -63,8 +69,14 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
-&                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
 &                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf
+#if !defined _PAR_IO
+ integer, external :: io_BS
+#endif
+#if defined _PAR_IO
+ integer, external :: io_COLLs_header,io_BS_header
+#endif
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -226,16 +238,25 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  ! BS
  !
+ !
  if (nqibz>0) then
    YAMBO_ALLOC(BSqpts,(3,nqibz))
    do i_io=1,nqibz
      call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+     io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
      io_BS_err=io_BS(i_io,Xbsk,io_ID)
+#endif
    enddo
    YAMBO_FREE(BSqpts)
  else
    call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+   io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
    io_BS_err=io_BS(1,Xbsk,io_ID)
+#endif
  endif
  !
  ! When a PPA screen is used to build the kernel the %ppaE component of Xbsk must be overwritten.
@@ -286,17 +307,17 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
 #endif
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
 #endif
  !
 end subroutine

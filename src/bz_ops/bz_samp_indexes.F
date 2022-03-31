@@ -46,7 +46,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
  use com,            ONLY:msg,fat_log
  use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_global_indexes
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use electrons,      ONLY:n_sp_pol,levels
@@ -62,11 +62,12 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use parser_m,       ONLY:parser
  use timing_m,       ONLY:timing
- use parallel_int,   ONLY:PARALLEL_global_indexes
  use openmp,         ONLY:n_threads,master_thread,OPENMP_update
 #if defined _ELPH
  use ELPH,           ONLY:elph_use_q_grid
 #endif
+ use parallel_m
+ !
 #include<memory.h>
  !
  type(levels) ::en
@@ -248,7 +249,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  ! Parallelization with Memory distribution
  !==========================================
- !
  if(X_scattering.and.Xk_grid_is_uniform.and.bse_scattering) then
    call PARALLEL_global_indexes(en,Xk,q,"BZ_Indexes")
    call PARALLEL_SETUP_K_scheme("BZINDX")
@@ -502,11 +502,12 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  do_qindx_B=master_cpu.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
 #if defined _PAR_IO
- do_qindx_B=PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
+ do_qindx_B=X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
 #endif
  !
  if (do_qindx_B) then
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/5/),ID=io_db,&
+&                  COMM=PAR_K_scheme%COM_ibz_index,DO_it=PAR_K_scheme%COM_ibz_A2A%CPU_id==0)
    io_err=io_QINDX(Xk,q,io_db)
  endif
  !

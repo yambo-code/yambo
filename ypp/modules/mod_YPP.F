@@ -62,7 +62,7 @@ module YPPm
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
- integer, parameter        :: n_SPECIAL_k_MAX=100
+ integer, parameter        :: n_SPECIAL_k_MAX=150
  real(SP),          allocatable :: CIRCUIT_k_norm(:)
  character(schlen), allocatable :: CIRCUIT_k_label(:)
  character(schlen) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "

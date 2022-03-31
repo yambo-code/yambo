@@ -31,8 +31,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:VERIFY,REP,OP_RD_CL
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
- use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table, &
-&                              pp_factor,pp_n_l_max
+ use pseudo,              ONLY:pp_kbv_dim,pp_n_l_times_proj_max,pp_table,pp_factor,pp_n_l_max
  !
 #include<memory.h>
  !
@@ -44,10 +43,8 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  real(SP)                     :: j,mj
  logical                      :: psp_has_so
- integer                      :: is,ia,il,i_ml,i_mj,l,ml,twojp1,i_m_shift(2),&
-&                                i_pp,pp_spin,i_spinor
+ integer                      :: is,ia,il,i_ml,i_mj,l,ml,twojp1,i_m_shift(2),i_pp,pp_spin,i_spinor
  integer                      :: io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err,D(3)
- !
  integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
  !
  Dip%Vnl_included=.false.

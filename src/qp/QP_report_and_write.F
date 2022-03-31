@@ -124,7 +124,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! and define a logical that define the first band of each
  ! k-point
  !
- forall (iqp=1:QP_n_states) i_k(iqp)=QP_table(iqp,3)
+ do iqp=1,QP_n_states
+   i_k(iqp)=QP_table(iqp,3)
+ enddo
  !
  i_spin=0
  !

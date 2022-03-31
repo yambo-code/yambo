@@ -21,24 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fluence(i_field)
+subroutine RT_Fluence_and_PI_kind(En,i_field)
  !
  use pars,           ONLY:SP,pi
- use units,          ONLY:SPEED_OF_LIGHT,AU2KWCMm2,PS2AUT
- use real_time,      ONLY:RT_step,NE_steps
- use fields,         ONLY:Efield,small_a
- use functions,      ONLY:theta_function
+ use units,          ONLY:PS2AUT
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time
+ use fields,         ONLY:Efield,gauge_field
+ use electrons,      ONLY:levels
+ use parser_m,       ONLY:parser
  !
  implicit none
  !
- integer      :: i_field
+ type(levels), intent(in) :: En
+ integer, intent(in)      :: i_field
  ! 
  ! Work Space
  !
- integer      :: it0,it,last_it_evaluated
- real(SP)     :: I(NE_steps),T(NE_steps),Field_time,E_coeff
- complex(SP)  :: E(3,NE_steps),A_of_t(2),E_of_t(2),theta,delta
- real(SP),external :: RIntegrate
+ type(gauge_field) :: A
+ !
+ logical      :: l_print_rabi
+ integer      :: it0,it,last_it_evaluated,NE_i_time_save
+ real(SP)     :: I(NE_steps),Omega(NE_steps),T(NE_steps)
+ !
+ real(SP),external :: RIntegrate,RT_Rabi_frequency
+ !
+ call parser("RabiAnalysis",l_print_rabi)
  !
  ! E(t)=-d A(t)/dt / SPEED_OF_LIGHT
  !
@@ -54,14 +61,17 @@ subroutine RT_Fluence(i_field)
    Efield(i_field)%t_final=Efield(i_field)%t_initial
    Efield(i_field)%t_final_indx=Efield(i_field)%t_initial_indx
    Efield(i_field)%fluence=0._SP
+   Efield(i_field)%pi_kind=0._SP
    return
  endif
  !
  I=0._SP
  T=0._SP
  last_it_evaluated=0
+ NE_i_time_save=NE_i_time
  !
  Efield(i_field)%fluence=0._SP
+ Efield(i_field)%pi_kind=0._SP
  !
  it0=Efield(i_field)%t_initial_indx
  !
@@ -71,44 +81,39 @@ subroutine RT_Fluence(i_field)
    !
    if ((it-it0)>6*nint(Efield(i_field)%width/RT_step)) exit
    !
-   Field_time=T(it)-Efield(i_field)%t_initial
+   NE_i_time=it
    !
-   A_of_t=small_a(Field_time,Efield(i_field),0)
-   E_of_t=small_a(Field_time,Efield(i_field),1)
+   call RT_Ext_fields(A,T(it),i_field)
    !
-   theta=theta_function(Field_time,RT_step,0)
-   delta=theta_function(Field_time,RT_step,1)
+   I(it)    =A%intensity
    !
-   select case(Efield(i_field)%ef_pol)
-   case("linear")
-     E_coeff=Efield(i_field)%amplitude
-     E(:,it)=E_coeff*Efield(i_field)%versor*( E_of_t(1)*theta+A_of_t(1)*delta )
-   case('circular')
-     E_coeff=Efield(i_field)%amplitude/sqrt(2._SP)
-     E(:,it)=E_coeff*Efield(i_field)%versor*( E_of_t(1)*theta+A_of_t(1)*delta )                 &
-&           +E_coeff*Efield(i_field)%versor_circ*( E_of_t(2)*theta+A_of_t(2)*delta )
-   end select
-   !
-   I(it)=(abs(E(1,it))**2+abs(E(2,it))**2+abs(E(3,it))**2)
+   Omega(it)=A%envelop
    !
    last_it_evaluated=it
    !
  enddo
  !
- ! I(t) = \frac{c}{8\pi} E^2(t)
- ! From au to kW/cm^2
+ NE_i_time=NE_i_time_save
  !
- I(:)=I(:)*SPEED_OF_LIGHT/4._SP/pi*AU2KWCMm2
+ ! Omega(t)
+ ! I divide for |E| which is already accounted for in Raby frequency
+ ! Rabi_frequency is in THz  
+ !
+ Omega(:)=Omega(:)*RT_Rabi_frequency(En,i_field,l_print_rabi)/Efield(i_field)%amplitude
  ! 
  ! To get the fluence in kJ/cm^2 I should translate T in sec.
  ! Then I would have a factor 10^-12 ( 1 nJ/cm^2 = 10^-12 kJ/cm^2 )
  ! thus I ruther convert time in ps
  !
- T(:)=T(:)/PS2AUT      ! au -> ps
+ T(:)=T(:)/real(PS2AUT,SP)      ! au -> ps
  !
  Efield(i_field)%fluence=RIntegrate(I(it0:last_it_evaluated),T(it0:last_it_evaluated),last_it_evaluated-it0+1)
+ !
+ Efield(i_field)%pi_kind=RIntegrate(Omega(it0:last_it_evaluated),T(it0:last_it_evaluated),last_it_evaluated-it0+1)
  !
  Efield(i_field)%t_final_indx=last_it_evaluated
  Efield(i_field)%t_final=(Efield(i_field)%t_final_indx-1)*RT_step
  !
-end subroutine RT_Fluence
+ if (l_print_rabi) call RT_Rabi_frequency_ALL_and_print(En,i_field)
+ !
+end subroutine RT_Fluence_and_PI_kind

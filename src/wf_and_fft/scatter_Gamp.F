@@ -32,7 +32,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ! isc%gamp are used multiplied by eps^-1 so, if present, the anisotropy
  ! is incuded.
  !
- use pars,          ONLY:SP,pi,schlen
+ use pars,          ONLY:SP,pi
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&

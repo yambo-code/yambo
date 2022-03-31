@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
-&                        l_GW_terminator,GW_terminator_Kind,QP_G_info,GW_iterations,GWo_iterations
+&                        l_GW_terminator,QP_G_info,GW_iterations,GWo_iterations
  use parser_m,      ONLY:parser
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan

@@ -24,8 +24,8 @@
 subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  use drivers,        ONLY:l_elel_scatt,l_elph_scatt
- use units,          ONLY:FS2AUT,SP,HA2EV
- use pars,           ONLY:schlen,lchlen,rZERO
+ use units,          ONLY:FS2AUT,HA2EV
+ use pars,           ONLY:schlen,lchlen,rZERO,SP,LP
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use R_lattice,      ONLY:bz_samp
@@ -39,7 +39,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  use vec_operate,    ONLY:c2a,v_norm
  use RT_control,     ONLY:RT_apply
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
- use real_time,      ONLY:RT_carriers,RT_bands
+ use real_time,      ONLY:RT_carriers,RT_bands,RT_nk
  use OUTPUT,         ONLY:OUTPUT_driver
  use interfaces,     ONLY:DESC_write
  use timing_m,       ONLY:timing
@@ -52,7 +52,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  ! Work Space
  !
- integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,Nk_path,last_ik,ibp
+ integer               :: i_RT,i_qp,ik_RT,ik,ib,i_spin,i_T,n_gamma,n_output,k_range(2),bands_range(2),i_a,Nk_path,ibp
  real(SP)              :: io_Time,tmp_lifetimes(6),data_to_plot(9),k_al(3),k_cc(3),axis(3,3),Ec,df,&
 &                         data_to_plot_cumulative(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,9),O(3),&
 &                         band_occupation(RT_bands(1):RT_bands(2)),dipoles_Weight
@@ -61,7 +61,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  character(3)          :: ch3_dummy
  logical               :: do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol),&
 &                         l_OCCgroup_k_and_b,l_OCCgroup_path,l_OCCgroup,l_E_select
- real(SP),allocatable  :: spin_factors(:,:,:),magn_factors(:,:,:)
+ integer(LP),allocatable :: k_flag(:)
+ real(SP),allocatable    :: spin_factors(:,:,:),magn_factors(:,:,:)
  !
  if(all(QP_table==0)) return
  !
@@ -139,6 +140,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    !
    call OUTPUT_driver("bands_occupation",action="open")
    !
+   YAMBO_ALLOC(k_flag,(RT_nk))
+   k_flag=0
+   !
  endif
  !
  n_gamma=0
@@ -179,7 +183,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
    if (l_OCCgroup_path) data_to_plot(2:7)=rZERO
    band_occupation=rZERO
    dipoles_Weight =rZERO
-   last_ik=0
    Nk_path=0
    !
    RT_loop: do i_RT=1,RT_carriers%nstates
@@ -202,6 +205,8 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        !
        if (k_al(1)<0..or.k_al(1)>v_norm(axis(1,:))) cycle RT_loop
        if (k_al(2)<0..or.k_al(2)>v_norm(axis(2,:))) cycle RT_loop
+       !if (abs(k_al(1))<epsilon(1._SP).or.abs(k_al(1)-v_norm(axis(1,:)))<epsilon(1._SP)) cycle RT_loop
+       !if (abs(k_al(2))<epsilon(1._SP).or.abs(k_al(2)-v_norm(axis(2,:)))<epsilon(1._SP)) cycle RT_loop
        !
      endif  
      !
@@ -252,9 +257,9 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
          dipoles_Weight=dipoles_Weight+DIPs_mask(ib,ik,i_spin)
        endif
        !
-       if (ik_RT/=last_ik) then
-         last_ik=ik_RT
+       if (k_flag(ik_RT)==0) then
          Nk_path=Nk_path+1
+         k_flag(ik_RT)=1
        endif
        !
        band_occupation(ib)=band_occupation(ib)+df
@@ -333,6 +338,7 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
  !
  YAMBO_FREE(spin_factors)
  YAMBO_FREE(magn_factors)
+ YAMBO_FREE(k_flag)
  !
  call timing('RT_occ_time',OPR='stop')
  !

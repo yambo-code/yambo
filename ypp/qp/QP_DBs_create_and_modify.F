@@ -39,13 +39,16 @@ subroutine QP_DBs_create_and_modify(en,k)
  !
  ! Work Space
  !
- integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is
+ integer  :: io_QP_and_GF_err,ID,i_u,ib,ik,ic,is,ik_qp,nk_lim(2),nb_lim(2)
  integer, external    :: io_QP_and_GF
  logical, allocatable :: QP_done(:,:,:,:)
  type(QP_t) :: qp
  !
  call section("=",'QP databases creation')
  !========================================
+ !
+ nk_lim=(/minval(QP_user_corrections(:,2)),maxval(QP_user_corrections(:,3))/)
+ nb_lim=(/minval(QP_user_corrections(:,4)),maxval(QP_user_corrections(:,5))/)
  !
  ! ...resets
  !
@@ -59,20 +62,22 @@ subroutine QP_DBs_create_and_modify(en,k)
  ! ...mark the states to correct
  !
  do i_u=1,size(QP_user_corrections,1)
-   do is=1,n_sp_pol
-     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
-       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
-         QP_state(ib,ik)=.TRUE.
-         QP_nb=max(QP_nb,ib)
-         QP_nk=max(QP_nk,ib)
-       enddo
+   do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+     do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
+       QP_state(ib,ik)=.TRUE.
      enddo
    enddo
  enddo
  !
- ! ... not turn QP_state into QP_table
+ QP_nk=nk_lim(2)
+ QP_nb=nb_lim(2)
+ !
+ ! ... now turn QP_state into QP_table
  !
  call QP_state_table_setup(en)
+ !
+ QP_nk=nk_lim(2)-nk_lim(1)+1
+ QP_nb=nb_lim(2)-nb_lim(1)+1
  !
  qp%n_states=QP_n_states
  qp%nb      =QP_nb
@@ -80,7 +85,7 @@ subroutine QP_DBs_create_and_modify(en,k)
  ! 
  call QP_alloc(qp)
  !
- YAMBO_ALLOC(QP_done,(QP_nb,QP_nb,QP_nk,n_sp_pol))
+ YAMBO_ALLOC(QP_done,(nb_lim(1):nb_lim(2),nb_lim(1):nb_lim(2),nk_lim(1):nk_lim(2),n_sp_pol))
  QP_done=.FALSE.
  !
  ! ...let's fill now
@@ -88,20 +93,21 @@ subroutine QP_DBs_create_and_modify(en,k)
  ic=1
  do i_u=1,size(QP_user_corrections,1)
    !
-   if (QP_user_corrections(i_u,7)<epsilon(1._SP)) QP_user_corrections(i_u,7)=1.
+   if (QP_user_corrections(i_u,8)<epsilon(1._SP)) QP_user_corrections(i_u,8)=1._SP
    !
-   do is=1,n_sp_pol
-     do ik=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,2))
-       do ib=int(QP_user_corrections(i_u,3)),int(QP_user_corrections(i_u,4))
+   do is=int(QP_user_corrections(i_u,1)),int(QP_user_corrections(i_u,1))
+     do ik=int(QP_user_corrections(i_u,2)),int(QP_user_corrections(i_u,3))
+       ik_qp=ik-QP_user_corrections(i_u,2)+1
+       do ib=int(QP_user_corrections(i_u,4)),int(QP_user_corrections(i_u,5))
          !
          qp%E_bare(ic) =en%E(ib,ik,is)
-         qp%E(ic)      =cmplx(QP_user_corrections(i_u,5)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,6)/HA2EV,kind=SP)
-         qp%Z(ic)      =cmplx(QP_user_corrections(i_u,7),0.,kind=SP)
+         qp%E(ic)      =cmplx(QP_user_corrections(i_u,6)/HA2EV+en%E(ib,ik,is),QP_user_corrections(i_u,7)/HA2EV,kind=SP)
+         qp%Z(ic)      =cmplx(QP_user_corrections(i_u,8),0._SP,kind=SP)
          qp%table(ic,1)=ib
          qp%table(ic,2)=ib
          qp%table(ic,3)=ik
          if(n_sp_pol==2) qp%table(ic,4)=is
-         qp%k(qp%table(ic,3),:)  =k%pt(qp%table(ic,3),:)
+         qp%k(ik_qp,:)  =k%pt(ik,:)
          !
          if(QP_done(ib,ib,ik,is)) call error("Duplicated quasi-particle index found")
          !

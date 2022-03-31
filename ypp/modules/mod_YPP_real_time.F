@@ -36,7 +36,6 @@ module YPP_real_time
  ! RT DBs (what)
  !
  logical  :: l_RTpump_energy
- logical  :: l_RTpump_kspace
  logical  :: l_RTpump_Fermi
  !
  ! RT Post-processing (what)
@@ -44,6 +43,7 @@ module YPP_real_time
  logical  :: l_RT_occupations
  logical  :: l_RT_lifetimes
  logical  :: l_RT_density
+ logical  :: l_RT_G_two_times
  logical  :: l_RT_X
  logical  :: l_NL_X
  logical  :: l_NL_exc
@@ -98,6 +98,7 @@ module YPP_real_time
  integer  :: N_pumps
  integer  :: N_probe_frequencies
  integer  :: X_order
+ character(schlen) :: X_kind
  character(schlen) :: Probe_Keyword
  character(schlen) :: Pump_Keyword
  integer, parameter:: max_n_of_paths=500
@@ -129,6 +130,10 @@ module YPP_real_time
  !
  real(SP),allocatable     :: RT_time(:)
  !
+ ! (RT) G<(t,t')
+ !
+ real(SP)                 :: Rho_deph
+ !
  type RT_ctl
    real(SP) :: delta_W             =0._SP   ! delta W
    real(SP) :: X_W_range(2)        =0._SP   ! Response energy range 
@@ -153,20 +158,12 @@ module YPP_real_time
    complex(SP), allocatable :: W(:)
  end type OBS_el
  !
- type(OBS_el) :: Pol 
- type(OBS_el) :: Curr 
- type(OBS_el) :: ElField 
+ type(OBS_el), allocatable :: Pol(:)
+ type(OBS_el), allocatable :: Curr(:)
+ type(OBS_el) :: ElField
+ type(OBS_el) :: GreenF_T_and_W
  !
  interface
-   !
-   subroutine  RT_OBSERVABLES_IO(what,IO_error,first_sec_only,G_lesser_only,COM_,mesg)
-     use electrons,     ONLY:levels
-     implicit none
-     character,    optional :: what
-     logical,      optional :: IO_error,first_sec_only,G_lesser_only
-     integer,      optional :: COM_
-     character(*), optional :: mesg
-   end subroutine
    !
    subroutine RT_IO_carriers(Time,imposed_COM)
      use pars,       ONLY:SP
@@ -175,8 +172,8 @@ module YPP_real_time
    end subroutine RT_IO_carriers
    !
  end interface
-   !
-   contains 
+ !
+ contains 
    !
    subroutine RT_conf_duplicate(Cin,Cout)
      type(RT_ctl) :: Cin,Cout
@@ -193,7 +190,7 @@ module YPP_real_time
      Cout%damping=Cin%damping   
    end subroutine
    !
-   subroutine FT_free(FT)
+   subroutine OBS_el_free(FT)
      type(OBS_el) :: FT
      YAMBO_FREE(FT%F_w)
      YAMBO_FREE(FT%F_t)
@@ -214,16 +211,18 @@ module YPP_real_time
    subroutine gimme_a_G_Time_Point(i_T)
      use real_time,  ONLY:G_MEM_steps
      use RT_control, ONLY:Gless_RT_IO_t
-     integer            ::i_T,i_Tp
+     integer            ::i_T,i_Tp,Nt
      real(SP)           ::TIME_diff,REF_diff
      !
-     REF_diff=Gless_RT_IO_t%Time(Gless_RT_IO_t%N)-Gless_RT_IO_t%Time(Gless_RT_IO_t%N-G_MEM_steps)
+     Nt=size(Gless_RT_IO_t%Time)
      !
-     do i_Tp=1,Gless_RT_IO_t%N
+     REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
+     !
+     do i_Tp=1,Nt
        TIME_diff= abs ( Gless_RT_IO_t%Time(i_Tp) - RT_time(i_T) )
        if (abs(TIME_diff)<REF_diff ) then 
          REF_diff=TIME_diff
-         Gless_RT_IO_t%iN_IO=i_Tp
+         Gless_RT_IO_t%N=i_Tp
        endif
      enddo
    end subroutine

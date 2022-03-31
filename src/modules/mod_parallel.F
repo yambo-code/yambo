@@ -122,7 +122,7 @@ module parallel_m
  type(yMPI_comm),SAVE   :: INTRA_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs of the same chain
  type(yMPI_comm),SAVE   :: INTER_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among same CPU (same ID) of different CHAINS 
  type(yMPI_comm),SAVE   :: CHILD_CHAIN(MAX_N_OF_CHAINS) ! COMMUNICATOR among CPUs (same ID) of different CHAINS enclosed in 
-                                                       ! the above INTER_CHAIN cpu's'
+                                                        ! the above INTER_CHAIN cpu's'
  !
  ! CPU's
  !=======
@@ -184,8 +184,8 @@ module parallel_m
  ! SCHEMEs ...
  !========================
  type PAR_scheme
-   type(yMPI_comm)      :: COMM_i
-   type(yMPI_comm)      :: COMM_a2a
+   type(yMPI_comm)     :: COMM_i
+   type(yMPI_comm)     :: COMM_a2a
    type(PP_indexes)    :: IND
    integer             :: ID
    integer             :: D(2)
@@ -217,8 +217,8 @@ module parallel_m
  !type(PAR_scheme),SAVE :: PARs_RT_plasma
  !
  type PARk_str
-   type(yMPI_comm)      :: COM_ibz_INDEX
-   type(yMPI_comm)      :: COM_ibz_A2A
+   type(yMPI_comm)     :: COM_ibz_INDEX
+   type(yMPI_comm)     :: COM_ibz_A2A
    type(PP_indexes)    :: IND_ibz
    type(PP_indexes)    :: IND_bz
    integer,allocatable :: ibz_index(:)
@@ -402,6 +402,7 @@ module parallel_m
  ! ... G bands
  type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX
  type(yMPI_comm),SAVE :: PAR_COM_G_b_A2A
+ type(yMPI_comm),SAVE :: PAR_COM_G_b_INDEX_global
  !
  ! ... WF
  type(yMPI_comm),SAVE :: PAR_COM_WF_k_A2A

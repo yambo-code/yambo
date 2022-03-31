@@ -156,13 +156,13 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (iq> 1) call PP_redux_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
-   call X_irredux(iq,X_par(1),Xen,Xk,wv,X,Dip)
+   call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF eps
    if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
    !
    ! X Dyson equation solver
-   if (.not.l_rpa_IP) call X_redux(iq,X_par(1),wv,X)
+   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
    !
    if (Macroscopic_CPU) then
      !
@@ -250,7 +250,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! CLEAN (each q)
    call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
-   call X_ALLOC_parallel(X_par(1),0,0,"CLEAN")
+   call MATRIX_reset(X_par(1))
    YAMBO_FREE(X_par_lower_triangle%blc)
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -261,7 +261,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! CLEAN
  !
- call MATRIX_reset(X_par(1))
  call MATRIX_reset(X_par_lower_triangle)
  deallocate(X_par)
  call WF_free(WF)

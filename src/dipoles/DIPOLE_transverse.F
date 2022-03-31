@@ -39,7 +39,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              compute_P2_dipoles,compute_Spin_dipoles
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD
+ use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
  use wave_func,           ONLY:wf_ng,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
@@ -57,8 +57,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm
- integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,&
-&                                i_sp_pol,n_LT_steps,ik_mem,ic_min
+ logical, allocatable         :: element_1D_spin(:)
+ integer                      :: ik,ic_wf,iv_wf,ic,iv,ifrag,i_sp_pol,N_elements_todo,ik_mem,ic_min
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
@@ -71,9 +71,22 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  call timing('DIPOLE_transverse',OPR='start')
  !
+ ! CPU-depedent work to be done 
+ !==============================
+ N_elements_todo=0
+ do iv=Dip%ib(1),Dip%ib_lim(1) 
+  if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+  ic_min=max(iv,Dip%ib_lim(2))
+  if (l_X_terminator) ic_min=iv
+  do ic=ic_min,Dip%ib(2)
+    if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
+    N_elements_todo=N_elements_todo+1
+  enddo
+ enddo
+ N_elements_todo=N_elements_todo*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
+ !
  ! Logicals setup
  !================
- !
  l_eval_DIP_iR=use_g_space_approach
  l_eval_DIP_V =use_g_space_approach.or.Dip%force_v_g_space
  l_eval_DIP_P2=compute_P2_dipoles
@@ -93,16 +106,19 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    io_KB_pwscf_err = io_err(2)
    io_Vnl_err      = io_err(3)
    !
+   IO_ACT_NOW=OP_RD
+   if (N_elements_todo==0) IO_ACT_NOW=OP_RD_CL
+   !
    ! Define pp_kbv_dim_yambo and pp_kbv_table
    !
    if (io_KB_pwscf_err==0) then
-     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
+     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
      call DIPOLE_kb_pwscf_def_dim()
    endif
    !
    if (io_KB_abinit_err==0) then
-     call io_control(ACTION=OP_RD,SEC=(/2/),ID=ID)
+     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
      call DIPOLE_kb_abinit_def_dim()
    endif
@@ -119,8 +135,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    ! Eo    are always the eigenvalues consistent with the WFs
    ! E     do also include the QP corrections when Eo are allocated
    !
-   if (allocated(Xen%Eo).and.l_eval_dip_iR) &
-   &   call msg('rns','[X] Using energies without QP corrections for the dipoles')
+   if (allocated(Xen%Eo).and.l_eval_dip_iR) call msg('rns','[X] Using energies without QP corrections for the dipoles')
+   !
+   allocate(element_1D_spin(Xk%nibz*n_sp_pol))
+   element_1D_spin=(/PAR_IND_DIPk_ibz%element_1D(:),PAR_IND_DIPk_ibz%element_1D(:)/)
    !
  endif
  !
@@ -130,46 +148,31 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
  !
- ! Live Timing steps
- n_LT_steps=0
- do iv=Dip%ib(1),Dip%ib_lim(1) 
-  if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
-  ic_min=max(iv,Dip%ib_lim(2))
-  if (l_X_terminator) ic_min=iv
-  do ic=ic_min,Dip%ib(2)
-    if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
-    n_LT_steps=n_LT_steps+1
-  enddo
- enddo
- n_LT_steps=n_LT_steps*n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)
- if (n_LT_steps>0) call live_timing(trim(live_t_string),n_LT_steps)
- !
  ! Main loop over k in IBZ
+ !
+ if (N_elements_todo>0) call live_timing(trim(live_t_string),N_elements_todo)
+ !
  do i_sp_pol=1,n_sp_pol
    !
-   if (n_LT_steps==0) cycle
+   if (N_elements_todo==0) cycle
    !
    do ik=1,Xk%nibz
+     ! 
+     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+     !
      ifrag=ik+(i_sp_pol-1)*Xk%nibz
      ! 
      ! [Vnl,r]
      !
      if(l_use_comm) then
-       if (io_KB_pwscf_err==0.and.ifrag>1) then
-         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
-         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
-         io_KB_pwscf_err=io_KB_pwscf(ID)
-       endif
        !
-       if (io_KB_abinit_err==0.and.ifrag>1) then
-         IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
-         call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
-         io_KB_abinit_err=io_KB_abinit(ID)
-       endif
+       IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol,element_1D=element_1D_spin)
+       call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
+       !
+       if (io_KB_pwscf_err==0 .and.ifrag>1)  io_KB_pwscf_err=io_KB_pwscf(ID)
+       if (io_KB_abinit_err==0.and.ifrag>1) io_KB_abinit_err=io_KB_abinit(ID)
        !
      endif
-     ! 
-     if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle 
      !
      ik_mem=PAR_DIPk_ibz_index(ik)
      !
@@ -233,7 +236,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
-         if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5*real(n_spinor,SP)
+         if (io_Vnl_err==0) rho(:) = rho(:) + Vnl(:3,ic,iv,ik,i_sp_pol)*0.5_SP*real(n_spinor,SP)
          !
          if (io_KB_abinit_err==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VAR(kbv))
          if (io_KB_pwscf_err ==0.and.pp_kbv_dim_yambo>0) call DIPOLE_kb_sum(ic_wf,iv_wf,rho,DEV_VAR(kbv))

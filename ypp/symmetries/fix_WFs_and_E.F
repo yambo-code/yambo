@@ -32,7 +32,6 @@ subroutine fix_WFs_and_E(E,k,k_save,kpoints_map,old_nsym,S_contains_TR,action_ki
  &                             WF,wf_nb_io_groups
  use electrons,           ONLY:levels,E_reset,n_sp_pol,n_spinor
  use LIVE_t,              ONLY:live_timing
- use stderr,              ONLY:intc
  use R_lattice,           ONLY:bz_samp,g_rot,ng_closed,nkibz
  use D_lattice,           ONLY:spin_sop
  use interfaces,          ONLY:WF_load,WF_free

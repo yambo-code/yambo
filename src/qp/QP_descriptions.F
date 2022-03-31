@@ -26,7 +26,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! WARNING ! Changes here must be updated in io_QP_and_GF as well.
  !
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_DbGd
+ use X_m,           ONLY:X_t,use_X_DbGd,OPTICAL_averaged_dirs_string
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
@@ -58,6 +58,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! Work Space
  !
+ integer           :: id
  integer, save     :: n_descs_save
  !
  if (.not.Update) n_descs_save=qp%desc%n
@@ -111,6 +112,12 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      !
      call IO_desc_add(qp%desc,str='X BZ energy Double Grid',kind='l',L=use_X_DbGd)
+     !
+   endif
+   !
+   if (ver_is_gt_or_eq(-1,(/5,1,1/))) then
+     !
+     call IO_desc_add(qp%desc,str='X Optical Averaged directions',kind='s',S=OPTICAL_averaged_dirs_string)
      !
    endif
    !
@@ -224,6 +231,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='[GF] Damping',term='ev',SZ=2,kind='r',R=QP_G_dr*HA2EV)
    !
  endif
+ !
+ ! Force all desc components to be checked at the I/O time
+ !
+ do id=1,qp%desc%n
+   qp%desc%ops(1,id)="=="
+   qp%desc%check(id)=.TRUE.
+ enddo
  !
  ! QP states
  !

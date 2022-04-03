@@ -37,7 +37,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
  use DIPOLES,    ONLY:use_covariant_approach,use_real_space_approach,&
 &                     Vnl_commutator_warning,use_shifted_grids_approach,use_g_space_approach,&
-&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_dipoles
+&                     compute_P2_dipoles,compute_Spin_dipoles,compute_Orb_rt_dipoles,compute_Orb_cd_dipoles
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
@@ -369,7 +369,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use_g_space_approach       = .TRUE.
  compute_P2_dipoles         = .FALSE.
  compute_Spin_dipoles       = .FALSE.
- compute_Orb_dipoles        = .FALSE.
+ compute_Orb_rt_dipoles     = .FALSE.
+ compute_Orb_cd_dipoles     = .FALSE.
  use_X_DbGd=.FALSE.
  X_DbGd_percentual=-1.
  eps_2_alpha=1._SP

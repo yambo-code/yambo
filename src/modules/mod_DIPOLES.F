@@ -37,7 +37,8 @@ module DIPOLES
  logical                  :: use_real_space_approach
  logical                  :: compute_P2_dipoles
  logical                  :: compute_Spin_dipoles
- logical                  :: compute_Orb_dipoles
+ logical                  :: compute_Orb_rt_dipoles
+ logical                  :: compute_Orb_cd_dipoles
  logical                  :: Vnl_commutator_warning
  ! 
  ! other

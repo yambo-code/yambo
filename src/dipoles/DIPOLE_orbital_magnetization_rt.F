@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
+subroutine Dipole_orbital_magnetization_rt(Xen,Xk,Dip)
  !
  ! This routine returns <L>
+ ! Using PRB 74, 024408 (2006)
  !
  use pars,                ONLY:SP,cI
  use LIVE_t,              ONLY:live_timing
@@ -31,7 +32,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index
  use vec_operate,         ONLY:cross_product
  use R_lattice,           ONLY:bz_samp
- use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t,DIP_v
+ use DIPOLES,             ONLY:DIP_iR,DIP_orbital,DIPOLE_t
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_VAL_BANDS_DIP_ID,&
 &                              PAR_IND_CON_BANDS_DIP,PAR_IND_CON_BANDS_DIP_ID
@@ -45,13 +46,14 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  ! Work Space
  !
  integer                      :: ik,ic,iv,ib,i_sp_pol,n_LT_steps,ik_mem
- complex(SP)                  :: DIP_x_loc(3),DIP_v_loc(3)
+ real(SP)                     :: Eb,Ev,Ec
+ complex(SP)                  :: DIP_pos(3,2),DIP_tmp(3)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization(rt)',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -69,22 +71,38 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
        !
        if(.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
        !
+       Ev=Xen%E(iv,ik,i_sp_pol)
+       if (allocated(Xen%Eo)) Ev=Xen%Eo(iv,ik,i_sp_pol)
+       !
        do ic=max(iv,Dip%ib_lim(2)),Dip%ib(2)
          !
          if(.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
          !
+         Ec=Xen%E(ic,ik,i_sp_pol)
+         if (allocated(Xen%Eo)) Ec=Xen%Eo(ic,ik,i_sp_pol)
+         !
          do ib=Dip%ib(1),Dip%ib(2)
            !
-           DIP_x_loc(:)=-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
-           
-           DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
+           Eb=Xen%E(ib,ik,i_sp_pol)
+           if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)
            !
-           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+ &
-           & cross_product(DIP_x_loc,DIP_v_loc)
+           !if (iv< ib) DIP_pos(:,1)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
+           !if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
+           !if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
+           !if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
+           DIP_pos(:,1)= -cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+           DIP_pos(:,2)= -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
-           ! DEBUG <
-           !write(*,*) "[DIP] writing DIP_orbital(..,ic,iv,ik,,) values"
-           ! DEBUG >
+           !DIP_tmp=-cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           DIP_tmp=cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           !
+           ! Local part
+           !
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+Eb*DIP_tmp
+           !
+           ! Itinerant part
+           !
+           DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,2)+(Ev+Ec)/2._SP*DIP_tmp
            !
          enddo
          !
@@ -99,4 +117,4 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  !
  call live_timing()
  !
-end subroutine Dipole_orb_magn_forCD
+end subroutine Dipole_orbital_magnetization_rt

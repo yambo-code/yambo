@@ -47,7 +47,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS,&
-&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles
+&                         compute_P2_dipoles,compute_Orb_rt_dipoles,compute_Orb_cd_dipoles,compute_Spin_dipoles
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -117,15 +117,17 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
  compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
- compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
+ compute_Orb_rt_dipoles      = index(Dip%computed,"OrbRT") /=0
+ compute_Orb_cd_dipoles      = index(Dip%computed,"OrbCD") /=0
 #if defined _SC
  compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
 #endif
 #if defined _RT
  compute_P2_dipoles          = compute_P2_dipoles   .or. l_real_time
  compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_real_time .and. n_spin>1)
- compute_Orb_dipoles         = compute_Orb_dipoles  .or. (l_real_time .and. n_spin>1)
+ compute_Orb_rt_dipoles      = compute_Orb_rt_dipoles  .or. ((l_real_time .and. n_spin>1) .and. (.not. compute_Orb_cd_dipoles))
 #endif
+ compute_Orb_cd_dipoles      = compute_Orb_cd_dipoles  .or. (l_BS_dichroism .and. (.not. compute_Orb_rt_dipoles))
  compute_Spin_dipoles        = compute_Spin_dipoles .or. (l_BS_magnons .and. n_spin>1)
  !
  if(.not.any((/use_g_space_approach,use_real_space_approach,use_covariant_approach,use_shifted_grids_approach/))) then
@@ -144,10 +146,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  idir_not_done           =.true.
  !
  Dip%computed='R V P'
- if (compute_P2_dipoles)   Dip%computed=trim(Dip%computed)//' P2'
- if (compute_Spin_dipoles) Dip%computed=trim(Dip%computed)//' Spin'
- if (compute_Orb_dipoles)  Dip%computed=trim(Dip%computed)//' Orb'
- if (l_BS_dichroism)       Dip%computed=trim(Dip%computed)//' OrbCD'
+ if (compute_P2_dipoles)      Dip%computed=trim(Dip%computed)//' P2'
+ if (compute_Spin_dipoles)    Dip%computed=trim(Dip%computed)//' Spin'
+ if (compute_Orb_rt_dipoles)  Dip%computed=trim(Dip%computed)//' OrbRT'
+ if (compute_Orb_rt_dipoles)  Dip%computed=trim(Dip%computed)//' OrbCD'
  !
  if (use_covariant_approach)  eval_OVERLAPS=.true.
  !
@@ -198,11 +200,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize()
    !
-#if defined _RT
-   if (compute_Orb_dipoles)        call DIPOLE_orbital_magnetization(Xen,Xk,Dip)
-#else
-   if (l_BS_dichroism)             call DIPOLE_orb_magn_forCD(Xen,Xk,Dip)
-#endif
+   if (compute_orb_rt_dipoles)     call DIPOLE_orbital_magnetization_rt(Xen,Xk,Dip)
+   !
+   if (compute_orb_cd_dipoles)     call DIPOLE_orbital_magnetization_cd(Xen,Xk,Dip)
    !
    call DIPOLES_ppredux_and_symmetrize_orbt()
    !
@@ -251,13 +251,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  call DIP_alloc('DIP_v')
  if (use_covariant_approach) call DIP_alloc('DIP_S')
  if (compute_P2_dipoles)     call DIP_alloc('P_square') 
- if (compute_Orb_dipoles)    call DIP_alloc('DIP_orbital')
+ if (compute_Orb_rt_dipoles) call DIP_alloc('DIP_orbital')
+ if (compute_Orb_cd_dipoles) call DIP_alloc('DIP_orbital')
  if (compute_Spin_dipoles)   call DIP_alloc('DIP_spin')
 #if defined _RT
  if (compute_Spin_dipoles.and.n_spinor==2) call DIP_alloc('DIP_P_spinor')
 #endif
- !
- if(l_BS_dichroism) call DIP_alloc('DIP_orbital')
  !
  contains
    !
@@ -270,8 +269,12 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
      DIP_P=cZERO
      DIP_v=cZERO
      !
-     if (compute_Orb_dipoles) then
+     if (compute_Orb_rt_dipoles) then
        call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,2/))
+       DIP_orbital=cZERO
+     endif
+     if (compute_Orb_cd_dipoles) then
+       call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,1/))
        DIP_orbital=cZERO
      endif
      if (compute_Spin_dipoles) then
@@ -291,11 +294,6 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
        P_square=cZERO
      endif
 #endif
-     !
-     if (l_BS_dichroism) then
-       call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,1/))
-       DIP_orbital=cZERO
-     endif
      !
      if(use_covariant_approach) then
        call DIP_alloc('DIP_S',(/Dip%ib(2),Dip%ib(2),6,Xk%nbz/))
@@ -400,8 +398,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
     integer  :: ic,iv,i_sp_pol,ik,ik_mem,i_dips,n_dips
     !
     n_dips=0
-    if (compute_Orb_dipoles) n_dips=2
-    if (l_BS_dichroism)      n_dips=1
+    if (compute_Orb_rt_dipoles) n_dips=2
+    if (compute_Orb_cd_dipoles) n_dips=1
     !
     do i_dips=1,n_dips
     do i_sp_pol=1,n_sp_pol

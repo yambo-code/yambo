@@ -127,7 +127,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
- use electric,    ONLY:l_no_P_periodic,l_force_SndOrd
+ use electric,    ONLY:l_P_periodic,l_force_SndOrd
 #endif
 #if defined _YAML_OUTPUT
  use com,         ONLY:depth_yaml
@@ -575,7 +575,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  call IO_desc_reset(SC_desc)
  !
- l_no_P_periodic=.FALSE.
+ l_P_periodic   =.FALSE.
  l_force_SndOrd =.FALSE.
  !
 #endif

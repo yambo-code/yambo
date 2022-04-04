@@ -28,7 +28,7 @@
 #
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
-# [@PARIO_check@] PARALLEL-IO
+# [@PARIO_check@] PARALLEL-IO @PARIO_info@
 # 
 # - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
 #

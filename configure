@@ -636,6 +636,7 @@ BLACS_str
 LAPACK_str
 BLAS_str
 FFT_str
+PARIO_info
 HDF5_info
 HDF5_str
 NETCDF_info
@@ -1641,7 +1642,7 @@ Optional Features:
   --enable-par-linalg     Use parallel linear algebra. Default is no
   --enable-hdf5-compression
                           Activate the HDF5 data compression. Default is no.
-  --enable-hdf5-par-io    Activate the HDF5 parallel io. Default is no.
+  --enable-hdf5-par-io    Enable to the HDF5 par I/O. Default is yes
   --enable-hdf5-p2y-support
                           Activate HDF5 support in p2y. Default is no unless
                           parallel HDF5 libs are linked.
@@ -12800,11 +12801,13 @@ if test "${enable_hdf5_compression+set}" = set; then :
 fi
 
 #
-# HDF5 PAR IO
+# HDF5 SER IO
 #
 # Check whether --enable-hdf5_par_io was given.
 if test "${enable_hdf5_par_io+set}" = set; then :
   enableval=$enable_hdf5_par_io;
+else
+  enable_hdf5_par_io="yes"
 fi
 
 #
@@ -12819,8 +12822,15 @@ fi
 enable_hdf5="yes" ;
 internal_hdf5="no"
 NETCDF_VER="v4"
-HDF5_OPT="--disable-parallel";
-IO_LIB_VER="serial";
+#
+if test "$mpibuild" = "yes" ; then
+  HDF5_OPT="--enable-parallel";
+  IO_LIB_VER="parallel";
+else
+  HDF5_OPT="--disable-parallel";
+  IO_LIB_VER="serial";
+  enable_hdf5_par_io="no";
+fi
 #
 # Other libs
 #
@@ -13136,7 +13146,7 @@ if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
 #
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xno"   ; then IO_LIB_VER="serial"; fi
 #
 #
 # HDF5 support
@@ -13214,8 +13224,11 @@ rm -f core conftest.err conftest.$ac_objext \
 $as_echo "yes - parallel lib found" >&6; } ;
        HDF5_OPT="--enable-parallel"  ;
     fi
-    if test $IO_LIB_VER = "serial";   then { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes - serial lib found" >&5
-$as_echo "yes - serial lib found" >&6; } ; fi
+    if test $IO_LIB_VER = "serial";   then
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes - serial lib found" >&5
+$as_echo "yes - serial lib found" >&6; } ;
+       HDF5_OPT="--disable-parallel"  ;
+    fi
     # AC_MSG_RESULT([yes]) ;
     IO_LIB_VER="unknown"
   fi
@@ -13306,12 +13319,12 @@ fi
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
-    parallel_io="HDF5";
+    parallel_io="X";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
-    parallel_io="NetCDF";
+    parallel_io="X";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
     parallel_io="COMPRESS-HDF5";
@@ -13427,13 +13440,14 @@ fi
 
 #
 enable_hdf5="yes" ;
+enable_pnetcdf="no" ;
 compile_netcdf="no"
 compile_pnetcdf="no"
 internal_netcdf="no"
 def_netcdf=""
 NETCDF_OPT="--enable-netcdf-4"
 NETCDF_VER="v4"
-IO_LIB_VER="serial";
+IO_LIB_VER="parallel";
 #
 save_fcflags="$FCFLAGS" ;
 hdf5_libs="$HDF5_LIBS" ;
@@ -13448,10 +13462,10 @@ if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_h
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
 #
 if test x"$enable_hdf5_par_io" = "xyes"  &&  test x"$enable_netcdf_par_io" = "xyes" ; then
-  as_fn_error $? "Select hdf5-par-io or netcdf-par-io, not both!!" "$LINENO" 5 ;
+  as_fn_error $? "Yuo neeed to select --disable-hdf5-par-io with --enable-netcdf-par-io" "$LINENO" 5 ;
 fi
 #
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xno"    ; then IO_LIB_VER="serial"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
 #
 #
@@ -13789,12 +13803,12 @@ parallel_io="-" ;
 if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     enable_hdf5_compression="no";
-    parallel_io="HDF5";
+    parallel_io="X";
 elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_PAR_IO";
     compile_pnetcdf=${compile_netcdf};
     enable_hdf5_compression="no";
-    parallel_io="NetCDF";
+    parallel_io="X";
 elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
     def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
     parallel_io="COMPRESS-HDF5";
@@ -14794,7 +14808,10 @@ else
 fi
 NETCDF_info="(NETCDF with large files support)"
 if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(NETCDF large files support disabled)"; fi
-if test "$enable_netcdf_par_io" = "yes";  then NETCDF_info="(NETCDF with parallel I/O and large files support)"; fi
+if test "$enable_netcdf_par_io" = "yes";  then
+  NETCDF_info="(NETCDF with parallel I/O and large files support)";
+  PARIO_info="(NETCDF)";
+fi
 #
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
@@ -14804,11 +14821,18 @@ if test "$hdf5" = "yes" ; then
   else
     HDF5_str=" E "
   fi
-  if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
-  if test "$enable_netcdf_hdf5" = "yes" ; then
-    HDF5_info="(HDF5-IO format";
-    if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib " ; fi
-    if test "$enable_hdf5_par_io" = "yes"; then HDF5_info="${HDF5_info}, parallel IO"   ; fi
+  if test "$enable_netcdf_classic" = "yes"  ; then
+    HDF5_info="(No HDF5-IO format)" ;
+  else
+    NETCDF_info="(NETCDF4:";
+    HDF5_info="HDF5-IO format";
+    if test "$enable_hdf5_par_io" = "no"; then
+      HDF5_info="${HDF5_info}, serial IO"   ;
+      if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib  " ; fi
+    else
+      HDF5_info="${HDF5_info}, parallel IO"   ;
+      PARIO_info="(HDF5)";
+    fi
     if test "$enable_hdf5_compression" = "yes"; then
       HDF5_info="${HDF5_info}, with data compression)" ;
     else
@@ -14905,6 +14929,7 @@ fi
 
 
 #
+
 
 
 

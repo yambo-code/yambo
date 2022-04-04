@@ -64,6 +64,7 @@ subroutine NL_initialize(E,k)
  call parser('FrPolPerdic' ,         l_P_periodic)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Check double-precision and other possible errors
  ! ================================================

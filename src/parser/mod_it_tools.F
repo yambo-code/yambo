@@ -112,6 +112,7 @@ module it_tools
      if (what=="resp"     ) check_verbosity=infile_verbosity==V_resp.or.infile_verbosity==V_all
      if (what=="real_time") check_verbosity=infile_verbosity==V_real_time.or.infile_verbosity==V_all
      if (what=="parallel" ) check_verbosity=infile_verbosity==V_parallel.or.infile_verbosity==V_all
+     if (what=="nl" )      check_verbosity=infile_verbosity==V_nl_optics.or.infile_verbosity==V_all
      if (.not.infile_editing) check_verbosity=.TRUE.
    end function
    !

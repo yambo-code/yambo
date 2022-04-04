@@ -642,7 +642,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'DipBandsALL','[DIP] Compute all bands range, not only valence and conduction',verb_level=V_resp)
 #if defined _NL || defined _ELECTRIC
  call it('f',defs,'EvPolarization','[DIP] Evaluate Polarization (require DipApproach=Covariant)',verb_level=V_resp)
- call it('f',defs,'FrPolPerdic','[DIP] Force periodicity of polarization respect to the external field',verb_level=V_nl_optics)
+ call it('f',defs,'FrPolPerdic','[DIP] Force periodicity of polarization respect to the external field')
 #endif
 #if defined _RT
  call it('f',defs,'SPINprojected', '[DIP] Project the spin dipoles in the c/v channels ',verb_level=V_real_time)

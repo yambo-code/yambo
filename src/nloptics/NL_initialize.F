@@ -213,7 +213,7 @@ subroutine NL_initialize(E,k)
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+4._SP*RT_step
      !
      call msg('sr','Dephasing Time              ',4._SP*Phase_LifeTime*AUT2FS,"[fs]")
-     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+4._SP*RT_step)*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then

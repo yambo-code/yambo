@@ -63,7 +63,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
- use nl_optics,      ONLY:NL_damping
+ use nl_optics,      ONLY:NL_damping,DephMult
  use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
@@ -158,7 +158,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
-   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*4._SP,-real(FS2AUT,SP)/)
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*DephMult,-real(FS2AUT,SP)/)
  endif
  !
 #endif

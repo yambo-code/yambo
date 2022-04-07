@@ -39,7 +39,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,&
+ use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1!,k_plus_q_table
 #include<memory.h>
  !
@@ -52,7 +52,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  ! Work Space
  !
  logical                 :: t_rev
- integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,&
+ integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
@@ -75,14 +75,17 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
    !
    ! with k and q in the BZ
    !
-   IO_ACT=manage_action(RD,iq_bz,1,q%nbz)
-   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+   iq_db=iq_bz
+   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   IO_ACT=manage_action(RD,iq_db,1,q%nbz)
+   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,q%nbz)
    !
-   call io_control(ACTION=IO_ACT,SEC=(/iq_bz+1/),ID=ID_gkkp)
+   
+   call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
    if(io_err/=0) call error(" Error reading gkkp_expanded") 
    !
-   ph_E=sqrt(abs(ph_freqs_sq(iq_bz,il)))
+   ph_E=sqrt(abs(ph_freqs_sq(iq_db,il)))
    !
    if (ph_E<FAN_deltaE_treshold) return
    !

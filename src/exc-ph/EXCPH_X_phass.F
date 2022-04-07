@@ -45,10 +45,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
-&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free
+&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use D_lattice,     ONLY:nsym
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -66,7 +67,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  real(SP)      :: min_E,exc_E,E_alpha,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  logical       :: l_DbGd_WEIGHTs
- integer       :: iq_fg,iq_idx
+ integer       :: iq_fg,iq_idx,iq_db
  integer       :: elph_branches_save(2)
  integer, external :: io_EXCPH_gkkp,io_ELPH
  !
@@ -104,7 +105,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
+   iq_db=iq_bz
+   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    ! Add the contribution of q-point transition to the renormalization factors
@@ -276,7 +279,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      use ELPH,          ONLY:elph_branches,PH_freqs_sq
      implicit none
      !
-     integer  :: iq_idx,iq_fg,nq_around
+     integer  :: iq_idx,iq_fg,nq_around,iq_db
      real(SP) :: N_bose,weight_dbgd
      real(SP), external :: get_ph_E_DbGd
      ! 
@@ -284,7 +287,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        do il=elph_branches(1),elph_branches(2)
          !      
-         ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+         iq_db=iq_bz
+         if(nsym==1) iq_db=DB_Q_map(iq_bz)
+         ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
          if(ph_E<FAN_deltaE_treshold) cycle
          !
          N_bose=bose_f(PH_E)

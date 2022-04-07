@@ -42,6 +42,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use pars,           ONLY:SP,cZERO,rZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_B_load
+ use D_lattice,      ONLY:nsym
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
@@ -50,7 +51,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi, &
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free
  use LIVE_t,         ONLY:live_timing
@@ -79,6 +80,16 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! 
  call EXCPH_load_L(1,X,'check','Lout')
  call EXCPH_load_L(1,X,'check','Lin')
+ !
+ !
+ ! Build Q_map
+ elph_branches_save  =elph_branches
+ call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+ elph_branches =elph_branches_save
+ !
+ ! I build the map only in the case without symmetries
+ if(io_err==0.and.nsym==1) call build_Q_map(q)
  !
  ! Check if exciton-phonon matrix elements have been already calculated
  ! and are consistent with the Lin and Lout specified in input
@@ -127,11 +138,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Check if gkkp_expanded is present
  !
  elph_branches_save  =elph_branches
- !
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  call deliver_IO_error_message(io_err,"GKKP")
- !
  elph_branches =elph_branches_save
  !
  if (io_err/=0) call error('El-Ph database not found')

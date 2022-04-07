@@ -94,6 +94,10 @@ module EXCPH
  !
  real(SP), allocatable :: EXC_Lifetime(:)
  !
+ ! DB Q-mapping in case symmetries are removed
+ !
+ integer, allocatable :: DB_Q_map(:)
+ !
  contains
    !      
    subroutine Sat_alloc()
@@ -178,5 +182,38 @@ module EXCPH
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
    end subroutine alloc_EXC
+   !
+   subroutine build_Q_map(q)
+    use R_lattice,      ONLY:bz_samp
+    use zeros,          ONLY:k_iku_zero
+    use vec_operate,    ONLY:v_is_zero
+    use ELPH,           ONLY:PH_qpt
+    implicit none
+    type(bz_samp) ::q
+    !
+    integer :: iq,idb
+    logical :: re_ordered
+    !
+    YAMBO_ALLOC(DB_Q_map,(q%nibz))
+    !
+    ! In this case nibz=nbz
+    !
+    DB_Q_map=0
+    do iq=1,q%nibz
+      do idb=1,q%nibz
+        if(v_is_zero(q%pt(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) DB_Q_map(iq)=idb
+      enddo
+    enddo
+    if(any(DB_Q_map==0)) call error("Q-point not found in gkkp_expanded DBs")
+    !
+    re_ordered=.FALSE.
+    do iq=1,q%nibz
+      if(DB_Q_map(iq)/=iq) then
+        call warning('Q-points in Yambo and gkkp_expanded DBs have a different order !')
+        exit
+      endif
+    enddo
+    ! 
+   end subroutine build_Q_map
    !
 end module EXCPH

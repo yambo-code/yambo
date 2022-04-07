@@ -211,7 +211,7 @@ integer function io_ELPH(ID,what)
  !
  call io_bulk(ID_frag,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID_frag,R1=PH_freqs_sq(iq,:))
- write(*,*) "w(",iq,")= ",PH_freqs_sq(iq,:)
+! write(*,*) "w(",iq,")= ",PH_freqs_sq(iq,:)
  !
  ! Polarization vectors
  ! 

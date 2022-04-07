@@ -29,13 +29,14 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:nsym
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use X_m,            ONLY:X_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq 
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map 
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
@@ -50,7 +51,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  integer :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
- integer :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star
+ integer :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star,iq_db
  integer :: elph_branches_save(2)
  integer :: min_pos(1)
  !
@@ -116,7 +117,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
    if(io_err/=0) call error('excph_gkkp databases not found!')
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_gkkp)
+   iq_db=iq_bz
+   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')
    !
@@ -155,7 +158,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  contains
   !
   function Simple_pole()
-    use EXCPH,          ONLY:min_EXC_E
+    use EXCPH,          ONLY:min_EXC_E,DB_Q_map
     use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
@@ -163,13 +166,16 @@ subroutine EXCPH_lifetime(E,k,q,X)
     real(SP) :: Simple_pole
     real(SP) :: E_alpha,E_beta
     real(SP) :: ph_E,N_bose,F_boltz
+    integer  :: iq_db
     !
     Simple_pole=rZERO
     !
     E_alpha=real(BS_E_in(i_alpha),SP)
     E_beta =BS_all_E(i_beta,iq)
     !
-    ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
+    iq_db=iq
+    if(nsym==1) iq_db=DB_Q_map(iq)
+    ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
     if(ph_E<FAN_deltaE_treshold) return
     !
     N_bose  =bose_f(ph_E)
@@ -183,7 +189,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
   !
   function DbGrid_pole()
     use EXCPH,          ONLY:min_EXC_E_DbGd,EXC_E_DbGd
-    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
+    use ELPH,           ONLY:FAN_deltaE_treshold
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
     !

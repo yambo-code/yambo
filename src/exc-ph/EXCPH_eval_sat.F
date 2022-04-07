@@ -26,10 +26,11 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:nsym
  use ELPH,           ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold
  use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs, &
 &                         EXCPH_Renorm,EXCPH_Renorm_PH_abs,BS_E,BS_E_in,EXCPH_Gkkp_sq, &
-&                         EXCPH_sum,EXCPH_states
+&                         EXCPH_sum,EXCPH_states,DB_Q_map
  !
 #include<memory.h>
  !
@@ -38,14 +39,16 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  ! Work space
  !
- integer  :: i_alpha,i_beta,il
+ integer  :: i_alpha,i_beta,il,iq_db
  real(SP) :: ph_E
  !
  ! Calculate satellites weights and renormalization factors without double-grid
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
+   iq_db=iq
+   if(nsym==1) iq_db=DB_Q_map(iq)
+   ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
    if(ph_E<FAN_deltaE_treshold) cycle
    !
    do i_alpha=EXCPH_states(1),EXCPH_states(2)

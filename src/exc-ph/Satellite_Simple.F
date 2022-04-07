@@ -38,9 +38,10 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  use frequency,     ONLY:w_samp
  use units,         ONLY:HA2CMm1
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:nsym
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
-&                        min_EXC_E
+&                        min_EXC_E,DB_Q_map
  use functions,     ONLY:bose_f,boltzman_f
  use units,         ONLY:HA2CMm1
  use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
@@ -55,13 +56,16 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  real(SP)    :: PH_E,bose_factor,boltzm_factor
  complex(SP) :: pole,E_alpha
+ integer     :: iq_db
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
  !
  ! Bose function for the phonons
  !
- ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
+ iq_db=iq
+ if(nsym==1) iq_db=DB_Q_map(iq)
+ ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
  !
  if(ph_E<FAN_deltaE_treshold) return
  !

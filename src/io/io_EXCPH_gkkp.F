@@ -34,7 +34,7 @@ integer function io_EXCPH_gkkp(ID,what)
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  use ELPH,           ONLY:ph_modes
  use stderr,         ONLY:intc
- use R_lattice,      ONLY:nqibz
+ use R_lattice,      ONLY:nqbz
  use timing_m,       ONLY:timing
  !
 #include<memory.h>
@@ -124,7 +124,7 @@ integer function io_EXCPH_gkkp(ID,what)
  !
  ! Manage RD_CL_IF_END
  !
- if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
+ if (io_action(ID)==RD_CL_IF_END.and.iq==nqbz) io_action(ID)=RD_CL
  !
  ! Excitonic Gkkp (and SE) fragments
  !=========================

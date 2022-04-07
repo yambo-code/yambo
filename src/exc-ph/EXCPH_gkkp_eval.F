@@ -25,7 +25,7 @@
 ! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
 ! - FP
 !
-subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
+subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use drivers,        ONLY:l_EXCPH_Sigma
@@ -46,14 +46,14 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  type(levels)  ::E
  type(bz_samp) ::k,q
  type(X_t)     ::X
- integer, intent(in)    :: iq,il
+ integer, intent(in)    :: iq,iq_s,iq_bz,il
  integer, intent(inout) :: ID_gkkp
  !
  ! Work Space
  !
  logical                 :: t_rev
- integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_star,iq_bz,i_H,i_Hp,i_alpha,&
-&                           iv,ic,ik_bz,ivp,icp,iq_s,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
+ integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,&
+&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
  !
@@ -64,19 +64,19 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
  !                                    ->i_alpha ->i_H [Calculate Gkkp]
  Xi=cZERO
  !
- do i_star=1,q%nstar(iq)
+ !do i_star=1,q%nstar(iq)
    !
-   iq_s=q%star(iq,i_star)
+   !iq_s=q%star(iq,i_star)
    t_rev= (iq_s>nsym/(i_time_rev+1))
    !
-   iq_bz = q%k_table(iq, iq_s)
+   !iq_bz = q%k_table(iq, iq_s)
    !
    ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
    !
    ! with k and q in the BZ
    !
    IO_ACT=manage_action(RD,iq_bz,1,q%nbz)
-   if(il==elph_branches(2).and.i_star==q%nstar(iq)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
    !
    call io_control(ACTION=IO_ACT,SEC=(/iq_bz+1/),ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
@@ -84,7 +84,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
    !
    ph_E=sqrt(abs(ph_freqs_sq(iq_bz,il)))
    !
-   if (ph_E<FAN_deltaE_treshold) cycle
+   if (ph_E<FAN_deltaE_treshold) return
    !
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
      !
@@ -160,7 +160,7 @@ subroutine EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
      !
    enddo !Loop i_beta
    !
- enddo !Loop i_star
+ !enddo !Loop i_star
  !
  ! Compute the squared couplings
  !

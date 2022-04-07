@@ -153,28 +153,28 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    if(iq>1) call EXCPH_load_L(iq,X,'check','Lout')
    call EXCPH_load_L(iq,X,'load','Lout')
    !
-   EXCPH_gkkp          =cZERO
-   EXCPH_gkkp_sq       =rZERO
-   !
-   do il=1,ph_modes
-     !
-     call  EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
-     !
-     call live_timing(steps=1)
-     !
-   enddo
-   !
-   ! Add the WEIGHTs factor to calculate the renormalization factors
-   !
    do i_star=1,q%nstar(iq)
+     !
+     iq_s=q%star(iq,i_star)
+     iq_bz = q%k_table(iq, iq_s)
+     !
+     EXCPH_gkkp          =cZERO
+     EXCPH_gkkp_sq       =rZERO
+     !
+     do il=1,ph_modes
+       !
+       call  EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
+       !
+       call live_timing(steps=1)
+       !
+     enddo
+     !
+     ! Add the WEIGHTs factor to calculate the renormalization factors
      !
      BS_Sat_E            =rZERO
      BS_Sat_E_PH_abs     =rZERO
      BS_Sat_WEIGHT       =rZERO
      BS_Sat_WEIGHT_PH_abs=rZERO
-     !
-     iq_s=q%star(iq,i_star)
-     iq_bz = q%k_table(iq, iq_s)
      !
      call  EXCPH_eval_sat(iq_bz,q)
      !
@@ -188,12 +188,12 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
        endif
      enddo
      !
+     ! I/O
+     !=====
+     call io_control(ACTION=WR_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
+     io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
+     !
    enddo
-   !
-   ! I/O
-   !=====
-   call io_control(ACTION=WR_CL_IF_END,SEC=(/iq+1/),ID=ID_exc_gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
    !
  enddo
  !

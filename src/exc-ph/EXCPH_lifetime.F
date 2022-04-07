@@ -50,11 +50,14 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  integer :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
- integer :: iq_bz,i_alpha,i_beta,il
+ integer :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star
  integer :: elph_branches_save(2)
  integer :: min_pos(1)
  !
  call section('*','EXCPH-LifTime')
+ !
+ call k_build_up_BZ_tables(k)
+ call k_build_up_BZ_tables(q)
  !
  ! Load excitonic energies 
  !
@@ -69,9 +72,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
  BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
  !
- do iq_bz=1,q%nibz
-   call EXCPH_load_L(iq_bz,X,'eigenvalues','Lout')
-   BS_all_E(:,iq_bz)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+ do iq=1,q%nibz
+   call EXCPH_load_L(iq,X,'eigenvalues','Lout')
+   BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
  !
  ! Load the Exciton-phonon elements and phonon energies
@@ -103,7 +106,11 @@ subroutine EXCPH_lifetime(E,k,q,X)
  YAMBO_ALLOC(EXC_LifeTime,(EXCPH_states(1):EXCPH_states(2)))
  EXC_LifeTime=rZERO
  !
- do iq_bz=1,q%nbz
+ do iq=1,q%nibz
+ do i_star=1,q%nstar(iq)
+   !
+   iq_s=q%star(iq,i_star)
+   iq_bz = q%k_table(iq, iq_s)
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
@@ -132,6 +139,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
    enddo
    !
  enddo
+ enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz)
  !
@@ -159,9 +167,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
     Simple_pole=rZERO
     !
     E_alpha=real(BS_E_in(i_alpha),SP)
-    E_beta =BS_all_E(i_beta,iq_bz)
+    E_beta =BS_all_E(i_beta,iq)
     !
-    ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+    ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
     if(ph_E<FAN_deltaE_treshold) return
     !
     N_bose  =bose_f(ph_E)

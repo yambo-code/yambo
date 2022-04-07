@@ -38,16 +38,15 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  ! Work space
  !
- integer  :: i_alpha,i_beta,il,iq_bz
+ integer  :: i_alpha,i_beta,il
  real(SP) :: ph_E
  !
  ! Calculate satellites weights and renormalization factors without double-grid
  !
- iq_bz = q%k_table(iq, 1)
- !
  do il=elph_branches(1),elph_branches(2)
    !
-   ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+   !ph_E=sqrt(abs(PH_freqs_sq(iq_bz,il)))
+   ph_E=sqrt(abs(PH_freqs_sq(iq,il)))
    if(ph_E<FAN_deltaE_treshold) cycle
    !
    do i_alpha=EXCPH_states(1),EXCPH_states(2)

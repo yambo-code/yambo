@@ -67,14 +67,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp
  integer  :: ID_gkkp,ID_exc_gkkp,io_err
- integer  :: il,iq,i1,elph_branches_save(2)
+ integer  :: il,iq,i1,i_star,iq_bz,iq_s,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
- !
- ! Symmetries check
- ! =================
- !
- if(q%nibz/=q%nbz) call error("Symmetries not implemented yet!!! ")
  !
  call section('*','Excitonic gkkp')
  !======================================
@@ -116,7 +111,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! K plus q table
  !
- call build_k_plus_q_table()
+ !call build_k_plus_q_table()
  !
  ! BSS_eh_table_m1
  !
@@ -161,11 +156,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    EXCPH_gkkp          =cZERO
    EXCPH_gkkp_sq       =rZERO
    !
-   BS_Sat_E            =rZERO
-   BS_Sat_E_PH_abs     =rZERO
-   BS_Sat_WEIGHT       =rZERO
-   BS_Sat_WEIGHT_PH_abs=rZERO
-   !
    do il=1,ph_modes
      !
      call  EXCPH_gkkp_eval(iq,il,E,k,q,X,ID_gkkp)
@@ -176,16 +166,28 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    !
    ! Add the WEIGHTs factor to calculate the renormalization factors
    !
-   call  EXCPH_eval_sat(iq,q)
-   !
-   ! Find the maximum weight of the satellites
-   ! 
-   do i1=EXCPH_states(1),EXCPH_states(2)
-     if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
-        max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
-        max_Sat_pos(i1,1) =iq
-        max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
-     endif
+   do i_star=1,q%nstar(iq)
+     !
+     BS_Sat_E            =rZERO
+     BS_Sat_E_PH_abs     =rZERO
+     BS_Sat_WEIGHT       =rZERO
+     BS_Sat_WEIGHT_PH_abs=rZERO
+     !
+     iq_s=q%star(iq,i_star)
+     iq_bz = q%k_table(iq, iq_s)
+     !
+     call  EXCPH_eval_sat(iq_bz,q)
+     !
+     ! Find the maximum weight of the satellites
+     ! 
+     do i1=EXCPH_states(1),EXCPH_states(2)
+       if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
+          max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+          max_Sat_pos(i1,1) =iq_bz
+          max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
+       endif
+     enddo
+     !
    enddo
    !
    ! I/O
@@ -224,7 +226,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
      YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      YAMBO_ALLOC(BS_E,(BSS_n_eig))
-     YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
+     !AMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,BSS_n_eig))
@@ -234,7 +236,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BS_mat=cZERO
      BS_E=cZERO
      !
-     k_plus_q_table  = 0
+     !k_plus_q_table  = 0
      BSS_eh_table    = 0
      BSS_eh_table_m1 = 0
      !
@@ -255,7 +257,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_FREE(BSS_eh_table_in)
      YAMBO_FREE(BSS_eh_table_m1_in)
      YAMBO_FREE(BS_E)
-     YAMBO_FREE(k_plus_q_table)
+     !AMBO_FREE(k_plus_q_table)
    end subroutine BSE_free
    !
    subroutine build_k_plus_q_table()
@@ -341,7 +343,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      enddo
      call msg('sr',' Max satellite weight: ')
      do i1=EXCPH_states(1),EXCPH_states(2)
-        iq_bz = q%k_table(max_Sat_pos(i1,1), 1)
+        iq_bz = max_Sat_pos(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
         ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos(i1,2))))
         write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight(i1)
         call msg('sr',message)

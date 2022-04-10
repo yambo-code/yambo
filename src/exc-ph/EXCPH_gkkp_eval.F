@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM FP
+! Authors (see AUTHORS file for details): AM FP DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -64,23 +64,17 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !                                    ->i_alpha ->i_H [Calculate Gkkp]
  Xi=cZERO
  !
- !do i_star=1,q%nstar(iq)
    !
-   !iq_s=q%star(iq,i_star)
    t_rev= (iq_s>nsym/(i_time_rev+1))
-   !
-   !iq_bz = q%k_table(iq, iq_s)
    !
    ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
    !
    ! with k and q in the BZ
    !
-   iq_db=iq_bz
-   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   iq_db=DB_Q_map(iq_bz)
    IO_ACT=manage_action(RD,iq_db,1,q%nbz)
    if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,q%nbz)
    !
-   
    call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
    if(io_err/=0) call error(" Error reading gkkp_expanded") 
@@ -162,8 +156,6 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
      Xi=cZERO
      !
    enddo !Loop i_beta
-   !
- !enddo !Loop i_star
  !
  ! Compute the squared couplings
  !

@@ -46,8 +46,7 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   iq_db=iq
-   if(nsym==1) iq_db=DB_Q_map(iq)
+   iq_db=DB_Q_map(iq)
    ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
    if(ph_E<FAN_deltaE_treshold) cycle
    !

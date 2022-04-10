@@ -105,8 +105,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
    !
-   iq_db=iq_bz
-   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   iq_db=DB_Q_map(iq_bz)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
@@ -287,8 +286,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        do il=elph_branches(1),elph_branches(2)
          !      
-         iq_db=iq_bz
-         if(nsym==1) iq_db=DB_Q_map(iq_bz)
+         iq_db=DB_Q_map(iq_bz)
          ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
          if(ph_E<FAN_deltaE_treshold) cycle
          !

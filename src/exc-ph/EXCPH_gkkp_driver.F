@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM FP AC
+! Authors (see AUTHORS file for details): AM FP AC DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -52,7 +52,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map, &
-&                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free, &
+&                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
@@ -68,7 +68,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp
  integer  :: ID_gkkp,ID_exc_gkkp,io_err
- integer  :: il,iq,i1,i_star,iq_bz,iq_s,elph_branches_save(2)
+ integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
  !
@@ -89,7 +89,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  elph_branches =elph_branches_save
  !
  ! I build the map only in the case without symmetries
- if(io_err==0.and.nsym==1) call build_Q_map(q)
+ if(io_err==0) then
+   call k_ibz2bz(q,"i",.false.)
+   call build_Q_map(q)
+ endif
  !
  ! Check if exciton-phonon matrix elements have been already calculated
  ! and are consistent with the Lin and Lout specified in input
@@ -185,6 +188,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BS_Sat_WEIGHT       =rZERO
      BS_Sat_WEIGHT_PH_abs=rZERO
      !
+     iq_db=DB_Q_map(iq_bz)
      call  EXCPH_eval_sat(iq_bz,q)
      !
      ! Find the maximum weight of the satellites
@@ -192,7 +196,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      do i1=EXCPH_states(1),EXCPH_states(2)
        if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
           max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
-          max_Sat_pos(i1,1) =iq_bz
+          max_Sat_pos(i1,1) =iq_db
           max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
        endif
      enddo

@@ -63,8 +63,7 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Bose function for the phonons
  !
- iq_db=iq
- if(nsym==1) iq_db=DB_Q_map(iq)
+ iq_db=DB_Q_map(iq)
  ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
  !
  if(ph_E<FAN_deltaE_treshold) return

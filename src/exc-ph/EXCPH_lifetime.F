@@ -117,8 +117,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
    if(io_err/=0) call error('excph_gkkp databases not found!')
    !
-   iq_db=iq_bz
-   if(nsym==1) iq_db=DB_Q_map(iq_bz)
+   iq_db=DB_Q_map(iq_bz)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')

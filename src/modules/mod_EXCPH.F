@@ -194,20 +194,22 @@ module EXCPH
     integer :: iq,idb
     logical :: re_ordered
     !
-    YAMBO_ALLOC(DB_Q_map,(q%nibz))
+    YAMBO_ALLOC(DB_Q_map,(q%nbz))
     !
     ! In this case nibz=nbz
     !
     DB_Q_map=0
-    do iq=1,q%nibz
-      do idb=1,q%nibz
-        if(v_is_zero(q%pt(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) DB_Q_map(iq)=idb
+    do iq=1,q%nbz
+      do idb=1,q%nbz
+        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
+        DB_Q_map(iq)=idb
+        exit
       enddo
     enddo
     if(any(DB_Q_map==0)) call error("Q-point not found in gkkp_expanded DBs")
     !
     re_ordered=.FALSE.
-    do iq=1,q%nibz
+    do iq=1,q%nbz
       if(DB_Q_map(iq)/=iq) then
         call warning('Q-points in Yambo and gkkp_expanded DBs have a different order !')
         exit

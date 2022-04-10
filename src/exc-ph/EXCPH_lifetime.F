@@ -172,8 +172,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     E_alpha=real(BS_E_in(i_alpha),SP)
     E_beta =BS_all_E(i_beta,iq)
     !
-    iq_db=iq
-    if(nsym==1) iq_db=DB_Q_map(iq)
+    iq_db=DB_Q_map(iq_bz)
     ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
     if(ph_E<FAN_deltaE_treshold) return
     !

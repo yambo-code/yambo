@@ -184,7 +184,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  call section('r','FL self-consistency')
  do i_f=1,n_frequencies
    !
-   print*, 'Frequency step = ',i_f,' of ',n_frequencies
+   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -203,14 +203,6 @@ subroutine FL_driver(E,X,k,q,Dip)
      FL_V_bands(i1,fl_shifted_zero_mode,i1,:,:)=cONE
      !
    enddo
-   !aim137 DEBUG test mixing
-   !do i1=NL_bands(1),E%nbf
-    !FL_V_bands(i1,fl_shifted_zero_mode+1,i1,:,:)=cONE*0.1
-    !FL_V_bands(i1,fl_shifted_zero_mode-1,i1,:,:)=-cONE*0.1
-    !FL_V_bands(i1,fl_shifted_zero_mode+2,i1,:,:)=-cONE*0.1
-    !FL_V_bands(i1,fl_shifted_zero_mode-2,i1,:,:)=cONE*0.1
-   !enddo
-   !aim137 END DEBUG
    !
    FL_S_minus=cZERO
    FL_S_plus =cZERO
@@ -234,11 +226,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_Chi_pol(i_f,:,:,:) = cZERO
    FL_loc_S_inv_mode = "0" !for first iteration
    !
-   !
-   !aim137 debug
-   !call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
-   !aim137 debug
-   !
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
@@ -257,7 +244,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
-     if (FL_iteration>6) l_FL_sc_reached = .true.
+     if (FL_iteration>10) l_FL_sc_reached = .true.
      !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
@@ -267,16 +254,17 @@ subroutine FL_driver(E,X,k,q,Dip)
    call live_timing(steps=1)
    !
    call msg('r','Frequency step    :',i_f)
+   call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    call msg('r','No. of iterations :',FL_iteration)
    call msg('r','Absolute error    :', abs(accuracy))
    call msg('r','------------------------------------')
    !
    !
-   !call FL_time_dep_variables(E,k,FL_V_bands)
+   !call FL_time_dep_variables(E,k,FL_V_bands) !this was to interface with ypp
    !
    !call NL_databases_IO(i_f,'write')
    !
-   !aim137 DEBUG
+   !aim137 DEBUG <
    !do i_sp_pol=1,n_sp_pol
    !do i_k_bz=1,k%nbz
    !write(filename,'(i0)') i_k_bz
@@ -314,23 +302,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !close(111)
    !enddo
    !enddo
-   !print*, 'kpoint 4'
-   !print*, FL_V_bands(:,1,4,4,1)
-   !print*, FL_V_bands(:,2,4,4,1)
-   !print*, FL_V_bands(:,3,4,4,1)
-   !print*, FL_V_bands(:,4,4,4,1)
-   !print*, FL_V_bands(:,5,4,4,1)
-   !print*, FL_V_bands(:,6,4,4,1)
-   !print*, FL_V_bands(:,7,4,4,1)
-   !print*, 'kpoint 15'
-   !print*, FL_V_bands(:,1,4,15,1)
-   !print*, FL_V_bands(:,2,4,15,1)
-   !print*, FL_V_bands(:,3,4,15,1)
-   !print*, FL_V_bands(:,4,4,15,1)
-   !print*, FL_V_bands(:,5,4,15,1)
-   !print*, FL_V_bands(:,6,4,15,1)
-   !print*, FL_V_bands(:,7,4,15,1)
-   !aim137 END DEBUG
+   !aim137 DEBUG >
    !
  enddo
  !

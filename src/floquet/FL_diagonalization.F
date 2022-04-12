@@ -46,7 +46,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  ! Work Space
  !
  real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
-!real(SP)    :: FL_QE(NL_bands(1):NL_bands(2),QP_nk,n_sp_pol)
  real(SP)    :: min_projection,trial_projection,trial_val,trial_proj
  real(SP)    :: energy_difference(FL_states(1):FL_states(2))
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
@@ -58,11 +57,15 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
  complex(SP) :: ref_vec(FL_states(1):FL_states(2)),trial_vec(FL_states(1):FL_states(2))
  complex(SP) :: Mtmp(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- logical     :: l_history
+ complex(SP) :: NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ complex(SP) :: NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ complex(SP) :: NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ complex(SP) :: NHM_Cmpl_Val(FL_states(1):FL_states(2))
+ logical     :: l_assume_Hermitian
  real(SP)    :: phase
  !
  FL_eigenvalues = 0._SP
- !FL_QE = 0._SP !aim137 this was wrong, they are initialised as E_full
+ l_assume_Hermitian = .false.
  !
  do ik_bz=1,QP_nk
    !
@@ -71,15 +74,40 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
    !
    do is=1,n_sp_pol
      !
-     ! Diagonalization
-     ! ===============
-     !
-      FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
-&    FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
-     call LINEAR_ALGEBRA_driver(DIAGO,&
-                              & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
-                              & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
-     !aim137 overwrites matrix M with eigenvectors as columns
+     if (l_assume_Hermitian) then
+       ! Diagonalization
+       ! ===============
+       !
+        FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
+&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
+       call LINEAR_ALGEBRA_driver(DIAGO,&
+                                & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
+       !aim137 overwrites matrix M with eigenvectors as columns
+       !
+     else
+       ! Non-Hermitian Diagonalization
+       ! =============================
+       !
+       NHM_Left_Vec = cZERO
+       NHM_Right_Vec = cZERO
+       NHM_Cmpl_Val = cZERO
+       !
+       NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
+&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
+       call LINEAR_ALGEBRA_driver(DIAGO,&
+                                & M=NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & V_left=NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & V_right=NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
+                                & E_cmpl=NHM_Cmpl_Val(FL_states(1):FL_states(2)))
+
+       ! discard imaginary part of eigenvalue
+       FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is) = real(NHM_Cmpl_Val(FL_states(1):FL_states(2)))
+       ! take right eigenvectors
+       FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))=&
+&      NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+       !
+     endif
      !
      FL_chosen_bands = 0
      !
@@ -87,19 +115,16 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
      ! ===================
      !
      do i_m=NL_bands(1),E%nbf ! band I want to update
-       !print*, '--- band =',i_m
        !
        ! ref_vec is FL_V_band from previous iteration
        !
-      !print*, ''
-      !print*, '------',i_m,ik_bz,is
        !
+       ! select eigenvector based on Quasi-Energy
        !
-       ! try with quasi-energy
        do i1_fks=FL_states(1),FL_states(2)
        energy_difference(i1_fks) = &
                     &   abs(FL_eigenvalues(i1_fks,ik_bz,is) &
-                    & - E_full(i_m,ik_bz,is))
+                    &     - E_full(i_m,ik_bz,is))
        enddo
        !
        if (minval(energy_difference) < 0.1_SP) then
@@ -121,7 +146,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
              ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
              !
            enddo
-        !  print*, FL_V_bands(i1,:,i_m,ik_bz,is)
+         !
          enddo
          !
          ! aim137 - prelim
@@ -162,36 +187,22 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
            !
          enddo
          !
-         !aim137 debug
-         !print*, '-------------------'
-         !print*, trial_proj
-         !print*, ''
-         !print*, ref_vec(FL_states(1):FL_states(2))
-         !print*, ''
-         !print*, trial_vec(FL_states(1):FL_states(2))
-         !call error('paro aca')
-         !aim137 debug
        endif
        !
        ! Set phase zero for central component of the eigenvector
        !
-       i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
+       !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
+       !trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
        !
        ! Detect avoided crossing
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        do i1_fks=FL_states(1),FL_states(2)
          !
-         if (abs(trial_vec(i1_fks)) > 0.1_SP .and. i1_fks /= i_central_fks) then
+         if (abs(trial_vec(i1_fks)) > 0.5_SP .and. i1_fks /= i_central_fks) then
            !
-           phase = asin(aimag(trial_vec(i1_fks))/abs(trial_vec(i1_fks)))
-           phase = abs(phase)
-           phase = phase - 1._SP*pi*nint(phase/(1._SP*pi))
-           if (phase > FL_ac_phase(i_m,ik_bz,is)) FL_ac_phase(i_m,ik_bz,is)=phase
-           trial_vec(i1_fks) = abs(trial_vec(i1_fks)) * &
-         & cmplx(cos(FL_ac_phase(i_m,ik_bz,is)),sin(FL_ac_phase(i_m,ik_bz,is)))
-           !print*, 'detected avoided crossing in kpt',ik_bz,' and band ',i_m
+           print*, 'detected avoided crossing in kpt',ik_bz,' and band ',i_m
+           print*, 'component number = ',i1_fks, 'value =',abs(trial_vec(i1_fks)) 
            !
          endif
          !
@@ -199,8 +210,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
        !
        !aim137 DEBUG <
       !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-      !if (ik_bz == 15 .and. i_m ==4) then
-      !  !print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
+      !if (ik_bz == 5 .and. i_m ==4) then
+      !  print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
+      !  print*, trial_vec
+      !  print*, FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
+      !  print*, FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)-1)
       !  print*,  trial_vec(i1_fks),'---',trial_vec(i1_fks+n_tot_fl_modes+1)
       !! print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is), &
       !!         &FL_eigenvalues(i1_fks+n_tot_fl_modes+1,ik_bz,is)-E_full(i_m+1,ik_bz,is)
@@ -220,68 +234,14 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
        !
        ! Overwrite FL_V_band with new result
        !
-       !aim137 check < which band has it chosen?
-       !if (ik_bz == 4 .and. i_m ==4 ) then
-       !print*, FL_chosen_bands(i_m), (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       !print*, 'energy diff with KS energy =', trial_val - E_full(i_m,ik_bz,is)
-       !print*, 'eigenvector highest component (abs)',abs(trial_vec((i_m-1)*n_tot_fl_modes + (max_fl_mode+1)))
-       !print*, trial_vec(FL_chosen_bands(i_m)),trial_vec((i_m-1)*n_tot_fl_modes + (max_fl_mode+1))
-       !endif
-       !aim137 check >
-       !
-       l_history = .false.
-       if (iter_num > 2 .and. l_history) then
-         do i1=NL_bands(1),NL_bands(2)
-           do i1_fl=1,n_tot_fl_modes
-             !
-             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-             FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
-             ! aim137 I tried using 'history' also for eigenvectors
-             ! but it resulted in a decay of the QE towards the KS energy
-           ! i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-           ! FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) = &
-           !&FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) + trial_vec(i1_fks)
-           ! FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
-           !&FL_V_bands_hist(i1,i1_fl,i_m,ik_bz,is) / real(iter_num-2,SP)
-             ! aim137 try mixing beta here
-             ! aim137 mixing beta - it did dampen the oscillations
-             ! in the accuracy, but not even 0.95 solved it
-             !   FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = &
-             !&  FL_V_bands(i1,i1_fl,i_m,ik_bz,is) * 0.9_SP +&
-             !&  trial_vec(i1_fks) * 0.1_SP
-             !
-           enddo
-             !print*, FL_V_bands(i1,:,i_m,ik_bz,is)
+       do i1=NL_bands(1),NL_bands(2)
+         do i1_fl=1,n_tot_fl_modes
+           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+           FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
          enddo
-         !
-         FL_QE_hist(i_m,ik_bz,is) = FL_QE_hist(i_m,ik_bz,is) + trial_val
-         FL_QE(i_m,ik_bz,is) = FL_QE_hist(i_m,ik_bz,is) / real(iter_num-2,SP)
-       else
-         do i1=NL_bands(1),NL_bands(2)
-           do i1_fl=1,n_tot_fl_modes
-             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
-             FL_V_bands(i1,i1_fl,i_m,ik_bz,is) = trial_vec(i1_fks)
-           enddo
-         enddo
-         FL_QE(i_m,ik_bz,is) = trial_val
-       endif
+       enddo
+       FL_QE(i_m,ik_bz,is) = trial_val
        !
-       !aim137 DEBUG <
-       i1_fl = (max_fl_mode+1)
-       i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-       if (ik_bz == 15 .and. i_m ==4) then
-         !print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
-         !print*, FL_V_bands(i_m,i1_fl,i_m,ik_bz,is),FL_V_bands(i_m+1,i1_fl+1,i_m,ik_bz,is)
-         !print*,  iter_num,FL_QE(i_m,ik_bz,is)-E_full(i_m,ik_bz,is)
-       endif
-       !aim137 DEBUG >
-       !aim137 try mixing beta here
-       !FL_QE(i_m,ik_bz,is) = FL_QE(i_m,ik_bz,is) * 0.9_SP + trial_val * 0.1_SP
-       !
-       !aim137 debug - avoid flipping
-       !if (FL_QE(i_m,ik_bz,is)-E_full(i_m,ik_bz,is) < 0) &
-       !        & FL_QE(i_m,ik_bz,is) = E_full(i_m,ik_bz,is) - (trial_val-E_full(i_m,ik_bz,is))
-       !aim137 debug
        !
     !  ! Optional: Check eigenvectors
     !  ! =============================

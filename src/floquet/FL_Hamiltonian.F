@@ -67,7 +67,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  integer      :: ik_bz,i_sp_pol,is,i1,ik_mem
  !aim137
- integer      :: i_fl,i_fks,i_shifted_fl
+ integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
  real(SP)     :: alpha_
  character(4) :: filename
@@ -129,8 +129,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
-&            - real(i_shifted_fl,SP) * w0 !& !aim137: w0 is in Hartree
-!&            + cI * NL_damping
+&            - real(i_shifted_fl,SP) * w0 &
+&            - cI * real(i_shifted_fl,SP) * NL_damping
        !
 !&            - real(i_shifted_fl,SP) * (w0-cI*NL_damping) & !aim137: I tried this but didn't help
      enddo
@@ -150,7 +150,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    !
    ! aim137 deleted more beyond-IPA stuff
    !
-   call FL_dephasing(FL_V_bands,E,k,ik_bz,i_sp_pol,H_nl_sc)
+   ! aim137: we will not use dephasing
+   ! call FL_dephasing(FL_V_bands,E,k,ik_bz,i_sp_pol,H_nl_sc)
    !
    ! Store the Hamiltonian
    ! =====================
@@ -173,7 +174,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  call timing('FL Hamiltonian',OPR='stop')
 #endif
  !
-  !aim137 DEBUG
+!!aim137 DEBUG
+!print*, 'printing Hamiltonian'
 !do ik_bz=1,QP_nk
 !write(filename,'(i0)') ik_bz
 !open(111,file='FL_Ho_plus_Sigma'//trim(adjustl(filename))//'.dat')
@@ -182,5 +184,5 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 !enddo
 !close(111)
 !enddo
- !aim137 END DEBUG
+!!aim137 END DEBUG
 end subroutine FL_Hamiltonian

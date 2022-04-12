@@ -50,9 +50,14 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
  complex(SP) :: I_deph(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ complex(SP) :: I_stabilization(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
+ logical :: l_stabilization,l_force_Hermitian
  !
  I_deph=cZERO
+ I_stabilization=cZERO
+ l_stabilization = .false.
+ l_force_Hermitian = .false.
  !
  ! off diagonal part
  !
@@ -63,6 +68,9 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
        do i2_fl=1,n_tot_fl_modes !gamma
          i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
          !
+         !aim137 DEBUG< trato de hacer esto solo en la diagonal
+         !if ( i1_fks /= i2_fks ) cycle
+         !aim137 DEBUG>
          do i3_fl=1,n_tot_fl_modes
              !
              i_shift_comb_fl = (i3_fl-(max_fl_mode+1)) &
@@ -110,6 +118,33 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  !print*, sum(I_deph)
  !call error('..')
  !aim137 DEBUG >
+ !
+ if (l_stabilization) then
+  !do i1=H_ref_bands(1),H_ref_bands(2) !i
+  !  do i1_fl=1,n_tot_fl_modes !eta
+  !    !
+  !    i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
+  !    !
+  !    if (i1 <= en%nbf) I_stabilization(i1_fks,i1_fks) = -0.05_SP
+  !    if (i1 >  en%nbf) I_stabilization(i1_fks,i1_fks) = +0.05_SP
+  !    !
+  !  enddo
+  !enddo
+   !
+!  i1_fks = (4-1)*n_tot_fl_modes + (max_fl_mode+1)
+!  I_stabilization(i1_fks,i1_fks) = -100.9_SP
+!  i2_fks = (5-1)*n_tot_fl_modes + (max_fl_mode+1) + 1
+!  I_stabilization(i2_fks,i2_fks) = +100.9_SP
+!  !
+   I_deph = I_deph * 0.4 + I_stabilization * 0.6
+ endif
+ !
+ if (l_force_Hermitian) then
+   !
+   I_deph = I_deph + conjg(I_deph)
+   !
+ endif
+ !aim137 DEBUG <
  !
  !$omp parallel do default(shared), private(i1,id)
   do i1=H_ref_bands(1),H_ref_bands(2)

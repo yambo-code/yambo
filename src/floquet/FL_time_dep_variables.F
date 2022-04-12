@@ -23,6 +23,8 @@
 !
 subroutine FL_time_dep_variables(E,k,FL_V_bands)
  !
+ ! Subroutine to interace with ypp
+ !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1,HA2EV,SPEED_OF_LIGHT
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin

@@ -75,10 +75,10 @@ subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      if(desc%kind(i_d)=='d') call msg(dest,local_var,real(desc%dval(i_d),SP),INDENT=0,after_msg=local_term)
      if(desc%kind(i_d)=='c') call msg(dest,local_var,&
 &                                     (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0,after_msg=local_term)
-     if(desc%kind(i_d)=='s') call msg(dest,local_var,trim(desc%sval(i_d)),INDENT=0)
+     if(desc%kind(i_d)=='s') call msg(dest,local_var,trim(desc%sval(i_d)),INDENT=0,after_msg=local_term)
      if(desc%kind(i_d)=='l') then
-       if(     desc%lval(i_d)) call msg(dest,local_var,'yes',INDENT=0)
-       if(.not.desc%lval(i_d)) call msg(dest,local_var,'no',INDENT=0)
+       if(     desc%lval(i_d)) call msg(dest,local_var,'yes',INDENT=0,after_msg=local_term)
+       if(.not.desc%lval(i_d)) call msg(dest,local_var,'no',INDENT=0,after_msg=local_term)
      endif
    endif
  enddo

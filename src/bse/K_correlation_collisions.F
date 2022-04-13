@@ -42,14 +42,13 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym
  use R_lattice,     ONLY:qindx_X,bz_samp
- use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
+ use BS,            ONLY:O_ng,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
 &                        BS_K_dim,l_BS_ares_from_res
  use electrons,     ONLY:n_sp_pol
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use deviceXlib_m,  ONLY:dev_memcpy
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -322,15 +321,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  contains
    !
-   !
    function collision_star(ik,is,ib,i_sp_pol,i_s_star,i_s_new)
+       use BS,            ONLY:WF_phase
        implicit none
        integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star,i_s_new
        integer :: collision_star
        collision_star=i_s_star
        if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
    end function collision_star
-   !
    !
    subroutine fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,    &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
@@ -446,6 +444,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_sp_pol_i,i_sp_pol_o,ibi,ibo,iq_W,i_s_collision,isc)
      use collision_el,  ONLY:elemental_collision
+     use deviceXlib_m,  ONLY:dev_memcpy
      implicit none
      integer,intent(in) :: iB,iki,iko,ikit,ikot,ibi,ibo,i_sp_pol_i,i_sp_pol_o,iq_W,i_s_collision
      type(elemental_collision),intent(inout) :: isc

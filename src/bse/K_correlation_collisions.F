@@ -40,8 +40,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
- use D_lattice,     ONLY:nsym,sop_inv,sop_tab
- use R_lattice,     ONLY:qindx_B,qindx_X,bz_samp,qindx_B_load
+ use D_lattice,     ONLY:nsym
+ use R_lattice,     ONLY:qindx_X,bz_samp
  use BS,            ONLY:O_ng,WF_phase,BS_bands,BS_res_K_corr,BS_cpl_K_corr,BS_blk,&
 &                        BS_oscillators_alloc,K_CORR_collision,BS_T_grp,&
 &                        BS_K_dim,l_BS_ares_from_res
@@ -50,7 +50,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
  use deviceXlib_m,  ONLY:dev_memcpy
- use parallel_m,    ONLY:PAR_K_scheme
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -62,8 +61,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! DEFINE BSK COMMON INDEXES
  !
- integer ::     i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
-&               i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
+ integer ::     i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
+&               i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp(2) 
@@ -149,72 +148,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
 &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
-       if (H_pos(1)>H_pos(2)) cycle 
        !
-       i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
-       i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
+       if (H_pos(1)>H_pos(2)) cycle
        !
-       i_k_s =Xk%sstar(i_k_bz,2) 
-       i_p_s =Xk%sstar(i_p_bz,2) 
-       !
-       i_k_s_m1= sop_inv(i_k_s) 
-       i_kp_s  = sop_tab(i_k_s_m1,i_p_s) 
-       !
-       i_kmq_bz=qindx_X(iq,i_k_bz,1) 
-       i_pmq_bz=qindx_X(iq,i_p_bz,1) 
-       !
-       i_kmq   =Xk%sstar(i_kmq_bz,1) 
-       i_pmq   =Xk%sstar(i_pmq_bz,1) 
-       !
-       i_kmq_s =Xk%sstar(i_kmq_bz,2) 
-       i_pmq_s =Xk%sstar(i_pmq_bz,2) 
-       !
-       if (BS_res_K_corr) then 
-         i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
-         i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
-       endif 
-       !
-       i_kmq_s_m1 = sop_inv(i_kmq_s) 
-       i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
-       ! 
-       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
-         i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
-         if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
-           i_p_bz_last=i_p_bz 
-           i_k_bz_last=i_k_bz 
-           if (i_k_bz_mem==0) then 
-             !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
-             iq_W_bz=qindx_tmp(1) 
-             ig_W   =qindx_tmp(2) 
-             !$omp end critical 
-           else 
-             iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
-             ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
-           endif 
-           iq_W_bz_last=iq_W_bz 
-           ig_W_last   =ig_W    
-         else 
-           iq_W_bz=iq_W_bz_last 
-           ig_W   =ig_W_last    
-         endif 
-         iq_W   =q%sstar( iq_W_bz ,1) 
-         iq_W_s =q%sstar( iq_W_bz ,2) 
-       endif 
-       !
-       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
-       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
-       !
-       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
-       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
-       ! 
-       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
-       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
-       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
-       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
-       !
-       i_s_star=Xk%s_table(i_p,i_kp_s) 
-       i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s) 
+       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
+       &                        i_p_bz_last,i_k_bz_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
@@ -236,76 +177,19 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
-         H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
+       !
+       H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
 &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
-       if (H_pos(1)>H_pos(2)) cycle 
        !
-       i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
-       i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
+       if (H_pos(1)>H_pos(2)) cycle
        !
-       i_k_s =Xk%sstar(i_k_bz,2) 
-       i_p_s =Xk%sstar(i_p_bz,2) 
-       !
-       i_k_s_m1= sop_inv(i_k_s) 
-       i_kp_s  = sop_tab(i_k_s_m1,i_p_s) 
-       !
-       i_kmq_bz=qindx_X(iq,i_k_bz,1) 
-       i_pmq_bz=qindx_X(iq,i_p_bz,1) 
-       !
-       i_kmq   =Xk%sstar(i_kmq_bz,1) 
-       i_pmq   =Xk%sstar(i_pmq_bz,1) 
-       !
-       i_kmq_s =Xk%sstar(i_kmq_bz,2) 
-       i_pmq_s =Xk%sstar(i_pmq_bz,2) 
-       !
-       if (BS_res_K_corr) then 
-         i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
-         i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
-       endif 
-       !
-       i_kmq_s_m1 = sop_inv(i_kmq_s) 
-       i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
-       !
-       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
-         i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
-         if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
-           i_p_bz_last=i_p_bz 
-           i_k_bz_last=i_k_bz 
-           if (i_k_bz_mem==0) then 
-             !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
-             iq_W_bz=qindx_tmp(1) 
-             ig_W   =qindx_tmp(2) 
-             !$omp end critical 
-           else 
-             iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
-             ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
-           endif 
-           iq_W_bz_last=iq_W_bz 
-           ig_W_last   =ig_W    
-         else 
-           iq_W_bz=iq_W_bz_last 
-           ig_W   =ig_W_last    
-         endif 
-         iq_W   =q%sstar( iq_W_bz ,1) 
-         iq_W_s =q%sstar( iq_W_bz ,2) 
-       endif 
-       !
-       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
-       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
-       !
-       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
-       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
-       !
-       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
-       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
-       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
-       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
-       !  
-       i_s_star=Xk%s_table(i_p,i_kp_s) 
-       i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s) 
+       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
+       &                        i_p_bz_last,i_k_bz_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
@@ -328,8 +212,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
 #if !defined _CUDA
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
- !$omp &          i_k_s,i_k_s_m1,i_p_s,i_k_bz,i_p_bz,i_kp_s,i_s_star,H_pos,&
- !$omp &          i_kmq_s,i_kmq_s_m1,i_pmq_s,i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
+ !$omp &          i_k_bz,i_p_bz,i_kp_s,i_s_star,H_pos,&
+ !$omp &          i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
  !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,&
  !$omp &          i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp, &
  !$omp &          i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
@@ -356,73 +240,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
 &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
-       if (H_pos(1)>H_pos(2)) cycle 
        !
-       i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
-       i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
+       if (H_pos(1)>H_pos(2)) cycle
        !
-       i_k_s =Xk%sstar(i_k_bz,2) 
-       i_p_s =Xk%sstar(i_p_bz,2) 
-       !
-       i_k_s_m1= sop_inv(i_k_s) 
-       i_kp_s  = sop_tab(i_k_s_m1,i_p_s) 
-       !
-       i_kmq_bz=qindx_X(iq,i_k_bz,1) 
-       i_pmq_bz=qindx_X(iq,i_p_bz,1) 
-       !
-       i_kmq   =Xk%sstar(i_kmq_bz,1) 
-       i_pmq   =Xk%sstar(i_pmq_bz,1) 
-       !
-       i_kmq_s =Xk%sstar(i_kmq_bz,2) 
-       i_pmq_s =Xk%sstar(i_pmq_bz,2) 
-       !
-       if (BS_res_K_corr) then 
-         i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
-         i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
-       endif 
-       !
-       i_kmq_s_m1 = sop_inv(i_kmq_s) 
-       i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
-       !
-       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
-         i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
-         if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
-           i_p_bz_last=i_p_bz 
-           i_k_bz_last=i_k_bz 
-           if (i_k_bz_mem==0) then 
-             !$omp critical 
-             qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
-             iq_W_bz=qindx_tmp(1) 
-             ig_W   =qindx_tmp(2) 
-             !$omp end critical 
-           else 
-             iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
-             ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
-           endif 
-           iq_W_bz_last=iq_W_bz 
-           ig_W_last   =ig_W    
-         else 
-           iq_W_bz=iq_W_bz_last 
-           ig_W   =ig_W_last    
-         endif 
-         iq_W   =q%sstar( iq_W_bz ,1) 
-         iq_W_s =q%sstar( iq_W_bz ,2) 
-       endif 
-       !
-       i_v_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,2) 
-       i_c_k=BS_T_grp(i_Tgrp_k)%table(i_Tk,3) 
-       !
-       i_v_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,2) 
-       i_c_p=BS_T_grp(i_Tgrp_p)%table(i_Tp,3) 
-       ! 
-       i_k_sp_pol_c=BS_T_grp(i_Tgrp_k)%table(i_Tk,4) 
-       i_p_sp_pol_c=BS_T_grp(i_Tgrp_p)%table(i_Tp,4) 
-       i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
-       i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
-       !       
-       i_s_star=Xk%s_table(i_p,i_kp_s) 
-       i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s) 
-
+       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
+       &                        i_p_bz_last,i_k_bz_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
@@ -457,7 +282,77 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
 &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
 &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
-       if (H_pos(1)>H_pos(2)) cycle 
+       !
+       if (H_pos(1)>H_pos(2)) cycle
+       !
+       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
+       &                        i_p_bz_last,i_k_bz_last)
+       !
+       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
+       !
+       ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
+       !
+       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
+       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,&
+       &                        i_p_sp_pol_c,i_v_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
+       !
+       ! c->v', i.e. k -> p=k-q_W transitions
+       !
+       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol_v,i_s_star,i_kp_s)
+       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_v,&
+       &                        i_c_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
+       !
+     enddo
+   enddo
+   !
+#if !defined _CUDA
+   !$omp end do
+#endif
+   !
+ end select
+ !
+ call elemental_collision_free(K_CORR_collision)
+#if !defined _CUDA
+ !$omp end parallel
+#endif
+ !
+ call timing('T_space CORR Osc.',OPR='stop')
+ !
+ contains
+   !
+   !
+   function collision_star(ik,is,ib,i_sp_pol,i_s_star,i_s_new)
+       implicit none
+       integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star,i_s_new
+       integer :: collision_star
+       collision_star=i_s_star
+       if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
+   end function collision_star
+   !
+   !
+   subroutine fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,    &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
+       &                        i_p_bz_last,i_k_bz_last)
+       !
+       use R_lattice,     ONLY:qindx_B,qindx_B_load
+       use D_lattice,     ONLY:sop_inv,sop_tab
+       use parallel_m,    ONLY:PAR_K_scheme
+       !
+       implicit none
+       !
+       integer, intent(in)   :: i_Tk,i_Tp
+       integer, intent(out)  :: i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,    &
+       &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,      &
+       &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,    &
+       &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c
+       integer, intent(inout):: i_p_bz_last,i_k_bz_last
+       !
+       integer               :: i_k_s,i_p_s,i_k_s_m1,i_kmq_s,i_pmq_s,i_kmq_s_m1
        ! 
        i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
        i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
@@ -524,45 +419,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        i_s_star=Xk%s_table(i_p,i_kp_s) 
        i_s_mq_star=Xk%s_table(i_pmq,i_kp_mq_s) 
        !
-       if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
-       !
-       ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
-       !
-       i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
-       call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,&
-       &                        i_p_sp_pol_c,i_v_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
-       !
-       ! c->v', i.e. k -> p=k-q_W transitions
-       !
-       i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol_v,i_s_star,i_kp_s)
-       call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_v,&
-       &                        i_c_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
-       !
-     enddo
-   enddo
-   !
-#if !defined _CUDA
-   !$omp end do
-#endif
-   !
- end select
- !
- call elemental_collision_free(K_CORR_collision)
-#if !defined _CUDA
- !$omp end parallel
-#endif
- !
- call timing('T_space CORR Osc.',OPR='stop')
- !
- contains
-   !
-   function collision_star(ik,is,ib,i_sp_pol,i_s_star,i_s_new)
-       implicit none
-       integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star,i_s_new
-       integer :: collision_star
-       collision_star=i_s_star
-       if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
-   end function
+   end subroutine fill_indexes
    !
    subroutine EVAL_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki_ko,i_s_collision)
      implicit none

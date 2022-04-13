@@ -51,7 +51,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map, &
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map,EXCPH_q, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free
  use LIVE_t,         ONLY:live_timing
@@ -156,6 +156,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call Sat_alloc()
  call Renorm_alloc()
  !
+ ! Get q-point coordinates in the q-BZ
+ YAMBO_ALLOC(EXCPH_q,(q%nbz,3))
+ call get_excph_q_momenta()
+ !
  ! Main q-loop
  !
  call live_timing('Excitonic Gkkp',q%nibz*ph_modes)
@@ -220,6 +224,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call EXCPH_gkkp_report()
  YAMBO_FREE(max_Sat_weight)
  YAMBO_FREE(max_Sat_pos)
+ YAMBO_FREE(EXCPH_q)
  ! 
  call Sat_free()
  call Renorm_free()
@@ -272,6 +277,29 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_FREE(BS_E)
      !AMBO_FREE(k_plus_q_table)
    end subroutine BSE_free
+   !
+   subroutine get_excph_q_momenta()
+     !    
+     integer iq,i_star,iq_s,iq_bz
+     !
+     YAMBO_ALLOC(q%ptbz,(q%nbz,3))
+     !
+     call k_ibz2bz(q,"i",.false.)
+     !
+     do iq=1,q%nibz
+       !
+       do i_star=1,q%nstar(iq)
+         !
+         iq_s=q%star(iq,i_star)
+         iq_bz = q%k_table(iq, iq_s)
+         !
+         EXCPH_q(iq_bz,:) = q%ptbz(iq_bz,:)
+         !
+       enddo
+     enddo
+     !
+     YAMBO_FREE(q%ptbz)
+   end subroutine get_excph_q_momenta
    !
    subroutine build_k_plus_q_table()
      !      

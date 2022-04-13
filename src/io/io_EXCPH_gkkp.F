@@ -28,7 +28,7 @@ integer function io_EXCPH_gkkp(ID,what)
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                         def_variable_bulk,io_variable_bulk,io_fragment
  use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
-&                         BS_E_in,BS_Sat_E,BS_Sat_WEIGHT,BS_EXCPH_E,ph_EXCPH_E,&
+&                         BS_E_in,BS_Sat_E,BS_Sat_WEIGHT,BS_EXCPH_E,ph_EXCPH_E,EXCPH_q,&
 &                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,L_kind_in,L_kind_out,Sat_alloc, &
 &                         EXCPH_gkkp_alloc
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
@@ -74,13 +74,19 @@ integer function io_EXCPH_gkkp(ID,what)
    !
    io_EXCPH_gkkp=io_header(ID,R_LATT=.true.,KPTS=.true.,FRAG=frag_ELPH)
    !
-   call io_elemental(ID,VAR="PARS",VAR_SZ=4,MENU=0)
+   call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
+   !
+   call io_elemental(ID,&
+&       VAR=" Number of qpoints (BZ)   :",I0=nqbz,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,&
 &       VAR=" Exciton states           :",I1=EXCPH_states,CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,&
-&       VAR=" Exciton sum (scattered):",I1=EXCPH_sum,CHECK=.true.,OP=(/"==","=="/))
+&       VAR=" Exciton sum (scattered) :",I1=EXCPH_sum,CHECK=.true.,OP=(/"==","=="/))
+   !
+   call io_elemental(ID,&
+&       VAR=" Phonon modes            :",I0=ph_modes,CHECK=.true.,OP=(/"=="/))
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
    !
@@ -93,11 +99,14 @@ integer function io_EXCPH_gkkp(ID,what)
    call io_bulk(ID,VAR="EXCITON_SUM",VAR_SZ=(/2/))
    call io_bulk(ID,I1=EXCPH_sum)
    !
+   call io_bulk(ID,VAR="PHONON_MODES",VAR_SZ=(/1/))
+   call io_bulk(ID,I0=ph_modes)
+   !
    call def_variable_elemental(ID,"L_kind_in",1,0,0)
    call io_variable_elemental(ID,VAR="[K] L_kind in",CH0=L_kind_in,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(ID,"L_kind_out",1,0,0)
-   call io_variable_elemental(ID,VAR="[K] L_kind out",CH0=L_kind_in,CHECK=.true.,OP=(/"=="/))
+   call io_variable_elemental(ID,VAR="[K] L_kind out",CH0=L_kind_out,CHECK=.true.,OP=(/"=="/))
    !
  endif
  !
@@ -135,6 +144,12 @@ integer function io_EXCPH_gkkp(ID,what)
  endif
  !
  if(l_excph_gkkp) then
+   !
+   if (.not. read_is_on(ID)) then
+     VAR_name="EXCPH_Q"//trim(intc(iq))
+     call def_variable_bulk(ID_frag,trim(VAR_name),1,(/3/),SP)
+     call io_variable_bulk(ID_frag,1,R1=EXCPH_q(iq,:))
+   endif
    !
    VAR_name="EXCITON_PH_GKKP_Q"//trim(intc(iq))
    VAR_size=(/2,ph_modes,EXCPH_sum(2),EXCPH_states(2)/)

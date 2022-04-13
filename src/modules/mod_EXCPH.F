@@ -39,6 +39,7 @@ module EXCPH
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: EXCPH_states(2)
  integer                  :: EXCPH_sum(2)
+ real(SP), allocatable    :: EXCPH_q(:,:)
  character(schlen)        :: EXCPH_kind
  !
  ! L_in and L_out paths

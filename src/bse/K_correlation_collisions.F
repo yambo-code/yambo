@@ -253,7 +253,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       !
        i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
        call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,i_p_sp_pol_v,&
        &                                   i_v_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)

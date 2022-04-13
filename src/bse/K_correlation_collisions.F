@@ -60,14 +60,13 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! DEFINE BSK COMMON INDEXES
  !
- integer ::     i_k_bz,i_p_bz,i_k,i_p,i_kp_s,& 
-&               i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
+ integer ::     j_k_bz,j_p_bz,i_k,i_p,i_kp_s,& 
+&               j_kmq_bz,j_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,& 
 &               i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,I_Tgrp_k_st,I_Tgrp_p_st,H_pos(2),& 
 &               i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,& 
-&               i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp(2) 
+&               i_kmq_t,i_pmq_t 
  ! OMP LAST DEF
- integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last
+ integer ::     i_k_bz_last,i_p_bz_last,iq_W_bz_last,ig_W_last
  !
  integer     :: i_s_star,i_s_mq_star,i_s_collision,N_kmq,N_pmq
  character(1):: mode_now
@@ -98,14 +97,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      !
-     i_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1) ! k
-     i_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1) ! p = k - q_W
+     j_k_bz=BS_T_grp(i_Tgrp_k)%table(i_Tk,1) ! k
+     j_p_bz=BS_T_grp(i_Tgrp_p)%table(i_Tp,1) ! p = k - q_W
      !
-     i_kmq_bz=qindx_X(iq,i_k_bz,1) ! k-q
-     i_pmq_bz=qindx_X(iq,i_p_bz,1) ! p-q = k - q_W -q
+     j_kmq_bz=qindx_X(iq,j_k_bz,1) ! k-q
+     j_pmq_bz=qindx_X(iq,j_p_bz,1) ! p-q = k - q_W -q
      !
-     i_kmq   =Xk%sstar(i_kmq_bz,1)
-     i_pmq   =Xk%sstar(i_pmq_bz,1)
+     i_kmq   =Xk%sstar(j_kmq_bz,1)
+     i_pmq   =Xk%sstar(j_pmq_bz,1)
      !
      i_kmq_t =BS_blk(i_block)%kp_table(1,i_kmq)
      i_pmq_t =BS_blk(i_block)%kp_table(2,i_pmq)     
@@ -132,7 +131,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  BS_blk(i_block)%O_table=0
  O_todo_table=.false.
  !
- i_p_bz_last=0  ; i_k_bz_last=0
+ i_p_bz_last=0 ;  i_k_bz_last=0 ;  iq_W_bz_last=0 ;  ig_W_last=0 
  !
  mode_now=BS_blk(i_block)%mode
  if (.not.l_BS_ares_from_res) mode_now="F"
@@ -150,11 +149,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,                  &
+       &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
-       &                        i_p_bz_last,i_k_bz_last)
+       &                        i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
@@ -184,11 +184,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,                  &
+       &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
-       &                        i_p_bz_last,i_k_bz_last)
+       &                        i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
@@ -211,12 +212,11 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
 #if !defined _CUDA
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
- !$omp &          i_k_bz,i_p_bz,i_kp_s,i_s_star,H_pos,&
- !$omp &          i_kmq_bz,i_pmq_bz,i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
+ !$omp &          i_kp_s,i_s_star,H_pos,&
+ !$omp &          i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
  !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,iq_W_bz,iq_W_s,ig_W,&
- !$omp &          i_kmq_t,i_pmq_t,i_k_bz_mem,qindx_tmp, &
- !$omp &          i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
- !$omp &          iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
+ !$omp &          i_kmq_t,i_pmq_t, &
+ !$omp &          i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last, &
  !$omp &          K_CORR_collision, i_s_collision)
 #endif
  !
@@ -224,7 +224,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  call elemental_collision_alloc(K_CORR_collision,NG=O_ng, TITLE="CORR_COLL")
  !
- i_p_bz_last=0  ; i_k_bz_last=0
+ i_p_bz_last=0 ;  i_k_bz_last=0 ;  iq_W_bz_last=0 ;  ig_W_last=0 
  !
  select case (mode_now)
  case("R","A","F")
@@ -242,11 +242,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,                  &
+       &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
-       &                        i_p_bz_last,i_k_bz_last)
+       &                        i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_c) cycle
        !
@@ -283,11 +284,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        if (H_pos(1)>H_pos(2)) cycle
        !
-       call fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,      &
+       call fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,                  &
+       &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
-       &                        i_p_bz_last,i_k_bz_last)
+       &                        i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
@@ -330,11 +332,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
    end function collision_star
    !
-   subroutine fill_indexes(i_Tk,i_Tp,i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,    &
+   subroutine fill_indexes(i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block,                &
+       &                        i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,         &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,           &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,         &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c,         &
-       &                        i_p_bz_last,i_k_bz_last)
+       &                        i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last)
        !
        use R_lattice,     ONLY:qindx_B,qindx_B_load
        use D_lattice,     ONLY:sop_inv,sop_tab
@@ -342,15 +345,16 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        implicit none
        !
-       integer, intent(in)   :: i_Tk,i_Tp
+       integer, intent(in)   :: i_Tk,i_Tp,i_Tgrp_k,i_Tgrp_p,i_block
        integer, intent(out)  :: i_kp_s,i_s_star,i_kp_mq_s,i_s_mq_star,    &
        &                        i_k,i_p,i_kmq,i_pmq,i_kmq_t,i_pmq_t,      &
        &                        i_c_p,i_v_p,i_p_sp_pol_v,i_p_sp_pol_c,    &
        &                        i_v_k,i_c_k,i_k_sp_pol_v,i_k_sp_pol_c
-       integer, intent(inout):: i_p_bz_last,i_k_bz_last
+       integer, intent(inout):: i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last
        !
-       integer               :: i_k_s,i_p_s,i_k_s_m1,i_kmq_s,i_pmq_s,i_kmq_s_m1
-       ! 
+       integer               :: i_k_bz,i_p_bz,i_kmq_bz,i_pmq_bz,i_k_s,i_p_s,i_k_s_m1,  &
+       &                        i_kmq_s,i_pmq_s,i_kmq_s_m1,i_k_bz_mem,qindx_tmp(2)
+       !
        i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
        i_p_bz  = BS_T_grp(i_Tgrp_p)%table(i_Tp,1) 
        ! 

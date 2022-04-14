@@ -10,7 +10,7 @@
 ! License as published by the Free Software Foundation; 
 ! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
+! This program is distributed in the hope that it Will 
 ! be useful, but WITHOUT ANY WARRANTY; without even the 
 ! implied warranty of MERCHANTABILITY or FITNESS FOR A 
 ! PARTICULAR PURPOSE.  See the GNU General Public License 
@@ -49,6 +49,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  use collision_el,  ONLY:elemental_collision_free,elemental_collision_alloc
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
+ use parallel_m,    ONLY:myid
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -323,12 +324,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  contains
    !
-   function collision_star(ik,is,ib,i_sp_pol,i_s_star,i_s_new)
+   function collision_star(ik,is,ib,i_sp_pol,i_s_star_in,i_s_new)
        use BS,            ONLY:WF_phase
        implicit none
-       integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star,i_s_new
+       integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star_in,i_s_new
        integer :: collision_star
-       collision_star=i_s_star
+       collision_star=i_s_star_in
        if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
    end function collision_star
    !
@@ -351,6 +352,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        &                        j_c_p,j_v_p,j_p_sp_pol_v,j_p_sp_pol_c,    &
        &                        j_v_k,j_c_k,j_k_sp_pol_v,j_k_sp_pol_c,j_q_W
        integer, intent(inout):: j_p_bz_last,j_k_bz_last,j_q_W_bz_last,j_g_W_last
+       !
+       ! local variables
        !
        integer               :: j_k_bz,j_p_bz,j_kmq_bz,j_pmq_bz,j_k_s,j_p_s,j_k_s_m1,  &
        &                        j_kmq_s,j_pmq_s,j_kmq_s_m1,j_k_bz_mem,qindx_tmp(2),    &
@@ -376,7 +379,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        ! 
        j_kmq_t=BS_blk(j_block)%kp_table(1,j_kmq) 
        j_pmq_t=BS_blk(j_block)%kp_table(2,j_pmq) 
-       ! 
+       !
        j_kmq_s_m1 = sop_inv(j_kmq_s) 
        j_kp_mq_s  = sop_tab(j_kmq_s_m1,j_pmq_s) 
        ! 
@@ -428,6 +431,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        if(BS_blk(iB_p)%ira_k/=BS_blk(iB)%ira_k .or. BS_blk(iB_p)%ira_p/=BS_blk(iB)%ira_p) exit
        if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
        if(.not.allocated(BS_blk(iB_p)%O_table)) cycle
+       if( iki>size(BS_blk(iB_p)%O_table(1,1,:,1,1,1,1)) .or. iko>size(BS_blk(iB_p)%O_table(1,1,1,:,1,1,1)) ) cycle
        if(BS_blk(iB_p)%O_table(1,i_s_collision,iki,iko,ibi,ibo,i_sp_pol)==0) cycle
        iB_ref=iB_p
        exit

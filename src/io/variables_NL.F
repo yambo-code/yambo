@@ -53,7 +53,7 @@ integer function variables_NL(ID)
 &         DESCRIPTOR=NL_desc)
  call io_elemental(ID,VAR="[RT] Time step",TERMINATOR="[fs]",R0=RT_step,      CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTOR=NL_desc,UNIT=AUT2FS)
- call io_elemental(ID,VAR="[NL] Damping",TERMINATOR="[fs]",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
+ call io_elemental(ID,VAR="[NL] Damping",TERMINATOR="[eV]",R0=NL_damping,   CHECK=.true.,OP=(/"=="/), &
 &         DESCRIPTOR=NL_desc,UNIT=HA2EV)
  call io_elemental(ID,VAR="[NL] Bands  range",I1=RT_bands,     CHECK=.true.,OP=(/"==","=="/), &
 &         DESCRIPTOR=NL_desc)

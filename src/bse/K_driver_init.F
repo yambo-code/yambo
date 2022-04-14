@@ -88,6 +88,27 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
+ !
+#if defined _SLEPC && !defined _NL
+ !
+ ! SLEPC
+ !=======
+ ! Here we will have two options to initialize the slepc matrix:
+ call parser('BSSSlepcMatrix',BSS_slepc_matrix)
+ !
+ ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ !
+ ! The doubling is activated unless explicily imposed by input since slepc
+ ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
+ ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
+ !
+ call parser('ImposeSymm',l_flag)
+ if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
+ BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
+ !
+#endif
+ !
  ! DS: the following line makes no sense. Resonant means I do not want the anti-resonant term ???
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
@@ -198,26 +219,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
  call parser('ForceEqTrans',EQ_Transitions)
  call parser('ForceEqNoOcc',EQ_NoOcc)
-#endif
- !
- ! SLEPC
- !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
- !
-#if defined _SLEPC && !defined _NL
- !
- ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
- !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
- !
- call parser('ImposeSymm',l_flag)
- if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
- BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
- !
 #endif
  !
  ! Double Grid support

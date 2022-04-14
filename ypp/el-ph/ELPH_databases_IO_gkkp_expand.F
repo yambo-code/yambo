@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
+subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag,GKKP)
  !
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
@@ -35,7 +35,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  implicit none
  !
  character(*)  ::mode
- integer, intent(in) :: qindx_ID
+ integer, intent(in) :: qindx_ID,qindx_ID_frag
  integer, intent(in) :: iq,iq_s
  type(bz_samp), intent(in) ::k,q
  type(GKKP_me) ::GKKP
@@ -72,6 +72,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      enddo
    enddo
    !
+   if(any(local_K_found.eqv..FALSE.)) &
+&     call error(' Error expanding GKKP: please set force_symmorphic=.true. in NSCF and nk=1 in DVSCF calculation ')
+   !
  endif
  !
  if (.not.mode=="Q") return
@@ -82,7 +85,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
- if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag) 
  !
  do ik_bz=1,k%nbz
    !
@@ -93,7 +96,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      !
      do ok_bz=1,k%nbz
        !
-       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
        if (iq_bz==iq) then
@@ -166,7 +169,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
      !
      do ok_bz=1,k%nbz
        !
-       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID)
+       qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
        if (iq_bz==iq) then
@@ -203,7 +206,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,GKKP)
  GKKP%dVc=GKKP_expanded%dVc
  GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
  !
- if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID)
+ if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  call ELPH_alloc("FREE",GKKP=GKKP_expanded)
  !

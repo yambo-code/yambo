@@ -25,12 +25,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP,cZERO
+ use pars,          ONLY:SP,cZERO,schlen
  use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
+ use LIVE_t,        ONLY:live_timing
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
  use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
-&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup
+&                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
+&                        n_OPTICAL_dir_to_eval,X_par_average
+ use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
@@ -45,7 +48,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use matrix,        ONLY:MATRIX_reset
+ use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
 #include<memory.h>
  !
@@ -56,16 +59,24 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  type(w_samp)  ::Xw
  logical       ::SILENT_MODE
  !
+ ! External
+ !
+ integer, external    :: io_X,X_eh_setup
+ !
  ! Work Space
  !
- integer              :: iq,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ integer              :: iq,iq_dir,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
  real(SP)             :: minmax_ehe(2)
- integer, external    :: io_X,X_eh_setup
  character(1)         :: sec_mode
+ character(schlen)    :: X_what
  !
  ! logicals and control
  !
  self_detect_E_range=.false.
+ !
+ ! Check if there is a Efield directions average to be done
+ !
+ call X_AVERAGE_setup("INIT",-1,X%q0)
  !
  ! Some check
  !
@@ -136,6 +147,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    if (i_err==0) then
      !
+     call live_timing("Loading the dielectric function",(X%iq(2)-X%iq(1)+1))
+     !
      do iq=X%iq(1),X%iq(2)
        !
        ! In the next lines Yambo will VERIFY the em1d database
@@ -153,7 +166,11 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
        io_X_done(iq)=io_X(X,Xw,Xdb)
        !
+       call live_timing(steps=1)
+       !
      enddo
+     !
+     call live_timing()
      !
    endif
    !
@@ -240,6 +257,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (     io_X_done(iq) > 0       ) cycle
    if (.not.PAR_IND_Q_ibz%element_1D(iq)) cycle
    !
+   ! Average setup
+   !
+   call X_AVERAGE_setup("Q-LOOP",iq,X%q0)
+   !
    if (iq/=1) then
      !
      ! TDDFT setup
@@ -262,17 +283,35 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   ! Allocation
-   !
+   ! Allocation Index
    iq_mem=PAR_Q_ibz_index(iq)
    if (io_RESPONSE) iq_mem=1
-   call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
    !
-   call X_irredux(iq,X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+   ! Live timing string
+   X_what=" "
    !
-   ! When X%whoami == 1 X is Xo (ACFDT). 
+   do iq_dir=1,n_OPTICAL_dir_to_eval
+     !
+     call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+     !
+     if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
+     if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
+     !
+     call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
+     !
+     ! When X%whoami == 1 X is Xo (ACFDT). 
+     !
+     if (X%whoami/=1) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
+     !
+     if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
+     if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
+     !
+   enddo
    !
-   if (X%whoami/=1) call X_redux(iq,X_par(iq_mem),Xw,X)
+   if (n_OPTICAL_dir_to_eval>1) then
+     call X_AVERAGE_do_it("DUMP",X_par(iq_mem))
+     call X_AVERAGE_setup("CLOSE",iq,X%q0)
+   endif
    !
 #if defined _PAR_IO
    if(.not.io_RESPONSE) then
@@ -313,7 +352,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
    ! database is not written on disk
-   !
    if (.not.io_RESPONSE.and.l_life) then
      call FREQUENCIES_reset(Xw,"coarse_grid")
    else
@@ -321,11 +359,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    endif
    !
    ! CLEAN (2)
-   !
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(iq_mem),0,0,"CLEAN")
+   if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
-   !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -351,4 +387,4 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  call DIP_alloc('DIP_v')
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
-end function
+end function X_dielectric_matrix

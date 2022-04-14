@@ -46,6 +46,7 @@ if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
 OPENMP_check="-"
 if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
 
+PARIO_check="$parallel_io"
 #
 # - LIBRARIES -
 #
@@ -93,7 +94,10 @@ else
 fi
 NETCDF_info="(NETCDF with large files support)"
 if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(NETCDF large files support disabled)"; fi
-if test "$enable_netcdf_par_io" = "yes";  then NETCDF_info="(NETCDF with parallel I/O and large files support)"; fi
+if test "$enable_netcdf_par_io" = "yes";  then
+  NETCDF_info="(NETCDF with parallel I/O and large files support)";
+  PARIO_info="(NETCDF)";
+fi
 #
 HDF5_str=" - "
 if test "$hdf5" = "yes" ; then
@@ -103,11 +107,18 @@ if test "$hdf5" = "yes" ; then
   else
     HDF5_str=" E "
   fi
-  if test "$enable_netcdf_hdf5" = "no"  ; then HDF5_info="(No HDF5-IO format)" ; fi
-  if test "$enable_netcdf_hdf5" = "yes" ; then
-    HDF5_info="(HDF5-IO format";
-    if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib " ; fi
-    if test "$enable_hdf5_par_io" = "yes"; then HDF5_info="${HDF5_info}, parallel IO"   ; fi
+  if test "$enable_netcdf_classic" = "yes"  ; then
+    HDF5_info="(No HDF5-IO format)" ;
+  else
+    NETCDF_info="(NETCDF4:";
+    HDF5_info="HDF5-IO format";
+    if test "$enable_hdf5_par_io" = "no"; then
+      HDF5_info="${HDF5_info}, serial IO"   ;
+      if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib  " ; fi
+    else
+      HDF5_info="${HDF5_info}, parallel IO"   ;
+      PARIO_info="(HDF5)";
+    fi
     if test "$enable_hdf5_compression" = "yes"; then
       HDF5_info="${HDF5_info}, with data compression)" ;
     else
@@ -202,6 +213,7 @@ AC_SUBST(MEM_profile_check)
 #
 AC_SUBST(MPI_check)
 AC_SUBST(OPENMP_check)
+AC_SUBST(PARIO_check)
 #
 AC_SUBST(YAML_str)
 AC_SUBST(FUTILE_str)
@@ -211,6 +223,7 @@ AC_SUBST(NETCDF_str)
 AC_SUBST(NETCDF_info)
 AC_SUBST(HDF5_str)
 AC_SUBST(HDF5_info)
+AC_SUBST(PARIO_info)
 #
 AC_SUBST(FFT_str)
 AC_SUBST(BLAS_str)

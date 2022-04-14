@@ -21,20 +21,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
+subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
  !
  use drivers,       ONLY:l_real_time,l_sc_magnetic
  use pars,          ONLY:SP,DP,cONE
  use electrons,     ONLY:n_spinor
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,wf_ncx,wf_igk,wf_nc_k
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
  use pseudo,        ONLY:pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_table,pp_kbv_table
- use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
+ use D_lattice,     ONLY:atom_pos,x_cc,a,n_atoms
  !
 #include<memory.h>
  !
- complex(SP)             :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo),kbv_real_space(fft_size,n_spinor,pp_kbv_dim_yambo)
- real(SP)                :: kpt(3)
+ integer,     intent(in)  :: npp,pp_range(2),i_atom,is,ia,ik
+ complex(SP), intent(in)  :: kbv(wf_ncx,n_spinor,4,npp)
+ complex(SP), intent(out) :: kbv_real_space(fft_size,n_spinor,pp_range(1):pp_range(2))
+ real(SP),    intent(in)  :: kpt(3)
  !
  ! Work Space
  !
@@ -44,12 +46,9 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  !
  ! Dummies
  !
- integer                 :: i1,i2,is,ia,i_atom,il,im,i_pp,pp_spin,i_spinor
+ integer                 :: ig,ic,i_pp,i_kbv,i_spinor
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
- !
- i1=0
- i_atom=0
  !
 #if defined _RT
  if(l_real_time) then
@@ -61,10 +60,6 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
  if(l_sc_magnetic)  kpt_factor=cONE
 #endif
  !
- do is = 1,n_atomic_species
-   do ia = 1,n_atoms_species(is)
-     !
-     i_atom=i_atom+1
      !
 #if defined _RT
      if(l_real_time) then
@@ -74,22 +69,15 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
      endif
 #endif
      !
-     do i_pp = 1, pp_n_l_times_proj_max
-       il = pp_table(1,is,i_pp)
-       pp_spin = pp_table(3,is,i_pp)   ! neglect the so-term for abinit KB
-       if(pp_spin>1) cycle
-       !
-       do im = 1,2*(il-1)+1
-         !
-         do i_spinor=1,n_spinor
-           !
-           i1=i1+2-i_spinor
-           i2=pp_kbv_table(i1)
-           !
-           if(i2==0) cycle
+     do i_pp = pp_range(1),pp_range(2)
+       i_kbv=i_pp-pp_range(1)+1
+       do i_spinor=1,n_spinor
            !
            kbv_DP=(0._DP,0._DP)
-           kbv_DP(fft_g_table(1:wf_ng,1))=conjg(kbv(1:wf_ng,i_spinor,1,i2))*fft_norm
+           do ic=1,wf_nc_k(ik)
+             ig=wf_igk(ic,ik)
+             kbv_DP(fft_g_table(ig,1))=conjg(kbv(ic,i_spinor,1,i_kbv))*fft_norm
+           enddo
            !
            ! Here I need to fourier tranform kbv(G,i1,1)
 #if defined _FFTW
@@ -99,13 +87,10 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt)
            call fft_3d(kbv_DP,fft_dim,1)
 #endif
            !
-           kbv_real_space(:,i_spinor,i2)=conjg(cmplx(kbv_DP(:),kind=SP))*kpt_factor(:)
+           kbv_real_space(:,i_spinor,i_pp)=conjg(cmplx(kbv_DP(:),kind=SP))*kpt_factor(:)
            !
-         enddo   ! i_spinor
-       enddo   ! im
+       enddo ! i_spinor
      enddo   ! i_pp
      !
-   enddo   ! ia
- enddo  ! is
  !
 end subroutine Pseudo_KB_FFT

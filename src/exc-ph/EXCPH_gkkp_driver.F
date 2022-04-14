@@ -214,6 +214,10 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    !
  enddo
  !
+ ! [FP] DEBUG
+ !call compare_qindxC_table()
+ ! [FP] END DEBUG
+ !
  call live_timing( )
  !
  call BSE_free()
@@ -312,7 +316,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
      !
-     call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
+     ! [FP] I comment the line below otherwise the code crashes. 
+     ! [FP] Serial support only for this function. Currently only used for debugging anyway.
+     !call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
      call PARALLEL_SETUP_K_scheme("BZINDX")
      !
      ! here qindx_B is allocated
@@ -363,6 +369,36 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      call live_timing( )
      !
    end subroutine build_inverse_eh_table
+   !
+   subroutine compare_qindxC_table()
+     !
+     ! [FP] DEBUG FUNCTION (to be removed?)
+     !
+     use R_lattice, ONLY:qindx_C
+     !
+     integer :: ik_plus_iq_C, ik_plus_iq_tbl, ik_bz
+     integer :: iq,i_star,iq_s,iq_bz
+     !
+     call build_k_plus_q_table()
+     do iq=1,q%nibz
+       !
+       do i_star=1,q%nstar(iq)
+         !
+         iq_s=q%star(iq,i_star)
+         iq_bz = q%k_table(iq, iq_s)
+         !
+         do ik_bz=1, k%nbz
+           !
+           ik_plus_iq_C   = qindx_C(ik_bz,iq_bz,1)
+           ik_plus_iq_tbl = k_plus_q_table(ik_bz,iq_bz)
+           write (*,*) ik_plus_iq_C-ik_plus_iq_tbl
+           !
+         enddo
+         !
+       enddo
+     enddo
+     !
+   end subroutine compare_qindxC_table
    !
    subroutine EXCPH_gkkp_report()
      use stderr,        ONLY:intc

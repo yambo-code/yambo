@@ -71,7 +71,10 @@ subroutine K_Haydock(iq,W,mode)
  character(1)       ::sec
  character(11)      ::scheme
  !
- if (BS_res_ares_n_mat==2) call error(" Haydock not coded for case  with two BSE matricies")
+ if (BS_res_ares_n_mat==2) then
+   call warning(" Haydock not coded for case  with two BSE matricies")
+   return
+ endif
  !
  call K_output_file(iq,"open Haydock "//trim(mode))
  !

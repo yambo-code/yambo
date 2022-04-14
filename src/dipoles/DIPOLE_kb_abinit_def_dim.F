@@ -36,7 +36,7 @@ subroutine Dipole_kb_abinit_def_dim()
  use wave_func,     ONLY:wf_ncx
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species
  use pseudo,        ONLY:pp_kbv_dim,pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_kbs,&
-&                        pp_kb,pp_kbd,pp_table,pp_kbv_table
+&                        pp_kb,pp_kbd,pp_table,pp_kbv_table,pp_kbv_dim_atom
  !
  implicit none
  !
@@ -44,7 +44,7 @@ subroutine Dipole_kb_abinit_def_dim()
  !
  complex(SP) :: tmp_var(wf_ncx,2),check(2)
  !
- integer     :: i1,i2,is,ia,pp_spin
+ integer     :: i1,i2,i3,is,ia,pp_spin
  integer     :: im,il,i_pp
  !
  allocate(pp_kbv_table(pp_kbv_dim))
@@ -52,9 +52,11 @@ subroutine Dipole_kb_abinit_def_dim()
  !
  i1=0
  i2=0
+ pp_kbv_dim_atom=0
  !
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
+     i3=0
      do i_pp=1,pp_n_l_times_proj_max
        !
        il      = pp_table(1,is,i_pp)
@@ -67,6 +69,7 @@ subroutine Dipole_kb_abinit_def_dim()
          !
          i1=i1+1
          i2=i2+1
+         i3=i3+1
          !
          tmp_var(:,1)= pp_kbs(is,i_pp)*pp_kb(:wf_ncx,is,i_pp,1)
          tmp_var(:,2)= pp_kbd(:wf_ncx,is,i_pp,1)+pp_kb(:wf_ncx,is,i_pp,1)
@@ -83,6 +86,7 @@ subroutine Dipole_kb_abinit_def_dim()
          !
        enddo
      enddo
+     pp_kbv_dim_atom=max(pp_kbv_dim_atom,i3)
    enddo
  enddo
  !

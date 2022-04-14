@@ -46,21 +46,16 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  logical                      :: psp_has_so
  integer                      :: is,ia,il,i_ml,i_mj,l,ml,twojp1,i_m_shift(2),&
 &                                i_pp,pp_spin,i_spinor
- integer                      :: io_KB_abinit_err,io_KB_pwscf_err,io_Vnl_err,D(3)
+ integer                      :: io_KB_abinit_err,io_KB_pwscf_err,D(3)
  !
- integer, external            :: io_KB_abinit,io_KB_pwscf,io_Vnl
+ integer, external            :: io_KB_abinit,io_KB_pwscf
  !
  Dip%Vnl_included=.false.
  !
- io_Vnl_err     =-1
  io_KB_abinit_err=-1
  io_KB_pwscf_err =-1
  !
  pp_kbv_dim=0
- !
- ! Check for the Vnl DB
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=ID)
- io_Vnl_err=io_Vnl(Dip,Xen,ID)
  !
  ! Check for the KB pwscf DB 
  if(.not.io_KB_abinit_err==0) then
@@ -74,7 +69,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
    io_KB_abinit_err=io_KB_abinit(ID)
  endif
  !
- Dip%Vnl_included= any((/io_KB_abinit_err==0,io_KB_pwscf_err==0,io_Vnl_err==0/))
+ Dip%Vnl_included= any((/io_KB_abinit_err==0,io_KB_pwscf_err==0/))
  !
  ! Here the pp_kbv_dim is evaluated
  ! The abinit and the pwscf approach are identical if n_spin=1 (a part from trivial factors)
@@ -157,7 +152,7 @@ subroutine Dipole_kb_init(Xen,Dip,io_err,ID)
  !
  io_err(1)=io_KB_abinit_err
  io_err(2)=io_KB_pwscf_err
- io_err(3)=io_Vnl_err
+ io_err(3)=-1
  !
  if ( pp_kbv_dim>0 ) call msg('s','[x,Vnl] computed using '//trim(intc(pp_kbv_dim))//' projectors')
  if ( pp_kbv_dim>50) call warning(' [x,Vnl] slows the Dipoles computation. To neglect it rename the ns.kb_pp file')

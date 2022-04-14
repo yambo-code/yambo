@@ -548,8 +548,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
          !
-         if (iq==1) ig_W_final=      ig_W_mq
-         if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_pmq,ig_kmq),iq_W_s_mq))
+         !if (iq==1) ig_W_final=      ig_W_mq
+         !if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_pmq,ig_kmq),iq_W_s_mq))
          !
        endif 
        ! 
@@ -564,7 +564,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
-         if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
+         !if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
          !
          if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !

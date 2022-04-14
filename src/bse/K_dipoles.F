@@ -247,6 +247,10 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
    call DIP_alloc('DIP_P_spinor')
+   !
+   ! Here I need the distribution over k
+   call PARALLEL_SETUP_K_scheme("Kdef")
+   !
  endif
  !
  if(iq>1) then

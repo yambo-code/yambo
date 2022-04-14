@@ -17,7 +17,7 @@ TARBALL=$(tarball_pnetcdf)
 # redefinitions
 #
 AUXFLAGS=--prefix=$(LIBPATH) \
-         --without-pic --enable-static --disable-shared
+         --without-pic --enable-static --disable-shared --disable-cxx
 
 # DEBUG <
 # This option is useful for debugging netcdf4 problems
@@ -41,9 +41,8 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
+	      CFLAGS="$(cflags)" \
 	      CPP="$(cpp)" \
-	      CXX="$(cxx)" \
-	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(inetcdf)" \
 	      F77="$(f77)" ); \

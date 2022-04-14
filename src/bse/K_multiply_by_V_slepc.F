@@ -45,8 +45,8 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- PetscFortranComplex  :: tmp_value(1)
- PetscFortranInt      :: H_pos(1)
+ PetscScalar          :: tmp_value(1)
+ PetscInt             :: H_pos(1), pet_one
  PetscErrorCode       :: ierr
  !
  VecScatter           :: ctx
@@ -59,6 +59,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  ! create scattering context vi (distributed) -> x (local)
  !
+ pet_one = 1
  call VecScatterCreateToAll(vi,ctx,x,ierr);
  !
  ! scatter from vi (distributed) -> x (local)
@@ -75,7 +76,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
+     call VecGetValues( x, pet_one, H_pos, tmp_value, ierr )
      Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
    enddo
  enddo
@@ -108,11 +109,11 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
      H_pos=start_index+i_c
      tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
+     call VecSetValues( vo, pet_one, H_pos, tmp_value, INSERT_VALUES, ierr )
      if(BSS_slepc_double_grp) then
        ! Expand vo to anti-resonant block
        H_pos=start_index_dg+i_c
-       call VecSetValues( vo, 1, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
+       call VecSetValues( vo, pet_one, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
      endif
    enddo
  enddo

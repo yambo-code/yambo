@@ -312,7 +312,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
          ivalue=ivalue+1
          if(i_point==1) values(2:ndims+1)=      tmp_var(:,ifile,iqnt)
          if(i_point> 1) values(2:ndims+1)=auxiliary_var(:,ifile,iqnt,i_point-1)
-         if(PLOT_BANDS .and. ivalue==1) values(2:ndims+1)=values(2:ndims+1)*HA2EV
+         if(PLOT_BANDS .and. ivalue<=n_sp_pol) values(2:ndims+1)=values(2:ndims+1)*HA2EV
          call msg('o '//trim(file_name(ivalue)),' ',values(:nval),INDENT=0,USE_TABS=.not.plot_G2,after_msg=k_name)
        enddo
        !

@@ -130,11 +130,13 @@ subroutine electrons_dos(Xk,Xen)
    call INTERPOLATION_driver_seed("f_on_built_in",ID_f,DOS_bands,Xk,SEED_E=Xen)
    call INTERPOLATION_driver_do("f_on_built_in",ID_f,GRID_k,OUT_E=GRID_E)
    !
+   ID_pdos=0
    if (l_PROJECT_atom) then
      call INTERPOLATION_driver_seed("PDOS_factors_on_built_in",ID_pdos,DOS_bands,Xk,SEED_R3=INTERP_obj(ID_bare_pdos)%INTERP)
      call INTERPOLATION_driver_do("PDOS_factors_on_built_in",ID_pdos,GRID_k)
    endif
    !
+   ID_spin=0
    if (n_spinor==2) then
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",ID_spin,DOS_bands,Xk,SEED_R3=INTERP_obj(ID_bare_spin)%INTERP)
      call INTERPOLATION_driver_do("SPIN_factors_on_built_in",ID_spin,GRID_k)

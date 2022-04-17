@@ -31,7 +31,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use drivers,        ONLY:l_EXCPH_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
- use R_lattice,      ONLY:nqibz,bz_samp,qindx_C
+ use R_lattice,      ONLY:nqibz,bz_samp!,qindx_C
  use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BS_mat,BSS_eh_table,BSS_free,BSS_write_eig_2_db
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
@@ -40,7 +40,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1!,k_plus_q_table
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table
 #include<memory.h>
  !
  type(levels)  ::E
@@ -93,8 +93,11 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
        iv    = BSS_eh_table(i_H,2)
        ic    = BSS_eh_table(i_H,3)
        !
-       ! ip_bz = R_iq_s^-1 R_ik_s ik_ibz
-       !       = R_iq_s^-1 ik_bz
+       ! DS note: I think here the choice is not unique
+       !          given a ik_bz there maybe multiple ik_s which send ik_ibz --> ik_bz
+       !
+       ! ip_bz = R_iq_s^-1 ik_bz
+       !       = R_iq_s^-1 R_ik_s ik_ibz
        !
        ip_bz = elemental_scattering(iq_s,ik_bz)
        !
@@ -116,7 +119,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
        !
        ! ip_bz = R_iq_s^-1 R_ik_s ik_ibz
        !
-       ik_plus_iq_bz = qindx_C(ik_bz,iq_bz,1) !  k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
+       !ik_plus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+       ik_plus_iq_bz = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
        !
        ip_bz = elemental_scattering(iq_s,ik_plus_iq_bz)
        !

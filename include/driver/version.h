@@ -25,6 +25,6 @@
 #define YAMBO_VERSION 5
 #define YAMBO_SUBVERSION 1
 #define YAMBO_PATCHLEVEL 1
-#define YAMBO_REVISION 21258
-#define YAMBO_HASH "96dceba85" 
+#define YAMBO_REVISION 21391
+#define YAMBO_HASH "f919e7ece" 
 

@@ -41,7 +41,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  use pars,           ONLY:SP,cZERO,rZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
- use R_lattice,      ONLY:bz_samp,qindx_B_load
+ use R_lattice,      ONLY:bz_samp,qindx_B !_load
  use D_lattice,      ONLY:nsym
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
@@ -125,7 +125,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! K plus q table
  !
- !call build_k_plus_q_table()
+ call build_k_plus_q_table()
  !
  ! BSS_eh_table_m1
  !
@@ -215,7 +215,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  enddo
  !
  ! [FP] DEBUG
- !call compare_qindxC_table()
+ ! call compare_qindxC_table()
  ! [FP] END DEBUG
  !
  call live_timing( )
@@ -248,7 +248,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
      YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      YAMBO_ALLOC(BS_E,(BSS_n_eig))
-     !AMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
+     YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,BSS_n_eig))
@@ -258,7 +258,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BS_mat=cZERO
      BS_E=cZERO
      !
-     !k_plus_q_table  = 0
+     k_plus_q_table  = 0
      BSS_eh_table    = 0
      BSS_eh_table_m1 = 0
      !
@@ -279,7 +279,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_FREE(BSS_eh_table_in)
      YAMBO_FREE(BSS_eh_table_m1_in)
      YAMBO_FREE(BS_E)
-     !AMBO_FREE(k_plus_q_table)
+     YAMBO_FREE(k_plus_q_table)
    end subroutine BSE_free
    !
    subroutine get_excph_q_momenta()
@@ -310,43 +310,36 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      use parallel_int,        ONLY:PARALLEL_global_indexes
      use R_lattice,           ONLY:bse_scattering
      !
-     integer, external ::qindx_B_init,qindx_B_close,io_QINDX 
-     integer :: qindx_ID,qindx_ID_frag,qindx_tmp(2),ID,io_err
+     !integer, external ::qindx_B_init,qindx_B_close,io_QINDX 
+     !integer :: qindx_ID,qindx_ID_frag,qindx_tmp(2),ID,io_err
+     integer, external ::io_QINDX 
+     integer :: ID,io_err
      integer :: ik_bz,iq_bz,ip_bz
      !
      if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
      !
-     ! [FP] I comment the line below otherwise the code crashes. 
-     ! [FP] Serial support only for this function. Currently only used for debugging anyway.
-     !call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
-     call PARALLEL_SETUP_K_scheme("BZINDX")
+     call PARALLEL_SETUP_K_scheme("Kdef")
      !
      ! here qindx_B is allocated
-     !
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,5/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
      io_err=io_QINDX(k,q,ID)
      if (io_err/=0) then
        call msg('s',"Missing k/q scattering database")
        call error("Please run a setup with the BSEscatt flag activated")
      endif
      !
-     io_err=qindx_B_init(qindx_ID,qindx_ID_frag)
-     if(io_err/=0) call error("Error reading qindx_B")
-     !
      call live_timing('K plus q table',k%nbz)
      do ik_bz=1,k%nbz
        call live_timing(steps=1)
        IQ_bz_loop: do iq_bz=1,q%nbz
          do ip_bz=1,k%nbz
-           qindx_tmp=qindx_B_load(ip_bz,ik_bz,qindx_ID_frag)
-           if (qindx_tmp(1)==iq_bz) then
+           if (qindx_B(ik_bz,ip_bz,1)==iq_bz) then
              k_plus_q_table(ik_bz,iq_bz)=ip_bz
              cycle IQ_bz_loop
            endif
          enddo
        enddo IQ_bz_loop
      enddo
-     qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
      call live_timing( )
      !
    end subroutine build_k_plus_q_table
@@ -379,7 +372,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      integer :: ik_plus_iq_C, ik_plus_iq_tbl, ik_bz
      integer :: iq,i_star,iq_s,iq_bz
      !
-     call build_k_plus_q_table()
+     !call build_k_plus_q_table()
+     call k_ibz2bz(q,"i",.false.)
+     call k_ibz2bz(k,"i",.false.)
      do iq=1,q%nibz
        !
        do i_star=1,q%nstar(iq)
@@ -391,7 +386,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
            !
            ik_plus_iq_C   = qindx_C(ik_bz,iq_bz,1)
            ik_plus_iq_tbl = k_plus_q_table(ik_bz,iq_bz)
-           write (*,*) ik_plus_iq_C-ik_plus_iq_tbl
+           write(*,*) k%ptbz(ik_bz,:),q%ptbz(iq_bz,:)
+           write(*,*) k%ptbz(ik_plus_iq_C,:),ik_plus_iq_C
+           write(*,*) k%ptbz(ik_plus_iq_tbl,:),ik_plus_iq_tbl
            !
          enddo
          !

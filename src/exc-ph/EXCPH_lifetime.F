@@ -76,6 +76,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+   !write(*,*) iq,BS_all_E(:,iq)
  enddo
  !
  ! Load the Exciton-phonon elements and phonon energies
@@ -132,6 +133,10 @@ subroutine EXCPH_lifetime(E,k,q,X)
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*DbGrid_pole()
          else
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*Simple_pole()
+           ! DS Debug <
+           ! EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+Simple_pole()
+           ! write(*,*) i_alpha,EXC_LifeTime(i_alpha)
+           ! Ds Debug >
          endif
          !
        enddo
@@ -143,7 +148,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  enddo
  enddo
  !
- EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz)
+ EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !
@@ -182,6 +187,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
     !
     Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &
 &                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
+    !
+    !write(*,*) E_alpha,E_beta,ph_E,Simple_pole
     !
   end function Simple_Pole
   !

@@ -182,7 +182,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     Simple_pole=rZERO
     !
     E_alpha=real(BS_E_in(i_alpha),SP)
-    E_beta =BS_all_E(i_beta,iq)
+    E_beta =BS_all_E(i_beta,iq_bz)
     !
     iq_db=DB_Q_map(iq_bz)
     ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))

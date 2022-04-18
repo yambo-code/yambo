@@ -670,6 +670,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it('f',defs,'DiagExcph'   , '[EXCPH] Use only Diagonal Exciton-phonon matrix elements')
+ call it('f',defs,'NoMatrxEl'   , '[EXCPH] Set all exciton-phonon matrix elements to one (for testing purpose)')
  call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
  !

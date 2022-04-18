@@ -49,11 +49,15 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  ! Work space
  !
- integer :: ID_exc_gkkp,ID_gkkp,io_err
+ integer  :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
- integer :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star,iq_db
- integer :: elph_branches_save(2)
- integer :: min_pos(1)
+ integer  :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star,iq_db
+ integer  :: elph_branches_save(2)
+ integer  :: min_pos(1)
+ logical  :: l_no_matrix_elements
+ real(SP) :: ExcPhM
+ !
+ call parser('NoMatrxEl',l_no_matrix_elements)
  !
  call section('*','EXCPH-LifTime')
  !
@@ -129,10 +133,13 @@ subroutine EXCPH_lifetime(E,k,q,X)
        !
        do il=elph_branches(1),elph_branches(2)
          !
+         ExcPhM=EXCPH_Gkkp_sq(il,i_beta,i_alpha)
+         if(l_no_matrix_elements) ExcPhM=1._SP 
+         !
          if(use_PH_DbGd) then
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*DbGrid_pole()
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
          else
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+EXCPH_Gkkp_sq(il,i_beta,i_alpha)*Simple_pole()
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
            ! DS Debug <
            ! EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+Simple_pole()
            ! write(*,*) i_alpha,EXC_LifeTime(i_alpha)

@@ -64,6 +64,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  !
+ call k_ibz2bz(q,"i",.false.)
+ !
  ! Load excitonic energies 
  !
  call EXCPH_load_L(1,X,'check','Lout')
@@ -104,6 +106,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
  call msg('rs','Self-energy broadening : ',L_damping*HA2EV*1000._SP,'meV')
  !
+! write(*,*) 
+! write(*,*) 
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
  !
@@ -172,6 +176,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     use EXCPH,          ONLY:min_EXC_E,DB_Q_map
     use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
+    use units,          ONLY:HA2EV
     implicit none
     !
     real(SP) :: Simple_pole
@@ -195,7 +200,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &
 &                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
     !
-    !write(*,*) E_alpha,E_beta,ph_E,Simple_pole
+!    write(*,*) E_beta*HA2EV,ph_E*HA2EV,q%ptbz(iq_bz,:)
     !
   end function Simple_Pole
   !

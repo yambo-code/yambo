@@ -193,7 +193,6 @@ module EXCPH
     type(bz_samp) ::q
     !
     integer :: iq,idb
-    logical :: re_ordered
     !
     YAMBO_ALLOC(DB_Q_map,(q%nbz))
     !
@@ -209,7 +208,6 @@ module EXCPH
     enddo
     if(any(DB_Q_map==0)) call error("Q-point not found in gkkp_expanded DBs")
     !
-    re_ordered=.FALSE.
     do iq=1,q%nbz
       if(DB_Q_map(iq)/=iq) then
         call warning('Q-points in Yambo and gkkp_expanded DBs have a different order !')

@@ -290,12 +290,15 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      call k_ibz2bz(q,"i",.false.)
      !
+!     write(*,*)
+!     write(*,*) 'Excitoni q-list in the BZ '
      do iq=1,q%nibz
        !
        do i_star=1,q%nstar(iq)
          !
          iq_s=q%star(iq,i_star)
          iq_bz = q%k_table(iq, iq_s)
+!         write(*,*) iq_bz,q%ptbz(iq_bz,:)
          !
          EXCPH_q(iq_bz,:) = q%ptbz(iq_bz,:)
          !

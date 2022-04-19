@@ -25,6 +25,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
+ use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
@@ -53,7 +54,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):E%nbf)
  character(4) :: filename
- integer     :: line_counter,i_central_fks
+ integer     :: line_counter,i_central_fks,trial_chosen_band_QE
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
  complex(SP) :: ref_vec(FL_states(1):FL_states(2)),trial_vec(FL_states(1):FL_states(2))
  complex(SP) :: Mtmp(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
@@ -62,9 +63,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  complex(SP) :: NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP) :: NHM_Cmpl_Val(FL_states(1):FL_states(2))
  logical     :: l_assume_Hermitian
- real(SP)    :: phase
+ real(SP)    :: energy_crossing
  !
  FL_eigenvalues = 0._SP
+ energy_difference = 0._SP
  l_assume_Hermitian = .false.
  !
  do ik_bz=1,QP_nk
@@ -116,10 +118,21 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
      !
      do i_m=NL_bands(1),E%nbf ! band I want to update
        !
-       ! ref_vec is FL_V_band from previous iteration
+       ! select eigenvector - 1. highest central component
        !
+       i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !
-       ! select eigenvector based on Quasi-Energy
+       FL_chosen_bands(i_m) = FL_states(1) - 1 + &
+&      maxloc(abs(FL_eigenvectors(i_central_fks,FL_states(1):FL_states(2))),dim=1)
+       !
+       ! aim137 prelim - I could confirm this choice with a dot product between
+       ! the chosen eigenvector and the band from the previous iteration (ref_vec)
+       !
+       trial_vec(FL_states(1):FL_states(2)) = &
+                    & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
+       trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
+       !
+       ! select eigenvector - 2. by Quasi-Energy
        !
        do i1_fks=FL_states(1),FL_states(2)
        energy_difference(i1_fks) = &
@@ -127,110 +140,105 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
                     &     - E_full(i_m,ik_bz,is))
        enddo
        !
-       if (minval(energy_difference) < 0.1_SP) then
+       trial_chosen_band_QE = FL_states(1) - 1 + &
+&      minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
+       !
+       if (FL_chosen_bands(i_m) /= trial_chosen_band_QE) then
          !
-         FL_chosen_bands(i_m) = minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
-         trial_vec(FL_states(1):FL_states(2)) = &
-                      & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
-         trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
+         energy_crossing = abs( &
+&        energy_difference(FL_chosen_bands(i_m)) - &
+&        energy_difference(trial_chosen_band_QE))
          !
-       else 
+         !call warning ('   There are Quasi-Energy crossings in the system')
          !
-         call error('  went through eigenvector route')
-         ref_vec = cZERO
-         !
-         do i1=NL_bands(1),NL_bands(2)
-           do i1_fl=1,n_tot_fl_modes
+         if (energy_crossing > 1.E-4_SP) then
+           !
+           ! ref_vec is FL_V_band from previous iteration
+           !
+           call error('  went through eigenvector route')
+           ref_vec = cZERO
+           !
+           do i1=NL_bands(1),NL_bands(2)
+             do i1_fl=1,n_tot_fl_modes
+               !
+               i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
+               ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
+               !
+             enddo
+           !
+           enddo
+           !
+           ! Find maximum inner product with ref_vec
+           !
+           min_projection = 1._SP
+           trial_vec = cZERO
+           trial_val = 0._SP
+           do i2_fks=FL_states(1),FL_states(2)
              !
-             i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
-             ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
+             trial_projection = Vstar_dot_V(FL_states(2)-FL_states(1)+1,&
+                             &  ref_vec(FL_states(1):FL_states(2)),&
+                             &  FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
+            !trial_projection = dot_product(&
+            !            &      conjg(ref_vec(FL_states(1):FL_states(2))),&
+            !            &    FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
+             if (real(trial_projection) < 0) then
+                     trial_projection = trial_projection*(-1._SP)
+                 !aim137 check - I don't know whether I need to do this or not
+                 !aim137 it did not change anything anyway
+                 !   FL_eigenvectors(FL_states(1):FL_states(2),i2_fks) = &
+                 ! & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)*(-1._SP)
+             endif
+             !
+             if ((1-real(trial_projection)) < min_projection) then
+               min_projection = 1-real(trial_projection)
+               trial_vec(FL_states(1):FL_states(2)) = &
+                       & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)
+               trial_val = FL_eigenvalues(i2_fks,ik_bz,is)
+               FL_chosen_bands(i_m) = i2_fks
+               trial_proj = real(trial_projection)
+             endif
              !
            enddo
-         !
-         enddo
-         !
-         ! aim137 - prelim
-         ! aim137: podria directamente multiplicar toda la matriz 
-         ! aim137  FL_eigenvectors aca por el valor que anula la fase
-         ! aim137  y ahi tomar el eigenvector que tenga un 1 en el
-         ! aim137  lugar correcto... luego chequeo con un dot prod y
-         ! aim137  si no da ~1, ahi entro al loop este...
-         ! Find maximum inner product with ref_vec
-         !
-         min_projection = 1._SP
-         trial_vec = cZERO
-         trial_val = 0._SP
-         do i2_fks=FL_states(1),FL_states(2)
            !
-           trial_projection = Vstar_dot_V(FL_states(2)-FL_states(1)+1,&
-                           &  ref_vec(FL_states(1):FL_states(2)),&
-                           &  FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
-          !trial_projection = dot_product(&
-          !            &      conjg(ref_vec(FL_states(1):FL_states(2))),&
-          !            &    FL_eigenvectors(FL_states(1):FL_states(2),i2_fks))
-           if (real(trial_projection) < 0) then
-                   trial_projection = trial_projection*(-1._SP)
-               !aim137 check - I don't know whether I need to do this or not
-               !aim137 it did not change anything anyway
-               !   FL_eigenvectors(FL_states(1):FL_states(2),i2_fks) = &
-               ! & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)*(-1._SP)
-           endif
-           !
-           if ((1-real(trial_projection)) < min_projection) then
-             min_projection = 1-real(trial_projection)
-             trial_vec(FL_states(1):FL_states(2)) = &
-                     & FL_eigenvectors(FL_states(1):FL_states(2),i2_fks)
-             trial_val = FL_eigenvalues(i2_fks,ik_bz,is)
-             FL_chosen_bands(i_m) = i2_fks
-             trial_proj = real(trial_projection)
-           endif
-           !
-         enddo
+         endif ! eigenvector route
          !
        endif
        !
+       !
+       !
        ! Set phase zero for central component of the eigenvector
+       ! 
+       ! we are not doing this in the end
        !
        !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
        !
-       ! Detect avoided crossing
+       ! Detect population inversion
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        do i1_fks=FL_states(1),FL_states(2)
          !
          if (abs(trial_vec(i1_fks)) > 0.5_SP .and. i1_fks /= i_central_fks) then
            !
-           print*, 'detected avoided crossing in kpt',ik_bz,' and band ',i_m
-           print*, 'component number = ',i1_fks, 'value =',abs(trial_vec(i1_fks)) 
+           i1 = nint(real(i1_fks/n_tot_fl_modes,SP))+1
+           i1_fl = mod(i1_fks,n_tot_fl_modes)
+           if (i1_fl == 0) then
+             i1_fl = n_tot_fl_modes - (max_fl_mode+1)
+             i1 = i1 - 1
+           else
+             i1_fl = i1_fl - (max_fl_mode+1)
+           endif
+           !
+           call msg('r','Detected population inversion at k-point: ',ik_bz)
+           call msg('r','involving band: ',i_m)
+           call msg('r','and band: ',i1)
+           call msg('r','Floquet mode on second band: ',i1_fl)
+           call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
+           call error ('   There was a large population inversion in the system')
            !
          endif
          !
        enddo
-       !
-       !aim137 DEBUG <
-      !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
-      !if (ik_bz == 5 .and. i_m ==4) then
-      !  print*, 'chosen band', FL_chosen_bands(i_m), 'central component', i1_fks
-      !  print*, trial_vec
-      !  print*, FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
-      !  print*, FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)-1)
-      !  print*,  trial_vec(i1_fks),'---',trial_vec(i1_fks+n_tot_fl_modes+1)
-      !! print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is), &
-      !!         &FL_eigenvalues(i1_fks+n_tot_fl_modes+1,ik_bz,is)-E_full(i_m+1,ik_bz,is)
-      !  !do i1_fks=FL_states(1),FL_states(2)
-      !    !write(*,'(100(1f6.3))') FL_eigenvectors(FL_states(1):FL_states(2),i1_fks)
-      !    !print*,  FL_eigenvalues(i1_fks,ik_bz,is)-E_full(i_m,ik_bz,is)
-      !  !enddo
-      ! !aim137 print avoided crossing
-      ! !energy_difference(FL_chosen_bands(i_m))=100 !pop the minimum
-      ! !print*, Efield(1)%frequency(1)*HA2EV, &
-      ! !        &(FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)-E_full(i_m,ik_bz,is))*HA2EV, &
-      ! !        &(FL_eigenvalues(&
-      ! !        &minloc(energy_difference(FL_states(1):FL_states(2))),ik_bz,is)-&
-      ! !        &E_full(i_m,ik_bz,is))*HA2EV
-      !endif
-       !aim137 DEBUG >
        !
        ! Overwrite FL_V_band with new result
        !
@@ -242,26 +250,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
        !
-       !
-    !  ! Optional: Check eigenvectors
-    !  ! =============================
-    !  !
-    !  Vzero=cZERO
-    !  size_Hamiltonian = FL_states(2) - FL_states(1) + 1
-    !  call M_by_V('N',size_Hamiltonian,size_Hamiltonian,cONE,&
-    !          &   FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is),&
-    !          &   size_Hamiltonian,FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)),&
-    !          &   1,cONE,Vzero(FL_states(1):FL_states(2)),1)
-    !  !
-    !  call V_plus_alpha_V(size_Hamiltonian, -FL_QE(i_m,ik_bz,is)*cONE, &
-    !          &           FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m)), Vzero(FL_states(1):FL_states(2)))
-    !  !
-    !  ! Check that Vzero is actually zero
-    !  if (sum(real(Vzero)) > 0.001) call error('Diagonalization in FL-KS space failed')
-    !  if (sum(aimag(Vzero)) > 0.001) call error('Diagonalization in FL-KS space failed...')
-    !  !
-    !  ! end Optional
-       ! ------------
        !
      enddo ! loop i_m
      !

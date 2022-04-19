@@ -45,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_Ho_lift_degeneracy
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
  use parallel_int,   ONLY:PP_redux_wait
@@ -130,9 +130,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
 &            - real(i_shifted_fl,SP) * w0 &
-&            - cI * real(i_shifted_fl,SP) * NL_damping
+&            - cI * real(i_shifted_fl,SP) * NL_damping &
+&            + cI * FL_Ho_lift_degeneracy(i_fks,ik_bz,i_sp_pol) * NL_damping
        !
-!&            - real(i_shifted_fl,SP) * (w0-cI*NL_damping) & !aim137: I tried this but didn't help
      enddo
    enddo
 ! $omp end parallel do

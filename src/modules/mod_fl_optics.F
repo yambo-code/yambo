@@ -40,6 +40,7 @@ module fl_optics
  complex(SP), allocatable :: FL_FT_extra_M(:,:)
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
+ real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -97,6 +98,7 @@ module fl_optics
      YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      !
      YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_Ho_lift_degeneracy,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))

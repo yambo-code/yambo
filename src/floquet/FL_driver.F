@@ -229,7 +229,9 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, 'Frequency [eV] = ',Efield(1)%frequency*HA2EV
+   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
+   call msg('r','Frequency step    :',i_f)
+   call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    !
    do while(.not.l_FL_sc_reached)
      !
@@ -253,8 +255,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    call live_timing(steps=1)
    !
-   call msg('r','Frequency step    :',i_f)
-   call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    call msg('r','No. of iterations :',FL_iteration)
    call msg('r','Absolute error    :', abs(accuracy))
    call msg('r','------------------------------------')

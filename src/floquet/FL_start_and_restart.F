@@ -33,7 +33,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  ! [4] Initialize the bare Hartree and XC
  ! [5] Initialize the fields
  !
- use pars,           ONLY:cZERO,rZERO,cONE
+ use pars,           ONLY:cZERO,rZERO,cONE,SP
  use com,            ONLY:msg
  use electrons,      ONLY:levels,n_sp_pol
  use real_time,      ONLY:rho_reference
@@ -50,7 +50,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
 &                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
- use fl_optics,      ONLY:max_fl_mode,FL_QE,FL_QE_hist
+ use fl_optics,      ONLY:max_fl_mode,FL_QE,FL_QE_hist,FL_Ho_lift_degeneracy,n_tot_fl_modes
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
  use parallel_int,   ONLY:PP_redux_wait
@@ -66,9 +66,10 @@ subroutine FL_start_and_restart(E,k,Dip)
  !
  ! Working space
  !
- integer :: i1,ib,i_f
+ integer :: i1,i2,ib,i_f,i_k,i_sp,i_fl,i1_fks,i2_fks
  integer :: ID,io_NonLinear
  integer, external::io_NL
+ real(SP) :: degeneracy_threshold,degeneracy_lifting
  !
  !
  ! Initialize the Gf and potentials
@@ -127,6 +128,38 @@ subroutine FL_start_and_restart(E,k,Dip)
  do ib=1,NL_bands(1)-1
    E_full(ib,1:QP_nk,1:n_sp_pol)=E_full(ib,1:QP_nk,1:n_sp_pol) &
 & -E_full(NL_bands(1),1:QP_nk,1:n_sp_pol)+E%E(NL_bands(1),1:QP_nk,1:n_sp_pol)
+ enddo
+ !
+ ! Lift degeneracy in Ho
+ ! =====================
+ !
+ FL_Ho_lift_degeneracy = 0._SP
+ degeneracy_threshold = 1.E-7_SP !aim137 tie to verbose input variable
+ degeneracy_lifting = 1.E-4_SP !aim137 tie to verbose input variable
+ !
+ do i_sp = 1,n_sp_pol
+   do i_k = 1,QP_nk
+     do i1=NL_bands(1),NL_bands(2)
+       do i2=i1+1,NL_bands(2)
+         !
+         if (abs(E_full(i1,i_k,i_sp)-E_full(i2,i_k,i_sp)) < degeneracy_threshold) then
+           !
+           call warning(' Degeneracies in the KS band structure were lifted')
+           !
+           do i_fl=1,n_tot_fl_modes
+             !
+             i1_fks = i_fl + (i1-1)*n_tot_fl_modes
+             FL_Ho_lift_degeneracy(i1_fks,i_k,i_sp) = -1._SP*degeneracy_lifting
+             i2_fks = i_fl + (i2-1)*n_tot_fl_modes
+             FL_Ho_lift_degeneracy(i2_fks,i_k,i_sp) = +1._SP*degeneracy_lifting
+             !
+           enddo 
+           !
+         end if
+         !
+       enddo
+     enddo
+   enddo
  enddo
  !
  ! Initialize Quasi-energies

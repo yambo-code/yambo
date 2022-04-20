@@ -113,7 +113,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    !
    ! Here I need the distribution over k
-   call PARALLEL_SETUP_K_scheme("K")
+   call PARALLEL_SETUP_K_scheme("Kdef")
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
@@ -189,7 +189,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! ... EH space (no parallelization)
    call K_Transitions_setup("K",iq,Ken,Xk,Dip)
-   !call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)

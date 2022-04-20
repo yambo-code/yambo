@@ -145,9 +145,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
          else
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
            ! DS Debug <
-           ! EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+Simple_pole()
-           ! write(*,*) i_alpha,EXC_LifeTime(i_alpha)
-           ! Ds Debug >
+           ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
+           ! DS Debug >
          endif
          !
        enddo
@@ -200,7 +199,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
     Simple_pole=(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &
 &                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
     !
-!    write(*,*) E_beta*HA2EV,ph_E*HA2EV,q%ptbz(iq_bz,:)
+    ! DEBUG <
+    ! write(200+i_alpha,*) E_alpha*HA2EV,E_beta*HA2EV,ph_E*HA2EV
+    ! DEBUG >
     !
   end function Simple_Pole
   !

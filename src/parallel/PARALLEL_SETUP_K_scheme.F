@@ -23,6 +23,7 @@
 !
 subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  !
+ use R_lattice,    ONLY:nXkibz,nXkbz
  use parallel_m,   ONLY:COMM_copy,PAR_INDEX_copy,COMM_reset,PP_indexes_reset,PAR_K_scheme
  ! DIP
  use parallel_m,  ONLY:PAR_COM_DIPk_ibz_INDEX,PAR_COM_DIPk_ibz_A2A,PAR_IND_DIPk_ibz,PAR_IND_DIPk_bz,&
@@ -38,6 +39,8 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
  implicit none
  !
  character(*),  intent(in)    :: PAR_K_scheme_kind
+ !
+ integer :: i1
  !
  call COMM_reset(PAR_K_scheme%COM_ibz_INDEX)
  call COMM_reset(PAR_K_scheme%COM_ibz_A2A)
@@ -110,6 +113,25 @@ subroutine PARALLEL_SETUP_K_scheme(PAR_K_scheme_kind)
      allocate(PAR_K_scheme%bz_index(size(PAR_Xk_bz_index)))
      PAR_K_scheme%bz_index=PAR_Xk_bz_index
    endif
+   PAR_K_scheme%comm_world=mpi_comm_world
+ case ("Kdef")
+   PAR_K_scheme%COM_ibz_INDEX%n_CPU=1
+   PAR_K_scheme%COM_ibz_INDEX%CPU_id=0
+   PAR_K_scheme%COM_ibz_A2A%CPU_id=0
+   allocate(PAR_K_scheme%IND_ibz%element_1d(nXkibz))
+   allocate(PAR_K_scheme%IND_bz%element_1d(nXkbz))
+   PAR_K_scheme%IND_ibz%element_1d=.true.
+   PAR_K_scheme%IND_bz%element_1d=.true.
+   PAR_K_scheme%nibz=nXkibz
+   PAR_K_scheme%nbz =nXkbz
+   allocate(PAR_K_scheme%ibz_index(nXkibz))
+   do i1=1,nXkibz
+     PAR_K_scheme%ibz_index(i1)=i1
+   enddo
+   allocate(PAR_K_scheme%bz_index(nXkbz))
+   do i1=1,nXkbz
+     PAR_K_scheme%bz_index(i1)=i1
+   enddo
    PAR_K_scheme%comm_world=mpi_comm_world
  end select
  !

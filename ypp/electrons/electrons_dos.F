@@ -114,6 +114,8 @@ subroutine electrons_dos(Xk,Xen)
  ! Define the regular grid for interpolation if (all(interp_grid>0))
  !===================================================================
  N_files=1
+ ID_E   =0
+ ID_f   =0
  !
  if (all(INTERP_grid>0).or.l_PROJECT_line) then
    !

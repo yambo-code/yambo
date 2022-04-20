@@ -30,6 +30,7 @@ subroutine FL_output
  use interfaces,  ONLY:DESC_write
  use nl_optics,   ONLY:n_frequencies,NL_er,NL_desc,NL_estep
  use fl_optics,   ONLY:max_fl_mode,n_tot_fl_modes,FL_Chi_pol,FL_Chi_order
+ use parallel_m,  ONLY:master_cpu
  !
  implicit none
  !
@@ -41,6 +42,8 @@ subroutine FL_output
  real(SP)          :: w_probe,Unit_of_Measure
  character(schlen) :: headings(11)
  real(SP)          :: Chi_plot(7)
+ !
+ if (.not. master_cpu) return
  !
  title_mode='ot'
  !

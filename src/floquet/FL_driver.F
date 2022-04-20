@@ -26,6 +26,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use pars,           ONLY:SP,DP,cZERO,cONE
  use units,          ONLY:HA2EV
  use com,            ONLY:msg
+ use parallel_int,   ONLY:PP_redux_wait
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY:QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
@@ -51,7 +52,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_COM_freqs_INDEX
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -180,6 +181,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !aim137: check this is what we need:
  call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
  !
+ FL_Chi_pol(:,:,:,:) = cZERO
  !
  call section('r','FL self-consistency')
  do i_f=1,n_frequencies
@@ -223,7 +225,6 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    l_FL_sc_reached = .false.
    FL_iteration = 0
-   FL_Chi_pol(i_f,:,:,:) = cZERO
    FL_loc_S_inv_mode = "0" !for first iteration
    !
    ! Efield
@@ -264,47 +265,9 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    !call NL_databases_IO(i_f,'write')
    !
-   !aim137 DEBUG <
-   !do i_sp_pol=1,n_sp_pol
-   !do i_k_bz=1,k%nbz
-   !write(filename,'(i0)') i_k_bz
-   !open(111,file='FL_quasienergies'//trim(adjustl(filename))//'.dat')
-   !line_counter=0
-   !do while (.true.)
-   !read(111,*,end=11)
-   !line_counter = line_counter+1
-   !enddo
-   !11 rewind(111)
-   !do i_m=1,line_counter
-   !read(111,*)
-   !enddo
-   !write(111,*) Efield(1)%frequency(1)*HA2EV, &
-   !          & ((FL_QE(i_m,i_k_bz,i_sp_pol)-E_full(i_m,i_k_bz,i_sp_pol))*HA2EV, i_m=1, NL_bands(2))
-   !close(111)
-   !enddo
-   !enddo
-   !
-   !do i_sp_pol=1,n_sp_pol
-   !do i_k_bz=1,k%nbz
-   !write(filename,'(i0)') i_k_bz
-   !open(111,file='FL_eigensolution'//trim(adjustl(filename))//'.dat')
-   !line_counter=0
-   !do while (.true.)
-   !read(111,*,end=11)
-   !line_counter = line_counter+1
-   !enddo
-   !11 rewind(111)
-   !do i_m=1,line_counter
-   !read(111,*)
-   !enddo
-   !write(111,*) Efield(1)%frequency(1)*HA2EV, &
-   !          & (abs(FL_V_bands(i_m,fl_shifted_zero_mode-1,i_m,i_k_bz,i_sp_pol)), i_m=1, E%nbf)
-   !close(111)
-   !enddo
-   !enddo
-   !aim137 DEBUG >
-   !
  enddo
+ !
+ call PP_redux_wait( FL_Chi_pol ,COMM=PAR_COM_freqs_INDEX%COMM )
  !
  call FL_output
  !

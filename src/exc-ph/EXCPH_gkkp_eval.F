@@ -112,8 +112,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          !
          if (i_Hp==0) cycle
          !
-         if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
-         if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
+         if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
          !
        enddo
        !
@@ -135,8 +135,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          !
          if (i_Hp==0) cycle
          !
-         if(     t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
-         if(.not.t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
+         if(.not.t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
          !
        enddo
        !

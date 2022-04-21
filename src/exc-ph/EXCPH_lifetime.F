@@ -192,6 +192,10 @@ subroutine EXCPH_lifetime(E,k,q,X)
     ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
     if(ph_E<FAN_deltaE_treshold) return
     !
+    ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
+    !
+    if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold) return
+    !
     N_bose  =bose_f(ph_E)
     !
     F_boltz=boltzman_f(E_beta-min_EXC_E)  ! Bose function? Boltzman function?
@@ -230,9 +234,13 @@ subroutine EXCPH_lifetime(E,k,q,X)
       ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
       if(ph_E<FAN_deltaE_treshold) cycle
       !
-      N_bose  =bose_f(ph_E)
-      !
       E_beta=EXC_E_DbGd(i_beta,iq_fg)
+      !
+      ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
+      !
+      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold) return
+      !
+      N_bose  =bose_f(ph_E)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?
       !
       DbGrid_pole=DbGrid_pole+(1._SP+N_bose+F_boltz)*Lorentzian_func(E_alpha-E_beta-ph_E,L_damping) &

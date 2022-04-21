@@ -26,7 +26,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  use pars,           ONLY:SP,DP,cZERO,cONE
  use units,          ONLY:HA2EV
  use com,            ONLY:msg
- use parallel_int,   ONLY:PP_redux_wait
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY:QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
@@ -51,8 +50,8 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         FL_ac_phase
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
- use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_COM_freqs_INDEX
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_freqs_INDEX,PAR_COM_Xk_ibz_INDEX,myid
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -154,7 +153,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! Allocation
  ! ==================
   call FL_alloc(E) 
- !aim137: next subroutine is unchanged - check
   call FL_alloc_k_distributed(E)
   call FL_FT_matrices
  !
@@ -165,7 +163,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! ==================
  call section('*','FL Start and Restart')
  call FL_start_and_restart(E,k,Dip)
-!aim137: newly written subroutine - under review
  !
  ! Check if calculation was already done
  ! =====================================
@@ -216,11 +213,17 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! aim137 or put in a logical variable to calculate all overlaps as heads!
    do i_sp_pol=1,n_sp_pol
      do i_k_bz=1,k%nbz
-       !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+       ! aim137 prelim - I tried to use BZ instead of IBZ for PAR_IND, but it did not work
+       if(.not.PAR_IND_Xk_ibz%element_1D(i_k_bz)) cycle
+       !
        call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands,FL_S_plus(:,:,:,:,i_k_bz,i_sp_pol),&
                                                    &   FL_S_minus(:,:,:,:,i_k_bz,i_sp_pol),&
                                                    &   FL_time_S_det(:,:,i_k_bz,i_sp_pol),.false.) 
      enddo
+     !
+     call PP_redux_wait(FL_S_plus(:,:,:,:,:,i_sp_pol) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     call PP_redux_wait(FL_S_minus(:,:,:,:,:,i_sp_pol), COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+     !
    enddo
    !
    l_FL_sc_reached = .false.
@@ -259,6 +262,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    call msg('r','No. of iterations :',FL_iteration)
    call msg('r','Absolute error    :', abs(accuracy))
    call msg('r','------------------------------------')
+   !aim137 prelim - msg is working only for one of the cores (i.e., one freq pool).
    !
    !
    !call FL_time_dep_variables(E,k,FL_V_bands) !this was to interface with ypp

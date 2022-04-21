@@ -35,6 +35,8 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order,&
 &                         max_time_step,n_tot_time_steps
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -61,19 +63,23 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  FL_S_minus=cZERO
  FL_S_plus =cZERO
- FL_time_S_det =cONE
+ FL_time_S_det =cZERO
  !
- do ik_bz=1,QP_nk
+ do is=1,n_sp_pol
    !
-   !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
-   !
-   do is=1,n_sp_pol
+   do ik_bz=1,QP_nk
+     !
+     if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
      !
      call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),&
                                            &  FL_S_minus(:,:,:,:,ik_bz,is),&
                                            &  FL_time_S_det(:,:,ik_bz,is),.true.)
      !
    enddo
+   !
+   call PP_redux_wait(FL_S_plus(:,:,:,:,:,is) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(FL_S_minus(:,:,:,:,:,is), COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(FL_time_S_det(:,:,:,is) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
  enddo
  !

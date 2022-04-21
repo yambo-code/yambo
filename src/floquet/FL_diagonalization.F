@@ -36,6 +36,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  use nl_optics,      ONLY:NL_bands,E_full
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_QE,FL_QE_hist,FL_V_bands_hist,FL_ac_phase
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
+ use parallel_int,   ONLY:PP_redux_wait
  !
  implicit none
  !
@@ -50,7 +52,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  real(SP)    :: min_projection,trial_projection,trial_val,trial_proj
  real(SP)    :: energy_difference(FL_states(1):FL_states(2))
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m
+ integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):E%nbf)
  character(4) :: filename
@@ -69,10 +71,15 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  energy_difference = 0._SP
  l_assume_Hermitian = .false.
  !
+ !aim137 to avoid summing previous values in PP_redux_wait
+ !aim137 I set to zero the ones that will be calculated here
+ forall(i_m=NL_bands(1):E%nbf) FL_QE(i_m,:,:) = 0._SP
+ forall(i_m=NL_bands(1):E%nbf) FL_V_bands(:,:,i_m,:,:) = cZERO
+ !
  do ik_bz=1,QP_nk
    !
-   !print*, '------ k points=',ik_bz
-   !if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+   if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
+   ik_mem=PAR_Xk_ibz_index(ik_bz)
    !
    do is=1,n_sp_pol
      !
@@ -81,7 +88,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
        ! ===============
        !
         FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
-&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
+&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)
        call LINEAR_ALGEBRA_driver(DIAGO,&
                                 & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
                                 & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
@@ -96,7 +103,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
        NHM_Cmpl_Val = cZERO
        !
        NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
-&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_bz,is)
+&      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)
        call LINEAR_ALGEBRA_driver(DIAGO,&
                                 & M=NHM_Mat(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
                                 & V_left=NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
@@ -155,14 +162,15 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
            !
            ! ref_vec is FL_V_band from previous iteration
            !
-           call error('  went through eigenvector route')
+           call error('  went through eigenvector route') !aim137 critical
            ref_vec = cZERO
            !
            do i1=NL_bands(1),NL_bands(2)
              do i1_fl=1,n_tot_fl_modes
                !
                i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
-               ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is)
+               ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is) 
+               !aim137 critical fix this, FL_V_bands was set to 0 in this subroutine
                !
              enddo
            !
@@ -234,7 +242,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
            call msg('r','and band: ',i1)
            call msg('r','Floquet mode on second band: ',i1_fl)
            call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
-           call error ('   There was a large population inversion in the system')
+           call error ('  [FL] There was a large population inversion in the system')
            !
          endif
          !
@@ -256,6 +264,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
    enddo
    !
  enddo
+ !
+ !aim137 reduce
+ call PP_redux_wait(FL_QE(NL_bands(1):E%nbf,:,:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(FL_V_bands(:,:,NL_bands(1):E%nbf,:,:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
 !!aim137 DEBUG
 !do ik_bz=1,QP_nk

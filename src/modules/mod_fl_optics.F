@@ -97,7 +97,6 @@ module fl_optics
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
      !
-     YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_Ho_lift_degeneracy,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
      if (fft_size>0) then
@@ -158,6 +157,8 @@ module fl_optics
      endif
      YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
+     !aim137 k-parallelization
+     YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),PAR_Xk_nibz,n_sp_pol))
      !
    end subroutine FL_alloc_k_distributed
    !

@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_Ho_lift_degeneracy
  use global_XC,      ONLY:WF_xc_functional,WF_kind
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index
+ use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -104,6 +104,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
   do ik_bz=1,QP_nk
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
+   !
+   ! ik_mem is for FL_Ho_plus_Sigma, which is allocated
+   ! to N_kpts/N_pools, instead of N_kpts
    !
    ik_mem=PAR_Xk_ibz_index(ik_bz)
    !
@@ -168,7 +171,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
   enddo  !---- loop on k-point
  enddo
  !
- if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
+ !if(Phase_LifeTime<zero_dfl) call PP_redux_wait(I_relax,COMM=PAR_COM_Xk_ibz_INDEX%COMM ) 
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='stop')

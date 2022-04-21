@@ -10971,7 +10971,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -10990,7 +10990,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
 fi
 
 		;;
@@ -11039,7 +11039,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11058,7 +11058,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
 fi
 
 		;;
@@ -11816,10 +11816,10 @@ if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    mkl_libdir="${MKLROOT}/lib/intel64"
    case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
     ;;
     *intel* | *pgi* | *nvfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
     ;;
     esac
 fi

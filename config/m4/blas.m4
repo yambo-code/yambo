@@ -113,7 +113,7 @@ fi
 # BLAS in Intel MKL library?
 if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
 	# MKL for gfortran
-	mkl_libdir="${MKLROOT}/lib"
+	mkl_libdir="${MKLROOT}/lib/intel64"
 	case "${FCKIND}" in
 	*gfortran* )
 		case "${host}" in

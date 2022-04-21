@@ -54,7 +54,7 @@ if test -d "${MKLROOT}" ; then
    #
    # Check for MPI libraries
    #
-   mkl_libdir="${MKLROOT}/lib"
+   mkl_libdir="${MKLROOT}/lib/intel64"
    #
    case "${MPIKIND}" in
    *Sgi* | *sgi* | *SGI* )

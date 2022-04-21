@@ -115,7 +115,7 @@ fi
 #
 if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    tty_fft_incdir="${MKLROOT}/include"
-   mkl_libdir="${MKLROOT}/lib"
+   mkl_libdir="${MKLROOT}/lib/intel64"
    case "${FCKIND}" in
    *gfortran* )
    	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl"

@@ -23,8 +23,8 @@
 !
 subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  !
- use pars,           ONLY:SP,DP,cI
- use fl_optics,      ONLY:FL_threshold,n_tot_fl_modes,max_fl_mode,FL_Chi_order
+ use pars,       ONLY:SP,DP,cI
+ use fl_optics,  ONLY:FL_Chi_thr_1,FL_Chi_thr_2,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
  complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
@@ -50,7 +50,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
 
  !print*, real(FL_pol(1,2,1)),aimag(FL_pol(1,2,1))
  !print*, 'diff_real =',diff_real ,'diff_imag =',diff_imag 
- if (diff_real < FL_threshold .and. diff_imag < FL_threshold) then
+ if (diff_real < FL_Chi_thr_1 .and. diff_imag < FL_Chi_thr_1) then
    l_1order_sc_reached = .true.
  else
    l_1order_sc_reached = .false.
@@ -74,7 +74,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
                        & -aimag(FL_pol(id,3,2)))
        !
        !aim137 prelim - improve threshold? link to input variable?
-       if (diff_real < 1.E-6_SP .and. diff_imag < 1.E-6_SP) then
+       if (diff_real < FL_Chi_thr_2 .and. diff_imag < FL_Chi_thr_2) then
          l_2order_sc_reached = .true.
        else
          l_2order_sc_reached = .false.

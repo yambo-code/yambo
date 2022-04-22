@@ -165,7 +165,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  ! Initialize Quasi-energies
  ! =========================
  !
- FL_QE = E_full
+ FL_QE = E%E(1:NL_bands(2),1:QP_nk,1:n_sp_pol)
  FL_QE_hist = cZERO
  !
 !!

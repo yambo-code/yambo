@@ -52,9 +52,12 @@ module fl_optics
  integer  :: n_tot_duffin_modes
  integer  :: n_tot_time_steps
  integer  :: FL_space_dim,FL_states(2)
- real(SP) :: FL_threshold
+ real(SP) :: FL_Chi_thr_1
+ real(SP) :: FL_Chi_thr_2
+ real(SP) :: FL_deg_thrs
+ real(SP) :: FL_deg_lift
  integer  :: FL_Chi_order
- character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode
+ character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode,FL_solver_mode
  !
  contains
    subroutine FL_alloc(en)

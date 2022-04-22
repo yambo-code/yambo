@@ -100,7 +100,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif 
 !aim137 prelim
 #if defined _FL
- use fl_optics,     ONLY:FL_threshold,FL_Chi_order,FL_S_inv_mode
+ use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
+&                        FL_solver_mode,FL_S_inv_mode
 #endif 
 !aim137
 #if defined _NL | defined _SC
@@ -547,11 +548,15 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  ! Floquet optics
  !
- !FL_threshold,FL_Chi_order,FL_S_inv_mode
+ !FL_Chi_thr_1,FL_Chi_order,FL_S_inv_mode
  !
- call it(defs,'Xorder',     '[FL] Max order of the response/exc functions',FL_Chi_order)
- call it(defs,'Xthreshold', '[FL] Self-consistent threshold on response function',FL_threshold)
- call it(defs,'S_inv_mode', '[FL] Inversion method ("NUMERICAL/DUFFIN/PERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
+ call it(defs,'Xorder',    '[FL] Max order of the response/exc functions',FL_Chi_order)
+ call it(defs,'Xthresh_1', '[FL] Self-consistent threshold on 1st order response function',FL_Chi_thr_1)
+ call it(defs,'Xthresh_2', '[FL] Self-consistent threshold on 2nd order response function',FL_Chi_thr_2)
+ call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION/(L)ANCZOS")',FL_solver_mode)
+ call it(defs,'FL_deg_thresh','[FL] Degeneracy threshold in KS band structure',FL_deg_thrs,verb_level=V_fl_optics)
+ call it(defs,'FL_deg_lift',  '[FL] Degeneracy lifting of KS band structure',FL_deg_lift,verb_level=V_fl_optics)
+ call it(defs,'S_inv_mode',   '[FL] Inversion method ("(N)UMERICAL/(D)UFFIN/(P)ERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
  !
 #endif
  !aim137

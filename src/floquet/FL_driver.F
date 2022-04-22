@@ -45,7 +45,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
 !aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
-&                         FL_S_plus,FL_S_minus,FL_time_S_det,FL_threshold,n_tot_fl_modes,FL_Chi_pol,&
+&                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
 &                         FL_ac_phase
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT

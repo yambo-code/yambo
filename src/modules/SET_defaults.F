@@ -125,7 +125,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _FL
- use fl_optics,  ONLY:FL_Chi_order,FL_threshold,FL_S_inv_mode
+ use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
+&                     FL_solver_mode,FL_S_inv_mode
 #endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -681,9 +682,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
 #if defined _FL
  !
- FL_Chi_order  = 2
- FL_threshold  = 1.E-3_SP
- FL_S_inv_mode = "N"
+ FL_Chi_order = 2
+ FL_Chi_thr_1 = 1.E-1_SP
+ FL_Chi_thr_2 = 1.E-6_SP
+ FL_deg_thrs  = 1.E-7_SP
+ FL_deg_lift  = 1.E-4_SP
+ FL_solver_mode = "D"
+ FL_S_inv_mode  = "N"
  !
 #endif
  !

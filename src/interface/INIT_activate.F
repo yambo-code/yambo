@@ -562,7 +562,10 @@ subroutine INIT_activate()
  !
 #if defined _FL
  if (l_fl_optics) then
-   call initactivate(1,'Xorder Xthreshold S_inv_mode')
+   call initactivate(1,'NLBands NLEnRange NLEnSteps NLDamping NLCorrelation')
+   call initactivate(1,'FFTGvecs HARRLvcs EXXRLvcs')
+   call initactivate(1,'ExtF_Dir ExtF_Int')
+   call initactivate(1,'Xorder Xthresh_1 Xthresh_2 FL_solver FL_deg_thresh FL_deg_lift S_inv_mode')
  endif
 #endif
  !

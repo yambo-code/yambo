@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
+subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
@@ -35,7 +35,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_bands,E_full
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_QE,FL_QE_hist,FL_V_bands_hist,FL_ac_phase
+&                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_V_bands_hist,FL_ac_phase
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
  !
@@ -45,6 +45,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  type(bz_samp), intent(in)     :: k
  integer,       intent(in)     :: iter_num
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
+ real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
@@ -71,14 +72,19 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
  energy_difference = 0._SP
  l_assume_Hermitian = .false.
  !
- !aim137 to avoid summing previous values in PP_redux_wait
- !aim137 I set to zero the ones that will be calculated here
- forall(i_m=NL_bands(1):E%nbf) FL_QE(i_m,:,:) = 0._SP
- forall(i_m=NL_bands(1):E%nbf) FL_V_bands(:,:,i_m,:,:) = cZERO
- !
  do ik_bz=1,QP_nk
    !
-   if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
+   if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) then
+     !
+     !aim137 to avoid summing previous values in PP_redux_wait, I set
+     !aim137 to zero the ones that will not be calculated in this core
+     !
+     FL_QE(:,ik_bz,:) = 0._SP
+     FL_V_bands(:,:,:,ik_bz,:) = cZERO
+     cycle
+     !
+   endif
+   !
    ik_mem=PAR_Xk_ibz_index(ik_bz)
    !
    do is=1,n_sp_pol
@@ -170,7 +176,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
                !
                i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !don't need SP here, it's an integer
                ref_vec(i1_fks) = FL_V_bands(i1,i1_fl,i_m,ik_bz,is) 
-               !aim137 critical fix this, FL_V_bands was set to 0 in this subroutine
+               !aim137 this is now ok as the ik_bz'th component of FL_V_bands was not set
+               ! to zero if the code has reached this point in that ik_bz.
                !
              enddo
            !
@@ -265,9 +272,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,iter_num)
    !
  enddo
  !
- !aim137 reduce
- call PP_redux_wait(FL_QE(NL_bands(1):E%nbf,:,:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
- call PP_redux_wait(FL_V_bands(:,:,NL_bands(1):E%nbf,:,:), COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(FL_QE, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(FL_V_bands, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
 !!aim137 DEBUG
 !do ik_bz=1,QP_nk

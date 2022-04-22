@@ -244,7 +244,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
      !
-     call FL_diagonalization(E,k,FL_V_bands,FL_iteration)
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_iteration)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !

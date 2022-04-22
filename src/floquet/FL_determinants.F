@@ -79,7 +79,8 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
    !
    ! Add Quasi-energies exponentials
    ! ================================
-   do i1=1,en%nbf
+   do i1=1,en%nbf !aim137 critical - there is a problem here
+                  !for i1<NL_bands(1), FL_QE=0... FIX THIS!!
      !
      do i2=1,en%nbf
        !

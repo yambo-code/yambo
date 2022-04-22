@@ -41,11 +41,15 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  #
  basecomp=$(basename $compdir)
  #
- rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h.F'         --exclude='*' $srcdir/ $compdir
- rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h'           --exclude='*' $srcdir/ $compdir
- rsync -az --exclude="$basecomp/"  --include='*/' --include='*.objects'     --exclude='*' $srcdir/ $compdir
- rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.loc' --exclude='*' $srcdir/ $compdir
- rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.lib' --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h.F'        --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h'          --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.objects'    --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.lo' --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile*'   --exclude='*' $srcdir/lib $compdir/
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*list*'       --exclude='*' $srcdir/lib $compdir/
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*make*'       --exclude='*' $srcdir/lib $compdir/
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.tar.*'      --exclude='*' $srcdir/lib $compdir/
+ #
  #
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi

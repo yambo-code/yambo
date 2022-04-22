@@ -28,3 +28,5 @@ petsc-dl:
 	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
 	@LIB2DO="slepc"; $(get_external_libraries)
+Ylib-dl: 
+	@LIB2DO="Ylib"; $(get_external_libraries)

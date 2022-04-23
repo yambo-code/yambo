@@ -46,7 +46,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
- use ELPH,           ONLY:ph_modes,elph_branches
+ use ELPH,           ONLY:ph_modes,elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
@@ -90,6 +90,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! I build the map only in the case without symmetries
  if(io_err==0) then
+   l_GKKP_expanded_DB_exists=.true.
+   call ELPH_databases_grids_map(k,q)
    call k_ibz2bz(q,"i",.false.)
    call build_Q_map(q)
  endif
@@ -192,7 +194,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      BS_Sat_WEIGHT       =rZERO
      BS_Sat_WEIGHT_PH_abs=rZERO
      !
-     iq_db=DB_Q_map(iq_bz)
+     !iq_db=DB_Q_map(iq_bz)
+     iq_db=Q_io_map(iq_bz)
      call  EXCPH_eval_sat(iq_bz,q)
      !
      ! Find the maximum weight of the satellites
@@ -378,6 +381,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !call build_k_plus_q_table()
      call k_ibz2bz(q,"i",.false.)
      call k_ibz2bz(k,"i",.false.)
+     !
+     do ik_bz=1, k%nbz
+       write(*,*) ik_bz,k%ptbz(ik_bz,:)
+     enddo
+     !
      do iq=1,q%nibz
        !
        do i_star=1,q%nstar(iq)

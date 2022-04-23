@@ -38,7 +38,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use IO_int,         ONLY:io_control
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
- use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP
+ use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table
 #include<memory.h>
@@ -52,7 +52,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  ! Work Space
  !
  logical                 :: t_rev
- integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,&
+ integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,ip_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
@@ -71,9 +71,11 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
    !
    ! with k and q in the BZ
    !
-   iq_db=DB_Q_map(iq_bz)
+   !iq_db=DB_Q_map(iq_bz)
+   iq_db=Q_io_map(iq_bz)
+   !write(*,*) iq_bz,iq_db,DB_Q_map(iq_bz)
    IO_ACT=manage_action(RD,iq_db,1,q%nbz)
-   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,q%nbz)
+   if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
    !
    call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
@@ -108,7 +110,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
          !
-         elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_bz,1)/sqrt(2._SP*ph_E)
+         ik_db=K_io_map(ik_bz)
+         elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
          !
@@ -131,7 +134,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          !
-         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ip_bz,1)/sqrt(2._SP*ph_E)
+         ip_db=K_io_map(ip_bz)
+         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ip_db,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
          !

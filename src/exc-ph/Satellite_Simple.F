@@ -44,7 +44,7 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
 &                        min_EXC_E,DB_Q_map
  use functions,     ONLY:bose_f,boltzman_f
  use units,         ONLY:HA2CMm1
- use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold
+ use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
  !
 #include<memory.h>
  !
@@ -63,7 +63,8 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Bose function for the phonons
  !
- iq_db=DB_Q_map(iq)
+ !iq_db=DB_Q_map(iq)
+ iq_db=Q_io_map(iq)
  ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
  !
  if(ph_E<FAN_deltaE_treshold) return

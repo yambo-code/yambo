@@ -37,7 +37,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
 &                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map 
- use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold
+ use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
  !
@@ -126,7 +126,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
    if(io_err/=0) call error('excph_gkkp databases not found!')
    !
-   iq_db=DB_Q_map(iq_bz)
+   !iq_db=DB_Q_map(iq_bz)
+   iq_db=Q_io_map(iq_bz)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')
@@ -173,7 +174,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
   !
   function Simple_pole()
     use EXCPH,          ONLY:min_EXC_E,DB_Q_map
-    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs_sq,Q_io_map
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     use units,          ONLY:HA2EV
     implicit none
@@ -188,7 +189,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
     E_alpha=real(BS_E_in(i_alpha),SP)
     E_beta =BS_all_E(i_beta,iq)
     !
-    iq_db=DB_Q_map(iq_bz)
+    !iq_db=DB_Q_map(iq_bz)
+    iq_db=Q_io_map(iq_bz)
     ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
     if(ph_E<FAN_deltaE_treshold) return
     !

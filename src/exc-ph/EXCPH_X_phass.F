@@ -46,7 +46,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
 &                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map
- use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes
+ use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes,Q_io_map
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use D_lattice,     ONLY:nsym
@@ -105,7 +105,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
    !
-   iq_db=DB_Q_map(iq_bz)
+   !iq_db=DB_Q_map(iq_bz)
+   iq_db=Q_io_map(iq_bz)
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
@@ -286,7 +287,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        do il=elph_branches(1),elph_branches(2)
          !      
-         iq_db=DB_Q_map(iq_bz)
+         !iq_db=DB_Q_map(iq_bz)
+         iq_db=Q_io_map(iq_bz)
          ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
          if(ph_E<FAN_deltaE_treshold) cycle
          !

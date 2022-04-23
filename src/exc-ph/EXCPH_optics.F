@@ -134,7 +134,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      !
      call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
      !
-     call X_write_q_plus_G(1,(/0.0,0.0,0.0/),1)
+     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
      !
      call msg('o eps_q pl_q','# EXCITON PHONON')    
      call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    

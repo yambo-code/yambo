@@ -87,6 +87,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
    !
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
      !
+     !write(iq_bz*1000+i_beta,*) iq_bz,i_beta,iq_s
+     !
      do i_H=1,BS_H_dim
        !
        ! K = (ik_bz,iv,ic)
@@ -114,6 +116,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
+         !
+         !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
          if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
          if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 

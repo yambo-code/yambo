@@ -54,10 +54,11 @@ subroutine EXCPH_lifetime(E,k,q,X)
  integer  :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star,iq_db
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1)
- logical  :: l_no_matrix_elements
+ logical  :: l_no_matrix_elements,l_keep_deg
  real(SP) :: ExcPhM
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
+ call parser('KeepDeg',  l_keep_deg)
  !
  call section('*','EXCPH-LifTime')
  !
@@ -196,7 +197,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
     !
     ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
     !
-    if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold) return
+    if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+    !
+    if(iq==1.and.i_alpha==i_beta) return
     !
     N_bose  =bose_f(ph_E)
     !

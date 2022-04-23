@@ -94,6 +94,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    call ELPH_databases_grids_map(k,q)
    call k_ibz2bz(q,"i",.false.)
    call build_Q_map(q)
+   call k_ibz2bz(q,"d",.false.)
  endif
  !
  ! Check if exciton-phonon matrix elements have been already calculated
@@ -164,6 +165,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Main q-loop
  !
+ !call k_ibz2bz(k,"i",.false.)
  call live_timing('Excitonic Gkkp',q%nibz*ph_modes)
  !
  do iq=1,q%nibz
@@ -289,8 +291,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !    
      integer iq,i_star,iq_s,iq_bz
      !
-     YAMBO_ALLOC(q%ptbz,(q%nbz,3))
-     !
      call k_ibz2bz(q,"i",.false.)
      !
 !     write(*,*)
@@ -308,7 +308,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
        enddo
      enddo
      !
-     YAMBO_FREE(q%ptbz)
+     call k_ibz2bz(q,"d",.false.)
+     !
    end subroutine get_excph_q_momenta
    !
    subroutine build_k_plus_q_table()
@@ -405,6 +406,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
          !
        enddo
      enddo
+     !
+     call k_ibz2bz(q,"d",.false.)
+     call k_ibz2bz(k,"d",.false.)
      !
    end subroutine compare_qindxC_table
    !

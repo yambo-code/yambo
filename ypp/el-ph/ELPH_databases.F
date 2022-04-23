@@ -32,7 +32,7 @@ subroutine ELPH_databases(k,E,q)
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqibz,bse_scattering,qindx_S
+ use R_lattice,           ONLY:bz_samp,qindx_B,nqibz,bse_scattering,qindx_C
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
@@ -92,13 +92,13 @@ subroutine ELPH_databases(k,E,q)
      if(io_err(2)/=0) call error("Error reading qindx_B")
      !
    else
-     ! otherwise qindx_S is allocated
-     if(.not.allocated(qindx_S)) then
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
+     ! otherwise qindx_C is allocated
+     if(.not.allocated(qindx_C)) then
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
        io_err(1)=io_QINDX(k,q,ID)
        if (io_err(1)/=0) then
          call msg('s',"Missing k/q scattering database")
-         call error("Please (re)run the setup")
+         call error('Please (re)run the setup K_grids="C"')
        endif
      endif
    endif

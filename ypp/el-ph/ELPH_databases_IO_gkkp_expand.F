@@ -26,7 +26,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  use pars,                ONLY:SP
  use units,               ONLY:HA2EV
  use electrons,           ONLY:levels
- use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
+ use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_C
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
@@ -99,6 +99,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
        qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
+       ! q_bz = ki_bz - ko_bz
+       !
        if (iq_bz==iq) then
          ok=k%sstar(ok_bz,1)
          os=k%sstar(ok_bz,2)
@@ -108,9 +110,10 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    else
      !
-     ! Use qindx_S     
+     ! Use qindx_S:   q_bz = ki_ibz - ko_bz
+     ! Use qindx_C:   q_bz = ki_bz - ko_bz
      !
-     ok_bz=qindx_S(ik,iq,1)
+     ok_bz=qindx_C(ik_bz,iq,1)
      ok=k%sstar(ok_bz,1)
      os=k%sstar(ok_bz,2)
      !
@@ -182,9 +185,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    else
      !      
-     ! Use qindx_S
+     ! Use qindx_C
      !
-     ok_bz=qindx_S(ik,iq,1)
+     ok_bz=qindx_C(ik_bz,iq,1)
      ok=k%sstar(ok_bz,1)
      os=k%sstar(ok_bz,2)
      !

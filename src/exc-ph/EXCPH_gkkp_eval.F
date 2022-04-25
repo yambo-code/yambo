@@ -52,7 +52,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  ! Work Space
  !
  logical                 :: t_rev
- integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,ip_db,&
+ integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
  real(SP)                :: ph_E,elph_gkkp_sq
  integer, external       :: io_ELPH
@@ -138,8 +138,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          !
-         ip_db=K_io_map(ip_bz)
-         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ip_db,1)/sqrt(2._SP*ph_E)
+         ik_db=K_io_map(ik_plus_iq_bz)
+         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
          !

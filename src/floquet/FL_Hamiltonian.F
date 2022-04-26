@@ -67,7 +67,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  integer      :: ik_bz,i_sp_pol,is,i1,ik_mem
  !aim137
- integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks
+ integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks,i_damping_fl
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
  real(SP)     :: alpha_
  character(4) :: filename
@@ -128,12 +128,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
      do i_fl=1,n_tot_fl_modes
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
        i_shifted_fl = i_fl - (max_fl_mode+1)
+       i_damping_fl = 1; if (i_shifted_fl == 0) i_damping_fl = 0
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
 &            + E_full(i1,ik_bz,i_sp_pol) &
 &            - real(i_shifted_fl,SP) * w0 &
-&            - cI * real(i_shifted_fl,SP) * NL_damping &
+&            - cI * real(i_damping_fl,SP) * NL_damping &
 &            + cI * FL_Ho_lift_degeneracy(i_fks,ik_bz,i_sp_pol) * NL_damping
        !
      enddo

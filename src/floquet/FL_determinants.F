@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
+subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ik_ibz,ikp_ibz)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1,HA2EV
@@ -36,7 +36,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
  type(levels), intent(in)   :: en
  complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
  complex(DP), intent(inout) :: FL_time_S_det(n_tot_time_steps)
- integer,     intent(in)    :: ikbz,ikp
+ integer,     intent(in)    :: ik_ibz,ikp_ibz
  !
  ! Work Space
  !
@@ -79,14 +79,13 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ikbz,ikp)
    !
    ! Add Quasi-energies exponentials
    ! ================================
-   do i1=1,en%nbf !aim137 critical - there is a problem here
-                  !for i1<NL_bands(1), FL_QE=0... FIX THIS!!
+   do i1=1,en%nbf 
      !
      do i2=1,en%nbf
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
-                               &  * exp(+cI*FL_QE(i1,ikbz,1)*t_samples(i_t)) &
-                               &  * exp(-cI*FL_QE(i2,ikp ,1)*t_samples(i_t)) !&
+                               &  * exp(+cI*FL_QE(i1,ik_ibz ,1)*t_samples(i_t)) &
+                               &  * exp(-cI*FL_QE(i2,ikp_ibz,1)*t_samples(i_t)) !&
                               !&  * exp(-2._SP*NL_damping*t_samples(i_t))  
                                !aim137 this should not be here. it is in the 
                                ! dephasing already. Doesn't change much anyway.

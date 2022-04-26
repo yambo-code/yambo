@@ -28,14 +28,14 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use fields,         ONLY:Efield,Divide_by_Field
  use D_lattice,      ONLY:a,DL_vol
- use R_lattice,      ONLY:bz_samp,k_map,bz_map
+ use R_lattice,      ONLY:bz_samp,k_map,bz_map,nXkbz
  use vec_operate,    ONLY:get_id_perpendicular
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands,NL_initial_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_time_S_det,FL_Chi_order,&
 &                         max_time_step,n_tot_time_steps
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
  use parallel_int,   ONLY:PP_redux_wait
  !
  implicit none
@@ -67,9 +67,9 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  do is=1,n_sp_pol
    !
-   do ik_bz=1,QP_nk
+   do ik_bz=1,nXkbz
      !
-     if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
+     if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
      !
      call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),&
                                            &  FL_S_minus(:,:,:,:,ik_bz,is),&

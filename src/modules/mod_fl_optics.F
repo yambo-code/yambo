@@ -24,6 +24,7 @@
 module fl_optics
  !
  use descriptors,     ONLY:IO_desc
+ use R_lattice,       ONLY:nXkbz
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
  use nl_optics
@@ -109,9 +110,9 @@ module fl_optics
      !
      ! FL overlaps
      !
-     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_time_S_det,(n_tot_time_steps,6,QP_nk,n_sp_pol)) !same number of time steps as fl_modes
+     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(FL_time_S_det,(n_tot_time_steps,6,nXkbz,n_sp_pol)) !same number of time steps as fl_modes
      !
      ! FL FT matrices
      !

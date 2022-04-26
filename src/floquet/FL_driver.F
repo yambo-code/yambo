@@ -51,7 +51,8 @@ subroutine FL_driver(E,X,k,q,Dip)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
- use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,PAR_COM_freqs_INDEX,PAR_COM_Xk_ibz_INDEX,myid
+ use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
+&                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -213,8 +214,8 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! aim137 or put in a logical variable to calculate all overlaps as heads!
    do i_sp_pol=1,n_sp_pol
      do i_k_bz=1,k%nbz
-       ! aim137 prelim - I tried to use BZ instead of IBZ for PAR_IND, but it did not work
-       if(.not.PAR_IND_Xk_ibz%element_1D(i_k_bz)) cycle
+       !
+       if(.not.PAR_IND_Xk_bz%element_1D(i_k_bz)) cycle
        !
        call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands,FL_S_plus(:,:,:,:,i_k_bz,i_sp_pol),&
                                                    &   FL_S_minus(:,:,:,:,i_k_bz,i_sp_pol),&

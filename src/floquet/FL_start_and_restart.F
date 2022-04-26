@@ -70,6 +70,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  integer :: ID,io_NonLinear
  integer, external::io_NL
  real(SP) :: degeneracy_threshold,degeneracy_lifting
+ logical  :: l_lifted
  !
  !
  ! Initialize the Gf and potentials
@@ -136,22 +137,25 @@ subroutine FL_start_and_restart(E,k,Dip)
  FL_Ho_lift_degeneracy = 0._SP
  degeneracy_threshold = 1.E-7_SP !aim137 tie to verbose input variable
  degeneracy_lifting = 1.E-4_SP !aim137 tie to verbose input variable
+ l_lifted = .false.
  !
  do i_sp = 1,n_sp_pol
    do i_k = 1,QP_nk
      do i1=NL_bands(1),NL_bands(2)
        do i2=i1+1,NL_bands(2)
          !
-         if (abs(E_full(i1,i_k,i_sp)-E_full(i2,i_k,i_sp)) < degeneracy_threshold) then
+         if (abs(E%E(i1,i_k,i_sp)-E%E(i2,i_k,i_sp)) < degeneracy_threshold) then
            !
-           call warning(' Degeneracies in the KS band structure were lifted')
+           l_lifted = .true.
            !
            do i_fl=1,n_tot_fl_modes
              !
              i1_fks = i_fl + (i1-1)*n_tot_fl_modes
-             FL_Ho_lift_degeneracy(i1_fks,i_k,i_sp) = -1._SP*degeneracy_lifting
+             FL_Ho_lift_degeneracy(i1_fks,i_k,i_sp) = &
+            &FL_Ho_lift_degeneracy(i1_fks,i_k,i_sp) -1._SP*degeneracy_lifting
              i2_fks = i_fl + (i2-1)*n_tot_fl_modes
-             FL_Ho_lift_degeneracy(i2_fks,i_k,i_sp) = +1._SP*degeneracy_lifting
+             FL_Ho_lift_degeneracy(i2_fks,i_k,i_sp) = &
+            &FL_Ho_lift_degeneracy(i2_fks,i_k,i_sp) +1._SP*degeneracy_lifting
              !
            enddo 
            !
@@ -161,6 +165,8 @@ subroutine FL_start_and_restart(E,k,Dip)
      enddo
    enddo
  enddo
+ !
+ if (l_lifted) call warning(' Degeneracies in the KS band structure were lifted')
  !
  ! Initialize Quasi-energies
  ! =========================

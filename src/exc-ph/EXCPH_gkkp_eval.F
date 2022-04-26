@@ -31,7 +31,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use drivers,        ONLY:l_EXCPH_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
- use R_lattice,      ONLY:nqibz,bz_samp!,qindx_C
+ use R_lattice,      ONLY:nqibz,bz_samp,qindx_C
  use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BS_mat,BSS_eh_table,BSS_free,BSS_write_eig_2_db
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
@@ -53,8 +53,9 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !
  logical                 :: t_rev
  integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
-&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,IO_ACT
- real(SP)                :: ph_E,elph_gkkp_sq
+&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT
+ real(SP)                :: ph_E
+ complex(SP)             :: elph_gkkp
  integer, external       :: io_ELPH
  !
  ! Loop scheme:
@@ -97,6 +98,10 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
        iv    = BSS_eh_table(i_H,2)
        ic    = BSS_eh_table(i_H,3)
        !
+       ik_minus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+       !
+       ik_plus_iq_bz  = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
+       !
        ! DS note: I think here the choice is not unique
        !          given a ik_bz there maybe multiple ik_s which send ik_ibz --> ik_bz
        !
@@ -113,21 +118,22 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
          !
          ik_db=K_io_map(ik_bz)
-         elph_gkkp_sq=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
+         !ik_db=K_io_map(ik_minus_iq_bz)
+         elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
+         !
+         !ik_db=K_io_map(ik_bz)
+         !write(*,*) elph_gkkp,conjg(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
          !
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
-         if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
+         if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
          !
        enddo
        !
        ! ip_bz = R_iq_s^-1 R_ik_s ik_ibz
-       !
-       !ik_plus_iq_bz = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
-       ik_plus_iq_bz = k_plus_q_table(ik_bz,iq_bz) ! K_bz+Q_bz
        !
        ip_bz = elemental_scattering(iq_s,ik_plus_iq_bz)
        !
@@ -139,12 +145,13 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          !
          ik_db=K_io_map(ik_plus_iq_bz)
-         elph_gkkp_sq=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
+         !ik_db=K_io_map(ik_bz)
+         elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
          !
          if (i_Hp==0) cycle
          !
-         if(.not.t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp_sq*      BS_mat(i_Hp,i_beta) 
+         if(.not.t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
          !
        enddo
        !

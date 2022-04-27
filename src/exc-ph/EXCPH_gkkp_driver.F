@@ -141,7 +141,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Save the Lin in information
  ! 
  BS_mat_in         =BS_mat(:,EXCPH_states(1):EXCPH_states(2))
- BSS_eh_table_in   =BSS_eh_table(EXCPH_states(1):EXCPH_states(2),:)
+ BSS_eh_table_in   =BSS_eh_table
  BSS_eh_table_m1_in=BSS_eh_table_m1
  BS_E_in           =BS_E
  !
@@ -260,7 +260,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
-     YAMBO_ALLOC(BS_mat_in,(BS_H_dim,BSS_n_eig))
+     YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,3+n_sp_pol-1))
      YAMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      !

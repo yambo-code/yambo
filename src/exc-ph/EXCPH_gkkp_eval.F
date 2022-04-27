@@ -25,34 +25,33 @@
 ! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
 ! - FP
 !
-subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
+subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO
- use drivers,        ONLY:l_EXCPH_Sigma
- use electrons,      ONLY:levels,n_sp_pol
+ !use electrons,      ONLY:levels
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
- use R_lattice,      ONLY:nqibz,bz_samp,qindx_C
- use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BS_mat,BSS_eh_table,BSS_free,BSS_write_eig_2_db
+ use R_lattice,      ONLY:bz_samp,qindx_C
+ use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
  use IO_int,         ONLY:io_control
- use X_m,            ONLY:X_t
- use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
+ !use X_m,            ONLY:X_t
+ use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
- use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table
+ use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
+&                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table
 #include<memory.h>
  !
- type(levels)  ::E
+ !type(levels)  ::E
  type(bz_samp) ::k,q
- type(X_t)     ::X
- integer, intent(in)    :: iq,iq_s,iq_bz,il
+ !type(X_t)     ::X
+ integer, intent(in)    :: iq_s,iq_bz,il!,iq
  integer, intent(inout) :: ID_gkkp
  !
  ! Work Space
  !
  logical                 :: t_rev
- integer                 :: ID_BS,ID_exc_Gkkp,io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
+ integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
 &                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp
@@ -120,6 +119,9 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          ik_db=K_io_map(ik_bz)
          !ik_db=K_io_map(ik_minus_iq_bz)
          elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
+         ! [FP] DEBUG>
+         !elph_gkkp=cmplx(1._SP,0._SP)
+         ! [FP] DEBUG<
          !
          !ik_db=K_io_map(ik_bz)
          !write(*,*) elph_gkkp,conjg(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
@@ -147,6 +149,9 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          ik_db=K_io_map(ik_plus_iq_bz)
          !ik_db=K_io_map(ik_bz)
          elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
+         ! [FP] DEBUG>
+         !elph_gkkp=cmplx(1._SP,0._SP)
+         ! [FP] DEBUG<
          !
          if (i_Hp==0) cycle
          !
@@ -179,7 +184,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  ! Compute the squared couplings
  !
  forall(i_alpha=EXCPH_states(1):EXCPH_states(2),i_beta=EXCPH_sum(1):EXCPH_sum(2))
-   EXCPH_Gkkp_sq(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
+   !EXCPH_Gkkp_sq(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
+   EXCPH_Gkkp_sq(il,i_beta,i_alpha)=REAL(EXCPH_Gkkp(il,i_beta,i_alpha))**2 + AIMAG(EXCPH_Gkkp(il,i_beta,i_alpha))**2
  end forall
  !
  contains

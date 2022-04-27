@@ -187,7 +187,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      do il=1,ph_modes
        !
-       call  EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
+       call  EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        call live_timing(steps=1)
        !

@@ -35,9 +35,10 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use X_m,            ONLY:X_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
 &                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
+ use vec_operate,    ONLY:degeneration_finder
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
  !
@@ -51,9 +52,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  integer  :: ID_exc_gkkp,ID_gkkp,io_err
  integer, external :: io_EXCPH_gkkp,io_ELPH
- integer  :: iq,iq_s,iq_bz,i_alpha,i_beta,il,i_star,iq_db
+ integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
- integer  :: min_pos(1)
+ integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_no_matrix_elements,l_keep_deg
  real(SP) :: ExcPhM
  !
@@ -78,7 +79,10 @@ subroutine EXCPH_lifetime(E,k,q,X)
  ! Load excitonic energies 
  !
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
- BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
+ BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
+ !
+ call degeneration_finder(real(BS_E_in),n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
+ &                          0.001/HA2EV,Include_single_values=.true.)
  !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
@@ -131,7 +135,10 @@ subroutine EXCPH_lifetime(E,k,q,X)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')
    !
-   do i_alpha=EXCPH_states(1),EXCPH_states(2)
+   do igrp=1,n_deg_grp
+   j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
+   do i_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1,first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
+   !do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      do i_beta=EXCPH_sum(1),EXCPH_sum(2)
        !
@@ -141,9 +148,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
          if(l_no_matrix_elements) ExcPhM=1._SP 
          !
          if(use_PH_DbGd) then
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
+           EXC_LifeTime(j_alpha)=EXC_LifeTime(j_alpha)+ExcPhM*DbGrid_pole()
          else
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
+           EXC_LifeTime(j_alpha)=EXC_LifeTime(j_alpha)+ExcPhM*Simple_pole()
            ! DS Debug <
            ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
            ! DS Debug >
@@ -153,6 +160,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
        !
      enddo
      !
+   enddo
+   EXC_LifeTime(j_alpha:i_alpha-1)=EXC_LifeTime(j_alpha)
    enddo
    !
  enddo

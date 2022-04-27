@@ -43,6 +43,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_B !_load
  use D_lattice,      ONLY:nsym
+ use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
@@ -53,7 +54,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map,EXCPH_q, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
-&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free
+&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free,&
+&                         l_const_elph,l_abs_elph
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -81,6 +83,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call EXCPH_load_L(1,X,'check','Lout')
  call EXCPH_load_L(1,X,'check','Lin')
  !
+ call parser('ConstElph',l_const_elph)
+ call parser('AbsElph',  l_abs_elph)
  !
  ! Build Q_map
  elph_branches_save  =elph_branches

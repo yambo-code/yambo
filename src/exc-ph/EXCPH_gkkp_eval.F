@@ -42,6 +42,7 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,&
 &                         l_const_elph,l_abs_elph
+ !
 #include<memory.h>
  !
  type(levels)  ::E
@@ -70,7 +71,6 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !
  t_rev= (iq_s>nsym/(i_time_rev+1))
  !
- if (.not.l_const_elph) then
    !
    ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
    !
@@ -89,8 +89,6 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
    ph_E=sqrt(abs(ph_freqs_sq(iq_db,il)))
    !
    if (ph_E<FAN_deltaE_treshold) return
-   !
- endif
    !
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
      !

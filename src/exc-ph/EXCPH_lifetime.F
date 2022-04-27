@@ -36,8 +36,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map, &
-&                         l_const_elph,l_abs_elph
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
@@ -59,8 +58,6 @@ subroutine EXCPH_lifetime(E,k,q,X)
  real(SP) :: ExcPhM
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
- call parser('ConstElph',l_const_elph)
- call parser('AbsElph',  l_abs_elph)
  call parser('KeepDeg',  l_keep_deg)
  !
  call section('*','EXCPH-LifTime')
@@ -110,8 +107,6 @@ subroutine EXCPH_lifetime(E,k,q,X)
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
  call msg('rs','Self-energy broadening : ',L_damping*HA2EV*1000._SP,'meV')
  !
-! write(*,*) 
-! write(*,*) 
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
  !

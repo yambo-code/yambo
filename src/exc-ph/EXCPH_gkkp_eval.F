@@ -27,7 +27,7 @@
 !
 subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !
- use pars,           ONLY:SP,cZERO,rZERO
+ use pars,           ONLY:SP,cZERO,rZERO,cONE
  use drivers,        ONLY:l_EXCPH_Sigma
  use electrons,      ONLY:levels,n_sp_pol
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
@@ -40,7 +40,8 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table
+&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,&
+&                         l_const_elph,l_abs_elph
 #include<memory.h>
  !
  type(levels)  ::E
@@ -65,8 +66,11 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
  !                                    ->i_alpha ->i_H [Calculate Gkkp]
  Xi=cZERO
  !
-   !
-   t_rev= (iq_s>nsym/(i_time_rev+1))
+ elph_gkkp=cONE
+ !
+ t_rev= (iq_s>nsym/(i_time_rev+1))
+ !
+ if (.not.l_const_elph) then
    !
    ! elph_gkkp(:,ib,ob,ik_bz) = < ib k | dV_ql | ob k - q >
    !
@@ -86,7 +90,11 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
    !
    if (ph_E<FAN_deltaE_treshold) return
    !
+ endif
+   !
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+     !
+     Xi=cZERO
      !
      !write(iq_bz*1000+i_beta,*) iq_bz,i_beta,iq_s
      !
@@ -116,20 +124,23 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
        do ivp=BS_bands(1),BS_bands(2)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
+         if (i_Hp==0) cycle
          !
-         ik_db=K_io_map(ik_bz)
-         !ik_db=K_io_map(ik_minus_iq_bz)
-         elph_gkkp=GKKP%dVc(il,iv,ivp,ik_db,1)/sqrt(2._SP*ph_E)
+         if (.not.l_const_elph) then
+           ik_db=K_io_map(ik_bz)
+           if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
+           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,iv,ivp,ik_db,1))/sqrt(2._SP*ph_E)
+           !ik_db=K_io_map(ik_minus_iq_bz)
+           !elph_gkkp=GKKP%dVc(il,ivp,iv,ik_db,1)/sqrt(2._SP*ph_E)
+         endif
          !
          !ik_db=K_io_map(ik_bz)
          !write(*,*) elph_gkkp,conjg(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
          !
-         if (i_Hp==0) cycle
-         !
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
-         if(.not.t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,i_beta,1)=Xi(i_H,i_beta,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
          !
        enddo
        !
@@ -143,15 +154,18 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
        do icp=BS_bands(1),BS_bands(2)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
-         !
-         ik_db=K_io_map(ik_plus_iq_bz)
-         !ik_db=K_io_map(ik_bz)
-         elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
-         !
          if (i_Hp==0) cycle
          !
-         if(.not.t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,i_beta,2)=Xi(i_H,i_beta,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if (.not.l_const_elph) then
+           ik_db=K_io_map(ik_plus_iq_bz)
+           if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,icp,ic,ik_db,1) /sqrt(2._SP*ph_E)
+           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
+           !ik_db=K_io_map(ik_bz)
+           !elph_gkkp=GKKP%dVc(il,ic,icp,ik_db,1)/sqrt(2._SP*ph_E)
+         endif
+         !
+         if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+         if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
          !
        enddo
        !
@@ -167,12 +181,10 @@ subroutine EXCPH_gkkp_eval(iq,iq_s,iq_bz,il,E,k,q,X,ID_gkkp)
          ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
          !
          EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
-&                                      BS_mat_in(i_H,i_alpha)*(Xi(i_H,i_beta,1)-Xi(i_H,i_beta,2))
+&                                      BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))
          !
        enddo
      enddo
-     !
-     Xi=cZERO
      !
    enddo !Loop i_beta
  !

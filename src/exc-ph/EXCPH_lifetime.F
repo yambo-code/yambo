@@ -36,7 +36,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map 
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map, &
+&                         l_const_elph,l_abs_elph
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
@@ -58,6 +59,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
  real(SP) :: ExcPhM
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
+ call parser('ConstElph',l_const_elph)
+ call parser('AbsElph',  l_abs_elph)
  call parser('KeepDeg',  l_keep_deg)
  !
  call section('*','EXCPH-LifTime')
@@ -147,7 +150,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
          else
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
            ! DS Debug <
-           ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
+           write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
            ! DS Debug >
          endif
          !
@@ -209,7 +212,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
 &                    +(N_bose-F_boltz)*Lorentzian_func(E_alpha-E_beta+ph_E,L_damping)
     !
     ! DEBUG <
-    ! write(200+i_alpha,*) E_alpha*HA2EV,E_beta*HA2EV,ph_E*HA2EV
+    write(200+i_alpha,*) E_alpha*HA2EV,E_beta*HA2EV,ph_E*HA2EV
     ! DEBUG >
     !
   end function Simple_Pole

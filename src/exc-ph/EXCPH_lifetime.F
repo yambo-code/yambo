@@ -23,13 +23,12 @@
 !
 !> @brief Calculate exciton non-radiative life-time induced by phonon-scattering
 !!
-subroutine EXCPH_lifetime(E,k,q,X)
+subroutine EXCPH_lifetime(k,q,X)
  !
  use units,          ONLY:HA2EV,HA2CMm1
  use pars,           ONLY:SP,cZERO,rZERO,schlen,pi
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:nsym
  use parser_m,       ONLY:parser
  use com,            ONLY:msg,of_open_close
  use X_m,            ONLY:X_t
@@ -37,7 +36,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
 &                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map
- use ELPH,           ONLY:PH_freqs,use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
+ use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
@@ -205,7 +204,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
     ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
     !
     if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-    !
+    !  
     if(iq==1.and.i_alpha==i_beta) return
     !
     N_bose  =bose_f(ph_E)
@@ -250,8 +249,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
       !
       ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
       !
-      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.
-l_keep_deg) return
+      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
       !
       N_bose  =bose_f(ph_E)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?

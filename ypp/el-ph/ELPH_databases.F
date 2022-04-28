@@ -94,7 +94,7 @@ subroutine ELPH_databases(k,E,q)
    else
      ! otherwise qindx_C is allocated
      if(.not.allocated(qindx_C)) then
-       if(coll_scattering.eqv.FALSE.) call error('Please run again the setup with: K_grids= "X B C S" ')
+       if(coll_scattering.eqv..FALSE.) call error('Please run again the setup with: K_grids= "X B C S" ')
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
        io_err(1)=io_QINDX(k,q,ID)
        if (io_err(1)/=0) then

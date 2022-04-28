@@ -250,7 +250,8 @@ subroutine EXCPH_lifetime(E,k,q,X)
       !
       ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
       !
-      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold) return
+      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.
+l_keep_deg) return
       !
       N_bose  =bose_f(ph_E)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?

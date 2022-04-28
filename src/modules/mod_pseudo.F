@@ -42,6 +42,7 @@ module pseudo
 
  integer :: pp_kbv_dim
  integer :: pp_kbv_dim_yambo
+ integer :: pp_kbv_dim_atom
  integer,  allocatable:: pp_kbv_table(:)
  integer,  allocatable:: pp_table(:,:,:)
  ! (3,n_atomic_species,pp_n_l_times_proj_max)

@@ -40,7 +40,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
-&                         l_const_elph,l_abs_elph
+&                         l_const_elph,l_abs_elph,BSS_eh_table_in
  !
 #include<memory.h>
  !
@@ -54,7 +54,8 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  logical                 :: t_rev
  integer                 :: io_err,i_H,i_Hp,i_alpha,iq_db,ik_db,&
-&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT
+&                           iv,ic,ik_bz,ivp,icp,i_beta,ip_bz,ik_plus_iq_bz,ik_minus_iq_bz,IO_ACT, &
+&                           iv_in,ic_in,ik_bz_in
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp
  integer, external       :: io_ELPH
@@ -174,6 +175,22 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
      do i_alpha=EXCPH_states(1),EXCPH_states(2)
        !
        do i_H=1,BS_H_dim
+         !
+         ! K = (ik_bz,iv,ic)
+         !
+         ik_bz = BSS_eh_table(i_H,1)
+         iv    = BSS_eh_table(i_H,2)
+         ic    = BSS_eh_table(i_H,3)
+         !
+         ! K_in = (ik_bz,iv,ic)
+         !
+         ik_bz_in = BSS_eh_table_in(i_H,1)
+         iv_in    = BSS_eh_table_in(i_H,2)
+         ic_in    = BSS_eh_table_in(i_H,3)
+         !
+         if (ik_bz /= ik_bz_in) call error(" Wrong k correspondence")
+         if (iv    /= iv_in   ) call error(" Wrong iv correspondence")
+         if (ic    /= ic_in   ) call error(" Wrong ic correspondence")
          !
          ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
          !

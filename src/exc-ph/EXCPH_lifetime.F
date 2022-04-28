@@ -56,7 +56,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_no_matrix_elements,l_keep_deg
- real(SP) :: ExcPhM
+ real(SP) :: ExcPhM,EXC_life_average
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
@@ -80,9 +80,6 @@ subroutine EXCPH_lifetime(E,k,q,X)
  !
  call EXCPH_load_L(1,X,'eigenvalues','Lin')
  BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
- !
- call degeneration_finder(real(BS_E_in),n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
- &                          0.001/HA2EV,Include_single_values=.true.)
  !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
@@ -135,10 +132,7 @@ subroutine EXCPH_lifetime(E,k,q,X)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')
    !
-   do igrp=1,n_deg_grp
-   j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
-   do i_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1,first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
-   !do i_alpha=EXCPH_states(1),EXCPH_states(2)
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      do i_beta=EXCPH_sum(1),EXCPH_sum(2)
        !
@@ -148,9 +142,9 @@ subroutine EXCPH_lifetime(E,k,q,X)
          if(l_no_matrix_elements) ExcPhM=1._SP 
          !
          if(use_PH_DbGd) then
-           EXC_LifeTime(j_alpha)=EXC_LifeTime(j_alpha)+ExcPhM*DbGrid_pole()
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
          else
-           EXC_LifeTime(j_alpha)=EXC_LifeTime(j_alpha)+ExcPhM*Simple_pole()
+           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
            ! DS Debug <
            ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
            ! DS Debug >
@@ -161,10 +155,20 @@ subroutine EXCPH_lifetime(E,k,q,X)
      enddo
      !
    enddo
-   EXC_LifeTime(j_alpha:i_alpha-1)=EXC_LifeTime(j_alpha)
-   enddo
    !
  enddo
+ enddo
+ !
+ ! Perform average
+ !
+ call degeneration_finder(real(BS_E_in),n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
+ &                          0.001/HA2EV,Include_single_values=.true.)
+ !
+ do igrp=1,n_deg_grp
+   j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
+   i_alpha=first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
+   EXC_life_average=sum(EXC_LifeTime(j_alpha:i_alpha))/real(n_of_exc_grp(igrp),SP)
+   EXC_LifeTime(j_alpha:i_alpha)=EXC_life_average
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)

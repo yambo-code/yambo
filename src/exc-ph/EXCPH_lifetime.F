@@ -160,8 +160,8 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  ! Perform average
  !
- call degeneration_finder(real(BS_E_in),n_exc_in,first_exc_grp,n_of_exc_grp,n_deg_grp,&
- &                          0.001/HA2EV,Include_single_values=.true.)
+ call degeneration_finder(real(BS_E_in(EXCPH_states(1):EXCPH_states(2))),n_exc_in,first_exc_grp, &
+ &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
  !
  do igrp=1,n_deg_grp
    j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1

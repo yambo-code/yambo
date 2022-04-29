@@ -200,15 +200,17 @@ subroutine EXCPH_lifetime(k,q,X)
     E_alpha=real(BS_E_in(i_alpha),SP)
     E_beta =BS_all_E(i_beta,iq)
     !
-    !iq_db=DB_Q_map(iq_bz)
     iq_db=Q_io_map(iq_bz)
     ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+    !
     if(ph_E<FAN_deltaE_treshold) return
     !
     ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
     !
-    if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-    if(iq==1.and.i_alpha==i_beta) return
+    ! if(iq_db==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+    ! if(iq_db==1.and.i_alpha==i_beta) return
+    !
+    if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
     !
     N_bose  =bose_f(ph_E)
     !
@@ -252,8 +254,10 @@ subroutine EXCPH_lifetime(k,q,X)
       !
       ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
       !
-      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-      if(iq==1.and.i_alpha==i_beta) return
+      ! if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+      ! if(iq==1.and.i_alpha==i_beta) return
+      !
+      if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
       !
       N_bose  =bose_f(ph_E)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?

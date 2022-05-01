@@ -14,7 +14,7 @@ define clean_driver
  if [ "$(1)" = "ext-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
    ACTION="clean_all";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_ext_lib_dir); \
    $(clean_ext_libs_bin_and_include); \
-   EXTS="Makefile -stamp";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
+   EXTS="Makefile .stamp";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
@@ -71,6 +71,7 @@ define clean_ext_lib_dir
    cd $$CWD;\
   fi;\
  done; \
+ find lib/archive -type d  |xargs rm -fr; \
  $(ECHO)
 endef
 define clean_mod_driver
@@ -84,10 +85,11 @@ define clean_mod_driver
 endef
 define clean_lib_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
- $(ECHO) "\t[CLEANING $$LMSG] Libraries" ; \
+ $(ECHO) "\t[CLEANING $$LMSG] Libraries $$WDIR" ; \
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
-  find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; \
+  if test -d $$dirtoclean; then find $$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
+  if test -d $$WDIR/$$dirtoclean; then find $$WDIR/$$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
   rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; \
  done
 endef

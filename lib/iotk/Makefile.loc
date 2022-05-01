@@ -26,6 +26,7 @@ all: $(LIBRARY)
 #
 uncompress:
 	@$(get_the_lib)
+	@ln -s iotk $(PACKAGE)
 	@$(uncompress)
 
 configure: uncompress

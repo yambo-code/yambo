@@ -56,6 +56,8 @@ endef
 define rm_the_lib
  if test -d $(PACKAGE) ; \
   then ( rm -rf $(PACKAGE) ) ; \
-  rm -rf make.sys make_iotk.inc uncompress.stamp ; \
+  rm -f make.sys;\
+  rm -f make_iotk.inc; \
+  rm -f uncompressed.stamp ; \
  fi 
 endef

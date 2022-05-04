@@ -199,7 +199,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !
 !$omp parallel do default(shared), private(id)
  do id=1,3
-   if(k_map%max_kdir(id)/=1) then ! periodic directions
+   if(k_map%max_kdir(id)==1) cycle ! non-periodic directions
      max_step=1
      if(k_map%max_kdir(id)>=6.and..not.l_force_SndOrd) max_step=2
 !$omp parallel do default(shared), private(istep)

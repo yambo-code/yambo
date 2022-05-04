@@ -78,9 +78,9 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !  one of the time-dependent valence bands, while the core part depends from
  !  both the wave-functions at k and k-delta
  !
+ ik_ibz=Xk%sstar(ikbz,1)
+ !
  do id=1,3
-   !
-   ik_ibz=Xk%sstar(ikbz,1)
    !
    if(k_map%max_kdir(id)/=1) then ! periodic directions
      !
@@ -138,7 +138,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_minus(:,i2,id+(istep-1)*3),1)
        enddo
        !
-       call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
+!       call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
        !
        idx=k_map%k_map_inv(ikbz,:)
        idx(id)=idx(id)+istep
@@ -187,7 +187,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
        enddo
        !
-       call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
+!       call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
        !
      enddo  
      !
@@ -195,4 +195,20 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
    !
  enddo
  !
+ ! Invert matrices
+ !
+!$omp parallel do default(shared), private(id)
+ do id=1,3
+   if(k_map%max_kdir(id)/=1) then ! periodic directions
+     max_step=1
+     if(k_map%max_kdir(id)>=6.and..not.l_force_SndOrd) max_step=2
+!$omp parallel do default(shared), private(istep)
+     do istep=1,max_step
+       call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
+       call SERIAL_inversion(en%nbf(i_sp), Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
+     enddo
+!$omp end parallel do
+  enddo
+!$omp end parallel do
+  !
 end subroutine Build_overlaps_det_NEQ

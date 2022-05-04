@@ -54,9 +54,13 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  !complex(SP) :: V_tmp(H_ref_bands(2),en%nbf(i_sp)) ! used in full construction of overlaps
  complex(SP) :: tmp_det,vtmp(H_ref_bands(2))
  !
- S_det    =cZERO
- Sm1_plus =cZERO
- Sm1_minus=cZERO
+!$omp parallel do default(shared), private(id)
+ do id=1,6
+   S_det    (id)    =cZERO
+   Sm1_plus (:,:,id)=cZERO
+   Sm1_minus(:,:,id)=cZERO
+ enddo
+!$omp end parallel do
  !
  ! I split the construction of the Sm1_minus(Sm1_plus) matrix in four parts
  !

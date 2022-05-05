@@ -200,12 +200,7 @@ subroutine electrons_dos(Xk,Xen)
  !
  ! Interpolation cleaning
  !
- call INTERPOLATION_driver_end(ID_E)
- call INTERPOLATION_driver_end(ID_f)
- call INTERPOLATION_driver_end(ID_spin)
- call INTERPOLATION_driver_end(ID_pdos)
- call INTERPOLATION_driver_end(ID_bare_spin)
- call INTERPOLATION_driver_end(ID_bare_pdos)
+ call INTERPOLATION_driver_end(0)
  !
  ! Fermi Level
  !

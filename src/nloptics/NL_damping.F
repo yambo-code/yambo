@@ -59,7 +59,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  !  In the 2021 version diagonal and off-diagonal contribution are separated
  !
-!$omp parallel default(shared), private(i1,i2,Gamma_ij)
+!$omp parallel default(shared), private(i1,i2,Gamma_ij), collapse(2)
  do i1=NL_bands(1),NL_bands(2)
    do i2=i1+1,NL_bands(2)
      !
@@ -83,7 +83,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  if(RAD_LifeTime>zero_dfl) then
    !      
-!$omp parallel default(shared), private(i1,ib)
+!$omp parallel default(shared), private(i1,i2,ib)
    do i1=NL_bands(1),NL_bands(2)
      !
      do ib=1,E%nbf(i_sp_pol)

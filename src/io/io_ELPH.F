@@ -53,9 +53,9 @@ integer function io_ELPH(ID,what)
  !Work Space
  !
  integer                ::iq,ierr,iq_mem,ID_frag
- real(SP)               ::v(3)
  character(schlen)      ::db_name
  logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
+ integer, external      ::variables_ELPH
  !
  call timing('io_ELPH',OPR='start')
  !
@@ -92,63 +92,8 @@ integer function io_ELPH(ID,what)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
    if (io_ELPH/=0) goto 1
    !
-   call IO_desc_reset(ELPH_desc)
-   !
-   if (.not.ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",6,SP,0)
-   if (     ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",7,SP,0)
-   call io_variable_elemental(ID,VAR="[ELPH] Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),&
-&                             TERMINATOR="[avail]",DESCRIPTOR=ELPH_desc)
-   if (l_gFsq) call io_variable_elemental(ID,VAR="[ELPH]",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/),&
-&                                         TERMINATOR="[used]",DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] K points",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   if (ver_is_gt_or_eq(ID,revision=18920)) then
-     call io_variable_elemental(ID,VAR="[ELPH] Bare interaction",L0=l_GKKP_hosts_bare_dV,&
-&                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   endif
-   if (l_gFsq) then
-     call def_variable_elemental(ID,"QP_nb_nk_n_states",3,SP,0)
-     call io_variable_elemental(ID,I0=QP_nb)
-     call io_variable_elemental(ID,I0=QP_nk)
-     call io_variable_elemental(ID,I0=QP_n_states,VAR='[ELPH] QP tot states')
-   endif
-   call def_variable_elemental(ID,"",0,0,1)
-   !
-   if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     QP_PH_n_G_bands=(/1,elph_nb/)
-     elph_Ham_bands =(/1,elph_nb/)
-     elph_branches  =(/1,ph_modes/)
-   endif
-   !
-   io_ELPH=io_status(ID)
+   io_ELPH=variables_ELPH(ID,what)
    if (io_ELPH/=0) goto 1
-   !
-   call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
-   call io_bulk(ID,R0=PH_W_debye)
-   !
-   if (read_is_on(ID)) call ELPH_alloc("PHONONS")
-   !
-   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nQ,3/) )
-   call io_bulk(ID,R2=PH_qpt(:,:))
-   !
-   if (l_gkkp.and.allocated(q_pt).and.elph_use_q_grid) then
-     do iq=1,nqibz
-       call c2a(v_in=q_pt(iq,:)+PH_qpt(iq,:),v_out=v,mode="ki2a")
-       if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
-         io_ELPH=IO_INCOMPATIBLE_VAR
-         goto 1
-       endif
-     enddo
-   endif
-   !
-   if (elph_grids_are_expanded) then
-     !
-     call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
-     call io_bulk(ID,R2=PH_kpt_bz(:,:))
-     !
-   endif
    !
  endif
  !

@@ -149,7 +149,6 @@ module EXCPH
    !
    subroutine EXCPH_gkkp_alloc()
      implicit none
-     n_exc_in=EXCPH_states(2)-EXCPH_states(1)+1
      YAMBO_ALLOC(EXCPH_Gkkp,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(EXCPH_Gkkp_sq,(ph_modes,EXCPH_sum(1):EXCPH_sum(2),EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(Xi,(BS_H_dim,2))    

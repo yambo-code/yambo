@@ -74,7 +74,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    !
  else
    !
-   call section('+','Screened interaction header I/O')
+   if(.not.l_RIM_W) call section('+','Screened interaction header I/O')
+   if(     l_RIM_W) call section('=','Screened interaction header I/O')
    !===================================================
    !
    if (X%ng<BS_n_g_W) call warning(" Using screening with less G than Weh interaction")
@@ -245,9 +246,12 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  if (have_cuda) then
    YAMBO_FREE(isc%gamp_d)
    YAMBO_FREE(RIM_vpW_d)
+   YAMBO_FREE(RIM_W_d)
  else
    YAMBO_FREE(RIM_vpW)
  endif
+ !
+ YAMBO_FREE(RIM_W)
  !
  if (.not.W_is_unscreened) call X_alloc('X')
  !

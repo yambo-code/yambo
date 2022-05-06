@@ -23,27 +23,20 @@
 !
 integer function io_ELPH(ID,what)
  !
- use pars,           ONLY:SP,schlen,LP
- use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,&
-&                         io_mode,DUMP,frag_ELPH,IO_INCOMPATIBLE_VAR
+ use pars,           ONLY:SP,schlen
+ use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,io_mode,frag_ELPH
  use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
 &                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,&
-&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
 &                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
-&                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         PH_pol_vector,elph_Ham_bands,elph_branches,GKKP,elph_grids_are_expanded
+&                         PH_pol_vector,elph_branches,GKKP,elph_grids_are_expanded
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
- use R_lattice,      ONLY:nkbz,nqibz,q_pt
+ use R_lattice,      ONLY:nkbz,nqibz
  use D_lattice,      ONLY:n_atoms
  use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
  use parallel_m,     ONLY:PAR_Q_bz_index
- use vec_operate,    ONLY:rlu_v_is_zero,c2a
- use zeros,          ONLY:k_rlu_zero
  use timing_m,       ONLY:timing
- use descriptors,    ONLY:IO_desc_reset
  !
 #include<memory.h>
  !
@@ -54,13 +47,12 @@ integer function io_ELPH(ID,what)
  !
  integer                ::iq,ierr,iq_mem,ID_frag
  character(schlen)      ::db_name
- logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
+ logical                ::l_no_matrix_elements,l_gkkp
  integer, external      ::variables_ELPH
  !
  call timing('io_ELPH',OPR='start')
  !
  l_no_matrix_elements=.FALSE.
- l_gFsq              =.FALSE.
  l_gkkp              =.FALSE.
  !
  ID_frag=0
@@ -69,15 +61,12 @@ integer function io_ELPH(ID,what)
  !
  if (index(what,'gkkp_expanded')>0) then
    db_name='elph_gkkp_expanded'
- else if (index(what,'gFsq')>0) then
-   db_name='elph_gFsq'
  else 
    db_name='elph_gkkp'
    l_gkkp=.TRUE.
  endif
  !
  elph_grids_are_expanded=index(what,'gkkp_expanded')>0
- l_gFsq                 =index(what,'gFsq')>0
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
@@ -108,38 +97,6 @@ integer function io_ELPH(ID,what)
  ! When the DB is fragmented I allow a partial reading checking
  ! if the fragment exists or not.
  ! If the fragment does not exist (ierr<0) I return an error code
- !
- if (l_gFsq) then
-   !
-   if (iq==1) then
-     call io_bulk(ID_frag,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
-     call io_bulk(ID_frag,I2=QP_table)
-   endif
-   !
-   iq_mem=iq
-   if (allocated(PAR_Q_bz_index)) iq_mem=PAR_Q_bz_index(iq)
-   !
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_fan(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_dw_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_dw(:,iq_mem,:))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_ca_corr_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_ca_corr(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_bose_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_life_bose(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_life_f(:,iq_mem,:,1))
-   !
-   ! PH frequencies (again)
-   !
-   if (iq==1) then
-     call io_bulk(ID_frag,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
-     call io_bulk(ID_frag,R2=PH_freqs_sq)
-   endif
-   !
-   goto 1
-   !
- endif
  !
  ! Allocation
  !

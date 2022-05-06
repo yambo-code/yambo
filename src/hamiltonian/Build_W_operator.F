@@ -81,7 +81,7 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
-       !$omp parallel do default(shared), private(i2,i1)
+       !$omp parallel do default(shared), private(i2,i1), collapse(2)
        do i2=H_ref_bands(1),H_ref_bands(2)
          do i1=H_ref_bands(1),H_ref_bands(2)
            Wop(i1,i2,istep)=sum(conjg(V_bands(i2,1:en%nbf(i_sp),ik))*(V_tilde(1:en%nbf(i_sp),i1,1)-V_tilde(1:en%nbf(i_sp),i1,2)))
@@ -145,7 +145,7 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  enddo
  !$omp end parallel do
  !
- !$omp parallel do default(shared), private(i1,id)
+ !$omp parallel do default(shared), private(i1,id), collapse(2)
  do i1=H_ref_bands(1),H_ref_bands(2)
    do id=1,3
      H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))=H_nl_sc(i1,H_ref_bands(1):H_ref_bands(2))-         &

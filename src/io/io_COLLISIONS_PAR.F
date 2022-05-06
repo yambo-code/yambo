@@ -25,7 +25,7 @@ integer function io_COLLISIONS_header(ID,COLL)
  !
  use pars,          ONLY:schlen,IP,SP
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
- use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group
+ use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,COLLISIONS_CV_only
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
 &                        VERIFY,io_extension,io_raw_extension
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
@@ -70,6 +70,9 @@ integer function io_COLLISIONS_header(ID,COLL)
  SIZE_=6
  if (COLL%kind==QP_SE_GW_NEQ) SIZE_=SIZE_+3
  if (COLL%kind==QP_SE_GW_QED) SIZE_=SIZE_+2
+ if (ver_is_gt_or_eq(ID,revision=21128)) then
+   SIZE_ = SIZE_+1
+ endif
  call io_elemental(ID,VAR="PARAMETERS",VAR_SZ=SIZE_,MENU=0)
  !
  call io_elemental(ID,I0=COLL%N,&
@@ -101,6 +104,9 @@ integer function io_COLLISIONS_header(ID,COLL)
  call io_elemental(ID,R0=SC_band_mixing,&
 &       VAR='Bands mixing                    ',CHECK=.true.,OP=(/"=="/))
  call io_elemental(ID,I0=COLL%kind,DB_I0=V_kind_disk,CHECK=.true.,OP=(/"=="/))
+ if (ver_is_gt_or_eq(ID,revision=21128)) then
+   call io_elemental(ID,L0=COLLISIONS_CV_only,VAR='CV only scattering    ',WARN=.true.,OP=(/"=="/))
+ endif
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  if(COLL%kind==H_SE_HARTREE.or.COLL%kind==H_SE_FOCK.or.COLL%kind==H_SE_SEX.or.COLL%kind>=H_SE_HARTREE) then

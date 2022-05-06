@@ -31,7 +31,7 @@ etsf_io:
 blacs: 
 	@if test "$(do_blacs)" = yes ; then LIBS="blacs" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) blacs-dl; $(mk_external_lib); fi
 scalapack: 
-	@if test "$(do_slk)" = yes ; then LIBS="scalapack" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) scalapacl-dl ; $(mk_external_lib); fi
+	@if test "$(do_slk)" = yes ; then LIBS="scalapack" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) scalapack-dl ; $(mk_external_lib); fi
 petsc: 
 	@if test "$(do_petsc)" = yes ; then LIBS="petsc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) petsc-dl; $(mk_external_lib); fi
 slepc: 

@@ -1,13 +1,7 @@
 #
-define get_the_lib
-if ! test -e uncompressed.stamp; then \
- cd ../archive ; if ! test -e $(TARBALL) ; then cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi; \
-fi
-endef
-#
 define uncompress
 if ! test -e uncompressed.stamp; then \
- gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -; \
+ gunzip < ../archive/$(PACKAGE).tar.gz | ../../config/missing --run tar xf -; \
  touch uncompressed.stamp;\
 fi
 endef

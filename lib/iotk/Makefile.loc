@@ -11,7 +11,6 @@ LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_iotk)
-TARBALL=$(tarball_iotk)
 #
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
@@ -25,7 +24,6 @@ CONFFLAGS=--prefix=$(LIBPATH) IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 all: $(LIBRARY)
 #
 uncompress:
-	@$(get_the_lib)
 	@if ! test -d iotk; then ln -s iotk $(PACKAGE); fi
 	@$(uncompress)
 

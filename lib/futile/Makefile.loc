@@ -11,8 +11,6 @@ LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_futile)
-TARBALL=$(tarball_futile)
-
 #
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
@@ -31,7 +29,6 @@ CONFFLAGS=--prefix=$(LIBPATH) \
 all: $(LIBRARY)
 #
 uncompress:
-	@$(get_the_lib)
 	@$(uncompress)
 
 configure: uncompress

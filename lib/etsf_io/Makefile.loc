@@ -11,8 +11,6 @@ LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_etsf_io)
-TARBALL=$(tarball_etsf_io)
-
 #
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
@@ -29,7 +27,6 @@ CONFFLAGS=--prefix=$(LIBPATH) \
 all: $(LIBRARY)
 #
 uncompress:
-	@$(get_the_lib)
 	@$(uncompress)
 
 configure: uncompress

@@ -544,7 +544,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_RT_X) then 
    call initactivate(1,"Xorder XKind ProbeKey PumpKey EnRngeRt ETStpsRt")
-   call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT")
+   call initactivate(1,"TimeRange DampMode DampFactor SkipOBS_IO FrMinDamp RmAsymLim UseFFT CheckPaths")
  endif
  !
 #endif
@@ -649,7 +649,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
-   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+   if (l_RT_G_two_times) then
+     call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+     call initactivate(1,"BuildSpec BuildGret BuildGadv BuildGles BuildGgrt KeepCC KeepCV KeepVC KeepVV")
+   endif
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")

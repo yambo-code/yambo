@@ -25,11 +25,12 @@ module com_interfcs
  !
  interface
    !
-   subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
+   subroutine msg_characters_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
      use pars,     ONLY:lchlen
      character(*)                :: how
      character(*)                :: mesg
      character(*)                :: val(:)
+     character(*),      optional :: after_msg
      logical,           optional :: USE_TABS
      integer,           optional :: INDENT
      character(lchlen), optional :: MSG_string

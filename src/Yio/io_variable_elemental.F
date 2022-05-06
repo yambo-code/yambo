@@ -335,8 +335,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if(present(R0) .or.present(R1)) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
    if(present(D0)                ) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
    if(present(C0)                ) call msg(msg_where,msg_,rc_db(1:2*SZ)*local_unit,after_msg=TERMINATOR)
-   if(present(L0)                ) call msg(msg_where,msg_,(l_db(1)==1))
-   if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)))
+   if(present(L0)                ) call msg(msg_where,msg_,l_db(1)==1,after_msg=TERMINATOR)
+   if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)),after_msg=TERMINATOR)
  endif
  !
  contains

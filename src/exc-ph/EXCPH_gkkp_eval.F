@@ -76,10 +76,8 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
    !
    ! with k and q in the BZ
    !
-   !iq_db=DB_Q_map(iq_bz)
    iq_db=Q_io_map(iq_bz)
-   !write(*,*) iq_bz,iq_db,DB_Q_map(iq_bz)
-   IO_ACT=manage_action(RD,iq_db,1,q%nbz)
+   IO_ACT=RD
    if(il==elph_branches(2)) IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
    !
    call io_control(ACTION=IO_ACT,SEC=(/iq_db+1/),ID=ID_gkkp)

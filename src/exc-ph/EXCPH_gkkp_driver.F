@@ -47,7 +47,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
  use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
- use ELPH,           ONLY:ph_modes,elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
+ use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
@@ -174,7 +174,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Main q-loop
  !
  !call k_ibz2bz(k,"i",.false.)
- call live_timing('Excitonic Gkkp',q%nibz*ph_modes)
+ call live_timing('Excitonic Gkkp',q%nbz*(elph_branches(2)-elph_branches(1)+1))
  !
  do iq=1,q%nibz
    ! 
@@ -189,7 +189,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      EXCPH_gkkp          =cZERO
      EXCPH_gkkp_sq       =rZERO
      !
-     do il=1,ph_modes
+     do il=elph_branches(1),elph_branches(2)
        !
        call  EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
        !

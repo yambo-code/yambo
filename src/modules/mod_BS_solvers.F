@@ -40,7 +40,7 @@ module BS_solvers
  ! Haydock
  !========== 
  type Haydock_vector
-   complex(SP), allocatable :: fragment(:)
+   complex(SP), allocatable :: fragment(:,:) ! (/ i_Tr; maxval(Xk%FGbz%N_mapped('kpts_in_T_gr')) /)
  end type Haydock_vector
  !
 #if defined _SLEPC && !defined _NL
@@ -100,6 +100,8 @@ module BS_solvers
  integer  :: Haydock_iterMAX
  real(SP) :: Haydock_threshold
  real(SP) :: Haydock_v0_mod
+ real(SP) :: FG_factor
+ logical  :: BSS_uses_FKE
  !
  ! Solvers (Slepc)
  !=========
@@ -355,15 +357,16 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_E_SOC_corr)
    end subroutine
    !
-   subroutine BS_HAYVEC_alloc(V)
+   subroutine BS_HAYVEC_alloc(V,dom_k)
      use parallel_m,    ONLY:PAR_IND_T_Haydock
      type(Haydock_vector) :: V(BS_nT_grps)
      ! ws:
      integer :: i_g
+     integer :: dom_k(BS_nT_grps)
      !
      do i_g=1,BS_nT_grps
        if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size))
+       YAMBO_ALLOC(V(i_g)%fragment,(BS_T_grp(i_g)%size,dom_k(i_g)))
      enddo
    end subroutine BS_HAYVEC_alloc
    !

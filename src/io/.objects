@@ -20,7 +20,7 @@ NL_objects = variables_NL.o io_NL.o
 ELECTRIC_objects = io_Overlaps.o
 #endif
 #if defined _ELPH 
-ELPH_objects = io_ELPH.o
+ELPH_objects = variables_ELPH.o io_ELPH.o io_gFsq.o
 #endif
 #if defined _PHEL 
 PHEL_objects = io_PH.o

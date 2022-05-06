@@ -1,7 +1,7 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ylib
 #
 # storing options
 #
@@ -25,7 +25,7 @@ keep_hdf5=no
 #
 # package names
 #
-pkgname_Ylib=yambo-libraries-1.0
+pkgname_Ylib=Ydriver-1.1.0
 pkgname_iotk=iotk-y1.2.2
 pkgname_netcdf=netcdf-c-4.7.4
 pkgname_netcdff=netcdf-fortran-4.5.3
@@ -53,7 +53,7 @@ tarball_pnetcdf=$(pkgname_pnetcdf).tar.gz
 tarball_hdf5=$(pkgname_hdf5).tar.gz
 tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
-tarball_lapack=$(pkgname_lapack).tar.gz
+tarball_lapack=v3.9.1.tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
 tarball_scalapack=$(pkgname_scalapack).tar.gz
 tarball_petsc=$(pkgname_petsc).tar.gz
@@ -72,9 +72,9 @@ url_slepc=https://slepc.upv.es/download/distrib/$(tarball_slepc)
 #
 # Internal URL's
 #
-url_base=https://github.com/yambo-code/yambo-libraries
+url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
-url_Ylib=$(url_base)/$(tarball_driver)
+url_Ylib=$(url_base)/$(tarball_Ylib)
 url_netcdf=$(url_base)/$(tarball_netcdf)
 url_netcdff=$(url_base)/$(tarball_netcdff)
 url_pnetcdf=$(url_base)/$(tarball_pnetcdf)

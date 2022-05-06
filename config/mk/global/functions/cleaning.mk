@@ -71,7 +71,7 @@ define clean_ext_lib_dir
    cd $$CWD;\
   fi;\
  done; \
- find lib/archive -type d  |xargs rm -fr; \
+ find lib/archive/* -type d  |xargs rm -fr; \
  $(ECHO)
 endef
 define clean_mod_driver
@@ -85,7 +85,7 @@ define clean_mod_driver
 endef
 define clean_lib_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
- $(ECHO) "\t[CLEANING $$LMSG] Libraries $$WDIR" ; \
+ $(ECHO) "\t[CLEANING $$LMSG] Libraries" ; \
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
   if test -d $$dirtoclean; then find $$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \

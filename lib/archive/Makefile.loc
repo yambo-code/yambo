@@ -108,6 +108,8 @@ define getsrc_git
 endef
 #
 define link_it
- if test -s $$LIB".tar.gz" ; then gunzip < $$LIB".tar.gz" | ../../config/missing --run tar xf - ; fi;\
- if ! test -d ../$(1); then cp -R $(PWD)/$$LIB ../$(1);fi
+ if test -s $$LIB".tar.gz" ; then \
+  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
+  cd ../$(1); \
+  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; fi
 endef

@@ -1,7 +1,8 @@
+!
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG DS
+! Authors (see AUTHORS file for details): AM MG DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -20,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
+subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
  use pars,           ONLY:SP,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
@@ -41,6 +42,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
  real(SP),    intent(in) :: Bf(it+1),Af(it)
  complex(SP), intent(in) :: Cf(Cf_size)
  real(SP),    intent(out):: reached_threshold
+ real(SP),    intent(in) :: FG_factor
  !
  ! Work Space
  !
@@ -248,8 +250,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
-   if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-   if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
+   if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor
+   if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor
    if (trim(mode)=="abs") then
      if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
      Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2

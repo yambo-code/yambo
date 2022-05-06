@@ -30,8 +30,8 @@ subroutine NL_initialize(E,k)
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
+ use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
@@ -40,8 +40,8 @@ subroutine NL_initialize(E,k)
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe
- use electric,       ONLY:l_force_SndOrd
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe,DephMult
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -61,8 +61,10 @@ subroutine NL_initialize(E,k)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
+ call parser('FrPolPerdic' ,         l_P_periodic)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Check double-precision and other possible errors
  ! ================================================
@@ -204,13 +206,13 @@ subroutine NL_initialize(E,k)
      !
      ! Dephasing Time
      !
-     NE_tot_time=Phase_LifeTime*5._SP
+     NE_tot_time=Phase_LifeTime*DephMult
      !
      ! Add time to sample the response
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time              ',5._SP*Phase_LifeTime*AUT2FS,"[fs]")
+     call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
      call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
@@ -244,9 +246,6 @@ subroutine NL_initialize(E,k)
  ! NB.: This part duplicates what is in
  !      INIT.F 
  !
- !COLLISIONS_CV_only=.true.
- COLLISIONS_CV_only=.false.
- ! 
  select case (trim(NL_Correlation))
     case('IPA')
         Correlation=IPA
@@ -296,6 +295,8 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
+ if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+ ! 
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
@@ -367,6 +368,7 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
  call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

@@ -72,7 +72,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                   ik_bz_gkkp,ib_gkkp,ob_gkkp,os,nq_to_sum,iq_mem,live_timing_steps
  type(w_samp)     ::Sc_W(qp%n_states)
  integer          ::io_err,ID,IO_ACT,ID_DG
- integer, external::io_ELPH,io_Double_Grid
+ integer, external::io_ELPH,io_Double_Grid,io_gFsq
  character(schlen)::ch
  real(SP)         ::ph_E,factor,&
 &                   elph_gkkp_sq,E_random_shift
@@ -429,14 +429,14 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (master_cpu) then
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_ELPH(ID,'gFsq')
+     io_err=io_gFsq(ID)
    endif
    call PP_redux_wait
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    do iq_loop=1,nq_to_sum
      if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
      call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/iq_loop+1/),ID=ID)
-     io_err=io_ELPH(ID,'gFsq')
+     io_err=io_gFsq(ID)
    enddo
    call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
    !

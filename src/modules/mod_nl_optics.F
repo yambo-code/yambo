@@ -132,6 +132,9 @@ module nl_optics
  !
  logical :: l_pump_and_probe=.FALSE.
  ! 
+ ! Dephasing time (in units of NL_damping) 
+ !
+ integer, parameter :: DephMult=4 
  !
  ! Wavefunction sampling
  !

@@ -9689,13 +9689,12 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM, AF, DS
+# Authors (see AUTHORS file for details): AM, AF, DS, CA
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -10959,7 +10958,7 @@ fi
 # BLAS in Intel MKL library?
 if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
 	# MKL for gfortran
-	mkl_libdir="${MKLROOT}/lib"
+	mkl_libdir="${MKLROOT}/lib/intel64"
 	case "${FCKIND}" in
 	*gfortran* )
 		case "${host}" in
@@ -10971,7 +10970,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_gf_lp64 -L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -10990,7 +10989,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"
 fi
 
 		;;
@@ -11039,7 +11038,7 @@ if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl $LIBS"
+LIBS="-lmkl_intel_lp64 -L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm $LIBS"
 cat > conftest.$ac_ext <<_ACEOF
       program main
       call $caxpy
@@ -11058,7 +11057,7 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+  acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
 fi
 
 		;;
@@ -11813,13 +11812,13 @@ fi
 #
 if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
    tty_fft_incdir="${MKLROOT}/include"
-   mkl_libdir="${MKLROOT}/lib"
+   mkl_libdir="${MKLROOT}/lib/intel64"
    case "${FCKIND}" in
    *gfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
     ;;
     *intel* | *pgi* | *nvfortran* )
-   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl"
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
     ;;
     esac
 fi
@@ -12591,7 +12590,7 @@ if test -d "${MKLROOT}" ; then
    #
    # Check for MPI libraries
    #
-   mkl_libdir="${MKLROOT}/lib"
+   mkl_libdir="${MKLROOT}/lib/intel64"
    #
    case "${MPIKIND}" in
    *Sgi* | *sgi* | *SGI* )
@@ -12602,16 +12601,7 @@ if test -d "${MKLROOT}" ; then
       lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
    esac
    #
-   # Check for compiler
-   #
-   case "${FCKIND}" in
-   *intel* | *pgi* | *nvfortran* )
-      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
-      ;;
-   *gfortran* )
-      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
-      ;;
-   esac
+   try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
 fi
 #
 # Parse configure options
@@ -13178,9 +13168,36 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
   if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
   #
-  if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
-  #
-  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test x"$with_hdf5_libs" != "x" ; then
+    try_HDF5_LIBS="$with_hdf5_libs" ;
+  else
+    #
+    # Automatic detection of hdf5 libs copied from QE
+    #
+    if test -e $with_hdf5_path/bin/h5pfc; then
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    elif command -v h5pfc >/dev/null; then
+       try_HDF5_LIBS=`h5pfc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_incdir=`h5pfc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+    elif test -e $with_hdf5_path/bin/h5fc; then
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+       IO_LIB_VER="serial";
+       enable_hdf5_par_io="no";
+    elif command -v h5fc>/dev/null; then
+       try_HDF5_LIBS=`h5fc -show | awk -F'-L' '{$1=""; for (i=2; i<=NF;i++) $i="-L"$i; print $0}'`
+       try_hdf5_incdir=`h5fc -show | awk -F'-I' '{print $2}' | awk '{print $1}'`
+       IO_LIB_VER="serial";
+       enable_hdf5_par_io="no";
+    else
+      if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+      if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
+      if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
+      if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
+      if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
+      if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
+    fi
+  fi
   #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
@@ -13188,12 +13205,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
   save_fcflags="$FCFLAGS" ;
   #
   FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
-  #
-  if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
-  if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
-  if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
-  if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
-  if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
   #
   LIBS="$try_HDF5_LIBS"
   #

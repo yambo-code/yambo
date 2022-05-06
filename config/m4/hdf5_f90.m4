@@ -1,11 +1,10 @@
 #
-
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
 #        Copyright (C) 2000-2021 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM, AF, DS
+# Authors (see AUTHORS file for details): AM, AF, DS, CA
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -106,9 +105,36 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
   if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
   #
-  if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
-  #
-  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test x"$with_hdf5_libs" != "x" ; then 
+    try_HDF5_LIBS="$with_hdf5_libs" ; 
+  else
+    #
+    # Automatic detection of hdf5 libs copied from QE
+    #
+    if test -e $with_hdf5_path/bin/h5pfc; then
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+    elif command -v h5pfc >/dev/null; then
+       try_HDF5_LIBS=`h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_incdir=`h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+    elif test -e $with_hdf5_path/bin/h5fc; then 
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="serial";
+       enable_hdf5_par_io="no";
+    elif command -v h5fc>/dev/null; then 
+       try_HDF5_LIBS=`h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_incdir=`h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="serial";
+       enable_hdf5_par_io="no";
+    else
+      if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+      if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
+      if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
+      if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
+      if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
+      if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
+    fi
+  fi
   #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
@@ -116,12 +142,6 @@ if test x"$enable_hdf5" = "xyes"; then
   save_fcflags="$FCFLAGS" ;
   #
   FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
-  #
-  if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
-  if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
-  if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
-  if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
-  if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
   #
   LIBS="$try_HDF5_LIBS"
   #

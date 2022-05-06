@@ -69,6 +69,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ID_E=0
  ID_f=0
  ID_spin=0
+ ID_pdos=0
  !
  ! Msgs
  !

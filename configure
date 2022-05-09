@@ -9910,7 +9910,7 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking the yambo-libraries git repository" >&5
 $as_echo_n "checking the yambo-libraries git repository... " >&6; }
   if ! test -d "yambo/driver/src"; then
-    git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
+    git clone https://github.com/yambo-code/yambo-libraries.git yambo >& /dev/null
   else
     cd yambo
     git checkout master >& /dev/null
@@ -9944,7 +9944,7 @@ fi
 
 cd lib/yambo
 YDRI_VERSION="1"
-YDRI_SUBVERSION="0"
+YDRI_SUBVERSION="1"
 YDRI_PATCHLEVEL="0"
 
 

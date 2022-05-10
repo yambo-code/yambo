@@ -27,10 +27,11 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use drivers,       ONLY:l_sc_magnetic
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use X_m,           ONLY:X_t
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ncx
  use FFT_m,         ONLY:fft_size
- use pseudo,        ONLY:pp_kbv_dim_yambo
+ use pseudo,        ONLY:pp_kbv_dim_yambo,pp_kbv_dim_atom
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:n_atomic_species,n_atoms_species
  use LIVE_t,        ONLY:live_timing
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
@@ -50,7 +51,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  complex(SP),allocatable :: kbv(:,:,:,:),kbv_real_space(:,:,:)
  !
  integer,    allocatable :: kbv_real_space_table(:)
- integer                 :: ik,i_sp_pol,ifrag
+ integer                 :: is,ia,ik,i_sp_pol,ifrag,i_atom,npp,npp_tab,pp_range(2)
  !
  ! I / O
  !
@@ -86,7 +87,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  if(fft_size==0) call fft_setup(0,1,.not.l_sc_magnetic)
  !
- YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_kbv_dim_yambo))
+ YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
  YAMBO_ALLOC(kbv_real_space,(fft_size,n_spinor,pp_kbv_dim_yambo))
  YAMBO_ALLOC(kbv_real_space_table,(pp_kbv_dim_yambo))
  !
@@ -118,19 +119,40 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        io_KB_abinit_err=io_KB_abinit(ID)
      endif
-     !  
-     ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
-     ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
-     if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
-     if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(ik,Xk,kbv)
      !
-     call Pseudo_KB_FFT(kbv,kbv_real_space,Xk%pt(ik,:))
-     !
-     IO_ACT_NOW=manage_action(OP_IF_START_APP_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
-     call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID_R)
-     io_KB_real_space_err=io_KB_real_space(ID_R,kbv_real_space,kbv_real_space_table)
-     !
-     call live_timing(steps=1)
+     if (io_KB_pwscf_err==0 .or. io_KB_abinit_err==0) then
+       !
+       i_atom=0
+       npp_tab=0
+       pp_range(2)=0
+       do is = 1,n_atomic_species
+         do ia = 1,n_atoms_species(is)
+           !
+           i_atom=i_atom+1
+           !
+           pp_range(1)=pp_range(2)+1
+           !  
+           ! Pseudo(k+G,k+G',i1) = kbv^*(k+G,i1,1) kbv(k+G',i1,1)
+           ! i1 runs over atomic_species, atoms_per_specie , l_per_atom, m=-l,-l+1,...,l-1,sl
+           if (io_KB_abinit_err==0) call DIPOLE_kb_abinit_comp(npp,npp_tab,ia,is,ik,i_sp_pol,Xk,kbv)
+           if (io_KB_pwscf_err ==0) call DIPOLE_kb_pwscf_comp(npp,npp_tab,ia,is,ik,Xk,kbv)
+           !
+           if (npp==0) cycle
+           !
+           pp_range(2)=pp_range(1)+npp-1
+           !
+           call Pseudo_KB_FFT(kbv(:,:,:,:npp),kbv_real_space(:,:,pp_range(1):pp_range(2)),Xk%pt(ik,:),pp_range,npp,i_atom,is,ia,ik)
+           !
+         enddo
+       enddo
+       !
+       IO_ACT_NOW=manage_action(OP_IF_START_APP_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol)
+       call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID_R)
+       io_KB_real_space_err=io_KB_real_space(ID_R,kbv_real_space,kbv_real_space_table)
+       !
+       call live_timing(steps=1)
+       !
+     endif
      !
    enddo
  enddo

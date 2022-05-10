@@ -87,7 +87,7 @@ subroutine rim(mode)
    if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
    !
  else 
-   call section('+','RIM-W integrals')
+   call section('=','RIM-W integrals')
    if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
  end if
  !

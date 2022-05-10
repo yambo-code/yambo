@@ -54,7 +54,7 @@ if test -d "${MKLROOT}" ; then
    #
    # Check for MPI libraries
    #
-   mkl_libdir="${MKLROOT}/lib"
+   mkl_libdir="${MKLROOT}/lib/intel64"
    #
    case "${MPIKIND}" in
    *Sgi* | *sgi* | *SGI* )
@@ -65,16 +65,7 @@ if test -d "${MKLROOT}" ; then
       lib_mkl_blacs="mkl_blacs_intelmpi_lp64" ;;
    esac
    #
-   # Check for compiler
-   #
-   case "${FCKIND}" in
-   *intel* | *pgi* | *nvfortran* )
-      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -l${lib_mkl_blacs} -liomp5 -lpthread -lm -ldl"
-      ;; 
-   *gfortran* )
-      try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -lmkl_gf_lp64 -lmkl_core -l${lib_mkl_blacs} -lpthread -lm -ldl"
-      ;;
-   esac
+   try_mkl_scalapack="-L${mkl_libdir} -lmkl_scalapack_lp64 -l${lib_mkl_blacs}"
 fi
 #
 # Parse configure options

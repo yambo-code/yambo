@@ -211,7 +211,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
              if ( l_check ) cycle
              i_wf=WF%index(ib,ik,i_sp_pol)
              !call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
-             call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv(:,:,:,:npp)),XX(:,:,:,pp_range(1):pp_range(2),ib))
+             call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv)(:,:,:,:npp),XX(:,:,:,pp_range(1):pp_range(2),ib))
            enddo
            !
          enddo

@@ -42,6 +42,10 @@ module electric
  !
  logical  :: l_force_SndOrd  ! Use second order dipoles as in the old code (default 4th order)
  !
+ ! Polarization
+ !
+ logical :: l_P_periodic ! Enforce periodicity in the polarization
+ !
  contains
    !
    subroutine ELECTRIC_alloc(en)

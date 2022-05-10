@@ -44,7 +44,7 @@ if test "$GIT_procedure" = "yes"; then
   AC_MSG_CHECKING([the yambo-libraries git repository])
   cd lib/
   if ! test -d "yambo/driver/src"; then
-    git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
+    git clone https://github.com/yambo-code/yambo-libraries.git yambo >& /dev/null
   else
     cd yambo
     git checkout master >& /dev/null

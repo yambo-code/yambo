@@ -105,11 +105,15 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Full construction of the Sm1_minus matrix
        !
+       !DEBUG>
+       !
 !       call M_by_M_omp('C','N',H_ref_bands(2),en%nbf(i_sp),H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikm,i_sp),&
 !&                          H_ref_bands(2),V_bands(:,:,ikm_ibz),H_ref_bands(2),cZERO,V_tmp,H_ref_bands(2))
        !
 !       call M_by_M_omp('C','N',en%nbf(i_sp),en%nbf(i_sp),H_ref_bands(2),cONE,V_bands(:,:,ik_ibz),&
 !&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_minus(:,:,id+(istep-1)*3),en%nbf(i_sp))
+       !
+       !DEBUG<
        !
        ! Matrix head
        !
@@ -157,11 +161,15 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        !
        ! Full construction of the Sm1_plus matrix
        !
+       !DEBUG>
+       !
 !       call M_by_M_omp('N','N',H_ref_bands(2),en%nbf(i_sp),H_ref_bands(2),cONE,DIP_S(:,:,id+(istep-1)*3,ikbz,i_sp),&
 !&                  H_ref_bands(2),V_bands(:,:,ikp_ibz),H_ref_bands(2),cZERO,V_tmp(:,:),H_ref_bands(2))
 !       !
 !       call M_by_M_omp('C','N',en%nbf(i_sp),en%nbf(i_sp),H_ref_bands(2),cONE,V_bands(:,:,ik_ibz),&
 !&                      H_ref_bands(2),V_tmp,H_ref_bands(2),cZERO,Sm1_plus(:,:,id+(istep-1)*3),en%nbf(i_sp))
+       !
+       !DEBUG<
        !
        ! Matrix head
        !

@@ -141,7 +141,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !      
              ! Calcualte the Satellite on the course q-grid
              !
-             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
              !
            else
              !      

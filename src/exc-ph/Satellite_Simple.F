@@ -33,7 +33,7 @@
 ! @param[out]      Sat_absorption      Satellite in absorption
 ! @param[out]      Sat_emission        Satellite in emission
 !!
-subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
+subroutine Satellite_Simple(iq,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  use frequency,     ONLY:w_samp
  use units,         ONLY:HA2CMm1
@@ -51,12 +51,13 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  integer,       intent(in)  :: il,iq,i_alpha,i_beta
  complex(SP),   intent(in)  :: W
  complex(SP),   intent(out) :: Sat_absorption, Sat_emission
+ type(bz_samp)              :: q
  !
  ! Work Space
  !
  real(SP)    :: PH_E,bose_factor,boltzm_factor
  complex(SP) :: pole,E_alpha
- integer     :: iq_db
+ integer     :: iq_db,iq_ibz
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
@@ -75,7 +76,8 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Boltzman factor for the luminescence
  !
- boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
+ iq_ibz = q%sstar(iq,1)
+ boltzm_factor=boltzman_f(BS_all_E(i_beta,iq_ibz)-min_EXC_E)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !

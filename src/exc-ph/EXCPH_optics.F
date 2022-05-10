@@ -68,7 +68,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Load excitonic energies and residuals
  !
  call EXCPH_load_L(1,X,'eigenvalues residuals','Lin')
- BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
+ BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
  !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')

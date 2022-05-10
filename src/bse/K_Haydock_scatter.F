@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_scatter(V,fullV,fullV_size)
+subroutine K_Haydock_scatter(V,fullV,fullV_size,n_ColsFG)
  !
  ! Scatter the full dimension vector on the master (read from disk/restart)
  ! into Haydock vector fragments 
@@ -39,6 +39,7 @@ subroutine K_Haydock_scatter(V,fullV,fullV_size)
  type(Haydock_vector),intent(inout) :: V(BS_nT_grps)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
+ integer                 :: i_ColFG,n_ColsFG(BS_nT_grps)
  !
  ! In this loop I need T_groups Haydock since I do need duplicates 
  !
@@ -47,10 +48,12 @@ subroutine K_Haydock_scatter(V,fullV,fullV_size)
  istop_g = 0
  !
  do i_g=1,BS_nT_grps
-   istart_g = istop_g + 1 
-   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-   if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-   V(i_g)%fragment(1:BS_T_grp(i_g)%size) = fullV(istart_g:istop_g)  
+   do i_ColFG=1,n_ColsFG(i_g)
+     istart_g = istop_g + 1 
+     istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+     if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
+     V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_ColFG) = fullV(istart_g:istop_g)  
+   enddo
  enddo
  !
 end subroutine K_Haydock_scatter

@@ -72,9 +72,11 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
+!$omp parallel do default(shared), private(i1)
  do i1=NL_bands(1),en%nbf(1)
    dG(i1,i1,:)=dG(i1,i1,:)-cI*spin_occ
  enddo
+!$omp end parallel do
  !
 #if defined _TIMING
  call timing('NL build_dG',OPR='stop')

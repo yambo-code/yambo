@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2021 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG, DS
+! Authors (see AUTHORS file for details): MG DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -42,7 +42,7 @@ subroutine K_dot_product(dot,V,W,i_kind)
  !
  ! Workspace
  !
- integer       :: i_T_g,i_factor
+ integer       :: i_T_g,i_factor,i_ColFG,ColsFG_T
  !
  dot = cZERO
  ! 
@@ -54,7 +54,10 @@ subroutine K_dot_product(dot,V,W,i_kind)
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
    i_factor= ( (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) )**i_kind
-   dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
+   ColsFG_T = size(V(i_T_g)%fragment,2)
+   do i_ColFG=1,ColsFG_T
+     dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,i_ColFG),W(i_T_g)%fragment(:,i_ColFG))
+   enddo
  enddo
  !
  ! Reduce all

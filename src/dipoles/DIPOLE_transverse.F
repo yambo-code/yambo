@@ -41,7 +41,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
- use wave_func,           ONLY:wf_ng,wf_ncx,wf_nc_k,WF
+ use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
  use cuda_m,              ONLY:have_cuda
@@ -126,11 +126,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      call DIPOLE_kb_abinit_def_dim()
    endif
    !
-   if(io_KB_abinit_err==0.or.io_KB_pwscf_err==0) then
-     YAMBO_ALLOC(kbv,(wf_ng,n_spinor,4,pp_kbv_dim_yambo))
-     ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+   l_use_comm=l_use_comm.and.(io_KB_abinit_err==0.or.io_KB_pwscf_err==0).and.pp_kbv_dim_yambo>0
+   !
+   if(l_use_comm) then
+     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_kbv_dim_yambo,Dip%ib(1):Dip%ib(2)))
+     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
      if (have_cuda) then
-       YAMBO_ALLOC(kbv_d,(wf_ng,n_spinor,4,max(pp_kbv_dim_yambo,1)))
+       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
        kbv_d=cZERO
      endif
    endif
@@ -213,7 +215,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
              endif
              if ( l_check ) cycle
              i_wf=WF%index(ib,ik,i_sp_pol)
-             !call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:nc,:,i_wf),DEV_VAR(kbv)(:nc,:,:,:),XX(:,:,:,:,ib))
              call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv)(:,:,:,:npp),XX(:,:,:,pp_range(1):pp_range(2),ib))
            enddo
            !

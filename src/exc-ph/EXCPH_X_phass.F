@@ -153,8 +153,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            !
            ! Add the satellites to the dielectric constant and luminescence
            !
-           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs  *BS_R(i_alpha)
-           PL_ii(iw,1)     =PL_ii(iw,1)     +Sat_alpha_emiss*BS_R(i_alpha)
+           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,1)     =PL_ii(iw,1)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            !
          enddo
          !

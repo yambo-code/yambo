@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -50,7 +50,7 @@ integer function io_X(X,Xw,ID)
  !Work Space
  !
  integer             ::sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
- logical             ::different_db_RL_order,perform_IO
+ logical             ::different_db_RL_order,perform_IO,EM1S_NOSOC
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
@@ -96,8 +96,11 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
+   !
+   EM1S_NOSOC=.TRUE.
+   !
    io_X=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,TEMP=.true.,XC_KIND=local_XC_KIND,&
-&                    CUTOFF=.true.,GAUGE=.TRUE.,FRAG=frag_RESPONSE)
+&                    CUTOFF=.true.,GAUGE=.TRUE.,ACCEPT_SPIN=EM1S_NOSOC,FRAG=frag_RESPONSE)
    if (io_X/=0) goto 1
    !
    if (.not.ver_is_gt_or_eq(ID,revision=308)) then
@@ -108,7 +111,7 @@ integer function io_X(X,Xw,ID)
    ! Global Descriptions
    !=====================
    !
-   io_X=variables_X(ID,X_desc,X)
+   io_X=variables_X(ID,X_desc,X,EM1S_NOSOC)
    if (io_X/=0) goto 1
    !
    ! When the SN is different and I am importing this DB 

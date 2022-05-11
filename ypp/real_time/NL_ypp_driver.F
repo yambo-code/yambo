@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -24,7 +24,7 @@
 subroutine NL_ypp_driver(en,k)
  !
  use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
-&                         l_skip_OBS_IO
+&                         l_skip_OBS_IO,Pump_path
  use pars,           ONLY:SP,pi,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
@@ -34,7 +34,7 @@ subroutine NL_ypp_driver(en,k)
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
- use com,            ONLY:msg
+ use com,            ONLY:jobstr,msg
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -57,9 +57,9 @@ subroutine NL_ypp_driver(en,k)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
+ character(lchlen) :: jobstr_save
  !
  call section("*",'NL Post Processing')
- !
  dbname="Nonlinear"
  !
  call RT_output_INIT( )
@@ -70,10 +70,18 @@ subroutine NL_ypp_driver(en,k)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_Nonlinear=io_NL(dbname,ID)
- if(io_Nonlinear/=0) call error("Error reading NonLinear database")
+ if(io_Nonlinear/=0) call error(" Error reading NonLinear database")
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
- io_Nonlinear_REF=io_NL(dbname//"_REF",ID_REF)
+ io_Nonlinear_REF=-1
+ if(Pump_path/='none') then
+    jobstr_save=jobstr
+    jobstr     =trim(Pump_path)
+    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
+    io_Nonlinear_REF=io_NL(dbname,ID_REF)
+    if(io_Nonlinear_REF/=0) call error(' Pump reference polarization not found!!')
+    call msg('rs','Found Pump reference polarization in: '//Pump_path)
+    jobstr     =jobstr_save
+ endif 
  !
  l_skip_OBS_IO=.false.
  !
@@ -118,13 +126,17 @@ subroutine NL_ypp_driver(en,k)
    !
    if(io_Nonlinear_REF==0) then
      call warning("removing reference polarization/current")
+     jobstr_save=jobstr
+     jobstr     =trim(PUMP_path)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
-     io_Nonlinear=io_NL(dbname//"_REF",ID_REF)
+     io_Nonlinear=io_NL(dbname,ID_REF)
+     jobstr=jobstr_save
      do i_d=1,3
        RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
      enddo
+      ! Restore original parameters of the Probe
+     call Efield_duplicate(Efield_probe,Efield(i_Probe))
    endif
-
    !
  enddo
  !

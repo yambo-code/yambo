@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -139,9 +139,10 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    ! A possible alternative could be to use the algorithm with Cf
    ! from both the left and the right hand side to get from a single Haydock loop
    !
-   if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs")
-   if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr")
-   if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons")
+   !
+   if(l_BS_abs)     call K_Haydock(iq,W_bss,"abs",Xk)
+   if(l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
+   if(l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
    !
  endif
  !

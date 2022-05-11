@@ -61,9 +61,11 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
      if(.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
      !
+!$omp parallel do default(shared), private(i1)
      do i1=1,NL_bands(2)
        VH_bands(i1,:,ik,isp)=en%E(i1,ik,isp)*conjg(V_bands(i1,:,ik,isp))
      enddo
+!$omp end parallel do
      !
    enddo
  enddo
@@ -121,9 +123,11 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  ! Transform in cartesian coordinates
  ! 
+!$omp parallel do default(shared), private(i1)
  do id=1,3
    NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
+!$omp end parallel do
  !
 ! call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_bz_INDEX%COMM)
  !

@@ -119,16 +119,10 @@ if test x"$enable_hdf5" = "xyes"; then
     if test -e $with_hdf5_path/bin/h5pfc; then
        try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
-    elif command -v h5pfc >/dev/null; then
-       try_HDF5_LIBS=`h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
-       try_hdf5_incdir=`h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="parallel";
     elif test -e $with_hdf5_path/bin/h5fc; then 
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$with_hdf5_path/bin/h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
-       IO_LIB_VER="serial";
-       enable_hdf5_par_io="no";
-    elif command -v h5fc>/dev/null; then 
-       try_HDF5_LIBS=`h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
-       try_hdf5_incdir=`h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";
        enable_hdf5_par_io="no";
     else

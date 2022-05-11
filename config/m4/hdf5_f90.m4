@@ -111,6 +111,8 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     # Automatic detection of hdf5 libs copied from QE
     #
+    AC_MSG_CHECKING([for HDF5 using h5pfc/h5fc compilers]) ;
+    #
     if test -e $with_hdf5_path/bin/h5pfc; then
        try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`

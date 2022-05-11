@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -180,7 +180,7 @@ module BS
    integer                       :: first_cv                   ! Position in the cv transitions @ k
    integer                       :: size
    integer,     allocatable      :: table(:,:)                 ! (/ i_Tr;5/) 5->(/ikbz,iv,ic,i_sp_v,i_sp_c/)
-   real(SP)   , allocatable      :: E(:)                       ! (/ i_Tr  /)
+   real(SP)   , allocatable      :: E(:,:)                     ! (/ i_Tr; maxval(Xk%FGbz%N_mapped('kpts_in_T_gr')) /)
    real(SP)   , allocatable      :: f(:)
    real(SP)   , allocatable      :: f_RES(:)
    real(SP)   , allocatable      :: f_PL(:,:)                    ! (/ i_Tr ; 2 /) This is always of size 2 since fv(1-fc) and fc(1-fv) are independent
@@ -204,6 +204,7 @@ module BS
  type(BS_T_group), allocatable, target :: BS_T_grp(:)
  integer         , allocatable  :: BS_T_grp_1st_el(:)
  integer         , allocatable  :: BS_nT_at_k(:)
+ integer         , allocatable  :: BS_nkFGbz_in_Tgrp(:)
  integer                        :: BS_nT_grps
  !
  ! Blocks ...
@@ -334,12 +335,12 @@ module BS
      !
    end subroutine
    !
-   subroutine BS_Blocks_and_Transitions_alloc(E,iT)
+   subroutine BS_Blocks_and_Transitions_alloc(E,iT,dom_k_T_group)
      !
      use pars,       ONLY:IP,cZERO
      use stderr,     ONLY:intc
      use electrons,  ONLY:levels,n_sp_pol
-     integer,      intent(in) :: iT
+     integer,      intent(in) :: iT,dom_k_T_group
      type(levels), intent(in) :: E
      integer :: nT,nDIP
      !
@@ -355,7 +356,7 @@ module BS
        YAMBO_ALLOC(BS_T_grp(iT)%dipoles_dic,(BS_dip_size,nT,nDIP))
      endif
      YAMBO_ALLOC(BS_T_grp(iT)%table,(nT,5))
-     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT))
+     YAMBO_ALLOC(BS_T_grp(iT)%E,(nT,dom_k_T_group))
      YAMBO_ALLOC(BS_T_grp(iT)%f,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_RES,(nT))
      YAMBO_ALLOC(BS_T_grp(iT)%f_PL,(nT,2))
@@ -368,6 +369,8 @@ module BS
      if (allocated(E%E_SOC)) then
        YAMBO_ALLOC(BS_T_grp(iT)%E_SOC_corr,(2/n_sp_pol,nT))
      endif
+     !
+     BS_T_grp(iT)%E(:,:) = 0._SP
      !
    end subroutine
    !
@@ -413,7 +416,9 @@ module BS
        !
      enddo
      !
-     YAMBO_FREE(BS_T_grp)
+     deallocate(BS_T_grp)
+     deallocate(BS_nkFGbz_in_Tgrp)
+     !
      if(allocated(BS_blk)) deallocate(BS_blk)
      !
    end subroutine

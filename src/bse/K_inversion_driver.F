@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -27,7 +27,8 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
 &                         K_INV_EPS,K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,BS_K_anti_resonant
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res, &
+&                         BS_K_anti_resonant,BS_res_ares_n_mat
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
@@ -81,6 +82,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
+ !
+ if (BS_res_ares_n_mat>1) then
+   call warning(" inversion solver coding not finalized for case with two BSE matricies ")
+   return
+ endif
  !
  call timing('Inversion Solver',OPR='start')
  !

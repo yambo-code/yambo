@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -63,7 +63,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
- use nl_optics,      ONLY:NL_damping
+ use nl_optics,      ONLY:NL_damping,DephMult
  use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
@@ -158,7 +158,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
-   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*DephMult,-real(FS2AUT,SP)/)
  endif
  !
 #endif
@@ -645,7 +645,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
-   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+   if (l_RT_G_two_times) then
+     call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+     call initactivate(1,"BuildSpec BuildGret BuildGadv BuildGles BuildGgrt KeepCC KeepCV KeepVC KeepVV")
+   endif
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -662,7 +665,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
+ if(l_NL_X)   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec PumpPATH")
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !

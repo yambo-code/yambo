@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,22 +25,24 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
+subroutine Dipole_kb_abinit_comp(npp,npp_tab,ia,is,ik,i_sp_pol,Xk,kbv)
  !
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:b,g_vec,bz_samp
  use vec_operate,   ONLY:v_norm,c2a
- use wave_func,     ONLY:wf_ng,wf_nc_k,wf_igk
- use D_lattice,     ONLY:n_atomic_species,atom_pos,n_atoms_species
- use pseudo,        ONLY:pp_kbv_dim,pp_kbv_dim_yambo,pp_n_l_times_proj_max,pp_kbs,&
+ use wave_func,     ONLY:wf_ng,wf_ncx,wf_nc_k,wf_igk
+ use D_lattice,     ONLY:atom_pos
+ use pseudo,        ONLY:pp_n_l_times_proj_max,pp_kbs,pp_kbv_dim_atom,&
 &                        pp_kb,pp_kbd,pp_table,pp_kbv_table,pp_n_l_max
  !
  implicit none
  !
- type(bz_samp) :: Xk
- complex(SP)   :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
- integer       :: ik,i_sp_pol
+ type(bz_samp),  intent(in)    :: Xk
+ complex(SP),    intent(out)   :: kbv(wf_ncx,n_spinor,4,pp_kbv_dim_atom)
+ integer,        intent(in)    :: ia,is,ik,i_sp_pol
+ integer,        intent(out)   :: npp
+ integer,        intent(inout) :: npp_tab
  ! 
  ! Work Space
  !
@@ -48,7 +50,7 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
  complex(SP) :: kb_Ylm(4)
  real(SP)    :: Ygrad(2,3)
  !
- integer     :: ic,ig,i1,i2,is,ia,pp_spin
+ integer     :: ic,ig,i1,i1_tab,i2,pp_spin
  integer     :: im,il,i_pp
  complex(SP) :: e_iGR
  real(SP)    :: KpG_cc(3),G_cc(3)
@@ -65,8 +67,9 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
    if(KpG_norm<1.E-5) cycle
    call DIPOLE_kb_Ylm(Ylm,dYlm,Ygrad,pp_n_l_max,KpG_cc)
    i1=0
-   do is = 1,n_atomic_species
-     do ia = 1,n_atoms_species(is)
+   i1_tab=npp_tab
+
+
        G_dot_Rat = dot_product(G_cc,atom_pos(:,ia,is))
        e_iGR = cmplx(cos(G_dot_Rat),sin(G_dot_Rat))
        do i_pp=1,pp_n_l_times_proj_max
@@ -84,22 +87,27 @@ subroutine Dipole_kb_abinit_comp(ik,i_sp_pol,Xk,kbv)
            kb_Ylm(1)=Ylm(il,im)
            kb_Ylm(2:4)=dYlm(1,il,im)*Ygrad(1,:)+dYlm(2,il,im)*Ygrad(2,:)
            !
-           i1=i1+1
-           i2=pp_kbv_table(i1)
+           i1_tab=i1_tab+1
+           i2=pp_kbv_table(i1_tab)
            !
            if(i2==0) cycle
            !
-           kbv(ig,1,1  ,i2)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ic,is,i_pp,i_sp_pol)*e_iGR*sf
-           kbv(ig,1,2:4,i2)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,i_sp_pol)+ &
+           i1=i1+1
+           !
+           kbv(ic,1,1  ,i1)=kb_Ylm(1)*pp_kbs(is,i_pp)*pp_kb(ic,is,i_pp,i_sp_pol)*e_iGR*sf
+           kbv(ic,1,2:4,i1)=(kb_Ylm(1)*KpG_cc(:)/KpG_norm*pp_kbd(ic,is,i_pp,i_sp_pol)+ &
 &                                 kb_Ylm(2:4)*pp_kb(ic,is,i_pp,i_sp_pol))*e_iGR*sf
            !
          enddo
        enddo
-     enddo
-   enddo
+
+
  enddo
  !
  if (n_spinor==2) kbv(:,2,:,:)=kbv(:,1,:,:)
+ !
+ npp=i1
+ npp_tab=i1_tab
  !
  !kbv=conjg(kbv)      ! To be checked if I need this for Kerr
  !

@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -36,7 +36,7 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
   cd lib
   AC_MSG_CHECKING([the yambo-libraries git repository])
   if ! test -d "yambo/driver/src"; then
-    git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
+    git clone https://github.com/yambo-code/yambo-libraries.git yambo >& /dev/null
   else
     cd yambo
     git checkout master >& /dev/null

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -47,7 +47,7 @@ subroutine INIT_ypp_load(defs)
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,X_kind,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
-&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold
+&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold,Pump_path
 
  use real_time,     ONLY:RT_bands
 #endif
@@ -142,6 +142,7 @@ subroutine INIT_ypp_load(defs)
  !
 #if defined _YPP_NL
  call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
+ call it(defs,'PumpPATH',"Path of the simulation with the Pump only",Pump_path)
 #endif
  !
  ! Temperatures
@@ -185,9 +186,11 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'RTtempEh', '[RT] Effective temperature hole | electron',Eh_temp,unit=E_unit)
  call it(defs,'RTautotuneThr', '[RT] Threshold to match no. of pumped holes and electrons.',h_mu_autotune_thr)
  !
- call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from the G_lesser')
+ call it('f',defs,'LoadGhistory','[NEGF] Build the NEQ density from G<(t,t)')
  call it('f',defs,'OCCgroup',    '[NEGF] Double grid states occupations are grouped')
  call it('f',defs,'IncludeEQocc','[NEGF] Include also equilibrium occupations')
+ call it('f',defs,'BuildGles',   '[NEGF] Build G<(t,tp) with GKBA')
+ call it('f',defs,'KeepCC',      '[NEGF] Use only the cc channel when reconstructuing G<(t,tp)')
  call it('f',defs,'NoOcc',       '[NEGF] Consider only the changes in the energy')
  call it('f',defs,'SkipFermiFIT','[NEGF] Do a Fermi Fit of occupations (and lifetimes ratio)')
  call it('f',defs,'SeparateEH',  '[NEGF] Separate electrons from holes in the data file') 

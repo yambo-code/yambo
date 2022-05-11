@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -87,7 +87,7 @@ subroutine rim(mode)
    if (RIM_is_diagonal) call msg('r','* Diagonal components only detected *')
    !
  else 
-   call section('+','RIM-W integrals')
+   call section('=','RIM-W integrals')
    if (RIM_W_is_diagonal) call msg('r','* Diagonal components only detected *')
  end if
  !

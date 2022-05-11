@@ -173,6 +173,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      ! iG=1 case
      DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
      if(iv/=ic) DEV_VAR(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
+     !
+     ! 2022/05/11 DS & AF
+     ! Note: if this is  lim (q->0) <psi_nk+q | 1 | psi_nk > = 0._SP
+     !       if this is             <psi_nk   | 1 | psi_nk > = 1._SP
+     !       in the code the value cONE is needed for the Drude term, to be checked what to do with the terminator
+     !       at present with the terminator we use 0.0_SP
+     !
      if(iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=0.0_SP

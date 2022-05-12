@@ -28,7 +28,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! Add diagonal part
  !                                        
- use pars,           ONLY:SP,cZERO,pi,cONE,cI
+ use pars,           ONLY:SP,cZERO,pi,cONE,cI,rZERO
  use units,          ONLY:SPEED_OF_LIGHT,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
@@ -45,9 +45,11 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_Ho_lift_degeneracy
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,&
+&                         FL_Ho_lift_degeneracy,FL_delta_rho,max_extra_mode
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
+ use parallel_m,     ONLY:master_cpu
  use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -55,6 +57,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
+ use FFT_m,         ONLY:fft_size,fft_rot_r
  !
  implicit none
  !
@@ -65,7 +68,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !
  ! Working Space
  !
- integer      :: ik_bz,i_sp_pol,is,i1,ik_mem
+ integer      :: ik_bz,i_sp_pol,is,i1,ik_mem,ir
  !aim137
  integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks,i_damping_fl
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
@@ -76,13 +79,46 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  call timing('FL Hamiltonian',OPR='start')
 #endif
  !
- ! aim137: deleted beyond-IPA stuff
+ FL_delta_rho = rZERO
+ !
+ if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
+   !
+   if(eval_HARTREE .or.  eval_DFT) then
+     !
+     call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
+     !
+     !aim137 DEBUG <
+     if (master_cpu) then
+     open(111,file='FL_rho_central_minus_reference.dat')
+     write(111,*) 'comparing FL_rho_delta (central component) of first iteration with rho_reference'
+     write(111,*) 'print FL_delta_rho(i,max_extra_mode+1)-rho_reference(i)'
+     do ir=1,fft_size
+     write(111,*) FL_delta_rho(ir,max_extra_mode+1),rho_reference(ir),&
+                 &FL_delta_rho(ir,max_extra_mode+1)-rho_reference(ir)
+     enddo
+     close(111)
+     open(112,file='FL_rho_all_modes.dat')
+     do ir=1,fft_size
+     write(112,*) FL_delta_rho(ir,:)
+     enddo
+     close(112)
+     endif
+     !aim137 DEBUG >
+     !
+   endif
+   !
+ ! if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+   !
+   !aim137 deleted TDDFT part
+   !
+ endif
+ !
  !
  !
  ! Evaluate the external/total field
  !=================================
  !
- call RT_Ext_fields(A_ext,0.41341373336561360)
+ call RT_Ext_fields(A_ext,0.41341373336561360) !aim137 critical - see if this has any effect at all
  !
  A_tot=A_ext
  !

@@ -42,6 +42,7 @@ module fl_optics
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
+ real(SP),    allocatable :: FL_delta_rho(:,:)
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -106,6 +107,7 @@ module fl_optics
      if (fft_size>0) then
        YAMBO_ALLOC(rho_reference,(fft_size))
        YAMBO_ALLOC(full_rho,(fft_size))
+       YAMBO_ALLOC(FL_delta_rho,(fft_size,n_tot_extra_modes))
      endif
      !
      ! FL overlaps
@@ -140,7 +142,7 @@ module fl_optics
      YAMBO_ALLOC(NL_P_t,(NE_steps,3))
    end subroutine FL_alloc
    !
-   subroutine FL_alloc_k_distributed(en) !aim137 still need to modify this subroutine
+   subroutine FL_alloc_k_distributed(en)
      !
      use parallel_m,     ONLY:PAR_Xk_nibz,PAR_Xk_ibz_index
      use pars,           ONLY:SP

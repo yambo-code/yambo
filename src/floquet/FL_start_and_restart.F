@@ -79,7 +79,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  if(allocated(V_xc_sc))         V_xc_sc     =rZERO
  if(allocated(V_hartree_sc))    V_hartree_sc=rZERO
  H_nl_sc           =cZERO
- I_relax           =cZERO     ! no se que es, pero da error
+ I_relax           =cZERO
  V_bands           =cZERO
  !
  if(NL_bands(2)<=E%nbf.or.NL_bands(1)>E%nbf) &
@@ -87,17 +87,21 @@ subroutine FL_start_and_restart(E,k,Dip)
  !
  forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
  !
-!if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
-!  !  
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
+   !  
+   !aim137 I will probably need this for the self energy
 !  call NL_build_valence_bands(E,V_bands,VAL_BANDS,1)
 !  call el_density_vbands(E,k,full_rho,VAL_BANDS)
-!  !
-!  call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
-!  call el_density_vbands(E,k,rho_reference,VAL_BANDS)
-!  !
+   !
+   !aim137 prelim - I will use this rho_reference for now, but 
+   !aim137 later on I may switch to the FL subroutine with the
+   !aim137 trivial FL_V_bands
+   call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
+   call el_density_vbands(E,k,rho_reference,VAL_BANDS)
+   !
 !  rho_n=full_rho
-!  !
-!endif
+   !
+ endif
  !
  ! Fields
  !=====================

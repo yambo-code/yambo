@@ -146,6 +146,11 @@ subroutine FL_driver(E,X,k,q,Dip)
  WF_Go_indx =1
  !
  !
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')
+ endif
+ !
+ !
  ! QP-corrections 
  !================
  call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
@@ -184,7 +189,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  call section('r','FL self-consistency')
  do i_f=1,n_frequencies
    !
-   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
+   print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -252,8 +257,9 @@ subroutine FL_driver(E,X,k,q,Dip)
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
      if (FL_iteration>10) l_FL_sc_reached = .true.
-     !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
+     print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !
+     call error ('£$%')
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
    enddo

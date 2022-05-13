@@ -48,7 +48,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
- use com,          ONLY:isec
  use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  ! mode ="T"
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
@@ -56,7 +55,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
 &                       BS_nkFGbz_in_Tgrp
  ! mode ="K"
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,  &
-&                       l_BS_ares_from_res,BS_n_eh_spaces,BS_res_ares_n_mat
+&                       l_BS_ares_from_res,BS_res_ares_n_mat
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset
@@ -79,7 +78,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  ! Work Space
  !
- character(1) :: sec
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,isp1,isp2,  &
@@ -89,11 +87,8 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  logical, external :: K_Transition_check
  !
- if (isec(3)/=0) sec="-"
- if (isec(3)==0) sec="+"
- !
- if (mode=="K") call section(sec,'Transition pre-analysis @q'//trim(intc(iq)))
- if (mode=="T") call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
+ if (mode=="K") call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
+ if (mode=="T") call section("=",'Transition Groups build-up @q'//trim(intc(iq)))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -131,7 +126,6 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  endif
 #endif
  !
- !
  do i_loop=1,n_loops
    !
    if (mode=="T") then
@@ -158,8 +152,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
        !
        if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
          nColFG_in_T_group_now = maxval(Xk%FGbz%N_mapped(&
-         &                       Xk%k_table(ik,Xk%star(&
-         &                       ik,:Xk%nstar(ik)))))
+&                                Xk%k_table(ik,Xk%star(ik,:Xk%nstar(ik)))))
        else
          nColFG_in_T_group_now=1
        end if
@@ -183,8 +176,16 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                ikpbz=qindx_X(iq,ikbz,1)
                ikp  =Xk%sstar(ikpbz,1)
                !
-               if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
-               if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
+               ib1=iv 
+               ib2=ic 
+               isp1=i_sp_v 
+               isp2=i_sp_c
+               if (i_res_ares==2) then
+                 ib1=ic 
+                 ib2=iv 
+                 isp1=i_sp_c 
+                 isp2=i_sp_v
+               endif
                !
                if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
 &                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
@@ -243,7 +244,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
                !
-               ! IA (2022/01/19):
+               ! IAM (2022/01/19):
                ! Transition energies in fine grid only for Haydock + DbGd case
                !
                if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) ) then

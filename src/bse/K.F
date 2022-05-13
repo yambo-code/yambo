@@ -25,34 +25,34 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1
  !
- use pars,         ONLY:SP,schlen,pi,cZERO,cI
- use stderr,       ONLY:intc
- use LOGO,         ONLY:pickup_a_random
- use drivers,      ONLY:l_bs_fxc,l_tddft,l_RIM_W
- use frequency,    ONLY:w_samp
- use electrons,    ONLY:levels,spin_occ,spin,n_spin
- use FFT_m,        ONLY:fft_size
- use interfaces,   ONLY:WF_load,WF_free,eval_G_minus_G
- use D_lattice,    ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,    ONLY:G_m_G,qindx_B,bz_samp,ng_closed,&
-&                       qindx_X,qindx_B_max,qindx_free,qindx_B_load,&
-&                       RIM_ng,RIM_W_is_diagonal,RIM_W_ng
- use com,          ONLY:msg
- use stderr,       ONLY:intc
- use LIVE_t,       ONLY:live_timing
- use X_m,          ONLY:X_t
- use BS,           ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
-&                       BS_res_K_exchange,BS_Block_size,BS_q,&
-&                       O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
-&                       BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
-&                       BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
-&                       BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
-&                       BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
-&                       l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                       BS_perturbative_SOC,BS_K_cutoff,BS_max_val
- use collision_el, ONLY:elemental_collision_free
- use IO_int,       ONLY:io_control
- use IO_m,         ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
+ use pars,          ONLY:SP,schlen,pi,cZERO,cI
+ use stderr,        ONLY:intc
+ use LOGO,          ONLY:pickup_a_random
+ use drivers,       ONLY:l_bs_fxc,l_tddft,l_RIM_W
+ use frequency,     ONLY:w_samp
+ use electrons,     ONLY:levels,spin_occ,spin,n_spin
+ use FFT_m,         ONLY:fft_size
+ use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
+ use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
+ use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,&
+&                        qindx_X,qindx_B_max,qindx_B_load,&
+&                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
+ use com,           ONLY:msg
+ use stderr,        ONLY:intc
+ use LIVE_t,        ONLY:live_timing
+ use X_m,           ONLY:X_t
+ use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
+&                        BS_res_K_exchange,BS_Block_size,&
+&                        O_ng,BS_n_g_exch,BS_n_g_fxc,BS_identifier,BS_LiveTiming_steps,&
+&                        BS_K_dim,BS_K_is_ALDA,BS_cpl_K_exchange,&
+&                        BS_cpl_K_corr,K_EXCH_collision,K_CORR_collision,&
+&                        BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
+&                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
+&                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+ use collision_el,  ONLY:elemental_collision_free
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
  use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc,ALDA_cut_scheme
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
@@ -61,8 +61,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use timing_m,      ONLY:timing
  use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
  use parallel_int,  ONLY:PP_redux_wait
- use MAGNONS,        ONLY:BSS_MAGN_free
- use PHOTOLUM,       ONLY:BSS_PL_free
+ use MAGNONS,       ONLY:BSS_MAGN_free
+ use PHOTOLUM,      ONLY:BSS_PL_free
  use parser_m,      ONLY:parser
  !
 #include<memory.h>
@@ -77,7 +77,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  character(schlen) :: section_title
  character(1)      :: mode_now
- integer, external :: io_BS_PAR_init
  !
  ! ... Kernel loop
  !
@@ -112,6 +111,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer           ::io_X_err,io_BS_Fxc_err,io_BS_err,qindx_ID,qindx_ID_frag,ID,ID_head,ID_compr,io_QINDX_err
  integer, external ::io_BS,io_BS_header
  integer, external ::qindx_B_init,qindx_B_close
+ integer, external ::io_BS_PAR_init
  !
  ! Timing and restart
  !
@@ -303,11 +303,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
 #if defined _PAR_IO
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID_head)
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
  io_BS_err=io_BS_header(iq,X,ID_head,"full")
  !
- call io_control(ACTION=OP_APP,COM=REP,ID=ID)
- io_BS_err=io_BS_PAR_INIT(iq,ID,"full")
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)
+ io_BS_err=io_BS_PAR_init(iq,ID,"full")
  !
 #else
  call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)
@@ -330,7 +330,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 #ifdef _PAR_IO
  if (l_BSE_restart) then
    !
-   if(m_steps>0) call live_timing("Loading partial kernel",m_steps)
+   if (m_steps>0) call live_timing("Loading partial kernel",m_steps)
    !
    do i_block=1,n_BS_blks
      !
@@ -375,7 +375,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (.not.l_bs_fxc) section_title='Kernel'
  if (     l_bs_fxc) section_title='Kernel->Fxc'
  !
- if(m_steps>0) call live_timing(trim(section_title),m_steps)
+ if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
  !------------------
  ! LOOP over blocks

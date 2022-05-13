@@ -27,14 +27,22 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 AC_SUBST(DRIVER_INCS)
 
-cd $srcdir
+GIT_procedure="no"
+if test -f "$compdir/.git" || test -d "$compdir/.git"; then
+ GIT_procedure="yes"
+fi
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ if test ! -d "$compdir/lib/" ;      then mkdir  $compdir/lib/                   ; fi
+ if test ! -d "$compdir/lib/yambo" ; then cp -r  $srcdir/lib/yambo $compdir/lib/ ; fi
+ GIT_procedure="no"
+fi
 
-if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
+if test "$GIT_procedure" = "yes"; then
   #
   # git procedure
   #
-  cd lib
   AC_MSG_CHECKING([the yambo-libraries git repository])
+  cd lib/
   if ! test -d "yambo/driver/src"; then
     git clone https://github.com/yambo-code/yambo-libraries.git yambo >& /dev/null
   else
@@ -43,16 +51,15 @@ if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
     git pull >& /dev/null
     cd ../
   fi
-  cd ..
+  m4_include([lib/yambo/driver/config/version.m4])
+  AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
+  cd ../
   #
 else
   #
   # direct download procedure
   #
   make download
-  #AC_MSG_CHECKING([the libraries archive ])
-  #cp yambo/external/*.gz  $compdir/lib/archive
-  #AC_MSG_RESULT(populated)
   TARBALL=`find lib/archive -name 'Ydriver*'`
   AC_MSG_NOTICE([Extracting yambo internal librar(ies)])
   if ! test -d "lib/yambo/driver/src"; then
@@ -62,15 +69,13 @@ else
     mkdir -p lib/yambo
     mv yambo-libraries-*/* lib/yambo
     rm -rf yambo-libraries-*
+    cd lib/yambo
+    m4_include([lib/yambo/driver/config/version.m4])
+    AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
+    cd ../../
   fi 
   #
 fi
 
-cd lib/yambo
-m4_include([lib/yambo/driver/config/version.m4])
-AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
-cd ../../
-
-cd $compdir
 
 ])

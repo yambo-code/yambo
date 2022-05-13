@@ -64,6 +64,7 @@ module ELPH
  integer              :: ID_E_kpq=1
  integer              :: ID_E_kpq_obj=1
  real(SP)             :: E_kpq_sh_fact=20.0_SP
+ real(SP)             :: Efermi_DbGd=0._SP
  !
  type E_kpq_fine_grid
    integer         :: nk

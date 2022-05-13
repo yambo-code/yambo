@@ -33,10 +33,8 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  use pars,       ONLY:SP
  use units,      ONLY:HA2EV
- use electrons,  ONLY:levels,n_sp_pol,spin_occ
+ use electrons,  ONLY:levels,n_sp_pol
  use R_lattice,  ONLY:bz_samp
- use D_lattice,  ONLY:T_elecs,T_holes
- use functions,  ONLY:Fermi_fnc
  use interfaces, ONLY:OCCUPATIONS_Gaps
  !
 #include<memory.h>
@@ -56,7 +54,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  E%E_Fermi=Xe%E_Fermi
  E%E_VBM =Xe%E_VBM
  E%E_CBm =Xe%E_CBm
- call f_build(Xe%E_Fermi)
+ call f_build(E,Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
  ! FineGd
@@ -96,21 +94,4 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
    call warning('Global and response function energy levels have different metallic character')
  endif
  !
- contains
-   !
-   subroutine f_build(Ef)
-     !
-     integer :: i1,i2,is
-     real(SP):: Ef
-     !
-     do i1=1,E%nb
-       do i2=1,E%nk
-         do is=1,n_sp_pol
-           if((E%E(i1,i2,is)-Ef)<=0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_holes)
-           if((E%E(i1,i2,is)-Ef)> 0._SP) E%f(i1,i2,is)=spin_occ*Fermi_fnc(E%E(i1,i2,is)-Ef,T_elecs)
-         enddo
-       enddo 
-     enddo
-   end subroutine
-   !
 end subroutine

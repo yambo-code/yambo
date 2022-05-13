@@ -396,9 +396,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
 &                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
-         ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
+         ! ELPH_Sigma_c_engine evaluates real and imaginary part of the electron-phonon self-energy
          !
-         call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
+         call ELPH_Simga_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,& 
+&                                 Sc_W(i_qp),q_weight(iq_bz))
          !
        enddo
        !

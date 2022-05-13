@@ -24,19 +24,18 @@
 subroutine K_inversion_driver(iq,W,E,k,q) 
  !
  use pars,           ONLY:SP,pi
- use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude
- use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,&
-&                         K_INV_EPS,K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
- use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res, &
-&                         BS_K_anti_resonant,BS_res_ares_n_mat
+ use X_m,            ONLY:Epsilon_ii,X_drude_term,l_drude,X_OUTPUT_driver
+ use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
+&                         K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
+ use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
+&                         BS_K_anti_resonant,l_BS_photolum,BS_res_ares_n_mat
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
- use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,&
-&                         PAR_COM_SLK_INDEX_local
+ use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
  use matrix,         ONLY:MATRIX_reset
@@ -50,9 +49,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
 #endif
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
- !
- use BS,             ONLY:l_BS_photolum
- use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
  !
 #include<memory.h>
@@ -187,9 +183,10 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
- ! Initialize the output file 
- !============================
- call K_output_file(iq,"open Inversion")
+ ! Initialize & write the output file 
+ !====================================
+ call X_OUTPUT_driver("DEF INIT",solver="Inversion") 
+ call K_OUTPUT(iq,W,"open Inversion close","ALL")
  !
  ! Perturbative Inversion
  !========================
@@ -229,7 +226,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
    !
  endif
  !
- call K_output_file(iq,"Inversion")
+ call K_OUTPUT(iq,W,"override dump Inversion close","ALL")
  !
  ! Full Inversion
  !=================
@@ -288,7 +285,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  call IO_desc_add(BSS_desc,kind="r",str="[INV] Converged frequencies",term="o/o",R=(/ratio/))
  !
- call K_output_file(iq,"Inversion")
+ call K_OUTPUT(iq,W,"override dump close Inversion","ALL")
  !
  ! CLEAN
  !

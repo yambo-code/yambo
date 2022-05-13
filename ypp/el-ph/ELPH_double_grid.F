@@ -24,18 +24,16 @@
 subroutine ELPH_double_grid(k,E,q)
  !
  use pars,                ONLY:SP,pi,schlen
- use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset,FineGd_E_components_alloc,n_sp_pol
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset,qindx_S
+ use electrons,           ONLY:levels,E_reset,FineGd_E_components_reset
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file
  use stderr,              ONLY:STRING_same,intc
  use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ,EkplusQ_mode, &
 &                              elph_grids_are_expanded         
  use com,                 ONLY:msg
- use units,               ONLY:HA2CMm1,HA2EV
- use vec_operate,         ONLY:c2a
  use parser_m,            ONLY:parser
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,OP_WR_CL
+ use IO_m,                ONLY:OP_RD_CL,REP,DUMP,OP_WR_CL
  use parser_m,            ONLY:parser
  !
 #include<memory.h>
@@ -47,7 +45,7 @@ subroutine ELPH_double_grid(k,E,q)
  !
  type(bz_samp)         :: q_fine
  logical               :: l_mix,l_expand,l_unexpand,FineGd_is_expanded,l_test_PHDGrid
- integer               :: ID,io_err(2),i_f,i_fg,iq,iq_bz,iq_fg,ib,okbz,ok,ik,is,iE_fg,iq_ibz,iq_db
+ integer               :: ID,io_err(2),i_f,i_fg,iq,iq_bz,iq_fg,ib,is,iE_fg,iq_ibz,iq_db
  integer, external     :: io_ELPH,io_Double_Grid
  logical, external     :: file_exists 
  character(schlen)     :: db_name

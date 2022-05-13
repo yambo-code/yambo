@@ -94,7 +94,6 @@ subroutine PH_Grid_Check_Transitions(iq,k,q,bands,k_FG,E_FG)
    ! 
    ! Main loop over iq in the ibz
    !==============================
-   !
    call X_Double_Grid_setup(iq,k,k_FG,nTrans_percent=PHEL_nTrans_percent(iq),Radius=PHEL_Q_Radius(iq))
    !
    ! Inner loop over ik in the bz

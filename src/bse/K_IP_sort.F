@@ -25,7 +25,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  !
  use pars,          ONLY:SP,cZERO
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
- use X_m,           ONLY:BS_E_sorted
+ use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted
  use BS,            ONLY:BS_K_dim
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
@@ -34,8 +34,8 @@ subroutine K_IP_sort(what,I,N,El,vC)
 #include<memory.h>
  !
  character(*)  ::what
- integer       ::I,N(2)
- complex(SP)   ::El,vC(BS_k_dim(1),N(1))
+ integer       ::I,N
+ complex(SP)   ::El,vC(BS_k_dim(1),N_BS_E_sorted)
  !
  ! Work space
  !
@@ -44,8 +44,8 @@ subroutine K_IP_sort(what,I,N,El,vC)
  integer,     allocatable :: sort_indx(:),first_el(:),n_of_el(:)
  !
  if (what=="add") then
-   N(2)=N(2)+1
-   vC(I,N(2))=El
+   N=N+1
+   vC(I,N)=El
    return
  endif
  !
@@ -66,7 +66,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  ! Threshold is 1meV
  call degeneration_finder(vR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
  !
- do i_VAR=1,N(1)
+ do i_VAR=1,n_BS_E_sorted
    BS_E_sorted(:,i_VAR,1)=cZERO
    do i_grp=1,n_deg_grp
      if(i_grp>EDIM) cycle

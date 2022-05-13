@@ -60,6 +60,13 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,
      local_message=trim(local_message)//trim(intc(LOADED))//"/"//trim(intc(TOTAL))//"("//trim(intc(PERCENTUAL))//"%)"
    endif
    !
+ else if(present(NC)) then
+   !
+   local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//" on "//trim(intc(NC))//" CPU]"
+ else
+   !
+   return
+   !
  endif
  !
  call LIVE_message(message=trim(local_message),lfmt="n")

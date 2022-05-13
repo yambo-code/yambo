@@ -39,7 +39,7 @@ subroutine RT_initialize(E,k,q)
  use X_m,            ONLY:global_gauge
  use electrons,      ONLY:levels
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,         &
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,         &
 &                         TIME_adjust,SAVE_G_history,CACHE_OBS_INTERVAL_time
  use RT_occupations, ONLY:l_RT_relax_time_approx
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times_INPUT,l_RT_lifetimes_extrapolation,&
@@ -240,10 +240,9 @@ subroutine RT_initialize(E,k,q)
    !
    MSG_ch="Field#"//trim(intc(i1))//" "//trim(Efield(i1)%ef_name)
    !
-   if((Efield(i1)%ef_name/='none')) then
+   if(trim(Efield(i1)%ef_name)/='none') then
      !
-     if (.not.field_is_ok( Efield(i1)) ) &
-&      call error(trim(MSG_ch)//' not supported or polarization is wrong')
+     if (.not.field_is_ok( Efield(i1)) ) call error(trim(MSG_ch)//' not supported or polarization is wrong')
      !
      l_NE_with_fields=.true.
      !
@@ -277,7 +276,7 @@ subroutine RT_initialize(E,k,q)
      else if ( (field_defs(1)=='QSSIN') .or. (field_defs(1)=='QSFIEL') .or. &
      &         (field_defs(1)=='GAUSS') .or.                                     &
      &         (field_defs(1)=='PULSE') .or. (field_defs(1)=='SPULSE')      ) then
-       call RT_Fluence_and_pikind(E,i1)
+       call RT_Fluence_and_PI_kind(E,i1)
      else
        Efield(i1)%t_final_indx=    NE_steps
        Efield(i1)%t_final=RT_step*(NE_steps-1)
@@ -406,7 +405,7 @@ subroutine RT_initialize(E,k,q)
  call                          msg('r', 'T cache step  of J,P,M     ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   OBS     ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', 'T between I/O of   CAR     ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
- call                          msg('r', '          I/O of   GFs     ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+ call                          msg('r', '          I/O of   GFs     ',Gless_RESTART_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  call                          msg('r', '               outputs     ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
  if (l_use_collisions)    call msg( 'r','Extended collisions   [I/O]',io_COLLs)
  !

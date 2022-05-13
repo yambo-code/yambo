@@ -25,25 +25,24 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
  ! Calculates and stores on file the dielectric matrix.
  !
- use pars,          ONLY:SP,cZERO,schlen
- use drivers,       ONLY:l_alda_fxc,l_gw0,l_life
- use LIVE_t,        ONLY:live_timing
+ use pars,          ONLY:SP,schlen
+ use drivers,       ONLY:l_alda_fxc,l_gw0,l_life,l_rpa_IP 
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
- use X_m,           ONLY:X_t,X_alloc,self_detect_E_range,X_poles,l_recalculate_X,&
+ use X_m,           ONLY:X_t,X_ALLOC_elemental,self_detect_E_range,X_poles,l_recalculate_X,l_write_disk_Xo,&
 &                        l_X_terminator,X_terminator_Kind,X_mat,X_par,X_par_lower_triangle,&
 &                        X_DbGd_nkpt_at_q,use_X_DbGd,X_DbGd_nkpt_at_q_table,X_Double_Grid_setup,&
 &                        n_OPTICAL_dir_to_eval,X_par_average
+ use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
- use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,&
-&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X,PAR_COM_X_WORLD,&
-&                        PAR_COM_X_WORLD_RL_resolved
+ use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
+&                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
- use IO_int,        ONLY:io_control
- use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE,OP_WR_CL
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
  use com,           ONLY:depth
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
@@ -65,7 +64,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! Work Space
  !
- integer              :: iq,iq_dir,Xdb,i_err,X_MEM_n_freqs,io_X_done(nqibz),iw,iq_mem,n_poles,iw_X_mat
+ integer              :: iq,ID(2),i_err,X_MEM_n_freqs,io_X_done(nqibz),iq_mem,&
+&                        X_MEM_n_tot_freqs,n_poles,iq_dir
  real(SP)             :: minmax_ehe(2)
  character(1)         :: sec_mode
  character(schlen)    :: X_what
@@ -89,10 +89,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  X%ngostnts=Dip%ng
  !
- ! TDDFT SETUP (-1 argument)
- !
- ! X%f_xc is setup when using ALDA, so that 
- ! the comparison in ioX can be done safely
+ ! TDDFT KERNEL SETUP (-1 argument)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
  !
@@ -103,7 +100,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  X_dielectric_matrix=-1
  !
- if (X%whoami==2) then
+ if (X%whoami==1) then
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamical IP Response Function Matrix')
+   X_MEM_n_freqs =Xw%n_freqs
+ else if (X%whoami==2) then
    if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
@@ -128,6 +128,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  call X_pre_setup(Xen,Xk,X)
  !
+ if (l_write_disk_Xo) then
+   if (.not.SILENT_MODE) call warning('On-the-fly extraction of IP Response Function Matrix')
+ endif
+ !
  ! Build frequency range only if Xw%p was not already allocated
  ! like in LifeTimes calculations or when self_detect_E_range=.TRUE. (real axis GW)
  !
@@ -142,8 +146,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  if (io_RESPONSE.and..not.l_recalculate_X) then
    !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(1))
+   i_err=io_X(X,Xw,ID(1))
    !
    if (i_err==0) then
      !
@@ -163,8 +167,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
          Xw%er=minmax_ehe
        endif
        !
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=Xdb)
-       io_X_done(iq)=io_X(X,Xw,Xdb)
+       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/2*iq/),MODE=VERIFY,ID=ID(1))
+       io_X_done(iq)=io_X(X,Xw,ID(1))
        !
        call live_timing(steps=1)
        !
@@ -192,18 +196,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  endif
  call X_half_mat_check(Xen,Xk,Xw)
  !
+ if (     io_RESPONSE) X_MEM_n_tot_freqs=Xw%n_freqs
+ if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
-   !
-   if (io_RESPONSE) then
-     allocate(X_par(1))
+   if (     io_RESPONSE) allocate(X_par(1))
 #if !defined _PAR_IO
-     call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
 #endif
-   else
-     allocate(X_par(PAR_nQ_ibz))
-     call X_alloc('X',(/X%ng,X%ng,X_MEM_n_freqs*PAR_nQ_ibz/))
-   endif
-   !
+   if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
+   if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
  !
  ! WF distribution 
@@ -245,8 +246,8 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
    endif
    !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
+   call                      elemental_IO( 0 , .FALSE. )
+   if (l_write_disk_Xo) call elemental_IO( 0 , .TRUE. )
    !
  endif
  !
@@ -292,16 +293,19 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    do iq_dir=1,n_OPTICAL_dir_to_eval
      !
-     call X_PARALLEL_alloc(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
+     call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
      !
      if (n_OPTICAL_dir_to_eval>1) call X_AVERAGE_setup("DIR-LOOP",iq_dir,X%q0)
      if (n_OPTICAL_dir_to_eval>1) X_what="("//trim(intc(iq_dir))//" of "//trim(intc(n_OPTICAL_dir_to_eval))//")"
      !
      call X_irredux(iq,"Xo"//trim(X_what),X_par(iq_mem),Xen,Xk,Xw,X,Dip)  
      !
-     ! When X%whoami == 1 X is Xo (ACFDT). 
+     if (l_write_disk_Xo.and.n_OPTICAL_dir_to_eval==1) then
+       call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
+       call elemental_IO( iq , .TRUE. )
+     endif
      !
-     if (X%whoami/=1) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
+     if (.not.l_rpa_IP) call X_redux(iq,"X"//trim(X_what),X_par(iq_mem),Xw,X)
      !
      if (n_OPTICAL_dir_to_eval>1.and.iq_dir==1) call MATRIX_copy(X_par(iq_mem),X_par_average,.TRUE.)
      if (n_OPTICAL_dir_to_eval>1)               call X_AVERAGE_do_it("ACCUMULATE",X_par(iq_mem))
@@ -313,45 +317,16 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
-#if defined _PAR_IO
-   if(.not.io_RESPONSE) then
-#endif
-     !
-     ! PAR => SER for I/O or for cases where I/O is not done
-     !
-     do iw=1,Xw%n_freqs
-       !
-       X_par(iq_mem)%I=iw
-       !
-       if (     io_RESPONSE) iw_X_mat=iw
-       if (.not.io_RESPONSE) iw_X_mat=(iq_mem-1)*X_MEM_n_freqs+iw
-       !
-       X_mat(:,:,iw_X_mat)=cZERO
-       !
-       if (PAR_COM_X_WORLD_RL_resolved%CPU_id==0) then
-         X_mat(X_par(iq_mem)%rows(1):X_par(iq_mem)%rows(2),&
-&              X_par(iq_mem)%cols(1):X_par(iq_mem)%cols(2),iw_X_mat)=X_par(iq_mem)%blc(:,:,iw)
-       endif
-       !
-       call PP_redux_wait(X_mat(:,:,iw_X_mat),COMM=PAR_COM_X_WORLD%COMM)
-       !
-     enddo
-     !
-#if defined _PAR_IO
-   endif
-#endif
+   ! X_par => X_mat
    !
-   ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
-   ! be re-initialized for all the cpus
+   call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
-   X%ng_db=X%ng
-   !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iq,2*iq+1/),ID=Xdb)
-   i_err=io_X(X,Xw,Xdb)
+   call elemental_IO( iq , .FALSE. )
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d
    ! database is not written on disk
+   !
    if (.not.io_RESPONSE.and.l_life) then
      call FREQUENCIES_reset(Xw,"coarse_grid")
    else
@@ -362,6 +337,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (io_RESPONSE) call MATRIX_reset(X_par(iq_mem))
    YAMBO_FREE(X_par_lower_triangle%blc)
    call MATRIX_reset(X_par_lower_triangle)
+   !
    if (use_X_DbGd) then
      YAMBO_FREE(X_DbGd_nkpt_at_q)
      YAMBO_FREE(X_DbGd_nkpt_at_q_table)
@@ -387,4 +363,54 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  call DIP_alloc('DIP_v')
  if (.not.SILENT_MODE.or.X%iq(2)==q%nibz) call WF_free(WF)
  !
-end function X_dielectric_matrix
+ contains
+   !
+   subroutine elemental_IO(iq_,this_is_Xo)
+     !
+     use IO_m,          ONLY:NONE
+     use pars,          ONLY:schlen
+     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
+     !
+     integer :: iq_,whoami_save,idb,COM,SEC(2)
+     logical :: this_is_Xo
+     character(schlen) :: KERNEL_save
+     !
+     ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
+     ! be re-initialized for all the cpus
+     !
+     X%ng_db=X%ng
+     idb=1
+     COM=REP
+     !
+     if (this_is_Xo) then
+       COM=NONE
+       whoami_save=X%whoami
+       KERNEL_save=X%KERNEL
+       X%whoami=1
+       idb=2
+       X%KERNEL="IP"
+     endif
+     !
+#if !defined _PAR_IO
+     call IO_and_Messaging_switch("SAVE")
+     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+#endif
+     !
+     SEC           =(/1,1/)
+     if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
+     !
+     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0)
+     i_err=io_X(X,Xw,ID(idb))
+     !
+     if (this_is_Xo) then
+       X%whoami=whoami_save
+       X%KERNEL=KERNEL_save
+     endif
+     !
+#if !defined _PAR_IO
+     call IO_and_Messaging_switch("RESTORE")
+#endif
+     !
+   end subroutine
+   !
+end function

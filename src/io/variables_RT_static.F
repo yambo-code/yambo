@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_RT_static(ID,what,l_carriers)
+integer function variables_RT_static(ID)
  !
  use pars,           ONLY:SP,LP,IP
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
@@ -30,6 +30,7 @@ integer function variables_RT_static(ID,what,l_carriers)
  use hamiltonian,    ONLY:H_ref_bands
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:FineGd_desc
+ use RT_control,     ONLY:RT_do_IO
  use RT_output_m,    ONLY:RT_desc,Gr_desc,n_RT_desc_static
  use RT_lifetimes,   ONLY:l_RT_lifetimes_extrapolation,RT_life_extrap_times_INPUT,l_RT_iterative_ELPH_lifetimes 
  use real_time,      ONLY:RT_nk,l_NE_with_fields,RT_step, &
@@ -40,7 +41,6 @@ integer function variables_RT_static(ID,what,l_carriers)
 #if defined _ELPH
  use ELPH,           ONLY:elph_branches
 #endif
- !
  use X_m,            ONLY:global_gauge
  use fields,         ONLY:n_ext_fields,Efield
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
@@ -48,21 +48,15 @@ integer function variables_RT_static(ID,what,l_carriers)
  implicit none
  !
  integer            :: ID
- character(*)       :: what
- logical            :: l_carriers
  !
  integer, external  ::io_descriptors
  !
  integer               :: i1,MENU_
- logical               :: l_OBS,l_G,l_carriers_,l_NE_with_fields_disk,l_RT_diamagnetic
+ logical               :: l_NE_with_fields_disk,l_RT_diamagnetic
  real(SP)              :: RT_life_extrap_decay_time
  !
  l_RT_diamagnetic          = .false.
  RT_life_extrap_decay_time = 0._SP
- !
- l_OBS         = what=="OBSERVABLES"
- l_G           = what=="G"
- l_carriers_   = what=="carriers".or.l_carriers
  !
  call IO_desc_reset(RT_desc)
  !
@@ -104,7 +98,7 @@ integer function variables_RT_static(ID,what,l_carriers)
  ! 
  variables_RT_static=io_descriptors(FineGd_desc,"FineGd",ID,.FALSE.)
  !
- if(any((/l_OBS,l_G,l_carriers_/))) then
+ if(any((/RT_do_IO("OBSERVABLES"),RT_do_IO("ANY_G"),RT_do_IO("carriers")/))) then
    !
    ! RT_DYNAMICS
    !

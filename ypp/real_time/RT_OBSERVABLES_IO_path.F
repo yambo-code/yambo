@@ -23,15 +23,17 @@
 !
 subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
- use pars,           ONLY:lchlen
- use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,RT_OBSERVABLES_IO,&
+ use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
+ use YPP_real_time,  ONLY:Probe_Keyword,Pump_Keyword,max_n_of_paths,Pump_path,Probe_path,&
 &                         N_pumps,N_probes,N_probe_frequencies
- use com,            ONLY:core_io_path,jobstr,msg
+ use RT_output_m,    ONLY:RT_desc
+ use com,            ONLY:core_io_path,msg,jobstr
  use IO_m,           ONLY:NONE
- use fields,         ONLY:Efield
- use stderr,         ONLY:STRING_split,cstr,intc
+ use fields,         ONLY:Efield,n_ext_fields
+ use stderr,         ONLY:STRING_split,cstr,intc,STRING_same
  use electrons,      ONLY:levels
- use parser_m,       ONLY:parser
+ use interfaces,     ONLY:DESC_compare
+ use descriptors,    ONLY:IO_desc,IO_desc_duplicate,IO_desc_reset
  !
  implicit none
  !
@@ -40,26 +42,23 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
  ! Work Space
  !
- character(lchlen) :: jobstr_save
- integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump
- logical           :: IO_error,l_many_paths=.false.
+ integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump,i_d,i_desc_err(2)
+ logical           :: IO_error
  character(10*max_n_of_paths) :: folder_list
- !
+ type(IO_desc)     :: Pump_RT_desc
  logical, external :: file_exists
- !
- call parser('CheckPaths',l_many_paths)
  !
  i_Probe=1
  i_Pump =2
  !
- if (l_many_paths) then
-   !
-   call section("=",'Checking for Probe and Pump paths')
-   !====================================================
+ call section("+",'Pump and Probe(s)')
+ !====================================
+ !
+ if (.not.STRING_same(Pump_Keyword,"none").or..not.STRING_same(Probe_Keyword,"none")) then
    !
    N_pumps =0
    !
-   ! Get the list of ALL folders in the current I/O directory (defult is .)
+   ! Get the list of ALL folders in the current I/O directory (default is .)
    !
    call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
    !
@@ -67,7 +66,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    !
    nf=count( len_trim(Probe_path(:)) > 0 ) 
    !
-   call warning(" Checking all "//trim(intc(nf))//" folders in core_io_path")
+   call warning(" Searching for Probe(s) and Pump(s) databases among "//trim(intc(nf))//" folders in "//trim(core_io_path))
    !
    ! Remove "." and ".."
    !
@@ -90,9 +89,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    do while (i_f<=nf)
      !
      if (file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_OBSERVABLES').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_G').or.&
-&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/db.RT_OBSERVABLES')) then
+&        file_exists(trim(core_io_path)//"/"//trim(Probe_path(i_f))//'/ndb.RT_OBSERVABLES')) then
        !
        if(index(trim(Probe_path(i_f)),trim(Probe_Keyword))>0.or.&
 &         (trim(Probe_Keyword)=="none".and.index(trim(Probe_path(i_f)),trim(jobstr))>0)) then
@@ -110,37 +107,54 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
      !
    enddo
    !
-   jobstr_save=jobstr
+   ! If no Probes using the Keyword try using jobstr
    !
-   ! Probe Databases
-   !=================
+   if (N_probes==0) then
+     N_probes=1
+     Probe_path(1)="default"
+   endif
    !
-   do i_f=1,N_probes
-     jobstr=trim(Probe_path(i_f))
-     call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
-     N_probe_frequencies= Efield(i_Probe)%n_frequencies
-   enddo
+   ! Jobstring/dirs re-direction
    !
-   ! In case of several probe_frequencies only one probe is supported
+   call IO_temporary_jobdir_and_strings("ALL","SAVE")
    !
-   if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
-   !
-   ! Pump only
-   !===========
-   !
+   ! Pump 
+   !======
    if (N_pumps==1) then
-     jobstr=trim(Pump_path)
+     call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
      call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
      if (.not.IO_error) then
        N_pump_frequencies= Efield(i_Pump)%n_frequencies
+       call IO_desc_reset(Pump_RT_desc)
+       call IO_desc_duplicate(RT_desc,Pump_RT_desc)
        if (N_pump_frequencies>1) call error('Pumps with multiple frequencies still not supported')
      else
        N_pumps=0
      endif
    endif
    !
-   jobstr=jobstr_save
+   ! Probe Databases
+   !=================
+   do i_f=1,N_probes
+     if (.not.STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(i_f))
+     if (     STRING_same(Probe_path(i_f),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
+     call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
+     N_probe_frequencies= Efield(i_Probe)%n_frequencies
+   enddo
    !
+   ! Pump & Probe comparison
+   !
+   if (N_pumps>0) then
+     call DESC_compare(RT_desc,Pump_RT_desc,i_desc_err,exclude="FIELDs")
+     if (any(i_desc_err/=0)) call error("Probe and Pump runs are not compatible")
+     if (n_ext_fields/=2) call warning("Probe run has only one field. Pump ignored")
+   endif
+   !
+   ! In case of several probe_frequencies only one probe is supported
+   !
+   if (N_probes>1.and.N_probe_frequencies>1) N_probes=0
+   !
+   call IO_temporary_jobdir_and_strings("ALL","RESTORE")
    !
  else
    !
@@ -149,9 +163,8 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    !
  endif
  !
- ! Single Probe 
- !=============
- !
+ ! No pump & Probe passed by -J strings
+ !======================================
  if (N_probes==0.and.N_pumps==0) then
    !
    call RT_OBSERVABLES_IO(what=what,IO_error=IO_error,first_sec_only=.TRUE.,COM_=NONE)
@@ -162,7 +175,9 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    if (Efield(i_Probe)%n_frequencies>1) IO_error=.TRUE.
    if (.not.IO_error)                   N_probes=1
    !
-   Probe_path(1)=jobstr
+   ! If no Probes using the Keyword try using jobstr
+   !
+   Probe_path(1)="default"
    !
  endif
  !

@@ -14,14 +14,13 @@
 ! be useful, but WITHOUT ANY WARRANTY; without even the 
 ! implied warranty of MERCHANTABILITY or FITNESS FOR A 
 ! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
+! for more details!
 ! You should have received a copy of the GNU General Public 
 ! License along with this program; if not, write to the Free 
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
+subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  ! Build electron-field operator
  ! call FL_Build_W_operator
@@ -30,7 +29,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE,cI,rZERO
  use units,          ONLY:SPEED_OF_LIGHT,HA2EV
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels,n_sp_pol,n_spin
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -46,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,&
-&                         FL_Ho_lift_degeneracy,FL_delta_rho,max_extra_mode
+&                         FL_Ho_lift_degeneracy,FL_delta_rho,FL_delta_rho_hist,max_extra_mode,n_tot_extra_modes
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -65,54 +64,64 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
  type(bz_samp), intent(in)    :: k,q
  complex(SP),   intent(in)    :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  real(SP),      intent(in)    :: w0
+ integer,       intent(in)    :: iter_num
  !
  ! Working Space
  !
- integer      :: ik_bz,i_sp_pol,is,i1,ik_mem,ir
- !aim137
+ integer      :: ik_bz,i_sp_pol,is,i1,i2,ik_mem,ir,i1_fl,i2_fl
  integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks,i_damping_fl
+ integer      :: i1_extra,i_comb_extra,i_shift_comb_extra
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
- real(SP)     :: alpha_
+ real(SP)     :: alpha_,beta
  character(4) :: filename
+ real(SP)     :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
+ complex(SP)  :: FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
 #endif
  !
- FL_delta_rho = rZERO
+ beta = 0.2_SP
+ if(allocated(FL_delta_rho)) FL_delta_rho = rZERO
+ FL_V_Hartree = rZERO
+ FL_V_Hartree_KS = cZERO
+ !aim137 check - should I only allocate these variables if Corr != IPA ?
  !
- if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
+ if (iter_num > 1) then ! FL_delta_rho will be 0 in first iteration
    !
-   if(eval_HARTREE .or.  eval_DFT) then
+   if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
      !
-     call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
-     !
-     !aim137 DEBUG <
-     if (master_cpu) then
-     open(111,file='FL_rho_central_minus_reference.dat')
-     write(111,*) 'comparing FL_rho_delta (central component) of first iteration with rho_reference'
-     write(111,*) 'print FL_delta_rho(i,max_extra_mode+1)-rho_reference(i)'
-     do ir=1,fft_size
-     write(111,*) FL_delta_rho(ir,max_extra_mode+1),rho_reference(ir),&
-                 &FL_delta_rho(ir,max_extra_mode+1)-rho_reference(ir)
-     enddo
-     close(111)
-     open(112,file='FL_rho_all_modes.dat')
-     do ir=1,fft_size
-     write(112,*) FL_delta_rho(ir,:)
-     enddo
-     close(112)
+     if(eval_HARTREE .or.  eval_DFT) then
+       !
+       call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
+       !
+       FL_delta_rho(:,max_extra_mode+1) = &
+      &FL_delta_rho(:,max_extra_mode+1) - rho_reference(:)
+       !
+       FL_delta_rho = FL_delta_rho * beta + &
+      &               FL_delta_rho_hist * (1-beta)
+       !
+       FL_delta_rho_hist = FL_delta_rho
+       !
      endif
-     !aim137 DEBUG >
+     !
+     if (eval_HARTREE) then
+       !
+       do i1_extra=1,n_tot_extra_modes
+         !
+         call V_Hartree(FL_delta_rho(:,i1_extra),FL_V_Hartree(:,:,i1_extra))
+         !
+       enddo
+       !
+     endif
      !
    endif
    !
- ! if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+ else
    !
-   !aim137 deleted TDDFT part
+   if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = rZERO
    !
  endif
- !
  !
  !
  ! Evaluate the external/total field
@@ -153,7 +162,39 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
    ! Correlation part Hartree + TDDFT
    ! ================================
    !
-   ! aim137: deleted more beyond-IPA stuff
+   !
+   if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
+     !
+     if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
+       call error ('TDDFT not yet implemented in floptics')
+     elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
+       do i1_extra=1,n_tot_extra_modes
+         call V_real_space_to_H(ik_bz,i_sp_pol,&
+            & FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i1_extra),&
+            & WF,'def',FL_V_hartree(:,:,i1_extra))
+       enddo 
+       !
+       do i1=NL_bands(1),NL_bands(2)
+         do i1_fl=1,n_tot_fl_modes
+           i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+           do i2=NL_bands(1),NL_bands(2)
+             do i2_fl=1,n_tot_fl_modes
+               i2_fks = i2_fl + (i2-1)*n_tot_fl_modes
+               i_shift_comb_extra = (i1_fl - (max_fl_mode+1)) &
+                                & - (i2_fl - (max_fl_mode+1))
+               i_comb_extra = i_shift_comb_extra + (max_extra_mode+1)
+               !
+               H_nl_sc(i1_fks,i2_fks) = &
+             & H_nl_sc(i1_fks,i2_fks) + &
+             & FL_V_Hartree_KS(i1,i2,i_comb_extra)
+               !
+             enddo
+           enddo
+         enddo
+       enddo
+     endif
+     !
+   endif
    !
    ! Add Ho = T+V_ion+V_h+V_xc
    !==========================
@@ -181,6 +222,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
      !    
      !aim137 no se que es esto
      !call RT_apply_field(ik_bz,i_sp_pol,H_nl_sc,A_tot)
+     call error ('Code with dipoles for 1st order only not yet implemented')
      !
    else
      !
@@ -225,4 +267,23 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0)
 !close(111)
 !enddo
 !!aim137 END DEBUG
+!
+!aim137 DEBUG <
+!if (master_cpu) then
+!open(111,file='FL_rho_central_minus_reference.dat')
+!write(111,*) 'comparing FL_rho_delta (central component) of first iteration with rho_reference'
+!write(111,*) 'print FL_delta_rho(i,max_extra_mode+1)-rho_reference(i)'
+!do ir=1,fft_size
+!write(111,*) ir, FL_delta_rho(ir,max_extra_mode+1),rho_reference(ir),&
+!            &FL_delta_rho(ir,max_extra_mode+1)-rho_reference(ir)
+!enddo
+!close(111)
+!open(112,file='FL_rho_all_modes.dat')
+!do ir=1,fft_size
+!write(112,*) ir, FL_delta_rho(ir,:)
+!enddo
+!close(112)
+!endif
+!aim137 DEBUG >
+!
 end subroutine FL_Hamiltonian

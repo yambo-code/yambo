@@ -189,7 +189,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  call section('r','FL self-consistency')
  do i_f=1,n_frequencies
    !
-   print*, 'Frequency step = ',i_f,' of ',n_frequencies
+   !print*, 'Frequency step = ',i_f,' of ',n_frequencies
    if(.not.PAR_IND_freqs%element_1D(i_f)) cycle
    !
    if(freqs_done(i_f)) then
@@ -248,18 +248,17 @@ subroutine FL_driver(E,X,k,q,Dip)
      FL_iteration=FL_iteration+1
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
-     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency)
+     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
      !
-     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_iteration)
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
      if (FL_iteration>10) l_FL_sc_reached = .true.
-     print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
+     !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !
-     call error ('£$%')
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
    enddo

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
+subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
@@ -43,7 +43,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  !
  type(levels),  intent(in)     :: E
  type(bz_samp), intent(in)     :: k
- integer,       intent(in)     :: iter_num
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
  !
@@ -168,7 +167,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
            !
            ! ref_vec is FL_V_band from previous iteration
            !
-           call error('  went through eigenvector route') !aim137 critical
+           call warning(' went through eigenvector route') !aim137 critical
            ref_vec = cZERO
            !
            do i1=NL_bands(1),NL_bands(2)
@@ -249,7 +248,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
            call msg('r','and band: ',i1)
            call msg('r','Floquet mode on second band: ',i1_fl)
            call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
-           call error ('  [FL] There was a large population inversion in the system')
+           call warning ('  [FL] There was a large population inversion in the system')
            !
          endif
          !

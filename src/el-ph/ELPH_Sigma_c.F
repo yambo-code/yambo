@@ -236,11 +236,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      use_PH_DbGd=.FALSE.
    endif
    !
-   if(any(en%nbm/=en%nbf)) then
-      Efermi_DbGd=Eval_Efermi_DbGd(q,k)
-      call msg('rs','Double-grid Fermi Energy shift:',Efermi_DbGd*HA2EV,'eV')
-   endif
-   !
  endif
  !
  ! Interpolate the E(k+q) energies for the double-grid
@@ -254,6 +249,11 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call INTERPOLATION_BZ_setup(k)
    INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
    call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+   if(any(en%nbm/=en%nbf)) then
+      Efermi_DbGd=Eval_Efermi_DbGd(q,k)
+      call msg('rs','Double-grid Fermi Energy shift:',Efermi_DbGd*HA2EV,'eV')
+   endif
    !
    call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
    !

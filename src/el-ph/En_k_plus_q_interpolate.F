@@ -88,10 +88,13 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  ! For the moment I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- call f_build(E_kpt,0._SP) ! Interpolate levels are already aligned
+ call f_build(E_kpq,0._SP) ! Interpolate levels are already aligned
  ! E_kpq%f(1:E%nbf(1),:,1)=spin_occ
- !E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
- !
+ ! E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
+         write(*,*) ' spin_occ ',spin_occ
+         do ik=1,n_k_plus_q
+         write(*,*) ' occ ',E_kpq%f(1:5,ik,1)
+         enddo
  ! Store E(k+q) energies in the GKKP
  ! ==========================================
  GKKP%E_dg_kpq(iqbz)%nk       =k%nibz

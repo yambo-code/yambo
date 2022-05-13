@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -101,7 +101,7 @@ subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
-!$omp parallel do default(shared), private(i2,iv1)
+!$omp parallel do default(shared), private(i2,iv1), collapse(2)
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf(i_sp)
      V_tilde(iv1,i2,1)=sum( Sm1_plus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:en%nbf(i_sp)))

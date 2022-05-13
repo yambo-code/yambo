@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -28,7 +28,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use BS_solvers,     ONLY:BSS_inversion_mode,BSS_desc,K_INV_PL,K_INV_EPS,&
 &                         K_Inversion_data,K_slk,K_inv_slk,BSS_eels_to_eps
  use BS,             ONLY:BS_H_dim,BS_Blocks_symmetrize_K,BS_blk,l_BS_ares_from_res,&
-&                         BS_K_anti_resonant,l_BS_photolum
+&                         BS_K_anti_resonant,l_BS_photolum,BS_res_ares_n_mat
  use electrons,      ONLY:levels
  use frequency,      ONLY:w_samp
  use R_lattice,      ONLY:bare_qpg,bz_samp
@@ -50,7 +50,6 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use stderr,         ONLY:intc
  use descriptors,    ONLY:IO_desc_add
  use PHOTOLUM,       ONLY:BSS_PL_free,PL
- !
  !
 #include<memory.h>
  !
@@ -79,6 +78,11 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  integer           :: i_err,ID,Lo_dim,Lo_n_loop
  integer, external :: io_BSS_invert
+ !
+ if (BS_res_ares_n_mat>1) then
+   call warning(" inversion solver coding not finalized for case with two BSE matricies ")
+   return
+ endif
  !
  call timing('Inversion Solver',OPR='start')
  !
@@ -238,6 +242,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  if (FULL.and.PERTURBATIVE) then
    !==============
+   !
    call FULL_INF_pre_setup(K_INV_EPS)
    if (l_BS_photolum) call FULL_INF_pre_setup(K_INV_PL)
    !
@@ -245,6 +250,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! FULL INVERSION
  !================
+ !
  if (K_INV_EPS%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_EPS)
  if (l_BS_photolum) then
    if (K_INV_PL%n_full_inv_freqs>0.and.FULL) call do_it_FULL(K_INV_PL)
@@ -271,6 +277,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !
  ! Final Output
  !==============
+ !
  if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
  if (l_drude) Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)*4._SP*pi/bare_qpg(iq,1)**2
  !

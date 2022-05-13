@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine DESC_compare(D1,D2,i_err,exclude,only)
  !
  ! Work Space
  !
- integer           :: i_d,n_val,i_v,i_dp
+ integer           :: i_d,i_v,i_dp
  !
  i_err=0
  !

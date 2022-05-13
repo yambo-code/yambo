@@ -1,4 +1,4 @@
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG DS
@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_gather(V,fullV,fullV_size)
+subroutine K_Haydock_gather(V,fullV,fullV_size,n_ColsFG)
  !
  ! Gather the Haydock vector fragments into one 
  ! large vector of full dimension  
@@ -40,6 +40,7 @@ subroutine K_Haydock_gather(V,fullV,fullV_size)
  complex(SP),intent(out) :: fullV(fullV_size)
  ! ws: 
  integer                 :: istart_g,istop_g,i_g
+ integer                 :: i_ColFG,n_ColsFG(BS_nT_grps)
  !
  fullV = cZERO
  istop_g = 0
@@ -47,10 +48,12 @@ subroutine K_Haydock_gather(V,fullV,fullV_size)
  ! In this loop I need T_groups indexes since I do not want duplicates 
  !
  do i_g=1,BS_nT_grps
-   istart_g = istop_g + 1 
-   istop_g  = istart_g + BS_T_grp(i_g)%size - 1
-   if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
-   fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size)
+   do i_ColFG=1,n_ColsFG(i_g)
+     istart_g = istop_g + 1 
+     istop_g  = istart_g + BS_T_grp(i_g)%size - 1
+     if (.not.PAR_IND_T_groups%element_1D(i_g)) cycle      
+     fullV(istart_g:istop_g) = V(i_g)%fragment(1:BS_T_grp(i_g)%size,i_ColFG)
+   enddo
  enddo
  !
  call PP_redux_wait( fullV ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )

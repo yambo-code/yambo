@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -96,7 +96,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     l_SC_nl_mix,SC_kind,SC_perturbation,SC_desc,SC_neq_kind,SC_last_coh_it
 #endif
 #if defined _SC || defined _RT || defined _QED || defined _NL
- use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff
+ use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_cutoff,COLLISIONS_CV_only
  use hamiltonian,    ONLY:H_potential
 #endif
 #if defined _RT || defined _YPP_RT
@@ -126,6 +126,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
 &                      MAG_gauge,MAG_psi,MAG_theta,phase_trick
+ use electric,    ONLY:l_P_periodic,l_force_SndOrd
 #endif
 #if defined _YAML_OUTPUT
  use com,         ONLY:depth_yaml
@@ -543,6 +544,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 # else
  COLLISIONS_cutoff=0.0005_SP
 # endif
+ COLLISIONS_CV_only=.FALSE.
  !
  H_potential="NONE"
  !
@@ -571,6 +573,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  SC_last_coh_it=50
  !
  call IO_desc_reset(SC_desc)
+ !
+ l_P_periodic   =.FALSE.
+ l_force_SndOrd =.FALSE.
  !
 #endif
  !

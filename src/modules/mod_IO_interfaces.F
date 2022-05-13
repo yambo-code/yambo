@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -173,9 +173,9 @@ module IO_int
    !
 #if !defined _io_lib
    integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,CUTOFF,GAUGE,&
-&                             IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
+&                             IMPOSE_GAUGE,ACCEPT_SPIN,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
      integer               :: ID
-     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE,NOWARN_SER
+     logical,optional      :: QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,ACCEPT_SPIN,FRAG,IMPOSE,NOWARN_SER
      character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
    end function
    !

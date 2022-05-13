@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG AC
@@ -132,6 +132,9 @@ module nl_optics
  !
  logical :: l_pump_and_probe=.FALSE.
  ! 
+ ! Dephasing time (in units of NL_damping) 
+ !
+ integer, parameter :: DephMult=4 
  !
  ! Wavefunction sampling
  !

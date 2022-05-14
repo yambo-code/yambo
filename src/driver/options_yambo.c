@@ -56,7 +56,11 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Dyson Equation solver";
- options[*i_opt].long_desc[0]="<string>=(n)ewton/(s)ecant/(g)reen";
+ options[*i_opt].long_desc[0]="<string>=(g)reen [any scattering]";
+ options[*i_opt].long_desc[1]="<string>=(n)ewton [order 1]/(s)ecant [e-e scattering]";
+#if defined _PHEL
+ options[*i_opt].long_desc[2]="<string>=(n)ewton [order 2] [p-e scattering]";
+#endif
  options[*i_opt].long_opt="dyson";
  options[*i_opt].short_opt='g';
  options[*i_opt].bin="yambo";
@@ -99,13 +103,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
- options[*i_opt].short_desc="Inverse Dielectric Matrix";
+ options[*i_opt].short_desc="Inverse Dielectric/Response Matrix";
  options[*i_opt].long_opt="X";
  options[*i_opt].short_opt='d';
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="screen";
  options[*i_opt].section=desc;
- options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/(f)ull";
+ options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/(d)ynamical dielectric matrix";
+ options[*i_opt].long_desc[1]="<string>=(X) dynamical response matrix";
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Oscillator strenghts (or dipoles)";

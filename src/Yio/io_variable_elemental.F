@@ -36,7 +36,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  use drivers, ONLY:list_dbs
 #endif
  use com,     ONLY:msg,com_compose_msg
- use stderr,  ONLY:STRING_pack,int2log,log2int
+ use stderr,  ONLY:STRING_pack,int2log,log2int,STRING_same,STRING_match
  use IO_m,    ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                  netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                  io_status,DUMP,REP,LOG,NO_VAR,io_com,io_file,&
@@ -335,8 +335,8 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
    if(present(R0) .or.present(R1)) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
    if(present(D0)                ) call msg(msg_where,msg_,r_db(1:SZ)*local_unit,after_msg=TERMINATOR)
    if(present(C0)                ) call msg(msg_where,msg_,rc_db(1:2*SZ)*local_unit,after_msg=TERMINATOR)
-   if(present(L0)                ) call msg(msg_where,msg_,(l_db(1)==1))
-   if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)))
+   if(present(L0)                ) call msg(msg_where,msg_,l_db(1)==1,after_msg=TERMINATOR)
+   if(present(CH0)               ) call msg(msg_where,msg_,trim(ch_db(1)),after_msg=TERMINATOR)
  endif
  !
  contains
@@ -402,14 +402,14 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
      character(*),optional :: chv1,chv2
      ch_verify=0
      !
-     if (.not.present(OP) .and. trim(chv1)/=trim(chv2)) ch_verify=IO_INCOMPATIBLE_VAR
+     if (.not.present(OP) .and. .not.STRING_same(chv1,chv2)) ch_verify=IO_INCOMPATIBLE_VAR
      !
      if (     present(OP)) then
-       if (OP(1)=="==" .and. trim(chv2)/=trim(chv1)              )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)=="<"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)=="<=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)==">"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)==">=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="==" .and. .not.STRING_same(chv1,chv2) )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<"  .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<=" .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">"  .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">=" .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
      endif
      !
    end function

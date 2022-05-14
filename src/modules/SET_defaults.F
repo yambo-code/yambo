@@ -31,7 +31,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use global_XC,  ONLY:EXT_NONE
  use X_m,        ONLY:current_iq,self_detect_E_range,X_FILL_UP_matrix_only,eps_2_alpha,l_drude,&
 &                     alpha_dim,use_X_DbGd,X_DbGd_nkpts,Chi_mode,skip_cond_sum_rule,&
-&                     eval_alpha,&
 &                     q_plus_G_direction,Q_Shift_Order,&
 &                     l_X_terminator,X_terminator_E,global_gauge,&
 &                     Chi_linalg_mode,X_use_lin_sys,X_use_gpu,X_DbGd_percentual
@@ -68,7 +67,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use BS_solvers, ONLY:BSS_mode,BSS_n_freqs,BSS_er,BSS_dr,&
 &                     BSS_q0,Haydock_threshold,Haydock_iterIO,Haydock_iterMAX,BSS_uses_DbGd,BSS_Wd,&
 &                     BSS_damp_reference,BSS_Vnl_included,BSS_uses_GreenF,BSS_inversion_mode,&
-&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL
+&                     BSS_perturbative_width,K_INV_EPS,K_INV_PL,K_INV_PI_PH
  use descriptors,ONLY:IO_desc_reset
 #if defined _SLEPC && !defined _NL
  use BS_solvers, ONLY:BSS_slepc_extraction,BSS_slepc_ncv,BSS_slepc_tol,BSS_slepc_target_E,BSS_slepc_maxit,&
@@ -76,7 +75,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use BS,         ONLY:BS_n_g_W,BS_eh_en,BS_identifier,BS_q,BS_eh_win,MAX_BSK_LIN_size,&
 &                     BS_K_dim,BS_not_const_eh_f,BSK_mode,l_BSE_kernel_complete,&
-&                     BS_K_is_ALDA,BSE_mode,BSE_prop,L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
+&                     BS_K_is_ALDA,BSE_mode,BSE_prop,BSE_L_kind,BS_K_cutoff,BS_perturbative_SOC,BSK_IO_mode
  use TDDFT,      ONLY:FXC_type,FXC_n_g_corr,ALDA_cut_scheme,&
 &                     FXC_per_memstps,FXC_LRC_alpha,FXC_PF_alpha,FXC_LRC_beta,FXC_SVD_digits,&
 &                     FXC_is_retarded,TDDFT_mode
@@ -103,7 +102,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _RT || defined _YPP_RT
  use RT_output_m,ONLY:n_RT_headings,N_RT_o_files,RT_o_file_long,RT_o_file_short,RT_o_file_is_open,&
 &                     RT_headings,YPP_append,Gr_desc,TIME_STEP_desc,RT_desc
- use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,SAVE_G_history,RT_ctl_db,&
+ use RT_control, ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,SAVE_G_history,RT_ctl_db,&
 &                     CACHE_OBS_last_point,CACHE_OBS_INTERVAL_time,CACHE_OBS_INTERVAL_time_INPUT,   &
 &                     CACHE_OBS_steps,CACHE_OBS_steps_now,RT_NAN_found
  use RT_lifetimes,ONLY:RT_life_extrap_times
@@ -373,7 +372,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  global_gauge='length'
  grid_paths=' '
  skip_cond_sum_rule=.FALSE.
- eval_alpha=.FALSE.
  Vnl_commutator_warning=.FALSE.
  q_plus_G_direction=0._SP
  Q_Shift_Order=1
@@ -441,7 +439,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BS_identifier=0
  BS_q=1
  BS_eh_win=100._SP
- L_kind='Lbar'
+ BSE_L_kind='BAR'
  BSE_mode='resonant'
  BSE_prop='abs'
  BSK_mode=' '
@@ -469,6 +467,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  BSS_Vnl_included=.FALSE.
  BSS_uses_GreenF=.FALSE.
  BSS_perturbative_width=.FALSE.
+ K_INV_PI_PH%what = "PH_PI"
  K_INV_PL%what     = "PLS"
  K_INV_PL%treshold =0.5_SP
  K_INV_EPS%what    = "EPS"
@@ -654,10 +653,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! RT_ctl
  !
- OBS_RT_IO_t%INTERVAL_time_INPUT   =2._SP*FS2AUT
- CARR_RT_IO_t%INTERVAL_time_INPUT  =2._SP*FS2AUT
- OUTPUT_RT_IO_t%INTERVAL_time_INPUT=5._SP*FS2AUT
- GF_RT_IO_t%INTERVAL_time_INPUT    =1._SP*FS2AUT
+ OBS_RT_IO_t%INTERVAL_time_INPUT              =2._SP*FS2AUT
+ CARR_RT_IO_t%INTERVAL_time_INPUT             =2._SP*FS2AUT
+ OUTPUT_RT_IO_t%INTERVAL_time_INPUT           =5._SP*FS2AUT
+ Gless_RESTART_RT_IO_t%INTERVAL_time_INPUT    =1._SP*FS2AUT
  SAVE_G_history=.FALSE.
  RT_NAN_found  =.FALSE.
  !

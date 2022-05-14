@@ -23,11 +23,10 @@
 !
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
- use pars,                ONLY:SP,pi,rZERO
- use units,               ONLY:HA2EV
+ use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
- use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
+ use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
 #include<memory.h>
@@ -92,7 +91,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
    E_kpq%f(1:E%nbf(1),:,1) =spin_occ
    E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  else 
-   call f_build(E_kpq,0._SP) ! Interpolate levels are already aligned
+   call f_build(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
  endif
  !
  ! Store E(k+q) energies in the GKKP

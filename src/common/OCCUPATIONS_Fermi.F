@@ -133,7 +133,7 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
  ! a very small temperature is imposed forcing the Fermi level to fall within the
  ! gap.
  !
- if (E%FG%nb>0) Tel=Tel_step
+ if (E%FG%nb>0.and.Tel<Tel_step) Tel=Tel_step
  !
  FERMI_LOOP: do while (.not.Fermi_is_converged)
    !
@@ -302,7 +302,6 @@ subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
 #if defined _SC
  !
  if (trim(SC_neq_kind)=="constrained-occ") then
-   write(*,*) n_carr
    do is=1,n_sp_pol
      do ik=1,E%nk
        do ib=1,nb_here

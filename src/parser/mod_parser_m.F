@@ -23,9 +23,9 @@
 !
 module parser_m
  !
- use pars         ,ONLY: SP,lchlen,DP
- use PARSER_lib   ,ONLY: iparse_isdef
- use OUTPUT_simple,ONLY: OUTPUT_unit_conversion
+ use pars,         ONLY: SP,lchlen,DP
+ use PARSER_lib,   ONLY: iparse_isdef
+ use OUTPUT,       ONLY: OUTPUT_unit_conversion
  !
  interface parser
    module procedure lqparser,chparser,chqparser,chmparser,i1qparser,iqparser,imqparser,&

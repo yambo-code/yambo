@@ -31,7 +31,7 @@ subroutine INIT_activate()
 &                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:H_potential
 #endif
@@ -53,6 +53,7 @@ subroutine INIT_activate()
 #if defined _RT
  integer          :: i1
 #endif
+ character(2)     :: X_kind
  !
  !Common
  !
@@ -60,21 +61,21 @@ subroutine INIT_activate()
  !
  !FFT
  !
- if (any((/(l_optics.and.l_chi),(l_optics.and.l_bse),l_em1d,&
+ if (any((/l_optics.and.l_chi,l_optics.and.l_bse,l_em1d,l_X,&
 &          l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut/))) call initactivate(1,'FFTGvecs WFbuffIO')
  !
  ! CPU structure
  !
- if (l_dipoles) then
+ if (l_dipoles.or.l_elphoton_corr) then
    call CPU_activate("DIP")
    call initactivate(1,'DIP_Threads')
  endif
  !
  ! CPU structure
  !
- if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+ if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
    if (l_elel_corr) then
-     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life) then
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
        call CPU_activate("X_and_IO")
      else
        call CPU_activate("X")
@@ -132,7 +133,7 @@ subroutine INIT_activate()
  endif
  !
 #if defined  _ELPH 
- if (l_life.and.l_phel_corr) then
+ if ((l_life.or.l_gw0).and.l_phel_corr) then
    call CPU_activate("PH_SE")
  endif
 #endif
@@ -161,10 +162,9 @@ subroutine INIT_activate()
  !
  ! Kernels
  !
- if (l_em1s.or.l_em1d)             call initactivate(1,'Chimod ChiLinAlgMod')
+ if (l_em1s.or.l_em1d.or.l_X)      call initactivate(1,'Chimod ChiLinAlgMod')
  if (l_optics.and.l_chi)           call initactivate(1,'Chimod ChiLinAlgMod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSEmod')
- if (l_optics.and.l_bse)           call initactivate(1,'BSKmod Lkind')
+ if (l_optics.and.l_bse)           call initactivate(1,'BSKmod BSEmod Lkind')
  if (l_optics.and.l_bse.and.l_bss) call initactivate(1,'BSSmod')
  !
  if (l_dipoles) then
@@ -187,16 +187,20 @@ subroutine INIT_activate()
    !
  endif
  !
- ! Optics(not bse) nor GW (no PP)
+ ! Optics(not bse) or GW (no PP)
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0)) then
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0).or.l_X) then
    !
-   if (.not.l_rpa_IP) call X_activate('Xd',(/'NGsBlk'/))
+   X_kind         ="Xd"
+   if (l_X) X_kind="Xx"
    !
-   call X_activate('Xd',(/'QpntsR','BndsRn',&
+   if (.not.l_rpa_IP) call X_activate(X_kind,(/'NGsBlk'/))
+   !
+   call X_activate(X_kind,(/'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
    call initactivate(1,'DrClassic')
+   if (.not.l_rpa_IP) call initactivate(1,'WriteXo')
    !
    call INIT_QP_ctl_switch('X')
    !
@@ -258,7 +262,6 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization FrSndOrd')
 #endif
    !
-   call initactivate(1,'BSEprop BSEdips')
    call initactivate(1,'PL_weights')
    !
    call initactivate(1,'DrudeWBS Reflectivity')
@@ -276,6 +279,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse.and.l_bss.or.(l_bse.and.l_rpa_IP)) then
    !
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir')
+   call initactivate(1,'BSEprop BSEdips')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation
@@ -355,7 +359,7 @@ subroutine INIT_activate()
  !
  if (l_gw0.or.l_life) then
    !
-   if (l_gw0.and..not.trim(QP_solver)=="g") call initactivate(1,'QPsymmtrz')
+   if (l_gw0.and..not.trim(QP_solver)=="g".and.(l_elel_corr.or.l_elph_corr)) call initactivate(1,'QPsymmtrz')
    !
 #if defined _QED
    if (l_elphoton_corr) then
@@ -416,13 +420,9 @@ subroutine INIT_activate()
    !
    if (l_phel_corr) then
      call initactivate(1,'ElecTemp BoseTemp PH_SE_mode GphBRnge GDamping PHELQpts ElPhModes PHDbGdsize DbGdQsize GDamping')
-     call initactivate(1,'ExtendOut')
-     if (l_gw0) then
-       call initactivate(1,'DysSolver OnMassShell')
-       if (trim(QP_solver)=="g") call initactivate(1,'GEnSteps GEnRnge') 
-     else
-       call initactivate(1,'GDamping PHELTrans') 
-     endif
+     call initactivate(1,'ExtendOut OnMassShell')
+     if (      l_gw0) call initactivate(1,'DysSolver GEnSteps GEnRnge PHEL_QPH_En')
+     if (.not. l_gw0) call initactivate(1,'GDamping PHELTrans') 
    endif
    !
 #endif

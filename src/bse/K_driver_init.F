@@ -24,20 +24,19 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use electrons,    ONLY:n_spin,levels,n_sp_pol
+ use electrons,    ONLY:levels,n_sp_pol
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match
+ use stderr,       ONLY:STRING_match,STRING_same
  use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
 &                       BSS_slepc_double_grp
- use BS,           ONLY:L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
-&                       l_BS_anomalous_Hall,BS_perturbative_SOC,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
-&                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,l_BS_optics,&
+ use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
+&                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
 &                       BS_n_eh_spaces,l_BS_ares_from_res,BS_bands,BS_K_anti_resonant
  use TDDFT,        ONLY:FXC_is_retarded,FXC_n_g_corr
  use drivers,      ONLY:l_col_cut,l_rpa_IP,l_alda_fxc,l_bs_fxc
- use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv
+ use D_lattice,    ONLY:l_0D,i_time_rev,i_space_inv,l_1D,l_2D
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Kernel,EQ_Transitions,EQ_NoOcc,NEQ_Residuals,RT_BSE_Occ_Mode
@@ -59,11 +58,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
- ! L_kind check
+ ! BSE_L_kind check
  !==============
- if (trim(L_kind)/="Lbar".and.trim(L_kind)/="full")  call error('set Lkind = Lbar or full ')
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) call error('set Lkind = BAR or FULL')
  !
- if (trim(L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+ if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
    call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
    BSE_mode="resonant"
  endif
@@ -88,28 +87,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- !
-#if defined _SLEPC && !defined _NL
- !
- ! SLEPC
- !=======
- ! Here we will have two options to initialize the slepc matrix:
- call parser('BSSSlepcMatrix',BSS_slepc_matrix)
- !
- ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
- l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
- !
- ! The doubling is activated unless explicily imposed by input since slepc
- ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
- ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
- !
- call parser('ImposeSymm',l_flag)
- if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
- BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
- !
-#endif
- !
- ! DS: the following line makes no sense. Resonant means I do not want the anti-resonant term ???
+ ! The next line is to switch of section of the codes due to the calculation
+ ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !
  ! I need ARES and I cannot get it from RES
@@ -119,15 +98,29 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    if (.not.BS_K_coupling) BS_res_ares_n_mat=2
  endif
  !
- if (what=="loop-init") return
- !
  ! Need to convert eels to epsilon ? (part A, part B in K_driver)
  !================================================================
+ !
  ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1
- if (.not.l_col_cut)          BSS_eels_to_eps=trim(L_kind)=="full"
- ! If the Coulomb cutoff is     used and the system is 0D  eps= eps^-1=1 since vbar=0
- if (     l_col_cut.and.l_0D) BSS_eels_to_eps=.false.
- ! If the Coulomb cutoff is     used and the system is 1D or 2D it depends on the q-point (see part B)
+ if (.not.l_col_cut)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
+ !
+ ! If the Coulomb cutoff is     used ...
+ if (l_col_cut) then
+   !
+   !...the system is 0D  eps= eps^-1=1 since vbar=0
+   if (l_0D)  BSS_eels_to_eps=.false.
+   !
+   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
+   if (l_1D.or.l_2D) then
+     if (iq==1) BSS_eels_to_eps=.false.
+     if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
+   endif
+ endif
+ !
+ if (what=="loop-init") return
+ !
+ BS_K_is_ALDA=l_alda_fxc
+ BS_dip_size=1
  !
  ! Memory saving
  !===============
@@ -175,43 +168,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'
  !
- BS_K_is_ALDA=l_alda_fxc
- !
- BS_dip_size=1
- !
- ! What...
- !--------
- l_BS_abs       = STRING_match(BSE_prop,'abs')
- l_BS_jdos      = STRING_match(BSE_prop,'jdos').or.STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP
- l_BS_dichroism = STRING_match(BSE_prop,'dich')
- l_BS_kerr      = STRING_match(BSE_prop,'kerr')
- l_BS_photolum  = STRING_match(BSE_prop,'photolum')
- l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
- !
- ! How ...
- !---------
- l_BS_esort     = STRING_match(BSE_prop,'esrt').and.(STRING_match(BSS_mode,'d').or.STRING_match(BSS_mode,'s').or.l_rpa_IP)
- !
- ! How to treat dipoles...
- !------------------------
- l_BS_trace     = STRING_match(BSE_prop,'trace')
- !
- if (l_BS_magnons.and.n_sp_pol==2) then
-   l_BS_abs    = .false.
-   l_BS_kerr   = .false.
-   l_BS_trace  = .false.
-   call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
- endif
- if (l_BS_kerr) then
-   call parser('AnHall',l_BS_anomalous_Hall)
-   BS_dip_size=2
-   l_BS_abs=.TRUE.
- endif
- if (l_BS_photolum) l_BS_trace  = .false.
- if (l_BS_trace   ) BS_dip_size = 3
- !
- l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
- !
  ! TR-ABS logicals
  !-----------------
 #if defined _RT
@@ -219,6 +175,26 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  NEQ_Residuals=STRING_match(RT_BSE_Occ_Mode,"r").and.allocated(Ken%fo)
  call parser('ForceEqTrans',EQ_Transitions)
  call parser('ForceEqNoOcc',EQ_NoOcc)
+#endif
+ !
+ ! SLEPC
+ !=======
+ ! Here we will have two options to initialize the slepc matrix:
+ call parser('BSSSlepcMatrix',BSS_slepc_matrix)
+ !
+#if defined _SLEPC && !defined _NL
+ !
+ ! Special case, slepc with distributed matrix need to explicitly compute the anti-resonant block
+ l_slepc_special = index(BSS_mode,'s')/=0 .and. BS_K_coupling .and. (.not.BSS_slepc_matrix)
+ !
+ ! The doubling is activated unless explicily imposed by input since slepc
+ ! with shells requires the extended K_multiply_by_V for the non hermitian algorithm
+ ! Slepc are not (yet) able to deal with a pseudo-hermitian algorithm 
+ !
+ call parser('ImposeSymm',l_flag)
+ if (l_slepc_special.and..not.l_flag) l_BS_ares_from_res=.FALSE.
+ BSS_slepc_double_grp=l_BS_ares_from_res.and.l_slepc_special
+ !
 #endif
  !
  ! Double Grid support

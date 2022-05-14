@@ -73,21 +73,19 @@ module fields
  contains
    !
    logical function field_is_ok(E_field)
+     use stderr,        ONLY:STRING_same
      type(ext_field)   ::E_field
-     character(schlen) ::field_defs(3)
-     field_defs=""
-     call string_split(trim(E_field%ef_name),field_defs)
-     field_is_ok= any((/ trim(field_defs(1)) == 'SIN'    ,&
-&                        trim(field_defs(1)) == 'SOFTSIN',&
-&                        trim(field_defs(1)) == 'DELTA'  ,&
-&                        trim(field_defs(1)) == 'GAUSS'  ,&
-&                        trim(field_defs(1)) == 'THETA'  ,&
-&                        trim(field_defs(1)) == 'PULSE'  ,&
-&                        trim(field_defs(1)) == 'QSSIN'  ,&
-&                        trim(field_defs(1)) == 'SPULSE' ,&
-&                        trim(field_defs(1)) == 'QSFIELD' /)).and. &
-&                 any((/ trim(E_field%ef_pol)  == 'linear' ,&
-&                        trim(E_field%ef_pol)  == 'circular' /))
+     field_is_ok= any((/ STRING_same(E_field%ef_name,'SIN') ,&
+&                        STRING_same(E_field%ef_name,'SOFTSIN') ,& 
+&                        STRING_same(E_field%ef_name,'DELTA') ,& 
+&                        STRING_same(E_field%ef_name,'GAUSS') ,& 
+&                        STRING_same(E_field%ef_name,'THETA') ,& 
+&                        STRING_same(E_field%ef_name,'PULSE') ,& 
+&                        STRING_same(E_field%ef_name,'QSSIN') ,&
+&                        STRING_same(E_field%ef_name,'SPULSE'),&
+&                        STRING_same(E_field%ef_name,'QSFIELD') /)) .and. &
+&                 any((/ STRING_same(E_field%ef_pol,'linear') ,&
+&                        STRING_same(E_field%ef_pol,'circular') /))
    end function
    !
    real(SP) function EtoT(E,T)
@@ -414,27 +412,6 @@ module fields
      type(gauge_field) :: A
      A%envelop= sqrt(abs(A%vecpot_vel(1))**2+abs(A%vecpot_vel(2))**2+abs(A%vecpot_vel(3))**2)/SPEED_OF_LIGHT
    end subroutine compute_envelop
-   !
-   complex(SP) function Rabi_Factor(Field,P,R)
-     use X_m,       ONLY:global_gauge
-     !
-     ! Rabi=2 * \mu.E
-     !
-     ! E is the field amplitude = sqrt ( I *8*pi/c  ) 
-     !
-     ! I is given in the input file
-     !
-     use pars, ONLY: cI
-     type(ext_field), intent(in) :: Field
-     complex(SP)                 :: P(3),R(3)
-     if ( trim(global_gauge)=='length' ) then
-       Rabi_Factor=2._SP*sum(R(:)*Field%versor(:))*Field%amplitude
-     else 
-       Rabi_Factor=2._SP*sum(P(:)*Field%versor(:))*Field%amplitude
-       !if( any( trim(Field%ef_name)==(/'ANTIRES','SIN    '/)) ) Rabi_Factor=-cI*Rabi_Factor/Field%frequency(1)
-       !if( any( trim(Field%ef_name)==(/'RES'/)) )               Rabi_Factor= cI*Rabi_Factor/Field%frequency(1)
-     endif
-   end function Rabi_Factor
    !
    complex(SP) function Divide_by_Field(Field,order)
      !

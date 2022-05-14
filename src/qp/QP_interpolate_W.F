@@ -25,12 +25,11 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E,&
+ use R_lattice,     ONLY:bz_samp,RIM_W_ng,b,k_grid_b,bare_qpg,&
+&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
 &                        RIM_id_epsm1_reference,RIM_epsm1,RIM_W_for_graph,RIM_qpg
- use memory,        ONLY:MEM_err
- use vec_operate,   ONLY:c2a,v_is_zero,v_norm
- use X_m,           ONLY:X_mat,X_t,X_alloc
+ use vec_operate,   ONLY:c2a,v_norm
+ use X_m,           ONLY:X_mat,X_t
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
@@ -184,7 +183,8 @@ subroutine interpolate_W(X,Xw,q,mode)
    enddo
    enddo
    !
-   call X_alloc('X')
+   call X_ALLOC_global('X')
+   !
  enddo
  !
  X%ng = ng_save
@@ -359,9 +359,9 @@ subroutine interpolate_W(X,Xw,q,mode)
  endif
  !
 end subroutine
-
+!
 subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
- use pars,          ONLY:SP,DP,rZERO
+ use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
  !

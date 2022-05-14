@@ -21,16 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID,COMM)
+integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID)
  !
  use pars,          ONLY:schlen,lchlen,num_of_alternative_locations
  use stderr,        ONLY:STRING_pack
- use parallel_m,    ONLY:ncpu
+ use parallel_m,    ONLY:ncpu,mpi_comm_null
  use IO_int,        ONLY:get_name,all_locations
  use IO_m,          ONLY:read_is_on,write_is_on,open_is_on,io_reset,io_file,io_unit,io_type,&
 &                        io_raw_extension,mk_dir,io_extension,io_folder,netcdf_call,&
-&                        IO_read,IO_write,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
-&                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL 
+&                        io_PAR_cpu,IO_NO_DATABASE,IO_CREATE_MODE,IO_READ_MODE,IO_WRITE_MODE,&
+&                        IO_NOT_ALLOWED,OP_APP,OP_APP_CL,io_action,OP_WR,OP_WR_CL,io_PAR_comm,io_sec,io_mode
 #if defined _PAR_IO && defined _HDF5_IO
  use IO_m,          ONLY:PAR_IO_CREATE_MODE,PAR_IO_WRITE_MODE
  use parallel_m,    ONLY:MPI_INFO_NULL
@@ -48,7 +48,6 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  character(*), optional :: subfolder
  logical,      optional :: no_full_RESET
  logical,      optional :: FORCE_READ_MODE
- integer,      optional :: COMM
  !
  ! Work Space
  !
@@ -64,18 +63,15 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  !
  write_mode=write_is_on(ID)
  read_mode =read_is_on(ID)
- if(present(FORCE_READ_MODE)) then
-   if(FORCE_READ_MODE) then
+ if (present(FORCE_READ_MODE)) then
+   if (FORCE_READ_MODE) then
      write_mode=.false.
      read_mode =.true.
    endif
  endif
  !
  io_connect=0
- par_IO=present(COMM).and.ncpu>1
- !
- if ( ( read_is_on(ID).and..not.IO_read ).or.&
-&     (write_is_on(ID).and..not.IO_write)      ) then
+ if (.not.io_PAR_cpu(ID)==1) then
    io_connect=IO_NOT_ALLOWED
    return
  endif
@@ -112,20 +108,22 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    if (present(subfolder)) call mk_dir(STRING_pack(folder,"/",subfolder))
  endif
  !
- if(.not.open_is_on(ID)) return
+ if (.not.open_is_on(ID)) return
  !
- ! It to write
+ ! If to write
  !
  if (write_mode) then
+   !
+   par_IO=io_PAR_comm(ID)/=mpi_comm_null.and.ncpu>1
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then
      !
      if(.not.par_IO) call netcdf_call(nf90_open(trim(io_file(ID)),IO_WRITE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO && defined _HDF5_IO
      if(     par_IO) call netcdf_call(nf90_open_par(trim(io_file(ID)),PAR_IO_WRITE_MODE, &
-&                                     COMM,MPI_INFO_NULL,io_unit(ID)),ID)
+&                                     io_PAR_comm(ID),MPI_INFO_NULL,io_unit(ID)),ID)
 #else
-     if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+     if(     par_IO) call error(' Parallel COMM present in io_connect, but yambo compiled with serial IO')
 #endif
      !
    else
@@ -133,9 +131,9 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
      if(.not.par_IO) call netcdf_call(nf90_create(trim(io_file(ID)),IO_CREATE_MODE,io_unit(ID)),ID)
 #if defined _PAR_IO && defined _HDF5_IO
      if(     par_IO) call netcdf_call(nf90_create_par(trim(io_file(ID)),PAR_IO_CREATE_MODE,&
-&                                     COMM,MPI_INFO_NULL,io_unit(ID)),ID)
+&                                     io_PAR_comm(ID),MPI_INFO_NULL,io_unit(ID)),ID)
 #else
-     if(     par_IO) call error(' COMM present in io_connect, but yambo compiled with serial IO')
+     if(     par_IO) call error(' Parallel COMM present in io_connect, but yambo compiled with serial IO')
 #endif
      call netcdf_call(nf90_enddef(io_unit(ID)),ID)
      !
@@ -181,38 +179,3 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
  io_type(ID)=type
  !
 end function io_connect
-!
-!
-subroutine io_disconnect(ID,FORCE)
-  !
-  use IO_m,       ONLY:netcdf_call,PLAIN_file_is_open,NETCDF_file_is_open,io_unit,io_type,&
-&                      close_is_on,io_status,IO_file,nf90_close,io_resetable,io_reset
-  !
-  implicit none
-  !
-  integer           :: ID,NC_ERR
-  logical, optional :: FORCE
-  logical           :: I_OPEN
-  !
-  logical :: FORCE_
-  !
-  I_OPEN=.FALSE.
-  !
-  FORCE_=.FALSE.
-  if (present(FORCE)) FORCE_=FORCE
-  !
-  if ( (.not.FORCE_) .and. (.not.close_is_on(ID)) .and. (io_status(ID)>=0) ) return
-  !
-  if (io_type(ID)==-2) then
-    I_OPEN=PLAIN_file_is_open(IO_file(ID))
-    if (I_OPEN) close(unit=io_unit(ID))
-  else
-    I_OPEN=NETCDF_file_is_open(ID)
-    if (I_OPEN) call netcdf_call(nf90_close(io_unit(ID)),ID)
-  endif
-  !
-  if (I_OPEN) io_unit(ID)=0
-  !
-  if (io_resetable(ID)) call io_reset(ID)
-  !
-end subroutine

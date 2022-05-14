@@ -39,10 +39,10 @@ AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
 AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
              [Activate the HDF5 data compression. Default is no.]))
 #
-# HDF5 SER IO
+# HDF5 PAR IO
 #
 AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
-             [Enable to the HDF5 par I/O. Default is yes]),,enable_hdf5_par_io="yes")
+             [Enable the HDF5 parallel I/O. Default is yes]),,enable_hdf5_par_io="yes")
 #
 # HDF5 FOR P2Y (also requires parallel HDF5)
 #
@@ -54,8 +54,13 @@ internal_hdf5="no"
 NETCDF_VER="v4"
 #
 if test "$mpibuild" = "yes" ; then
-  HDF5_OPT="--enable-parallel";
-  IO_LIB_VER="parallel";
+  if test x"$enable_hdf5_par_io" = "xno" ; then 
+   HDF5_OPT="--disable-parallel";
+   IO_LIB_VER="serial";
+  else
+   HDF5_OPT="--enable-parallel";
+   IO_LIB_VER="parallel";
+  fi
 else
   HDF5_OPT="--disable-parallel";
   IO_LIB_VER="serial";
@@ -114,16 +119,10 @@ if test x"$enable_hdf5" = "xyes"; then
     if test -e $with_hdf5_path/bin/h5pfc; then
        try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
-    elif command -v h5pfc >/dev/null; then
-       try_HDF5_LIBS=`h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
-       try_hdf5_incdir=`h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="parallel";
     elif test -e $with_hdf5_path/bin/h5fc; then 
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$with_hdf5_path/bin/h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
-       IO_LIB_VER="serial";
-       enable_hdf5_par_io="no";
-    elif command -v h5fc>/dev/null; then 
-       try_HDF5_LIBS=`h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
-       try_hdf5_incdir=`h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";
        enable_hdf5_par_io="no";
     else
@@ -244,22 +243,6 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
   #
 fi
 #
-# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
-#
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    enable_hdf5_compression="no";
-    parallel_io="X";    
-elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    compile_pnetcdf=${compile_netcdf};
-    enable_hdf5_compression="no";
-    parallel_io="X";    
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-    parallel_io="COMPRESS-HDF5";    
-fi
-#
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(HDF5_OPT)
@@ -267,8 +250,6 @@ AC_SUBST(IO_LIB_VER)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)
-AC_SUBST(compile_netcdf)
-AC_SUBST(compile_pnetcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)

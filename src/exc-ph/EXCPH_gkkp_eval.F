@@ -40,7 +40,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
-&                         l_const_elph,l_abs_elph,BSS_eh_table_in
+&                         l_const_elph,l_abs_elph,l_abs_exc,BSS_eh_table_in
  !
 #include<memory.h>
  !
@@ -135,8 +135,12 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
-         if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if (l_abs_exc) then
+           Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+         else
+           if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         endif
          !
        enddo
        !
@@ -159,9 +163,12 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
            !ik_db=K_io_map(ik_bz)
            !elph_gkkp=GKKP%dVc(il,ic,icp,ik_db,1)/sqrt(2._SP*ph_E)
          endif
-         !
-         if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if (l_abs_exc) then
+           Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+         else
+           if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         endif
          !
        enddo
        !

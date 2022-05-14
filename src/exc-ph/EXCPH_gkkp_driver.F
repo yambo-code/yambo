@@ -55,7 +55,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map,EXCPH_q, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free,&
-&                         l_const_elph,l_abs_elph,n_exc_in
+&                         l_const_elph,l_abs_elph,l_abs_exc,n_exc_in
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -89,6 +89,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call parser('ConstElph',l_const_elph)
  call parser('AbsElph',  l_abs_elph)
+ call parser('AbsExc',   l_abs_exc)
  !
  ! Build Q_map
  elph_branches_save  =elph_branches

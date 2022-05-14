@@ -24,14 +24,16 @@
 function Eval_Efermi_DbGd(k,q)
  !
  use pars,          ONLY:SP
- use R_lattice,     ONLY:bz_samp
- use electrons,     ONLY:n_sp_pol,levels
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use electrons,     ONLY:n_sp_pol,levels,E_reset
  use ELPH,          ONLY:elph_nb,ID_E_kpq
+ use units,         ONLY:HA2EV
+ use interpolate,   ONLY:INTERPOLATION_BZ
+ use com,           ONLY:msg
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)  :: q,k
- type(levels),  intent(in)  :: E
  !
  ! Work space
  !
@@ -41,31 +43,41 @@ function Eval_Efermi_DbGd(k,q)
  type(levels)  :: all_E_kpq
  !
  call bz_samp_reset(all_k_plus_q)
- if(allocated(all_k_plus_q%pt)) YAMBO_FREE(all_k_plus_q%pt)
+ if(allocated(all_k_plus_q%pt)) then
+   YAMBO_FREE(all_k_plus_q%pt)
+ endif
  !
- N_k_plus_q=k%nbz*q%FGbz%N
+ ! In principle should be N_k_plus_q=k%nbz*q%FGbz%N
+ ! see comment below
+ !
+ N_k_plus_q=q%FGbz%N
  all_k_plus_q%nibz=N_k_plus_q
  YAMBO_ALLOC(all_k_plus_q%pt,(all_k_plus_q%nibz,3))
  !
- ic=1
- do ik=1,k%nbz
-   do iq_fine=q%FGbz%N
-     all_k_plus_q%pt(ic,:)=k%ptbz(ic,:)+q%FGbz%pt(iq_fine,:)
-     ic=ic+1
-   enddo
- enddo
+ call warning('Fermi Energy is calculated on the Double-Grid E(q_dbgrid) ')
+ !
+ ! In principle one should include all the point
+ ! E(k_i + q_j^fine) where i=1,k%nbz and j=1,q%FGbz%N
+ ! but this grid is too large, I calculate the Fermi
+ ! energy on the grid E(q_fine) that is supposed to be
+ ! much larger than E(k)
+ !
+ !=============================================
+ !
+ all_k_plus_q%pt(:,:)=q%FGbz%pt(:,:)
  !
  ! Interpolate All Energies
  ! ==========================================
  call E_reset(all_E_kpq)
  all_E_kpq%nb=elph_nb
  all_E_kpq%nk=N_k_plus_q
- YAMBO_ALLOC(all_E_kpq%E,(elph_nb,n_k_plus_q, n_sp_pol))
- call INTERPOLATION_BZ(K=k_plus_q,NK=N_k_plus_q,ID=ID_E_kpq,E=all_E_kpq)
+ YAMBO_ALLOC(all_E_kpq%E,(elph_nb,N_k_plus_q, n_sp_pol))
+ call INTERPOLATION_BZ(K=all_k_plus_q,NK=N_k_plus_q,ID=ID_E_kpq,E=all_E_kpq)
+ call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q)
  !
- call OCCUPATIONS_Fermi(all_E_kpt,all_k_plus_q)
+ Eval_Efermi_DbGd=all_E_kpq%E_Fermi*HA2EV
  !
- Eval_Efermi_DbGd=0._SP
+ call msg('rs','Fermi Energy shift due to the Double-Grid : ',Eval_Efermi_DbGd,'eV')
  !
 end function Eval_Efermi_DbGd
 

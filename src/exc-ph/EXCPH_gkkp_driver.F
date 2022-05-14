@@ -59,6 +59,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
+ use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  !
 #include<memory.h>
  !
@@ -68,8 +69,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Work Space
  !
- integer, external :: io_ELPH,io_EXCPH_gkkp
- integer  :: ID_gkkp,ID_exc_gkkp,io_err
+ integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
+ integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID
  integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
@@ -84,6 +85,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Check if Lout and Lin are present
  ! and read their kind
  ! 
+ ! Load RIM if present
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_err=io_RIM(io_ID)
+ !
+ if(io_err==0) call msg('sr','RIM found and loaded')
+ !
  call EXCPH_load_L(1,X,'check','Lout')
  call EXCPH_load_L(1,X,'check','Lin')
  !

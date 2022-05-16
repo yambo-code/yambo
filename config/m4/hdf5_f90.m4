@@ -178,8 +178,18 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     if test "x$hdf5" = xno; then
       AC_MSG_RESULT([no]) ;
-      AC_MSG_CHECKING([for HDF5 using automatic library list]) ;   
-      if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+      AC_MSG_CHECKING([for HDF5 using automatic library list]) ;
+      #
+      # re-define lib and inc dirs
+      #
+      if test -d "$with_hdf5_path" ; then 
+          try_hdf5_libdir=$with_hdf5_path/lib
+          try_hdf5_incdir=$with_hdf5_path/include
+      fi
+      if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
+      if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
+      #
+      if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5_hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
       if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
       if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
       if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
@@ -237,7 +247,7 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
     NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
     #
-    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
+    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
     HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     hdf5=yes ;
@@ -250,7 +260,7 @@ if test x"$enable_hdf5" = "xyes"; then
     elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
       IO_LIB_VER="parallel";
-      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
+      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
       HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
       AC_MSG_RESULT([already compiled (using parallel version)]) ;
       #

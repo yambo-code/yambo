@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -171,10 +171,10 @@ subroutine RT_output(what,VALUES,TIME,E)
    !
    select case (trim(RT_o_file_short(i_f)))
      !
-     case('current','YPP-current')
+     case('YPP-probe-current','YPP-pump-current','current','YPP-current')
        data_to_dump(2:4) =real(RT_ind_J)
      !
-     case('polarization','YPP-polarization','YPP-dP_order_0',&
+     case('YPP-probe-polarization','YPP-pump-polarization','polarization','YPP-polarization','YPP-dP_order_0',&
 &         'YPP-dP_order_1','YPP-dP_order_2','YPP-dP_order_3','YPP-dP_order_4',&
 &         'YPP-dP_order_5','YPP-dP_order_6','YPP-dP_order_7','YPP-dP_order_8','YPP-dP_order_9',&
 &         'YPP-P_minus_P_pump')

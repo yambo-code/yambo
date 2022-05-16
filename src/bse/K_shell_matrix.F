@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -52,7 +52,7 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  integer, intent(in)  :: i_BS_mat
  Mat,     intent(out) :: slepc_mat
  !
- integer          :: i_B
+ integer          :: i_B,domk(BS_nT_grps)
  PetscInt         :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
@@ -68,8 +68,9 @@ subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  Slepc_v%it=1
  allocate(Slepc_v%Vi(BS_nT_grps))
  allocate(Slepc_v%Vo(BS_nT_grps))
- call BS_HAYVEC_alloc(Slepc_v%Vi)
- call BS_HAYVEC_alloc(Slepc_v%Vo)
+ domk=1
+ call BS_HAYVEC_alloc(Slepc_v%Vi,domk)
+ call BS_HAYVEC_alloc(Slepc_v%Vo,domk)
  !
  ! Allocate slepc shell matrix
  !

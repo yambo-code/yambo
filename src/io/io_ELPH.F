@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM AC
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -23,27 +23,17 @@
 !
 integer function io_ELPH(ID,what)
  !
- use pars,           ONLY:SP,schlen,LP
- use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,&
-&                         io_mode,DUMP,frag_ELPH,IO_INCOMPATIBLE_VAR
- use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
-&                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,ELPH_desc,&
-&                         QP_PH_n_G_bands,PH_W_debye,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
-&                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
-&                         gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,gsqF_life_f,&
-&                         PH_pol_vector,elph_Ham_bands,elph_branches,GKKP,elph_grids_are_expanded
+ use pars,           ONLY:schlen
+ use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
+&                         io_bulk,io_header
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
+&                         PH_pol_vector,GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
- use R_lattice,      ONLY:nkbz,nqibz,q_pt
+ use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
- use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
- use parallel_m,     ONLY:PAR_Q_bz_index
- use vec_operate,    ONLY:rlu_v_is_zero,c2a
- use zeros,          ONLY:k_rlu_zero
  use timing_m,       ONLY:timing
- use descriptors,    ONLY:IO_desc_reset
  !
 #include<memory.h>
  !
@@ -52,15 +42,14 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ierr,iq_mem,ID_frag
- real(SP)               ::v(3)
+ integer                ::iq,ierr,ID_frag
  character(schlen)      ::db_name
- logical                ::l_no_matrix_elements,l_gFsq,l_gkkp
+ logical                ::l_no_matrix_elements,l_gkkp
+ integer, external      ::variables_ELPH
  !
  call timing('io_ELPH',OPR='start')
  !
  l_no_matrix_elements=.FALSE.
- l_gFsq              =.FALSE.
  l_gkkp              =.FALSE.
  !
  ID_frag=0
@@ -69,15 +58,12 @@ integer function io_ELPH(ID,what)
  !
  if (index(what,'gkkp_expanded')>0) then
    db_name='elph_gkkp_expanded'
- else if (index(what,'gFsq')>0) then
-   db_name='elph_gFsq'
  else 
    db_name='elph_gkkp'
    l_gkkp=.TRUE.
  endif
  !
  elph_grids_are_expanded=index(what,'gkkp_expanded')>0
- l_gFsq                 =index(what,'gFsq')>0
  l_no_matrix_elements   =index(what,'no_matrix_elements')>0
  !
  io_ELPH=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
@@ -92,63 +78,8 @@ integer function io_ELPH(ID,what)
    if (     elph_grids_are_expanded) io_ELPH=io_header(ID,R_LATT=.true.,KPTS=.false.,IMPOSE_SN=.FALSE.,FRAG=frag_ELPH)
    if (io_ELPH/=0) goto 1
    !
-   call IO_desc_reset(ELPH_desc)
-   !
-   if (.not.ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",6,SP,0)
-   if (     ver_is_gt_or_eq(ID,revision=18920)) call def_variable_elemental(ID,"PARS",7,SP,0)
-   call io_variable_elemental(ID,VAR="[ELPH] Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),&
-&                             TERMINATOR="[avail]",DESCRIPTOR=ELPH_desc)
-   if (l_gFsq) call io_variable_elemental(ID,VAR="[ELPH]",I0=elph_nQ_used,CHECK=.true.,OP=(/"=="/),&
-&                                         TERMINATOR="[used]",DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] K points",I0=elph_nk_bz,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] El-PH bands",I0=elph_nb,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   call io_variable_elemental(ID,VAR="[ELPH] Using the Q-grid",L0=elph_use_q_grid,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   if (ver_is_gt_or_eq(ID,revision=18920)) then
-     call io_variable_elemental(ID,VAR="[ELPH] Bare interaction",L0=l_GKKP_hosts_bare_dV,&
-&                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
-   endif
-   if (l_gFsq) then
-     call def_variable_elemental(ID,"QP_nb_nk_n_states",3,SP,0)
-     call io_variable_elemental(ID,I0=QP_nb)
-     call io_variable_elemental(ID,I0=QP_nk)
-     call io_variable_elemental(ID,I0=QP_n_states,VAR='[ELPH] QP tot states')
-   endif
-   call def_variable_elemental(ID,"",0,0,1)
-   !
-   if (io_mode(ID)==DUMP.or.write_is_on(ID)) then
-     QP_PH_n_G_bands=(/1,elph_nb/)
-     elph_Ham_bands =(/1,elph_nb/)
-     elph_branches  =(/1,ph_modes/)
-   endif
-   !
-   io_ELPH=io_status(ID)
+   io_ELPH=variables_ELPH(ID,what)
    if (io_ELPH/=0) goto 1
-   !
-   call io_bulk(ID,VAR="MAX_PH_FREQ",VAR_SZ=(/1/))
-   call io_bulk(ID,R0=PH_W_debye)
-   !
-   if (read_is_on(ID)) call ELPH_alloc("PHONONS")
-   !
-   call io_bulk(ID,VAR="PH_Q",VAR_SZ=(/elph_nQ,3/) )
-   call io_bulk(ID,R2=PH_qpt(:,:))
-   !
-   if (l_gkkp.and.allocated(q_pt).and.elph_use_q_grid) then
-     do iq=1,nqibz
-       call c2a(v_in=q_pt(iq,:)+PH_qpt(iq,:),v_out=v,mode="ki2a")
-       if (.not.rlu_v_is_zero(v,zero_=k_rlu_zero)) then
-         io_ELPH=IO_INCOMPATIBLE_VAR
-         goto 1
-       endif
-     enddo
-   endif
-   !
-   if (elph_grids_are_expanded) then
-     !
-     call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
-     call io_bulk(ID,R2=PH_kpt_bz(:,:))
-     !
-   endif
    !
  endif
  !
@@ -163,38 +94,6 @@ integer function io_ELPH(ID,what)
  ! When the DB is fragmented I allow a partial reading checking
  ! if the fragment exists or not.
  ! If the fragment does not exist (ierr<0) I return an error code
- !
- if (l_gFsq) then
-   !
-   if (iq==1) then
-     call io_bulk(ID_frag,VAR="QP_table",VAR_SZ=(/QP_n_states,3+n_sp_pol-1/))
-     call io_bulk(ID_frag,I2=QP_table)
-   endif
-   !
-   iq_mem=iq
-   if (allocated(PAR_Q_bz_index)) iq_mem=PAR_Q_bz_index(iq)
-   !
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_fan_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_fan(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_dw_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_dw(:,iq_mem,:))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_ca_corr_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_ca_corr(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_bose_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_life_bose(:,iq_mem,:,1))
-   call io_bulk(ID_frag,VAR="ELPH_GFSQ_life_f_Q"//trim(intc(iq)),VAR_SZ=(/QP_n_states,ph_modes/))
-   call io_bulk(ID_frag,R2=gsqF_life_f(:,iq_mem,:,1))
-   !
-   ! PH frequencies (again)
-   !
-   if (iq==1) then
-     call io_bulk(ID_frag,VAR="PH_FREQS",VAR_SZ=(/elph_nQ,ph_modes/))
-     call io_bulk(ID_frag,R2=PH_freqs_sq)
-   endif
-   !
-   goto 1
-   !
- endif
  !
  ! Allocation
  !

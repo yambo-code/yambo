@@ -30,7 +30,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
- use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC
@@ -107,7 +106,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
- call X_setup_file_names(1,'bse ','phass',dbgd_string) 
+! call X_setup_file_names(1,'bse ','phass',dbgd_string) 
  !
  call print_output()
  !
@@ -126,20 +125,25 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  contains
    !
    subroutine print_output()
-     use X_output,      ONLY:X_write_messages_before_headers,X_write_q_plus_G
+!     use X_output,      ONLY:X_write_messages_before_headers,X_write_q_plus_G
      implicit none
+     !
+     character(schlen) :: eps_file_name,pl_file_name
+     !
+     eps_file_name='eps_bse_ph_ass'
+     pl_file_name ='pl_bse_ph_ass'
      !
      call of_open_close(eps_file_name,'ot')
      call of_open_close(pl_file_name,'ot')
      !
-     call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
+!     call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
      !
-     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
+!     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
      !
-     call msg('o eps_q pl_q','# EXCITON PHONON')    
-     call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
-     call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
-     call msg('o eps_q pl_q','#')
+     call msg('o eps_ph pl_ph','# EXCITON PHONON')    
+     call msg('o eps_ph pl_ph','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o eps_ph pl_ph','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     call msg('o eps_ph pl_ph','#')
      !
      ! Write output on file
      !
@@ -149,13 +153,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
 &             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
-       call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o eps_ph','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Luminescence
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
 &               aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
-       call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o pl_ph','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo
      !

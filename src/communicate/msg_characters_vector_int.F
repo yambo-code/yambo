@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
+subroutine msg_characters_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
  !
- use pars,         ONLY:lchlen,max_open_ofs,repfile_index
+ use pars,         ONLY:schlen,lchlen,max_open_ofs,repfile_index
  use stderr,       ONLY:c_print,write_to_log,log_as_a_file,logfile_unit,STRING_remove
  use LIVE_t,       ONLY:LIVE_message
  use com,          ONLY:repfile,terminator,of_unit
@@ -38,6 +38,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  character(*)                :: how
  character(*)                :: mesg
  character(*)                :: val(:)
+ character(*),      optional :: after_msg
  logical,           optional :: USE_TABS
  integer,           optional :: INDENT
  character(lchlen), optional :: MSG_string
@@ -46,6 +47,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  !
  integer          :: i1,i2,l_indent,i1_limits(2),nm
  character(lchlen):: msgfmt,lch,yaml_mesg,yaml_val(size(val)),mesg_plus
+ character(schlen):: after_msg_
  logical          :: l_tabs,OUT_msg,REP_msg,LOG_msg,STD_msg,&
 &                    l_new_line(2) !left and right
 #if defined _YAML_OUTPUT
@@ -53,6 +55,9 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
 #endif
  !
  if (len_trim(how)==0) return
+ !
+ after_msg_=""
+ if(present(after_msg)) after_msg_=after_msg
  ! switches to positive the value of of_unit which matches the given filename
  call msg_manager(how,OUT_msg,REP_msg,LOG_msg,STD_msg,l_new_line)
  l_tabs=.false.
@@ -61,6 +66,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  if (present(INDENT))   l_indent = INDENT
  msgfmt=composed_fmt('a',size(val),l_tabs,l_indent)
  if(trim(msgfmt)=="(/00x,a, 01(a,1x))") msgfmt="(/99x,a, 01(a,1x))"
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
 #if defined _YAML_OUTPUT
  l_yaml_map= len_trim(val(1))> 0
  l_yaml_com= len_trim(val(1))<=0 .and. len_trim(mesg)>1 .and.              &
@@ -84,6 +90,7 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
    else
      write (MSG_string,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
    endif
+   if (len_trim(after_msg_)> 0) MSG_string=trim(MSG_string)//" "//trim(after_msg_)
    return
  endif
  !
@@ -91,9 +98,11 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
    if (of_unit(i1)<=0) cycle
    if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
      call add_the_semi_column(mesg,nm,mesg_plus)
-     write (of_unit(i1),trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
+     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
+     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val)),trim(after_msg_)
    else
-     write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+     if (len_trim(after_msg_)==0) write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
+     if (len_trim(after_msg_)> 0) write (of_unit(i1),trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val)),trim(after_msg_)
    endif
    ! after writing the value of of_unit is switched back to negative
    of_unit(i1)=-of_unit(i1)
@@ -111,12 +120,16 @@ subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
  if (.not.write_to_log.or.(.not.STD_msg.and..not.LOG_msg)) return
  !
  msgfmt=composed_fmt('a',-size(val),.false.,-1)
+ !
+ if (len_trim(after_msg_)>0) call fix_the_new_line(how,msgfmt,l_new_line(2))
+ !
  if (len_trim(mesg)>0.and.len_trim(val(1))>0.and.trim(mesg)/="#") then
    call add_the_semi_column(mesg,nm,mesg_plus)
    write (lch,trim(msgfmt)) mesg_plus(1:nm),(trim(val(i2)),i2=1,size(val))
  else
    write (lch,trim(msgfmt)) mesg,(trim(val(i2)),i2=1,size(val))
  endif
+ if (len_trim(after_msg)> 0) lch=trim(lch)//" ["//trim(after_msg)//"]"
  !
  if (LOG_msg) then
    if(.not.log_as_a_file) call c_print(terminator(3),lch,terminator(4),"%s")

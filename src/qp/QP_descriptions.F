@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -98,7 +98,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='X e/h E range',term='ev',SZ=2,kind='r',R=X%ehe*HA2EV)
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
-     call IO_desc_add(qp%desc,str='X xc-Kernel',kind='s',S=trim(X%f_xc))
+     call IO_desc_add(qp%desc,str='X Hxc Kernel',kind='s',S=trim(X%KERNEL))
    endif
    !
    if (.not.l_ppa.and..not.l_cohsex) then

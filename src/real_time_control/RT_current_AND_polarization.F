@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -60,7 +60,6 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  ! Work Space
  !
  complex(SP)         :: RT_M_tmp(3)
- logical, external   :: RT_do_it
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -91,8 +90,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
    !     This expression is exact up to linear order in the field.
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   !
-   RT_P    =RT_P/DL_vol
+   RT_P=RT_P/DL_vol
    !
  else
    !
@@ -100,8 +98,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
    !     This expression is exact to all orders in the field.
    !     (to be fixed, it is not stable ...)
    !
-   if(integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
-   if(integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
+   if (integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
+   if (integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
    !
  endif
  !

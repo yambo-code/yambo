@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -57,11 +57,11 @@ subroutine COLLISIONS_load(CHECK_EXISTENCE_ONLY)
  !
  ! Work Space
  !
- integer            :: COLL_kind(4),ID,io_err(4),COM_,i1,i_sec,IO_ACT
+ integer            :: COLL_kind(4),ID,io_err(4),COM_,i1,IO_ACT
  logical            :: l_use_scatt_collisions,l_warning,l_error,l_use_P_collisions
  !
 #if defined _PAR_IO
- integer, external  :: io_COLLISIONS_header
+ integer, external :: io_COLLs_header
 #endif
  !
  io_err      =0

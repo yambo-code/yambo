@@ -273,17 +273,18 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   subroutine print_and_write()
     use pars,           ONLY:schlen
-    use OUTPUT_simple,  ONLY:OUTPUT_add_column
+    use OUTPUT,         ONLY:OUTPUT_driver
     use stderr,         ONLY:real2ch,intc,log2ch
     !
     implicit none
     !
     character(schlen) :: what='QP'
     !
-    call OUTPUT_add_column(what,action="reset")
-    call OUTPUT_add_column(what,action="open")
-    call OUTPUT_add_column(what,ORDER=(/"Eo"/))
-    call OUTPUT_add_column(what,ORDER=(/"Width [me"/))
+    call OUTPUT_driver(what,action="reset")
+    call OUTPUT_driver(what,action="open")
+    !
+    call OUTPUT_driver(what,ORDER=(/"Eo"/))
+    call OUTPUT_driver(what,ORDER=(/"Width [me"/))
     !
     call msg('rs','Exciton lifetimes:')
     !
@@ -298,16 +299,16 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do i_alpha=EXCPH_states(1),EXCPH_states(2)
       !
-      call OUTPUT_add_column(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
-      call OUTPUT_add_column(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
-      call OUTPUT_add_column(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
-      call OUTPUT_add_column(what,action="write")
+      call OUTPUT_driver(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
+      call OUTPUT_driver(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
+      call OUTPUT_driver(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
+      call OUTPUT_driver(what,action="write")
       !
       call msg('rs','Exciton ['//trim(intc(i_alpha))//'] Lifetime: ',EXC_LifeTime(i_alpha)*HA2EV*1000._SP,'meV')
       !
     enddo  
     !
-    call OUTPUT_add_column(what,action="close")
+    call OUTPUT_driver(what,action="close")
     !
   end subroutine 
   !

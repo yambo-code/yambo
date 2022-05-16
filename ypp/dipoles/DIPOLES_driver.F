@@ -36,7 +36,7 @@ subroutine DIPOLES_driver(k,E,q)
  use QP_CTL_m,       ONLY:QP_apply
  use vec_operate,    ONLY:v_norm
  use interfaces,     ONLY:DESC_write
- use OUTPUT_simple,  ONLY:OUTPUT_add_column
+ use OUTPUT,         ONLY:OUTPUT_driver
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
  use parser_m,       ONLY:parser
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,GRID_k,INTERP_obj
@@ -99,6 +99,8 @@ subroutine DIPOLES_driver(k,E,q)
  !
  ! ... IO
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
+ !
+ if (trim(DIPs_kind)=="LOAD") return
  !
  DIPs_direction=DIPs_direction/v_norm(DIPs_direction)
  !
@@ -175,8 +177,8 @@ subroutine DIPOLES_driver(k,E,q)
  if (.not.l_PROJECT_plane) then
    !
    ! ... Print
-   call OUTPUT_add_column("electronic_dipoles",action="reset")
-   call OUTPUT_add_column("electronic_dipoles",action="open")
+   call OUTPUT_driver("electronic_dipoles",action="reset")
+   call OUTPUT_driver("electronic_dipoles",action="open")
    call DESC_write('o electronic_dipoles','#',DIP_desc)
    !
    NK=k%nbz
@@ -191,16 +193,16 @@ subroutine DIPOLES_driver(k,E,q)
        ik=k%sstar(ikbz,1)
      endif
      call K_transform(v,'iku')
-     call OUTPUT_add_column("electronic_dipoles",TITLES=(/"k_x ("//trim(coo_out)//")",&
+     call OUTPUT_driver("electronic_dipoles",TITLES=(/"k_x ("//trim(coo_out)//")",&
 &                                    "k_y ("//trim(coo_out)//")","k_z ("//trim(coo_out)//")"/),R_VALUES=v)
      if (allocated(GRID_k%pt)) then
-       call OUTPUT_add_column("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/INTERP_obj(ID)%INTERP(1,ikbz,1)/))
+       call OUTPUT_driver("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/INTERP_obj(ID)%INTERP(1,ikbz,1)/))
      else
-       call OUTPUT_add_column("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/DIP_accumulated(1,ik,1)/))
+       call OUTPUT_driver("electronic_dipoles",TITLES=(/"|<v|R|c>.DIP_dir|^2"/),R_values=(/DIP_accumulated(1,ik,1)/))
      endif
-     call OUTPUT_add_column("electronic_dipoles",action="write")
+     call OUTPUT_driver("electronic_dipoles",action="write")
    enddo
-   call OUTPUT_add_column("electronic_dipoles",action="close")
+   call OUTPUT_driver("electronic_dipoles",action="close")
    !
  endif
  !

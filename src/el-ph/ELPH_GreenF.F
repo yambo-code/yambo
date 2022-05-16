@@ -40,7 +40,6 @@
 subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi,cZERO
- use units,         ONLY:HA2THZ,HA2EV
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
@@ -66,23 +65,23 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! Work Space
  !
  integer  :: iw
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ic,nq_around,iq_idx
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight,DW_weight
+ real(SP) :: weight_dbg,DW_weight
  !
  logical  :: eval_DW
  !
  ! Residues
  !
- real(SP) ::gsqF_RES_life_B,gsqF_RES_life_f,gsqf_RES_ca_corr,gsqF_RES_fan,gsqF_RES_DW 
+ real(SP) ::gsqF_RES_life_B,gsqF_RES_life_f,gsqF_RES_ca_corr,gsqF_RES_fan,gsqF_RES_DW 
  !
  ! Denominators
  !
  real(SP) :: gsqF_DEN_life_B(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_life_f(gsqF_energy_steps)
- real(SP) :: gsqf_DEN_ca_corr(gsqF_energy_steps)
+ real(SP) :: gsqF_DEN_ca_corr(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_fan(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_DW 
  !

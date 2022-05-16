@@ -27,8 +27,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  use pars,           ONLY:SP,cI
  use zeros,          ONLY:zero_dfl
- use electrons,      ONLY:levels,n_sp_pol
- use QP_m,           ONLY:QP_nk
+ use electrons,      ONLY:levels
  use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
  use nl_optics,      ONLY:I_relax,NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -43,7 +42,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  ! Working Space
  !
  integer          :: ib,i1,i2,ik_mem
- real(SP)         :: W_,Gamma_ij
+ real(SP)         :: Gamma_ij
  !
  ! Damping
  !=========

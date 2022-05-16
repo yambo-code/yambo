@@ -23,19 +23,16 @@
 !
 integer function io_ELPH(ID,what)
  !
- use pars,           ONLY:SP,schlen
- use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,io_mode,frag_ELPH
- use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
-&                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,elph_nQ,PH_kpt_bz,l_GKKP_hosts_bare_dV,&
-&                         elph_use_q_grid,PH_qpt,elph_nQ_used,GKKP,GKKP_bare,&
-&                         PH_pol_vector,elph_branches,GKKP,elph_grids_are_expanded
+ use pars,           ONLY:schlen
+ use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
+&                         io_bulk,io_header
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
+&                         PH_pol_vector,GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
- use R_lattice,      ONLY:nkbz,nqibz
+ use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
- use electrons,      ONLY:n_sp_pol
- use parallel_m,     ONLY:PAR_Q_bz_index
  use timing_m,       ONLY:timing
  !
 #include<memory.h>
@@ -45,7 +42,7 @@ integer function io_ELPH(ID,what)
  !
  !Work Space
  !
- integer                ::iq,ierr,iq_mem,ID_frag
+ integer                ::iq,ierr,ID_frag
  character(schlen)      ::db_name
  logical                ::l_no_matrix_elements,l_gkkp
  integer, external      ::variables_ELPH

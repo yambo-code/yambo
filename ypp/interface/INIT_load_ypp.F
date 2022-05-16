@@ -122,6 +122,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTpol',        '[R] Analize time-dependent polarization')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  call it('r',defs,'RTGtwotimes',  '[R] Construct G</G>/G(r)/G(a)/A(t,tp) from rho within GKBA')
  !
@@ -381,7 +382,6 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipOBS_IO','Do not dump on file the RT observables (P(t),J(t),D(t)...)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
- call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
  call it('f',defs,'STD_style','Prin occupations in output with standard style',verb_level=V_real_time) 
  !

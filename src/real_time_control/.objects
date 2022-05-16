@@ -5,4 +5,5 @@ objs = RT_alloc.o RT_free.o RT_Dynamics_is_over.o RT_RESTART_database_copy.o $(d
        RT_carriers_object.o RT_k_grid.o RT_apply.o \
        RT_interpolation_driver.o RT_interpolation_doit_and_transfer.o \
        RT_update_TIME_CONF_descriptions.o \
-       RT_entropy.o RT_carriers_number_and_temperature.o RT_energy_components.o  RT_output_and_IO_driver.o RT_Fluence.o
+       RT_entropy.o RT_carriers_number.o RT_carriers_temperature.o RT_energy_components.o  RT_output_and_IO_driver.o \
+       RT_Fluence_and_PI_kind.o RT_Rabi_frequency.o RT_Rabi_frequency_ALL_and_print.o

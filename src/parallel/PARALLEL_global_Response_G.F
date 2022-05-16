@@ -105,6 +105,10 @@ subroutine PARALLEL_global_Response_G(E,Xk,q,ENVIRONMENT,X_type)
 &                           TOTAL=PAR_Q_ibz_range(2)-PAR_Q_ibz_range(1)+1,&
 &                           NCPU=PAR_COM_Q_INDEX%n_CPU)
  !
+ ! RL space
+ !
+ call  PARALLEL_live_message("G-vectors",ENVIRONMENT=ENVIRONMENT,NCPU=PAR_COM_RL_INDEX%n_CPU)
+ !
  ! AM March 2019. Lifetimes calculations do not support the parallel Q distribution
  !
  if (l_life.and.PAR_COM_Q_INDEX%n_CPU>1) then

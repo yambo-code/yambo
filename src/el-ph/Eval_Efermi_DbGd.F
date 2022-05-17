@@ -29,6 +29,7 @@ function Eval_Efermi_DbGd(k,q)
  use ELPH,          ONLY:elph_nb,ID_E_kpq
  use units,         ONLY:HA2EV
  use interpolate,   ONLY:INTERPOLATION_BZ
+ use interfaces,    ONLY:OCCUPATIONS_Fermi
  use com,           ONLY:msg
  !
 #include<memory.h>
@@ -53,6 +54,9 @@ function Eval_Efermi_DbGd(k,q)
  N_k_plus_q=q%FGbz%N
  all_k_plus_q%nibz=N_k_plus_q
  YAMBO_ALLOC(all_k_plus_q%pt,(all_k_plus_q%nibz,3))
+ YAMBO_ALLOC(all_k_plus_q%weights,(N_k_plus_q))
+ !
+ all_k_plus_q%weights=1._SP
  !
  call warning('Fermi Energy is calculated on the Double-Grid E(q_fine) ')
  !
@@ -73,7 +77,7 @@ function Eval_Efermi_DbGd(k,q)
  all_E_kpq%nk=N_k_plus_q
  YAMBO_ALLOC(all_E_kpq%E,(elph_nb,N_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=all_k_plus_q,NK=N_k_plus_q,ID=ID_E_kpq,E=all_E_kpq)
- call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q,n_bands=elph_nb)
+ call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q,'DbGrid',n_bands=elph_nb,mode='FERMI')
  !
  Eval_Efermi_DbGd=all_E_kpq%E_Fermi*HA2EV
  !

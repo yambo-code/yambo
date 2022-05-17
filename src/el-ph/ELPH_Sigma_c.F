@@ -251,7 +251,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
    !
    if(any(en%nbm/=en%nbf)) then
-      if(elph_nb<en%nbm) & 
+      if(any(elph_nb<en%nbm)) & 
         &  call error('Number of bands in EL-PH should be => number of metallic bands')
       Efermi_DbGd=Eval_Efermi_DbGd(k,q)
       call msg('rs','Double-grid Fermi Energy shift:',Efermi_DbGd*HA2EV,'eV')

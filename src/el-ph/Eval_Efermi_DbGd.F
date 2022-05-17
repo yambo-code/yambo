@@ -54,7 +54,7 @@ function Eval_Efermi_DbGd(k,q)
  all_k_plus_q%nibz=N_k_plus_q
  YAMBO_ALLOC(all_k_plus_q%pt,(all_k_plus_q%nibz,3))
  !
- call warning('Fermi Energy is calculated on the Double-Grid E(q_dbgrid) ')
+ call warning('Fermi Energy is calculated on the Double-Grid E(q_fine) ')
  !
  ! In principle one should include all the point
  ! E(k_i + q_j^fine) where i=1,k%nbz and j=1,q%FGbz%N
@@ -73,7 +73,7 @@ function Eval_Efermi_DbGd(k,q)
  all_E_kpq%nk=N_k_plus_q
  YAMBO_ALLOC(all_E_kpq%E,(elph_nb,N_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=all_k_plus_q,NK=N_k_plus_q,ID=ID_E_kpq,E=all_E_kpq)
- call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q)
+ call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q,n_bands=elph_nb)
  !
  Eval_Efermi_DbGd=all_E_kpq%E_Fermi*HA2EV
  !

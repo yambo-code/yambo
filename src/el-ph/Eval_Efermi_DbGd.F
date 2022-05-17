@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-function Eval_Efermi_DbGd(k,q)
+function Eval_Efermi_DbGd(k,q,en)
  !
  use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
@@ -35,13 +35,17 @@ function Eval_Efermi_DbGd(k,q)
 #include<memory.h>
  !
  type(bz_samp), intent(in)  :: q,k
+ type(levels) :: en
  !
  ! Work space
  !
  real(SP) :: Eval_Efermi_DbGd
- integer  :: ikbz,iq_fine,N_k_plus_q,ic
+ integer  :: ikbz,iq_fine,N_k_plus_q,ic,ik
  type(bz_samp) :: all_k_plus_q
  type(levels)  :: all_E_kpq
+ !
+ if(any(elph_nb<en%nbm)) &
+&      call error('Number of bands in EL-PH should be => number of metallic bands')
  !
  call bz_samp_reset(all_k_plus_q)
  if(allocated(all_k_plus_q%pt)) then
@@ -56,7 +60,7 @@ function Eval_Efermi_DbGd(k,q)
  YAMBO_ALLOC(all_k_plus_q%pt,(all_k_plus_q%nibz,3))
  YAMBO_ALLOC(all_k_plus_q%weights,(N_k_plus_q))
  !
- all_k_plus_q%weights=1._SP
+ all_k_plus_q%weights=1._SP/real(N_k_plus_q,SP)
  !
  call warning('Fermi Energy is calculated on the Double-Grid E(q_fine) ')
  !
@@ -77,11 +81,10 @@ function Eval_Efermi_DbGd(k,q)
  all_E_kpq%nk=N_k_plus_q
  YAMBO_ALLOC(all_E_kpq%E,(elph_nb,N_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=all_k_plus_q,NK=N_k_plus_q,ID=ID_E_kpq,E=all_E_kpq)
+ !
  call OCCUPATIONS_Fermi(all_E_kpq,all_k_plus_q,'DbGrid',n_bands=elph_nb,mode='FERMI')
- !
- Eval_Efermi_DbGd=all_E_kpq%E_Fermi*HA2EV
- !
- call msg('rs','Fermi Energy shift due to the Double-Grid : ',Eval_Efermi_DbGd,'eV')
+ Eval_Efermi_DbGd=all_E_kpq%E_Fermi
+ call msg('rs','Fermi Energy shift due to the Double-Grid : ',Eval_Efermi_DbGd*HA2EV,'eV')
  !
 end function Eval_Efermi_DbGd
 

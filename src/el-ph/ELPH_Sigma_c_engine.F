@@ -215,6 +215,10 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
      f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik,1,iq_idx)/spin_occ
+     ! DEBUG>
+     ! E_kpq=en%E(ob,ok,1)
+     ! f_occ=en%f(ob,ok,1)/spin_occ
+     ! DEBUG<
      !
      do iw=1,gsqF_energy_steps
        ! 
@@ -245,6 +249,9 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
      do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around  ! Numbere of q-points around Gamma
        !
        delta_E_at_gamma=en%E(ib,ik,1) - GKKP%E_dg_kpq(1)%E_kpq(ob,ik,1,iq_idx)
+       ! DEBUG>
+       ! delta_E_at_gamma=en%E(ib,ik,1)               -en%E(ob,ik,1)
+       ! DEBUG<
        !
        if(abs(delta_E_at_gamma)>DW_deltaE_treshold) then
          gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E

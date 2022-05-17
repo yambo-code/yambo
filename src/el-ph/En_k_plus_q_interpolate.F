@@ -36,8 +36,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  ! Work space
  !
- integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
- integer               :: nq_around
+ integer       :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
+ integer       :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
  !
@@ -80,17 +80,21 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
  !
- ! Calculate the new occupations (only for semiconductors) 
+ ! Calculate the new occupations 
  ! ==============================
- ! This part has to be generilized to metals, taking into account 
- ! the fact the the Fermi energy can change due to the presence of E(k+q) states
- ! For the moment I set all valence occupations to 1(or 2 without spin)
+ ! For semiconductors I do not recalculate occupations
+ ! I supposed fine and course grid have the same metallicity
+ ! and I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
  if(all(E%nbm/=E%nbf)) then
    E_kpq%f(1:E%nbf(1),:,1) =spin_occ
    E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  else 
+   !
+   ! For metals occuations are recalculated
+   ! using the Fine-grid fermi energy
+   !
    call f_build(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
  endif
  !

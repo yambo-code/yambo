@@ -250,12 +250,9 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
    call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
    !
-   if(any(en%nbm/=en%nbf)) then
-      if(any(elph_nb<en%nbm)) & 
-        &  call error('Number of bands in EL-PH should be => number of metallic bands')
-      Efermi_DbGd=Eval_Efermi_DbGd(k,q)
-      call msg('rs','Double-grid Fermi Energy shift:',Efermi_DbGd*HA2EV,'eV')
-   endif
+   ! Evaluate the new Fermi-Energy
+   !
+   if(any(en%nbm/=en%nbf)) Efermi_DbGd=Eval_Efermi_DbGd(k,q,en)
    !
    call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
    !

@@ -140,10 +140,15 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      !
 !     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
      !
-     call msg('o eps_ph pl_ph','# EXCITON PHONON')    
-     call msg('o eps_ph pl_ph','# Exciton_states    :',EXCPH_states,INDENT=0)    
-     call msg('o eps_ph pl_ph','# EXciton sum       :',EXCPH_sum,INDENT=0)    
-     call msg('o eps_ph pl_ph','#')
+     call msg('o eps_bse pl_bse','# EXCITON PHONON')    
+     call msg('o eps_bse pl_bse','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o eps_bse pl_bse','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     call msg('o eps_bse pl_bse','#')
+     call msg('o eps_bse','#       E[1] [eV]          Im(eps_ph)' &
+ //'            Re(eps_bse)            Im(eps)          Re(eps)')
+     call msg('o pl_ph' ,'#       E[1] [eV]          Im(pl_ph) ' &
+ //'            Re(pl_bse)            Im(pl)          Re(pl)')
+     call msg('o eps_bse pl_bse','#')
      !
      ! Write output on file
      !

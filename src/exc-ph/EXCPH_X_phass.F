@@ -45,7 +45,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
-&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map
+&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map,  &
+&                        l_DbGd_WEIGHTs
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes,Q_io_map
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
@@ -53,7 +54,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
- use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
@@ -66,12 +66,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,E_alpha,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- logical       :: l_DbGd_WEIGHTs
  integer       :: iq_fg,iq_idx,iq_db
  integer       :: elph_branches_save(2)
  integer, external :: io_EXCPH_gkkp,io_ELPH
- !
- call parser('DbGdWEIGHTs',l_DbGd_WEIGHTs)
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))

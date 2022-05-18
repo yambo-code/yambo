@@ -38,8 +38,8 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP,cZERO,rZERO
- use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd, &
-&                        BS_Sat_W_DG,BS_Sat_W_DG_PH_abs 
+ use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd,BS_Sat_E, &
+&                        BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,l_DbGd_PH_only,BS_Sat_E_PH_abs
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq
  use functions,     ONLY:bose_f,boltzman_f
  !
@@ -109,9 +109,18 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    boltzm_factor=boltzman_f(E_beta-min_EXC_E_DbGd)
    !
    ! Evaluate BS_Sat energies in the double-grid
-   ! 
-   BS_Sat_E_DbGd       =E_beta-BS_E_in(i_alpha)+ph_E
-   BS_Sat_E_DbGd_PH_abs=E_beta-BS_E_in(i_alpha)-ph_E
+   !
+   if(l_DbGd_PH_only) then
+     ! 
+     BS_Sat_E_DbGd       =BS_Sat_E(il,i_beta,i_alpha)
+     BS_Sat_E_DbGd_PH_abs=BS_Sat_E_PH_abs(il,i_beta,i_alpha) 
+     !
+   else
+     ! 
+     BS_Sat_E_DbGd       =E_beta-BS_E_in(i_alpha)+ph_E
+     BS_Sat_E_DbGd_PH_abs=E_beta-BS_E_in(i_alpha)-ph_E
+     !
+   endif
    !
    pole=E_alpha+BS_Sat_E_DbGd
    !

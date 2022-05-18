@@ -101,6 +101,11 @@ module EXCPH
  !
  integer, allocatable :: DB_Q_map(:)
  !
+ ! Control flags
+ !
+ logical       :: l_DbGd_WEIGHTs ! Double-Grid for Satellite weights
+ logical       :: l_DbGd_PH_only ! Double-Grid only for phonon energies
+ !
  contains
    !      
    subroutine Sat_alloc()

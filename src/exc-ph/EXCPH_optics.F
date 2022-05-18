@@ -153,13 +153,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
 &             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
-       call msg('o eps_ph','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o eps_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Luminescence
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
 &               aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
-       call msg('o pl_ph','',output_data,INDENT=-2,USE_TABS=.true.)
+       call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo
      !

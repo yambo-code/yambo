@@ -176,10 +176,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  EXCPH_Renorm_PL_PH_abs= EXCPH_Renorm_PL_PH_abs/real(q%nbz,SP)
  !
  call msg('sr','Renormalization factors at finite temperature [Absorption]:')
+ call msg('sr','[ph-emission]   [ph-absorption]')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
    call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm(i_alpha),EXCPH_Renorm_PH_abs(i_alpha)/))
  enddo
  call msg('sr','Renormalization factors at finite temperature [Emission]:')
+ call msg('sr','[ph-emission]   [ph-absorption]')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
    call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm_PL(i_alpha),EXCPH_Renorm_PL_PH_abs(i_alpha)/))
  enddo

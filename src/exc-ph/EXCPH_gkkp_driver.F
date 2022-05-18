@@ -46,7 +46,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
- use BS,             ONLY:BS_H_dim,BS_bands,BS_res_ares_n_mat,BS_K_dim
+ use BS,             ONLY:BS_H_dim,BS_bands,BS_res_ares_n_mat,BS_K_dim,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
@@ -271,6 +271,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      YAMBO_ALLOC(BS_E,(BSS_n_eig))
      YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
+     YAMBO_ALLOC(BSqpts,(3,q%nibz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
@@ -302,6 +303,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_FREE(BSS_eh_table_m1_in)
      YAMBO_FREE(BS_E)
      YAMBO_FREE(k_plus_q_table)
+     YAMBO_FREE(BSqpts)
    end subroutine BSE_free
    !
    subroutine get_excph_q_momenta()

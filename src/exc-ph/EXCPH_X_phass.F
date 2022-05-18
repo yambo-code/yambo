@@ -189,6 +189,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  min_E=min_EXC_E
  if(use_PH_DbGd) min_E=min_EXC_E_DbGd
  !
+ call live_timing('Epsilon',wv%n_freqs)
  do iw=1,wv%n_freqs
    !
    W=wv%p(iw)
@@ -210,7 +211,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
    enddo
    !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing( )
  !
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !

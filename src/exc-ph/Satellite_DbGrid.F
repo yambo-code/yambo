@@ -40,7 +40,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd,BS_Sat_E,l_DbGd_WEIGHTs, &
 &                        BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,l_DbGd_PH_only,BS_Sat_E_PH_abs, &
-                         BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs
+                         BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,min_EXC_E
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq
  use functions,     ONLY:bose_f,boltzman_f
  !
@@ -87,7 +87,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
    !
    if(l_DbGd_PH_only) then
      !      
-     iq_ibz = q%sstar(iq,1)
+     iq_ibz = q%sstar(iq_bz,1)
      E_beta  =BS_all_E(i_beta,iq_ibz)
      !
      boltzm_factor=boltzman_f(E_beta-min_EXC_E)

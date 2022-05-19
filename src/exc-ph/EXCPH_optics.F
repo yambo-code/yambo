@@ -146,6 +146,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      !
      eps_file_name='eps_bse_ph_ass'
      pl_file_name ='pl_bse_ph_ass'
+     if(use_PH_DbGd) then
+       eps_file_name='eps_bse_ph_ass_dbgd'
+       pl_file_name ='pl_bse_ph_ass_dbgd'
+     endif
      !
      call of_open_close(eps_file_name,'ot')
      call of_open_close(pl_file_name,'ot')

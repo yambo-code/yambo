@@ -50,6 +50,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=7
  real(SP)            :: output_data(n_output)
+ character(schlen)   :: headers(n_output)
  integer             :: iw,iq,i_alpha,max_filling
  character(schlen)   :: dbgd_string
  !
@@ -168,10 +169,12 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        call msg('o eps_bse pl_bse','# Double-grid only for phonons :',l_DbGd_PH_only,INDENT=0)    
      endif
      call msg('o eps_bse pl_bse','#')
-     call msg('o eps_bse','#       E[1] [eV]          Im(eps_ph)' &
- //'            Re(eps_bse)            Im(eps)          Re(eps)         Re(eps_sat)         Im(pl_sat)')
-     call msg('o pl_ph' ,'#       E[1] [eV]          Im(pl_ph) ' &
- //'            Re(pl_bse)            Im(pl)          Re(pl)            Re(pl_sat)          Im(pl_sat)')
+     headers(1)='E[eV]'
+     headers(2:n_output)=(/'Im(eps_ph )','Re(eps_ph )','Im(eps_nos)','Re(eps_nos)','Re(eps_sat)','Im(eps_sat)'/)
+     call msg('o eps_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
+     !
+     headers(2:n_output)=(/'Im(pl_ph )','Re(pl_ph )','Im(pl_nos)','Re(pl_nos)','Re(pl_sat)','Im(pl_sat)'/)
+     call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
      call msg('o eps_bse pl_bse','#')
      !
      ! Write output on file

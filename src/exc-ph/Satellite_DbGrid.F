@@ -120,17 +120,8 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
    !
    ! Evaluate BS_Sat energies in the double-grid
    !
-   if(l_DbGd_PH_only) then
-     ! 
-     BS_Sat_E_DbGd       =BS_Sat_E(il,i_beta,i_alpha)
-     BS_Sat_E_DbGd_PH_abs=BS_Sat_E_PH_abs(il,i_beta,i_alpha) 
-     !
-   else
-     ! 
-     BS_Sat_E_DbGd       =E_beta-BS_E_in(i_alpha)+ph_E
-     BS_Sat_E_DbGd_PH_abs=E_beta-BS_E_in(i_alpha)-ph_E
-     !
-   endif
+   BS_Sat_E_DbGd       =E_beta-BS_E_in(i_alpha)+ph_E
+   BS_Sat_E_DbGd_PH_abs=E_beta-BS_E_in(i_alpha)-ph_E
    !
    pole=E_alpha+BS_Sat_E_DbGd
    !

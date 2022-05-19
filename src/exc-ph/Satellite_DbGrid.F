@@ -134,8 +134,6 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
    !
    pole=E_alpha+BS_Sat_E_DbGd
    !
-   write(100,*) i_alpha,il,iq_bz,boltzm_factor,bose_factor,ph_E
-   !
    ! Bose factor already included in BS_Sat_W_DG and BS_Sat_W_DG_PH_abs
    !
    ! Phonon emission in absorption

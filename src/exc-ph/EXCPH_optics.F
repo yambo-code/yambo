@@ -33,7 +33,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC, &
-&                         l_DbGd_PH_only,l_DbGd_WEIGHTs
+&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use frequency,      ONLY:w_samp
  use parser_m,      ONLY:parser
@@ -48,7 +48,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Work space
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
- integer, parameter  :: n_output=5
+ integer, parameter  :: n_output=7
  real(SP)            :: output_data(n_output)
  integer             :: iw,iq,i_alpha,max_filling
  character(schlen)   :: dbgd_string
@@ -86,6 +86,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
+ call parser('NoMatrxEl',l_no_matrix_elements)
+ !  
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
  !
@@ -113,8 +115,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Frequencies and damping setup
  call FREQUENCIES_setup(wv)
- YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
- YAMBO_ALLOC(PL_ii,(wv%n_freqs,2))
+ YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,3))
+ YAMBO_ALLOC(PL_ii,(wv%n_freqs,3))
  !
  ! Calculate X(w) include phonon assisted transitions
  !
@@ -161,11 +163,15 @@ subroutine EXCPH_optics(E,k,q,X,wv)
      call msg('o eps_bse pl_bse','# EXCITON PHONON')    
      call msg('o eps_bse pl_bse','# Exciton_states    :',EXCPH_states,INDENT=0)    
      call msg('o eps_bse pl_bse','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     if(use_PH_DbGd) then
+       call msg('o eps_bse pl_bse','# Double-grid for satellites   :',l_DbGd_WEIGHTs,INDENT=0)    
+       call msg('o eps_bse pl_bse','# Double-grid only for phonons :',l_DbGd_PH_only,INDENT=0)    
+     endif
      call msg('o eps_bse pl_bse','#')
      call msg('o eps_bse','#       E[1] [eV]          Im(eps_ph)' &
- //'            Re(eps_bse)            Im(eps)          Re(eps)')
+ //'            Re(eps_bse)            Im(eps)          Re(eps)         Re(eps_sat)         Im(pl_sat)')
      call msg('o pl_ph' ,'#       E[1] [eV]          Im(pl_ph) ' &
- //'            Re(pl_bse)            Im(pl)          Re(pl)')
+ //'            Re(pl_bse)            Im(pl)          Re(pl)            Re(pl_sat)          Im(pl_sat)')
      call msg('o eps_bse pl_bse','#')
      !
      ! Write output on file
@@ -175,13 +181,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        ! Eps
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
-&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
+&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),aimag(Epsilon_ii(iw,3)),real(Epsilon_ii(iw,3))/)
        call msg('o eps_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Luminescence
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
-&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
+&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),aimag(PL_ii(iw,3)),real(PL_ii(iw,3))/)
        call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo

@@ -37,10 +37,11 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  !
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
+ use units,         ONLY:HA2EV
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd,BS_Sat_E,l_DbGd_WEIGHTs, &
 &                        BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,l_DbGd_PH_only,BS_Sat_E_PH_abs, &
-                         BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,min_EXC_E
+                         BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,min_EXC_E,l_no_matrix_elements
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq,Q_io_map
  use functions,     ONLY:bose_f,boltzman_f
  !
@@ -69,6 +70,11 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  else
    BS_ave_W       =BS_Sat_WEIGHT(il,i_beta,i_alpha)
    BS_ave_W_PH_abs=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)
+ endif
+ !
+ if(l_no_matrix_elements) then
+   BS_ave_W       =1._SP
+   BS_ave_W_PH_abs=1._SP
  endif
  !
  Sat_absorption=cZERO

@@ -35,7 +35,7 @@ subroutine EXCPH_lifetime(k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder
  use frequency,      ONLY:w_samp
@@ -54,7 +54,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
- logical  :: l_no_matrix_elements,l_keep_deg
+ logical  :: l_keep_deg
  real(SP) :: ExcPhM,EXC_life_average
  !
  call parser('NoMatrxEl',l_no_matrix_elements)

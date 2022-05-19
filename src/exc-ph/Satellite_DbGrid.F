@@ -54,7 +54,7 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  real(SP)    :: PH_E,E_alpha,boltzm_factor,weight_dbgd,E_beta,BS_ave_W,BS_ave_W_PH_abs,bose_factor
  complex(SP) :: BS_Sat_E_DbGd,BS_Sat_E_DbGd_PH_abs
- integer     :: nq_around,iq_fg,iq_idx
+ integer     :: nq_around,iq_fg,iq_idx,iE_fg,
  complex(SP) :: pole
  real(SP), external :: get_ph_E_DbGd
  !
@@ -94,7 +94,8 @@ subroutine Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_absorption,Sat_emiss
  !
  do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
    !
-   ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
+   iE_fg  =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
+   get_ph_E_DbGd =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
    !
    if(ph_E<FAN_deltaE_treshold) cycle
    !

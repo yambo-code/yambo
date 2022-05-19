@@ -24,7 +24,7 @@
 !> @brief Calculate the phonon-assisted satellite for absorption and emission
 !         using double-grid
 !
-! @param[in]       iq                  q-point
+! @param[in]       iq_bz               q-point
 ! @param[in]       il                  phonon branch
 ! @param[in]       i_alpha             incoming exciton
 ! @param[in]       i_beta              outgoing exciton

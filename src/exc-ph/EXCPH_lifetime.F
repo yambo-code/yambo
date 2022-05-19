@@ -227,14 +227,14 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   function DbGrid_pole()
     use EXCPH,          ONLY:min_EXC_E_DbGd,EXC_E_DbGd
-    use ELPH,           ONLY:FAN_deltaE_treshold
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
     !
     real(SP) :: DbGrid_pole
     real(SP) :: E_alpha,E_beta
     real(SP) :: ph_E,N_bose,F_boltz
-    integer  :: nq_around,iq_fg
+    integer  :: nq_around,iq_fg,iE_fg
     real(SP) :: weight_dbgd
     real(SP), external :: get_ph_E_DbGd
     !
@@ -247,7 +247,9 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
       !
-      ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
+      iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
+      ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+      !
       if(ph_E<FAN_deltaE_treshold) cycle
       !
       E_beta=EXC_E_DbGd(i_beta,iq_fg)

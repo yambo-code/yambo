@@ -99,4 +99,6 @@ subroutine Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  !
  Sat_emission=Sat_emission+BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/(W-pole)*(1._SP+bose_factor)*boltzm_factor
  !
+ write(99,*) i_alpha,il,iq_bz,boltzm_factor,bose_factor,ph_E
+ !
 end subroutine Satellite_Simple

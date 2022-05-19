@@ -227,7 +227,7 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   function DbGrid_pole()
     use EXCPH,          ONLY:min_EXC_E_DbGd,EXC_E_DbGd
-    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs,PH_freqs_sq,Q_io_map
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
     !
@@ -247,8 +247,19 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
       !
-      iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
-      ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+      if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+        iq_db=Q_io_map(iq_bz)
+        ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+        !
+        ! If there is the double-grid I read the gamma phonons from there
+        ! because they include the LO-TO splitting and the acustic sum rule
+        !
+        if(iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
+        !
+      else
+        iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
+        ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+      endif
       !
       if(ph_E<FAN_deltaE_treshold) cycle
       !

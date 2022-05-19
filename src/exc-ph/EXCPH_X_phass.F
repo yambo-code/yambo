@@ -138,13 +138,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !      
              ! Calcualte the Satellite on the course q-grid
              !
-             call Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
              !
            else
              !      
              ! Use the double-grid to average denominators
              !
-             call Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
              !
            endif
            !
@@ -287,7 +287,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      real(SP) :: N_bose,weight_dbgd
      real(SP), external :: get_ph_E_DbGd
      ! 
-     if(.not.use_PH_DbGd) then
+     if(.not.use_PH_DbGd.or..not.l_DbGd_WEIGHTs) then
        !
        do il=elph_branches(1),elph_branches(2)
          !      

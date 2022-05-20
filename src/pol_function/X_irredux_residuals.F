@@ -39,12 +39,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
- use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G)
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
  !
 #include<dev_defs.h>
+ !
+ use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G)
  !
  implicit none
  !

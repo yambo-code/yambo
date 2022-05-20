@@ -42,8 +42,9 @@ module fl_optics
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
- real(SP),    allocatable :: FL_delta_rho(:,:)
- real(SP),    allocatable :: FL_delta_rho_hist(:,:)
+ complex(SP), allocatable :: FL_delta_rho(:,:)
+ complex(SP), allocatable :: FL_delta_rho_hist(:,:)
+ real(SP),    allocatable :: FL_beta
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -59,7 +60,7 @@ module fl_optics
  real(SP) :: FL_Chi_thr_2
  real(SP) :: FL_deg_thrs
  real(SP) :: FL_deg_lift
- integer  :: FL_Chi_order
+ integer  :: FL_Chi_order,FL_max_iterations
  character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode,FL_solver_mode
  !
  contains

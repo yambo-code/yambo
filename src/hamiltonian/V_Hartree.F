@@ -36,8 +36,8 @@ subroutine V_Hartree(rho,vhr)
  ! 
  implicit none
  !
- real(SP), intent(in)  :: rho(fft_size)
- real(SP), intent(out) :: vhr(fft_size,n_spin)
+ complex(SP), intent(in)  :: rho(fft_size)
+ complex(SP), intent(out) :: vhr(fft_size,n_spin)
  !
  ! Work Space
  !
@@ -84,7 +84,7 @@ subroutine V_Hartree(rho,vhr)
  call fft_3d(vhtmp,fft_dim,1)
 #endif
  !
- vhr(:,1) = real(vhtmp,SP)
+ vhr(:,1) = vhtmp
  if(n_spin==2) vhr(:,2)=vhr(:,1)
  !
  call timing('V_Hartree',OPR='stop')

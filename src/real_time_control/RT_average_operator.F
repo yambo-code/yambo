@@ -210,7 +210,7 @@ subroutine RT_average_operator(N_V,O_VALUE,V_VALUE,O_REAL,O_QP,O_MATRIX,&
        !
        ! Warning: for nspinor=2 the Vxc countribution could be wrong
        !
-       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,Hk_tmp,WF,'def',V=O_REAL)
+       if (present(O_REAL))   call V_real_space_to_H(ik,i_sp_pol,Hk_tmp,WF,'def',V=cmplx(O_REAL,KIND=SP))
        !
      endif
      !

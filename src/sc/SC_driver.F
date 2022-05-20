@@ -384,7 +384,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        ! Add local V_xc
        !
-       if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
+       if (l_sc_XC_is_local.and..not.l_use_collisions) &
+         & call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=cmplx(V_xc_sc,KIND=SP))
        !
        i_frag=ik+(i_sp_pol-1)*QP_nk
        IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
@@ -393,7 +394,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        ! Add V_Hartree
        !
-       if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=V_hartree_sc)
+       if  (l_sc_hartree.and..not.COLLISIONS_have_HARTREE) &
+         & call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'def',V=cmplx(V_hartree_sc,KIND=SP))
        !
        call PP_redux_wait(H_nl_sc)
        !

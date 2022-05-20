@@ -126,7 +126,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
 #if defined _FL
  use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
-&                     FL_solver_mode,FL_S_inv_mode
+&                     FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta
 #endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -689,6 +689,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  FL_deg_lift  = 1.E-4_SP
  FL_solver_mode = "D"
  FL_S_inv_mode  = "N"
+ FL_max_iterations = 11
+ FL_beta = 1._SP
  !
 #endif
  !

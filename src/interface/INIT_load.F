@@ -101,7 +101,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 !aim137 prelim
 #if defined _FL
  use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
-&                        FL_solver_mode,FL_S_inv_mode
+&                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta
 #endif 
 !aim137
 #if defined _NL | defined _SC
@@ -557,6 +557,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FL_deg_thresh','[FL] Degeneracy threshold in KS band structure',FL_deg_thrs,verb_level=V_fl_optics)
  call it(defs,'FL_deg_lift',  '[FL] Degeneracy lifting of KS band structure',FL_deg_lift,verb_level=V_fl_optics)
  call it(defs,'S_inv_mode',   '[FL] Inversion method ("(N)UMERICAL/(D)UFFIN/(P)ERTURBATIVE")',FL_S_inv_mode,verb_level=V_fl_optics)
+ call it(defs,'FL_beta',     '[FL] Mixing beta',FL_beta,verb_level=V_fl_optics)
+ call it(defs,'FL_max_it',   '[FL] Maximum number of iterations',FL_max_iterations,verb_level=V_fl_optics)
  !
 #endif
  !aim137

@@ -44,7 +44,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use nl_optics,      ONLY:Correlation,V_xc_0,full_rho,IPA,E_full,LRC,JGM,LRCW,l_use_DIPOLES,NL_LRC_alpha,   &
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,&
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,FL_delta_rho,FL_delta_rho_hist,max_extra_mode,n_tot_extra_modes
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
@@ -72,18 +72,17 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks,i_damping_fl
  integer      :: i1_extra,i_comb_extra,i_shift_comb_extra
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
- real(SP)     :: alpha_,beta
+ real(SP)     :: phase(fft_size)
  character(4) :: filename
- real(SP)     :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
+ complex(SP)  :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
 #endif
  !
- beta = 0.2_SP
- if(allocated(FL_delta_rho)) FL_delta_rho = rZERO
- FL_V_Hartree = rZERO
+ if(allocated(FL_delta_rho)) FL_delta_rho = cZERO
+ FL_V_Hartree = cZERO
  FL_V_Hartree_KS = cZERO
  !aim137 check - should I only allocate these variables if Corr != IPA ?
  !
@@ -95,13 +94,16 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        !
        call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
        !
+       print*, iter_num, sum(FL_delta_rho(:,:)),&
+       &                 sum(rho_reference(:))
+       !
        FL_delta_rho(:,max_extra_mode+1) = &
-      &FL_delta_rho(:,max_extra_mode+1) - rho_reference(:)
+      &real(FL_delta_rho(:,max_extra_mode+1),SP) - rho_reference(:)
        !
-       FL_delta_rho = FL_delta_rho * beta + &
-      &               FL_delta_rho_hist * (1-beta)
-       !
-       FL_delta_rho_hist = FL_delta_rho
+!      FL_delta_rho = FL_delta_rho * FL_beta + &
+!     &               FL_delta_rho_hist * (1._SP-FL_beta)
+!      !
+!      FL_delta_rho_hist = FL_delta_rho
        !
      endif
      !
@@ -119,7 +121,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
  else
    !
-   if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = rZERO
+   if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = cZERO
    !
  endif
  !
@@ -171,7 +173,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        do i1_extra=1,n_tot_extra_modes
          call V_real_space_to_H(ik_bz,i_sp_pol,&
             & FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i1_extra),&
-            & WF,'def',FL_V_hartree(:,:,i1_extra))
+            & WF,'def',FL_V_Hartree(:,:,i1_extra))
        enddo 
        !
        do i1=NL_bands(1),NL_bands(2)

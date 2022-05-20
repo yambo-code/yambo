@@ -164,7 +164,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
      !
      if (.not.PAR_IND_Xk_ibz%element_1D(ik) ) cycle
      !
-     call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=V_hartree_sc,Vxc=V_xc_sc)
+     call V_real_space_to_H(ik,1,H_nl_sc,WF,'def+xc',V=cmplx(V_hartree_sc,KIND=SP),Vxc=cmplx(V_xc_sc,KIND=SP))
      if(n_spinor==2.and.l_update_soc) call Vgrad_real_space_to_H(ik,H_nl_sc,WF,V_scf_grad)
      !
      call PP_redux_wait(H_nl_sc,COMM=PAR_COM_Xk_ibz_A2A%COMM)

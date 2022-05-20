@@ -23,7 +23,7 @@
 !
 subroutine Bare_Hamiltonian(E,Xk,k)
  !
- use pars,           ONLY:cZERO
+ use pars,           ONLY:cZERO,SP
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
  use QP_m,           ONLY:QP_nk,QP_Vxc,QP_n_states
  use hamiltonian,    ONLY:Hzero,E_reference,V_hartree_sc,rho_n,magn_n,V_xc_sc,&
@@ -145,7 +145,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      ! ... then remove Vh[rho_0] 
      !===========================
      !
-     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-V_hartree_sc)
+     call V_real_space_to_H(ik,i_sp_pol,Hzero(:,:,ik,i_sp_pol),WF,'def',V=-cmplx(V_hartree_sc,KIND=SP))
      !
      ! ... then remove Vxc[rho_0] also
      !=================================

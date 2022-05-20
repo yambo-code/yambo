@@ -47,8 +47,8 @@ subroutine V_real_space_to_H(ik,i_sp_pol,H,WF,V_kind,V,Vxc)
  complex(SP),  intent(inout)           :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  type(WAVEs),  intent(in)              :: WF
  character(*), intent(in)              :: V_kind
- real(SP),     intent(in), optional    :: V(fft_size,n_spin)
- real(SP),     intent(in), optional    :: Vxc(fft_size,n_spin)
+ complex(SP),  intent(in), optional    :: V(fft_size,n_spin)
+ complex(SP),  intent(in), optional    :: Vxc(fft_size,n_spin)
  !
  ! Work Space
  !

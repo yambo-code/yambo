@@ -565,7 +565,7 @@ subroutine INIT_activate()
    call initactivate(1,'NLBands NLEnRange NLEnSteps NLDamping NLCorrelation')
    call initactivate(1,'FFTGvecs HARRLvcs EXXRLvcs')
    call initactivate(1,'ExtF_Dir ExtF_Int')
-   call initactivate(1,'Xorder Xthresh_1 Xthresh_2 FL_solver FL_deg_thresh FL_deg_lift S_inv_mode')
+   call initactivate(1,'Xorder Xthresh_1 Xthresh_2 FL_solver FL_deg_thresh FL_deg_lift S_inv_mode FL_beta FL_max_it')
  endif
 #endif
  !

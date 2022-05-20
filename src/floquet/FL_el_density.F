@@ -25,7 +25,7 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  !
  ! This is based on nloptics/el_density_vbands.F
  !
- use pars,          ONLY:SP,rZERO
+ use pars,          ONLY:SP,cZERO
  use electrons,     ONLY:levels,n_sp_pol,spin_occ
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
@@ -36,11 +36,14 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  use QP_m,          ONLY:QP_nk
  use nl_optics,     ONLY:NL_bands
  use fl_optics,     ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_extra_modes,max_extra_mode
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  type(bz_samp),intent(in)  :: Xk
  type(levels), intent(in)  :: en       
- real(SP),     intent(out) :: rho(fft_size,n_tot_extra_modes)
+ complex(SP),  intent(out) :: rho(fft_size,n_tot_extra_modes)
  complex(SP),  intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
  integer,      intent(in)  :: lowest_band
  !
@@ -48,11 +51,13 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  !
  integer     :: i1,i2,ik,i_sp,rho_syms,ir,ik_mem,i_m
  integer     :: i1_extra,i1_fl,i_comb_fl,i_shift_comb_fl
- integer     :: i1_wf,i2_wf
- real(SP)    :: rho_no_sym(fft_size,n_tot_extra_modes)
+ integer     :: i1_wf,i2_wf,i1_extra_opposite
+ complex(SP) :: rho_no_sym(fft_size,n_tot_extra_modes)
  !
- rho=rZERO
- rho_no_sym=rZERO
+ call timing('FL Density',OPR='start')
+ !
+ rho=cZERO
+ rho_no_sym=cZERO
  !
  do ik=1,Xk%nibz
    !  
@@ -61,10 +66,10 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
    !
    do i_m=lowest_band,en%nbf
      !
-     do i1_extra=1,n_tot_extra_modes
+     do i1_extra=max_extra_mode+1,n_tot_extra_modes !aim137 prelim - this can be reduced to half as rho must be real
        !
-       do i1=lowest_band,NL_bands(2)   !j aim137 check - this should be from 1
-         do i2=lowest_band,NL_bands(2) !i aim137 but I think it is safe to choose this
+       do i1=1,NL_bands(2)   !j aim137 check - this should be from 1
+         do i2=1,NL_bands(2) !i aim137 but I think it is safe to choose this
            do i1_fl=1,n_tot_fl_modes   !eta
              !
              i_shift_comb_fl = (i1_extra-(max_extra_mode+1)) &
@@ -94,6 +99,13 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
        !
      enddo ! extra modes
      !
+     do i1_extra=1,max_extra_mode
+       !
+       i1_extra_opposite = -(i1_extra-(max_extra_mode+1))+(max_extra_mode+1)
+       rho_no_sym(:,i1_extra) = conjg(rho_no_sym(:,i1_extra_opposite))
+       !
+     enddo
+     !
    enddo ! i_m band
    !
  enddo ! kpts
@@ -106,7 +118,7 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  !
  do ir=1,fft_size
    do i1=1,rho_syms
-     rho(ir,:)=rho(ir,:)+real(rho_no_sym(fft_rot_r(ir,i1),:),SP)/real(nsym,SP)
+     rho(ir,:)=rho(ir,:)+rho_no_sym(fft_rot_r(ir,i1),:)/real(nsym,SP)
    enddo
  enddo
  !
@@ -114,4 +126,5 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
    rho(ir,:)=(1._SP+i_time_rev)*rho(ir,:)
  enddo
  !
+ call timing('FL Density',OPR='stop')
 end subroutine

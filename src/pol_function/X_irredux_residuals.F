@@ -38,8 +38,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
- use R_lattice,     ONLY:G_m_G_d
+ use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
+ use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G)
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
@@ -64,9 +64,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !     many calls are done, though)
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
- complex(SP)        :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
+ complex(SP) DEV_ATTR :: DEV_VAR(rhotw_save)(Xo_scatt%ngrho),DEV_VAR(rhotw_save2)(Xo_scatt%ngrho)
  integer            :: sop_inv_l,X_ng
- complex(SP)        :: ctmp
+ complex(SP)        :: ctmp,Z_
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho

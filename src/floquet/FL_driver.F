@@ -47,7 +47,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
-&                         FL_ac_phase,FL_max_iterations
+&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
@@ -233,13 +233,15 @@ subroutine FL_driver(E,X,k,q,Dip)
    enddo
    !
    l_FL_sc_reached = .false.
+   l_FL_conv_Chi = .false.
+   l_FL_conv_Rho = .false.
    FL_iteration = 0
    FL_loc_S_inv_mode = "0" !for first iteration
    !
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
+   print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
    call msg('r','Frequency step    :',i_f)
    call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    !
@@ -255,9 +257,11 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
-&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_sc_reached,accuracy)
+&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy)
+     l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
      if (FL_iteration == FL_max_iterations) l_FL_sc_reached = .true.
      !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
+     print*, FL_iteration, '----------------------------------------', l_FL_conv_Chi,l_FL_conv_Rho,l_FL_sc_reached
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !

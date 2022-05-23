@@ -45,7 +45,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
-&                         FL_Ho_lift_degeneracy,FL_delta_rho,FL_delta_rho_hist,max_extra_mode,n_tot_extra_modes
+&                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
+&                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -81,7 +82,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  call timing('FL Hamiltonian',OPR='start')
 #endif
  !
- if(allocated(FL_delta_rho)) FL_delta_rho = cZERO
  FL_V_Hartree = cZERO
  FL_V_Hartree_KS = cZERO
  !aim137 check - should I only allocate these variables if Corr != IPA ?
@@ -90,25 +90,29 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
    if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
      !
-     if(eval_HARTREE .or.  eval_DFT) then
+     if((eval_HARTREE .or. eval_DFT) .and. l_FL_conv_Chi) then
        !
        call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
        !
-       print*, iter_num, sum(FL_delta_rho(:,:)),&
-       &                 sum(rho_reference(:))
+       print*, '>>>>Calculating density in iteration ',iter_num
+     ! print*, iter_num, sum(FL_delta_rho(:,:)),&
+     ! &                 sum(rho_reference(:))
        !
        FL_delta_rho(:,max_extra_mode+1) = &
       &real(FL_delta_rho(:,max_extra_mode+1),SP) - rho_reference(:)
        !
-!      FL_delta_rho = FL_delta_rho * FL_beta + &
-!     &               FL_delta_rho_hist * (1._SP-FL_beta)
-!      !
-!      FL_delta_rho_hist = FL_delta_rho
+       FL_delta_rho = FL_delta_rho * FL_beta + &
+      &               FL_delta_rho_hist * (1._SP-FL_beta)
        !
+       FL_delta_rho_hist = FL_delta_rho
+       !
+       !aim137 prelim - find appropriate criterio to have Rho converged
+       if (iter_num > 4) l_FL_conv_Rho = .true.
      endif
      !
      if (eval_HARTREE) then
        !
+       print*, '>>>>Calculating V Hartree in iteration ',iter_num
        do i1_extra=1,n_tot_extra_modes
          !
          call V_Hartree(FL_delta_rho(:,i1_extra),FL_V_Hartree(:,:,i1_extra))
@@ -122,6 +126,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  else
    !
    if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = cZERO
+   if(allocated(FL_delta_rho)) FL_delta_rho = cZERO
    !
  endif
  !

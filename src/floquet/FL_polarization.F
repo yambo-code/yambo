@@ -145,6 +145,16 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    enddo
    !
  enddo
+!aim137 DEBUG <
+!print*, ''
+!print*, FL_time_P_Berry_RED(1,:)
+!print*, FL_time_P_Berry_RED(2,:)
+!print*, FL_time_P_Berry_RED(3,:)
+!print*, 'id = 1, a= ',a(1,:)
+!print*, 'id = 2, a= ',a(2,:)
+!print*, 'id = 3, a= ',a(3,:)
+!call error ('><><><><><><><><><><><><><>< testing code up to this point ><><><><><><><><><><><><><><')
+!aim137 DEBUG >
  !
  !aim137 DEBUG <
  !print*, 'NL_initial_P:'

@@ -1,0 +1,97 @@
+!
+!        Copyright (C) 2000-2021 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): MG IA
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
+subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
+ !
+ use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
+ use units,          ONLY:HA2FSm1,HA2EV
+ use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
+ use R_lattice,      ONLY:bz_samp
+ use fields,         ONLY:Efield,EtoT
+ use QP_m,           ONLY:QP_nk
+ use nl_optics,      ONLY:NL_bands,NL_damping
+ use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
+&                         n_tot_extra_modes,FL_QE,max_fl_mode
+ use parallel_int,   ONLY:PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
+ !
+ implicit none
+ !
+ type(levels), intent(in)   :: en
+ type(bz_samp),intent(in)   :: Xk
+ complex(SP),  intent(in)   :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(out)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,en%nbf,QP_nk,n_sp_pol)
+ !
+ ! Work Space
+ !
+ integer       :: i_t,i1_fl,i1_extra,i1_shifted_fl,i1,i2,ik_bz,is
+ real(SP)      :: time,w0,T_period,t_samples(n_tot_extra_modes)
+ !
+#if defined _TIMING
+ call timing('FL Density',OPR='start')
+#endif
+ !
+ FL_V_bands_time = cZERO 
+ !
+ ! Calculate FL_V_bands_time as a function of time
+ ! ===============================================
+ !
+ do is=1,n_sp_pol
+   !
+   do ik_bz=1,QP_nk
+     !
+     if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
+     !
+     do i_t=1,n_tot_extra_modes
+       !
+       do i1_fl=1,n_tot_fl_modes
+         !
+         i1_shifted_fl = i1_fl -(max_fl_mode+1)
+         !
+         FL_V_bands_time(:,i_t,:,ik_bz,is) = &
+       & FL_V_bands_time(:,i_t,:,ik_bz,is) + &
+       & exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_extra_modes) * &
+       & FL_V_bands(:,i1_fl,:,ik_bz,is)
+         !
+        !print*, '------------------'
+        !print*, i1_shifted_fl
+        !print*, FL_V_bands(:,:,i1_extra)
+       enddo
+     ! print*, exp(-1*cI*2*pi*(i_t-1)/n_tot_extra_modes)
+       !
+     enddo
+     !
+   enddo
+   !
+   call PP_redux_wait(FL_V_bands_time(:,:,:,:,is) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   !
+ enddo
+ !
+#if defined _TIMING
+ call timing('FL Density',OPR='stop')
+#endif
+ !
+end subroutine FL_build_valence_bands

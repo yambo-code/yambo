@@ -54,7 +54,9 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  integer     :: i1_wf,i2_wf,i1_extra_opposite
  complex(SP) :: rho_no_sym(fft_size,n_tot_extra_modes)
  !
+#if defined _TIMING
  call timing('FL Density',OPR='start')
+#endif
  !
  rho=cZERO
  rho_no_sym=cZERO
@@ -126,5 +128,8 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
    rho(ir,:)=(1._SP+i_time_rev)*rho(ir,:)
  enddo
  !
+#if defined _TIMING
  call timing('FL Density',OPR='stop')
+#endif
+ !
 end subroutine

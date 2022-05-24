@@ -71,6 +71,12 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  energy_difference = 0._SP
  l_assume_Hermitian = .false.
  !
+ !         print*, 'kpt = 6, band = 4,band2 = 5'
+ !         print*, '18,18',FL_Ho_plus_Sigma(18,18,6,1)
+ !         print*, '18,24',FL_Ho_plus_Sigma(18,24,6,1)
+ !         print*, '24,18',FL_Ho_plus_Sigma(24,18,6,1)
+ !         print*, '24,24',FL_Ho_plus_Sigma(24,24,6,1)
+ !
  do ik_bz=1,QP_nk
    !
    if(.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) then
@@ -162,7 +168,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
 &        energy_difference(FL_chosen_bands(i_m)) - &
 &        energy_difference(trial_chosen_band_QE))
          !
-         call warning ('   There are Quasi-Energy crossings in the system')
+        !call warning ('   There are Quasi-Energy crossings in the system')
          !
        endif
        !
@@ -189,14 +195,18 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
              i1_fl = i1_fl - (max_fl_mode+1)
            endif
            !
-          !print*, 'kpt = ',ik_bz, ' band = ',i_m, 'band2 =',i1
-          !write(*,'(100(1f7.4))') abs(trial_vec)
-           call msg('r','Detected population inversion at k-point: ',ik_bz)
-           call msg('r','involving band: ',i_m)
-           call msg('r','and band: ',i1)
-           call msg('r','Floquet mode on second band: ',i1_fl)
-           call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
-           call warning ('  [FL] There was a large population inversion in the system')
+           !print*, 'kpt = ',ik_bz, ' band = ',i_m, 'band2 =',i1
+           !print*, i_central_fks,i_central_fks,FL_Ho_plus_Sigma(i_central_fks,i_central_fks,ik_mem,1)
+           !print*, i_central_fks,i1_fks,FL_Ho_plus_Sigma(i_central_fks,i1_fks,ik_mem,1)
+           !print*, i1_fks,i_central_fks,FL_Ho_plus_Sigma(i1_fks,i_central_fks,ik_mem,1)
+           !print*, i1_fks,i1_fks,FL_Ho_plus_Sigma(i1_fks,i1_fks,ik_mem,1)
+           !write(*,'(100(1f7.4))') abs(trial_vec)
+          !call msg('r','Detected population inversion at k-point: ',ik_bz)
+          !call msg('r','involving band: ',i_m)
+          !call msg('r','and band: ',i1)
+          !call msg('r','Floquet mode on second band: ',i1_fl)
+          !call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
+          !call warning ('  [FL] There was a large population inversion in the system')
            !
          endif
          !

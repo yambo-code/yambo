@@ -74,6 +74,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
+ ! Debug
+ !integer :: ik
+ !open(1, file='K_grid_bz.dat')
  !
  call section('*','Excitonic gkkp')
  !======================================
@@ -142,6 +145,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  max_Sat_weight=rZERO
  max_Sat_pos   =0
+ !
+ ! Debug
+ !call k_ibz2bz(k,"i",.false.)
+ !do ik=1,k%nbz
+ !!  write (1,*) k%ptbz(ik,:)
+ !enddo
+ !close(1)
  !
  ! K plus q table
  !

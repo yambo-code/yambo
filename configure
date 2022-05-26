@@ -13247,12 +13247,14 @@ rm -f core conftest.err conftest.$ac_objext \
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for HDF5 using h5pfc/h5fc system compilers" >&5
 $as_echo_n "checking for HDF5 using h5pfc/h5fc system compilers... " >&6; } ;
     #
+    h5pfc="none"
     if test -e $with_hdf5_path/bin/h5pfc; then
        h5pfc=$with_hdf5_path/bin/h5pfc;
      elif command -v h5pfc > /dev/null; then
        h5pfc=$(command -v h5pfc)
     fi
     #
+    h5fc="none"
     if test -e $with_hdf5_path/bin/h5fc ; then
        h5fc=$with_hdf5_path/bin/h5fc;
     elif command -v h5fc > /dev/null; then

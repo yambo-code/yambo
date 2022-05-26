@@ -134,12 +134,14 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     AC_MSG_CHECKING([for HDF5 using h5pfc/h5fc system compilers]) ;
     #
+    h5pfc="none"
     if test -e $with_hdf5_path/bin/h5pfc; then 
        h5pfc=$with_hdf5_path/bin/h5pfc; 
      elif command -v h5pfc > /dev/null; then 
        h5pfc=$(command -v h5pfc)  
     fi
     # 
+    h5fc="none"
     if test -e $with_hdf5_path/bin/h5fc ; then 
        h5fc=$with_hdf5_path/bin/h5fc; 
     elif command -v h5fc > /dev/null; then 

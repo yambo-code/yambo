@@ -82,14 +82,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  real(SP)     :: FL_rho_at_t(fft_size)
+ real(SP)     :: FL_res_rho_at_t(fft_size)
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
 #endif
  !
- print*, 'inicio iteracion ',iter_num
  density_method="T"
- print*, 'density_method: ',density_method
  !
  FL_V_Hartree = cZERO
  FL_V_Hartree_KS = cZERO
@@ -107,7 +106,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          !
          call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
          !
-         print*, '>>>>Calculating rho Hartree in iteration ',iter_num
+         !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
          !
          FL_delta_rho(:,max_extra_mode+1) = &
         &real(FL_delta_rho(:,max_extra_mode+1),SP) - rho_reference(:)
@@ -123,7 +122,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        !
        if (eval_HARTREE) then
          !
-         print*, '>>>>Calculating V Hartree in iteration ',iter_num
+         !print*, '>>>>Calculating V Hartree in iteration ',iter_num
          do i1_extra=1,n_tot_extra_modes
            !
            call V_Hartree(FL_delta_rho(:,i1_extra),FL_V_Hartree(:,:,i1_extra))
@@ -151,11 +150,11 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
      if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
        !
-       if((eval_HARTREE .or. eval_DFT) .and. l_FL_conv_Chi) then
+       if((eval_HARTREE .or. eval_DFT) )then!.and. l_FL_conv_Chi) then
          !
          call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
          !
-         print*, '>>>>Calculating rho Hartree in iteration ',iter_num
+         !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
          do i_t=1,n_tot_extra_modes
            !
            call NL_build_valence_bands(E,FL_V_bands_time(:,i_t,:,:,:),VAL_BANDS,NL_bands(1))
@@ -164,12 +163,22 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            FL_delta_rho(:,i_t) = cZERO
            FL_delta_rho(:,i_t) = FL_rho_at_t(:)
            !
+           if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
+           !
            FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
+           !
+           FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
+                         & - real(FL_delta_rho_hist(:,i_t),SP)
+           !
+         ! call FL_precondition(FL_res_rho_at_t)
+           !
+           FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
+                               & FL_delta_rho_hist(:,i_t)
            !
          enddo
          !
-         FL_delta_rho = FL_delta_rho * FL_beta + &
-        &               FL_delta_rho_hist * (1._SP-FL_beta)
+      !  FL_delta_rho = FL_delta_rho * FL_beta + &
+      ! &               FL_delta_rho_hist !* (1._SP-FL_beta)
          !
          FL_delta_rho_hist = FL_delta_rho
          !
@@ -184,7 +193,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            call V_Hartree(FL_delta_rho(:,i_t),FL_V_Hartree(:,:,i_t))
            FL_V_Hartree(:,:,i_t) = cZERO + real(FL_V_Hartree(:,:,i_t),SP)
            !
-           print*, i_t-1, FL_V_Hartree(9,1,i_t), FL_V_Hartree(13,1,i_t), FL_V_Hartree(21,1,i_t)
+           !print*, i_t-1, FL_V_Hartree(9,1,i_t), FL_V_Hartree(13,1,i_t), FL_V_Hartree(21,1,i_t)
          enddo
          !
        endif
@@ -393,5 +402,4 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 !endif
 !aim137 DEBUG >
 !
-print*, 'fin iteracion',iter_num
 end subroutine FL_Hamiltonian

@@ -231,10 +231,12 @@ contains
     netcdf_error = nf90_get_var(ncid, varid, symafm)
     call netcdf_check(ncid,netcdf_error,varid)
 
+    YAMBO_ALLOC( trev, (a_nsym) )
+    trev=0
     if (any(symafm==-1)) then
-      YAMBO_ALLOC( trev, (a_nsym) )
       trev=-99
       do is=1,a_nsym
+        write(*,*) symafm(is)
         det_s=m3det_i(asop(:,:,is))
         if (symafm(is)*det_s==-1)  trev(is)=1
         if (symafm(is)*det_s== 1)  trev(is)=0
@@ -242,7 +244,7 @@ contains
       if (any(trev==-99)) call error(" some symmetry has determinant different from 1 or -1")
     endif
 
-    call symmetries_check_and_load(asop,a_nsym,trevsym=any(trev==-1),t_rev=trev)
+    call symmetries_check_and_load(asop,a_nsym,t_rev=trev)
 
     return
   end subroutine import_geometry_group

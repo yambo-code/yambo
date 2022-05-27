@@ -28,9 +28,12 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  use pars,                  ONLY:DP,SP,cZERO
  use stderr,                ONLY:intc
  use com,                   ONLY:msg
+ use interfaces,            ONLY:ELPH_alloc
+ use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt
+ use D_lattice,             ONLY:n_atoms
  use ELPH,                  ONLY:ph_modes,elph_nb,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
 &                                elph_nQ,elph_nk_bz,elph_grids_are_expanded,elph_use_q_grid,&
-&                                PH_qpt,PH_kpt_bz
+&                                PH_qpt,PH_kpt_bz,GKKP,PH_freqs_sq
  !
 #include<memory.h>
  !
@@ -45,19 +48,28 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  l_GKKP_hosts_DW     =.false.
  elph_use_q_grid     =.true.
  !
- netcdf_error = nf90_inq_grp_ncid(ncid, "gkk_spin"//trim(intc(i_sp_pol)), grpid)
+ ! global dimensions
+ ! TODO: add checks vs WFK file
  !
- netcdf_error = nf90_inq_varid(grpid, "nb", varid)
- netcdf_error = nf90_get_var(grpid, varid, elph_nb)
+ !n_atoms     = netcdf_get_dimension(ncid, "natom")
+ ph_modes    = netcdf_get_dimension(ncid, "natom3")
+ ! 
+ nkibz = netcdf_get_dimension(ncid, "gstore_nkibz")
+ nkbz  = netcdf_get_dimension(ncid, "gstore_nkbz" )
+ nqibz = netcdf_get_dimension(ncid, "gstore_nqibz")
+ nqbz  = netcdf_get_dimension(ncid, "gstore_nqbz" )
  !
- netcdf_error = nf90_inq_varid(grpid, "natom3", varid)
- netcdf_error = nf90_get_var(grpid, varid, ph_modes)
+ ! dimensions specific of gkk_spin group
  !
- netcdf_error = nf90_inq_varid(grpid, "glob_nk", varid)
- netcdf_error = nf90_get_var(grpid, varid, elph_nk_bz)
+ netcdf_error = nf90_inq_grp_ncid(ncid, "gqk_spin"//trim(intc(i_sp_pol)), grpid)
  !
- netcdf_error = nf90_inq_varid(grpid, "glob_nq", varid)
- netcdf_error = nf90_get_var(grpid, varid, elph_nQ)
+ elph_nb    = netcdf_get_dimension(grpid, "nb")
+ elph_nk_bz = netcdf_get_dimension(grpid, "glob_nk")
+ elph_nQ    = netcdf_get_dimension(grpid, "glob_nq")
+ !
+ call msg('s','ELPH dims',(/elph_nb,ph_modes,elph_nk_bz,elph_nQ/))
+ !
+ call ELPH_alloc("PHONONS dV LEVELS",GKKP=GKKP)
  !
  ! K-points
  !
@@ -71,7 +83,7 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  call import_qpoints_group()
  call msg('l','done')
  !
- call ELPH_alloc("PHONONS dV")
+ call import_ph_frequencies()
  !
  contains
   !
@@ -85,63 +97,101 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    use D_lattice,            only : alat
    implicit none
    integer :: ik
-   real(SP), allocatable :: reduced_coordinates_of_kpoints(:,:)
+   real(DP), allocatable :: gstore_kbz(:,:)
    !
-   allocate(reduced_coordinates_of_kpoints(3, elph_nk_bz))
+   allocate(gstore_kbz(3, elph_nk_bz))
    !
-   varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
-   netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_kpoints)
+   varid = netcdf_inquire_varid(ncid, "gstore_kbz")
+   netcdf_error = nf90_get_var(ncid, varid, gstore_kbz)
    call netcdf_check(ncid,netcdf_error,varid)
    !
-   YAMBO_ALLOC(PH_kpt_bz,(elph_nk_bz,3))
    do ik = 1,elph_nk_bz
-     PH_kpt_bz(ik,:)=matmul(transpose(b),reduced_coordinates_of_kpoints(:,ik))*alat(:)/2.0_SP/pi
+     PH_kpt_bz(ik,:)=matmul(transpose(b),gstore_kbz(:,ik))*alat(:)/2.0_SP/pi
    enddo
    !
-   deallocate(reduced_coordinates_of_kpoints)
+   deallocate(gstore_kbz)
+   !
+   allocate(gstore_kbz(3, nkibz))
+   !
+   varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
+   netcdf_error = nf90_get_var(ncid, varid, gstore_kbz)
+   call netcdf_check(ncid,netcdf_error,varid)
+   !
+   allocate(k_pt(nkibz,3) )
+   do ik = 1,nkibz
+     k_pt(ik,:)=matmul(transpose(b),gstore_kbz(:,ik))*alat(:)/2.0_SP/pi
+   enddo
+   !
+   deallocate(gstore_kbz)
    !
    ! Here I will have to load the k-points symmetries, etc ...
    !
   end subroutine import_kpoints_group
   !
-  !
   ! Q-points (convert to new units)
-  !===========================================================
+  !=================================
   subroutine import_qpoints_group()
    use pars,                 only : pi
    use R_lattice,            only : b
    use D_lattice,            only : alat
    implicit none
    integer :: iq
-   real(SP), allocatable :: reduced_coordinates_of_qpoints(:,:)
+   real(DP), allocatable :: gstore_qibz(:,:)
    !
-   allocate(reduced_coordinates_of_qpoints(3, elph_nQ))
+   allocate(gstore_qibz(3, elph_nQ))
    !
-   !varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_qpoints")
-   !netcdf_error = nf90_get_var(ncid, varid, reduced_coordinates_of_qpoints)
-   !call netcdf_check(ncid,netcdf_error,varid)
+   varid = netcdf_inquire_varid(ncid, "gstore_qibz")
+   netcdf_error = nf90_get_var(ncid, varid, gstore_qibz)
+   call netcdf_check(ncid,netcdf_error,varid)
    !
-   YAMBO_ALLOC(PH_qpt,(elph_nQ,3))
-   !do iq = 1,elph_nQ
-   !  PH_kpt_bz(iq,:)=matmul(transpose(b),reduced_coordinates_of_qpoints(:,iq))*alat(:)/2.0_SP/pi
-   !enddo
-   PH_kpt_bz=0._SP
+   do iq = 1,elph_nQ
+     PH_qpt(iq,:)=matmul(transpose(b),gstore_qibz(:,iq))*alat(:)/2.0_SP/pi
+   enddo
    !
-   deallocate(reduced_coordinates_of_qpoints)
+   deallocate(gstore_qibz)
    !
   end subroutine import_qpoints_group
   !
+  ! PH_frequencies
+  !=================
+  subroutine import_ph_frequencies()
+   use pars,                 only : pi
+   use R_lattice,            only : b
+   use D_lattice,            only : alat
+   implicit none
+   integer :: iq
+   real(DP), allocatable :: phfreqs_ibz(:,:)
+   !
+   allocate(phfreqs_ibz(ph_modes,elph_nQ))
+   !
+   varid = netcdf_inquire_varid(ncid, "phfreqs_ibz")
+   netcdf_error = nf90_get_var(ncid, varid, phfreqs_ibz)
+   call netcdf_check(ncid,netcdf_error,varid)
+   !
+   do iq = 1,elph_nQ
+     PH_freqs_sq(iq,:)=real(phfreqs_ibz(:,iq),SP)**2
+   enddo
+   !
+   deallocate(phfreqs_ibz)
+   !
+  end subroutine import_ph_frequencies
+  !
 end subroutine a2y_gkkp_header
-!
-!
+ !
+ !  TO FIX
+ ! call io_bulk(ID_frag,VAR="E_K_PLUS_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,nkbz,1/) )
+ ! call io_bulk(ID_frag,R3=GKKP%E_kpq(iq)%E)
+ !
+ !
 subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  ! Reads and returns g_kkp matrix elements for each q point
  !
  use netcdf
  use netcdf_data
+ use D_lattice,             ONLY: n_atoms
  use pars,                  ONLY: DP,SP
- use elph,                  ONLY: GKKP,elph_nb,ph_modes,elph_nQ,elph_nk_bz
+ use elph,                  ONLY: GKKP,elph_nb,ph_modes,elph_nQ,elph_nk_bz,PH_pol_vector
  !
 #include<memory.h>
  !
@@ -149,19 +199,19 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  ! Workspace
  !
- integer    :: varid,netcdf_error,ik,i_modes,ipos(6),isize(6)
- real(DP), allocatable :: gkkp_abinit(:,:,:,:,:,:)
+ integer    :: varid,netcdf_error,ik,i_modes,ipos(6),isize(6),i_atom,xyz
+ real(DP), allocatable :: gstore_abinit(:,:,:,:,:,:),phdispl_cart_ibz(:,:,:,:,:)
  !
  ! (natom3, glob_nk, nb, glob_nq, nb, cplex) 
  !
- allocate(gkkp_abinit(2,elph_nb,1,elph_nb,elph_nk_bz,ph_modes))
- !AMBO_ALLOC(gkkp_abinit,(2,elph_nb,elph_nb,ph_modes,elph_nQ))
+ allocate(gstore_abinit(2,elph_nb,elph_nb,ph_modes,elph_nk_bz,1))
+ !AMBO_ALLOC(gstore_abinit,(2,elph_nb,elph_nb,ph_modes,elph_nQ))
  !
- ipos =(/1,1,iq,1,1,1/)
- isize=(/2,elph_nb,1,elph_nb,elph_nk_bz,ph_modes/)
+ ipos =(/1,1,1,1,1,iq/)
+ isize=(/2,elph_nb,elph_nb,ph_modes,elph_nk_bz,1/)
  !
- netcdf_error = nf90_inq_varid(grpid, "vars", varid)
- netcdf_error = nf90_get_var(grpid, varid, gkkp_abinit, ipos, isize)
+ varid = netcdf_inquire_varid(grpid, "gvals")
+ netcdf_error = nf90_get_var(grpid, varid, gstore_abinit, ipos, isize)
  !
  !call ELPH_alloc("dV")
  !
@@ -169,11 +219,28 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  do ik=1,elph_nk_bz
    do i_modes=1,ph_modes
-     GKKP%dVc(i_modes,:,:,ik,1)=cmplx(gkkp_abinit(1,:,1,:,i_modes,ik),gkkp_abinit(2,:,1,:,ik,i_modes),kind=SP)
-     !GKKP%dVc(i_modes,:,:,ik,1)=cmplx(gkkp_abinit(1,:,1,:,i_modes,ik),gkkp_abinit(2,:,1,:,i_modes,ik),kind=SP)
+     GKKP%dVc(i_modes,:,:,ik,1)=cmplx(gstore_abinit(1,:,:,i_modes,ik,1),gstore_abinit(2,:,:,i_modes,ik,1),kind=SP)
    enddo
  enddo
  !
- deallocate(gkkp_abinit)
+ deallocate(gstore_abinit)
+ !
+ ! Polarization vectors
+ !
+ allocate(phdispl_cart_ibz(2,3,n_atoms,ph_modes,1))
+ !
+ ipos(1:5) =(/1,1,1,1,iq/)
+ isize(1:5)=(/2,3,n_atoms,ph_modes,1/)
+ !
+ varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
+ netcdf_error = nf90_get_var(ncid, varid, phdispl_cart_ibz, ipos(1:5), isize(1:5))
+ !
+ do xyz=1,3
+   do i_atom=1,n_atoms
+     PH_pol_vector(:,i_atom,xyz,iq)=cmplx(phdispl_cart_ibz(1,xyz,i_atom,:,1),phdispl_cart_ibz(2,xyz,i_atom,:,1),kind=SP)
+   enddo
+ enddo
+ ! 
+ deallocate(phdispl_cart_ibz)
  !
 end subroutine a2y_gkkp

@@ -29,7 +29,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use vec_operate,         ONLY: sort
  use pars,                ONLY: SP,lchlen,cZERO
  use LOGO,                ONLY: pickup_a_random
- use com,                 ONLY: msg,core_io_path
+ use com,                 ONLY: msg,core_io_path,jobstr
  use it_m,                ONLY: nrnlvls,rnlvls,rstatus
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
@@ -234,22 +234,20 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if(file_exists(trim(gkkp_file))) then
    !
+   jobstr="GKKP_abinit"
+   !
    call msg('s','NETCDF Gkkp file ',trim(gkkp_file))
    netcdf_error = nf90_open(path = trim(gkkp_file), mode = NF90_NOWRITE, ncid = ncid_gkkp)
    call netcdf_check(ncid_gkkp,netcdf_error, 0)
    !
-   call msg('s',' == Writing DB3 (gkkp) ...')
-   !
    do i_sp_pol=1,n_sp_pol
      !
-     write(*,*) "GKKP header read"
      call a2y_gkkp_header(i_sp_pol,ncid_gkkp,grpid_gkkp)
-     write(*,*) "GKKP header done"
      !
-     write(*,*) "GKKP header write"
+     call msg('s',' == Writing DB3 (gkkp) ...')
+     !
      call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID)
      io_err=io_ELPH(ID,'gkkp')
-     write(*,*) "GKKP header done"
      !
      do iq=1,elph_nQ
        !
@@ -272,6 +270,6 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    !
  endif
  !
- call msg('l','')
+ call msg('ln',' ')
  !
 end function

@@ -58,8 +58,9 @@ integer function variables_ELPH(ID,what)
  !
  NVAR=6
  if (ver_is_gt_or_eq(ID,revision=18920)) NVAR=7
- if (ver_is_gt_or_eq(ID,revision=21565)) NVAR=8
+ if (ver_is_gt_or_eq(ID,revision=21550)) NVAR=8
  call def_variable_elemental(ID,"PARS",NVAR,SP,0)
+ !
  call io_variable_elemental(ID,VAR="[ELPH] Phonon modes",I0=ph_modes,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  call io_variable_elemental(ID,VAR="[ELPH] Q points",I0=elph_nQ,CHECK=.true.,OP=(/"=="/),&
 &                             TERMINATOR="[avail]",DESCRIPTOR=ELPH_desc)
@@ -72,7 +73,7 @@ integer function variables_ELPH(ID,what)
    call io_variable_elemental(ID,VAR="[ELPH] Bare interaction",L0=l_GKKP_hosts_bare_dV,&
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  endif
- if (ver_is_gt_or_eq(ID,revision=21565)) then
+ if (ver_is_gt_or_eq(ID,revision=21550)) then
    call io_variable_elemental(ID,VAR="[ELPH] Debay-Waller",L0=l_GKKP_hosts_DW,&
 &                               CHECK=.true.,OP=(/"=="/),DESCRIPTOR=ELPH_desc)
  else
@@ -113,7 +114,7 @@ integer function variables_ELPH(ID,what)
    enddo
  endif
  !
- if (ver_is_gt_or_eq(ID,revision=21565).or.elph_grids_are_expanded) then
+ if (ver_is_gt_or_eq(ID,revision=21550).or.elph_grids_are_expanded) then
    call io_bulk(ID,VAR="PH_K",VAR_SZ=(/nkbz,3/) )
    call io_bulk(ID,R2=PH_kpt_bz(:,:))
  endif

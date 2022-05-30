@@ -37,7 +37,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
 &                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
- use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme
+ use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
@@ -121,7 +121,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    !
    ! Here I need the distribution over k
-   call PARALLEL_SETUP_K_scheme("Kdef")
+   if(     trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("K")
+   if(.not.trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("Kdef")
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)

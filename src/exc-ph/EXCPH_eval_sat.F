@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine EXCPH_eval_sat(iq,q)
+subroutine EXCPH_eval_sat(iq_bz,q)
  !
  use pars,           ONLY:SP,cZERO,rZERO
  use R_lattice,      ONLY:bz_samp
@@ -33,7 +33,7 @@ subroutine EXCPH_eval_sat(iq,q)
  !
 #include<memory.h>
  !
- integer,       intent(in) :: iq
+ integer,       intent(in) :: iq_bz
  type(bz_samp), intent(in) :: q
  !
  ! Work space
@@ -45,7 +45,7 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   iq_db=Q_io_map(iq)
+   iq_db=Q_io_map(iq_bz)
    ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
    if(ph_E<FAN_deltaE_treshold) cycle
    !

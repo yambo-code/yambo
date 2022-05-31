@@ -118,7 +118,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
     ! call Eval_Sat_Weights_DbGd()
    endif
    !
-   call  EXCPH_eval_sat(iq_bz,q,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs)
+   call  EXCPH_eval_sat(iq_bz,q)
    !
    call EXCPH_eval_renorm(iq_bz,q,EXCPH_Renorm,EXCPH_Renorm_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs)
    !

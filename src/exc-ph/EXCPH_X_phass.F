@@ -68,6 +68,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: iq_fg,iq_idx,iq_db
  integer       :: elph_branches_save(2)
+ !
+ real(SP), allocatable  :: max_Sat_weight(:)
+ integer,  allocatable  :: max_Sat_pos(:,:)
+ real(SP), allocatable  :: max_Sat_weight_PH_abs(:)
+ integer,  allocatable  :: max_Sat_pos_PH_abs(:,:)
+ !
  integer, external :: io_EXCPH_gkkp,io_ELPH
  !
  min_pos  =minloc(BS_all_E(1,:))
@@ -88,7 +94,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  elph_branches=elph_branches_save
  !
- ! The satellites
+ ! Renormalization factors
  !
  call Renorm_alloc()
  !
@@ -98,6 +104,18 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  EXCPH_Renorm_PH_abs   =rZERO
  EXCPH_Renorm_PL       =rZERO
  EXCPH_Renorm_PL_PH_abs=rZERO
+ !
+ ! Max and min satellites Energies
+ ! 
+ YAMBO_ALLOC(max_Sat_weight,(EXCPH_states(1):EXCPH_states(2)))
+ YAMBO_ALLOC(max_Sat_pos,(EXCPH_states(1):EXCPH_states(2),3))
+ YAMBO_ALLOC(max_Sat_weight_PH_abs,(EXCPH_states(1):EXCPH_states(2)))
+ YAMBO_ALLOC(max_Sat_pos_PH_abs,(EXCPH_states(1):EXCPH_states(2),3))
+ !
+ max_Sat_weight=rZERO
+ max_Sat_pos   =0
+ max_Sat_weight_PH_abs=rZERO
+ max_Sat_pos_PH_abs   =0
  !
  call live_timing('Satellites',q%nibz)
  !
@@ -114,11 +132,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ! Add the contribution of q-point transition to the renormalization factors
    ! for all excionts i_alpha
    !
-   if(use_PH_DbGd.and.l_DbGd_WEIGHTs) then
-    ! call Eval_Sat_Weights_DbGd()
-   endif
+   call EXCPH_eval_sat(iq_bz,q)
    !
-   call  EXCPH_eval_sat(iq_bz,q)
+   !if(use_PH_DbGd.and.l_DbGd_WEIGHTs)  call Eval_Sat_Weights_DbGd()
+   !
+   call Find_Max_Sat()
    !
    call EXCPH_eval_renorm(iq_bz,q,EXCPH_Renorm,EXCPH_Renorm_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs)
    !
@@ -168,6 +186,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  enddo   
  !
  call live_timing( )
+ !
+ call Sat_report()
  !
  call msg('sr','Renormalization factors at finite temperature [Absorption]:')
  call msg('sr','        [ph-emission]   [ph-absorption]')
@@ -223,4 +243,67 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  call Sat_free()
  call Renorm_free()
  !
+ contains
+ !
+ subroutine Find_Max_Sat()
+   implicit none
+   !
+   ! Work Space
+   !
+   integer :: i1
+   !      
+   ! Find the maximum weight of the satellites
+   ! 
+   do i1=EXCPH_states(1),EXCPH_states(2)
+     if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
+        max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+        max_Sat_pos(i1,1) =iq_db
+        max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
+     endif
+     if(max_Sat_weight_PH_abs(i1)<maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))) then
+        max_Sat_weight_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+        max_Sat_pos_PH_abs(i1,1) =iq_db
+        max_Sat_pos_PH_abs(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+      endif
+    enddo
+    !
+ end subroutine Find_Max_Sat
+ !
+ subroutine Sat_report()
+   use stderr,        ONLY:intc
+   use units,         ONLY:HA2EV
+   use ELPH,          ONLY:ph_freqs_sq
+   implicit none
+   !
+   ! work space
+   !
+   character(schlen) :: message
+   real(SP)          :: ph_E
+   integer           :: iq_bz,i1
+   !
+   call msg('sr',' Max satellite weight: ')
+   do i1=EXCPH_states(1),EXCPH_states(2)
+     iq_bz = max_Sat_pos(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
+     ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos(i1,2))))
+     write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight(i1)
+     call msg('sr',message)
+     write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
+&                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
+     call msg('sr',message)
+   enddo
+   !
+   call msg('sr',' Max satellite weight (phonon absorption): ')
+   do i1=EXCPH_states(1),EXCPH_states(2)
+      iq_bz = max_Sat_pos_PH_abs(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
+      ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos_PH_abs(i1,2))))
+      write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight_PH_abs(i1)
+      call msg('sr',message)
+      write(message,*) '   for iq = '//intc(max_Sat_pos_PH_abs(i1,1))//' il = '//intc(max_Sat_pos_PH_abs(i1,2))//'  ib = ' &
+&                                     //intc(max_Sat_pos_PH_abs(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
+        call msg('sr',message)
+     enddo
+    !
+ end subroutine Sat_report
+ !
 end subroutine EXCPH_X_phass
+

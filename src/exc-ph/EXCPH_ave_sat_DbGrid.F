@@ -22,7 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !
-subroutine EXCPH_eval_sat_DbGrid(iq_bz,q)
+subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cI
  use R_lattice,      ONLY:bz_samp

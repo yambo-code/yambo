@@ -28,7 +28,6 @@
 !
 ! @param[in]       wv                  frequencies range
 ! @param[in]       EXCPH_gkkp          read from file
-! @param[in]       PH_E                read from file
 ! @param[in]       Bose_Temp           Bose temperature for phonons
 ! @param[in]       Boltz_Temp          Boltz temperature for excitons
 !
@@ -43,14 +42,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV,HA2CMm1
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
-&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
-&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map,  &
-&                        l_DbGd_WEIGHTs
- use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes,Q_io_map
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
+&                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
+&                        EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,l_DbGd_WEIGHTs
+ use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
- use D_lattice,     ONLY:nsym
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -64,9 +61,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,E_alpha,PH_E
+ real(SP)      :: min_E,exc_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: iq_fg,iq_idx,iq_db
+ integer       :: iq_db
  integer       :: elph_branches_save(2)
  !
  real(SP), allocatable  :: max_Sat_weight(:)
@@ -134,7 +131,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    call EXCPH_eval_sat(iq_bz,q)
    !
-   !if(use_PH_DbGd.and.l_DbGd_WEIGHTs)  call Eval_Sat_Weights_DbGd()
+   if(use_PH_DbGd.and.l_DbGd_WEIGHTs)  call EXCPH_ave_sat_DbGrid(iq_bz,q)
    !
    call Find_Max_Sat()
    !

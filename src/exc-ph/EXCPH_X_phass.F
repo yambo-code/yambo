@@ -94,6 +94,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  Epsilon_ii            =cZERO
  PL_ii                 =cZERO
+ EXCPH_Renorm          =rZERO
+ EXCPH_Renorm_PH_abs   =rZERO
+ EXCPH_Renorm_PL       =rZERO
+ EXCPH_Renorm_PL_PH_abs=rZERO
  !
  call live_timing('Satellites',q%nibz)
  !
@@ -120,7 +124,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      enddo
    endif
    !
-   call Eval_Renorm_Factor()
+   call EXCPH_eval_renorm(iq_bz,q,EXCPH_Renorm,EXCPH_Renorm_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs)
    !
    do iw=1,wv%n_freqs
      !
@@ -168,11 +172,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  enddo   
  !
  call live_timing( )
- !
- EXCPH_Renorm          = EXCPH_Renorm/real(q%nbz,SP)
- EXCPH_Renorm_PH_abs   = EXCPH_Renorm_PH_abs/real(q%nbz,SP)
- EXCPH_Renorm_PL       = EXCPH_Renorm_PL/real(q%nbz,SP)
- EXCPH_Renorm_PL_PH_abs= EXCPH_Renorm_PL_PH_abs/real(q%nbz,SP)
  !
  call msg('sr','Renormalization factors at finite temperature [Absorption]:')
  call msg('sr','        [ph-emission]   [ph-absorption]')
@@ -278,92 +277,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
          enddo  ! il
        enddo  ! i_beta
      enddo ! i_alpha
-     !
-   end subroutine
-   !
-   subroutine Eval_Renorm_Factor()
-     use ELPH,          ONLY:elph_branches,PH_freqs_sq
-     implicit none
-     !
-     integer  :: iq_idx,iq_fg,nq_around,iq_db
-     real(SP) :: N_bose,weight_dbgd
-     real(SP), external :: get_ph_E_DbGd
-     ! 
-     if(.not.use_PH_DbGd.or..not.l_DbGd_WEIGHTs) then
-       !
-       do il=elph_branches(1),elph_branches(2)
-         !      
-         !iq_db=DB_Q_map(iq_bz)
-         iq_db=Q_io_map(iq_bz)
-         ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
-         if(ph_E<FAN_deltaE_treshold) cycle
-         !
-         N_bose=bose_f(PH_E)
-         !
-         do i_alpha=EXCPH_states(1),EXCPH_states(2)
-           do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-              !
-              ! Phonon emission in absorption [photon absorption / phonon emission]
-              !
-             EXCPH_Renorm(i_alpha)           = EXCPH_Renorm(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+N_bose)
-             !
-             ! Phonon absorption in luminescence [photon emission / phonon absorption]
-             !
-             EXCPH_Renorm_PL_PH_abs(i_alpha) = EXCPH_Renorm_PL_PH_abs(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*N_bose
-             !
-             ! Phonon absorption in absorption [photon absorption / phonon absorption]
-             !
-             EXCPH_Renorm_PH_abs(i_alpha)    = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*N_bose
-             !
-             ! Phonon emission in luminescence [photon emission / phonon emission]
-             !
-             EXCPH_Renorm_PL(i_alpha)        = EXCPH_Renorm_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)
-             !
-           enddo
-         enddo
-         !
-       enddo
-       !
-     else
-       !      
-       do i_alpha=EXCPH_states(1),EXCPH_states(2)
-         do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-           do il=elph_branches(1),elph_branches(2)
-             !      
-             nq_around =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1) ! Number of fine q-points around iq_bz
-             weight_dbgd=1._SP/real(nq_around+1._SP,SP)                  ! Total weight of the DbGd including the iq_bz
-             !
-             do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
-               !
-               ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
-               iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
-               !
-               if(ph_E<FAN_deltaE_treshold) cycle
-               !
-               N_bose=bose_f(PH_E)
-               !
-               ! In the double grid case
-               !
-               ! BS_Sat_W_DG = Gkk^2/(E_a-E_b-w)^2
-               !
-               ! See above no-DG case for physical interpretation of factors
-               !
-               EXCPH_Renorm(i_alpha)          =EXCPH_Renorm(i_alpha)          +BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)        &
-&                                                                             *(1._SP+N_bose)*weight_dbgd
-               EXCPH_Renorm_PH_abs(i_alpha)   =EXCPH_Renorm_PH_abs(i_alpha)   +BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx) &
-&                                                                             *N_bose*weight_dbgd
-               EXCPH_Renorm_PL(i_alpha)       =EXCPH_Renorm_PL(i_alpha)       +BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx) &
-&                                                                             *(1._SP+N_bose)*weight_dbgd
-               EXCPH_Renorm_PL_PH_abs(i_alpha)=EXCPH_Renorm_PL_PH_abs(i_alpha)+BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)        &
-&                                                                             *N_bose*weight_dbgd
-               !
-             enddo
-             !
-           enddo
-         enddo
-       enddo
-       !
-     endif
      !
    end subroutine
  !

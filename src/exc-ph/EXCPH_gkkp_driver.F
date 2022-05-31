@@ -74,6 +74,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
+ real(SP), allocatable  :: max_Sat_weight_PH_abs(:)
+ integer,  allocatable  :: max_Sat_pos_PH_abs(:,:)
  ! Debug
  !integer :: ik
  !open(1, file='K_grid_bz.dat')
@@ -142,9 +144,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call EXCPH_gkkp_alloc()
  YAMBO_ALLOC(max_Sat_weight,(EXCPH_states(1):EXCPH_states(2)))
  YAMBO_ALLOC(max_Sat_pos,(EXCPH_states(1):EXCPH_states(2),3))
+ YAMBO_ALLOC(max_Sat_weight_PH_abs,(EXCPH_states(1):EXCPH_states(2)))
+ YAMBO_ALLOC(max_Sat_pos_PH_abs,(EXCPH_states(1):EXCPH_states(2),3))
  !
  max_Sat_weight=rZERO
  max_Sat_pos   =0
+ max_Sat_weight_PH_abs=rZERO
+ max_Sat_pos_PH_abs   =0
  !
  ! Debug
  !call k_ibz2bz(k,"i",.false.)
@@ -234,6 +240,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
           max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
           max_Sat_pos(i1,1) =iq_db
           max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
+       endif
+       if(max_Sat_weight_PH_abs(i1)<maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))) then
+          max_Sat_weight_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+          max_Sat_pos_PH_abs(i1,1) =iq_db
+          max_Sat_pos_PH_abs(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
        endif
      enddo
      !
@@ -461,6 +472,17 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
         call msg('sr',message)
         write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
+        call msg('sr',message)
+     enddo
+     !
+     call msg('sr',' Max satellite weight (phonon absorption): ')
+     do i1=EXCPH_states(1),EXCPH_states(2)
+        iq_bz = max_Sat_pos_PH_abs(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
+        ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos_PH_abs(i1,2))))
+        write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight_PH_abs(i1)
+        call msg('sr',message)
+        write(message,*) '   for iq = '//intc(max_Sat_pos_PH_abs(i1,1))//' il = '//intc(max_Sat_pos_PH_abs(i1,2))//'  ib = ' &
+&                                     //intc(max_Sat_pos_PH_abs(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
         call msg('sr',message)
      enddo
      !

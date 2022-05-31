@@ -79,7 +79,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Load the Exciton-phonon elements and phonon energies
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  if(io_err/=0) call error('excph_gkkp databases not found!')
  !
  elph_branches_save=elph_branches
@@ -104,7 +104,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  do iq_bz=1,q%nbz
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'satellites')
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    !
    !iq_db=DB_Q_map(iq_bz)
    iq_db=Q_io_map(iq_bz)
@@ -115,14 +115,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ! for all excionts i_alpha
    !
    if(use_PH_DbGd.and.l_DbGd_WEIGHTs) then
-     call Eval_Sat_Weights_DbGd()
-   elseif(use_PH_DbGd.and..not.l_DbGd_WEIGHTs) then
-     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
-       iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
-       BS_Sat_W_DG(:,:,:,iq_idx)=BS_Sat_WEIGHT
-       BS_Sat_W_DG_PH_abs(:,:,:,iq_idx)=BS_Sat_WEIGHT_PH_abs
-     enddo
+    ! call Eval_Sat_Weights_DbGd()
    endif
+   !
+   call  EXCPH_eval_sat(iq_bz,q,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs)
    !
    call EXCPH_eval_renorm(iq_bz,q,EXCPH_Renorm,EXCPH_Renorm_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs)
    !
@@ -226,58 +222,5 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call Sat_free()
  call Renorm_free()
- !
- contains 
-   !
-   subroutine Eval_Sat_Weights_DbGd()
-     use EXCPH,     ONLY:BS_Sat_E
-     implicit none
-     !
-     real(SP) :: E_beta,bose_factor,EXC_gkkp_sq
-     integer  :: iq_fg,iq_idx
-     real(SP), external :: get_ph_E_DbGd
-     !
-     BS_Sat_W_DG       =rZERO
-     BS_Sat_W_DG_PH_abs=rZERO
-     !
-     do i_alpha=EXCPH_states(1),EXCPH_states(2)
-       !
-       E_alpha =BS_E_in(i_alpha)
-       !
-       do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-         !
-         do il=elph_branches(1),elph_branches(2)
-           !
-           ! calculate for all point of the double-grid
-           ! 
-           EXC_gkkp_sq=BS_Sat_WEIGHT(il,i_beta,i_alpha)*abs(BS_Sat_E(il,i_beta,i_alpha))
-           ! 
-           do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
-             !
-             ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
-             !
-             iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
-             !
-             bose_factor=bose_f(PH_E)
-             !  
-             ! Excitonic energies in the double-grid
-             !
-             E_beta  =EXC_E_DbGd(i_beta,iq_fg)
-             !
-             if(ph_E<FAN_deltaE_treshold) cycle ! exclude addition phonon modes with low energy in the DbGd
-             !
-             if(abs(E_beta-E_alpha+ph_E)>FAN_deltaE_treshold) &
-&                  BS_Sat_W_DG(il,i_beta,i_alpha,iq_idx)       =EXC_gkkp_sq/abs(E_beta-E_alpha+ph_E)**2
-             !
-             if(abs(E_beta-E_alpha-ph_E)>FAN_deltaE_treshold) &
-&                  BS_Sat_W_DG_PH_abs(il,i_beta,i_alpha,iq_idx)=EXC_gkkp_sq/abs(E_beta-E_alpha-ph_E)**2
-             ! 
-           enddo
-           !
-         enddo  ! il
-       enddo  ! i_beta
-     enddo ! i_alpha
-     !
-   end subroutine
  !
 end subroutine EXCPH_X_phass

@@ -33,7 +33,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
 &                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC, &
-&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements
+&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use frequency,      ONLY:w_samp
  use parser_m,      ONLY:parser
@@ -66,6 +66,8 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Allocations 
  !
  call alloc_EXC(q)
+ !
+ call Sat_alloc()
  !
  ! Load excitonic energies and residuals
  !
@@ -130,6 +132,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Deallocations
  !
  call free_EXC()
+ call Sat_free()
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)
  if(use_PH_DbGd) then

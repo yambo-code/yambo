@@ -443,7 +443,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
    !
    subroutine EXCPH_gkkp_report()
      use stderr,        ONLY:intc
-     use EXCPH,         ONLY:EXCPH_Renorm_PH_abs,EXCPH_Renorm
      use units,         ONLY:HA2EV
      use ELPH,          ONLY:ph_freqs_sq
      implicit none
@@ -454,11 +453,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      real(SP)          :: ph_E
      integer           :: iq_bz
      !
-     call msg('sr',' Excitons renormalizations  (without Bose factor): ')
-     do i1=EXCPH_states(1),EXCPH_states(2)
-        write(message,*) 'Exciton '//trim(intc(i1))//': R =',EXCPH_Renorm(i1),'    R_abs =',EXCPH_Renorm_PH_abs(i1)
-        call msg('sr',message)
-     enddo
      call msg('sr',' Max satellite weight: ')
      do i1=EXCPH_states(1),EXCPH_states(2)
         iq_bz = max_Sat_pos(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)

@@ -29,8 +29,7 @@ subroutine EXCPH_eval_sat(iq,q)
  use D_lattice,      ONLY:nsym
  use ELPH,           ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
  use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs, &
-&                         EXCPH_Renorm,EXCPH_Renorm_PH_abs,BS_E,BS_E_in,EXCPH_Gkkp_sq, &
-&                         EXCPH_sum,EXCPH_states,DB_Q_map
+&                         BS_E,BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,DB_Q_map
  !
 #include<memory.h>
  !
@@ -46,7 +45,6 @@ subroutine EXCPH_eval_sat(iq,q)
  !
  do il=elph_branches(1),elph_branches(2)
    !
-   !iq_db=DB_Q_map(iq)
    iq_db=Q_io_map(iq)
    ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
    if(ph_E<FAN_deltaE_treshold) cycle
@@ -61,9 +59,6 @@ subroutine EXCPH_eval_sat(iq,q)
 &         BS_Sat_WEIGHT(il,i_beta,i_alpha)       =EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E(il,i_beta,i_alpha))**2
        if(abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))>FAN_deltaE_treshold) &
 &         BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2
-       !
-       EXCPH_Renorm(i_alpha)        = EXCPH_Renorm(i_alpha)        + BS_Sat_WEIGHT(il,i_beta,i_alpha)/real(q%nbz,SP)
-       EXCPH_Renorm_PH_abs(i_alpha) = EXCPH_Renorm_PH_abs(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)/real(q%nbz,SP)
        !
      enddo
    enddo

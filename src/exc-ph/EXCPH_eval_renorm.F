@@ -39,7 +39,7 @@ subroutine EXCPH_eval_renorm(iq_bz,q,R,R_PH_abs,R_PL,R_PL_PH_abs)
  use R_lattice,      ONLY:bz_samp
  use functions,      ONLY:bose_f
  use ELPH,           ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
- use EXCPH,          ONLY:BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,EXCPH_sum,EXCPH_states,DB_Q_map
+ use EXCPH,          ONLY:BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,EXCPH_sum,EXCPH_states
  !
 #include<memory.h>
  !

@@ -26,11 +26,9 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cI
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:nsym
- use ELPH,           ONLY:elph_branches,PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
+ use ELPH,           ONLY:elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs,PH_freqs_sq
  use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs, &
-&                         BS_E,BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,DB_Q_map,  &
-&                         L_damping,EXC_E_DbGd
+&                         BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,L_damping,EXC_E_DbGd
  !
 #include<memory.h>
  !
@@ -39,7 +37,7 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  !
  ! Work space
  !
- integer     :: i_alpha,i_beta,il,iq_db,iq_fg,nq_around,iq_idx
+ integer     :: i_alpha,i_beta,il,iq_db,iE_fg,iq_fg,nq_around,iq_idx
  real(SP)    :: ph_E,weight_DbGd,E_alpha,E_beta
  complex(SP) :: W_DG,W_DG_PH_abs
  real(SP), external :: get_ph_E_DbGd
@@ -64,7 +62,19 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
        ! 
        do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
          !
-         ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
+         if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+           iq_db=Q_io_map(iq_bz)
+           ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+           !
+           ! If there is the double-grid I read the gamma phonons from there
+           ! because they include the LO-TO splitting and the acustic sum rule
+           !
+           if(iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
+           !
+         else
+           iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
+           ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+         endif
          !
          iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
          !

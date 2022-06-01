@@ -37,7 +37,7 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  !
  ! Work space
  !
- integer     :: i_alpha,i_beta,il,iq_db,iE_fg,iq_fg,nq_around,iq_idx
+ integer     :: i_alpha,i_beta,il,iq_db,iE_fg,iq_fg,nq_around
  real(SP)    :: ph_E,weight_DbGd,E_alpha,E_beta
  complex(SP) :: W_DG,W_DG_PH_abs
  real(SP), external :: get_ph_E_DbGd
@@ -75,8 +75,6 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
            iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
            ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
          endif
-         !
-         iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)+1
          !
          ! Excitonic energies in the double-grid
          !

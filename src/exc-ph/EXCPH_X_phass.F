@@ -45,7 +45,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
 &                        EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,l_DbGd_WEIGHTs
- use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
+ use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs_sq
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
@@ -61,7 +61,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E
+ real(SP)      :: min_E,exc_E,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: iq_db
  integer       :: elph_branches_save(2)
@@ -146,6 +146,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        do il=elph_branches(1),elph_branches(2)
          !
+         iq_db=Q_io_map(iq_bz)
+         ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+         !
          do i_beta=EXCPH_sum(1),EXCPH_sum(2)
            !
            if(.not.use_PH_DbGd) then
@@ -167,8 +170,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
            Epsilon_ii(iw,3)=Epsilon_ii(iw,3)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
            !
-           PL_ii(iw,1)     =PL_ii(iw,1)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
-           PL_ii(iw,3)     =PL_ii(iw,3)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,1)     =PL_ii(iw,1)+(W-2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,3)     =PL_ii(iw,3)+(W-2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            !
          enddo
          !
@@ -219,7 +222,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_E_in(i_alpha)-min_E
      pole =BS_E_in(i_alpha)          
-     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + (1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
+     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**2*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo

@@ -218,7 +218,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw,1:2)     =PL_ii(iw,1:2)     +(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
+     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**3*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
@@ -232,7 +232,6 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
  Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
- PL_ii         =-PL_ii
  !
  ! Free
  !
@@ -286,6 +285,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
      call msg('sr',message)
+     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),max_Sat_pos(i1,1))*HA2EV
+     call msg('sr',message)
    enddo
    !
    call msg('sr',' Max satellite weight (phonon absorption): ')
@@ -296,7 +297,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
       call msg('sr',message)
       write(message,*) '   for iq = '//intc(max_Sat_pos_PH_abs(i1,1))//' il = '//intc(max_Sat_pos_PH_abs(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos_PH_abs(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
-        call msg('sr',message)
+     call msg('sr',message)
+     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),max_Sat_pos(i1,1))*HA2EV
+     call msg('sr',message)
      enddo
     !
  end subroutine Sat_report

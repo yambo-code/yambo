@@ -165,8 +165,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            ! Add the satellites to the dielectric constant and luminescence
            !
            Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
-           PL_ii(iw,1)     =PL_ii(iw,1)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            Epsilon_ii(iw,3)=Epsilon_ii(iw,3)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
+           !
+           PL_ii(iw,1)     =PL_ii(iw,1)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            PL_ii(iw,3)     =PL_ii(iw,3)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            !
          enddo
@@ -216,9 +217,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      ! [FP] Luminescence in RS (detailed balance) assumption requires Lin=Lout.
      !      Maybe put a check/logical enforcing this for PL? 
      !
-     exc_E=BS_all_E(i_alpha,1)-min_E
-     pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**3*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
+     exc_E=BS_E_in(i_alpha)-min_E
+     pole =BS_E_in(i_alpha)          
+     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + (1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
@@ -232,6 +233,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
  Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
+ PL_ii          =-PL_ii
  !
  ! Free
  !

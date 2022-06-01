@@ -72,7 +72,7 @@ subroutine EXCPH_eval_renorm(iq_bz,q,R,R_PH_abs,R_PL,R_PL_PH_abs)
        !
        ! Phonon absorption in luminescence [photon emission / phonon absorption]
        !
-       R_PL_PH_abs(i_alpha) = R_PL_PH_abs(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*N_bose/real(q%nbz,SP)
+       R_PL_PH_abs(i_alpha) = R_PL_PH_abs(i_alpha) + BS_Sat_WEIGHT(il,i_beta,i_alpha)*(1._SP+N_bose)/real(q%nbz,SP)
        !
        ! Phonon absorption in absorption [photon absorption / phonon absorption]
        !
@@ -80,7 +80,7 @@ subroutine EXCPH_eval_renorm(iq_bz,q,R,R_PH_abs,R_PL,R_PL_PH_abs)
        !
        ! Phonon emission in luminescence [photon emission / phonon emission]
        !
-       R_PL(i_alpha)        = R_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*(1._SP+N_bose)/real(q%nbz,SP)
+       R_PL(i_alpha)        = R_PL(i_alpha) + BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*N_bose/real(q%nbz,SP)
        !
      enddo
    enddo

@@ -233,7 +233,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
  Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
- PL_ii          =-PL_ii
+ !
+ do iw=1,wv%n_freqs
+   W=wv%p(iw)
+   PL_ii(iw,:)=-W*PL_ii(iw,:)
+ enddo
  !
  ! Free
  !

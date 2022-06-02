@@ -132,7 +132,7 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
    !
    ! Phonon emission in luminescence
    !
-   Sat_emission  =Sat_emission  +BS_ave_W/(W-pole)*boltzm_factor*boltzm_factor
+   Sat_emission  =Sat_emission  +BS_ave_W/(W-pole)*bose_factor*boltzm_factor
    !
    pole=E_alpha+BS_Sat_E_DbGd_PH_abs
    !
@@ -142,7 +142,7 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
    ! 
    ! Phonon absorption in luminescence
    !
-   Sat_emission=Sat_emission    +BS_ave_W_PH_abs/(W-pole)*boltzm_factor*(1._SP+bose_factor)
+   Sat_emission=Sat_emission    +BS_ave_W_PH_abs/(W-pole)*(1._SP+bose_factor)*boltzm_factor
    !
  enddo
  !

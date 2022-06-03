@@ -32,7 +32,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use X_m,            ONLY:X_t
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC, &
+&                         BS_R_left,BS_R_right,BS_R,free_EXC,alloc_EXC, &
 &                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use frequency,      ONLY:w_samp
@@ -90,6 +90,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
+ if(l_no_matrix_elements) call warning('No exc-ph matrix elements, just ph-assisted dos')
  !  
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
@@ -101,10 +102,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  if(use_PH_DbGd) then
    dbgd_string='DbGd'
    max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
-   YAMBO_ALLOC(BS_Sat_W_DG,(ph_modes,EXCPH_sum(2),EXCPH_states(2),max_filling))
-   YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(ph_modes,EXCPH_sum(2),EXCPH_states(2),max_filling))
-   BS_Sat_W_DG       =rZERO
-   BS_Sat_W_DG_PH_abs=rZERO
    !
    ! Check double-grid flags
    !
@@ -135,10 +132,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call Sat_free()
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)
- if(use_PH_DbGd) then
-   YAMBO_FREE(BS_Sat_W_DG)
-   YAMBO_FREE(BS_Sat_W_DG_PH_abs)
- endif
  !
  call FREQUENCIES_reset(wv,"all")
  !

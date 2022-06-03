@@ -155,6 +155,7 @@ subroutine NL_initialize(E,k)
  !
  if(((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none').or.n_frequencies==1) then
    l_pump_and_probe=.true.
+   call msg('sl','[NL] Variables NLEnSteps and NLEnRange are ignored!!! ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
    if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
    NL_verbosity=VERB_HIGH

@@ -39,7 +39,7 @@ subroutine EXCPH_eval_sat(iq_bz,q)
  ! Work space
  !
  integer  :: i_alpha,i_beta,il,iq_db,iq_ibz
- real(SP) :: ph_E
+ real(SP) :: ph_E,E_alpha,E_beta
  !
  ! Calculate satellites weights and renormalization factors without double-grid
  !
@@ -54,12 +54,17 @@ subroutine EXCPH_eval_sat(iq_bz,q)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      do i_beta=EXCPH_sum(1),EXCPH_sum(2)
        !
-       BS_Sat_E       (il,i_beta,i_alpha)=BS_all_E(i_beta,iq_ibz)-BS_E_in(i_alpha)+ph_E
-       BS_Sat_E_PH_abs(il,i_beta,i_alpha)=BS_all_E(i_beta,iq_ibz)-BS_E_in(i_alpha)-ph_E
+       E_alpha=BS_E_in(i_alpha)
+       E_beta =BS_all_E(i_beta,iq_ibz)
        !
+       BS_Sat_E       (il,i_beta,i_alpha)=E_beta-E_alpha+ph_E
+       BS_Sat_E_PH_abs(il,i_beta,i_alpha)=E_beta-E_alpha-ph_E
+       !
+!       if(abs(E_alpha-E_beta)>FAN_deltaE_treshold) &
        if(abs(BS_Sat_E(il,i_beta,i_alpha))>FAN_deltaE_treshold) &
 &         BS_Sat_WEIGHT(il,i_beta,i_alpha)       =EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E(il,i_beta,i_alpha))**2
        if(abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))>FAN_deltaE_treshold) &
+!       if(abs(E_alpha-E_beta)>FAN_deltaE_treshold) &
 &         BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=EXCPH_Gkkp_sq(il,i_beta,i_alpha)/abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))**2
        !
      enddo

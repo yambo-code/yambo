@@ -261,12 +261,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i1=EXCPH_states(1),EXCPH_states(2)
      if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
         max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
-        max_Sat_pos(i1,1) =iq_db
+        max_Sat_pos(i1,1) =iq_bz
         max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
      endif
      if(max_Sat_weight_PH_abs(i1)<maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))) then
         max_Sat_weight_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
-        max_Sat_pos_PH_abs(i1,1) =iq_db
+        max_Sat_pos_PH_abs(i1,1) =iq_bz
         max_Sat_pos_PH_abs(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
       endif
     enddo
@@ -283,31 +283,35 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    character(schlen) :: message
    real(SP)          :: ph_E
-   integer           :: iq_bz,i1
+   integer           :: iq_bz,i1,iq_ibz
    !
    call msg('sr',' Max satellite weight: ')
    do i1=EXCPH_states(1),EXCPH_states(2)
-     iq_bz = max_Sat_pos(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
-     ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos(i1,2))))
+     iq_bz  = max_Sat_pos(i1,1) 
+     iq_db  =Q_io_map(iq_bz)
+     iq_ibz =q%sstar(iq_bz,1)
+     ph_E=sqrt(abs(ph_freqs_sq(iq_db,max_Sat_pos(i1,2))))
      write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight(i1)
      call msg('sr',message)
      write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
      call msg('sr',message)
-     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),max_Sat_pos(i1,1))*HA2EV
+     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),iq_ibz)*HA2EV
      call msg('sr',message)
    enddo
    !
    call msg('sr',' Max satellite weight (phonon absorption): ')
    do i1=EXCPH_states(1),EXCPH_states(2)
       iq_bz = max_Sat_pos_PH_abs(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
-      ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos_PH_abs(i1,2))))
+      iq_db =Q_io_map(iq_bz)
+      iq_ibz=q%sstar(iq_bz,1)
+      ph_E=sqrt(abs(ph_freqs_sq(iq_db,max_Sat_pos_PH_abs(i1,2))))
       write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight_PH_abs(i1)
       call msg('sr',message)
       write(message,*) '   for iq = '//intc(max_Sat_pos_PH_abs(i1,1))//' il = '//intc(max_Sat_pos_PH_abs(i1,2))//'  ib = ' &
 &                                     //intc(max_Sat_pos_PH_abs(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
      call msg('sr',message)
-     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),max_Sat_pos(i1,1))*HA2EV
+     write(message,*) '   E(in) = ',real(BS_E_in(i1))*HA2EV, ' E(out)= ',BS_all_E(max_Sat_pos(i1,3),iq_ibz)*HA2EV
      call msg('sr',message)
      enddo
     !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -24,7 +24,6 @@
 subroutine RT_G_two_times_interp_and_plot(en,kpt,qpt)
  !
  use pars,           ONLY:SP
- use com,            ONLY:of_open_close
  use YPP_interfaces, ONLY:k_special
  use YPPm,           ONLY:BANDS_path,BANDS_steps,CIRCUIT_k,USER_k
  use RT_control,     ONLY:RTibz_to_RT_k

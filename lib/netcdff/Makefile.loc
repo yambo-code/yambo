@@ -41,9 +41,8 @@ configure-stamp: uncompress-stamp
 	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      ./configure $(AUXFLAGS) \
 	      CC="$(cc)" \
+	      CFLAGS="$(cflags)" \
 	      CPP="$(cpp)" \
-	      CXX="$(cc)" \
-	      CXXCPP="$(cpp)" \
 	      FC="$(fc)" \
 	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf) $(inetcdf)" \
 	      LIBS="$(lnetcdf) $(lpnetcdf) $(lhdf5)" \
@@ -67,7 +66,7 @@ $(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-install
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@if test -d $(PACKAGE) && test -e configure-stamp; then ( cd $(PACKAGE);  $(make) -s distclean-recursive ) ; fi
 	@- rm -rf package-ready-stamp configure-stamp package-installed
 
 clean_all: clean

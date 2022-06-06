@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -60,6 +60,5 @@ subroutine INIT_read_command_line_corr_scatt(KIND,STR,POS,l_ee,l_ep,l_pe,l_eh)
  if (l_ep)     call initactivate(1,'el_ph_'//trim(suffix))
  if (l_pe)     call initactivate(1,'ph_el_'//trim(suffix))
  if (l_eh)     call initactivate(1,'el_photon_'//trim(suffix))
- !
  !
 end subroutine

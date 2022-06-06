@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -44,7 +44,7 @@ fi
 #
 # Projects 
 #==========
-for PJ in _SC _RT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
+for PJ in _SC _RT _RT_SCATT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
 do
  sources_pj_dependent=" "
  for file in $sources

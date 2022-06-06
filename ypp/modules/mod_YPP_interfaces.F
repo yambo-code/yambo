@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,21 +27,33 @@ module YPP_interfaces
  !
  interface
    !
-   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
+#if defined _YPP_RT
+   !
+   subroutine  RT_OBSERVABLES_IO(what,J,P,IO_error,first_sec_only,G_lesser_only,COM_)
+     use YPP_real_time,  ONLY:OBS_el
+     use electrons,      ONLY:levels
+     implicit none
+     character(*)           :: what
+     type(OBS_el), optional :: J,P
+     logical,      optional :: IO_error,first_sec_only,G_lesser_only
+     integer,      optional :: COM_
+   end subroutine
+   !
+#endif
+   !
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels,n_spin
      use R_lattice,      ONLY:bz_samp 
      use electrons,      ONLY:n_spin
      use YPPm,           ONLY:DOS_E_steps
      implicit none
-     type(bz_samp), intent(in) :: k
-     type(levels),  intent(in) :: E
-     integer,       intent(in) :: bands(2)
-     real(SP),      intent(in) :: dos_E(DOS_E_steps)
-     real(SP),      intent(out):: el_dos(DOS_E_steps,n_spin)
-     real(SP), pointer,  intent(in) :: WF_fac(:,:,:)
-     real(SP), pointer,  intent(in) :: PDOS_fac(:,:,:)
-     logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
+     type(bz_samp),    intent(in) :: k
+     type(levels),     intent(in) :: E
+     integer,          intent(in) :: bands(2),ID_spin,ID_pdos
+     real(SP),         intent(in) :: dos_E(DOS_E_steps)
+     real(SP),         intent(out):: el_dos(DOS_E_steps,n_spin)
+     logical, optional,intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
    end subroutine electrons_dos_elemental
    !
    subroutine excitons_sort_and_report(iq,BS_R,BS_E,BS_E_SOC_corr,EXC_spin)

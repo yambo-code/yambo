@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -36,17 +36,17 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  type(bz_samp), intent(in) ::Xk
  type(levels),  intent(in) ::Xen
  !
- real(SP),   intent(in)  :: dos_E,DOS_broadening
- integer,    intent(in)  :: DOS_bands(2)
- real(SP),   intent(out) :: dos_value(n_spin)
+ real(SP),           intent(in) :: dos_E,DOS_broadening
+ integer,            intent(in) :: DOS_bands(2)
+ real(SP),          intent(out) :: dos_value(n_spin)
  logical,  optional, intent(in) :: USE_Eo,USE_W,USE_the_DbGd,USE_occupations
- real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
- real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
+ real(SP), optional, intent(in) :: WF_fac(:,:,:)
+ real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
  !
  ! Work space
  !
  integer   :: i_sp_pol,ik,ik_fg,ib,iE_fg
- real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin),DOS_Broadening_
+ real(SP)  :: el_dos_tmp(n_sp_pol),f_occ,E,proj_fac(n_spin),DOS_broadening_
  logical   :: ik_ibz_done(Xk%nibz),USE_Eo_,USE_W_,USE_the_DbGd_,USE_occ,USE_WFs,USE_PDOS
  !
  dos_value=0._SP
@@ -65,11 +65,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  USE_occ=.FALSE.
  if (present(USE_occupations)) USE_occ=USE_occupations
  !
- USE_WFs=.FALSE.
- if (present(WF_fac))          USE_WFs=associated(WF_fac)
- !
- USE_PDOS=.FALSE.
- if (present(PDOS_fac))        USE_PDOS=associated(PDOS_fac)
+ USE_WFs =present(WF_fac)
+ USE_PDOS=present(PDOS_fac)
  !
  DOS_broadening_=DOS_broadening
  !
@@ -110,10 +107,10 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        ! Project on SOC coefficients
        !
-       if(n_spinor==2) then
-         if(USE_WFs) then
-           proj_fac(1)=proj_fac(1)*WF_fac(ib,ik,1)
-           proj_fac(2)=proj_fac(2)*WF_fac(ib,ik,2)
+       if (n_spinor==2) then
+         if (USE_WFs) then
+           proj_fac(1)=proj_fac(1)*WF_fac(ib-DOS_bands(1)+1,ik,1)
+           proj_fac(2)=proj_fac(2)*WF_fac(ib-DOS_bands(1)+1,ik,2)
          else
            proj_fac   =proj_fac*0.5_SP
          endif
@@ -121,11 +118,12 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        ! Project on PSOC coefficients
        !
-       if(USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
+       if (USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib-DOS_bands(1)+1,ik,i_sp_pol)
        !
-       if(n_spinor==1) dos_value(i_sp_pol)=dos_value(i_sp_pol)+el_dos_tmp(i_sp_pol)*proj_fac(i_sp_pol)
+       ! Sum-up
        !
-       if(n_spinor==2) dos_value          =dos_value          +el_dos_tmp(1)       *proj_fac
+       if (n_spinor==1) dos_value(i_sp_pol)=dos_value(i_sp_pol)+el_dos_tmp(i_sp_pol)*proj_fac(i_sp_pol)
+       if (n_spinor==2) dos_value          =dos_value          +el_dos_tmp(1)       *proj_fac
        !
      enddo  ! ib
      !

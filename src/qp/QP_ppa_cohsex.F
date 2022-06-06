@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM [AF,IM,MB]
@@ -48,10 +48,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,GW_terminator_E,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
- use X_m,           ONLY:X_alloc,X_par,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_par,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
-&                        RIM_W_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,G_m_G_d,nqibz,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V,V_dot_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free,MATRIX_transpose,MATRIX_duplicate
@@ -87,7 +87,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer          :: X_rows1,X_rows2,X_cols1,X_cols2,X_nrows,X_ncols
  !
  character(schlen):: ch,SECTION_name,W_name
- logical          :: X_is_TR_rotated,l_X_alloc,l_RIM_W_g
+ logical          :: X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
  real(SP)         :: eet_cutoff0_sp(n_sp_pol),eet_cutoff0,eet_cutoff1_sp(n_sp_pol),eet_cutoff1
  real(SP)         :: X_ppaE,bose_PPA_E,eet_energy
  real(SP)         :: E_kmq,f_kmq,PPA_E
@@ -215,17 +215,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  ! deallocate X_mat
- call X_alloc("X")
+ call X_ALLOC_elemental("X")
  !
  if (.not.allocated(X_par).and.io_RESPONSE) then
    allocate(X_par(1))
  endif
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(1),X%ng,1,"X")
+   if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,1,"X")
    YAMBO_ALLOC(dc,(2))
  else
-   if (io_RESPONSE) call X_PARALLEL_alloc(X_par(1),X%ng,2,"X")
+   if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2,"X")
    YAMBO_ALLOC(W_,(QP_dSc_steps))
    YAMBO_ALLOC(dc,(QP_dSc_steps))
  endif
@@ -637,7 +637,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              else
                PPA_R=-X_blc_p(ig1,ig2,X_range1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
              endif
-             
              !
              ! inline bose_f function
              bose_PPA_E=0.
@@ -767,17 +766,17 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(local_rhotw)
  YAMBO_FREE(conjg_iscp_rhotw)
  !
- l_X_alloc=.true.
+ l_X_ALLOC_elemental=.true.
 #if defined _SC
- l_X_alloc=l_sc_run.and.io_RESPONSE
+ l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
 #endif
- if(l_X_alloc) then
+ if(l_X_ALLOC_elemental) then
    do iq_mem = 1,size(X_par)
      call MATRIX_reset(X_par(iq_mem))
    enddo
    if (allocated(X_par)) deallocate(X_par)
  endif
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  !
  call timing('GW(ppa)',OPR='stop')
  !

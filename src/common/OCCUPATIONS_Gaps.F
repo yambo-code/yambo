@@ -1,5 +1,5 @@
 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,filled_tresh,spin_occ
  !
  implicit none
  !

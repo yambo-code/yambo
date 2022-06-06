@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,6 +42,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
+ use matrix,        ONLY:MATRIX_reset
  use matrix_operate,ONLY:mat_transpose
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use wave_func,     ONLY:WF
@@ -52,7 +53,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        QP_W,QP_solver,QP_W_er,QP_W_dr,QP_n_W_freqs,QP_Sc_steps,&
 &                        QP_n_W_freqs_redux,e2et,h2ht
- use X_m,           ONLY:X_alloc,X_mat,X_t,X_par
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t,X_par
  use functions,     ONLY:bose_decay
  use R_lattice,     ONLY:qindx_S,bz_samp
  use D_lattice,     ONLY:nsym,i_space_inv,i_time_rev,mag_syms
@@ -279,7 +280,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  ! ALLOCATION (scattering_main)
  !
- call X_alloc('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))
  !
  call elemental_collision_alloc(scattering_main,NG=X%ng,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(scattering_prime,NG=X%ng,TITLE="GW")
@@ -379,7 +380,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    ! TO BE completed (avoiding reference to X_mat in the following)
    !
    if (.not. allocated(X_par) ) allocate(X_par(1))
-   call X_PARALLEL_alloc(X_par(1),X%ng,Xw%n_freqs,"X")
+   call X_ALLOC_parallel(X_par(1),X%ng,Xw%n_freqs,"X")
    !
    ! Useful when GPU porting will be introduced
    ! X_blc_p=> DEV_VAR(X_par%blc)
@@ -507,7 +508,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      enddo bands_loop
    enddo qp_loop
    !
-   call X_PARALLEL_alloc(X_par(1),0,0,"CLEAN")
+   call MATRIX_reset(X_par(1))
    !
    if (.not.l_life) then
      !
@@ -572,7 +573,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  !
  if (allocated(X_par)) deallocate(X_par)
  !
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  call WF_free(WF)
  call elemental_collision_free(scattering_main)
  call elemental_collision_free(scattering_prime)

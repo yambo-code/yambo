@@ -199,7 +199,7 @@ subroutine INIT_ypp_load(defs)
  ! TRANSIENT ABSORPTION
  !
  call it(defs,'TRabsOBS',&
-&             '[RT] RT observable. It can be a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
+&             '[RT] RT obs. Use a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
  call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
  call it(defs,'TRabsDIPdir',   '[RT] Dipole reference direction. Defines the internal `x` axis',TRabsDIP_dir)
  call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)

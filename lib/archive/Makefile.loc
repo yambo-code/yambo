@@ -4,7 +4,7 @@
 include ./package.list
 include ./git.list
 #
-WGETFLAGS=--no-check-certificate
+WGETFLAGS=--no-check-certificate -v
 #
 all: $(EXT_LIBS)
 #
@@ -75,11 +75,11 @@ clean_all:
 #
 define getsrc
  if test ! -s $$LIB".tar.gz" ; then \
-  echo -n "getting "$$LIB "..."; \
+  echo "\t[$$LIB] download";\
   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
-   wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL ; \
+   wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
   elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-   curl -L --progress-bar -o $$LIB".tar.gz" $$URL ; \
+   curl -L --progress-bar -o $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1 ; \
   fi ; \
   if test ! -s $$LIB".tar.gz" ; then \
    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
@@ -91,17 +91,16 @@ endef
 #
 define getsrc_git
  if test ! -s $$LIB".tar.gz" && test ! -d $$LIB ; then \
-  echo -n "getting "$$LIB "..."; \
+  echo "\t[$$LIB] download";\
   if [ ! "$$GBRANCH" = "none" ] ; then \
    echo " via $$GIT" ; \
    if [ ! -d $$LIB ]; then git clone $$GIT $$LIB; fi ; \
    cd $$LIB ; git checkout $$GBRANCH ; cd ../ ; \
   else \
-   echo "via wget" ; \
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
-    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL ; \
+    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-    curl -L --progress-bar -o $$LIB".tar.gz" $$URL ; \
+    curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    fi \
   fi;\
  fi

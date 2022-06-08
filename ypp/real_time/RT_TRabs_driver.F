@@ -213,7 +213,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
  YAMBO_ALLOC(TRabs_RES_right,(N_trans*N_res,N_DIP_dirs,2))
  !
  ! ... Observables 
- YAMBO_ALLOC(Epsilon_ij,(RT_conf%W_n_steps,3,3)) 
+ if (l_ABS) then
+   YAMBO_ALLOC(Epsilon_ij,(RT_conf%W_n_steps,3,3)) 
+ endif
  if (l_OFF) then
    YAMBO_ALLOC(B_Hall,(3,3)) 
  endif
@@ -248,9 +250,9 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
    !
    TRabs_E        =rZERO
    TRabs_RES_left =cZERO
-   TRabs_RES_right    =cZERO
-   if (l_KERR) B_Hall =cZERO
-   Epsilon_ij         =cZERO
+   TRabs_RES_right=cZERO
+   if (l_KERR) B_Hall    =cZERO
+   if (l_ABS ) Epsilon_ij=cZERO
    !
    N_trans_real=0
    if (l_BS) call RT_TRabs_residuals("BSE",N_trans_real,N_DIP_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
@@ -272,7 +274,7 @@ subroutine RT_transient_absorption(Xen,Xk,Xq)
      enddo
    enddo
    !
-   call PP_redux_wait(Epsilon_ij)
+   if (l_ABS)  call PP_redux_wait(Epsilon_ij)
    if (l_KERR) call PP_redux_wait(B_Hall)
    !
    ! Output (write)

@@ -5,63 +5,49 @@
 #
 include ../../config/setup
 include ../archive/package.list
-
+#
 LIBNAME=libyaml.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_yaml)
 TARBALL=$(tarball_yaml)
-
 #
-# redefinitions
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
 AUXFLAGS=--prefix=$(LIBPATH)
 
 #
-# MAIN target
-#
-all: $(LIBRARY)
-
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
-
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	  ./configure $(AUXFLAGS) \
+CONFFLAGS=--prefix=$(LIBPATH) \
 	  CC="$(cc)" \
 	  FC="$(fc)" \
 	  F77="$(fc)" \
 	  CPP="$(cpp)" \
-	  FCCPP="$(fpp)" ); \
-	fi
-	touch configure-stamp
-  
-package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) ) ; fi
-	touch package-ready-stamp
+	  FCCPP="$(fpp)"
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
 
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
+configure: uncompress
+	@$(configure)
 
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+compile: uncompress configure
+	@$(call compile)
+	
+install: uncompress configure compile
+	@$(call install_via_make,yaml)
 
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(call clean_the_lib,clean)
 
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp 
-  
-define install
-	cd $(PACKAGE);  $(make) install; chmod u+x $(LIBPATH)/lib/libyaml.a
-endef 
+	@$(rm_the_lib)
+#

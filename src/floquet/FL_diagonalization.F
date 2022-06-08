@@ -54,7 +54,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
- integer     :: FL_chosen_bands(NL_bands(1):E%nbf)
+ integer     :: FL_chosen_bands(NL_bands(1):E%nbf),i1_fks_eigenvec
  character(4) :: filename
  integer     :: line_counter,i_central_fks,trial_chosen_band_QE
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
@@ -150,27 +150,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
                     & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
        trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
        !
-       ! select eigenvector - 2. by Quasi-Energy
-       !
-       do i1_fks=FL_states(1),FL_states(2)
-       energy_difference(i1_fks) = &
-                    &   abs(FL_eigenvalues(i1_fks,ik_bz,is) &
-                    &     - E_full(i_m,ik_bz,is))
-       enddo
-       !
-       trial_chosen_band_QE = FL_states(1) - 1 + &
-&      minloc(energy_difference(FL_states(1):FL_states(2)),dim=1)
-       !
-       if (FL_chosen_bands(i_m) /= trial_chosen_band_QE) then
-         !print*, 'kpt=',ik_bz,'i_m=',i_m,'chosen:',FL_chosen_bands(i_m),trial_chosen_band_QE
-         !
-         energy_crossing = abs( &
-&        energy_difference(FL_chosen_bands(i_m)) - &
-&        energy_difference(trial_chosen_band_QE))
-         !
-        !call warning ('   There are Quasi-Energy crossings in the system')
-         !
-       endif
+       !aim137 DEBUG <
+       !print*, 'kpt: ',ik_bz,' band: ',i_m,' complex quasienergy: ', NHM_Cmpl_Val(FL_chosen_bands(i_m))
+       !print*, 'real quasienergy: ',trial_val
+       !aim137 DEBUG >
        !
        ! Set phase zero for central component of the eigenvector
        ! we are not doing this in the end
@@ -184,7 +167,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        !
        do i1_fks=FL_states(1),FL_states(2)
          !
-         if (abs(trial_vec(i1_fks)) > 0.2_SP .and. i1_fks /= i_central_fks) then
+         if (abs(trial_vec(i1_fks)) > 0.5_SP .and. i1_fks /= i_central_fks) then
            !
            i1 = nint(real(i1_fks/n_tot_fl_modes,SP))+1
            i1_fl = mod(i1_fks,n_tot_fl_modes)
@@ -195,12 +178,19 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
              i1_fl = i1_fl - (max_fl_mode+1)
            endif
            !
-           !print*, 'kpt = ',ik_bz, ' band = ',i_m, 'band2 =',i1
-           !print*, i_central_fks,i_central_fks,FL_Ho_plus_Sigma(i_central_fks,i_central_fks,ik_mem,1)
-           !print*, i_central_fks,i1_fks,FL_Ho_plus_Sigma(i_central_fks,i1_fks,ik_mem,1)
-           !print*, i1_fks,i_central_fks,FL_Ho_plus_Sigma(i1_fks,i_central_fks,ik_mem,1)
-           !print*, i1_fks,i1_fks,FL_Ho_plus_Sigma(i1_fks,i1_fks,ik_mem,1)
-           !write(*,'(100(1f7.4))') abs(trial_vec)
+           i1_fks_eigenvec = FL_states(1) - 1 + &
+&          maxloc(abs(FL_eigenvectors(i1_fks,FL_states(1):FL_states(2))),dim=1)
+           !
+           print*, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  kpt = ',ik_bz, &
+                   &' band = ',i_m,'(',E%E(i_m,ik_bz,1)*HA2EV,' eV) -- &
+                   & band2 = ',i1, '(',E%E(i1 ,ik_bz,1)*HA2EV,' eV)'
+!          print*, i_central_fks,i_central_fks,FL_Ho_plus_Sigma(i_central_fks,i_central_fks,ik_mem,1)
+!          print*, i_central_fks,i1_fks,FL_Ho_plus_Sigma(i_central_fks,i1_fks,ik_mem,1)
+!          print*, i1_fks,i_central_fks,FL_Ho_plus_Sigma(i1_fks,i_central_fks,ik_mem,1)
+!          print*, i1_fks,i1_fks,FL_Ho_plus_Sigma(i1_fks,i1_fks,ik_mem,1)
+           write(*,'(100(1f7.4))') trial_val*HA2EV,abs(trial_vec)
+           write(*,'(100(1f7.4))') FL_eigenvalues(i1_fks_eigenvec,ik_bz,1)*HA2EV,&
+                   &               abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec))
           !call msg('r','Detected population inversion at k-point: ',ik_bz)
           !call msg('r','involving band: ',i_m)
           !call msg('r','and band: ',i1)

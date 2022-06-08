@@ -134,7 +134,7 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
-!$omp parallel do default(shared), private(i2,iv1)
+! $omp parallel do default(shared), private(i2,iv1)
  do i2=H_ref_bands(1),H_ref_bands(2)
    do iv1=1,en%nbf
      do i1_fl=1,n_tot_fl_modes
@@ -147,6 +147,6 @@ subroutine FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_t
      enddo
    enddo
  enddo
-!$omp end parallel do
+! $omp end parallel do
  !
 end subroutine FL_build_tilde_V_bands

@@ -179,22 +179,22 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      ! First order formula D(dk)      
      ! Eq. 96 of PRB 63, 155107(2001)
      !
-     !$omp parallel do default(shared), private(id)
+     ! $omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,:,:)=Wk(id,:,:)+Wop(:,:,1)*a(id_red,id)
      enddo
-     !$omp end parallel do
+     ! $omp end parallel do
      !
    else
      !      
      ! Second order formula   ( 4*D(dk) - D(2*dk) ) / 3
      ! Eq. 97 of PRB 63, 155107(2001)
      !
-     !$omp parallel do default(shared), private(id)
+     ! $omp parallel do default(shared), private(id)
      do id=1,3
        Wk(id,:,:)=Wk(id,:,:)+(4._SP*Wop(:,:,1)-Wop(:,:,2))/3._SP*a(id_red,id)
      enddo
-     !$omp end parallel do
+     ! $omp end parallel do
      !
    endif
    !
@@ -204,13 +204,15 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  ! Make an Hermitian operator
  !
- !$omp parallel do default(shared), private(id)
+ ! $omp parallel do default(shared), private(id)
  do id=1,3
-   Wk(id,:,:)=Wk(id,:,:)+hermitian(Wk(id,:,:))
+   Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
+  &Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)) + &
+  &hermitian(Wk(id,FL_states(1):FL_states(2),FL_states(1):FL_states(2)))
  enddo
- !$omp end parallel do
+ ! $omp end parallel do
  !
- !$omp parallel do default(shared), private(i1,id)
+ ! $omp parallel do default(shared), private(i1,id)
   do i1=H_ref_bands(1),H_ref_bands(2)
     do i1_fl=1,n_tot_fl_modes
       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
@@ -220,6 +222,6 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
       enddo
     enddo
   enddo
- !$omp end parallel do
+ ! $omp end parallel do
  !
 end subroutine FL_build_W_operator

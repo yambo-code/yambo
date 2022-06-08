@@ -177,9 +177,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            !
          enddo
          !
-      !  FL_delta_rho = FL_delta_rho * FL_beta + &
-      ! &               FL_delta_rho_hist !* (1._SP-FL_beta)
-         !
          FL_delta_rho_hist = FL_delta_rho
          !
          !aim137 prelim - find appropriate criterio to have Rho converged

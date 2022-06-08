@@ -186,7 +186,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  FL_Chi_pol(:,:,:,:) = cZERO
  !
- call section('r','FL self-consistency')
+ call section('*','FL self-consistency')
  do i_f=1,n_frequencies
    !
    !print*, 'Frequency step = ',i_f,' of ',n_frequencies
@@ -260,7 +260,10 @@ subroutine FL_driver(E,X,k,q,Dip)
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy)
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
      if (FL_iteration == FL_max_iterations) l_FL_sc_reached = .true.
-     print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
+     if (FL_iteration == FL_max_iterations) &
+&    print*, 'Frequency step',i_f,' with value ',Efield(1)%frequency(1)*HA2EV,&
+&            ' was unconverged - acc=',real(accuracy), aimag(accuracy)
+     !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !print*, FL_iteration, '----------------------------------------', l_FL_conv_Chi,l_FL_conv_Rho,l_FL_sc_reached
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative

@@ -110,7 +110,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        !
        ! Matrix head
        !
-!$omp parallel do default(shared), private(i1,i2)
+! $omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1
          do i1=1,H_ref_bands(1)-1
            i1_extra = max_extra_mode+1 
@@ -118,13 +118,13 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
            FL_S_minus(i1,i2,i1_extra,id+(istep-1)*3)=conjg(DIP_S(i2,i1,id+(istep-1)*3,ikm,i_sp))
          enddo
        enddo
-!$omp end parallel do
+! $omp end parallel do
        !
        ! Matrix wings
        !
        ! aim137: this wing is included in the calculation of the core
        !
-!!$omp parallel do default(shared), private(i1,i2)
+!! $omp parallel do default(shared), private(i1,i2)
 !       do i1=1,H_ref_bands(1)-1 ! wing 2
 !         do i2=H_ref_bands(1),en%nbf
 !           do i1_fl=1,n_tot_fl_modes
@@ -136,8 +136,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
 !           enddo
 !         enddo
 !       enddo
-!!$omp end parallel do
-!$omp parallel do default(shared), private(i1,i2)
+!! $omp end parallel do
+! $omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1 ! wing 1
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
@@ -150,7 +150,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
            enddo
          enddo
        enddo
-!$omp end parallel do
+! $omp end parallel do
        !
        ! Matrix core
        !
@@ -186,7 +186,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
        !
        ! Matrix head
        !
-!$omp parallel do default(shared), private(i1,i2)
+! $omp parallel do default(shared), private(i1,i2)
        do i1=1,H_ref_bands(1)-1
          do i2=1,H_ref_bands(1)-1
            i1_extra = max_extra_mode+1 
@@ -194,13 +194,13 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
            FL_S_plus(i1,i2,i1_extra,id+(istep-1)*3)=DIP_S(i1,i2,id+(istep-1)*3,ikbz,i_sp)
          enddo
        enddo
-!$omp end parallel do
+! $omp end parallel do
        !
        ! Matrix wings
        !
        !aim137: this wing is included in the calculation of the core
        !
-!!$omp parallel do default(shared), private(i1,i2)
+!! $omp parallel do default(shared), private(i1,i2)
 !       do i1=1,H_ref_bands(1)-1 ! wing 2
 !         do i2=H_ref_bands(1),en%nbf
 !           do i1_fl=1,n_tot_fl_modes
@@ -212,8 +212,8 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
 !           enddo
 !         enddo
 !       enddo
-!!$omp end parallel do
-!$omp parallel do default(shared), private(i1,i2)
+!! $omp end parallel do
+! $omp parallel do default(shared), private(i1,i2)
        do i2=1,H_ref_bands(1)-1 ! wing 1
          do i1=H_ref_bands(1),en%nbf
            do i1_fl=1,n_tot_fl_modes
@@ -226,7 +226,7 @@ subroutine FL_overlaps(en,Xk,i_sp,ikbz,FL_V_bands,FL_S_plus,FL_S_minus,FL_time_S
            enddo
          enddo
        enddo
-!$omp end parallel do
+! $omp end parallel do
        !
        ! Matrix Core
        !

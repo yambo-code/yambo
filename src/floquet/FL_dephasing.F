@@ -146,7 +146,7 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  endif
  !aim137 DEBUG <
  !
- !$omp parallel do default(shared), private(i1,id)
+ ! $omp parallel do default(shared), private(i1,id)
   do i1=H_ref_bands(1),H_ref_bands(2)
     do i1_fl=1,n_tot_fl_modes
       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
@@ -154,6 +154,6 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  &      cI * NL_damping * I_deph(i1_fks,:)
     enddo
   enddo
- !$omp end parallel do
+ ! $omp end parallel do
  !
 end subroutine FL_dephasing

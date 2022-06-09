@@ -175,10 +175,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      if(iv/=ic) DEV_VAR(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
      !
      ! 2022/05/11 DS & AF
-     ! Note: if this is  lim (q->0) <psi_nk+q | 1 | psi_nk > = 0._SP
-     !       if this is             <psi_nk   | 1 | psi_nk > = 1._SP
-     !       in the code the value cONE is needed for the Drude term, to be checked what to do with the terminator
+     ! Note: lim (q->0) <psi_nk+q | e-^{-i*q*r} | psi_nk > = <psi_nk   | 1 | psi_nk > = 1._SP
+     !       in the code the value cONE is needed for the Drude term;
+     !       to be checked what to do with the terminator
      !       at present with the terminator we use 0.0_SP
+     !
+     ! If I take the expansion e-^{-i*q*r}= 1 + O(q) for the leading term this gives instead
+     !       lim (q->0) <psi_nk+q | 1 | psi_nk > = 0._SP 
+     !       Only using also <psi_nk+q | = <psi_nk | (1 + O(q) ) we recover the correct result.
      !
      if(iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected)
      !

@@ -38,12 +38,9 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  ! Work space
  !
  integer     :: i_alpha,i_beta,il,iq_db,iE_fg,iq_fg,nq_around
- real(SP)    :: ph_E,weight_DbGd,E_alpha,E_beta
+ real(SP)    :: ph_E,weight_dbgd,weight_dbgd_PH_abs,E_alpha,E_beta
  complex(SP) :: W_DG,W_DG_PH_abs
  real(SP), external :: get_ph_E_DbGd
- !
- nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1 ! Number of fine q-points around iq_bz
- weight_dbgd=1._SP/real(nq_around,SP)
  !
  ! Calculate satellites weights and renormalization factors without double-grid
  !
@@ -58,11 +55,15 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
        W_DG=cZERO
        W_DG_PH_abs=cZERO
        !
+       weight_dbgd        =rZERO
+       weight_dbgd_PH_abs =rZERO
+       !
        ! Renormalize satellite weight with double-grid
-       ! 
+       !
        do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
          !
          if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+           !      
            iq_db=Q_io_map(iq_bz)
            ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
            !
@@ -80,16 +81,27 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
          !
          E_beta  =EXC_E_DbGd(i_beta,iq_fg)
          !
-         W_DG       =W_DG + 1._SP/(E_beta-E_alpha+ph_E+cI*L_damping)
-         W_DG_PH_abs=W_DG_PH_abs + 1._SP/(E_beta-E_alpha-ph_E+cI*L_damping)
+         if(abs(E_beta-E_alpha+ph_E)>FAN_deltaE_treshold) then
+           W_DG        =W_DG + 1._SP/(E_beta-E_alpha+ph_E+cI*L_damping)
+           weight_dbgd =weight_dbgd+1._SP
+         endif
+         !  
+         if(abs(E_beta-E_alpha-ph_E)>FAN_deltaE_treshold) then
+           W_DG_PH_abs        =W_DG_PH_abs       + 1._SP/(E_beta-E_alpha-ph_E+cI*L_damping)
+           weight_dbgd_PH_abs =weight_dbgd_PH_abs+1._SP
+         endif
          ! 
        enddo
        !
-       W_DG       =W_DG       *weight_dbgd*       abs(BS_Sat_E(il,i_beta,i_alpha))
-       W_DG_PH_abs=W_DG_PH_abs*weight_dbgd*abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))
+       if(weight_dbgd/=rZERO) then
+         W_DG       =W_DG       *1._SP/weight_dbgd       *abs(BS_Sat_E(il,i_beta,i_alpha))
+         BS_Sat_WEIGHT(il,i_beta,i_alpha)       =BS_Sat_WEIGHT(il,i_beta,i_alpha)       *abs(W_DG)**2
+       endif
        !
-       BS_Sat_WEIGHT(il,i_beta,i_alpha)       =BS_Sat_WEIGHT(il,i_beta,i_alpha)       *abs(W_DG)**2
-       BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*abs(W_DG_PH_abs)**2
+       if(weight_dbgd_PH_abs/=rZERO) then
+         W_DG_PH_abs=W_DG_PH_abs*1._SP/weight_dbgd_PH_abs*abs(BS_Sat_E_PH_abs(il,i_beta,i_alpha))
+         BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)*abs(W_DG_PH_abs)**2
+       endif
        !
      enddo  ! il
    enddo  ! i_beta

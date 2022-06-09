@@ -114,7 +114,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  max_Sat_weight_PH_abs=rZERO
  max_Sat_pos_PH_abs   =0
  !
- call live_timing('Satellites',q%nibz)
+ call live_timing('Satellites',q%nbz)
  !
  do iq_bz=1,q%nbz
    !

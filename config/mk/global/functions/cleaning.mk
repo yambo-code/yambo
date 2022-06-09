@@ -9,11 +9,12 @@ define clean_driver
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_mod_driver); \
  fi;\
  if [ "$(1)" = "ext-libs"  ] || [ -z "$(1)" ]                       ; then \
-   EXTS="internal";ACTION="clean";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
+   ACTION="clean";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_ext_lib_dir); \
  fi; \
  if [ "$(1)" = "ext-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
+   ACTION="clean_all";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_ext_lib_dir); \
    $(clean_ext_libs_bin_and_include); \
-   EXTS="Makefile -stamp";ACTION="clean_all";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
+   EXTS="Makefile .stamp";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
@@ -55,16 +56,23 @@ define clean_dir_driver
   for dirtoclean in $$TARG; do \
    if test -d $$WDIR/$$dirtoclean; then\
     find $$WDIR/$$dirtoclean \( -name '*'$$ext  \) |  xargs rm -fr ; \
-    if test -f $$WDIR/$$dirtoclean/Makefile.loc; then \
-      $(ECHO)  "\t[CLEANING $$dirtoclean] Internal procedures" ; \
-      CWD=`pwd`;\
-      cd $$WDIR/$$dirtoclean;\
-      $(MAKE) -s -f Makefile.loc $$ACTION;\
-      cd $$CWD;\
-    fi;\
    fi;\
   done;\
  done
+endef
+define clean_ext_lib_dir
+ $(ECHO) -n "\t[CLEANING external-libraries]" ; \
+ for dirtoclean in $$TARG; do \
+  if test -f $$WDIR/$$dirtoclean/Makefile.loc; then \
+   $(ECHO) -n " $$dirtoclean" ; \
+   CWD=`pwd`;\
+   cd $$WDIR/$$dirtoclean;\
+   $(MAKE) -s -f Makefile.loc $$ACTION;\
+   cd $$CWD;\
+  fi;\
+ done; \
+ find lib/archive/* -type d  |xargs rm -fr; \
+ $(ECHO)
 endef
 define clean_mod_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
@@ -80,7 +88,8 @@ define clean_lib_driver
  $(ECHO) "\t[CLEANING $$LMSG] Libraries" ; \
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
-  find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; \
+  if test -d $$dirtoclean; then find $$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
+  if test -d $$WDIR/$$dirtoclean; then find $$WDIR/$$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
   rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; \
  done
 endef
@@ -116,7 +125,7 @@ define clean_bin
  rm -fr $(prefix)/log/*
 endef
 define clean_ext_libs_bin_and_include
- $(ECHO) "\t[CLEANING] External libraries bin and include" ; \
+ $(ECHO) "\t[CLEANING external-libraries] bin(s) and include(s)" ; \
  rm -fr $(prefix)/lib/bin/*; \
  rm -fr $(prefix)/include/system
 endef

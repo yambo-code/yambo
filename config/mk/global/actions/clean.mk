@@ -1,12 +1,12 @@
 gitclean: clean_all
 	@git clean -fdx
 distclean: clean_all
-clean_all: dependencies
+clean_all: 
 	@$(call clean_driver,all)
-clean: dependencies
+clean: 
 	@$(call clean_driver,$(what))
 	@$(call clean_driver,"stamps")
-reset: dependencies
+reset:
 	@$(call clean_driver,"")
 	@$(call clean_driver,"int-libs")
 check: 

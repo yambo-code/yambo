@@ -59,8 +59,6 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  complex(SP) :: pole
  real(SP), external :: get_ph_E_DbGd
  !
- nq_around  =q%FGbz%k_range(iq_bz,2)-q%FGbz%k_range(iq_bz,1)+1 ! Number of fine q-points around iq_bz
- weight_dbgd=1._SP/real(nq_around,SP)                
  !
  BS_ave_W       =BS_Sat_WEIGHT(il,i_beta,i_alpha)
  BS_ave_W_PH_abs=BS_Sat_WEIGHT_PH_abs(il,i_beta,i_alpha)
@@ -74,6 +72,8 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  Sat_emission  =cZERO
  !
  E_alpha =BS_E_in(i_alpha)
+ !
+ weight_dbgd=rZERO
  !
  do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2),1
    !
@@ -93,6 +93,8 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
    endif
    !
    if(ph_E<FAN_deltaE_treshold) cycle
+   !
+   weight_dbgd=weight_dbgd+1._SP
    !
    bose_factor=bose_f(ph_E)
    !
@@ -147,8 +149,20 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  enddo
  !
  ! Average on the q%FGbz points around iq_bz including the point calculated in Satellite_Simple
- ! 
- Sat_emission  =Sat_emission*weight_dbgd
- Sat_absorption=Sat_absorption*weight_dbgd
+ !
+ if(weight_dbgd/=rZERO) then
+   !
+   weight_dbgd=1._SP/weight_dbgd 
+   Sat_emission  =Sat_emission*weight_dbgd
+   Sat_absorption=Sat_absorption*weight_dbgd
+   !
+ else
+   !
+   ! Case for acustic phonons close to Gamma
+   !   
+   Sat_emission  =cZERO
+   Sat_absorption=cZERO
+   !
+ endif
  !
 end subroutine Satellite_DbGrid

@@ -1,11 +1,11 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ylib
 #
 # storing options
 #
-keep_Ydriver=yes
+keep_Ylib=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
@@ -25,8 +25,8 @@ keep_hdf5=no
 #
 # package names
 #
-pkgname_Ydriver=Ydriver-0.0.2
-pkgname_iotk=iotk
+pkgname_Ylib=Ydriver-1.1.0
+pkgname_iotk=iotk-y1.2.2
 pkgname_netcdf=netcdf-c-4.7.4
 pkgname_netcdff=netcdf-fortran-4.5.3
 pkgname_pnetcdf=pnetcdf-1.12.1
@@ -45,8 +45,8 @@ pkgname_futile=futile-yambo
 #
 # tarball names
 #
-tarball_Ydriver=$(pkgname_Ydriver).tar.gz
-tarball_iotk=iotk-y1.2.2.tar.gz
+tarball_Ylib=$(pkgname_Ylib).tar.gz
+tarball_iotk=$(pkgname_iotk).tar.gz
 tarball_netcdf=$(pkgname_netcdf).tar.gz
 tarball_netcdff=$(pkgname_netcdff).tar.gz
 tarball_pnetcdf=$(pkgname_pnetcdf).tar.gz
@@ -60,7 +60,7 @@ tarball_petsc=$(pkgname_petsc).tar.gz
 tarball_slepc=$(pkgname_slepc).tar.gz
 tarball_fftw=$(pkgname_fftw).tar.gz
 tarball_fftqe=$(pkgname_fftqe).tar.gz
-tarball_yaml=$(pkgname_yamal).tar.gz
+tarball_yaml=$(pkgname_yaml).tar.gz
 tarball_futile=$(pkgname_futile).tar.gz
 #
 # External URL's
@@ -72,18 +72,18 @@ url_slepc=https://slepc.upv.es/download/distrib/$(tarball_slepc)
 #
 # Internal URL's
 #
-base_url=https://github.com/yambo-code/yambo-libraries/raw/master/external/
+url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
-url_driver=$(base_url)/$(tarball_driver)
-url_netcdf=$(base_url)/$(tarball_netcdf)
-url_netcdff=$(base_url)/$(tarball_netcdff)
-url_pnetcdf=$(base_url)/$(tarball_pnetcdf)
-url_hdf5=$(base_url)/$(tarball_hdf5)
-url_iotk=$(base_url)/$(tarball_iotk)
-url_etsf_io=$(base_url)/$(tarball_etsf_io)
-url_blacs=$(base_url)/$(tarball_blacs)
-url_scalapack=$(base_url)/$(tarball_scalapack)
-url_fftw=$(base_url)/$(tarball_fftw)
-url_fftqe=$(base_url)/$(tarball_fftqe)
-url_yaml=$(base_url)/$(tarball_yaml)
-url_futile=$(base_url)/$(tarball_futile)
+url_Ylib=$(url_base)/$(tarball_Ylib)
+url_netcdf=$(url_base)/$(tarball_netcdf)
+url_netcdff=$(url_base)/$(tarball_netcdff)
+url_pnetcdf=$(url_base)/$(tarball_pnetcdf)
+url_hdf5=$(url_base)/$(tarball_hdf5)
+url_iotk=$(url_base)/$(tarball_iotk)
+url_etsf_io=$(url_base)/$(tarball_etsf_io)
+url_blacs=$(url_base)/$(tarball_blacs)
+url_scalapack=$(url_base)/$(tarball_scalapack)
+url_fftw=$(url_base)/$(tarball_fftw)
+url_fftqe=$(url_base)/$(tarball_fftqe)
+url_yaml=$(url_base)/$(tarball_yaml)
+url_futile=$(url_base)/$(tarball_futile)

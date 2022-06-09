@@ -29,7 +29,6 @@ if ! test -d $CURRENT_DIR ; then
 fi
 #
 compdir=`echo "$PWD"`
-AC_SUBST(compdir)
 #
 AC_PREFIX_DEFAULT($PWD)
 if test "$prefix" = "NONE" ;      then prefix="$PWD" ; fi
@@ -40,13 +39,12 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 # YAMBO SPECIFIC
 #
-m4_include([config/m4/yambo_libraries.m4])
 m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
+m4_include([config/m4/yambo_libraries.m4])
 # 
 #  General
 #
-m4_pattern_allow(AC_PROG_ECHO)
 m4_include([config/m4/acx_echo.m4])
 m4_include([config/m4/acx_misc.m4])
 m4_include([config/m4/acx_gmake.m4])
@@ -59,6 +57,7 @@ m4_include([config/m4/acx_fortran_flags.m4])
 m4_include([config/m4/acx_mpi.m4])
 m4_include([config/m4/cuda.m4])
 m4_include([config/m4/acx_branch.m4])
+m4_include([config/m4/acx_IO_wrap_up.m4])
 # 
 #  Report
 #
@@ -69,6 +68,8 @@ AC_PROG_ECHO
 # ============================================================================
 # Current branch
 ACX_BRANCH
+#
+# Checks for library functions.
 # ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
@@ -276,6 +277,9 @@ AC_HAVE_HDF5_F90
 # NETCDF 
 AC_HAVE_NETCDF_F90
 # ============================================================================
+# I/O wrap-up 
+ACX_IO_WRAP_UP
+# ============================================================================
 # FUTILE library 
 AC_HAVE_FUTILE
 # ============================================================================
@@ -294,12 +298,16 @@ AC_HAVE_CUDA
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
+# Compilation dir
+AC_SUBST(compdir)
+# ============================================================================
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
  config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
  include/branch.inc include/driver/editor.h 
+ lib/archive/git.list
 ])
 #
 AC_OUTPUT

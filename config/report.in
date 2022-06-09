@@ -1,5 +1,7 @@
 #
 # [VER] @SVERSION@.@SSUBVERSION@
+#
+# Legend: [E]=external library [C]=internal lib to be compiled [I]=internal lib already compiled [X]=used [-]=not used
 # 
 # - GENERAL CONFIGURATIONS -
 # 
@@ -21,52 +23,57 @@
 #
 # - SCRIPTS -
 #
-# [@YDB_str@] YDB: Yambo DataBase
-# [@YPY_str@] YAMBOpy: Yambo Python scripts
+# [@YDB_check@] YDB: Yambo DataBase
+# [@YPY_check@] YAMBOpy: Yambo Python scripts
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL/CUDA SUPPORT -
 #
+# [@CUDA_check@] CUDA
 # [@MPI_check@] MPI
 # [@OPENMP_check@] OpenMP
-# [@PARIO_check@] PARALLEL-IO @PARIO_info@
 # 
-# - LIBRARIES [E=external library; I?=internal library (c=to be compiled / f=found already compiled); X=system default; -=not used;] -
+# - I/O -
 #
-# > I/O: @NETCDF_info@ @HDF5_info@
+# [@PARIO_check@]: Parallel I/O @PARIO_info@
+# [@HDF5_check@]: HDF5 @HDF5_info@
+# [@NETCDF_check@]: NETCDF @NETCDF_info@
+# [@PNETCDF_check@]: Parallel NETCDF 
+# [@HDF5_PAR_IO_check@]: Parallel HDF5 @HDF5_PAR_IO_info@
+# 
+# - LIBRARIES - 
 #
-# [@FUTILE_str@] FUTILE  : @FUTILE_LIBS@
+# [@FUTILE_check@] FUTILE  : @FUTILE_LIBS@
 #                 @FUTILE_INCS@
-# [@YAML_str@] YAML    : @YAML_LIBS@
+# [@YAML_check@] YAML    : @YAML_LIBS@
 #                 @YAML_INCS@
-# [@IOTK_str@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
+# [@IOTK_check@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
 #                 @IOTK_INCS@
-# [@ETSF_str@] ETSF_IO : @ETSF_LIBS@
+# [@ETSF_check@] ETSF_IO : @ETSF_LIBS@
 #                 @ETSF_INCS@
-# [@NETCDF_str@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @PNETCDF_LIBS@
+# [@NETCDF_check@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @PNETCDF_LIBS@
 #                 @NETCDFF_INCS@ @NETCDF_INCS@ @PNETCDF_INCS@
-# [@HDF5_str@] HDF5    : @HDF5_LIBS@
+# [@HDF5_check@] HDF5    : @HDF5_LIBS@
 #                 @HDF5_INCS@
 #
 # > MATH: @FFT_info@ @BLAS_info@
 #
-# [@FFT_str@] FFT       : @FFT_LIBS@
-#                   @FFT_INCS@
-# [@BLAS_str@] BLAS      : @BLAS_LIBS@
-# [@LAPACK_str@] LAPACK    : @LAPACK_LIBS@
-# [@SLK_str@] SCALAPACK : @SCALAPACK_LIBS@ 
-# [@BLACS_str@] BLACS     : @BLACS_LIBS@
-# [@PETSC_str@] PETSC     : @PETSC_LIBS@ 
-#                   @PETSC_INCS@ 
-# [@SLEPC_str@] SLEPC     : @SLEPC_LIBS@ 
-#                   @SLEPC_INCS@ 
+# [@FFT_check@] FFT       : @FFT_LIBS@
+#                 @FFT_INCS@
+# [@BLAS_check@] BLAS      : @BLAS_LIBS@
+# [@LAPACK_check@] LAPACK    : @LAPACK_LIBS@
+# [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS@ 
+# [@BLACS_check@] BLACS     : @BLACS_LIBS@
+# [@PETSC_check@] PETSC     : @PETSC_LIBS@ 
+#                 @PETSC_INCS@ 
+# [@SLEPC_check@] SLEPC     : @SLEPC_LIBS@ 
+#                 @SLEPC_INCS@ 
 #
 # > OTHERs
 #
-# [@LIBXC_str@] LibXC     : @LIBXC_LIBS@
-#                   @LIBXC_INCS@
-# [@MPI_str@] MPI       : @MPI_LIBS@ @MPI_info@
-#                   @MPI_INCS@
-# [ Ic] Ydriver   : @YDRI_VERSION@.@YDRI_SUBVERSION@.@YDRI_PATCHLEVEL@
+# [@LIBXC_check@] LibXC     : @LIBXC_LIBS@
+#                 @LIBXC_INCS@
+# [@MPI_check@] MPI       : @MPI_LIBS@ @MPI_info@
+#                 @MPI_INCS@
 #
 # - COMPILERS -
 #

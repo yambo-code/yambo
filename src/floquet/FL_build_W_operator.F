@@ -63,7 +63,6 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
- Wop=cZERO
  Wk=cZERO
  ph_p = cONE!exp(+cI*pi/4._SP)
  ph_m = cONE!exp(-cI*pi/4._SP)
@@ -71,6 +70,8 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  ikbz=Xk%k_table(ik,1)
  !
  do id_red=1,3  ! loop on reciprocal lattice
+   !
+   Wop=cZERO
    !
    if(k_map%max_kdir(id_red)/=1) then
      !

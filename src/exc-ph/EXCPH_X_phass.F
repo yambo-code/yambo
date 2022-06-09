@@ -46,6 +46,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
 &                        EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,l_DbGd_WEIGHTs
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs_sq
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
@@ -65,6 +67,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: iq_db
  integer       :: elph_branches_save(2)
+ type(PP_indexes)::px
  !
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
@@ -114,7 +117,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  max_Sat_weight_PH_abs=rZERO
  max_Sat_pos_PH_abs   =0
  !
- call live_timing('Satellites',q%nbz)
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/wv%n_freqs/)) 
+ ! 
+ call live_timing('Satellites',px%n_of_elements(myid+1)*q%nbz)
  !
  do iq_bz=1,q%nbz
    !
@@ -137,6 +143,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call EXCPH_eval_renorm(iq_bz,q,EXCPH_Renorm,EXCPH_Renorm_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs)
    !
    do iw=1,wv%n_freqs
+     !
+     if (.not.px%element_1D(iw)) cycle
      !
      W=wv%p(iw)
      !
@@ -179,9 +187,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
      enddo   
      !
+     call live_timing(steps=1)
+     !
    enddo   
-   !
-   call live_timing(steps=1)
    !
  enddo   
  !
@@ -208,6 +216,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  call live_timing('Epsilon',wv%n_freqs)
  do iw=1,wv%n_freqs
    !
+   if (.not.px%element_1D(iw)) cycle   
+   !
    W=wv%p(iw)
    !
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
@@ -222,7 +232,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_E_in(i_alpha)-min_E
      pole =BS_E_in(i_alpha)          
-     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
+     PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**3*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
@@ -233,17 +243,23 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
  call live_timing( )
  !
+ !
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
- Epsilon_ii(:,:)=1._SP-Epsilon_ii(:,:)
  !
  do iw=1,wv%n_freqs
+   if (.not.px%element_1D(iw)) cycle   
    W=wv%p(iw)
+   Epsilon_ii(iw,:)=1._SP-Epsilon_ii(iw,:)
    PL_ii(iw,:)=-W*PL_ii(iw,:)
  enddo
  !
+ call PP_redux_wait(Epsilon_ii)
+ call PP_redux_wait(PL_ii) 
+ !
  ! Free
  !
+ call PP_indexes_reset(px)
  call Sat_free()
  call Renorm_free()
  !

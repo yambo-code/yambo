@@ -261,6 +261,7 @@ if test x"$enable_hdf5" = "xyes"; then
       #
     elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
+      compile_hdf5="no" ;
       IO_LIB_VER="parallel";
       HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
       HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;

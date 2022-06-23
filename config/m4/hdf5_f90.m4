@@ -134,12 +134,14 @@ if test x"$enable_hdf5" = "xyes"; then
     #
     AC_MSG_CHECKING([for HDF5 using h5pfc/h5fc system compilers]) ;
     #
+    h5pfc="none"
     if test -e $with_hdf5_path/bin/h5pfc; then 
        h5pfc=$with_hdf5_path/bin/h5pfc; 
      elif command -v h5pfc > /dev/null; then 
        h5pfc=$(command -v h5pfc)  
     fi
     # 
+    h5fc="none"
     if test -e $with_hdf5_path/bin/h5fc ; then 
        h5fc=$with_hdf5_path/bin/h5fc; 
     elif command -v h5fc > /dev/null; then 
@@ -259,6 +261,7 @@ if test x"$enable_hdf5" = "xyes"; then
       #
     elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
+      compile_hdf5="no" ;
       IO_LIB_VER="parallel";
       HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
       HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;

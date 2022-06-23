@@ -218,7 +218,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
            !
            if (trim(PARALLEL_default_mode)=="workload")  CONDITION=VALS_sorted(i_v)>=maxval(VALS_sorted)
            if (trim(PARALLEL_default_mode)=="balanced")  CONDITION=.FALSE.
-           if (trim(PARALLEL_default_mode)=="memory")    CONDITION=.TRUE.
+           if (index(PARALLEL_default_mode,"memory")>0)  CONDITION=.TRUE.
            !
          enddo
        enddo

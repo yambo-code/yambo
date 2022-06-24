@@ -26,6 +26,7 @@ define clean_driver
    WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
+   $(clean_libs_using_stamps_driver); \
    $(call clean_src_driver,"src");\
    $(call clean_src_driver,"ypp");\
    $(call clean_src_driver,"interfaces");\
@@ -83,6 +84,14 @@ define clean_mod_driver
   fi; \
  done
 endef
+define clean_libs_using_stamps_driver
+ $(ECHO) "\t[CLEANING] Stamped Libraries" ; \
+ for file in $(prefix)/config/stamps_and_lists/lib*stamp; do \
+  ldir=`basename $$file | sed 's/.stamp//'`; \
+  rm -f $(prefix)/lib/$$ldir; \
+  rm -f $$file; \
+ done
+endef
 define clean_lib_driver
  if test -n "$$MSG"; then LMSG="$$MSG"; else LMSG="$$TARG";fi; \
  $(ECHO) "\t[CLEANING $$LMSG] Libraries" ; \
@@ -98,10 +107,10 @@ endef
 #
 define clean_config
  $(ECHO) "\t[CLEANING] Configure, Make-related files and lists"; \
- if test -f config/stamps_and_lists/autoconf_generated_files.list; then \
-  for file in `cat config/stamps_and_lists/autoconf_generated_files.list` ; do rm -fr $$file; done; fi; \
- if test -f config/stamps_and_lists/active_directories.list; then \
-  for dir in `cat config/stamps_and_lists/active_directories.list` ; do \
+ if test -f $(prefix)/config/stamps_and_lists/autoconf_generated_files.list; then \
+  for file in `cat $(prefix)/config/stamps_and_lists/autoconf_generated_files.list` ; do rm -fr $$file; done; fi; \
+ if test -f $(prefix)/config/stamps_and_lists/active_directories.list; then \
+  for dir in `cat $(prefix)/config/stamps_and_lists/active_directories.list` ; do \
    rm -fr $$dir/Makefile; \
    rm -fr $$dir/*.mk; \
   done;\
@@ -133,7 +142,6 @@ define clean_stamps
  $(ECHO) "\t[CLEANING] Stamps" ; \
  rm -fr $(prefix)/config/stamps_and_lists/*keep*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*2y.stamp; \
- rm -fr $(prefix)/config/stamps_and_lists/lib*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/yambo*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/compiling*.stamp; \

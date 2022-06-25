@@ -26,7 +26,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  use pars,          ONLY:SP,cZERO
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
  use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted
- use BS,            ONLY:BS_K_dim
+ use BS,            ONLY:BS_H_dim
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
  use parallel_int,  ONLY:PP_redux_wait
@@ -35,7 +35,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  !
  character(*)  ::what
  integer       ::I,N
- complex(SP)   ::El,vC(BS_k_dim(1),N_BS_E_sorted)
+ complex(SP)   ::El,vC(BS_H_dim,N_BS_E_sorted)
  !
  ! Work space
  !
@@ -52,14 +52,14 @@ subroutine K_IP_sort(what,I,N,El,vC)
  call PP_redux_wait(vC,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(vC,COMM=PAR_COM_eh_INDEX%COMM )
  !
- YAMBO_ALLOC(vR,(BS_K_dim(1))) 
- YAMBO_ALLOC(sort_indx,(BS_K_dim(1)))
+ YAMBO_ALLOC(vR,(BS_H_dim)) 
+ YAMBO_ALLOC(sort_indx,(BS_H_dim))
  !
  ! Sort the energies
  vR=real(vC(:,1),SP)
  call sort(arrin=vR,indx=sort_indx)
  !
- EDIM=min(BS_K_dim(1),10000)
+ EDIM=min(BS_H_dim,10000)
  allocate(first_el(EDIM)) 
  allocate(n_of_el(EDIM))
  !
@@ -69,7 +69,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  do i_VAR=1,n_BS_E_sorted
    BS_E_sorted(:,i_VAR,1)=cZERO
    do i_grp=1,n_deg_grp
-     if(i_grp>EDIM) cycle
+     if(i_grp>EDIM/10) cycle
      if(i_VAR==2) then
        BS_E_sorted(i_grp,i_VAR,1)=real(n_of_el(i_grp),SP)
        cycle

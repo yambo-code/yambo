@@ -32,13 +32,14 @@ subroutine ELPH_databases(k,E,q)
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqibz,bse_scattering,qindx_C,coll_scattering
+ use R_lattice,           ONLY:bz_samp,qindx_B,nqbz,nqibz,bse_scattering,qindx_C,coll_scattering
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
-&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand,l_use_qindxB
+&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand,l_use_qindxB, &
+&                              l_gkkp_expand_only_k
  use LIVE_t,              ONLY:live_timing 
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
@@ -52,7 +53,7 @@ subroutine ELPH_databases(k,E,q)
  ! Work Space...
  !
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
- character(schlen)  ::what
+ character(schlen)  ::what,db_name
  integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
  logical, external  ::file_exists
  real(SP)           ::v(3)
@@ -64,9 +65,10 @@ subroutine ELPH_databases(k,E,q)
  !=================
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
+ call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
  call parser('UseQindxB',l_use_qindxB)
  !
- if(l_gkkp_expand) then
+ if(l_gkkp_expand.or.l_gkkp_expand_only_k) then
    !      
    ! Setup parallelization to load qindx_B
    ! ======================================
@@ -213,6 +215,24 @@ subroutine ELPH_databases(k,E,q)
  elph_use_q_grid=.FALSE.
  if(DB_nq==nqibz.and.all(DB_Q_map/=0)) elph_use_q_grid=.TRUE.
  !
+ ! If l_gkkp_expand_only_k I suppose the q-grid is in the BZ
+ !
+ if(l_gkkp_expand_only_k) then
+   DB_Q_map=0
+   do idb=1,DB_nq
+     do iq=1,nqbz
+       v=DB_PH_qpt(idb,:)
+       if (v_is_zero(v+q%ptbz(iq,:),zero_=k_iku_zero)) DB_Q_map(idb)=iq
+     enddo
+   enddo
+   !
+   elph_use_q_grid=.FALSE.
+   if(DB_nq==nqbz.and.all(DB_Q_map/=0)) elph_use_q_grid=.TRUE.
+   !
+   if(.not.elph_use_q_grid) call error('Expand only-k works only with uniform q-grids in the BZ')
+   !
+ endif
+ !
  if (.not.elph_use_q_grid) then
    if (DB_Q_map(1)/=1) call error("First qpt must be Gamma.")
    do idb=1,DB_nq
@@ -246,6 +266,7 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Bands                 :',DB_nb)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
+ if(l_gkkp_expand_only_k) call msg('s',':: Q-points in the BZ     :',l_gkkp_expand_only_k)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
  if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
@@ -285,6 +306,10 @@ subroutine ELPH_databases(k,E,q)
  !... GKKP
  call live_timing('ELPH databases: transfer and I/O',DB_nq)
  call section("*","== Q-points list in Yambo (iku units) ==")
+ !
+ db_name='gkkp'
+ if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
+ !
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -322,13 +347,13 @@ subroutine ELPH_databases(k,E,q)
        endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
-       io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       io_err(3)=io_ELPH(ID,db_name)
        call msg('r','',PH_qpt(iq_bz,:),USE_TABS=.TRUE.)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
-     io_err(3)=io_ELPH(ID,'gkkp')
+     io_err(3)=io_ELPH(ID,db_name)
      call msg('r','',PH_qpt(iq,:),USE_TABS=.TRUE.)
    endif
    !

@@ -122,7 +122,7 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
  ! If use Double-Grid occupation can be different
  ! due to the change in the Fermi energy, I read them from the DbGrid
  !
-! if(use_PH_DbGd) f_occ=Fermi_fnc(E_kpq-Efermi_DbGd,Tel)
+ if(use_PH_DbGd) f_occ=Fermi_fnc(E_kpq-Efermi_DbGd,Tel)
  !
  ! Frequency Loop
  !

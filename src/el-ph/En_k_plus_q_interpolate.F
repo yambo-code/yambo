@@ -87,7 +87,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  ! and I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- if(all(E%nbm/=E%nbf)) then
+ if(all(E%nbm==E%nbf)) then
    E_kpq%f(1:E%nbf(1),:,1) =spin_occ
    E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  else 

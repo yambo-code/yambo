@@ -13,46 +13,41 @@ LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 PACKAGE=$(pkgname_scalapack)
 TARBALL=$(tarball_scalapack)
 #
-# MAIN target
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
 all: $(LIBRARY)
 #
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
 
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	cat $(compdir)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
-	cp  $(srcdir)/lib/scalapack/Makefile.lib  Makefile );  \
+configure: uncompress
+	@if test -d $(PACKAGE) && ! test -f configured.stamp ; then \
+         echo "\t[$(PACKAGE)] configuration"; \
+	 cd $(PACKAGE);  \
+	 cat $(compdir)/config/setup $(srcdir)/lib/scalapack/SLmake.inc_lib > SLmake.inc ; \
+	 cp  $(srcdir)/lib/scalapack/Makefile.lib  Makefile ;  \
+         touch ../configured.stamp;\
 	fi
-	touch configure-stamp
 	
-package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) -j1 ) ; \
+compile: uncompress configure
+	@$(call compile)
+
+install: uncompress configure compile
+	@if ! test -e installed.stamp ; then \
+         echo "\t[$(PACKAGE)] installation"; \
+         cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
+	 chmod +x $(LIBPATH)/lib/*blacs*.a; \
+	 touch ../installed.stamp;\
 	fi
-	touch package-ready-stamp
 
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
-
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
-
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE)  && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(clean_the_lib)
 
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp
-
-define install
- cd $(PACKAGE);  cp *.a $(LIBPATH)/lib ; chmod +x $(LIBPATH)/lib/*scalapack*.a 
-endef    
+	@$(rm_the_lib)

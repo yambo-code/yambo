@@ -5,75 +5,60 @@
 #
 include ../../config/setup
 include ../archive/package.list
-
+#
 LIBNAME=libslepc.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${yprecision}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_slepc)
 TARBALL=$(tarball_slepc)
-
 #
-# redefinitions
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
-AUXFLAGS=--prefix="$(LIBPATH)"
-
-
+CONFFLAGS=--prefix="$(LIBPATH)"
 #
 # MAIN target
 #
 all: $(LIBRARY)
 #
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
 
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then \
-	  unset PETSC_DIR; \
-	  unset PETSC_ARCH; \
-	  cd $(PACKAGE); \
-	  PETSC_DIR=$(LIBPATH) \
-	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  python3 ./configure $(AUXFLAGS) ; \
+configure: uncompress
+	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
+         echo "\t[$(PACKAGE)] configuration"; \
+	 cd $(PACKAGE); \
+	 PETSC_DIR=$(LIBPATH) \
+	 SLEPC_DIR=$(PWD)/$(PACKAGE) \
+	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+	 touch ../configured.stamp; \
 	fi
-	touch configure-stamp
 	
-package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
-	  unset PETSC_ARCH; \
-	  cd $(PACKAGE); \
-	  $(make) -j1 \
-	  SLEPC_DIR=$(PWD)/$(PACKAGE) \
-	  PETSC_DIR=$(LIBPATH) ; \
+compile: uncompress configure
+	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
+         echo "\t[$(PACKAGE)] compilation"; \
+	 cd $(PACKAGE); \
+         $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH)  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
+         touch ../compiled.stamp; \
 	fi
-	touch package-ready-stamp
+	
+install: uncompress configure compile
+	@if ! test -f installed.stamp ; then \
+         echo "\t[$(PACKAGE)] installation"; \
+	 cd $(PACKAGE); \
+         $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
+         chmod u+x $(LIBPATH)/lib/*slepc*.a; \
+	 touch ../installed.stamp; \
+	fi
 
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
-
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
-
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(call clean_the_lib,clean)
 
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf make.sys uncompress-stamp 
-	
-#
-define install
- unset PETSC_ARCH; \
- cd $(PACKAGE); \
- $(make) -j1 \
- SLEPC_DIR=$(PWD)/$(PACKAGE) \
- PETSC_DIR=$(LIBPATH) \
- install; \
- chmod u+x $(LIBPATH)/lib/*slepc*.a     
-endef
+	@$(rm_the_lib)

@@ -31,8 +31,8 @@ subroutine f_build(E,Ef)
  !
  implicit none 
  !
- real(SP), intent(in) :: Ef
- type(levels)         :: E
+ real(SP), intent(in)           :: Ef
+ type(levels), intent(inout)    :: E
  !
  ! Work Space
  !

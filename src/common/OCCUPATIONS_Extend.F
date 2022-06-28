@@ -77,7 +77,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  !
  Ef_test=maxval(Xe%E_VBM(:n_sp_pol))+Ef_step
  do while(Ef_test<minval(Xe%E_CBm(:n_sp_pol)))
-   call f_build(Ef_test)
+   call f_build(E,Ef_test)
    call OCCUPATIONS_Gaps(E)
    if (all(E%nbf==Xe%nbf).and.all(E%nbm==Xe%nbm)) then
      E%E_Fermi=Ef_test

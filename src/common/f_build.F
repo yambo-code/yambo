@@ -38,6 +38,7 @@ subroutine f_build(E,Ef)
  !
  integer :: i1,i2,is
  !
+ !$omp parallel do default(shared), private(i1,i2,is), collapse(3)
  do i1=1,E%nb
    do i2=1,E%nk
      do is=1,n_sp_pol
@@ -46,5 +47,6 @@ subroutine f_build(E,Ef)
      enddo
    enddo 
  enddo
+ !$omp end parallel do
  !
 end subroutine

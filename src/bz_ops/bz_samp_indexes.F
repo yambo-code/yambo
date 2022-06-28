@@ -98,9 +98,10 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  coll_scattering =(l_elel_scatt.or.l_EXCPH_gkkp)
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
- call warning(' BSE scattering equal to TRUE')
+ call warning(' BSE and CALL scattering equal to TRUE')
 ! if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
  bse_scattering=.TRUE.
+ coll_scattering=.TRUE.
 #endif
  !
  ! ... User defined

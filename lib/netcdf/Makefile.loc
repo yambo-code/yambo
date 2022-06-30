@@ -1,6 +1,6 @@
-
+#
 #===============================
-# WanT package
+# Yambo package
 #===============================
 #
 include ../../config/setup
@@ -12,69 +12,49 @@ LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_netcdf)
 TARBALL=$(tarball_netcdf)
-
 #
-# redefinitions
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
-AUXFLAGS=--prefix=$(LIBPATH) \
-         --without-pic --enable-static --disable-shared \
-         --disable-dap  $(netcdf_opt)
-
+# Configure flags
+#
+CONFFLAGS=--prefix=$(LIBPATH) --without-pic --enable-static --disable-shared --disable-dap  $(netcdf_opt) \
+          CC="$(cc)" \
+	  CPP="$(cpp)" \
+	  CFLAGS="$(cflags)" \
+	  FC="$(fc)" \
+	  CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
+	  LIBS="$(lpnetcdf) $(lhdf5)" \
+	  F77="$(f77)"
 # DEBUG <
 # This option is useful for debugging netcdf4 problems
 # --enable-logging
 # See also the connected call in src/setup/setup.F
 # call netcdf_call(nf90_set_log_level(3),1)
 # DEBUG >
-
-
-#
-# MAIN target
 #
 all: $(LIBRARY)
+#
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
 
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
+configure: uncompress
+	@$(configure)
 
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
-	      ./configure $(AUXFLAGS) \
-	      CC="$(cc)" \
-	      CPP="$(cpp)" \
-	      CFLAGS="$(cflags)" \
-	      FC="$(fc)" \
-	      CPPFLAGS="$(netcdf_flag) $(ihdf5) $(ipnetcdf)" \
-	      LIBS="$(lpnetcdf) $(lhdf5)" \
-	      F77="$(f77)" ); \
-	fi
-#	      LDFLAGS="-L${LIBPATH}/lib -lpnetcdf" \#
-	touch configure-stamp
+compile: uncompress configure
+	@$(call compile)
+	
+install: uncompress configure compile
+	@$(call install_via_make,netcdf)
 
-package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) ) ; fi
-	touch package-ready-stamp
-
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
-
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
-
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s distclean-recursive ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(call clean_the_lib,clean)
 
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp 
-	
-define install
- cd $(PACKAGE);  $(make) install; chmod u+x $(LIBPATH)/lib/*netcdf*.a
-endef 
+	@$(rm_the_lib)
+#

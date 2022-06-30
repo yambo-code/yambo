@@ -1,0 +1,5 @@
+#
+# GIT's repositories and branches
+#
+git_Ylib=git@github.com:yambo-code/yambo-libraries.git
+branch_Ylib=@with_yambo_libs_branch@

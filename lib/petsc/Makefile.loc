@@ -12,12 +12,12 @@ LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_petsc)
 TARBALL=$(tarball_petsc)
-
 #
-# redefinitions
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
 PETSC_ARCH=yambo_${yprecision}_complex
-AUXFLAGS=--prefix="$(LIBPATH)" \
+CONFFLAGS=--prefix="$(LIBPATH)" \
          --PETSC_ARCH=${PETSC_ARCH} \
          --with-ssl=0 \
          --with-x=0 \
@@ -25,52 +25,48 @@ AUXFLAGS=--prefix="$(LIBPATH)" \
          --with-shared-libraries=0 \
          --with-blaslapack-lib="$(llapack) $(lblas)" \
          --with-scalar-type="complex" \
-         --with-precision="${yprecision}"
-
+         --with-precision="${yprecision}" \
+         --with-cc=$(cc) --with-fc=$(fc)
 #
 # MAIN target
 #
 all: $(LIBRARY)
 #
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
 
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then \
-	  cd $(PACKAGE);  \
-	  unset PETSC_DIR; \
-	  unset PETSC_ARCH; \
-	  python3 ./configure $(AUXFLAGS) --with-cc=$(cc) --with-fc=$(fc) ; \
+configure: uncompress
+	@if test -d $(PACKAGE) && ! test -f configured.stamp; then \
+         echo "\t[$(PACKAGE)] configuration"; \
+	 cd $(PACKAGE);  \
+	 unset PETSC_DIR; \
+	 unset PETSC_ARCH; \
+	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
+	 touch ../configured.stamp; \
 	fi
-	touch configure-stamp
 	
-package-ready-stamp: uncompress-stamp configure-stamp
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) ) ; fi
-	#
-	touch package-ready-stamp
+compile: uncompress configure
+	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
+         echo "\t[$(PACKAGE)] compilation"; \
+	 ( cd $(PACKAGE);  $(make) -j1 PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ) ; \
+         touch compiled.stamp; \
+        fi
+	
+install: uncompress configure compile
+	@if ! test -f installed.stamp ; then \
+         echo "\t[$(PACKAGE)] installation"; \
+         ( cd $(PACKAGE); $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
+         chmod u+x $(LIBPATH)/lib/*petsc*.a; \
+	 touch installed.stamp; \
+	fi
 
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
-
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
-
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  rm -rf $(PETSC_ARCH) ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(call clean_the_lib,clean)
 
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp 
-	
-define install
- cd $(PACKAGE);  $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install; \
- chmod u+x $(LIBPATH)/lib/*petsc*.a
-endef 
+	@$(rm_the_lib)

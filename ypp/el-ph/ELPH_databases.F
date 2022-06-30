@@ -68,6 +68,9 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
  call parser('UseQindxB',l_use_qindxB)
  !
+ if(l_gkkp_expand.and.l_gkkp_expand_only_k) &
+&  call error(' Both flags "GkkpExpand" and "GkkpExpOnlyK" cannot be present at the same moment! ')
+ !
  if(l_gkkp_expand.or.l_gkkp_expand_only_k) then
    !      
    ! Setup parallelization to load qindx_B

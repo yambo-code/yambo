@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -74,29 +74,34 @@ fi
 #echo "SAVE" $save_dir 
 #echo "RESTORE" $restore_dir 
 #
-for lock in $unmatched
+# SAVE (step #1) & RESTORE (step #2) PJ dependent objects (from .dep files)
+#
+step=1
+while [ $step -le 2 ]
 do
- #
- # SAVE & RESTORE PJ dependent objects (from .dep files)
- #
- if test -f "$dir/${lock}_project.dep"; then
-  deps=`cat $dir/${lock}_project.dep`
-  for file in $deps
-  do
-    source ./sbin/compilation/object_save_restore_remove.sh "save"
-    source ./sbin/compilation/object_save_restore_remove.sh "restore"
-  done
- fi
- #
- # Remove the lock 
- #
- if [ "$VERB" == 1 ] ; then
-  echo "rm -f $dir/$lock.lock"
- else
-  rm -f $dir/$lock.lock
- fi
- DIR_is_to_recompile=1
- #
+ for lock in $unmatched
+ do
+  #
+  if test -f "$dir/${lock}_project.dep"; then
+   deps=`cat $dir/${lock}_project.dep`
+   for file in $deps
+   do
+     if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
+     if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
+   done
+  fi
+  #
+  # Remove the lock 
+  #
+  if [ "$VERB" == 1 ] && [ $step == 2 ] ; then
+   echo "rm -f $dir/$lock.lock"
+  else
+   rm -f $dir/$lock.lock
+  fi
+  DIR_is_to_recompile=1
+  #
+ done
+ ((step++))
 done
 #
 #

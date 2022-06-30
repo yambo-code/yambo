@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,8 @@ subroutine check_periodic_directions(is_cut)
  !
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use X_m,            ONLY:eps_2_alpha,alpha_dim,eval_alpha
- use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,&
-&                         l_0D,l_1D,l_2D,l_3D
+ use X_m,            ONLY:eps_2_alpha,alpha_dim
+ use D_lattice,      ONLY:DL_vol,a,non_periodic_directions,l_0D,l_1D,l_2D,l_3D
  use vec_operate,    ONLY:v_norm
  !
  implicit none
@@ -62,7 +61,6 @@ subroutine check_periodic_directions(is_cut)
  if (l_0D) then 
    alpha_dim='volume'
    eps_2_alpha=DL_vol
-   eval_alpha=.TRUE.
  endif
  !
  ! 2D case. Note that to be a correct geometric configuration
@@ -98,12 +96,11 @@ subroutine check_periodic_directions(is_cut)
          eps_2_alpha=non_periodic_length
          alpha_dim='length'
        endif
-       eval_alpha=.TRUE.
      endif
    enddo
  endif
  !
- if (.not.eval_alpha) then
+ if (trim(alpha_dim)=="none") then
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -62,7 +62,7 @@ module YPPm
  ! 
  ! DOS/BANDS/SPECIAL-K/INTERP grids
  !
- integer, parameter        :: n_SPECIAL_k_MAX=100
+ integer, parameter        :: n_SPECIAL_k_MAX=150
  real(SP),          allocatable :: CIRCUIT_k_norm(:)
  character(schlen), allocatable :: CIRCUIT_k_label(:)
  character(schlen) :: SPECIAL_k_label(n_SPECIAL_k_MAX)=" "
@@ -287,6 +287,8 @@ module YPPm
  real(SP),    pointer     ::BS_R_PL(:,:)       => null()
  complex(SP), pointer     ::BS_R_kerr(:)       => null()
  type(X_t)                ::Xbsk 
+ !
+ ! NL
  !
  interface
    !

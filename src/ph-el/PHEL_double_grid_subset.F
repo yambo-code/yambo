@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): FP
@@ -42,7 +42,7 @@ subroutine PHEL_double_grid_subset(k,k_FG,nk_CG)
  integer :: N_FG_per_K_average,ik
  !
  if (.not.l_PH_uses_E_FineGd .and..not. l_RT_uses_E_FineGd) return
- if (PH_DbGd_points<0) return
+ if (PH_DbGd_points==k_FG%N) return
  !
  call section("=","Electronic Fine Grid")
  !
@@ -52,13 +52,7 @@ subroutine PHEL_double_grid_subset(k,k_FG,nk_CG)
  if (PH_DbGd_points<0.or.PH_DbGd_points>k_FG%N) FG_is_sane=.FALSE.
  if (any(k_FG%N_mapped<N_FG_per_K_average))     FG_is_sane=.FALSE. 
  !
- if (.not.FG_is_sane) then
-   call warning("[PHEL] Fine Grid does not match user requests. DbGd support switched off")
-   PH_DbGd_points=-1
-   l_PH_uses_E_FineGd=.FALSE.
-   l_RT_uses_E_FineGd=.FALSE.
-   return
- endif
+ if (.not.FG_is_sane) call error("[PHEL] Fine Grid does not match user requests. DbGd support switched off")
  !
  N_FG_per_K_average=ceiling(float(PH_DbGd_points)/float(nk_CG))
  !

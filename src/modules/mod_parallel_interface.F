@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ module parallel_int
 ! To be uncommented but protected with precompiler flags on gfortran compiler
 ! include 'mpif.h'
 #else
- use parallel_m, ONLY:mpi_comm_world,mpi_comm_null
+ use parallel_m, ONLY:mpi_comm_world
 #endif
  !
  implicit none

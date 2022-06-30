@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -68,7 +68,6 @@ subroutine RT_relaxation(E,k,q,Time)
 #if defined _PHEL
  use drivers,        ONLY:l_phel_scatt
  use R_lattice,      ONLY:nqibz
- use real_time,      ONLY:RTibz,RT_levels
 #endif
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PARs_PH_Q_ibz
  use RT_occupations, ONLY:l_RT_relax_time_approx 

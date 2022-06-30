@@ -661,7 +661,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
- call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
+ call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
  !

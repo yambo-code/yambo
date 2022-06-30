@@ -89,7 +89,7 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Load the Exciton-phonon elements and phonon energies
  !
  call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),MODE=DUMP,ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  if(io_err/=0) call error('excph_gkkp databases not found!')
  !
  elph_branches_save = elph_branches
@@ -122,7 +122,7 @@ subroutine EXCPH_lifetime(k,q,X)
    iq_bz = q%k_table(iq, iq_s)
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
-   io_err=io_EXCPH_gkkp(ID_exc_gkkp,'gkkp')
+   io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    if(io_err/=0) call error('excph_gkkp databases not found!')
    !
    !iq_db=DB_Q_map(iq_bz)

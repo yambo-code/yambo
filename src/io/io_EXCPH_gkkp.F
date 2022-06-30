@@ -21,15 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_EXCPH_gkkp(ID,what)
+integer function io_EXCPH_gkkp(ID)
  !
  use pars,           ONLY:SP,schlen
  use IO_m,           ONLY:io_sec,read_is_on,RD_CL,RD_CL_IF_END,io_action,frag_ELPH,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                         def_variable_bulk,io_variable_bulk,io_fragment
  use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
-&                         BS_E_in,BS_Sat_E,BS_Sat_WEIGHT,BS_EXCPH_E,ph_EXCPH_E,EXCPH_q,&
-&                         BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,L_kind_in,L_kind_out,Sat_alloc, &
+&                         BS_EXCPH_E,ph_EXCPH_E,EXCPH_q,L_kind_in,L_kind_out,Sat_alloc, &
 &                         EXCPH_gkkp_alloc
  use IO_int,         ONLY:io_variable_elemental,def_variable_elemental
  use ELPH,           ONLY:ph_modes
@@ -40,25 +39,13 @@ integer function io_EXCPH_gkkp(ID,what)
 #include<memory.h>
  !
  integer      ::ID
- character(*) ::what
  !
  !Work Space
  !
  integer                :: iq,ierr,VAR_size(4),VAR_size_sq(3),ID_frag
  character(schlen)      :: db_name,VAR_name,dim_names(4),dim_names_sq(3)
- logical                :: l_excph_gkkp,l_excph_satellites
  !
  call timing('io_EXCPH_gkkp',OPR='start')
- !
- l_excph_gkkp      =.FALSE.
- l_excph_satellites=.FALSE.
- !
- if (index(what,'gkkp')>0)       l_excph_gkkp      =.TRUE.
- if (index(what,'satellites')>0) l_excph_satellites=.TRUE.
- if (index(what,'all')>0) then
-   l_excph_gkkp=.TRUE.
-   l_excph_satellites=.TRUE.
- endif
  !
  ID_frag=0
  io_EXCPH_gkkp=0
@@ -115,8 +102,6 @@ integer function io_EXCPH_gkkp(ID,what)
  iq=maxval(io_sec(ID,:))-1
  if (iq<=0) goto 1
  !
- if(.not.l_excph_gkkp.and..not.l_excph_satellites) goto 1
- !
  ! Fragmentation
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=ierr)
@@ -138,52 +123,25 @@ integer function io_EXCPH_gkkp(ID,what)
  ! Excitonic Gkkp (and SE) fragments
  !=========================
  !
- if (read_is_on(ID)) then
-   if(.not.allocated(EXCPH_gkkp).and.l_excph_gkkp      ) call EXCPH_gkkp_alloc()
-   if(.not.allocated(BS_Sat_E)  .and.l_excph_satellites) call Sat_alloc()
+ if (read_is_on(ID).and..not.allocated(EXCPH_gkkp)) call EXCPH_gkkp_alloc()
+ !
+ if (.not. read_is_on(ID)) then
+   VAR_name="EXCPH_Q"//trim(intc(iq))
+   call def_variable_bulk(ID_frag,trim(VAR_name),1,(/3/),SP)
+   call io_variable_bulk(ID_frag,1,R1=EXCPH_q(iq,:))
  endif
  !
- if(l_excph_gkkp) then
-   !
-   if (.not. read_is_on(ID)) then
-     VAR_name="EXCPH_Q"//trim(intc(iq))
-     call def_variable_bulk(ID_frag,trim(VAR_name),1,(/3/),SP)
-     call io_variable_bulk(ID_frag,1,R1=EXCPH_q(iq,:))
-   endif
-   !
-   VAR_name="EXCITON_PH_GKKP_Q"//trim(intc(iq))
-   VAR_size=(/2,ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
-   dim_names = [character(schlen) :: 'complex','PH_modes','N_exc_sum','N_exc_states']
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
-   call io_variable_bulk(ID_frag,1,C3=EXCPH_gkkp)
-   !
-   VAR_name="EXCITON_PH_GKKP_SQUARED_Q"//trim(intc(iq))
-   VAR_size_sq=(/ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
-   dim_names_sq = [character(schlen) :: 'PH_modes','N_exc_sum','N_exc_states']
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
-   call io_variable_bulk(ID_frag,1,R3=EXCPH_gkkp_sq)
-   !
- endif
+ VAR_name="EXCITON_PH_GKKP_Q"//trim(intc(iq))
+ VAR_size=(/2,ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
+ dim_names = [character(schlen) :: 'complex','PH_modes','N_exc_sum','N_exc_states']
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
+ call io_variable_bulk(ID_frag,1,C3=EXCPH_gkkp)
  !
- if(l_excph_satellites) then
-   !      
-   VAR_name="EXCITON_SATELLITE_ENERGY_Q"//trim(intc(iq))
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
-   call io_variable_bulk(ID_frag,1,C3=BS_Sat_E)
-   !
-   VAR_name="EXCITON_SATELLITE_ENERGY_ph_abs_Q"//trim(intc(iq))
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size,SP,dim_names)
-   call io_variable_bulk(ID_frag,1,C3=BS_Sat_E_PH_abs)
-   !
-   VAR_name="EXCITON_SATELLITE_WEIGHT_Q"//trim(intc(iq))
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
-   call io_variable_bulk(ID_frag,1,R3=BS_Sat_WEIGHT)
-   !
-   VAR_name="EXCITON_SATELLITE_WEIGHT_ph_abs_Q"//trim(intc(iq))
-   call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
-   call io_variable_bulk(ID_frag,1,R3=BS_Sat_WEIGHT_PH_abs)
-   !
- endif
+ VAR_name="EXCITON_PH_GKKP_SQUARED_Q"//trim(intc(iq))
+ VAR_size_sq=(/ph_modes,EXCPH_sum(2),EXCPH_states(2)/)
+ dim_names_sq = [character(schlen) :: 'PH_modes','N_exc_sum','N_exc_states']
+ call def_variable_bulk(ID_frag,trim(VAR_name),1,VAR_size_sq,SP,dim_names_sq)
+ call io_variable_bulk(ID_frag,1,R3=EXCPH_gkkp_sq)
  !
  io_EXCPH_gkkp=io_status(ID)
  !

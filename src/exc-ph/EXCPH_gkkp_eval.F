@@ -38,7 +38,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  !use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
- use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
+ use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
 &                         l_const_elph,l_abs_elph,l_abs_exc,BSS_eh_table_in
  !

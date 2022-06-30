@@ -30,36 +30,26 @@
 !!
 !! @param[out]      EXCPH_gkkp                  Exciton-phonon matrix elements
 !! @param[out]      EXCPH_gkkp_sq               Exciton-phonon matrix elements squared
-!! @param[out]      EXCPH_Renorm                Excitonn renormalization factor R
-!! @param[out]      EXCPH_Renorm_PH_abs         Excitonn renormalization factor R_PH_abs for absorbed phonons
-!! @param[out]      BS_Sat_E                    Satellite energy differences
-!! @param[out]      BS_Sat_E_PH_abs             Satellite energy differences for absorbed phonons
-!! @param[out]      BS_Sat_WEIGHT               Satellite weight
-!! @param[out]      BS_Sat_WEIGHT_PH_abs        Satellite weight for absorbed phonons
 !
 subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  use pars,           ONLY:SP,cZERO,rZERO,schlen
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp,qindx_B !_load
- use D_lattice,      ONLY:nsym
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
- use BS,             ONLY:BS_H_dim,BS_bands,BS_res_ares_n_mat,BS_K_dim,BSqpts
+ use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
-&                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map,EXCPH_q, &
-&                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
-&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free,&
-&                         l_const_elph,l_abs_elph,l_abs_exc,n_exc_in
+&                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,build_Q_map,EXCPH_q, &
+&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,n_exc_in
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
- use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  !
 #include<memory.h>
  !
@@ -71,9 +61,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
  integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID
- integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
- real(SP), allocatable  :: max_Sat_weight(:)
- integer,  allocatable  :: max_Sat_pos(:,:)
+ integer  :: il,iq_bz,iq,i_star,iq_s,iq_db,elph_branches_save(2)
  ! Debug
  !integer :: ik
  !open(1, file='K_grid_bz.dat')
@@ -140,11 +128,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Alloage EXCPH_gkkp
  !
  call EXCPH_gkkp_alloc()
- YAMBO_ALLOC(max_Sat_weight,(EXCPH_states(1):EXCPH_states(2)))
- YAMBO_ALLOC(max_Sat_pos,(EXCPH_states(1):EXCPH_states(2),3))
- !
- max_Sat_weight=rZERO
- max_Sat_pos   =0
  !
  ! Debug
  !call k_ibz2bz(k,"i",.false.)
@@ -183,9 +166,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID_exc_gkkp)
  io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
  !
- call Sat_alloc()
- call Renorm_alloc()
- !
  ! Get q-point coordinates in the q-BZ
  YAMBO_ALLOC(EXCPH_q,(q%nbz,3))
  call get_excph_q_momenta()
@@ -218,29 +198,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      ! Add the WEIGHTs factor to calculate the renormalization factors
      !
-     BS_Sat_E            =rZERO
-     BS_Sat_E_PH_abs     =rZERO
-     BS_Sat_WEIGHT       =rZERO
-     BS_Sat_WEIGHT_PH_abs=rZERO
-     !
-     !iq_db=DB_Q_map(iq_bz)
      iq_db=Q_io_map(iq_bz)
-     call  EXCPH_eval_sat(iq_bz,q)
      !
-     ! Find the maximum weight of the satellites
-     ! 
-     do i1=EXCPH_states(1),EXCPH_states(2)
-       if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
-          max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
-          max_Sat_pos(i1,1) =iq_db
-          max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
-       endif
-     enddo
      !
      ! I/O
      !=====
      call io_control(ACTION=WR_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
-     io_err=io_EXCPH_gkkp(ID_exc_gkkp,'all')
+     io_err=io_EXCPH_gkkp(ID_exc_gkkp)
      !
    enddo
    !
@@ -257,14 +221,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Report all relevant data of the exciton-phonon coupling
  !
- call EXCPH_gkkp_report()
- YAMBO_FREE(max_Sat_weight)
- YAMBO_FREE(max_Sat_pos)
  YAMBO_FREE(EXCPH_q)
  ! 
- call Sat_free()
- call Renorm_free()
- !
  call timing('EXCPH_gkkp',OPR='stop')
  !
  return
@@ -441,35 +399,5 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
    end subroutine compare_qindxC_table
    !
-   subroutine EXCPH_gkkp_report()
-     use stderr,        ONLY:intc
-     use EXCPH,         ONLY:EXCPH_Renorm_PH_abs,EXCPH_Renorm
-     use units,         ONLY:HA2EV
-     use ELPH,          ONLY:ph_freqs_sq
-     implicit none
-     !
-     ! work space
-     !
-     character(schlen) :: message
-     real(SP)          :: ph_E
-     integer           :: iq_bz
-     !
-     call msg('sr',' Excitons renormalizations  (without Bose factor): ')
-     do i1=EXCPH_states(1),EXCPH_states(2)
-        write(message,*) 'Exciton '//trim(intc(i1))//': R =',EXCPH_Renorm(i1),'    R_abs =',EXCPH_Renorm_PH_abs(i1)
-        call msg('sr',message)
-     enddo
-     call msg('sr',' Max satellite weight: ')
-     do i1=EXCPH_states(1),EXCPH_states(2)
-        iq_bz = max_Sat_pos(i1,1) !  q%k_table(max_Sat_pos(i1,1), 1)
-        ph_E=sqrt(abs(ph_freqs_sq(iq_bz,max_Sat_pos(i1,2))))
-        write(message,*) 'Exciton '//trim(intc(i1))//' max(W_sat)=',max_Sat_weight(i1)
-        call msg('sr',message)
-        write(message,*) '   for iq = '//intc(max_Sat_pos(i1,1))//' il = '//intc(max_Sat_pos(i1,2))//'  ib = ' &
-&                                     //intc(max_Sat_pos(i1,3)),' w(iq,il) = ',ph_E*HA2EV*1000._SP,'meV'
-        call msg('sr',message)
-     enddo
-     !
-   end subroutine EXCPH_gkkp_report
-   !
+    !
 end subroutine

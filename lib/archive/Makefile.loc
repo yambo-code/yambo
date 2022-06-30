@@ -2,7 +2,11 @@
 # Package List
 #
 include ./package.list
-include ./git.list
+ifeq ($(wildcard ./git.list),./git.list)
+  include ./git.list
+else
+  include ./git.list.def
+endif
 #
 WGETFLAGS=--no-check-certificate -v
 #
@@ -79,6 +83,7 @@ clean_all:
 define getsrc
  if test ! -s $$LIB".tar.gz" ; then \
   echo "\t[$$LIB] download";\
+  if ! test -d  ../../log; then mkdir ../../log; fi; \
   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
   elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \

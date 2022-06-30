@@ -1,0 +1,8 @@
+#
+# GIT's repositories and branches
+#
+git_Ylib=git@github.com:yambo-code/yambo-libraries.git
+branch_Ylib=devel-gpuhack21
+#
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
+branch_devxlib=develop

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -49,7 +49,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  real(SP)           :: Ef_test
  real(SP),parameter :: Ef_step=0.1/HA2EV
  !
-  if (.not.allocated(E%f)) then
+ if (.not.allocated(E%f)) then
    YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
  endif
  !
@@ -59,9 +59,6 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  call f_build(Xe%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
- ! FineGd
- call OCCUPATIONS_Extend_Double_Grid("E",E,k)
- !
  ! If Xe and E have same metallic character then
  ! simply shift E components (Xe have been already shifted
  ! in the Fermi routine)
@@ -70,6 +67,9 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
    E%E=E%E-E%E_Fermi
    E%E_VBM =E%E_VBM-E%E_Fermi
    E%E_CBm =E%E_CBm-E%E_Fermi
+   !
+   ! FineGd
+   call OCCUPATIONS_Extend_Double_Grid("E",E,k)
    return
  endif
  !
@@ -91,6 +91,9 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  E%E=E%E-E%E_Fermi
  E%E_VBM =E%E_VBM-E%E_Fermi
  E%E_CBm =E%E_CBm-E%E_Fermi
+ !
+ ! FineGd
+ call OCCUPATIONS_Extend_Double_Grid("E",E,k)
  !
  if (any(E%nbf/=Xe%nbf).or.any(E%nbm/=Xe%nbm)) then
    call warning('Global and response function energy levels have different metallic character')

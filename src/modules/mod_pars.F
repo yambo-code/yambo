@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -64,7 +64,8 @@ module pars
  integer,parameter  :: logfile_index=1002
  !
  !...I/O
- integer, parameter :: max_io_units=20
+ integer, parameter :: max_io_units=40
+ integer, parameter :: io_units_shift=max_io_units+20 ! io_units for netcdf
  integer, parameter :: max_io_vars_open=500
  integer, parameter :: max_active_sections=10
  !

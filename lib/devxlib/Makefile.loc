@@ -12,20 +12,21 @@ TARBALL=$(tarball_devxlib)
 
 AUXFLAGS="--prefix=$(LIBPATH) $(devxlib_flgs)"
 
+
 #
 # MAIN target
 #
 all: $(LIBRARY)
 
-uncompress-stamp:
+uncompress:
 	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -e $(PACKAGE) ; then \
-	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(TARBALL) ; cd - ; fi )
+	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(MAKEFLAGS) $(devxlib) ; cd - ; fi )
 	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
-	if test -d ../archive/$(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi
+	if test -d ../archive/$(PACKAGE) && ! test -e $(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi
 	if ! test -f Makefile ; then (cp Makefile.loc Makefile); fi
-	touch uncompress-stamp
+	touch uncompressed.stamp
 
-configure-stamp: uncompress-stamp
+configure: uncompress
 	if test -e $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	      export CUDA_LIBS="$(lcudalib)"; \
 	      export CUDA_INCS="$(icudalib)"; \
@@ -40,29 +41,32 @@ configure-stamp: uncompress-stamp
 	      MPIF90="$(fc)" \
 	      MPIFC="$(fc)" ); \
 	fi
-	touch configure-stamp
+	touch configured.stamp
 
-package-ready-stamp: uncompress-stamp configure-stamp
+compile: uncompress configure
 	if test -e $(PACKAGE) ; then \
 	( cd $(PACKAGE);  $(make) core) ; fi
-	touch package-ready-stamp
+#	@$(call compile,core)
+       
+install: uncompress configure compile
+	@if ! test -e installed.stamp ; then \
+	 echo "\t[$(PACKAGE)] installation"; \
+	 ($(install));\
+	 touch installed.stamp;\
+	fi
 
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(mkdir_install));  ($(install)); fi
-	touch package-installed
-
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+$(LIBRARY): uncompress configure compile install
 
 #
 # cleaning
 #
 clean:
-	@if test -e $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@if test -e $(PACKAGE) && test -e configure.stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
+	@- rm -rf compiled.stamp configured.stamp installed.stamp
 
 clean_all: clean
 	@if test -e $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompress-stamp 
+	@- rm -rf uncompressed.stamp 
 
 define mkdir_install
  if ! test -d $(LIBPATH) ; then \
@@ -70,7 +74,6 @@ define mkdir_install
  fi 
 endef
 
-	
 define install
  cd $(PACKAGE);  cp src/libdevXlib.a $(LIBPATH)/lib/ ; chmod u+x $(LIBPATH)/lib/libdevXlib.a ; cp src/*.mod $(LIBPATH)/include/ ;
 endef

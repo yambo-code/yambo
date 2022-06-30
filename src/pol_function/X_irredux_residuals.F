@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM,AF,IM
@@ -40,7 +40,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:DEV_VAR(g_rot),qindx_X,bz_samp,DEV_VAR(G_m_G),q0_def_norm
+ use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G)
+ use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
@@ -64,8 +65,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
- complex(SP)        :: Z_,ctmp
  integer            :: sop_inv_l,X_ng
+ complex(SP)        :: ctmp,Z_
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho
@@ -173,6 +174,17 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      ! iG=1 case
      DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
+     !
+     ! 2022/05/11 DS & AF
+     ! Note: lim (q->0) <psi_nk+q | e-^{-i*q*r} | psi_nk > = <psi_nk   | 1 | psi_nk > = 1._SP
+     !       in the code the value cONE is needed for the Drude term;
+     !       to be checked what to do with the terminator
+     !       at present with the terminator we use 0.0_SP
+     !
+     ! If I take the expansion e-^{-i*q*r}= 1 + O(q) for the leading term this gives instead
+     !       lim (q->0) <psi_nk+q | 1 | psi_nk > = 0._SP 
+     !       Only using also <psi_nk+q | = <psi_nk | (1 + O(q) ) we recover the correct result.
+     !
      !
      !DEV_ACC data present(Xo_scatt_rhotw_p)
      if(iv/=ic) Xo_scatt_rhotw_p(1)=    -conjg(DIP_projected)

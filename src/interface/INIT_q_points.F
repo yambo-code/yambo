@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -113,7 +113,7 @@ subroutine INIT_q_points( )
      real(DP)          :: alat_DP
      !
      call io_control(ACTION=OP_RD_CL,ID=ID)
-     write (dbph_name,'(a,i6.6)') 'SAVE/s.dbph_',iabs(i_q)
+     write (dbph_name,'(a,i6.6)') 's.dbph_',iabs(i_q)
      io_err=io_connect(desc=trim(dbph_name),type=-4,ID=ID)
      get_e_p_q_point=io_err
      !

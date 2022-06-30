@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -76,7 +76,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::io_ELPH
+ integer, external ::io_gFsq
  !
  ! calculate q%weights
  !
@@ -112,7 +112,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  YAMBO_FREE(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=io_ELPH(ID,'gFsq')
+ io_err=io_gFsq(ID)
  !
  if (io_err/=0) call error(' Error reading the gFsq databases!')
  !
@@ -130,7 +130,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    else
      call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
    endif
-   io_err=io_ELPH(ID,'gFsq')
+   io_err=io_gFsq(ID)
  enddo
  !
  ! Energy setup
@@ -169,6 +169,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  QP_n_states_2do=count(QP_table_map(:,1)>0)
  call PP_redux_wait
  !
+ call msg('sr','Number of states to calculate ',QP_n_states_2do)
  call live_timing('gF^2 [el]',QP_n_states_2do*nq_loop)
  !
  do i1=1,QP_n_states_DB
@@ -222,7 +223,8 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
      !
      iqp=QP_table_map(i1,1)
      !
-     if (.not.state_is_2do(iqp)) cycle
+!     I do not understand this line I comment it
+!     if (.not.state_is_2do(iqp)) cycle
      !
      ch='g_sq_F_b_'//trim(intc(QP_table(iqp,1)))//'_k_'//trim(intc(QP_table(iqp,3)))
      call of_open_close(trim(ch),'ot')

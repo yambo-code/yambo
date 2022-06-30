@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -38,6 +38,14 @@ module interfaces
  implicit none
  !
  interface
+   !
+   subroutine DESC_compare(D1,D2,i_err,exclude,only)
+     use descriptors,ONLY:IO_desc
+     type(IO_desc),          intent(in) :: D1,D2
+     integer                            :: i_err(2)
+     character(*), optional, intent(in) :: exclude
+     character(*), optional, intent(in) :: only
+   end subroutine
    !
    subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      use descriptors,ONLY:IO_desc
@@ -150,8 +158,8 @@ module interfaces
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
      logical,  optional, intent(in) :: USE_Eo,USE_W,USE_occupations,USE_the_DbGd
-     real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
-     real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
+     real(SP), optional, intent(in) :: WF_fac(:,:,:)
+     real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL

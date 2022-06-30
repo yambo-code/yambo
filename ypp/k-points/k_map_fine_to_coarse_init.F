@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -29,7 +29,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use parser_m,            ONLY:parser
  use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode,k_the_nearest
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev,n_atoms
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,&

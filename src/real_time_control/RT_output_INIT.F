@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -54,8 +54,11 @@ subroutine RT_output_INIT( )
  !=================
  !
  call RT_FILE_add(name='current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
- !
  call RT_FILE_add(name='polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
+ call RT_FILE_add(name='probe-current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
+ call RT_FILE_add(name='probe-polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
+ call RT_FILE_add(name='pump-current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
+ call RT_FILE_add(name='pump-polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
  !
  do i_fp=1,3
    if (i_fp==1) dumb_ch="external_field"

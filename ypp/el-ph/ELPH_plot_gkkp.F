@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -26,14 +26,13 @@ subroutine ELPH_plot_gkkp(k,E,q)
  use pars,                ONLY:SP,pi,schlen
  use electrons,           ONLY:levels,spin
  use R_lattice,           ONLY:bz_samp
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,elph_nQ,PH_qpt
+ use ELPH,                ONLY:elph_use_q_grid,ph_modes,GKKP,elph_nQ,PH_qpt
  use com,                 ONLY:msg
  use QP_m,                ONLY:QP_table,QP_n_states
- use vec_operate,         ONLY:c2a
  use IO_int,              ONLY:io_control
  use YPPm,                ONLY:coo_out,K_transform
  use com,                 ONLY:msg,of_open_close
- use IO_m,                ONLY:OP_RD_CL,REP,deliver_IO_error_message,DUMP,manage_action,RD_CL_IF_END,OP_RD
+ use IO_m,                ONLY:REP,deliver_IO_error_message,DUMP,manage_action,RD_CL_IF_END,OP_RD
  use stderr,              ONLY:intc
  use LIVE_t,              ONLY:live_timing
  !

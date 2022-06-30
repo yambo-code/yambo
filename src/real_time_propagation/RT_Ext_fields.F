@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -41,7 +41,7 @@ subroutine RT_Ext_fields(A,time,i_f)
  ! b. uses A" (the ext current) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use functions,      ONLY:theta_function

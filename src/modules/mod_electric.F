@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -41,6 +41,10 @@ module electric
  complex(SP), allocatable :: W_electric(:,:,:,:)
  !
  logical  :: l_force_SndOrd  ! Use second order dipoles as in the old code (default 4th order)
+ !
+ ! Polarization
+ !
+ logical :: l_P_periodic ! Enforce periodicity in the polarization
  !
  contains
    !

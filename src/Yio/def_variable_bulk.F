@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -26,9 +26,9 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  use netcdf
  use com,        ONLY:fat_log
  use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
- use parallel_m, ONLY:ncpu
+ use parallel_m, ONLY:ncpu,mpi_comm_null
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
-&                     netcdf_dim,io_file
+&                     netcdf_dim,io_file,io_PAR_comm
  !
  implicit none
  !
@@ -101,7 +101,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
      nf_error=nf90_def_var(io_unit(ID),VAR,netcdf_var_kind,var_dim,io_netcdf_var(ID,VAR_ID)) 
      call netcdf_call(nf_error,ID,VAR=VAR)
 #if defined _PAR_IO
-     if(present(par_io_kind).and.ncpu>1) then
+     if (present(par_io_kind).and.io_PAR_comm(ID)/=mpi_comm_null) then
        nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,VAR_ID), netcdf_par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
      endif

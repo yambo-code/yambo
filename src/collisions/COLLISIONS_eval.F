@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -254,7 +254,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      use COLL_interfaces,   ONLY:io_COLLISIONS
 #if defined _PAR_IO
-     integer, external :: io_COLLISIONS_header
+     integer, external :: io_COLLs_header
 #endif
      !
      integer :: i_coll

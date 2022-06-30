@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, DS, DV
@@ -32,7 +32,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  use pars,           ONLY:SP,DP,IPL,pi,pi_DP,RZERO
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
- use drivers,        ONLY:l_sc_run,l_real_time,l_nl_optics
+ use drivers,        ONLY:l_real_time,l_nl_optics
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif

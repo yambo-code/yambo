@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2021 the YAMBO team
+         Copyright (C) 2000-2022 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -204,9 +204,12 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="ypp_rt";
  options[*i_opt].yambo_string="TDplots"; /* TDplots */
  options[*i_opt].section="Real-Time";
- options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(g)reenfunction";
+ options[*i_opt].long_desc[0]="<string>=(X)response,(a)bsorption,(o)ccupations,(l)ifetimes,(d)ensity,(p)olariazion,(g)reen-function";
  options[*i_opt].long_desc[1]=" ";
- options[*i_opt].long_desc[2]="response uses the time-resolved polarization. absorption amends the Kubo expression with the time-dependent occupations";
+ options[*i_opt].long_desc[2]="(X) response calculates the response via the time-resolved polarization";
+ options[*i_opt].long_desc[3]="(a) absorption amends the Kubo expression with the time-dependent occupations";
+ options[*i_opt].long_desc[4]="(p) polarization evaluates the k-resolved components of the time-dependent polarization";
+ options[*i_opt].long_desc[5]="(g) evaluates the two-imes Green`s function";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="TD plot control";
  options[*i_opt].char_var=1;
@@ -219,4 +222,5 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].long_desc[1]="rtplot=o   => <string>=(b)ands,(t)ime,(e)nergy,(d)os";
  options[*i_opt].long_desc[2]="rtplot=l   => <string>=(b)ands,(t)ime,(e)nergy";
  options[*i_opt].long_desc[3]="rtplot=d   => <string>=(t)ime";
+ options[*i_opt].long_desc[4]="rtplot=p   => <string>=(t)ime";
 };

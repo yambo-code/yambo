@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,7 +28,7 @@ subroutine MEM_treshold_estimate( )
  use electrons,    ONLY:n_spin,n_bands
  use R_lattice,    ONLY:nkibz
  use wave_func,    ONLY:wf_ng
- use y_memory,       ONLY:MEM_treshold
+ use <y_memory,       ONLY:MEM_treshold
  !
  implicit none
  !

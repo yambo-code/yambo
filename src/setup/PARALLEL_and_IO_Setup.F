@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
- use y_memory,         ONLY:USER_MEM_limit_string
+ use <y_memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
  use cuda_m_y,       ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
 #if defined _GPU
@@ -125,7 +125,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
 #ifdef _GPU
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
- call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
+ if (len_trim(cuda_visible_devices)>0) call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
  call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
  ierr = cudaGetDevice(i_dev)
  call msg('s', 'MPI assigned to GPU ',i_dev)

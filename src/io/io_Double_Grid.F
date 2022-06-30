@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,14 +24,13 @@
 integer function io_Double_Grid(E,Xk,ID,what)
  !
  use pars,           ONLY:schlen
- use electrons,      ONLY:levels,FineGd_E_components_alloc,n_sp_pol
+ use electrons,      ONLY:levels,FineGd_E_components_alloc
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
- use IO_int,         ONLY:io_connect,io_disconnect,io_bulk,io_variable_elemental,def_variable_bulk,&
-&                         io_header,ver_is_gt_or_eq,io_variable_bulk,def_variable_elemental,io_fragment
+ use IO_int,         ONLY:io_connect,io_disconnect,io_variable_elemental,def_variable_bulk,&
+&                         io_header,ver_is_gt_or_eq,io_variable_bulk,def_variable_elemental
  use IO_m,           ONLY:read_is_on,write_is_on,IO_OUTDATED_DB,variable_exist,io_sec,frag_DG 
  use timing_m,       ONLY:timing
- use stderr,         ONLY:intc
  use pars,           ONLY:IP,SP
 #if defined _ELPH
  use ELPH,           ONLY:EkplusQ_mode
@@ -44,7 +43,6 @@ integer function io_Double_Grid(E,Xk,ID,what)
  integer      :: ID,ID_frag=0
  character(*) ::what 
  character(schlen)  ::db_name 
- character(schlen)  ::VAR_name
  !
  ! Work Space
  !
@@ -177,6 +175,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
      !
      character(*)       ::what,kind
      type(bz_fine_grid) ::FG
+     character(schlen)  ::VAR_name
      !
      VAR_NAME=kind//"_"//what
      !

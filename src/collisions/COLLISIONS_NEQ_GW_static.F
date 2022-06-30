@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -40,7 +40,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  use timing_m,      ONLY:timing
  use IO_int,        ONLY:io_control,Io_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,qindx_C,bz_samp
@@ -106,7 +106,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! ALLOCATION
  !------------
  !
- call X_alloc('X',(/X%ng,X%ng,1/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
  YAMBO_ALLOC(EM1s,(X%ng,X%ng))
  !
  call elemental_collision_alloc(isc, NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="NEQ_GW")
@@ -132,7 +132,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! Write Database Header 
  !
  if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",0,last_coll,GW_NEQ_collisions,&
-         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
+         &                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global)
  !
  do i_coll1=1,GW_NEQ_collisions%N
    !
@@ -296,14 +296,14 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
    if (io_COLLs) then
      if (COLLISIONS_parallel_SC_structure) then
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_QP_A2A%COMM)
-       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_INDEX%COMM)
+       call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_Q_index%COMM)
      else
        call PP_redux_wait(GW_NEQ_COLL_element(1)%v3_r,COMM=PAR_COM_G_b_A2A%COMM)
      endif
    endif
    !
    if (io_COLLs) call COLLISIONS_linearize_and_IO("GW_NEQ",i_coll1,last_coll,GW_NEQ_collisions,&
-   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global%COMM)
+   &                                               GW_NEQ_COLL_element,ID_GW,PAR_COM_G_b_index_global)
    !
  enddo
  !
@@ -314,7 +314,7 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  ! CLEAN
  !
  YAMBO_FREE(EM1s)
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  !

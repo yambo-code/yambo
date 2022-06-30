@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,7 +23,7 @@
 !
 subroutine MEM_error(what)
  !
- use y_memory,       ONLY:MEM_err,MEM_msg
+ use <y_memory,       ONLY:MEM_err,MEM_msg
  use LIVE_t,       ONLY:LIVE_message
  use stderr,       ONLY:intc
  !

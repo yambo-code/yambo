@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -35,7 +35,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  use X_m,           ONLY:global_gauge
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included
- use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,L_kind,BS_bands,&
+ use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&
 &                        BS_dip_size,l_BS_trace,BS_n_eh_spaces,&
 &                        l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BSE_dipole_geometry,BS_field_direction,l_BS_ares_from_res
@@ -225,7 +225,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  !
  call live_timing()
  !
- if (trim(L_kind)=="full") then
+ if (trim(BSE_L_kind)=="full") then
    do i_T_g=1,BS_nT_grps
      if (.not.allocated(BS_T_grp(i_T_g)%dipoles_opt) ) then
        YAMBO_ALLOC(BS_T_grp(i_T_g)%dipoles_opt,(BS_dip_size,BS_T_grp(i_T_g)%size,2/BS_n_eh_spaces))
@@ -247,6 +247,10 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
    call DIP_alloc('DIP_orbital')
    call DIP_alloc('P_square') 
    call DIP_alloc('DIP_P_spinor')
+   !
+   ! Here I need the distribution over k
+   call PARALLEL_SETUP_K_scheme("Kdef")
+   !
  endif
  !
  if(iq>1) then

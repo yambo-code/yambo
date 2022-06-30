@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -138,12 +138,15 @@ subroutine k_special(LIST_only)
      call k_add((/ep,bp,0._SP/),'X1' ) ! 9 
      call k_add(SPECIAL_k%pt(9,:)+(/0._SP,0._SP,cp/),'A1' ) ! 10
      !
-     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' ) ! X+Y
-     call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:),'A2' )
+     call k_add(SPECIAL_k%pt(3,:)+SPECIAL_k%pt(5,:),'X2' ) ! 11
+     call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(3,:),'A2' ) ! 12
      call k_add(SPECIAL_k%pt(4,:)-2.*SPECIAL_k%pt(2,:),'A3' )
      call k_add(SPECIAL_k%pt(4,:)+SPECIAL_k%pt(5,:),'A4' )
      call k_add(SPECIAL_k%pt(13,:)+SPECIAL_k%pt(5,:),'A5' )
      call k_add(SPECIAL_k%pt(12,:)+SPECIAL_k%pt(5,:),'A6' )
+     call k_add(SPECIAL_k%pt(4,:)-SPECIAL_k%pt(5,:),'A7' )
+     !
+     call k_add(SPECIAL_k%pt(5,:)-(/0._SP,0._SP,cp/),'Tp' ) 
      !
      ! Y direction
      !
@@ -151,59 +154,80 @@ subroutine k_special(LIST_only)
      call k_add(-SPECIAL_k%pt(3,:)-SPECIAL_k%pt(5,:),'X4' ) ! -X-Y
      call k_add(-SPECIAL_k%pt(5,:),'Yp' ) ! -Y
      !
+     ! XY plane 
+     !==========
+     call k_FC_compose_and_add( (/0._SP,0.88_SP   /),"xy","YZp1" )
+     call k_FC_compose_and_add( (/0._SP,0.12_SP   /),"xy","YZp2" )
+     call k_FC_compose_and_add( (/0.26_SP,0.12_SP /),"xy","YZp3" )
+     call k_FC_compose_and_add( (/0.74_SP,0.88_SP /),"xy","YZm1" )
+     call k_FC_compose_and_add( (/0.74_SP,0.12_SP /),"xy","YZm2" )
+     call k_FC_compose_and_add( (/1._SP,0.12_SP   /),"xy","YZm3" )
+     !
+     ! YZ plane 
+     !==========
+     call k_FC_compose_and_add( (/0.88_SP,0._SP   /),"yz","XZp1" )
+     call k_FC_compose_and_add( (/0.12_SP,0._SP   /),"yz","XZp2" )
+     call k_FC_compose_and_add( (/0.12_SP,0.26_SP /),"yz","XZp3" )
+     call k_FC_compose_and_add( (/0.88_SP,0.74_SP /),"yz","XZm1" )
+     call k_FC_compose_and_add( (/0.12_SP,0.74_SP /),"yz","XZm2" )
+     call k_FC_compose_and_add( (/0.12_SP,1._SP   /),"yz","XZm3" )
+     !
+     ! XZ plane 
+     !==========
+     !
      ! X=+, Z=- quadrant
      !
-     call k_ORTHO_b_gt_a_add( (/0.88_SP,0._SP  /),"XYpm1 XYp1" )
-     call k_ORTHO_b_gt_a_add( (/0.88_SP,0._SP  /),"XYpm1" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0._SP  /),"XYpp1 XYpm2" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.26_SP/),"XYpm3 Ypm3 Gpm2 Gpp1" )
-     call k_ORTHO_b_gt_a_add( (/0.88_SP,0.26_SP/),"XYpm4" )
+     call k_FC_compose_and_add( (/0.88_SP,0._SP  /),"xz","XYpm1 XYp1" )
+     call k_FC_compose_and_add( (/0.88_SP,0._SP  /),"xz","XYpm1" )
+     call k_FC_compose_and_add( (/0.50_SP,0._SP  /),"xz","XYpp1 XYpm2" )
+     call k_FC_compose_and_add( (/0.50_SP,0.26_SP/),"xz","XYpm3 Ypm3 Gpm2 Gpp1" )
+     call k_FC_compose_and_add( (/0.88_SP,0.26_SP/),"xz","XYpm4" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.26_SP/),"Gp1" )
-     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.26_SP/),"Gpm1" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.50_SP/),"Gpm3 Gmp1 Gmm2" )
+     call k_FC_compose_and_add( (/0.62_SP,0.26_SP/),"xz","Gp1" )
+     call k_FC_compose_and_add( (/0.72_SP,0.26_SP/),"xz","Gpm1" )
+     call k_FC_compose_and_add( (/0.50_SP,0.50_SP/),"xz","Gpm3 Gmp1 Gmm2" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.1_SP/),"Yp1" )
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.16_SP/),"Ypm1" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.16_SP/),"Ypp1 Ypm2" )
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.26_SP/),"Ypm4" )
+     call k_FC_compose_and_add( (/0.62_SP,0.1_SP/),"xz","Yp1" )
+     call k_FC_compose_and_add( (/0.62_SP,0.16_SP/),"xz","Ypm1" )
+     call k_FC_compose_and_add( (/0.50_SP,0.16_SP/),"xz","Ypp1 Ypm2" )
+     call k_FC_compose_and_add( (/0.62_SP,0.26_SP/),"xz","Ypm4" )
      !
      ! X=+, Z=+ quadrant
      !
-     call k_ORTHO_b_gt_a_add( (/0.12_SP,0._SP  /),"XYpp2 XYp2" )
-     call k_ORTHO_b_gt_a_add( (/0.12_SP,0.26_SP/),"XYpp3 XYp3" )
+     call k_FC_compose_and_add( (/0.12_SP,0._SP  /),"xz","XYpp2 XYp2" )
+     call k_FC_compose_and_add( (/0.12_SP,0.26_SP/),"xz","XYpp3 XYp3" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.26_SP/),"Gpp2" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.50_SP/),"Gp3 Gm2" )
-     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.50_SP/),"Gpp3 Gmp2" )
+     call k_FC_compose_and_add( (/0.28_SP,0.26_SP/),"xz","Gpp2" )
+     call k_FC_compose_and_add( (/0.38_SP,0.50_SP/),"xz","Gp3 Gm2" )
+     call k_FC_compose_and_add( (/0.28_SP,0.50_SP/),"xz","Gpp3 Gmp2" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.1_SP/),"Yp2" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.16_SP/),"Ypp2" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.26_SP/),"Ypp3 Yp3 Gp2" )
+     call k_FC_compose_and_add( (/0.38_SP,0.1_SP/),"xz","Yp2" )
+     call k_FC_compose_and_add( (/0.38_SP,0.16_SP/),"xz","Ypp2" )
+     call k_FC_compose_and_add( (/0.38_SP,0.26_SP/),"xz","Ypp3 Yp3 Gp2" )
      !
      ! X=-, Z=- quadrant
      !
-     call k_ORTHO_b_gt_a_add( (/0.88_SP,0.74_SP/),"XYmm1 XYm1" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.74_SP/),"Gmm3 XYmp1 Ymp1 Ymm2 XYmm2" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,1._SP  /),"XYmm3" )
-     call k_ORTHO_b_gt_a_add( (/0.88_SP,1._SP  /),"XYmm4" )
+     call k_FC_compose_and_add( (/0.88_SP,0.74_SP/),"xz","XYmm1 XYm1" )
+     call k_FC_compose_and_add( (/0.50_SP,0.74_SP/),"xz","Gmm3 XYmp1 Ymp1 Ymm2 XYmm2" )
+     call k_FC_compose_and_add( (/0.50_SP,1._SP  /),"xz","XYmm3" )
+     call k_FC_compose_and_add( (/0.88_SP,1._SP  /),"xz","XYmm4" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.50_SP/),"Gm1" )
-     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.50_SP/),"Gmm1" )
-     call k_ORTHO_b_gt_a_add( (/0.50_SP,0.84_SP/),"Ymm3" )
-     call k_ORTHO_b_gt_a_add( (/0.72_SP,0.74_SP/),"Gmm4" )
+     call k_FC_compose_and_add( (/0.62_SP,0.50_SP/),"xz","Gm1" )
+     call k_FC_compose_and_add( (/0.72_SP,0.50_SP/),"xz","Gmm1" )
+     call k_FC_compose_and_add( (/0.50_SP,0.84_SP/),"xz","Ymm3" )
+     call k_FC_compose_and_add( (/0.72_SP,0.74_SP/),"xz","Gmm4" )
      !
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.74_SP/),"Ymm1 Ym1" )
-     call k_ORTHO_b_gt_a_add( (/0.62_SP,0.84_SP/),"Ymm4" )
+     call k_FC_compose_and_add( (/0.62_SP,0.74_SP/),"xz","Ymm1 Ym1" )
+     call k_FC_compose_and_add( (/0.62_SP,0.84_SP/),"xz","Ymm4" )
      !
      ! X=-, Z=+ quadrant
      !
-     call k_ORTHO_b_gt_a_add( (/0.12_SP,1._SP  /),"XYmp3 XYm3" )
-     call k_ORTHO_b_gt_a_add( (/0.12_SP,0.74_SP/),"XYmp2 XYm2" )
-     call k_ORTHO_b_gt_a_add( (/0.28_SP,0.74_SP/),"Gmp3" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.9_SP/),"Ym3" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.84_SP/),"Ymp3" )
-     call k_ORTHO_b_gt_a_add( (/0.38_SP,0.74_SP/),"Ymp2 Ym2 Gm3" )
+     call k_FC_compose_and_add( (/0.12_SP,1._SP  /),"xz","XYmp3 XYm3" )
+     call k_FC_compose_and_add( (/0.12_SP,0.74_SP/),"xz","XYmp2 XYm2" )
+     call k_FC_compose_and_add( (/0.28_SP,0.74_SP/),"xz","Gmp3" )
+     call k_FC_compose_and_add( (/0.38_SP,0.9_SP/),"xz","Ym3" )
+     call k_FC_compose_and_add( (/0.38_SP,0.84_SP/),"xz","Ymp3" )
+     call k_FC_compose_and_add( (/0.38_SP,0.74_SP/),"xz","Ymp2 Ym2 Gm3" )
      !
    case('CUB')
      !
@@ -334,7 +358,7 @@ subroutine k_special(LIST_only)
     !
    end subroutine
    !
-   subroutine k_ORTHO_b_gt_a_add(coordinates,labels_string)
+   subroutine k_FC_compose_and_add(coordinates,plane,labels_string)
     !
     use stderr,              ONLY:STRING_split
     !
@@ -343,27 +367,39 @@ subroutine k_special(LIST_only)
     integer           :: i_l
     real(SP)          :: coordinates(2)
     character(*)      :: labels_string
+    character(2)      :: plane
     character(schlen) :: label(10)
     !
     call STRING_split(labels_string,label," ")
     do i_l=1,10
       if (len_trim(label(i_l))==0) cycle
       SPECIAL_k%nbz=SPECIAL_k%nbz+1
-      SPECIAL_k%pt(SPECIAL_k%nbz,:)=K_ORTHO_el(coordinates(1),coordinates(2))
+      SPECIAL_k%pt(SPECIAL_k%nbz,:)=k_FC_plane(coordinates(1),coordinates(2),plane)
       SPECIAL_k_label(SPECIAL_k%nbz)=trim(label(i_l))
     enddo
     !
    end subroutine
    !
-   function K_ORTHO_el(alpha,beta)
-    real(SP) :: K_ORTHO_el(3),alpha,beta
-    integer           :: i_l,iA4,iA5,iA6
+   function k_FC_plane(alpha,beta,plane)
+    real(SP) :: k_FC_plane(3),alpha,beta
+    integer           :: i_l,iO,iX,iY
+    character(2)      :: plane
     do i_l=1,SPECIAL_k%nbz
-      if (trim(SPECIAL_k_label(i_l))=="A4") iA4=i_l
-      if (trim(SPECIAL_k_label(i_l))=="A5") iA5=i_l
-      if (trim(SPECIAL_k_label(i_l))=="A6") iA6=i_l
+      if (plane=="xz") then
+        if (trim(SPECIAL_k_label(i_l))=="A4") iO=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A5") iX=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A6") iY=i_l
+      else if (plane=="xy") then
+        if (trim(SPECIAL_k_label(i_l))=="A4") iO=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A6") iX=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A7") iY=i_l
+      else if (plane=="yz") then
+        if (trim(SPECIAL_k_label(i_l))=="A4") iO=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A7") iX=i_l
+        if (trim(SPECIAL_k_label(i_l))=="A5") iY=i_l
+      endif
     enddo
-    K_ORTHO_el=(1.-alpha-beta)*SPECIAL_k%pt(iA4,:)+alpha*SPECIAL_k%pt(iA5,:)+beta*SPECIAL_k%pt(iA6,:)
+    k_FC_plane=(1.-alpha-beta)*SPECIAL_k%pt(iO,:)+alpha*SPECIAL_k%pt(iX,:)+beta*SPECIAL_k%pt(iY,:)
    end function
    !
 end subroutine k_special

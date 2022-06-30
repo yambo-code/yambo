@@ -20,6 +20,10 @@ hdf5-dl:
 	@LIB2DO="hdf5"; $(get_external_libraries)
 netcdf-dl: 
 	@LIB2DO="netcdf"; $(get_external_libraries)
+pnetcdf-dl: 
+	@LIB2DO="pnetcdf"; $(get_external_libraries)
+netcdff-dl: 
+	@LIB2DO="netcdff"; $(get_external_libraries)
 etsf_io-dl: 
 	@LIB2DO="etsf_io"; $(get_external_libraries)
 blacs-dl: 
@@ -30,3 +34,5 @@ petsc-dl:
 	@LIB2DO="petsc"; $(get_external_libraries)
 slepc-dl: 
 	@LIB2DO="slepc"; $(get_external_libraries)
+Ylib-dl: 
+	@LIB2DO="Ylib"; $(get_external_libraries)

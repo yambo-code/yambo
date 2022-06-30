@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -29,7 +29,7 @@ subroutine MEM_manager_alloc(what,Sz,Kn,where)
  use stderr,       ONLY:intc
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
- use y_memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
+ use <y_memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,&
 &                       MEM_err,MEM_msg,N_MEM_elements,LARGE_MEMs,N_MEM_SAVE_max,&
 &                       N_MEM_SAVE_elements,N_MEM_SAVE_max,&
 &                       MEM_SAVE_treshold,MAX_MEM_Kb,MEMs,USER_MEM_limit_string,&

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -25,7 +25,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  !
  use pars,            ONLY:SP,schlen,pi,cI
  use units,           ONLY:HBAR_eVfs,FEMTO,SPEED_OF_LIGHT_SI,HA2EV
- use OUTPUT_simple,   ONLY:OUTPUT_add_column
+ use OUTPUT,          ONLY:OUTPUT_driver
  use RT_output_m,     ONLY:RT_desc,Gr_desc,TIME_STEP_desc
  use interfaces,      ONLY:DESC_write
  use YPP_real_time,   ONLY:TRabsWHAT,TRabsMODE,Epsilon_ij,B_Hall,TRabs_EPS_label,&
@@ -67,7 +67,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  !
  if (what=="open".or.what=="close") then
    do i_f=1,N_files
-    call OUTPUT_add_column(trim(ofile(i_f)),action=what)
+    call OUTPUT_driver(trim(ofile(i_f)),action=what)
     if (what=="open") then
       call elemental_desc_write(trim(ofile(i_f)))
     endif
@@ -91,17 +91,17 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  !
  ! Hall coefficient
  if (allocated(B_Hall)) then
-   call OUTPUT_add_column("Hall_"//how,TITLES=(/"Time"/),R_VALUES=(/TIME/),KIND="Time",UNIT="fs")
+   call OUTPUT_driver("Hall_"//how,TITLES=(/"Time"/),R_VALUES=(/TIME/),KIND="Time",UNIT="fs")
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    do i_dir=1,3
      do j_dir=1,3
        if (.not.TRabs_lEPS(i_dir,j_dir).or.i_dir==j_dir) cycle
        B_data(1)=real(B_Hall(i_dir,j_dir))
-       call OUTPUT_add_column("Hall_"//how,TITLES=(/"B_"//TRabs_EPS_label(i_dir,j_dir)/),&
+       call OUTPUT_driver("Hall_"//how,TITLES=(/"B_"//TRabs_EPS_label(i_dir,j_dir)/),&
 &                             R_VALUES=(/real(B_Hall(i_dir,j_dir))/),UNIT="(Ohm*cm)^-1")
      enddo
    enddo
-   call OUTPUT_add_column("Hall_"//how,action="write")
+   call OUTPUT_driver("Hall_"//how,action="write")
  endif
  !
  call set_real_printed_length( )
@@ -111,10 +111,10 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
    subroutine elemental_TIME_E_write(file,data)
      character(*) :: file
      real(SP)     :: data(2)
-     call OUTPUT_add_column(file,TITLES=(/"Time"/),R_VALUES=(/TIME/),UNIT="fs",KIND="Time")
-     call OUTPUT_add_column(file,TITLES=(/"Energy"/),R_VALUES=(/real(W%p(i_freq))/),UNIT="eV")
-     call OUTPUT_add_column(file,TITLES=(/"Eps-Im","Eps-Re"/),R_VALUES=data)
-     call OUTPUT_add_column(file,action="write")
+     call OUTPUT_driver(file,TITLES=(/"Time"/),R_VALUES=(/TIME/),UNIT="fs",KIND="Time")
+     call OUTPUT_driver(file,TITLES=(/"Energy"/),R_VALUES=(/real(W%p(i_freq))/),UNIT="eV")
+     call OUTPUT_driver(file,TITLES=(/"Eps-Im","Eps-Re"/),R_VALUES=data)
+     call OUTPUT_driver(file,action="write")
    end subroutine
    !
    subroutine gimme_a_name(i,j,desc)

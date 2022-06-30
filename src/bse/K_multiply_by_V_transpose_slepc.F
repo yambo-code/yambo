@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM, DS
+! Authors (see AUTHORS file for details): HM DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -45,8 +45,8 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- PetscFortranComplex  :: tmp_value(1)
- PetscFortranInt      :: H_pos(1)
+ PetscScalar          :: tmp_value(1)
+ PetscInt             :: H_pos(1), pet_one 
  PetscErrorCode       :: ierr
  !
  VecScatter           :: ctx
@@ -58,6 +58,8 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
  integer              :: n, i_g, i_g_start, i_c, start_index, start_index_dg
  !
  ! create scattering context vi (distributed) -> x (local)
+ !
+ pet_one = 1
  !
  call VecScatterCreateToAll(vi,ctx,x,ierr);
  !
@@ -75,8 +77,8 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
-     Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
+     call VecGetValues( x, pet_one, H_pos, tmp_value, ierr )
+     Slepc_v%Vi(i_g)%fragment(i_c,1)=cmplx(tmp_value(1),kind=SP)
    enddo
  enddo
  !
@@ -106,13 +108,13 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
    if(BSS_slepc_double_grp) start_index_dg = sum(BS_T_grp(i_g_start:i_g-1)%size)-1+BS_K_dim(1)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c,1))
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
+     call VecSetValues( vo, pet_one, H_pos, tmp_value, INSERT_VALUES, ierr )
      if(BSS_slepc_double_grp) then
        ! Expand vo to anti-resonant block
        H_pos=start_index_dg+i_c
-       call VecSetValues( vo, 1, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
+       call VecSetValues( vo, pet_one, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
      endif
    enddo
  enddo

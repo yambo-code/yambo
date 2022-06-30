@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,11 +59,11 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use YPP_real_time,  ONLY:l_RealTime,l_RT_dos,l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_G_two_times,&
 &                         l_RT_energy,l_RT_lifetimes,l_RT_occupations,l_RT_time,l_RT_X,l_RTpump_Fermi,&
 &                         l_RTpump_energy,Eh_pumped_pair_n_BZ_regions,Eh_pumped_pair_BZ_regions,&
-&                         l_NL_X,l_NL_exc,RT_conf
+&                         l_NL_X,l_NL_exc,RT_conf,l_RT_pol
  use real_time,      ONLY:RT_bands
 #endif
 #if defined _YPP_NL 
- use nl_optics,      ONLY:NL_damping
+ use nl_optics,      ONLY:NL_damping,DephMult
  use pars,           ONLY:SP
 #endif
 #if defined _YPP_ELPH
@@ -137,7 +137,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! GF
- io_RT_G_err=io_RT_components('G' ,ID)
+ io_RT_G_err=io_RT_components('G_lesser_RESTART' ,ID)
  if (io_RT_G_err==0) QP_nb=RT_bands(2)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=ID) ! Current response
@@ -158,7 +158,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  io_Nonlinear=io_NL("Nonlinear",ID)
  !
  if(io_Nonlinear==0) then
-   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*5._SP,-real(FS2AUT,SP)/)
+   if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*DephMult,-real(FS2AUT,SP)/)
  endif
  !
 #endif
@@ -336,6 +336,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_RT_density     =STRING_match(rstr_piece(i1+1),'d')
        l_RT_G_two_times =STRING_match(rstr_piece(i1+1),'g')
        l_RT_abs         =STRING_match(rstr_piece(i1+1),'a')
+       l_RT_pol         =STRING_match(rstr_piece(i1+1),'p')
        !
        l_rtplot=.TRUE.
        !
@@ -379,6 +380,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if (l_RT_time)        call initactivate(1,'RTtime')
  if (l_RT_energy)      call initactivate(1,'RTenergy')
  if (l_RT_dos)         call initactivate(1,'RTdos')
+ if (l_RT_pol)         call initactivate(1,'RTpol')
+ !
 #endif
  !
  if (l_amplitude)      call initactivate(1,'amplitude')
@@ -462,6 +465,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_RTpump_energy    = runlevel_is_on('Select_energy')
  l_RTpump_Fermi     = runlevel_is_on('Select_Fermi')
  !
+ l_RT_pol           = runlevel_is_on('RTpol')
  l_RT_abs           = runlevel_is_on('RTabs')
  l_RT_occupations   = runlevel_is_on('RToccupations')
  l_RT_lifetimes     = runlevel_is_on('RTlifetimes')
@@ -633,9 +637,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
  if (l_RealTime) then
    !
-   l_flag=l_RT_occupations.or.l_RT_abs
+   l_flag=l_RT_occupations.or.l_RT_abs.or.l_RT_pol
    if (l_flag)      call init_RT_ctl_switch('G')
-   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_G_two_times
+   l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol.or.l_RT_G_two_times
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
    l_flag=l_RT_time.and.l_RT_occupations
@@ -645,7 +649,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
      if (l_RT_time)  call initactivate(1,"BANDS_path CarrEnRnge")
    endif
    if (l_RT_density)     call initactivate(1,"LoadGhistory IncludeEQocc")
-   if (l_RT_G_two_times) call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+   if (l_RT_G_two_times) then
+     call initactivate(1,"LoadGhistory IncludeEQocc EnRngeRt ETStpsRt DampFactor RhoDeph")
+     call initactivate(1,"BuildSpec BuildGret BuildGadv BuildGles BuildGgrt KeepCC KeepCV KeepVC KeepVV")
+   endif
    if (l_RT_dos)  then
      call initactivate(1,"DOSERange DOSESteps DOS_broad SeparateEH IncludeEQocc NoOcc")
      call initactivate(1,"PDOS_atoms PDOS_kinds PDOS_wfcs PDOS_l PDOS_j PDOS_m")
@@ -662,7 +669,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  !
 #if defined _YPP_NL
- if(l_NL_X) call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec")
+ if(l_NL_X)   call initactivate(1,"Xorder TimeRange ETStpsRt EnRngeRt DampMode DampFactor PrtPwrSpec PumpPATH")
  if(l_NL_exc) call initactivate(1,"Xorder PrintExc")
 #endif
  !

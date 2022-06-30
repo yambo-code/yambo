@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -26,7 +26,7 @@ subroutine MEM_free(what,Sz)
  use pars,         ONLY:schlen,DP,IPL,IP
  use units,        ONLY:Kilobyte
  use openmp,       ONLY:master_thread
- use y_memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
+ use <y_memory,       ONLY:TOT_MEM_Kb,MEM_element_copy,N_MEM_elements,MEMs
  !
  implicit none
  !

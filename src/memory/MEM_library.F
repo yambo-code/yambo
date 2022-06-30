@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,7 +23,7 @@
 !
 subroutine MEM_library(member,shelf)
  !
- use y_memory,  ONLY:N_MEM_shelf,MEM_shelf,N_MEM_LIBs,MEM_LIBs
+ use <y_memory,  ONLY:N_MEM_shelf,MEM_shelf,N_MEM_LIBs,MEM_LIBs
  !
  implicit none
  !

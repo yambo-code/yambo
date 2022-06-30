@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -219,17 +219,15 @@ module functions
      real(SP), intent(in):: Eb
      real(SP)            :: boltzman_f
      !
-     real(SP) :: E_small=0.002/HA2EV  ! Threashold for degenerate excitons
+     real(SP) :: E_small=0.005/HA2EV  ! Threashold for degenerate excitons
      real(SP) :: T_small=1._SP/HA2KEL
      !
      if(abs(Eb)>E_small.and.abs(Boltz_Temp)>T_small) then
        boltzman_f=exp(-Eb/Boltz_Temp)  ! Normal case
      elseif(abs(Eb)>E_small.and.abs(Boltz_Temp)<=T_small) then
        boltzman_f=0._SP  ! Case  E>0 but T=0
-     elseif(abs(Eb)<E_small.and.abs(Boltz_Temp)<T_small) then
-       boltzman_f=1._SP  ! Limit E->0 T->0
-     elseif(abs(Eb)<E_small.and.abs(Boltz_Temp)>T_small) then
-       boltzman_f=1._SP  ! Case E=0 T->0
+     elseif(abs(Eb)<E_small) then
+       boltzman_f=1._SP  ! Limit E=0 
      endif
      !
    end function

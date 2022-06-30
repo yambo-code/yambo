@@ -40,7 +40,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,DB_Q_map,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
-&                         l_const_elph,l_abs_elph,BSS_eh_table_in
+&                         l_const_elph,l_abs_elph,l_abs_exc,BSS_eh_table_in
  !
 #include<memory.h>
  !
@@ -59,6 +59,7 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp
  integer, external       :: io_ELPH
+ !complex(SP)                :: aux_phase_1,aux_phase_2
  !
  ! Loop scheme:
  !  i_l ->i_beta ->i_star [load gkkp] ->i_H
@@ -135,8 +136,12 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          !write(iq_bz*1000+i_beta,*) i_Hp,ik_bz,ivp,ic,abs(BS_mat(i_Hp,i_beta)),ip_bz,ik_db,k%ptbz(ik_bz,:)
          !
-         if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if (l_abs_exc) then
+           Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+         else
+           if(.not.t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,1)=Xi(i_H,1)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         endif
          !
        enddo
        !
@@ -159,9 +164,12 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
            !ik_db=K_io_map(ik_bz)
            !elph_gkkp=GKKP%dVc(il,ic,icp,ik_db,1)/sqrt(2._SP*ph_E)
          endif
-         !
-         if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
-         if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         if (l_abs_exc) then
+           Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*abs(BS_mat(i_Hp,i_beta))
+         else
+           if(.not.t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
+           if(     t_rev) Xi(i_H,2)=Xi(i_H,2)+elph_gkkp*      BS_mat(i_Hp,i_beta)
+         endif
          !
        enddo
        !
@@ -192,8 +200,11 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          ! "Left" part of exciton-phonon coupling. The "right" part is its conjugate
          !
+         !aux_phase_1 = EXP( (0.0,1.0)*ATAN2( AIMAG(Xi(i_H,1)), REAL(Xi(i_H,1)) ) )
+         !aux_phase_2 = EXP( (0.0,1.0)*ATAN2( AIMAG(Xi(i_H,2)), REAL(Xi(i_H,2)) ) )
+         !
          EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
-&                                      BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))
+&                                      BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))!*conjg(aux_phase_2)*aux_phase_1)
          !
        enddo
      enddo
@@ -210,6 +221,16 @@ subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
  contains
    !
    integer function elemental_scattering(i_q_SYM,i_k_BZ)
+       !
+       ! This is done because the BSE is solved for q in IBZ  and k in BZ.
+       ! However the EXCPH matrix elements are for k in BZ and q in BZ.
+       !
+       ! Therefore, I have the exc. weight (q |cRk vRk-q)
+       ! but I don't have the exc. weight (Sq |cRk vRk-Sq).
+       !
+       ! Yet, I know that (Sq |cRk vRk-Sq) = (q |c{S^-1R}k v{S^-1R}k-q).
+       !
+       ! Therefore, in this subroutine I look for p = {S^-1 R}k
        !
        integer i_q_SYM,i_k_BZ,i_k_IBZ,i_k_SYM
        !

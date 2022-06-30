@@ -24,7 +24,7 @@
 !> @brief Calculate the phonon-assisted satellite for absorption and emission
 !         using double-grid
 !
-! @param[in]       iq                  q-point
+! @param[in]       iq_bz               q-point in the BZ
 ! @param[in]       il                  phonon branch
 ! @param[in]       i_alpha             incoming exciton
 ! @param[in]       i_beta              outgoing exciton
@@ -33,7 +33,7 @@
 ! @param[out]      Sat_absorption      Satellite in absorption
 ! @param[out]      Sat_emission        Satellite in emission
 !!
-subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
+subroutine Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  use frequency,     ONLY:w_samp
  use units,         ONLY:HA2CMm1
@@ -48,23 +48,24 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
 #include<memory.h>
  !
- integer,       intent(in)  :: il,iq,i_alpha,i_beta
+ integer,       intent(in)  :: il,iq_bz,i_alpha,i_beta
  complex(SP),   intent(in)  :: W
  complex(SP),   intent(out) :: Sat_absorption, Sat_emission
+ type(bz_samp)              :: q
  !
  ! Work Space
  !
  real(SP)    :: PH_E,bose_factor,boltzm_factor
  complex(SP) :: pole,E_alpha
- integer     :: iq_db
+ integer     :: iq_db,iq_ibz
  !
  Sat_absorption=cZERO
  Sat_emission  =cZERO
  !
  ! Bose function for the phonons
  !
- !iq_db=DB_Q_map(iq)
- iq_db=Q_io_map(iq)
+ !iq_db=DB_Q_map(iq_bz)
+ iq_db=Q_io_map(iq_bz)
  ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
  !
  if(ph_E<FAN_deltaE_treshold) return
@@ -75,7 +76,8 @@ subroutine Satellite_Simple(iq,il,i_alpha,i_beta,W,Sat_absorption,Sat_emission)
  !
  ! Boltzman factor for the luminescence
  !
- boltzm_factor=boltzman_f(BS_all_E(i_beta,iq)-min_EXC_E)
+ iq_ibz = q%sstar(iq_bz,1)
+ boltzm_factor=boltzman_f(BS_all_E(i_beta,iq_ibz)-min_EXC_E)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -76,7 +76,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::io_ELPH
+ integer, external ::io_gFsq
  !
  ! calculate q%weights
  !
@@ -112,7 +112,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  YAMBO_FREE(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=io_ELPH(ID,'gFsq')
+ io_err=io_gFsq(ID)
  !
  if (io_err/=0) call error(' Error reading the gFsq databases!')
  !
@@ -130,7 +130,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    else
      call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
    endif
-   io_err=io_ELPH(ID,'gFsq')
+   io_err=io_gFsq(ID)
  enddo
  !
  ! Energy setup

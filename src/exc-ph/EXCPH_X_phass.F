@@ -45,7 +45,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,BS_Sat_W_DG,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,EXC_E_DbGd,min_EXC_E_DbGd, &
-&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map
+&                        BS_Sat_W_DG_PH_abs,EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,DB_Q_map,  &
+&                        l_DbGd_WEIGHTs
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,ph_modes,Q_io_map
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
@@ -53,25 +54,21 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
- use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
  type(bz_samp), intent(in)  :: q
  type(w_samp),  intent(in)  :: wv
- complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,2),PL_ii(wv%n_freqs,2)
+ complex(SP),   intent(out) :: Epsilon_ii(wv%n_freqs,3),PL_ii(wv%n_freqs,3)
  !
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,E_alpha,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- logical       :: l_DbGd_WEIGHTs
  integer       :: iq_fg,iq_idx,iq_db
  integer       :: elph_branches_save(2)
  integer, external :: io_EXCPH_gkkp,io_ELPH
- !
- call parser('DbGdWEIGHTs',l_DbGd_WEIGHTs)
  !
  min_pos  =minloc(BS_all_E(1,:))
  min_EXC_E=minval(BS_all_E(1,:))
@@ -141,20 +138,22 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
              !      
              ! Calcualte the Satellite on the course q-grid
              !
-             call Satellite_Simple(iq_bz,il,i_alpha,i_beta,W,  Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
              !
            else
              !      
              ! Use the double-grid to average denominators
              !
-             call Satellite_DbGrid(iq_bz,il,i_alpha,i_beta,W,q,Sat_alpha_abs,Sat_alpha_emiss)
+             call Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_alpha_abs,Sat_alpha_emiss)
              !
            endif
            !
            ! Add the satellites to the dielectric constant and luminescence
            !
-           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs  *BS_R(i_alpha)
-           PL_ii(iw,1)     =PL_ii(iw,1)     +Sat_alpha_emiss*BS_R(i_alpha)
+           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,1)     =PL_ii(iw,1)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+           Epsilon_ii(iw,3)=Epsilon_ii(iw,3)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,3)     =PL_ii(iw,3)+Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            !
          enddo
          !
@@ -176,12 +175,14 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  EXCPH_Renorm_PL_PH_abs= EXCPH_Renorm_PL_PH_abs/real(q%nbz,SP)
  !
  call msg('sr','Renormalization factors at finite temperature [Absorption]:')
+ call msg('sr','        [ph-emission]   [ph-absorption]')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm(i_alpha),EXCPH_Renorm_PH_abs(i_alpha)/))
+   call msg('sr','Exciton '//trim(intc(i_alpha))//': ',(/EXCPH_Renorm(i_alpha),EXCPH_Renorm_PH_abs(i_alpha)/))
  enddo
  call msg('sr','Renormalization factors at finite temperature [Emission]:')
+ call msg('sr','        [ph-emission]   [ph-absorption]')
  do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   call msg('sr','Exciton '//intc(i_alpha)//': ',(/EXCPH_Renorm_PL(i_alpha),EXCPH_Renorm_PL_PH_abs(i_alpha)/))
+   call msg('sr','Exciton '//trim(intc(i_alpha))//': ',(/EXCPH_Renorm_PL(i_alpha),EXCPH_Renorm_PL_PH_abs(i_alpha)/))
  enddo
  !
  ! The term without satellites
@@ -189,6 +190,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  min_E=min_EXC_E
  if(use_PH_DbGd) min_E=min_EXC_E_DbGd
  !
+ call live_timing('Epsilon',wv%n_freqs)
  do iw=1,wv%n_freqs
    !
    W=wv%p(iw)
@@ -196,7 +198,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do i_alpha=EXCPH_states(1),EXCPH_states(2)
      !
      pole =BS_E_in(i_alpha)
-     Epsilon_ii(iw,:)=Epsilon_ii(iw,:)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha)/(W-pole)
+     Epsilon_ii(iw,1:2)=Epsilon_ii(iw,1:2)+(1._SP-EXCPH_Renorm(i_alpha)-EXCPH_Renorm_PH_abs(i_alpha))*BS_R(i_alpha)/(W-pole)
      !
      ! [CA] The pole of luminescence should be the pole of BS_E_in 
      !      but I think this is not consistent with the Boltzman weight, I use always Lout.
@@ -205,12 +207,16 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_all_E(i_alpha,1)-min_E
      pole =BS_all_E(i_alpha,1)          
-     PL_ii(iw,:)     =PL_ii(iw,:)     +(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
+     PL_ii(iw,1:2)     =PL_ii(iw,1:2)     +(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
 &                                      /(W-pole)*boltzman_f(exc_E)
      !
    enddo
    !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing( )
  !
  ! Eps(w)=1._SP - X(w) in agreement with definition in src/bse/
  !
@@ -283,7 +289,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      real(SP) :: N_bose,weight_dbgd
      real(SP), external :: get_ph_E_DbGd
      ! 
-     if(.not.use_PH_DbGd) then
+     if(.not.use_PH_DbGd.or..not.l_DbGd_WEIGHTs) then
        !
        do il=elph_branches(1),elph_branches(2)
          !      

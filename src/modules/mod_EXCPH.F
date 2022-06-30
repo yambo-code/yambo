@@ -35,7 +35,7 @@ module EXCPH
  !
  ! ... GKKP & EXC-PH Interaction
  !
- logical  :: l_const_elph,l_abs_elph 
+ logical  :: l_const_elph,l_abs_elph,l_abs_exc 
  complex(SP), allocatable :: EXCPH_Gkkp(:,:,:)
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: n_exc_in
@@ -100,6 +100,12 @@ module EXCPH
  ! DB Q-mapping in case symmetries are removed
  !
  integer, allocatable :: DB_Q_map(:)
+ !
+ ! Control flags
+ !
+ logical       :: l_DbGd_WEIGHTs ! Double-Grid for Satellite weights
+ logical       :: l_DbGd_PH_only ! Double-Grid only for phonon energies
+ logical       :: l_no_matrix_elements  ! Set EXC-PH matrix elements to 1 (in lifetime and satellites)
  !
  contains
    !      

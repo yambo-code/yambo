@@ -92,7 +92,7 @@ subroutine EXCPH_double_grid_setup(q)
  min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
  min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
  call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
- call msg('rs','Minimum exctonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
+ call msg('rs','Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
  write(q_point,'(3f12.6,a)') v(:),' [rlu] '
  call msg('rs','Minimum q-point in the DbGrid : '//q_point)
  !

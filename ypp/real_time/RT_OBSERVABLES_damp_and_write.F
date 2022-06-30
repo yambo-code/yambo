@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -24,6 +24,7 @@
 subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  use YPP_real_time,  ONLY:l_force_min_damp,RT_time,OBS_el,RT_ctl
+ use stderr,         ONLY:STRING_match
  use pars,           ONLY:pi,SP
  use units,          ONLY:AUT2FS
  use RT_control,     ONLY:RT_output
@@ -67,24 +68,12 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  !
  call section("s",'[RT] '//trim(OBS%title)//' dumped on file')
  !=============================================================
- !
- select case (trim(OBS%title))
-   !
-   case("Polarization") 
-     call RT_output(what="open pol")
-     do i_t=1,RT%T_n_steps
-       RT_P=OBS%F_t(i_t,1:3)
-       call RT_output('pol',TIME=RT_time(i_t)*AUT2FS)
-     enddo
-   case("Current") 
-     call RT_output(what="open curr")
-     do i_t=1,RT%T_n_steps
-       RT_ind_J=OBS%F_t(i_t,1:3)
-       call RT_output('curr',TIME=RT_time(i_t)*AUT2FS)
-     enddo
-     !
- end select
- !
- call RT_output(what="close pol curr")
+ call RT_output(what="open "//trim(OBS%title))
+ do i_t=1,RT%T_n_steps
+   if (STRING_match(OBS%title,"polarization")) RT_P=OBS%F_t(i_t,1:3)
+   if (STRING_match(OBS%title,"current")     ) RT_ind_J=OBS%F_t(i_t,1:3)
+   call RT_output(trim(OBS%title),TIME=RT_time(i_t)*AUT2FS)
+ enddo
+ call RT_output(what="close "//trim(OBS%title))
  !
 end subroutine

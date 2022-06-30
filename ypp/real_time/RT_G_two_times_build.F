@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -29,16 +29,16 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  use electrons,      ONLY:levels
  use parser_m,       ONLY:parser
  use matrix_operate, ONLY:hermitian
- use stderr,         ONLY:intc,real2ch
+ use stderr,         ONLY:real2ch
  use wrapper,        ONLY:M_by_M
  use com,            ONLY:msg,of_open_close
  use IO_int,         ONLY:io_control
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE
 #if !defined _PAR_IO
  use IO_m,           ONLY:manage_action
 #endif
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,NE_i_time,NE_time,dG_lesser,G_lesser_reference,RT_step,&
+ use RT_control,     ONLY:RT_apply,SAVE_G_history,Gless_RT_IO_t
+ use real_time,      ONLY:RT_nk,RT_bands,RT_nbands,dG_lesser,G_lesser_reference,RT_step,&
 &                         RT_dyn_step,G_MEM_steps,Ho_plus_Sigma,H_EQ,I1_matrix,RTibz
  use YPP_real_time,  ONLY:RT_time,RT_conf,GreenF_T_and_W,Rho_deph
  use LIVE_t,         ONLY:live_timing
@@ -54,7 +54,7 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
 #if !defined _PAR_IO
  integer               :: IO_ACT
 #endif
- integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_dT,i_kind,i_t_tmp,Nt
+ integer               :: ID,ik,ik_RT,ib1,ib2,io_err,i_T(2),i_w,i_T1,i_T2,i_Tc,i_kind,i_t_tmp,Nt
  character(2)          :: function_name
  logical               :: include_eq_occ,keep_cc,keep_vv,keep_cv,keep_vc,&
 &                         build_G_ret,build_G_adv,build_G_les,build_G_grt,build_Spect,&
@@ -92,12 +92,11 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  ! I/O
  !=====
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
- io_err=io_RT_components('G',ID)
- if(.not.SAVE_G_history) &
-   &  call error(" History of rho not found. Two times function cannot be computed")
+ io_err=io_RT_components('G_lesser',ID)
+ if(.not.SAVE_G_history) call error(" History of rho not found. Two times function cannot be computed")
  !
  RT_dyn_step=RT_step
- call RT_time_configuration_setup("Glesser",GF_RT_IO_t)
+ call RT_time_configuration_setup("Glesser",Gless_RT_IO_t)
  !
  if (build_G_les) function_name="G<"
  if (build_G_grt) function_name="G>"
@@ -155,14 +154,14 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
  call msg('s',function_name//"(k,w) at time "//trim(real2ch(real(T_c/FS2AUT,SP)))//" fs")
  !
- Nt=GF_RT_IO_t%N
+ Nt=Gless_RT_IO_t%N
  !
- REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+ REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
  do i_t_tmp=1,Nt
-   TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_Tc) )
+   TIME_diff= abs ( Gless_RT_IO_t%Time(i_t_tmp) - RT_time(i_Tc) )
    if (abs(TIME_diff)<REF_diff ) then 
      REF_diff=TIME_diff
-     GF_RT_IO_t%N=i_t_tmp
+     Gless_RT_IO_t%N=i_t_tmp
    endif
  enddo
  !
@@ -170,12 +169,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
  !
 #if defined _PAR_IO
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
- io_err=io_RT_components('G',ID)
+ io_err=io_RT_components('G_lesser_K_section',ID)
 #else
  do ik = 1, RT_nk
    IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
    call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+1/),ID=ID)
-   io_err=io_RT_components('G',ID)
+   io_err=io_RT_components('G_lesser_K_section',ID)
  enddo
 #endif
  !
@@ -252,12 +251,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
    !
    do i_kind=1,2
      !
-     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
+     REF_diff=Gless_RT_IO_t%Time(Nt)-Gless_RT_IO_t%Time(Nt-G_MEM_steps)
      do i_t_tmp=1,Nt
-       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T(i_kind)) )
+       TIME_diff= abs ( Gless_RT_IO_t%Time(i_t_tmp) - RT_time(i_T(i_kind)) )
        if (abs(TIME_diff)<REF_diff ) then 
          REF_diff=TIME_diff
-         GF_RT_IO_t%N=i_t_tmp
+         Gless_RT_IO_t%N=i_t_tmp
        endif
      enddo
      !
@@ -265,12 +264,12 @@ subroutine RT_G_two_times_build(en,kpt,qpt)
      !
 #if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
-     io_err=io_RT_components('G',ID)
+     io_err=io_RT_components('G_lesser_K_section',ID)
 #else
      do ik = 1, RT_nk 
        IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G',ID)
+       io_err=io_RT_components('G_lesser_K_section',ID)
      enddo
 #endif
      ! exp(-abs(RT_time(i_t)*damp_factor))

@@ -30,12 +30,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use X_m,            ONLY:X_t
- use X_output,       ONLY:eps_file_name,pl_file_name,X_setup_file_names,X_write_messages_before_headers
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC
+&                         BS_R_left,BS_R_right,BS_R,BS_Sat_W_DG,BS_Sat_W_DG_PH_abs,free_EXC,alloc_EXC, &
+&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use frequency,      ONLY:w_samp
+ use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
@@ -47,8 +48,9 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Work space
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
- integer, parameter  :: n_output=5
+ integer, parameter  :: n_output=7
  real(SP)            :: output_data(n_output)
+ character(schlen)   :: headers(n_output)
  integer             :: iw,iq,i_alpha,max_filling
  character(schlen)   :: dbgd_string
  !
@@ -68,7 +70,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Load excitonic energies and residuals
  !
  call EXCPH_load_L(1,X,'eigenvalues residuals','Lin')
- BS_E_in(:)=BS_E(:) ! L_in can be different from L_out 
+ BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
  !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
@@ -85,10 +87,15 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
  !
+ call parser('NoMatrxEl',l_no_matrix_elements)
+ !  
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
  !
  dbgd_string=''
+ !
+ call msg('rs','Double-grid                  :',use_PH_DbGd)
+ !
  if(use_PH_DbGd) then
    dbgd_string='DbGd'
    max_filling=maxval(q%FGbz%N_mapped)+1  ! max number of tilde q around each q-point include the q itself
@@ -96,18 +103,27 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    YAMBO_ALLOC(BS_Sat_W_DG_PH_abs,(ph_modes,EXCPH_sum(2),EXCPH_states(2),max_filling))
    BS_Sat_W_DG       =rZERO
    BS_Sat_W_DG_PH_abs=rZERO
+   !
+   ! Check double-grid flags
+   !
+   call parser('DbGdWEIGHTs',l_DbGd_WEIGHTs)
+   call parser('DbGdOnlyPh', l_DbGd_PH_only)
+   !
+   call msg('rs','Double-grid for satellites   :',l_DbGd_WEIGHTs)
+   call msg('rs','Double-grid only for phonons :',l_DbGd_PH_only) 
+   !
  endif
  !
  ! Frequencies and damping setup
  call FREQUENCIES_setup(wv)
- YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,2))
- YAMBO_ALLOC(PL_ii,(wv%n_freqs,2))
+ YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,3))
+ YAMBO_ALLOC(PL_ii,(wv%n_freqs,3))
  !
  ! Calculate X(w) include phonon assisted transitions
  !
  call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  !
- call X_setup_file_names(1,'bse ','phass',dbgd_string) 
+! call X_setup_file_names(1,'bse ','phass',dbgd_string) 
  !
  call print_output()
  !
@@ -126,20 +142,40 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  contains
    !
    subroutine print_output()
-     use X_output,      ONLY:X_write_messages_before_headers,X_write_q_plus_G
+!     use X_output,      ONLY:X_write_messages_before_headers,X_write_q_plus_G
      implicit none
+     !
+     character(schlen) :: eps_file_name,pl_file_name
+     !
+     eps_file_name='eps_bse_ph_ass'
+     pl_file_name ='pl_bse_ph_ass'
+     if(use_PH_DbGd) then
+       eps_file_name='eps_bse_ph_ass_dbgd'
+       pl_file_name ='pl_bse_ph_ass_dbgd'
+     endif
      !
      call of_open_close(eps_file_name,'ot')
      call of_open_close(pl_file_name,'ot')
      !
-     call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
+!     call X_write_messages_before_headers(1,.FALSE.,.FALSE.,'r ')
      !
-     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
+!     call X_write_q_plus_G(1,(/0._SP,0._SP,0._SP/),1)
      !
-     call msg('o eps_q pl_q','# EXCITON PHONON')    
-     call msg('o eps_q pl_q','# Exciton_states    :',EXCPH_states,INDENT=0)    
-     call msg('o eps_q pl_q','# EXciton sum       :',EXCPH_sum,INDENT=0)    
-     call msg('o eps_q pl_q','#')
+     call msg('o eps_bse pl_bse','# EXCITON PHONON')    
+     call msg('o eps_bse pl_bse','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o eps_bse pl_bse','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     if(use_PH_DbGd) then
+       call msg('o eps_bse pl_bse','# Double-grid for satellites   :',l_DbGd_WEIGHTs,INDENT=0)    
+       call msg('o eps_bse pl_bse','# Double-grid only for phonons :',l_DbGd_PH_only,INDENT=0)    
+     endif
+     call msg('o eps_bse pl_bse','#')
+     headers(1)='E[eV]'
+     headers(2:n_output)=(/'Im(eps_ph )','Re(eps_ph )','Im(eps_nos)','Re(eps_nos)','Re(eps_sat)','Im(eps_sat)'/)
+     call msg('o eps_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
+     !
+     headers(2:n_output)=(/'Im(pl_ph )','Re(pl_ph )','Im(pl_nos)','Re(pl_nos)','Re(pl_sat)','Im(pl_sat)'/)
+     call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
+     call msg('o eps_bse pl_bse','#')
      !
      ! Write output on file
      !
@@ -148,14 +184,14 @@ subroutine EXCPH_optics(E,k,q,X,wv)
        ! Eps
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1)), &
-&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2))/)
-       call msg('o eps_q','',output_data,INDENT=-2,USE_TABS=.true.)
+&             aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),aimag(Epsilon_ii(iw,3)),real(Epsilon_ii(iw,3))/)
+       call msg('o eps_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
        ! Luminescence
        !
        output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
-&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2))/)
-       call msg('o pl_q','',output_data,INDENT=-2,USE_TABS=.true.)
+&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),aimag(PL_ii(iw,3)),real(PL_ii(iw,3))/)
+       call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo
      !

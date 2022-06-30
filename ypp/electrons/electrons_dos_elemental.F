@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,8 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
-&                                  WF_fac,PDOS_fac,USE_the_DbGd,QUIET,FORCE_occ)
+subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_the_DbGd,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels,n_spin
@@ -34,17 +33,16 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parser_m,       ONLY:parser
+ use interpolate,    ONLY:INTERP_obj
  !
  implicit none
  !
- type(bz_samp),     intent(in)  :: k
- type(levels),      intent(in)  :: E
- integer,           intent(in)  :: bands(2)
- real(SP),          intent(in)  :: dos_E(DOS_E_steps)
- real(SP),          intent(out) :: el_dos(DOS_E_steps,n_spin)
- real(SP), pointer, intent(in)  :: WF_fac(:,:,:)
- real(SP), pointer, intent(in)  :: PDOS_fac(:,:,:)
- logical,  optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
+ type(bz_samp),     intent(in) :: k
+ type(levels),      intent(in) :: E
+ integer,           intent(in) :: bands(2),ID_spin,ID_pdos
+ real(SP),          intent(in) :: dos_E(DOS_E_steps)
+ real(SP),          intent(out):: el_dos(DOS_E_steps,n_spin)
+ logical, optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
  !
  ! Work Space
  ! 
@@ -76,9 +74,22 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,&
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &              ! standard
-&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,& ! optionals
-&                              WF_fac=WF_fac,PDOS_fac=PDOS_fac)                                 ! optional pointers
+   if (ID_spin==0.and.ID_pdos==0) then
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
+&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ) 
+   else if (ID_spin>0.and.ID_pdos==0) then
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
+&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
+&                              WF_fac=INTERP_obj(ID_spin)%INTERP) 
+   else if (ID_spin==0.and.ID_pdos>0) then
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
+&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
+&                              PDOS_fac=INTERP_obj(ID_pdos)%INTERP) 
+   else if (ID_spin>0.and.ID_pdos>0) then
+     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
+&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
+&                              WF_fac=INTERP_obj(ID_spin)%INTERP,PDOS_fac=INTERP_obj(ID_pdos)%INTERP) 
+   endif
    !
    if (LIVE_t_) call live_timing(steps=1)
    !

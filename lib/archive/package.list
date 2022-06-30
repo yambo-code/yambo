@@ -70,7 +70,7 @@ url_libxc=https://www.tddft.org/programs/libxc/down/5.1.5/$(tarball_libxc)
 url_petsc=https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/$(tarball_petsc)
 url_slepc=https://slepc.upv.es/download/distrib/$(tarball_slepc)
 #
-# Intenrnal URL's
+# Internal URL's
 #
 base_url=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -35,15 +35,16 @@ subroutine RT_start_and_restart(E,k,q)
  ! [5] Initialize the fields
  ! [6] (Eventually) load the retarded Green Functions
  !
- use pars,           ONLY:SP,cZERO,rZERO,schlen
+ use pars,           ONLY:SP,cZERO,rZERO
  use units,          ONLY:HA2EV,AUT2FS
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt
  use com,            ONLY:msg
  use QP_CTL_m,       ONLY:QP_ctl_user
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use R_lattice,      ONLY:bz_samp,nXkibz
- use RT_control,     ONLY:ID,NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,GF_RT_IO_t,OUTPUT_RT_IO_t,&
-&                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc
+ use RT_control,     ONLY:NE_i_start_time,CARR_RT_IO_t,OBS_RT_IO_t,Gless_RESTART_RT_IO_t,OUTPUT_RT_IO_t,&
+&                         CACHE_OBS_INTERVAL_time,RT_control_free,RT_control_alloc,RT_DB_name,RT_DB_ID,N_RT_databases,&
+&                         RT_return_db_ID
  use real_time,      ONLY:NE_steps,RT_ind_J,l_NE_dynamics,H_EQ,&
 &                         G_lesser_reference,rho_reference,magn_reference,  &
 &                         l_NE_with_fields,XC0,HARTREE0,NE_time,RT_levels,&
@@ -72,8 +73,7 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Work Space
  !
- integer :: i_mem,ib,i_sp_pol,ik,iE_fg,ik_RT,IO_ACT,nt,i_db,io_err(8)
- character(schlen) :: db_name(8)
+ integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(N_RT_databases),COM_MODE,ib,iE_fg,ik_RT
  integer, external :: io_RT_components
  integer, external :: RT_Lifetimes_evaluation_plan
  logical :: RESTART
@@ -83,7 +83,6 @@ subroutine RT_start_and_restart(E,k,q)
  call RT_local_init()
  call RT_occupations_and_levels_init(RT_bands,E,k,q,RTibz,RT_levels)
  call RT_G_lesser_init()
- !
  !
  ! The Equilibrium Hamiltonian
  !=========================
@@ -132,19 +131,13 @@ subroutine RT_start_and_restart(E,k,q)
  !
  ! Perform a first I/O to check which DBs are present.
  !=====================================================
- !
  RESTART=.FALSE.
- db_name=""
- db_name(4)='OBSERVABLES'
- db_name(5)='G'
- db_name(6)='carriers'
- db_name(7)='THETA'
- db_name(8)='REF'
- !
- do i_db=4,8
-   if (i_db/=5) call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
-   if (i_db==5) call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(i_db))
-   io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
+ do i_db=1,N_RT_databases
+   COM_MODE=NONE
+   if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
+   if (i_db==RT_return_db_ID("G_lesser_RESTART")) COM_MODE=REP
+   call io_control(ACTION=OP_RD_CL,COM=COM_MODE,SEC=(/1/),MODE=VERIFY,ID=RT_DB_ID(i_db))
+   io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
  enddo
  !
  ! To restart from RT only I need:
@@ -153,12 +146,14 @@ subroutine RT_start_and_restart(E,k,q)
  !  2. The OBSERVABLES -> RT_IO_t
  !  3. The REFERENCE -> G_lesser_ref
  !
- RESTART = io_err(4)==0.and.io_err(5)==0.and.io_err(8)==0
+ RESTART = io_err(RT_return_db_ID("G_lesser_RESTART"))==0.and.&
+&          io_err(RT_return_db_ID("OBSERVABLES"))==0.and.&
+&          io_err(RT_return_db_ID("REFERENCE"))==0
  !
 #if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)
  !
- if (l_RT_iterative_ELPH_lifetimes) RESTART = RESTART.and.(io_err(7)==0)
+ if (l_RT_iterative_ELPH_lifetimes) RESTART = RESTART.and.(io_err(RT_return_db_ID("THETA"))==0)
 #endif
  !
  ! In case I restart I need to copy the databases in the WD
@@ -168,15 +163,16 @@ subroutine RT_start_and_restart(E,k,q)
  !
  if (RESTART) then
    !
-   do i_db=4,8
-     call RT_RESTART_database_copy( trim(db_name(i_db)) )
+   do i_db=1,N_RT_databases
+     call RT_RESTART_database_copy( trim(RT_DB_name(i_db)) )
    enddo
    !
    call PP_redux_wait()
    !
-   do i_db=4,8
-     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID(i_db))
-     io_err(i_db)=io_RT_components(trim(db_name(i_db)),ID(i_db))
+   do i_db=1,N_RT_databases
+     if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=RT_DB_ID(i_db))
+     io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
    enddo
    !
    NE_i_start_time=NE_i_time
@@ -189,19 +185,17 @@ subroutine RT_start_and_restart(E,k,q)
    ! I use G_lesser(:,:,:) to reconstruct everything
    ! Note that the databases must be loaded at the RESTART time (NE_time)
    !
+   i_db=RT_return_db_ID("G_lesser_RESTART_K_section")
+   !
 #if defined _PAR_IO
-   !
-   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID(5))
-   io_err(5)=io_RT_components('G',ID(5))
-   !
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=RT_DB_ID(i_db))
+   io_err(i_db)=io_RT_components('G_lesser_RESTART_K_section',RT_DB_ID(i_db))
 #else
-   !
    do ik=PAR_G_k_range(1),PAR_G_k_range(2)
      IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,PAR_G_k_range(1),PAR_G_k_range(2))
-     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=ID(5))
-     io_err(5)=io_RT_components('G',ID(5))
+     call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=DUMP,ID=RT_DB_ID(i_db))
+     io_err(i_db)=io_RT_components('G_lesser_RESTART_K_section',RT_DB_ID(i_db))
    enddo
-   !
 #endif
    !
    ! The G_lesser must be now rebuild from the reference (T=0) and latest dG components
@@ -212,10 +206,11 @@ subroutine RT_start_and_restart(E,k,q)
    !
 #if defined _ELPH_ITERATIVE
    if (l_RT_iterative_ELPH_lifetimes) then
+     i_db=RT_return_db_ID("THETA")
      do ik=1,RT_nk
        IO_ACT=manage_action(RD_CL_IF_END,ik,FIRST=1,LAST=RT_nk)
-       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=ID(7))
-       io_err(7)=io_RT_components('THETA',ID(7))
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),MODE=VERIFY,ID=RT_DB_ID(i_db))
+       io_err(i_db)=io_RT_components('THETA',RT_DB_ID(i_db))
      enddo
    endif
    !
@@ -244,7 +239,7 @@ subroutine RT_start_and_restart(E,k,q)
    call msg('r',  'T cache step  of J,P,M            ',CACHE_OBS_INTERVAL_time*AUT2FS,"[fs]")
    call msg('r',  'T between I/O of J,P,M            ',OBS_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
    call msg('r',  '          I/O of carriers         ',CARR_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
-   call msg('r',  '          I/O of   GFs            ',GF_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
+   call msg('r',  '          I/O of   GFs            ',Gless_RESTART_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
    call msg('r',  '               outputs            ',OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS,"[fs]")
    !
  endif

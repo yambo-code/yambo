@@ -31,7 +31,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  use BS_solvers,     ONLY:io_BSS_diago,BSS_n_eig,BSS_free,BSS_write_eig_2_db,BSS_n_eig
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use R_lattice,      ONLY:bz_samp
- use BS,             ONLY:BS_H_dim,L_kind,BS_res_ares_n_mat,BS_K_dim
+ use BS,             ONLY:BS_H_dim,BSE_L_kind,BS_res_ares_n_mat,BS_K_dim
  use EXCPH,          ONLY:BS_E,BS_R_left,BS_R_right,EXCPH_states,EXCPH_sum,EXCPH_kind,Lout_path,L_kind_in,L_kind_out
  use IO_int,         ONLY:io_control
  use stderr,         ONLY:intc
@@ -80,10 +80,10 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
    if(iq_bse==1) then
      call msg('rs','Found '//trim(Ltype)//' with dimension: '//trim(intc(BSS_n_eig))//' x '//trim(intc(BS_H_dim)))
      if(index(Ltype,'Lout')>0) then
-       L_kind_out=L_kind
+       L_kind_out=BSE_L_kind
        call msg('rs','L kind out: '//trim(L_kind_out))
      elseif(index(Ltype,'Lin')>0) then
-       L_kind_in =L_kind
+       L_kind_in =BSE_L_kind
        call msg('rs','L kind  in: '//trim(L_kind_in))
      endif
    endif

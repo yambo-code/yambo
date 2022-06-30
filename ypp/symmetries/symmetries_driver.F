@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -90,8 +90,6 @@ subroutine symmetries_driver(E,Xk)
  !
  ! Expansion of default k-points
  call k_ibz2bz(Xk,'i',.false.)
- YAMBO_FREE(Xk%pt)
- call k_reduce(Xk,.false.)
  !
  call fix_symmetries(old_nsym,old_dl_sop,old_sop_inv,S_contains_TR,action_kind)
  !

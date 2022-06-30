@@ -35,7 +35,7 @@ subroutine EXCPH_lifetime(k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map
+&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder
  use frequency,      ONLY:w_samp
@@ -54,7 +54,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
- logical  :: l_no_matrix_elements,l_keep_deg
+ logical  :: l_keep_deg
  real(SP) :: ExcPhM,EXC_life_average
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
@@ -227,14 +227,14 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   function DbGrid_pole()
     use EXCPH,          ONLY:min_EXC_E_DbGd,EXC_E_DbGd
-    use ELPH,           ONLY:FAN_deltaE_treshold
+    use ELPH,           ONLY:FAN_deltaE_treshold,PH_freqs,PH_freqs_sq,Q_io_map
     use functions,      ONLY:bose_f,boltzman_f,Lorentzian_func
     implicit none
     !
     real(SP) :: DbGrid_pole
     real(SP) :: E_alpha,E_beta
     real(SP) :: ph_E,N_bose,F_boltz
-    integer  :: nq_around,iq_fg
+    integer  :: nq_around,iq_fg,iE_fg
     real(SP) :: weight_dbgd
     real(SP), external :: get_ph_E_DbGd
     !
@@ -247,7 +247,20 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
       !
-      ph_E=get_ph_E_DbGd(il,iq_fg,iq_bz,q)
+      if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
+        iq_db=Q_io_map(iq_bz)
+        ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+        !
+        ! If there is the double-grid I read the gamma phonons from there
+        ! because they include the LO-TO splitting and the acustic sum rule
+        !
+        if(iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
+        !
+      else
+        iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
+        ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+      endif
+      !
       if(ph_E<FAN_deltaE_treshold) cycle
       !
       E_beta=EXC_E_DbGd(i_beta,iq_fg)
@@ -273,17 +286,18 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   subroutine print_and_write()
     use pars,           ONLY:schlen
-    use OUTPUT_simple,  ONLY:OUTPUT_add_column
+    use OUTPUT,         ONLY:OUTPUT_driver
     use stderr,         ONLY:real2ch,intc,log2ch
     !
     implicit none
     !
     character(schlen) :: what='QP'
     !
-    call OUTPUT_add_column(what,action="reset")
-    call OUTPUT_add_column(what,action="open")
-    call OUTPUT_add_column(what,ORDER=(/"Eo"/))
-    call OUTPUT_add_column(what,ORDER=(/"Width [me"/))
+    call OUTPUT_driver(what,action="reset")
+    call OUTPUT_driver(what,action="open")
+    !
+    call OUTPUT_driver(what,ORDER=(/"Eo"/))
+    call OUTPUT_driver(what,ORDER=(/"Width [me"/))
     !
     call msg('rs','Exciton lifetimes:')
     !
@@ -298,16 +312,16 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do i_alpha=EXCPH_states(1),EXCPH_states(2)
       !
-      call OUTPUT_add_column(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
-      call OUTPUT_add_column(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
-      call OUTPUT_add_column(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
-      call OUTPUT_add_column(what,action="write")
+      call OUTPUT_driver(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
+      call OUTPUT_driver(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
+      call OUTPUT_driver(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
+      call OUTPUT_driver(what,action="write")
       !
       call msg('rs','Exciton ['//trim(intc(i_alpha))//'] Lifetime: ',EXC_LifeTime(i_alpha)*HA2EV*1000._SP,'meV')
       !
     enddo  
     !
-    call OUTPUT_add_column(what,action="close")
+    call OUTPUT_driver(what,action="close")
     !
   end subroutine 
   !

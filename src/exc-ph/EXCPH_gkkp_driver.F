@@ -46,7 +46,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
  use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
- use BS,             ONLY:BS_H_dim,BS_bands,L_kind,BS_res_ares_n_mat,BS_K_dim
+ use BS,             ONLY:BS_H_dim,BS_bands,BS_res_ares_n_mat,BS_K_dim,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
 &                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
@@ -55,10 +55,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
 &                         EXCPH_states,EXCPH_sum,EXCPH_kind,BSS_eh_table_m1,k_plus_q_table,Xi,build_Q_map,EXCPH_q, &
 &                         BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,Sat_alloc,Sat_free,DB_Q_map, &
 &                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,EXCPH_Renorm,EXCPH_Renorm_PH_abs,Renorm_alloc,Renorm_free,&
-&                         l_const_elph,l_abs_elph,n_exc_in
+&                         l_const_elph,l_abs_elph,l_abs_exc,n_exc_in
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
+ use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts
  !
 #include<memory.h>
  !
@@ -68,11 +69,14 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  ! Work Space
  !
- integer, external :: io_ELPH,io_EXCPH_gkkp
- integer  :: ID_gkkp,ID_exc_gkkp,io_err
+ integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
+ integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID
  integer  :: il,iq,i1,i_star,iq_bz,iq_s,iq_db,elph_branches_save(2)
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
+ ! Debug
+ !integer :: ik
+ !open(1, file='K_grid_bz.dat')
  !
  call section('*','Excitonic gkkp')
  !======================================
@@ -84,11 +88,19 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Check if Lout and Lin are present
  ! and read their kind
  ! 
+ ! Load RIM if present
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
+ io_err=io_RIM(io_ID)
+ !
+ if(io_err==0) call msg('sr','RIM found and loaded')
+ !
  call EXCPH_load_L(1,X,'check','Lout')
  call EXCPH_load_L(1,X,'check','Lin')
  !
  call parser('ConstElph',l_const_elph)
  call parser('AbsElph',  l_abs_elph)
+ call parser('AbsExc',   l_abs_exc)
  !
  ! Build Q_map
  elph_branches_save  =elph_branches
@@ -133,6 +145,13 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  max_Sat_weight=rZERO
  max_Sat_pos   =0
+ !
+ ! Debug
+ !call k_ibz2bz(k,"i",.false.)
+ !do ik=1,k%nbz
+ !!  write (1,*) k%ptbz(ik,:)
+ !enddo
+ !close(1)
  !
  ! K plus q table
  !
@@ -262,6 +281,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      YAMBO_ALLOC(BS_E,(BSS_n_eig))
      YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
+     YAMBO_ALLOC(BSqpts,(3,q%nibz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
@@ -293,6 +313,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      YAMBO_FREE(BSS_eh_table_m1_in)
      YAMBO_FREE(BS_E)
      YAMBO_FREE(k_plus_q_table)
+     YAMBO_FREE(BSqpts)
    end subroutine BSE_free
    !
    subroutine get_excph_q_momenta()

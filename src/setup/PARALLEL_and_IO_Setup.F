@@ -39,7 +39,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
- use <y_memory,         ONLY:USER_MEM_limit_string
+ use y_memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
  use cuda_m_y,       ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
 #if defined _GPU

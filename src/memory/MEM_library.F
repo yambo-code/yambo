@@ -23,7 +23,7 @@
 !
 subroutine MEM_library(member,shelf)
  !
- use <y_memory,  ONLY:N_MEM_shelf,MEM_shelf,N_MEM_LIBs,MEM_LIBs
+ use y_memory,  ONLY:N_MEM_shelf,MEM_shelf,N_MEM_LIBs,MEM_LIBs
  !
  implicit none
  !

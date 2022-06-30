@@ -24,7 +24,7 @@
 subroutine MEM_report( REPORT )
  !
  use pars,         ONLY:lchlen
- use <y_memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
+ use y_memory,       ONLY:MEMs,N_MEM_elements,mem_string,MEM_element,MAX_MEM_Kb,N_MEM_SAVE_elements,&
 &                       LARGE_MEMs,MEM_treshold,MEM_SAVE_treshold,HOST_,DEV_
  use units,        ONLY:Kilobyte
  use com,          ONLY:msg,fat_log

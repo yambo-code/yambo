@@ -113,7 +113,12 @@ define link_it
  if test -s $$LIB".tar.gz" ; then \
   if ! test -d  ../$(1); then mkdir ../$(1); fi; \
   cd ../$(1); \
-  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; fi
+  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ elif test -d $$LIB ; then \
+  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
+  cd ../$(1); \
+  if ! test -d driver; then ln -s ../archive/$$LIB/* ./ ; fi ; \
+ fi
 endef
 #
 

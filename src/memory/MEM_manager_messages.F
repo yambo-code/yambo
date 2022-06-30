@@ -25,7 +25,7 @@ subroutine MEM_manager_messages(what,adding,MEM_now_Kb,where)
  !
  use pars,         ONLY:lchlen
  use com,          ONLY:msg,fat_log
- use <y_memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
+ use y_memory,       ONLY:TOT_MEM_Kb,TOT_MEM_Kb_MEMSTAT,TOT_MEM_Kb_SAVE,MEM_treshold,&
 &                       MEM_jump_treshold,mem_string,HOST_,DEV_
  !
  implicit none

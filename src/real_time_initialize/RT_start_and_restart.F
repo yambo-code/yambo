@@ -134,8 +134,7 @@ subroutine RT_start_and_restart(E,k,q)
  RESTART=.FALSE.
  do i_db=1,N_RT_databases
    COM_MODE=NONE
-   if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
-   if (i_db==RT_return_db_ID("G_lesser_RESTART")) COM_MODE=REP
+   if (i_db==RT_return_db_ID("ANY_G")) COM_MODE=REP
    call io_control(ACTION=OP_RD_CL,COM=COM_MODE,SEC=(/1/),MODE=VERIFY,ID=RT_DB_ID(i_db))
    io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
  enddo

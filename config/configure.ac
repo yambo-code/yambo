@@ -29,7 +29,6 @@ if ! test -d $CURRENT_DIR ; then
 fi
 #
 compdir=`echo "$PWD"`
-AC_SUBST(compdir)
 #
 AC_PREFIX_DEFAULT($PWD)
 if test "$prefix" = "NONE" ;      then prefix="$PWD" ; fi
@@ -69,6 +68,8 @@ AC_PROG_ECHO
 # ============================================================================
 # Current branch
 ACX_BRANCH
+#
+# Checks for library functions.
 # ============================================================================
 AC_CHECK_HEADERS([malloc.h stdlib.h unistd.h string.h sys/time.h])
 AC_FUNC_ALLOCA
@@ -297,12 +298,16 @@ AC_HAVE_CUDA
 # Prepare the REPORT file variables
 ACX_REPORT()
 # ============================================================================
+# Compilation dir
+AC_SUBST(compdir)
+# ============================================================================
 AC_CONFIG_HEADERS([include/headers/common/have_malloc.h:include/headers/common/have_malloc.h.in])
 AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
  config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
  include/branch.inc include/driver/editor.h 
+ lib/archive/git.list
 ])
 #
 AC_OUTPUT

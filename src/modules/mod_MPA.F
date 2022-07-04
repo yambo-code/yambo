@@ -110,49 +110,64 @@ contains
    !
    integer     :: i, j
    complex(SP) :: Eaux(np)
-   real(SP)    :: wmax, thr=0.00001_SP
+   real(SP)    :: wmax, thr=0.0005_SP
    !
    npr=np
    wmax=maxval(real(z,SP))
    !
-   do i=1,npr
+   i=0
+   do while(i<npr)
      !
      Eaux(i)=sqrt(E(i))
      if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
      Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      !
-     if(real(Eaux(i),SP)>wmax) then
+     do while(real(Eaux(i),SP)>wmax)
        Eaux(i)=sqrt(E(npr))
-       PPcond(i)=.true.
+       PPcond(npr)=.true.
        if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
        Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
        npr=npr-1
-     endif
+     enddo
      !
-     do j=2,i-1
+     do j=1,i-1
        if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
          !
-         Eaux(j)=real(Eaux(j),SP)+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
-         PPcond(j)=.true.
-         Eaux(i)=sqrt(E(npr))
-         PPcond(i)=.true.
+         if(abs(real(Eaux(j),SP))>max(aimag(Eaux(j)),aimag(Eaux(i)))) then
+           Eaux(j)=(real(Eaux(j),SP)+real(Eaux(i),SP))/2._SP+cI*min(aimag(Eaux(j)),aimag(Eaux(i)))         
+         else
+           Eaux(j)=(real(Eaux(j),SP)+real(Eaux(i),SP))/2._SP+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
+         endif
+         if(abs(real(Eaux(j),SP))<aimag(Eaux(j))) PPcond(i)=.false.
          !
+         Eaux(i)=sqrt(E(npr))
+         PPcond(npr)=.true.
          if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
          Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
          npr=npr-1
-         ! DALV: exit
+         !
+         do while(real(Eaux(i),SP)>wmax)
+           Eaux(i)=sqrt(E(npr))
+           PPcond(npr)=.true.
+           if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
+           Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
+           npr=npr-1
+         enddo
+         !
+         ! DALV: exit not necessary
          !
        endif
      enddo
      !
+     i=i+1
+     !
    enddo
    !
    E(1:npr)=Eaux(1:npr)
-   !
-   do i=np,npr+1,-1
-     E(i)=1._SP-cI*epsilon(1._SP)
-     PPcond(i)=.true.
-   enddo
+   if(npr<np) then
+     E(npr+1:np)=1._SP-cI*epsilon(1._SP)
+     PPcond(npr+1:np)=.true.
+   endif
    !
  end subroutine mpa_cond
  !
@@ -207,7 +222,7 @@ contains
 #endif
    !
    R(1:npr)=B(1:npr)
-   if (npr<np) R(npr+1:)=0.0_SP
+   if (npr<np) R(npr+1:np)=0.0_SP
    !
  end subroutine mpa_R_fit
  !

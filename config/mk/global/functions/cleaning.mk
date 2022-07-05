@@ -2,7 +2,9 @@
 # Drivers (top)
 #
 define clean_driver
- if [ "$(1)" = "bin"       ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_bin); fi;\
+ if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ylib_folder); fi ;\
+ if [ "$(1)" = "archive"   ] ||                  [ "$(1)" = "all" ] ; then $(clean_archive); fi ;\
+ if [ "$(1)" = "bin"       ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_bins); fi;\
  if [ "$(1)" = "int-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
    EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_dir_driver); \
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_lib_driver); \
@@ -20,9 +22,9 @@ define clean_driver
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
+ if [ "$(1)" = "Ylib"   ] ||                  [ "$(1)" = "all" ] ; then \
    EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
-   WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
+   WDIR="$(libdir)";TARG="Ylib";$(clean_lib_driver);\
    WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
@@ -72,7 +74,6 @@ define clean_ext_lib_dir
    cd $$CWD;\
   fi;\
  done; \
- find lib/archive/* -type d  |xargs rm -fr; \
  $(ECHO)
 endef
 define clean_mod_driver
@@ -116,7 +117,6 @@ define clean_config
   done;\
  fi;\
  rm -fr $(prefix)/config/stamps_and_lists/*.list;\
- rm -fr $(prefix)/log;\
  rm -fr $(prefix)/bin;\
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
@@ -124,14 +124,13 @@ define clean_config
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile
 endef
-define clean_bin
- $(ECHO) "\t[CLEANING] bin" ;\
+define clean_bins
+ $(ECHO) "\t[CLEANING] bin(s)" ;\
  for file in $(prefix)/bin/*; do \
   exe=`basename $$file`;\
   rm -f $(prefix)/bin/$$exe; \
   rm -f $(prefix)/config/stamps_and_lists/"$$exe.stamp"; \
- done;\
- rm -fr $(prefix)/log/*
+ done
 endef
 define clean_ext_libs_bin_and_include
  $(ECHO) "\t[CLEANING external-libraries] bin(s) and include(s)" ; \
@@ -154,3 +153,15 @@ define clean_dependencies
            -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
 endef
+define clean_log_and_Ylib_folder
+ $(ECHO) "\t[CLEANING] folders and log" ; \
+ rm -fr $(prefix)/lib/yambo;\
+ rm -fr $(prefix)/log 
+endef
+define clean_archive
+ $(ECHO) "\t[CLEANING] Libraries archive" ; \
+ CWD=`pwd`;\
+ cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD;\
+ find lib/archive/* -type d  |xargs rm -fr
+endef
+

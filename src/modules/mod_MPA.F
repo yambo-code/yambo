@@ -115,14 +115,14 @@ contains
    npr=np
    wmax=maxval(real(z,SP))
    !
-   i=0
-   do while(i<npr)
+   i=1
+   do while(i<=npr)
      !
      Eaux(i)=sqrt(E(i))
      if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
      Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      !
-     do while(real(Eaux(i),SP)>wmax)
+     do while(real(Eaux(i),SP)>wmax.and.i<=npr)
        Eaux(i)=sqrt(E(npr))
        PPcond(npr)=.true.
        if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.

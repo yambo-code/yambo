@@ -148,7 +148,7 @@ contains
    real(SP)    :: wmax, thr=0.00001_SP
    !
    npr=np
-   wmax=maxval(sqrt(real(z,SP)))
+   wmax=maxval(sqrt(real(z,SP)))*1.5_SP !DALV: we were using the square before, now we use 1.5* the extreme of the interval
    !
    i=1
    do while(i<=npr)

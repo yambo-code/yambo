@@ -301,7 +301,7 @@ use parser_m,       ONLY:parser
      !
      X_is_TR_rotated=.false.
      !
-     MPred_rate=MPred_rate/X%ng**2
+     MPred_rate=X%mpa_npoles-MPred_rate/X%ng**2
      PPcond_Qrate=PPcond_Qrate/X%ng**2
      MP_Qerr=MP_Qerr/X%ng**2
      cond_numQ(:)=cond_numQ(:)/X%ng**2

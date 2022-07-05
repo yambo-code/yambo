@@ -290,10 +290,6 @@ use parser_m,       ONLY:parser
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
          MP_Qerr=MP_Qerr+MP_err
          cond_numQ(:)=cond_numQ(:)+cond_num(:)
-
-         if(MPred) then
-           write(*,*) MPA_E_mat(ig1,ig2,X%mpa_npoles)
-         endif
          !
        enddo
      enddo

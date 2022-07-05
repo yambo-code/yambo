@@ -100,6 +100,41 @@ contains
    !
  end subroutine mpa_cond1
  !
+ function pole_is_out(i, wmax, thr, E)
+   implicit none
+   !
+   integer ,    intent(in)     :: i
+   real(SP),    intent(in)     :: wmax, thr
+   complex(SP), intent(inout)  :: E(:)
+   !
+   integer     :: j
+   logical     :: pole_is_out
+   !
+   pole_is_out=.false.
+   !
+   if(real(E(i),SP)>wmax) pole_is_out=.true.
+   !
+   j=1
+   do while(j<i.and..not.pole_is_out)
+     !
+     if(abs(real(E(i),SP)-real(E(j),SP))<thr) then
+       !
+       pole_is_out=.true.
+       !
+       if(abs(real(E(j),SP))>max(abs(aimag(E(j))),abs(aimag(E(i))))) then
+         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*max(abs(aimag(E(j))),abs(aimag(E(i))))
+       else
+         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*min(abs(aimag(E(j))),abs(aimag(E(i))))
+       endif
+       !
+     endif
+     !
+     j=j+1
+     !
+   enddo
+   !
+ endfunction pole_is_out
+ !
  subroutine mpa_cond(np, npr, z, E, PPcond)
    !
    integer,     intent(in)     :: np
@@ -110,54 +145,24 @@ contains
    !
    integer     :: i, j
    complex(SP) :: Eaux(np)
-   real(SP)    :: wmax, thr=0.0005_SP
+   real(SP)    :: wmax, thr=0.00001_SP
    !
    npr=np
-   wmax=maxval(real(z,SP))
+   wmax=maxval(sqrt(real(z,SP)))
    !
    i=1
    do while(i<=npr)
      !
      Eaux(i)=sqrt(E(i))
-     if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-     Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      !
-     do while(real(Eaux(i),SP)>wmax.and.i<=npr)
+     do while(pole_is_out(i,wmax,thr,Eaux).and.i<=npr)
        Eaux(i)=sqrt(E(npr))
        PPcond(npr)=.true.
-       if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-       Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
        npr=npr-1
      enddo
      !
-     do j=1,i-1
-       if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
-         !
-         if(abs(real(Eaux(j),SP))>max(aimag(Eaux(j)),aimag(Eaux(i)))) then
-           Eaux(j)=(real(Eaux(j),SP)+real(Eaux(i),SP))/2._SP+cI*min(aimag(Eaux(j)),aimag(Eaux(i)))         
-         else
-           Eaux(j)=(real(Eaux(j),SP)+real(Eaux(i),SP))/2._SP+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
-         endif
-         if(abs(real(Eaux(j),SP))<aimag(Eaux(j))) PPcond(i)=.false.
-         !
-         Eaux(i)=sqrt(E(npr))
-         PPcond(npr)=.true.
-         if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-         Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
-         npr=npr-1
-         !
-         do while(real(Eaux(i),SP)>wmax)
-           Eaux(i)=sqrt(E(npr))
-           PPcond(npr)=.true.
-           if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-           Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
-           npr=npr-1
-         enddo
-         !
-         ! DALV: exit not necessary
-         !
-       endif
-     enddo
+     if(.not.pole_is_out(i,wmax,thr,Eaux).and.abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
+     Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      !
      i=i+1
      !

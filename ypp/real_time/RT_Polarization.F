@@ -36,7 +36,8 @@ subroutine RT_Polarization(en,k,q)
  use real_time,      ONLY:RT_nk,RT_bands,dG_lesser,RT_P,RT_carriers
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:DUMP,OP_RD_CL,REP,NONE,manage_action,OP_IF_START_RD_CL_IF_END
- use parallel_int,   ONLY:PARALLEL_global_indexes
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP,PAR_DIPk_ibz_index
+ use parallel_int,   ONLY:PP_redux_wait
  use DIPOLES,        ONLY:DIP_iR
  use functions,      ONLY:Fermi_fnc_derivative
  !
@@ -47,7 +48,7 @@ subroutine RT_Polarization(en,k,q)
  !
  ! Work Space
  !
- integer               :: ID,io_err,i_T,ik,IO_ACT,i_n,i_m,i_s,i_sp_pol,i_RT_n,i_RT_m,i_RT,ic,iE,COM
+ integer               :: ID,io_err,i_T,ik,IO_ACT,i_n,i_m,i_s,i_sp_pol,i_RT_n,i_RT_m,i_RT,ic,iE,COM,ik_mem
  integer, external     :: io_RT_components
  real(SP)              :: io_Time,delta_f,delta_E,trans_weight,P_w(RT_conf%W_n_steps),P(RT_conf%W_n_steps,3)
  character(schlen)     :: file_name
@@ -94,10 +95,6 @@ subroutine RT_Polarization(en,k,q)
    call RT_time_configuration_setup('Glesser reset',Gless_RESTART_RT_IO_t)
  endif
  !
- ! Par setup
- !-----------
- call PARALLEL_global_indexes(en,k,q," ",RESET=.TRUE.)
- !
  ! Loop
  !------
  !
@@ -136,9 +133,13 @@ subroutine RT_Polarization(en,k,q)
    !
    do i_sp_pol=1,n_sp_pol
      do i_n=RT_bands(1),RT_bands(2)
+       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(i_n)) cycle
        do i_m=RT_bands(1),RT_bands(2)
+         if (.not.PAR_IND_CON_BANDS_DIP%element_1D(i_m)) cycle
          if (i_n==i_m) cycle
          K_LOOP: do ik=1,k%nibz
+           if (.not.PAR_IND_DIPk_ibz%element_1D(ik)) cycle
+           ik_mem=PAR_DIPk_ibz_index(ik)
            if (STRING_same(RT_pol_mode,"transitions")) then
              do i_RT=1,RT_carriers%nstates
                if (RT_carriers%table(i_RT,2)==ik.and.RT_carriers%table(i_RT,4)==i_sp_pol) then
@@ -151,14 +152,14 @@ subroutine RT_Polarization(en,k,q)
              delta_E=RT_carriers%E_bare(i_RT_m)-RT_carriers%E_bare(i_RT_n)
              if (delta_E<RT_conf%X_W_range(1).or.delta_E>RT_conf%X_W_range(2)) cycle K_LOOP
              do ic=1,3
-               trans_weight=delta_f*abs(DIP_iR(ic,i_n,i_m,ik,i_sp_pol))**2.
+               trans_weight=delta_f*abs(DIP_iR(ic,i_n,i_m,ik_mem,i_sp_pol))**2.
                do iE=1,RT_conf%W_n_steps
                  P(iE,ic)=P(iE,ic)+trans_weight*Fermi_fnc_derivative(delta_E-P_w(iE),RT_conf%damp_factor)
                enddo
              enddo
            endif
            if (STRING_same(RT_pol_mode,"slice")) then
-             RT_P=RT_P+DIP_iR(ic,i_n,i_m,ik,i_sp_pol)*dG_lesser(i_m,i_n,ik,1)/DL_vol*k%weights(ik)
+             RT_P=RT_P+DIP_iR(ic,i_n,i_m,ik_mem,i_sp_pol)*dG_lesser(i_m,i_n,ik,1)/DL_vol*k%weights(ik)
            endif
          enddo K_LOOP
        enddo
@@ -166,10 +167,13 @@ subroutine RT_Polarization(en,k,q)
    enddo
    !
    if (STRING_same(RT_pol_mode,"transitions")) then
+     call PP_redux_wait(P)
      do iE=1,RT_conf%W_n_steps
        call RT_output(trim(file_name),VALUEs=(/P(iE,:)/),E=P_w(iE)*HA2EV,TIME=RT_time(i_T)*AUT2FS)
      enddo
      call RT_output("space "//trim(file_name))
+   else
+     call PP_redux_wait(P)
    endif
    !
    call live_timing(steps=1)

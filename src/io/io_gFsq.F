@@ -23,17 +23,15 @@
 !
 integer function io_gFsq(ID)
  !
- use pars,           ONLY:SP,schlen
- use IO_m,           ONLY:io_sec,io_status,read_is_on,write_is_on,io_mode,frag_ELPH
- use IO_int,         ONLY:io_connect,ver_is_gt_or_eq,io_disconnect,io_fragment,&
-&                         io_variable_elemental,io_bulk,io_header,def_variable_elemental
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,elph_nk_bz,elph_nQ,PH_kpt_bz,&
-&                         elph_use_q_grid,PH_qpt,elph_nQ_used,gsqF_fan,gsqF_dw,gsqF_ca_corr, &
-&                         gsqF_life_bose ,gsqF_life_f,PH_pol_vector,elph_branches
+ use pars,           ONLY:schlen
+ use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
+&                         io_bulk,io_header
+ use ELPH,           ONLY:ph_modes,PH_freqs_sq,elph_nQ,&
+&                         gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose ,gsqF_life_f
  use stderr,         ONLY:intc
- use D_lattice,      ONLY:n_atoms
  use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_n_states,QP_nb,QP_nk,QP_table
+ use QP_m,           ONLY:QP_n_states,QP_table
  use parallel_m,     ONLY:PAR_Q_bz_index
  use timing_m,       ONLY:timing
  !

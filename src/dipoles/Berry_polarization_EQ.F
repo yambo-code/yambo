@@ -32,7 +32,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  ! crystaline solids", Phys Rev B 47, 1651 (1993).      
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE
- use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_map
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular

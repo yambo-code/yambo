@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -33,10 +33,12 @@ endif
 MAKEFLAGS = --no-print-directory
 #
 # Targets
-include config/mk/global/targets.mk
+  include config/mk/global/targets.mk
 #
-# Libraries (ordered for compiling & linking)
-include config/mk/global/libraries.mk
+ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
+  # Libraries (ordered for compiling & linking)
+  include config/mk/global/libraries.mk
+endif
 
 .PHONY: interfaces ypp
 

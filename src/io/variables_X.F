@@ -75,14 +75,14 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  VAR_NAME=trim(X_label)//"Time_ordering"
  if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
  call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
- call io_variable_elemental(ID,&
-&     VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
+ call io_variable_elemental(ID,VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
+ !
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
    !
    ! TDDFT_KERNEL
    !
    call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,0,0)
-   call io_variable_elemental(ID,VAR="X xc-Kernel",CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=local_desc)
+   call io_variable_elemental(ID,VAR="X Hxc Kernel",CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=local_desc)
    !
    ! DRUDE
    !

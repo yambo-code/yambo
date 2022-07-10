@@ -128,7 +128,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #else
    wf_grad=cZERO
-   !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+   !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
      do ic=1,wf_nc_k(ik)
        ig=wf_igk(ic,ik)
@@ -174,7 +174,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #if defined _SC || defined _RT
    if(l_eval_P2) then
-     !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+     !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
      do i_spinor=1,n_spinor
        do ic=1,wf_nc_k(ik)
          ig=wf_igk(ic,ik)

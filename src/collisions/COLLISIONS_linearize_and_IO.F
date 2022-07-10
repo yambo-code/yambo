@@ -24,7 +24,7 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
  use pars,            ONLY:SP,cZERO
- use parallel_m,      ONLY:master_cpu
+ use parallel_m,      ONLY:master_cpu,yMPI_comm
  use parallel_int,    ONLY:PP_redux_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_int,          ONLY:io_control
@@ -37,19 +37,20 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
 #include<collisions.h>
  !
  character(*)                            :: what
- integer,                  intent(in)    :: i_coll,last_coll,COMM
+ integer,                  intent(in)    :: i_coll,last_coll
+ type(yMPI_comm),          intent(in)    :: COMM
  integer,                  intent(inout) :: COLL_ID
  type(COLLISIONS_group),   intent(inout) :: COLL
  type(COLLISIONS_element), intent(inout) :: COLL_element(COLL%N)
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,IO_ACT
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
 #if defined _PAR_IO
- integer, external :: io_collisions_header
+ integer, external :: io_COLLs_header
 #endif
  !
  if (i_coll==0) then
@@ -59,8 +60,8 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
        io_err=io_COLLs_header(COLL_ID,COLL)
      endif
 #if defined _PAR_IO
-     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID)
-     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll,COMM=COMM)
+     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,COMM=COMM,DO_IT=.TRUE.)
+     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
 #endif
    endif
    call PP_redux_wait()

@@ -64,7 +64,6 @@ subroutine RT_apply_field(ik,i_sp_pol,H_nl_sc,A_input)
    !
    do i1=RT_bands(1),RT_bands(2)
      !
-     !Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      ! Case A: the pseudo-potential is correctly gauged, so A*p enters the hamiltonian
      if (     l_velocity_gauge_corr) Jtot(1:3)= -DIP_P(1:3,i1,i1,PAR_Xk_ibz_index(ik),i_sp_pol)+A_vec_pot(1:3)/2._SP
      ! Case b: the pseudo-potential is   *not*   gauged, so A*v enters the hamiltonian.

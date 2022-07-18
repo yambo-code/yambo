@@ -48,6 +48,7 @@ module fl_optics
  !
  !aim137 new variables
  integer  :: max_fl_mode
+ integer  :: FL_add_mode
  integer  :: max_extra_mode
  integer  :: max_duffin_mode
  integer  :: max_time_step
@@ -83,7 +84,7 @@ module fl_optics
      type(levels), intent(in) :: en
      !
      max_time_step   = FL_Chi_order
-     max_fl_mode     = FL_Chi_order+1 !aim137 removed for debug
+     max_fl_mode     = FL_Chi_order+FL_add_mode !aim137 removed for debug
      !max_fl_mode     = 3 !aim137 remove after DEBUG
      max_extra_mode  = 2*max_fl_mode
      max_duffin_mode = 4*max_fl_mode

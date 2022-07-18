@@ -101,7 +101,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 !aim137 prelim
 #if defined _FL
  use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
-&                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta
+&                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode
 #endif 
 !aim137
 #if defined _NL | defined _SC
@@ -551,6 +551,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !FL_Chi_thr_1,FL_Chi_order,FL_S_inv_mode
  !
  call it(defs,'Xorder',    '[FL] Max order of the response/exc functions',FL_Chi_order)
+ call it(defs,'Xadd_mode', '[FL] Additional modes to ensure convercence',FL_add_mode,verb_level=V_fl_optics)
  call it(defs,'Xthresh_1', '[FL] Self-consistent threshold on 1st order response function',FL_Chi_thr_1)
  call it(defs,'Xthresh_2', '[FL] Self-consistent threshold on 2nd order response function',FL_Chi_thr_2)
  call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION/(L)ANCZOS")',FL_solver_mode)

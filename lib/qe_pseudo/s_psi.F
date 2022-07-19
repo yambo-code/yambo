@@ -206,18 +206,18 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
           IF ( m == 1 ) THEN
 #if defined _DOUBLE
              CALL DGEMV( 'N', 2 * n, nkb, 1.D0, real(vkb,SP), &
-                  2 * lda, ps, 1, 1.D0, spsi, 1 )
+                  2 * lda, ps, 1, 1.D0, real(spsi,SP), 1 )
 #else
              CALL SGEMV( 'N', 2 * n, nkb, 1.0_SP, real(vkb,SP), &
-                  2 * lda, ps, 1, 1.0_SP, spsi, 1 )
+                  2 * lda, ps, 1, 1.0_SP, real(spsi,SP), 1 )
 #endif
           ELSE
 #if defined _DOUBLE
              CALL DGEMM( 'N', 'N', 2 * n, m, nkb, 1.D0, real(vkb,SP), &
-                  2 * lda, ps, nkb, 1.D0, spsi, 2 * lda )
+                  2 * lda, ps, nkb, 1.D0, real(spsi,SP), 2 * lda )
 #else
              CALL SGEMM( 'N', 'N', 2 * n, m, nkb, 1.0_SP, real(vkb,SP), &
-                  2 * lda, ps, nkb, 1.0_SP, spsi, 2 * lda )
+                  2 * lda, ps, nkb, 1.0_SP, real(spsi,SP), 2 * lda )
 #endif
           END IF
 !       ELSE

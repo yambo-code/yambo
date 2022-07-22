@@ -59,6 +59,7 @@ module fl_optics
  integer  :: FL_space_dim,FL_states(2)
  real(SP) :: FL_Chi_thr_1
  real(SP) :: FL_Chi_thr_2
+ real(SP) :: FL_Chi_thr_3
  real(SP) :: FL_deg_thrs
  real(SP) :: FL_deg_lift
  integer  :: FL_Chi_order,FL_max_iterations

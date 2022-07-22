@@ -125,7 +125,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use fields,     ONLY:Efield,Efield_reset
 #endif
 #if defined _FL
- use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
+ use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
 &                     FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode
 #endif
 #if defined _SC
@@ -685,8 +685,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  FL_Chi_order = 2
  FL_Chi_thr_1 = 1.E-1_SP
  FL_Chi_thr_2 = 1.E-6_SP
- FL_deg_thrs  = 1.E-7_SP
- FL_deg_lift  = 1.E-4_SP
+ FL_Chi_thr_3 = 1.E-12_SP
+ FL_deg_thrs  = 1.E-5_SP
+ FL_deg_lift  = 1.E-2_SP
  FL_solver_mode = "D"
  FL_S_inv_mode  = "N"
  FL_max_iterations = 11

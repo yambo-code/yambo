@@ -100,7 +100,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif 
 !aim137 prelim
 #if defined _FL
- use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_deg_thrs,FL_deg_lift,&
+ use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
 &                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode
 #endif 
 !aim137
@@ -554,6 +554,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Xadd_mode', '[FL] Additional modes to ensure convercence',FL_add_mode,verb_level=V_fl_optics)
  call it(defs,'Xthresh_1', '[FL] Self-consistent threshold on 1st order response function',FL_Chi_thr_1)
  call it(defs,'Xthresh_2', '[FL] Self-consistent threshold on 2nd order response function',FL_Chi_thr_2)
+ call it(defs,'Xthresh_3', '[FL] Self-consistent threshold on 3rd order response function',FL_Chi_thr_3)
  call it(defs,'FL_solver',    '[FL] Eigenproblem solver mode ("(D)IAGONALIZATION/(L)ANCZOS")',FL_solver_mode)
  call it(defs,'FL_deg_thresh','[FL] Degeneracy threshold in KS band structure',FL_deg_thrs,verb_level=V_fl_optics)
  call it(defs,'FL_deg_lift',  '[FL] Degeneracy lifting of KS band structure',FL_deg_lift,verb_level=V_fl_optics)

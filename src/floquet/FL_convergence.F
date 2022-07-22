@@ -24,7 +24,7 @@
 subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  !
  use pars,       ONLY:SP,DP,cI
- use fl_optics,  ONLY:FL_Chi_thr_1,FL_Chi_thr_2,n_tot_fl_modes,max_fl_mode,FL_Chi_order
+ use fl_optics,  ONLY:FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
  complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
@@ -32,7 +32,7 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  !
  ! Work Space
  integer  :: id,FL_Pi_order
- logical  :: l_1order_sc_reached,l_2order_sc_reached
+ logical  :: l_1order_sc_reached,l_2order_sc_reached,l_3order_sc_reached
  real(SP) :: diff_real,diff_imag,diff_complex
  !
  FL_Pi_order = FL_Chi_order + 1
@@ -96,10 +96,49 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  endif
  !
  !
+ ! Third order convergence
+ ! =======================
+ !
+ if (l_1order_sc_reached .and. l_2order_sc_reached) then
+   !
+   if (FL_Chi_order > 2) then
+     !
+     do id=1,2!aim137 change to 3
+       !
+       !aim137 add condition - if direction non periodic --> cycle
+       !
+       diff_real  =  abs(  real(FL_pol(id,4,1)) &
+                       & - real(FL_pol(id,4,2)))
+       diff_imag  =  abs( aimag(FL_pol(id,4,1)) &
+                       & -aimag(FL_pol(id,4,2)))
+       !
+       !aim137 prelim - improve threshold? link to input variable?
+       if (diff_real < FL_Chi_thr_3 .and. diff_imag < FL_Chi_thr_3) then
+         l_3order_sc_reached = .true.
+       else
+         l_3order_sc_reached = .false.
+         exit !if one direction is not converged, then FL_pol is not converged
+       endif
+       !
+     enddo
+     !
+   else
+     !
+     l_3order_sc_reached = .true. ! 2nd order is not requested
+     !
+   endif
+   !
+ else
+   !
+   l_3order_sc_reached = .false. ! skip 3rd order if previous not converged
+   !
+ endif
+ !
+ !
  ! Gather convergence
  ! ==================
  !
- l_sc_reached = (l_1order_sc_reached .and. l_2order_sc_reached)
+ l_sc_reached = (l_1order_sc_reached .and. l_2order_sc_reached .and. l_3order_sc_reached)
  accuracy = diff_real + cI * diff_imag
  !
 end subroutine FL_check_convergence

@@ -50,9 +50,10 @@ if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*make*'       --exclude='*' $srcdir/lib $compdir/
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.tar.*'      --exclude='*' $srcdir/lib $compdir/
  #
- #
+ if test ! -d "$compdir/log"        ; then mkdir "$compdir/log"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
  cp     $srcdir/lib/archive/*         $compdir/lib/archive
+ cp     $srcdir/lib/config/*          $compdir/lib/config
  #
 fi

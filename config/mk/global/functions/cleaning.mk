@@ -99,7 +99,7 @@ define clean_lib_driver
  for dirtoclean in $$TARG; do \
   ldir=`basename $$dirtoclean`;  \
   if test -d $$dirtoclean; then find $$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
-  if test -d $$WDIR/$$dirtoclean; then find $$WDIR/$$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
+  if test -d $$WDIR/$$dirtoclean; then find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
   rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; \
  done
 endef

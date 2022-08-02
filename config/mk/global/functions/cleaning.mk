@@ -2,7 +2,6 @@
 # Drivers (top)
 #
 define clean_driver
- if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ylib_folder); fi ;\
  if [ "$(1)" = "archive"   ] ||                  [ "$(1)" = "all" ] ; then $(clean_archive); fi ;\
  if [ "$(1)" = "bin"       ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_bins); fi;\
  if [ "$(1)" = "int-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
@@ -37,7 +36,8 @@ define clean_driver
  if [ "$(1)" = "src"        ] ; then $(call clean_src_driver,"src"); fi; \
  if [ "$(1)" = "interfaces" ] ; then $(call clean_src_driver,"interfaces"); fi; \
  if [ "$(1)" = "conf"      ] ||                  [ "$(1)" = "all" ] ; then $(clean_config); fi; \
- if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi 
+ if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi ; \
+ if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ylib_folder); fi 
 endef
 #
 # Drivers (intermediate)

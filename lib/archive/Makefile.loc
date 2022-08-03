@@ -126,7 +126,6 @@ define link_it
  fi
 endef
 #
-<<<<<<< HEAD
 
   #  if test ! -s $$TARBALL ; then \
   #    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
@@ -140,5 +139,3 @@ endef
 	#    cd ../archive ; \
   #  fi \
 
-=======
->>>>>>> bug-fixes

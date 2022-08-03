@@ -66,10 +66,6 @@ module DIPOLES
  !
  complex(SP), allocatable          :: DIP_work_drho(:,:,:)
  complex(SP), allocatable DEV_ATTR :: DIP_work_drho_d(:,:,:)
- complex(SP), allocatable DEV_ATTR, target :: DIP_work_XXv(:,:,:,:)
- complex(SP), allocatable DEV_ATTR, target :: DIP_work_XXc(:,:,:,:)
- complex(SP), allocatable DEV_ATTR :: DIP_work_WFv(:,:)
- complex(SP), allocatable DEV_ATTR :: DIP_work_WFc(:,:)
  !
  ! type def
  !
@@ -145,18 +141,8 @@ module DIPOLES
          ! d(1) = pp_kbv_dim_yambo
          ! d(2) = wf_ng
          YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
-         if (.not.have_cuda .or. have_openacc) then
-           YAMBO_ALLOC(DIP_work_XXv,(n_spinor,n_spinor,4,d(1)))
-           YAMBO_ALLOC(DIP_work_XXc,(n_spinor,n_spinor,4,d(1)))
-           YAMBO_ALLOC(DIP_work_WFv,(d(2),n_spinor))
-           YAMBO_ALLOC(DIP_work_WFc,(d(2),n_spinor))
-         endif
          if (have_cuda) then
            YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
-           YAMBO_ALLOC_GPU(DIP_work_XXv,(n_spinor,n_spinor,4,d(1)))
-           YAMBO_ALLOC_GPU(DIP_work_XXc,(n_spinor,n_spinor,4,d(1)))
-           YAMBO_ALLOC_GPU(DIP_work_WFv,(d(2),n_spinor))
-           YAMBO_ALLOC_GPU(DIP_work_WFc,(d(2),n_spinor))
          endif
        end select
      else
@@ -187,15 +173,7 @@ module DIPOLES
          YAMBO_FREE(P_square)
        case('DIP_work')
          YAMBO_FREE_GPU(DEV_VAR(DIP_work_drho))
-         YAMBO_FREE_GPU(DIP_work_XXv)
-         YAMBO_FREE_GPU(DIP_work_XXc)
-         YAMBO_FREE_GPU(DIP_work_WFv)
-         YAMBO_FREE_GPU(DIP_work_WFc)
          YAMBO_FREE(DIP_work_drho)
-         YAMBO_FREE(DIP_work_XXv)
-         YAMBO_FREE(DIP_work_XXc)
-         YAMBO_FREE(DIP_work_WFv)
-         YAMBO_FREE(DIP_work_WFc)
        end select
      endif
    end subroutine

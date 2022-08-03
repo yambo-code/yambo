@@ -159,7 +159,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! sum_kb workspace
  !
  if(l_eval_dip_V.or.l_eval_dip_iR) then
-    call DIP_alloc("DIP_work",[pp_dim,wf_ng])
+    call DIP_alloc("DIP_work",[pp_dim,nc])
  endif
  !
  ! Main loop over k in IBZ

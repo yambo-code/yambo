@@ -21,12 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
 &                        X_fxc,EEL,Alpha,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
+ use cuda_m_y,      ONLY:have_cuda
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
 #endif

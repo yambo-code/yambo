@@ -59,8 +59,8 @@ contains
     if(istat/=0) stop 'cublasInit failed'
     istat =  cublasCreate(cublas_h)
     if(istat/=0) stop 'creating cublas handle'
-    istat = cusolverDnCreate(cusolv_h)
-    if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
+    !istat = cusolverDnCreate(cusolv_h)
+    !if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
     !
 #endif
     cuda_linalg_init=.true.

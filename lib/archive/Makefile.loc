@@ -114,10 +114,10 @@ define link_it
  if test -s $$LIB".tar.gz" ; then \
   cd $(srcdir)/lib/$(1); \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-  if [ "$(srcdir)" != "$(compdir)" ] ; then rm -fr $(compdir)/lib/$(1); cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); sleep 2s; fi;\
  fi;\
  if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
   cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
   touch $(srcdir)/lib/$(1)/installed.stamp; \
- fi
+ fi ;\
+ if [ "$(srcdir)" != "$(compdir)" ] && [ ! -d $(compdir)/lib/$(1) ]; then cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); fi
 endef

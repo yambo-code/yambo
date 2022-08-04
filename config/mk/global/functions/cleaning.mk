@@ -100,7 +100,8 @@ define clean_lib_driver
   ldir=`basename $$dirtoclean`;  \
   if test -d $$dirtoclean; then find $$dirtoclean \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
   if test -d $$WDIR/$$dirtoclean; then find $$WDIR \( -name '*'$$ldir'*.a' \) |  xargs rm -fr ; fi; \
-  rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; \
+  if [ "$$MSG" != "ypp"    ]; then rm -f $(prefix)/config/stamps_and_lists/lib"$$ldir.a.stamp"; fi; \
+  if [ "$$MSG"  = "ypp"    ]; then rm -f $(prefix)/config/stamps_and_lists/lib_ypp_"$$ldir.a.stamp"; fi; \
  done
 endef
 #

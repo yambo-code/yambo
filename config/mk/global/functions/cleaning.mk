@@ -155,7 +155,7 @@ define clean_dependencies
 endef
 define clean_log_and_Ylib_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
- rm -fr $(prefix)/lib/yambo;\
+ rm -fr $(srcdir)/lib/yambo;\
  rm -fr $(prefix)/log 
 endef
 define clean_archive

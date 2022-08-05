@@ -23,25 +23,42 @@
 !
 !> @brief Calculate exciton-dipole
 !!
-subroutine EXC_dip()
+subroutine EXC_dip(Xk,E)
  !
  use pars,           ONLY:pi,SP,rZERO
  use com,            ONLY:msg
- use R_lattice,      ONLY:d3k_factor,bare_qpg
- use electrons,      ONLY:spin_occ
+ use R_lattice,      ONLY:d3k_factor,bare_qpg,bz_samp
+ use DIPOLES,        ONLY:DIPOLE_t
+ use electrons,      ONLY:levels,spin_occ
  use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states,BS_E_in
  use vec_operate,    ONLY:v_norm
+ use BS,             ONLY:BS_bands,BS_dip_size
+ use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt   
  !
 #include<memory.h>
+ !
+ type(levels),  intent(in) :: E
+ type(bz_samp), intent(in) :: Xk
+ !
  !
  ! Work Space
  !
  integer :: i_alpha,i_BS_mat
+ integer :: io_err
+ type(DIPOLE_t) :: Dip
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
    !      
    EXC_q0=EXC_q0/v_norm(EXC_q0)
    call msg('rs','Excitonic dipole along the direction : ',EXC_q0)
+   !
+   BS_dip_size=1
+   YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
+   !
+   call DIPOLE_dimensions(E,Dip,BS_bands,EXC_q0)
+   call DIPOLE_IO(Xk,E,Dip,'read ',io_err,'K')
+   !
+   ! Fill BSS_dipole_opt to be done
    !
    i_BS_mat=1
    call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)

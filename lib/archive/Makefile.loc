@@ -130,7 +130,8 @@ define copy_driver
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
  fi;\
  if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
-  cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
+  cp -R $$LIB/*    $(srcdir)/lib/$(1)/; \
+  cp -R $$LIB/.git $(srcdir)/lib/$(1)/; \
   touch $(srcdir)/lib/$(1)/installed.stamp; \
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \

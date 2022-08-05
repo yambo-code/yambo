@@ -8,6 +8,7 @@ else
  git_Ylib=git@github.com:yambo-code/yambo-libraries.git
  branch_Ylib=none
 endif
+include ../../config/setup
 #
 WGETFLAGS=--no-check-certificate -v
 #
@@ -16,7 +17,7 @@ all: $(EXT_LIBS)
 # Libraries (GIT + archives)
 #
 Ylib:
-	@+URL="$(url_Ylib)"  ;  GBRANCH="$(branch_Ylib)"  ;  GIT="$(git_Ylib)"; LIB="$(pkgname_Ylib)"; $(getsrc_git); $(call link_it,"yambo")
+	@+URL="$(url_Ylib)"  ;  GBRANCH="$(branch_Ylib)"  ;  GIT="$(git_Ylib)"; LIB="$(pkgname_Ylib)"; $(getsrc_git); $(call copy_driver,"yambo")
 #
 # Libraries (archives)
 #
@@ -117,10 +118,21 @@ define link_it
   if ! test -d  ../$(1); then mkdir ../$(1); fi; \
   cd ../$(1); \
   gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
- elif test -d $$LIB ; then \
-  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
-  cd ../$(1); \
-  if ! test -d driver; then ln -s ../archive/$$LIB/* ./ ; fi ; \
  fi
 endef
 #
+define copy_driver
+ if ! test -d  $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
+ if test -s $$LIB".tar.gz" ; then \
+  cd $(srcdir)/lib/$(1); \
+  gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ fi;\
+ if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
+  cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
+  touch $(srcdir)/lib/$(1)/installed.stamp; \
+ fi ;\
+ if [ "$(srcdir)" != "$(compdir)" ]; then \
+   rm -rf $(compdir)/lib/$(1) ]; \
+   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+ fi
+endef

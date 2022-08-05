@@ -43,6 +43,7 @@ module EXCPH
  integer                  :: EXCPH_sum(2)
  real(SP), allocatable    :: EXCPH_q(:,:)
  character(schlen)        :: EXCPH_kind
+ real(SP)                 :: EXC_q0(3)
  !
  ! L_in and L_out paths
  !

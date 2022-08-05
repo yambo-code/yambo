@@ -83,7 +83,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
- use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -540,6 +540,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  EXCPH_states=(/1,1/)
  EXCPH_sum=(/1,1/)
  L_damping=0.0005/HA2EV ! set to 0.5 meV
+ EXC_q0=(/0.0,0.0,0.0/)
  !
 #endif
  !

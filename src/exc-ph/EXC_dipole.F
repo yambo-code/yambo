@@ -26,9 +26,11 @@
 subroutine EXC_dip()
  !
  use pars,           ONLY:pi,SP,rZERO
+ use com,            ONLY:msg
  use R_lattice,      ONLY:d3k_factor,bare_qpg
  use electrons,      ONLY:spin_occ
- use EXCPH,          ONLY:BS_R_left,BS_R_right,BS_R,EXCPH_states
+ use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states
+ use vec_operate,    ONLY:v_norm
  !
 #include<memory.h>
  !
@@ -36,14 +38,24 @@ subroutine EXC_dip()
  !
  integer :: i_alpha
  !
- ! Calculate the residual
  !
- BS_R=rZERO
- do i_alpha=EXCPH_states(1),EXCPH_states(2)
-   BS_R(i_alpha)=real(abs(BS_R_left(i_alpha)*BS_R_right(i_alpha)),SP)
- enddo
- !
- ! This formula can be wrong in presence of the 2D-cutoff
- BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
+ if(all(abs(EXC_q0(:))<epsilon(1.))) then
+   !
+   call msg('rs','Use dipole of the Lin ') 
+   !
+   ! Calculate the residual
+   !
+   BS_R=rZERO
+   do i_alpha=EXCPH_states(1),EXCPH_states(2)
+     BS_R(i_alpha)=real(abs(BS_R_left(i_alpha)*BS_R_right(i_alpha)),SP)
+   enddo
+   !
+   ! This formula can be wrong in presence of the 2D-cutoff
+   BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
+   !
+ else
+   EXC_q0=EXC_q0/v_norm(EXC_q0)
+   call msg('rs','Excitonic dipole along the direction : ',EXC_q0)
+ endif
  !
 end subroutine

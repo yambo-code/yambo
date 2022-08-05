@@ -107,13 +107,20 @@ define clean_config
   done;\
  fi;\
  rm -fr $(prefix)/config/stamps_and_lists/*.list;\
+ rm -fr $(prefix)/config/msg_ydb;\
+ rm -fr $(prefix)/config/setup;\
+ rm -fr $(prefix)/config/report;\
+ rm -fr $(prefix)/config/mk/defs.mk $(prefix)/config/mk/local/defs.mk $(prefix)/config/mk/global/defs.mk;   \
  rm -fr $(prefix)/log;\
  rm -fr $(prefix)/bin;\
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
- rm -fr $(prefix)/lib/archive/Makefile
+ rm -fr $(prefix)/lib/archive/Makefile;\
+ rm -fr $(prefix)/src/tools/.objects;\
+ rm -fr $(prefix)/src/wf_and_fft/sgfft.F;\
+ rm -fr $(prefix)/sbin/compilation/helper.inc.sh
 endef
 define clean_bin
  $(ECHO) "\t[CLEANING] bin" ;\
@@ -127,7 +134,10 @@ endef
 define clean_ext_libs_bin_and_include
  $(ECHO) "\t[CLEANING external-libraries] bin(s) and include(s)" ; \
  rm -fr $(prefix)/lib/bin/*; \
- rm -fr $(prefix)/include/system
+ rm -fr $(prefix)/include/system; \
+ rm -fr $(prefix)/include/branch.inc; \
+ rm -fr $(prefix)/include/driver/editor.h; \
+ rm -fr $(prefix)/include/headers/common/have_malloc.h
 endef
 define clean_stamps
  $(ECHO) "\t[CLEANING] Stamps" ; \

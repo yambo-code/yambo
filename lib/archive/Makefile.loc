@@ -125,5 +125,8 @@ define copy_driver
   cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
   touch $(srcdir)/lib/$(1)/installed.stamp; \
  fi ;\
- if [ "$(srcdir)" != "$(compdir)" ] && [ ! -d $(compdir)/lib/$(1) ]; then cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); fi
+ if [ "$(srcdir)" != "$(compdir)" ]; then \
+   rm -rf $(compdir)/lib/$(1) ]; \
+   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+ fi
 endef

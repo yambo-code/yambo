@@ -131,7 +131,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    if(l_use_comm) then
      ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
-     pp_dim=max(pp_kbv_dim_atom,1)
+     pp_dim=max(pp_kbv_dim_yambo,1)
      YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim,Dip%ib(1):Dip%ib(2)))
      YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim))
      if (have_cuda) then

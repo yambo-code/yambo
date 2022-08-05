@@ -33,9 +33,7 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  use pars,          ONLY:SP,cONE,cZERO
  use wrapper,       ONLY:M_by_M,DEV_SUB(M_by_M)
  use electrons,     ONLY:n_spinor
- !use DIPOLES,       ONLY:XX=>DIP_work_XX,WF_ib=>DIP_work_WF
 #if defined _CUDAF
- use DIPOLES,       ONLY:DEV_VAR(drho)=>DEV_VAR(DIP_work_drho)
  use cudafor,       ONLY:C_DEVLOC
 #endif
  !
@@ -74,7 +72,6 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use cuda_m_y,      ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy_d2h
 #if defined _CUDAF
- !use DIPOLES,       ONLY:XXv=>DIP_work_XXv,XXc=>DIP_work_XXc,&
  use DIPOLES,       ONLY:DEV_VAR(drho)=>DEV_VAR(DIP_work_drho)
 #endif
  !

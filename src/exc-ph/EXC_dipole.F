@@ -34,6 +34,7 @@ subroutine EXC_dip(Xk,E)
  use vec_operate,    ONLY:v_norm
  use BS,             ONLY:BS_bands,BS_dip_size
  use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt   
+ use parallel_int,    ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
  !
@@ -55,10 +56,15 @@ subroutine EXC_dip(Xk,E)
    BS_dip_size=1
    YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
    !
-   call DIPOLE_dimensions(E,Dip,BS_bands,EXC_q0)
-   call DIPOLE_IO(Xk,E,Dip,'read ',io_err,'K')
+   ! ... PARALLEL setup
+   call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(Xen,Xk,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=.TRUE.)
    !
    ! Fill BSS_dipole_opt to be done
+   !
+   call K_dipoles(1,E,Xk,Dip)
+   !
+   BSS_dipoles_opt(1,:)=BS_T_grp(1)%dipoles_opt(1,:,1)
    !
    i_BS_mat=1
    call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)

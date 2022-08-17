@@ -1,4 +1,4 @@
-download:  
+download:
 	@LIB2DO="all"; $(get_external_libraries)
 libxc-dl: 
 	@LIB2DO="libxc"; $(get_external_libraries)

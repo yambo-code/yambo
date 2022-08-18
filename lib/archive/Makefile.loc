@@ -120,6 +120,7 @@ define link_it
   if ! test -d  ../$(1); then mkdir ../$(1); fi; \
   cd ../$(1); \
   gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+  cd ../archive; \
  fi
 endef
 #
@@ -128,6 +129,7 @@ define copy_driver
  if test -s $$LIB".tar.gz" ; then \
   cd $(srcdir)/lib/$(1); \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+  cd $(compdir)/lib/archive; \
  fi;\
  if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
   cp -R $$LIB/*    $(srcdir)/lib/$(1)/; \

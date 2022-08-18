@@ -64,7 +64,8 @@ pkgname_fftw=fftw-$(version_fftw)
 pkgname_fftqe=fftqe
 pkgname_yaml=yaml-$(version_yaml)
 pkgname_futile=futile-yambo
-pkgname_devxlib=devicexlib   #-$(version_devxlib)
+pkgname_devxlib=devicexlib
+#pkgname_devxlib=devicexlib-$(version_devxlib)
 #
 # tarball names
 #

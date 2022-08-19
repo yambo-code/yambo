@@ -27,7 +27,7 @@ uncompress:
 	touch uncompressed.stamp
 
 configure: uncompress
-	if test -e $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	if test -e $(PACKAGE) && ! test -f configured.stamp ; then ( cd $(PACKAGE);  \
 	      export CUDA_LIBS="$(lcudalib)"; \
 	      export CUDA_INCS="$(icudalib)"; \
 	      export BLAS_LIBS="$(lblas)"; \
@@ -44,8 +44,9 @@ configure: uncompress
 	touch configured.stamp
 
 compile: uncompress configure
-	if test -e $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) core) ; fi
+	if test -e $(PACKAGE) && ! test -f compiled.stamp ; then \
+	( cd $(PACKAGE);  $(make) core; cd .. ) ; fi
+	touch compiled.stamp
 #	@$(call compile,core)
        
 install: uncompress configure compile
@@ -68,13 +69,10 @@ clean_all: clean
 	@if test -e $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
 	@- rm -rf uncompressed.stamp 
 
-define mkdir_install
+define install
  if ! test -d $(LIBPATH) ; then \
    mkdir $(LIBPATH) ; mkdir $(LIBPATH)/lib ; mkdir $(LIBPATH)/include ; mkdir $(LIBPATH)/bin ; \
- fi 
-endef
-
-define install
+ fi ; \
  cd $(PACKAGE);  cp src/libdevXlib.a $(LIBPATH)/lib/ ; chmod u+x $(LIBPATH)/lib/libdevXlib.a ; cp src/*.mod $(LIBPATH)/include/ ;
 endef
 

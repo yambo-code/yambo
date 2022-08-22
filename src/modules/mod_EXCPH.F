@@ -42,8 +42,12 @@ module EXCPH
  integer                  :: EXCPH_states(2)
  integer                  :: EXCPH_sum(2)
  real(SP), allocatable    :: EXCPH_q(:,:)
- character(schlen)        :: EXCPH_kind
+ character(schlen)        :: EXCPH_kind_name
+ integer                  :: EXCPH_kind
  real(SP)                 :: EXC_q0(3)
+ !
+ integer, parameter :: PALEARI  = 1
+ integer, parameter :: BERNARDI = 2
  !
  ! L_in and L_out paths
  !

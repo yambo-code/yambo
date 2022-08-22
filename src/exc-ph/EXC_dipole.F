@@ -23,7 +23,7 @@
 !
 !> @brief Calculate exciton-dipole
 !!
-subroutine EXC_dip(Xk,E)
+subroutine EXC_dip(Xk,E,q)
  !
  use pars,           ONLY:pi,SP,rZERO
  use com,            ONLY:msg
@@ -32,14 +32,14 @@ subroutine EXC_dip(Xk,E)
  use electrons,      ONLY:levels,spin_occ
  use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states,BS_E_in
  use vec_operate,    ONLY:v_norm
- use BS,             ONLY:BS_bands,BS_dip_size
+ use BS,             ONLY:BS_bands,BS_dip_size,BS_T_grp
  use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt   
- use parallel_int,    ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
  !
  type(levels),  intent(in) :: E
- type(bz_samp), intent(in) :: Xk
+ type(bz_samp), intent(in) :: Xk,q
  !
  !
  ! Work Space
@@ -57,14 +57,16 @@ subroutine EXC_dip(Xk,E)
    YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
    !
    ! ... PARALLEL setup
-   call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(Xen,Xk,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=.TRUE.)
+   call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(E,Xk,q,"DIPOLES",Dip=Dip,Dip_limits_pre_defined=.TRUE.)
    !
    ! Fill BSS_dipole_opt to be done
    !
    call K_dipoles(1,E,Xk,Dip)
    !
    BSS_dipoles_opt(1,:)=BS_T_grp(1)%dipoles_opt(1,:,1)
+   !
+   ! Recalculate the residuals
    !
    i_BS_mat=1
    call K_diago_hermitian_residuals(i_BS_mat,BS_E_in,BS_R_left,BS_R_right)
@@ -75,7 +77,7 @@ subroutine EXC_dip(Xk,E)
    !
  endif
  !
- ! Calculate the residual
+ ! Calculate the full residual
  !
  BS_R=rZERO
  do i_alpha=EXCPH_states(1),EXCPH_states(2)

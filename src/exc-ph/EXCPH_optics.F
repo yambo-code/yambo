@@ -76,8 +76,6 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call BSE_alloc(k,q)
  call EXCPH_load_L(1,X,'load residuals','Lin')
  BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
- write(*,*) ' passo qui ',shape(BSS_eh_table)
- stop
  !
  ! Recalculate excitonic dipole if required
  !

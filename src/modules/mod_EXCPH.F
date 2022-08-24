@@ -214,7 +214,11 @@ module EXCPH
      !
      YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
-     YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
+     !
+     if(.not.allocated(BS_E)) then
+        YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     endif
      YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
      YAMBO_ALLOC(BSqpts,(3,q%nibz))
      !

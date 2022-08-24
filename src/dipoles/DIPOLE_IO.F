@@ -121,7 +121,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      i_count=i_count+1
      if((i_count==max_count).and.io_err/=0) then
        if(writing) call error(" [DIP] Header not found while writing dipoles ")
-       if(reading) call error(" [DIP] Header not found while reading dipoles ")
+       if(reading) call error(" [DIP] Header not found or wrong while reading dipoles ")
        if(  check) call warning("[DIP] Database not correct or missing. To be computed")
        return
      endif

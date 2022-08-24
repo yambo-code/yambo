@@ -32,11 +32,13 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use X_m,            ONLY:X_t
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R,free_EXC,alloc_EXC, &
+&                         BS_R_left,BS_R_right,BS_R,BSE_alloc,BSE_free,                      &
+&                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,     &
 &                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
+ use BS_solvers,     ONLY:BSS_eh_table
  use frequency,      ONLY:w_samp
- use parser_m,      ONLY:parser
+ use parser_m,       ONLY:parser
  !
 #include<memory.h>
  !
@@ -65,14 +67,17 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Allocations 
  !
- call alloc_EXC(q)
+ call RESIDUALS_and_EIGENVALUES_alloc(q)
  !
  call Sat_alloc()
  !
  ! Load excitonic energies and residuals
  !
- call EXCPH_load_L(1,X,'eigenvalues residuals','Lin')
+ call BSE_alloc(k,q)
+ call EXCPH_load_L(1,X,'load residuals','Lin')
  BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
+ write(*,*) ' passo qui ',shape(BSS_eh_table)
+ stop
  !
  ! Recalculate excitonic dipole if required
  !
@@ -122,7 +127,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Deallocations
  !
- call free_EXC()
+ call RESIDUALS_and_EIGENVALUES_free()
  call Sat_free()
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)

@@ -172,28 +172,76 @@ module EXCPH
      YAMBO_FREE(Xi)    
    end subroutine EXCPH_gkkp_free
    !
-   subroutine free_EXC()
+   subroutine RESIDUALS_and_EIGENVALUES_free
      implicit none
      !
-     YAMBO_FREE(BS_E)
      YAMBO_FREE(BS_all_E)
      YAMBO_FREE_P(BS_R_left)
      YAMBO_FREE_P(BS_R_right)
      YAMBO_FREE(BS_R)
+     if(allocated(BS_E)) then
+        YAMBO_FREE(BS_E)
+     endif
      !
-   end subroutine free_EXC
+   end subroutine RESIDUALS_and_EIGENVALUES_free
    !
-   subroutine alloc_EXC(q)
+   subroutine RESIDUALS_and_EIGENVALUES_alloc(q)
      use R_lattice,      ONLY:bz_samp
      implicit none
      type(bz_samp) ::q
-     YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     if(.not.allocated(BS_E)) then
+       YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     endif
      YAMBO_ALLOC_P(BS_R_left,(BSS_n_eig))
      YAMBO_ALLOC_P(BS_R_right,(BSS_n_eig))
      YAMBO_ALLOC(BS_R,(BSS_n_eig))
      YAMBO_ALLOC(BS_E_in,(EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(BS_all_E,(BSS_n_eig,q%nibz))
-   end subroutine alloc_EXC
+   end subroutine RESIDUALS_and_EIGENVALUES_alloc
+   !
+   subroutine BSE_alloc(k,q)
+     !      
+     use electrons,      ONLY:n_sp_pol      
+     use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
+     use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
+     use R_lattice,      ONLY:bz_samp
+     !
+#include<memory.h>
+     !
+     type(bz_samp) ::k,q
+     !      
+     ! pre-allocs...
+     !
+     YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
+     YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
+     YAMBO_ALLOC(BS_E,(BSS_n_eig))
+     YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
+     YAMBO_ALLOC(BSqpts,(3,q%nibz))
+     !
+     BS_mat=cZERO
+     BS_E=cZERO
+     !
+     k_plus_q_table  = 0
+     BSS_eh_table    = 0
+     BSS_eh_table_m1 = 0
+     !
+   end subroutine BSE_alloc
+   !
+   subroutine BSE_free
+     use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
+     use BS,             ONLY:BSqpts
+     !
+#include<memory.h>
+     !
+     YAMBO_FREE(BS_mat)
+     YAMBO_FREE(BSS_eh_table)
+     YAMBO_FREE(BSS_eh_table_m1)
+     if(allocated(BS_E)) then
+       YAMBO_FREE(BS_E)
+     endif
+     YAMBO_FREE(k_plus_q_table)
+     YAMBO_FREE(BSqpts)
+   end subroutine BSE_free
    !
    subroutine build_Q_map(q)
     use R_lattice,      ONLY:bz_samp

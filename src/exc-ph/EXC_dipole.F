@@ -52,7 +52,7 @@ subroutine EXC_dipole(Xk,E,q,X)
  type(DIPOLE_t) :: DIPs
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
-   !      
+   !
    EXC_q0=EXC_q0/v_norm(EXC_q0)
    call msg('rs','Excitonic dipole along the direction : ',EXC_q0)
    !

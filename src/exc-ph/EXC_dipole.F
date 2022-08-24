@@ -79,11 +79,14 @@ subroutine EXC_dipole(Xk,E,q,X)
    call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)
    call PARALLEL_global_indexes(E,Xk,q,"Response_T_space",X=X)
    !
-   ! Fill BSS_dipole_opt to be done
+   ! ... EH space (no parallelization)
+   call K_Transitions_setup("K",1,E,Xk,DIPs)
    ! 
-   call K_Transitions_setup("T",1,E,Xk,DIPs)
-   !
+   !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
+   !
+   ! ... EH space (with parallelization) and Transition groups build-up
+   call K_Transitions_setup("T",1,E,Xk,DIPs)
    !
    !... Blocks build-up
    call K_blocks()
@@ -93,6 +96,7 @@ subroutine EXC_dipole(Xk,E,q,X)
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
    call PARALLEL_WF_index( )
    !
+   ! Fill BSS_dipole_opt to be done
    call K_dipoles(1,E,Xk,DIPs)
    !
    BSS_dipoles_opt(1,:)=BS_T_grp(1)%dipoles_opt(1,:,1)

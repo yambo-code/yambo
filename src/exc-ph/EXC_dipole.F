@@ -36,7 +36,8 @@ subroutine EXC_dipole(Xk,E,q,X)
  use X_m,            ONLY:X_t
  use BS,             ONLY:BS_bands,BS_dip_size,BS_T_grp
  use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt,BSS_Vnl_included 
- use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_m,     ONLY:PAR_IND_WF_b_and_k
  !
 #include<memory.h>
  !
@@ -71,7 +72,7 @@ subroutine EXC_dipole(Xk,E,q,X)
    DIPs%computed    ='R V P'
    !
    call msg('s','Dipole bands range : ',BS_bands)
-   call msg('s','Dipole Vnl included: ',BSS_Vnl_included)
+   call msg('s','Dipole Vnl included:  ',BSS_Vnl_included)
    !
    ! ... PARALLEL setup
    !
@@ -79,6 +80,18 @@ subroutine EXC_dipole(Xk,E,q,X)
    call PARALLEL_global_indexes(E,Xk,q,"Response_T_space",X=X)
    !
    ! Fill BSS_dipole_opt to be done
+   ! 
+   call K_Transitions_setup("T",1,E,Xk,DIPs)
+   !
+   call PARALLEL_global_Response_T_transitions(Xk)
+   !
+   !... Blocks build-up
+   call K_blocks()
+   !
+   ! Wave Functions distribution 
+   !=============================
+   call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.FALSE.)
+   call PARALLEL_WF_index( )
    !
    call K_dipoles(1,E,Xk,DIPs)
    !
@@ -104,5 +117,7 @@ subroutine EXC_dipole(Xk,E,q,X)
  !
  ! This formula can be wrong in presence of the 2D-cutoff
  BS_R=BS_R*real(spin_occ,SP)/(2._SP*pi)**3*d3k_factor*4._SP*pi/bare_qpg(1,1)**2
+ !
+ call PARALLEL_global_indexes(E,Xk,q,"Response_T_space",X=X,RESET=.TRUE.)
  !
 end subroutine

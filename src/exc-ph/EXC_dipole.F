@@ -27,6 +27,7 @@ subroutine EXC_dipole(Xk,E,q)
  !
  use pars,           ONLY:pi,SP,rZERO
  use com,            ONLY:msg
+ use stderr,         ONLY:intc
  use R_lattice,      ONLY:d3k_factor,bare_qpg,bz_samp
  use DIPOLES,        ONLY:DIPOLE_t
  use electrons,      ONLY:levels,spin_occ
@@ -46,7 +47,7 @@ subroutine EXC_dipole(Xk,E,q)
  !
  integer :: i_alpha,i_BS_mat
  integer :: io_err
- type(DIPOLE_t) :: Dip
+ type(DIPOLE_t) :: DIPs
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
    !      
@@ -57,18 +58,18 @@ subroutine EXC_dipole(Xk,E,q)
    YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
    !
    DIPs%ib    =BS_bands(1:2)
-   DIPs%ib_lim(1)=E%nbf
-   DIPs%ib_lim(2)=E%nbf+1
+   DIPs%ib_lim(1)=E%nbf(1)
+   DIPs%ib_lim(2)=E%nbf(1)+1
    !
-   call msg('s'',Dipole bands range: ',BS_bands)
+   call msg('s','Dipole bands range: ',BS_bands)
    !
    ! ... PARALLEL setup
    call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,Xk,q,"DIPOLES",Dip=Dip,Dip_limits_pre_defined=.TRUE.)
+   call PARALLEL_global_indexes(E,Xk,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=.TRUE.)
    !
    ! Fill BSS_dipole_opt to be done
    !
-   call K_dipoles(1,E,Xk,Dip)
+   call K_dipoles(1,E,Xk,DIPs)
    !
    BSS_dipoles_opt(1,:)=BS_T_grp(1)%dipoles_opt(1,:,1)
    !

@@ -81,7 +81,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Calculate excitonic dipole
  !
- call EXC_dipole(k,E,q)
+ call EXC_dipole(k,E,q,X)
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  if(l_no_matrix_elements) call warning('No exc-ph matrix elements, just ph-assisted dos')

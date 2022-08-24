@@ -23,7 +23,7 @@
 !
 !> @brief Calculate exciton-dipole
 !!
-subroutine EXC_dipole(Xk,E,q)
+subroutine EXC_dipole(Xk,E,q,X)
  !
  use pars,           ONLY:pi,SP,rZERO
  use com,            ONLY:msg
@@ -33,6 +33,7 @@ subroutine EXC_dipole(Xk,E,q)
  use electrons,      ONLY:levels,spin_occ
  use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states,BS_E_in
  use vec_operate,    ONLY:v_norm
+ use X_m,            ONLY:X_t
  use BS,             ONLY:BS_bands,BS_dip_size,BS_T_grp
  use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt,BSS_Vnl_included 
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
@@ -41,6 +42,7 @@ subroutine EXC_dipole(Xk,E,q)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: Xk,q
+ type(X_t),     intent(in) :: X
  !
  !
  ! Work Space
@@ -61,15 +63,20 @@ subroutine EXC_dipole(Xk,E,q)
    DIPs%ib          =BS_bands(1:2)
    DIPs%ib_lim(1)   =E%nbf(1)
    DIPs%ib_lim(2)   =E%nbf(1)+1
-   DIPs%Vnl_included=.TRUE.  ! Unfortunatelly BSS_Vnl_included is not saved on disk I assume .TRUE.
-   DIPs%computed='R V P'
+!   
+!  Unfortunatelly BSS_Vnl_included and DIPs%computed 
+!  are not saved by the BS_solves I assume .TRUE. and 'R V P'
+!
+   DIPs%Vnl_included=.TRUE. 
+   DIPs%computed    ='R V P'
    !
    call msg('s','Dipole bands range : ',BS_bands)
    call msg('s','Dipole Vnl included: ',BSS_Vnl_included)
    !
    ! ... PARALLEL setup
+   !
    call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)
-   call PARALLEL_global_indexes(E,Xk,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=.TRUE.)
+   call PARALLEL_global_indexes(E,Xk,q,"Response_T_space",X=X)
    !
    ! Fill BSS_dipole_opt to be done
    !

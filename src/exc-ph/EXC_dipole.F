@@ -23,7 +23,7 @@
 !
 !> @brief Calculate exciton-dipole
 !!
-subroutine EXC_dip(Xk,E,q)
+subroutine EXC_dipole(Xk,E,q)
  !
  use pars,           ONLY:pi,SP,rZERO
  use com,            ONLY:msg
@@ -55,6 +55,12 @@ subroutine EXC_dip(Xk,E,q)
    !
    BS_dip_size=1
    YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
+   !
+   DIPs%ib    =BS_bands(1:2)
+   DIPs%ib_lim(1)=E%nbf
+   DIPs%ib_lim(2)=E%nbf+1
+   !
+   call msg('s'',Dipole bands range: ',BS_bands)
    !
    ! ... PARALLEL setup
    call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)

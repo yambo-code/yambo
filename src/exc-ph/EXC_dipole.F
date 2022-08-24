@@ -29,12 +29,12 @@ subroutine EXC_dipole(Xk,E,q)
  use com,            ONLY:msg
  use stderr,         ONLY:intc
  use R_lattice,      ONLY:d3k_factor,bare_qpg,bz_samp
- use DIPOLES,        ONLY:DIPOLE_t
+ use DIPOLES,        ONLY:DIPOLE_t,DIPOLES_reset
  use electrons,      ONLY:levels,spin_occ
  use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states,BS_E_in
  use vec_operate,    ONLY:v_norm
  use BS,             ONLY:BS_bands,BS_dip_size,BS_T_grp
- use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt   
+ use BS_solvers,     ONLY:BS_H_dim,BSS_dipoles_opt,BSS_Vnl_included 
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
@@ -46,7 +46,6 @@ subroutine EXC_dipole(Xk,E,q)
  ! Work Space
  !
  integer :: i_alpha,i_BS_mat
- integer :: io_err
  type(DIPOLE_t) :: DIPs
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
@@ -57,11 +56,16 @@ subroutine EXC_dipole(Xk,E,q)
    BS_dip_size=1
    YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
    !
-   DIPs%ib    =BS_bands(1:2)
-   DIPs%ib_lim(1)=E%nbf(1)
-   DIPs%ib_lim(2)=E%nbf(1)+1
+   call DIPOLES_reset(DIPs)
    !
-   call msg('s','Dipole bands range: ',BS_bands)
+   DIPs%ib          =BS_bands(1:2)
+   DIPs%ib_lim(1)   =E%nbf(1)
+   DIPs%ib_lim(2)   =E%nbf(1)+1
+   DIPs%Vnl_included=.TRUE.  ! Unfortunatelly BSS_Vnl_included is not saved on disk I assume .TRUE.
+   DIPs%computed='R V P'
+   !
+   call msg('s','Dipole bands range : ',BS_bands)
+   call msg('s','Dipole Vnl included: ',BSS_Vnl_included)
    !
    ! ... PARALLEL setup
    call PARALLEL_global_indexes(E,Xk,q," ",RESET=.TRUE.)

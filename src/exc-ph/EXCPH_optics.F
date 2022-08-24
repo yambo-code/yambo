@@ -74,14 +74,14 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call EXCPH_load_L(1,X,'eigenvalues residuals','Lin')
  BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
  !
+ ! Recalculate excitonic dipole if required
+ !
+ call EXC_dipole(k,E,q,X)
+ !
  do iq=1,q%nibz
    call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
- !
- ! Calculate excitonic dipole
- !
- call EXC_dipole(k,E,q,X)
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  if(l_no_matrix_elements) call warning('No exc-ph matrix elements, just ph-assisted dos')

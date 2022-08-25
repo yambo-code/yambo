@@ -38,7 +38,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use R_lattice,      ONLY:bz_samp,qindx_B !_load
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig,BSS_alloc,BSS_free
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
@@ -131,6 +131,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
+ !
+ call BSS_alloc()
  !
  call BSE_alloc(k,q)
  !
@@ -239,6 +241,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call live_timing( )
  !
+ call BSS_free()
  call BSE_free()
  call BSE_in_free()
  call EXCPH_gkkp_free()

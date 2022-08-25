@@ -213,7 +213,6 @@ module EXCPH
      ! pre-allocs...
      !
      YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
-     YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
      YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      !
      if(.not.allocated(BS_E)) then
@@ -226,7 +225,6 @@ module EXCPH
      BS_E=cZERO
      !
      k_plus_q_table  = 0
-     BSS_eh_table    = 0
      BSS_eh_table_m1 = 0
      !
    end subroutine BSE_alloc

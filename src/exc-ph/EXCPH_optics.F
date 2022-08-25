@@ -36,7 +36,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
 &                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,     &
 &                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
- use BS_solvers,     ONLY:BSS_eh_table
+ use BS_solvers,     ONLY:BSS_eh_table,BSS_alloc,BSS_free
  use frequency,      ONLY:w_samp
  use parser_m,       ONLY:parser
  !
@@ -73,7 +73,10 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  ! Load excitonic energies and residuals
  !
+ call BSS_alloc()
+ !
  call BSE_alloc(k,q)
+ !
  call EXCPH_load_L(1,X,'load residuals','Lin')
  BS_E_in(:)=BS_E(EXCPH_states(1):EXCPH_states(2)) ! L_in can be different from L_out 
  !
@@ -127,6 +130,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  call RESIDUALS_and_EIGENVALUES_free()
  call Sat_free()
+ call BSS_free()
  YAMBO_FREE(Epsilon_ii)
  YAMBO_FREE(PL_ii)
  !

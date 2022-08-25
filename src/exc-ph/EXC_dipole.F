@@ -91,10 +91,6 @@ subroutine EXC_dipole(Xk,E,q,X)
    ! Fill BSS_dipole_opt to be done
    call K_dipoles(1,E,Xk,DIPs)
    !
-   BSE_prop='abs'
-   BS_dip_size=1
-   call K_observables()
-   !
    call K_components_folded_in_serial_arrays(1)
    !
    ! Recalculate the residuals

@@ -37,6 +37,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
 &                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use BS_solvers,     ONLY:BSS_eh_table,BSS_alloc,BSS_free
+ use BS,             ONLY:BSE_prop,BS_dip_size
  use frequency,      ONLY:w_samp
  use parser_m,       ONLY:parser
  !
@@ -72,6 +73,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call Sat_alloc()
  !
  ! Load excitonic energies and residuals
+ !
+ BSE_prop='abs'
+ BS_dip_size=1
+ !
+ call K_observables()
  !
  call BSS_alloc()
  !

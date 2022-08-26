@@ -291,6 +291,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    ! Live timing string
    X_what=" "
    !
+   ! n_OPTICAL_dir_to_eval is set in the previous call to X_AVERAGE_setup("Q-LOOP").
+   ! There, for iq>1 n_optical_dir_to_eval is set = 1
+   !
    do iq_dir=1,n_OPTICAL_dir_to_eval
      !
      call X_ALLOC_parallel(X_par(iq_mem),X%ng,Xw%n_freqs,"XUP")
@@ -372,7 +375,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
      !
      integer :: iq_,whoami_save,idb,COM,SEC(2)
-     logical :: this_is_Xo
+     logical :: this_is_Xo,reset_permissions
      character(schlen) :: KERNEL_save
      !
      ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
@@ -391,14 +394,20 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        X%KERNEL="IP"
      endif
      !
-#if !defined _PAR_IO
-     call IO_and_Messaging_switch("SAVE")
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+     reset_permissions=.true.
+#if defined _PAR_IO
+     reset_permissions=(iq_==0)
 #endif
+     !
+     if (reset_permissions) then
+       call IO_and_Messaging_switch("SAVE")
+       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+     endif
      !
      SEC           =(/1,1/)
      if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
      !
+     !call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_X_WORLD,DO_IT=.TRUE.)
      call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0)
      i_err=io_X(X,Xw,ID(idb))
      !
@@ -407,9 +416,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        X%KERNEL=KERNEL_save
      endif
      !
-#if !defined _PAR_IO
-     call IO_and_Messaging_switch("RESTORE")
-#endif
+     if (reset_permissions) call IO_and_Messaging_switch("RESTORE")
      !
    end subroutine
    !

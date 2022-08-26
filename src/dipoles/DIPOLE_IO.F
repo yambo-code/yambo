@@ -26,6 +26,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use pars,        ONLY:SP,cI,cZERO
  use parser_m,    ONLY:parser
  use stderr,      ONLY:intc
+ use com,         ONLY:msg
  use IO_m,        ONLY:io_DIP
  use R_lattice,   ONLY:bz_samp
  use electrons,   ONLY:levels,n_sp_pol
@@ -34,7 +35,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
  use parallel_int,ONLY:PP_redux_wait
- use parallel_m,  ONLY:master_cpu,PAR_K_scheme,PP_indexes,PP_indexes_reset
+ use parallel_m,  ONLY:master_cpu,PAR_K_scheme
 #if defined _RT
  use RT_control,  ONLY:l_project_spin_dipoles
 #endif
@@ -55,7 +56,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  integer           :: ID,ID_S,IO_ACTION,IO_ACT_NOW,IO_MODE,ik_mem,ik,i_sp_pol,i_fragment,iv,ic,max_count,i_count
  integer, external :: io_DIPOLES
  integer, external :: io_Overlaps
- type(PP_indexes)  :: IO_par_index
  !
  if (.not.IO_dip) return
  !
@@ -122,7 +122,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
      if((i_count==max_count).and.io_err/=0) then
        if(writing) call error(" [DIP] Header not found while writing dipoles ")
        if(reading) call error(" [DIP] Header not found while reading dipoles ")
-       if(  check) call warning("[DIP] Database not correct or missing. To be computed")
+       if(  check) call msg("s","[DIP] Database not correct or missing. To be computed ")
        return
      endif
    enddo
@@ -132,44 +132,27 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  if (writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  if (writing) call fix_velocity(Dip,-1)
  !
- if (reading) then
-   IO_ACTION=OP_IF_START_RD_CL_IF_END
-   IO_do_it =.TRUE.
- endif
- if (writing) then
-   IO_ACTION=OP_IF_START_APP_CL_IF_END
-   IO_do_it=PAR_K_scheme%COM_ibz_A2A%CPU_id==0
- endif
+ if(reading) IO_ACTION=OP_IF_START_RD_CL_IF_END
+ if(writing) IO_ACTION=OP_IF_START_APP_CL_IF_END
+ !
+ IO_do_it = reading .or. (writing.and.PAR_K_scheme%COM_ibz_A2A%CPU_id==0)
  !
  ! DIPOLES I/O
  !==============
  !
- ! IO parallel indexes needed below by manage_action
- !---------------------
- call PP_indexes_reset(IO_par_index)
- allocate(IO_par_index%element_1D(n_sp_pol*Xk%nibz))
- IO_par_index%element_1D=.FALSE.
- do i_sp_pol=1,n_sp_pol
-   do ik=1,Xk%nibz
-     i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-     if ( .not.PAR_K_scheme%IND_ibz%element_1D(ik)) cycle
-     IO_par_index%element_1D(i_fragment)=.TRUE.
-   enddo
- enddo
- !
 #if defined _PAR_IO
  IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
- call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID,COMM=PAR_K_scheme%COM_ibz_index,DO_IT=IO_do_it)
+ call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID,COMM=PAR_K_scheme%COM_ibz_index,DO_it=IO_do_it)
  io_err=io_DIPOLES(Dip,ID)
  IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
  do i_sp_pol=1,n_sp_pol
    do ik=1,Xk%nibz
      i_fragment=ik+(i_sp_pol-1)*Xk%nibz
-     if (.not.IO_par_index%element_1D(i_fragment)            ) cycle
+     if (.not.PAR_K_scheme%IND_ibz%element_1D(i_fragment)            ) cycle
 #if !defined _PAR_IO
      if (.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0.and.writing ) cycle
-     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,IO_par_index)
+     IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nibz*n_sp_pol,PAR_K_scheme%IND_ibz)
 #endif
      call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID)
      io_err=io_DIPOLES(Dip,ID)
@@ -189,32 +172,19 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  if(use_covariant_approach) then
    !
-   ! IO parallel indexes needed below by manage_action
-   !---------------------
-   call PP_indexes_reset(IO_par_index)
-   allocate(IO_par_index%element_1D(n_sp_pol*Xk%nbz))
-   IO_par_index%element_1D=.FALSE.
-   do i_sp_pol=1,n_sp_pol
-     do ik=1,Xk%nbz
-       i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if ( .not.PAR_K_scheme%IND_bz%element_1D(ik)) cycle
-       IO_par_index%element_1D(i_fragment)=.TRUE.
-     enddo
-   enddo
-   !
 #if defined _PAR_IO
    IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_ibz_index,DO_IT=IO_do_it)
+   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_bz_index,DO_it=IO_do_it)
    io_err=io_Overlaps(Dip,ID_S)
    IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nbz
        i_fragment=ik+(i_sp_pol-1)*Xk%nbz
-       if (.not.IO_par_index%element_1D(i_fragment).and.writing) cycle
+       if (.not.PAR_K_scheme%IND_bz%element_1D(i_fragment).and.writing) cycle
 #if !defined _PAR_IO
        if (.not.PAR_K_scheme%COM_ibz_A2A%CPU_id==0 .and.writing) cycle
-       if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,IO_par_index)
+       if (writing) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol,PAR_K_scheme%IND_bz)
        if (reading) IO_ACT_NOW=manage_action(IO_ACTION,i_fragment,1,Xk%nbz*n_sp_pol)
 #endif
        call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/1+i_fragment/),ID=ID_S)
@@ -234,10 +204,6 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
- !
-#if !defined _PAR_IO
- call PP_indexes_reset(IO_par_index)
-#endif
  !
 #if defined _RT
  if(reading.and.l_project_spin_dipoles) call project_spin_dipoles(Dip)

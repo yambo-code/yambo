@@ -25,7 +25,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
  !
  use pars,            ONLY:SP,cZERO
  use parallel_m,      ONLY:master_cpu,yMPI_comm
- use parallel_int,    ONLY:PP_redux_wait
+ use parallel_int,    ONLY:PP_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:REP,OP_APP_CL,OP_WR_CL,OP_APP,WR,WR_CL,io_COLLs
@@ -64,7 +64,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
      io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
 #endif
    endif
-   call PP_redux_wait()
+   call PP_wait()
    return
  endif
  !

@@ -34,7 +34,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  use IO_int,      ONLY:io_control
  use IO_m,        ONLY:manage_action,VERIFY,DUMP,REP,OP_WR_CL,OP_WR,OP_RD_CL,&
 &                      OP_IF_START_APP_CL_IF_END,OP_IF_START_RD_CL_IF_END
- use parallel_int,ONLY:PP_redux_wait
+ use parallel_int,ONLY:PP_wait
  use parallel_m,  ONLY:master_cpu,PAR_K_scheme
 #if defined _RT
  use RT_control,  ONLY:l_project_spin_dipoles
@@ -94,7 +94,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  !
  ! To fix problems with asynchronous I/O 
  !
- call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ call PP_wait(COMM=PAR_K_scheme%comm_world)
  !
  IO_MODE=VERIFY
  if((read_header.or.read_header_ovlp).and.writing) IO_MODE=DUMP
@@ -129,7 +129,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
  endif
  !
  if (check)   return
- if (writing) call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ if (writing) call PP_wait(COMM=PAR_K_scheme%comm_world)
  if (writing) call fix_velocity(Dip,-1)
  !
  if(reading) IO_ACTION=OP_IF_START_RD_CL_IF_END
@@ -174,7 +174,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
    !
 #if defined _PAR_IO
    IO_ACT_NOW=manage_action(IO_ACTION,0,0,2)
-   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_bz_index,DO_it=IO_do_it)
+   call io_control(ACTION=IO_ACT_NOW,COM=REP,SEC=(/0/),ID=ID_S,COMM=PAR_K_scheme%COM_ibz_index,DO_it=IO_do_it)
    io_err=io_Overlaps(Dip,ID_S)
    IO_ACT_NOW=manage_action(IO_ACTION,1,0,2)
 #endif
@@ -201,7 +201,7 @@ subroutine DIPOLE_IO(Xk,Xen,Dip,check_read_or_write,io_err,PAR_K_scheme_kind)
 #endif
  endif
  !
- call PP_redux_wait(COMM=PAR_K_scheme%comm_world)
+ call PP_wait(COMM=PAR_K_scheme%comm_world)
  !
  call fix_velocity(Dip,1)
  !

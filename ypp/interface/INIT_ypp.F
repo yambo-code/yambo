@@ -42,7 +42,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same,logfile_unit 
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
@@ -733,7 +733,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
-   call PP_redux_wait
+   call PP_wait()
  endif
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
@@ -796,7 +796,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
-   call PP_redux_wait
+   call PP_wait()
  endif
  !
  contains

@@ -97,11 +97,15 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  if(ID>0) io_PAR_comm(ID)=mpi_comm_null
 #if defined _PAR_IO
  if (ncpu>1.and.define_ID_WR.and.(present(COMM).or.present(DO_IT))) then
+   ! DEBUG <
    !write(*,*) myid,"before redux ",ID,my_max_ID,HEAD_cpu,local_COMM,mpi_comm_world
-   call PP_redux_wait(ID,COMM=local_COMM)
-   !write(*,*) myid,"after redux ",ID,my_max_ID
+   ! DEBUG >
+   call PP_bcast(ID,0,COMM=local_COMM)
    call PP_bcast(io_unit(ID),0,local_COMM)
    io_PAR_comm(ID)=local_COMM
+   ! DEBUG <
+   !write(*,*) myid,"after redux ",ID,my_max_ID,io_PAR_comm(ID)
+   ! DEBUG >
  endif
 #endif
  !

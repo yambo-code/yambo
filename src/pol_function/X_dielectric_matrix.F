@@ -372,11 +372,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      use IO_m,          ONLY:NONE
      use pars,          ONLY:schlen
-     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
+     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,yMPI_comm,COMM_copy,PAR_COM_NULL,master_cpu
      !
      integer :: iq_,whoami_save,idb,COM,SEC(2)
-     logical :: this_is_Xo,reset_permissions
+     logical :: this_is_Xo,reset_permissions,condition
      character(schlen) :: KERNEL_save
+     type(yMPI_comm)   :: LOCAL_yMPI_COMM
      !
      ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
      ! be re-initialized for all the cpus
@@ -395,20 +396,29 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      endif
      !
      reset_permissions=.true.
+     call COMM_copy(PAR_COM_NULL,LOCAL_yMPI_COMM)
+     condition=PAR_COM_X_WORLD%CPU_id==0
+     !
+     ! Only the master writes the header
+     if(iq_==0) condition=master_cpu
+     !
 #if defined _PAR_IO
      reset_permissions=(iq_==0)
+     if(iq_/=0) then
+       call COMM_copy(PAR_COM_RL_INDEX,LOCAL_yMPI_COMM)
+       condition=PAR_COM_RL_A2A%CPU_id==0
+     endif
 #endif
      !
      if (reset_permissions) then
        call IO_and_Messaging_switch("SAVE")
-       call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+       call IO_and_Messaging_switch("+io_out",CONDITION=condition)
      endif
      !
      SEC           =(/1,1/)
      if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
      !
-     !call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_X_WORLD,DO_IT=.TRUE.)
-     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0)
+     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=local_yMPI_COMM,DO_IT=condition)
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then

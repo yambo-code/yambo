@@ -79,7 +79,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    if (write_is_on(ID)) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
  endif
  !
- ! Despite all processors write to file (and also the define the variable), only the master fills it
+ ! Despite all processors write to file (and also define the variable), only the master fills it
  !
  if (io2 .and. ((write_is_on(ID).and.master_cpu).or.read_is_on(ID))) then
    call io_variable_bulk(ID,1,I0=COLL_element%N)
@@ -127,7 +127,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  endif
  !
  ! nf90_sync is performed up to LAST_COLL_sync and at steps of 5% of bse kernel
- file_sync= i_coll<=LAST_COLL_sync .and. mod(i_coll,max(1,PAR_COLL_min/20))==0
+ file_sync= i_coll<=LAST_COLL_sync .and. mod(i_coll,max(1,PAR_COLL_min/20))==0 .and. index(trim(db_name),"HXC")/=0
  !
  if(write_is_on(ID).and.file_sync.and.io3) then
    stat = nf90_sync(io_unit(ID))

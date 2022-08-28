@@ -24,7 +24,7 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
  use pars,            ONLY:SP,cZERO
- use parallel_m,      ONLY:master_cpu,yMPI_comm,HEAD_QP_cpu
+ use parallel_m,      ONLY:master_cpu,yMPI_comm
  use parallel_int,    ONLY:PP_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_int,          ONLY:io_control
@@ -66,7 +66,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
      !call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,DO_IT=.TRUE.)
      !However, since there is a partial redux of the collisions, only few in practice are writing
      !Setting DO_IT=.true. would also work. However some info would be written twice in the same place
-     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,COMM=COMM,DO_IT=HEAD_QP_cpu)
+     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,COMM=COMM)
      io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
 #endif
    endif

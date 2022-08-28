@@ -73,7 +73,6 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  if (present(COMM)) then
    HEAD_cpu=COMM%CPU_id==0
    local_COMM=COMM%COMM
-   if (.not.present(DO_IT)) call error("COMM provided without DO_IT")
  else if (present(DO_it)) then
    HEAD_cpu=master_cpu
    local_COMM=mpi_comm_world

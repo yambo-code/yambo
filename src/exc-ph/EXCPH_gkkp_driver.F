@@ -102,6 +102,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
         call error("Unknow exciton-phonon coupling type")
  end select
  !
+ call msg('rs','Use coupling convention from',trim(EXCPH_kind_name)) 
+ !
  elph_branches_save  =elph_branches
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.

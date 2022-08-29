@@ -321,7 +321,6 @@ module BS_solvers
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
-     write(*,*) ' passo qui ',l_BS_abs,BS_dip_size,BS_H_dim
      if (l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism) then
        YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
        BSS_dipoles_opt = cZERO

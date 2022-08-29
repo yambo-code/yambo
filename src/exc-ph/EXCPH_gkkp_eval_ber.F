@@ -30,14 +30,12 @@
 subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
- !use electrons,      ONLY:levels
  use D_lattice,      ONLY:i_time_rev,sop_inv,sop_tab,nsym,i_time_rev
  use R_lattice,      ONLY:bz_samp,qindx_C
  use BS_solvers,     ONLY:io_BSS_diago,BS_mat,BSS_eh_table,BSS_free
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL, &
 &                         deliver_IO_error_message,manage_action,RD
  use IO_int,         ONLY:io_control
- !use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
  use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,&
@@ -46,9 +44,7 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
 #include<memory.h>
  !
- !type(levels)  ::E
  type(bz_samp) ::k,q
- !type(X_t)     ::X
  integer, intent(in)    :: iq_s,iq_bz,il!,iq
  integer, intent(inout) :: ID_gkkp
  !
@@ -61,7 +57,6 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
  real(SP)                :: ph_E
  complex(SP)             :: elph_gkkp,Xi_element
  integer, external       :: io_ELPH
- !complex(SP)                :: aux_phase_1,aux_phase_2
  !
  ! Loop scheme:
  !  i_l ->i_beta ->i_star [load gkkp] ->i_H
@@ -89,7 +84,7 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  if (ph_E<FAN_deltaE_treshold) return
  !
- EXCPH_Gkkp(il,i_beta,i_alpha)=cZERO
+ EXCPH_gkkp=cZERO
  !
  do i_beta=EXCPH_sum(1),EXCPH_sum(2)
    !
@@ -128,7 +123,9 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
        if(.not.t_rev) Xi_element=elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
        if(     t_rev) Xi_element=elph_gkkp*      BS_mat(i_Hp,i_beta)
        !
-       EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+BS_mat_in(i_H,i_alpha)*Xi_element
+       do i_alpha=EXCPH_states(1),EXCPH_states(2)
+         EXCPH_gkkp(il,i_beta,i_alpha)=EXCPH_gkkp(il,i_beta,i_alpha)+BS_mat_in(i_H,i_alpha)*Xi_element
+       enddo
        !
      enddo
      !
@@ -150,7 +147,9 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
        if(.not.t_rev) Xi_element=elph_gkkp*conjg(BS_mat(i_Hp,i_beta))
        if(     t_rev) Xi_element=elph_gkkp*      BS_mat(i_Hp,i_beta)
        !
-       EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)-BS_mat_in(i_H,i_alpha)*Xi_element
+       do i_alpha=EXCPH_states(1),EXCPH_states(2)
+         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)-BS_mat_in(i_H,i_alpha)*Xi_element
+       enddo
        !
      enddo
      !

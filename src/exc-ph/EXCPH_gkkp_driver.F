@@ -38,7 +38,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use R_lattice,      ONLY:bz_samp,qindx_B !_load
  use parser_m,       ONLY:parser
  use X_m,            ONLY:X_t
- use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BS_H_dim,BSS_n_eig,BSS_alloc,BSS_free
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
@@ -46,7 +46,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,build_Q_map,EXCPH_q, &
-&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,n_exc_in
+&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,n_exc_in, &
+&                         EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -90,7 +91,17 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call parser('AbsElph',  l_abs_elph)
  call parser('AbsExc',   l_abs_exc)
  !
- ! Build Q_map
+ ! Exciton-phonon kind
+ !
+ select case (trim(EXCPH_kind_name))
+    case('PALEARI')
+        EXCPH_kind=PALEARI
+    case('BERNARDI')
+        EXCPH_kind=BERNARDI
+    case default
+        call error("Unknow exciton-phonon coupling type")
+ end select
+ !
  elph_branches_save  =elph_branches
  call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
@@ -121,9 +132,15 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
  !
- call BSE_alloc()
+ call BSS_alloc()
+ !
+ call BSE_alloc(k,q)
  !
  call EXCPH_load_L(1,X,'load','Lin')
+ !
+ ! Alloc BS_in variables
+ ! 
+ call BSE_in_alloc()
  !
  ! Alloage EXCPH_gkkp
  !
@@ -190,7 +207,15 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      do il=elph_branches(1),elph_branches(2)
        !
-       call  EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
+       if(EXCPH_kind==PALEARI) then
+         !      
+         call EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
+         ! 
+       elseif(EXCPH_kind==BERNARDI) then
+         !      
+         call EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
+         !
+       endif
        !
        call live_timing(steps=1)
        !
@@ -216,7 +241,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call live_timing( )
  !
+ call BSS_free()
  call BSE_free()
+ call BSE_in_free()
  call EXCPH_gkkp_free()
  !
  ! Report all relevant data of the exciton-phonon coupling
@@ -229,50 +256,30 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  contains
    !
-   subroutine BSE_alloc()
+   subroutine BSE_in_alloc()
      implicit none
      !      
      ! pre-allocs...
-     !
-     YAMBO_ALLOC(BS_mat,(BS_H_dim,BSS_n_eig))
-     YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,3+n_sp_pol-1))
-     YAMBO_ALLOC(BSS_eh_table_m1,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
-     YAMBO_ALLOC(BS_E,(BSS_n_eig))
-     YAMBO_ALLOC(k_plus_q_table,(k%nbz,q%nbz))
-     YAMBO_ALLOC(BSqpts,(3,q%nibz))
      !
      YAMBO_ALLOC(BS_E_in,(BSS_n_eig))
      YAMBO_ALLOC(BS_mat_in,(BS_H_dim,EXCPH_states(1):EXCPH_states(2)))
      YAMBO_ALLOC(BSS_eh_table_in,(BS_H_dim,3+n_sp_pol-1))
      YAMBO_ALLOC(BSS_eh_table_m1_in,(k%nbz,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2)))
      !
-     BS_mat=cZERO
-     BS_E=cZERO
-     !
-     k_plus_q_table  = 0
-     BSS_eh_table    = 0
-     BSS_eh_table_m1 = 0
-     !
      BS_mat_in=cZERO
      BS_E_in  =cZERO
      BSS_eh_table_in     = 0
      BSS_eh_table_m1_in  = 0
      !
-   end subroutine BSE_alloc
+   end subroutine BSE_in_alloc
    !
-   subroutine BSE_free
+   subroutine BSE_in_free
      implicit none
-     YAMBO_FREE(BS_mat)
-     YAMBO_FREE(BSS_eh_table)
-     YAMBO_FREE(BSS_eh_table_m1)
      YAMBO_FREE(BS_E_in)
      YAMBO_FREE(BS_mat_in)
      YAMBO_FREE(BSS_eh_table_in)
      YAMBO_FREE(BSS_eh_table_m1_in)
-     YAMBO_FREE(BS_E)
-     YAMBO_FREE(k_plus_q_table)
-     YAMBO_FREE(BSqpts)
-   end subroutine BSE_free
+   end subroutine BSE_in_free
    !
    subroutine get_excph_q_momenta()
      !    

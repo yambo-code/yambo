@@ -35,7 +35,8 @@ subroutine EXCPH_lifetime(k,q,X)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
-&                         alloc_EXC,free_EXC,EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements
+&                         EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements, &
+&                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free 
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder
  use frequency,      ONLY:w_samp
@@ -73,7 +74,7 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  ! Allocations 
  !
- call alloc_EXC(q)
+ call RESIDUALS_and_EIGENVALUES_alloc(q)
  !
  ! Load excitonic energies 
  !
@@ -179,7 +180,7 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Deallocations
  !
  YAMBO_FREE(EXC_LifeTime)
- call free_EXC()
+ call RESIDUALS_and_EIGENVALUES_free()
  !
  contains
   !

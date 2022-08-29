@@ -32,7 +32,7 @@ subroutine EXCPH_load_L(iq_bse,X,what,Ltype)
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message
  use R_lattice,      ONLY:bz_samp
  use BS,             ONLY:BS_H_dim,BSE_L_kind,BS_res_ares_n_mat,BS_K_dim
- use EXCPH,          ONLY:BS_E,BS_R_left,BS_R_right,EXCPH_states,EXCPH_sum,EXCPH_kind,Lout_path,L_kind_in,L_kind_out
+ use EXCPH,          ONLY:BS_E,BS_R_left,BS_R_right,EXCPH_states,EXCPH_sum,Lout_path,L_kind_in,L_kind_out
  use IO_int,         ONLY:io_control
  use stderr,         ONLY:intc
  use X_m,            ONLY:X_t

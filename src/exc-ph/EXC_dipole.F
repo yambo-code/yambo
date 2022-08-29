@@ -34,8 +34,8 @@ subroutine EXC_dipole(Xk,E,q,X)
  use EXCPH,          ONLY:EXC_q0,BS_R_left,BS_R_right,BS_R,EXCPH_states,BS_E_in
  use vec_operate,    ONLY:v_norm
  use X_m,            ONLY:X_t
- use BS,             ONLY:BS_bands,BS_T_grp,BSE_prop,BS_dip_size
- use BS_solvers,     ONLY:BS_H_dim,BSS_Vnl_included,BSS_alloc 
+ use BS,             ONLY:BS_bands,BS_T_grp,BSE_prop,BS_dip_size,BS_nT_grps
+ use BS_solvers,     ONLY:BS_H_dim,BSS_Vnl_included,BSS_alloc,BSS_free
  use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait,PARALLEL_index,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_WF_b_and_k
  !
@@ -53,10 +53,11 @@ subroutine EXC_dipole(Xk,E,q,X)
  !
  if(any(abs(EXC_q0(:))>epsilon(1.))) then
    !
-   EXC_q0=EXC_q0/v_norm(EXC_q0)
-   call msg('rs','Excitonic dipole along the direction : ',EXC_q0)
    !
    call DIPOLES_reset(DIPs)
+   !
+   DIPs%q0=EXC_q0/v_norm(EXC_q0)
+   call msg('rs','Excitonic dipole along the direction : ', DIPs%q0)
    !
    DIPs%ib          =BS_bands(1:2)
    DIPs%ib_lim(1)   =E%nbf(1)
@@ -90,6 +91,11 @@ subroutine EXC_dipole(Xk,E,q,X)
    !
    ! Fill BSS_dipole_opt to be done
    call K_dipoles(1,E,Xk,DIPs)
+   !
+   ! I deallocate BSS_eh_table to force the code
+   ! to reconstruct all elements
+   ! 
+   call BSS_free() 
    !
    call K_components_folded_in_serial_arrays(1)
    !

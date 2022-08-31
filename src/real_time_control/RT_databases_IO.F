@@ -37,7 +37,7 @@ subroutine RT_databases_IO(E,DO_IT)
  use IO_m,           ONLY:manage_action,NONE,io_GF,io_CARRIERs,io_OBSERVABLES,OP_APP_CL,OP_WR_CL,&
 &                         OP_IF_START_APP_CL_IF_END,WR_CL_IF_END,OP_APP,WR_CL,WR,OP_APP,OP_WR
  use parallel_m,     ONLY:PAR_G_k_range,myid,HEAD_k_cpu
- use parallel_int,   ONLY:PP_redux_wait,PP_bcast
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait,PP_bcast
  use timing_m,       ONLY:timing
  use fields,         ONLY:A_tot
 #if defined _PAR_IO
@@ -227,7 +227,7 @@ subroutine RT_databases_IO(E,DO_IT)
          !
        enddo 
        !
-       call PP_redux_wait( )
+       call PP_wait( )
        !
      enddo
      !

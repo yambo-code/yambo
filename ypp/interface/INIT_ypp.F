@@ -642,6 +642,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol.or.l_RT_G_two_times
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
+   if (l_RT_pol)    call initactivate(1,"PolMode EnRngeRt ETStpsRt DampFactor")
+   !
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")

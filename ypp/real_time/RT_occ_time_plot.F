@@ -205,8 +205,6 @@ subroutine RT_occ_time_plot(En,kpt,n_T_steps)
        !
        if (k_al(1)<0..or.k_al(1)>v_norm(axis(1,:))) cycle RT_loop
        if (k_al(2)<0..or.k_al(2)>v_norm(axis(2,:))) cycle RT_loop
-       !if (abs(k_al(1))<epsilon(1._SP).or.abs(k_al(1)-v_norm(axis(1,:)))<epsilon(1._SP)) cycle RT_loop
-       !if (abs(k_al(2))<epsilon(1._SP).or.abs(k_al(2)-v_norm(axis(2,:)))<epsilon(1._SP)) cycle RT_loop
        !
      endif  
      !

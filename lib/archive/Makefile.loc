@@ -4,11 +4,11 @@
 include ./package.list
 ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
+  include ../../config/setup
 else
  git_Ylib=git@github.com:yambo-code/yambo-libraries.git
  branch_Ylib=none
 endif
-include ../../config/setup
 #
 WGETFLAGS=--no-check-certificate -v
 #

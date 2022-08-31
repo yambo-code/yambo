@@ -33,12 +33,10 @@ endif
 MAKEFLAGS = --no-print-directory
 #
 # Targets
-  include config/mk/global/targets.mk
+include config/mk/global/targets.mk
 #
-ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
-  # Libraries (ordered for compiling & linking)
-  include config/mk/global/libraries.mk
-endif
+# Libraries (ordered for compiling & linking)
+include config/mk/global/libraries.mk
 
 .PHONY: interfaces ypp
 

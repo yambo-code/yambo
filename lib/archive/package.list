@@ -35,7 +35,7 @@ pkgname_etsf_io=etsf_io-1.0.4
 pkgname_libxc=libxc-5.1.5
 pkgname_lapack=lapack-3.9.1
 pkgname_blacs=blacs
-pkgname_scalapack=scalapack-2.1.0
+pkgname_scalapack=scalapack-2.2.0
 pkgname_petsc=petsc-3.14.6
 pkgname_slepc=slepc-3.14.2
 pkgname_fftw=fftw-3.3.6-pl1
@@ -55,7 +55,7 @@ tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
 tarball_lapack=v3.9.1.tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
-tarball_scalapack=$(pkgname_scalapack).tar.gz
+tarball_scalapack=v2.2.0.tar.gz
 tarball_petsc=$(pkgname_petsc).tar.gz
 tarball_slepc=$(pkgname_slepc).tar.gz
 tarball_fftw=$(pkgname_fftw).tar.gz
@@ -65,6 +65,7 @@ tarball_futile=$(pkgname_futile).tar.gz
 #
 # External URL's
 #
+url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
 url_libxc=https://www.tddft.org/programs/libxc/down/5.1.5/$(tarball_libxc)
 url_petsc=https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/$(tarball_petsc)
@@ -82,7 +83,6 @@ url_hdf5=$(url_base)/$(tarball_hdf5)
 url_iotk=$(url_base)/$(tarball_iotk)
 url_etsf_io=$(url_base)/$(tarball_etsf_io)
 url_blacs=$(url_base)/$(tarball_blacs)
-url_scalapack=$(url_base)/$(tarball_scalapack)
 url_fftw=$(url_base)/$(tarball_fftw)
 url_fftqe=$(url_base)/$(tarball_fftqe)
 url_yaml=$(url_base)/$(tarball_yaml)

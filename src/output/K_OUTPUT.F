@@ -76,8 +76,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
  !
  if (STRING_match(WHAT,"open").or.STRING_match(WHAT,"override")) then
-   if (BS_dip_size==1) call X_OUTPUT_messages(iq,Q_plus_G=BSqpts(:,iq),ig=1)
-   if (BS_dip_size==2) call X_OUTPUT_messages(iq,Q_plus_G=BSqpts(:,iq),ig=1,Qprime=BS_field_direction(:,2))
+   call X_OUTPUT_messages(iq,Q_plus_G=BSqpts(:,iq),ig=1)
    !
    if (     trim(BSE_mode)=='resonant' ) ordering='r'
    if (.not.trim(BSE_mode)=='resonant' ) ordering='R'

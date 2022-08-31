@@ -172,7 +172,7 @@ module X_m
  !
  interface
    !
-   subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
+   subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,MORE)
      use pars,      ONLY:schlen,SP,msg_len
      integer                :: iq
      integer,      optional :: ig
@@ -180,12 +180,11 @@ module X_m
      logical,      optional :: GF
      character(2), optional :: ordering
      real(SP),     optional :: Q_plus_G(3)
-     real(SP),     optional :: Qprime(3)
      character(*), optional :: MORE
    end subroutine
    !
    subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
-     use pars,          ONLY:SP
+     use pars,           ONLY:SP
      use frequency,      ONLY:w_samp
      use descriptors,    ONLY:IO_desc
      character(*)          :: WHAT

@@ -39,17 +39,20 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
  ! Work Space
  !
  integer  :: i_t
+ real(SP) :: local_damping
  logical  :: l_no_damping
  !
  l_no_damping= trim(RT%damping) == "NONE"
  !
+ local_damping=RT%damp_factor
+ !
  if (l_no_damping) then
    !
-   RT%damp_factor=0._SP
+   local_damping=0._SP
    !
    ! Force the minimal damping to make finite the Fourier Transform
    !
-   if(l_force_min_damp) then
+   if (l_force_min_damp) then
      call section("s",'[RT] Minimum damping applied to '//trim(OBS%title))
      call RT_damp_it("LORENTZIAN",RT%Field_damp_factor,OBS%F_t,OBS%N)
    endif
@@ -60,7 +63,7 @@ subroutine RT_OBSERVABLES_damp_and_write(OBS,RT,IO_skip)
    ! has be applied also the initial part otherwise 
    ! there will problems doing FFT for the non-zero starting point 
    !
-   call RT_damp_it(RT%damping,RT%damp_factor,OBS%F_t,OBS%N)
+   call RT_damp_it(RT%damping,local_damping,OBS%F_t,OBS%N)
    !
  endif
  !

@@ -1,1 +1,1 @@
-objs = DIPOLES_driver.o
+objs = DIPOLE_ypp_driver.o

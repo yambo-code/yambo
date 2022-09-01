@@ -24,8 +24,9 @@
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
  use pars,          ONLY:schlen,IP,SP
+ use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
- use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync
+ use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,io_unit,&
 &                        VERIFY,io_extension,write_is_on,nf90_sync,netcdf_call
  use IO_int,        ONLY:io_connect,io_header,io_elemental,ver_is_gt_or_eq,io_fragment, &
@@ -50,7 +51,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  character(1)      :: TMP_VAR(1)
  character(schlen) :: db_name
  integer           :: i_coll,stat
- logical           :: def1,def2,io2,io3,io4
+ logical           :: def1,def2,io2,io3,io4,file_sync
  !
  call timing('io_COLLISIONS',OPR='start')
  !
@@ -78,7 +79,9 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    if (write_is_on(ID)) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
  endif
  !
- if (io2 .and. (write_is_on(ID).or.read_is_on(ID))) then     
+ ! Despite all processors write to file (and also define the variable), only the master fills it
+ !
+ if (io2 .and. ((write_is_on(ID).and.master_cpu).or.read_is_on(ID))) then
    call io_variable_bulk(ID,1,I0=COLL_element%N)
  endif
  !
@@ -123,10 +126,15 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    endif
  endif
  !
- if(write_is_on(ID).and.i_coll<=LAST_COLL_sync.and.io3) then
+#if defined _RT
+ ! nf90_sync is performed up to LAST_COLL_sync and at steps of 5% of bse kernel
+ file_sync= i_coll<=LAST_COLL_sync .and. mod(i_coll,max(1,PAR_COLL_min/20))==0 .and. index(trim(db_name),"HXC")/=0
+ !
+ if(write_is_on(ID).and.file_sync.and.io3) then
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
  endif
+#endif
  !
 1 call io_disconnect(ID=ID)
  !

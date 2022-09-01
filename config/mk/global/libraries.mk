@@ -1,7 +1,9 @@
 #
 # EXT_LIBS imported 
 #
-include config/mk/defs.mk
+ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
+  include config/mk/defs.mk
+endif
 include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local
@@ -75,8 +77,8 @@ YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #
 # YAMBO sources needed by YPP
 #
-YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function el-ph qp bse
-YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function el-ph qp bse
+YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \

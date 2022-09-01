@@ -124,7 +124,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! Memory saving
  !===============
- l_BSE_minimize_memory=((Xk%nbz==1).or.trim(PARALLEL_default_mode)=="memory")
+ l_BSE_minimize_memory=((Xk%nbz==1).or.index(PARALLEL_default_mode,"memory")>0)
  !
  if (l_BSE_minimize_memory) call warning(" BSE calculation with minimal memory utilization")
  !

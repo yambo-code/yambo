@@ -30,6 +30,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  ! Each block has a status variables indicating if the matrix element was already calculated
  !
  use pars,          ONLY:IP,IPL,SP,schlen
+ use stderr,        ONLY:STRING_remove
  use BS,            ONLY:BS_blk,BSK_IO_mode,MAX_BSK_LIN_size,n_BS_blks_min
  use timing_m,      ONLY:timing
  use IO_m,          ONLY:io_unit,netcdf_call,nf90_sync,&
@@ -45,7 +46,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  ! Work Space
  !
  character(schlen)   :: BSK_IO_local
- logical             :: lwrite(3)
+ logical             :: lwrite(3),file_sync
  integer             :: x1,x2,VAR_IDs(2),stat,ID_now(2)
  integer             :: n2,i1,i2,idx1,idx2,imax,i_rep(2),ilast
  integer(IPL)        :: idx
@@ -71,7 +72,7 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
  x1=BS_blk(i_block)%coordinate(1)
  x2=BS_blk(i_block)%coordinate(2)
  !
- BSK_IO_local=trim(BSK_IO_mode)
+ BSK_IO_local=trim(STRING_remove(BSK_IO_mode,"norestart"))
  if(index(mode,"compressed")/=0) BSK_IO_local=trim(mode)
  !
  select case(trim(BSK_IO_local))
@@ -198,7 +199,10 @@ subroutine io_BS_PAR_block(iq,i_block,ID,mode)
    !
  end select
  !
- if(write_is_on(ID).and.i_block<=n_BS_blks_min) then
+ ! nf90_sync is performed up to n_BS_blks_min and at steps of 5% of BSE kernel
+ file_sync= i_block<=n_BS_blks_min .and. mod(i_block,max(1,n_BS_blks_min/20))==0 .and. index(BSK_IO_mode,"norestart")==0
+ !
+ if(write_is_on(ID).and.file_sync) then
    stat = nf90_sync(io_unit(ID))
    call netcdf_call(stat,ID)
  endif

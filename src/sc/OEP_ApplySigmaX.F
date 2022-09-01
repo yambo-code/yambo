@@ -44,7 +44,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use QP_m,            ONLY:QP_ng_Sx
  use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -81,7 +81,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  call scatter_Gamp(isc,'x')
  U_x=(0._SP,0._SP)
  call PARALLEL_index(px,(/q%nbz,maxval(E%nbm)/))
- call PP_redux_wait
+ call PP_wait()
  ch="Sigma_X|WF>@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1)*maxval(E%nbm)*k%nibz)
  do iq=1,q%nbz

@@ -156,6 +156,9 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('TD_INTERPOLATED_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
+ call RT_FILE_add('TD_P_decomposition',TITLES=(/'T        [fs]','deltaE   [eV]',&
+                                                'deltaF*Dip(x)','deltaF*Dip(y)','deltaF*Dip(z)'/))
+ !
  if (n_spin>1) then
    if (l_project_spin_dipoles) then
      call RT_FILE_add('spin_magnetization',&

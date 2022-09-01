@@ -210,7 +210,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Specific SECTIONS
  !===================
  !
- if (l_dipoles.and.trim(DIPs_kind)=="IP") call DIPOLES_driver(Xk,Xen,q)
+ if (l_dipoles.and.trim(DIPs_kind)=="IP") call DIPOLE_ypp_driver(Xk,Xen,q)
  !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !

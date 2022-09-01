@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -137,12 +137,18 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
+ !
  ! io_netcdf_var(ID,1)  is used for tmp vars by io_elemental, io_bulk,  def/io_variable_elemental
  ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
  integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
+ !
+ ! Parallel I/O
+ integer :: io_PAR_comm(max_io_units) ! COMM allowed to write the DB
+ integer :: io_PAR_cpu(max_io_units)  ! =1 if the CPU is part of the COMM and/or allowed to read/write
+                                      ! =0 otherwise
  !
  ! Type & extension
  !
@@ -267,11 +273,12 @@ module IO_m
 #endif
    !
    subroutine io_reset(ID)
+     use parallel_m, ONLY:mpi_comm_null
      integer :: ID
      io_status(ID)=0
      !
-     ! DEBUG. AM Jan2020. The IO_type cannot be zeroed oterwise several errors appear. To be fixed.
-     !io_type(ID)=0
+     io_PAR_comm(ID)=mpi_comm_null
+     io_PAR_cpu(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0

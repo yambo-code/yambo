@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -24,8 +24,8 @@
 subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
  use pars,            ONLY:SP,cZERO
- use parallel_m,      ONLY:master_cpu
- use parallel_int,    ONLY:PP_redux_wait
+ use parallel_m,      ONLY:master_cpu,yMPI_comm
+ use parallel_int,    ONLY:PP_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:REP,OP_APP_CL,OP_WR_CL,OP_APP,WR,WR_CL,io_COLLs
@@ -37,33 +37,40 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
 #include<collisions.h>
  !
  character(*)                            :: what
- integer,                  intent(in)    :: i_coll,last_coll,COMM
+ integer,                  intent(in)    :: i_coll,last_coll
+ type(yMPI_comm),          intent(in)    :: COMM
  integer,                  intent(inout) :: COLL_ID
  type(COLLISIONS_group),   intent(inout) :: COLL
  type(COLLISIONS_element), intent(inout) :: COLL_element(COLL%N)
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,IO_ACT
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
 #if defined _PAR_IO
- integer, external :: io_collisions_header
+ integer, external :: io_COLLs_header
 #endif
  !
  if (i_coll==0) then
    if(io_COLLs) then
      if(master_cpu) then
+       !Only the master writes the header
        call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=COLL_ID)
        io_err=io_COLLs_header(COLL_ID,COLL)
      endif
+     call PP_wait()
 #if defined _PAR_IO
-     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID)
-     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll,COMM=COMM)
+     !Here I could let all processors write.
+     !call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,DO_IT=.TRUE.)
+     !However, since there is a partial redux of the collisions, only few in practice are writing
+     !Setting DO_IT=.true. would also work. However some info would be written twice in the same place
+     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,COMM=COMM)
+     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
 #endif
    endif
-   call PP_redux_wait()
+   call PP_wait()
    return
  endif
  !
@@ -139,6 +146,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,C
    !
 #if defined _PAR_IO
    if(i_coll==last_coll) then
+     call PP_wait()
      call io_control(ACTION=WR_CL,SEC=(/5/),ID=COLL_ID)
      io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    endif

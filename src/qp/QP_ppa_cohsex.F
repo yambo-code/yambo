@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -34,7 +34,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
 &                        l_rt_carriers_in_use,l_RIM_W
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
@@ -47,10 +47,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
- use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,bare_qpg,q0_def_norm,RIM_W_E,&
-&                        RIM_W_is_diagonal,RIM_W_ng,g_vec,RIM_W,RIM_W_d,f_coeff
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -80,16 +80,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Work Space
  !
- integer          ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                   i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
- !
+ integer                  ::i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
+&                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
- !
- logical          ::X_is_TR_rotated,l_X_alloc,l_RIM_W_g
+ logical          ::X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
- complex(SP)      ::local_rhotw(X%ng),pre_factor,PPA_R
+ complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
  !
 #ifdef _CUDA
@@ -216,10 +214,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2/))
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
@@ -227,7 +225,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  endif
  !
- call PP_redux_wait
+ call PP_wait()
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
@@ -529,8 +527,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
                endif
                !
-
-               !
                ! inline bose_f function
                bose_PPA_E=0.
                if (PPA_E<0.) bose_PPA_E=-spin_occ
@@ -581,8 +577,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                else
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                end if
-               !
-
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
@@ -673,11 +667,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_FREE(eet_factor)
    endif
  endif
- l_X_alloc=.true.
+ l_X_ALLOC_elemental=.true.
 #if defined _SC
- l_X_alloc=l_sc_run.and.io_RESPONSE
+ l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
 #endif
- if(l_X_alloc) call X_alloc('X')
+ if(l_X_ALLOC_elemental) call X_ALLOC_elemental('X')
  !
  call timing('GW(ppa)',OPR='stop')
  !

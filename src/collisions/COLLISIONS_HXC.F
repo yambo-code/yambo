@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -36,18 +36,18 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  use xc_functionals,ONLY:F_xc,V_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_kind,WF_xc_functional
  use parallel_int,  ONLY:PP_redux_wait
- use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,ncpu,myid,&
+ use parallel_m,    ONLY:PAR_IND_Q_bz,MPI_COMM_NULL,ncpu,myid,COMM_copy,yMPI_COMM,&
 &                        PAR_n_Bp_mat_elements,PAR_COM_QP_A2A,PAR_COM_QP_INDEX,PAR_COM_Q_INDEX,&
 &                        PAR_IND_Bp_mat,PAR_nQ_bz,PAR_COM_G_b_A2A,PAR_COM_G_b_index_global
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_HXC_local,COLLISIONS_HXC_MB,&
 &                        COLL_bands,HXC_COLL_element,HXC_collisions,COH_COLL_element,COH_collisions,&
-&                        COLLISIONS_HXC_use_TDDFT,LAST_COLL_sync
+&                        COLLISIONS_HXC_use_TDDFT,LAST_COLL_sync,PAR_COLL_min
  use timing_m,      ONLY:timing
  use QP_m,          ONLY:QP_ng_SH,QP_ng_Sx,QP_ng_Sc
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
- use IO_m,          ONLY:OP_RD,RD,RD_CL,OP_RD_CL,REP,VERIFY,NONE,io_COLLs
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use IO_m,          ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use interfaces,    ONLY:WF_load
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use R_lattice,     ONLY:qindx_S,bz_samp,g_rot,minus_G
@@ -63,12 +63,13 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  ! Work Space
  !
- integer                 :: i_coll,first_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(3),&
+ integer                 :: i_coll,first_coll,last_coll,ig1,ig2,iqbz,iqibz,alloc_err,iqs,iGo_max,NG_max,NG_XC,LOCAL_COMM(2),&
 &                           i_n,i_k,i_k_s,i_sp,i_m,i_mp,N_g_vecs_H,N_g_vecs_X,N_g_vecs_C,i_star,i_p,i_p_s,i_loop,&
-&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,PAR_COLL_min,bands_to_load(2),n_colls
+&                           i_np,i_kmq,i_kmq_bz,i_kmq_s,i_kmq_G0,PAR_NC_local,n_steps,bands_to_load(2),n_colls
  logical                 :: l_HXC_collisions,eval_coll,l_compute_screening
  !
  type(elemental_collision):: isc_XC,iscp_XC,isc_H,iscp_H
+ type(yMPI_comm)          :: LOCAL_yMPI_COMM
  real(SP)                 :: Co
  complex(SP)              :: pre_factor1,pre_factor2
  !
@@ -182,7 +183,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    !
    ! Allocation (EM1S can be bigger than N_g_vecs_C)
    !
-   call X_alloc('X',(/X%ng,X%ng,1/))
+   call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    YAMBO_ALLOC(EM1s,(N_g_vecs_C,N_g_vecs_C))
    !
    call elemental_collision_alloc(isc_XC, NG=NG_XC,NG_GAMP=(/N_g_vecs_C,N_g_vecs_C/),TITLE=trim(H_potential))
@@ -264,17 +265,19 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  if (COLLISIONS_parallel_SC_structure) then
    LOCAL_COMM(1)=PAR_COM_QP_A2A%COMM
    LOCAL_COMM(2)=PAR_COM_Q_INDEX%COMM
-   LOCAL_COMM(3)=PAR_COM_QP_INDEX%COMM
+   call COMM_copy(PAR_COM_QP_INDEX,LOCAL_yMPI_COMM)
  else
    LOCAL_COMM(1)=PAR_COM_G_b_A2A%COMM
    LOCAL_COMM(2)=MPI_COMM_NULL
-   LOCAL_COMM(3)=PAR_COM_G_b_INDEX_global%COMM
+   call COMM_copy(PAR_COM_G_b_index_global,LOCAL_yMPI_COMM)
  endif
  !
  ! Write Database Header 
  !
- if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
- if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
+ if (l_HXC_collisions    ) call COLLISIONS_linearize_and_IO("HXC",0,last_coll,HXC_collisions,&
+&                                                             HXC_COLL_element,ID_HXC,LOCAL_yMPI_COMM)
+ if (l_use_COH_collisions) call COLLISIONS_linearize_and_IO("COH",0,last_coll,COH_collisions,&
+&                                                             COH_COLL_element,ID_COH,LOCAL_yMPI_COMM)
  !
  call live_timing("Collisions",n_steps)
  !
@@ -319,13 +322,15 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    if(l_HXC_collisions) then
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(HXC_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,HXC_COLL_element,ID_HXC,LOCAL_COMM(3))
+     call COLLISIONS_linearize_and_IO("HXC",i_coll,last_coll,HXC_collisions,&
+&                                       HXC_COLL_element,ID_HXC,LOCAL_yMPI_COMM)
    endif
    !
    if(l_use_COH_collisions) then
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(1))
      call PP_redux_wait(COH_COLL_element(1)%v3_c,COMM=LOCAL_COMM(2))
-     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,COH_COLL_element,ID_COH,LOCAL_COMM(3))
+     call COLLISIONS_linearize_and_IO("COH",i_coll,last_coll,COH_collisions,&
+&                                       COH_COLL_element,ID_COH,LOCAL_yMPI_COMM)
    endif
    !
  enddo ! loop on i_coll
@@ -336,7 +341,7 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  if (l_compute_screening) then
    YAMBO_FREE(EM1s)
-   call X_alloc('X')
+   call X_ALLOC_elemental('X')
    call elemental_collision_free(isc_H)
    call elemental_collision_free(iscp_H)
    call elemental_collision_free(isc_XC)
@@ -355,9 +360,9 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
    subroutine compute_loc_HXC_collisions()
      !
      ! Scattering geometry
-     !=====================          _ \ _
-     !                              /  /  \
-     !                   G_p{np,mp} |       | (i_p,i_p_s)
+     !=====================           _ \ _
+     !                               /  /  \
+     !                   G_p{np,mp} |      | (i_p,i_p_s)
      !                              \_ _ _/
      !                                 | 
      !                                 | W(q=0)
@@ -483,6 +488,8 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
      !
      ! Scattering geometry
      !=====================
+     !
+     use IO_m, ONLY:OP_RD,RD,RD_CL
      !
      !                      W(i_kmq_G0,iqibz,iqs)                    
      !                        _ _ _ _ \ _ _ _ _

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -26,7 +26,7 @@ subroutine RT_ypp_driver(en,k,q)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use YPP_real_time,  ONLY:l_RT_X,l_RT_occupations,l_RT_lifetimes,l_RT_density,&
-&                         l_RT_G_two_times,l_skip_OBS_IO,l_force_min_damp
+&                         l_RT_G_two_times,l_skip_OBS_IO,l_force_min_damp,l_RT_pol
  use YPPm,           ONLY:PROJECT_mode,l_PROJECT_atom,l_PROJECT_line,l_PROJECT_plane,&
 &                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use interpolate,    ONLY:l_integral_respect
@@ -58,7 +58,6 @@ subroutine RT_ypp_driver(en,k,q)
  !
  ! Output files
  !==============
- !
  call RT_output_INIT( )
  !
  ! Real-Time occupations and lifetimes
@@ -75,6 +74,6 @@ subroutine RT_ypp_driver(en,k,q)
  !
  ! Response Functions
  !====================
- if ( l_RT_X )                             call RT_X_response(en,k,q)
+ if ( l_RT_X .or. l_RT_pol )               call RT_X_response(en,k,q)
  !
 end subroutine

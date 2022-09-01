@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -153,8 +153,9 @@ subroutine NL_initialize(E,k)
    !
  enddo
  !
- if((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none') then
+ if(((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none').or.n_frequencies==1) then
    l_pump_and_probe=.true.
+   call msg('sl','[NL] Variables NLEnSteps and NLEnRange are ignored!!! ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
    if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
    NL_verbosity=VERB_HIGH

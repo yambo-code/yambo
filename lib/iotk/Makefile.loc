@@ -5,30 +5,33 @@
 #
 include ../../config/setup
 include ../archive/package.list
-
+#
 LIBNAME=libiotk.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_iotk)
-TARBALL=$(tarball_iotk)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
 #
 # redefinitions
 #
-AUXFLAGS=--prefix=$(LIBPATH) IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
+CONFFLAGS=--prefix=$(LIBPATH) IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 #
 # MAIN target
 #
 all: $(LIBRARY)
 #
-uncompress-stamp:
-	( cd ../archive ; if ! test -e $(TARBALL) ; then \
-	cp Makefile.loc Makefile ; $(make) $(TARBALL) ; fi )
-	gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -
-	touch uncompress-stamp
+uncompress:
+	@if ! test -d iotk; then ln -s iotk $(PACKAGE); fi
+	@$(uncompress)
 
-configure-stamp: uncompress-stamp
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+configure: uncompress
+	@if ! test -e configured.stamp; then \
+	 rm -f ${compdir}/log/config_$(PACKAGE).log; \
+	 echo "\t[$(PACKAGE)] configuration"; \
+	 if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 		if test -e ${compdir}/lib/iotk/make.sys ; then rm ${compdir}/lib/iotk/make.sys ; fi ; \
 	        if test -e ${compdir}/lib/iotk/make_iotk.inc ; then \
 	           cp ${compdir}/lib/iotk/make_iotk.inc ${compdir}/lib/iotk/make.sys ; \
@@ -36,35 +39,37 @@ configure-stamp: uncompress-stamp
 	        if test -e ${srcdir}/lib/iotk/iotk_specials.h ; then \
 	           cp ${srcdir}/lib/iotk/iotk_specials.h ${compdir}/lib/iotk/$(PACKAGE)/include ; \
 	        fi ) ; \
-	fi
-	if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
+	 fi;\
+	 if test -d $(PACKAGE) ; then ( cd $(PACKAGE);  \
 	        if test -x ./configure ; then \
-	           ./configure $(AUXFLAGS) \
+	           ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log \
 	           FC="$(fc)"; \
 	        fi ) ; \
+	 fi;\
+	 touch configured.stamp;\
 	fi
-	touch configure-stamp
 #
-package-ready-stamp: uncompress-stamp configure-stamp 
-	if test -d $(PACKAGE) ; then \
-	( cd $(PACKAGE);  $(make) loclib_only ; $(make) iotk.x ) ; fi
-	touch package-ready-stamp
+compile: uncompress configure
+	@$(call compile,loclib_only)
+	@$(call compile,iotk.x)
+
+install: uncompress configure compile
+	@if ! test -e installed.stamp ; then \
+	 echo "\t[$(PACKAGE)] installation"; \
+	 ($(install));\
+	 touch installed.stamp;\
+	fi
 #
-package-installed: uncompress-stamp configure-stamp package-ready-stamp
-	if ! test -e package-installed ; then ($(install)); fi
-	touch package-installed
-#
-$(LIBRARY): uncompress-stamp configure-stamp package-ready-stamp package-installed
+$(LIBRARY): uncompress configure compile install
 #
 # cleaning
 #
 clean:
-	@if test -d $(PACKAGE) && test -e configure-stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf package-ready-stamp configure-stamp package-installed
+	@$(clean_the_lib)
 #
 clean_all: clean
-	@if test -d $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf make.sys uncompress-stamp 
+	@$(rm_the_lib)
+	@rm -fr iotk
 #
 # Replaces make install which seems to be missing for iotk
 #

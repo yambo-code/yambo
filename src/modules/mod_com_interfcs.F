@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,11 +25,12 @@ module com_interfcs
  !
  interface
    !
-   subroutine msg_characters_vector_int(how,mesg,val,USE_TABS,INDENT,MSG_string)
+   subroutine msg_characters_vector_int(how,mesg,val,after_msg,USE_TABS,INDENT,MSG_string)
      use pars,     ONLY:lchlen
      character(*)                :: how
      character(*)                :: mesg
      character(*)                :: val(:)
+     character(*),      optional :: after_msg
      logical,           optional :: USE_TABS
      integer,           optional :: INDENT
      character(lchlen), optional :: MSG_string

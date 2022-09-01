@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -44,16 +44,23 @@ module BS
  logical :: BS_not_const_eh_f=.FALSE.
  logical :: BS_perturbative_SOC=.FALSE.
  logical :: BS_K_has_been_calculated_loaded=.FALSE.
- character(schlen) :: L_kind
+ character(schlen) :: BSE_L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  !
- ! Kind of response function
- !===========================
- logical :: l_BS_jdos
+ ! Dipoles tracing 
+ !=================
  logical :: l_BS_trace
+ !
+ ! AH 
+ !====
+ logical :: l_BS_anomalous_hall
+ !
+ ! Observables
+ !=============
+ logical :: l_BS_jdos
  logical :: l_BS_abs
  logical :: l_BS_kerr
  logical :: l_BS_kerr_asymm
@@ -62,7 +69,6 @@ module BS
  logical :: l_BS_dichroism
  logical :: l_BS_optics
  logical :: l_BS_esort
- logical :: l_BS_anomalous_hall
  !
  ! Dimensions
  !=============

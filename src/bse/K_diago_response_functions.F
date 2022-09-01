@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS, AM, MG
@@ -123,7 +123,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
          Joint_DOS(:,2)=Joint_DOS(:,2)+1._SP/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
      endif
-     !
      if(l_BS_abs) then
        res_abs=BS_R_left_abs(i1)*BS_R_right_abs(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
@@ -134,11 +133,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
        if (l_ADD_the_ARES_using_the_RES) then
          Epsilon_ii(:,2)=Epsilon_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
-       !
        if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,1)**2
        if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
      endif
-     !
      if(l_BS_kerr) then
        res_kerr=BS_R_left_abs(i1)*BS_R_right_kerr(i1)*ares_fac
        if(l_BS_kerr_asymm) then

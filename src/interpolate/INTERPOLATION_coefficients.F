@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -30,8 +30,7 @@ subroutine INTERPOLATION_coefficients(R1D,R2D,C1D,C2D,E,k,Nk,ID,ID_obj)
  use pars,              ONLY:SP
  use R_lattice,         ONLY:bz_samp
  use electrons,         ONLY:levels
- use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd, &
-&                            INTERPOLATE_use_symm         
+ use interpolate,       ONLY:interpls,REAL1D,REAL2D,CMPLX1D,CMPLX2D,nshells,INTERP_FineGd
  use interpolate_tools, ONLY:get_ID
  !
 #include<memory.h>

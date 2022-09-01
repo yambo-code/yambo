@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2021 the YAMBO team
+         Copyright (C) 2000-2022 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): DS
@@ -22,7 +22,7 @@
   MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 */
 #if defined _PAR_IO
-#define io_COLLs_header io_collisions_header
+#define io_COLLs_header io_COLLISIONS_header
 #else
-#define io_COLLs_header io_collisions
+#define io_COLLs_header io_COLLISIONS
 #endif

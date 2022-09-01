@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -28,7 +28,7 @@ subroutine Build_W_operator(en,Xk,A_input,ik,i_sp,V_bands,H_nl_sc)
  !
  use pars,           ONLY:SP,cI,cZERO,pi
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use electric,       ONLY:l_force_SndOrd
  use QP_m,           ONLY:QP_nk
  use hamiltonian,    ONLY:H_ref_bands

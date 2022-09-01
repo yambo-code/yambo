@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG, DS
@@ -43,7 +43,7 @@ subroutine K_diago_driver(iq,W,X_static)
 &                         BS_res_ares_n_mat,l_BS_optics,l_BS_dichroism !,BS_Blocks_symmetrize_K,&
  use BS_solvers,     ONLY:io_BSS_diago,BSS_perturbative_width,BSS_mode,&
 &                         BSS_write_eig_2_db,BSS_eh_W,BS_mat,BSS_n_eig,BS_E
- use X_m,            ONLY:X_t
+ use X_m,            ONLY:X_t,X_OUTPUT_driver
  use electrons,      ONLY:n_sp_pol,n_spinor
  use frequency,      ONLY:w_samp
  use com,            ONLY:isec
@@ -90,20 +90,17 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  ! Excitonic hamiltonian, residuals independent
  !==============================================
- !
  real(SP),allocatable    :: BS_E_real(:)
  real(SP)   ,pointer     :: BS_E_SOC_corr(:,:) => null()
  complex(SP),allocatable :: BS_corrections(:,:)
  !
  ! Coupling
- !
  complex(SP),allocatable :: BS_V_left(:,:)
  complex(SP),allocatable :: BS_V_right(:,:)
  complex(SP),pointer     :: BS_overlap(:,:)    => null()
  !
  ! Residuals, different for each response function
  !=================================================
- !
  complex(SP),pointer     :: BS_R_left_abs(:)     => null()
  complex(SP),pointer     :: BS_R_right_abs(:)    => null()
  !
@@ -117,7 +114,6 @@ subroutine K_diago_driver(iq,W,X_static)
  complex(SP),pointer     :: BS_R_right_magn(:,:) => null()
  !
  ! I/O
- !
  integer                 :: io_err,ID
  type(X_t),intent(in)    :: X_static
  !
@@ -135,11 +131,15 @@ subroutine K_diago_driver(iq,W,X_static)
  !
  call timing(trim(Solver)//' Solver',OPR='start')
  !
+ ! Output files initialization
+ !=============================
+ call X_OUTPUT_driver("DEF INIT",solver=Solver) 
+ !
  ! Sectioning
  !============
  if (isec(2)/=0) sec="="
  if (isec(2)==0) sec="+"
- call section("+P",trim(Solver)//' Solver @q'//trim(intc(iq)))
+ call section(sec,trim(Solver)//' Solver @q'//trim(intc(iq)))
  !  
 #if defined _SLEPC && !defined _NL
  if(l_slepc) call K_slepc_local_init()
@@ -167,7 +167,7 @@ subroutine K_diago_driver(iq,W,X_static)
    !========================
    call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
    io_err=io_BSS_diago(iq,i_BS_mat,ID,X_static,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
-  &              BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
+  &                    BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
    !
    K_is_not_hermitian=BS_K_coupling.or.(allocated(BSS_eh_W).and..not.BSS_perturbative_width)
    !
@@ -354,9 +354,8 @@ subroutine K_diago_driver(iq,W,X_static)
  enddo
  !
  ! Initialize & write the output file 
- !=====================================
- call K_output_file(iq,"open "//trim(Solver))
- call K_output_file(iq,trim(Solver))
+ !====================================
+ call K_OUTPUT(iq,W,"open dump close "//trim(Solver),"ALL")
  !
  ! CLEAN
  !

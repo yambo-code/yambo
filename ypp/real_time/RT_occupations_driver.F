@@ -52,7 +52,7 @@ subroutine RT_occupations_driver(k,q,en)
    call section('=',"The Dipoles `Mask`")
    !=====================================
    DIPs_V_bands=RT_bands
-   call DIPOLES_driver(k,en,q)
+   call DIPOLE_ypp_driver(k,en,q)
  endif
  !
  ! Setups

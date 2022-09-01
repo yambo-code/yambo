@@ -2,7 +2,13 @@
 define uncompress
 if ! test -e uncompressed.stamp; then \
  gunzip < ../archive/$(PACKAGE).tar.gz | ../../config/missing --run tar xf -; \
- touch uncompressed.stamp;\
+ if ! test -d $(PACKAGE)  ; then \
+  for folder in ./* ; do \
+   if ! test -d $$folder; then continue; fi; \
+   mv $$folder $(PACKAGE) ; \
+  done; \
+ fi; \
+ touch uncompressed.stamp; \
 fi
 endef
 #
@@ -21,9 +27,13 @@ if ! test -e compiled.stamp && test -d $(PACKAGE); then \
  echo "\t[$(PACKAGE)] $(1) compilation"; \
  rm -f ${compdir}/log/compile_$(PACKAGE).log; \
  CWD=`pwd`;\
+ FLGS="$(MAKEFLAGS)";\
+ if [ "$(PACKAGE)" = "scalapack-2.1.0" ]; then \
+  FLGS=`echo "$(MAKEFLAGS)" | sed 's/-j//g'`; \
+ fi;\
  cd $(PACKAGE); \
  $(make) $(MAKEFLAGS) $(1) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1;  \
-  if [ ! "$(1)" = "blaslib" ] &&  [ ! "$(1)" = "loclib_only" ]; then touch $$CWD/compiled.stamp; fi;\
+ if [ ! "$(1)" = "blaslib" ] &&  [ ! "$(1)" = "loclib_only" ]; then touch $$CWD/compiled.stamp; fi;\
 fi
 endef
 #

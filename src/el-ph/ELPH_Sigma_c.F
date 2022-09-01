@@ -35,7 +35,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes
+ use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes
  use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
@@ -51,8 +51,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
 &                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
-&                        E_kpq_sh_fact, &
-&                        gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
+&                        E_kpq_sh_fact,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
@@ -74,10 +73,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  integer          ::io_err,ID,IO_ACT,ID_DG
  integer, external::io_ELPH,io_Double_Grid,io_gFsq
  character(schlen)::ch
- real(SP)         ::ph_E,factor,&
-&                   elph_gkkp_sq,E_random_shift
+ real(SP)         ::ph_E,factor,elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
- integer , allocatable :: q_each_cpu(:)
  real(SP), allocatable :: q_weight(:)
  ! 
  call timing('GW(e-p)',OPR='start')
@@ -203,7 +200,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    nq_to_sum=q%nbz
    call k_ibz2bz(q,'i',.TRUE.)
    YAMBO_ALLOC(q_weight,(nq_to_sum))
-   YAMBO_ALLOC(q_each_cpu,(q%nibz))
    call rim_spherical(nq_to_sum,q%ptbz,q_weight,factor/real(nq_to_sum,SP),2,.TRUE.)
    call k_ibz2bz(q,'d',.TRUE.)
  else
@@ -259,11 +255,13 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                  PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)*&
 &                  PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
  !
- call PP_redux_wait
+ call PP_wait()
  !
  ! g^2F(w) residuals Allocation
  !
  call ELPH_alloc('gFsq')
+ !
+ call section('=','Momenta and branches loop')
  !
  iq_db_ref=0
  !
@@ -287,7 +285,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    !
    if (iq_db/=iabs(iq_db_ref)) then
      !
-     if(load_gkkp_DB) then
+     if (load_gkkp_DB) then
        !      
        if (     elph_use_q_grid.and..not.elph_grids_are_expanded) IO_ACT=manage_action(RD_CL_IF_END,iq_ibz,1,nqibz)
        if (.not.elph_use_q_grid.or.elph_grids_are_expanded)       IO_ACT=manage_action(RD_CL_IF_END,iq_db,1,nq_to_sum)
@@ -431,7 +429,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_gFsq(ID)
    endif
-   call PP_redux_wait
+   call PP_wait()
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    do iq_loop=1,nq_to_sum
      if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle
@@ -445,7 +443,6 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  ! CLEAN
  !
  call ELPH_alloc('FREE')
- YAMBO_FREE(q_each_cpu)
  YAMBO_FREE(q_weight)
  do i_qp=1,qp%n_states
    call W_reset(Sc_W(i_qp))

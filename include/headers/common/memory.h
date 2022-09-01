@@ -39,7 +39,7 @@
     call MEM_global_mesg(QUOTES x QUOTES,kind(x),HOST_SIZE) NEWLINE \
     deallocate(x) NEWLINE \
   endif NEWLINE \
-  call PP_redux_wait(COMM=PAR_COM_HOST%COMM)
+  call PP_wait(COMM=PAR_COM_HOST%COMM)
 
 
 #define YAMBO_PAR_ALLOC_CHECK1(x,SIZE) \

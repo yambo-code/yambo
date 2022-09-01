@@ -26,7 +26,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  ! close BSE netcdf parallel file
  !
  use pars,          ONLY:SP
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use BS,            ONLY:l_BSE_kernel_complete,BS_K_has_been_calculated_loaded,BS_K_cutoff
  use IO_m,          ONLY:read_is_on,write_is_on,io_BS_K
  use IO_int,        ONLY:io_disconnect
@@ -40,7 +40,7 @@ subroutine io_BS_PAR_free(ID_head,ID,mode,l_kernel_complete)
  integer              :: io_BS
  integer, external    :: variables_BS_more
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  if(trim(mode)=="compressed_head".or.trim(mode)=="full") then
    if(write_is_on(ID)) then

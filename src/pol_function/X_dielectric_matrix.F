@@ -37,7 +37,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
 &                        PAR_IND_Xk_ibz,PAR_IND_CON_BANDS_X,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
@@ -224,7 +224,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  if (X%iq(1)<=1 .and. 1<=X%iq(2) .and. io_X_done(1)<=0 .and. PAR_IND_Q_ibz%element_1D(1) ) then
    !
@@ -251,7 +251,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  do iq=X%iq(1),X%iq(2)
    !
@@ -290,6 +290,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
    ! Live timing string
    X_what=" "
+   !
+   ! n_OPTICAL_dir_to_eval is set in the previous call to X_AVERAGE_setup("Q-LOOP").
+   ! There, for iq>1 n_optical_dir_to_eval is set = 1
    !
    do iq_dir=1,n_OPTICAL_dir_to_eval
      !
@@ -369,11 +372,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      !
      use IO_m,          ONLY:NONE
      use pars,          ONLY:schlen
-     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX
+     use parallel_m,    ONLY:PAR_COM_RL_A2A,PAR_COM_RL_INDEX,yMPI_comm,COMM_copy,PAR_COM_NULL,master_cpu
      !
      integer :: iq_,whoami_save,idb,COM,SEC(2)
-     logical :: this_is_Xo
+     logical :: this_is_Xo,reset_permissions,condition
      character(schlen) :: KERNEL_save
+     type(yMPI_comm)   :: LOCAL_yMPI_COMM
      !
      ! Only the cpus that write the q=1 component knows the value of ng_db. Thus this must 
      ! be re-initialized for all the cpus
@@ -391,15 +395,30 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        X%KERNEL="IP"
      endif
      !
-#if !defined _PAR_IO
-     call IO_and_Messaging_switch("SAVE")
-     call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_X_WORLD%CPU_id==0)
+     reset_permissions=.true.
+     call COMM_copy(PAR_COM_NULL,LOCAL_yMPI_COMM)
+     condition=PAR_COM_X_WORLD%CPU_id==0
+     !
+     ! Only the master writes the header
+     if(iq_==0) condition=master_cpu
+     !
+#if defined _PAR_IO
+     reset_permissions=(iq_==0)
+     if(iq_/=0) then
+       call COMM_copy(PAR_COM_RL_INDEX,LOCAL_yMPI_COMM)
+       condition=PAR_COM_RL_A2A%CPU_id==0
+     endif
 #endif
+     !
+     if (reset_permissions) then
+       call IO_and_Messaging_switch("SAVE")
+       call IO_and_Messaging_switch("+io_out",CONDITION=condition)
+     endif
      !
      SEC           =(/1,1/)
      if (iq_>0) SEC=(/2*iq_,2*iq_+1/)
      !
-     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0)
+     call io_control(ACTION=OP_APP_CL,COM=COM,SEC=SEC,ID=ID(idb),COMM=local_yMPI_COMM,DO_IT=condition)
      i_err=io_X(X,Xw,ID(idb))
      !
      if (this_is_Xo) then
@@ -407,9 +426,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
        X%KERNEL=KERNEL_save
      endif
      !
-#if !defined _PAR_IO
-     call IO_and_Messaging_switch("RESTORE")
-#endif
+     if (reset_permissions) call IO_and_Messaging_switch("RESTORE")
      !
    end subroutine
    !

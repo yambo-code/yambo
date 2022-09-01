@@ -42,7 +42,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  use stderr,         ONLY:STRING_split,write_to_log,log_as_a_file,logfile,STRING_match,STRING_same,logfile_unit 
  use electrons,      ONLY:n_spin,n_spinor,levels
  use parallel_m,     ONLY:master_cpu
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_wait
  use LIVE_t,         ONLY:live_timing_is_on
  use parser_m,       ONLY:PARSER_array
  use IO_int,         ONLY:io_control
@@ -642,6 +642,8 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    l_flag=l_RT_occupations.or.l_RT_density.or.l_RT_lifetimes.or.l_RT_abs.or.l_RT_pol.or.l_RT_G_two_times
    if (l_flag)      call initactivate(1,"TimeStep TimeRange")
    !
+   if (l_RT_pol)    call initactivate(1,"PolMode EnRngeRt ETStpsRt DampFactor")
+   !
    l_flag=l_RT_time.and.l_RT_occupations
    if (l_flag)           call initactivate(1,"OCCgroup")
    if (l_RT_occupations) call initactivate(1,"IncludeEQocc SkipFermiFIT")
@@ -733,7 +735,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
-   call PP_redux_wait
+   call PP_wait()
  endif
  !
  if (l_QP_DBs_create_and_modify.or.l_QP_DBs_manipulate) call QP_DBs_initialize()
@@ -796,7 +798,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
    open(unit=inpfile_unit,file=trim(infile))
    call initinfio(defs,inpfile_unit)
    close(inpfile_unit)
-   call PP_redux_wait
+   call PP_wait()
  endif
  !
  contains

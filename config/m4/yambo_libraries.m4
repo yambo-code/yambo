@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -21,56 +21,21 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-#
 AC_DEFUN([AC_YAMBO_LIBRARIES],[
 
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
-AC_SUBST(DRIVER_INCS)
-
-cd $srcdir
-
-if test -f "$srcdir/.git" || test -d "$srcdir/.git"; then
-  #
-  # git procedure
-  #
-  cd lib
-  AC_MSG_CHECKING([the yambo-libraries git repository])
-  if ! test -d "yambo/driver/src"; then
-    git clone git@github.com:yambo-code/yambo-libraries.git yambo >& /dev/null
-  else
-    cd yambo
-    git checkout master >& /dev/null
-    git pull >& /dev/null
-    cd ../
-  fi
-  cd ..
-  #
+#
+AC_ARG_WITH(yambo-libs-branch,[AC_HELP_STRING([--with-yambo-libs-branch=<branch>], [Use the <branch> of the yambo-libraries repository.],[32])],,[with_yambo_libs_branch=none])
+#
+if test x"$with_yambo_libs_branch" = "xnone"; then
+ Ydriver_check="D"; 
+ Ydriver_LIB="Download"
 else
-  #
-  # direct download procedure
-  #
-  make download
-  #AC_MSG_CHECKING([the libraries archive ])
-  #cp yambo/external/*.gz  $compdir/lib/archive
-  #AC_MSG_RESULT(populated)
-  TARBALL=`find lib/archive -name 'Ydriver*'`
-  AC_MSG_NOTICE([Extracting yambo internal librar(ies)])
-  if ! test -d "lib/yambo/driver/src"; then
-    AC_MSG_CHECKING([the internal library ${TARBALL}])
-    tar -xzf $TARBALL
-    rm   -rf lib/yambo
-    mkdir -p lib/yambo
-    mv yambo-libraries-*/* lib/yambo
-    rm -rf yambo-libraries-*
-  fi 
-  #
+ Ydriver_check="G"; 
+ Ydriver_LIB="GIT, branch $with_yambo_libs_branch"
 fi
-
-cd lib/yambo
-m4_include([lib/yambo/driver/config/version.m4])
-AC_MSG_RESULT([@ version $YDRI_VERSION.$YDRI_SUBVERSION.$YDRI_PATCHLEVEL])
-cd ../../
-
-cd $compdir
-
+AC_SUBST(Ydriver_LIB)
+AC_SUBST(Ydriver_check)
+AC_SUBST(DRIVER_INCS)
+AC_SUBST(with_yambo_libs_branch)
 ])

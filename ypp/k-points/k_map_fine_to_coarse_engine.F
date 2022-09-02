@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  use R_lattice,           ONLY:k_the_nearest
  use vec_operate,         ONLY:sort
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg
  !
@@ -50,7 +50,7 @@ subroutine k_map_fine_to_coarse_engine(zone,pts_fg,N_pts_fg,pts_cg,N_pts_cg,MAP)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/N_pts_fg/))
- call PP_redux_wait
+ call PP_wait()
  !
  call live_timing(zone//' Double Grid Map',px%n_of_elements(myid+1))
  !

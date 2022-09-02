@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -142,7 +142,9 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      !
      do ib=bands_range(1),bands_range(2)
        !
-       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       if (allocated(PAR_IND_WF_linear%element_2D)) then
+         if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       endif
        !
        if (size(WF%index,1)<ib)        cycle
        if (size(WF%index,2)<ik)        cycle

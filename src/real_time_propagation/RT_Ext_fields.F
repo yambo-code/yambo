@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -41,7 +41,7 @@ subroutine RT_Ext_fields(A,time,i_f)
  ! b. uses A" (the ext current) to evolve the Maxwell equations when
  !    the induced current is included in the dynamics ( RT_propagate_fields )
  !
- use pars,           ONLY:SP,cZERO
+ use pars,           ONLY:SP
  use units,          ONLY:SPEED_OF_LIGHT
  use real_time,      ONLY:RT_dyn_step,NE_i_time
  use functions,      ONLY:theta_function
@@ -85,11 +85,11 @@ subroutine RT_Ext_fields(A,time,i_f)
    case('circular')
      A_coeff=SPEED_OF_LIGHT*Efield(i_f)%amplitude/sqrt(2._SP)
      A%vecpot(:)    =-A_coeff*Efield(i_f)%versor     *( A_of_t(1)*theta)                                  &
-&                     -A_coeff*Efield(i_f)%versor_circ*( A_of_t(2)*theta)
+&                    -A_coeff*Efield(i_f)%versor_circ*( A_of_t(2)*theta)
      A%vecpot_vel(:)=-A_coeff*Efield(i_f)%versor     *( E_of_t(1)*theta+A_of_t(1)*delta )                 &
-&                     -A_coeff*Efield(i_f)%versor_circ*( E_of_t(2)*theta+A_of_t(2)*delta )
+&                    -A_coeff*Efield(i_f)%versor_circ*( E_of_t(2)*theta+A_of_t(2)*delta )
      A%vecpot_acc(:)=-A_coeff*Efield(i_f)%versor     *( J_of_t(1)*theta+E_of_t(1)*delta+A_of_t(1)*signf)  &
-&                     -A_coeff*Efield(i_f)%versor_circ*( J_of_t(2)*theta+E_of_t(2)*delta+A_of_t(2)*signf)
+&                    -A_coeff*Efield(i_f)%versor_circ*( J_of_t(2)*theta+E_of_t(2)*delta+A_of_t(2)*signf)
    case default
      call error("Unknown external field polarization! ")
    end select

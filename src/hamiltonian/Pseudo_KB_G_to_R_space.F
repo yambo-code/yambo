@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -36,7 +36,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
  use timing_m,      ONLY:timing
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:master_cpu,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz
  !
 #include<memory.h>
@@ -159,7 +159,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  !
  call live_timing()
  !
-1 call PP_redux_wait()
+1 call PP_wait()
  !
  ! Free mem
  YAMBO_FREE(kbv_real_space_table)

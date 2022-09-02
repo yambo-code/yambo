@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,7 +43,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use QP_m,                ONLY:QP_n_states,QP_table,QP_state,QP_nb,QP_nk,QP_states_simmetrize
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid,PAR_nQ_bz
- use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use functions,           ONLY:Fermi_fnc_derivative
  !
 #include<memory.h>
@@ -76,7 +76,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  !I/O
  !
  integer           ::io_err,ID
- integer, external ::io_ELPH
+ integer, external ::io_gFsq
  !
  ! calculate q%weights
  !
@@ -112,7 +112,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  YAMBO_FREE(QP_table)
  !
  call io_control(ACTION=OP_RD,SEC=(/1/),MODE=DUMP,ID=ID)
- io_err=io_ELPH(ID,'gFsq')
+ io_err=io_gFsq(ID)
  !
  if (io_err/=0) call error(' Error reading the gFsq databases!')
  !
@@ -130,7 +130,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    else
      call io_control(ACTION=RD,SEC=(/iq+1/),ID=ID)
    endif
-   io_err=io_ELPH(ID,'gFsq')
+   io_err=io_gFsq(ID)
  enddo
  !
  ! Energy setup
@@ -167,7 +167,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  enddo
  !
  QP_n_states_2do=count(QP_table_map(:,1)>0)
- call PP_redux_wait
+ call PP_wait()
  !
  call msg('sr','Number of states to calculate ',QP_n_states_2do)
  call live_timing('gF^2 [el]',QP_n_states_2do*nq_loop)
@@ -276,7 +276,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
    call msg('s',' Processing '//trim(intc(EXCITONS_n_user_states))//' state(s)')
    !
    call PARALLEL_index(px,(/BS_K_dim(1)/))
-   call PP_redux_wait
+   call PP_wait()
    !
    do i_lambda=1,EXCITONS_n_user_states
      !

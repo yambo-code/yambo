@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -54,7 +54,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  integer               :: I_id,i1,i_t,io_err,ID,COM_,i2,nkibz_save,i_j,NN
  real(SP)              :: local_Time,TIME_diff,REF_diff
  integer,parameter     :: n_pieces=10
- integer, external     :: io_RT_components
  character(schlen)     :: db_piece(n_pieces),T_unit,ch
  character(lchlen)     :: db_name
  character(3)          :: what_
@@ -62,6 +61,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
 &                         load_times_only,do_not_interp
  !
  logical, external     :: file_exists
+ integer, external     :: io_RT_components
  !
  local_Time=0._SP
  if (present(Time)) local_Time=Time
@@ -183,7 +183,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  ! I/O Time
  !==========
- !
  if (present(Time)) local_Time=Time
  !
  l_elel_corr_save      =l_elel_corr
@@ -191,7 +190,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  ! 
  ! CARRIERS I/O (I)
  !====================
- !
  call io_control(ACTION=OP_RD_CL,COM=COM_,MODE=DUMP,SEC=(/1/),ID=ID) 
  io_err=io_RT_components(trim(db_name),ID)
  !
@@ -218,7 +216,6 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !
  ! TIMES...
  !----------
- !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),MODE=DUMP,ID=ID)
  io_err=io_RT_components(trim(db_name),ID)
  !
@@ -257,7 +254,7 @@ subroutine RT_apply(bands,E,K,what,VERBOSE,IO_COM,Time,keep_RT_carriers,TIMES_ON
  !==============
  if (.not.do_not_interp) call RT_interpolation_driver(bands,E,K,what_,local_Time,l_f,l_E,l_W,l_BOLTZ,NN,l_verbose)
  !
- call REPORT_Energies(E%f/HA2EV,K,K,E%nb,(/1,K%nibz/),'OCCrt',.FALSE.,.TRUE.)
+ if (l_verbose) call REPORT_Energies(E%f/HA2EV,K,K,E%nb,(/1,K%nibz/),'OCCrt',.FALSE.,.TRUE.)
  !
  if (.not.l_keep_carriers) call RT_obj_free(RT_carriers)
  !

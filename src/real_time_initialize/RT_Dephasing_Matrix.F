@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -45,7 +45,6 @@ subroutine RT_Dephasing_Matrix(E)
  ! %DephMatrix fields
  !
  if ( .not. (allocated(RT_INPUT_Deph_limits) .or. (RAD_LifeTime>thresh) .or. (Phase_LifeTime>thresh) .or. allocated(E%W) ) ) return
- !
  !
  YAMBO_ALLOC(RT_Deph_Matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -110,8 +110,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      ! Mute
      !
      if (trim(ch_piece(ich))=="MUTE") then
-       IO_read           =.FALSE.
-       IO_write          =.FALSE.
        write_to_of       =.FALSE.
        write_to_report   =.FALSE.
        write_to_log      =.FALSE.

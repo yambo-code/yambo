@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  use com,            ONLY:msg
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset,ncpu
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  !
  implicit none
  !
@@ -47,7 +47,7 @@ subroutine PROJECTION_perpendicular_sampling( K, versor )
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/K%nbz/))
- call PP_redux_wait
+ call PP_wait()
  !
  call live_timing('[PROJECT] Perpendicular sampling: borders',px%n_of_elements(myid+1))
  !

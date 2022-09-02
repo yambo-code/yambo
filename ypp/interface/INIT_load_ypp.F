@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -47,8 +47,7 @@ subroutine INIT_ypp_load(defs)
  use YPP_real_time, ONLY:RT_conf,Eh_pumped_Nel,Eh_pumped_pair_deltaE,Rho_deph,&
 &                        Eh_pumped_pair_width,Probe_Keyword,Pump_Keyword,X_order,X_kind,Eh_pumped_pair_energy,&
 &                        Eh_pumped_pair_BZ_width,Eh_mu,Eh_temp,h_mu_autotune_thr,TRabsWHAT,TRabsDIP_plane,&
-&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold
-
+&                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold,Pump_path,RT_pol_mode
  use real_time,     ONLY:RT_bands
 #endif
 #if defined _YPP_SC
@@ -82,19 +81,19 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'Random_Grid', '[R] Random grids')
  call it('r',defs,'High_Symm',   '[R] High_Symmetry points and paths') 
  call it('r',defs,'Regular_Grid','[R] Regular grid')
- call it('r',defs,'amplitude',    '[R] Amplitude')
- call it('r',defs,'plot',         '[R] Plot')
- call it('r',defs,'density',      '[R] Density')
- call it('r',defs,'current',      '[R] Current')
- call it('r',defs,'bnds',         '[R] Bands')
- call it('r',defs,'wavefunction', '[R] Wavefunction')
- call it('r',defs,'interpolate',  '[R] Interpolate')
+ call it('r',defs,'amplitude',   '[R] Amplitude')
+ call it('r',defs,'plot',        '[R] Plot')
+ call it('r',defs,'density',     '[R] Density')
+ call it('r',defs,'current',     '[R] Current')
+ call it('r',defs,'bnds',        '[R] Bands')
+ call it('r',defs,'wavefunction','[R] Wavefunction')
+ call it('r',defs,'interpolate', '[R] Interpolate')
 #if defined _YPP_ELPH
- call it('r',defs,'eliashberg',   '[R] Eliashberg')
- call it('r',defs,'gkkp_db',   '[R] GKKP database')
- call it('r',defs,'gkkp_dg',   '[R] GKKP double grid')
- call it('r',defs,'gkkp_plot',   '[R] GKKP plot')
- call it('r',defs,'ph_ass_dos',   '[R] Phonon-assisted DOS')
+ call it('r',defs,'eliashberg', '[R] Eliashberg')
+ call it('r',defs,'gkkp_db',    '[R] GKKP database')
+ call it('r',defs,'gkkp_dg',    '[R] GKKP double grid')
+ call it('r',defs,'gkkp_plot',  '[R] GKKP plot')
+ call it('r',defs,'ph_ass_dos', '[R] Phonon-assisted DOS')
 #endif
 #if defined _YPP_SC
  call it('r',defs,'angular_m',    '[R] Canonical angular momentum')
@@ -107,14 +106,11 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'QPDB_edit',    '[R] Generation/editing')
  call it('r',defs,'QPDB_merge',   '[R] Mergering')
  call it('r',defs,'QPDB_expand',  '[R] Symmetry expand')
- !
 #if defined _YPP_RT
  call it('r',defs,'RealTime',     '[R] TD Post-Processing')
  call it('r',defs,'RT_X',         '[R] Response functions Post-Processing')
  call it('r',defs,'RT_ph_osc',    '[R] Coherent phonon oscillations')
-#endif
  !
-#if defined _YPP_RT
  call it('r',defs,'Select_energy','[R] NEQ DBs from input energy window')
  call it('r',defs,'Select_manual','[R] NEQ DBs manually created')
  call it('r',defs,'Select_Fermi', '[R] NEQ DBs according to Fermi distribution')
@@ -122,6 +118,7 @@ subroutine INIT_ypp_load(defs)
  call it('r',defs,'RTabs',        '[R] Transient absorption')
  call it('r',defs,'RToccupations','[R] Analize time-dependent occupations')
  call it('r',defs,'RTlifetimes',  '[R] Analize time-dependent lifetimes')
+ call it('r',defs,'RTpol',        '[R] Analize time-dependent polarization')
  call it('r',defs,'RTdeltaRho',   '[R] Analize the density')
  call it('r',defs,'RTGtwotimes',  '[R] Construct G</G>/G(r)/G(a)/A(t,tp) from rho within GKBA')
  !
@@ -142,6 +139,7 @@ subroutine INIT_ypp_load(defs)
  !
 #if defined _YPP_NL
  call it('f',defs,'PrtPwrSpec','Print power spectrum',verb_level=V_nl_optics)
+ call it(defs,'PumpPATH',"Path of the simulation with the Pump only",Pump_path)
 #endif
  !
  ! Temperatures
@@ -197,7 +195,7 @@ subroutine INIT_ypp_load(defs)
  ! TRANSIENT ABSORPTION
  !
  call it(defs,'TRabsOBS',&
-&             '[RT] RT observable. It can be a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
+&             '[RT] RT obs. Use a combination of (abs)bsorption, (trans)mission, (refl)ectivity, (kerr)err',TRabsWHAT)
  call it(defs,'TRabsDIPplane', '[RT] Dipole rotation plane',TRabsDIP_plane)
  call it(defs,'TRabsDIPdir',   '[RT] Dipole reference direction. Defines the internal `x` axis',TRabsDIP_dir)
  call it(defs,'TRabsMODE',     '[RT] TRabs mode. It can be a combination of cv,vv,cc,ip,eq',TRabsMODE)
@@ -370,7 +368,7 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'DampMode','Damping type ( NONE | LORENTZIAN | GAUSSIAN )',RT_conf%damping)
  call it(defs,'DampFactor','Damping parameter',RT_conf%damp_factor,unit=E_unit) 
  call it(defs,'RhoDeph','Dephasing parameter for G_GKBA',Rho_deph,unit=E_unit) 
-! call it(defs,'MaxContr','Maximum cotribution (%) to excitation',NL_ExcMaxContribution,verb_level=V_real_time) 
+ call it(defs,'PolMode','Polarization analysis mode ("slice","transitions")',RT_pol_mode) 
  call it('f',defs,'UseFFT','Use Fast Fourier transform with EnRange taken from dynamics',verb_level=V_real_time)
  call it('f',defs,'PrintExc','Print excited states functions')
  !
@@ -380,9 +378,8 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'FrMinDamp','Force minimal damping',verb_level=V_real_time)
  call it('f',defs,'SkipOBS_IO','Do not dump on file the RT observables (P(t),J(t),D(t)...)')
  call it('f',defs,'RmAsymLim','Remove Asymptotic limit from P or J',verb_level=V_real_time) 
- call it('f',defs,'CheckPaths','Check inside all the paths present in the current folder',verb_level=V_real_time)
  !
- call it('f',defs,'STD_style','Prin occupations in output with standard style',verb_level=V_real_time) 
+ call it('f',defs,'STD_style','Print occupations using the standard style',verb_level=V_real_time) 
  !
 #endif
  !

@@ -121,8 +121,7 @@ AC_SUBST(AR_FLAGS)
 #
 # C options specific for driver.c
 #
-AC_ARG_ENABLE(options_check, AC_HELP_STRING([--enable-options-check],
-              [Enable the command line options check in driver.c. Default is yes.]))
+AC_ARG_ENABLE(options_check, AS_HELP_STRING([--enable-options-check],[Enable the command line options check in driver.c. Default is yes.]))
 if test x"$enable_options_check" = "x"; then enable_options_check="yes"; fi
 if test x"$enable_options_check" = "xno"; then
  SAVE=$CFLAGS
@@ -144,8 +143,7 @@ AC_LANG_PUSH(Fortran)
 #
 # F90 extension
 #
-AC_ARG_WITH(f90ext, AC_HELP_STRING([--with-f90ext=<flags>],
-           [Use .<flags> Fortran 90 extension],[32]))
+AC_ARG_WITH(f90ext, AS_HELP_STRING([--with-f90ext=<flags>],[Use .<flags> Fortran 90 extension],[32]))
 if ! test -z "$with_f90ext"; then F90SUFFIX=".$with_f90ext"; fi
 case $F90SUFFIX in
  .f90)
@@ -173,9 +171,9 @@ FCFLAGS="$acx_save_fcflags $F90EXTFLAGS"
 #
 GPU_SUPPORT="no_gpu"
 #
-AC_ARG_ENABLE(cuda_fortran,[AC_HELP_STRING([--enable-cuda-fortran], [Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda_fortran="no"])
-AC_ARG_ENABLE(openacc,[AC_HELP_STRING([--enable-openacc], [Enable OPENACC support @<:@default=no@:>@])],[],[enable_openacc="no"])
-AC_ARG_ENABLE(openmp5,[AC_HELP_STRING([--enable-openmp5], [Enable OPENMP5 support @<:@default=no@:>@])],[],[enable_openmp5="no"])
+AC_ARG_ENABLE(cuda_fortran,[AS_HELP_STRING([--enable-cuda-fortran],[Enable CUDA support @<:@default=no@:>@])],[],[enable_cuda_fortran="no"])
+AC_ARG_ENABLE(openacc,[AS_HELP_STRING([--enable-openacc],[Enable OPENACC support @<:@default=no@:>@])],[],[enable_openacc="no"])
+AC_ARG_ENABLE(openmp5,[AS_HELP_STRING([--enable-openmp5],[Enable OPENMP5 support @<:@default=no@:>@])],[],[enable_openmp5="no"])
 #
 if test x"$enable_cuda_fortran" != "xno" ; then GPU_SUPPORT="cudaf"   ; fi
 if test x"$enable_openacc" != "xno"      ; then GPU_SUPPORT="openacc" ; enable_open_mp="no";  fi
@@ -190,7 +188,7 @@ AC_SUBST(GPU_SUPPORT)
 #
 # OpenMP
 #
-AC_ARG_ENABLE(open-mp, AC_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
+AC_ARG_ENABLE(open-mp, AS_HELP_STRING([--enable-open-mp],[Enable OpenMP support]))
 if test x"$enable_open_mp" = "x"; then enable_open_mp="no"; fi
 OPENMPLIBS=" "
 def_openmp=" "

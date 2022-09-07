@@ -26,7 +26,7 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 #
-AC_ARG_WITH(yambo-libs-branch,[AC_HELP_STRING([--with-yambo-libs-branch=<branch>], [Use the <branch> of the yambo-libraries repository.],[32])],,[with_yambo_libs_branch=devel-gpuhack21])
+AC_ARG_WITH(yambo-libs-branch,[AS_HELP_STRING([--with-yambo-libs-branch=<branch>], [Use the <branch> of the yambo-libraries repository.],[32])],,[with_yambo_libs_branch=devel-gpuhack21])
 #
 AC_SUBST(DRIVER_INCS)
 

@@ -108,7 +108,7 @@ AC_ARG_WITH([cuda-int-libs],
    [],[with_cuda_int_libs=cufft,cublas,cusolver])
 #
 AC_ARG_ENABLE(nvtx,
-        [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
+        [AS_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support @<:@default=no@:>@])],[],[enable_nvtx="no"])
 #
 use_int_cuda_libs="no"
 enable_nvtx=no

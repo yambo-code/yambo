@@ -136,19 +136,20 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    use D_lattice,            only : alat
    implicit none
    integer :: iq
-   real(DP), allocatable :: gstore_qibz(:,:)
+   real(DP), allocatable :: gstore_q(:,:)
    !
-   allocate(gstore_qibz(3, elph_nQ))
+   allocate(gstore_q(3, elph_nQ))
    !
-   varid = netcdf_inquire_varid(ncid, "gstore_qibz")
-   netcdf_error = nf90_get_var(ncid, varid, gstore_qibz)
+   if(elph_nQ==nqibz) varid = netcdf_inquire_varid(ncid, "gstore_qibz")
+   if(elph_nQ==nqbz ) varid = netcdf_inquire_varid(ncid, "gstore_qbz")
+   netcdf_error = nf90_get_var(ncid, varid, gstore_q)
    call netcdf_check(ncid,netcdf_error,varid)
    !
    do iq = 1,elph_nQ
-     PH_qpt(iq,:)=matmul(transpose(b),gstore_qibz(:,iq))*alat(:)/2.0_SP/pi
+     PH_qpt(iq,:)=matmul(transpose(b),gstore_q(:,iq))*alat(:)/2.0_SP/pi
    enddo
    !
-   deallocate(gstore_qibz)
+   deallocate(gstore_q)
    !
   end subroutine import_qpoints_group
   !
@@ -159,17 +160,30 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    use R_lattice,            only : b
    use D_lattice,            only : alat
    implicit none
-   integer :: iq
+   integer :: iq,iqibz,qpt_map(elph_nQ)
    real(DP), allocatable :: phfreqs_ibz(:,:)
    !
-   allocate(phfreqs_ibz(ph_modes,elph_nQ))
+   allocate(phfreqs_ibz(ph_modes,nqibz))
    !
    varid = netcdf_inquire_varid(ncid, "phfreqs_ibz")
    netcdf_error = nf90_get_var(ncid, varid, phfreqs_ibz)
    call netcdf_check(ncid,netcdf_error,varid)
    !
+   if (elph_nQ==nqibz) then
+     do iq = 1,elph_nQ
+       qpt_map(iq)=iq
+     enddo
+   else
+     ! This is a temporary implementation
+     ! It needs to be fixed for the case elph_nQ==nqbz)
+     do iq = 1,elph_nQ
+       qpt_map(iq)=mod(iq-1,nqibz)+1
+     enddo
+   endif
+   !
    do iq = 1,elph_nQ
-     PH_freqs_sq(iq,:)=real(phfreqs_ibz(:,iq),SP)**2
+     iqibz=qpt_map(iq)
+     PH_freqs_sq(iq,:)=real(phfreqs_ibz(:,iqibz),SP)**2
    enddo
    !
    deallocate(phfreqs_ibz)

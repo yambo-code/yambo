@@ -23,7 +23,7 @@
 !
 subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
- use pars,          ONLY:rZERO,cZERO,schlen
+ use pars,          ONLY:SP,rZERO,cZERO,schlen
  use D_lattice,     ONLY:n_atoms
  use R_lattice,     ONLY:nkbz,nqbz
  use electrons,     ONLY:E_reset

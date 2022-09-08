@@ -35,7 +35,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
  use pseudo,              ONLY: PP_free,pp_n_l_times_proj_max
- use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
+ use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz,nqibz,nqbz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
  use IO_int,              ONLY: io_control,IO_and_Messaging_switch
  use IO_m,                ONLY: OP_WR,WR,WR_CL,OP_WR_CL,NONE,OP_APP_CL,serial_number
@@ -246,19 +246,23 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
      !
      call msg('s',' == Writing DB3 (gkkp) ...')
      !
-     call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID)
-     io_err=io_ELPH(ID,'gkkp')
-     !
      do iq=1,elph_nQ
        !
        ! Read from the etsf-nc file
        !
        call a2y_gkkp(iq,i_sp_pol,ncid_gkkp,grpid_gkkp)
        !
+       if(i_sp_pol==1.and.iq==1) then
+         call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID)
+         if(elph_nQ==nqibz) io_err=io_ELPH(ID,'gkkp')
+         if(elph_nQ==nqbz)  io_err=io_ELPH(ID,'gkkp_expanded')
+       endif
+       !
        ifrag=iq+elph_nQ*(i_sp_pol-1)
        if(ifrag <elph_nQ*n_sp_pol) call io_control(ACTION=WR,   SEC=(/ifrag+1/),ID=ID)
        if(ifrag==elph_nQ*n_sp_pol) call io_control(ACTION=WR_CL,SEC=(/ifrag+1/),ID=ID)
-       io_err=io_ELPH(ID,'gkkp')
+       if(elph_nQ==nqibz) io_err=io_ELPH(ID,'gkkp')
+       if(elph_nQ==nqbz)  io_err=io_ELPH(ID,'gkkp_expanded')
        !
      enddo
      !

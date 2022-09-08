@@ -250,6 +250,8 @@ module EXCPH
     use zeros,          ONLY:k_iku_zero
     use vec_operate,    ONLY:v_is_zero
     use ELPH,           ONLY:PH_qpt
+    use com,            ONLY:msg
+    !
     implicit none
     type(bz_samp) ::q
     !
@@ -267,7 +269,12 @@ module EXCPH
         exit
       enddo
     enddo
-    if(any(DB_Q_map==0)) call error("Q-point not found in gkkp_expanded DBs")
+    if(any(DB_Q_map==0)) then
+      do iq=1,q%nbz
+        if(DB_Q_map(iq)==0) call msg('s',' Q point not found in gkkp_expanded DBs ',q%ptbz(iq,:))
+      enddo 
+      call error("Q-point not found in gkkp_expanded DBs")
+    endif
     !
     do iq=1,q%nbz
       if(DB_Q_map(iq)/=iq) then

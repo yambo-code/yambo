@@ -1,11 +1,11 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ylib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
 #
 # storing options
 #
-keep_Ylib=yes
+keep_Ydriver=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
@@ -25,7 +25,7 @@ keep_hdf5=no
 #
 # package versions
 #
-version_Ylib=1.1.0
+version_Ydriver=1.1.0
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -45,7 +45,7 @@ version_futile=missing
 #
 # package names
 #
-pkgname_Ylib=Ydriver-$(version_Ylib)
+pkgname_Ydriver=Ydriver-$(version_Ydriver)
 pkgname_iotk=iotk-$(version_iotk)
 pkgname_netcdf=netcdf-c-$(version_netcdf)
 pkgname_netcdff=netcdf-fortran-$(version_netcdff)
@@ -65,7 +65,7 @@ pkgname_futile=futile-yambo
 #
 # tarball names
 #
-tarball_Ylib=$(pkgname_Ylib).tar.gz
+tarball_Ydriver=$(pkgname_Ydriver).tar.gz
 tarball_iotk=$(pkgname_iotk).tar.gz
 tarball_netcdf=v$(version_netcdf).tar.gz
 tarball_netcdff=v$(version_netcdff).tar.gz
@@ -108,7 +108,7 @@ url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_l
 #
 url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
-url_Ylib=$(url_base)/$(tarball_Ylib)
+url_Ydriver=$(url_base)/$(tarball_Ydriver)
 url_pnetcdf=$(url_base)/$(tarball_pnetcdf)
 url_iotk=$(url_base)/$(tarball_iotk)
 url_etsf_io=$(url_base)/$(tarball_etsf_io)

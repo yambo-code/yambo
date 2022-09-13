@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
  use drivers,       ONLY:list_dbs
 #endif
  use com,           ONLY:msg,com_compose_msg
- use stderr,        ONLY:STRING_pack
+ use stderr,        ONLY:STRING_pack,STRING_same,STRING_match
  use IO_m,          ONLY:write_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                        netcdf_dim,io_rec_pos,read_is_on,io_mode,VERIFY,&
 &                        io_status,DUMP,REP,LOG,io_com,io_file,&
@@ -506,14 +506,14 @@ subroutine io_elemental(ID,VAR,VAR_SZ,CHECK,WARN,OP,I0,DB_I0,I1,DB_I1,&
      character(*),optional :: chv1,chv2
      ch_verify=0
      !
-     if (.not.present(OP) .and. trim(chv1)/=trim(chv2)) ch_verify=IO_INCOMPATIBLE_VAR
+     if (.not.present(OP) .and. .not.STRING_same(chv1,chv2)) ch_verify=IO_INCOMPATIBLE_VAR
      !
      if (     present(OP)) then
-       if (OP(1)=="==" .and. trim(chv2)/=trim(chv1)              )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)=="<"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)=="<=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)==">"  .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
-       if (OP(1)==">=" .and. index(trim(chv2),trim(chv1))==0     )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="==" .and. .not.STRING_same(chv1,chv2) )  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<"  .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)=="<=" .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">"  .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
+       if (OP(1)==">=" .and. .not.STRING_match(chv2,chv1))  ch_verify=IO_INCOMPATIBLE_VAR
      endif
      !
    end function

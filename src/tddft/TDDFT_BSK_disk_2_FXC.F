@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  use matrix_operate,ONLY:UP_matrix_index
  use com,           ONLY:isec
  use LIVE_t,        ONLY:live_timing
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use D_lattice,     ONLY:DL_vol
  use interfaces,    ONLY:WF_load,WF_free
  use wave_func,     ONLY:WF
@@ -146,7 +146,7 @@ subroutine TDDFT_BSK_disk_2_FXC(iq,Xk,W,X_static)
  !
  ! CLEAN
  !
- call PP_redux_wait
+ call PP_wait()
  YAMBO_FREE(O1x)
  YAMBO_FREE(O2x)
  call WF_free(WF)

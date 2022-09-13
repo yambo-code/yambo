@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,6 +59,8 @@ module electrons
  real(SP)                 :: Orbital_magn(3)
  real(SP)                 :: Itinerant_magn(3)
  !
+ ! Fine grid
+ !-----------
  type E_fine_grid
    integer              :: nk
    integer              :: nb
@@ -69,6 +71,8 @@ module electrons
    real(SP)             :: E_Fermi
  end type E_fine_grid
  !
+ ! Levels 
+ !--------
  type levels
    !
    integer         :: nb

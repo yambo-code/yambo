@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,10 +24,10 @@
 subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
- use YPP_real_time,  ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_conf,RT_time,RT_conf_save,RT_conf_duplicate
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use real_time,      ONLY:RT_step,G_MEM_steps
+ use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
  !
 #include<memory.h>
@@ -38,18 +38,23 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! Work Space
  !
  integer  :: i_t,i_ref(2),j_ref
- logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G
+ logical  :: UNIFORM,l_current,l_G_lesser,l_reset
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)
  !
+ ! Backup
+ !========
+ if (RT_conf_save%delta_T==0._SP) call RT_conf_duplicate(RT_conf,RT_conf_save)
+ !
  ! Definitions
  !==============
+ l_current =index(what,"CURRENT")>0
+ l_G_lesser=index(what,"Glesser")>0
+ l_reset   =index(what,"reset")>0
  !
- l_carriers=(what=="CARRIERS")
- l_current =(what=="CURRENT")
- l_G_lesser=(what=="Glesser")
- l_rho_G   =(what=="G-DENSITY")
- l_rho_f   =(what=="f-DENSITY")
+ ! Reset
+ !========
+ if (l_reset) call RT_conf_duplicate(RT_conf_save,RT_conf)
  !
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step
@@ -58,14 +63,6 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !  In the case of non-uniform T samplings the last time points can be imposed by the total time and, hence, the
  !  STEP can appear even smaller than the effective step.
  if (GENERAL_RT_IO_t%N> 2) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-2))
- !
- if (GENERAL_RT_IO_t%N> 1) then
-   if (RT_conf%delta_T> 0._SP) STEP=max(TIME_adjust(RT_conf%delta_T,STEP),STEP)
-   if (l_rho_G .or. l_G_lesser) then
-    TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. abs(TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
-   endif
- endif
  !
  ! Time range ...
  !===============

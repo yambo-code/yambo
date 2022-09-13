@@ -2,67 +2,57 @@
 # Package List
 #
 include ./package.list
-WGETFLAGS=--no-check-certificate
+ifeq ($(wildcard ./git.list),./git.list)
+  include ./git.list
+  include ../../config/setup
+else
+ git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+ branch_Ydriver=none
+endif
 #
-all: $(tarball_futile) $(tarball_iotk) $(tarball_netcdf) $(tarball_netcdff) $(tarball_pnetcdf) $(tarball_hdf5) $(tarball_etsf_io) $(tarball_libxc) \
-     $(tarball_lapack) $(tarball_blacs) $(tarball_scalapack) $(tarball_petsc) $(tarball_slepc) $(tarball_fftw) $(tarball_fftqe) $(tarball_yaml) $(tarball_Ydriver)
+WGETFLAGS=--no-check-certificate -v
 #
-# Alias
+all: $(EXT_LIBS)
 #
-tarball_driver:    $(tarball_Ydriver)
-tarball_yaml:      $(tarball_yaml)
-tarball_futile:    $(tarball_futile)
-tarball_iotk:      $(tarball_iotk)
-tarball_hdf5:      $(tarball_hdf5)
-tarball_netcdf :   $(tarball_netcdf)
-tarball_netcdff:   $(tarball_netcdff)
-tarball_pnetcdf:   $(tarball_pnetcdf)
-tarball_etsf_io:   $(tarball_etsf_io)
-tarball_libxc:     $(tarball_libxc)
-tarball_lapack:    $(tarball_lapack)
-tarball_blacs:     $(tarball_blacs)
-tarball_scalapack: $(tarball_scalapack)
-tarball_petsc:     $(tarball_petsc)
-tarball_slepc:     $(tarball_slepc)
-tarball_fttw:      $(tarball_fftw)
-tarball_fftqe:     $(tarball_fftqe)
+# Libraries (GIT + archives)
 #
-# Libraries
+Ydriver:
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
 #
-$(tarball_Ydriver):
-	@+TARBALL="$(tarball_Ydriver)"   ; URL="$(url_driver)"   ; LIB="DRIVER"; $(getsrc)
-$(tarball_yaml):
-	@+TARBALL="$(tarball_yaml)"     ; URL="$(url_yaml)"     ; LIB="YAML"; $(getsrc)
-$(tarball_futile):
-	@+TARBALL="$(tarball_futile)"   ; URL="$(url_futile)"   ; LIB="FUTILE"; $(getsrc)
-$(tarball_iotk):
-	@+TARBALL="$(tarball_iotk)"     ; URL="$(url_iotk)"     ; LIB="IOTK"; $(getsrc)
-$(tarball_hdf5):
-	@+TARBALL="$(tarball_hdf5)"     ; URL="$(url_hdf5)"     ; LIB="HDF5"; $(getsrc)
-$(tarball_netcdf):
-	@+TARBALL="$(tarball_netcdf)"   ; URL="$(url_netcdf)"   ; LIB="NETCDF"; $(getsrc)
-$(tarball_netcdff):
-	@+TARBALL="$(tarball_netcdff)"  ; URL="$(url_netcdff)"  ; LIB="NETCDFF"; $(getsrc)
-$(tarball_pnetcdf):
-	@+TARBALL="$(tarball_pnetcdf)"  ; URL="$(url_pnetcdf)"  ; LIB="PNETCDF"; $(getsrc)
-$(tarball_etsf_io):
-	@+TARBALL="$(tarball_etsf_io)"  ; URL="$(url_etsf_io)"  ; LIB="ETSF_IO"; $(getsrc)
-$(tarball_libxc):
-	@+TARBALL="$(tarball_libxc)"    ; URL="$(url_libxc)"    ; LIB="LIBXC"; $(getsrc)
-$(tarball_lapack):
-	@+TARBALL="$(tarball_lapack)"   ; URL="$(url_lapack)"   ; LIB="LAPACK"; $(getsrc)
-$(tarball_blacs):
-	@+TARBALL="$(tarball_blacs)"    ; URL="$(url_blacs)"    ; LIB="BLACS"; $(getsrc)
-$(tarball_scalapack):
-	@+TARBALL="$(tarball_scalapack)"; URL="$(url_scalapack)"; LIB="SCALAPACK"; $(getsrc)
-$(tarball_petsc):
-	@+TARBALL="$(tarball_petsc)"    ; URL="$(url_petsc)"    ; LIB="PETSC"; $(getsrc)
-$(tarball_slepc):
-	@+TARBALL="$(tarball_slepc)"    ; URL="$(url_slepc)"    ; LIB="SLEPC"; $(getsrc)
-$(tarball_fftw):
-	@+TARBALL="$(tarball_fftw)"     ; URL="$(url_fftw)"     ; LIB="FFTW"; $(getsrc)
-$(tarball_fftqe):
-	@+TARBALL="$(tarball_fftqe)"    ; URL="$(url_fftqe)"    ; LIB="FFTW"; $(getsrc)
+# Libraries (archives)
+#
+yaml:
+	@+URL="$(url_yaml)"     ; LIB="$(pkgname_yaml)"; $(getsrc)
+futile:
+	@+URL="$(url_futile)"   ; LIB="$(pkgname_futile)"; $(getsrc)
+iotk:
+	@+URL="$(url_iotk)"     ; LIB="$(pkgname_iotk)"; $(getsrc)
+hdf5:
+	@+URL="$(url_hdf5)"     ; LIB="$(pkgname_hdf5)"; $(getsrc)
+netcdf:
+	@+URL="$(url_netcdf)"   ; LIB="$(pkgname_netcdf)"; $(getsrc)
+netcdff:
+	@+URL="$(url_netcdff)"  ; LIB="$(pkgname_netcdff)"; $(getsrc)
+pnetcdf:
+	@+URL="$(url_pnetcdf)"  ; LIB="$(pkgname_pnetcdf)"; $(getsrc)
+etsf_io:
+	@+URL="$(url_etsf_io)"  ; LIB="$(pkgname_etsf_io)"; $(getsrc)
+libxc:
+	@+URL="$(url_libxc)"    ; LIB="$(pkgname_libxc)"; $(getsrc)
+lapack:
+	@+URL="$(url_lapack)"   ; LIB="$(pkgname_lapack)"; $(getsrc)
+blacs:
+	@+URL="$(url_blacs)"    ; LIB="$(pkgname_blacs)"; $(getsrc)
+scalapack:
+	@+URL="$(url_scalapack)"; LIB="$(pkgname_scalapack)"; $(getsrc)
+petsc:
+	@+URL="$(url_petsc)"    ; LIB="$(pkgname_petsc)"; $(getsrc)
+slepc:
+	@+URL="$(url_slepc)"    ; LIB="$(pkgname_slepc)"; $(getsrc)
+fftw:
+	@+URL="$(url_fftw)"     ; LIB="$(pkgname_fftw)"; $(getsrc)
+fftqe:
+	@+URL="$(url_fftqe)"    ; LIB="$(pkgname_fftqe)"; $(getsrc)
 #
 # cleaning
 #
@@ -70,7 +60,7 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)    ; fi ; \
+          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
@@ -90,14 +80,62 @@ clean_all:
 	fi
 #
 define getsrc
-if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
-wget $(WGETFLAGS) -O $$TARBALL $$URL ; \
-elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
-curl -L --progress-bar -o $$TARBALL $$URL ; \
-fi ; \
-if test ! -s $$TARBALL ; then \
-echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
-echo "*** if you have direct access to the internet." ; \
-echo "*** If not, copy $$TARBALL into extlibs/archive/" ; \
-fi
+ if test ! -s $$LIB".tar.gz" ; then \
+  echo "\t[$$LIB] download";\
+  if ! test -d  ../../log; then mkdir ../../log; fi; \
+  if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+   wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
+  elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+   curl -L --progress-bar -o $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1 ; \
+  fi ; \
+  if test ! -s $$LIB".tar.gz" ; then \
+   echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
+   echo "*** if you have direct access to the internet." ; \
+   echo "*** If not, copy $$LIB".tar.gz" into extlibs/archive/" ; \
+  fi; \
+ fi
+endef
+#
+define getsrc_git
+ if test ! -s $$LIB".tar.gz" && test ! -d $$LIB ; then \
+  mkdir -p  ../../log;\
+  if [ ! "$$GBRANCH" = "none" ] ; then \
+   echo "\t[$$LIB] clone";\
+   echo " via $$GIT" ; \
+   if [ ! -d $$LIB ]; then git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; fi ; \
+   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
+  else \
+   echo "\t[$$LIB] download";\
+   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
+    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
+   elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
+    curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
+   fi \
+  fi;\
+ fi
+endef
+#
+define link_it
+ if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
+ if test -s $$LIB".tar.gz" ; then \
+  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
+  cd ../$(1); \
+  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ fi
+endef
+#
+define copy_driver
+ if ! test -d  $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
+ if test -s $$LIB".tar.gz" ; then \
+  cd $(srcdir)/lib/$(1); \
+  gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ fi;\
+ if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
+  cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
+  touch $(srcdir)/lib/$(1)/installed.stamp; \
+ fi ;\
+ if [ "$(srcdir)" != "$(compdir)" ]; then \
+   rm -rf $(compdir)/lib/$(1) ]; \
+   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+ fi
 endef

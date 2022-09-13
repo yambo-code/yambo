@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -111,7 +111,7 @@ if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 # Makefile creation: (III) special sources 
 source ./sbin/compilation/special_sources.sh
 #
-cat <<EOF > config/mk/local/static_variables.mk
+cat <<EOF > $compdir/config/mk/local/static_variables.mk
 STDLOG         =$compdir/log/"compile_"$goal".log"
 libs           =$libs
 linclude       =$lf90include

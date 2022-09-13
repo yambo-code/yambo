@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DS,AF,FA
@@ -413,11 +413,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          if (PAR_COM_RL_INDEX_n_CPU>1) then
            lda=size(X_par_lower_triangle%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, & 
-                   & X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
+&                        X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          else
            lda=size(X_par%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, &
-&                             X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
+&                        X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          endif
          !
 #  if defined _OPENMP

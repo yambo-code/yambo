@@ -2,7 +2,7 @@
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -70,13 +70,13 @@ AC_ARG_ENABLE(netcdf_output,AC_HELP_STRING([--enable-netcdf-output],
              [Activate the netcdf copy for some output files. Default is no.]))
 #
 enable_hdf5="yes" ;
+enable_pnetcdf="no" ;
 compile_netcdf="no"
-compile_pnetcdf="no"
 internal_netcdf="no"
 def_netcdf=""
 NETCDF_OPT="--enable-netcdf-4"
 NETCDF_VER="v4"
-IO_LIB_VER="serial";
+IO_LIB_VER="parallel";
 #
 save_fcflags="$FCFLAGS" ;
 hdf5_libs="$HDF5_LIBS" ;
@@ -84,20 +84,17 @@ save_libs="$LIBS" ;
 #
 # global options
 #
-#
 if test x"$enable_netcdf_classic" = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_pnetcdf=yes ; enable_hdf5=no  ; fi
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
 #
 if test x"$enable_hdf5_par_io" = "xyes"  &&  test x"$enable_netcdf_par_io" = "xyes" ; then
-  AC_MSG_ERROR([Select hdf5-par-io or netcdf-par-io, not both!!]) ;
+  AC_MSG_ERROR([Select --disable-hdf5-par-io with --enable-netcdf-par-io]) ;
 fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xno"    ; then IO_LIB_VER="serial"; fi
 if test x"$enable_netcdf_par_io" = "xyes" ; then IO_LIB_VER="parallel"; fi
-#
-#
 #
 # Set NETCDF LIBS and FLAGS from INPUT
 #
@@ -240,7 +237,7 @@ if test x"$enable_hdf5" = "xno"; then
     NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     NETCDFF_LIBS="${NETCDF_HDF5_PATH}/lib/libnetcdff.a" ;
     NETCDFF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
-    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a" ;
+    PNETCDF_LIBS="${NETCDF_HDF5_PATH}/lib/libpnetcdf.a -L${NETCDF_HDF5_PATH}/lib" ;
     PNETCDF_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     if test "$use_libm"    = "yes"; then NETCDF_LIBS="$NETCDF_LIBS -lm"   ; fi
@@ -327,9 +324,8 @@ if test x"$enable_hdf5" = "xyes"; then
       #
     elif test "$IO_LIB_VER" = "serial" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" && test -e "${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a"; then
       #
+      compile_netcdf="no" ;
       IO_LIB_VER="parallel";
-      HDF5_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libhdf5hl_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PAR_PATH}/lib/libhdf5.a" ;
-      HDF5_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
       NETCDF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdf.a" ;
       NETCDF_INCS="${IFLAG}${NETCDF_HDF5_PAR_PATH}/include" ;
       NETCDFF_LIBS="${NETCDF_HDF5_PAR_PATH}/lib/libnetcdff.a" ;
@@ -381,23 +377,6 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
   #
 fi
 #
-# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
-#
-parallel_io="-" ;
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    enable_hdf5_compression="no";
-    parallel_io="HDF5";
-elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    compile_pnetcdf=${compile_netcdf};
-    enable_hdf5_compression="no";
-    parallel_io="NetCDF";
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-    parallel_io="COMPRESS-HDF5";
-fi
-#
 AC_SUBST(NETCDF_LIBS)
 AC_SUBST(NETCDF_INCS)
 AC_SUBST(NETCDF_OPT)
@@ -410,9 +389,7 @@ AC_SUBST(IO_LIB_VER)
 AC_SUBST(netcdf)
 AC_SUBST(def_netcdf)
 AC_SUBST(compile_netcdf)
-AC_SUBST(compile_pnetcdf)
 AC_SUBST(internal_netcdf)
-AC_SUBST(parallel_io)
 AC_SUBST(enable_netcdf_classic)
 AC_SUBST(enable_netcdf_v3)
 AC_SUBST(enable_netcdf_par_io)

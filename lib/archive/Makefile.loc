@@ -60,7 +60,7 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_Ydriver)     && test "$(keep_Ydriver)"      != "yes" ;  then rm $(tarball_Ydriver)    ; fi ; \
+          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \

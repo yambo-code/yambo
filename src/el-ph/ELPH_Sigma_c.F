@@ -35,7 +35,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_elel_corr
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes
+ use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes
  use parallel_m,    ONLY:PAR_IND_Q_bz,PAR_Q_bz_index,PAR_IND_QP,&
 &                        PAR_IND_Q_bz_ID,PAR_IND_G_b,PAR_IND_G_b_ID,PAR_IND_QP_ID,master_cpu,&
                          PAR_COM_Q_A2A,PAR_COM_Q_INDEX,myid
@@ -255,7 +255,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                  PAR_IND_Q_bz%n_of_elements(PAR_IND_Q_bz_ID+1)*&
 &                  PAR_IND_G_b%n_of_elements(PAR_IND_G_b_ID+1)
  !
- call PP_redux_wait
+ call PP_wait()
  !
  ! g^2F(w) residuals Allocation
  !
@@ -429,7 +429,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
      io_err=io_gFsq(ID)
    endif
-   call PP_redux_wait
+   call PP_wait()
    call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
    do iq_loop=1,nq_to_sum
      if (.not.PAR_IND_Q_bz%element_1D(iq_loop)) cycle

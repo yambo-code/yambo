@@ -62,8 +62,8 @@ module DIPOLES
  !
  type DIPOLE_t
    integer    :: iq(2)
-   integer    :: ib(2)
-   integer    :: ib_lim(2)
+   integer    :: ib(2)     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+   integer    :: ib_lim(2) !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction  
    integer    :: db_ib(2)
    integer    :: db_ib_lim(2)
    integer    :: ng

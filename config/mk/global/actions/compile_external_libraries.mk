@@ -20,19 +20,19 @@ iotk:
 	@+if test "$(do_iotk)" = yes ; then LIBS="iotk" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) iotk-dl; $(mk_external_lib); fi
 hdf5: 
 	@+if test "$(do_hdf5)" = yes ; then LIBS="hdf5" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) hdf5-dl; $(mk_external_lib); fi
-pnetcdf:
+pnetcdf: netcdf
 	@+if test "$(do_pnetcdf)" = yes ; then LIBS="pnetcdf" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) pnetcdf-dl ; $(mk_external_lib); fi
-netcdf:
+netcdf: hdf5
 	@+if test "$(do_netcdf)" = yes ; then LIBS="netcdf"; BASE="lib"; $(MAKE) $(MAKEFLAGS) netcdf-dl ; $(mk_external_lib); fi
-netcdff:
+netcdff: netcdf
 	@+if test "$(do_netcdf)" = yes ; then LIBS="netcdff" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) netcdff-dl ; $(mk_external_lib); fi
 etsf_io: 
 	@+if test "$(do_etsf)" = yes ; then LIBS="etsf_io" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) etsf_io-dl ; $(mk_external_lib); fi
-blacs: 
+blacs: scalapack
 	@if test "$(do_blacs)" = yes ; then LIBS="blacs" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) blacs-dl; $(mk_external_lib); fi
-scalapack: 
+scalapack: lapack
 	@if test "$(do_slk)" = yes ; then LIBS="scalapack" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) scalapack-dl ; $(mk_external_lib); fi
-petsc: 
+petsc:
 	@if test "$(do_petsc)" = yes ; then LIBS="petsc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) petsc-dl; $(mk_external_lib); fi
-slepc: 
+slepc: petsc
 	@if test "$(do_slepc)" = yes ; then LIBS="slepc" ; BASE="lib"; $(MAKE) $(MAKEFLAGS) slepc-dl; $(mk_external_lib); fi

@@ -38,7 +38,6 @@ install: uncompress configure compile
 	@if ! test -e installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
          cd $(PACKAGE); cp *.a $(LIBPATH)/lib ; \
-	 chmod +x $(LIBPATH)/lib/*blacs*.a; \
 	 touch ../installed.stamp;\
 	fi
 

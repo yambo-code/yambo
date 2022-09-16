@@ -2,7 +2,13 @@
 # Package List
 #
 include ./package.list
-include ./git.list
+ifeq ($(wildcard ./git.list),./git.list)
+  include ./git.list
+  include ../../config/setup
+else
+ git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+ branch_Ydriver=none
+endif
 #
 WGETFLAGS=--no-check-certificate -v
 #
@@ -10,8 +16,8 @@ all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
 #
-Ylib:
-	@+URL="$(url_Ylib)"  ;  GBRANCH="$(branch_Ylib)"  ;  GIT="$(git_Ylib)"; LIB="$(pkgname_Ylib)"; $(getsrc_git); $(call link_it,"yambo")
+Ydriver:
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
 #
 # Libraries (archives)
 #
@@ -54,7 +60,7 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test "$(keep_Ylib)"      != "yes" ;  then rm -fr $(pkgname_Ylib)* ../yambo ; fi ; \
+          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \
@@ -76,6 +82,7 @@ clean_all:
 define getsrc
  if test ! -s $$LIB".tar.gz" ; then \
   echo "\t[$$LIB] download";\
+  if ! test -d  ../../log; then mkdir ../../log; fi; \
   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
   elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
@@ -91,12 +98,14 @@ endef
 #
 define getsrc_git
  if test ! -s $$LIB".tar.gz" && test ! -d $$LIB ; then \
-  echo "\t[$$LIB] download";\
+  mkdir -p  ../../log;\
   if [ ! "$$GBRANCH" = "none" ] ; then \
+   echo "\t[$$LIB] clone";\
    echo " via $$GIT" ; \
-   if [ ! -d $$LIB ]; then git clone $$GIT $$LIB; fi ; \
-   cd $$LIB ; git checkout $$GBRANCH ; cd ../ ; \
+   if [ ! -d $$LIB ]; then git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; fi ; \
+   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
   else \
+   echo "\t[$$LIB] download";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
@@ -107,8 +116,26 @@ define getsrc_git
 endef
 #
 define link_it
+ if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
  if test -s $$LIB".tar.gz" ; then \
   if ! test -d  ../$(1); then mkdir ../$(1); fi; \
   cd ../$(1); \
-  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; fi
+  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ fi
+endef
+#
+define copy_driver
+ if ! test -d  $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
+ if test -s $$LIB".tar.gz" ; then \
+  cd $(srcdir)/lib/$(1); \
+  gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+ fi;\
+ if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
+  cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
+  touch $(srcdir)/lib/$(1)/installed.stamp; \
+ fi ;\
+ if [ "$(srcdir)" != "$(compdir)" ]; then \
+   rm -rf $(compdir)/lib/$(1) ]; \
+   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+ fi
 endef

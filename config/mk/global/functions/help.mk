@@ -27,10 +27,10 @@ define yambo_help
    $(ECHO) "\n *** Utils ***";\
    $(ECHO) -n " [utils]         "; for target in $(UTILS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO)  "\n *** Cleaning ***" ;\
-   $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver Ylib src ypp interfaces conf dep";\
+   $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver Ydriver src ypp interfaces conf dep";\
    $(ECHO)  " Each of these module can be called by using";\
    $(ECHO)  " make clean what=<MODULE> \n";\
-   $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ylib, dependencies and configure files.";\
+   $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files.";\
    $(ECHO)  " make clean_all           =  remove all modules. Complete cleaning.";\
    $(ECHO)  " make reset               =  clean  + int-libs.";\
    $(ECHO);\

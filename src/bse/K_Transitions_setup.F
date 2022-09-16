@@ -149,6 +149,9 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
        !
        ! Moreover I cannot move iv,ic loops insiede i_sp_pol and i_star loops
        ! Otherwise runs with parallelization over eh fail
+       ! Having i_star inside the loops is likely what makes the distribution
+       ! of the algorithm with the qindx_B distributed in memory very slow
+       ! since i_k_bz and i_p_bz change at each iteration of the loop
        !
        if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
          nColFG_in_T_group_now = maxval(Xk%FGbz%N_mapped(&

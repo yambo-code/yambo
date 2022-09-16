@@ -63,7 +63,7 @@ subroutine RT_start_and_restart(E,k,q)
  use xc_functionals, ONLY:V_xc
  use H_interfaces,   ONLY:V_real_space_to_H
  use parallel_m,     ONLY:PAR_G_k_range,PAR_IND_Xk_ibz
- use parallel_int,   ONLY:PP_redux_wait
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
 #include<memory.h>
@@ -134,8 +134,7 @@ subroutine RT_start_and_restart(E,k,q)
  RESTART=.FALSE.
  do i_db=1,N_RT_databases
    COM_MODE=NONE
-   if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
-   if (i_db==RT_return_db_ID("G_lesser_RESTART")) COM_MODE=REP
+   if (i_db==RT_return_db_ID("ANY_G")) COM_MODE=REP
    call io_control(ACTION=OP_RD_CL,COM=COM_MODE,SEC=(/1/),MODE=VERIFY,ID=RT_DB_ID(i_db))
    io_err(i_db)=io_RT_components(trim(RT_DB_name(i_db)),RT_DB_ID(i_db))
  enddo
@@ -167,7 +166,7 @@ subroutine RT_start_and_restart(E,k,q)
      call RT_RESTART_database_copy( trim(RT_DB_name(i_db)) )
    enddo
    !
-   call PP_redux_wait()
+   call PP_wait()
    !
    do i_db=1,N_RT_databases
      if (i_db==RT_return_db_ID("G_lesser_RESTART_K_section").or.i_db==RT_return_db_ID("G_lesser_K_section")) cycle
@@ -299,7 +298,7 @@ subroutine RT_start_and_restart(E,k,q)
    !
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  contains
    !

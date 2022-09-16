@@ -129,7 +129,7 @@ integer function io_RT_components(what,ID)
  !
  ! 1st SECTION
  !=============
- if (any((/io_sec(ID,:)==1/))) then
+ if (any((/io_sec(ID,:)==1/)).and..not.RT_do_IO("ANY_K_section")) then
    !
    call io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
    if (io_RT_components/=0) goto 1

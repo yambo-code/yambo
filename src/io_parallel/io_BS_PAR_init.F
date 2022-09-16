@@ -23,7 +23,7 @@
 !
 integer function io_BS_PAR_init(iq,ID,mode)
  !
- use stderr,        ONLY:intc,real2ch
+ use stderr,        ONLY:intc,real2ch,STRING_remove
  use com,           ONLY:msg
  use pars,          ONLY:IP,IPL,SP,schlen,lchlen,max_io_vars_open
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
@@ -92,7 +92,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  if (     BS_K_coupling     ) n_vars=2
  if (.not.l_BS_ares_from_res) n_vars=n_vars+1
  !
- BSK_IO_local=trim(BSK_IO_mode)
+ BSK_IO_local=trim(STRING_remove(BSK_IO_mode,"norestart"))
  if(index(mode,"compressed")/=0 ) BSK_IO_local=trim(mode)
  !
  select case(trim(BSK_IO_local))

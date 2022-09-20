@@ -4,9 +4,9 @@
 # -------------
 # Check whether to use -e or not to intepret \backslash commands
 #
-m4_defun([AC_PROG_ECHO],
+AC_DEFUN([AC_PROG_ECHO],
 [
-ECHO=
+ECHO=" "
 case `sh -c 'echo "\tx"'` in
 *t*)
   ECHO='echo -e';;
@@ -14,4 +14,4 @@ case `sh -c 'echo "\tx"'` in
   ECHO='echo';;
 esac
 AC_SUBST(ECHO)
-])# AC_PROG_ECHO
+])

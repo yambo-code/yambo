@@ -31,7 +31,7 @@ subroutine k_random(Xk,No_Weight)
  use LIVE_t,              ONLY:live_timing
  use stderr,              ONLY:intc
  use parallel_m,          ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use parser_m,            ONLY:parser 
  !
 #include<memory.h>
@@ -128,7 +128,7 @@ subroutine k_random(Xk,No_Weight)
  ! ... parallel setup
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BZ_random_nkpts/))
- call PP_redux_wait
+ call PP_wait()
  !
  ! ... Map
  YAMBO_ALLOC(MAP,(Xk%nbz))

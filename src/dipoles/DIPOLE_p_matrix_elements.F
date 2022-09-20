@@ -172,7 +172,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #endif
    !
-#if defined _SC || defined _RT
    if(l_eval_P2) then
      !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
      do i_spinor=1,n_spinor
@@ -187,7 +186,6 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      !$omp end parallel do
      P2=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_der_sq(:wf_nc_k(ik),:),WF%c(:wf_nc_k(ik),:,ic_wf))
    endif
-#endif
    !
  enddo
  !

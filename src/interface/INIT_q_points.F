@@ -33,6 +33,7 @@ subroutine INIT_q_points( )
  use pars,        ONLY:SP,schlen,DP
  use it_tools,    ONLY:check_verbosity
  use R_lattice,   ONLY:nqibz,q_pt,bz_samp,q_source
+ use D_lattice,   ONLY:nsym
 #if defined _ELPH
  use ELPH,        ONLY:PH_qpt,elph_use_q_grid,elph_nQ,elph_grids_are_expanded
 #endif
@@ -64,6 +65,11 @@ subroutine INIT_q_points( )
    enddo
  else if (allocated(PH_qpt).and.elph_use_q_grid.and..not.elph_grids_are_expanded) then
    q_source="is read from the El-Ph databases"
+   nqibz=elph_nQ
+   YAMBO_ALLOC(q_pt,(nqibz,3))
+   q_pt(:,:)=-real(PH_qpt(:,:),SP)
+ else if(allocated(PH_qpt).and.elph_use_q_grid.and.elph_grids_are_expanded.and.nsym==1) then
+   q_source="is read from the El-Ph databases expanded"
    nqibz=elph_nQ
    YAMBO_ALLOC(q_pt,(nqibz,3))
    q_pt(:,:)=-real(PH_qpt(:,:),SP)
@@ -124,6 +130,6 @@ subroutine INIT_q_points( )
      endif
      call io_disconnect(ID)
      !
-   end function
+   end function get_e_p_q_point
    !
 end subroutine

@@ -6,8 +6,8 @@ ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
 else
- git_Ylib=git@github.com:yambo-code/yambo-libraries.git
- branch_Ylib=none
+ git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+ branch_Ydriver=none
 endif
 #
 WGETFLAGS=--no-check-certificate -v
@@ -16,8 +16,8 @@ all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
 #
-Ylib:
-	@+URL="$(url_Ylib)"  ;  GBRANCH="$(branch_Ylib)"  ;  GIT="$(git_Ylib)"; LIB="$(pkgname_Ylib)"; $(getsrc_git); $(call copy_driver,"yambo")
+Ydriver:
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
 #
 # Libraries (archives)
 #
@@ -60,7 +60,7 @@ clean: clean_all
 #
 clean_all:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -s $(tarball_Ylib)     && test "$(keep_Ylib)"      != "yes" ;  then rm $(tarball_Ylib)    ; fi ; \
+          if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
           if test -s $(tarball_iotk)     && test "$(keep_iotk)"      != "yes" ;  then rm $(tarball_iotk)      ; fi ; \
           if test -s $(tarball_netcdf)   && test "$(keep_netcdf)"    != "yes" ;  then rm $(tarball_netcdf)    ; fi ; \

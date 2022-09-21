@@ -67,12 +67,14 @@ subroutine INIT_q_points( )
    q_source="is read from the El-Ph databases"
    nqibz=elph_nQ
    YAMBO_ALLOC(q_pt,(nqibz,3))
+   ! here I read from s.ph and I need to put a -1
    q_pt(:,:)=-real(PH_qpt(:,:),SP)
  else if(allocated(PH_qpt).and.elph_use_q_grid.and.elph_grids_are_expanded.and.nsym==1) then
    q_source="is read from the El-Ph databases expanded"
    nqibz=elph_nQ
    YAMBO_ALLOC(q_pt,(nqibz,3))
-   q_pt(:,:)=-real(PH_qpt(:,:),SP)
+   ! In the ndb.gkkp the -q was already imposed
+   q_pt(:,:)=real(PH_qpt(:,:),SP)
  endif
 #endif
  !

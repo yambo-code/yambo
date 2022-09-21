@@ -29,7 +29,7 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  use stderr,                ONLY:intc
  use com,                   ONLY:msg
  use interfaces,            ONLY:ELPH_alloc
- use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt
+ use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt,k_sstar,q_pt,q_sstar
  use D_lattice,             ONLY:n_atoms
  use ELPH,                  ONLY:ph_modes,elph_nb,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
 &                                elph_nQ,elph_nk_bz,elph_grids_are_expanded,elph_use_q_grid,&
@@ -98,7 +98,11 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    implicit none
    integer :: ik
    real(DP), allocatable :: gstore_kbz(:,:)
+   real(DP), allocatable :: abi_kibz(:,:)
+   integer,  allocatable :: abi_kbz2ibz(:,:)
    !
+   ! k-points of gstore, for now always in the BZ
+   !==============================================
    allocate(gstore_kbz(3, elph_nk_bz))
    !
    varid = netcdf_inquire_varid(ncid, "gstore_kbz")
@@ -111,20 +115,36 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    !
    deallocate(gstore_kbz)
    !
-   allocate(gstore_kbz(3, nkibz))
+   ! k-points in the IBZ
+   !=====================
+   allocate(abi_kibz(3, nkibz))
    !
    varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
-   netcdf_error = nf90_get_var(ncid, varid, gstore_kbz)
+   netcdf_error = nf90_get_var(ncid, varid, abi_kibz)
    call netcdf_check(ncid,netcdf_error,varid)
    !
    allocate(k_pt(nkibz,3) )
    do ik = 1,nkibz
-     k_pt(ik,:)=matmul(transpose(b),gstore_kbz(:,ik))*alat(:)/2.0_SP/pi
+     k_pt(ik,:)=matmul(transpose(b),abi_kibz(:,ik))*alat(:)/2.0_SP/pi
    enddo
    !
-   deallocate(gstore_kbz)
+   deallocate(abi_kibz)
+   !
+   ! symmetries to move from the BZ to IBZ
+   !=======================================
+   allocate(abi_kbz2ibz(6, nkbz))
    !
    ! Here I will have to load the k-points symmetries, etc ...
+   varid = netcdf_inquire_varid(ncid, "gstore_kbz2ibz")
+   netcdf_error = nf90_get_var(ncid, varid, abi_kbz2ibz)
+   call netcdf_check(ncid,netcdf_error,varid)
+   !
+   allocate(k_sstar(nkbz,2) )
+   do ik = 1,nkbz
+     k_sstar(ik,:)=abi_kbz2ibz(1:2,ik)
+   enddo
+   !
+   deallocate(abi_kbz2ibz)
    !
   end subroutine import_kpoints_group
   !
@@ -137,6 +157,8 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    implicit none
    integer :: iq
    real(DP), allocatable :: gstore_q(:,:)
+   real(DP), allocatable :: abi_qibz(:,:)
+   integer,  allocatable :: abi_qbz2ibz(:,:)
    !
    allocate(gstore_q(3, elph_nQ))
    !
@@ -145,11 +167,44 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    netcdf_error = nf90_get_var(ncid, varid, gstore_q)
    call netcdf_check(ncid,netcdf_error,varid)
    !
+   ! warning: here I et a -q
+   call warning(" setting PH_qpt=-qpt_abi")
    do iq = 1,elph_nQ
-     PH_qpt(iq,:)=matmul(transpose(b),gstore_q(:,iq))*alat(:)/2.0_SP/pi
+     PH_qpt(iq,:)=-matmul(transpose(b),gstore_q(:,iq))*alat(:)/2.0_SP/pi
    enddo
    !
    deallocate(gstore_q)
+   !
+   ! q-points in the IBZ
+   !=====================
+   allocate(abi_qibz(3, nqibz))
+   !
+   varid = netcdf_inquire_varid(ncid, "reduced_coordinates_of_kpoints")
+   netcdf_error = nf90_get_var(ncid, varid, abi_qibz)
+   call netcdf_check(ncid,netcdf_error,varid)
+   !
+   allocate(q_pt(nqibz,3) )
+   do iq = 1,nqibz
+     q_pt(iq,:)=matmul(transpose(b),abi_qibz(:,iq))*alat(:)/2.0_SP/pi
+   enddo
+   !
+   deallocate(abi_qibz)
+   !
+   ! symmetries to move from the BZ to IBZ
+   !=======================================
+   allocate(abi_qbz2ibz(6, nqbz))
+   !
+   ! Here I will have to load the k-points symmetries, etc ...
+   varid = netcdf_inquire_varid(ncid, "gstore_qbz2ibz")
+   netcdf_error = nf90_get_var(ncid, varid, abi_qbz2ibz)
+   call netcdf_check(ncid,netcdf_error,varid)
+   !
+   allocate(q_sstar(nqbz,2) )
+   do iq = 1,nqbz
+     q_sstar(iq,:)=abi_qbz2ibz(1:2,iq)
+   enddo
+   !
+   deallocate(abi_qbz2ibz)
    !
   end subroutine import_qpoints_group
   !
@@ -160,7 +215,7 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    use R_lattice,            only : b
    use D_lattice,            only : alat
    implicit none
-   integer :: iq,iqibz,qpt_map(elph_nQ)
+   integer :: iq,iqibz
    real(DP), allocatable :: phfreqs_ibz(:,:)
    !
    allocate(phfreqs_ibz(ph_modes,nqibz))
@@ -169,22 +224,16 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
    netcdf_error = nf90_get_var(ncid, varid, phfreqs_ibz)
    call netcdf_check(ncid,netcdf_error,varid)
    !
-   if (elph_nQ==nqibz) then
-     do iq = 1,elph_nQ
-       qpt_map(iq)=iq
+   if (elph_nQ==nqbz) then
+     do iq = 1,nqbz
+       iqibz=q_sstar(iq,1)
+       PH_freqs_sq(iq,:)=real(phfreqs_ibz(:,iqibz),SP)**2
      enddo
    else
-     ! This is a temporary implementation
-     ! It needs to be fixed for the case elph_nQ==nqbz)
-     do iq = 1,elph_nQ
-       qpt_map(iq)=mod(iq-1,nqibz)+1
+     do iqibz = 1,nqibz
+       PH_freqs_sq(iqibz,:)=real(phfreqs_ibz(:,iqibz),SP)**2
      enddo
    endif
-   !
-   do iq = 1,elph_nQ
-     iqibz=qpt_map(iq)
-     PH_freqs_sq(iq,:)=real(phfreqs_ibz(:,iqibz),SP)**2
-   enddo
    !
    deallocate(phfreqs_ibz)
    !

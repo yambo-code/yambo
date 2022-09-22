@@ -48,11 +48,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs_sq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
- use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
+ use parser_m,       ONLY:parser
+ use com,            ONLY:msg,of_open_close
  !
 #include<memory.h>
  !
@@ -68,6 +69,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  integer       :: iq_db
  integer       :: elph_branches_save(2)
  type(PP_indexes)::px
+ logical       :: l_prt_pl_q_res
+ complex(SP), allocatable :: PL_ii_q(:,:,:)
+ character(schlen) :: pl_file_name
+ integer, parameter  :: n_output=7
+ real(SP)            :: output_data(n_output)
+ character(schlen)   :: headers(n_output)
  !
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
@@ -93,6 +100,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  elph_branches=elph_branches_save
+ !
+ call parser('PLqres',l_prt_pl_q_res)
+ if(l_prt_pl_q_res) then
+   YAMBO_ALLOC(PL_ii_q,(wv%n_freqs,3,q%nbz))
+   PL_ii_q=cZERO
+ endif
  !
  ! Renormalization factors
  !
@@ -181,6 +194,11 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            PL_ii(iw,1)     =PL_ii(iw,1)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            PL_ii(iw,3)     =PL_ii(iw,3)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
            !
+           if(l_prt_pl_q_res) then
+              PL_ii_q(iw,1,iq_bz)     =PL_ii_q(iw,1,iq_bz)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+              PL_ii_q(iw,3,iq_bz)     =PL_ii_q(iw,3,iq_bz)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+           endif
+           !
          enddo
          !
        enddo
@@ -252,10 +270,51 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    W=wv%p(iw)
    Epsilon_ii(iw,:)=1._SP-Epsilon_ii(iw,:)
    PL_ii(iw,:)=-W*PL_ii(iw,:)
+   if(l_prt_pl_q_res) then
+     PL_ii_q(iw,:,:)=-W*PL_ii_q(iw,:,:)
+   endif
+   !
  enddo
+ !
+ if(l_prt_pl_q_res) then
+   ! Write on disk
+   do iq_bz=1,q%nbz
+     pl_file_name ='pl_bse_resolved_q'//intc(iq_bz)
+     !
+     call of_open_close(pl_file_name,'ot')
+     !
+     call msg('o pl_bse','# EXCITON PHONON')    
+     call msg('o pl_bse','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o pl_bse','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     call msg('o pl_bse','#')
+     headers(1)='E[eV]'
+     headers(2:n_output)=(/'Im(pl_ph )','Re(pl_ph )','Im(pl_nos)','Re(pl_nos)','Re(pl_sat)','Im(pl_sat)'/)
+     call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
+     call msg('o pl_bse','#')
+     !
+     ! Write output on file
+     !
+     do iw=1,wv%n_freqs
+       !
+       ! Luminescence
+       !
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
+&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),aimag(PL_ii(iw,3)),real(PL_ii(iw,3))/)
+       call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
+       !
+     enddo
+     !
+     ! Close files
+     !
+     call of_open_close(pl_file_name)
+   enddo
+   !
+ endif
+ ! 
  !
  call PP_redux_wait(Epsilon_ii)
  call PP_redux_wait(PL_ii) 
+ if(l_prt_pl_q_res) call PP_redux_wait(PL_ii_q) 
  !
  ! Free
  !

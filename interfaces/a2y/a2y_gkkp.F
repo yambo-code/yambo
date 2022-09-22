@@ -262,7 +262,7 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  ! Workspace
  !
- integer    :: varid,netcdf_error,ik,i_modes,ipos(6),isize(6),i_atom,xyz
+ integer    :: varid,netcdf_error,ik,i_modes,ipos(6),isize(6),i_atom,xyz,i_n,i_m
  real(DP), allocatable :: gstore_abinit(:,:,:,:,:,:),phdispl_cart_ibz(:,:,:,:,:)
  !
  ! (natom3, glob_nk, nb, glob_nq, nb, cplex) 
@@ -282,7 +282,14 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  do ik=1,elph_nk_bz
    do i_modes=1,ph_modes
-     GKKP%dVc(i_modes,:,:,ik,1)=cmplx(gstore_abinit(1,:,:,i_modes,ik,1),gstore_abinit(2,:,:,i_modes,ik,1),kind=SP)
+     ! Invert the band indexes and do the complex conjugate
+     ! See eq.(5) of the notes of Fulvio
+     do i_n=1,elph_nb
+       do i_m=1,elph_nb
+         GKKP%dVc(i_modes,i_n,i_m,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
+         &                                   -gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
+       enddo
+     enddo
    enddo
  enddo
  !

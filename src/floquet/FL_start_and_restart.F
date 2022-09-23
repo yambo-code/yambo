@@ -66,7 +66,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  !
  ! Working space
  !
- integer :: i1,i2,ib,i_f,i_k,i_sp,i_fl,i1_fks,i2_fks
+ integer :: i1,i2,ib,i_f,i_k,i_sp,i_fl,i1_fks,i2_fks,i_sp_pol
  integer :: ID,io_NonLinear
  integer, external::io_NL
  logical  :: l_lifted
@@ -188,7 +188,9 @@ call DIP_polarization(E,k,V_bands,NL_initial_P(4:6))
 if(.not.l_use_DIPOLES) then
   !   
   ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
-  call Berry_Polarization_NEQ(E,k,V_bands,NL_initial_P(1:3))
+  do i_sp_pol=1,n_sp_pol
+    call Berry_Polarization_NEQ(E,k,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),NL_initial_P(1:3))
+  enddo
   !
 else
   NL_initial_P(1:3)=NL_initial_P(4:6)
@@ -215,7 +217,7 @@ endif
  if(master_cpu) then
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   io_NonLinear=io_NL(ID)
+   io_NonLinear=io_NL("Nonlinear",ID)
    !
    if(io_NonLinear==0) then
      do i_f=1,n_frequencies
@@ -231,4 +233,3 @@ endif
  if(n_freqs_todo/=n_frequencies) call msg('s','RESTART, remaining frequencies ',n_freqs_todo)
  !
 end subroutine FL_start_and_restart
-

@@ -202,11 +202,13 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_V_bands=cZERO
    FL_V_bands_hist=cZERO
    FL_ac_phase=cZERO
-   do i1=1,E%nbf(i_sp_pol)
-     !
-     fl_shifted_zero_mode = max_fl_mode+1
-     FL_V_bands(i1,fl_shifted_zero_mode,i1,:,:)=cONE
-     !
+   do i_sp_pol=1,n_sp_pol
+     do i1=1,E%nbf(i_sp_pol)
+       !
+       fl_shifted_zero_mode = max_fl_mode+1
+       FL_V_bands(i1,fl_shifted_zero_mode,i1,:,i_sp_pol)=cONE
+       !
+     enddo
    enddo
    !
    FL_S_minus=cZERO

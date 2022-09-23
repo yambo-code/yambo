@@ -210,7 +210,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  ! Evaluate the external/total field
  !=================================
  !
- call RT_Ext_fields(A_ext,0.41341373336561360) !aim137 critical - see if this has any effect at all
+ call RT_Ext_fields_sum(A_ext,0.41341373336561360) !aim137 critical - see if this has any effect at all
  !
  A_tot=A_ext
  !
@@ -339,7 +339,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    else
      !
-     call FL_build_W_operator(E,k,A_tot,ik_bz,i_sp_pol,FL_V_bands(:,:,E%nbf(i_sp_pol),:,i_sp_pol),H_nl_sc)
+     call FL_build_W_operator(E,k,A_tot,ik_bz,i_sp_pol,FL_V_bands(:,:,:E%nbf(i_sp_pol),:,i_sp_pol),H_nl_sc)
      !
    endif                                                         
    !

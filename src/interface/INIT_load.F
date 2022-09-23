@@ -902,7 +902,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      type(levels), intent(in) :: E_in
      !
-     logical :: is_def(15)
+     logical :: is_def(16)
      integer :: i1,bands(2),tmp_bands(2)
      !
      if (initmode/=4) return

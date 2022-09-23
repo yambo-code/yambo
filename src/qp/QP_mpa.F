@@ -33,7 +33,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_sc_run
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
 use parser_m,       ONLY:parser
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -46,7 +46,7 @@ use parser_m,       ONLY:parser
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
- use X_m,           ONLY:X_alloc,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
@@ -175,7 +175,7 @@ use parser_m,       ONLY:parser
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2*X%mpa_npoles/))
+ if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
  allocate(W_(QP_dSc_steps))
  allocate(dc(QP_dSc_steps),stat=alloc_err)
  !
@@ -184,7 +184,7 @@ use parser_m,       ONLY:parser
  if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
  call parser('mpERdb',io_MULTIPOLE)
  !
- call PP_redux_wait
+ call PP_wait()
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
@@ -418,7 +418,7 @@ use parser_m,       ONLY:parser
  !
  deallocate(dc)
  deallocate(W_)
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  call MPA_free()
  !
  call timing('GW(mpa)',OPR='stop')

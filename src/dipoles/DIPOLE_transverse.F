@@ -277,8 +277,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)
          !
-         Dipole_Energy_treshold=Dip%Energy_treshold 
-         if(l_X_terminator.and.ic<=Dip%ib_lim(1)) Dipole_Energy_treshold=Dip%Energy_treshold_vv
+         Dipole_Energy_treshold=Dip%Energy_treshold
+         ! DEBUG <
+         ! if(l_X_terminator.and.ic<=Dip%ib_lim(1)) Dipole_Energy_treshold=Dip%Energy_treshold_vv
+         ! DEBUG >
          !
          !=====
          ! <v>

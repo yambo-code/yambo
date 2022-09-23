@@ -80,7 +80,6 @@ subroutine INIT_activate()
        call CPU_activate("X")
      endif
      call initactivate(1,'X_Threads')
-   endif
    if (l_elel_corr.or.l_elphoton_corr) then
      call CPU_activate("DIP")
      call initactivate(1,'X_Threads DIP_Threads')

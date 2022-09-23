@@ -44,11 +44,21 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! Work Space
  !
  integer           :: i_coll,i_comp,i_coll_mem,i_spin,i_n,i_m,i_kmq,ib,ibp,i_k,i_k_RT
+ logical           :: do_collisions(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2))
  complex(SP)       :: G_avg(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
  call timing('COLLISIONS (compose)',OPR='start')
+ !
+ do_collisions=.false.
+ !
+ do ibp=COLL_bands(1),COLL_bands(2)
+   do ib=COLL_bands(1),COLL_bands(2)
+     if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+     do_collisions(ib,ibp)=.true.
+   enddo
+ enddo
  !
  G_avg=cZERO
  !
@@ -105,7 +115,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
          !
          i_comp=i_comp+1
          !
-         if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+         if (.not.do_collisions(ib,ibp)) cycle
          !
          RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
 &                                      -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)

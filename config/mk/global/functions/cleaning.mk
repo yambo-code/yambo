@@ -21,9 +21,9 @@ define clean_driver
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
- if [ "$(1)" = "Ylib"   ] ||                  [ "$(1)" = "all" ] ; then \
+ if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
    EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
-   WDIR="$(libdir)";TARG="Ylib";$(clean_lib_driver);\
+   WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
    WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
@@ -37,7 +37,7 @@ define clean_driver
  if [ "$(1)" = "interfaces" ] ; then $(call clean_src_driver,"interfaces"); fi; \
  if [ "$(1)" = "conf"      ] ||                  [ "$(1)" = "all" ] ; then $(clean_config); fi; \
  if [ "$(1)" = "dep"       ] ||                  [ "$(1)" = "all" ] ; then $(clean_dependencies); fi ; \
- if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ylib_folder); fi 
+ if                                              [ "$(1)" = "all" ] ; then $(clean_log_and_Ydriver_folder); fi 
 endef
 #
 # Drivers (intermediate)
@@ -118,12 +118,19 @@ define clean_config
   done;\
  fi;\
  rm -fr $(prefix)/config/stamps_and_lists/*.list;\
+ rm -fr $(prefix)/config/msg_ydb;\
+ rm -fr $(prefix)/config/setup;\
+ rm -fr $(prefix)/config/report;\
+ rm -fr $(prefix)/config/mk/defs.mk $(prefix)/config/mk/local/defs.mk $(prefix)/config/mk/global/defs.mk;   \
  rm -fr $(prefix)/bin;\
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
- rm -fr $(prefix)/lib/archive/Makefile
+ rm -fr $(prefix)/lib/archive/Makefile;\
+ rm -fr $(prefix)/src/tools/.objects;\
+ rm -fr $(prefix)/src/wf_and_fft/sgfft.F;\
+ rm -fr $(prefix)/sbin/compilation/helper.inc.sh
 endef
 define clean_bins
  $(ECHO) "\t[CLEANING] bin(s)" ;\
@@ -136,7 +143,10 @@ endef
 define clean_ext_libs_bin_and_include
  $(ECHO) "\t[CLEANING external-libraries] bin(s) and include(s)" ; \
  rm -fr $(prefix)/lib/bin/*; \
- rm -fr $(prefix)/include/system
+ rm -fr $(prefix)/include/system; \
+ rm -fr $(prefix)/include/branch.inc; \
+ rm -fr $(prefix)/include/driver/editor.h; \
+ rm -fr $(prefix)/include/headers/common/have_malloc.h
 endef
 define clean_stamps
  $(ECHO) "\t[CLEANING] Stamps" ; \
@@ -154,7 +164,7 @@ define clean_dependencies
            -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
 endef
-define clean_log_and_Ylib_folder
+define clean_log_and_Ydriver_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
  rm -fr $(srcdir)/lib/yambo;\
  rm -fr $(prefix)/log 

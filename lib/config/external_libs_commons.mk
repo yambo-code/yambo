@@ -2,7 +2,13 @@
 define uncompress
 if ! test -e uncompressed.stamp; then \
  gunzip < ../archive/$(PACKAGE).tar.gz | ../../config/missing --run tar xf -; \
- touch uncompressed.stamp;\
+ if ! test -d $(PACKAGE)  ; then \
+  for folder in ./* ; do \
+   if ! test -d $$folder; then continue; fi; \
+   mv $$folder $(PACKAGE) ; \
+  done; \
+ fi; \
+ touch uncompressed.stamp; \
 fi
 endef
 #

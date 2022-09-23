@@ -37,7 +37,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
  !
@@ -82,7 +82,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
- call PP_redux_wait
+ call PP_wait()
  !
  call live_timing('Excitonic Spin',px%n_of_elements(myid+1)) 
  !

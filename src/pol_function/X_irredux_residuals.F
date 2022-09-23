@@ -38,13 +38,14 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:g_rot,qindx_X,bz_samp,G_m_G,q0_def_norm
- use R_lattice,     ONLY:G_m_G_d
+ use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
  !
 #include<dev_defs.h>
+ !
+ use R_lattice,     ONLY:DEV_VAR(g_rot),DEV_VAR(G_m_G)
  !
  implicit none
  !
@@ -64,9 +65,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  !     many calls are done, though)
  !
  complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
- complex(SP)        :: rhotw_save(Xo_scatt%ngrho),rhotw_save2(Xo_scatt%ngrho),Z_
+ complex(SP) DEV_ATTR :: DEV_VAR(rhotw_save)(Xo_scatt%ngrho),DEV_VAR(rhotw_save2)(Xo_scatt%ngrho)
  integer            :: sop_inv_l,X_ng
- complex(SP)        :: ctmp
+ complex(SP)        :: ctmp,Z_
  real(SP)           :: Z_eh_occ
  logical            :: l_X_term_vv
  integer            :: ngrho
@@ -172,6 +173,17 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      ! iG=1 case
      DIP_projected=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk))
      if(iv/=ic) DEV_VAR(Xo_scatt%rhotw)(1)=    -conjg(DIP_projected)
+     !
+     ! 2022/05/11 DS & AF
+     ! Note: lim (q->0) <psi_nk+q | e-^{-i*q*r} | psi_nk > = <psi_nk   | 1 | psi_nk > = 1._SP
+     !       in the code the value cONE is needed for the Drude term;
+     !       to be checked what to do with the terminator
+     !       at present with the terminator we use 0.0_SP
+     !
+     ! If I take the expansion e-^{-i*q*r}= 1 + O(q) for the leading term this gives instead
+     !       lim (q->0) <psi_nk+q | 1 | psi_nk > = 0._SP 
+     !       Only using also <psi_nk+q | = <psi_nk | (1 + O(q) ) we recover the correct result.
+     !
      if(iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=cONE-conjg(DIP_projected)
      !
      if (l_X_term_vv.and.iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=0.0_SP

@@ -34,7 +34,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
  use D_lattice,     ONLY:n_atoms
  use LIVE_t,        ONLY:live_timing
  use hamiltonian,   ONLY:H_ref_bands,Hzero
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use interfaces,    ONLY:WF_load,WF_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_IF_START_RD_CL_IF_END,manage_action
@@ -85,7 +85,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
    return
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  YAMBO_ALLOC(kbv_ks_space,(H_ref_bands(1):H_ref_bands(2)))
  YAMBO_ALLOC(kbv_gauged,(fft_size,n_spinor))

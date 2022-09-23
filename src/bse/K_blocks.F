@@ -37,7 +37,7 @@ subroutine K_blocks( )
  !
  use pars,         ONLY:cZERO,SP,IP,IPL
  use parallel_m,   ONLY:PAR_IND_T_ordered,myid,ncpu,PAR_COM_HOST
- use parallel_int, ONLY:PP_redux_wait,PARALLEL_live_message
+ use parallel_int, ONLY:PP_wait,PP_redux_wait,PARALLEL_live_message
  use BS,           ONLY:BS_blk,n_BS_blks,n_BS_blks,BS_K_coupling,BS_T_grp,BS_nT_grps,&
 &                       BS_K_dim,BS_Block_size,BS_LiveTiming_steps,BS_H_dim,n_BS_blks_min,&
 &                       BS_n_eh_spaces,BS_res_ares_n_mat,BS_IO_dim,l_BS_ares_from_res

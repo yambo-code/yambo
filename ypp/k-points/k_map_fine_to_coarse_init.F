@@ -225,7 +225,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    deallocate(rand_E)
  endif
  !
- if(.not.PH_grid) then
+ if(.not.PH_grid.and.Xen%nb>1) then
    gap(1)=minval(FineGd_E%E(Xen%nbf(1)+1,:,1))-maxval(FineGd_E%E(Xen%nbf(1),:,1)) 
    gap(2)=10000._SP
    do i1=1,FineGd_E%nk
@@ -241,7 +241,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  if (i_time_rev==1) call msg('s',':: Time reversal included ')
  if (i_time_rev==0) call msg('s',':: Time reversal not included')
  !
- if(.not.PH_grid) then
+ if(.not.PH_grid.and.Xen%nb>1) then
    if (all(Xen%nbf==Xen%nbm)) then
      call msg('s',':: Gap indirect              :',gap(1)*HA2EV,"[eV]")
      call msg('s','::     direct                :',gap(2)*HA2EV,"[eV]")

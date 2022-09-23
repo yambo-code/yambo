@@ -46,7 +46,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
  use com,            ONLY:msg,fat_log
  use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_global_indexes
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_global_indexes
  use LIVE_t,         ONLY:live_timing
  use matrix_operate, ONLY:m3inv,m3det
  use electrons,      ONLY:n_sp_pol,levels
@@ -486,7 +486,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! Before writing the new DB I need to wait that all cores are done
  ! with checking DB which was present before
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  if(l_setup.and.fat_log) call print_q_indirect( )
  !
@@ -498,7 +498,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! Before writing section 5 (qindx_B) I need to wait that the master is done
  ! with writing all other sections
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  do_qindx_B=master_cpu.and.X_scattering.and.Xk_grid_is_uniform.and.bse_scattering
 #if defined _PAR_IO
@@ -520,7 +520,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
    YAMBO_FREE(q%ptbz)
  endif
  call qindx_free('B')
- call PP_redux_wait()
+ call PP_wait()
  call PP_indexes_reset(PAR_IND_Xk)
  call PP_indexes_reset(PAR_IND_k)
  !

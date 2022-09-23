@@ -99,14 +99,10 @@ subroutine rim_spherical(Np,points,p_weight,radius,power,MULTIPLY_BY_Q)
  if (l_real_time     ) call section('=','Spherical RIM with a N='//trim(intc(power))//' power')
  if (.not.l_real_time) call section('p','Spherical RIM with a N='//trim(intc(power))//' power')
  !
- ! Random generator seed
- !
- call date_and_time(ch(1),ch(2),ch(3),iseed)
- iseed=iabs(iseed)
- !
+ ! Random generator seed. AF: fixing the seed for the sake of data reproducibility.
  ! iseed(4) must be odd
- !
- iseed(4)=2*(iseed(4)/2)+1
+ iseed=0
+ iseed(4:8) = (/5,6,7,8,9/)
  !
  ! Loop setup
  !

@@ -47,7 +47,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use drivers,         ONLY:l_oep_kli,l_oep_ceda
  use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
  use interfaces,      ONLY:LINEAR_ALGEBRA_driver 
- use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -114,7 +114,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  YAMBO_ALLOC(rhotw_rs,(QP_ng_Sx))
  !
  call PARALLEL_index(px,(/nkibz,E%nbf(:)/))
- call PP_redux_wait
+ call PP_wait()
  if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
  if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1))

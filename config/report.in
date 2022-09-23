@@ -42,6 +42,7 @@
 # 
 # - LIBRARIES - 
 #
+# [@Ydriver_check@] Ydriver : @Ydriver_LIB@
 # [@FUTILE_check@] FUTILE  : @FUTILE_LIBS@
 #                 @FUTILE_INCS@
 # [@YAML_check@] YAML    : @YAML_LIBS@

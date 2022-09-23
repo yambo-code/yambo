@@ -1,8 +1,8 @@
 #
 # GIT's repositories and branches
 #
-git_Ylib=git@github.com:yambo-code/yambo-libraries.git
-branch_Ylib=@with_yambo_libs_branch@
+git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+branch_Ydriver=@with_yambo_libs_branch@
 #
 git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
 branch_devxlib=develop

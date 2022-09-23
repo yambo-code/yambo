@@ -26,5 +26,5 @@
 #define YAMBO_SUBVERSION 1
 #define YAMBO_PATCHLEVEL 0
 #define YAMBO_REVISION 21796
-#define YAMBO_HASH "a4f467ea9" 
+#define YAMBO_HASH "dd5596d5a" 
 

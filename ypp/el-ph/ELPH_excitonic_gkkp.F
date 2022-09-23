@@ -34,7 +34,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  use ELPH,                ONLY:elph_nQ,ph_modes,&
 &                              elph_use_q_grid,PH_freqs_sq,GKKP
  use parallel_m,          ONLY:PP_indexes,PP_indexes_reset,myid
- use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,        ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use LIVE_t,              ONLY:live_timing
  use com,                 ONLY:msg,of_open_close
  use stderr,              ONLY:intc
@@ -76,7 +76,7 @@ subroutine ELPH_excitonic_gkkp(Xk)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/elph_nQ,Xk%nibz/))
- call PP_redux_wait
+ call PP_wait()
  !
  do iq=1,elph_nQ
    !

@@ -1,7 +1,9 @@
 #
 # EXT_LIBS imported 
 #
-include config/mk/defs.mk
+ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
+  include config/mk/defs.mk
+endif
 include lib/archive/package.list
 #
 INT_LIBS      = qe_pseudo slatec math77 local

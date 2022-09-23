@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -54,7 +54,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use SC,              ONLY:it_now
  use IO_int,          ONLY:io_control
  use IO_m,            ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
- use X_m,             ONLY:X_alloc,X_mat,X_t
+ use X_m,             ONLY:X_ALLOC_elemental,X_mat,X_t
  !
  ! I/O
  !
@@ -90,7 +90,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  io_err=io_X(X,Xw,ID)
  if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  !
- call X_alloc('X',(/X%ng,X%ng,1/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
  YAMBO_ALLOC(PPaR_ws,(X%ng,X%ng))
  YAMBO_ALLOC(PPaR,(X%ng,X%ng))
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -24,15 +24,15 @@
 subroutine RT_X_response(en,k,q)
  !
  use YPP_real_time,  ONLY:Use_FFT,Pol,Curr,N_probe_frequencies,&
-&                         N_probes,N_pumps,RT_OBSERVABLES_IO,X_order,&
+&                         N_probes,N_pumps,X_order,l_RT_pol,OBS_el_free,&
 &                         l_RT_X_inversion,Probe_path,Pump_path,N_probes,RT_conf,l_skip_OBS_IO
+ use YPP_interfaces, ONLY:RT_OBSERVABLES_IO
  use RT_control,     ONLY:OBS_RT_IO_t
- use pars,           ONLY:lchlen,schlen
- use stderr,         ONLY:STRING_split
+ use pars,           ONLY:schlen
+ use stderr,         ONLY:STRING_split,STRING_same
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use fields,         ONLY:Efield
- use com,            ONLY:jobstr
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -42,18 +42,17 @@ subroutine RT_X_response(en,k,q)
  !
  ! Work Space
  !
- integer           :: i_f,i_Probe,Ndefs
- character(lchlen) :: jobstr_save
+ integer           :: Ndefs,i_o
  character(schlen) :: probe_defs(3)
- logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin
+ logical           :: l_RT_LRR_real_field,l_RT_X_effective,l_RT_SHG_qssin,IO_error
  !
  call RT_OBSERVABLES_IO_paths('JP',en)
  !
- i_Probe=1
+ ! Here only the first Field is analyzed
+ !=======================================
+ call STRING_split(Efield(1)%ef_name,probe_defs,n_non_empty_strings=Ndefs)
  !
- call STRING_split(Efield(i_Probe)%ef_name,probe_defs,n_non_empty_strings=Ndefs)
- !
- l_RT_LRR_real_field= all( (/ Ndefs==1 ,N_pumps==0, N_probes==1, X_order==1/) )
+ l_RT_LRR_real_field= all( (/ Ndefs==1 ,N_pumps<=1, N_probes==1, X_order==1/) )
  !
  l_RT_SHG_qssin     = all( (/ trim(probe_defs(1))=="QSSIN" , N_pumps==0, N_probes==1, X_order==2/) )
  !
@@ -71,36 +70,49 @@ subroutine RT_X_response(en,k,q)
  !=========================
  if ( any((/l_RT_LRR_real_field,l_RT_SHG_qssin/)) ) then
    !
+   call section("=",'Pump and Probe(s) databases I/O')
+   !--------------------------------------------------
    ! Database
    !
-   ! Search the database in JOBSTR,Pump_path and Probe_path
+   allocate(Pol(N_pumps+N_probes))
+   allocate(Curr(N_pumps+N_probes))
    !
-   call RT_OBSERVABLES_IO( what='JP' )
+   call IO_temporary_jobdir_and_strings("ALL","SAVE")
    !
-   jobstr_save=jobstr
-   if (.not.allocated(Curr%F_t)) then
-     jobstr=trim(Pump_path)
-     call RT_OBSERVABLES_IO(what='JP', mesg=trim(Pump_path))
-   endif
-   if (.not.allocated(Curr%F_t)) then
-     do i_f=1,N_probes
-       jobstr=trim(Probe_path(i_f))
-       call RT_OBSERVABLES_IO( what='JP', mesg=trim(Pump_path))
-       if (allocated(Curr%F_t)) exit
-     enddo
-   endif
-   jobstr=trim(jobstr_save)
-   !
-   if (.not.allocated(Curr%F_t)) call error('J and P databases not found')
-   !
-   !  Initialization 
-   !
-   if ( l_RT_LRR_real_field.or. l_RT_SHG_qssin) then 
-     call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,l_skip_OBS_IO)
-     call RT_OBSERVABLES_damp_and_write(Curr,RT_conf,l_skip_OBS_IO)
+   if (N_pumps==0) then
+     Pol(1)%title ="polarization"
+     Curr(1)%title="current"
+   else
+     Pol(1)%title ="probe-polarization"
+     Curr(1)%title="probe-current"
+     Pol(2)%title ="pump-polarization"
+     Curr(2)%title="pump-current"
+     if (.not.STRING_same(Pump_path,"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Pump_path)
+     call RT_OBSERVABLES_IO( what='JP',J=Curr(2),P=Pol(2),IO_error=IO_error)
+     if (.not.allocated(Curr(2)%F_t)) call error('Pump databases missing/corrupt')
    endif
    !
-   if ( l_RT_LRR_real_field ) then
+   if (     STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("ALL","RESTORE")
+   if (.not.STRING_same(Probe_path(1),"default")) call IO_temporary_jobdir_and_strings("JOBSTR",Probe_path(1))
+   call RT_OBSERVABLES_IO( what='JP',J=Curr(1),P=Pol(1),IO_error=IO_error)
+   if (.not.allocated(Curr(1)%F_t)) call error('Probe databases missing/corrupt')
+   !
+   call IO_temporary_jobdir_and_strings("ALL","RESTORE")
+   !
+   !  Damping and output 
+   !---------------------
+   call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,l_skip_OBS_IO)
+   call RT_OBSERVABLES_damp_and_write(Curr(1),RT_conf,l_skip_OBS_IO)
+   if (N_pumps>0) then
+     call RT_OBSERVABLES_damp_and_write(Pol(2),RT_conf,l_skip_OBS_IO)
+     call RT_OBSERVABLES_damp_and_write(Curr(2),RT_conf,l_skip_OBS_IO)
+   endif
+   !
+   if ( l_RT_pol ) then
+     !
+     call RT_Polarization(en,k,q) 
+     !
+   else if ( l_RT_LRR_real_field ) then
      !
      ! CORE Logicals
      !---------------
@@ -130,7 +142,11 @@ subroutine RT_X_response(en,k,q)
  !
  ! CLEAN
  !
- YAMBO_FREE(Pol%F_t)
- YAMBO_FREE(Curr%F_t)
+ do i_o=1,N_probes+N_pumps
+   call OBS_el_free(Pol(i_o))
+   call OBS_el_free(Curr(i_o))
+ enddo
+ deallocate(Pol)
+ deallocate(Curr)
  !
 end subroutine

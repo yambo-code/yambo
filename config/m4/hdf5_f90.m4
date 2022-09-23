@@ -1,11 +1,10 @@
 #
-
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM, AF, DS
+# Authors (see AUTHORS file for details): AM, AF, DS, CA
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -43,7 +42,7 @@ AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
 # HDF5 PAR IO
 #
 AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
-             [Activate the HDF5 parallel io. Default is no.]))
+             [Enable the HDF5 parallel I/O. Default is yes]),,enable_hdf5_par_io="yes")
 #
 # HDF5 FOR P2Y (also requires parallel HDF5)
 #
@@ -53,8 +52,20 @@ AC_ARG_ENABLE(hdf5_p2y_support, AC_HELP_STRING([--enable-hdf5-p2y-support],
 enable_hdf5="yes" ;
 internal_hdf5="no"
 NETCDF_VER="v4"
-HDF5_OPT="--disable-parallel";
-IO_LIB_VER="serial";
+#
+if test "$mpibuild" = "yes" ; then
+  if test x"$enable_hdf5_par_io" = "xno" ; then 
+   HDF5_OPT="--disable-parallel";
+   IO_LIB_VER="serial";
+  else
+   HDF5_OPT="--enable-parallel";
+   IO_LIB_VER="parallel";
+  fi
+else
+  HDF5_OPT="--disable-parallel";
+  IO_LIB_VER="serial";
+  enable_hdf5_par_io="no";
+fi
 #
 # Other libs
 #
@@ -74,7 +85,7 @@ if test x"$enable_netcdf_v3"      = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_netcdf_par_io"  = "xyes" ; then  enable_hdf5=no      ; fi
 if test x"$enable_hdf5_par_io"    = "xyes" ; then  enable_hdf5=yes     ; fi
 #    
-if test x"$enable_hdf5_par_io" = "xyes"   ; then IO_LIB_VER="parallel"; fi
+if test x"$enable_hdf5_par_io" = "xno"   ; then IO_LIB_VER="serial"; fi
 #
 #
 # HDF5 support
@@ -99,9 +110,30 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
   if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
   #
-  if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
-  #
-  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  if test x"$with_hdf5_libs" != "x" ; then 
+    try_HDF5_LIBS="$with_hdf5_libs" ; 
+  else
+    #
+    # Automatic detection of hdf5 libs copied from QE
+    #
+    if test -e $with_hdf5_path/bin/h5pfc; then
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="parallel";
+    elif test -e $with_hdf5_path/bin/h5fc; then 
+       try_HDF5_LIBS=`$with_hdf5_path/bin/h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
+       try_hdf5_incdir=`$with_hdf5_path/bin/h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
+       IO_LIB_VER="serial";
+       enable_hdf5_par_io="no";
+    else
+      if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+      if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
+      if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
+      if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
+      if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
+      if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
+    fi
+  fi
   #
   if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
   #
@@ -109,12 +141,6 @@ if test x"$enable_hdf5" = "xyes"; then
   save_fcflags="$FCFLAGS" ;
   #
   FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
-  #
-  if test "$use_libz"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lz"   ; fi
-  if test "$use_libsz"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lsz"  ; fi
-  if test "$use_libm"    = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lm"   ; fi
-  if test "$use_libdl"   = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -ldl"  ; fi
-  if test "$use_libcurl" = "yes"; then try_HDF5_LIBS="$try_HDF5_LIBS -lcurl"; fi
   #
   LIBS="$try_HDF5_LIBS"
   #
@@ -129,9 +155,15 @@ if test x"$enable_hdf5" = "xyes"; then
   if test "x$hdf5" = xyes; then
     HDF5_LIBS="$try_HDF5_LIBS" ;
     HDF5_INCS="$try_HDF5_INCS" ;
-    #if test $IO_LIB_VER = "parallel"; then AC_MSG_RESULT([yes - parallel lib found]) ; fi
-    #if test $IO_LIB_VER = "serial";   then AC_MSG_RESULT([yes - serial lib found]) ; fi
-    AC_MSG_RESULT([yes]) ;
+    if test $IO_LIB_VER = "parallel"; then 
+       AC_MSG_RESULT([yes - parallel lib found]) ; 
+       HDF5_OPT="--enable-parallel"  ; 
+    fi
+    if test $IO_LIB_VER = "serial";   then
+       AC_MSG_RESULT([yes - serial lib found]) ;
+       HDF5_OPT="--disable-parallel"  ; 
+    fi
+    # AC_MSG_RESULT([yes]) ;
     IO_LIB_VER="unknown"
   fi
   #
@@ -211,22 +243,6 @@ elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" ; then
   #
 fi
 #
-# NETCDF-HDF5 PAR IO or HDF5-DATA COMPRESSION (the two are exclusive)
-#
-if test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_par_io" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    enable_hdf5_compression="no";
-    parallel_io="HDF5";    
-elif test x"$netcdf" = "xyes" && test x"$enable_pnetcdf" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_PAR_IO";
-    compile_pnetcdf=${compile_netcdf};
-    enable_hdf5_compression="no";
-    parallel_io="NetCDF";    
-elif test x"$netcdf" = "xyes" && test x"$hdf5" = "xyes" && test x"$enable_hdf5" = "xyes" && test x"$enable_hdf5_compression" = "xyes" ; then
-    def_netcdf="${def_netcdf} -D_HDF5_COMPRESSION";
-    parallel_io="COMPRESS-HDF5";    
-fi
-#
 AC_SUBST(HDF5_LIBS)
 AC_SUBST(HDF5_INCS)
 AC_SUBST(HDF5_OPT)
@@ -234,8 +250,6 @@ AC_SUBST(IO_LIB_VER)
 AC_SUBST(netcdf)
 AC_SUBST(hdf5)
 AC_SUBST(def_netcdf)
-AC_SUBST(compile_netcdf)
-AC_SUBST(compile_pnetcdf)
 AC_SUBST(compile_hdf5)
 AC_SUBST(internal_netcdf)
 AC_SUBST(internal_hdf5)

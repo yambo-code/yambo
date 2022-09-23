@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM (AF)
@@ -251,35 +251,36 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      !
    endif
    !
-   ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
+   ! When calculating EPS1 multiply X left and right by v_coul^1/2 (diagonal in reciprocal space)
    !
-   if (compute_on_gpu) then
-      !
-!      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(iq,Xo_cols(1):),"R",scal=cmplx(4._SP*pi,kind=SP)) 
-      !
-      BUFFER_blc_d => BUFFER%blc_d
-      !
-      !$cuf kernel do(2)
-      do ig2=Xo_cols(1),Xo_cols(2)
-        do ig1=Xo_rows(1),Xo_rows(2)
-          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+   if (X%whoami/=1) then
+     !
+     if (compute_on_gpu) then
+        !
+        BUFFER_blc_d => BUFFER%blc_d
+        !
+        !$cuf kernel do(2)
+        do ig2=Xo_cols(1),Xo_cols(2)
+          do ig1=Xo_rows(1),Xo_rows(2)
+            BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+          enddo
         enddo
-      enddo
-      !
-      call dev_stream_sync(stream_default)
-      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
-      !
-   else
-      !
-      !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-      do ig2=Xo%cols(1),Xo%cols(2)
-        do ig1=Xo%rows(1),Xo%rows(2)
-          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+        !
+        call dev_stream_sync(stream_default)
+        call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+        !
+     else
+        !
+        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+        do ig2=Xo%cols(1),Xo%cols(2)
+          do ig1=Xo%rows(1),Xo%rows(2)
+            BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+          enddo
         enddo
-      enddo
-      !$omp end parallel do
-      !
+        !$omp end parallel do
+        !
+     endif
+     !
    endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
@@ -307,7 +308,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  if (X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par)
-   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
+   call X_ALLOC_parallel(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
    !
  endif
  !

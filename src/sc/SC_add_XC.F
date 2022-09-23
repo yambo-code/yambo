@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -63,7 +63,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  !
  ! tests for excitons
  !
- real(SP)                 :: n_exc,ELEC,HOLE,DELTA
+ real(SP)                 :: ELEC,HOLE,DELTA
  !
  type(QP_t)   :: qp_dummy
  !

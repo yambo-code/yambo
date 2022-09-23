@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM DS
@@ -26,6 +26,10 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  ! Here I fill the kernel (coupling not yet included) in a slepc matrix to be
  ! used for diagonalization and/or invertion
  !
+ !      | (K_r)     (cI*K_c)    |  
+ !  K = |                       |
+ !      | (-cI*K_c^*)  (-K_r^*) |
+ !
  use pars,           ONLY:cI,cONE
  use BS,             ONLY:BS_K_dim,BS_H_dim,BS_blk,n_BS_blks,BS_K_coupling,&
  &                        BS_res_ares_n_mat,l_BS_ares_from_res
@@ -49,8 +53,8 @@ subroutine K_stored_in_a_slepc_matrix(i_BS_mat,slepc_mat)
  Mat,     intent(out) :: slepc_mat
  !
  integer     :: i_c,i_r,i_Tk,i_Tp,i_B,H_shift(2)
- PetscFortranComplex :: Mij
- PetscFortranInt     :: H_pos(2),SL_K_dim(2),SL_H_dim
+ PetscScalar         :: Mij
+ PetscInt            :: H_pos(2),SL_K_dim(2),SL_H_dim
  PetscErrorCode      :: ierr
  !
  if(     BS_K_coupling) SL_H_dim=BS_H_dim

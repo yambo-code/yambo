@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -41,7 +41,7 @@ module matrix
  integer              :: N_MAX_PAR_to_PAR_comms=0
  integer              :: N_PAR_to_PAR_comms    =0
  character(schlen)    :: PAR_to_PAR_comm_NAME
- type(yMPI_comm),    allocatable  :: PAR_to_PAR_comm_SAVE(:)
+ type(yMPI_comm),   allocatable  :: PAR_to_PAR_comm_SAVE(:)
  character(schlen), allocatable  :: PAR_to_PAR_comm_SAVE_NAME(:)
  !
  type PAR_matrix

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,8 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  use QP_m,          ONLY:QP_states_simmetrize
  use R_lattice,     ONLY:nqbz
  use parallel_int,  ONLY:PP_redux_wait
- use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_Q_A2A,&
-&                        PAR_Q_bz_index,PAR_IND_Q_bz
+ use LIVE_t,        ONLY:live_timing
+ use parallel_m,    ONLY:PAR_COM_Q_A2A,PAR_COM_Q_A2A,PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz
  use ELPH,          ONLY:gsqF_energy_steps,gsqF_ca_corr,gsqF_fan,gsqF_life_f,gsqF_life_bose,&
 &                        gsqF_dw,eval_G_using_KK,elph_branches,elph_nQ_used,elph_use_q_grid
  !
@@ -43,6 +43,8 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
  if (.not.elph_use_q_grid) nq=elph_nQ_used
  !
  ! Degenerate bands average
+ !
+ call live_timing('El-Ph Sc  [symm]',PAR_nQ_bz)
  !
  do iq_loop=1,nq
    !
@@ -75,6 +77,11 @@ subroutine ELPH_simmetrize_and_distribute_gsqF(en)
      enddo
      !
    enddo
+   !
+   call live_timing(steps=1)
+   !
  enddo
+ !
+ call live_timing()
  !
 end subroutine

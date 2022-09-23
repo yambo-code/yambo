@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function variables_X(ID,local_desc,X)
+integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc,IO_desc_reset
@@ -35,10 +35,11 @@ integer function variables_X(ID,local_desc,X)
  integer            ::ID
  type(IO_desc)      ::local_desc
  type(X_t)          ::X
+ logical            ::EM1S_NOSOC
  !
  ! Work Space
  !
- integer             ::sec_size
+ integer             ::sec_size,tmp_ib(2)
  logical             ::local_long_gauge
  character(schlen)   ::X_label,VAR_NAME
  !
@@ -52,8 +53,20 @@ integer function variables_X(ID,local_desc,X)
  !
  call io_variable_elemental(ID,DB_I0=X%ng_db,&
 &     VAR="X matrix size",I0=X%ng,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=local_desc)
+ !
+ tmp_ib=X%ib
+ if (read_is_on(ID).and.EM1S_NOSOC) then
+   ! Here I'm in the case where I'm using a DB computed without SOC
+   ! The bands in X%ib are with SOC, while on disk I have half of the bands
+   tmp_ib(1)=(X%ib(1)-1)/2+1
+   tmp_ib(2)= X%ib(2)   /2
+ endif
+ !
  call io_variable_elemental(ID,&
-&     VAR="X band range",I1=X%ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+&     VAR="X band range",I1=tmp_ib,CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=local_desc)
+ !
+ if (read_is_on(ID).and..not.EM1S_NOSOC) X%ib=tmp_ib
+ !
  call io_variable_elemental(ID,UNIT=HA2EV,&
 &     VAR="X e/h energy range ",TERMINATOR="[eV]",R1=X%ehe,CHECK=.true.,OP=(/">=","<="/),DESCRIPTOR=local_desc)
  !
@@ -62,14 +75,14 @@ integer function variables_X(ID,local_desc,X)
  VAR_NAME=trim(X_label)//"Time_ordering"
  if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
  call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
- call io_variable_elemental(ID,&
-&     VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
+ call io_variable_elemental(ID,VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
+ !
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
    !
    ! TDDFT_KERNEL
    !
    call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,0,0)
-   call io_variable_elemental(ID,VAR="X xc-Kernel",CH0=X%f_xc,CHECK=.true.,DESCRIPTOR=local_desc)
+   call io_variable_elemental(ID,VAR="X Hxc Kernel",CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=local_desc)
    !
    ! DRUDE
    !

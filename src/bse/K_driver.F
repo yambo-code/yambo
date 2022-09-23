@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,22 +27,20 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use com,            ONLY:msg
  use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
- use frequency,      ONLY:w_samp,W_reset,Mauri_damp
- use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge
+ use frequency,      ONLY:w_samp,W_reset
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_OUTPUT_driver
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps
- use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_K_is_ALDA,BS_cpl_K_corr,&
-&                         BS_Blocks_and_Transitions_free,BSqpts,L_kind,l_BS_photolum
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps,BSS_uses_DbGd
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
+&                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
- use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss,l_col_cut
- use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
+ use parallel_m,     ONLY:PAR_IND_WF_b_and_k,PAR_K_scheme,PARALLEL_default_mode
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:eval_G_minus_G
- use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free,RIM_W_for_graph
- use D_lattice,      ONLY:l_1D,l_2D
- use parser_m,       ONLY:parser
+ use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  !
 #include<memory.h>
  !
@@ -66,9 +64,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  call section('*','Bethe Salpeter Equation driver')
  !
- call parser('RIM_W_graph',RIM_W_for_graph)
- call msg('r','RIM_W_graph', RIM_W_for_graph)
- !
  ! TDDFT setup and Resets
  !========================
  call X_reset(X_tddft)
@@ -78,6 +73,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
+ ! Observables initialization
+ !============================
+ call K_observables( )
+ !
  ! PL is implemented only in velocity gauge
  if (l_BS_photolum) global_gauge="velocity"
  !
@@ -85,10 +84,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    call warning(" Not a valid gauge in input. Switching to length gauge")
    global_gauge="length"
  endif
- !
- Mauri_damp = .false.
- call parser('Mauri_damp',Mauri_damp)
- if(Mauri_damp) call warning("Using damping of Mauri paper")
  !
  ! Energy points
  !===============
@@ -100,6 +95,11 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
+ !
+ ! Double Grid support
+ !=====================
+ BSS_uses_DbGd = ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'i')/=0)) &
+&           .or. ((Ken%FG%nb>=BS_bands(2)) .and. (index(BSS_mode,'h')/=0))
  !
  ! PARALLEL SETUP
  !================
@@ -121,7 +121,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
    !
    ! Here I need the distribution over k
-   call PARALLEL_SETUP_K_scheme("K")
+   if(     trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("K")
+   if(.not.trim(PARALLEL_default_mode)=="KQmemory") call PARALLEL_SETUP_K_scheme("Kdef")
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
@@ -142,24 +143,24 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !
  do iq=BS_q(1),BS_q(2)
    !
+   ! Output files & observables initialization
+   !===========================================
+   call X_OUTPUT_driver("DEF INIT") 
+   !
    if (iq==1) BSqpts(:,iq) = BSS_q0
    if (iq/=1) BSqpts(:,iq) = q%pt(iq,:)
    !
    call K_driver_init("loop-init",iq,Ken,Xk)
    !
-   call section('*','Bethe Salpeter Equation @q'//trim(intc(iq)))
-   !
-   ! Need to convert eels to epsilon ? (part B)
-   !===========================================
-   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
-   if (l_col_cut.and.(l_1D.or.l_2D)) then
-     if(iq==1) BSS_eels_to_eps=.false.
-     if(iq/=1) BSS_eels_to_eps=trim(L_kind)=="full"
+   if (iq==BS_q(1)) call section('+','Bethe Salpeter Equation @q'//trim(intc(iq)))
+   if (iq> BS_q(1)) then
+     call section('-P',' ')
+     call section('=','Bethe Salpeter Equation @q'//trim(intc(iq)))
    endif
    !
    ! BSS output arrays
    !===================
-   call K_observables("ALLOC",W_bss)
+   call X_ALLOC_global("ALLOC",W_bss)
    !
    if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
      !
@@ -197,7 +198,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! ... EH space (no parallelization)
    call K_Transitions_setup("K",iq,Ken,Xk,Dip)
-   !call K_Transitions_k_resolved(iq,Ken,Xk,Dip)
    !
    !... Parallel distribution
    call PARALLEL_global_Response_T_transitions(Xk)
@@ -246,7 +246,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
        Xen%E =Ken%E
      endif
      !
-     call PP_redux_wait
+     call PP_wait()
      X_tddft%iq=iq
      X_tddft%ng=BS_n_g_exch
      call OPTICS_driver(Xen,Xk,q,W_bss,X_tddft,Dip) 
@@ -254,10 +254,9 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    endif
    !
    ! CLEAN (OBSs)
-   call K_observables("FREE",W_bss)
+   call X_ALLOC_global("FREE",W_bss)
    !
    ! CLEAN (Blocks)
-   !
    call BS_Blocks_and_Transitions_free( )
    !
  enddo

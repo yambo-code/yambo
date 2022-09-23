@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -28,7 +28,6 @@ subroutine symmetries_driver(E,Xk)
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
  use IO_m,                ONLY:rm_file
- use IO_int,              ONLY:ver_is_gt_or_eq
  use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym,atom_mass,atoms_map,n_atoms_species_max,n_atomic_species

@@ -1,5 +1,5 @@
 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
  !
  use pars,          ONLY:SP
- use electrons,     ONLY:levels,n_sp_pol,n_spin,filled_tresh,spin_occ
+ use electrons,     ONLY:levels,n_sp_pol,filled_tresh,spin_occ
  !
  implicit none
  !
@@ -134,14 +134,15 @@ subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,Nbf,Nbm,I_dir,E_k_dir,E_k_ind)
    do i_sp_pol=1,n_sp_pol
      !
      if (Nbf_(i_sp_pol)/=Nbm_(i_sp_pol)) cycle
-     E_g_ind_(i_sp_pol,1)=E_cb_min(i_sp_pol)-E_vb_max(i_sp_pol) 
-     E_g_ind_(i_sp_pol,2)=E_vb_max(i_sp_pol)-E_vb_min(i_sp_pol)
-     E_g_ind_(i_sp_pol,3)=E_cb_max(i_sp_pol)-E_cb_min(i_sp_pol)
+     E_g_ind_(i_sp_pol+1,1)=E_cb_min(i_sp_pol)-E_vb_max(i_sp_pol)
+     E_g_ind_(i_sp_pol+1,2)=E_vb_max(i_sp_pol)-E_vb_min(i_sp_pol)
+     E_g_ind_(i_sp_pol+1,3)=E_cb_max(i_sp_pol)-E_cb_min(i_sp_pol)
      !
    enddo
  endif
  !
- E%E_ind_gap(1:n_sp_pol) =E_g_ind_(1:n_sp_pol,1)
+ if(n_sp_pol==1) E%E_ind_gap(1)  =E_g_ind_(1,1)
+ if(n_sp_pol==2) E%E_ind_gap(1:2)=E_g_ind_(2:3,1)
  ! 
  ! [2] Direct Gaps (min/max)
  !

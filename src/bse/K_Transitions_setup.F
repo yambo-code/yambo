@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -48,14 +48,14 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
- use com,          ONLY:isec
- use BS_solvers,   ONLY:BSS_mode
+ use BS_solvers,   ONLY:BSS_mode,BSS_uses_DbGd
  ! mode ="T"
  use BS,           ONLY:T_group,BS_bands,BS_T_grp,BS_nT_grps,BS_n_eh_spaces,&
-&                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC
+&                       BS_Blocks_and_Transitions_alloc,BS_perturbative_SOC,&
+&                       BS_nkFGbz_in_Tgrp
  ! mode ="K"
  use BS,           ONLY:BS_K_dim,BS_H_dim,BS_nT_at_k,BS_K_coupling,  &
-&                       l_BS_ares_from_res,BS_n_eh_spaces,BS_res_ares_n_mat
+&                       l_BS_ares_from_res,BS_res_ares_n_mat
  use DIPOLES,      ONLY:DIPOLE_t
  use parallel_m,   ONLY:PAR_IND_WF_b_and_k,PAR_IND_T_ordered,PAR_IND_T_groups,&
 &                       PAR_IND_T_Haydock,PP_indexes_reset
@@ -78,20 +78,17 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
  !
  ! Work Space
  !
- character(1) :: sec
  real(SP)     :: E_eh,E_eh_SOC_corr(2/n_sp_pol),f_eh,f_eh_RES,f_eh_PL
  logical      :: l_trans_in_group,l_grp_to_grp
  integer      :: ikbz,ikpbz,iv,ic,ik,ikp,i_sp_v,i_sp_c,i_star,ib1,ib2,isp1,isp2,  &
 &                i_T_now,i_T_group_now,i_T_group_last,i_T_group_start,i_g,n_loops,i_loop,i_T_in_the_grp,i_res_ares,&
-&                BS_nT_at_k_tmp(Xk%nibz*2),V_bands(2),C_bands(2)
+&                BS_nT_at_k_tmp(Xk%nibz*2),V_bands(2),C_bands(2),&
+&                nColFG_in_T_group_now,i_ColFG,ikFGbz,ikFG
  !
  logical, external :: K_Transition_check
  !
- if (isec(3)/=0) sec="-"
- if (isec(3)==0) sec="+"
- !
- if (mode=="K") call section(sec,'Transition pre-analysis @q'//trim(intc(iq)))
- if (mode=="T") call section(sec,'Transition Groups build-up @q'//trim(intc(iq)))
+ if (mode=="K") call section("+P",'Transition pre-analysis @q'//trim(intc(iq)))
+ if (mode=="T") call section("=",'Transition Groups build-up @q'//trim(intc(iq)))
  !
  call k_build_up_BZ_tables(Xk)
  !
@@ -103,6 +100,9 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
      BS_T_grp(i_g)%size=0
    enddo
    n_loops=2
+   !
+   allocate(BS_nkFGbz_in_Tgrp(BS_nT_grps))
+   !
    call PP_indexes_reset(PAR_IND_WF_b_and_k)
    YAMBO_ALLOC(PAR_IND_WF_b_and_k%element_2D,(BS_bands(2),Xk%nibz))
    PAR_IND_WF_b_and_k%element_2D=.FALSE.
@@ -149,6 +149,16 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
        !
        ! Moreover I cannot move iv,ic loops insiede i_sp_pol and i_star loops
        ! Otherwise runs with parallelization over eh fail
+       ! Having i_star inside the loops is likely what makes the distribution
+       ! of the algorithm with the qindx_B distributed in memory very slow
+       ! since i_k_bz and i_p_bz change at each iteration of the loop
+       !
+       if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
+         nColFG_in_T_group_now = maxval(Xk%FGbz%N_mapped(&
+&                                Xk%k_table(ik,Xk%star(ik,:Xk%nstar(ik)))))
+       else
+         nColFG_in_T_group_now=1
+       end if
        !
        do iv=V_bands(1),V_bands(2)
          do ic=C_bands(1),C_bands(2)
@@ -169,8 +179,16 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                ikpbz=qindx_X(iq,ikbz,1)
                ikp  =Xk%sstar(ikpbz,1)
                !
-               if(i_res_ares==1) then; ib1=iv; ib2=ic; isp1=i_sp_v; isp2=i_sp_c; endif
-               if(i_res_ares==2) then; ib1=ic; ib2=iv; isp1=i_sp_c; isp2=i_sp_v; endif
+               ib1=iv 
+               ib2=ic 
+               isp1=i_sp_v 
+               isp2=i_sp_c
+               if (i_res_ares==2) then
+                 ib1=ic 
+                 ib2=iv 
+                 isp1=i_sp_c 
+                 isp2=i_sp_v
+               endif
                !
                if (.not.K_Transition_check(Ken,Dip,iq,ik,ikp,ib1,ib2,isp2,i_res_ares,&
 &                                          E_eh,E_eh_SOC_corr,f_eh,f_eh_RES,f_eh_PL)) cycle
@@ -186,6 +204,8 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                !
                if (i_loop==1) BS_T_grp(i_T_group_now)%size=BS_T_grp(i_T_group_now)%size+1
                !
+               if (i_loop==2) BS_nkFGbz_in_Tgrp(i_T_group_now) = nColFG_in_T_group_now
+               !
                l_trans_in_group=PAR_IND_T_groups%element_1D(i_T_group_now)
                !
                l_grp_to_grp= any( PAR_IND_T_ordered%element_2D(i_T_group_now,:)) .or. &
@@ -200,7 +220,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                  !
                  if (i_loop==2) then
                    !
-                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now)
+                   call BS_Blocks_and_Transitions_alloc(Ken,i_T_group_now,nColFG_in_T_group_now)
                    !
                    BS_T_grp(i_T_group_now)%i_T_ref   =i_T_group_start 
                    BS_T_grp(i_T_group_now)%i_res_ares=i_res_ares
@@ -224,8 +244,21 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                   PAR_IND_T_Haydock%element_1D(i_T_group_now)=.TRUE.
                endif
                !
-               BS_T_grp(i_T_group_now)%E(i_T_in_the_grp) =E_eh
+               BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,1) =E_eh
                BS_T_grp(i_T_group_now)%f(i_T_in_the_grp) =f_eh
+               !
+               ! IAM (2022/01/19):
+               ! Transition energies in fine grid only for Haydock + DbGd case
+               !
+               if ( BSS_uses_DbGd  .and. (index(BSS_mode,'h')/=0) ) then
+                 if( Xk%FGbz%N_mapped(ikbz)>0 ) then
+                   do ikFGbz=Xk%FGbz%k_range(ikbz,1)+1,Xk%FGbz%k_range(ikbz,2)
+                     ikFG = Xk%FGbz%E_map(ikFGbz)
+                     i_ColFG = ikFGbz - Xk%FGbz%k_range(ikbz,1) + 1
+                     BS_T_grp(i_T_group_now)%E(i_T_in_the_grp,i_ColFG) = Ken%FG%E(ic,ikFG,1) - Ken%FG%E(iv,ikFG,1)
+                   enddo
+                 endif
+               end if
                !
                ! To be fixed
                if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL

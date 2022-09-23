@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -23,8 +23,7 @@
 !
 subroutine NL_ypp_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
-&                         l_skip_OBS_IO
+ use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO,Pump_path
  use pars,           ONLY:SP,pi,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
@@ -34,7 +33,7 @@ subroutine NL_ypp_driver(en,k)
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
- use com,            ONLY:msg
+ use com,            ONLY:jobstr,msg
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -57,6 +56,7 @@ subroutine NL_ypp_driver(en,k)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
+ character(lchlen) :: jobstr_save
  !
  call section("*",'NL Post Processing')
  !
@@ -70,10 +70,18 @@ subroutine NL_ypp_driver(en,k)
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
  io_Nonlinear=io_NL(dbname,ID)
- if(io_Nonlinear/=0) call error("Error reading NonLinear database")
+ if(io_Nonlinear/=0) call error(" Error reading NonLinear database")
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
- io_Nonlinear_REF=io_NL(dbname//"_REF",ID_REF)
+ io_Nonlinear_REF=-1
+ if(Pump_path/='none') then
+    jobstr_save=jobstr
+    jobstr     =trim(Pump_path)
+    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
+    io_Nonlinear_REF=io_NL(dbname,ID_REF)
+    if(io_Nonlinear_REF/=0) call error(' Pump reference polarization not found!!')
+    call msg('rs','Found Pump reference polarization in: '//Pump_path)
+    jobstr     =jobstr_save
+ endif 
  !
  l_skip_OBS_IO=.false.
  !
@@ -118,11 +126,16 @@ subroutine NL_ypp_driver(en,k)
    !
    if(io_Nonlinear_REF==0) then
      call warning("removing reference polarization/current")
+     jobstr_save=jobstr
+     jobstr     =trim(PUMP_path)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
-     io_Nonlinear=io_NL(dbname//"_REF",ID_REF)
+     io_Nonlinear=io_NL(dbname,ID_REF)
+     jobstr=jobstr_save
      do i_d=1,3
        RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
      enddo
+      ! Restore original parameters of the Probe
+      call Efield_duplicate(Efield_probe,Efield(i_Probe))
    endif
 
    !
@@ -151,13 +164,13 @@ subroutine NL_ypp_driver(en,k)
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
- call msg('s',' Field type    ', trim(Efield_probe%ef_name))
+ call msg('s','Field type    ', trim(Efield_probe%ef_name))
  !
  select case (trim(Efield_probe%ef_name))
    !
    ! CONTINUOUS MONOCHROMATIC SOURCES
    !
- case('SIN','SOFTSIN','ANTIRES')
+   case('SIN','SOFTSIN','ANTIRES')
      !  
      YAMBO_ALLOC(X_effective,(0:X_order,n_frequencies,3))
      YAMBO_ALLOC(Susceptibility,(0:X_order,n_frequencies,3))
@@ -206,7 +219,7 @@ subroutine NL_ypp_driver(en,k)
          !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
-                &                                                   Divide_by_Field(Efield(i_Probe),i_order)
+&                                        Divide_by_Field(Efield(i_Probe),i_order)
          else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if
@@ -222,25 +235,27 @@ subroutine NL_ypp_driver(en,k)
      YAMBO_FREE(Susceptibility)
      YAMBO_FREE(Harmonic_Frequency)
      !
-  case ('DELTA','PULSE')
-    !
-    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
-    Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    Pol%title="Polarization"
-    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
-    call RT_OBSERVABLES_damp_and_write(Pol,RT_conf,.FALSE.)
-    call RT_X_LRR_real_field(en)
-    YAMBO_FREE(Pol%F_t)
+   case ('DELTA','PULSE')
      !
-     ! OTHER CASES NOT YET WORKING
+     allocate(Pol(1))
+     YAMBO_ALLOC(Pol(1)%F_t,(RT_conf%T_n_steps,3))
+     Pol(1)%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+     Pol(1)%N=3
+     Pol(1)%title="polarization"
+     call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,.FALSE.)
+     call RT_X_LRR_real_field(en)
+     YAMBO_FREE(Pol(1)%F_t)
+     deallocate(Pol)
      !
   case default 
-    call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
-  end select
-  !
-  YAMBO_FREE(RT_P_probe)
-  !
-contains
+     ! OTHER CASES NOT YET WORKING
+     !
+     call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
+ end select
+ !
+ YAMBO_FREE(RT_P_probe)
+ !
+ contains
    !
    subroutine plot_X_effective()
      !

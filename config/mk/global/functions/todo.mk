@@ -6,9 +6,11 @@ define todo_lib
 endef
 define todo_precision
  $(ECHO) "\t[$@] Compilation Precision check";\
- if echo $(1) | grep -q DOUBLE ; then \
+ if echo $(1)" "$(xcpp) | grep -q DOUBLE ; then \
+  $(ECHO) "\t           to compile in DOUBLE";\
   if [ ! -f  $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp ]; then \
    if [ -f  $(compdir)/config/stamps_and_lists/compilation_objects_in_SINGLE_precision.stamp ]; then \
+     $(ECHO) "\t          cleaning compiled in SINGLE";\
      $(MAKE) $(MAKEFLAGS) clean what="int-libs"; \
      $(MAKE) $(MAKEFLAGS) clean what="driver"; \
      $(MAKE) $(MAKEFLAGS) clean what="ypp"; \
@@ -18,8 +20,10 @@ define todo_precision
    touch  $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp; \
   fi; \
  else \
+  $(ECHO) "\t           to compile in SINGLE";\
   if [ ! -f  $(compdir)/config/stamps_and_lists/compilation_objects_in_SINGLE_precision.stamp ]; then \
    if [ -f  $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp ]; then \
+    $(ECHO) "\t           cleaning compiled in DOUBLE";\
     $(MAKE) $(MAKEFLAGS) clean what="int-libs"; \
     $(MAKE) $(MAKEFLAGS) clean what="driver"; \
     $(MAKE) $(MAKEFLAGS) clean what="ypp"; \

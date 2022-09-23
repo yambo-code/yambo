@@ -26,7 +26,7 @@ integer function io_MPA(X,Xw,ID)
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:nqibz,g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc,X_alloc
+ use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,MPA_desc
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
@@ -36,7 +36,6 @@ integer function io_MPA(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:PAR_COM_X_WORLD
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
  !
 #include<memory.h>
@@ -48,7 +47,7 @@ integer function io_MPA(X,Xw,ID)
  !Work Space
  !
  integer           :: sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
- logical           :: different_db_RL_order,perform_IO
+ logical           :: different_db_RL_order
  character(schlen) :: ch,db_desc
  character(2)      :: local_XC_KIND
  real(SP),   allocatable :: RL_vecs_disk(:,:)
@@ -73,18 +72,10 @@ integer function io_MPA(X,Xw,ID)
  !
  io_extension(ID)='mpa_ER'
  !
-#if defined _PAR_IO
- perform_IO=PAR_COM_X_WORLD%CPU_id==0.or.read_is_on(ID)
-#else
- perform_IO=.true.
-#endif
+ io_MPA=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID) 
+ if (io_MPA/=0) goto 1
  !
- if(perform_IO) then
-   io_MPA=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID) 
-   if (io_MPA/=0) goto 1
- endif
- !
- if (any((/io_sec(ID,:)==1/)).and.perform_IO) then
+ if (any((/io_sec(ID,:)==1/))) then
    !
    ! Header
    !
@@ -116,8 +107,7 @@ integer function io_MPA(X,Xw,ID)
  !
  if (iq==0) goto 1
  !
- call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err, &
-&                 COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err)
  !
  !  type(X_t)    ::X(5)  x s d p m
  !
@@ -133,11 +123,8 @@ integer function io_MPA(X,Xw,ID)
    io_com_save=io_com(ID_frag)
    call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
-   if (perform_IO) then
-     call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
-     call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
-     !
-   endif
+   call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
+   call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
    !
    call def_variable_elemental(ID_frag,"",0,0,1)
    io_MPA=io_status(ID_frag)

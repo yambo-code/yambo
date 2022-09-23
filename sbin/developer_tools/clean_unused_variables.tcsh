@@ -143,6 +143,7 @@ cat << EOF > AWK_separate
  na = split (line,a)
  var_line = "yes"
  if (index(line,"use")>0 && index (line,"only")==0 &&  index (line,"ONLY")==0 ) var_line = "no"
+ if (index(line,"code_branch")>0) var_line = "no"
  if (index(line,"call")>0) found_call = "yes"
  if (index(line,"&")==0 && index(line,"real")==0  &&
      index(line,"integer")==0 && index(line,"complex")==0  &&

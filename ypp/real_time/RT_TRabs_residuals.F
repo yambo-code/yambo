@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -160,7 +160,6 @@ subroutine RT_TRabs_residuals(what,N_trans,N_dirs,DIP_dir,Xen,Xk,nb,l_EQ)
      real(SP)    :: Delta_f,Delta_df
      integer     :: ib,ibp,i_sp,ik
      Delta_f=(Xen%fo(ib,ik,i_sp)-Xen%fo(ibp,ik,i_sp))/spin_occ
-     !Delta_df=(Xen%df(ib,ik,i_sp)-Xen%df(ibp,ik,i_sp))/spin_occ
      Delta_df=(Xen%f(ib,ik,i_sp)-Xen%f(ibp,ik,i_sp))/spin_occ-Delta_f
      gimme_f_and_delta_f(1)=Delta_f
      gimme_f_and_delta_f(2)=Delta_df

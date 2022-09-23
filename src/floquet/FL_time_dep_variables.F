@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_time_dep_variables(E,k,FL_V_bands)
+subroutine FL_time_dep_variables(E,k)
  !
  ! Subroutine to interace with ypp
  !
@@ -44,7 +44,6 @@ subroutine FL_time_dep_variables(E,k,FL_V_bands)
  !
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k
- complex(SP),   intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
  !
  ! Work Space
  !
@@ -86,8 +85,8 @@ subroutine FL_time_dep_variables(E,k,FL_V_bands)
            idx=k_periodic_idx(idx,k_map)
            ikp=k_map%k_map_dir(idx(1),idx(2),idx(3))
            !
-           call FL_all_time_determinants(E,FL_S_plus(:,:,:,id+(istep-1)*3,ik_bz,is),&
-                   &                   FL_all_time_S_det(:,id+(istep-1)*3,ik_bz,is),ik_bz,ikp)
+           call FL_all_time_determinants(E,ik_bz,ikp,is,FL_S_plus(:,:E%nbf(is),:E%nbf(is),id+(istep-1)*3,ik_bz,is),&
+           &                                            FL_all_time_S_det(:,id+(istep-1)*3,ik_bz,is))
          enddo
        endif
      enddo
@@ -171,7 +170,7 @@ subroutine FL_time_dep_variables(E,k,FL_V_bands)
  !
 end subroutine
 !
-subroutine FL_all_time_determinants(en,FL_S_plus,FL_all_time_S_det,ikbz,ikp)
+subroutine FL_all_time_determinants(en,ikbz,ikp,i_sp,FL_S_plus,FL_all_time_S_det)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1,HA2EV
@@ -185,13 +184,13 @@ subroutine FL_all_time_determinants(en,FL_S_plus,FL_all_time_S_det,ikbz,ikp)
  implicit none
  !
  type(levels), intent(in)   :: en
- complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
+ integer,     intent(in)    :: ikbz,ikp,i_sp
+ complex(SP), intent(inout) :: FL_S_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
  complex(DP), intent(inout) :: FL_all_time_S_det(NE_steps)
- integer,     intent(in)    :: ikbz,ikp
  !
  ! Work Space
  !
- complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,NE_steps)
+ complex(SP)   :: FL_time_S_plus(en%nbf(i_sp),en%nbf(i_sp),NE_steps)
  integer       :: i_t,i1_extra,i1_shifted_fl,i1,i2
  real(SP)      :: time,w0,T_period,t_samples(NE_steps)
  !
@@ -223,9 +222,9 @@ subroutine FL_all_time_determinants(en,FL_S_plus,FL_all_time_S_det,ikbz,ikp)
    !
    ! Add Quasi-energies exponentials
    ! ================================
-   do i1=1,en%nbf
+   do i1=1,en%nbf(i_sp)
      !
-     do i2=1,en%nbf
+     do i2=1,en%nbf(i_sp)
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
                                &  * exp(+cI*FL_QE(i1,ikbz,1)*time) &
@@ -240,7 +239,7 @@ subroutine FL_all_time_determinants(en,FL_S_plus,FL_all_time_S_det,ikbz,ikp)
    ! Calculate determinant as a function of time
    ! ============================================
    !
-   call SERIAL_inversion(en%nbf,FL_time_S_plus(:,:,i_t),FL_all_time_S_det(i_t),.true.)
+   call SERIAL_inversion(en%nbf(i_sp),FL_time_S_plus(:,:,i_t),FL_all_time_S_det(i_t),.true.)
    !
  enddo
  !

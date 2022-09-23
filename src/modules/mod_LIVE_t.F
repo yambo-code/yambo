@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -335,12 +335,10 @@ module LIVE_t
    end subroutine
    !
    subroutine live_timing_close( )
+     use stderr,  ONLY:log_as_a_file,logfile_unit
      implicit none
-     ! 
-     if (steps_done==time_steps) return
-     !
-     call live_timing_add(steps=time_steps-steps_done)
-     !
+     if (.not.steps_done==time_steps) call live_timing_add(steps=time_steps-steps_done)
+     if(log_as_a_file) flush(logfile_unit)
    end subroutine
    !
    !

@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,8 +28,9 @@ subroutine electrons_magnetization(Xk,Xen)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_sp_pol
  use FFT_m,          ONLY:fft_size
+ use interfaces,     ONLY:el_magnetization
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,use_xcrysden,&
-&                         use_gnuplot,use_cube,plot_title,l_density,l_norm_to_one,mag_dir
+&                         use_gnuplot,use_cube,plot_title,l_density,mag_dir
  use com,            ONLY:msg,of_open_close
  use xc_functionals, ONLY:magn
  !
@@ -63,8 +64,6 @@ subroutine electrons_magnetization(Xk,Xen)
  if (use_cube) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.cube'
  if (use_xcrysden) output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d.xsf'
  if (use_gnuplot)  output_fname='mag_'//trim(mag_dir)//'_'//trim(intc(plot_dim))//'d'
- !
- l_norm_to_one=.false.
  !
  if (use_cube) then 
    call of_open_close(trim(output_fname),'o')

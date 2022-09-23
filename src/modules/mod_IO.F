@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -137,12 +137,18 @@ module IO_m
  integer :: io_code_version(max_io_units,3)
  integer :: io_code_revision(max_io_units,2) ! devel,GPL
  integer :: io_serial_number(max_io_units)
+ !
  ! io_netcdf_var(ID,1)  is used for tmp vars by io_elemental, io_bulk,  def/io_variable_elemental
  ! io_netcdf_var(ID,2:) is used for stored var-IDs by def/io_variable_bulk
  integer :: io_netcdf_var(max_io_units,max_io_vars_open) 
  logical :: io_resetable(max_io_units)
  character(lchlen)          :: io_file(max_io_units)
  character(lchlen)          :: io_folder(max_io_units)
+ !
+ ! Parallel I/O
+ integer :: io_PAR_comm(max_io_units) ! COMM allowed to write the DB
+ integer :: io_PAR_cpu(max_io_units)  ! =1 if the CPU is part of the COMM and/or allowed to read/write
+                                      ! =0 otherwise
  !
  ! Type & extension
  !
@@ -205,24 +211,39 @@ module IO_m
    end function
    !
 #if !defined _io_lib
-   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index)
+   integer function manage_action(IO_ACTION,NOW,FIRST,LAST,PAR_index,element_1D)
      !
      use parallel_m, ONLY:PP_indexes
      !
      integer, intent(in) :: IO_ACTION,NOW
      integer, intent(in) :: FIRST,LAST
      type(PP_indexes), intent(in), optional :: PAR_index
+     logical, intent(in),          optional :: element_1D(LAST-FIRST+1)
      !
-     integer :: start_,end_,ii
+     integer :: start_,end_,ii,N
+     logical, allocatable :: element_1D_(:)
      !
      end_  =LAST
      start_=FIRST
      !
      if (present(PAR_index)) then
+       if(.not.allocated(PAR_index%element_1D)) call error(" manage action, element_1S of PAR_index not allocated")
+       N=size(PAR_index%element_1D)
+       allocate(element_1D_(N))
+       element_1D_=PAR_index%element_1D
+     endif
+     !
+     if (present(element_1D)) then
+       N=LAST-FIRST+1
+       allocate(element_1D_(N))
+       element_1D_=element_1D
+     endif
+     !
+     if(allocated(element_1D_)) then
        start_=0
        end_  =0
-       do ii=1,size(PAR_index%element_1D)
-         if (PAR_index%element_1D(ii)) then
+       do ii=1,N
+         if (element_1D_(ii)) then
            if (start_==0) start_=ii
            end_=ii
          endif
@@ -252,11 +273,12 @@ module IO_m
 #endif
    !
    subroutine io_reset(ID)
+     use parallel_m, ONLY:mpi_comm_null
      integer :: ID
      io_status(ID)=0
      !
-     ! DEBUG. AM Jan2020. The IO_type cannot be zeroed oterwise several errors appear. To be fixed.
-     !io_type(ID)=0
+     io_PAR_comm(ID)=mpi_comm_null
+     io_PAR_cpu(ID)=0
      io_unit(ID)=0
      io_mode(ID)=0
      io_sec(ID,:)=0

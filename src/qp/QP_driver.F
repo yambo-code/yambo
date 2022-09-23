@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr,l_RIM_W
  use electrons,     ONLY:levels,n_sp_pol,spin
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng,RIM_W_for_graph
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
@@ -37,7 +37,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
 &                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
-&                        l_GW_terminator,GW_terminator_Kind,QP_G_info,GW_iterations,GWo_iterations
+&                        l_GW_terminator,QP_G_info,GW_iterations,GWo_iterations
+ use parser_m,      ONLY:parser
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
@@ -74,6 +75,11 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (QP_n_G_bands(2)>en%nb) call error("Too many bands required in Green's function. Run DFT with more bands!")
  !
  if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
+ !
+ call parser('RIM_W',l_RIM_W)
+ call parser('RIM_W_diag',RIM_W_is_diagonal)
+ call parser('RIM_W_graph',RIM_W_for_graph)
+ if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
  ! 

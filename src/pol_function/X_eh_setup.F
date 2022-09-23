@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,19 +40,26 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  ! Work Space
  !
- integer :: ik_bz,i_sym,ik,ik_m_q,iv,ic,Nv,Nc,i_sp,i_pole,ic_min,Nc_XTerm
+ integer :: ik_bz,i_sym,ik,ik_m_q,iv,ic,Nv(n_sp_pol),Nc(n_sp_pol),i_sp,i_pole,ic_min,Nc_XTerm(n_sp_pol),N_tot
  logical :: MPI_logicals_on,l_XTerm_vv
  real(SP):: E_eh,E_in,f_eh,local_tresh
  real(SP), allocatable :: poles(:),Ein_poles(:)
  !
- Nv=Xen%nbm-X%ib(1)+1
- Nc=X%ib(2)-Xen%nbf
+ do i_sp=1,n_sp_pol
+   Nv(i_sp)=Xen%nbm(i_sp)-X%ib(1)+1
+   Nc(i_sp)=X%ib(2)-Xen%nbf(i_sp)
+ enddo
  !
  Nc_XTerm=0
  if (l_X_terminator) Nc_XTerm=Nv
  !
- YAMBO_ALLOC(poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
- YAMBO_ALLOC(Ein_poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ N_tot=0
+ do i_sp=1,n_sp_pol
+   N_tot=N_tot+Nv(i_sp)*(Nc(i_sp)+Nc_XTerm(i_sp))
+ enddo
+ !
+ YAMBO_ALLOC(poles,(Xk%nbz*N_tot))
+ YAMBO_ALLOC(Ein_poles,(Xk%nbz*N_tot))
  !
  MPI_logicals_on=allocated(PAR_IND_Xk_bz%element_1D)
  !
@@ -65,24 +72,24 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  X_eh_setup=0
  local_tresh=epsilon(1._SP)
  !
+ do i_sp=1,n_sp_pol
  do ik_bz=1,Xk%nbz
    !
    if (MPI_logicals_on) then
      if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
    endif
    !
-   do iv=X%ib(1),X%ib(1)+Nv-1
+   do iv=X%ib(1),X%ib(1)+Nv(i_sp)-1
      !
      if (MPI_logicals_on) then
        if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
      endif
      !
      ! setting terminator bnd range
-     ic_min = X%ib(2)-Nc+1
+     ic_min = X%ib(2)-Nc(i_sp)+1
      if (l_X_terminator) ic_min=X%ib(1) 
      !
      do  ic=ic_min,X%ib(2)
-       do i_sp=1,n_sp_pol
          !
          if (MPI_logicals_on) then
            if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
@@ -93,7 +100,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          ik_m_q =Xk%sstar(i_sym,1)
          !
          ! terminator handling
-         if (ic>=X%ib(1).and.ic<=Xen%nbm.and.l_X_terminator) then
+         if (ic>=X%ib(1).and.ic<=Xen%nbm(i_sp).and.l_X_terminator) then
            l_XTerm_vv=.TRUE.
            E_eh=X_term_E-Xen%E(iv,ik_m_q,i_sp)       
          else

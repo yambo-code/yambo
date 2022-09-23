@@ -27,10 +27,11 @@ module fl_optics
  use R_lattice,       ONLY:nXkbz
  use pars,            ONLY:SP,schlen,lchlen
  use electrons,       ONLY:levels
- use nl_optics
  !
 #include<memory.h>
+ !
  ! Bands in terms of Kohn-Sham orbitals
+ !
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_V_bands_hist(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
@@ -67,6 +68,7 @@ module fl_optics
  logical  :: l_FL_conv_Chi,l_FL_conv_Rho
  !
  contains
+   !
    subroutine FL_alloc(en)
      !
      use pars,           ONLY:SP
@@ -78,7 +80,7 @@ module fl_optics
      use QP_m,           ONLY:QP_nk
      use electric,       ONLY:ELECTRIC_alloc
      use drivers,        ONLY:l_use_Hxc_collisions
-     use nl_optics,      ONLY:V_bands,n_frequencies,NL_P_t
+     use nl_optics,      ONLY:V_bands,n_frequencies,NL_P_t,full_rho,E_full,NL_bands,l_use_DIPOLES
      !
      implicit none
      !
@@ -102,10 +104,10 @@ module fl_optics
      call FL_H_alloc(en,.true.,.false.,FL_states)
      !
      ! aim137 allocate V_bands because I still need it for FL_start_and_restart
-     YAMBO_ALLOC(V_bands,(NL_bands(2),en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(V_bands,(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol))
      ! aim137 FL_bands in FKS space broken down in bands x fl modes
-     YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
      !
      YAMBO_ALLOC(FL_Ho_lift_degeneracy,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
@@ -118,8 +120,8 @@ module fl_optics
      !
      ! FL overlaps
      !
-     YAMBO_ALLOC(FL_S_plus,(en%nbf,en%nbf,n_tot_extra_modes,6,nXkbz,n_sp_pol))
-     YAMBO_ALLOC(FL_S_minus,(en%nbf,en%nbf,n_tot_extra_modes,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(FL_S_plus,(maxval(en%nbf),maxval(en%nbf),n_tot_extra_modes,6,nXkbz,n_sp_pol))
+     YAMBO_ALLOC(FL_S_minus,(maxval(en%nbf),maxval(en%nbf),n_tot_extra_modes,6,nXkbz,n_sp_pol))
      YAMBO_ALLOC(FL_time_S_det,(n_tot_time_steps,6,nXkbz,n_sp_pol)) !same number of time steps as fl_modes
      !
      ! FL FT matrices
@@ -139,7 +141,7 @@ module fl_optics
      !
      YAMBO_ALLOC(FL_QE,(1:NL_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_QE_hist,(1:NL_bands(2),QP_nk,n_sp_pol))
-     YAMBO_ALLOC(FL_ac_phase,(en%nbf,QP_nk,n_sp_pol))
+     YAMBO_ALLOC(FL_ac_phase,(maxval(en%nbf),QP_nk,n_sp_pol))
      !
      if(.not.l_use_DIPOLES) then
        call  ELECTRIC_alloc(en)
@@ -158,6 +160,7 @@ module fl_optics
      use R_lattice,      ONLY:nXkbz
      use QP_m,           ONLY:QP_nk
      use FFT_m,          ONLY:fft_size
+     use nl_optics,      ONLY:VAL_BANDS,I_relax,NL_bands
      !
      implicit none
      !
@@ -166,9 +169,9 @@ module fl_optics
      ! Valence bands in fft space
      !
      if(fft_size>0) then
-       YAMBO_ALLOC(VAL_BANDS,(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol))
+       YAMBO_ALLOC(VAL_BANDS,(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      endif
-     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),en%nbf,PAR_Xk_nibz,n_sp_pol))
+     YAMBO_ALLOC(I_relax,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),maxval(en%nbf),PAR_Xk_nibz,n_sp_pol))
      YAMBO_ALLOC(Ho_plus_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),PAR_Xk_nibz,n_sp_pol))
      !aim137 k-parallelization
      YAMBO_ALLOC(FL_Ho_plus_Sigma,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),PAR_Xk_nibz,n_sp_pol))
@@ -181,6 +184,7 @@ module fl_optics
      use real_time,      ONLY:rho_reference,Ho_plus_Sigma,RT_Vnl_xc
      use electric,       ONLY:ELECTRIC_free
      use drivers,        ONLY:l_use_Hxc_collisions
+     use nl_optics,      ONLY:I_relax,V_bands,full_rho,E_full,VAL_BANDS,l_use_DIPOLES
      !
      implicit none
      !

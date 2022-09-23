@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -63,7 +63,7 @@ subroutine RT_Glesser_evolve(En,kpt,dG_old,dG_in,dG_out,dT,dTp)
    if (l_RT_EXP.and.l_RT_ACC ) call RT_EXP_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_EXP.and.l_RT_STD ) call RT_EXP_step_std(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    !
-   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
+   if (l_RT_EULER            ) call RT_EULER_step(dG_in(:,:,ik),dG_out(:,:,ik),ik,En%nbf,dT)
    !
    if (l_RT_INV.and.l_RT_ACC ) call RT_INV_step_accurate(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)
    if (l_RT_INV.and.l_RT_DIAG) call RT_INV_step_diago(dG_old(:,:,ik),dG_in(:,:,ik),dG_out(:,:,ik),ik,dT)

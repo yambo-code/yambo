@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -24,9 +24,9 @@
 subroutine INIT_read_command_line(rstr,init_)
  !
  use pars,           ONLY:schlen
- use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,&
+ use drivers,        ONLY:infile_editing,l_bse,l_alda_fxc,l_chi,l_elel_corr,l_nl_p_and_p,&
 &                         l_elel_scatt,l_elph_corr,l_elph_scatt,l_elphoton_corr,&
-&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_phel_scatt,l_phel_corr,l_dipoles
+&                         l_elphoton_scatt,l_em1s,l_em1d,l_ppa,l_phel_scatt,l_phel_corr,l_dipoles,l_X
  use BS,             ONLY:BSK_mode
  use BS_solvers,     ONLY:BSS_mode
  use X_m,            ONLY:Chi_mode
@@ -137,7 +137,7 @@ subroutine INIT_read_command_line(rstr,init_)
      ! V_real_time=8
      ! V_parallel=9
      ! V_nl_optics=10
-     ! V_ph=10
+     ! V_ph=11
      ! V_fl_optics=12
      ! V_all=99
      !
@@ -162,9 +162,11 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
      !
      if ( trim(rstr_piece(i1)) == 'screen') then
-       l_em1s= STRING_same(trim(rstr_piece(i1+1)),'s')
-       l_em1d= (STRING_same(trim(rstr_piece(i1+1)),'f') )
-       l_ppa = (STRING_same(trim(rstr_piece(i1+1)),'p') )
+       l_em1s= STRING_match(trim(rstr_piece(i1+1)),'s')
+       l_em1d= (STRING_match(trim(rstr_piece(i1+1)),'d') )
+       l_ppa = (STRING_match(trim(rstr_piece(i1+1)),'p') )
+       l_X   = (STRING_match(trim(rstr_piece(i1+1)),'X') )
+       if (l_X)   call initactivate(1,'Xx')
        if (l_em1s) call initactivate(1,'em1s')
        if (l_em1d) call initactivate(1,'em1d')
        if (l_ppa)  call initactivate(1,'ppa')
@@ -241,7 +243,8 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'dyson' ) then
        QP_solver=trim(rstr_piece(i1+1))
-       if (.not.any((/trim(QP_solver)=='n',trim(QP_solver)=='s',trim(QP_solver)=='g',trim(QP_solver)=='r'/)))  QP_solver='n'
+       if (.not.any((/STRING_match(QP_solver,'n'),STRING_match(QP_solver,'s'),&
+&                     STRING_match(QP_solver,'g')/)))  QP_solver='n'
 #if !defined  _ELPH && !defined _QED
        l_elel_corr=.true.
 #endif
@@ -280,15 +283,15 @@ subroutine INIT_read_command_line(rstr,init_)
          infile_editing=.true.
          l_ppa=.TRUE.
          if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'ppa')
+         call initactivate(1,'ppa el_el_corr')
        else if (trim(rstr_piece(i1+1))=='c') then
          infile_editing=.true.
          if (i_cycle==1) QP_solver="n"
-         call initactivate(1,'cohsex dyson')
+         call initactivate(1,'cohsex dyson el_el_corr')
        else if (trim(rstr_piece(i1+1))=='r') then
          infile_editing=.true.
          if (i_cycle==1) QP_solver="s"
-         call initactivate(1,'em1d')
+         call initactivate(1,'em1d el_el_corr')
 #if defined  _ELPH 
        else if (trim(rstr_piece(i1+1))=='fan') then
          infile_editing=.true.
@@ -344,6 +347,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
        !
      endif
 #endif
@@ -363,6 +367,7 @@ subroutine INIT_read_command_line(rstr,init_)
        V_is_defined=INIT_read_command_line_potentials(V_string,"ip")
        V_is_defined=INIT_read_command_line_potentials(V_string,"f")
        V_is_defined=INIT_read_command_line_potentials(V_string,"h")
+       V_is_defined=INIT_read_command_line_potentials(V_string,"cvonly")
        !
      endif
 #endif
@@ -407,6 +412,24 @@ subroutine INIT_read_command_line(rstr,init_)
        if ( i_cycle == 2 .and. .not. V_is_defined ) H_potential='IP'
        !
      endif
+#endif
+     !
+#if defined _NL
+     !
+     ! NL
+     !
+     if ( trim(rstr_piece(i1)) == 'nloptics' ) then
+       !
+       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=1
+       if ( trim(rstr_piece(i1+1)) == 'p'   ) then
+          n_ext_fields=2
+          l_nl_p_and_p=.TRUE.
+       endif
+       !
+       if( n_ext_fields==0) n_ext_fields=1
+       !
+     endif
+     !
 #endif
      !
 #if defined _SC || defined _RT

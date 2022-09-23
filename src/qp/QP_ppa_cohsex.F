@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,8 +32,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,l_rt_carriers_in_use
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+ use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
+&                        l_rt_carriers_in_use,l_RIM_W
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
 &                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
@@ -46,9 +47,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
- use X_m,           ONLY:X_alloc,X_mat,X_mat_d,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,&
+&                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -83,7 +85,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
  character(schlen)::ch,SECTION_name,W_name
- logical          ::X_is_TR_rotated,l_X_alloc
+ logical          ::X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
  real(SP)         ::eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol),PPA_E
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
@@ -97,6 +99,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer, device :: iscp_rhotw_d(:)
  complex(SP), pointer, device :: isc_gamp_d(:,:)
 #endif
+ !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
  !
@@ -115,7 +118,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! COHSEX: bands setup
  !
  if ((l_sc_srpa.or.l_cohsex.or.l_sc_coh.or.l_sc_sex  ).and.(.not.COHSEX_use_empties)) then
-   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),n_met_bands)
+   QP_n_G_bands(2)=max(maxval(QP_table(:,:2)),maxval(n_met_bands))
  endif
  !
  ! Section
@@ -134,8 +137,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
- if (GW_iter==0) call section('+',trim(SECTION_name))
- if (GW_iter> 0) call section('=',trim(SECTION_name))
+ if (GW_iter==0) then
+   if(l_RIM_W) then
+     call section('-',trim(SECTION_name))
+   else
+     call section('+',trim(SECTION_name))
+   end if
+ end if
+ if (GW_iter > 0) call section('=',trim(SECTION_name))
  !
  if (GW_iter==0) then
    call msg('r', '[  GW  ] Bands range     ',QP_n_G_bands)
@@ -205,10 +214,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !------------
  !
  if (l_sc_coh.or.l_sc_sex.or.l_cohsex.or.l_sc_srpa) then
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,1/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
    allocate(dc(2))
  else
-   if (io_RESPONSE) call X_alloc('X',(/X%ng,X%ng,2/))
+   if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2/))
    allocate(W_(QP_dSc_steps))
    allocate(dc(QP_dSc_steps),stat=alloc_err)
    if(l_GW_terminator) then
@@ -216,7 +225,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    endif
  endif
  !
- call PP_redux_wait
+ call PP_wait()
  !
  timing_steps=PAR_IND_QP%n_of_elements(PAR_IND_QP_ID+1)*&
 &             PAR_IND_Q_ibz%n_of_elements(PAR_IND_Q_ibz_ID+1)*&
@@ -233,7 +242,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
    io_err=io_X(X,Xw,ID)
  endif
  !
- Q_loop: do iqbz=iq_to_start,q%nbz 
+ Q_loop: do iqbz=iq_to_start,q%nbz
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
    !
@@ -277,10 +286,21 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then
-             if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
-               X_mat(ig1,ig2,X_range(2))=X%ppaE
+             !
+             ! RIM W support
+             !
+             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+             if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+             !
+             if (l_RIM_W_g) then
+               X_mat(ig1,ig2,X_range(2))=RIM_W_E(ig1,ig2)
+               !
              else
-               X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+               if (real(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2)))<=1._SP) then
+                 X_mat(ig1,ig2,X_range(2))=X%ppaE
+               else
+                 X_mat(ig1,ig2,X_range(2))=sqrt(X_mat(ig1,ig2,X_range(1))/X_mat(ig1,ig2,X_range(2))-1)
+               endif
              endif
            else
              X_mat(ig1,ig2,X_range(1))=X_mat(ig1,ig2,X_range(1))*isc%gamp(ig1,ig2)
@@ -357,7 +377,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (l_GW_terminator) then
          do is=1,n_sp_pol
-           eet_cutoff0(is)=minval(E%E(E%nbf+1,:,is))
+           eet_cutoff0(is)=minval(E%E(E%nbf(is)+1,:,is))
            eet_cutoff1(is)=minval(E%E(QP_n_G_bands(2),:,is))
          enddo
          eet_cutoff0(1)=minval(eet_cutoff0(:))
@@ -494,8 +514,19 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              do ig1=1,Xng
                !
                PPA_E= real(XppaE/X_mat_d(ig1,ig2,Xr2),kind=SP)
-               PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
-
+               !
+               ! RIM W support
+               !
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+               !
+               if (l_RIM_W_g) then
+                 PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
+&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+               else
+                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+               endif
+               !
                ! inline bose_f function
                bose_PPA_E=0.
                if (PPA_E<0.) bose_PPA_E=-spin_occ
@@ -527,12 +558,25 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          do i_w=1,QP_dSc_steps
            !
            dp_dummy = 0.0_DP
-           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp), reduction(+:dp_dummy)
+           !
+           !$omp parallel do default(shared), private(ig1,ig2,PPA_E,PPA_R,ctmp, &
+           !$omp &           l_RIM_W_g), reduction(+:dp_dummy)
            do ig2=1,X%ng
              do ig1=1,X%ng
                !
                PPA_E= real(X%ppaE/X_mat(ig1,ig2,X_range(2)),kind=SP)
-               PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               !
+               ! RIM W support
+               !
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
+               !
+               if (l_RIM_W_g) then
+                 PPA_R=-cmplx(RIM_W(iqibz,ig1,ig2)/2._SP, &
+&                       aimag(X_mat(ig1,ig2,X_range(1)))*real(isc%gamp(ig1,ig2),kind=SP),kind=SP)/2._SP*PPA_E
+               else
+                 PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
+               end if
                !
                ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
@@ -623,11 +667,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_FREE(eet_factor)
    endif
  endif
- l_X_alloc=.true.
+ l_X_ALLOC_elemental=.true.
 #if defined _SC
- l_X_alloc=l_sc_run.and.io_RESPONSE
+ l_X_ALLOC_elemental=l_sc_run.and.io_RESPONSE
 #endif
- if(l_X_alloc) call X_alloc('X')
+ if(l_X_ALLOC_elemental) call X_ALLOC_elemental('X')
  !
  call timing('GW(ppa)',OPR='stop')
  !

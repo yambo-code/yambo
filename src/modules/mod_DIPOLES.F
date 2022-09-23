@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -56,14 +56,14 @@ module DIPOLES
  complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
- complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_spin(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  type DIPOLE_t
    integer    :: iq(2)
-   integer    :: ib(2)
-   integer    :: ib_lim(2)
+   integer    :: ib(2)     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+   integer    :: ib_lim(2) !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction  
    integer    :: db_ib(2)
    integer    :: db_ib_lim(2)
    integer    :: ng
@@ -118,7 +118,7 @@ module DIPOLES
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,3))
          DIP_spin=cZERO
        case('DIP_P_spinor')
          if (allocated(DIP_P_spinor).or.n_spinor==1) return
@@ -256,7 +256,7 @@ module DIPOLES
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
-     if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol,1)
      if(trim(what)=="DIP_L" ) DIP_in=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)  
      !
      DIP_rotated = matmul( tmp_sop , DIP_in  )

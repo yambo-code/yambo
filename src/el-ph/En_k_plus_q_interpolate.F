@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -23,8 +23,7 @@
 !
 subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
- use pars,                ONLY:SP,pi,rZERO
- use units,               ONLY:HA2EV
+ use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
  use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
@@ -41,6 +40,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  integer               :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
+ !
+ if (n_sp_pol==2) call error("En_k_plus_q_interpolate to be checked for n_sp_pol==2")
  !
  ! Allocation of the Double Grids for each k+q points
  ! =====================================================
@@ -86,8 +87,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  ! For the moment I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- E_kpq%f(1:E%nbf,:,1)=spin_occ
- E_kpq%f(E%nbf+1:,:,1)=rZERO
+ E_kpq%f(1:E%nbf(1),:,1)=spin_occ
+ E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
  !
  ! Store E(k+q) energies in the GKKP
  ! ==========================================

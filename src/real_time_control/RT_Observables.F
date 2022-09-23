@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -55,7 +55,8 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
- call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
+ call RT_carriers_number(en,k,NCarr)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  if (.not. RT_do_it('OUT') ) then
    call timing('RT observables',OPR='stop')
@@ -68,7 +69,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Temperature
  !=============
- call RT_temperature(TFit,EfFit)
+ call RT_carriers_temperature(TFit,EfFit)
  !
  ! Energy
  !========

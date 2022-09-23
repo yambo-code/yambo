@@ -202,7 +202,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    FL_V_bands=cZERO
    FL_V_bands_hist=cZERO
    FL_ac_phase=cZERO
-   do i1=1,E%nbf 
+   do i1=1,E%nbf(i_sp_pol)
      !
      fl_shifted_zero_mode = max_fl_mode+1
      FL_V_bands(i1,fl_shifted_zero_mode,i1,:,:)=cONE
@@ -222,9 +222,10 @@ subroutine FL_driver(E,X,k,q,Dip)
        !
        if(.not.PAR_IND_Xk_bz%element_1D(i_k_bz)) cycle
        !
-       call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands,FL_S_plus(:,:,:,:,i_k_bz,i_sp_pol),&
-                                                   &   FL_S_minus(:,:,:,:,i_k_bz,i_sp_pol),&
-                                                   &   FL_time_S_det(:,:,i_k_bz,i_sp_pol),.false.) 
+       call FL_overlaps(E,k,i_sp_pol,i_k_bz,FL_V_bands(:,:,:E%nbf(i_sp_pol),:,i_sp_pol), &
+                                        &   FL_S_plus(:E%nbf(i_sp_pol),:E%nbf(i_sp_pol),:,:,i_k_bz,i_sp_pol),&
+                                        &   FL_S_minus(:E%nbf(i_sp_pol),:E%nbf(i_sp_pol),:,:,i_k_bz,i_sp_pol),&
+                                        &   FL_time_S_det(:,:,i_k_bz,i_sp_pol),.false.) 
      enddo
      !
      call PP_redux_wait(FL_S_plus(:,:,:,:,:,i_sp_pol) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
@@ -278,7 +279,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !aim137 prelim - msg is working only for one of the cores (i.e., one freq pool).
    !
    !
-   !call FL_time_dep_variables(E,k,FL_V_bands) !this was to interface with ypp
+   !call FL_time_dep_variables(E,k) !this was to interface with ypp
    !
    !call NL_databases_IO(i_f,'write')
    !

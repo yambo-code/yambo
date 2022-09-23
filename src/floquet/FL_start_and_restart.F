@@ -82,10 +82,10 @@ subroutine FL_start_and_restart(E,k,Dip)
  I_relax           =cZERO
  V_bands           =cZERO
  !
- if(NL_bands(2)<=E%nbf.or.NL_bands(1)>E%nbf) &
+ if(NL_bands(2)<=maxval(E%nbf).or.NL_bands(1)>minval(E%nbf)) &
      & call error(" Wrong bands range!")
  !
- forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
+ forall(i1=1:maxval(E%nbf)) V_bands(i1,i1,:,:)=cONE
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -27,6 +27,11 @@ if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
 fi
+if test -f $compdir/config/stamps_and_lists/$target.stamp; then
+ candidates=`find $srcdir/$dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${target}.stamp`
+ candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.stamp`
+ candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${target}.stamp`
+fi
 if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
  candidates=`find $srcdir/$dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
@@ -38,5 +43,5 @@ do
   obj=`echo $file | sed "s/\.o/\.X/"`
   obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
   DIR_is_to_recompile=1
-  source ./sbin/compilation/check_object_childs.sh "remove"
+  source ./sbin/compilation/check_object_childs.sh
 done

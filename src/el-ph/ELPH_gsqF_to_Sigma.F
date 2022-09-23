@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
 &                        QP_table
  use parallel_m,    ONLY:PAR_nQ_bz,PAR_nQP,PAR_IND_QP,PAR_Q_bz_index,PAR_IND_Q_bz,PAR_COM_G_b_INDEX
  use parallel_int,  ONLY:PP_redux_wait
- use electrons,     ONLY:levels
+ use electrons,     ONLY:levels,spin_occ
  use R_lattice,     ONLY:bz_samp
  use frequency,     ONLY:w_samp,W_reset
  !
@@ -112,10 +112,10 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
          ! QP lifetimes/Green's function
          !-------------------------------
          if (l_GF_from_CA.and.trim(QP_solver)=='g') then
-           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2.*bose_f(ph_freq)/spin_occ+1.)/2.+&
 &                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
          else
-           DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)/2+1.)/2.+&
+           DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)/spin_occ+1.)/2.+&
 &                                             gsqF_life_f(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
          endif
          !
@@ -126,7 +126,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
            ! QP energies: FAN+correction
            !-----------------------------
            ! 
-           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)+1.)/2.+&
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2.*bose_f(ph_freq)/spin_occ+1.)/2.+&
 &                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
            !
          endif
@@ -138,7 +138,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
        ! QP energies : DW
        !------------------
        !
-       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(bose_f(ph_freq)+1.)/2./real( PAR_COM_G_b_INDEX%n_CPU)
+       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(2.*bose_f(ph_freq)/spin_occ+1.)/2./real( PAR_COM_G_b_INDEX%n_CPU)
        ! 
      enddo
      !

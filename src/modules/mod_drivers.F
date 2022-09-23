@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,6 +33,7 @@ module drivers
  !
  logical :: l_setup              =.FALSE.
  logical :: l_rim                =.FALSE.
+ logical :: l_RIM_W              =.FALSE.
  logical :: l_col_cut            =.FALSE.
  logical :: l_acfdt              =.FALSE.
  !
@@ -46,8 +47,8 @@ module drivers
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
  logical :: l_nl_optics          =.FALSE.
- !aim137: adding fl optics
  logical :: l_fl_optics          =.FALSE.
+ logical :: l_nl_p_and_p         =.FALSE.
  !
  ! The self-energy correlation "kind"
  !
@@ -79,11 +80,16 @@ module drivers
  !
  logical :: l_optics             =.FALSE.
  logical :: l_chi                =.FALSE.
- logical :: l_em1d               =.FALSE.
- logical :: l_em1s               =.FALSE.
  logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
+ !
+ ! The screening runlevels ...
+ !
+ logical :: l_screen             =.FALSE.
+ logical :: l_X                  =.FALSE.
+ logical :: l_em1d               =.FALSE.
+ logical :: l_em1s               =.FALSE.
  !
  ! ... and the kernel
  !

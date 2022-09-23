@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
+subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  !
  ! Build the Hermitian W operator eq. 62 and 63
  ! in PRB 69, 085106 (2004)
@@ -42,10 +42,10 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
  type(gauge_field), intent(in) :: A_input
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
+ complex(SP),  intent(in)      :: FL_V_bands(H_ref_bands(2),n_tot_fl_modes,en%nbf(i_sp),QP_nk)
  complex(SP),  intent(inout)   :: H_nl_sc(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  !
  ! Work Space
@@ -54,9 +54,8 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
  integer :: ikbz,istep,max_step
  complex(SP) :: Wk(3,FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP) :: Wop(FL_states(1):FL_states(2),FL_states(1):FL_states(2),2)
- complex(SP) :: V_tilde(en%nbf,H_ref_bands(2),2)
  !aim137: cambie el orden de las variables respecto a NL V_tilde
- complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf,2) 
+ complex(SP) :: FL_V_tilde(H_ref_bands(2),n_tot_fl_modes,n_tot_duffin_modes,en%nbf(i_sp),2) 
  complex(SP) :: E_vec_pot(3)
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
  complex(SP) :: ph_p,ph_m
@@ -84,7 +83,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
      !
      do istep=1,max_step
        !
-       call FL_build_tilde_V_bands(FL_V_bands,en,Xk,ikbz,i_sp,istep,id_red,FL_V_tilde)
+       call FL_build_tilde_V_bands(en,Xk,ikbz,i_sp,istep,id_red,FL_V_bands,FL_V_tilde)
        ! aim137 :
        ! FL_V_tilde = cZERO
        !
@@ -92,7 +91,7 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
        !
        ! W(i,j) = \sum_m V*(m,i) * [\tilde Vp(m,j) - \tilde Vm(m,j) ]
        !
-       !$ omp parallel do default(shared), private(i2,i1)
+       ! $omp parallel do default(shared), private(i2,i1)
        do i1=H_ref_bands(1),H_ref_bands(2) !j
          do i2=H_ref_bands(1),H_ref_bands(2) !i
            do i1_fl=1,n_tot_fl_modes !gamma
@@ -114,27 +113,27 @@ subroutine FL_build_W_operator(FL_V_bands,en,Xk,A_input,ik,i_sp,H_nl_sc)
                    if (abs(i_shift_comb_fl) > max_fl_mode-1) then
                      !
                      if (i_shift_comb_fl > 0) then
-                       do i_m=1,en%nbf 
+                       do i_m=1,en%nbf(i_sp) 
                          Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only plus exponential
-                                                  & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * &
+                                                  & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik)) * &
                                                   & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                   &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_p
                        enddo
                      else
-                       do i_m=1,en%nbf 
+                       do i_m=1,en%nbf(i_sp) 
                          Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !only minus exponential
-                                         & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * &
+                                         & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik)) * &
                                                   & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                   &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_m
                        enddo
                      endif
                    else
-                     do i_m=1,en%nbf 
+                     do i_m=1,en%nbf(i_sp) 
                        Wop(i1_fks,i2_fks,istep) = Wop(i1_fks,i2_fks,istep) + & !both exponentials
-                                                & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik,i_sp)) * & !plus exp
+                                                & (conjg(FL_V_bands(i2,i_comb_fl-1,i_m,ik)) * & !plus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                 &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_p + &
-                                       & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik,i_sp)) * & !minus exp
+                                       & (-1._SP)*(conjg(FL_V_bands(i2,i_comb_fl+1,i_m,ik)) * & !minus exp
                                                 & (FL_V_tilde(i1,i3_fl,i4_fl,i_m,1) - &
                                                 &  FL_V_tilde(i1,i3_fl,i4_fl,i_m,2)))*ph_m
                      enddo

@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS, AM
@@ -52,6 +52,8 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  NEAREST=.FALSE.
  if(trim(INTERP_input_mode)=='NN') NEAREST=.TRUE.
  GRID   =.FALSE.
+ !
+ ID_bands=-1
  !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !

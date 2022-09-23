@@ -40,27 +40,27 @@ subroutine FL_S_numerical_inversion(en,Xk,FL_Sm1_num_plus,FL_Sm1_num_minus,id_re
  integer,       intent(in) :: i_sp
  integer,       intent(in) :: ikbz
  !
- complex(SP),  intent(inout) :: FL_Sm1_num_minus(en%nbf,en%nbf,n_tot_extra_modes)
- complex(SP),  intent(inout) :: FL_Sm1_num_plus(en%nbf,en%nbf,n_tot_extra_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_num_minus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_num_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
  !
  ! Work space
  !
- complex(SP) :: FL_S_t_plus(en%nbf,en%nbf,n_tot_extra_modes)
- complex(SP) :: FL_S_t_minus(en%nbf,en%nbf,n_tot_extra_modes)
+ complex(SP) :: FL_S_t_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
+ complex(SP) :: FL_S_t_minus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
  !
  !
- complex(SP) :: FL_Duffin_Gmatrix_plus(en%nbf,en%nbf,n_tot_duffin_modes,n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_Gmatrix_minus(en%nbf,en%nbf,n_tot_duffin_modes,n_tot_duffin_modes)
- complex(SP) :: tmp_M(en%nbf,en%nbf)
- complex(SP) :: test_mat_1(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
- complex(SP) :: test_mat_2(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
- complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf*n_tot_duffin_modes,en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf*n_tot_duffin_modes,en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_duffin_modes)
- complex(SP) :: vector_b(en%nbf*n_tot_fl_modes)
- complex(SP) :: vtmp(en%nbf*n_tot_duffin_modes)
- complex(SP) :: diagonal_elements(en%nbf),sum_minus_trace,dummy_det
+ complex(SP) :: FL_Duffin_Gmatrix_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes,n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_Gmatrix_minus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes,n_tot_duffin_modes)
+ complex(SP) :: tmp_M(en%nbf(i_sp),en%nbf(i_sp))
+ complex(SP) :: test_mat_1(en%nbf(i_sp)*n_tot_fl_modes,en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: test_mat_2(en%nbf(i_sp)*n_tot_fl_modes,en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf(i_sp)*n_tot_duffin_modes,en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf(i_sp)*n_tot_duffin_modes,en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: vector_b(en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: vtmp(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: diagonal_elements(en%nbf(i_sp)),sum_minus_trace,dummy_det
  integer     :: time_samples
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,ikm,i_t
@@ -90,14 +90,14 @@ subroutine FL_S_numerical_inversion(en,Xk,FL_Sm1_num_plus,FL_Sm1_num_minus,id_re
      !
    enddo
    !
-   call SERIAL_inversion(en%nbf,FL_S_t_plus(:,:,i_t),dummy_det,.false.)
-   call SERIAL_inversion(en%nbf,FL_S_t_minus(:,:,i_t),dummy_det,.false.)
+   call SERIAL_inversion(en%nbf(i_sp),FL_S_t_plus(:,:,i_t),dummy_det,.false.)
+   call SERIAL_inversion(en%nbf(i_sp),FL_S_t_minus(:,:,i_t),dummy_det,.false.)
    !
  enddo ! loop on time
  !
  !
- do i1=1,en%nbf
-   do i2=1,en%nbf
+ do i1=1,en%nbf(i_sp)
+   do i2=1,en%nbf(i_sp)
    !
    call M_by_V_omp('N',n_tot_extra_modes,FL_FT_extra_Mm1,FL_S_t_plus(i1,i2,:), FL_Sm1_num_plus(i1,i2,:))
    call M_by_V_omp('N',n_tot_extra_modes,FL_FT_extra_Mm1,FL_S_t_minus(i1,i2,:),FL_Sm1_num_minus(i1,i2,:))
@@ -108,11 +108,11 @@ subroutine FL_S_numerical_inversion(en,Xk,FL_Sm1_num_plus,FL_Sm1_num_minus,id_re
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  !call FL_check_S_inversion(&
  !        &     FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
- !        &     FL_Sm1_num_plus,en%nbf,n_tot_extra_modes,n_tot_extra_modes,&
+ !        &     FL_Sm1_num_plus,en%nbf(i_sp),n_tot_extra_modes,n_tot_extra_modes,&
  !        &     diagonal_elements,sum_minus_trace,100,l_debug_printouts)
  !
  !print*, ''
- !write(*,'(I2,I2,I2,100(1f13.7))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf)
+ !write(*,'(I2,I2,I2,100(1f13.7))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf(i_sp))
   
  !if (ikbz == 3) then
  !  if (id_red == 2) then

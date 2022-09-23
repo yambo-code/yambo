@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -57,10 +57,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
 #endif
 #if defined _HDF5_IO
  ! For I/O debug, see below
- !use IO_m,           ONLY:netcdf_call,nf90_set_log_level
+ !use IO_m,           ONLY:netcdf_call
 #endif
  !
 #include <memory.h>
+ !
+ ! For I/O debug, see below
+#if defined _HDF5_IO
+!#include <netcdf.inc>
+#endif
  !
  type(levels)    ::en,Xen,Ken
  type(bz_samp)   ::k,Xk
@@ -68,15 +73,15 @@ subroutine setup(en,Xen,Ken,k,Xk)
  ! Work Space
  !
  real(SP)          :: Tel_SAVE,tmp_V(3)
- integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_m_SAVE(2),ID,n_to_print
+ integer           :: i1,i2,i3,ik,is,ia,i_err,nbf_SAVE(2),nbm_SAVE(2),ID,n_to_print
  type(levels)      :: Xen_COPY
  character(schlen) :: dumb_ch
  integer, external :: k_lattice,io_Double_Grid
  !
 #if defined _HDF5_IO
  ! This is very useful for I/O debug
- ! NETCDF library need to be compiled with --enable-loggning flag
- ! call netcdf_call(nf90_set_log_level(3),1)
+ ! NETCDF library need to be compiled with --enable-logging flag
+ !call netcdf_call(nf_set_log_level(3),1)
 #endif
  !
  call section('*','CORE Variables Setup') 
@@ -336,10 +341,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  endif
  !
  call section('=','Energies & Occupations')
- !==============================================
- !
- !call msg('rn','Energy unit   ',' [eV]')
- !
+ !=========================================
  Xen%nk=Xk%nibz
  ! 
  call E_duplicate(en,Xen)
@@ -374,10 +376,12 @@ subroutine setup(en,Xen,Ken,k,Xk)
  Tel_SAVE=Tel
  !
  if (input_Tel_is_negative) then
+   call E_reset(Xen_COPY)
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
    call OCCUPATIONS_Fermi(Xen_COPY,Xk,"X",mode="OCCUPATIONS")
-   nbf_m_SAVE=(/Xen_COPY%nbf,Xen_COPY%nbm/)
+   nbf_SAVE=Xen_COPY%nbf
+   nbm_SAVE=Xen_COPY%nbm
    call E_reset(Xen_COPY)
  endif
  !
@@ -386,10 +390,10 @@ subroutine setup(en,Xen,Ken,k,Xk)
  call OCCUPATIONS_Extend(Xen,en,k)
  !
  if (input_Tel_is_negative) then
-   Xen%nbf=nbf_m_SAVE(1)
-   Xen%nbm=nbf_m_SAVE(2)
-   en%nbf =nbf_m_SAVE(1)
-   en%nbm =nbf_m_SAVE(2)
+   Xen%nbf=nbf_SAVE
+   Xen%nbm=nbm_SAVE
+   en%nbf =nbf_SAVE
+   en%nbm =nbm_SAVE
  endif
  !
  n_met_bands =en%nbm

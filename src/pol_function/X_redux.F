@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM (AF)
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_redux(iq,X_par,Xw,X)
+subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
  !
@@ -38,7 +38,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use com,           ONLY:msg
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_int,  ONLY:PP_redux_wait,PP_bcast
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PP_bcast
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg, bare_qpg_d
@@ -61,6 +61,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(X_t)        :: X
  type(w_samp)     :: Xw
  integer          :: iq
+ character(*)     :: what
  !
  ! Work Space
  !
@@ -75,11 +76,11 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  ! Setup 
  !
- call timing('X (procedure)',OPR='start')
+ call timing(what//' (procedure)',OPR='start')
  !
  ! Barrier... 
  !
- call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
+ call PP_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! compute X on GPU if compiled with GPU support,
  ! unless GPU-usage is switch-off from input
@@ -92,7 +93,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  if (PAR_COM_SLK%n_CPU>=4.and.have_cuda) compute_on_gpu=.false.
  !
- if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
+ if (have_cuda) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution
  !         ========================
@@ -101,7 +102,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
  call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_SLK_INDEX_local%COMM)
  !
- if (PAR_n_freqs>0) call live_timing('X@q['//trim(intc(iq))//'] ',PAR_n_freqs)
+ if (PAR_n_freqs>0) call live_timing(what//'@q['//trim(intc(iq))//'] ',PAR_n_freqs)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
@@ -250,35 +251,36 @@ subroutine X_redux(iq,X_par,Xw,X)
      !
    endif
    !
-   ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
+   ! When calculating EPS1 multiply X left and right by v_coul^1/2 (diagonal in reciprocal space)
    !
-   if (compute_on_gpu) then
-      !
-!      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(iq,Xo_cols(1):),"R",scal=cmplx(4._SP*pi,kind=SP)) 
-      !
-      BUFFER_blc_d => BUFFER%blc_d
-      !
-      !$cuf kernel do(2)
-      do ig2=Xo_cols(1),Xo_cols(2)
-        do ig1=Xo_rows(1),Xo_rows(2)
-          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+   if (X%whoami/=1) then
+     !
+     if (compute_on_gpu) then
+        !
+        BUFFER_blc_d => BUFFER%blc_d
+        !
+        !$cuf kernel do(2)
+        do ig2=Xo_cols(1),Xo_cols(2)
+          do ig1=Xo_rows(1),Xo_rows(2)
+            BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+          enddo
         enddo
-      enddo
-      !
-      call dev_stream_sync(stream_default)
-      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
-      !
-   else
-      !
-      !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-      do ig2=Xo%cols(1),Xo%cols(2)
-        do ig1=Xo%rows(1),Xo%rows(2)
-          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+        !
+        call dev_stream_sync(stream_default)
+        call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+        !
+     else
+        !
+        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+        do ig2=Xo%cols(1),Xo%cols(2)
+          do ig1=Xo%rows(1),Xo%rows(2)
+            BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+          enddo
         enddo
-      enddo
-      !$omp end parallel do
-      !
+        !$omp end parallel do
+        !
+     endif
+     !
    endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
@@ -295,8 +297,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  call MATRIX_reset(Xo)
  if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
- call timing('X (procedure)',OPR='stop')
- call timing('X (REDUX)',OPR='start')
+ call timing(what//' (procedure)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='start')
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -306,7 +308,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  if (X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par)
-   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
+   call X_ALLOC_parallel(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
    !
  endif
  !
@@ -345,7 +347,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  !
- call timing('X (REDUX)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='stop')
  !
  ! Clean-up of FREQ structure
  !==========

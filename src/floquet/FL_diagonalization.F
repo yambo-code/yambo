@@ -43,7 +43,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  !
  type(levels),  intent(in)     :: E
  type(bz_samp), intent(in)     :: k
- complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
  !
  ! Work Space
@@ -54,7 +54,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
- integer     :: FL_chosen_bands(NL_bands(1):E%nbf),i1_fks_eigenvec
+ integer     :: FL_chosen_bands(NL_bands(1):maxval(E%nbf)),i1_fks_eigenvec
  character(4) :: filename
  integer     :: line_counter,i_central_fks,trial_chosen_band_QE
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
@@ -134,7 +134,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
      ! Populate FL_V_bands
      ! ===================
      !
-     do i_m=NL_bands(1),E%nbf ! band I want to update
+     do i_m=NL_bands(1),E%nbf(is) ! band I want to update
        !
        ! select eigenvector - 1. highest central component
        !
@@ -243,7 +243,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
 !do is=1,n_sp_pol
 !write(filename,'(i0)') ik_bz
 !open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
-!do i_m=NL_bands(1),E%nbf
+!do i_m=NL_bands(1),E%nbf(is)
 !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
 !write(111,*) 'Real and imaginary parts of eigenvector:'
 !do i1_fks=FL_states(1),FL_states(2)

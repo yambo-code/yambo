@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -61,7 +61,7 @@ integer function io_ATMPROJ_pwscf(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
+   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.false.,FRAG=frag_WF)
    if (io_ATMPROJ_pwscf/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=2,MENU=0)

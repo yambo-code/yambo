@@ -42,7 +42,7 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  type(bz_samp),intent(in)      :: Xk
  integer,      intent(in)      :: ik
  integer,      intent(in)      :: i_sp
- complex(SP),  intent(in)      :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)      :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf(i_sp))
  complex(SP),  intent(inout)   :: H_nl_sc(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  !
  ! Work Space
@@ -80,10 +80,10 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
              if (abs(i_shift_comb_fl) > max_fl_mode) cycle 
              i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
              !
-             do i_m=1,en%nbf 
+             do i_m=1,en%nbf(i_sp)
                I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) + & 
-                                     & (conjg(FL_V_bands(i2,i_comb_fl,i_m,ik,i_sp)) * &
-                                     & FL_V_bands(i1,i3_fl,i_m,ik,i_sp))
+                                     & (conjg(FL_V_bands(i2,i_comb_fl,i_m)) * &
+                                     & FL_V_bands(i1,i3_fl,i_m))
              enddo
              !
          enddo ! i3_fl
@@ -104,7 +104,7 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
  !call error('..')
  !aim137 DEBUG >
  !
- do i1=H_ref_bands(1),en%nbf !i
+ do i1=H_ref_bands(1),en%nbf(i_sp) !i
    do i1_fl=1,n_tot_fl_modes !eta
      !
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
@@ -125,8 +125,8 @@ subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
   !    !
   !    i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
   !    !
-  !    if (i1 <= en%nbf) I_stabilization(i1_fks,i1_fks) = -0.05_SP
-  !    if (i1 >  en%nbf) I_stabilization(i1_fks,i1_fks) = +0.05_SP
+  !    if (i1 <= en%nbf(i_sp)) I_stabilization(i1_fks,i1_fks) = -0.05_SP
+  !    if (i1 >  en%nbf(i_sp)) I_stabilization(i1_fks,i1_fks) = +0.05_SP
   !    !
   !  enddo
   !enddo

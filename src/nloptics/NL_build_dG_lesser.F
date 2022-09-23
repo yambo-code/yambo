@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -40,13 +40,15 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  implicit none
  !
  type(levels), intent(in)  :: en
- complex(SP),  intent(in)  :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)  :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk,n_sp_pol)
  complex(SP),  intent(out) :: dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk)
  !
  ! Work Space
  !
  integer :: i1,i2
  integer :: ik
+ !
+ if (n_sp_pol==2) call error(" NL_build_dG not coded for n_sp_pol==2")
  !
 #if defined _TIMING
  call timing('NL build_dG',OPR='start')
@@ -59,7 +61,7 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
    do i1=NL_bands(1),NL_bands(2)             
 !$omp parallel do default(shared), private(i2)
      do i2=i1,NL_bands(2)
-       dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf,V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
+       dG(i1,i2,ik)=Vstar_dot_V_omp(en%nbf(1),V_bands(i2,:,ik,1),V_bands(i1,:,ik,1))
        dG(i2,i1,ik)=conjg(dG(i1,i2,ik))
      enddo
 !$omp end parallel do
@@ -70,9 +72,11 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  !
  call PP_redux_wait(dG,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
- do i1=NL_bands(1),en%nbf
+!$omp parallel do default(shared), private(i1)
+ do i1=NL_bands(1),en%nbf(1)
    dG(i1,i1,:)=dG(i1,i1,:)-cI*spin_occ
  enddo
+!$omp end parallel do
  !
 #if defined _TIMING
  call timing('NL build_dG',OPR='stop')

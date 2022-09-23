@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -130,7 +130,7 @@ subroutine RT_interpolation_driver(bands,E,K,what,Time,l_f,l_E,l_W,l_B,NN,VERB)
    call msg('r',  '['//trim(title)//'] Max energy levels change      ',dE_Max*HA2EV,"[eV]")
  endif
  !
- call msg('rn',   '['//trim(title)//'] Full and metallic bands       ', (/E%nbf,E%nbm/)) 
+ call msg('rn',   '['//trim(title)//'] Full and metallic bands       ', (/E%nbf(1),E%nbm(1)/)) 
  !
  if (.not.l_real_time) call REPORT_Occupations(trim(title),E)
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -39,6 +39,14 @@ module interfaces
  !
  interface
    !
+   subroutine DESC_compare(D1,D2,i_err,exclude,only)
+     use descriptors,ONLY:IO_desc
+     type(IO_desc),          intent(in) :: D1,D2
+     integer                            :: i_err(2)
+     character(*), optional, intent(in) :: exclude
+     character(*), optional, intent(in) :: only
+   end subroutine
+   !
    subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      use descriptors,ONLY:IO_desc
      character(*),           intent(in) :: dest
@@ -48,7 +56,7 @@ module interfaces
      character(*), optional, intent(in) :: skip_patt
    end subroutine
    !
-   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands)
+   subroutine OCCUPATIONS_Fermi(E,K,OBJ,mode,n_bands,impose_balance)
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
      type(levels)  ::E
@@ -56,6 +64,7 @@ module interfaces
      character(*)           ::OBJ
      character(*), OPTIONAL ::mode
      integer,      OPTIONAL ::n_bands
+     logical,      OPTIONAL ::impose_balance
    end subroutine
    !
    subroutine MATRIX_duplicate( operation, M_in, INDEX_in, M_out )
@@ -125,8 +134,20 @@ module interfaces
      logical,  optional, intent(in) ::force_spatial_inversion
    end subroutine el_density_and_current
    !
+   subroutine el_magnetization(en,Xk,magn,bands)
+     use pars,           ONLY:SP
+     use electrons,      ONLY:levels
+     use R_lattice,      ONLY:bz_samp
+     use FFT_m,          ONLY:fft_size
+     implicit none
+     type(levels), intent(in ) ::en
+     type(bz_samp),intent(in ) ::Xk
+     real(SP),     intent(out) ::magn(fft_size,3)
+     integer,  optional, intent(in) ::bands(2)
+   end subroutine el_magnetization
+   !
    subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,&
-&                                  USE_the_DbGd,USE_Eo,USE_occupations,WF_fac,PDOS_fac)
+&                                  USE_the_DbGd,USE_Eo,USE_W,USE_occupations,WF_fac,PDOS_fac)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp 
@@ -136,9 +157,9 @@ module interfaces
      real(SP),      intent(in)  :: dos_E,DOS_broadening
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
-     logical,  optional, intent(in) :: USE_Eo,USE_occupations,USE_the_DbGd
-     real(SP), optional, pointer, intent(in) :: WF_fac(:,:,:)
-     real(SP), optional, pointer, intent(in) :: PDOS_fac(:,:,:)
+     logical,  optional, intent(in) :: USE_Eo,USE_W,USE_occupations,USE_the_DbGd
+     real(SP), optional, intent(in) :: WF_fac(:,:,:)
+     real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL
@@ -193,8 +214,8 @@ module interfaces
      type(levels)       :: E
      real(SP), optional :: E_g_dir(1+(n_sp_pol-1)*2,2) ! min - max
      real(SP), optional :: E_g_ind(1+(n_sp_pol-1)*2,2) ! min - max
-     integer , optional :: N_f(n_sp_pol)
-     integer , optional :: N_m(n_sp_pol)
+     integer , optional :: N_f(2)
+     integer , optional :: N_m(2)
      integer , optional :: I_dir(2)
      integer , optional :: E_k_dir(n_sp_pol)    ! k-point of the direct gap
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap

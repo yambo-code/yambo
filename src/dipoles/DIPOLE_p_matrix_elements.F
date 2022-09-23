@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -30,10 +30,11 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  use pars,          ONLY:SP,cZERO,pi
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use D_lattice,     ONLY:alat
- use wave_func,     ONLY:WF,wf_ng
+ use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk
  use electrons,     ONLY:n_spinor
  use R_lattice,     ONLY:g_vec,bz_samp
 #ifdef _CUDA
+ use wave_func,     ONLY:wf_igk_d
  use R_lattice,     ONLY:g_vec_d
 #endif
 #if defined _RT
@@ -50,15 +51,16 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  ! 
  ! Work Space
  !
- integer      :: ig
+ integer      :: ic,ig
  logical      :: eval_spinor_matrix
  integer      :: i_spinor,j_spinor,i1
- complex(SP)  :: wf_grad(wf_ng,n_spinor),wf_der_sq(wf_ng,n_spinor)
+ complex(SP)  :: wf_grad(wf_ncx,n_spinor),wf_der_sq(wf_ncx,n_spinor)
 #ifdef _CUDA
  complex(SP), pointer, device :: WF_c_d(:,:,:)
  complex(SP)  :: rho_acc
  real(SP)     :: rho_acc_r,rho_acc_i
  real(SP)     :: alat_i1,xk_i1
+ integer      :: wf_nc_ik
 #endif
  !
  rho=cZERO
@@ -79,6 +81,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    WF_c_d => WF%c_d
    xk_i1=Xk%pt(ik,i1)
    alat_i1=alat(i1)
+   wf_nc_ik=wf_nc_k(ik)
    !
    if(eval_spinor_matrix) then
      !
@@ -89,9 +92,10 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          rho_acc_i=0.0_SP
          !
          !$cuf kernel do(1)
-         do ig=1,wf_ng
-           rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
-&                         WF_c_d(ig,j_spinor,ic_wf)
+         do ic=1,wf_nc_ik
+           ig=wf_igk_d(ic,ik)
+           rho_acc= conjg(WF_c_d(ic,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
+&                         WF_c_d(ic,j_spinor,ic_wf)
            rho_acc_r=rho_acc_r + real(rho_acc,SP)
            rho_acc_i=rho_acc_i + aimag(rho_acc)
          enddo
@@ -108,9 +112,10 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      ! 
      !$cuf kernel do(2)
      do i_spinor=1,n_spinor
-     do ig=1,wf_ng
-        rho_acc= conjg(WF_c_d(ig,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
-&                      WF_c_d(ig,i_spinor,ic_wf)
+     do ic=1,wf_nc_ik
+        ig=wf_igk_d(ic,ik)
+        rho_acc= conjg(WF_c_d(ic,i_spinor,iv_wf))*(xk_i1+g_vec_d(ig,i1))*2.0_SP*pi/alat_i1* &
+&                      WF_c_d(ic,i_spinor,ic_wf)
         rho_acc_r=rho_acc_r + real(rho_acc,SP)
         rho_acc_i=rho_acc_i + aimag(rho_acc)
      enddo
@@ -122,10 +127,12 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
    !
 #else
-   !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+   wf_grad=cZERO
+   !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
    do i_spinor=1,n_spinor
-     do ig=1,wf_ng
-       wf_grad(ig,i_spinor)=WF%c(ig,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+     do ic=1,wf_nc_k(ik)
+       ig=wf_igk(ic,ik)
+       wf_grad(ic,i_spinor)=WF%c(ic,i_spinor,iv_wf)*(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
      enddo
    enddo
    !$omp end parallel do
@@ -151,14 +158,15 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      !
      do i_spinor=1,n_spinor
        do j_spinor=1,n_spinor
-         rho_spinor(i1,i_spinor,j_spinor)=Vstar_dot_V_omp(wf_ng,wf_grad(:,i_spinor),WF%c(:,j_spinor,ic_wf))
+         rho_spinor(i1,i_spinor,j_spinor)=&
+         &  Vstar_dot_V_omp(wf_nc_k(ik),wf_grad(:wf_nc_k(ik),i_spinor),WF%c(:wf_nc_k(ik),j_spinor,ic_wf))
        enddo
        rho(i1)=rho(i1)+rho_spinor(i1,i_spinor,i_spinor)
      enddo
      !
    else
      !
-     rho(i1)=Vstar_dot_V_omp(wf_ng*n_spinor,wf_grad(:,:),WF%c(:,:,ic_wf))
+     rho(i1)=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_grad(:wf_nc_k(ik),:),WF%c(:wf_nc_k(ik),:,ic_wf))
      !
    endif
    !
@@ -166,17 +174,18 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
    !
 #if defined _SC || defined _RT
    if(l_eval_P2) then
-     !$omp parallel do default(shared), private(ig,i_spinor), collapse(2)
+     !$omp parallel do default(shared), private(ic,ig,i_spinor), collapse(2)
      do i_spinor=1,n_spinor
-       do ig=1,wf_ng
-         wf_der_sq(ig,i_spinor) = WF%c(ig,i_spinor,iv_wf) *  & 
+       do ic=1,wf_nc_k(ik)
+         ig=wf_igk(ic,ik)
+         wf_der_sq(ic,i_spinor) = WF%c(ic,i_spinor,iv_wf) *  & 
 &                        ( (Xk%pt(ik,1) + g_vec(ig,1))**2 * (2.0_SP*pi/alat(1))**2  &
 &                        + (Xk%pt(ik,2) + g_vec(ig,2))**2 * (2.0_SP*pi/alat(2))**2  &
 &                        + (Xk%pt(ik,3) + g_vec(ig,3))**2 * (2.0_SP*pi/alat(3))**2 )
        enddo
      enddo
      !$omp end parallel do
-     P2=Vstar_dot_V_omp(wf_ng*n_spinor,wf_der_sq(:,:),WF%c(:,:,ic_wf))
+     P2=Vstar_dot_V_omp(wf_nc_k(ik)*n_spinor,wf_der_sq(:wf_nc_k(ik),:),WF%c(:wf_nc_k(ik),:,ic_wf))
    endif
 #endif
    !

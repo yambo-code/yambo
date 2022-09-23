@@ -1,7 +1,8 @@
-!        Copyright (C) 2000-2021 the YAMBO team
+!
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM MG DS
+! Authors (see AUTHORS file for details): AM MG DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -20,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_threshold)
+subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_threshold,FG_factor)
  !
  use pars,           ONLY:SP,cZERO,cONE,pi
  use X_m,            ONLY:Epsilon_ii,Joint_DOS,X_drude_term,global_gauge,skip_cond_sum_rule, &
@@ -37,10 +38,11 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
  type(w_samp),intent(in) :: W
  integer,     intent(in) :: iq,it,Cf_size
  character(*),intent(in) :: scheme
- character(*),intent(in) :: mode
+ character(*),intent(in) :: OBS
  real(SP),    intent(in) :: Bf(it+1),Af(it)
  complex(SP), intent(in) :: Cf(Cf_size)
  real(SP),    intent(out):: reached_threshold
+ real(SP),    intent(in) :: FG_factor
  !
  ! Work Space
  !
@@ -226,10 +228,10 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
      cycle
    endif
    !
-   select case(trim(mode))
+   select case(trim(OBS))
    case("jdos")
      Joint_DOS(iw,i_eps(:))=  -X_o(1:2,1)*Co
-   case("abs")
+   case("optics")
      Epsilon_ii(iw,i_eps(:))= -X_o(1:2,1)
    case("kerr")
      Epsilon_ij(iw,i_eps(:))= -X_o(1:2,1)
@@ -248,17 +250,17 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
    !
    if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
    !
-   if (trim(mode)=="abs")  Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-   if (trim(mode)=="kerr") Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor
-   if (trim(mode)=="abs") then
-     if(BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
+   if (trim(OBS)=="kerr")    Epsilon_ij(iw,i_eps(:))=(Epsilon_ij(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor
+   if (trim(OBS)=="optics") then
+     Epsilon_ii(iw,i_eps(:))=(Epsilon_ii(iw,i_eps(:))+diam_term_used(:))*gauge_factor*FG_factor 
+     if (BSS_eels_to_eps) Epsilon_ii(iw,i_eps(:))=(1._SP-Epsilon_ii(iw,i_eps(:)))**(-1)-1._SP
      Epsilon_ii(iw,i_eps(:))=Epsilon_ii(iw,i_eps(:))+X_drude_term(iw)*4._SP*pi/bare_qpg(iq,1)**2
    endif
    !
    ! I add the term describing the Anomalous Hall effect which is
    ! missing in the length gauge (this should be zero for systems with a gap)
    !
-   if (l_BS_anomalous_Hall.and.trim(mode)=="kerr") then
+   if (l_BS_anomalous_Hall.and.trim(OBS)=="kerr") then
      if (trim(global_gauge)=='length') then
        B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,1)**2
        Epsilon_ij(iw,2)=Epsilon_ij(iw,2)+B_Hall(2)/W%p(iw)
@@ -267,11 +269,11 @@ subroutine K_Haydock_response(iq,it,Cf_size,mode,scheme,W,Af,Bf,Cf,reached_thres
      endif
    endif
    !
-   select case(trim(mode))
+   select case(trim(OBS))
    case("jdos")
      sums=( Joint_DOS(iw,2)+ Joint_DOS(iw,4))/2._SP
      diff=  Joint_DOS(iw,2)- Joint_DOS(iw,4)
-   case("abs")
+   case("optics")
      sums=(Epsilon_ii(iw,2)+Epsilon_ii(iw,4))/2._SP
      diff= Epsilon_ii(iw,2)-Epsilon_ii(iw,4)
    case("kerr")

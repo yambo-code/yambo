@@ -42,7 +42,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  type(levels),  intent(in)  :: E
  type(bz_samp), intent(in)  :: k
- complex(SP),   intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  complex(DP),   intent(inout) :: FL_Chi_pol(3,FL_Chi_order+1)  ! In cartesian coordinates
  !
  ! Work Space
@@ -50,7 +50,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  complex(DP)  :: FL_time_P_Berry_RED(3,n_tot_time_steps)  ! In reduced coordinates
  complex(DP)  :: FL_time_P_Berry_CART(3,n_tot_time_steps) ! In cartesian coordinates
  complex(DP)  :: FL_Pi_pol(3,n_tot_time_steps)
- integer      :: ik_bz,is,i_t,i_order,i1_fl
+ integer      :: ik_bz,i_sp,i_t,i_order,i1_fl
  integer      :: id_in,id2,id3,Nperpend,i1,i2,i3,idx(3),ikbz,id
  complex(DP)  :: zeta
  real(DP)     :: imag_zeta
@@ -65,21 +65,22 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  FL_S_plus =cZERO
  FL_time_S_det =cZERO
  !
- do is=1,n_sp_pol
+ do i_sp=1,n_sp_pol
    !
    do ik_bz=1,nXkbz
      !
      if(.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle
      !
-     call FL_overlaps(E,k,is,ik_bz,FL_V_bands,FL_S_plus(:,:,:,:,ik_bz,is),&
-                                           &  FL_S_minus(:,:,:,:,ik_bz,is),&
-                                           &  FL_time_S_det(:,:,ik_bz,is),.true.)
+     call FL_overlaps(E,k,i_sp,ik_bz,FL_V_bands(:,:,:E%nbf(i_sp),:,i_sp), &
+                                  &  FL_S_plus(:E%nbf(i_sp),:E%nbf(i_sp),:,:,ik_bz,i_sp),&
+                                  &  FL_S_minus(:E%nbf(i_sp),:E%nbf(i_sp),:,:,ik_bz,i_sp),&
+                                  &  FL_time_S_det(:,:,ik_bz,i_sp),.true.)
      !
    enddo
    !
-   call PP_redux_wait(FL_S_plus(:,:,:,:,:,is) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   call PP_redux_wait(FL_S_minus(:,:,:,:,:,is), COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   call PP_redux_wait(FL_time_S_det(:,:,:,is) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(FL_S_plus(:,:,:,:,:,i_sp) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(FL_S_minus(:,:,:,:,:,i_sp), COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(FL_time_S_det(:,:,:,i_sp) , COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
  enddo
  !

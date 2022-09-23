@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -73,6 +73,13 @@ module SC
  real(SP),parameter   :: OEP_threshold = 1.E-5
  character(schlen)    :: OEP_approx
  logical              :: l_oep_iterative,l_oep_EWeight
+ !
+ ! NEQ
+ !
+ character(schlen)     :: SC_neq_kind
+ integer               :: SC_last_coh_it
+ real(SP)              :: SC_mu(3)
+ real(SP), allocatable :: SC_occ(:,:,:)
  !
  ! xc potential
  !

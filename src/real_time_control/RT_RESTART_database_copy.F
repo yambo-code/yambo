@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -27,7 +27,7 @@ subroutine RT_RESTART_database_copy(db)
  use IO_m,           ONLY:cp_file,mk_dir
  use RT_control,     ONLY:RT_DB_file_name
  use stderr,         ONLY:n_max_jobstr,STRING_split
- use com,            ONLY:jobdir,jobstr
+ use com,            ONLY:jobdir,jobstr,more_io_path
  use parallel_m,     ONLY:master_cpu
  !
  implicit none
@@ -56,11 +56,11 @@ subroutine RT_RESTART_database_copy(db)
  !
  call STRING_split(trim(db_to_cp),components,"/",n_non_empty_strings=n_s)
  !
- if (len_trim(jobdir)>0)  destination=trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
- if (len_trim(jobdir)==0) destination=                   trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)>0)  destination=trim(more_io_path)//trim(jobdir)//"/"//trim(jobstr)//"/"//trim(components(n_s))
+ if (len_trim(jobdir)==0) destination=trim(more_io_path)              //"/"//trim(jobstr)//"/"//trim(components(n_s))
  !
  if (.not.file_exists(trim(destination))) then
-   call mk_dir(trim(jobdir)//"/"//trim(jobstr))
+   call mk_dir(trim(more_io_path)//"/"//trim(jobdir)//"/"//trim(jobstr))
    call cp_file(trim(db_to_cp),trim(destination),i_err)
  endif
  !

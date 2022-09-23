@@ -43,7 +43,8 @@ endif
 #
 yambo yambo_ph yambo_sc yambo_rt yambo_rt_gpl yambo_rt_iterative yambo_nl yambo_qed yambo_fl: 
 	@rm -f ${compdir}/log/"compile_"$@".log"
-	@touch config/stamps_and_lists/compiling_$@.stamp
+	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
+	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp
 	@$(call todo_precision,$(PRECMP))
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs

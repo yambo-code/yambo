@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,15 +25,16 @@ subroutine X_pre_setup(Xen,Xk,X)
  !
  use pars,          ONLY:SP
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,&
-&                        X_use_gpu,Chi_linalg_mode,X_ng
- use electrons,     ONLY:levels
- use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use
+&                        X_use_gpu,Chi_linalg_mode,X_ng,l_write_disk_Xo
+ use electrons,     ONLY:levels,n_sp_pol
+ use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use,l_rpa_IP
  use R_lattice,     ONLY:nqibz,bz_samp
  use QP_m,          ONLY:COHSEX_use_empties
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
  use stderr,        ONLY:intc
+ use parser_m,      ONLY:parser
  use cuda_m,        ONLY:have_cuda
  !
  implicit none
@@ -55,13 +56,13 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! In these two lines I ensure the at least all the metallic
  ! bands are included in the X summation
  !
- if (X%ib(1)>Xen%nbf+1) X%ib(1)=Xen%nbf+1
- if (X%ib(2)<Xen%nbm)   X%ib(2)=Xen%nbm
+ if (X%ib(1)>minval(Xen%nbf)+1) X%ib(1)=minval(Xen%nbf)+1
+ if (X%ib(2)<maxval(Xen%nbm)  ) X%ib(2)=maxval(Xen%nbm)
  !
  ! Other checks
  !
- if (X%ib(1)<0.or.X%ib(1)>Xen%nbm.or.X%ib(2)<X%ib(1)) X%ib(1)=1
- if (X%ib(2)>Xen%nb.or.X%ib(2)<Xen%nbf)               X%ib(2)=Xen%nb
+ if (X%ib(1)<0.or.X%ib(1)>maxval(Xen%nbm).or.X%ib(2)<X%ib(1))  X%ib(1)=1
+ if (X%ib(2)>Xen%nb.or.X%ib(2)<minval((/Xen%nbf(:n_sp_pol)/))) X%ib(2)=Xen%nb
  !
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation
@@ -120,5 +121,11 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! Copy of X dimension for Parallel default environment solver
  !
  X_ng=X%ng
+ !
+ ! Check if Xo must be written on-the-fly
+ !
+ call parser('WriteXo',l_write_disk_Xo)
+ !
+ if (l_rpa_IP) l_write_disk_Xo=.FALSE.
  !
 end subroutine

@@ -1,0 +1,7 @@
+#if defined _SC || _RT || _QED
+COLL_objects = io_COLLISIONS_header.o io_COLLISIONS.o COLLISIONS_dbname.o
+#endif
+objs = io_BS_header.o io_BS_PAR_init.o io_BS_PAR_free.o io_BS_PAR_block.o \
+       $(COLL_objects) \
+       io_DIPOLES.o io_Overlaps.o \
+       variables_BS.o variables_BS_more.o

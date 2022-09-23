@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ik_ibz,ikp_ibz)
+subroutine FL_determinants(en,ik_ibz,ikp_ibz,i_sp,FL_S_plus,FL_time_S_det)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1,HA2EV
@@ -34,13 +34,13 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ik_ibz,ikp_ibz)
  implicit none
  !
  type(levels), intent(in)   :: en
- complex(SP), intent(inout) :: FL_S_plus(en%nbf,en%nbf,n_tot_extra_modes)
+ integer,     intent(in)    :: ik_ibz,ikp_ibz,i_sp
+ complex(SP), intent(inout) :: FL_S_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_extra_modes)
  complex(DP), intent(inout) :: FL_time_S_det(n_tot_time_steps)
- integer,     intent(in)    :: ik_ibz,ikp_ibz
  !
  ! Work Space
  !
- complex(SP)   :: FL_time_S_plus(en%nbf,en%nbf,n_tot_time_steps)
+ complex(SP)   :: FL_time_S_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_time_steps)
  integer       :: i_t,i1_extra,i1_shifted_fl,i1,i2
  real(SP)      :: time,w0,T_period,t_samples(n_tot_time_steps)
  !
@@ -79,9 +79,9 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ik_ibz,ikp_ibz)
    !
    ! Add Quasi-energies exponentials
    ! ================================
-   do i1=1,en%nbf 
+   do i1=1,en%nbf(i_sp) 
      !
-     do i2=1,en%nbf
+     do i2=1,en%nbf(i_sp)
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
                                &  * exp(+cI*FL_QE(i1,ik_ibz ,1)*t_samples(i_t)) &
@@ -100,7 +100,7 @@ subroutine FL_determinants(en,FL_S_plus,FL_time_S_det,ik_ibz,ikp_ibz)
    !
    !aim137 prelim
    !aim137: for now I am doing inversion, but I should really write a subroutine to just get the det
-   call SERIAL_inversion(en%nbf,FL_time_S_plus(:,:,i_t),FL_time_S_det(i_t),.true.)
+   call SERIAL_inversion(en%nbf(i_sp),FL_time_S_plus(:,:,i_t),FL_time_S_det(i_t),.true.)
    !
  enddo
  !

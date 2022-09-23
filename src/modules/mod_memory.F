@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -107,7 +107,7 @@ module memory
 &                             MEM_r1,  MEM_r2,  MEM_r3,  MEM_r4,  MEM_r5,                   &
 &                             MEM_c1,  MEM_c2,  MEM_c3,  MEM_c4,  MEM_c5,  MEM_c6,          &
 #ifndef _DOUBLE
-&                             MEM_rd1, MEM_rd2, MEM_rd3,                                    &
+&                             MEM_rd1, MEM_rd2, MEM_rd3, MEM_rd4, MEM_rd5,                  &
 &                             MEM_cd1, MEM_cd2, MEM_cd3, MEM_cd4, MEM_cd5, MEM_cd6,         &
 #endif
 &                             MEM_l1,  MEM_l2,  MEM_l3,  MEM_l4,  MEM_l5,  MEM_l6,          &
@@ -312,6 +312,16 @@ module memory
      character(*)::name
      real(DP)    ::r(:,:,:)
      call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1)),HOST_)
+   end subroutine
+   subroutine MEM_rd4(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:,:)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1)),HOST_)
+   end subroutine
+   subroutine MEM_rd5(name,r)
+     character(*)::name
+     real(DP)    ::r(:,:,:,:,:)
+     call MEM_manager_alloc(name,size(r,KIND=IPL),kind(r(1,1,1,1,1)),HOST_)
    end subroutine
 #endif
 #ifdef _CUDA

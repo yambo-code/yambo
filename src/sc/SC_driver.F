@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -34,18 +34,19 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         rho_convergence,magn_convergence,it_now,SC_nbands,          &
 &                         l_SC_cycle,SC_cycle_mixing,SC_alloc,SC_free,l_SC_nl_mix,    &
 &                         l_SC_RESTART,l_Mean_Potential,it_to_start,l_froze_density,  &
-&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters
+&                         l_NSC_shot,SC_preconditioning,V_mean,SC_up_W_iters,         &
+&                         SC_neq_kind,SC_mu
  use hamiltonian,    ONLY:rho_n,magn_n,l_sc_V_is_local,H_nl_sc,WF_G_max,WF_Go_indx,   &
 &                         V_hartree_sc,Hzero,V_xc_sc,E_reference,l_sc_XC_is_local,            &
-&                         H_QP_table_setup,H_rotation
+&                         H_QP_table_setup,H_rotation,H_rotation_ref
  use wave_func,      ONLY:WF,WAVEs,WF_copy
  use FFT_m,          ONLY:fft_size
  use linear_algebra, ONLY:DIAGO
- use interfaces,     ONLY:el_density_and_current,WF_load,WF_free, &
+ use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load,WF_free, &
 &                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg
- use X_m,            ONLY:X_t,current_iq,X_alloc
+ use X_m,            ONLY:X_t,current_iq,X_ALLOC_elemental
  use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
@@ -83,12 +84,16 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: H_nl_nm1(:,:,:,:)
  !
+ complex(SP) :: H_tmp(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2))
+ !
+ complex(SP), allocatable :: H_rotation0(:,:,:,:)
+ !
  type(WAVEs)              :: WFo
  ! 
  ! Work Space
  !
- integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),IO_ACT,io_E,io_V,io_WF,i_sp_pol,i_frag,i_io,io_X_err,io_DIP_err
- real(SP)                 :: max_proj,V_xc_sc_shift(n_spin)
+ integer                  :: ir,i1,i2,ik,ib,ibp,ID(4),IO_ACT,io_E,io_V,io_WF,i_sp_pol,i_frag,i_io,io_X_err,io_DIP_err,nb
+ real(SP)                 :: max_proj,V_xc_sc_shift(n_spin),ELEC,HOLE,DELTA,DELTA_NEW(2)
  character(schlen)        :: dumb_ch,dumb_ch2
  integer, external        :: io_SC_components,X_dielectric_matrix
  logical, external        :: STOP_now
@@ -105,9 +110,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  ! SC_bands(2)
  !=============
  if (SC_bands(2)> E%nb)  call error(' Upper bound of band indexes cannot to be higher than '//trim(intc(E%nb)))
- if (SC_bands(2)< E%nbm) then
-   SC_bands(2)=E%nbm
-   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(E%nbm)))
+ if (SC_bands(2)< maxval(E%nbm)) then
+   SC_bands(2)=maxval(E%nbm)
+   call warning(' Imposing upper bound of band indexes at least to metallic bands '//trim(intc(maxval(E%nbm))))
  endif
  !
  spread       =rZERO
@@ -262,10 +267,41 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
  endif
  !
+ ! Apply shift to the chemical potential
+ !
+ if(trim(SC_neq_kind)=="matsubara") then
+   !
+   YAMBO_ALLOC(H_rotation_ref,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),E%nk,n_sp_pol))
+   H_rotation_ref=H_rotation
+   !
+   do i_sp_pol=1,n_sp_pol
+     do ik=1,QP_nk
+       !
+       ! Transform H_SC into H_matsubara
+       !
+       H_tmp=cZERO
+       do ib=SC_bands(1),SC_bands(2)
+         !if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) write(*,*) 'occ',ik,ib,SC_mu(2)*27.2116,E_reference%E(ib,ik,i_sp_pol)*27.2116
+         !if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) write(*,*) 'emp',ik,ib,SC_mu(3)*27.2116,E_reference%E(ib,ik,i_sp_pol)*27.2116
+         if(E_reference%E(ib,ik,i_sp_pol)<=SC_mu(1)) H_tmp(ib,ib) = -SC_mu(2)
+         if(E_reference%E(ib,ik,i_sp_pol)> SC_mu(1)) H_tmp(ib,ib) = -SC_mu(3)
+       enddo
+       ! The chemical potential is imposed in the EQ-SEX basis
+       call OBS_rotate(H_rotation(:,:,ik,i_sp_pol),H_tmp,SC_nbands,-1)
+       Hzero(:,:,ik,i_sp_pol)=Hzero(:,:,ik,i_sp_pol)+H_tmp
+       !
+     enddo
+   enddo
+   !
+ endif
  !
  ! Initial Polarization
  ! ====================
- if(l_sc_electric)  call Berry_polarization_NEQ(E,Xk,H_rotation(:,1:E%nbf,:,:),Initial_Pol)
+ if(l_sc_electric)  then
+   do i_sp_pol=1,n_sp_pol
+     call Berry_polarization_NEQ(E,Xk,i_sp_pol,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),Initial_Pol)
+   enddo
+ endif
  !
  ! SCF cycle & NSC shot
  !=====================
@@ -288,7 +324,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    ! Exchange & Correlation
    !========================
    !
-   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it_sc,V_xc_nm1)
+   if (l_SC_cycle) call SC_add_XC(X,Xw,Xk,E,k,q,it_sc,V_xc_nm1,ELEC,HOLE,DELTA)
    !
    ! Hartree potential
    !===================
@@ -327,7 +363,9 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    !
    if(l_sc_electric) then
      !      
-     call SC_add_efield(H_rotation(:,1:E%nbf,:,:),E,Xk,Polarization)
+     do i_sp_pol=1,n_sp_pol
+       call SC_add_efield(E,Xk,i_sp_pol,H_rotation(:,1:E%nbf(i_sp_pol),:,i_sp_pol),Polarization)
+     enddo
      Polarization=Polarization-Initial_Pol
      !
    endif
@@ -340,6 +378,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    if (.not.l_sc_V_is_local) call io_control(ACTION=OP_WR,   COM=NONE,SEC=(/1/),ID=ID(3))
    io_V=io_SC_components('V' ,E,ID(3))
    !
+   DELTA_NEW=0.
    do i_sp_pol=1,n_sp_pol
      !
      do ik = 1, QP_nk 
@@ -403,6 +442,22 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        H_nl_sc = H_nl_sc + Hzero(:,:,ik,i_sp_pol)
        !
+       if(trim(SC_neq_kind)=="matsubara") then
+         !
+         ! Compute DELTA_NEW
+         !
+         H_tmp=H_nl_sc
+         call OBS_rotate(H_rotation_ref(:,:,ik,1),H_tmp,SC_nbands,i_sp_pol)
+         do ib=SC_bands(1),SC_bands(2)
+           do ibp=SC_bands(1),SC_bands(2)
+             if( .not.( E_reference%E(ib,ik,i_sp_pol)>SC_mu(1) .and. E_reference%E(ibp,ik,i_sp_pol)<=SC_mu(1) ) ) cycle
+             DELTA_NEW(1)=DELTA_NEW(1)+abs(H_tmp(ib,ibp))**2*Xk%weights(ik)
+             if(ik==1) DELTA_NEW(2)=DELTA_NEW(2)+abs(H_tmp(ib,ibp))**2
+           enddo
+         enddo
+         !
+       endif
+       !
        ! Diagonalize H_nl_sc 
        !=====================
        !
@@ -427,6 +482,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      enddo ! ik
      !
    enddo ! i_sp_pol
+   !
+   DELTA_NEW(:)=sqrt(DELTA_NEW(:))*HA2EV 
    !
    if (l_NSC_shot) call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
    !
@@ -542,6 +599,12 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        dumb_ch2=trim(dumb_ch2)//'  - '//trim(real2ch(magn_convergence))//'%'
      endif
      !
+     if(trim(SC_neq_kind)=="matsubara") then
+       if(it_now==it_to_start) dumb_ch =trim(dumb_ch)//'    -  ELECS  /  HOLES  /  RHOIJ  / DELTA  '
+       dumb_ch2=trim(dumb_ch2)//' - '//trim(real2ch(ELEC))//'/'//trim(real2ch(HOLE))//'/'&
+       &                      //trim(real2ch(DELTA))//'/'//trim(real2ch(DELTA_NEW(1)))
+     endif
+     !
      if(l_sc_electric) then
        if(it_sc==1) then
          dumb_ch= trim(dumb_ch) //'    -  Polarization;'
@@ -630,6 +693,11 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
    call msg('r' ,'[SC]          on energies     ',E_convergence*HA2EV,"[eV]")
    if (     l_sc_V_is_local)  call msg('r' ,'[SC] Total Energy (no Ewald)        ',E_total*(/1._SP,2._SP/),"[Ha/Ry]")
    if (.not.l_sc_V_is_local)  call msg('r','')
+   if(trim(SC_neq_kind)=="matsubara") then
+                       call msg('r' ,'[SC] Electrons and Holes            ',(/ELEC,HOLE/))
+                       call msg('r' ,'[SC] Trace over rho_ij              ',DELTA)
+                       call msg('r' ,'[SC] Order Parameter           [eV] ',DELTA_NEW)
+   endif
    if(l_sc_electric) then
       call msg('r' ,'[SC] Polarization [Re]              ', real(Polarization,SP))
       call msg('r' ,'[SC] Polarization [Im]              ',aimag(Polarization)   )
@@ -697,6 +765,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        call ELECTRIC_alloc(E)
        YAMBO_ALLOC(W_electric,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      endif
+     YAMBO_ALLOC(H_rotation0,(SC_bands(1):SC_bands(2),SC_bands(1):SC_bands(2),QP_nk,n_sp_pol))
      !
    end subroutine
    !
@@ -736,7 +805,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        YAMBO_FREE(H_nl_nm1)
      endif
      !
-     if (.not.io_RESPONSE) call X_alloc('X')
+     if (.not.io_RESPONSE) call X_ALLOC_elemental('X')
      !
      if(l_SC_electric) then
        call ELECTRIC_free()
@@ -753,7 +822,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      if (l_SC_cycle) then
        do i_sp_pol=1,n_sp_pol
-         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:n_met_bands,:,i_sp_pol))-maxval(E%E(:n_met_bands,:,i_sp_pol)) 
+         nb=n_met_bands(i_sp_pol)
+         V_xc_sc_shift(i_sp_pol )= maxval(E_reference%E(:nb,:,i_sp_pol))-maxval(E%E(:nb,:,i_sp_pol)) 
          if (l_sc_V_is_local) then
            V_xc_sc(:,i_sp_pol)=V_xc_sc(:,i_sp_pol)+V_xc_sc_shift(i_sp_pol)
            call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID(3))

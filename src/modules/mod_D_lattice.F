@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,6 +38,8 @@ module D_lattice
  ! Temperature
  !
  real(SP) :: Tel
+ real(SP) :: T_elecs
+ real(SP) :: T_holes
  real(SP) :: Bose_Temp
  real(SP) :: input_GS_Tel
  logical  :: input_Tel_is_negative

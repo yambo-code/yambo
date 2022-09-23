@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -66,7 +66,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! States selector
  !=================
  !
- NB=(/1,Xen%nbm/)
+ NB=(/1,maxval(Xen%nbm)/)
  NK=(/1,Xk%nibz/)
  !
  if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -37,10 +37,13 @@ subroutine NL_databases_IO(i_f,read_or_write)
  !
  integer              :: io_Nonlinear,IO_ACTION
  integer, external    :: io_NL
+ character(9)         :: dbname
  logical              :: reading,writing
  !
  reading=trim(read_or_write)=="read"
  writing=trim(read_or_write)=="write"
+ !
+ dbname="Nonlinear"
  !    
  if(i_f==0) then
    if(master_cpu) then
@@ -49,7 +52,7 @@ subroutine NL_databases_IO(i_f,read_or_write)
      if(writing) IO_ACTION=OP_WR_CL
      !
      call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID(1))
-     io_Nonlinear=io_NL(ID(1))
+     io_Nonlinear=io_NL(dbname,ID(1))
    endif
  else
    !         
@@ -57,7 +60,7 @@ subroutine NL_databases_IO(i_f,read_or_write)
    if(writing) IO_ACTION=OP_APP_CL
    !
    call io_control(ACTION=IO_ACTION,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID(1))
-   io_Nonlinear=io_NL(ID(1))
+   io_Nonlinear=io_NL(dbname,ID(1))
    !
  endif
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -236,7 +236,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  if (present(NO_EMPTIES)) NO_EMPTIES_=NO_EMPTIES
  !
  if (px%n_of_elements(myid_loop+1)==0) then
-   call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   call warning("Empty workload for CPU "//trim(intc(myid+1)))
  endif
  !
 end subroutine

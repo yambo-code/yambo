@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,9 +23,9 @@
 !
 subroutine REPORT_Occupations(what,E)
  !
- use pars,          ONLY:SP,schlen,msg_len
+ use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV,BO2ANG,HA2EV,HA2KEL
- use D_lattice,     ONLY:Tel,Bose_Temp,DL_vol
+ use D_lattice,     ONLY:Tel,T_holes,T_elecs,Bose_Temp,DL_vol
  use drivers,       ONLY:Finite_Tel
  use com,           ONLY:msg,COMPOSE_spin_msg
  use electrons,     ONLY:levels,n_sp_pol,nel,spin_string,spin_occ
@@ -38,7 +38,7 @@ subroutine REPORT_Occupations(what,E)
  ! 
  ! Work Space
  ! 
- integer           ::i_sp_pol,Nbf(n_sp_pol),Nbm(n_sp_pol),title_len
+ integer           ::i_sp_pol,Nbf(2),Nbm(2),title_len
  character(schlen) ::title
  real(SP)          ::N_met,f_met,val(10,2,1+(n_sp_pol-1)*2)
  real(SP)          ::E_g_dir(1+(n_sp_pol-1)*2,2) ! min gap - max gap
@@ -62,7 +62,10 @@ subroutine REPORT_Occupations(what,E)
  !
  if (n_sp_pol==1) call msg('r',title(1:title_len)//"=== General ===")
  if (n_sp_pol==2) call msg('r',title(1:title_len)//"=== Spin Independent ===")
- call msg('r',COMPOSE_spin_msg(title,title_len,'Electronic Temperature',0),(/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
+ if (T_elecs==T_holes) call msg('r',COMPOSE_spin_msg(title,title_len,'Electronic Temperature',0),&
+&                                                                (/Tel*HA2EV,Tel*HA2KEL/),'[eV K]')
+ if (T_elecs/=T_holes) call msg('r',COMPOSE_spin_msg(title,title_len,'Holes / Elecs Temp',0),    &
+&                                                        (/T_holes*HA2EV,T_elecs*HA2KEL/),'[eV K]')
  call msg('r',COMPOSE_spin_msg(title,title_len,'Bosonic    Temperature',0),(/Bose_Temp*HA2EV,Bose_Temp*HA2KEL/),'[eV K]')
  call msg('r',COMPOSE_spin_msg(title,title_len,'Finite Temperature mode',0),Finite_Tel)
  call msg('r',COMPOSE_spin_msg(title,title_len,'El. density',0),(/nel/(DL_vol*BO2ANG**3*1.E-24)/),'[cm-3]')
@@ -93,10 +96,10 @@ subroutine REPORT_Occupations(what,E)
    !
    if (Nbf(i_sp_pol)==Nbm(i_sp_pol).and.Nbf(i_sp_pol)>0) then
      call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap',i_sp_pol),E_g_dir(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k-point ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Direct Gap localized at k ',i_sp_pol),E_k_dir(i_sp_pol+(n_sp_pol-1)))
      if (E%nk>1) then
        call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap',i_sp_pol),E_g_ind(i_sp_pol+(n_sp_pol-1),1)*HA2EV,'[eV]')
-       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between k-points ',i_sp_pol),E_k_ind(i_sp_pol,:))
+       call msg('r',COMPOSE_spin_msg(title,title_len,'Indirect Gap between kpts ',i_sp_pol),E_k_ind(i_sp_pol,:))
        call msg('r',COMPOSE_spin_msg(title,title_len,'Last valence band width',i_sp_pol), &
 &               E_g_ind(i_sp_pol+(n_sp_pol-1),2)*HA2EV,'[eV]')
        call msg('r',COMPOSE_spin_msg(title,title_len,'1st conduction band width',i_sp_pol), &
@@ -131,10 +134,11 @@ subroutine REPORT_Occupations(what,E)
    do i_sp_pol=1,n_sp_pol
      f_met=f_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/sum(spin_occ*real(E%nk*(Nbm(:)-Nbf(:))))
      N_met=N_met+sum(E%f(Nbf(i_sp_pol)+1:Nbm(i_sp_pol),:,i_sp_pol))/real(E%nk)
+     !
+     call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',i_sp_pol),(/nel/real(n_sp_pol),N_met/))
+     call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',i_sp_pol),(/f_met/))
+     !
    enddo
-   !
-   call msg('r',COMPOSE_spin_msg(title,title_len,'N of el / N of met el',0),(/nel,N_met/))
-   call msg('r',COMPOSE_spin_msg(title,title_len,'Average metallic occ.',0),(/f_met/))
    !
    if (n_sp_pol==1) call warning(COMPOSE_spin_msg(title,title_len,'Metallic system',0))
    if (n_sp_pol==2) then

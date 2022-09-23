@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -23,8 +23,7 @@
 !
 subroutine NL_ypp_driver(en,k)
  !
- use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,&
-&                         l_skip_OBS_IO
+ use YPP_real_time,  ONLY:X_order,RT_conf,RT_time,Pol,l_skip_OBS_IO,Pump_path
  use pars,           ONLY:SP,pi,lchlen
  use units,          ONLY:HA2EV,AUT2FS
  use R_lattice,      ONLY:bz_samp
@@ -34,7 +33,7 @@ subroutine NL_ypp_driver(en,k)
  use fields,         ONLY:Efield,EtoT,Divide_by_Field,ext_field,Efield_duplicate,Efield_strength
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
- use com,            ONLY:msg
+ use com,            ONLY:jobstr,msg
  use real_time,      ONLY:NE_steps,RT_step,NE_steps
  use stderr,         ONLY:intc,real2ch
  use RT_control,     ONLY:OBS_RT_IO_t
@@ -48,16 +47,20 @@ subroutine NL_ypp_driver(en,k)
  ! Working Space
  !
  integer, external::io_NL
- integer  :: io_Nonlinear,ID,i_Probe
+ integer  :: io_Nonlinear,io_Nonlinear_REF,ID,ID_REF,i_Probe
  integer  :: i_f,i_d,i_order
+ character(9) :: dbname
  real(SP) :: W_step,T_period,time_range_save(2)
  real(SP),    allocatable  :: RT_P_probe(:,:,:),Harmonic_Frequency(:,:),Probe_frequency(:)
  complex(SP), allocatable  :: X_effective(:,:,:),Susceptibility(:,:,:)
  logical  :: Probe_consistency_error,l_print_pwr_spectrum
  type(ext_field)   :: Efield_probe
  logical, allocatable :: runs_ok(:)
+ character(lchlen) :: jobstr_save
  !
  call section("*",'NL Post Processing')
+ !
+ dbname="Nonlinear"
  !
  call RT_output_INIT( )
  !
@@ -66,8 +69,20 @@ subroutine NL_ypp_driver(en,k)
  ! Input/Output
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
- io_Nonlinear=io_NL(ID)
- if(io_Nonlinear/=0) call error("Error reading NonLinear database")
+ io_Nonlinear=io_NL(dbname,ID)
+ if(io_Nonlinear/=0) call error(" Error reading NonLinear database")
+ !
+ io_Nonlinear_REF=-1
+ if(Pump_path/='none') then
+    jobstr_save=jobstr
+    jobstr     =trim(Pump_path)
+    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID_REF)
+    io_Nonlinear_REF=io_NL(dbname,ID_REF)
+    if(io_Nonlinear_REF/=0) call error(' Pump reference polarization not found!!')
+    call msg('rs','Found Pump reference polarization in: '//Pump_path)
+    jobstr     =jobstr_save
+ endif 
+ !
  l_skip_OBS_IO=.false.
  !
  YAMBO_ALLOC(RT_P_probe,(NE_steps,n_frequencies,3))
@@ -85,7 +100,7 @@ subroutine NL_ypp_driver(en,k)
  !
  do i_f=1,n_frequencies
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID)
-   io_Nonlinear=io_NL(ID)
+   io_Nonlinear=io_NL(dbname,ID)
    !
    if(io_Nonlinear/=0) then
      runs_ok(i_f)=.false.
@@ -108,6 +123,21 @@ subroutine NL_ypp_driver(en,k)
    enddo
    !
    Probe_frequency(i_f)=Efield(i_Probe)%frequency(1)
+   !
+   if(io_Nonlinear_REF==0) then
+     call warning("removing reference polarization/current")
+     jobstr_save=jobstr
+     jobstr     =trim(PUMP_path)
+     call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+i_f/),MODE=DUMP,ID=ID_REF)
+     io_Nonlinear=io_NL(dbname,ID_REF)
+     jobstr=jobstr_save
+     do i_d=1,3
+       RT_P_probe(:,i_f,i_d)=RT_P_probe(:,i_f,i_d)-NL_P_t(:,i_d)
+     enddo
+      ! Restore original parameters of the Probe
+      call Efield_duplicate(Efield_probe,Efield(i_Probe))
+   endif
+
    !
  enddo
  !
@@ -134,13 +164,13 @@ subroutine NL_ypp_driver(en,k)
  if((RT_conf%T_range(2) - RT_conf%T_range(1))<T_period) &
 &   call warning('Simulation time not long enough. Period is'//trim(real2ch(T_period*AUT2FS))//' fs')
  !
- call msg('s',' Field type    ', trim(Efield_probe%ef_name))
+ call msg('s','Field type    ', trim(Efield_probe%ef_name))
  !
  select case (trim(Efield_probe%ef_name))
    !
    ! CONTINUOUS MONOCHROMATIC SOURCES
    !
- case('SIN','SOFTSIN','ANTIRES')
+   case('SIN','SOFTSIN','ANTIRES')
      !  
      YAMBO_ALLOC(X_effective,(0:X_order,n_frequencies,3))
      YAMBO_ALLOC(Susceptibility,(0:X_order,n_frequencies,3))
@@ -189,7 +219,7 @@ subroutine NL_ypp_driver(en,k)
          !
          if (i_order==1) then
            Susceptibility(i_order,i_f,1)=4._SP*pi*dot_product( Efield(i_Probe)%versor(:),X_effective(i_order,i_f,:) )*&
-                &                                                   Divide_by_Field(Efield(i_Probe),i_order)
+&                                        Divide_by_Field(Efield(i_Probe),i_order)
          else 
            Susceptibility(i_order,i_f,:)=X_effective(i_order,i_f,:)*Divide_by_Field(Efield(i_Probe),i_order)
          end if
@@ -205,23 +235,27 @@ subroutine NL_ypp_driver(en,k)
      YAMBO_FREE(Susceptibility)
      YAMBO_FREE(Harmonic_Frequency)
      !
-  case ('DELTA','PULSE')
-    !
-    YAMBO_ALLOC(Pol%F_t,(RT_conf%T_n_steps,3))
-    Pol%F_t(:,:) =RT_P_probe(:,i_Probe,:)
-    call RT_damp_it(RT_conf%damping,RT_conf%damp_factor,Pol%F_t,3)
-    call RT_X_LRR_real_field(en)
-    YAMBO_FREE(Pol%F_t)
+   case ('DELTA','PULSE')
      !
-     ! OTHER CASES NOT YET WORKING
+     allocate(Pol(1))
+     YAMBO_ALLOC(Pol(1)%F_t,(RT_conf%T_n_steps,3))
+     Pol(1)%F_t(:,:) =RT_P_probe(:,i_Probe,:)
+     Pol(1)%N=3
+     Pol(1)%title="polarization"
+     call RT_OBSERVABLES_damp_and_write(Pol(1),RT_conf,.FALSE.)
+     call RT_X_LRR_real_field(en)
+     YAMBO_FREE(Pol(1)%F_t)
+     deallocate(Pol)
      !
   case default 
-    call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
-  end select
-  !
-  YAMBO_FREE(RT_P_probe)
-  !
-contains
+     ! OTHER CASES NOT YET WORKING
+     !
+     call error('Analysis not available for the '//trim((Efield_probe%ef_name))//' field')
+ end select
+ !
+ YAMBO_FREE(RT_P_probe)
+ !
+ contains
    !
    subroutine plot_X_effective()
      !
@@ -235,6 +269,7 @@ contains
      use vec_operate,    ONLY:sort
      use interfaces,     ONLY:DESC_write
      use nl_optics,      ONLY:NL_desc
+     use stderr,         ONLY:intc
      !
      ! Working Space
      !
@@ -243,7 +278,7 @@ contains
      logical           :: l_prt_err
      real(SP)          :: Unit_of_Measure,VALUEs(11)
      integer           :: f_indx(max_n_of_paths),n_headings
-     character(schlen) :: headings(11)
+     character(schlen) :: headings(11,0:X_order),oexp
      !
      l_prt_err=.false.
      !
@@ -252,9 +287,22 @@ contains
      !
      n_headings=7
      !
-     headings(1)=" E [eV]"
-     headings(2:7)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
-&                              'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     headings(1,:)=" E [eV]"
+     !
+     ! X^1 is adimensional
+     ! X^0 I don't know :-)
+     ! X^n n>2 [cm/stV]^{n-1}
+     !
+     headings(2:7,0)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,1)=(/'X/Im(x)','X/Re(x)','X/Im(y)','X/Re(y)','X/Im(z)','X/Re(z)'/)
+     headings(2:7,2)=(/'X/Im[cm/stV](x)','X/Re[cm/stV](x)','X/Im[cm/stV](y)','X/Re[cm/stV](y)',&
+&                      'X/Im[cm/stV](z)','X/Re[cm/stV](z)'/)
+     do i_order=3,X_order,1
+       oexp=trim(intc(i_order-1))
+       headings(2:7,i_order)=(/'X/Im[cm/stV]^'//oexp//'(x)','X/Re[cm/stV]^'//oexp//'(x)',&
+&                              'X/Im[cm/stV]^'//oexp//'(y)','X/Re[cm/stV]^'//oexp//'(y)',&
+&                              'X/Im[cm/stV]^'//oexp//'(z)','X/Re[cm/stV]^'//oexp//'(z)'/)
+     enddo
      !
      do i_order=0,X_order,1
        !
@@ -265,7 +313,7 @@ contains
        call DESC_write('o probe','#',NL_desc)
        !
        call msg('o probe','#')
-       call msg('o probe','#',headings(1:n_headings),INDENT=0,USE_TABS=.TRUE.)
+       call msg('o probe','#',headings(1:n_headings,i_order),INDENT=0,USE_TABS=.TRUE.)
        call msg('o probe','#')
        !
        do i_fp=1,n_frequencies

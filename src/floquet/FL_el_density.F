@@ -44,7 +44,7 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  type(bz_samp),intent(in)  :: Xk
  type(levels), intent(in)  :: en       
  complex(SP),  intent(out) :: rho(fft_size,n_tot_extra_modes)
- complex(SP),  intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol)
  integer,      intent(in)  :: lowest_band
  !
  ! Work Space 
@@ -61,12 +61,14 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
  rho=cZERO
  rho_no_sym=cZERO
  !
- do ik=1,Xk%nibz
+ do i_sp=1,n_sp_pol
+   !
+   do ik=1,Xk%nibz
    !  
    if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
    ik_mem=PAR_Xk_ibz_index(ik)
    !
-   do i_m=lowest_band,en%nbf
+   do i_m=lowest_band,en%nbf(i_sp)
      !
      do i1_extra=max_extra_mode+1,n_tot_extra_modes !aim137 prelim - this can be reduced to half as rho must be real
        !
@@ -79,8 +81,6 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
              !
              if (abs(i_shift_comb_fl) > max_fl_mode) cycle
              i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
-             !
-             do i_sp=1,n_sp_pol
                !
                i1_wf=WF%index(i1,ik,i_sp)
                i2_wf=WF%index(i2,ik,i_sp)
@@ -93,7 +93,6 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
                  ! aim137 critical - I have serious doubts about summing over spinors
                  !
                enddo
-             enddo
              !
            enddo
          enddo
@@ -111,6 +110,8 @@ subroutine FL_el_density(en,Xk,rho,FL_V_bands,lowest_band)
    enddo ! i_m band
    !
  enddo ! kpts
+ !
+ enddo ! i_sp
  !
  call PP_redux_wait(rho_no_sym,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
  !

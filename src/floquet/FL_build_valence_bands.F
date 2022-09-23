@@ -42,8 +42,8 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
  !
  type(levels), intent(in)   :: en
  type(bz_samp),intent(in)   :: Xk
- complex(SP),  intent(in)   :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf,QP_nk,n_sp_pol)
- complex(SP),  intent(out)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,en%nbf,QP_nk,n_sp_pol)
+ complex(SP),  intent(in)   :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol)
+ complex(SP),  intent(out)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,maxval(en%nbf),QP_nk,n_sp_pol)
  !
  ! Work Space
  !

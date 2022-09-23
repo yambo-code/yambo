@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -56,9 +56,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  use FFT_m,          ONLY:fft_size
  use drivers,        ONLY:l_use_Hxc_collisions
  use R_lattice,      ONLY:bz_samp,nXkibz
- use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc,E_reference
+ use hamiltonian,    ONLY:V_hartree_sc,H_nl_sc,rho_n,magn_n,V_xc_sc
  use real_time,      ONLY:Ho_plus_Sigma,l_NE_with_fields,REF_V_xc_sc, &
-&                         rho_reference,magn_reference,RT_Vnl_xc,         &
+&                         rho_reference,magn_reference,RT_Vnl_xc,H_EQ,         &
 &                         l_RT_RWA,eval_HARTREE,eval_DFT,RTibz,RT_potential,      &
 &                         RT_bands,RT_nbands,    &
 &                         l_update_SOC,l_velocity_gauge_corr
@@ -81,7 +81,7 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
  !
  ! Work Space
  !
- integer                  :: ik,ik_RT,ib,iE_fg
+ integer                  :: ik,ik_RT,ib
  logical                  :: l_H_contains_Hartree
  real(SP),    allocatable :: delta_rho(:),delta_magn(:,:)
  complex(SP), allocatable :: V_scf(:),V_scf_grad(:,:),V_xc_mat(:,:,:)
@@ -220,31 +220,9 @@ subroutine RT_Hamiltonian(dG_in,A_input,E,k)
    !
  endif
  !
- ! The bare Hamiltonian
- !=========================
- if (.not.l_RT_RWA) then
-   !
-   do ik=1,nXkibz
-     !
-     if (.not.PAR_IND_Xk_ibz%element_1D(ik)) cycle
-     !
-     ! DAVIDE:
-     ! Ho+Sigma[eq]= E^{QP} 
-     !
-     do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
-       do ib=RT_bands(1),RT_bands(2)
-         if (ik_RT/=RTibz%k_range(ik,1)) then
-           iE_fg=RTibz%E_map(ik_RT)
-           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%FG%E(ib,iE_fg,1)
-         else
-           Ho_plus_Sigma(ib,ib,ik_RT,1)=Ho_plus_Sigma(ib,ib,ik_RT,1)+E_reference%E(ib,ik,1)
-         endif
-       enddo
-     enddo
-     !
-   enddo
-   !
- endif
+ ! The KS Hamiltonian
+ !====================
+ if (.not.l_RT_RWA) Ho_plus_Sigma=Ho_plus_Sigma+H_EQ
  !
  ! Pseudo potential terms needed for velocity gauge
  !==================================================

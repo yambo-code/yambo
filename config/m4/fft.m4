@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -109,6 +109,21 @@ if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
        try_fft_libs="-lfftw3"
    fi
    #
+fi
+#
+# check for MKL
+#
+if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
+   try_fft_incdir="${MKLROOT}/include"
+   mkl_libdir="${MKLROOT}/lib/intel64"
+   case "${FCKIND}" in
+   *gfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
+    ;;
+    *intel* | *pgi* | *nvfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
+    ;;
+    esac 
 fi
 #
 if ! test x"$try_fft_libs" = "x" ; then

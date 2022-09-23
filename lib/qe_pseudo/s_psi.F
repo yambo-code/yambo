@@ -94,7 +94,12 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
   !
   IF ( gamma_only ) THEN
      !
+#if defined _TOSOLVE
      CALL s_psi_gamma()
+#else
+     CALL error(&
+          "s_psi, the process flow should not go through gamma only.")
+#endif
      !
   ELSE IF ( noncolin ) THEN
      !
@@ -125,6 +130,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
   !
   CONTAINS
      !
+#if defined _TOSOLVE
      !-----------------------------------------------------------------------
      SUBROUTINE s_psi_gamma()
        !-----------------------------------------------------------------------
@@ -205,18 +211,18 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
 !       IF( becp%comm == mp_get_comm_null() ) THEN
           IF ( m == 1 ) THEN
 #if defined _DOUBLE
-             CALL DGEMV( 'N', 2 * n, nkb, 1.D0, real(vkb,SP), &
+             CALL DGEMV( 'N', 2 * n, nkb, 1.D0, vkb, &
                   2 * lda, ps, 1, 1.D0, spsi, 1 )
 #else
-             CALL SGEMV( 'N', 2 * n, nkb, 1.0_SP, real(vkb,SP), &
+             CALL SGEMV( 'N', 2 * n, nkb, 1.0_SP, vkb, &
                   2 * lda, ps, 1, 1.0_SP, spsi, 1 )
 #endif
           ELSE
 #if defined _DOUBLE
-             CALL DGEMM( 'N', 'N', 2 * n, m, nkb, 1.D0, real(vkb,SP), &
+             CALL DGEMM( 'N', 'N', 2 * n, m, nkb, 1.D0, vkb, &
                   2 * lda, ps, nkb, 1.D0, spsi, 2 * lda )
 #else
-             CALL SGEMM( 'N', 'N', 2 * n, m, nkb, 1.0_SP, real(vkb,SP), &
+             CALL SGEMM( 'N', 'N', 2 * n, m, nkb, 1.0_SP, vkb, &
                   2 * lda, ps, nkb, 1.0_SP, spsi, 2 * lda )
 #endif
           END IF
@@ -254,6 +260,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
        RETURN
        !
      END SUBROUTINE s_psi_gamma
+#endif
      !
      !-----------------------------------------------------------------------
      SUBROUTINE s_psi_k()

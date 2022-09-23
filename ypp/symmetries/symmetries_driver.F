@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -28,13 +28,13 @@ subroutine symmetries_driver(E,Xk)
  use electrons,           ONLY:levels,Spin_magn,n_spinor
  use FFT_m,               ONLY:fft_size
  use IO_m,                ONLY:rm_file
- use IO_int,              ONLY:ver_is_gt_or_eq
  use com,                 ONLY:msg,core_io_path,more_io_path
  use R_lattice,           ONLY:bz_samp,ng_closed,ng_vec,bz_samp_reset,bz_samp_duplicate
  use D_lattice,           ONLY:nsym,atom_mass,atoms_map,n_atoms_species_max,n_atomic_species
  use wave_func,           ONLY:wf_ng,WF
  use stderr,              ONLY:intc
- use interfaces,          ONLY:WF_load,WF_free
+ use interfaces,          ONLY:WF_load,WF_free,el_magnetization
+ use parser_m,            ONLY:parser
  !
 #include<memory.h>
  !
@@ -49,11 +49,13 @@ subroutine symmetries_driver(E,Xk)
  integer               :: old_nsym
  real(SP)              :: old_dl_sop(3,3,nsym)
  integer               :: old_sop_inv(nsym)
- logical               :: S_contains_TR(nsym)
+ logical               :: S_contains_TR(nsym),l_keep_k_grid
  !
  integer               :: action_kind,old_nkpt
  !
  if (core_io_path==more_io_path) more_io_path=trim(core_io_path)//"/FixSymm"
+ !
+ call parser('KeepKGrid',l_keep_k_grid)
  !
  call msg('s','Symmetries-respecting SAVE written to'//trim(more_io_path))
  !
@@ -92,22 +94,27 @@ subroutine symmetries_driver(E,Xk)
  !
  if(old_nsym<nsym) ng_closed=ng_vec
  !
+ !
  call section('=',"K-points")
  !===========================
  !
  call bz_samp_reset(Xk_save)
  call bz_samp_duplicate(Xk,Xk_save)
  !
- old_nkpt=Xk%nibz
- YAMBO_FREE(Xk%pt)
- call k_reduce(Xk,.false.)
- call msg('s',trim(intc(old_nkpt))//' k-points have been expanded/reduced to ...'//trim(intc(Xk%nibz)))
- !
- YAMBO_FREE(Xk%sstar)
- YAMBO_FREE(Xk%star)
- YAMBO_FREE(Xk%nstar)
- YAMBO_FREE(Xk%weights)
- call k_expand(Xk)
+ if(.not.l_keep_k_grid) then
+   !
+   old_nkpt=Xk%nibz
+   YAMBO_FREE(Xk%pt)
+   call k_reduce(Xk,.false.)
+   call msg('s',trim(intc(old_nkpt))//' k-points have been expanded/reduced to ...'//trim(intc(Xk%nibz)))
+   !
+   YAMBO_FREE(Xk%sstar)
+   YAMBO_FREE(Xk%star)
+   YAMBO_FREE(Xk%nstar)
+   YAMBO_FREE(Xk%weights)
+   call k_expand(Xk)
+   !
+ endif
  !
  YAMBO_ALLOC(kpoints_map,(2,Xk%nibz))
  call k_build_map(Xk,Xk_save,kpoints_map,action_kind)

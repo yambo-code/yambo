@@ -64,7 +64,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  type(levels),  intent(in)    :: E
  type(bz_samp), intent(in)    :: k,q
- complex(SP),   intent(in)    :: FL_V_bands(NL_bands(2),n_tot_fl_modes,E%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)    :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  real(SP),      intent(in)    :: w0
  integer,       intent(in)    :: iter_num
  !
@@ -77,7 +77,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  real(SP)     :: phase(fft_size)
  character(4) :: filename
  character(1) :: density_method
- complex(SP)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,E%nbf,QP_nk,n_sp_pol)
+ complex(SP)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  complex(SP)  :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
@@ -339,14 +339,14 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    else
      !
-     call FL_build_W_operator(FL_V_bands,E,k,A_tot,ik_bz,i_sp_pol,H_nl_sc)
+     call FL_build_W_operator(E,k,A_tot,ik_bz,i_sp_pol,FL_V_bands(:,:,E%nbf(i_sp_pol),:,i_sp_pol),H_nl_sc)
      !
    endif                                                         
    !
    ! aim137 deleted more beyond-IPA stuff
    !
    ! aim137: we will not use dephasing
-   ! call FL_dephasing(FL_V_bands,E,k,ik_bz,i_sp_pol,H_nl_sc)
+   ! call FL_dephasing(E,k,ik_bz,i_sp_pol,FL_V_bands(:,:,E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)
    !
    ! Store the Hamiltonian
    ! =====================

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -43,11 +43,17 @@ subroutine SC_History(it,E)
  character(schlen), SAVE :: E_file_name(2)
  character(schlen)       :: headers(SC_nbands*nkibz)
  !
- b_range(1)=max(n_full_bands-1,1)
- b_range(2)=b_range(1)+2
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
+   !
+   ! 2021/11/09 DS
+   ! The commented lin is more correct for the definition of b_range(1).
+   ! However the other one is kept to avoid problems with the test-suite
+   !b_range(1)=max(n_full_bands(i_spin)-1,1)
+   !
+   b_range(1)=max(minval(n_full_bands)-1,1)
+   b_range(2)=b_range(1)+2
    !
    if ( it == 1 ) then
      !

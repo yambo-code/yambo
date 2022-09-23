@@ -39,23 +39,23 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  integer,       intent(in) :: i_sp
  integer,       intent(in) :: ikbz
  !
- complex(SP),  intent(inout) :: FL_Sm1_Duffin_minus(en%nbf,en%nbf,n_tot_duffin_modes)
- complex(SP),  intent(inout) :: FL_Sm1_Duffin_plus(en%nbf,en%nbf,n_tot_duffin_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_Duffin_minus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes)
+ complex(SP),  intent(inout) :: FL_Sm1_Duffin_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes)
  !
  ! Work space
  !
- complex(SP) :: FL_Duffin_Gmatrix_plus(en%nbf,en%nbf,n_tot_duffin_modes,n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_Gmatrix_minus(en%nbf,en%nbf,n_tot_duffin_modes,n_tot_duffin_modes)
- complex(SP) :: tmp_M(en%nbf,en%nbf)
- complex(SP) :: test_mat_1(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
- complex(SP) :: test_mat_2(en%nbf*n_tot_fl_modes,en%nbf*n_tot_fl_modes)
- complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf*n_tot_duffin_modes,en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf*n_tot_duffin_modes,en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf*n_tot_duffin_modes)
- complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf*n_tot_duffin_modes)
- complex(SP) :: vector_b(en%nbf*n_tot_fl_modes)
- complex(SP) :: vtmp(en%nbf*n_tot_duffin_modes)
- complex(SP) :: diagonal_elements(en%nbf),sum_minus_trace,dummy_det
+ complex(SP) :: FL_Duffin_Gmatrix_plus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes,n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_Gmatrix_minus(en%nbf(i_sp),en%nbf(i_sp),n_tot_duffin_modes,n_tot_duffin_modes)
+ complex(SP) :: tmp_M(en%nbf(i_sp),en%nbf(i_sp))
+ complex(SP) :: test_mat_1(en%nbf(i_sp)*n_tot_fl_modes,en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: test_mat_2(en%nbf(i_sp)*n_tot_fl_modes,en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: FL_Duffin_BIG_MATRIX_plus(en%nbf(i_sp)*n_tot_duffin_modes,en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_MATRIX_minus(en%nbf(i_sp)*n_tot_duffin_modes,en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_VECTOR_plus(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: FL_Duffin_BIG_VECTOR_minus(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: vector_b(en%nbf(i_sp)*n_tot_fl_modes)
+ complex(SP) :: vtmp(en%nbf(i_sp)*n_tot_duffin_modes)
+ complex(SP) :: diagonal_elements(en%nbf(i_sp)),sum_minus_trace,dummy_det
  integer     :: time_samples
  !
  integer :: i1,i2,iv1,im,idx(3),id,ikp,ikm
@@ -105,17 +105,17 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
        if (abs(i_shift_comb_fl) > max_extra_mode) cycle !the criterion changes
        i_comb_extra = i_shift_comb_fl + (max_extra_mode+1)
        !
-       call M_by_M_omp('N','N',en%nbf,en%nbf,en%nbf,cONE,  & !tested ok
-       & FL_S_plus(:,:,i_comb_extra,id_red+(istep-1)*3,ikbz,i_sp),en%nbf, &
-       & conjg(FL_S_plus(:,:,i3_extra,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf,cZERO,&!new
-       & tmp_M,en%nbf)
+       call M_by_M_omp('N','N',en%nbf(i_sp),en%nbf(i_sp),en%nbf(i_sp),cONE,  & !tested ok
+       & FL_S_plus(:,:,i_comb_extra,id_red+(istep-1)*3,ikbz,i_sp),en%nbf(i_sp), &
+       & conjg(FL_S_plus(:,:,i3_extra,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf(i_sp),cZERO,&!new
+       & tmp_M,en%nbf(i_sp))
        !
        FL_Duffin_Gmatrix_plus(:,:,i1_df,i2_df) = FL_Duffin_Gmatrix_plus(:,:,i1_df,i2_df) + tmp_M
        !
-       call M_by_M_omp('N','N',en%nbf,en%nbf,en%nbf,cONE,  &
-       & FL_S_minus(:,:,i_comb_extra,id_red+(istep-1)*3,ikbz,i_sp),en%nbf, &
-       & conjg(FL_S_minus(:,:,i3_extra,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf,cZERO,&
-       & tmp_M,en%nbf)
+       call M_by_M_omp('N','N',en%nbf(i_sp),en%nbf(i_sp),en%nbf(i_sp),cONE,  &
+       & FL_S_minus(:,:,i_comb_extra,id_red+(istep-1)*3,ikbz,i_sp),en%nbf(i_sp), &
+       & conjg(FL_S_minus(:,:,i3_extra,id_red+(istep-1)*3,ikbz,i_sp)),en%nbf(i_sp),cZERO,&
+       & tmp_M,en%nbf(i_sp))
        !
        FL_Duffin_Gmatrix_minus(:,:,i1_df,i2_df) = FL_Duffin_Gmatrix_minus(:,:,i1_df,i2_df) + tmp_M
        !
@@ -143,8 +143,8 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  ! ========================
  ! aim137: this is a big matrix. is this deallocated when the subroutine finishes as it is not intent in/out?
  !
- do i1=1,en%nbf
-   do i2=1,en%nbf
+ do i1=1,en%nbf(i_sp)
+   do i2=1,en%nbf(i_sp)
      do i1_df=1,n_tot_duffin_modes
        do i2_df=1,n_tot_duffin_modes
          !
@@ -163,7 +163,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  if (l_debug_printouts) then
    open(111,file='BigG_matrix_real.dat')
-     do i1_fks=1,en%nbf*n_tot_duffin_modes
+     do i1_fks=1,en%nbf(i_sp)*n_tot_duffin_modes
        write(111,'(100(1f7.4))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
      enddo
    close(111)
@@ -172,19 +172,19 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  !
  if (.not. l_solve_linear_problem) then
    !
-   call SERIAL_inversion(en%nbf*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_plus,dummy_det,.false.)
-   call SERIAL_inversion(en%nbf*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_minus,dummy_det,.false.)
+   call SERIAL_inversion(en%nbf(i_sp)*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_plus,dummy_det,.false.)
+   call SERIAL_inversion(en%nbf(i_sp)*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_minus,dummy_det,.false.)
    !
    !
    !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
    if (l_debug_printouts) then
      open(111,file='BigGm1_matrix_real.dat')
-       do i1_fks=1,en%nbf*n_tot_duffin_modes
+       do i1_fks=1,en%nbf(i_sp)*n_tot_duffin_modes
          write(111,'(100(1f7.4))') real(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
        enddo
      close(111)
      open(111,file='BigGm1_matrix_complex.dat')
-       do i1_fks=1,en%nbf*n_tot_duffin_modes
+       do i1_fks=1,en%nbf(i_sp)*n_tot_duffin_modes
          write(111,'(100(1f7.4))') aimag(FL_Duffin_BIG_MATRIX_plus(i1_fks,:))
        enddo
      close(111)
@@ -197,7 +197,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  ! Solving the system column by column
  ! =================================== 
  ! 
- do i_m=1,en%nbf ! solving column m of F <=> row m of H
+ do i_m=1,en%nbf(i_sp) ! solving column m of F <=> row m of H
    !
    ! Build Duffin BIG VECTORS
    ! ========================
@@ -205,7 +205,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    FL_Duffin_BIG_VECTOR_plus  = cZERO
    FL_Duffin_BIG_VECTOR_minus = cZERO
    !
-   do i1=1,en%nbf
+   do i1=1,en%nbf(i_sp)
      do i1_df=1,n_tot_duffin_modes
      !
      i1_extra = i1_df + max_extra_mode - max_duffin_mode
@@ -228,8 +228,8 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    if (l_solve_linear_problem) then
      !aim137:  this needs fixing, I don't get to the same as with inversion.
      !aim137:  update, inversion was wrong. But in any case, do a final check when everything else works.
-     call SERIAL_lin_system(en%nbf*n_tot_duffin_modes,1,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus)
-     call SERIAL_lin_system(en%nbf*n_tot_duffin_modes,1,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus)
+     call SERIAL_lin_system(en%nbf(i_sp)*n_tot_duffin_modes,1,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus)
+     call SERIAL_lin_system(en%nbf(i_sp)*n_tot_duffin_modes,1,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus)
      !aim137: I understand A x = b returns b in the variable where x was passed on
      !
    else
@@ -238,22 +238,22 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
      !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
      if (l_debug_printouts) then
        open(111,file='F_vector.dat')
-         do i1_fks=1,en%nbf*n_tot_duffin_modes
+         do i1_fks=1,en%nbf(i_sp)*n_tot_duffin_modes
            write(111,*) FL_Duffin_BIG_VECTOR_plus(i1_fks)
          enddo
        close(111)
      endif
      !aim137 debug )))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
      !
-     call M_by_V_omp('N',en%nbf*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus,vtmp)
+     call M_by_V_omp('N',en%nbf(i_sp)*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_plus,FL_Duffin_BIG_VECTOR_plus,vtmp)
      FL_Duffin_BIG_VECTOR_plus = vtmp
-     call M_by_V_omp('N',en%nbf*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus,vtmp)
+     call M_by_V_omp('N',en%nbf(i_sp)*n_tot_duffin_modes,FL_Duffin_BIG_MATRIX_minus,FL_Duffin_BIG_VECTOR_minus,vtmp)
      FL_Duffin_BIG_VECTOR_minus = vtmp
      !
      !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
      if (l_debug_printouts) then
        open(111,file='H_vector.dat')
-         do i1_fks=1,en%nbf*n_tot_duffin_modes
+         do i1_fks=1,en%nbf(i_sp)*n_tot_duffin_modes
            write(111,*) FL_Duffin_BIG_VECTOR_plus(i1_fks)
          enddo
        close(111)
@@ -266,7 +266,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    ! Scatter to Inverse matrix
    ! ========================
    !
-   do i1=1,en%nbf
+   do i1=1,en%nbf(i_sp)
      do i1_df=1,n_tot_duffin_modes
      !
      i1_fks = i1_df + (i1-1)*n_tot_duffin_modes
@@ -284,7 +284,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    open(111,file='FL_Sm1.dat')
      do i1_df=1,n_tot_duffin_modes
        write(111,*) 'FL mode =',i1_df
-       do i1=1,en%nbf
+       do i1=1,en%nbf(i_sp)
        write(111,*) FL_Sm1_Duffin_plus(i1,:,i1_df)
        enddo
      enddo
@@ -300,7 +300,7 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
    open(111,file='FL_S.dat')
      do i1_extra=i_start,i_finish
        write(111,*) 'FL mode =',i1_extra-max_extra_mode+max_fl_mode
-       do i1=1,en%nbf
+       do i1=1,en%nbf(i_sp)
        write(111,*) FL_S_plus(i1,:,i1_extra,id_red+(istep-1)*3,ikbz,i_sp)
        enddo
      enddo
@@ -310,12 +310,12 @@ subroutine FL_Duffin(en,Xk,FL_Sm1_Duffin_plus,FL_Sm1_Duffin_minus,id_red,istep,i
  !
  call FL_check_S_inversion(&
          &     FL_S_plus(:,:,:,id_red+(istep-1)*3,ikbz,i_sp),&
-         &     FL_Sm1_Duffin_plus,en%nbf,n_tot_extra_modes,n_tot_duffin_modes,&
+         &     FL_Sm1_Duffin_plus,en%nbf(i_sp),n_tot_extra_modes,n_tot_duffin_modes,&
          &     diagonal_elements,sum_minus_trace,100,l_debug_printouts)
  !
  !aim137 debug (((((((((((((((((((((((((((((((((((((((((((((((((((((((((((
  !print*, ''
- !write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf)
+ !write(*,'(I2,I2,I2,100(1f7.2))') ikbz, id_red, istep, (real(diagonal_elements(i1)), i1=1,en%nbf(i_sp))
  !
  !if (ikbz == 3) then
  !  if (id_red == 2) then

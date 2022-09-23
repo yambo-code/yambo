@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine RT_update_TIME_CONF_descriptions( )
  use units,          ONLY:AUT2FS
  use RT_lifetimes,   ONLY:RT_life_extrap_times
  use real_time,      ONLY:NE_time,RT_dyn_step,RT_is_dynamically_dephased,NE_time_step_update_jump
- use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,GF_RT_IO_t,CACHE_OBS_INTERVAL_time
+ use RT_control,     ONLY:CARR_RT_IO_t,OBS_RT_IO_t,OUTPUT_RT_IO_t,Gless_RESTART_RT_IO_t,CACHE_OBS_INTERVAL_time
  use stderr,         ONLY:real2ch
  use RT_output_m,    ONLY:TIME_STEP_desc
  use descriptors,    ONLY:IO_desc_add
@@ -45,7 +45,7 @@ subroutine RT_update_TIME_CONF_descriptions( )
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O interval(J-P-M)",R=(/OBS_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O interval(Carr)",R=(/CARR_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O interval(OUT)",R=(/OUTPUT_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
- call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O interval(GF)",R=(/GF_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
+ call IO_desc_add(TIME_STEP_desc,kind='r',str=ch//"] I/O interval(GF)",R=(/Gless_RESTART_RT_IO_t%INTERVAL_time*AUT2FS/),term="fs")
  !
  if (RT_is_dynamically_dephased) then
    call IO_desc_add(TIME_STEP_desc,SZ=2,kind='r',str=ch//"] Life Inter-Intra",R=RT_life_extrap_times*AUT2FS,term="fs")

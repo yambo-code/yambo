@@ -925,7 +925,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      call parser('QpntsRXd',is_def(13))
      call parser('QpntsRXs',is_def(14))
      call parser('QpntsRXx',is_def(15))
-     call parser('BSEQptR', is_def(15))
+     call parser('BSEQptR', is_def(16))
      !
      ! Q's
      !

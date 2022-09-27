@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -24,10 +24,12 @@
 subroutine NL_driver(E,X,k,q,Dip)
  !
  use pars,           ONLY:SP,cZERO,cONE
+ use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions
  use QP_m,           ONLY: QP_ng_SH,QP_ng_Sx 
  use LIVE_t,         ONLY:live_timing 
  use electrons,      ONLY:levels,n_sp_pol
+ use collision_ext,  ONLY:COLLISIONS_CV_only 
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t,DIP_alloc,DIP_S
  use wave_func,      ONLY:WF,wf_ng
@@ -156,6 +158,8 @@ subroutine NL_driver(E,X,k,q,Dip)
         call warning('With Collisions TDDFT is approximated to the linear contribution!')
      endif
    endif
+   !
+   if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
    !
  endif
  !

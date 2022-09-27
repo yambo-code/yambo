@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -54,7 +54,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
  use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use interfaces,     ONLY:WF_free
  use timing_m,       ONLY:timing
  !
@@ -254,7 +254,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      !
      use COLL_interfaces,   ONLY:io_COLLISIONS
 #if defined _PAR_IO
-     integer, external :: io_COLLISIONS_header
+     integer, external :: io_COLLs_header
 #endif
      !
      integer :: i_coll
@@ -285,7 +285,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      ! In case io_Colls is /=0 all CPU have to sincronize before starting
      ! to compute the collisions and write a new header
      !
-     call PP_redux_wait()
+     call PP_wait()
      !
      if (IO_err==0) return
      !

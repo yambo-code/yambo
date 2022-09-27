@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,7 +23,6 @@
 !
 subroutine k_find_border_and_merge(FineGd_E,FineGd_k,n_FineGd_DBs,FineGd_io_E,FineGd_io_k,Xk,l_skip_border_pts)
  !
- use pars,      ONLY:SP
  use R_lattice, ONLY:bz_samp,k_the_nearest,bz_samp_reset
  use electrons, ONLY:levels,E_reset
  use stderr,    ONLY:intc

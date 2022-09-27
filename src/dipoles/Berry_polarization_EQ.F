@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -32,10 +32,11 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  ! crystaline solids", Phys Rev B 47, 1651 (1993).      
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE
- use electrons,      ONLY:n_sp_pol,levels,spin_occ,n_spin
+ use electrons,      ONLY:levels,spin_occ
  use R_lattice,      ONLY:bz_samp,bz_map
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
+ use electric,       ONLY:l_P_periodic
  !
  implicit none           
  !
@@ -84,7 +85,7 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
        ! Do we miss a factor 2?
        !
        imag_zeta=aimag(log(zeta))
-       imag_zeta=imag_zeta-1._DP*pi*nint(imag_zeta/(1._DP*pi))
+       if(l_P_periodic) imag_zeta=imag_zeta-1._DP*pi*nint(imag_zeta/(1._DP*pi))
        !
        P_Berry_RED(id_in)=P_Berry_RED(id_in)+imag_zeta
        !
@@ -97,6 +98,6 @@ subroutine Berry_polarization_EQ(P_Berry_Red,All_S_det,en,Xk,k_map)
  !
  P_Berry_RED=P_Berry_RED/(2._SP*pi)*spin_occ
  !
- P_Berry_RED=real(P_Berry_RED,SP)-spin_occ*NINT(real(P_Berry_RED,SP)/spin_occ)
+ if(l_P_periodic) P_Berry_RED=real(P_Berry_RED,SP)-spin_occ*NINT(real(P_Berry_RED,SP)/spin_occ)
  !
 end subroutine Berry_polarization_EQ

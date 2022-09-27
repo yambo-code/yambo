@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -29,7 +29,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use parser_m,            ONLY:parser
  use interfaces,          ONLY:io_DB1_selective_scan
  use zeros,               ONLY:k_iku_zero,k_rlu_zero,define_zeros
- use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode,k_the_nearest
+ use R_lattice,           ONLY:bz_samp,nkibz,bz_samp_reset,BZ_FineGd_mode
  use D_lattice,           ONLY:alat,nsym,input_GS_Tel,a,dl_sop,i_time_rev,n_atoms
  use com,                 ONLY:msg
  use YPPm,                ONLY:BZ_FineGd_nkpts_to_use,FineGd_DB1_paths,MAX_FineGd_DBs,&
@@ -225,7 +225,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
    deallocate(rand_E)
  endif
  !
- if(.not.PH_grid) then
+ if(.not.PH_grid.and.Xen%nb>1) then
    gap(1)=minval(FineGd_E%E(Xen%nbf(1)+1,:,1))-maxval(FineGd_E%E(Xen%nbf(1),:,1)) 
    gap(2)=10000._SP
    do i1=1,FineGd_E%nk
@@ -241,7 +241,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  if (i_time_rev==1) call msg('s',':: Time reversal included ')
  if (i_time_rev==0) call msg('s',':: Time reversal not included')
  !
- if(.not.PH_grid) then
+ if(.not.PH_grid.and.Xen%nb>1) then
    if (all(Xen%nbf==Xen%nbm)) then
      call msg('s',':: Gap indirect              :',gap(1)*HA2EV,"[eV]")
      call msg('s','::     direct                :',gap(2)*HA2EV,"[eV]")

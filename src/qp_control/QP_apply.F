@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -69,6 +69,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  integer          ::i_spin,nbf_SAVE(2),nbm_SAVE(2),nb_SAVE(2),i_a
  character(2)     ::sec_mode
+ logical          ::main
  !
  ! Resets
  !========
@@ -106,9 +107,11 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  ! Sectioning
  !=============
  sec_mode="+P"
+ main=.FALSE.
  if (present(main_section)) then
-   if (main_section) sec_mode="*"
+   main=main_section
  endif
+ if (main) sec_mode="*"
  call section(trim(sec_mode),"External/Internal QP corrections")
  !
  !==============
@@ -149,7 +152,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  if ( .not.any( QP_action(:)%active ) ) then 
    !
-   call section('-P'," ")
+   if (.not.main) call section('-P'," ")
    !
    return
    !
@@ -163,7 +166,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
    !
    call QP_actions_reset( )
    !
-   call section('-P'," ")
+   if (.not.main) call section('-P'," ")
    !
    return
    !
@@ -172,8 +175,9 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  ! The extension to the Fine Grid has been removed from here and 
  ! included in QP_transfer, inside QP_apply_interpolate_QP
  !
- call section('p'," QP corrections report")
- !==========================================
+ if (.not.main) call section('p'," QP corrections report")
+ if (     main) call section('+'," QP corrections report")
+ !=========================================================
  !
  ! Fermi Level Updates
  !=====================
@@ -214,7 +218,7 @@ subroutine QP_apply(bands,en,k,object,msg_fmt,qp_impose,QP_ctl_impose,main_secti
  !
  call QP_actions_reset( )
  !
- call section('-P'," ")
+ if (.not.main) call section('-P'," ")
  !
  contains
    !

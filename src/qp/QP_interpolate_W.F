@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AG
@@ -25,12 +25,11 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
- use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,b,k_grid_b,ng_vec,rl_sop,bare_qpg,&
-&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,cut_is_slab,idir,RIM_W_E,&
+ use R_lattice,     ONLY:bz_samp,RIM_W_ng,b,k_grid_b,bare_qpg,&
+&                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
 &                        RIM_id_epsm1_reference,RIM_epsm1,RIM_W_for_graph,RIM_qpg
- use memory,        ONLY:MEM_err
- use vec_operate,   ONLY:c2a,v_is_zero,v_norm
- use X_m,           ONLY:X_mat,X_t,X_alloc
+ use vec_operate,   ONLY:c2a,v_norm
+ use X_m,           ONLY:X_mat,X_t
  use frequency,     ONLY:w_samp
  use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
 &                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
@@ -58,11 +57,12 @@ subroutine interpolate_W(X,Xw,q,mode)
  complex(SP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
  real(SP)          :: v1(3),r_dum(2)
  real(SP)          :: q_grid_b_rlu(3,2),q_grid_b_iku(3,2),q_grid_b_cc(3,2)
- integer           :: ID, io_err, ng_save,G_max_ibz(q%nibz)
+ integer           :: ID, io_err, ng_save,G_max_ibz(q%nibz), G_max
  integer, external :: io_X, io_RIM_W
  character(schlen) :: ch_dum,fmt_dum,msg_dum(2)
  !
  call timing('RIM-W-coeff',OPR='start')
+ !
  YAMBO_ALLOC(f_coeff,(6,RIM_W_ng,RIM_W_ng,q%nibz,Xw%n_freqs))
  !
  call section("+", "RIM-W interpolation")
@@ -105,6 +105,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
+   YAMBO_FREE(f_coeff)
    if (have_cuda) then
      YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
    endif
@@ -123,7 +124,8 @@ subroutine interpolate_W(X,Xw,q,mode)
  !Initialize G_max_ibz to RIM_W_ng
  G_max_ibz(1:q%nibz) = RIM_W_ng
  !
- !Look if G_max_ibz must be increased
+ ! Look if G_max_ibz must be increased
+ !
  do iq=1,q%nibz
    do ig=1,RIM_W_ng
      do nn=2,5
@@ -134,8 +136,9 @@ subroutine interpolate_W(X,Xw,q,mode)
    enddo
  enddo
  !
- if(maxval(G_max_ibz) > X%ng) call error('G_max for RIM-W is higher than G_max of vX')
+ G_max=maxval(G_max_ibz)
  !
+ if (G_max > X%ng) call error(' G_max '//trim(intc(G_max))//' for RIM-W is higher than G_max '//trim(intc(X%ng))//' of vX')
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
  call msg('r','')
@@ -180,7 +183,8 @@ subroutine interpolate_W(X,Xw,q,mode)
    enddo
    enddo
    !
-   call X_alloc('X')
+   call X_ALLOC_global('X')
+   !
  enddo
  !
  X%ng = ng_save
@@ -352,10 +356,12 @@ subroutine interpolate_W(X,Xw,q,mode)
    YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
  endif
  !
+ YAMBO_FREE(f_coeff)
+ !
 end subroutine
-
+!
 subroutine find_q_nns(q,q_grid_b_iku,idx_q,idx_is,idx_G)
- use pars,          ONLY:SP,DP,rZERO
+ use pars,          ONLY:SP
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,g_vec,ng_vec,rl_sop
  use vec_operate,   ONLY:v_is_zero
  !

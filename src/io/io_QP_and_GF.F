@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -127,7 +127,7 @@ integer function io_QP_and_GF(what,qp,ID)
      io_QP_and_GF=io_header(ID,TEMP=.true.,D_LATT=.true.,XC_KIND="G",CUTOFF=.true.)
  end select
  !
- if (.not.QP_DB_kind==QP_SE_NONE) then
+ if (.not.QP_DB_kind==QP_SE_NONE.and..not.IO_mode(ID)==VERIFY) then
    if (.not.QP_DB_kind==QP_SE_COHSEX) then
      call IO_desc_add(qp%desc,kind="s",str='GF energies kind',S=trim(G_E_xc_string))
    endif

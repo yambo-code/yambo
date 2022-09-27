@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,DV
@@ -23,12 +23,12 @@
 !
  subroutine cutoff_slab(q)
  !
- use com,           ONLY:msg,of_open_close
+ use com,           ONLY:of_open_close
  use pars,          ONLY:SP,pi,schlen
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:alat
- use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,k_grid_uc_vol,&
-&                        d3q_factor,RIM_qpg,q_norm,q0_def_norm,idir
+ use R_lattice,     ONLY:bz_samp,g_vec,bare_qpg,&
+&                        d3q_factor,RIM_qpg,q0_def_norm,idir
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
  use parallel_int,  ONLY:PARALLEL_index
  implicit none

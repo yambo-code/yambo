@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -124,7 +124,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! and define a logical that define the first band of each
  ! k-point
  !
- forall (iqp=1:QP_n_states) i_k(iqp)=QP_table(iqp,3)
+ do iqp=1,QP_n_states
+   i_k(iqp)=QP_table(iqp,3)
+ enddo
  !
  i_spin=0
  !

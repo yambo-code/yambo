@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): CA
+! Authors (see AUTHORS file for details): AM CA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -40,7 +40,6 @@
 subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi,cZERO
- use units,         ONLY:HA2THZ,HA2EV
  use electrons,     ONLY:levels,spin_occ
  use frequency,     ONLY:w_samp
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
@@ -66,23 +65,23 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  ! Work Space
  !
  integer  :: iw
- integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ik_plus_q_dg,ic,nq_around,iq_idx
+ integer  :: ik,ik_bz,ib,iE_fg,iq_fg,ic,nq_around,iq_idx
  complex(SP) :: delta_E
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
- real(SP) :: weight_dbg,ph_E_dbg,q_dbg_weight,DW_weight
+ real(SP) :: weight_dbg,DW_weight
  !
  logical  :: eval_DW
  !
  ! Residues
  !
- real(SP) ::gsqF_RES_life_B,gsqF_RES_life_f,gsqf_RES_ca_corr,gsqF_RES_fan,gsqF_RES_DW 
+ real(SP) ::gsqF_RES_life_B,gsqF_RES_life_f,gsqF_RES_ca_corr,gsqF_RES_fan,gsqF_RES_DW 
  !
  ! Denominators
  !
  real(SP) :: gsqF_DEN_life_B(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_life_f(gsqF_energy_steps)
- real(SP) :: gsqf_DEN_ca_corr(gsqF_energy_steps)
+ real(SP) :: gsqF_DEN_ca_corr(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_fan(gsqF_energy_steps)
  real(SP) :: gsqF_DEN_DW 
  !
@@ -113,7 +112,6 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
  endif
  !
- !
  ! Frequency Loop
  !
  do iw=1,gsqF_energy_steps
@@ -131,15 +129,15 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
     ! "Bose" Term
     !
     gsqF_RES_life_B    =2._SP*pi*elph_gkkp_sq*q_weight
-    gsqF_DEN_life_B(iw)=            (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
- &               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
+    gsqF_DEN_life_B(iw)=             Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
+ &               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) 
     !
     ! "f" Term
     !
     gsqF_RES_life_f    =pi*elph_gkkp_sq*q_weight
-    gsqF_DEN_life_f(iw)=  ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+    gsqF_DEN_life_f(iw)=   (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &       QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))*f_occ-&
-&                           Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping))
+&                           Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) 
     !
     if (.not.eval_G_using_KK) then 
       !
@@ -211,11 +209,11 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
        ! 
        delta_E     =Sc_W%p(iw)-E_kpq                                ! E(k) - E(k+q_dg)
        !
-       gsqF_DEN_life_B(iw)=gsqF_DEN_life_B(iw)+     (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)&
- &                               +QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))
-       gsqF_DEN_life_f(iw)=gsqF_DEN_life_f(iw)+  ((Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
+       gsqF_DEN_life_B(iw)=gsqF_DEN_life_B(iw)+      Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping)+&
+&                              QP_time_order_sign*Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping) 
+       gsqF_DEN_life_f(iw)=gsqF_DEN_life_f(iw)+   (Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) - &
 &                              QP_time_order_sign* Fermi_fnc_derivative(real(delta_E)-ph_E,gsqF_damping))*f_occ-&
-&                                                  Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping))
+&                                                  Fermi_fnc_derivative(real(delta_E)+ph_E,gsqF_damping) 
        !
        one_minus_2f_occ=(1._SP-2._SP*f_occ)
        !

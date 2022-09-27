@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -22,8 +22,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+WY=`date +%Y`
+#
 if [ $# -ne 2 ]; then 
          echo 1>&2 Usage: recursive_year_update.sh check/replace YEAR
+         echo 1>&2
+         echo 1>&2 Current year is is $WY
          exit 127
 fi
 #
@@ -39,7 +43,7 @@ cat << EOF > normal.awk
 {
   if ( index(\$0,"Copyright (C)") != 0 && index(\$0,"YAMBO"))
   {
-   gsub ("-$2","-2021")
+   gsub ("-$2","-$WY")
   }
   print \$0 >> "temporary"
 }
@@ -48,17 +52,21 @@ cat << EOF > php.awk
 {
   if ( index(\$0,"-$2 Andrea Marini") != 0)
   {
-    gsub ("-$2","-2021")
+    gsub ("-$2","-$WY")
   }
   print \$0 >> "temporary"
 }
 EOF
 #
-file_list=`find .  -type f  | grep -v bz2 | grep -E '\.F|\.pm|\.pl|\.php|\.m4|\.h|\.in|\.c' `
+file_list=`find .  -type f  | grep -v bz2 | grep -E '\.F|\.pm|\.pl|\.php|\.m4|\.h|\.in|\.c|\.sh' `
 for file in $file_list; do
  php=`echo $file| grep -E '\.php' |wc -l`
+ sh=`echo $file| grep -E '\.sh' |wc -l`
+ pl=`echo $file| grep -E '\.pl' |wc -l`
  if [ ${php} != "0" ]; then
   awk -f php.awk $file
+  if [ ${sh} != "0" ]; then chmod +x $file; fi
+  if [ ${pl} != "0" ]; then chmod +x $file; fi
  else
   if [ "$1" = "check" ]; then 
    awk -f check.awk $file 

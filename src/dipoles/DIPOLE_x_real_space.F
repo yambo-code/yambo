@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -140,7 +140,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
            if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_tmp(idir,ic,iv)*Ev_m_Ec_KS
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=cI*DIP_tmp(idir,ic,iv)*Ev_m_Ec_KS
            enddo
          enddo
        enddo

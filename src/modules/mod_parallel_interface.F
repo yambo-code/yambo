@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,7 +32,7 @@ module parallel_int
 ! To be uncommented but protected with precompiler flags on gfortran compiler
 ! include 'mpif.h'
 #else
- use parallel_m, ONLY:mpi_comm_world,mpi_comm_null
+ use parallel_m, ONLY:mpi_comm_world
 #endif
  !
  implicit none
@@ -42,15 +42,14 @@ module parallel_int
  !
  interface PP_redux_wait
    module procedure l1share,                                           &
-&                   i1share, i2share, i3share,                         &
-&                   i81share,                                          &
+&                   i0share, i1share, i2share,i3share,                 &
 &                   r0share, r1share, r2share,r3share,                 &
 &                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
 &                   d0share, d1share, d2share,d3share,                 &
 &                   dc0share,dc1share,dc2share,                        &
 #endif
-&                   PARALLEL_wait
+&                   i81share
  end interface PP_redux_wait
  !
  interface PP_bcast
@@ -170,7 +169,7 @@ module parallel_int
  !
  contains
    !
-   subroutine PARALLEL_wait(COMM)
+   subroutine PP_wait(COMM)
      integer, optional :: COMM
 #if defined _MPI
      integer :: local_COMM
@@ -221,6 +220,33 @@ module parallel_int
      call mpi_barrier(LOCAL_COMM,i_err)
 #endif
    end subroutine
+   !
+   subroutine i0share(ival,imode,COMM)
+     integer:: ival
+     integer, optional :: imode,COMM
+#if defined _MPI
+     integer ::omode,LOCAL_COMM
+     integer ::local_ival
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     call mpi_barrier(LOCAL_COMM,i_err)
+     if (present(imode)) then
+       if (imode==1) omode=mpi_sum
+       if (imode==2) omode=mpi_prod
+     else
+       omode=mpi_sum
+     endif
+     call mpi_allreduce(ival,local_ival,1,mpi_integer,omode,LOCAL_COMM,i_err)
+     ival=local_ival
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine i0share
    !
    subroutine i1share(array,imode,COMM)
      integer:: array(:)

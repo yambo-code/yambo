@@ -66,7 +66,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,PH_E
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: iq_db
+ integer       :: iq_db,iq_ibz
  integer       :: elph_branches_save(2)
  type(PP_indexes)::px
  logical       :: l_prt_pl_q_res
@@ -280,6 +280,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    ! Write on disk
    do iq_bz=1,q%nbz
      pl_file_name ='pl_bse_resolved_q'//intc(iq_bz)
+     iq_ibz = q%sstar(iq_bz,1)
      !
      call of_open_close(pl_file_name,'ot')
      !
@@ -291,6 +292,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      headers(2:n_output)=(/'Im(pl_ph )','Re(pl_ph )','Im(pl_nos)','Re(pl_nos)','Re(pl_sat)','Im(pl_sat)'/)
      call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
      call msg('o pl_bse','#')
+     call msg('o pl_bse','# iq_ibz = '//intc(iq_ibz))
      !
      ! Write output on file
      !

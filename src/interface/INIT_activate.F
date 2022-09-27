@@ -563,7 +563,6 @@ subroutine INIT_activate()
  do i1=1,n_ext_fields
    call Afield_activate(i1)
  enddo
- !
 #endif
  !
 #if defined _FL

@@ -35,9 +35,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
 #endif
-#if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
-#endif
  use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
@@ -49,9 +47,10 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(6),DIP_ipos(6),VAR_ID,stat
-#if defined _RT || defined _SC
- integer :: P2_size(5),P2_ipos(5),Pspinor_size(7),Pspinor_ipos(7)
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(6),DIP_ipos(6),VAR_ID,stat,&
+&           P2_size(5),P2_ipos(5)
+#if defined _RT
+ integer :: Pspinor_size(7),Pspinor_ipos(7)
 #endif
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
@@ -115,13 +114,11 @@ integer function io_DIPOLES(Dip,ID)
  Pspinor_ipos(5:7)=DIP_ipos(3:5)
 #endif
  !
-#if defined _RT || defined _SC
  P2_size(1)=2
  P2_ipos(1)=1
  !
  P2_size(2:5)=DIP_size(3:6)
  P2_ipos(2:5)=DIP_ipos(3:6)
-#endif
  !
  if (read_is_on(ID).and.i_fragment==-1) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
@@ -136,9 +133,7 @@ integer function io_DIPOLES(Dip,ID)
    if (compute_Spin_dipoles.and.n_spinor==2) &
    & call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
-#if defined _SC || defined _RT
    if (compute_P2_dipoles)  call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-#endif
    if(l_BS_dichroism) then
      call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
    endif
@@ -208,7 +203,6 @@ integer function io_DIPOLES(Dip,ID)
  endif
 #endif
  !
-#if defined _SC || defined _RT
  if (compute_P2_dipoles) then
    !
    ! P2
@@ -219,7 +213,6 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C4=P_square(:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=P2_ipos)
    !
  endif
-#endif
  !
  if (l_BS_dichroism) then
    !

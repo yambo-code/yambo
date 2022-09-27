@@ -298,8 +298,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
        !
        ! Luminescence
        !
-       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii(iw,1)),real(PL_ii(iw,1)),          &
-&               aimag(PL_ii(iw,2)),real(PL_ii(iw,2)),aimag(PL_ii(iw,3)),real(PL_ii(iw,3))/)
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii_q(iw,1,iq_bz)),real(PL_ii_q(iw,1,iq_bz)),          &
+&               aimag(PL_ii_q(iw,2,iq_bz)),real(PL_ii_q(iw,2,iq_bz)),aimag(PL_ii_q(iw,3,iq_bz)),real(PL_ii_q(iw,3,iq_bz))/)
        call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
        !
      enddo

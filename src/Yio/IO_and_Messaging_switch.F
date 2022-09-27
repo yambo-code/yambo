@@ -110,8 +110,6 @@ subroutine IO_and_Messaging_switch(what,CONDITION)
      ! Mute
      !
      if (trim(ch_piece(ich))=="MUTE") then
-       IO_read           =.FALSE.
-       IO_write          =.FALSE.
        write_to_of       =.FALSE.
        write_to_report   =.FALSE.
        write_to_log      =.FALSE.

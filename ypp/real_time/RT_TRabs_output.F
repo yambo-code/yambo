@@ -55,7 +55,7 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  if (what=="init") then
    do i_dir=1,3
      do j_dir=1,3
-       if (TRabs_lEPS(i_dir,j_dir))  call gimme_a_name(i_dir,j_dir,how)
+       if (TRabs_lEPS(i_dir,j_dir).and.STRING_match(TRabsWHAT,"abs"))  call gimme_a_name(i_dir,j_dir,how)
      enddo
    enddo
    if (allocated(B_Hall)) then
@@ -78,19 +78,21 @@ subroutine RT_TRabs_output(what,how,ofile,N_files,W,TIME)
  call set_real_printed_length(f_length=12,g_length=15)
  !
  ! Epsilon
- do i_dir=1,3
-   do j_dir=1,3
-     if (.not.TRabs_lEPS(i_dir,j_dir)) cycle
-     do i_freq=1,W%n_freqs
-       call elemental_TIME_E_write("eps_"//TRabs_EPS_label(i_dir,j_dir)//"_"//how,&
-&                                 (/aimag(Epsilon_ij(i_freq,i_dir,j_dir)),&
-&                                    real(Epsilon_ij(i_freq,i_dir,j_dir))/))
+ if (STRING_match(TRabsWHAT,"abs")) then
+   do i_dir=1,3
+     do j_dir=1,3
+       if (.not.TRabs_lEPS(i_dir,j_dir)) cycle
+       do i_freq=1,W%n_freqs
+         call elemental_TIME_E_write("eps_"//TRabs_EPS_label(i_dir,j_dir)//"_"//how,&
+&                                   (/aimag(Epsilon_ij(i_freq,i_dir,j_dir)),&
+&                                      real(Epsilon_ij(i_freq,i_dir,j_dir))/))
+       enddo
      enddo
    enddo
- enddo
+ endif
  !
  ! Hall coefficient
- if (allocated(B_Hall)) then
+ if (STRING_match(TRabsWHAT,"kerr").and.allocated(B_Hall)) then
    call OUTPUT_driver("Hall_"//how,TITLES=(/"Time"/),R_VALUES=(/TIME/),KIND="Time",UNIT="fs")
    B_Hall=B_Hall*HA2EV/(4*pi*cI*HBAR_eVfs)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    do i_dir=1,3

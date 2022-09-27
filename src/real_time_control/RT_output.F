@@ -229,7 +229,7 @@ subroutine RT_output(what,VALUES,TIME,E)
 &         'YPP-Polarization_W')
        if(.not.present(VALUES)) cycle
        data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)
-     case('YPP-X_effective','YPP-TD_dos','YPP-TD_INTERPOLATED_dos')
+     case('YPP-X_effective','YPP-TD_dos','YPP-TD_INTERPOLATED_dos','YPP-TD_P_decomposition')
        data_to_dump(3:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-2)
      case('YPP-single_time_dos','YPP-single_time_INTERPOLATED_dos')
        data_to_dump(2:n_RT_headings(i_f)) = VALUES(1:n_RT_headings(i_f)-1)

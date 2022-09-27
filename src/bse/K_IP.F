@@ -37,7 +37,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
- &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_K_dim,&
+ &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                        BS_K_anti_resonant,l_BS_ares_from_res
  use parallel_int,  ONLY:PP_redux_wait
@@ -119,7 +119,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    if(l_BS_kerr)      n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_dichroism) n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_magnons)   n_BS_E_sorted=n_BS_E_sorted+2
-   YAMBO_ALLOC(vtmpC,(BS_K_dim(1),n_BS_E_sorted))
+   YAMBO_ALLOC(vtmpC,(BS_H_dim,n_BS_E_sorted))
    vtmpC=cZERO
  endif
  !

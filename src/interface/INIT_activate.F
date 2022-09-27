@@ -74,14 +74,12 @@ subroutine INIT_activate()
  ! CPU structure
  !
  if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
-   if (l_elel_corr) then
      if (l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
        call CPU_activate("X_and_IO")
      else
        call CPU_activate("X")
      endif
      call initactivate(1,'X_Threads')
-   endif
    if (l_elel_corr.or.l_elphoton_corr) then
      call CPU_activate("DIP")
      call initactivate(1,'X_Threads DIP_Threads')
@@ -587,7 +585,7 @@ subroutine INIT_activate()
      character(6)::field
      field='Field'//trim(intc(i1))
      call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_MaxFreq')
+     call initactivate(1,field//'_NFreqs')
      call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')

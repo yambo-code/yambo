@@ -47,7 +47,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
  use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,    ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -105,7 +105,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  !call scatterGamp(isc,'c') !???
  Vcoh =(0._DP,0._DP)
  call PARALLEL_index(px,(/q%nbz,maxval(E%nbm)/))
- call PP_redux_wait
+ call PP_wait()
  ch="Sigma_csX|WF>@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1)*maxval(E%nbm)*k%nibz)
  do iq=1,q%nbz

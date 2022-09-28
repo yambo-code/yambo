@@ -33,7 +33,7 @@ integer function io_MPA(X,Xw,ID)
 &                        io_fragment,ver_is_gt_or_eq
  use IO_m,          ONLY:io_sec,io_com,io_status,read_is_on,write_is_on,io_serial_number,serial_number,&
 &                        NONE,IO_INCOMPATIBLE_VAR,io_MULTIPOLE,IO_NOT_ALLOWED,io_extension,&
-&                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP
+&                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
@@ -54,7 +54,6 @@ integer function io_MPA(X,Xw,ID)
  complex(SP),allocatable :: X_on_disk(:,:)
    !
  integer, external :: variables_MPA
-
  !
  ! checks & return
  !
@@ -72,15 +71,20 @@ integer function io_MPA(X,Xw,ID)
  !
  io_extension(ID)='mpa_ER'
  !
- io_MPA=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID) 
+ iq=0
+ do i1=1,size(io_sec(ID,:))
+   if (io_sec(ID,i1)==0) cycle
+   iq=io_sec(ID,i1)/2
+ enddo
+ !
+ io_MPA=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=iq>0.and.frag_RESPONSE)
  if (io_MPA/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
    ! Header
    !
-   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.false.,WF=.false.,&
-&                   FRAG=frag_MULTIPOLE)
+   io_MPA=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.false.,FRAG=frag_MULTIPOLE)
    if (io_MPA/=0) goto 1
    !
    ! Global Descriptions
@@ -100,14 +104,11 @@ integer function io_MPA(X,Xw,ID)
    endif
  endif
  !
- do i1=1,size(io_sec(ID,:))
-   if (io_sec(ID,i1)==0) cycle
-   iq=io_sec(ID,i1)/2
- enddo
- !
  if (iq==0) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err)
+ io_MPA=io_err
+ if (io_err/=0) goto 1
  !
  !  type(X_t)    ::X(5)  x s d p m
  !
@@ -121,7 +122,7 @@ integer function io_MPA(X,Xw,ID)
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID_frag)
-   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
+   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1)
    !
    call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
    call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))

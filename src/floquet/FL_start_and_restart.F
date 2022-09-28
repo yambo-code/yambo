@@ -56,6 +56,7 @@ subroutine FL_start_and_restart(E,k,Dip)
  use parallel_int,   ONLY:PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use electric,       ONLY:l_P_periodic
  !
 #include<memory.h>
  !
@@ -178,6 +179,7 @@ subroutine FL_start_and_restart(E,k,Dip)
 !!
 ! Evaluate Initial Polarization 
 ! ====================================
+l_P_periodic = .true.
 !
 if(.not.l_use_DIPOLES) then
   call POLARIZATION_output(E,k,Dip)

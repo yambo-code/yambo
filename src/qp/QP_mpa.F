@@ -35,14 +35,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use drivers,       ONLY:l_sc_run
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
-use parser_m,       ONLY:parser
- use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
-&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,&
-&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu
+ use parser_m,      ONLY:parser
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,PAR_COM_Q_A2A,&
+&                        PAR_IND_Q_ibz,PAR_IND_Q_ibz_ID,PAR_IND_QP_ID,PAR_COM_RL_INDEX,&
+&                        PAR_Q_ibz_index,n_WF_bands_to_load,HEAD_QP_cpu,master_cpu,myid
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use functions,     ONLY:bose_f
- use IO_int,        ONLY:io_control
- use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
@@ -73,7 +73,7 @@ use parser_m,       ONLY:parser
  ! Work Space
  !
  integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
-&                    i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,timing_steps,&
+&                    i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps,&
 &                    cond_g, cond_b
  !
  complex(SP), allocatable :: W_(:),dc(:),eet_factor(:,:)
@@ -195,6 +195,21 @@ use parser_m,       ONLY:parser
  !
  call msg('r','  MPA interpolation solver:      ',Xw%mpa_solver)
  !
+ if (io_RESPONSE) then
+   call io_control(ACTION=OP_RD,COM=NONE,SEC=(/1/),ID=ID)
+   io_err=io_X(X,Xw,ID)
+ endif
+ !
+ if(io_MULTIPOLE) then
+   !call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=PAR_COM_NULL,DO_IT=master_cpu)
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2)
+   io_err=io_MPA(X,Xw,ID2)
+   call IO_and_Messaging_switch("SAVE")
+   call IO_and_Messaging_switch("+io_out",CONDITION=PAR_COM_Q_A2A%CPU_id==0)
+ endif
+ !
+ call PP_wait()
+ !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
@@ -215,14 +230,8 @@ use parser_m,       ONLY:parser
      !
      if (io_RESPONSE) then
        !
-       if (iqbz==iq_to_start) then
-         call io_control(ACTION=OP_RD,COM=NONE,       SEC=(/1,2,2*iqibz+1/),ID=ID)
-       else if (q%nbz==1) then
-         call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-       else if (iqbz> iq_to_start) then
-         call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
-       endif
-       !
+       IO_ACT=manage_action(RD_CL_IF_END,iqibz,iq_to_start,q%nibz,PAR_INDEX=PAR_IND_Q_ibz)
+       call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iqibz,2*iqibz+1/),ID=ID)
        io_err=io_X(X,Xw,ID)
        !
        call deliver_IO_error_message(io_err,'MPA/Xm',STOP_it=.TRUE.)
@@ -281,12 +290,14 @@ use parser_m,       ONLY:parser
      !
      if (io_MULTIPOLE) then
        !
-       if(iqibz==1) then
-         call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),  ID=ID2)
-         io_err=io_MPA(X,Xw,ID2)
-       endif
-       !
-       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),  ID=ID2)
+! #if defined _PAR_IO
+!       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2, &
+!       &               COMM=PAR_COM_RL_INDEX,DO_IT=PAR_COM_RL_A2A%CPU_id==0 )
+! #else
+!       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2, &
+!       &               COMM=PAR_COM_NULL,DO_IT=PAR_COM_X_WORLD%CPU_id==0 )
+! #endif
+       call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/2*iqibz,2*iqibz+1/),ID=ID2)
        io_err=io_MPA(X,Xw,ID2)
        call msg('r',' :: PP cond fix/tot      ',PPcond_Qrate)
        call msg('r',' :: Mean np reduction    ',MPred_rate)
@@ -411,6 +422,8 @@ use parser_m,       ONLY:parser
    enddo QP_loop
    !
  enddo Q_loop 
+ !
+ if(io_MULTIPOLE) call IO_and_Messaging_switch("RESTORE")
  !
  call live_timing()
  !

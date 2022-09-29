@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_dephasing(FL_V_bands,en,Xk,ik,i_sp,H_nl_sc)
+subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  !
  use pars,           ONLY:SP,cI,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT

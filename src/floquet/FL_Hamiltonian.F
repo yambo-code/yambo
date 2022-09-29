@@ -46,7 +46,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
-&                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1
+&                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
+&                         FL_dG,FL_dG_time,FL_Sigma
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -219,8 +220,59 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  E_tot=E_ext
  E_ks =E_ext
  !
- ! aim137: deleted more beyond-IPA stuff
- ! aim137: deleted G_lesser
+ !
+ ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
+ ! ======================================================
+ ! aim137 put this in a loop on time steps.
+ if (eval_dG .and. iter_num > 1) then
+   !
+   call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
+   do i_t=1,n_tot_extra_modes
+     !
+     call NL_build_dG_lesser(E,FL_V_bands_time(:,i_t,:,:,:),&
+&    FL_dG_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,i_t))
+     !
+   enddo
+   !
+   FL_dG = cZERO
+   !
+   do ik_bz=1,QP_nk
+   !aim137 puedo paralelizar en kpoints aca
+     do i1=NL_bands(1),NL_bands(2)
+       do i2=NL_bands(1),NL_bands(2)
+         !
+         call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_Mm1,&
+      &  n_tot_extra_modes,FL_dG_time(i1,i2,ik_bz,:),1,cZERO,FL_dG(i1,i2,ik_bz,:),1)
+         !
+       enddo
+     enddo
+   enddo
+   !
+ else
+   !
+   if (allocated(FL_dG)) FL_dG = cZERO
+   if (allocated(FL_dG_time)) FL_dG_time = cZERO
+   !
+ endif
+ !
+ if(l_use_Hxc_collisions .and. iter_num > 1) then
+   !
+   !
+   do i1_extra=1,n_tot_extra_modes
+     !
+     call COLLISIONS_compose_nl(FL_dG(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,i1_extra))
+     !
+     FL_Sigma(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,i1_extra) = &
+   & RT_Vnl_xc(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),:,1)
+     !
+   enddo
+   !
+ else
+   !
+   if (allocated(FL_Sigma)) FL_Sigma = cZERO
+   !
+ endif
+ !
  !
  ! Build the Hamiltonian
  ! =====================
@@ -244,7 +296,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
    ! Correlation part Hartree + TDDFT
    ! ================================
-   !
    !
    if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !
@@ -343,7 +394,28 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    endif                                                         
    !
-   ! aim137 deleted more beyond-IPA stuff
+   !aim137 Add the self-energy to the Hamiltonian
+   if(l_use_Hxc_collisions) then
+     do i1=NL_bands(1),NL_bands(2)
+       do i1_fl=1,n_tot_fl_modes
+         i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+         do i2=NL_bands(1),NL_bands(2)
+           do i2_fl=1,n_tot_fl_modes
+             i2_fks = i2_fl + (i2-1)*n_tot_fl_modes
+             i_shift_comb_extra = (i1_fl - (max_fl_mode+1)) &
+                              & - (i2_fl - (max_fl_mode+1))
+             i_comb_extra = i_shift_comb_extra + (max_extra_mode+1)
+             !
+             H_nl_sc(i1_fks,i2_fks) = &
+           & H_nl_sc(i1_fks,i2_fks) + &
+           & FL_Sigma(i1,i2,ik_bz,i_comb_extra)
+             !
+           enddo
+         enddo
+       enddo
+     enddo
+   endif
+   !aim137 and after this it should be done
    !
    ! aim137: we will not use dephasing
    ! call FL_dephasing(E,k,ik_bz,i_sp_pol,FL_V_bands(:,:,E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)

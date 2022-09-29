@@ -40,7 +40,7 @@ subroutine FL_initialize(E,k,q)
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
- use electric,       ONLY:l_force_SndOrd
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -59,6 +59,7 @@ subroutine FL_initialize(E,k,q)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
+ l_P_periodic = .true.
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
  !
@@ -226,18 +227,22 @@ subroutine FL_initialize(E,k,q)
         RT_potential='default'
         eval_HARTREE =.true.
         eval_DFT     =.true.
+        call error ('  [FL] TDDFT not yet implemented in Floquet')
     case('LRC')
         Correlation=LRC
         RT_potential='HARTREE'
         eval_HARTREE =.true.
+        call error ('  [FL] LRC not yet implemented in Floquet')
     case('LRW')
         Correlation=LRCW
         RT_potential='HARTREE'
         eval_HARTREE =.true.
+        call error ('  [FL] LRW not yet implemented in Floquet')
     case('JGM')
         Correlation=JGM
         RT_potential='HARTREE'
         eval_HARTREE =.true.
+        call error ('  [FL] JGM not yet implemented in Floquet')
     case('SEX')
         Correlation    =SEX
         RT_potential   ='HARTREE+SEX'

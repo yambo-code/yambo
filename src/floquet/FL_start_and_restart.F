@@ -56,7 +56,6 @@ subroutine FL_start_and_restart(E,k,Dip)
  use parallel_int,   ONLY:PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use electric,       ONLY:l_P_periodic
  !
 #include<memory.h>
  !
@@ -90,17 +89,11 @@ subroutine FL_start_and_restart(E,k,Dip)
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  
-   !aim137 I will probably need this for the self energy
-!  call NL_build_valence_bands(E,V_bands,VAL_BANDS,1)
-!  call el_density_vbands(E,k,full_rho,VAL_BANDS)
-   !
    !aim137 prelim - I will use this rho_reference for now, but 
    !aim137 later on I may switch to the FL subroutine with the
    !aim137 trivial FL_V_bands
    call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
    call el_density_vbands(E,k,rho_reference,VAL_BANDS)
-   !
-!  rho_n=full_rho
    !
  endif
  !
@@ -179,7 +172,6 @@ subroutine FL_start_and_restart(E,k,Dip)
 !!
 ! Evaluate Initial Polarization 
 ! ====================================
-l_P_periodic = .true.
 !
 if(.not.l_use_DIPOLES) then
   call POLARIZATION_output(E,k,Dip)

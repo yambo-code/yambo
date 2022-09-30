@@ -46,6 +46,9 @@ module fl_optics
  complex(SP), allocatable :: FL_delta_rho(:,:)
  complex(SP), allocatable :: FL_delta_rho_hist(:,:)
  real(SP),    allocatable :: FL_beta
+ complex(SP), allocatable :: FL_dG_time(:,:,:,:)  ! Density matrix at different time steps
+ complex(SP), allocatable :: FL_dG(:,:,:,:)  ! Density matrix at different Floquet modes
+ complex(SP), allocatable :: FL_Sigma(:,:,:,:)  ! Self-energy in FKS space
  !
  !aim137 new variables
  integer  :: max_fl_mode
@@ -142,6 +145,15 @@ module fl_optics
      YAMBO_ALLOC(FL_QE,(1:NL_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_QE_hist,(1:NL_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_ac_phase,(maxval(en%nbf),QP_nk,n_sp_pol))
+     !
+     ! Density matrix and self-energy
+     !
+     if (l_use_Hxc_collisions) then
+       YAMBO_ALLOC(FL_dG,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes))
+       YAMBO_ALLOC(FL_dG_time,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes))
+       YAMBO_ALLOC(FL_Sigma,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes))
+       YAMBO_ALLOC(RT_Vnl_xc,(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_sp_pol))
+     endif
      !
      if(.not.l_use_DIPOLES) then
        call  ELECTRIC_alloc(en)

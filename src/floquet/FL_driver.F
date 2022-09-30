@@ -43,7 +43,6 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,E_full, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
 &                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
-!aim137: add floquet 
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
@@ -145,16 +144,38 @@ subroutine FL_driver(E,X,k,q,Dip)
  endif
  WF_Go_indx =1
  !
- !
- if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
-   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')
+ if(io_COLLs) then
+   !      
+   ! check if they exist      
+   !
+   call COLLISIONS_load(.true.)
+   !
+   if(.not.l_use_Hxc_collisions .and. (Correlation==SEX.or.Correlation==HF)) &
+&    call error(' HF / SEX need Collisions. Cannot be computed on the fly.')
+   !
+   !aim137 I think I don't need this?:
+   !if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
+   !
  endif
  !
+ if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
+   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
+ endif
+ !
+ ! Load Collisions if necessary
+ ! ============================
+ !
+ if(l_use_Hxc_collisions.and.io_COLLs) then
+   !
+   eval_dG=.true.
+   !
+   call COLLISIONS_load(.false.)
+   !
+ endif
  !
  ! QP-corrections 
  !================
  call QP_apply(NL_bands,E,k,"G",msg_fmt='s')
- !
  !
  ! Allocation
  ! ==================
@@ -178,10 +199,10 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! ==================
  !aim137: we'll need to add FL_databases
  !call NL_databases_IO(0,'write')
- ! i_k_bz
+ !
  ! Start-Up & Timing
  !===================
- !aim137: check this is what we need:
+ !
  call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
  !
  FL_Chi_pol(:,:,:,:) = cZERO
@@ -265,7 +286,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      if (FL_iteration == FL_max_iterations) l_FL_sc_reached = .true.
      if (FL_iteration == FL_max_iterations) &
 &    print*, 'Frequency step',i_f,' with value ',Efield(1)%frequency(1)*HA2EV,&
-&            ' was unconverged - acc=',real(accuracy), aimag(accuracy)
+&            ' was unconverged after',FL_iteration,' iterations - acc=',real(accuracy), aimag(accuracy)
      !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !print*, FL_iteration, '----------------------------------------', l_FL_conv_Chi,l_FL_conv_Rho,l_FL_sc_reached
      !

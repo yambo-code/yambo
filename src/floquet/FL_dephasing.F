@@ -93,17 +93,18 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
      do i2=H_ref_bands(1),H_ref_bands(2)        !j
        do i2_fl=1,n_tot_fl_modes                !gamma
          i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
-         !
-         do i3_fl=1,n_tot_fl_modes
+	 !
+         do i1_fl=1,n_tot_fl_modes                !eta
+           i1_fks = i1_fl + (i2-1)*n_tot_fl_modes !j,eta
            !
-           i_shift_comb_fl = (i3_fl-(max_fl_mode+1)) &
-                          &+ (i2_fl-(max_fl_mode+1))
+           i_shift_comb_fl = (i2_fl-(max_fl_mode+1)) &
+                          &- (i1_fl-(max_fl_mode+1))
            !
            if (abs(i_shift_comb_fl) > max_fl_mode) cycle 
            i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
            !
 	   do im=1,en%nbf(i_sp_pol)
-             I_deph(i2_fks,i2_fks) = I_deph(i2_fks,i2_fks) - & 
+             I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) - & 
                                    & conjg(FL_V_bands(i2,i_comb_fl,im))
            enddo
 	   !

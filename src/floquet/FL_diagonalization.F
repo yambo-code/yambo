@@ -239,22 +239,22 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  call PP_redux_wait(FL_V_bands, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
  !aim137 DEBUG
- do ik_bz=1,QP_nk
- do is=1,n_sp_pol
- write(filename,'(i0)') ik_bz
- open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
- do i_m=1,E%nbf(1)
- write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
- write(111,*) 'Real and imaginary parts of eigenvector:'
- do i1=1,NL_bands(2)
- write(111,'(100(1f20.14))') abs(FL_V_bands(i1,:,i_m,ik_bz,is))
- !write(111,'(100(1f20.14))') atan(real(FL_V_bands(i1,:,i_m,ik_bz,is)),aimag(FL_V_bands(i1,:,i_m,ik_bz,is)))
- enddo
- write(111,*) ''
- enddo
- close(111)
- enddo
- enddo
+!do ik_bz=1,QP_nk
+!do is=1,n_sp_pol
+!write(filename,'(i0)') ik_bz
+!open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
+!do i_m=1,E%nbf(1)
+!write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
+!write(111,*) 'Real and imaginary parts of eigenvector:'
+!do i1=1,NL_bands(2)
+!write(111,'(100(1f20.14))') abs(FL_V_bands(i1,:,i_m,ik_bz,is))
+!!write(111,'(100(1f20.14))') atan(real(FL_V_bands(i1,:,i_m,ik_bz,is)),aimag(FL_V_bands(i1,:,i_m,ik_bz,is)))
+!enddo
+!write(111,*) ''
+!enddo
+!close(111)
+!enddo
+!enddo
  !aim137 END DEBUG
  !
 end subroutine

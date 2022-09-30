@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
-&                         FL_dG,FL_dG_time,FL_Sigma
+&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -371,7 +371,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
        i_shifted_fl = i_fl - (max_fl_mode+1)
        i_damping_fl = 1; if (i_shifted_fl == 0) i_damping_fl = 0
-       !i_damping_fl = 0 !uncomment to remove the damping
+       if (l_FL_dephase) i_damping_fl = 0
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
@@ -420,9 +420,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      enddo
    endif
    !
-   ! aim137: we will not use dephasing
-   !call FL_dephasing(E,k,ik_bz,i_sp_pol,&
-   !& FL_V_bands(:,:,:E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)
+   if (l_FL_dephase) call FL_dephasing(E,k,ik_bz,i_sp_pol,&
+   &           FL_V_bands(:,:,:E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)
    !
    ! Store the Hamiltonian
    ! =====================

@@ -164,7 +164,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            FL_delta_rho(:,i_t) = cZERO
            FL_delta_rho(:,i_t) = FL_rho_at_t(:)
            !
-           if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
+           !if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
            !
            FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
            !
@@ -369,8 +369,8 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      do i_fl=1,n_tot_fl_modes
        i_fks = i_fl + (i1-1)*n_tot_fl_modes
        i_shifted_fl = i_fl - (max_fl_mode+1)
-       !i_damping_fl = 1; if (i_shifted_fl == 0) i_damping_fl = 0
-       i_damping_fl = 0
+       i_damping_fl = 1; if (i_shifted_fl == 0) i_damping_fl = 0
+       !i_damping_fl = 0 !uncomment to remove the damping
        !
        H_nl_sc(i_fks,i_fks) = &
 &              H_nl_sc(i_fks,i_fks) & 
@@ -416,10 +416,10 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        enddo
      enddo
    endif
-   !aim137 and after this it should be done
    !
    ! aim137: we will not use dephasing
-   call FL_dephasing(E,k,ik_bz,i_sp_pol,FL_V_bands(:,:,E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)
+   !call FL_dephasing(E,k,ik_bz,i_sp_pol,&
+   !& FL_V_bands(:,:,:E%nbf(i_sp_pol),ik_bz,i_sp_pol),H_nl_sc)
    !
    ! Store the Hamiltonian
    ! =====================

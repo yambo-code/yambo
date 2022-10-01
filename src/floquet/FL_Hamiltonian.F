@@ -293,6 +293,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    ! Here I fill H_nl_sc with...
    !
    H_nl_sc=cZERO
+   FL_V_Hartree_KS_time=cZERO
    !
    ! Correlation part Hartree + TDDFT
    ! ================================
@@ -395,7 +396,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    endif
    !
-   !aim137 Add the self-energy to the Hamiltonian
+   ! Add Self-energy
+   ! ===============
+   !
    if(l_use_Hxc_collisions) then
      do i1=NL_bands(1),NL_bands(2)
        do i1_fl=1,n_tot_fl_modes

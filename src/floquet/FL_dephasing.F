@@ -52,6 +52,7 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
  integer :: ikbz,istep,max_step
  integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
  complex(SP) :: I_deph(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ character(4) :: filename
  !
  I_deph=cZERO
  !
@@ -107,11 +108,11 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
          I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) - & 
                                & conjg(FL_V_bands(i2,i_comb_fl,i1))
          !
-           enddo ! i1_fl
-         enddo ! i1 band
-         !
-       enddo ! i2_fl
-     enddo   ! i2 band
+       enddo ! i1_fl
+     enddo ! i1 band
+     !
+   enddo ! i2_fl
+ enddo   ! i2 band
 
  ! $omp parallel do default(shared), private(i1,i1_fl,i1_fks)
  do i1=H_ref_bands(1),H_ref_bands(2)
@@ -125,4 +126,12 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
  enddo
  ! $omp end parallel do
  !
+ !aim137 DEBUG
+!write(filename,'(i0)') ik
+!open(111,file='FL_I_deph_at_kpt'//trim(adjustl(filename))//'.dat')
+!do i1_fks=FL_states(1),FL_states(2)
+!write(111,'(100(1f8.4))') abs(I_deph(i1_fks,:))
+!enddo
+!close(111)
+ !aim137 END DEBUG
 end subroutine FL_dephasing

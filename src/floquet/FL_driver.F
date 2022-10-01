@@ -51,7 +51,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
-&                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid
+&                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid,master_cpu
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
 #include<memory.h>
@@ -287,7 +287,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      if (FL_iteration == FL_max_iterations) &
 &    print*, 'Frequency step',i_f,' with value ',Efield(1)%frequency(1)*HA2EV,&
 &            ' was unconverged after',FL_iteration,' iterations - acc=',real(accuracy), aimag(accuracy)
-     !print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
+     if (master_cpu) print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
      !print*, FL_iteration, '----------------------------------------', l_FL_conv_Chi,l_FL_conv_Rho,l_FL_sc_reached
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative

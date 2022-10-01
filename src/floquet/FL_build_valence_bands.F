@@ -33,7 +33,7 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
  use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
 &                         n_tot_extra_modes,FL_QE,max_fl_mode
  use parallel_int,   ONLY:PP_redux_wait
- use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
+ use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX,master_cpu
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -94,4 +94,13 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
  call timing('FL Density',OPR='stop')
 #endif
  !
+ !aim137 DEBUG<
+!if (master_cpu) then
+!  do ik_bz=26,26!1,QP_nk
+!    print*, 'k-point ',ik_bz
+!    write(*,'(100(1f12.8))') real(FL_V_bands_time(4,:,4,ik_bz,1))
+!    write(*,'(100(1f12.8))') real(FL_V_bands_time(5,:,4,ik_bz,1))
+!  enddo
+!endif
+ !aim137 DEBUG>
 end subroutine FL_build_valence_bands

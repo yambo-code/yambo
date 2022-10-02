@@ -263,7 +263,7 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  ! Workspace
  !
  integer    :: varid,netcdf_error,ik,i_modes,ipos(6),isize(6),i_atom,xyz,i_n,i_m
- real(DP), allocatable :: gstore_abinit(:,:,:,:,:,:),phdispl_cart_ibz(:,:,:,:,:)
+ real(DP), allocatable :: gstore_abinit(:,:,:,:,:,:),pheigvec_cart_ibz(:,:,:,:,:)
  !
  ! (natom3, glob_nk, nb, glob_nq, nb, cplex) 
  !
@@ -297,20 +297,20 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  ! Polarization vectors
  !
- allocate(phdispl_cart_ibz(2,3,n_atoms,ph_modes,1))
+ allocate(pheigvec_cart_ibz(2,3,n_atoms,ph_modes,1))
  !
  ipos(1:5) =(/1,1,1,1,iq/)
  isize(1:5)=(/2,3,n_atoms,ph_modes,1/)
  !
- varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
- netcdf_error = nf90_get_var(ncid, varid, phdispl_cart_ibz, ipos(1:5), isize(1:5))
+ varid = netcdf_inquire_varid(ncid, "pheigvec_cart_ibz")
+ netcdf_error = nf90_get_var(ncid, varid, pheigvec_cart_ibz, ipos(1:5), isize(1:5))
  !
  do xyz=1,3
    do i_atom=1,n_atoms
-     PH_pol_vector(:,i_atom,xyz,iq)=cmplx(phdispl_cart_ibz(1,xyz,i_atom,:,1),phdispl_cart_ibz(2,xyz,i_atom,:,1),kind=SP)
+     PH_pol_vector(:,i_atom,xyz,iq)=cmplx(pheigvec_cart_ibz(1,xyz,i_atom,:,1),pheigvec_cart_ibz(2,xyz,i_atom,:,1),kind=SP)
    enddo
  enddo
  ! 
- deallocate(phdispl_cart_ibz)
+ deallocate(pheigvec_cart_ibz)
  !
 end subroutine a2y_gkkp

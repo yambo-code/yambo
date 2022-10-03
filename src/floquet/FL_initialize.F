@@ -41,6 +41,7 @@ subroutine FL_initialize(E,k,q)
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
+ use fl_optics,      ONLY:l_FL_dephase
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -56,6 +57,7 @@ subroutine FL_initialize(E,k,q)
  ! Parser
  ! ============
  !
+ call parser('Dephase',              l_FL_dephase)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)

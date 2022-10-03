@@ -126,11 +126,11 @@ subroutine FL_driver(E,X,k,q,Dip)
  if(l_use_DIPOLES) then
    call DIP_alloc('DIP_S')
  else
-!    call DIP_alloc('DIP_R')
-!   if(.not.l_eval_CURRENT) then
+   call DIP_alloc('DIP_R')
+   if(.not.l_eval_CURRENT) then
      call DIP_alloc('DIP_R')
      call DIP_alloc('DIP_v')
-!   endif
+   endif
  endif
  !
  ! WFs loading
@@ -282,13 +282,15 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      if (FL_iteration>1)&
 &    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy)
+     !
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
-     if (FL_iteration == FL_max_iterations) l_FL_sc_reached = .true.
-     if (FL_iteration == FL_max_iterations) &
-&    print*, 'Frequency step',i_f,' with value ',Efield(1)%frequency(1)*HA2EV,&
-&            ' was unconverged after',FL_iteration,' iterations - acc=',real(accuracy), aimag(accuracy)
-     if (master_cpu) print*, FL_iteration, '----------------------------------------', real(accuracy), aimag(accuracy)
-     !print*, FL_iteration, '----------------------------------------', l_FL_conv_Chi,l_FL_conv_Rho,l_FL_sc_reached
+     !
+     if (FL_iteration == FL_max_iterations) then
+       l_FL_sc_reached = .true.
+       print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
+&      ' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy), aimag(accuracy)
+     endif
+     !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy), aimag(accuracy)
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
@@ -320,7 +322,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  wf_ng     = wf_ng_save
  !
  call WF_free(WF)
- !it's crashing in the following subroutine
  call FL_free()
  call DIP_alloc('DIP_S')
  call DIP_alloc('DIP_R')

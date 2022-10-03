@@ -84,6 +84,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  real(SP)     :: FL_rho_at_t(fft_size)
  real(SP)     :: FL_res_rho_at_t(fft_size)
+ complex(SP)  :: FL_dG_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
@@ -171,7 +172,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
                          & - real(FL_delta_rho_hist(:,i_t),SP)
            !
-         ! call FL_precondition(FL_res_rho_at_t)
+           call FL_precondition(FL_res_rho_at_t)
            !
            FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
                                & FL_delta_rho_hist(:,i_t)
@@ -234,6 +235,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      !
    enddo
    !
+   FL_dG_prev = FL_dG
    FL_dG = cZERO
    !
    do ik_bz=1,QP_nk
@@ -248,10 +250,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      enddo
    enddo
    !
+   FL_dG = FL_dG * FL_beta + FL_dG_prev * (1._SP - FL_beta)
+   !
  else
    !
    if (allocated(FL_dG)) FL_dG = cZERO
    if (allocated(FL_dG_time)) FL_dG_time = cZERO
+   FL_dG_prev = cZERO
    !
  endif
  !
@@ -273,6 +278,14 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !
  endif
  !
+ !aim137 DEBUG<
+! do ik_bz=1,QP_nk
+! print*, 'kpt',ik_bz,'----------------------------'
+! do i1=NL_bands(1),NL_bands(2)
+! print*, abs(FL_sigma(i1,:,ik_bz,3))
+! enddo
+! enddo
+ !aim137 DEBUG>
  !
  ! Build the Hamiltonian
  ! =====================

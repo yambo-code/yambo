@@ -25,7 +25,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
- use electrons,     ONLY:levels,nel,filled_tresh
+ use electrons,     ONLY:levels,nel,filled_tresh,nel_cond
  use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it,runlevel_is_on
@@ -209,6 +209,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel,verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
 #if defined _ELPH 

@@ -30,7 +30,7 @@ subroutine INIT_ypp_load(defs)
  use LIVE_t,        ONLY:nhash
  use D_lattice,     ONLY:Tel,Bose_Temp
  use R_lattice,     ONLY:BZ_FineGd_mode
- use electrons,     ONLY:n_spinor
+ use electrons,     ONLY:n_spinor,nel_cond
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
  use YPPm,          ONLY:E_field,alat_used_for_output,B_field,B_psi,B_theta,BANDS_bands,BANDS_path,&
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
@@ -146,6 +146,10 @@ subroutine INIT_ypp_load(defs)
  !
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
+ !
+ ! Electrons
+ ! 
+ call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel,verb_level=V_general)
  !
  ! DOS
  !

@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
+subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -47,6 +47,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  type(levels) ::E
  type(bz_samp)::K
  integer      ::mode
+ real(SP), intent(out) :: E_fermi_h,E_fermi_e
  !
  ! Work Space
  !
@@ -86,8 +87,8 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  !
  nbf_save=E_minus%nbf(1)
  !
- call REPORT_all_Occupations(E_minus,k,'E_minus')
- call REPORT_all_Occupations(E_plus,k,'E_plus')
+ call REPORT_Occupations(E_minus,'E_minus')
+ call REPORT_Occupations(E_plus,'E_plus')
  !
  call OCCUPATIONS_Merge(E,E_minus,E_plus,K,mode) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
  !
@@ -95,11 +96,14 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  E%nbf=nbf_save
  E%nbm=nbm_save
  !
+ E_fermi_h=E_minus%E_Fermi
+ E_fermi_e=E_plus%E_Fermi
+ !
  call msg('rsn','Number of metalic bands : ',E%nbm(1))
  call msg('rsn','Number of filled  bands : ',E%nbf(1))
  call msg('rsn','Number of valence bands : ',nval)
  !
- call REPORT_all_Occupations(E,k,'E')
+ call REPORT_Occupations(E,'E')
  !
  call E_reset(E_plus)
  call E_reset(E_minus)

@@ -149,7 +149,7 @@ subroutine INIT_ypp_load(defs)
  !
  ! Electrons
  ! 
- call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel,verb_level=V_general)
+ call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel_cond,verb_level=V_general)
  !
  ! DOS
  !

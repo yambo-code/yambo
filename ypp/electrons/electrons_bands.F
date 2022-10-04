@@ -37,7 +37,7 @@ subroutine electrons_bands(Xk,Xen)
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
- use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin,nel_cond
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg 
@@ -56,7 +56,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Work Space
  !
- type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE
+ type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE,E_QF
  integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
  real(SP)              :: dEf
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
@@ -68,6 +68,7 @@ subroutine electrons_bands(Xk,Xen)
  logical, external     :: file_exists
  character(schlen)     :: INTERP_mode_save
  real(SP)              :: INTERP_shell_factor_save
+ real(SP)              :: E_fermi_h,E_fermi_e
  !
  ! Apply QP corrections
  !====================== 
@@ -148,6 +149,12 @@ subroutine electrons_bands(Xk,Xen)
    !
 #endif
    !
+ endif
+ !
+ ! Quasi-Fermi distribution
+ ! =========================
+ if(nel_cond/=rZERO.and.BANDS_steps> 0) then
+   call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk,1)        
  endif
  !
  ! Fermi Levels

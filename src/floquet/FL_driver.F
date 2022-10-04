@@ -265,7 +265,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
+   print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
    call msg('r','Frequency step    :',i_f)
    call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    !
@@ -285,12 +285,12 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
      !
+     if (master_cpu) print*, FL_iteration, '--------------', real(accuracy), aimag(accuracy)
      if (FL_iteration == FL_max_iterations) then
        l_FL_sc_reached = .true.
        print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
 &      ' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy), aimag(accuracy)
      endif
-     !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy), aimag(accuracy)
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !

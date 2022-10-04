@@ -45,7 +45,7 @@ subroutine OCCUPATIONS_Merge(E,E_minus,E_plus,K,mode)
  ! I do not change E_fermi so the top valence of the un-excited system
  ! is set to zero
  !
- if(.not.associated(E%f)) return 
+ if(.not.allocated(E%f)) return 
  !
  E%f(:nval,:,:)  =E_minus%f(:nval,:,:)
  E%f(nval+1:,:,:)=E_plus%f(nval+1:,:,:)

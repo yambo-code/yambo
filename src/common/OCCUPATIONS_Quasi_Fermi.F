@@ -36,12 +36,11 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  !
  use pars,          ONLY:SP,DP
  use units,         ONLY:HA2EV
- use electrons,     ONLY:levels,nel_cond,nel,E_duplicate,E_reset
+ use electrons,     ONLY:levels,nel_cond,nel,E_duplicate,E_reset,n_sp_pol
  use R_lattice,     ONLY:bz_samp
- use IO_m,          ONLY:IO_and_Messaging_switch
- use com,           ONLY:error,msg
+ use IO_int,        ONLY:IO_and_Messaging_switch
+ use com,           ONLY:msg
  use parser_m,      ONLY:parser
- use lum_m,         ONLY:k_vertical_exc
  !
  implicit none
  !
@@ -55,16 +54,10 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  real(SP) :: nel_save
  integer  :: nbf_save,nbm_save
  integer  :: nval 
- logical  :: l_gamma_exc
  !
  call  OCCUPATIONS_Fermi(E,K,mode)
  !
  if(nel_cond==0._SP) return
- !
- if(k_vertical_exc/=0) then
-   call Vertical_Occupation(E,K,mode,k_vertical_exc)
-   return
- endif
  !
  nel_save=nel
  !
@@ -73,15 +66,17 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  call E_duplicate(E,E_plus)
  call E_duplicate(E,E_minus)
  !
- if(E%nbf/=E%nbm) call error("Quasi-Fermi distribution only for insulators/semiconductors")
+ if(any(E%nbf/=E%nbm)) call error("Quasi-Fermi distribution only for insulators/semiconductors")
  !
- nval=E%nbf
+ if(n_sp_pol/=1) call error("Quasi-Fermi distribution not implemented for spin-polarized systems")
+ !
+ nval=E%nbf(1)
  nel =nel+nel_cond
  !
  call IO_and_Messaging_switch("-report -log -io_in -io_out")
  call OCCUPATIONS_Fermi(E_plus,K,mode)
  !
- nbm_save=E_plus%nbm
+ nbm_save=E_plus%nbm(1)
  !
  nel =nel_save
  nel =nel-nel_cond
@@ -89,7 +84,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  call OCCUPATIONS_Fermi(E_minus,K,mode)
  call IO_and_Messaging_switch("+report +log +io_in +io_out")
  !
- nbf_save=E_minus%nbf
+ nbf_save=E_minus%nbf(1)
  !
  call REPORT_all_Occupations(E_minus,k,'E_minus')
  call REPORT_all_Occupations(E_plus,k,'E_plus')
@@ -100,8 +95,8 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,K,mode)
  E%nbf=nbf_save
  E%nbm=nbm_save
  !
- call msg('rsn','Number of metalic bands : ',E%nbm)
- call msg('rsn','Number of filled  bands : ',E%nbf)
+ call msg('rsn','Number of metalic bands : ',E%nbm(1))
+ call msg('rsn','Number of filled  bands : ',E%nbf(1))
  call msg('rsn','Number of valence bands : ',nval)
  !
  call REPORT_all_Occupations(E,k,'E')

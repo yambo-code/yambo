@@ -57,7 +57,6 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  integer  :: nval 
  !
  call  OCCUPATIONS_Fermi(E,K,'EQ',mode="OCCUPATIONS")
- stop
  !
  if(nel_cond==0._SP) return
  !

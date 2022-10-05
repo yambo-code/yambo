@@ -76,9 +76,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  character(4) :: filename
  integer     :: line_counter,i_m
  !
- complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
- integer, external    :: io_FL
+ integer, external  :: io_FL
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -284,7 +282,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
      !
-     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalues)
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
@@ -317,7 +315,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !call NL_databases_IO(i_f,'write')
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
-   i_err=io_FL(ID_FL,FL_eigenvalues=FL_eigenvalues,FL_eigenvectors=FL_eigenvectors)
+   i_err=io_FL(ID_FL)
    !
  enddo
  !

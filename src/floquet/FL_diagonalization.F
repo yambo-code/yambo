@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalues)
+subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
@@ -35,7 +35,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalue
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_bands,E_full,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_V_bands_hist,FL_ac_phase
+&                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_V_bands_hist,FL_ac_phase,&
+&                         FL_eigenvectors,FL_eigenvalues
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
  !
@@ -45,8 +46,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalue
  type(bz_samp), intent(in)     :: k
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
- complex(SP),   intent(out)    :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- real(SP),      intent(out)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !

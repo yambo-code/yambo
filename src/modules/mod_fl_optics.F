@@ -41,6 +41,8 @@ module fl_optics
  complex(SP), allocatable :: FL_Chi_pol(:,:,:,:) !freq,dir,order,previous
  complex(SP), allocatable :: FL_FT_extra_M(:,:)
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
+ complex(SP), allocatable :: FL_eigenvectors(:,:)
+ real(SP), allocatable    :: FL_eigenvalues(:,:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
  complex(SP), allocatable :: FL_delta_rho(:,:)
@@ -69,6 +71,8 @@ module fl_optics
  integer  :: FL_Chi_order,FL_max_iterations
  character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode,FL_solver_mode
  logical  :: l_FL_conv_Chi,l_FL_conv_Rho,l_FL_dephase
+ !
+ type(IO_desc)    :: FL_desc
  !
  contains
    !
@@ -140,11 +144,16 @@ module fl_optics
      !
      YAMBO_ALLOC(E_full,(1:NL_bands(2),QP_nk,n_sp_pol))
      !
-     ! Floquet Quasi energies
+     ! Floquet Quasi energies at selected mode
      !
      YAMBO_ALLOC(FL_QE,(1:NL_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_QE_hist,(1:NL_bands(2),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_ac_phase,(maxval(en%nbf),QP_nk,n_sp_pol))
+     !
+     ! Floquet Quasi energies for all modes and eigenvectors
+     !
+     YAMBO_ALLOC(FL_eigenvectors,(FL_states(1):FL_states(2),FL_states(1):FL_states(2)))
+     YAMBO_ALLOC(FL_eigenvalues,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
      ! Density matrix and self-energy
      !
@@ -215,6 +224,17 @@ module fl_optics
        call ELECTRIC_free()
      endif
      !
+     ! Floquet Quasi energies at selected mode
+     !
+     YAMBO_FREE(FL_QE)
+     YAMBO_FREE(FL_QE_hist)
+     YAMBO_FREE(FL_ac_phase)
+     !
+     ! Floquet Quasi energies for all modes and eigenvectors
+     !
+     YAMBO_FREE(FL_eigenvectors)
+     YAMBO_FREE(FL_eigenvalues)
+     !
    end subroutine FL_free
  !
    subroutine FL_FT_matrices
@@ -251,4 +271,4 @@ module fl_optics
      !
    end subroutine FL_FT_matrices
  !
-end module
+end module fl_optics

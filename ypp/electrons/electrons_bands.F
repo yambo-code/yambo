@@ -155,7 +155,7 @@ subroutine electrons_bands(Xk,Xen)
  ! =========================
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
    call E_reset(E_qf)
-   call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk,1)        
+   call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk)        
  endif
  !
  ! Fermi Levels

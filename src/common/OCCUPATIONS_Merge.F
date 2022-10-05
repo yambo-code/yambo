@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Merge(E,E_minus,E_plus,K,mode)
+subroutine OCCUPATIONS_Merge(E,E_minus,E_plus,K)
  !
  use pars,          ONLY:SP,DP
  use electrons,     ONLY:levels,default_nel
@@ -31,7 +31,6 @@ subroutine OCCUPATIONS_Merge(E,E_minus,E_plus,K,mode)
  !
  type(levels)  :: E,E_minus,E_plus
  type(bz_samp) :: K
- integer       :: mode
  !
  ! Work Space
  !

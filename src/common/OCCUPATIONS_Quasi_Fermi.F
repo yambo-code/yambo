@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
+subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -41,12 +41,12 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  use IO_int,        ONLY:IO_and_Messaging_switch
  use com,           ONLY:msg
  use parser_m,      ONLY:parser
+ use interfaces,    ONLY:OCCUPATIONS_Fermi
  !
  implicit none
  !
  type(levels) ::E
  type(bz_samp)::K
- integer      ::mode
  real(SP), intent(out) :: E_fermi_h,E_fermi_e
  !
  ! Work Space
@@ -56,7 +56,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  integer  :: nbf_save,nbm_save
  integer  :: nval 
  !
- call  OCCUPATIONS_Fermi(E,K,'EQ',mode)
+ call  OCCUPATIONS_Fermi(E,K,'EQ',mode="OCCUPATIONS")
  !
  if(nel_cond==0._SP) return
  !
@@ -75,14 +75,14 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  nel =nel+nel_cond
  !
  call IO_and_Messaging_switch("-report -log -io_in -io_out")
- call OCCUPATIONS_Fermi(E_plus,K,'Eplus',mode)
+ call OCCUPATIONS_Fermi(E_plus,K,'Eplus',mode="OCCUPATIONS")
  !
  nbm_save=E_plus%nbm(1)
  !
  nel =nel_save
  nel =nel-nel_cond
  !
- call OCCUPATIONS_Fermi(E_minus,K,'Eminus',mode)
+ call OCCUPATIONS_Fermi(E_minus,K,'Eminus',mode="OCCUPATIONS")
  call IO_and_Messaging_switch("+report +log +io_in +io_out")
  !
  nbf_save=E_minus%nbf(1)
@@ -90,7 +90,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  call REPORT_Occupations(E_minus,'E_minus')
  call REPORT_Occupations(E_plus,'E_plus')
  !
- call OCCUPATIONS_Merge(E,E_minus,E_plus,K,mode) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
+ call OCCUPATIONS_Merge(E,E_minus,E_plus,K) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
  !
  nel  =nel_save
  E%nbf=nbf_save

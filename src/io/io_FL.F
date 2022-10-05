@@ -23,10 +23,25 @@
 !
 integer function io_FL(ID,FL_eigenvalues,FL_eigenvectors)
  !
+ use pars,          ONLY:SP,schlen
+ use electrons,     ONLY:n_sp_pol
+ use QP_m,          ONLY:QP_nk
+ use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
+&                        io_fragment,io_elemental,io_variable_bulk,&
+&                        def_variable_bulk
+ use fl_optics,     ONLY:FL_states
+ use timing_m,      ONLY:timing
+ !
+ implicit none
+ !
+ integer, intent(in) :: ID
  complex(SP), optional,   intent(inout)    :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  real(SP),    optional,   intent(inout)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
  !
- integer :: VAR_SZ(4)
+ ! Work space
+ !
+ integer :: ID_frag,VAR_SZ(4),io_err,ifreq
  character(schlen) :: dim_names(4)
  !
  call timing('io_FL',OPR='stop')
@@ -47,7 +62,7 @@ integer function io_FL(ID,FL_eigenvalues,FL_eigenvectors)
  if (ifreq==0) goto 1
  !
  call io_fragment(ID,ID_frag,i_fragment=ifreq,ierr=io_err)
- io_NL=io_err
+ io_FL=io_err !I think this is meant to be io_FL, not io_NL.
  if (io_err/=0) goto 1
  !
  VAR_SZ(1)=2
@@ -58,15 +73,15 @@ integer function io_FL(ID,FL_eigenvalues,FL_eigenvectors)
  VAR_SZ(2:4)=shape(FL_eigenvalues)
  dim_names(2:4)=[character(schlen) :: "FLstates" , "QP_nk" , "n_sp_pol"]
  ! 
- call def_variable_bulk(ID,"FL_eigenvalues", 1,VAR_SZ(1:4),SP,dim_names=dim_names(1:3),silent=.true.)
- call io_variable_bulk(ID,1,C3=FL_eigenvalues)
+ call def_variable_bulk(ID,"FL_eigenvalues", 1,VAR_SZ(2:4),SP,dim_names=dim_names(2:4))
+ call io_variable_bulk(ID,1,R3=FL_eigenvalues)
  !
  ! Variable 2
  !
  VAR_SZ(2:3)=shape(FL_eigenvectors)
  dim_names(2:3)=[character(schlen) :: "FLstates" , "LFstates"]
  !
- call def_variable_bulk(ID,"FL_eigenvectors",2,VAR_SZ(1:3),SP,dim_names=dim_names(1:3),silent=.true.)
+ call def_variable_bulk(ID,"FL_eigenvectors",2,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
  call io_variable_bulk(ID,4,C2=FL_eigenvectors)
  !
 1 call io_fragment_disconnect(ID,ID_frag)

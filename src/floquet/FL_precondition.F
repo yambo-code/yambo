@@ -34,6 +34,7 @@ subroutine FL_precondition(delta_rho)
  use electrons,     ONLY: nel
  !
  implicit none
+ !
  real(SP),intent(inout) :: delta_rho(fft_size)
  !
  ! Work Space

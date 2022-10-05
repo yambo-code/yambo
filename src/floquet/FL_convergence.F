@@ -26,6 +26,8 @@ subroutine FL_check_convergence(FL_pol,l_sc_reached,accuracy)
  use pars,       ONLY:SP,DP,cI
  use fl_optics,  ONLY:FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,n_tot_fl_modes,max_fl_mode,FL_Chi_order
  !
+ implicit none
+ !
  complex(SP), intent(inout) :: FL_pol(3,FL_Chi_order+1,2) !second dimension for previous iteration
  logical,intent(out) :: l_sc_reached
  complex(DP),intent(out)    :: accuracy

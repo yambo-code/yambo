@@ -49,7 +49,8 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
 &                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
- use IO_m,           ONLY:io_COLLs
+ use IO_m,           ONLY:io_COLLs,OP_WR_CL,VERIFY,REP
+ use IO_int,         ONLY:io_control
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
 &                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid,master_cpu
@@ -68,7 +69,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
+ integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol,i_err
  integer  :: FL_iteration,fl_shifted_zero_mode,ID_FL
  logical  :: l_FL_sc_reached
  complex(DP) :: accuracy
@@ -77,6 +78,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  !
  complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
+ integer, external    :: io_FL
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -315,7 +317,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !call NL_databases_IO(i_f,'write')
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
-   i_err=io_FL(ID_FL)
+   i_err=io_FL(ID_FL,FL_eigenvalues=FL_eigenvalues,FL_eigenvectors=FL_eigenvectors)
    !
  enddo
  !

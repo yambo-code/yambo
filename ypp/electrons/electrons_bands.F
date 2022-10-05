@@ -37,7 +37,7 @@ subroutine electrons_bands(Xk,Xen)
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
- use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin,nel_cond
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin,nel_cond,E_duplicate
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:lattice
  use com,            ONLY:msg 
@@ -155,6 +155,7 @@ subroutine electrons_bands(Xk,Xen)
  ! =========================
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
    call E_reset(E_qf)
+   call E_duplicate(Xen,E_qf)
    call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk)        
  endif
  !

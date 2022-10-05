@@ -151,9 +151,10 @@ subroutine electrons_bands(Xk,Xen)
    !
  endif
  !
- ! Quasi-Fermi distribution
+ ! Find the Fermi energies of the Quasi-Fermi distribution
  ! =========================
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
+   call E_reset(E_qf)
    call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk,1)        
  endif
  !
@@ -197,6 +198,10 @@ subroutine electrons_bands(Xk,Xen)
    IDs(nqnt)=ID_proj
  endif
 #endif
+ !
+ ! Generate excited states occupations
+ if(nel_cond/=rZERO.and.BANDS_steps> 0) then
+ endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
 &   (Xk,Xen,dEf,USER_k,   IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"built_in",    "bands",0)

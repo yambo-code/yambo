@@ -56,7 +56,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  integer  :: nbf_save,nbm_save
  integer  :: nval 
  !
- call  OCCUPATIONS_Fermi(E,K,mode)
+ call  OCCUPATIONS_Fermi(E,K,'EQ',mode)
  !
  if(nel_cond==0._SP) return
  !
@@ -75,14 +75,14 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K,mode)
  nel =nel+nel_cond
  !
  call IO_and_Messaging_switch("-report -log -io_in -io_out")
- call OCCUPATIONS_Fermi(E_plus,K,mode)
+ call OCCUPATIONS_Fermi(E_plus,K,'Eplus',mode)
  !
  nbm_save=E_plus%nbm(1)
  !
  nel =nel_save
  nel =nel-nel_cond
  !
- call OCCUPATIONS_Fermi(E_minus,K,mode)
+ call OCCUPATIONS_Fermi(E_minus,K,'Eminus',mode)
  call IO_and_Messaging_switch("+report +log +io_in +io_out")
  !
  nbf_save=E_minus%nbf(1)

@@ -37,6 +37,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
+ use QP_m,           ONLY:QP_nk
  use QP_CTL_m,       ONLY:QP_apply
  use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
@@ -46,7 +47,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
-&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho
+&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
@@ -68,11 +69,14 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! Work Space
  !
  integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol
- integer  :: FL_iteration,fl_shifted_zero_mode
+ integer  :: FL_iteration,fl_shifted_zero_mode,ID_FL
  logical  :: l_FL_sc_reached
  complex(DP) :: accuracy
  character(4) :: filename
  integer     :: line_counter,i_m
+ !
+ complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
  !
  ! In Non-Linear NL_bands always equal to RT_bands
  ! ==============================================
@@ -199,6 +203,8 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! ==================
  !aim137: we'll need to add FL_databases
  !call NL_databases_IO(0,'write')
+ call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
+ i_err=io_FL(ID_FL)
  !
  ! Start-Up & Timing
  !===================
@@ -276,7 +282,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
      !
-     call FL_diagonalization(E,k,FL_V_bands,FL_QE)
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalues)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
@@ -307,6 +313,9 @@ subroutine FL_driver(E,X,k,q,Dip)
    !call FL_time_dep_variables(E,k) !this was to interface with ypp
    !
    !call NL_databases_IO(i_f,'write')
+   !
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
+   i_err=io_FL(ID_FL)
    !
  enddo
  !

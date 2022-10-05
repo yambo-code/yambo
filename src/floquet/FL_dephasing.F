@@ -56,8 +56,6 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
  !
  I_deph=cZERO
  !
- ! A
- !
  do i1=H_ref_bands(1),H_ref_bands(2)        !i
    do i1_fl=1,n_tot_fl_modes                !eta
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
@@ -65,6 +63,8 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
      do i2=H_ref_bands(1),H_ref_bands(2)        !j
        do i2_fl=1,n_tot_fl_modes                !gamma
          i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
+         !
+         ! A term
          !
          do i3_fl=1,n_tot_fl_modes
            !
@@ -83,22 +83,9 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
            !
          enddo ! i3_fl
          !
-       enddo ! i2_fl
-     enddo   ! i2 band
-     !
-   enddo ! i1_fl
- enddo ! i1 band
- !
- ! B term
- !
- do i1=H_ref_bands(1),en%nbf(i_sp_pol)          ! i (only occ)
-   do i1_fl=1,n_tot_fl_modes                    !eta
-    i1_fks = i1_fl + (i1-1)*n_tot_fl_modes      !i,eta
-    !
-     do i2=H_ref_bands(1),H_ref_bands(2)        !j
-       do i2_fl=1,n_tot_fl_modes                !gamma
-         i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
+         ! B term
          !
+         if (i1>en%nbf(i_sp_pol)) cycle            ! i (only occ)
          i_shift_comb_fl = (i2_fl-(max_fl_mode+1)) &
                         &- (i1_fl-(max_fl_mode+1))
          !
@@ -108,12 +95,12 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
          I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) - & 
                                & conjg(FL_V_bands(i2,i_comb_fl,i1))
          !
-       enddo ! i1_fl
-     enddo ! i1 band
+       enddo ! i2_fl
+     enddo   ! i2 band
      !
-   enddo ! i2_fl
- enddo   ! i2 band
-
+   enddo ! i1_fl
+ enddo ! i1 band
+ !
  ! $omp parallel do default(shared), private(i1,i1_fl,i1_fks)
  do i1=H_ref_bands(1),H_ref_bands(2)
    do i1_fl=1,n_tot_fl_modes

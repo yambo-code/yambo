@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
+subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_eigenvectors,FL_eigenvalues)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
@@ -45,13 +45,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  type(bz_samp), intent(in)     :: k
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
+ complex(SP),   intent(out)    :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ real(SP),      intent(out)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
  !
  ! Work Space
  !
- real(SP)    :: FL_eigenvalues(FL_states(1):FL_states(2),QP_nk,n_sp_pol)
  real(SP)    :: min_projection,trial_projection,trial_val,trial_proj
  real(SP)    :: energy_difference(FL_states(1):FL_states(2))
- complex(SP) :: FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):maxval(E%nbf)),i1_fks_eigenvec

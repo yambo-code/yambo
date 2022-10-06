@@ -31,8 +31,15 @@ else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
  YPP_SRC_LIBS=$(YPPPH_LIBS)
  YPP_EXE_LIBS=$(YPPPH_LIBS_LD)
 else ifneq (,$(findstring ypp_nl,$(MAKECMDGOALS)))
- Y_PRECMP=-D_YPP_RT -D_YPP_NL -D_RT -D_NL -D_DOUBLE
- YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_DOUBLE
+ Y_PRECMP=-D_YPP_RT -D_RT -D_NL -D_FL -D_DOUBLE
+ YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_YPP_FL -D_DOUBLE
+ Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
+ Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
+ YPP_SRC_LIBS=$(YPPRT_LIBS)
+ YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
+else ifneq (,$(findstring ypp_fl,$(MAKECMDGOALS)))
+ Y_PRECMP=-D_YPP_RT -D_FL -D_RT -D_NL -D_DOUBLE
+ YPP_PRECMP=-D_YPP_RT -D_YPP_NL -D_YPP_FL -D_DOUBLE
  Y_SRC_LIBS=$(YPPRT_MAIN_LIBS)
  Y_EXE_LIBS=$(YPPRT_MAIN_LIBS_LD)
  YPP_SRC_LIBS=$(YPPRT_LIBS)
@@ -41,7 +48,7 @@ endif
 #
 # Compilation
 #
-ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl: 
+ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl ypp_fl:
 	@rm -f ${compdir}/log/"compile_"$@".log"
 	@rm -f ${compdir}/config/stamps_and_lists/compilation_stop_$@.stamp
 	@touch ${compdir}/config/stamps_and_lists/compiling_$@.stamp

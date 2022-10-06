@@ -32,6 +32,7 @@ module fl_optics
  !
  ! Bands in terms of Kohn-Sham orbitals
  !
+ integer,     allocatable :: FL_table(:,:)
  complex(SP), allocatable :: FL_V_bands(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_V_bands_hist(:,:,:,:,:)  ! Floquet bands
  complex(SP), allocatable :: FL_S_plus(:,:,:,:,:,:)  ! Floquet overlaps
@@ -93,21 +94,6 @@ module fl_optics
      !
      type(levels), intent(in) :: en
      !
-     max_time_step   = FL_Chi_order
-     max_fl_mode     = FL_Chi_order+FL_add_mode !aim137 removed for debug
-     !max_fl_mode     = 3 !aim137 remove after DEBUG
-     max_extra_mode  = 2*max_fl_mode
-     max_duffin_mode = 4*max_fl_mode
-     !
-     n_tot_time_steps   = 2*max_time_step+1
-     n_tot_fl_modes     = 2*max_fl_mode+1
-     n_tot_extra_modes  = 2*max_extra_mode+1
-     n_tot_duffin_modes = 2*max_duffin_mode+1
-     !
-     FL_space_dim = NL_bands(2) * n_tot_fl_modes
-     FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
-     FL_states(2) = FL_space_dim
-     !
      call FL_H_alloc(en,.true.,.false.,FL_states)
      !
      ! aim137 allocate V_bands because I still need it for FL_start_and_restart
@@ -115,6 +101,8 @@ module fl_optics
      ! aim137 FL_bands in FKS space broken down in bands x fl modes
      YAMBO_ALLOC(FL_V_bands,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
      YAMBO_ALLOC(FL_V_bands_hist,(NL_bands(2),n_tot_fl_modes,maxval(en%nbf),QP_nk,n_sp_pol))
+     !
+     YAMBO_ALLOC(FL_table,(FL_states(1):FL_states(2),2))
      !
      YAMBO_ALLOC(FL_Ho_lift_degeneracy,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
      !
@@ -215,6 +203,8 @@ module fl_optics
      YAMBO_FREE(I_relax)
      YAMBO_FREE(V_bands)
      !
+     YAMBO_FREE(FL_table)
+     !
      YAMBO_FREE(rho_reference)
      YAMBO_FREE(full_rho)
      YAMBO_FREE(E_full)
@@ -236,8 +226,8 @@ module fl_optics
      YAMBO_FREE(FL_eigenvalues)
      !
    end subroutine FL_free
- !
-   subroutine FL_FT_matrices
+   !
+   subroutine FL_FT_matrices()
      !
      use pars,           ONLY:SP,cI,pi
      !
@@ -270,5 +260,53 @@ module fl_optics
      !aim137 DEBUG this gives some terms 1.d-16
      !
    end subroutine FL_FT_matrices
- !
+   !
+   subroutine FL_build_table()
+     use nl_optics,      ONLY:NL_bands
+     integer :: ib,ifl,ifks
+     do ib=NL_bands(1),NL_bands(2)
+       do ifl=1,n_tot_fl_modes
+         ifks = ifl + (ib-1)*n_tot_fl_modes
+         FL_table(ifks,:)=(/ifl,ib/)
+       enddo
+     enddo
+   end subroutine FL_build_table
+   !
+   subroutine FL_output_to_FL_E(E,E_eq,j_mode)
+     use pars,           ONLY:rZERO
+     use electrons,      ONLY:levels,E_reset,n_sp_pol
+     use nl_optics,      ONLY:NL_bands
+     use QP_m,           ONLY:QP_nk
+     type(levels) :: E,E_eq
+     integer, intent(in) :: j_mode
+     integer             :: i_mode,i_sp_pol,ib,ik,i_fks
+     if (.not.allocated(E%E)) then
+       call E_reset(E)
+       E%nk=QP_nk
+       E%nb=NL_bands(2)
+       E%nbf=E_eq%nbf
+       E%nbm=E_eq%nbm
+       E%E_Fermi  =E_eq%E_Fermi
+       E%E_VBM    =E_eq%E_VBM
+       E%E_CBm    =E_eq%E_CBm
+       E%E_dir_gap=E_eq%E_dir_gap
+       YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+       YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+       E%E=rZERO
+       E%f=rZERO
+     endif
+     !
+     do i_sp_pol=1,n_sp_pol
+       do ik=1,QP_nk
+         do i_fks=FL_states(1),FL_states(2)
+           i_mode = FL_table(i_fks,1)
+           ib     = FL_table(i_fks,2)
+           if (i_mode/=j_mode) cycle
+           E%E(ib,ik,i_sp_pol)=FL_eigenvalues(i_fks,ik,i_sp_pol)
+         enddo
+       enddo
+     enddo
+     !
+   end subroutine
+   !
 end module fl_optics

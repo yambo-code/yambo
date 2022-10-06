@@ -188,6 +188,13 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="nonlinear";
  options[*i_opt].section="Real-Time";
  *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Floquet bands interpolation";
+ options[*i_opt].long_opt="flbands";
+ options[*i_opt].short_opt='f';
+ options[*i_opt].bin="ypp_fl";
+ options[*i_opt].yambo_string="floquet";
+ options[*i_opt].section="Real-Time";
+ *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Carriers database generation";
  options[*i_opt].long_desc[0]="<string>=(e)nergy,(f)ermi";
  options[*i_opt].long_opt=  "rtdb";

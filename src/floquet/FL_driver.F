@@ -43,12 +43,12 @@ subroutine FL_driver(E,X,k,q,Dip)
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,E_full, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
-&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
+&                         HF,SEX,NL_bands,WF_sample,V_bands_t,NL_alloc_k_distributed
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
 &                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
  use IO_m,           ONLY:io_COLLs,OP_WR_CL,VERIFY,REP
  use IO_int,         ONLY:io_control
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
@@ -77,16 +77,6 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer     :: line_counter,i_m
  !
  integer, external  :: io_FL
- !
- ! In Non-Linear NL_bands always equal to RT_bands
- ! ==============================================
- !
- NL_nbands=NL_bands(2)-NL_bands(1)+1
- !
- RT_bands =NL_bands
- RT_nbands=NL_nbands
- !
- call section('*','FL Initialization')
  !
  ! Initialize
  !=========
@@ -185,7 +175,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! ==================
   call FL_alloc(E) 
   call FL_alloc_k_distributed(E)
-  call FL_FT_matrices
+  call FL_FT_matrices()
  !
  if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
  if (FL_Chi_order > max_fl_mode) call warning('    [FL] Probe order greater than max Floquet mode')

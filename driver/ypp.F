@@ -41,11 +41,17 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 &                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
 &                              DIPs_kind,l_sp_wf,l_mean_potential
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_RT_abs
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
 &                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
+#endif
+#if defined _YPP_NL
+ use YPP_real_time,       ONLY:l_NL_X,l_NL_exc
+#endif
+#if defined _YPP_FL
+ use YPP_real_time,       ONLY:l_FL_bands
 #endif
  !
  implicit none
@@ -241,6 +247,10 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  if (l_NL_X  ) call NL_ypp_driver(en,k)
  if (l_NL_exc) call NL_exc_driver(en,k)
  !
+#endif
+ !
+#if defined _YPP_FL
+ if (l_FL_bands) call FL_bands_interpolation(en,k,q)
 #endif
  !
  l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")

@@ -50,6 +50,9 @@ subroutine INIT_ypp_load(defs)
 &                        TRabsMODE,TRabsDIP_dir,TRabs_Eeh_treshold,Pump_path,RT_pol_mode
  use real_time,     ONLY:RT_bands
 #endif
+#if defined _YPP_FL
+ use YPP_real_time, ONLY:FL_freq_indx
+#endif
 #if defined _YPP_SC
  use YPPm,          ONLY:V_value
  use SC,            ONLY:SC_neq_kind
@@ -381,6 +384,14 @@ subroutine INIT_ypp_load(defs)
  !
  call it('f',defs,'STD_style','Print occupations using the standard style',verb_level=V_real_time) 
  !
+#endif
+ !
+#if defined _YPP_FL
+ !
+ ! FL Post-Processing
+ !
+ call it(defs,'FreqIndx','Index for the frequency',FL_freq_indx)
+ ! 
 #endif
  !
 end subroutine

@@ -36,12 +36,14 @@ subroutine FL_initialize(E,k,q)
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
+ use real_time,      ONLY:RT_nbands,RT_bands
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
-&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
+&                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_nbands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
- use fl_optics,      ONLY:l_FL_dephase
+ use fl_optics,      ONLY:l_FL_dephase,FL_Chi_order,FL_add_mode,max_time_step,max_fl_mode,max_extra_mode,max_duffin_mode, &
+&                         FL_states,FL_space_dim,n_tot_time_steps,n_tot_fl_modes,n_tot_extra_modes,n_tot_duffin_modes
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -53,6 +55,30 @@ subroutine FL_initialize(E,k,q)
  !
  real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
  integer  :: i1
+ !
+ ! Input variables: FL_Chi_order, FL_add_mode, NL_bands
+ !
+ max_time_step   = FL_Chi_order
+ max_fl_mode     = FL_Chi_order+FL_add_mode !aim137 removed for debug
+ !max_fl_mode     = 3 !aim137 remove after DEBUG
+ max_extra_mode  = 2*max_fl_mode
+ max_duffin_mode = 4*max_fl_mode
+ !
+ n_tot_time_steps   = 2*max_time_step+1
+ n_tot_fl_modes     = 2*max_fl_mode+1
+ n_tot_extra_modes  = 2*max_extra_mode+1
+ n_tot_duffin_modes = 2*max_duffin_mode+1
+ !
+ NL_nbands=NL_bands(2)-NL_bands(1)+1
+ !
+ RT_bands =NL_bands
+ RT_nbands=NL_nbands
+ !
+ FL_space_dim = NL_bands(2) * n_tot_fl_modes
+ FL_states(1) = (NL_bands(1)-1)*n_tot_fl_modes+1
+ FL_states(2) = FL_space_dim
+ !
+ call section('*','FL Initialization')
  !
  ! Parser
  ! ============

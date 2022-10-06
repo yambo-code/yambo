@@ -72,7 +72,8 @@ integer function io_FL(ID)
    call def_variable_elemental(ID,VAR="QP_nk",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
    call io_variable_elemental(ID,VAR="[FL] Number of kpoints",I0=QP_nk,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=FL_desc)
    !
-   call def_variable_bulk(ID,"FL_table",1,VAR_SZ=shape(FL_table),VAR_KIND=IP+100,dim_names=(/"FLstates"/))
+   dim_names(1:2)=[character(schlen) :: "FLstates" , "two"]
+   call def_variable_bulk(ID,"FL_table",1,VAR_SZ=shape(FL_table),VAR_KIND=IP+100,dim_names=dim_names(1:2))
    call io_variable_bulk(ID,1,I2=FL_table)
    !
  endif

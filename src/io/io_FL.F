@@ -50,7 +50,7 @@ integer function io_FL(ID)
  !
  ID_frag=0
  !
- io_FL=io_connect(desc="Floquet",type=2,ID=ID)
+ io_FL=io_connect(desc="Floquet",type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))))
  if (io_FL/=0) goto 1
  !
  if (any((/io_sec(ID,:)==1/))) then

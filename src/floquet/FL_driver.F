@@ -51,7 +51,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
  use IO_m,           ONLY:io_COLLs,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use IO_int,         ONLY:io_control
- use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait,PP_wait
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
 &                         PAR_COM_freqs_INDEX,PAR_COM_Xk_bz_INDEX,PAR_COM_Xk_ibz_INDEX,myid,master_cpu
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
@@ -194,8 +194,12 @@ subroutine FL_driver(E,X,k,q,Dip)
  ! ==================
  !aim137: we'll need to add FL_databases
  !call NL_databases_IO(0,'write')
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
- i_err=io_FL(ID_FL)
+ if (master_cpu) then
+   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
+   i_err=io_FL(ID_FL)
+ endif
+ !
+ call PP_wait()
  !
  ! Start-Up & Timing
  !===================

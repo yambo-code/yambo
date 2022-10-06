@@ -43,8 +43,8 @@ integer function io_FL(ID)
  !
  ! Work space
  !
- integer :: ID_frag,VAR_SZ(4),io_err,ifreq
- character(schlen) :: dim_names(4)
+ integer :: ID_frag,VAR_SZ(5),io_err,ifreq
+ character(schlen) :: dim_names(5)
  !
  call timing('io_FL',OPR='start')
  !
@@ -99,11 +99,11 @@ integer function io_FL(ID)
  !
  ! Variable 2
  !
- VAR_SZ(2:3)=shape(FL_eigenvectors)
- dim_names(2:3)=[character(schlen) :: "FLstates" , "LFstates"]
+ VAR_SZ(2:5)=shape(FL_eigenvectors)
+ dim_names(2:5)=[character(schlen) :: "FLstates" , "LFstates" , "QP_nk" , "n_sp_pol"]
  !
- call def_variable_bulk(ID_frag,"FL_eigenvectors",2,VAR_SZ(1:3),SP,dim_names=dim_names(1:3))
- call io_variable_bulk(ID_frag,2,C2=FL_eigenvectors)
+ call def_variable_bulk(ID_frag,"FL_eigenvectors",2,VAR_SZ(1:3),SP,dim_names=dim_names(1:5))
+ call io_variable_bulk(ID_frag,2,C4=FL_eigenvectors)
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !

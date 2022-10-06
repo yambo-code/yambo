@@ -97,11 +97,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        ! Diagonalization
        ! ===============
        !
-        FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)) = &
+       FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is) = &
 &      FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)
        call LINEAR_ALGEBRA_driver(DIAGO,&
-                                & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2)),&
-                                & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
+       & M=FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
+       & E_real=FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)) 
        !aim137 overwrites matrix M with eigenvectors as columns
        !
      else
@@ -123,7 +123,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        ! discard imaginary part of eigenvalue
        FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is) = real(NHM_Cmpl_Val(FL_states(1):FL_states(2)))
        ! take right eigenvectors
-       FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2))=&
+       FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is)=&
 &      NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
        !
      endif
@@ -140,13 +140,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !
        FL_chosen_bands(i_m) = FL_states(1) - 1 + &
-&      maxloc(abs(FL_eigenvectors(i_central_fks,FL_states(1):FL_states(2))),dim=1)
+&      maxloc(abs(FL_eigenvectors(i_central_fks,FL_states(1):FL_states(2),ik_mem,is)),dim=1)
        !
        ! aim137 prelim - I could confirm this choice with a dot product between
        ! the chosen eigenvector and the band from the previous iteration (ref_vec)
        !
        trial_vec(FL_states(1):FL_states(2)) = &
-                    & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m))
+                    & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m),ik_mem,is)
        trial_val = FL_eigenvalues(FL_chosen_bands(i_m),ik_bz,is)
        !
        !aim137 DEBUG <
@@ -178,7 +178,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
            endif
            !
            i1_fks_eigenvec = FL_states(1) - 1 + &
-&          maxloc(abs(FL_eigenvectors(i1_fks,FL_states(1):FL_states(2))),dim=1)
+&          maxloc(abs(FL_eigenvectors(i1_fks,FL_states(1):FL_states(2),ik_mem,is)),dim=1)
            !
            print*, 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  kpt = ',ik_bz, &
                    &' band = ',i_m,'(',E%E(i_m,ik_bz,1)*HA2EV,' eV) -- &
@@ -189,7 +189,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
 !          print*, i1_fks,i1_fks,FL_Ho_plus_Sigma(i1_fks,i1_fks,ik_mem,1)
            write(*,'(100(1f7.4))') trial_val*HA2EV,abs(trial_vec)
            write(*,'(100(1f7.4))') FL_eigenvalues(i1_fks_eigenvec,ik_bz,1)*HA2EV,&
-                   &               abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec))
+                   &               abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec,ik_mem,is))
           !call msg('r','Detected population inversion at k-point: ',ik_bz)
           !call msg('r','involving band: ',i_m)
           !call msg('r','and band: ',i1)

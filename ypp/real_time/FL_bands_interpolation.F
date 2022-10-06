@@ -31,9 +31,11 @@ subroutine FL_bands_interpolation(en,k,q)
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,CIRCUIT_k,BANDS_path,CIRCUIT_E_DB_path,&
 &                         CIRCUIT_made_of_SPECIAL_k,BANDS_bands,l_dipoles,&
 &                         l_PROJECT_line,l_PROJECT_plane,PROJECT_N_par,DIPs_mask
- use YPP_real_time,  ONLY:l_RT_lifetimes,l_RT_occupations,RT_time,integrated_Nel,integrated_Nhole
+ use YPP_real_time,  ONLY:FL_freq_indx
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot,k_special
  use stderr,         ONLY:real2ch,intc,STRING_remove,STRING_same
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE,VERIFY
  use nl_optics,      ONLY:NL_bands
  use fl_optics,      ONLY:FL_output_to_FL_E,n_tot_fl_modes
  use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do,electrons_bands_interpolate,&
@@ -52,11 +54,24 @@ subroutine FL_bands_interpolation(en,k,q)
  character(schlen)     :: operation,basename,extension,sec_name
  logical               :: QUIET_interp,plot_STD_style,plot_RT_style
  integer               :: ID_circuit,ID_spin,ID_magn,ID_bands(3),ID_grid,IDs(6)
+ integer               :: io_Floquet,ID_FL
  integer               :: ib,ik,ik_path,i_spin,i_mode,nfiles(5),nqnt
+ !
  logical, external     :: file_exists
+ integer, external     :: io_FL
  !
  call section('*','Interpolation tool')
  !=====================================
+ !
+ if (FL_freq_indx==0) FL_freq_indx=1
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID_FL)
+ io_Floquet=io_FL(ID_FL)
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1+FL_freq_indx/),ID=ID_FL)
+ io_Floquet=io_FL(ID_FL)
+ !
+ if (io_Floquet/=0) call error(" Floque database not found")
  !
  !call parser("STD_style",plot_STD_style)
  plot_STD_style=.true.
@@ -99,7 +114,7 @@ subroutine FL_bands_interpolation(en,k,q)
  !
  do i_mode=1,n_tot_fl_modes
    !
-   call FL_output_to_FL_E(en,FL_E,i_mode)
+   call FL_output_to_FL_E(FL_E,en,i_mode)
    !
    call section('=',"Levels interpolation")
    !
@@ -111,7 +126,7 @@ subroutine FL_bands_interpolation(en,k,q)
    !
    ! Perform the energies interpolation
    !====================================
-   call electrons_bands_interpolate(FL_E,k,NL_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
+   call electrons_bands_interpolate(FL_E,k,BANDS_bands,ID_bands,CIRCUIT_E,CIRCUIT_dE=CIRCUIT_dE)
    !
    !extension="circuit"
    !operation=trim(operation)//" Mode "//trim(intc(i_mode))//"/"//trim(intc(n_tot_fl_modes))
@@ -129,12 +144,8 @@ subroutine FL_bands_interpolation(en,k,q)
    if (plot_STD_style) then
      IDs=0
      nqnt=1
-     IDs(1)=ID_circuit
+     IDs(1)=ID_bands(2)
      nfiles(1)=n_sp_pol
-     !
-     nqnt=nqnt+1
-     nfiles(2)=n_sp_pol
-     IDs(2)=ID_bands(2)
      !
      if(n_spinor==2.and.i_mode==1) then
        nqnt=nqnt+2
@@ -142,7 +153,7 @@ subroutine FL_bands_interpolation(en,k,q)
        IDs(nqnt-1:nqnt)=(/ID_spin,ID_magn/)
      endif
      !
-     basename="interpolated_mode_"//trim(intc(i_mode))
+     basename="interpolated_mode"//trim(intc(i_mode))//"_freq"//trim(intc(FL_freq_indx))
      call plot_interpolated_values(k,en,0._SP,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),basename,"bands",i_mode)
      !
    endif

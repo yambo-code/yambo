@@ -281,21 +281,20 @@ module fl_optics
      type(levels) :: E,E_eq
      integer, intent(in) :: j_mode
      integer             :: i_mode,i_sp_pol,ib,ik,i_fks
-     if (.not.allocated(E%E)) then
-       call E_reset(E)
-       E%nk=QP_nk
-       E%nb=NL_bands(2)
-       E%nbf=E_eq%nbf
-       E%nbm=E_eq%nbm
-       E%E_Fermi  =E_eq%E_Fermi
-       E%E_VBM    =E_eq%E_VBM
-       E%E_CBm    =E_eq%E_CBm
-       E%E_dir_gap=E_eq%E_dir_gap
-       YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
-       YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
-       E%E=rZERO
-       E%f=rZERO
-     endif
+     !
+     call E_reset(E)
+     E%nk=QP_nk
+     E%nb=NL_bands(2)
+     E%nbf=E_eq%nbf
+     E%nbm=E_eq%nbm
+     E%E_Fermi  =E_eq%E_Fermi
+     E%E_VBM    =E_eq%E_VBM
+     E%E_CBm    =E_eq%E_CBm
+     E%E_dir_gap=E_eq%E_dir_gap
+     YAMBO_ALLOC(E%E,(E%nb,E%nk,n_sp_pol))
+     YAMBO_ALLOC(E%f,(E%nb,E%nk,n_sp_pol))
+     E%E=rZERO
+     E%f=rZERO
      !
      do i_sp_pol=1,n_sp_pol
        do ik=1,QP_nk

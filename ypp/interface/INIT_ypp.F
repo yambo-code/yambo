@@ -108,6 +108,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  integer, external::io_NL
  integer          ::io_Nonlinear
 #endif
+#if defined _YPP_FL
+ integer, external::io_FL
+ integer          ::io_Floquet
+#endif
  !
  if (FINALIZE) then
    call call_INIT_load('Game_Over')
@@ -164,6 +168,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  if(io_Nonlinear==0) then
    if(NL_damping/=0._SP) RT_conf%T_range(:)  =(/2._SP/NL_damping*DephMult,-real(FS2AUT,SP)/)
  endif
+ !
+#endif
+ !
+#if defined _YPP_FL
+ !
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
+ io_Floquet=io_FL(ID)
  !
 #endif
  !
@@ -586,6 +597,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_RT
  l_flag=l_flag.or.(l_RealTime.and.(l_RT_bands.or.l_RT_dos.or.l_RT_G_two_times))
 #endif
+#if defined _YPP_FL
+ l_flag=l_flag.or.l_FL_bands
+#endif
  if (l_flag) call initactivate(1,"INTERP_mode INTERP_Shell_Fac INTERP_NofNN")
  !
  l_flag=l_electrons.and.l_dos
@@ -779,6 +793,9 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  !
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_bands.or.l_RT_G_two_times
+#endif
+#if defined _YPP_FL
+ l_flag=l_flag.or.l_FL_bands
 #endif
  !
  if (l_flag) call USER_vector_handle("BANDS_kpts")

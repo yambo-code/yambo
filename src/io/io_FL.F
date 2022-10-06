@@ -37,7 +37,7 @@ integer function io_FL(ID)
 &                        FL_desc,FL_table
  use timing_m,      ONLY:timing
  !
- implicit none
+#include<memory.h>
  !
  integer, intent(in) :: ID
  !
@@ -47,6 +47,8 @@ integer function io_FL(ID)
  character(schlen) :: dim_names(5)
  !
  call timing('io_FL',OPR='start')
+ !
+ ID_frag=0
  !
  io_FL=io_connect(desc="Floquet",type=2,ID=ID)
  if (io_FL/=0) goto 1
@@ -72,12 +74,14 @@ integer function io_FL(ID)
    call def_variable_elemental(ID,VAR="QP_nk",VAR_SZ=1,VAR_KIND=IP+100,MENU=0)
    call io_variable_elemental(ID,VAR="[FL] Number of kpoints",I0=QP_nk,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=FL_desc)
    !
-   call def_variable_bulk(ID,"FL_table",1,VAR_SZ=shape(FL_table),VAR_KIND=IP+100,dim_names=(/"FLstates"/))
+   if(read_is_on(ID).and..not.allocated(FL_table)) then
+     YAMBO_ALLOC(FL_table,(FL_states(1):FL_states(2),2))
+   endif
+   dim_names(1:2)=[character(schlen) :: "FLstates" , "two"]
+   call def_variable_bulk(ID,"FL_table",1,VAR_SZ=shape(FL_table),VAR_KIND=IP+100,dim_names=dim_names(1:2))
    call io_variable_bulk(ID,1,I2=FL_table)
    !
  endif
- !
- ID_frag=0
  !
  ifreq = maxval(io_sec(ID,:))-1
  if (ifreq==0) goto 1
@@ -94,13 +98,19 @@ integer function io_FL(ID)
  VAR_SZ(2:4)=shape(FL_eigenvalues)
  dim_names(2:4)=[character(schlen) :: "FLstates" , "QP_nk" , "n_sp_pol"]
  ! 
+ if(read_is_on(ID).and..not.allocated(FL_eigenvalues)) then
+   YAMBO_ALLOC(FL_eigenvalues,(FL_states(1):FL_states(2),QP_nk,n_sp_pol))
+ endif
  call def_variable_bulk(ID_frag,"FL_eigenvalues", 1,VAR_SZ(2:4),SP,dim_names=dim_names(2:4))
  call io_variable_bulk(ID_frag,1,R3=FL_eigenvalues)
  !
  ! Variable 2
  !
+ if(read_is_on(ID).and..not.allocated(FL_eigenvectors)) then
+   YAMBO_ALLOC(FL_eigenvectors,(FL_states(1):FL_states(2),FL_states(1):FL_states(2),QP_nk,n_sp_pol))
+ endif
  VAR_SZ(2:5)=shape(FL_eigenvectors)
- dim_names(2:5)=[character(schlen) :: "FLstates" , "LFstates" , "QP_nk" , "n_sp_pol"]
+ dim_names(2:5)=[character(schlen) :: "FLstates" , "FLstates" , "QP_nk" , "n_sp_pol"]
  !
  call def_variable_bulk(ID_frag,"FL_eigenvectors",2,VAR_SZ(1:5),SP,dim_names=dim_names(1:5))
  call io_variable_bulk(ID_frag,2,C4=FL_eigenvectors)

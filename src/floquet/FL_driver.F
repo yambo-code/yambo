@@ -49,7 +49,7 @@ subroutine FL_driver(E,X,k,q,Dip)
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
 &                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states,FL_build_table
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
- use IO_m,           ONLY:io_COLLs,OP_WR_CL,VERIFY,REP
+ use IO_m,           ONLY:io_COLLs,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use IO_int,         ONLY:io_control
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_bz,&
@@ -305,7 +305,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !
    !call NL_databases_IO(i_f,'write')
    !
-   call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
+   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/i_f+1/),MODE=VERIFY,ID=ID_FL)
    i_err=io_FL(ID_FL)
    !
  enddo

@@ -155,7 +155,7 @@ subroutine plot_interpolated_values(Xk,Xen,Ef,LOCAL_k,IDs,dims,nquantities,nfile
    enddo
  endif
  !
- if (i_T>0 ) then
+ if (i_T>0 .and. sum(nfiles)>1 ) then
    file_name(nfiles(1)+1:nfiles(1)+nfiles(2))="occupations_"//trim(basename)
    do i_sp_pol=1,n_sp_pol
      ifile=ifile+1

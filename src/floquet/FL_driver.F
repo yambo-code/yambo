@@ -47,7 +47,7 @@ subroutine FL_driver(E,X,k,q,Dip)
  use fl_optics,      ONLY:max_fl_mode,FL_alloc,FL_alloc_k_distributed,FL_FT_matrices,FL_free,FL_V_bands,&
 &                         FL_S_plus,FL_S_minus,FL_time_S_det,n_tot_fl_modes,FL_Chi_pol,&
 &                         FL_Chi_order,FL_S_inv_mode,FL_loc_S_inv_mode,FL_space_dim,FL_QE,FL_V_bands_hist,&
-&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states
+&                         FL_ac_phase,FL_max_iterations,l_FL_conv_Chi,l_FL_conv_Rho,FL_states,FL_build_table
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,eval_DFT
  use IO_m,           ONLY:io_COLLs,OP_WR_CL,VERIFY,REP
  use IO_int,         ONLY:io_control
@@ -176,6 +176,7 @@ subroutine FL_driver(E,X,k,q,Dip)
   call FL_alloc(E) 
   call FL_alloc_k_distributed(E)
   call FL_FT_matrices()
+  call FL_build_table()
  !
  if (FL_Chi_order < 0) call error('    [FL] Probe order must be positive or zero')
  if (FL_Chi_order > max_fl_mode) call warning('    [FL] Probe order greater than max Floquet mode')

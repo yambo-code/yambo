@@ -43,7 +43,7 @@ module fl_optics
  complex(SP), allocatable :: FL_FT_extra_M(:,:)
  complex(SP), allocatable :: FL_FT_extra_Mm1(:,:)
  complex(SP), allocatable :: FL_eigenvectors(:,:,:,:)
- real(SP), allocatable    :: FL_eigenvalues(:,:,:)
+ real(SP),    allocatable :: FL_eigenvalues(:,:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
  complex(SP), allocatable :: FL_delta_rho(:,:)

@@ -25,7 +25,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  ! Intialize variables on BSE netcdf parallel file
  !
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use com,           ONLY:msg
  use pars,          ONLY:schlen,lchlen
  use stderr,        ONLY:intc
@@ -69,7 +69,7 @@ integer function io_BS_header(iq,X,ID,mode)
      endif
    endif
    !
-   call PP_redux_wait()
+   call PP_wait()
    !
  endif
  !
@@ -115,7 +115,7 @@ integer function io_BS_header(iq,X,ID,mode)
  !
  call io_disconnect(ID)
  !
- if (read_is_on(ID)) call PP_redux_wait()
+ if (read_is_on(ID)) call PP_wait()
  !
  ! Descriptions transfer
  !   

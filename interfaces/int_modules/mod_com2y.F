@@ -95,19 +95,16 @@ module mod_com2y
      !
      mag_syms=.false.
      inv_index=-1
-     if(present(t_rev).and.present(trevsym)) then
-       i_time_rev=0
-       if(trevsym) i_time_rev=1
-       if(any(t_rev(:)==1)) then
-         mag_syms=.true.
-         i_time_rev=1
-       endif
-       double_symmetries=.not.mag_syms
-     else
-       i_time_rev=1
-       if(l_spin_orbit.and.n_spin_den==4) i_time_rev=0
-       double_symmetries=(i_time_rev==1)
+     !
+     i_time_rev=1
+     if (present(trevsym)) then
+       if(     trevsym) i_time_rev=1
+       if(.not.trevsym) i_time_rev=0
      endif
+     if(any(t_rev(:)==1)) mag_syms=.true.
+     !
+     double_symmetries=.not.mag_syms
+     if (mag_syms) i_time_rev=1
      !
      ! Space Invertion (possible only for v >= 3.0.4)
      !
@@ -210,8 +207,8 @@ module mod_com2y
      is_spatial=0
      is_trev=0
      do is=1,nsym_
+       ! I need to reorder the symmetries
        if(mag_syms) then
-         ! PWscf: I need to reorder the symmetries
          if(t_rev(is)==0) then
            is_spatial=is_spatial+1
            is_yambo=is_spatial

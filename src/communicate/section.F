@@ -37,7 +37,7 @@ subroutine section(mode,name)
  use stderr,          ONLY:STRING_pack
  use LIVE_t,          ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
  use parallel_m,      ONLY:ncpu
- use parallel_int,    ONLY:PP_redux_wait
+ use parallel_int,    ONLY:PP_wait,PP_redux_wait
  use com,             ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
 &                          write_to_report,repfile_unit,repfile,previous_secmode
  use timing_m,        ONLY:timing_upto_now
@@ -92,7 +92,7 @@ subroutine section(mode,name)
    depth_SAVE_p=depth 
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Get HostName date & time etc...
  !
@@ -213,6 +213,6 @@ subroutine section(mode,name)
    !
  endif
  !
- call PP_redux_wait
+ call PP_wait()
  !
 end subroutine

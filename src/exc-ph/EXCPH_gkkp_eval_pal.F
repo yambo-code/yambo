@@ -25,7 +25,9 @@
 ! (5) Figure out rotations/symmetry of exciton eigenvectors and EPC m.e.
 ! - FP
 !
-subroutine EXCPH_gkkp_eval(iq_s,iq_bz,il,k,q,ID_gkkp)
+! GKKP formulation following the F. Paleari PhD thesis
+!
+subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
  !use electrons,      ONLY:levels

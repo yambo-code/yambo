@@ -129,15 +129,15 @@ module D_lattice
          m=matmul(dl_sop(:,:,i1),dl_sop(:,:,i2))
          do i3=1,nsym
            if (all(abs(m-dl_sop(:,:,i3))<=1.E-5)) then
-             if (sop_tab(i1,i2)/=0) call error('[SYMs] check the input symmetries!')        
+             if (sop_tab(i1,i2)/=0) call error('[SYMs] Two sym pairs lead to the same symmetry') 
              sop_tab(i1,i2)=i3
              if (sop_tab(i1,i2)==1) sop_inv(i1)=i2                
            endif
          enddo
-         if (sop_tab(i1,i2)==0) call error('[SYMs] check the input symmetries!')    
+         if (sop_tab(i1,i2)==0) call error('[SYMs] Sop tab is not complete')
        enddo
      enddo
-     if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
+     if (any(sop_inv==0)) call error('[SYMs] Sop inv missing for some symmetries')
      call msg(msg_where,'Group table correct   ',.true.)
      !
      if (have_cuda) then

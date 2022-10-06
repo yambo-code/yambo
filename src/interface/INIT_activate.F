@@ -58,7 +58,7 @@ subroutine INIT_activate()
  !
  !Common
  !
- call initactivate(1,'StdoHash Nelectro ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh')
+ call initactivate(1,'StdoHash Nelectro NelCond ElecTemp BoseTemp OccTresh NLogCPUs DBsIOoff DBsFRAGpm EvalMagn MEM_tresh')
  !
  !FFT
  !
@@ -454,10 +454,10 @@ subroutine INIT_activate()
  !
  ! Exciton-phonon Self-energy
  !
- if (l_EXCPH_gkkp)     call initactivate(1,'ELPhExcStates ELPhExcSum LoutPath FANdEtresh EkpqShFact LDamping')
+ if (l_EXCPH_gkkp)     call initactivate(1,'ELPhExcStates ELPhExcSum ExcPhKind LoutPath FANdEtresh EkpqShFact LDamping')
  if (l_EXCPH_lifetime) call initactivate(1,'BoseTemp ElPhModes EXCTemp NoMatrxEl')
  if (l_EXCPH_optics)  &
-&   call initactivate(1,'BoseTemp ElPhModes EXCTemp DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+&   call initactivate(1,'BoseTemp ElPhModes EXCTemp EXCLongDr PLqres DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
  !
 #endif
  !
@@ -593,7 +593,7 @@ subroutine INIT_activate()
      character(6)::field
      field='Field'//trim(intc(i1))
      call initactivate(1,field//'_Freq')
-     call initactivate(1,field//'_MaxFreq')
+     call initactivate(1,field//'_NFreqs')
      call initactivate(1,field//'_DFreq')
      call initactivate(1,field//'_Int')
      call initactivate(1,field//'_Width')

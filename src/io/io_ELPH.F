@@ -27,7 +27,7 @@ integer function io_ELPH(ID,what)
  use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH
  use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
 &                         io_bulk,io_header
- use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
+ use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
 &                         PH_pol_vector,GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
@@ -141,10 +141,14 @@ integer function io_ELPH(ID,what)
    !
  endif
  !
- ! ELPH_DW 
- !
- call io_bulk(ID_frag,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- call io_bulk(ID_frag,R4=GKKP%dVr(:,:,:,:,1))
+ if (l_GKKP_hosts_DW) then
+   !
+   ! ELPH_DW 
+   !
+   call io_bulk(ID_frag,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+   call io_bulk(ID_frag,R4=GKKP%dVr(:,:,:,:,1))
+   !
+ endif
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !

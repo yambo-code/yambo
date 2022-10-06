@@ -23,7 +23,7 @@
 !
 subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
- use pars,          ONLY:rZERO,cZERO,schlen
+ use pars,          ONLY:SP,rZERO,cZERO,schlen
  use D_lattice,     ONLY:n_atoms
  use R_lattice,     ONLY:nkbz,nqbz
  use electrons,     ONLY:E_reset
@@ -91,6 +91,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          do iq=1,elph_nQ
            YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
            YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(elph_nb,nkbz,1))
+           GKKP%E_kpq(iq)%E=0._SP
          enddo
        endif
      case ('DGRID')

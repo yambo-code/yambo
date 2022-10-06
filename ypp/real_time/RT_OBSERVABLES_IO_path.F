@@ -44,7 +44,7 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
  !
  integer           :: i_f,i_fp,nf,N_pump_frequencies,i_Probe,i_Pump,i_d,i_desc_err(2)
  logical           :: IO_error
- character(10*max_n_of_paths) :: folder_list
+ character(100*max_n_of_paths) :: folder_list
  type(IO_desc)     :: Pump_RT_desc
  logical, external :: file_exists
  !
@@ -61,6 +61,8 @@ subroutine RT_OBSERVABLES_IO_paths(what,en)
    ! Get the list of ALL folders in the current I/O directory (default is .)
    !
    call ifolder_list(cstr(trim(core_io_path)),folder_list,nf)
+   !
+   if (nf>100*max_n_of_paths) call error(" too many folders found")
    !
    call STRING_split(folder_list(:nf),Probe_path)
    !

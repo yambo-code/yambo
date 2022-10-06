@@ -29,6 +29,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
+ use parser_m,            ONLY:parser
  !
  implicit none
  !
@@ -45,6 +46,33 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  type(GKKP_me) ::GKKP_expanded
  integer, external ::qindx_B_init,qindx_B_close 
  integer       :: qindx_tmp(2),iq_bz
+ !
+ ! Debug: print kpt/qpt coordinates for plotting
+ integer :: iaux
+ logical :: l_debug
+ call parser('GKKPDebug',l_debug)
+ if (l_debug) then
+   open(1, file='K_grid_bz.dat')
+   open(2, file='Q_grid_bz.dat')
+   open(3, file='PH_Q_grid_bz.dat')
+   open(4, file='K_grid_Ibz.dat')
+   call k_ibz2bz(k,"i",.false.)
+   call k_ibz2bz(q,"i",.false.)
+   do iaux=1,k%nibz
+     write (4,*) k%pt(iaux,:)
+   enddo
+   do iaux=1,k%nbz
+     write (1,*) k%ptbz(iaux,:)
+   enddo
+   do iaux=1,q%nbz
+     write (2,*) q%ptbz(iaux,:)
+     write (3,*) PH_qpt(iaux,:)
+   enddo
+   close(1)
+   close(2)
+   close(3)
+   close(4)
+ endif
  !
  ! "K" mode
  !==========
@@ -63,6 +91,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      do is=1,nsmall
        ik_bz=DB_ph_K_sym_table(ik,sop_inv(small(is)))
        if (local_K_found(ik_bz)) cycle
+       if (l_debug) write (*,*) "Expanding k ",ik_bz," from ",ik
        GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik,1)
        if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik,1)
        GKKP%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq)%E(:,ik,1)

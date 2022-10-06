@@ -191,7 +191,8 @@ void options_ypp(struct options_struct options[],int *i_opt)
  options[*i_opt].short_desc="Floquet bands interpolation";
  options[*i_opt].long_opt="flbands";
  options[*i_opt].short_opt='f';
- options[*i_opt].bin="ypp_fl";
+ options[*i_opt].bin="ypp_nl";
+/* options[*i_opt].bin="ypp_fl"; */
  options[*i_opt].yambo_string="floquet";
  options[*i_opt].section="Real-Time";
  *i_opt=*i_opt+1;

@@ -20,7 +20,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
+subroutine OCCUPATIONS_Quasi_Fermi(E,K,E_qf,E_fermi_h,E_fermi_e)
  !
  ! Mode = 0 
  !  Update the Fermi energy
@@ -45,16 +45,17 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  !
  implicit none
  !
- type(levels) ::E
- type(bz_samp)::K
- real(SP), intent(out) :: E_fermi_h,E_fermi_e
+ type(levels), intent(out) :: E_qf
+ real(SP),     intent(out) :: E_fermi_h,E_fermi_e
+ type(levels), intent(in)  :: E 
+ type(bz_samp),intent(in)  :: K
  !
  ! Work Space
  !
  type(levels) :: E_plus,E_minus
  real(SP) :: nel_save
  integer  :: nbf_save,nbm_save
- integer  :: nval 
+ integer  :: nval,ik 
  !
  call msg('rs','Quasi-Fermi occupation')
  !
@@ -66,8 +67,10 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  !
  call E_reset(E_plus)
  call E_reset(E_minus)
+ call E_reset(E_qf)
  call E_duplicate(E,E_plus)
  call E_duplicate(E,E_minus)
+ call E_duplicate(E,E_qf)
  !
  if(any(E%nbf/=E%nbm)) call error("Quasi-Fermi distribution only for insulators/semiconductors")
  !
@@ -92,20 +95,24 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  call REPORT_Occupations('E_minus',E_minus)
  call REPORT_Occupations('E_plus',E_plus)
  !
- call OCCUPATIONS_Merge(E,E_minus,E_plus,K) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
+ call OCCUPATIONS_Merge(E_qf,E_minus,E_plus,K) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
  !
  nel  =nel_save
- E%nbf=nbf_save
- E%nbm=nbm_save
+ E_fermi_h=E_minus%E_fermi
+ E_fermi_e= E_plus%E_fermi
  !
- E_fermi_h=E_minus%E_Fermi
- E_fermi_e=E_plus%E_Fermi
- !
- call msg('rsn','Number of metalic bands : ',E%nbm(1))
- call msg('rsn','Number of filled  bands : ',E%nbf(1))
+ call msg('rsn','Number of metalic bands : ',E_qf%nbm(1))
+ call msg('rsn','Number of filled  bands : ',E_qf%nbf(1))
  call msg('rsn','Number of valence bands : ',nval)
+ call msg('rsm','Hole Fermi level        : ',E_fermi_h*HA2EV,'[eV]')
+ call msg('rsm','Electron Fermi level    : ',E_fermi_e*HA2EV,'[eV]')
  !
- call REPORT_Occupations('E quasi-fermi',E)
+ call REPORT_Occupations('E quasi-fermi',E_qf)
+ !
+ K_LOOP: do ik=1,K%nibz
+   call REPORT_Energies(E_qf%E,K,K,E_qf%nb,(/ik,ik/),'E',.FALSE.,.TRUE.)
+   call REPORT_Energies(E_qf%f/HA2EV,K,K,E_qf%nb,(/ik,ik/),'occ',.FALSE.,.TRUE.)
+ enddo K_LOOP
  !
  call E_reset(E_plus)
  call E_reset(E_minus)

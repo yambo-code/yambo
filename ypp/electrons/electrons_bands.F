@@ -58,7 +58,7 @@ subroutine electrons_bands(Xk,Xen)
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE,E_QF
  integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
- real(SP)              :: dEf
+ real(SP)              :: dEf,E_fermi_e,E_fermi_h
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
 #if defined _YPP_SC
  integer               :: ID_proj
@@ -68,7 +68,6 @@ subroutine electrons_bands(Xk,Xen)
  logical, external     :: file_exists
  character(schlen)     :: INTERP_mode_save
  real(SP)              :: INTERP_shell_factor_save
- real(SP)              :: E_fermi_h,E_fermi_e
  !
  ! Apply QP corrections
  !====================== 
@@ -154,9 +153,8 @@ subroutine electrons_bands(Xk,Xen)
  ! Find the Fermi energies of the Quasi-Fermi distribution
  ! =========================
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
-   call E_reset(E_qf)
-   call E_duplicate(Xen,E_qf)
-   call OCCUPATIONS_Quasi_Fermi(E_qf,E_fermi_h,E_fermi_e,Xk)        
+   call E_reset(E_QF)
+   call OCCUPATIONS_Quasi_Fermi(Xen,Xk,E_QF,E_fermi_h,E_fermi_e)        
  endif
  !
  ! Fermi Levels

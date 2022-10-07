@@ -37,14 +37,16 @@ subroutine electrons_bands(Xk,Xen)
  use YPPm,           ONLY:BANDS_steps,INTERP_grid,&
 &                         BANDS_bands,CIRCUIT_E_DB_path,CIRCUIT_E_db,USER_k,CIRCUIT_k,&
 &                         BANDS_path,BANDS_from_db,l_PROJECT_line,l_PROJECT_plane
- use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin,nel_cond,E_duplicate
+ use electrons,      ONLY:levels,n_sp_pol,n_spinor,E_reset,n_spin,nel_cond,E_duplicate,spin_occ
  use R_lattice,      ONLY:bz_samp
- use D_lattice,      ONLY:lattice
+ use functions,      ONLY:Fermi_fnc
+ use D_lattice,      ONLY:lattice,Tel
  use com,            ONLY:msg 
  use parser_m,       ONLY:parser
- use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor
+ use interpolate,    ONLY:electrons_bands_interpolate,GRID_k,INTERP_mode,INTERP_shell_factor,INTERP_obj
  use QP_CTL_m,       ONLY:QP_apply
  use interfaces,     ONLY:OCCUPATIONS_Fermi
+ use interpolate,    ONLY:INTERPOLATION_driver_seed,INTERPOLATION_driver_do
 #if defined _YPP_SC
  use SC,             ONLY:SC_neq_kind
 #endif
@@ -57,8 +59,8 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE,E_QF
- integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib
- real(SP)              :: dEf,E_fermi_e,E_fermi_h
+ integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib,ID_occ,ik
+ real(SP)              :: dEf,E_fermi_e,E_fermi_h,E_h,E_e
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
 #if defined _YPP_SC
  integer               :: ID_proj
@@ -200,6 +202,29 @@ subroutine electrons_bands(Xk,Xen)
  !
  ! Generate excited states occupations
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
+   !
+   call INTERPOLATION_driver_seed("SCporj",ID_occ,BANDS_bands,SEED_k=Xk,SEED_E=Xen)
+   YAMBO_ALLOC(INTERP_obj(ID_occ)%INTERP,(BANDS_bands(1):BANDS_bands(2),CIRCUIT_k%nibz,INTERP_obj(ID_occ)%D))
+   INTERP_obj(ID_occ)%INTERP=rZERO
+   !
+   do ik=1,CIRCUIT_k%nibz
+     !
+     do ib=BANDS_bands(1),Xen%nbf(1)
+       E_h=INTERP_obj(ID_bands(2))%INTERP(ib,ik,1)-E_fermi_h
+       INTERP_obj(ID_occ)%INTERP(ib,ik,1)=spin_occ*Fermi_fnc(E_h,Tel)-spin_occ
+     enddo
+     !
+     do ib=Xen%nbf(1)+1,BANDS_bands(2)
+       E_h=INTERP_obj(ID_bands(2))%INTERP(ib,ik,1)-E_fermi_e
+       INTERP_obj(ID_occ)%INTERP(ib,ik,1)=spin_occ*Fermi_fnc(E_h,Tel)
+     enddo
+     !
+   enddo
+   !
+   nqnt=nqnt+1
+   nfiles(nqnt)=1
+   IDs(nqnt)=ID_occ
+   !
  endif
  !
  if (BANDS_built_in.and.USER_k%nbz>0     )  call plot_interpolated_values &
@@ -209,7 +234,7 @@ subroutine electrons_bands(Xk,Xen)
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
  !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",0)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",1)
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

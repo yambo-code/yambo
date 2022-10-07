@@ -168,6 +168,8 @@ subroutine electrons_bands(Xk,Xen)
  !                  shift of the BUILT-in and the INTERPOLATED grids. Thus it is non-zero
  !                  only when it can be correctly (all occupied bands) evaulated with GRID_E
  !
+ write(*,*) 'passo qui ',GRID_interpolate,BANDS_bands(1)
+ stop
  if (GRID_interpolate.and.BANDS_bands(1)==1) call OCCUPATIONS_Fermi(GRID_E,GRID_k,"GRID",mode="FERMI")
  !
  call msg("s",'Fermi Level  (BUILT-in bands)     ',Xen%E_Fermi*HA2EV,"[eV]")

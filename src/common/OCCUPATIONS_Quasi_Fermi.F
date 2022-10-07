@@ -105,7 +105,7 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  call msg('rsn','Number of filled  bands : ',E%nbf(1))
  call msg('rsn','Number of valence bands : ',nval)
  !
- call REPORT_Occupations('E',E)
+ call REPORT_Occupations('E quasi-fermi',E)
  !
  call E_reset(E_plus)
  call E_reset(E_minus)

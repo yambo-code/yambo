@@ -56,6 +56,8 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  integer  :: nbf_save,nbm_save
  integer  :: nval 
  !
+ call msg('rs','Quasi-Fermi occupation')
+ !
  call  OCCUPATIONS_Fermi(E,K,'EQ',mode="OCCUPATIONS")
  !
  if(nel_cond==0._SP) return
@@ -87,8 +89,8 @@ subroutine OCCUPATIONS_Quasi_Fermi(E,E_fermi_h,E_fermi_e,K)
  !
  nbf_save=E_minus%nbf(1)
  !
- call REPORT_Occupations(E_minus,'E_minus')
- call REPORT_Occupations(E_plus,'E_plus')
+ call REPORT_Occupations('E_minus',E_minus)
+ call REPORT_Occupations('E_plus',E_plus)
  !
  call OCCUPATIONS_Merge(E,E_minus,E_plus,K) ! Generate a Quasi-Fermi distribution in E using E_minus and E_plus
  !

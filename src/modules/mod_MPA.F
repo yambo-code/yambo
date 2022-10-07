@@ -100,6 +100,41 @@ contains
    !
  end subroutine mpa_cond1
  !
+ function pole_is_out(i, wmax, thr, E)
+   implicit none
+   !
+   integer ,    intent(in)     :: i
+   real(SP),    intent(in)     :: wmax, thr
+   complex(SP), intent(inout)  :: E(:)
+   !
+   integer     :: j
+   logical     :: pole_is_out
+   !
+   pole_is_out=.false.
+   !
+   if(real(E(i),SP)>wmax) pole_is_out=.true.
+   !
+   j=1
+   do while(j<i.and..not.pole_is_out)
+     !
+     if(abs(real(E(i),SP)-real(E(j),SP))<thr) then
+       !
+       pole_is_out=.true.
+       !
+       if(abs(real(E(j),SP))>max(abs(aimag(E(j))),abs(aimag(E(i))))) then
+         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*max(abs(aimag(E(j))),abs(aimag(E(i))))
+       else
+         E(j)=(real(E(j),SP)+real(E(i),SP))/2._SP-cI*min(abs(aimag(E(j))),abs(aimag(E(i))))
+       endif
+       !
+     endif
+     !
+     j=j+1
+     !
+   enddo
+   !
+ endfunction pole_is_out
+ !
  subroutine mpa_cond(np, npr, z, E, PPcond)
    !
    integer,     intent(in)     :: np
@@ -113,46 +148,31 @@ contains
    real(SP)    :: wmax, thr=0.00001_SP
    !
    npr=np
-   wmax=maxval(real(z,SP))
+   wmax=maxval(sqrt(real(z,SP)))*1.5_SP !DALV: we were using the square before, now we use 1.5* the extreme of the interval
    !
-   do i=1,npr
+   i=1
+   do while(i<=npr)
      !
      Eaux(i)=sqrt(E(i))
-     if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
+     !
+     do while(pole_is_out(i,wmax,thr,Eaux).and.i<=npr)
+       Eaux(i)=sqrt(E(npr))
+       PPcond(npr)=.true.
+       npr=npr-1
+     enddo
+     !
+     if(.not.pole_is_out(i,wmax,thr,Eaux).and.abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
      Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
      !
-     if(real(Eaux(i),SP)>wmax) then
-       Eaux(i)=sqrt(E(npr))
-       PPcond(i)=.true.
-       if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-       Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
-       npr=npr-1
-     endif
-     !
-     do j=2,i-1
-       if(abs(real(Eaux(i),SP)-real(Eaux(j),SP))<thr) then
-         !
-         Eaux(j)=real(Eaux(j),SP)+cI*max(aimag(Eaux(j)),aimag(Eaux(i)))
-         PPcond(j)=.true.
-         Eaux(i)=sqrt(E(npr))
-         PPcond(i)=.true.
-         !
-         if(abs(real(Eaux(i),SP))<abs(aimag(Eaux(i)))) PPcond(i)=.false.
-         Eaux(i)=max(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))-cI*min(abs(real(Eaux(i),SP)),abs(aimag(Eaux(i))))
-         npr=npr-1
-         ! DALV: exit
-         !
-       endif
-     enddo
+     i=i+1
      !
    enddo
    !
    E(1:npr)=Eaux(1:npr)
-   !
-   do i=np,npr+1,-1
-     E(i)=1._SP-cI*epsilon(1._SP)
-     PPcond(i)=.true.
-   enddo
+   if(npr<np) then
+     E(npr+1:np)=1._SP-cI*epsilon(1._SP)
+     PPcond(npr+1:np)=.true.
+   endif
    !
  end subroutine mpa_cond
  !
@@ -207,7 +227,7 @@ contains
 #endif
    !
    R(1:npr)=B(1:npr)
-   if (npr<np) R(npr+1:)=0.0_SP
+   if (npr<np) R(npr+1:np)=0.0_SP
    !
  end subroutine mpa_R_fit
  !

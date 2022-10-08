@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLES_driver(k,E,q)
+subroutine DIPOLE_ypp_driver(k,E,q)
  !
  use pars,           ONLY:SP,rZERO,schlen
  use com,            ONLY:msg
@@ -36,6 +36,7 @@ subroutine DIPOLES_driver(k,E,q)
  use QP_CTL_m,       ONLY:QP_apply
  use vec_operate,    ONLY:v_norm
  use interfaces,     ONLY:DESC_write
+ use IO_m,           ONLY:deliver_IO_error_message
  use OUTPUT,         ONLY:OUTPUT_driver
  use YPP_interfaces, ONLY:PROJECTION_setup,PROJECTION_plot
  use parser_m,       ONLY:parser
@@ -48,7 +49,7 @@ subroutine DIPOLES_driver(k,E,q)
  !
  ! Work Space
  !
- integer     :: io_err,ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,BANDS_done(DIPs_C_bands(2))
+ integer     :: ik,ic,iv,is,ikbz,ID,NK,ik_plane,ik_mem,BANDS_done(DIPs_C_bands(2)),io_err
  complex(SP) :: DIP_projected
  real(SP)    :: delta_E,v(3),DIP_accumulated(1,k%nibz,1)
  logical     :: BAND_fields_controls(2)
@@ -99,6 +100,7 @@ subroutine DIPOLES_driver(k,E,q)
  !
  ! ... IO
  call DIPOLE_IO(k,e,DIPs,'read ',io_err,'DIP')
+ call deliver_IO_error_message(io_err,"Dipoles",.TRUE.)
  !
  if (trim(DIPs_kind)=="LOAD") return
  !

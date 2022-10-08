@@ -34,7 +34,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  use R_lattice,      ONLY:bare_qpg,bz_samp
  use com,            ONLY:isec,msg
  use LIVE_t,         ONLY:live_timing
- use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
+ use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_live_message
  use parallel_m,     ONLY:PP_indexes,PP_indexes_reset,PAR_COM_SLK_INDEX_local,PAR_COM_SLK_INDEX_local
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:REP,NONE,OP_WR_CL
@@ -260,7 +260,7 @@ subroutine K_inversion_driver(iq,W,E,k,q)
  !==================================================================
  call K_eps_interpolate(W%n_freqs,real(W%p),K_INV_EPS%err)
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  ! I/O [after full inversion]
  !=====

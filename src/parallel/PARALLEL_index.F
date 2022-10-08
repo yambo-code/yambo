@@ -236,7 +236,7 @@ subroutine PARALLEL_index(px,uplim,low_range,COMM,CONSECUTIVE,ORDERED,NO_EMPTIES
  if (present(NO_EMPTIES)) NO_EMPTIES_=NO_EMPTIES
  !
  if (px%n_of_elements(myid_loop+1)==0) then
-   call warning(" Empty workload for CPU "//trim(intc(myid+1)))
+   call warning("Empty workload for CPU "//trim(intc(myid+1)))
  endif
  !
 end subroutine

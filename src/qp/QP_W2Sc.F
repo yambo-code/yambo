@@ -29,8 +29,7 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  !
  use pars,          ONLY:SP,cZERO,cI
  use QP_m,          ONLY:QP_t,QP_W,QP_Sc,QP_n_states,QP_G_damp,QP_n_G_bands,&
-&                        QP_solver_state,QP_n_W_freqs,QP_table
- use drivers,       ONLY:Finite_Tel
+&                        QP_solver_state,QP_n_W_freqs,QP_table,QP_time_order_sign
  use frequency,     ONLY:w_samp
  use functions,     ONLY:bose_f,bose_decay
  use electrons,     ONLY:levels,spin_occ,spin
@@ -46,12 +45,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
  ! WorkSpace
  !
  integer         :: i_qp,i_w,ib,is(2),os(3),i_qp_mem,i_q_mem,i_b_mem
- real(SP)        :: tsign
  complex(SP)     :: QP_W_here(QP_n_W_freqs)
  complex(SP), allocatable :: dSc(:)
- !
- tsign=-1._SP
- if (Finite_Tel) tsign=1._SP
  !
  i_q_mem=PAR_Q_bz_index(iqbz)
  !
@@ -88,8 +83,8 @@ subroutine QP_W2Sc(iqbz,k,E,Xw,Sc_W)
 &                         bose_decay(real(Xw%p(i_w)))
      !
      call Kramers_Kronig(QP_W_here,real(Xw%p(:)),QP_n_W_freqs,dSc,          &
-&            real(Sc_W(i_qp)%p(:))-tsign*cI*aimag(Sc_W(i_qp)%p(:)),         &
-&            Sc_W(i_qp)%n_freqs, E%E(os(1),os(2),os(3))+tsign*cI*QP_G_damp)
+&            real(Sc_W(i_qp)%p(:))-QP_time_order_sign*cI*aimag(Sc_W(i_qp)%p(:)),         &
+&            Sc_W(i_qp)%n_freqs, E%E(os(1),os(2),os(3))+QP_time_order_sign*cI*QP_G_damp)
      !
      ! 2nd term: (f_os+fbose)
      !

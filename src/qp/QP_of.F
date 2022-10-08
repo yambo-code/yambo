@@ -34,6 +34,7 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
 &                        QP_states_simmetrize,QP_G_info,QP_dSc,report_Sc
  use OUTPUT,        ONLY:OUTPUT_driver
  use interfaces,    ONLY:DESC_write
+ use stderr,        ONLY:intc
  !
  implicit none
  !
@@ -197,9 +198,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
    !
    do  i_qp=1,QP_n_states
      !
-     if (spin(QP_table(i_qp,:))==1) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3),'_s1'
-     if (spin(QP_table(i_qp,:))==2) write (G_Sc_name,'(2(a,i3.3),a)') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3),'_s2'
-     if (n_sp_pol==1) write (G_Sc_name,'(2(a,i3.3))') 'G_Sc_band_',QP_table(i_qp,1),'_k_',QP_table(i_qp,3)
+     G_Sc_name='G_Sc_band_'//trim(intc(QP_table(i_qp,1)))//'_k_'//trim(intc(QP_table(i_qp,3)))
+     if (n_sp_pol>1) G_Sc_name=trim(G_Sc_name)//'_s'//trim(intc(spin(QP_table(i_qp,:))))
      !
      call OUTPUT_driver(trim(G_sc_name),action="reset")
      call OUTPUT_driver(trim(G_sc_name),action="open")
@@ -216,13 +216,13 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      do i_w=1,qp%GreenF_n_steps
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy"/),R_VALUES=(/real(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(G)","Im(G)"/),&
-&                             R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
+&                         R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
        if (allocated(QP_Vxc).and.allocated(QP_Vnl_xc)) then
          call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(S_c)"/),&
-&                               R_VALUES=(/real(qp%S_total(i_qp,i_w)-QP_Vnl_xc(i_qp)+QP_Vxc(i_qp))/),UNIT="eV")
+&                           R_VALUES=(/real(qp%S_total(i_qp,i_w)-QP_Vnl_xc(i_qp)+QP_Vxc(i_qp))/),UNIT="eV")
        endif
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(S_tot)","Im(S_c)  "/),&
-&                             R_VALUES=(/real(qp%S_total(i_qp,i_w)),aimag(qp%S_total(i_qp,i_w))/),UNIT="eV")
+&                         R_VALUES=(/real(qp%S_total(i_qp,i_w)),aimag(qp%S_total(i_qp,i_w))/),UNIT="eV")
        !
        call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Energ","Re(G)","Im(G)"/))
        call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(S_tot)","Im(S_c)  "/))

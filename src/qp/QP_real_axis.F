@@ -39,7 +39,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
 &                        PAR_IND_Q_ibz,PAR_QP_index,PAR_Q_bz_index,PAR_G_bands_index,&
 &                        n_WF_bands_to_load,PAR_Q_ibz_index,PAR_nQP,&
 &                        PAR_nG_bands,PAR_nQ_bz
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
@@ -229,7 +229,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
      X%iq=iqibz
      i_err=X_dielectric_matrix(Xen,Xk,q,X,X_life_W(iqibz),Dip,iqibz>1)
    enddo
-   call PP_redux_wait()
+   call PP_wait()
    !
  endif
  !
@@ -288,7 +288,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  ! Main Loop
  !===========
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  ! ... Timing...
  !--------------
@@ -519,7 +519,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  endif
  !
  call live_timing()
- call PP_redux_wait()
+ call PP_wait()
  !
  ! CLEAN
  !
@@ -549,7 +549,7 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  call WF_free(WF)
  call elemental_collision_free(scattering_main)
  call elemental_collision_free(scattering_prime)
- call PP_redux_wait()
+ call PP_wait()
  !
  call timing('GW(real-axis)',OPR='stop')
  !

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
+subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,MORE)
  !
  use pars,           ONLY:schlen,SP
  use TDDFT,          ONLY:FXC_n_g_corr
@@ -29,6 +29,7 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
  use X_m,            ONLY:global_gauge,X_obs,alpha_dim,N_X_obs,X_ng
  use global_XC,      ONLY:X_E_xc_string
  use stderr,         ONLY:intc,STRING_match
+ use BS,             ONLY:BSE_dipole_geometry
  !
  implicit none
  !
@@ -38,7 +39,6 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
  logical,      optional :: GF
  character(2), optional :: ordering
  real(SP),     optional :: Q_plus_G(3)
- real(SP),     optional :: Qprime(3)
  character(*), optional :: MORE
  !
  ! WorkSpace
@@ -53,7 +53,12 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
      if (ig==1) then
        wk=com_compose_msg(pre='# ',body=trim(X_obs(it)%title)//' @ Q('//trim(intc(iq))//')')
        if (iq==1) call msg("o "//trim(X_obs(it)%prefix),trim(wk),Q_plus_G,INDENT=0,after_msg="[q->0 direction]")
-       if (iq> 1) call msg("o "//trim(X_obs(it)%prefix),trim(wk),Q_plus_G,INDENT=0)
+       if (iq> 1) call msg("o "//trim(X_obs(it)%prefix),trim(wk),Q_plus_G,INDENT=0,after_msg="[iku]")
+       if (STRING_match(X_obs(it)%what,"off").or.STRING_match(X_obs(it)%what,"beta").or.&
+&          STRING_match(X_obs(it)%what,"moke")) then
+         call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="[DIP] Rotation plane"),&
+&                 trim(BSE_dipole_geometry),INDENT=0)
+       endif
      else
        wk=com_compose_msg(pre='# ',body=trim(X_obs(it)%title)//' @Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')')
        call msg("o "//trim(X_obs(it)%prefix),trim(wk),Q_plus_G,INDENT=0)
@@ -102,13 +107,6 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,Qprime,MORE)
      if (STRING_match(MORE,"Diamagnetic")) then
        call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
      endif
-   ! ... Diamagnetic term
-   !A_drude(:)=A_drude(:)/real(nkbz,SP)*spin_occ
-!   call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
-!   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),real(A_drude(2)),INDENT=0,after_msg="[nel]")
-!   if (.not.STRING_match(WHAT,"IP")) call msg("o eps",com_compose_msg(pre="# ",body="A"),&
-!&                                             real(A_drude(1)),INDENT=0,after_msg="[nel]")
-   !
      if (STRING_match(MORE,"FXC_size")) then
        call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="[FXC] G-size"),FXC_n_g_corr,INDENT=0)
      endif

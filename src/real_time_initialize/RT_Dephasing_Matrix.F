@@ -46,7 +46,6 @@ subroutine RT_Dephasing_Matrix(E)
  !
  if ( .not. (allocated(RT_INPUT_Deph_limits) .or. (RAD_LifeTime>thresh) .or. (Phase_LifeTime>thresh) .or. allocated(E%W) ) ) return
  !
- !
  YAMBO_ALLOC(RT_Deph_Matrix,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz))
  !
  RT_Deph_Matrix=(0._SP,0._SP)

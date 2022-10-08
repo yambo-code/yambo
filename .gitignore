@@ -39,9 +39,9 @@ lib/archive/git.list
 
 # source #
 ##########
+lib/archive/yambo-libraries-1.0/
 lib/yambo/driver/yambo/include/editor.h
 lib/yambo/driver/yambo/include/version.h
-include/driver/version.h
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects

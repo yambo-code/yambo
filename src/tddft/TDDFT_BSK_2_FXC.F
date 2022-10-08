@@ -32,7 +32,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
 &                        FXC_is_retarded,io_BS_Fxc
  use DIPOLES,       ONLY:DIP_rotated
  use parallel_m,    ONLY:PP_indexes,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index 
  use D_lattice,     ONLY:DL_vol
  use R_lattice,     ONLY:bare_qpg,nXkbz,bz_samp
  use IO_int,        ONLY:io_control
@@ -81,7 +81,7 @@ subroutine TDDFT_BSK_2_FXC(iq,ik1,ik2,O1x,O2x,O_x_dim,W,X_static)
  !
  ! [IO] READ PARS & FXC_K_diagonal 
  !
- call PP_redux_wait()
+ call PP_wait()
  call io_control(ACTION=OP_RD,COM=NONE,MODE=VERIFY,SEC=(/1,2/),ID=ID)
  ioFxc_err=io_BS_Fxc(iq,W,ID,X=X_static)
  !

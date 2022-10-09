@@ -88,6 +88,8 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  integer     :: i1,i2,i_spinor
  complex(SP) :: drho(n_spinor,3,pp_kbv_dim_yambo)
  !
+ if (pp_kbv_dim_yambo==0) return
+ !
  !DEV_ACC data present(DEV_VAR(drho),XXv,XXc)
  !DEV_ACC parallel loop collapse(3) async
  !DEV_CUF kernel do(3)

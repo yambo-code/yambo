@@ -102,6 +102,7 @@ module DIPOLES
      !
      character(*)      :: what
      integer, optional :: d(:)
+     integer           :: d_tmp
      !
      if (present(d)) then
        select case(what)
@@ -140,9 +141,11 @@ module DIPOLES
        case('DIP_work')
          ! d(1) = pp_kbv_dim_yambo
          ! d(2) = wf_ng
-         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
+         ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+         d_tmp=max(d(1),1)
+         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d_tmp))
          if (have_cuda) then
-           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
+           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d_tmp))
          endif
        end select
      else

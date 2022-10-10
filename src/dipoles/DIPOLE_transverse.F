@@ -41,7 +41,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
+ use IO_m,                ONLY:manage_action,OP_IF_START_RD_CL_IF_END,OP_RD_CL
  use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
@@ -110,34 +110,32 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    io_KB_abinit_err= io_err(1)
    io_KB_pwscf_err = io_err(2)
    !
-   IO_ACT_NOW=OP_RD
-   if (N_elements_todo==0) IO_ACT_NOW=OP_RD_CL
-   !
    ! Define pp_kbv_dim_yambo and pp_kbv_table
    !
    if (io_KB_pwscf_err==0) then
-     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
      call DIPOLE_kb_pwscf_def_dim()
    endif
    !
    if (io_KB_abinit_err==0) then
-     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
      call DIPOLE_kb_abinit_def_dim()
    endif
    !
    l_use_comm=l_use_comm.and.(io_KB_abinit_err==0.or.io_KB_pwscf_err==0).and.pp_kbv_dim_yambo>0
    !
-   if(l_use_comm) then
-     ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
-     pp_dim=max(pp_kbv_dim_yambo,1)
-     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim,Dip%ib(1):Dip%ib(2)))
-     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim))
-     if (have_cuda) then
-       YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim))
-       call dev_memset(DEV_VAR(kbv),cZERO)
-     endif
+ endif
+ !
+ if(l_use_comm) then
+   ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+   pp_dim=max(pp_kbv_dim_yambo,1)
+   YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim,Dip%ib(1):Dip%ib(2)))
+   YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim))
+   if (have_cuda) then
+     YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim))
+     call dev_memset(DEV_VAR(kbv),cZERO)
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -148,6 +146,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    allocate(element_1D_spin(Xk%nibz*n_sp_pol))
    element_1D_spin=(/PAR_IND_DIPk_ibz%element_1D(:),PAR_IND_DIPk_ibz%element_1D(:)/)
    !
+   ! sum_kb workspace
+   !
+   call DIP_alloc("DIP_work",[pp_dim,nc])
+   !
  endif
  !
                                       live_t_string='Dipoles: P (T)'
@@ -155,12 +157,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
- !
- ! sum_kb workspace
- !
- if(l_eval_dip_V.or.l_eval_dip_iR) then
-    call DIP_alloc("DIP_work",[pp_dim,nc])
- endif
  !
  ! Main loop over k in IBZ
  !
@@ -180,7 +176,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      if(l_use_comm) then
        !
-       IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol,element_1D=element_1D_spin)
+       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol,element_1D=element_1D_spin)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        !
        if (io_KB_pwscf_err==0 .and.ifrag>1)  io_KB_pwscf_err=io_KB_pwscf(ID)
@@ -340,9 +336,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! CLEAN
  !
- call DIP_alloc("DIP_work")
- !
  if (l_use_comm) then
+   call DIP_alloc("DIP_work")
    YAMBO_FREE_GPU(DEV_VAR(kbv))
    YAMBO_FREE(XX)
    YAMBO_FREE(pp_n_l_comp)

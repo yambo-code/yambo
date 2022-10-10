@@ -139,13 +139,9 @@ module DIPOLES
          YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
        case('DIP_work')
-         ! d(1) = pp_kbv_dim_yambo
-         ! d(2) = wf_ng
-         ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
-         d_tmp=max(d(1),1)
-         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d_tmp))
+         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
          if (have_cuda) then
-           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d_tmp))
+           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
          endif
        end select
      else

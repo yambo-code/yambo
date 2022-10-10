@@ -59,7 +59,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,pp_dim,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
@@ -130,11 +130,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  if(l_use_comm) then
    ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
-   pp_dim=max(pp_kbv_dim_yambo,1)
-   YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim,Dip%ib(1):Dip%ib(2)))
-   YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim))
+   pp_dim_yambo=max(pp_kbv_dim_yambo,1)
+   pp_dim_atom =max(pp_kbv_dim_atom, 1)
+   YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
+   YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    if (have_cuda) then
-     YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim))
+     YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
      call dev_memset(DEV_VAR(kbv),cZERO)
    endif
    !
@@ -148,10 +149,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    ! sum_kb workspace
    !
-   call DIP_alloc("DIP_work",[pp_dim,nc])
+   call DIP_alloc("DIP_work",[pp_dim_yambo,nc])
    !
  endif
- !
                                       live_t_string='Dipoles: P (T)'
  if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
  if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
@@ -193,6 +193,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      if (l_use_comm) then
        !
+       npp=0
        npp_tab=0
        pp_range(2)=0
        XX=cZERO

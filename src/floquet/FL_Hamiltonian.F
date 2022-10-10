@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
-&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase
+&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -176,7 +176,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
                          & - real(FL_delta_rho_hist(:,i_t),SP)
            !
-           !call FL_precondition(FL_res_rho_at_t)
+           if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
            !
            FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
                                & FL_delta_rho_hist(:,i_t)
@@ -211,19 +211,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    endif
    !
  end select
- !
- !
- ! Evaluate the external/total field
- !=================================
- !
- call RT_Ext_fields_sum(A_ext,0.41341373336561360) !aim137 critical - see if this has any effect at all
- !
- A_tot=A_ext
- !
- E_ext=-A_ext%vecpot_vel/SPEED_OF_LIGHT
- !
- E_tot=E_ext
- E_ks =E_ext
  !
  !
  ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
@@ -278,15 +265,15 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    enddo
    !
    !aim137 DEBUG<
-    print*, 'I will print Sigma_Hartree in time and KS space'
-    do ik_bz=26,26!1,QP_nk
-    print*, ''
-    print*, 'kpt',ik_bz,' and time step =',1
-    do i1=NL_bands(1),NL_bands(2)
-    print*, abs(FL_sigma_time(i1,:,ik_bz,1))
-    enddo
-    print*, ''
-    enddo
+    !print*, 'I will print Sigma_Hartree in time and KS space'
+    !do ik_bz=26,26!1,QP_nk
+    !print*, ''
+    !print*, 'kpt',ik_bz,' and time step =',1
+    !do i1=NL_bands(1),NL_bands(2)
+    !print*, abs(FL_sigma_time(i1,:,ik_bz,1))
+    !enddo
+    !print*, ''
+    !enddo
    !aim137 DEBUG>
    FL_Sigma_prev = FL_Sigma
    FL_Sigma = cZERO
@@ -303,7 +290,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      enddo
    enddo
    !
-   FL_Sigma = FL_beta * FL_Sigma + (1._SP-FL_beta) * FL_Sigma_prev
+   !FL_Sigma = FL_beta * FL_Sigma + (1._SP-FL_beta) * FL_Sigma_prev
    !
  else
    !
@@ -352,7 +339,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
      if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
        call error ('TDDFT not yet implemented in floptics')
      elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
-        if (ik_bz==26) print*, 'I will print V_Hartree in time and KS space'
+        !if (ik_bz==26) print*, 'I will print V_Hartree in time and KS space'
        do i1_extra=1,n_tot_extra_modes
          call V_real_space_to_H(ik_bz,i_sp_pol,&
             & FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),i1_extra),&
@@ -360,14 +347,14 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
        enddo 
        !
    !aim137 DEBUG<
-    if (ik_bz==26) then
-    print*, 'kpt',ik_bz,' and time step =',1
-    print*, ''
-    do i1=NL_bands(1),NL_bands(2)
-    print*, abs(FL_V_Hartree_KS_time(i1,:,1))
-    enddo
-    print*, ''
-    endif
+   !if (ik_bz==26) then
+   !print*, 'kpt',ik_bz,' and time step =',1
+   !print*, ''
+   !do i1=NL_bands(1),NL_bands(2)
+   !print*, abs(FL_V_Hartree_KS_time(i1,:,1))
+   !enddo
+   !print*, ''
+   !endif
    !aim137 DEBUG>
        !
        select case(density_method)
@@ -466,7 +453,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    ! ===============
    !
    if (l_use_Hxc_collisions .and. iter_num > 1) then
-     if (ik_bz==26) print*, 'I will print the self-energy'
+     !if (ik_bz==26) print*, 'I will print the self-energy'
      do i1=NL_bands(1),NL_bands(2)
        do i1_fl=1,n_tot_fl_modes
          i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
@@ -482,9 +469,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            & FL_Sigma(i1,i2,ik_bz,i_comb_extra)
              !
              !aim137 DEBUG<
-             if (ik_bz == 26) then
-             FKS_Sigma(i1_fks,i2_fks) = FL_Sigma(i1,i2,26,i_comb_extra)
-             endif
+             !if (ik_bz == 26) then
+             !FKS_Sigma(i1_fks,i2_fks) = FL_Sigma(i1,i2,26,i_comb_extra)
+             !endif
              !aim137 DEBUG>
            enddo
          enddo

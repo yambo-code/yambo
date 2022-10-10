@@ -43,7 +43,7 @@ subroutine FL_initialize(E,k,q)
 &                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
  use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use fl_optics,      ONLY:l_FL_dephase,FL_Chi_order,FL_add_mode,max_time_step,max_fl_mode,max_extra_mode,max_duffin_mode, &
-&                         FL_states,FL_space_dim,n_tot_time_steps,n_tot_fl_modes,n_tot_extra_modes,n_tot_duffin_modes
+&                         FL_states,FL_space_dim,n_tot_time_steps,n_tot_fl_modes,n_tot_extra_modes,n_tot_duffin_modes,l_FL_precond
  use parser_m,       ONLY:parser
  !
 #include<memory.h>
@@ -83,6 +83,7 @@ subroutine FL_initialize(E,k,q)
  ! Parser
  ! ============
  !
+ call parser('DensityPrecondition',  l_FL_precond)
  call parser('Dephase',              l_FL_dephase)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)

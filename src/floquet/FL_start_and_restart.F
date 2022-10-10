@@ -67,8 +67,8 @@ subroutine FL_start_and_restart(E,k,Dip)
  ! Working space
  !
  integer :: i1,i2,ib,i_f,i_k,i_sp,i_fl,i1_fks,i2_fks,i_sp_pol
- integer :: ID,io_NonLinear
- integer, external::io_NL
+ integer :: ID,io_Floquet
+ integer, external::io_FL
  logical  :: l_lifted
  !
  !
@@ -211,11 +211,11 @@ endif
  if(master_cpu) then
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   io_NonLinear=io_NL("Nonlinear",ID)
+   io_Floquet=io_FL(ID)
    !
-   if(io_NonLinear==0) then
+   if(io_Floquet==0) then
      do i_f=1,n_frequencies
-        if(file_is_present('Nonlinear_fragment_'//intc(i_f))) freqs_done(i_f)=.true.
+        if(file_is_present('Floquet_fragment_'//intc(i_f))) freqs_done(i_f)=.true.
      enddo                                                                    
     endif
     !

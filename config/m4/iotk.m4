@@ -23,16 +23,11 @@
 #
 AC_DEFUN([AC_HAVE_IOTK],[
 
-AC_ARG_ENABLE(iotk, AC_HELP_STRING([--enable-iotk],
-            [Activate the IOTK support]),[],[enable_iotk="yes"])
-AC_ARG_WITH(iotk_libs, AC_HELP_STRING([--with-iotk-libs=<libs>],
-            [Use the IOTK library in <libs>],[32]),[],[])
-AC_ARG_WITH(iotk_path, AC_HELP_STRING([--with-iotk-path=<path>],
-            [Path to the IOTK install directory],[32]),[],[])
-AC_ARG_WITH(iotk_libdir, AC_HELP_STRING([--with-iotk-libdir=<path>],
-            [Path to the IOTK lib directory],[32]))
-AC_ARG_WITH(iotk_includedir, AC_HELP_STRING([--with-iotk-includedir=<path>],
-            [Path to the IOTK include directory],[32]),[],[])
+AC_ARG_ENABLE(iotk, AS_HELP_STRING([--enable-iotk],[Activate the IOTK support]),[],[enable_iotk="yes"])
+AC_ARG_WITH(iotk_libs, AS_HELP_STRING([--with-iotk-libs=<libs>],[Use the IOTK library in <libs>],[32]),[],[])
+AC_ARG_WITH(iotk_path, AS_HELP_STRING([--with-iotk-path=<path>],[Path to the IOTK install directory],[32]),[],[])
+AC_ARG_WITH(iotk_libdir, AS_HELP_STRING([--with-iotk-libdir=<path>],[Path to the IOTK lib directory],[32]))
+AC_ARG_WITH(iotk_includedir, AS_HELP_STRING([--with-iotk-includedir=<path>],[Path to the IOTK include directory],[32]),[],[])
 
 compile_p2y="no"
 compile_iotk="no"

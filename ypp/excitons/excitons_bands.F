@@ -49,7 +49,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  !
  ! Work space
  !
- integer :: iq,i_c,i_l,ID_INTERP_EXC,i_E
+ integer :: iq,i_c,i_l,ID_INTERP_EXC,ID_INTERP_OCC,i_E
  real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
  type(bz_samp)            :: GRID_q
  character(schlen)        :: file_name
@@ -75,7 +75,8 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  ! Read and interpolate excitons dispersion
  !
  ID_INTERP_EXC=1
- call excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,.TRUE.)
+ ID_INTERP_OCC=2
+ call excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,.TRUE.)
  !
  ! Interpolate and write on disk
  !

@@ -26,13 +26,14 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use pars,          ONLY:SP,schlen,rZERO
  use LIVE_t,        ONLY:live_timing
  use R_lattice,     ONLY:bz_samp
+ use D_lattice,     ONLY:Boltz_Temp
  use interpolate,   ONLY:INTERPOLATION_BZ
- use electrons,     ONLY:levels
- use functions,     ONLY:Fermi_fnc_derivative
+ use electrons,     ONLY:levels,nel_cond
+ use functions,     ONLY:Fermi_fnc_derivative,boltzman_f
  use units,         ONLY:HA2EV
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step, &
-&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp
+&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp,EXC_min
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
@@ -78,6 +79,14 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  ID_INTERP_OCC=2
  call excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,.TRUE.)
  !
+ ! Check exciton occupations
+ !
+ if(Boltz_Temp/=rZERO.and.EXC_min/=rZERO) then
+   call msg('rs','Boltzman occupation for the excitons')
+   if(nel_cond/=rZERO) call error('NelCond /= 0 not compatible with Boltzman occupation ')
+   l_exc_occ_interp=.true.
+ endif
+ !
  ! Interpolate and write on disk
  !
  call k_circuit_made_of_user_points( )
@@ -91,7 +100,18 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !
    if(l_exc_occ_interp) then
      YAMBO_ALLOC(EXC_occ_interp,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
-     call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=EXC_occ_interp,ID=ID_INTERP_OCC)
+     if(nel_cond/=rZERO) then
+        ! Excitonic occupations are interpolated     
+        call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=EXC_occ_interp,ID=ID_INTERP_OCC)
+     else
+        ! Boltzman occupations are directly calculated
+        do iq=1,CIRCUIT_k%nibz
+          do i_c=1,EXCITONS_n_user_states
+            EXC_occ_interp(i_c,iq)=boltzman_f(BSE_interp_E(i_c,iq)-EXC_min)
+          enddo
+        enddo
+        !
+     endif
    endif
    !
    call print_BANDS()

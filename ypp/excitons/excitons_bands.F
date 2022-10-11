@@ -32,7 +32,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use units,         ONLY:HA2EV
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out, &
 &                        BANDS_steps,INTERP_grid,K_transform,CIRCUIT_k,DOS_E_step, &
-&                        DOS_E_steps,DOS_broadening,USER_k
+&                        DOS_E_steps,DOS_broadening,USER_k,l_exc_occ_interp
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
@@ -50,9 +50,9 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  ! Work space
  !
  integer :: iq,i_c,i_l,ID_INTERP_EXC,ID_INTERP_OCC,i_E
- real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),values(:)
+ real(SP), allocatable    :: BS_all_E(:,:),BSE_interp_E(:,:),EXC_occ_interp(:,:),values(:)
  type(bz_samp)            :: GRID_q
- character(schlen)        :: file_name
+ character(schlen)        :: file_name,file_name2
  character(schlen), allocatable :: headings(:)
  logical                  :: GRID_interpolate,l_prt_dos
  real(SP)                 :: tmp_q(3)
@@ -88,6 +88,11 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !   
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
+   !
+   if(l_exc_occ_interp) then
+     YAMBO_ALLOC(EXC_occ_interp,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
+     call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=EXC_occ_interp,ID=ID_INTERP_OCC)
+   endif
    !
    call print_BANDS()
    !
@@ -183,6 +188,13 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
      call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
      call msg('o '//trim(file_name),"#")
      !
+     if(l_exc_occ_interp) then
+       file_name2="excitons_occupation"
+       call of_open_close(trim(file_name2),'ot')
+       call msg('o '//trim(file_name2),"#",headings,INDENT=0,USE_TABS=.true.)
+       call msg('o '//trim(file_name2),"#")
+     endif
+     !
      values=0._SP
      !
      do iq=1,CIRCUIT_k%nibz
@@ -195,8 +207,16 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
        values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
        values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
        call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+       !
+       if(l_exc_occ_interp) then
+         values(1+1:EXCITONS_n_user_states+1)=EXC_occ_interp(:,iq)
+         values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
+         call msg('o '//trim(file_name2),' ',values,INDENT=0,USE_TABS=.true.)
+       endif
+       !
      enddo
      call of_open_close(trim(file_name))
+     if(l_exc_occ_interp) call of_open_close(trim(file_name2))
      !
    end subroutine print_BANDS
    !

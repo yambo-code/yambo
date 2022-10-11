@@ -80,7 +80,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)
 #if defined _YPP_PH
-     call EXC_occupations(E_QF,EXC_n_user_states,EXC_user_indexes,EXC_occ(:,iq))
+     call EXC_occupations(E_QF,Xk,EXC_n_user_states,EXC_user_indexes,EXC_occ(:,iq))
 #endif
    else
      call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)
@@ -131,5 +131,10 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
  call INTERPOLATION_BZ_setup(q)
  INTERP_obj(ID_INTERP_EXC)%what="excitons"
  call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP_EXC,ID_obj=ID_INTERP_EXC)
+ !
+ if(l_exc_occ_interp) then
+   INTERP_obj(ID_INTERP_EXC)%what="occupations"
+   call INTERPOLATION_coefficients(R1D=EXC_occ,k=q,NK=q%nibz,ID=ID_INTERP_OCC,ID_obj=ID_INTERP_OCC)
+ endif
  !
 end subroutine

@@ -23,20 +23,51 @@
 !
 ! Excitonic occupation, following PRB 99, 081109(R) 2019
 !
-subroutine EXC_occupation(E_QF,EXC_n_states,EXC_indexes,EXC_occ)
+subroutine EXC_occupation(E_QF,k,EXC_n_states,EXC_indexes,EXC_occ)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,spin_occ
+ use R_lattice,      ONLY:bz_samp
+ use BS,             ONLY:BS_H_dim,BS_bands
+ use BS_solvers,     ONLY:BSS_eh_table
  !
 #include<memory.h>
  !
- ! Work space
- !
  type(levels), intent(in)  :: E_QF
+ type(bz_samp),intent(in)  :: k
  integer,      intent(in)  :: EXC_n_states
  integer,      intent(in)  :: EXC_indexes(EXC_n_states)
  real(SP),     intent(out) :: EXC_occ(EXC_n_states)
  !
+ ! Work space
+ !
+ integer                   :: i_H,iv,ic,ik_bz,ik_ibz,ik_minus_iq_bz,ik_minus_iq_ibz
+ real(SP)                  :: el_occ
+ !
  EXC_occ=rZERO
+ !
+ do i_H=1,BS_H_dim
+   !
+   ! K = (ik_bz,iv,ic)
+   !
+   ik_bz  = BSS_eh_table(i_H,1)
+   ik_ibz = k%sstar(ik_bz,1)
+   !
+   iv    = BSS_eh_table(i_H,2)
+   ic    = BSS_eh_table(i_H,3)
+   !
+   ! In the BSE at finite q we connect (v, k-q) ==> (c, k)
+   !
+   ik_minus_iq_bz  = qindx_C(ik_bz,iq_bz,1)      ! K_bz-Q_bz
+   ik_minus_iq_ibz = k%sstar(ik_minus_iq_bz,1)
+   !
+   el_occ=E_qf%f(ic,ik_ibz,1)*(spin_occ-E_qf%f(iv,ik_minus_iq_ibz,1))
+   !
+   do i_c=1,EXCITONS_n_user_states
+      i_l=EXCITONS_user_indexes(i_c)
+      EXC_occ(i_c)=EXC_occ(i_c)+abs(BS_mat(i_H,i_l))**2*el_occ
+   enddo
+   !
+ enddo
  !
 end subroutine

@@ -164,4 +164,18 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo_pl";
  options[*i_opt].yambo_string="photolum";
  options[*i_opt].section=desc;
+
+#if defined _SURF
+ desc="Surface Spectroscopy";
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Surface Spectroscopy";
+ options[*i_opt].long_desc[0]="<string>=(r)as/r(e)els/(b)oth";
+ options[*i_opt].long_opt="surface";
+ options[*i_opt].short_opt='t';
+ options[*i_opt].bin="yambo_surf";
+ options[*i_opt].yambo_string="sursp";
+ options[*i_opt].char_var=1;
+ options[*i_opt].section=desc;
+#endif
+
 };

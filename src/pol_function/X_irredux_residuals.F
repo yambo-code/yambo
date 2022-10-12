@@ -42,6 +42,10 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use deviceXlib_m
+#if defined _SURF
+ use ras_module,    ONLY: lras, lreels
+ use optcut,        ONLY: loptcut, DIP_iR_cut, DIP_rotated_cut
+#endif
  !
 #include<dev_defs.h>
  !
@@ -69,14 +73,26 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  integer            :: sop_inv_l,X_ng
  complex(SP)        :: ctmp,Z_
  real(SP)           :: Z_eh_occ
- logical            :: l_X_term_vv
+ logical            :: l_X_term_vv,skip_WF_load
  integer            :: ngrho
  integer            :: ig1,ig2,ik,is,ikp,ikbz,ikpbz,i_spin,&
 &                      isp,iv,ic,isave(4),n_poles,i_bg,ig_start,ROWS(2)
+#if defined _SURF
+ complex(SP)             :: iscut
+#endif
  !
  ! DIPOLES
  !
- complex(SP)        :: DIP_projected,field_dir(3)
+ complex(SP)        :: DIP_projected,DIP_projected_cut,field_dir(3)
+ !
+#if defined _SURF
+ ! Project's dependent presets
+ if(lras.or.lreels) then
+    skip_WF_load   = .true.  ! No LFE, q=0
+!   force_bare_X_G = .false.
+ endif
+#endif
+
  !
  field_dir=Dip%q0/v_norm(Dip%q0)*q0_def_norm
  !
@@ -140,6 +156,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      Xo_scatt%is = (/ic,ik,1,i_spin/)
      Xo_scatt%os = (/iv,ik,1,i_spin/)
      Xo_scatt%qs = (/1,1,1/)
+#if defined _SURF
+     if((lras.or.lreels).and.skip_WF_load) isave=(/iv,ic,ik,i_spin/)
+#endif
      if (.not. X%ng==1) then
        if ( any((/isave(1)/=iv,isave(2)/=ic,isave(3)/=ik,isave(4)/=i_spin/)) ) then
          !
@@ -188,6 +207,20 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !
      if (l_X_term_vv.and.iv==ic) DEV_VAR(Xo_scatt%rhotw)(1)=0.0_SP
      !
+#if defined _SURF
+       !-----------------------------------------------------------------------------
+       if(lras.or.lreels) then
+         if(loptcut) then
+           DIP_projected_cut=dot_product(field_dir,DIP_rotated_cut(ic,iv,ikbz,i_spin,"DIP_iR_cut",Xk))
+           iscut= -conjg(DIP_projected_cut)
+         else
+           iscut= -conjg(DIP_projected)
+         endif
+         DEV_VAR(Xo_res)(1,1)=DEV_VAR(Xo_res)(1,1)+Z_eh_occ*iscut*conjg(Xo_scatt_rhotw_p(1))
+         cycle loop_bare_grid
+       endif
+#endif
+    !
    else
      !
      ! iq>1: direct computation

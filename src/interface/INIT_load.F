@@ -109,6 +109,16 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
 #endif
+#if defined _SURF
+ use bulkeps,              ONLY:init_bulk
+ use eels_kinematics,      ONLY:init_kinematics
+ use eels_detector,        ONLY:init_detector
+ use optcut,               ONLY:init_cutoff
+ use surface_geometry,     ONLY:init_surface
+ use model_loss_function,  ONLY:init_loss_function
+ use convolute,            ONLY:init_convolute
+ use ras_module,           ONLY:locfac,loctype
+#endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
 #endif
@@ -177,6 +187,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('r',defs,'el_el_corr',    '[R] Electron-Electron Correlation') 
 #if defined _QED
  call it('r',defs,'el_photon_corr','[R] Electron-Photon Correlation') 
+#endif
+#if defined _SURF
+call it('r',defs,'reels',  '[R] Reflection EELS (3-layer model) ')
+call it('r',defs,'ras',    '[R] Reflectance anisotropy spectroscopy (RAS)')
 #endif
  !
  !=======
@@ -402,6 +416,20 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
  call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
  call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations,verb_level=V_qp)
+ !
+ ! Surface spectroscopy
+ !
+#if defined _SURF
+ call init_bulk(defs)
+ call init_surface(defs)
+ call init_cutoff(defs)
+ call init_kinematics(defs)
+ call init_loss_function(defs)
+ call init_detector(defs)
+ call init_convolute(defs)
+ call it(defs,'LocType', '[RAS] Transition filter (ss/sb/bs/bb|no)',loctype,verb_level=V_resp)
+ call it(defs,'LocLimit','[RAS] Factor defining state localization',locfac,verb_level=V_resp)
+#endif
  !
  ! S_xc
  !

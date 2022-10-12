@@ -48,6 +48,9 @@ subroutine INIT_read_command_line(rstr,init_)
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
  use stderr,         ONLY:intc
 #endif
+#if defined _SURF
+ use ras_module,     ONLY:lras, lreels
+#endif
  !
  implicit none
  !
@@ -308,6 +311,17 @@ subroutine INIT_read_command_line(rstr,init_)
        !
      endif
      !
+         !
+         ! Surface spectroscopy
+         !
+#if defined _SURF
+         if ( trim(rstr_piece(i1)) == 'sursp' )  then
+           if ( trim(rstr_piece(i1+1)) == 'r') call initactivate(1,'ras')
+           if ( trim(rstr_piece(i1+1)) == 'e') call initactivate(1,'reels')
+           if ( trim(rstr_piece(i1+1)) == 'b') call initactivate(1,'ras reels')
+         endif
+#endif
+!
 #if defined _SC || defined _RT
      !
      if ( trim(rstr_piece(i1)) == 'potential' )  then

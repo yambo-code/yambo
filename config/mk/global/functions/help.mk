@@ -16,6 +16,7 @@ define yambo_help
    $(ECHO) -n " [ph-project]    "; for target in $(PH_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rt-project]    "; for target in $(RT_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO) -n " [surf-project]    "; for target in $(SURF_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rtext-project] "; for target in $(RTE_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** GPL components *** ";\
    $(ECHO) -n " [gpl]           "; for target in $(GPL); do $(ECHO) -n "$$target" ; done;$(ECHO) ;\
@@ -52,5 +53,7 @@ define yambo_help
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response";\
    $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
+   $(ECHO)  " yambo_surf = Surface-spectroscyopy project ";\
+   $(ECHO)  "             http://\n";\
   fi
 endef

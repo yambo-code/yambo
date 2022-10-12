@@ -705,6 +705,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
    if (l_interp) then
      call initactivate(-1,"BSQindex")
+     call initactivate(1,"NelCond ExcMin EXCTemp")
      call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
      call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
    endif

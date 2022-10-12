@@ -31,7 +31,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
  use electrons,     ONLY:levels,nel_cond,E_reset
  use interpolate,   ONLY:INTERPOLATION_BZ,INTERP_obj,INTERPOLATION_coefficients
  use YPPm,          ONLY:BS_E,EXCITONS_user_indexes,EXCITONS_n_user_states,coo_out,K_transform,&
-&                        l_exc_occ_interp    
+&                        l_exc_occ_interp,EXCITONS_user_indexes,EXCITONS_n_user_states
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  !
@@ -79,8 +79,10 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    !
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)
-#if defined _YPP_PH
-     call EXC_occupations(E_QF,Xk,EXC_n_user_states,EXC_user_indexes,EXC_occ(:,iq))
+#if defined _YPP_ELPH
+     call EXC_occupations(E_QF,Xk,EXCITONS_user_indexes,EXCITONS_n_user_states,EXC_occ(:,iq))
+     write(*,*) ' exc occ ',EXC_occ(:,iq)
+     stop
 #endif
    else
      call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)

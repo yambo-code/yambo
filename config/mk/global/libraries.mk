@@ -70,8 +70,8 @@ YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits elec
 YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
-YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph excitons
-YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph excitons
+YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph exc-ph excitons
+YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph exc-ph excitons
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) el-ph real_time excitons
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #

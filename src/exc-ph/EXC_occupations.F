@@ -23,7 +23,7 @@
 !
 ! Excitonic occupation, following PRB 99, 081109(R) 2019
 !
-subroutine EXC_occupation(E_QF,k,EXC_n_states,EXC_indexes,EXC_occ)
+subroutine EXC_occupations(E_QF,k,EXC_n_states,EXC_indexes,EXC_occ)
  !
  use pars,           ONLY:SP,cZERO,rZERO,cONE
  use electrons,      ONLY:levels,spin_occ
@@ -62,6 +62,7 @@ subroutine EXC_occupation(E_QF,k,EXC_n_states,EXC_indexes,EXC_occ)
    ik_minus_iq_ibz = k%sstar(ik_minus_iq_bz,1)
    !
    el_occ=E_qf%f(ic,ik_ibz,1)*(spin_occ-E_qf%f(iv,ik_minus_iq_ibz,1))
+   write(*,*) 'passo qui ',iv,ic,ik_ibz,el_occ
    !
    do i_c=1,EXCITONS_n_user_states
       i_l=EXCITONS_user_indexes(i_c)

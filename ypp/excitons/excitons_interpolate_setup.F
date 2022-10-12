@@ -62,6 +62,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    l_exc_occ_interp=.TRUE.
    call E_reset(E_QF)
    call OCCUPATIONS_Quasi_Fermi(Xen,Xk,E_QF,E_fermi_h,E_fermi_e)
+   if(.not.allocated(q%k_table))  call k_build_up_BZ_tables(q)
 #if defined _YPP_ELPH
    YAMBO_ALLOC(EXC_occ,(EXCITONS_n_user_states,q%nibz))
 #else
@@ -80,9 +81,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)
 #if defined _YPP_ELPH
-     call EXC_occupations(E_QF,Xk,EXCITONS_user_indexes,EXCITONS_n_user_states,EXC_occ(:,iq))
-     write(*,*) ' exc occ ',EXC_occ(:,iq)
-     stop
+     call EXC_occupations(E_QF,Xk,q,iq,EXCITONS_user_indexes,EXCITONS_n_user_states,EXC_occ(:,iq))
 #endif
    else
      call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)

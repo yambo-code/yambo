@@ -70,8 +70,8 @@ YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits elec
 YPP_BASIC_LIBS_LD  = modules interface qp plotting k-points symmetries bits electrons dipoles 
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPP_LIBS_LD        = $(YPP_BASIC_LIBS_LD) excitons
-YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph exc-ph excitons
-YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph exc-ph excitons
+YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph excitons
+YPPPH_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph excitons
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) el-ph real_time excitons
 YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #
@@ -79,6 +79,8 @@ YPPRT_LIBS_LD      = $(YPP_BASIC_LIBS_LD) el-ph real_time excitons
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+YPPPH_MAIN_LIBS    = $(YPP_MAIN_LIBS) el-ph exc-ph
+YPPPH_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) el-ph exc-ph
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \

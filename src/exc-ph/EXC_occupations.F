@@ -64,7 +64,7 @@ subroutine EXC_occupations(E_QF,k,q,iq_ibz,EXC_n_states,EXC_indexes,EXC_occ)
    ik_minus_iq_ibz = k%sstar(ik_minus_iq_bz,1)
    !
    el_occ=E_qf%f(ic,ik_ibz,1)*(spin_occ-E_qf%f(iv,ik_minus_iq_ibz,1))
-!   write(*,*) 'passo qui ',iv,ic,ik_ibz,el_occ
+!   if(iv==4.and.ic==5) write(*,*) 'passo qui ',iv,ic,ik_ibz,el_occ
    !
    do i_c=1,EXC_n_states
       i_l=EXC_indexes(i_c)
@@ -72,5 +72,6 @@ subroutine EXC_occupations(E_QF,k,q,iq_ibz,EXC_n_states,EXC_indexes,EXC_occ)
    enddo
    !
  enddo
+!   write(*,*) iq_ibz,EXC_occ(:)
  !
 end subroutine

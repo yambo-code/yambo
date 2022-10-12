@@ -93,7 +93,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    if(l_exc_occ_interp) then
      call excitons_read(k,Xk,en,Xen,iq,"eigenvectors eigenvalues",io_err)
 #if defined _YPP_ELPH
-     call EXC_occupations(E_QF,Xk,q,iq,EXCITONS_user_indexes,EXCITONS_n_user_states,EXC_occ(:,iq))
+     call EXC_occupations(E_QF,Xk,q,iq,EXCITONS_n_user_states,EXCITONS_user_indexes,EXC_occ(:,iq))
 #endif
    else
      call excitons_read(k,Xk,en,Xen,iq,"eigenvalues",io_err)

@@ -37,11 +37,12 @@ subroutine Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  !
  use frequency,     ONLY:w_samp
  use units,         ONLY:HA2CMm1
+ use electrons,     ONLY:nel_cond
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_Sat_E,BS_Sat_WEIGHT,BS_all_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT_PH_abs,BS_E_in, &
-&                        min_EXC_E,DB_Q_map
+&                        min_EXC_E,DB_Q_map,EXC_occ
  use functions,     ONLY:bose_f,boltzman_f
  use units,         ONLY:HA2CMm1
  use ELPH,          ONLY:PH_freqs_sq,FAN_deltaE_treshold,Q_io_map
@@ -78,6 +79,8 @@ subroutine Satellite_Simple(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  !
  iq_ibz = q%sstar(iq_bz,1)
  boltzm_factor=boltzman_f(BS_all_E(i_beta,iq_ibz)-min_EXC_E)
+ !
+ if(nel_cond/=rZERO) boltzm_factor=EXC_occ(i_beta,iq_ibz)
  !
  pole=E_alpha+BS_Sat_E(il,i_beta,i_alpha)
  !

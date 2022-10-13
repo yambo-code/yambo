@@ -110,6 +110,10 @@ module EXCPH
  logical       :: l_DbGd_PH_only ! Double-Grid only for phonon energies
  logical       :: l_no_matrix_elements  ! Set EXC-PH matrix elements to 1 (in lifetime and satellites)
  !
+ ! Excitonic occupations
+ !
+ real(SP), allocatable :: EXC_occ(:,:)
+ !
  contains
    !      
    subroutine Sat_alloc()

@@ -88,6 +88,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FKS_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP)  :: FL_Sigma_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  complex(SP)  :: FL_Sigma_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
+ logical      :: l_Broyden_mixing
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
@@ -95,6 +96,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  FKS_Sigma=cZERO
  density_method="T"
+ l_Broyden_mixing=.true.
  !
  FL_V_Hartree = cZERO
  FL_V_Hartree_KS = cZERO
@@ -173,13 +175,31 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            !
            FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
            !
-           FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
-                         & - real(FL_delta_rho_hist(:,i_t),SP)
-           !
-           if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
-           !
-           FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
-                               & FL_delta_rho_hist(:,i_t)
+           if (.not. l_Broyden_mixing) then
+             !
+             FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
+                           & - real(FL_delta_rho_hist(:,i_t),SP)
+             !
+             if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
+             !
+             FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
+                                 & FL_delta_rho_hist(:,i_t)
+             !
+           else
+             !
+             !this is not the residue, but just a real variable
+             !that goes inout into the Broyden mixer
+             FL_res_rho_at_t(:) = real(FL_delta_rho(:,i_t),SP) + rho_reference(:)
+             !
+             if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
+             !
+             call FL_Broyden(FL_res_rho_at_t,&
+             &               real(FL_delta_rho_hist(:,i_t),SP)+rho_reference(:),&
+             &               FL_beta,iter_num-1)
+             !
+             FL_delta_rho(:,i_t) = cZERO + FL_res_rho_at_t(:) - rho_reference(:)
+             !
+           endif
            !
          enddo
          !

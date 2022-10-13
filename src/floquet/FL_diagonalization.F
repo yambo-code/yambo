@@ -35,8 +35,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  use wrapper,        ONLY:M_by_V,V_plus_alpha_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_bands,E_full,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_V_bands_hist,FL_ac_phase,&
-&                         FL_eigenvectors,FL_eigenvalues
+&                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_ac_phase,&
+&                         FL_eigenvectors,FL_eigenvalues,FL_beta
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
  !
@@ -63,6 +63,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  complex(SP) :: NHM_Left_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP) :: NHM_Right_Vec(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP) :: NHM_Cmpl_Val(FL_states(1):FL_states(2))
+ complex(SP) :: FL_V_bands_hist(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  logical     :: l_assume_Hermitian
  real(SP)    :: energy_crossing,modul,beta
  !
@@ -75,6 +76,8 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  !         print*, '18,24',FL_Ho_plus_Sigma(18,24,6,1)
  !         print*, '24,18',FL_Ho_plus_Sigma(24,18,6,1)
  !         print*, '24,24',FL_Ho_plus_Sigma(24,24,6,1)
+ !
+ FL_V_bands_hist = FL_V_bands
  !
  do ik_bz=1,QP_nk
    !
@@ -237,6 +240,9 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  call PP_redux_wait(FL_QE, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(FL_V_bands, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
+ !Mixing of eigenvectors
+ !FL_V_bands = FL_V_bands * FL_beta + FL_V_bands_hist * (1._SP - FL_beta)
+ !
  !aim137 DEBUG
 !do ik_bz=1,QP_nk
 !do is=1,n_sp_pol
@@ -244,7 +250,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
 !open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
 !do i_m=1,E%nbf(1)
 !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
-!write(111,*) 'Real and imaginary parts of eigenvector:'
+!!write(111,*) 'Real and imaginary parts of eigenvector:'
 !do i1=1,NL_bands(2)
 !write(111,'(100(1f20.14))') abs(FL_V_bands(i1,:,i_m,ik_bz,is))
 !!write(111,'(100(1f20.14))') atan(real(FL_V_bands(i1,:,i_m,ik_bz,is)),aimag(FL_V_bands(i1,:,i_m,ik_bz,is)))

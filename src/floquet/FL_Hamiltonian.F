@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
-&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond
+&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,l_Broyden_mixing
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -88,7 +88,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FKS_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP)  :: FL_Sigma_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  complex(SP)  :: FL_Sigma_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
- logical      :: l_Broyden_mixing
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
@@ -96,7 +95,6 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  FKS_Sigma=cZERO
  density_method="T"
- l_Broyden_mixing=.true.
  !
  FL_V_Hartree = cZERO
  FL_V_Hartree_KS = cZERO

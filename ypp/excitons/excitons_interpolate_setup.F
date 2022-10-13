@@ -146,7 +146,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
  call INTERPOLATION_coefficients(R1D=BS_all_E,k=q,NK=q%nibz,ID=ID_INTERP_EXC,ID_obj=ID_INTERP_EXC)
  !
  if(l_exc_occ_interp) then
-   INTERP_obj(ID_INTERP_EXC)%what="occupations"
+   INTERP_obj(ID_INTERP_OCC)%what="occupations"
    call INTERPOLATION_coefficients(R1D=EXC_occ,k=q,NK=q%nibz,ID=ID_INTERP_OCC,ID_obj=ID_INTERP_OCC)
  endif
  !

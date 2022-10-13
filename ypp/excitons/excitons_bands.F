@@ -229,7 +229,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
        call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
        !
        if(l_exc_occ_interp) then
-         values(1+1:EXCITONS_n_user_states+1)=EXC_occ_interp(:,iq)
+         values(1+1:EXCITONS_n_user_states+1)=abs(EXC_occ_interp(:,iq))
          values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
          call msg('o '//trim(file_name2),' ',values,INDENT=0,USE_TABS=.true.)
        endif

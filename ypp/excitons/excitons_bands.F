@@ -87,6 +87,8 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    l_exc_occ_interp=.true.
  endif
  !
+ if(nel_cond/=rZERO.and.Boltz_Temp/=rZERO) call warning('Excitonic Occupation, EXCTemp ignored, use ElecTemp!')
+ !
  ! Interpolate and write on disk
  !
  call k_circuit_made_of_user_points( )

@@ -112,8 +112,8 @@ subroutine RT_start_and_restart(E,k,q)
    !==========================
    do i_sp_pol=1,n_sp_pol
      do ik=1,nXkibz
-       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=cmplx(V_hartree_sc,KIND=SP))
-       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=cmplx(V_xc,KIND=SP))
+       call V_real_space_to_H(ik,i_sp_pol,HARTREE0(:,:,ik,i_sp_pol),WF,'def',V=V_hartree_sc)
+       call V_real_space_to_H(ik,i_sp_pol,     XC0(:,:,ik,i_sp_pol),WF,'xc ',Vxc=V_xc)
      enddo
    enddo
    !

@@ -52,7 +52,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
  use parallel_int,   ONLY:PP_redux_wait
- use wrapper,        ONLY:M_by_V
+ use wrapper,        ONLY:M_by_V,V_dot_V
  use wrapper_omp,    ONLY:M_plus_alpha_M_omp
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use H_interfaces,   ONLY:V_real_space_to_H
@@ -73,13 +73,12 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  !
  integer      :: ik_bz,i_sp_pol,is,i1,i2,ik_mem,ir,i1_fl,i2_fl,i_t
  integer      :: i_fl,i_fks,i_shifted_fl,i1_fks,i2_fks,i_damping_fl
- integer      :: i1_extra,i_comb_extra,i_shift_comb_extra
+ integer      :: i1_extra,i_comb_extra,i_shift_comb_extra,fl_shifted_zero_mode
  complex(SP)  :: E_vec_pot(3),E_xc_pot(3)
  real(SP)     :: phase(fft_size)
  character(4) :: filename
- character(1) :: density_method
  complex(SP)  :: FL_V_bands_time(NL_bands(2),n_tot_extra_modes,maxval(E%nbf),QP_nk,n_sp_pol)
- complex(SP)  :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
+ real(SP)     :: FL_V_Hartree(fft_size,n_spin,n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  complex(SP)  :: FL_V_Hartree_KS_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),n_tot_extra_modes)
  real(SP)     :: FL_rho_at_t(fft_size)
@@ -94,141 +93,82 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 #endif
  !
  FKS_Sigma=cZERO
- density_method="T"
  !
- FL_V_Hartree = cZERO
+ FL_V_Hartree = rZERO
  FL_V_Hartree_KS = cZERO
  FL_V_Hartree_KS_time = cZERO
  !aim137 check - should I only allocate these variables if Corr != IPA ?
  !
- select case(density_method)
- case("F")
+ if (iter_num > 1) then
    !
-   if (iter_num > 1) then ! FL_delta_rho will be 0 in first iteration
+   if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
      !
-     if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
+     if((eval_HARTREE .or. eval_DFT) )then!.and. l_FL_conv_Chi) then
        !
-       if((eval_HARTREE .or. eval_DFT) .and. l_FL_conv_Chi) then
-         !
-         call FL_el_density(E,k,FL_delta_rho,FL_V_bands,NL_bands(1))
-         !
-         !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
-         !
-         FL_delta_rho(:,max_extra_mode+1) = &
-        &real(FL_delta_rho(:,max_extra_mode+1),SP) - rho_reference(:)
-         !
-         FL_delta_rho = FL_delta_rho * FL_beta + &
-        &               FL_delta_rho_hist * (1._SP-FL_beta)
-         !
-         FL_delta_rho_hist = FL_delta_rho
-         !
-         !aim137 prelim - find appropriate criterio to have Rho converged
-         !if (iter_num > 4) l_FL_conv_Rho = .true.
-       endif
+       call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
        !
-       if (eval_HARTREE) then
+       !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
+       do i_t=1,n_tot_extra_modes
          !
-         !print*, '>>>>Calculating V Hartree in iteration ',iter_num
-         do i1_extra=1,n_tot_extra_modes
-           !
-           call V_Hartree(FL_delta_rho(:,i1_extra),FL_V_Hartree(:,:,i1_extra))
-           !
-         enddo
+         call NL_build_valence_bands(E,FL_V_bands_time(:,i_t,:,:,:),VAL_BANDS,NL_bands(1))
          !
-       endif
+         call el_density_vbands(E,k,FL_delta_rho(:,i_t),VAL_BANDS)
+         !
+         !if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
+         !
+         FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
+         !
+         if (.not. l_Broyden_mixing) then
+           !
+           FL_res_rho_at_t = FL_delta_rho(:,i_t) &
+                         & - FL_delta_rho_hist(:,i_t)
+           !
+           if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
+           !
+           FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
+                               & FL_delta_rho_hist(:,i_t)
+           !
+         else
+           !
+           if (l_FL_precond) call FL_precondition(FL_delta_rho(:,i_t))
+           !
+           call FL_Broyden(FL_delta_rho(:,i_t),&
+           &               FL_delta_rho_hist(:,i_t),&
+           &               FL_beta,iter_num-1)
+           !
+         endif
+         !
+       enddo
+       !
+       !print*, iter_num, abs(V_dot_V(fft_size,&
+       !&       FL_delta_rho(:,2)-FL_delta_rho_hist(:,2),&
+       !&       FL_delta_rho(:,2)-FL_delta_rho_hist(:,2)))
+       !
+       FL_delta_rho_hist = FL_delta_rho
+       !
+       !aim137 prelim - find appropriate criterio to have Rho converged
+       !if (iter_num > 4) l_FL_conv_Rho = .true.
+     endif
+     !
+     if (eval_HARTREE) then
+       !
+       do i_t=1,n_tot_extra_modes
+         !
+         call V_Hartree(FL_delta_rho(:,i_t),FL_V_Hartree(:,:,i_t))
+         !
+         !print*, i_t-1, FL_V_Hartree(9,1,i_t), FL_V_Hartree(13,1,i_t), FL_V_Hartree(21,1,i_t)
+       enddo
        !
      endif
      !
-   else
-     !
-     if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = cZERO
-     if(allocated(FL_delta_rho)) FL_delta_rho = cZERO
-     !
    endif
    !
- case("T")
+ else
    !
-   FL_V_Hartree = cZERO
-   FL_V_Hartree_KS = cZERO
-   FL_V_Hartree_KS_time = cZERO
+   if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = rZERO
+   if(allocated(FL_delta_rho)) FL_delta_rho = rZERO
    !
-   if (iter_num > 1) then
-     !
-     if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
-       !
-       if((eval_HARTREE .or. eval_DFT) )then!.and. l_FL_conv_Chi) then
-         !
-         call FL_build_valence_bands(E,k,FL_V_bands,FL_V_bands_time)
-         !
-         !print*, '>>>>Calculating rho Hartree in iteration ',iter_num
-         do i_t=1,n_tot_extra_modes
-           !
-           call NL_build_valence_bands(E,FL_V_bands_time(:,i_t,:,:,:),VAL_BANDS,NL_bands(1))
-           !
-           call el_density_vbands(E,k,FL_rho_at_t,VAL_BANDS)
-           FL_delta_rho(:,i_t) = cZERO
-           FL_delta_rho(:,i_t) = FL_rho_at_t(:)
-           !
-           !if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
-           !
-           FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
-           !
-           if (.not. l_Broyden_mixing) then
-             !
-             FL_res_rho_at_t = real(FL_delta_rho(:,i_t),SP) &
-                           & - real(FL_delta_rho_hist(:,i_t),SP)
-             !
-             if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
-             !
-             FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
-                                 & FL_delta_rho_hist(:,i_t)
-             !
-           else
-             !
-             !this is not the residue, but just a real variable
-             !that goes inout into the Broyden mixer
-             FL_res_rho_at_t(:) = real(FL_delta_rho(:,i_t),SP) + rho_reference(:)
-             !
-             if (l_FL_precond) call FL_precondition(FL_res_rho_at_t)
-             !
-             call FL_Broyden(FL_res_rho_at_t,&
-             &               real(FL_delta_rho_hist(:,i_t),SP)+rho_reference(:),&
-             &               FL_beta,iter_num-1)
-             !
-             FL_delta_rho(:,i_t) = cZERO + FL_res_rho_at_t(:) - rho_reference(:)
-             !
-           endif
-           !
-         enddo
-         !
-         FL_delta_rho_hist = FL_delta_rho
-         !
-         !aim137 prelim - find appropriate criterio to have Rho converged
-         !if (iter_num > 4) l_FL_conv_Rho = .true.
-       endif
-       !
-       if (eval_HARTREE) then
-         !
-         do i_t=1,n_tot_extra_modes
-           !
-           call V_Hartree(FL_delta_rho(:,i_t),FL_V_Hartree(:,:,i_t))
-           FL_V_Hartree(:,:,i_t) = cZERO + real(FL_V_Hartree(:,:,i_t),SP)
-           !
-           !print*, i_t-1, FL_V_Hartree(9,1,i_t), FL_V_Hartree(13,1,i_t), FL_V_Hartree(21,1,i_t)
-         enddo
-         !
-       endif
-       !
-     endif
-     !
-   else
-     !
-     if(allocated(FL_delta_rho_hist)) FL_delta_rho_hist = cZERO
-     if(allocated(FL_delta_rho)) FL_delta_rho = cZERO
-     !
-   endif
-   !
- end select
+ endif
  !
  !
  ! Evaluate the G_lesser if using TD-SEX or TD-HF and than add COLLISIONS
@@ -375,25 +315,17 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
    !endif
    !aim137 DEBUG>
        !
-       select case(density_method)
-       case("F")
-         !
-         FL_V_Hartree_KS = FL_V_Hartree_KS_time
-         !
-       case("T")
-         !
-         FL_V_Hartree_KS = cZERO
-         !
-         do i1=NL_bands(1),NL_bands(2)
-           do i2=NL_bands(1),NL_bands(2)
-             !
-              call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_Mm1,&
-           &  n_tot_extra_modes,FL_V_Hartree_KS_time(i1,i2,:),1,cZERO,FL_V_Hartree_KS(i1,i2,:),1)
-             !
-           enddo
+       !
+       FL_V_Hartree_KS = cZERO
+       !
+       do i1=NL_bands(1),NL_bands(2)
+         do i2=NL_bands(1),NL_bands(2)
+           !
+            call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_Mm1,&
+         &  n_tot_extra_modes,FL_V_Hartree_KS_time(i1,i2,:),1,cZERO,FL_V_Hartree_KS(i1,i2,:),1)
+           !
          enddo
-         !
-       end select
+       enddo
        !
        !
        do i1=NL_bands(1),NL_bands(2)

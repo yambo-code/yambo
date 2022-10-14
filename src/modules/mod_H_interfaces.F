@@ -37,8 +37,8 @@ module H_interfaces
      complex(SP),  intent(inout)           :: H(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
      type(WAVEs),  intent(in)              :: WF
      character(*), intent(in)              :: V_kind
-     complex(SP),  intent(in), optional    :: V(fft_size,n_spin)
-     complex(SP),  intent(in), optional    :: Vxc(fft_size,n_spin)
+     real(SP),     intent(in), optional    :: V(fft_size,n_spin)
+     real(SP),     intent(in), optional    :: Vxc(fft_size,n_spin)
    end subroutine
    !
  end interface

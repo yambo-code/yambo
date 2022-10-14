@@ -46,8 +46,8 @@ module fl_optics
  real(SP),    allocatable :: FL_eigenvalues(:,:,:)
  real(SP),    allocatable :: FL_QE(:,:,:),FL_QE_hist(:,:,:),FL_ac_phase(:,:,:)
  real(SP),    allocatable :: FL_Ho_lift_degeneracy(:,:,:) ! Lift degeneracy in unperturbed H
- complex(SP), allocatable :: FL_delta_rho(:,:)
- complex(SP), allocatable :: FL_delta_rho_hist(:,:)
+ real(SP),    allocatable :: FL_delta_rho(:,:)
+ real(SP),    allocatable :: FL_delta_rho_hist(:,:)
  real(SP),    allocatable :: FL_beta
  complex(SP), allocatable :: FL_dG_time(:,:,:,:)  ! Density matrix at different time steps
  complex(SP), allocatable :: FL_dG(:,:,:,:)  ! Density matrix at different Floquet modes

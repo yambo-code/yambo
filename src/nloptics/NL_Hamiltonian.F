@@ -29,7 +29,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
- use electrons,      ONLY:levels,n_sp_pol,n_spin
+ use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:rho_n,H_nl_sc,V_hartree_sc,V_xc_sc
@@ -66,7 +66,6 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
  integer     :: ik,i_sp_pol,is,i1,ik_mem
  complex(SP) :: E_vec_pot(3),E_xc_pot(3)
- complex(SP) :: cmplx_V_hartree_sc(fft_size,n_spin)
  real :: alpha_
  !
 #if defined _TIMING
@@ -83,8 +82,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif
    !
-   if(eval_HARTREE) call V_Hartree(cmplx(rho_n-rho_reference,KIND=SP),cmplx_V_hartree_sc)
-   V_hartree_sc = real(cmplx_V_hartree_sc,SP)
+   if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
    !
    ! I reconstruct the full density if necessary because both TDDFT 
    ! and JGM are not linear in rho_n and require the full density
@@ -202,10 +200,9 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    if(Correlation/=IPA.and.(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE)) then
      !  
      if (eval_Hartree.and.(eval_DFT.or.Correlation==JGM)) then
-       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def+xc',&
-          & cmplx(V_hartree_sc,KIND=SP),cmplx(V_xc_sc,KIND=SP))
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def+xc',V_hartree_sc,V_xc_sc)
      elseif(eval_Hartree.and.(.not.eval_DFT.and..not.Correlation==JGM)) then
-       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def',cmplx(V_hartree_sc,KIND=SP))
+       call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WF,'def',V_hartree_sc)
      endif
      !
    endif

@@ -113,6 +113,8 @@ module EXCPH
  ! Excitonic occupations
  !
  real(SP), allocatable :: EXC_occ(:,:)
+ integer  :: ID_occ,ID_occ_obj
+ real(SP), allocatable :: EXC_occ_DbGd(:,:)
  !
  contains
    !      

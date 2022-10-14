@@ -55,7 +55,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e
  character(schlen)   :: headers(n_output)
  integer             :: iw,iq,i_alpha,max_filling,EXC_n_sum,i_beta
- integer, allocatable:: EXC_states(:)
+ integer, allocatable:: EXC_indexes(:)
  character(schlen)   :: dbgd_string
  type(levels)        :: E_QF
  !
@@ -100,17 +100,18 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    call OCCUPATIONS_Quasi_Fermi(E,k,E_QF,E_fermi_h,E_fermi_e)
    EXC_n_sum=EXCPH_sum(2)-EXCPH_sum(1)+1
    YAMBO_ALLOC(EXC_occ,(EXC_n_sum,q%nibz))
-   YAMBO_ALLOC(EXC_states,(EXC_n_sum))
+   YAMBO_ALLOC(EXC_indexes,(EXC_n_sum))
+   if(.not.allocated(q%k_table))  call k_build_up_BZ_tables(q)   
    if(EXCPH_sum(1)/=1) call error("This part of the code does not work for ELPhExcSum(1)/=1")
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
-      EXC_states(i_beta)=i_beta 
+      EXC_indexes(i_beta)=i_beta 
    enddo
  endif
  !
  do iq=1,q%nibz
    if(nel_cond/=rZERO) then
      call EXCPH_load_L(iq,X,'load','Lout')
-     call EXC_occupations(E_QF,k,q,iq,EXC_n_sum,EXC_states,EXC_occ(:,iq))
+     call EXC_occupations(E_QF,k,q,iq,EXC_n_sum,EXC_indexes,EXC_occ(:,iq))
    else
      call EXCPH_load_L(iq,X,'eigenvalues','Lout')
    endif

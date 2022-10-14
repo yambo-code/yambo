@@ -59,7 +59,7 @@ subroutine electrons_bands(Xk,Xen)
  ! Work Space
  !
  type(levels)          :: GRID_E,CIRCUIT_E,CIRCUIT_dE,E_QF
- integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib,ID_occ,ik
+ integer               :: ID_spin,ID_magn,ID_bands(3),IDs(5),nfiles(5),nqnt,ib,ID_occ,ik,prt_occ
  real(SP)              :: dEf,E_fermi_e,E_fermi_h,E_h,E_e
  logical               :: BANDS_built_in,BANDS_interpolated,GRID_interpolate
 #if defined _YPP_SC
@@ -233,8 +233,11 @@ subroutine electrons_bands(Xk,Xen)
  if (BANDS_interpolated.and.BANDS_from_db)  call plot_interpolated_values &
 &   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:1),   BANDS_bands,1,   nfiles(1:1),   "from_DB",     "bands",0)
  !
+ prt_occ=0
+ if(nel_cond/=rZERO) prt_occ=1
+ !
  if(BANDS_interpolated                   )  call plot_interpolated_values &
-&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",1)
+&   (Xk,Xen,dEf,CIRCUIT_k,IDs(1:nqnt),BANDS_bands,nqnt,nfiles(1:nqnt),"interpolated","bands",prt_occ)
  !
  if (l_PROJECT_plane) call PROJECTION_plot( "BANDS", 1, n_spin, BANDS_bands, OBS_B=GRID_E%E ) 
  !

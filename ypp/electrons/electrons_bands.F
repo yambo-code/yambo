@@ -203,7 +203,7 @@ subroutine electrons_bands(Xk,Xen)
  ! Generate excited states occupations
  if(nel_cond/=rZERO.and.BANDS_steps> 0) then
    !
-   call INTERPOLATION_driver_seed("SCporj",ID_occ,BANDS_bands,SEED_k=Xk,SEED_E=Xen)
+   call INTERPOLATION_driver_seed("OCCinterp",ID_occ,BANDS_bands,SEED_k=Xk,SEED_E=Xen)
    YAMBO_ALLOC(INTERP_obj(ID_occ)%INTERP,(BANDS_bands(1):BANDS_bands(2),CIRCUIT_k%nibz,INTERP_obj(ID_occ)%D))
    INTERP_obj(ID_occ)%INTERP=rZERO
    !

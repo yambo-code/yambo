@@ -29,6 +29,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  use pars,           ONLY:SP,cZERO,schlen,rZERO
  use electrons,      ONLY:levels,nel_cond,E_reset
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
+ use D_lattice,      ONLY:Boltz_Temp
  use X_m,            ONLY:X_t
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in,   &
@@ -106,6 +107,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    do i_beta=EXCPH_sum(1),EXCPH_sum(2)
       EXC_indexes(i_beta)=i_beta 
    enddo
+   if(Boltz_Temp/=rZERO) call warning('Excitonic Occupation, EXCTemp ignored, use ElecTemp!')
  endif
  !
  do iq=1,q%nibz

@@ -41,7 +41,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
-
+ use EXCPH,         ONLY:alphaQ
  !
 #include<memory.h> 
  !
@@ -99,6 +99,13 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    !   
    YAMBO_ALLOC(BSE_interp_E,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
+   !
+   if(alphaQ/=rZERO) then
+     call msg('rs','Excitonic bands stretching :',alphaQ)
+      do iq=1,CIRCUIT_k%nibz
+        BSE_interp_E(:,iq)=BSE_interp_E(:,iq)+alphaQ*iku_v_norm(CIRCUIT_k%pt(iq,:3))
+      enddo
+   endif
    !
    if(l_exc_occ_interp) then
      YAMBO_ALLOC(EXC_occ_interp,(EXCITONS_n_user_states,CIRCUIT_k%nibz))      

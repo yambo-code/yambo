@@ -27,6 +27,7 @@ module EXCPH
  use BS_solvers,     ONLY:BSS_n_eig
  use BS,             ONLY:BS_H_dim
  use ELPH,           ONLY:ph_modes
+ use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
@@ -94,7 +95,9 @@ module EXCPH
  !
  integer  :: ID_EXC,ID_EXC_obj
  real(SP) :: min_EXC_E_DbGd
+ integer  :: min_pos_E_DbGd(1)
  real(SP), allocatable :: EXC_E_DbGd(:,:)
+ type(bz_samp) :: q_DbGd 
  !
  ! Life Times
  !

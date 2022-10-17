@@ -27,15 +27,17 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,cZERO,schlen,rZERO
+ use vec_operate,    ONLY:iku_v_norm,c2a
  use electrons,      ONLY:levels,nel_cond,E_reset
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use D_lattice,      ONLY:Boltz_Temp
  use X_m,            ONLY:X_t
  use com,            ONLY:msg,of_open_close
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in,   &
-&                         BS_R_left,BS_R_right,BS_R,BSE_alloc,BSE_free,EXC_occ,                &
-&                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,     &
-&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
+&                         BS_R_left,BS_R_right,BS_R,BSE_alloc,BSE_free,EXC_occ,alphaQ,q_DbGd,  &
+&                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,EXC_E_DbGd,  &
+&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free, &
+&                         min_EXC_E_DbGd,min_pos_E_DbGd
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use BS_solvers,     ONLY:BSS_eh_table,BSS_alloc,BSS_free
  use BS,             ONLY:BSE_prop,BS_dip_size
@@ -53,11 +55,12 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=7
- real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e
+ real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e,v(3)
  character(schlen)   :: headers(n_output)
  integer             :: iw,iq,i_alpha,max_filling,EXC_n_sum,i_beta
  integer, allocatable:: EXC_indexes(:)
  character(schlen)   :: dbgd_string
+ character(schlen) :: q_point 
  type(levels)        :: E_QF
  !
  call section('*','EXCPH-Optics')
@@ -148,6 +151,27 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  call FREQUENCIES_setup(wv)
  YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,3))
  YAMBO_ALLOC(PL_ii,(wv%n_freqs,3))
+ !
+ ! Band structure distortion
+ !
+ if(alphaQ/=rZERO) then
+   call msg('rs','Excitonic bands stretching :',alphaQ)
+   do iq=1,q%nibz
+      BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_norm(q%pt(iq,:3))
+   enddo
+   if(use_PH_DbGd) then
+      do iq=1,q_DbGd%nibz
+         EXC_E_DbGd(:,iq)=EXC_E_DbGd(:,iq)+alphaQ*iku_v_norm(q_DbGd%pt(iq,:3))
+      enddo
+       min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
+       min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
+       call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
+       call msg('rs','NEW!!! Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
+       write(q_point,'(3f12.6,a)') v(:),' [rlu] '
+       call msg('rs','NEW!!!! Minimum q-point in the DbGrid : '//q_point)
+   endif
+ endif
+ !
  !
  ! Calculate X(w) include phonon assisted transitions
  !

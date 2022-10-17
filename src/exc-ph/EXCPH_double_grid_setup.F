@@ -36,7 +36,7 @@ subroutine EXCPH_double_grid_setup(q)
  use interpolate,    ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
  use EXCPH,          ONLY:min_EXC_E_DbGd,ID_EXC,ID_EXC_obj,EXC_E_DbGd,EXCPH_sum,BS_all_E, &
-&                         EXC_occ,ID_occ,ID_occ_obj,EXC_occ_DbGd
+&                         EXC_occ,ID_occ,ID_occ_obj,EXC_occ_DbGd,q_DbGd,min_pos_E_DbGd
  use com,            ONLY:msg
  !
 #include<memory.h>
@@ -45,9 +45,7 @@ subroutine EXCPH_double_grid_setup(q)
  !
  ! Work space
  !
- type(bz_samp) :: q_DbGd
  integer  :: io_err,ID_DG
- integer  :: min_pos_E_DbGd(1)
  real(SP) :: v(3)
  character(schlen) :: q_point
  integer, external   :: io_Double_Grid

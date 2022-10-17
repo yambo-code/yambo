@@ -27,7 +27,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  use units,          ONLY:HA2EV
  use pars,           ONLY:SP,cZERO,schlen,rZERO
- use vec_operate,    ONLY:iku_v_norm,c2a
+ use vec_operate,    ONLY:iku_v_2D_norm,c2a
  use electrons,      ONLY:levels,nel_cond,E_reset
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
  use D_lattice,      ONLY:Boltz_Temp
@@ -157,11 +157,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  if(alphaQ/=rZERO) then
    call msg('rs','Excitonic bands stretching :',alphaQ)
    do iq=1,q%nibz
-      BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_norm(q%pt(iq,:3))
+      BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_2D_norm(q%pt(iq,:3))
    enddo
    if(use_PH_DbGd) then
       do iq=1,q_DbGd%nibz
-         EXC_E_DbGd(:,iq)=EXC_E_DbGd(:,iq)+alphaQ*iku_v_norm(q_DbGd%pt(iq,:3))
+         EXC_E_DbGd(:,iq)=EXC_E_DbGd(:,iq)+alphaQ*iku_v_2D_norm(q_DbGd%pt(iq,:3))
       enddo
        min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
        min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))

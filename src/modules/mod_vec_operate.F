@@ -103,6 +103,29 @@ module vec_operate
      !
    end function iku_v_norm
    !
+   real(SP) function iku_v_2D_norm(v,inside_bz)
+     !
+     ! shifted in the BZ if inside_bz is set to true, ak2bz=|k|
+     !
+     use D_lattice,      ONLY:alat
+     real(SP), intent(in)           :: v(3)
+     logical,  intent(in), optional :: inside_bz
+     !
+     real(SP) :: u(3)
+     logical  :: inside_bz_
+     !
+     inside_bz_=.false.
+     if(present(inside_bz)) inside_bz_=inside_bz
+     !
+     u(:)=v(:)
+     if(inside_bz_) call k2bz(v_in=u)
+     !
+     u(1:2)=u(1:2)*2._SP*pi/alat(1:2)
+     iku_v_2D_norm=sqrt(dot_product(u(1:2),u(1:2)))
+     !
+   end function iku_v_2D_norm
+
+   !
    real(SP) function rlu_v_norm(k,inside_bz) 
      !
      ! Input k is rlu 

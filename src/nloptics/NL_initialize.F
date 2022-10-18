@@ -160,6 +160,8 @@ subroutine NL_initialize(E,k)
  !
  if(n_active_fields==0) call error('Not valid external field present!')
  !
+ call msg('s','[NL] Number of active fields : ',n_active_fields)
+ !
  if(n_active_fields>1.or.all(NL_er<0._SP)) then
    l_pump_and_probe=.true.
    l_NE_with_fields=.true.

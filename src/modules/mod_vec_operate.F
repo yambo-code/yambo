@@ -121,7 +121,8 @@ module vec_operate
      if(inside_bz_) call k2bz(v_in=u)
      !
      u(1:2)=u(1:2)*2._SP*pi/alat(1:2)
-     iku_v_2D_norm=sqrt(dot_product(u(1:2),u(1:2)))
+     u(3)=0._SP
+     iku_v_2D_norm=sqrt(dot_product(u,u))
      !
    end function iku_v_2D_norm
 

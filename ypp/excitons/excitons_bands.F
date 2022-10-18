@@ -37,7 +37,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
  use parser_m,      ONLY:parser
  use com,           ONLY:msg,of_open_close
  use stderr,        ONLY:intc
- use vec_operate,   ONLY:iku_v_2D_norm
+ use vec_operate,   ONLY:iku_v_2D_norm,iku_v_norm
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index

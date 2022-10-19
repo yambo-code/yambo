@@ -153,7 +153,9 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel_cond,verb_level=V_general)
  call it(defs,'ExcMin' ,'Minimum excitonic energy',EXC_min,unit=E_unit,verb_level=V_general)
  call it(defs,'EXCTemp','Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit,verb_level=V_general)
+#if defined _YPP_ELPH
  call it(defs,'AlphaQ',"Distortion of excitonic dispersion E'(Q)=E(Q)+\alpha*|Q| ",alphaQ,verb_level=V_general)
+#endif
  !
  ! DOS
  !

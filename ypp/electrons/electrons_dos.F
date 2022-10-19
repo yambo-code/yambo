@@ -49,9 +49,10 @@ subroutine electrons_dos(Xk,Xen)
  real(SP), external    :: RIntegrate
  real(SP), allocatable :: el_dos(:,:,:)
  real(SP), pointer     :: spin_fac(:,:,:) => null()
+ real(SP), pointer     :: magn_fac(:,:,:) => null()
  real(SP), pointer     :: pdos_fac(:,:,:) => null()
  integer               :: i_E,i_f,N_files,N_grid_files,ival,is,ib,ik,ikbz,ID_E,ID_f, &
- &                        ID_spin,ID_pdos,ik_path,n_t
+ &                        ID_spin,ID_magn,ID_pdos,ik_path,n_t
  character(schlen)     :: base_fname,titles(DOS_bands(2)+4)
  logical               :: l_DbGd
  type(levels)          :: GRID_E
@@ -102,6 +103,8 @@ subroutine electrons_dos(Xk,Xen)
  if (n_spinor==2) then
    YAMBO_ALLOC_P(spin_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,n_spinor))
    call electrons_spin_factors((/1,Xk%nibz/),DOS_bands,spin_fac)
+   YAMBO_ALLOC_P(magn_fac,(DOS_bands(1):DOS_bands(2),Xk%nibz,3))
+   call electrons_magn_factors((/1,Xk%nibz/),DOS_bands,magn_fac)
  endif
  !
  if (.not.l_PROJECT_line) then
@@ -137,10 +140,14 @@ subroutine electrons_dos(Xk,Xen)
    endif
    !
    ID_spin=0
+   ID_magn=0
    if (n_spinor==2) then
      N_grid_files=N_grid_files+2
      call INTERPOLATION_driver_seed("SPIN_factors_on_built_in",ID_spin,DOS_bands,Xk,SEED_R3=spin_fac)
      call INTERPOLATION_driver_do("SPIN_factors_on_built_in",ID_spin,GRID_k)
+     N_grid_files=N_grid_files+3
+     call INTERPOLATION_driver_seed("MAGN_factors_on_built_in",ID_magn,DOS_bands,Xk,SEED_R3=magn_fac)
+     call INTERPOLATION_driver_do("MAGN_factors_on_built_in",ID_magn,GRID_k)
    endif
    !
    do i_f=1,N_grid_files
@@ -151,12 +158,15 @@ subroutine electrons_dos(Xk,Xen)
      !
      if (i_f==1) base_fname="Egrid"
      if (i_f>=2) base_fname="Sgrid"
-     if (i_f==3) base_fname="Sgrid"
+     if (i_f>=4) base_fname="Mgrid"
      !
      output_fname=trim(base_fname)
      !
      if (i_f==2) output_fname=trim(base_fname)//"_spin-up"
      if (i_f==3) output_fname=trim(base_fname)//"_spin-dn"
+     if (i_f==4) output_fname=trim(base_fname)//"_Mx"
+     if (i_f==5) output_fname=trim(base_fname)//"_My"
+     if (i_f==6) output_fname=trim(base_fname)//"_Mz"
      if (n_sp_pol==2.and.is==1) output_fname=trim(base_fname)//"_spin-up"
      if (n_sp_pol==2.and.is==2) output_fname=trim(base_fname)//"_spin-dn"
      !
@@ -179,7 +189,8 @@ subroutine electrons_dos(Xk,Xen)
        values(1)=real(ik,SP)
        ival=DOS_bands(2)-DOS_bands(1)
        if (i_f==1) values(5:ival+5)=GRID_E%E(DOS_bands(1):DOS_bands(2),ik,is)*HA2EV
-       if (i_f>=2) values(5:ival+5)=INTERP_obj(ID_spin)%INTERP(DOS_bands(1):DOS_bands(2),ik,i_f-1)
+       if (i_f>=2.and.i_f<=3) values(5:ival+5)=INTERP_obj(ID_spin)%INTERP(DOS_bands(1):DOS_bands(2),ik,i_f-1)
+       if (i_f>=4           ) values(5:ival+5)=INTERP_obj(ID_magn)%INTERP(DOS_bands(1):DOS_bands(2),ik,i_f-3)
        call msg('o '//trim(base_fname),' ',values(:ival+5),INDENT=0,USE_TABS=.true.)
      enddo
      !

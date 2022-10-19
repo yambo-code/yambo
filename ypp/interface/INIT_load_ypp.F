@@ -28,7 +28,7 @@ subroutine INIT_ypp_load(defs)
 &                        Time_unit,Bfield_unit,V_real_time,T_unit,V_nl_optics,V_io,V_sc
  use wave_func,     ONLY:wf_ng
  use LIVE_t,        ONLY:nhash
- use D_lattice,     ONLY:Tel,Bose_Temp
+ use D_lattice,     ONLY:Tel,Bose_Temp,Boltz_Temp
  use R_lattice,     ONLY:BZ_FineGd_mode
  use electrons,     ONLY:n_spinor,nel_cond
  use interpolate,   ONLY:INTERP_shell_factor,INTERP_mode,NN_n_of_nearest
@@ -36,7 +36,7 @@ subroutine INIT_ypp_load(defs)
 &                        BZ_FineGd_nkpts_to_use,BZ_random_nkpts,CIRCUIT_E_DB_path,coo_in,coo_out,current_dir,&
 &                        deg_energy,BANDS_steps,DOS_bands,DOS_broadening,PROJECT_path,QP_DB_to_expand,&
 &                        DOS_E_range,DOS_E_steps,EXCITON_E_treshold,EXCITON_Res_treshold,EXCITON_weight_treshold,&
-&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,&
+&                        INTERP_grid,mag_dir,N_path_pts,ncell,p_dir,p_format,PDOS_atoms,EXC_min,&
 &                        PDOS_j,PDOS_wfcs,PDOS_kinds,PDOS_l,PDOS_m,perturbative_SOC_path,PtsPath,r_hole,seed_name,&
 &                        SOC_bands_buffer,SOC_bands_to_map,SOC_split,state_ctl,AVE_exc,BSiq_via_command_line,&
 &                        WF_multiplier,WF_ref,what_to_write,BSiq,PROJECT_mode,PROJECT_N_perp,PROJECT_steps,PROJECT_threshold,&
@@ -58,6 +58,7 @@ subroutine INIT_ypp_load(defs)
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
  use ELPH,          ONLY:EkplusQ_mode
+ use EXCPH,         ONLY:alphaQ
 #endif
  !
  implicit none
@@ -147,9 +148,14 @@ subroutine INIT_ypp_load(defs)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
  !
- ! Electrons
+ ! Electrons/Exciton Occupations
  ! 
  call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel_cond,verb_level=V_general)
+ call it(defs,'ExcMin' ,'Minimum excitonic energy',EXC_min,unit=E_unit,verb_level=V_general)
+ call it(defs,'EXCTemp','Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit,verb_level=V_general)
+#if defined _YPP_ELPH
+ call it(defs,'AlphaQ',"Distortion of excitonic dispersion E'(Q)=E(Q)+\alpha*|Q| ",alphaQ,verb_level=V_general)
+#endif
  !
  ! DOS
  !

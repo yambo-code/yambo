@@ -27,6 +27,7 @@ module EXCPH
  use BS_solvers,     ONLY:BSS_n_eig
  use BS,             ONLY:BS_H_dim
  use ELPH,           ONLY:ph_modes
+ use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
@@ -94,7 +95,9 @@ module EXCPH
  !
  integer  :: ID_EXC,ID_EXC_obj
  real(SP) :: min_EXC_E_DbGd
+ integer  :: min_pos_E_DbGd(1)
  real(SP), allocatable :: EXC_E_DbGd(:,:)
+ type(bz_samp) :: q_DbGd 
  !
  ! Life Times
  !
@@ -109,6 +112,13 @@ module EXCPH
  logical       :: l_DbGd_WEIGHTs ! Double-Grid for Satellite weights
  logical       :: l_DbGd_PH_only ! Double-Grid only for phonon energies
  logical       :: l_no_matrix_elements  ! Set EXC-PH matrix elements to 1 (in lifetime and satellites)
+ !
+ ! Excitonic occupations
+ !
+ real(SP), allocatable :: EXC_occ(:,:)
+ integer  :: ID_occ,ID_occ_obj
+ real(SP), allocatable :: EXC_occ_DbGd(:,:)
+ real(SP) :: alphaQ
  !
  contains
    !      

@@ -25,16 +25,18 @@
 !
 subroutine EXCPH_double_grid_setup(q)
  !       
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen,SP,rZERO
  use vec_operate,    ONLY:c2a
  use units,          ONLY:HA2EV
+ use electrons,      ONLY:nel_cond
  use R_lattice,      ONLY:bz_samp,bz_samp_reset
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use ELPH,           ONLY:PH_freqs,use_PH_DbGd,ph_modes,E_kpq_sh_fact
  use interpolate,    ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
 &                        INTERPOLATE_is_quiet,INTERPOLATION_BZ
- use EXCPH,          ONLY:min_EXC_E_DbGd,ID_EXC,ID_EXC_obj,EXC_E_DbGd,EXCPH_sum,BS_all_E
+ use EXCPH,          ONLY:min_EXC_E_DbGd,ID_EXC,ID_EXC_obj,EXC_E_DbGd,EXCPH_sum,BS_all_E, &
+&                         EXC_occ,ID_occ,ID_occ_obj,EXC_occ_DbGd,q_DbGd,min_pos_E_DbGd
  use com,            ONLY:msg
  !
 #include<memory.h>
@@ -43,9 +45,7 @@ subroutine EXCPH_double_grid_setup(q)
  !
  ! Work space
  !
- type(bz_samp) :: q_DbGd
  integer  :: io_err,ID_DG
- integer  :: min_pos_E_DbGd(1)
  real(SP) :: v(3)
  character(schlen) :: q_point
  integer, external   :: io_Double_Grid
@@ -78,7 +78,7 @@ subroutine EXCPH_double_grid_setup(q)
  ID_EXC_obj=1
  ID_EXC    =1
  call INTERPOLATION_BZ_setup(q)
- INTERP_obj(ID_EXC_obj)%what="EXC_E(k+q)"
+ INTERP_obj(ID_EXC_obj)%what="EXC_E(Q)"
  call INTERPOLATION_coefficients(R1D=BS_all_E(:EXCPH_sum(2),:),k=q,NK=q%nibz,ID=ID_EXC,ID_obj=ID_EXC_obj)
  !
  call bz_samp_reset(q_DbGd)
@@ -95,5 +95,15 @@ subroutine EXCPH_double_grid_setup(q)
  call msg('rs','Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
  write(q_point,'(3f12.6,a)') v(:),' [rlu] '
  call msg('rs','Minimum q-point in the DbGrid : '//q_point)
+ !
+ if(nel_cond/=rZERO) then
+   ID_occ_obj=2
+   ID_occ    =2
+   INTERP_obj(ID_occ_obj)%what="EXC_occ(Q)"
+   call INTERPOLATION_coefficients(R1D=EXC_occ(:EXCPH_sum(2),:),k=q,NK=q%nibz,ID=ID_occ,ID_obj=ID_occ_obj)
+   YAMBO_ALLOC(EXC_occ_DbGd,(EXCPH_sum(2),q_DbGd%nibz))
+   call INTERPOLATION_BZ(K=q_DbGd,NK=q_DbGd%nibz,ID=ID_occ,R1D=EXC_occ_DbGd)
+   call msg('rs','Excitonic occupation interpolated on the Double-Grid')
+ endif
  !
 end subroutine

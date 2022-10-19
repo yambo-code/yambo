@@ -456,8 +456,10 @@ subroutine INIT_activate()
  !
  if (l_EXCPH_gkkp)     call initactivate(1,'ELPhExcStates ELPhExcSum ExcPhKind LoutPath FANdEtresh EkpqShFact LDamping')
  if (l_EXCPH_lifetime) call initactivate(1,'BoseTemp ElPhModes EXCTemp NoMatrxEl')
- if (l_EXCPH_optics)  &
-&   call initactivate(1,'BoseTemp ElPhModes EXCTemp EXCLongDr PLqres DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+ if (l_EXCPH_optics)  then
+   call initactivate(1,'EXCTemp AlphaQ PLqres DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+   call initactivate(1,'DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+ endif
  !
 #endif
  !

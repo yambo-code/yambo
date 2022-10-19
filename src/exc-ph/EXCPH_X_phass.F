@@ -42,7 +42,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV,HA2CMm1
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,EXC_occ,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
 &                        EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,l_DbGd_WEIGHTs
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs_sq
@@ -52,8 +52,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
- use parser_m,       ONLY:parser
- use com,            ONLY:msg,of_open_close
+ use electrons,     ONLY:nel_cond
+ use parser_m,      ONLY:parser
+ use com,           ONLY:msg,of_open_close
  !
 #include<memory.h>
  !
@@ -64,7 +65,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,PH_E
+ real(SP)      :: min_E,exc_E,PH_E,occ_fact
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: iq_db,iq_ibz
  integer       :: elph_branches_save(2)
@@ -250,8 +251,15 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_E_in(i_alpha)-min_E
      pole =BS_E_in(i_alpha)          
+     !
+     if(nel_cond/=rZERO) then
+       occ_fact=EXC_occ(i_alpha,1)
+     else
+       occ_fact=boltzman_f(exc_E)
+     endif
+     !
      PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**3*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
-&                                      /(W-pole)*boltzman_f(exc_E)
+&                                      /(W-pole)*occ_fact
      !
    enddo
    !

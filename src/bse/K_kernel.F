@@ -103,7 +103,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: load_O_X,l_bs_corr,l_load_WFs
+ logical    :: load_O_X,l_bs_corr,l_load_WFs,l_matrix_init
  !
  ! I/O
  !
@@ -280,6 +280,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! iHxc=1 --> K_H=v
  ! iHxc=2 --> K_TDDFT=fxc
  ! iHxc=3 --> K_c=W
+ !
+ l_matrix_init=.true.
  !
  do iHxc=1,3
  !
@@ -659,11 +661,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (mode_now=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*BS_blk(i_block)%mat(i_Tk,i_Tp)
+       BS_mat_tmp=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (mode_now=="C") BS_mat_tmp= cI*BS_mat_tmp
        !
-       if (iHxc==1) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_mat_tmp
-       if (iHxc>=2) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_blk(i_block)%mat(i_Tk,i_Tp)+BS_mat_tmp
+       if (     l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_mat_tmp
+       if (.not.l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_blk(i_block)%mat(i_Tk,i_Tp)+BS_mat_tmp
        !
        if (iHxc==3) BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
@@ -724,6 +726,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (l_load_WFs) call WF_free(WF,keep_states_to_load=iHxc<3)
+ !
+ l_matrix_init=.false.
  !
  enddo ! iHxc loop
  !

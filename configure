@@ -680,7 +680,6 @@ CUDA_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
-GAMMA_ONLY_check
 DP_check
 CUDA_FLAGS
 def_cuda
@@ -856,8 +855,6 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
-def_gamma_only
-enable_gamma_only
 build_precision
 def_dp
 enable_dp
@@ -917,7 +914,6 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
-enable_gamma_only
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1649,7 +1645,6 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
-  --enable-gamma-only     Gamma only build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -3414,20 +3409,6 @@ def_dp=""
 if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 
-
-
-#
-# ============================================================================
-# VERSION for gamma only case
-# Check whether --enable-gamma_only was given.
-if test ${enable_gamma_only+y}
-then :
-  enableval=$enable_gamma_only;
-fi
-
-def_gamma_only=""
-if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
-if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
 
 
 #
@@ -5633,14 +5614,7 @@ printf "%s\n" "#define realloc rpl_realloc" >>confdefs.h
 fi
 
 
-if test ${ac_cv_func_setvbuf_reversed+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_cv_func_setvbuf_reversed=no
-fi
-
-
+# AC_FUNC_SETVBUF_REVERSE # This is reported as obsolete
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether lstat correctly handles trailing slash" >&5
 printf %s "checking whether lstat correctly handles trailing slash... " >&6; }
 if test ${ac_cv_func_lstat_dereferences_slashed_symlink+y}
@@ -9523,7 +9497,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
 
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -9882,7 +9856,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -10090,7 +10064,7 @@ fi
 
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -10667,7 +10641,7 @@ fi
 #
 enable_yambopy="no"
 #
-# AC_ARG_ENABLE(yambopy, AC_HELP_STRING([--enable-yambopy],[Activate the Yambo PY project]))
+# AC_ARG_ENABLE(yambopy, AS_HELP_STRING([--enable-yambopy],[Activate the Yambo PY project]))
 #
 if test "x$enable_ydb" = "xyes"; then
  #
@@ -15736,9 +15710,6 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
-GAMMA_ONLY_check="-"
-if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
-#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -15917,7 +15888,6 @@ if test "$hdf5" = "yes" ; then
   fi
 fi
 #
-
 
 
 

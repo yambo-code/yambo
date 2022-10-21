@@ -23,29 +23,19 @@
 #
 AC_DEFUN([AC_PETSC_SLEPC_SETUP],[
 #
-AC_ARG_ENABLE(slepc_linalg,   AC_HELP_STRING([--enable-slepc-linalg],         [Enable suport for the diagonalization of BSE using SLEPC. Default is no]))
+AC_ARG_ENABLE(slepc_linalg,   AS_HELP_STRING([--enable-slepc-linalg],[Enable suport for the diagonalization of BSE using SLEPC. Default is no]))
 #
-AC_ARG_WITH(slepc_libs,AC_HELP_STRING([--with-slepc-libs=<libs>],
-            [Use Slepc libraries <libs>],[32]))
-AC_ARG_WITH(slepc_incs,AC_HELP_STRING([--with-slepc-incs=<incs>],
-            [Use Slepc includes <incs>],[32]))
-AC_ARG_WITH(slepc_path, AC_HELP_STRING([--with-slepc-path=<path>],
-            [Path to the Slepc install directory],[32]),[],[])
-AC_ARG_WITH(slepc_libdir,AC_HELP_STRING([--with-slepc-libdir=<path>],
-            [Path to the Slepc lib directory],[32]))
-AC_ARG_WITH(slepc_includedir,AC_HELP_STRING([--with-slepc-includedir=<path>],
-            [Path to the Slepc include directory],[32]))
+AC_ARG_WITH(slepc_libs,AS_HELP_STRING([--with-slepc-libs=<libs>],[Use Slepc libraries <libs>],[32]))
+AC_ARG_WITH(slepc_incs,AS_HELP_STRING([--with-slepc-incs=<incs>],[Use Slepc includes <incs>],[32]))
+AC_ARG_WITH(slepc_path, AS_HELP_STRING([--with-slepc-path=<path>],[Path to the Slepc install directory],[32]),[],[])
+AC_ARG_WITH(slepc_libdir,AS_HELP_STRING([--with-slepc-libdir=<path>],[Path to the Slepc lib directory],[32]))
+AC_ARG_WITH(slepc_includedir,AS_HELP_STRING([--with-slepc-includedir=<path>],[Path to the Slepc include directory],[32]))
 #
-AC_ARG_WITH(petsc_libs,AC_HELP_STRING([--with-petsc-libs=<libs>],
-            [Use Petsc libraries <libs>],[32]))
-AC_ARG_WITH(petsc_incs,AC_HELP_STRING([--with-petsc-incs=<incs>],
-            [Use Petsc includes <incs>],[32]))
-AC_ARG_WITH(petsc_path, AC_HELP_STRING([--with-petsc-path=<path>],
-            [Path to the Petsc install directory],[32]),[],[])
-AC_ARG_WITH(petsc_libdir,AC_HELP_STRING([--with-petsc-libdir=<path>],
-            [Path to the Petsc lib directory],[32]))
-AC_ARG_WITH(petsc_includedir,AC_HELP_STRING([--with-petsc-includedir=<path>],
-            [Path to the Petsc include directory],[32]))
+AC_ARG_WITH(petsc_libs,AS_HELP_STRING([--with-petsc-libs=<libs>],[Use Petsc libraries <libs>],[32]))
+AC_ARG_WITH(petsc_incs,AS_HELP_STRING([--with-petsc-incs=<incs>],[Use Petsc includes <incs>],[32]))
+AC_ARG_WITH(petsc_path, AS_HELP_STRING([--with-petsc-path=<path>],[Path to the Petsc install directory],[32]),[],[])
+AC_ARG_WITH(petsc_libdir,AS_HELP_STRING([--with-petsc-libdir=<path>],[Path to the Petsc lib directory],[32]))
+AC_ARG_WITH(petsc_includedir,AS_HELP_STRING([--with-petsc-includedir=<path>],[Path to the Petsc include directory],[32]))
 
 #
 def_slepc=""

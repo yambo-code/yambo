@@ -36,9 +36,7 @@ integer function io_DIPOLES(Dip,ID)
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
 #endif
-#if defined _SC || defined _RT
  use DIPOLES,       ONLY:P_square,compute_P2_dipoles
-#endif
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
  !
@@ -49,9 +47,10 @@ integer function io_DIPOLES(Dip,ID)
  !
  ! Work Space
  !
- integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4),ID_frag
-#if defined _RT || defined _SC
- integer :: P2_size(3),P2_ipos(3),Pspinor_size(6),Pspinor_ipos(6)
+ integer :: ik,ik_mem,i_fragment,i_sp_pol,DIP_size(4),DIP_ipos(4),ID_frag,&
+&           P2_size(3),P2_ipos(3)
+#if defined _RT
+ integer :: Pspinor_size(6),Pspinor_ipos(6)
 #endif
  integer, external    :: variables_DIPOLES
  character(schlen)    :: VAR_name
@@ -105,13 +104,11 @@ integer function io_DIPOLES(Dip,ID)
  Pspinor_ipos(5:6)=DIP_ipos(3:4)
 #endif
  !
-#if defined _RT || defined _SC
  P2_size(1)=2
  P2_ipos(1)=1
  !
  P2_size(2:3)=DIP_size(3:4)
  P2_ipos(2:3)=DIP_ipos(3:4)
-#endif
  !
  if (read_is_on(ID)) then
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
@@ -128,9 +125,7 @@ integer function io_DIPOLES(Dip,ID)
    if (compute_Spin_dipoles.and.n_spinor==2) &
    & call DIP_alloc('DIP_P_spinor',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #endif
-#if defined _SC || defined _RT
    if (compute_P2_dipoles) call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
-#endif
    !
  endif
  !
@@ -208,7 +203,6 @@ integer function io_DIPOLES(Dip,ID)
  endif
 #endif
  !
-#if defined _SC || defined _RT
  if (compute_P2_dipoles) then
    !
    ! P2
@@ -218,8 +212,7 @@ integer function io_DIPOLES(Dip,ID)
    call io_bulk(ID_frag,C2=P_square(:,:,ik_mem,i_sp_pol),IPOS=P2_ipos )
    !
  endif
-#endif
- ! 
+ !
  call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)

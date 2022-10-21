@@ -109,12 +109,12 @@ subroutine K_multiply_by_V_transpose_slepc(slepc_mat,vi,vo,ierr)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c,1))
+     tmp_value_star=real(Slepc_v%Vo(i_g)%fragment(i_c,1))-cI*aimag(Slepc_v%Vo(i_g)%fragment(i_c,1))
      !SLEPC funcitons expect C indexes both in Fortran and C
      call VecSetValues( vo, pet_one, H_pos, tmp_value, INSERT_VALUES, ierr )
      if(BSS_slepc_double_grp) then
        ! Expand vo to anti-resonant block
        H_pos=start_index_dg+i_c
-       tmp_value_star=real(tmp_value)-cI*aimag(cmplx(tmp_value))
        call VecSetValues( vo, pet_one, H_pos, fac*tmp_value_star, INSERT_VALUES, ierr )
      endif
    enddo

@@ -103,7 +103,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: load_O_X,l_bs_corr,l_load_WFs,l_matrix_init
+ logical    :: l_bs_exch,l_bs_corr,l_matrix_init,l_load_kernel,l_write_kernel
  !
  ! I/O
  !
@@ -161,20 +161,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call section('=',trim(section_title))
  !
- ! Exchange
- !==========
- !
- load_O_X=BS_res_K_exchange.or.l_bs_fxc
- !
- if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
- !
  ! Oscillators Setup
  !===================
  O_ng=1
  O_ng_exch =maxval(qindx_X(iq,:,2))
  O_ng_shift=O_ng_exch
  !
- l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc
+ l_bs_exch=any((/BS_res_K_exchange,BS_cpl_K_exchange/)).or.l_bs_fxc.and..not.(l_BS_magnons.and.n_sp_pol==2)
+ l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)) .and. .not.l_bs_fxc
+ !
+ if (l_bs_exch) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
  if (l_bs_corr) then
    O_ng=G_m_G_maxval
@@ -282,14 +278,22 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  ! iHxc=3 --> K_c=W
  !
  l_matrix_init=.true.
+ l_load_kernel=.true.
+ l_write_kernel=.false.
  !
  do iHxc=1,3
  !
  if (iHxc==1) BS_blk_done=.false.
  !
- if (l_BS_magnons.and.n_sp_pol==2.and.iHxc==1) cycle
+ if ((.not.l_bs_exch).and.iHxc==1) cycle
  !
  if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
+ !
+ if ((.not.l_bs_corr).and.iHxc==3) cycle
+ !
+ if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
+ if (iHxc==2) l_write_kernel=.not. l_bs_corr
+ if (iHxc==3) l_write_kernel=.true.
  !
  section_title='-BSK-'//trim(intc(iHxc))
  if (l_bs_fxc) section_title='-BSK->Fxc-'//trim(intc(iHxc))
@@ -302,8 +306,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==3) NG=(/O_ng,O_ng_shift/)
  !if (iHxc==3) NG(2)=O_ng_shift
  ! WARNING >
- !
- l_load_WFs= iHxc==1 .or. iHxc==2 .or. (iHxc==3.and.l_bs_corr)
  !
  ! ALDA
  !======
@@ -349,11 +351,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if (l_load_WFs) call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
+ call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
  !
  ! Wave Functions Phases
  !=======================
- if (iHxc==3.and.l_bs_corr) call K_WF_phases(Xk)
+ if (iHxc==3) call K_WF_phases(Xk)
  ! 
  ! Spatial Inversion Test
  !========================
@@ -371,7 +373,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !=================================================
  !
 #ifdef _PAR_IO
- if (l_BSE_restart.and.iHxc==1) then
+ if (l_BSE_restart.and.l_load_kernel) then
    !
    if (m_steps>0) call live_timing("Loading partial kernel",m_steps)
    !
@@ -412,6 +414,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call msg("s","Kernel loaded percentual ",real(n_steps-m_steps,SP)/real(n_steps,SP)*100._SP,'[%]')
    !
+   l_load_kernel=.false.
+   !
  endif
 #endif
  !
@@ -421,7 +425,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==1) section_title=trim(section_title)//' exch'
  if (iHxc==2) section_title=trim(section_title)//' tddft'
  if (iHxc==3) section_title=trim(section_title)//' corr'
- if (.not.l_load_WFs) section_title='Final I/O'
+ if (l_write_kernel) section_title=trim(section_title)//' and I/O'
  !
  if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
@@ -432,9 +436,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
+   mode_now=BS_blk(i_block)%mode
+   if (.not.l_BS_ares_from_res) mode_now="F"
+   !
    if (BS_blk_done(i_block)) then
 #if defined _PAR_IO
-     if(l_partial_kernel_loaded.and.iHxc==3) then
+     if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
      endif
@@ -465,7 +472,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   if(iHxc==3.and.l_bs_corr) call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+   if(iHxc==3) call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    ! Transition Loops
    !------------------
@@ -476,7 +483,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
@@ -522,7 +529,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s =Xk%sstar(i_kmq_bz,2) 
        i_pmq_s =Xk%sstar(i_pmq_bz,2) 
        !
-       if (iHxc==3.and.l_bs_corr) then 
+       if (iHxc==3) then 
          i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
          i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
        endif 
@@ -530,7 +537,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if (iHxc==3.and.l_bs_corr) then 
+       if (iHxc==3) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -570,7 +577,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
-       if (iHxc==3.and.l_bs_corr) then 
+       if (iHxc==3) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
@@ -595,14 +602,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
        endif 
        ! 
-       if (BS_K_is_ALDA.and.iHxc==2) then 
+       if (iHxc==2) then 
          is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) 
          os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) 
          is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) 
          os_p = (/i_v_p,i_pmq,i_pmq_s,i_p_sp_pol_v/) 
        endif 
        !
-       if (iHxc==3.and.l_bs_corr) then 
+       if (iHxc==3) then 
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
@@ -613,9 +620,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        H_x=cZERO
        H_c=cZERO
        !
-       mode_now=BS_blk(i_block)%mode
-       if (.not.l_BS_ares_from_res) mode_now="F"
-       !
        select case (mode_now)
        !
        case ("R","A","F")
@@ -624,14 +628,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !===================================
          !
          ! Exchange
-         if (BS_res_K_exchange.and.iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
-&                                               BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
+         if (iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
+&                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
-         if (BS_K_is_ALDA     .and.iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
+         if (iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
          !
          ! Correlations
-         if (BS_res_K_corr    .and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
@@ -642,14 +646,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          !=============================
          !
          ! Exchange
-         if (BS_cpl_K_exchange.and.iHxc==1) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
-                                           &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
+         if (iHxc==1) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
+&                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
-         if (BS_K_is_ALDA     .and.iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
+         if (iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr    .and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (BS_cpl_K_corr.and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
@@ -667,7 +671,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        if (     l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_mat_tmp
        if (.not.l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_blk(i_block)%mat(i_Tk,i_Tp)+BS_mat_tmp
        !
-       if (iHxc==3) BS_blk(i_block)%done(i_Tk,i_Tp)="t"
+       if (l_write_kernel) BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
@@ -676,7 +680,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp end parallel
 #endif
    !
-   if(BS_K_cutoff>0._SP.and.iHxc==3) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
+   if(BS_K_cutoff>0._SP.and.l_write_kernel) &
+&     BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
    !
    if(l_BSE_minimize_memory.and.iHxc==1) then
      call BS_oscillators_free(i_Tgrp_p,0)
@@ -685,7 +690,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if(iHxc==3) call BS_oscillators_free(0,i_block)
    !
-   if(iHxc==3) then
+   if(l_write_kernel) then
 #if defined _PAR_IO
      call io_control(ACTION=WR,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID,"full")
@@ -719,13 +724,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- if(iHxc==3.and.l_bs_corr) then
+ if(iHxc==3) then
    YAMBO_FREE(WF_phase)
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
    YAMBO_FREE(BS_W)
  endif
  !
- if (l_load_WFs) call WF_free(WF,keep_states_to_load=iHxc<3)
+ call WF_free(WF,keep_states_to_load=iHxc<3)
  !
  l_matrix_init=.false.
  !

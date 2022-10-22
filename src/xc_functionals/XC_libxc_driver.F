@@ -92,7 +92,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Convert and Initialize
  !===============================
  !
- l_Fxc_from_Vxc=.true.
+ l_Fxc_from_Vxc=(n_spin==1)
  !
  exsr=0._DP
  FUNCTIONALTMP=0
@@ -159,7 +159,14 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
    endif
  endif
  !
- forall(i1=1:fft_size,i2=1:n_spin)  spin_rho_DP(i2,i1)=spin_rho_SP(i1,i2)*real(fft_size,DP)/real(DL_vol,DP)
+ do i1=1,fft_size
+   do i2=1,n_spin
+     spin_rho_DP(i2,i1)=real(spin_rho_SP(i1,i2),DP)*real(fft_size,DP)/real(DL_vol,DP)
+     ! This was needed for absorption using old libxc
+     ! Keeping it with magnons gives numberical noise
+     !if (spin_rho_DP(i2,i1)<1.E-10_DP) spin_rho_DP(i2,i1)=0._DP
+   enddo
+ enddo
  !
  !=============================
  ! Electronic density gradient
@@ -224,11 +231,10 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
      do is1 = 1,n_spin
        do is2 = is1,n_spin
          is_xc = xc_spin_map1(is1,is2)
-         sigma(is_xc,i1) = drho(i1,is1,1)*drho(i1,is2,1)+drho(i1,is1,2)*drho(i1,is2,2)+drho(i1,is1,3)*drho(i1,is2,3)
+         sigma(is_xc,i1) = real(drho(i1,is1,1)*drho(i1,is2,1)+drho(i1,is1,2)*drho(i1,is2,2)+drho(i1,is1,3)*drho(i1,is2,3),DP)
        end do
      end do
    end do
-   !
    !
  endif
  !
@@ -259,6 +265,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ORDER_NOW=ORDER
  if (l_Fxc_from_Vxc.and.ORDER==2) then
+   call warning(' Evaluating Fxc as numerical functional derivative of Vxc')
    PERT_FAC=1.000001_DP
    ORDER_NOW=1
    YAMBO_ALLOC(V_xc_pert,(fft_size,n_spin))
@@ -283,11 +290,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
        case(2)
          if( l_BS_magnons) then
            call xc_f03_lda_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v1rho(1,1))
-           if(n_spinor==2) forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
+           forall(i1=1:fft_size,i2=1:n_spin) V_xc(i1,i2) = V_xc(i1,i2) + real(v1rho(i2,i1),SP)
          endif
-         call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
-         ! Yambo internal for Kxc
-         call XC_eval_lda_kernel(v1rho,v2rho2)
+         ! I could avoid this, however I need it due to numerical noise
+         ! See also comment in Build_F_xc_mat
+         !if( (.not.l_BS_magnons) .or. n_spinor==2) then
+           call xc_f03_lda_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), v2rho2(1,1))
+           ! Yambo internal for Kxc
+           call XC_eval_lda_kernel(v1rho,v2rho2)
+         !endif
      end select
    elseif (fnctl(ixc)%family==XC_FAMILY_GGA.or.fnctl(ixc)%family==XC_FAMILY_HYB_GGA) then
         !GAUPBE short range x-energy  and potentials part
@@ -319,11 +330,15 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
          if( l_BS_magnons) then
            call xc_f03_gga_vxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v1rho(1,1), v1sigma(1,1))
            ! Yambo internal for V_xc
-           if(n_spinor==2) call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
+           call XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
          endif
-         call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
-         ! Yambo internal for Kxc
-         call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
+         ! I could avoid this, however I need it due to numerical noise
+         ! See also comment in Build_F_xc_mat
+         !if( (.not.l_BS_magnons) .or. n_spinor==2) then
+           call xc_f03_gga_fxc(fnctl(ixc)%conf, size_IPL, spin_rho_DP(1,1), sigma(1,1), v2rho2(1,1), v2rhosigma(1,1), v2sigma2(1,1))
+           ! Yambo internal for Kxc
+           call XC_eval_gga_kernel(v1rho,v1sigma,v2rho2,v2rhosigma,v2sigma2)
+         !endif
      end select
    end if
    call xc_f03_func_end(fnctl(ixc)%conf)
@@ -335,10 +350,9 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  endif
  !
  if (l_Fxc_from_Vxc.and.ORDER==2) then
-   if (n_spin>1) call error("not coded for n_spin>1")
    do ifft=1,fft_size
      if (abs(spin_rho_DP(1,ifft))<1.E-7_DP) cycle
-     F_xc(ifft,1,1)=real( real(V_xc_pert(ifft,1)-V_xc(ifft,1),DP)/spin_rho_DP(1,ifft) ,SP)
+     F_xc(ifft,1,1)=real( real(V_xc_pert(ifft,1)-V_xc(ifft,1),DP)/(spin_rho_DP(1,ifft)*(PERT_FAC-1._DP)),SP)
    enddo
  endif
  !

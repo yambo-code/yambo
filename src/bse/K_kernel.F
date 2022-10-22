@@ -291,10 +291,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if ((.not.l_bs_corr).and.iHxc==3) cycle
  !
- if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
- if (iHxc==2) l_write_kernel=.not. l_bs_corr
- if (iHxc==3) l_write_kernel=.true.
- !
  section_title='-BSK-'//trim(intc(iHxc))
  if (l_bs_fxc) section_title='-BSK->Fxc-'//trim(intc(iHxc))
  !
@@ -425,7 +421,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==1) section_title=trim(section_title)//' exch'
  if (iHxc==2) section_title=trim(section_title)//' tddft'
  if (iHxc==3) section_title=trim(section_title)//' corr'
- if (l_write_kernel) section_title=trim(section_title)//' and I/O'
  !
  if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
@@ -438,6 +433,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    mode_now=BS_blk(i_block)%mode
    if (.not.l_BS_ares_from_res) mode_now="F"
+   !
+   if (.not.trim(BS_blk(i_block)%mode)=="C") then
+     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
+     if (iHxc==2) l_write_kernel=.not. l_bs_corr
+     if (iHxc==3) l_write_kernel=.true.
+   else
+     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.BS_cpl_K_corr)
+     if (iHxc==2) l_write_kernel=.not. BS_cpl_K_corr
+     if (iHxc==3) l_write_kernel=.true.
+     !
+     if (iHxc==3.and..not.BS_cpl_K_corr) cycle
+     !
+   endif
    !
    if (BS_blk_done(i_block)) then
 #if defined _PAR_IO

@@ -266,6 +266,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ORDER_NOW=ORDER
  if (l_Fxc_from_Vxc.and.ORDER==2) then
+   call warning(' Evaluating Fxc as numerical functional derivative of Vxc')
    PERT_FAC=1.000001_DP
    ORDER_NOW=1
    YAMBO_ALLOC(V_xc_pert,(fft_size,n_spin))

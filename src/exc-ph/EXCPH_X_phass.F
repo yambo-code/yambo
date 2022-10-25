@@ -285,6 +285,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  enddo
  !
  if(l_prt_pl_q_res) then
+   call k_ibz2bz(q)
    ! Write on disk
    do iq_bz=1,q%nbz
      pl_file_name ='pl_bse_resolved_q'//intc(iq_bz)

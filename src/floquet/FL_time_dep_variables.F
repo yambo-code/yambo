@@ -157,17 +157,20 @@ subroutine FL_time_dep_variables(E,k)
    !
  enddo
  !
- do i_t=1,NE_steps
-   !
-   time=real(i_t-1,SP)*RT_step
-   call RT_Ext_fields(A_ext,Time)
-   !
-   E_ext=-A_ext%vecpot_vel/SPEED_OF_LIGHT
-   E_tot=E_ext
-   E_ks =E_ext
-   !
- enddo 
  !
+!aim137 DEBUG <
+write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV
+w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
+open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
+write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
+write(111,*) 't_step  time   Pol_x   Pol_y   Pol_z'
+do i_t=1,NE_steps
+time=real(i_t-1,SP)*RT_step
+!time = 1/(w0_sm1) * (i_t-1)/NE_steps ! when i_t=1, time = 0
+write(111,*) i_t, time, real(NL_P_t(i_t,1)),real(NL_P_t(i_t,2)),real(NL_P_t(i_t,3))
+enddo
+close(111)
+!aim137 DEBUG >
 end subroutine
 !
 subroutine FL_all_time_determinants(en,ikbz,ikp,i_sp,FL_S_plus,FL_all_time_S_det)
@@ -228,9 +231,7 @@ subroutine FL_all_time_determinants(en,ikbz,ikp,i_sp,FL_S_plus,FL_all_time_S_det
        !
        FL_time_S_plus(i1,i2,i_t) = FL_time_S_plus(i1,i2,i_t)     &
                                &  * exp(+cI*FL_QE(i1,ikbz,1)*time) &
-                               &  * exp(-cI*FL_QE(i2,ikp ,1)*time) &
-                               &  * exp(-2._SP*NL_damping*time)  
-
+                               &  * exp(-cI*FL_QE(i2,ikp ,1)*time)
        !
      enddo
      !

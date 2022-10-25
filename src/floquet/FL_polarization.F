@@ -206,7 +206,7 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !write(111,*) 't_step  time   Pol_x   Pol_y'
  !do i_t=1,n_tot_time_steps
  !time = 1/(w0_sm1) * (i_t-1)/n_tot_time_steps ! when i_t=1, time = 0
- !write(111,*) i_t, time, real(FL_time_P_Berry_CART(1,i_t)),real(FL_time_P_Berry_CART(2,i_t))
+ !write(111,*) i_t, time, real(FL_time_P_Berry_CART(1,i_t)),real(FL_time_P_Berry_CART(2,i_t)),real(FL_time_P_Berry_CART(3,i_t))
  !enddo
  !close(111)
  !aim137 DEBUG >

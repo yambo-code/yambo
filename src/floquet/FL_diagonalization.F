@@ -71,12 +71,6 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  energy_difference = 0._SP
  l_assume_Hermitian = .false.
  !
- !         print*, 'kpt = 6, band = 4,band2 = 5'
- !         print*, '18,18',FL_Ho_plus_Sigma(18,18,6,1)
- !         print*, '18,24',FL_Ho_plus_Sigma(18,24,6,1)
- !         print*, '24,18',FL_Ho_plus_Sigma(24,18,6,1)
- !         print*, '24,24',FL_Ho_plus_Sigma(24,24,6,1)
- !
  FL_V_bands_hist = FL_V_bands
  !
  do ik_bz=1,QP_nk
@@ -145,8 +139,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        FL_chosen_bands(i_m) = FL_states(1) - 1 + &
 &      maxloc(abs(FL_eigenvectors(i_central_fks,FL_states(1):FL_states(2),ik_mem,is)),dim=1)
        !
-       ! aim137 prelim - I could confirm this choice with a dot product between
-       ! the chosen eigenvector and the band from the previous iteration (ref_vec)
+       ! finding closest quasi-energy to check
+       !energy_difference = FL_eigenvalues(:,ik_bz,is)- E%E(i_m,ik_bz,1)
+       !i3_fks = FL_states(1) - 1 +  minloc(abs(FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)),dim=1)
+       !if (i3_fks /= FL_chosen_bands(i_m)) &
+       !&call warning (' the criteria for eigenpair selection are not giving the same result')
        !
        trial_vec(FL_states(1):FL_states(2)) = &
                     & FL_eigenvectors(FL_states(1):FL_states(2),FL_chosen_bands(i_m),ik_mem,is)
@@ -239,6 +236,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  !
  call PP_redux_wait(FL_QE, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(FL_V_bands, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(FL_eigenvalues, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  !
  !Mixing of eigenvectors
  !FL_V_bands = FL_V_bands * FL_beta + FL_V_bands_hist * (1._SP - FL_beta)

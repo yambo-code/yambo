@@ -343,7 +343,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
              & FL_V_Hartree_KS(i1,i2,i_comb_extra)
                !
                !aim137 DEBUG<
-               if (ik_bz == 26) then
+               if (ik_bz == 24) then
                FKS_Sigma(i1_fks,i2_fks) = FL_V_Hartree_KS(i1,i2,i_comb_extra)
                endif
                !aim137 DEBUG>
@@ -491,4 +491,16 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 !endif
 !aim137 DEBUG >
 !
+ !aim137 DEBUG
+!do ik_bz=1,QP_nk
+!do is=1,n_sp_pol
+!write(filename,'(i0)') 24!ik_bz
+!open(111,file='FL_VHartree'//trim(adjustl(filename))//'.dat')
+!do i_fks=FL_states(1),FL_states(2)
+!write(111,'(100(1f20.14))') abs(FKS_Sigma(i_fks,:))
+!enddo
+!close(111)
+!enddo
+!enddo
+ !aim137 END DEBUG
 end subroutine FL_Hamiltonian

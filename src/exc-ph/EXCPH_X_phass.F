@@ -65,7 +65,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,PH_E,occ_fact
+ real(SP)      :: min_E,exc_E,PH_E,occ_fact,v(3)
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
  integer       :: iq_db,iq_ibz
  integer       :: elph_branches_save(2)
@@ -301,6 +301,9 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
      call msg('o pl_bse','#')
      call msg('o pl_bse','# iq_ibz = '//intc(iq_ibz))
+     call msg('o pl_bse','# iq_bz  = '//intc(iq_bz))
+     call c2a(v_in=q%ptbz(iq_bz,:),v_out=v,mode="ki2a")
+     call msg('o pl_bse','# qbz_pt   = ',v)
      !
      ! Write output on file
      !

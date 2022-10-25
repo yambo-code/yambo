@@ -301,9 +301,8 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
      call msg('o pl_bse','#')
      call msg('o pl_bse','# iq_ibz = '//intc(iq_ibz))
-     call msg('o pl_bse','# iq_bz  = '//intc(iq_bz))
      call c2a(v_in=q%ptbz(iq_bz,:),v_out=v,mode="ki2a")
-     call msg('o pl_bse','# qbz_pt   = ',v)
+     call msg('o pl_bse','# q_pt_bz(rlu)   = ',v)
      !
      ! Write output on file
      !

@@ -31,7 +31,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use R_lattice,     ONLY:bz_samp,d3k_factor,bare_qpg,q0_def_norm
  use DIPOLES,       ONLY:DIPOLE_t
  use stderr,        ONLY:intc
- use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol
+ use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,&
 &                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
@@ -118,7 +118,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    if(l_BS_abs)       n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_kerr)      n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_dichroism) n_BS_E_sorted=n_BS_E_sorted+1
-   if(l_BS_magnons)   n_BS_E_sorted=n_BS_E_sorted+2
+   if(l_BS_magnons)   n_BS_E_sorted=n_BS_E_sorted+n_spinor
    YAMBO_ALLOC(vtmpC,(BS_H_dim,n_BS_E_sorted))
    vtmpC=cZERO
  endif
@@ -238,7 +238,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn=res_magn*f_eh*Z_eh
        if (l_BS_esort.and.i_res_ares==1) then
          call K_IP_sort("add",i_sort,nVAR,res_magn(1),vtmpC)
-         call K_IP_sort("add",i_sort,nVAR,res_magn(2),vtmpC)
+	 if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,res_magn(2),vtmpC)
        endif
      endif
      !

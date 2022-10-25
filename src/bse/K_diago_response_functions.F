@@ -166,7 +166,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_righ
      if(l_BS_magnons) then
        res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
-         BS_E_sorted_tmp(i1,nVAR+1:nVAR+2)=res_magn
+         BS_E_sorted_tmp(i1,nVAR+1:nVAR+n_spinor)=res_magn
          nVAR=nVAR+n_spinor
        endif
        X_magnons(:,1,2)=X_magnons(:,1,2)-res_magn(1)/(W%p(:)-EXC_E(i_pert_SOC))

@@ -320,7 +320,7 @@ subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &
  !
  ! STATUS
  !
- if ( VERIFY_ .and. CHECK_ .and. io_status(ID)==0) io_status(ID)=i_err
+ if ( io_mode(ID)==VERIFY .and. CHECK_ .and. io_status(ID)==0) io_status(ID)=i_err
  !
  ! MSG
  !

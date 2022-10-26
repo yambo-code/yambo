@@ -25,29 +25,22 @@
 #
 AC_DEFUN([AC_HAVE_HDF5_F90],[
 #
-AC_ARG_WITH(hdf5_libs,AC_HELP_STRING([--with-hdf5-libs=<libs>],
-            [Use HDF5 libraries <libs>],[32]))
-AC_ARG_WITH(hdf5_path, AC_HELP_STRING([--with-hdf5-path=<path>],
-            [Path to the HDF5 install directory],[32]),[],[])
-AC_ARG_WITH(hdf5_libdir,AC_HELP_STRING([--with-hdf5-libdir=<path>],
-            [Path to the HDF5 lib directory],[32]))
-AC_ARG_WITH(hdf5_includedir,AC_HELP_STRING([--with-hdf5-includedir=<path>],
-            [Path to the HDF5 include directory],[32]))
+AC_ARG_WITH(hdf5_libs,AS_HELP_STRING([--with-hdf5-libs=<libs>],[Use HDF5 libraries <libs>],[32]))
+AC_ARG_WITH(hdf5_path, AS_HELP_STRING([--with-hdf5-path=<path>],[Path to the HDF5 install directory],[32]),[],[])
+AC_ARG_WITH(hdf5_libdir,AS_HELP_STRING([--with-hdf5-libdir=<path>],[Path to the HDF5 lib directory],[32]))
+AC_ARG_WITH(hdf5_includedir,AS_HELP_STRING([--with-hdf5-includedir=<path>],[Path to the HDF5 include directory],[32]))
 #
 # HDF5 data compression
 #
-AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
-             [Activate the HDF5 data compression. Default is no.]))
+AC_ARG_ENABLE(hdf5_compression,AS_HELP_STRING([--enable-hdf5-compression],[Activate the HDF5 data compression. Default is no.]))
 #
 # HDF5 PAR IO
 #
-AC_ARG_ENABLE(hdf5_par_io,AC_HELP_STRING([--enable-hdf5-par-io],
-             [Enable the HDF5 parallel I/O. Default is yes]),,enable_hdf5_par_io="yes")
+AC_ARG_ENABLE(hdf5_par_io,AS_HELP_STRING([--enable-hdf5-par-io],[Enable the HDF5 parallel I/O. Default is yes]),,enable_hdf5_par_io="yes")
 #
 # HDF5 FOR P2Y (also requires parallel HDF5)
 #
-AC_ARG_ENABLE(hdf5_p2y_support, AC_HELP_STRING([--enable-hdf5-p2y-support],
- [Activate HDF5 support in p2y. Default is no unless parallel HDF5 libs are linked.]))
+AC_ARG_ENABLE(hdf5_p2y_support, AS_HELP_STRING([--enable-hdf5-p2y-support],[Activate HDF5 support in p2y. Default is no unless parallel HDF5 libs are linked.]))
 #
 enable_hdf5="yes" ;
 internal_hdf5="no"

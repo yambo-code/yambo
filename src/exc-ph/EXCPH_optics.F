@@ -62,6 +62,7 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  character(schlen)   :: dbgd_string
  character(schlen) :: q_point 
  type(levels)        :: E_QF
+ logical :: l_sat_from_Hpert
  !
  call section('*','EXCPH-Optics')
  !
@@ -172,10 +173,24 @@ subroutine EXCPH_optics(E,k,q,X,wv)
    endif
  endif
  !
- !
- ! Calculate X(w) include phonon assisted transitions
- !
- call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
+ call parser('SatFromHPert',l_sat_from_Hpert)
+ if (l_sat_from_Hpert) then
+   !
+   ! This option only computes phonon-assisted emission satellites
+   ! using perturbation-theory formula from excitonic Hamiltonian
+   ! (i.e. |sum_in BS_R (in) G (in,out)|^2 instead of sum_in BS_R(in)**2! G(in,out)**2 )
+   !
+   call warning(' Calculating only modified satellites for PL')
+   call EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
+   !
+ else
+   !
+   ! Calculate X(w) including phonon-assisted transitions as
+   ! derived from exciton-phonon self-energy
+   !
+   call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
+   !
+ endif
  !
 ! call X_setup_file_names(1,'bse ','phass',dbgd_string) 
  !

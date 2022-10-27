@@ -56,11 +56,8 @@ subroutine rim(mode)
  integer            :: iseed(8)
  real(DP), external :: dlaran
  ! 
- if (mode == "x") then
-   call timing('RIM',OPR='start')
- else
-   call timing('RIM-W',OPR='start')
- end if
+ if (mode == "x") call timing('RIM',OPR='start')
+ if (mode == "c") call timing('RIM-W',OPR='start')
  !
  call PP_indexes_reset(px)
  !
@@ -235,10 +232,7 @@ subroutine rim(mode)
  call PP_indexes_reset(px)
  YAMBO_FREE(qr)
  !
- if (mode == "x") then
-   call timing('RIM',OPR='stop')
- else
-   call timing('RIM-W',OPR='stop')
- end if
+ if (mode == "x") call timing('RIM',OPR='stop')
+ if (mode == "c") call timing('RIM-W',OPR='stop')
  !
 end subroutine

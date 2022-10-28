@@ -111,7 +111,7 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
      ! ip_bz = R_iq_s^-1 ik_bz
      !       = R_iq_s^-1 R_ik_s ik_ibz
      !
-     ip_bz = elemental_scattering(iq_s,ik_plus_iq_bz)
+     ip_bz = elemental_scattering(iq_s,ik_minus_iq_bz)
      !
      ! Conduction scattering
      ! ======================
@@ -122,8 +122,8 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        if (i_Hp==0) cycle
        !
-       ik_db=K_io_map(ik_plus_iq_bz)
-!       ik_db=K_io_map(ik_minus_iq_bz)
+!       ik_db=K_io_map(ik_plus_iq_bz)
+       ik_db=K_io_map(ik_minus_iq_bz)
        elph_gkkp=GKKP%dVc(il,icp,ic,ik_db,1)/sqrt(2._SP*ph_E)
        !
        if(.not.t_rev) Xi_element=elph_gkkp*conjg(BS_mat(i_Hp,i_beta))

@@ -190,14 +190,8 @@ subroutine rim(mode)
    !
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
-     !
-     if (iq==1) then
-     endif
-     !
    else
-     !
      call rim_integrate_w(iq,qr,N_out,em1_anis)
-     !
    endif
    call live_timing(steps=1)
    !
@@ -222,7 +216,7 @@ subroutine rim(mode)
    call msg('r','                               should be <',7.7956_SP)
    if (RIM_id_epsm1_reference/=0) then
      call msg('r','Anisotropy correction            [o/o]',&
-&               (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100._SP)
+&               (RIM_anisotropy-RIM_qpg(1,1,1))/RIM_qpg(iq,1,1)*100._SP)
    endif
    !
  endif

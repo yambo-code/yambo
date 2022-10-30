@@ -216,7 +216,7 @@ subroutine rim(mode)
    call msg('r','                               should be <',7.7956_SP)
    if (RIM_id_epsm1_reference/=0) then
      call msg('r','Anisotropy correction            [o/o]',&
-&               (RIM_anisotropy-RIM_qpg(1,1,1))/RIM_qpg(iq,1,1)*100._SP)
+&               (RIM_anisotropy-RIM_qpg(1,1,1))/RIM_qpg(1,1,1)*100._SP)
    endif
    !
  endif

@@ -172,7 +172,6 @@ endef
 define clean_archive
  $(ECHO) "\t[CLEANING] Libraries archive" ; \
  CWD=`pwd`;\
- cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD;\
- find lib/archive/* -type d  |xargs rm -fr
+ cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD
 endef
 

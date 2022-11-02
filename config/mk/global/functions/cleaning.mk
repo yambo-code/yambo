@@ -167,6 +167,7 @@ endef
 define clean_log_and_Ydriver_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
  rm -fr $(srcdir)/lib/yambo;\
+ rm -fr $(prefix)/lib/yambo;\
  rm -fr $(prefix)/log 
 endef
 define clean_archive

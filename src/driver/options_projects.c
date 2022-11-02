@@ -165,7 +165,6 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="photolum";
  options[*i_opt].section=desc;
 
-#if defined _SURF
  desc="Surface Spectroscopy";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Surface Spectroscopy";
@@ -176,6 +175,5 @@ void options_projects(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="sursp";
  options[*i_opt].char_var=1;
  options[*i_opt].section=desc;
-#endif
 
 };

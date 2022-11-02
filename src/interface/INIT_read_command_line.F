@@ -48,9 +48,6 @@ subroutine INIT_read_command_line(rstr,init_)
  use fields,         ONLY:n_ext_fields,n_ext_fields_max
  use stderr,         ONLY:intc
 #endif
-#if defined _SURF
- use ras_module,     ONLY:lras, lreels
-#endif
  !
  implicit none
  !

@@ -459,7 +459,9 @@ if (iq==1) then
  YAMBO_FREE(Xo_res)
  YAMBO_FREE(Xo_res_d)
  YAMBO_FREE(rhotw_save_d)
+#if defined _SURF
  call DIP_alloc_cut('DIP_iR_cut')
+#endif
  call elemental_collision_free(Xo_scatt)
  !
 #if !defined _CUDA

@@ -19,7 +19,9 @@ help:
 	@$(ECHO)  " yambo_nl     =  Non-linear optics project "
 	@$(ECHO)  "                 http://www.yambo-code.org/wiki/index.php?title=Tutorials#Non_linear_response\n"
 	@$(ECHO)  " yambo_ph     =  Electron-phonon coupling project "
-	@$(ECHO)  "                 http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling"
+	@$(ECHO)  "                 http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n"
+	@$(ECHO)  " yambo_surf   =  Surface spectroscopy project "
+	@$(ECHO)  "                 Missing tutorial\n"
 	@$(ECHO)  "\nCleaning: " ;
 	@$(ECHO)  "========= " 
 	@$(ECHO)  " The cleaning procedure of yambo is divided in several modules: $(CLEANING_COMPONENTS)"

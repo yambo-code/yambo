@@ -54,6 +54,6 @@ define yambo_help
    $(ECHO)  " yambo_ph =  Electron-phonon coupling project ";\
    $(ECHO)  "             http://www.yambo-code.org/wiki/index.php?title=Tutorials#Electron_phonon_coupling\n";\
    $(ECHO)  " yambo_surf = Surface-spectroscyopy project ";\
-   $(ECHO)  "             http://\n";\
+   $(ECHO)  "             Missing tutorial\n";\
   fi
 endef

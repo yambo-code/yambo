@@ -321,8 +321,9 @@ end subroutine init_bulk
 
     do j = 2,m
        ! Rousseau's method [Spectrochim. Acta A 259, 119849 (2021)]
-       fc = fc+am(j)*((((x-xp(j-1))/(xp(j)-xp(j-1))*log((x-xp(j))/(x-xp(j-1))))-((xp(j+1)-x)/(xp(j+1)-xp(j))*log((x-xp(j))/(x-xp(j+1)))))-((x+xp(j-1))/(xp(j)-xp(j-1))*log((x+xp(j))/(x+xp(j-1)))+&
-  &(xp(j+1)+x)/(xp(j+1)-xp(j))*log((x+xp(j))/(x+xp(j+1)))))
+       fc =fc+am(j)*((((x-xp(j-1))/(xp(j)-xp(j-1))*log((x-xp(j))/(x-xp(j-1))))-((xp(j+1)-x)/(xp(j+1)-xp(j))*&
+       &   log((x-xp(j))/(x-xp(j+1)))))-((x+xp(j-1))/(xp(j)-xp(j-1))*log((x+xp(j))/(x+xp(j-1)))+&
+       &   (xp(j+1)+x)/(xp(j+1)-xp(j))*log((x+xp(j))/(x+xp(j+1)))))
     enddo
 
     fc = fc/pi

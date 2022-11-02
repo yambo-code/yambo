@@ -1,30 +1,10 @@
 !
-! Copyright (C) 2000-2016 C. Hogan  and the YAMBO team 
-!              http://www.yambo-code.org
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
 module bulkeps
   !
   ! Routines and types for reading, storing and processing 
   ! the bulk dielectric function
   !
-  use pars,                 ONLY : schlen, lchlen, SP, PI
+  use pars,                 ONLY : schlen, lchlen, SP, PI, cI
   use units,                ONLY : HA2EV
   save
   private
@@ -221,7 +201,7 @@ end subroutine init_bulk
 &   hwin(1)*HA2EV,'-',hwin(nline)*HA2EV,'eV]'
     return
 
-102   format(f8.3,2f9.4)
+102 format(f8.3,2f12.6)
 103 format(a,i4,a,f5.2,a,f5.2,a,i5,a,f5.2,a,f5.2,a)
   end subroutine getbulkeps
 
@@ -236,7 +216,6 @@ end subroutine init_bulk
 !   Work space
     integer                  :: i
     real(SP)                 :: e1(nw), e2(nw) ! temp eps_b
-    real(SP)                 :: ahalb, deb, fz
     complex(SP)              :: eps, omega
     logical                  :: lerr2
     !
@@ -260,27 +239,19 @@ end subroutine init_bulk
       !
       !  Do Kramig-Kroners transform to obtain e1
       !
-      fz = 0.0
-      deb = hw(2) - hw(1)
-      ahalb=hw(1)-deb/2.0_SP
+      eps= 0d0
+      e2(0) = 0
+      e2(nw) = 0
       eps_b(:) = 0
-      do i = 1, nw
-        omega = CMPLX(hw(i),bbroad) 
-        call epsKK(omega,e2,hw,nw,ahalb,fz,eps,nw,lerr2)
+      do i = 1,nw
+        omega = real(hw(i))+cI*bbroad
+        call epsKK(omega,e2,hw,nw,eps,nw,lerr2)
         if (lerr2) then
           lbulkerr = .true.
           errmsg='Problem doing Kramers Kronig of resonant part.'
           return 
         endif
-        eps_b(i) = eps_b(i) + eps
-        omega = CMPLX(-hw(i),-bbroad) 
-        call epsKK(omega,e2,hw,nw,ahalb,fz,eps,nw,lerr2)
-        if (lerr2) then
-          lbulkerr = .true.
-          errmsg='Problem doing Kramers Kronig of anti-resonant part.'
-          return 
-        endif
-        eps_b(i) = eps_b(i) + eps
+        eps_b(i)=eps_b(i)+eps
       enddo
       !
       ! Add the missing 1 to real part.
@@ -329,46 +300,31 @@ end subroutine init_bulk
 &   hwin(1)*HA2EV,'-',hwin(nline)*HA2EV,'eV]'
     return
 
-102   format(f8.3,2f9.4)
+102 format(f8.3,2f9.4)
 103 format(a,i4,a,f5.2,a,f5.2,a,i5,a,f5.2,a,f5.2,a)
   end subroutine generate_bulkeps
 
-  subroutine epsKK(x,am,xp,n,a,fz,fc,nmax,lerr)
+  subroutine epsKK(x,am,xp,n,fc,nmax,lerr)
     implicit none
     logical,     intent(out) :: lerr
     integer,     intent(in)  :: n, nmax
-    real(SP),    intent(in)  :: a, fz, xp(nmax), am(nmax)
+    real(SP),    intent(in)  :: xp(nmax), am(nmax)
     complex(SP), intent(in)  :: x
     complex(SP), intent(out) :: fc
 !   Work space
     integer :: m, j
-    real(SP) :: ev, e
-    complex(SP) :: b, c, d, f, h
 
     lerr = .false.
 
     m = n - 1
-    f = x - a
-    ev = xp(1) - a
-    if (ABS(ev).LT.1.E-10) then
-       lerr = .true.
-       return
-    endif
+    fc = 0d0
 
-    b = log(1.0_SP - ev/f)
-    fc = fz * (-1.0_SP + log((xp(1) - x)/(a-x)) * (xp(1) - x)/ev)
-
-    do j = 1, m
-       e = xp(j+1) - xp(j)
-       d = xp(j+1) - x
-       h = x - xp(j)
-       c = log(1.0_SP-e/h)
-       fc = fc + am(j)*( c*d/e + b*f/ev )
-       b = c
-       f = h
-       ev = e
+    do j = 2,m
+       ! Rousseau's method [Spectrochim. Acta A 259, 119849 (2021)]
+       fc = fc+am(j)*((((x-xp(j-1))/(xp(j)-xp(j-1))*log((x-xp(j))/(x-xp(j-1))))-((xp(j+1)-x)/(xp(j+1)-xp(j))*log((x-xp(j))/(x-xp(j+1)))))-((x+xp(j-1))/(xp(j)-xp(j-1))*log((x+xp(j))/(x+xp(j-1)))+&
+  &(xp(j+1)+x)/(xp(j+1)-xp(j))*log((x+xp(j))/(x+xp(j+1)))))
     enddo
-    fc = fc + am(n) * (1.0_SP + b*f/ev)
+
     fc = fc/pi
     return
   end subroutine epsKK

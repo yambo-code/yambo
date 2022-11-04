@@ -30,7 +30,7 @@
 #endif
 #if defined _ypp
  char *tool="ypp";
- char *tool_desc="Y(ambo) P(ost) P(rocessor)";
+ char *tool_desc="Y(ambo) P(ost)/(re) P(rocessor)";
 #endif
 #if defined _a2y
  char *tool="a2y";

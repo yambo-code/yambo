@@ -341,10 +341,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  endif
  !
  call section('=','Energies & Occupations')
- !==============================================
- !
- !call msg('rn','Energy unit   ',' [eV]')
- !
+ !=========================================
  Xen%nk=Xk%nibz
  ! 
  call E_duplicate(en,Xen)
@@ -379,6 +376,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  Tel_SAVE=Tel
  !
  if (input_Tel_is_negative) then
+   call E_reset(Xen_COPY)
    call E_duplicate(Xen,Xen_COPY)
    Tel=0._SP
    call OCCUPATIONS_Fermi(Xen_COPY,Xk,"X",mode="OCCUPATIONS")

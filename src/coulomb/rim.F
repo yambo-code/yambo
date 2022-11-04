@@ -23,7 +23,7 @@
 !
 subroutine rim(mode)
  !
- use pars,          ONLY:SP,pi,DP,schlen
+ use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
@@ -33,7 +33,7 @@ subroutine rim(mode)
  use R_lattice,     ONLY:RL_vol,k_grid_uc_vol,k_grid_b,nqbz,&
 &                        nqibz,RIM_epsm1,RIM_is_diagonal,RIM_RL_vol,&
 &                        RIM_n_rand_pts,RIM_ng,RIM_W_ng,RIM_qpg,RIM_W_is_diagonal,&
-&                        RIM_id_epsm1_reference,RIM_anisotropy,q_pt,RIM_W,&
+&                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
  !
@@ -55,13 +55,9 @@ subroutine rim(mode)
  real(SP), allocatable  :: qr(:,:)
  integer            :: iseed(8)
  real(DP), external :: dlaran
- character(schlen)  :: msg_dum(2)
  ! 
- if (mode == "x") then
-   call timing('RIM',OPR='start')
- else
-   call timing('RIM-W',OPR='start')
- end if
+ if (mode == "x") call timing('RIM',OPR='start')
+ if (mode == "c") call timing('RIM-W',OPR='start')
  !
  call PP_indexes_reset(px)
  !
@@ -178,6 +174,9 @@ subroutine rim(mode)
  if (mode == "x") then
    YAMBO_ALLOC(RIM_qpg,(nqibz,RIM_ng,RIM_ng))
    RIM_qpg=0._SP
+   G_radii=0._SP
+   G_circ=0._SP
+   N_out_G=0
  else if (mode == "c") then
    YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
@@ -191,22 +190,8 @@ subroutine rim(mode)
    !
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
-     !
-     if (iq==1) then
-       call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
-       call msg('r','Points outside the sphere             ',n_out_G)
-       call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
-&                     4.*pi**3.*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1./3.))
-       call msg('r','                               should be <',7.7956_SP)
-       if (RIM_id_epsm1_reference/=0) call &
-&           msg('r','Anisotropy correction            [o/o]',&
-&                   (RIM_anisotropy-RIM_qpg(iq,1,1))/RIM_qpg(iq,1,1)*100.)
-     endif
-     !
    else
-     !
      call rim_integrate_w(iq,qr,N_out,em1_anis)
-     !
    endif
    call live_timing(steps=1)
    !
@@ -214,22 +199,34 @@ subroutine rim(mode)
  !
  call live_timing()
  !
- if (mode == "x") then
-   call PP_redux_wait(RIM_qpg)
- else if (mode == "c") then
-   call PP_redux_wait(RIM_W)
- end if
+ if (mode == "x") call PP_redux_wait(RIM_qpg)
+ if (mode == "c") call PP_redux_wait(RIM_W)
+ !
  call PP_redux_wait(RIM_anisotropy)
+ !
+ if (mode == "x") then
+   !
+   call PP_redux_wait(G_radii)
+   call PP_redux_wait(N_out_G)
+   !
+   call msg('r','Gamma point sphere radius             ',G_radii,"[a.u.]")
+   call msg('r','Points outside the sphere             ',N_out_G)
+   call msg('r','[Int_sBZ(q=0) 1/q^2]*(Vol_sBZ)^(-1/3) =',&
+&               4._SP*pi**3*RIM_qpg(1,1,1)*k_grid_uc_vol**(-1._SP/3._SP))
+   call msg('r','                               should be <',7.7956_SP)
+   if (RIM_id_epsm1_reference/=0) then
+     call msg('r','Anisotropy correction            [o/o]',&
+&               (RIM_anisotropy-RIM_qpg(1,1,1))/RIM_qpg(1,1,1)*100._SP)
+   endif
+   !
+ endif
  !
  ! CLEAN
  !
  call PP_indexes_reset(px)
  YAMBO_FREE(qr)
  !
- if (mode == "x") then
-   call timing('RIM',OPR='stop')
- else
-   call timing('RIM-W',OPR='stop')
- end if
+ if (mode == "x") call timing('RIM',OPR='stop')
+ if (mode == "c") call timing('RIM-W',OPR='stop')
  !
 end subroutine

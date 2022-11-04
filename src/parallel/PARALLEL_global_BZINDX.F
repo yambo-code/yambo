@@ -51,7 +51,7 @@ subroutine PARALLEL_global_BZINDX(E,Xk,q,ENVIRONMENT)
  call PARALLEL_structure(1,(/"k"/))
  !
  call PARALLEL_assign_chains_and_COMMs(1,COMM_index_1=PAR_COM_BZINDXk_ibz_INDEX,&
-&                                         COMM_A2A_1=PAR_COM_BZINDXk_ibz_A2A)
+&                                        COMM_A2A_1=PAR_COM_BZINDXk_ibz_A2A)
  !
  ! K-points (IBZ)
  !

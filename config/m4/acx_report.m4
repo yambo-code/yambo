@@ -38,171 +38,172 @@ if test "$enable_time_profile" = "yes" ; then TIME_profile_check="X"; fi
 MEM_profile_check="-"
 if test "$enable_memory_profile" = "yes" ; then MEM_profile_check="X"; fi
 # 
-# - PARALLEL SUPPORT -
+# - PARALLEL/CUDA SUPPORT -
 # 
-MPI_check="-"
-if test "$mpibuild" = "yes" ; then MPI_check="X" ; fi
+CUDA_check="-"
+if ! test x"$enable_cuda" = "x"; then CUDA_check="X"; fi
 #
-OPENMP_check="-"
-if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
-
-PARIO_check="$parallel_io"
-#
-# - LIBRARIES -
-#
-#
-YAML_str=" - "
-if test "$internal_yaml" = "yes" ; then
-  if test "$compile_yaml" = "yes" ; then YAML_str=" Ic"; fi
-  if test "$compile_yaml" = "no"  ; then YAML_str=" If"; fi
-elif test "$enable_yaml" = "yes" ; then
-  YAML_str=" E "
-fi
-#
-FUTILE_str=" - "
-if test "$internal_futile" = "yes" ; then
-  if test "$compile_futile" = "yes" ; then FUTILE_str=" Ic"; fi
-  if test "$compile_futile" = "no"  ; then FUTILE_str=" If"; fi
-elif test "$enable_futile" = "yes" ; then
-  FUTILE_str=" E "
-fi
-#
-IOTK_str=" - "
-if test "$compile_p2y" = "yes" ; then
-  IOTK_str=" E "
-  if test "$internal_iotk" = "yes" ; then
-    if test "$compile_iotk" = "yes" ; then IOTK_str=" Ic"; fi
-    if test "$compile_iotk" = "no"  ; then IOTK_str=" If"; fi
-  fi
-fi
-#
-ETSF_str=" - "
-if test "$compile_e2y" = "yes" ; then
-  ETSF_str=" E "
-  if test "$internal_etsf" = "yes" ; then
-    if test "$compile_etsf" = "yes" ; then ETSF_str=" Ic"; fi
-    if test "$compile_etsf" = "no"  ; then ETSF_str=" If"; fi
-  fi
-fi
-#
-NETCDF_str=" - "
-if test "$internal_netcdf" = "yes" ; then
-  if test "$compile_netcdf" = "yes" ; then NETCDF_str=" Ic"; fi
-  if test "$compile_netcdf" = "no"  ; then NETCDF_str=" If"; fi
-else
-  NETCDF_str=" E "
-fi
-NETCDF_info="(NETCDF with large files support)"
-if test "$enable_netcdf_classic" = "yes"; then NETCDF_info="(NETCDF large files support disabled)"; fi
-if test "$enable_netcdf_par_io" = "yes";  then
-  NETCDF_info="(NETCDF with parallel I/O and large files support)";
-  PARIO_info="(NETCDF)";
-fi
-#
-HDF5_str=" - "
-if test "$hdf5" = "yes" ; then
-  if test "$internal_hdf5" = "yes" ; then
-    if test "$compile_hdf5" = "yes" ; then HDF5_str=" Ic"; fi
-    if test "$compile_hdf5" = "no"  ; then HDF5_str=" If"; fi
-  else
-    HDF5_str=" E "
-  fi
-  if test "$enable_netcdf_classic" = "yes"  ; then
-    HDF5_info="(No HDF5-IO format)" ;
-  else
-    NETCDF_info="(NETCDF4:";
-    HDF5_info="HDF5-IO format";
-    if test "$enable_hdf5_par_io" = "no"; then
-      HDF5_info="${HDF5_info}, serial IO"   ;
-      if test "$IO_LIB_VER" = "parallel" ;     then HDF5_info="${HDF5_info}, parallel_lib  " ; fi
-    else
-      HDF5_info="${HDF5_info}, parallel IO"   ;
-      PARIO_info="(HDF5)";
-    fi
-    if test "$enable_hdf5_compression" = "yes"; then
-      HDF5_info="${HDF5_info}, with data compression)" ;
-    else
-      HDF5_info="${HDF5_info}, no data compression)" ;
-    fi
-  fi
-fi
-#
-
-#
-FFT_str=" E "
-if test "$internal_fft" = "yes" ; then
-  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_str=" Ic"; fi
-  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_str=" If"; fi
-else
-  if test "$compile_fftqe" = "yes" ; then FFT_str="E+I"; fi
-fi
-#
-BLAS_str=" E "
-if test "$internal_blas" = "yes" ; then
-  if test "$compile_blas" = "yes"; then BLAS_str=" Ic"; fi
-  if test "$compile_blas" = "no" ; then BLAS_str=" If"; fi
-fi
-#
-LAPACK_str=" E "
-if test "$internal_lapack" = "yes" ; then
-  if test "$compile_lapack" = "yes"; then LAPACK_str=" Ic"; fi
-  if test "$compile_lapack" = "no" ; then LAPACK_str=" If"; fi
-fi
-#
-SLK_str=" - "
-if test "$enable_scalapack" = "yes" ; then SLK_str=" E "; fi
-if test "$internal_slk" = "yes" ; then
-  if test "$compile_slk" = "yes"; then SLK_str=" Ic"; fi
-  if test "$compile_slk" = "no" ; then SLK_str=" If"; fi
-fi
-#
-BLACS_str=" - "
-if test "$enable_scalapack" = "yes" ; then BLACS_str=" E "; fi
-if test "$internal_blacs" = "yes" ; then
-  if test "$compile_blacs" = "yes"; then BLACS_str=" Ic"; fi
-  if test "$compile_blacs" = "no" ; then BLACS_str=" If"; fi
-fi
-#
-#
-PETSC_str=" - "
-if test "$internal_petsc" = "yes" ; then
-  if test "$compile_petsc" = "yes" ; then PETSC_str=" Ic"; fi
-  if test "$compile_petsc" = "no"  ; then PETSC_str=" If"; fi
-elif test "$enable_petsc" = "yes" ; then
-  PETSC_str=" E "
-fi
-
-#
-SLEPC_str=" - "
-if test "$internal_slepc" = "yes" ; then
-  if test "$compile_slepc" = "yes" ; then SLEPC_str=" Ic"; fi
-  if test "$compile_slepc" = "no"  ; then SLEPC_str=" If"; fi
-elif test "$enable_slepc" = "yes" ; then
-  SLEPC_str=" E "
-fi
-
-#
-LIBXC_str=" E "
-if test "$internal_libxc" = "yes" ; then
-  if test "$compile_libxc" = "yes"; then LIBXC_str=" Ic"; fi
-  if test "$compile_libxc" = "no" ; then LIBXC_str=" If"; fi
-fi
-
-#
-YDB_str="-";
-if test "$enable_ydb" = "yes" ; then YDB_str="X"; fi
-YPY_str="-";
-if test "$enable_yambopy" = "yes" ; then YPY_str="X"; fi
-
-#
-MPI_str=" - ";
+MPI_check="-";
 MPI_info=""
 if test "$mpibuild" = "yes" ; then
   if test "$MPI_LIBS" = "" ; then
     MPI_info="(system default detected)";
-    MPI_str=" X ";
+    MPI_check="X";
   else
-    MPI_str=" E ";
+    MPI_check="E";
+  fi
+fi
+#
+OPENMP_check="-"
+if test "$enable_open_mp" = "yes" ; then OPENMP_check="X"; fi
+#
+# - LIBRARIES -
+#
+YAML_check="-"
+if test "$internal_yaml" = "yes" ; then
+  if test "$compile_yaml" = "yes" ; then YAML_check="C"; fi
+  if test "$compile_yaml" = "no"  ; then YAML_check="I"; fi
+elif test "$enable_yaml" = "yes" ; then
+  YAML_check="E"
+fi
+#
+FUTILE_check="-"
+if test "$internal_futile" = "yes" ; then
+  if test "$compile_futile" = "yes" ; then FUTILE_check="C"; fi
+  if test "$compile_futile" = "no"  ; then FUTILE_check="I"; fi
+elif test "$enable_futile" = "yes" ; then
+  FUTILE_check="E"
+fi
+#
+IOTK_check="-"
+if test "$compile_p2y" = "yes" ; then
+  IOTK_check="E"
+  if test "$internal_iotk" = "yes" ; then
+    if test "$compile_iotk" = "yes" ; then IOTK_check="C"; fi
+    if test "$compile_iotk" = "no"  ; then IOTK_check="I"; fi
+  fi
+fi
+#
+ETSF_check="-"
+if test "$compile_e2y" = "yes" ; then
+  ETSF_check="E"
+  if test "$internal_etsf" = "yes" ; then
+    if test "$compile_etsf" = "yes" ; then ETSF_check="C"; fi
+    if test "$compile_etsf" = "no"  ; then ETSF_check="I"; fi
+  fi
+fi
+#
+FFT_check="E"
+if test "$internal_fft" = "yes" ; then
+  if test "$compile_fftw" = "yes" || test "$compile_fftqe" = "yes"; then FFT_check="C"; fi
+  if test "$compile_fftw" = "no"  && test "$compile_fftqe" = "no" ; then FFT_check="I"; fi
+else
+  if test "$compile_fftqe" = "yes" ; then FFT_check="E+I"; fi
+fi
+#
+BLAS_check="E"
+if test "$internal_blas" = "yes" ; then
+  if test "$compile_blas" = "yes"; then BLAS_check="C"; fi
+  if test "$compile_blas" = "no" ; then BLAS_check="I"; fi
+fi
+#
+LAPACK_check="E"
+if test "$internal_lapack" = "yes" ; then
+  if test "$compile_lapack" = "yes"; then LAPACK_check="C"; fi
+  if test "$compile_lapack" = "no" ; then LAPACK_check="I"; fi
+fi
+#
+SLK_check="-"
+if test "$enable_scalapack" = "yes" ; then SLK_check="E"; fi
+if test "$internal_slk" = "yes" ; then
+  if test "$compile_slk" = "yes"; then SLK_check="C"; fi
+  if test "$compile_slk" = "no" ; then SLK_check="I"; fi
+fi
+#
+BLACS_check="-"
+if test "$enable_scalapack" = "yes" ; then BLACS_check="E"; fi
+if test "$internal_blacs" = "yes" ; then
+  if test "$compile_blacs" = "yes"; then BLACS_check="C"; fi
+  if test "$compile_blacs" = "no" ; then BLACS_check="I"; fi
+fi
+#
+PETSC_check="-"
+if test "$internal_petsc" = "yes" ; then
+  if test "$compile_petsc" = "yes" ; then PETSC_check="C"; fi
+  if test "$compile_petsc" = "no"  ; then PETSC_check="I"; fi
+elif test "$enable_petsc" = "yes" ; then
+  PETSC_check="E"
+fi
+#
+SLEPC_check="-"
+if test "$internal_slepc" = "yes" ; then
+  if test "$compile_slepc" = "yes" ; then SLEPC_check="C"; fi
+  if test "$compile_slepc" = "no"  ; then SLEPC_check="I"; fi
+elif test "$enable_slepc" = "yes" ; then
+  SLEPC_check="E"
+fi
+#
+LIBXC_check="E"
+if test "$internal_libxc" = "yes" ; then
+  if test "$compile_libxc" = "yes"; then LIBXC_check="C"; fi
+  if test "$compile_libxc" = "no" ; then LIBXC_check="I"; fi
+fi
+#
+YDB_check="-";
+if test "$enable_ydb" = "yes" ; then YDB_check="X"; fi
+YPY_check="-";
+if test "$enable_yambopy" = "yes" ; then YPY_check="X"; fi
+#
+# - I/O -
+#
+HDF5_PAR_IO_check="-"
+PNETCDF_check="-"
+NETCDF_check="-"
+if test "$internal_netcdf" = "yes" ; then
+  if test "$compile_netcdf" = "yes" ; then NETCDF_check="C"; fi
+  if test "$compile_netcdf" = "no"  ; then NETCDF_check="I"; fi
+else
+  NETCDF_check="E"
+fi
+NETCDF_info="Large Files Support enabled"
+if test "$enable_netcdf_classic" = "yes"; then 
+  NETCDF_info="NO Large Files Support"
+else
+  NETCDF_info="${NETCDF_info}, Version 4"
+fi
+#
+PNETCDF_check="-"
+if test "$enable_netcdf_par_io" = "yes";  then
+  PNETCDF_check="X"
+  NETCDF_info="${NETCDF_info}, Version 4"
+fi
+#
+PARIO_check="-"
+if ! test "$PARIO_info" = " " ; then
+ PARIO_check="X"
+fi
+#
+HDF5_check="-"
+HDF5_PAR_IO_check="X"
+HDF5_PAR_IO_info=" "
+if test "$hdf5" = "yes" ; then
+  if test "$internal_hdf5" = "yes" ; then
+    if test "$compile_hdf5" = "yes" ; then HDF5_check="C"; fi
+    if test "$compile_hdf5" = "no"  ; then HDF5_check="I"; fi
+  else
+    HDF5_check="E"
+  fi
+  if test "$IO_LIB_VER" = "parallel" ; then HDF5_info="Parallel_lib" ; fi
+  if ! test "$enable_netcdf_classic" = "yes"  ; then
+    if test "$enable_hdf5_compression" = "yes"; then
+      HDF5_PAR_IO_info="Data Compression enabled" ;
+    else
+      HDF5_PAR_IO_info="NO Data Compression" ;
+    fi
+    if ! test "$enable_hdf5_par_io" = "yes"; then
+      HDF5_PAR_IO_check="-"
+      HDF5_PAR_IO_info=" "
+    fi
   fi
 fi
 #
@@ -211,32 +212,34 @@ AC_SUBST(KEEP_OBJS_check)
 AC_SUBST(TIME_profile_check)
 AC_SUBST(MEM_profile_check)
 #
-AC_SUBST(MPI_check)
+AC_SUBST(CUDA_check)
 AC_SUBST(OPENMP_check)
 AC_SUBST(PARIO_check)
-#
-AC_SUBST(YAML_str)
-AC_SUBST(FUTILE_str)
-AC_SUBST(IOTK_str)
-AC_SUBST(ETSF_str)
-AC_SUBST(NETCDF_str)
-AC_SUBST(NETCDF_info)
-AC_SUBST(HDF5_str)
+AC_SUBST(HDF5_check)
 AC_SUBST(HDF5_info)
-AC_SUBST(PARIO_info)
+AC_SUBST(HDF5_PAR_IO_check)
+AC_SUBST(HDF5_PAR_IO_info)
+AC_SUBST(PNETCDF_check)
+AC_SUBST(NETCDF_check)
+AC_SUBST(NETCDF_info)
 #
-AC_SUBST(FFT_str)
-AC_SUBST(BLAS_str)
-AC_SUBST(LAPACK_str)
-AC_SUBST(BLACS_str)
-AC_SUBST(SLK_str)
-AC_SUBST(PETSC_str)
-AC_SUBST(SLEPC_str)
+AC_SUBST(YAML_check)
+AC_SUBST(FUTILE_check)
+AC_SUBST(IOTK_check)
+AC_SUBST(ETSF_check)
 #
-AC_SUBST(YDB_str)
-AC_SUBST(YPY_str)
+AC_SUBST(FFT_check)
+AC_SUBST(BLAS_check)
+AC_SUBST(LAPACK_check)
+AC_SUBST(BLACS_check)
+AC_SUBST(SLK_check)
+AC_SUBST(PETSC_check)
+AC_SUBST(SLEPC_check)
 #
-AC_SUBST(LIBXC_str)
-AC_SUBST(MPI_str)
+AC_SUBST(YDB_check)
+AC_SUBST(YPY_check)
+#
+AC_SUBST(LIBXC_check)
+AC_SUBST(MPI_check)
 AC_SUBST(MPI_info)
 ])

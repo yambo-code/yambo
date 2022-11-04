@@ -28,10 +28,9 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  use BS,            ONLY:BS_n_g_fxc,l_BS_magnons
  use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size,fftw_plan,fft_dim,fft_g_table
- use electrons,     ONLY:levels,n_spin,n_spinor
- use R_lattice,     ONLY:bz_samp,G_m_G
+ use electrons,     ONLY:n_spin,n_spinor
+ use R_lattice,     ONLY:G_m_G
  use xc_functionals,ONLY:F_xc_mat
- use interfaces,    ONLY:eval_G_minus_G
  !
  implicit none
  !

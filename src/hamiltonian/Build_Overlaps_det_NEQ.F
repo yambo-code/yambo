@@ -26,7 +26,7 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
  ! Build overlaps determinants between valence bands
  !
  use pars,           ONLY:SP,cZERO,cONE
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use hamiltonian,    ONLY:H_ref_bands
  use R_lattice,      ONLY:k_map,bz_samp
  use vec_operate,    ONLY:k_periodic_idx
@@ -147,8 +147,9 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
        enddo
 !$omp end parallel do
        !
-!       call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
-       !
+       !DEBUG>
+       !call SERIAL_inversion(en%nbf(i_sp),Sm1_minus(:,:,id+(istep-1)*3),tmp_det,.FALSE.)
+       !DEBUG<
        idx=k_map%k_map_inv(ikbz,:)
        idx(id)=idx(id)+istep
        idx=k_periodic_idx(idx,k_map)
@@ -201,9 +202,9 @@ subroutine Build_overlaps_det_NEQ(en,Xk,i_sp,ikbz,V_bands,Sm1_plus,Sm1_minus,S_d
 &                      H_ref_bands(2),vtmp,1,cZERO,Sm1_plus(:,i2,id+(istep-1)*3),1)
        enddo
 !$omp end parallel do
-       !
-!       call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
-       !
+       !DEBUG>
+       !call SERIAL_inversion(en%nbf(i_sp),Sm1_plus(:,:,id+(istep-1)*3),S_det(id+(istep-1)*3),.TRUE.)
+       !DEBUG>
      enddo  
      !
    endif

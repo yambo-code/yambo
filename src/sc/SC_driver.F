@@ -46,7 +46,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 &                         LINEAR_ALGEBRA_driver,OCCUPATIONS_Fermi
  use H_interfaces,   ONLY:V_real_space_to_H
  use com,            ONLY:msg
- use X_m,            ONLY:X_t,current_iq,X_alloc
+ use X_m,            ONLY:X_t,current_iq,X_ALLOC_elemental
  use DIPOLES,        ONLY:DIPOLE_t
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc,real2ch,log_as_a_file
@@ -803,7 +803,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        YAMBO_FREE(H_nl_nm1)
      endif
      !
-     if (.not.io_RESPONSE) call X_alloc('X')
+     if (.not.io_RESPONSE) call X_ALLOC_elemental('X')
      !
      if(l_SC_electric) then
        call ELECTRIC_free()

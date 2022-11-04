@@ -33,7 +33,6 @@ subroutine NL_exc_driver(en,k)
  !
  ! Working Space
  !
- !
  call section("*",'NL Exc Post Processing')
  !
  ! Input/Output

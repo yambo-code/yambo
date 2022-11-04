@@ -63,7 +63,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  !
  ! tests for excitons
  !
- real(SP)                 :: n_exc,ELEC,HOLE,DELTA
+ real(SP)                 :: ELEC,HOLE,DELTA
  !
  type(QP_t)   :: qp_dummy
  !

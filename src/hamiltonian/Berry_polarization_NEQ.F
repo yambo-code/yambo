@@ -24,7 +24,7 @@
 subroutine Berry_polarization_NEQ(Xen,Xk,i_sp_pol,V_bands,Polarization)
  !
  use pars,           ONLY:SP,cZERO
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:levels
  use D_lattice,      ONLY:a,DL_vol
  use R_lattice,      ONLY:bz_samp,k_map,nXkbz
  use hamiltonian,    ONLY:H_ref_bands

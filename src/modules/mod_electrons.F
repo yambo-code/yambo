@@ -59,6 +59,8 @@ module electrons
  real(SP)                 :: Orbital_magn(3)
  real(SP)                 :: Itinerant_magn(3)
  !
+ ! Fine grid
+ !-----------
  type E_fine_grid
    integer              :: nk
    integer              :: nb
@@ -69,6 +71,8 @@ module electrons
    real(SP)             :: E_Fermi
  end type E_fine_grid
  !
+ ! Levels 
+ !--------
  type levels
    !
    integer         :: nb
@@ -84,13 +88,13 @@ module electrons
    !
    ! QP corrections
    !
-   real(SP),   allocatable :: E(:,:,:)         
-   real(SP),   allocatable :: Eo(:,:,:)        
-   real(SP),   allocatable :: f(:,:,:)         
-   real(SP),   allocatable :: fo(:,:,:)        
+   real(SP),   allocatable :: E(:,:,:)        ! Kohn-Sham or Quasi-particle energies 
+   real(SP),   allocatable :: Eo(:,:,:)       ! Bare energies (Kohn-Sham) 
+   real(SP),   allocatable :: f(:,:,:)        ! Electronic occupation 
+   real(SP),   allocatable :: fo(:,:,:)       ! Bare electronic occupation 
    real(SP),   allocatable :: df(:,:,:)        
-   real(SP),   allocatable :: W(:,:,:)         
-   complex(SP),allocatable :: Z(:,:,:)         
+   real(SP),   allocatable :: W(:,:,:)        ! Imaginary part of the quasi-particle 
+   complex(SP),allocatable :: Z(:,:,:)        ! Renormalization factor 
    !
    ! Green Functions
    !

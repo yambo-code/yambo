@@ -24,8 +24,6 @@
 subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag,GKKP)
  !
  use pars,                ONLY:SP
- use units,               ONLY:HA2EV
- use electrons,           ONLY:levels
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab

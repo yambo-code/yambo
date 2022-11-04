@@ -28,10 +28,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  use D_lattice,      ONLY:DL_vol
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels,n_spin,n_spinor,n_sp_pol
- use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use YPP_interfaces, ONLY:electrons_dos_elemental
- use YPPm,           ONLY:DOS_broadening,DOS_E_steps,&
-&                         INTERP_grid,DOS_E_step,l_PROJECT_atom,&
+ use YPPm,           ONLY:DOS_broadening,DOS_E_steps,INTERP_grid,DOS_E_step,l_PROJECT_atom,&
 &                         l_add_EQ_occ,l_separate_eh,l_skip_occ
  use QP_CTL_m,       ONLY:QP_apply
  use YPP_real_time,  ONLY:RT_time
@@ -51,16 +49,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ! Work Space
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
- real(SP),allocatable  :: PDOS_fac_v(:,:,:)
- real(SP),allocatable  :: SPIN_fac_v(:,:,:)
- real(SP),allocatable,target :: RT_PDOS_fac(:,:,:)
- real(SP),allocatable,target :: RT_SPIN_fac(:,:,:)
- real(SP),pointer,contiguous :: PDOS_fac_p(:,:,:) => null()
- real(SP),pointer,contiguous :: SPIN_fac_p(:,:,:) => null()
- !
+ real(SP),allocatable  :: TMP_fac(:,:,:)
  real(SP),   external  :: RIntegrate
- !
- integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,LB(3),UB(3)
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,ID_bare_spin,ID_bare_pdos
  logical               :: space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -78,6 +69,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ID_E=0
  ID_f=0
  ID_spin=0
+ ID_pdos=0
  !
  ! Msgs
  !
@@ -98,26 +90,29 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Load the PDOS coefficient
  !-----------------------------
+ ID_bare_pdos=0
  if (l_PROJECT_atom) then
-   YAMBO_ALLOC(PDOS_fac_v,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_sp_pol))
-   YAMBO_ALLOC(RT_PDOS_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
-   call electrons_pdos_factors((/1,k%nibz/),RT_carriers%nb,PDOS_fac_v)
+   ID_bare_pdos=1
+   INTERP_obj(ID_bare_pdos)%in_use=.TRUE.
+   YAMBO_ALLOC(TMP_fac,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_sp_pol))
+   YAMBO_ALLOC(INTERP_obj(ID_bare_pdos)%INTERP,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
+   call electrons_pdos_factors((/1,k%nibz/),RT_carriers%nb,TMP_fac)
    do i_RT=1,RT_carriers%nstates
-     RT_PDOS_fac(:,RT_carriers%table(i_RT,3),:)=PDOS_fac_v(:, RT_carriers%table(i_RT,2), :)
+     INTERP_obj(ID_bare_pdos)%INTERP(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
    enddo
-   PDOS_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_sp_pol) => RT_PDOS_fac
-   YAMBO_FREE(PDOS_fac_v)
+   YAMBO_FREE(TMP_fac)
  endif
  !
+ ID_bare_spin=0
  if (n_spinor==2) then
-   YAMBO_ALLOC(SPIN_fac_v,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_spinor))
-   YAMBO_ALLOC(RT_SPIN_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_spinor))
-   call electrons_spin_factors((/1,k%nibz/),RT_carriers%nb,SPIN_fac_v)
+   ID_bare_spin=ID_bare_pdos+1
+   YAMBO_ALLOC(TMP_fac,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_spinor))
+   YAMBO_ALLOC(INTERP_obj(ID_bare_spin)%INTERP,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_spinor))
+   call electrons_spin_factors((/1,k%nibz/),RT_carriers%nb,TMP_fac)
    do i_RT=1,RT_carriers%nstates
-     RT_SPIN_fac(:,RT_carriers%table(i_RT,3),:)=SPIN_fac_v(:, RT_carriers%table(i_RT,2), :)
+     INTERP_obj(ID_bare_spin)%INTERP(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
    enddo
-   SPIN_fac_p(RT_carriers%nb(1):RT_carriers%nb(2),1:RT_carriers%nk,1:n_spinor) => RT_SPIN_fac
-   YAMBO_FREE(SPIN_fac_v)
+   YAMBO_FREE(TMP_fac)
  endif
  !
  ! Map the RT k in RT_k
@@ -125,9 +120,24 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  call RT_carriers_to_RT_k(RT_k)
  call k_ibz2bz(RT_k,'iku',.TRUE.)
  !
- ! Interpolation GRID INIT 
+ ! Interpolation GRID 
  !
- if (l_interp) call INTERPOLATION_create_the_grid(INTERP_grid)
+ if (l_interp) then
+   !
+   ! ... INIT
+   call INTERPOLATION_create_the_grid(INTERP_grid)
+   !
+   if (l_PROJECT_atom) then
+     call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=INTERP_obj(ID_bare_pdos)%INTERP)
+     call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
+   endif
+   !
+   if (n_spinor==2) then
+     call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=INTERP_obj(ID_bare_spin)%INTERP)
+     call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
+   endif
+   !
+ endif
  !
  ! T-D DOS
  !=========
@@ -157,7 +167,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    !... DOS
    !
-   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,SPIN_fac_p,PDOS_fac_p,&
+   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,ID_spin,ID_pdos,&
 &                               USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
@@ -170,24 +180,8 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      call INTERPOLATION_driver_seed("f_on_RT_grid",ID_f,RT_bands,RT_k,SEED_E=RT_E,QUIET=.TRUE.)
      call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E)
      !
-     if (l_PROJECT_atom) then
-       call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=RT_PDOS_fac)
-       call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
-       call C_F_POINTER(C_LOC(INTERP_obj(ID_pdos)%INTERP), PDOS_fac_p, shape(INTERP_obj(ID_pdos)%INTERP) )
-       LB=lbound(INTERP_obj(ID_pdos)%INTERP) ; UB=ubound(INTERP_obj(ID_pdos)%INTERP)
-       PDOS_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => PDOS_fac_p
-     endif
-     !
-     if (n_spinor==2) then
-       call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=RT_SPIN_fac)
-       call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
-       call C_F_POINTER(C_LOC(INTERP_obj(ID_spin)%INTERP), SPIN_fac_p, shape(INTERP_obj(ID_spin)%INTERP) )
-       LB=lbound(INTERP_obj(ID_spin)%INTERP) ; UB=ubound(INTERP_obj(ID_spin)%INTERP)
-       SPIN_fac_p(LB(1):UB(1),LB(2):UB(2),LB(3):UB(3)) => SPIN_fac_p
-     endif
-     !
      !... DOS
-     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,SPIN_fac_p,PDOS_fac_p,&
+     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,ID_spin,ID_pdos,&
 &                                 USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
@@ -195,8 +189,6 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      !
      call INTERPOLATION_driver_end(ID_E)
      call INTERPOLATION_driver_end(ID_f)
-     call INTERPOLATION_driver_end(ID_pdos)
-     call INTERPOLATION_driver_end(ID_spin)
      !
    endif
    !
@@ -263,11 +255,9 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  call live_timing()
  !
- call INTERPOLATION_driver_end(0)
- !
- nullify(PDOS_fac_p)
- nullify(PDOS_fac_p)
- YAMBO_FREE(RT_PDOS_fac)
- YAMBO_FREE(RT_SPIN_fac)
+ call INTERPOLATION_driver_end(ID_pdos)
+ call INTERPOLATION_driver_end(ID_spin)
+ call INTERPOLATION_driver_end(ID_bare_spin)
+ call INTERPOLATION_driver_end(ID_bare_pdos)
  !
 end subroutine RT_dos_time_plot

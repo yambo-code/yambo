@@ -39,7 +39,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  !
  ! Work space
  !
- integer                  :: EDIM,i_VAR,i_cv,i_grp,n_deg_grp
+ integer                  :: EDIM,Ntmp,i_VAR,i_cv,i_grp,n_deg_grp
  real(SP),    allocatable :: vR(:)
  integer,     allocatable :: sort_indx(:),first_el(:),n_of_el(:)
  !
@@ -60,6 +60,8 @@ subroutine K_IP_sort(what,I,N,El,vC)
  call sort(arrin=vR,indx=sort_indx)
  !
  EDIM=min(BS_H_dim,10000)
+ Ntmp=1
+ if(EDIM>1000) Ntmp=10
  allocate(first_el(EDIM)) 
  allocate(n_of_el(EDIM))
  !
@@ -69,7 +71,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  do i_VAR=1,n_BS_E_sorted
    BS_E_sorted(:,i_VAR,1)=cZERO
    do i_grp=1,n_deg_grp
-     if(i_grp>EDIM/10) cycle
+     if(i_grp>EDIM/Ntmp) cycle
      if(i_VAR==2) then
        BS_E_sorted(i_grp,i_VAR,1)=real(n_of_el(i_grp),SP)
        cycle

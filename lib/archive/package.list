@@ -1,11 +1,11 @@
 #
 # Libs list
 #
-EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ylib
+EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blacs scalapack petsc slepc fftw fftqe Ydriver
 #
 # storing options
 #
-keep_Ylib=yes
+keep_Ydriver=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no
@@ -23,67 +23,96 @@ keep_yaml=no
 keep_futile=no
 keep_hdf5=no
 #
+# package versions
+#
+version_Ydriver=1.1.0
+version_iotk=y1.2.2
+version_netcdf=4.9.0
+version_netcdff=4.6.0
+version_pnetcdf=1.12.1
+version_hdf5=1.12.2
+version_etsf_io=1.0.4
+version_libxc=5.2.3
+version_lapack=3.9.1
+version_blacs=missing
+version_scalapack=2.2.1
+version_slepc=3.17.2
+version_petsc=3.17.4
+version_fftw=3.3.10
+version_fftqe=missing
+version_yaml=0.2.2
+version_futile=missing
+#
 # package names
 #
-pkgname_Ylib=Ydriver-1.1.0
-pkgname_iotk=iotk-y1.2.2
-pkgname_netcdf=netcdf-c-4.7.4
-pkgname_netcdff=netcdf-fortran-4.5.3
-pkgname_pnetcdf=pnetcdf-1.12.1
-pkgname_hdf5=hdf5-1.12.0
-pkgname_etsf_io=etsf_io-1.0.4
-pkgname_libxc=libxc-5.1.5
-pkgname_lapack=lapack-3.9.1
+pkgname_Ydriver=Ydriver-$(version_Ydriver)
+pkgname_iotk=iotk-$(version_iotk)
+pkgname_netcdf=netcdf-c-$(version_netcdf)
+pkgname_netcdff=netcdf-fortran-$(version_netcdff)
+pkgname_pnetcdf=pnetcdf-$(version_pnetcdf)
+pkgname_hdf5=hdf5-$(version_hdf5)
+pkgname_etsf_io=etsf_io-$(version_etsf_io)
+pkgname_libxc=libxc-$(version_libxc)
+pkgname_lapack=lapack-$(version_lapack)
 pkgname_blacs=blacs
-pkgname_scalapack=scalapack-2.1.0
-pkgname_petsc=petsc-3.14.6
-pkgname_slepc=slepc-3.14.2
-pkgname_fftw=fftw-3.3.6-pl1
+pkgname_scalapack=scalapack-$(version_scalapack)
+pkgname_slepc=slepc-$(version_slepc)
+pkgname_petsc=petsc-$(version_petsc)
+pkgname_fftw=fftw-$(version_fftw)
 pkgname_fftqe=fftqe
-pkgname_yaml=yaml-0.2.2
+pkgname_yaml=yaml-$(version_yaml)
 pkgname_futile=futile-yambo
 #
 # tarball names
 #
-tarball_Ylib=$(pkgname_Ylib).tar.gz
+tarball_Ydriver=$(pkgname_Ydriver).tar.gz
 tarball_iotk=$(pkgname_iotk).tar.gz
-tarball_netcdf=$(pkgname_netcdf).tar.gz
-tarball_netcdff=$(pkgname_netcdff).tar.gz
+tarball_netcdf=v$(version_netcdf).tar.gz
+tarball_netcdff=v$(version_netcdff).tar.gz
 tarball_pnetcdf=$(pkgname_pnetcdf).tar.gz
-tarball_hdf5=$(pkgname_hdf5).tar.gz
+tarball_hdf5=hdf5-1_12_2.tar.gz
 tarball_etsf_io=$(pkgname_etsf_io).tar.gz
 tarball_libxc=$(pkgname_libxc).tar.gz
-tarball_lapack=v3.9.1.tar.gz
+tarball_lapack=v$(version_lapack).tar.gz
+tarball_scalapack=v$(version_scalapack).tar.gz
 tarball_blacs=$(pkgname_blacs).tar.gz
-tarball_scalapack=$(pkgname_scalapack).tar.gz
-tarball_petsc=$(pkgname_petsc).tar.gz
-tarball_slepc=$(pkgname_slepc).tar.gz
+tarball_slepc=slepc-v$(version_slepc).tar.gz
+tarball_petsc=petsc-v$(version_petsc).tar.gz
 tarball_fftw=$(pkgname_fftw).tar.gz
 tarball_fftqe=$(pkgname_fftqe).tar.gz
 tarball_yaml=$(pkgname_yaml).tar.gz
 tarball_futile=$(pkgname_futile).tar.gz
 #
-# External URL's
+# External URL's on Github
 #
+url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
-url_libxc=https://www.tddft.org/programs/libxc/down/5.1.5/$(tarball_libxc)
-url_petsc=https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/$(tarball_petsc)
-url_slepc=https://slepc.upv.es/download/distrib/$(tarball_slepc)
+url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
+url_hdf5=https://github.com/HDFGroup/hdf5/archive/refs/tags/$(tarball_hdf5)
+url_netcdf=https://github.com/Unidata/netcdf-c/archive/refs/tags/$(tarball_netcdf)
+url_netcdff=https://github.com/Unidata/netcdf-fortran/archive/refs/tags/$(tarball_netcdff)
+#url_fftw=https://github.com/FFTW/fftw3/archive/refs/tags/$(tarball_fftw)  # this would not work, since the repo contains the code generator
+#
+# External URL's on Gitlab
+#
+url_slepc=https://gitlab.com/slepc/slepc/-/archive/v$(version_slepc)/$(tarball_slepc)
+url_petsc=https://gitlab.com/petsc/petsc/-/archive/v$(version_petsc)/$(tarball_petsc)
+#url_libxc=https://gitlab.com/libxc/libxc/-/archive/$(version_libxc)/$(tarball_libxc)  # this would require to run "autoreconf -i"
+#
+# External URL's More
+#
+url_fftw=https://fftw.org/$(tarball_fftw)
+url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_libxc)
 #
 # Internal URL's
 #
 url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
-url_Ylib=$(url_base)/$(tarball_Ylib)
-url_netcdf=$(url_base)/$(tarball_netcdf)
-url_netcdff=$(url_base)/$(tarball_netcdff)
+url_Ydriver=$(url_base)/$(tarball_Ydriver)
 url_pnetcdf=$(url_base)/$(tarball_pnetcdf)
-url_hdf5=$(url_base)/$(tarball_hdf5)
 url_iotk=$(url_base)/$(tarball_iotk)
 url_etsf_io=$(url_base)/$(tarball_etsf_io)
 url_blacs=$(url_base)/$(tarball_blacs)
-url_scalapack=$(url_base)/$(tarball_scalapack)
-url_fftw=$(url_base)/$(tarball_fftw)
 url_fftqe=$(url_base)/$(tarball_fftqe)
 url_yaml=$(url_base)/$(tarball_yaml)
 url_futile=$(url_base)/$(tarball_futile)

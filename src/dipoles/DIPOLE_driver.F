@@ -53,13 +53,13 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parser_m,       ONLY:parser
- use DIPOLES,        ONLY:DIP_spin,DIP_orbital,DIP_P_spinor
+ use DIPOLES,        ONLY:DIP_spin,DIP_orbital,P_square
  use electrons,      ONLY:n_spin,n_spinor
 #if defined _NL
  use nl_optics,      ONLY:l_use_DIPOLES
 #endif
-#if defined _SC || defined _RT
- use DIPOLES,        ONLY:P_square
+#if defined _RT
+ use DIPOLES,        ONLY:DIP_P_spinor
 #endif
  use BS,             ONLY:BSE_prop,l_BS_magnons,l_BS_dichroism,l_BS_photolum
 #if defined _SLEPC && !defined _NL
@@ -284,12 +284,10 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
      endif
 #endif
      !
-#if defined _SC || defined _RT || defined _NL
      if (compute_P2_dipoles) then
        call DIP_alloc('P_square',(/Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
        P_square=cZERO
      endif
-#endif
      !
      if (l_BS_dichroism) then
        call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz,1/))
@@ -335,9 +333,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         if (compute_Spin_dipoles.and.n_spinor==2) &
         & call PP_redux_wait(DIP_P_spinor(:,:,:,:,:,ik_mem),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
 #endif
-#if defined _SC || defined _RT || defined _NL
         if (compute_P2_dipoles) call PP_redux_wait(P_square(:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
-#endif
         !
         ! Symmetrization 
         !================
@@ -356,11 +352,9 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
             if (compute_Spin_dipoles.and.n_spinor==2) &
             & DIP_P_spinor(:,:,:,iv,iv,ik_mem)=cmplx( real(DIP_P_spinor(:,:,:,iv,iv,ik_mem)),0. ,SP)
 #endif
-#if defined _SC || defined _RT
             if (compute_P2_dipoles) then
               P_square(iv,iv,ik_mem,i_sp_pol)=cmplx(real(P_square(iv,iv,ik_mem,i_sp_pol)),0. ,SP)
             endif
-#endif
             !
           endif
           !
@@ -378,10 +372,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
               if (compute_Spin_dipoles.and.n_spinor==2) &
               & DIP_P_spinor(:,:,:,iv,ic,ik_mem)= conjg(DIP_P_spinor(:,:,:,ic,iv,ik_mem))
 #endif
-#if defined _SC || defined _RT
               if (compute_P2_dipoles) &
 &               P_square(iv,ic,ik_mem,i_sp_pol) =  conjg(P_square(ic,iv,ik_mem,i_sp_pol))
-#endif
               !
             endif
           enddo

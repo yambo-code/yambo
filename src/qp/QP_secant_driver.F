@@ -56,7 +56,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
  use parallel_m,    ONLY:PAR_IND_Q_ibz
- use parallel_int,  ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta
@@ -127,7 +127,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Root
  !
@@ -163,7 +163,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Analytic continuation 
  !
@@ -198,7 +198,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  YAMBO_FREE(QP_W)
  YAMBO_FREE(QP_W_dr)
  YAMBO_FREE(QP_W_er)
- call PP_redux_wait()
+ call PP_wait()
  !
  contains 
    !

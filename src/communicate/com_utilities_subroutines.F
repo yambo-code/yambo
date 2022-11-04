@@ -216,15 +216,20 @@ subroutine warning(mesg)
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
 #endif
+ use pars,       ONLY:lchlen
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
  !
  implicit none
  !
  character(*) :: mesg
- call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+ character(lchlen)  :: mesg_loc
+ !
+ mesg_loc=mesg
+ if (mesg(1:1)/=" ") mesg_loc=" "//mesg
+ call msg('nr',STRING_pack('[WARNING] ',trim(mesg_loc)))
 #if !defined _io_lib
- call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+ call LIVE_message(STRING_pack('[WARNING] ',trim(mesg_loc)),"n","","%s")
 #endif
  !
 end subroutine warning
@@ -234,6 +239,7 @@ subroutine error(mesg)
 #if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
 #endif
+ use pars,       ONLY:lchlen
  use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
@@ -245,9 +251,13 @@ subroutine error(mesg)
 #if defined _MPI
  integer         :: ierr
 #endif
- character(*)    :: mesg
+ character(*)       :: mesg
+ character(lchlen)  :: mesg_loc
  !
  live_timing_is_on=.FALSE.
+ !
+ mesg_loc=mesg
+ if (mesg(1:1)/=" ") mesg_loc=" "//mesg
  !
  if (len_trim(secnm)>0) then
    call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
@@ -255,9 +265,9 @@ subroutine error(mesg)
    call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
 #endif
  endif
- call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+ call msg('nr',STRING_pack('[ERROR] ',trim(mesg_loc)))
 #if !defined _io_lib
- call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
+ call LIVE_message(STRING_pack('[ERROR] ',trim(mesg_loc)),"n","","%s")
  call LIVE_message("","n","","%s")
 #endif
  if(log_as_a_file) call yambo_flush(logfile_unit)

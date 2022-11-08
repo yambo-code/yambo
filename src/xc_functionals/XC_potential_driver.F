@@ -33,7 +33,7 @@
 !!
 !! @param[out]      E_xc                exchange correlation energy    (if ORDER=0)
 !! @param[out]      V_xc                exchange correlation potential (if ORDER=1)
-!! @param[out]      F_xc                exchange correlation potential (if ORDER=2)
+!! @param[out]      F_xc                exchange correlation kernel    (if ORDER=2)
 !
 subroutine XC_potential_driver(en,Xk,KIND,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !

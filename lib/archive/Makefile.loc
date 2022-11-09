@@ -106,7 +106,7 @@ endef
 #
 define getsrc_git
  mkdir -p  ../../log; \
- if [ "$$GBRANCH" = "none" ] ; then \
+ if [ ! "$$GBRANCH" = "none" ] ; then \
   if test ! -e $$LIB".pulled"; then \
    if test ! -d $$LIB ; then \
     echo "\t[$$LIB] clone via $$GIT" ; \

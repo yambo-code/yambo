@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,6 +59,13 @@ subroutine PARALLEL_live_message(WHAT,ENVIRONMENT,LOADED,TOTAL,LOADED_r,TOTAL_r,
      PERCENTUAL=nint(real(LOADED,SP)/real(TOTAL,SP)*100._SP)
      local_message=trim(local_message)//trim(intc(LOADED))//"/"//trim(intc(TOTAL))//"("//trim(intc(PERCENTUAL))//"%)"
    endif
+   !
+ else if(present(NC)) then
+   !
+   local_message="[PARALLEL "//trim(local_env)//" for "//WHAT//" on "//trim(intc(NC))//" CPU]"
+ else
+   !
+   return
    !
  endif
  !

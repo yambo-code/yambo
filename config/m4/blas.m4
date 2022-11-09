@@ -3,17 +3,17 @@
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
 AC_DEFUN([ACX_BLAS], [
-AC_PREREQ(2.50)
+AC_PREREQ([2.71])
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
-AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
-AC_ARG_ENABLE(int_linalg,   AC_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
-AC_ARG_ENABLE(openmp_int_linalg,   AC_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
+AC_ARG_WITH(blas_libs,[AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
+AC_ARG_ENABLE(int_linalg,   AS_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
+AC_ARG_ENABLE(openmp_int_linalg,   AS_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
-        [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
 case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
@@ -108,6 +108,43 @@ if test $acx_blas_ok = no; then
                 [AC_CHECK_LIB(essl, $caxpy,
                         [acx_blas_ok=yes; BLAS_LIBS="-lessl -lblas"],
                         [], [-lblas $FLIBS])])
+fi
+
+# BLAS in Intel MKL library?
+if test $acx_blas_ok = no && test -d "${MKLROOT}" ; then
+	# MKL for gfortran
+	mkl_libdir="${MKLROOT}/lib/intel64"
+	case "${FCKIND}" in
+	*gfortran* )
+		case "${host}" in
+		*x86*64*)
+			AC_CHECK_LIB(mkl_gf_lp64, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm"],,
+				[-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm])
+		;;
+		i?86*linux*)
+			AC_CHECK_LIB(mkl_gf, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread"],,
+				[-L${mkl_libdir} -lmkl_gf -lmkl_sequential -lmkl_core -lpthread])
+		;;
+		esac
+	;;
+	# MKL for other compilers (Intel, PGI, ...?)
+	*intel* | *nvfortran* | *pgi* )
+		# 64 bit
+		case "${host}" in
+		*x86*64*)
+			AC_CHECK_LIB(mkl_intel_lp64, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"],,
+				[-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm])
+		;;
+		i?86*linux*)
+			AC_CHECK_LIB(mkl_intel, $caxpy,
+				[acx_blas_ok=yes;BLAS_LIBS="-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread"],,
+				[-L${mkl_libdir} -lmkl_intel -lmkl_sequential -lmkl_core -lpthread])
+		;;
+		esac
+	esac
 fi
 
 # Generic BLAS library?

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): HM AM
@@ -28,11 +28,13 @@ sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
 # Locks -> string
 #
 lock_string=""
+save_dir=""
 for lock in $sorted_locks
 do
  lock=`echo $lock | sed "s/.lock//"`
  lock=`basename $lock`
  lock_string="${lock} ${lock_string}"
+ save_dir="${lock}_${single_save_dir}"
 done
 #
 # -D* -> string

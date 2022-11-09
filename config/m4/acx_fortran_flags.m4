@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -31,8 +31,7 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
-AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
-              [Debug flags are set for compilation. Default is no.]))
+AC_ARG_ENABLE(debug-flags, AS_HELP_STRING([--enable-debug-flags],[Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
 HDF5_MODE="production";
@@ -318,7 +317,12 @@ ia64*linux* )
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;
-      *17* | *18* | *19* )
+      *19* )
+       CPU_FLAG=" "
+       OMPFLAGS="-qopenmp"
+       CFLAGS="-O2 -std=gnu99 -no-multibyte-chars"
+       ;;
+      *17* | *18* )
        CPU_FLAG=" "
        OMPFLAGS="-qopenmp"
        CFLAGS="-O2 -std=gnu99"

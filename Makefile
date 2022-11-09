@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -87,6 +87,10 @@ conf-check:
 #
 STAMP_DBLE=
 ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compilation_objects_in_DOUBLE_precision.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_yambo_nl.stamp))
+ STAMP_DBLE=-D_DOUBLE
+else ifneq (,$(wildcard $(compdir)/config/stamps_and_lists/compiling_ypp_nl.stamp))
  STAMP_DBLE=-D_DOUBLE
 endif
 #

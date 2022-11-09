@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH, AF
@@ -30,7 +30,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use it_m,                ONLY:nrnlvls,rnlvls,rstatus
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:ncpu,myid,PP_indexes,PP_indexes_reset
- use parallel_int,        ONLY:PARALLEL_wait,PARALLEL_index,PARALLEL_live_message,PP_redux_wait
+ use parallel_int,        ONLY:PARALLEL_index,PARALLEL_live_message,PP_wait
  use electrons,           ONLY:levels,E_reset,n_bands,n_sp_pol,n_spinor
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF, wf_nb_io_groups,wf_nb_io
@@ -143,7 +143,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (ncpu>1) then
    !
-   call PARALLEL_wait()
+   call PP_wait()
    !
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=ID)
    io_err=io_DB1(en,k,ID)
@@ -181,7 +181,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1/),ID=ID)
  io_err=io_WF(ID)
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  IO_write=.true.
  IO_read=.true.
@@ -222,7 +222,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  IO_write=IO_write_save
  IO_read=IO_read_save
  !
- if (ncpu>1)   call PARALLEL_wait()
+ if (ncpu>1)   call PP_wait()
  if (n_live>0) call live_timing()
  !
  YAMBO_FREE(wf_disk)
@@ -258,7 +258,7 @@ integer function p2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
    endif
  endif
  !
- call PARALLEL_wait()
+ call PP_wait()
  !
  call pw_close
  !

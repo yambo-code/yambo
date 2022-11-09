@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): HM DS
@@ -73,29 +73,32 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  !
  external :: MyEPSMonitor !function to monitor the convergence
  ! 
- EPS            :: eps
- ST             :: st    ! spectral transformation context
- KSP            :: ksp
- PC             :: pc
+ EPS                                :: eps
+ ST                                 :: st    ! spectral transformation context
+ KSP                                :: ksp
+ PC                                 :: pc
  !
- EPSType        :: epskind
- STType         :: stkind
- KSPType        :: kspkind
- PCType         :: pckind
+ EPSType                            :: epskind
+ STType                             :: stkind
+ KSPType                            :: kspkind
+ PCType                             :: pckind
  !
- EPSExtraction  :: extr
- PetscReal      :: tol, ferror
- PetscScalar    :: target_energy
- PetscErrorCode :: ierr
- PetscInt       :: nev, ncv, mpd, maxit, its, nconv, n, i, j
- PetscInt       :: idx(2)
- PetscScalar    :: kr, ki
- PetscScalar, pointer :: xsr(:), xsi(:), xsr_left(:), xsi_left(:)
- PetscScalar, pointer :: M(:,:)          !pointer to matrix
- Vec            ::  xr, xi, xr_left, xi_left, voutr, vouti, voutr_left, vouti_left
- PetscViewer    ::  viewer, hdf5v
- PetscMPIInt    ::  rank
- VecScatter     ::  ctxr, ctxi, ctxr_left, ctxi_left
+ EPSExtraction                      :: extr
+ PetscReal                          :: tol, ferror
+ PetscScalar                        :: target_energy
+ PetscErrorCode                     :: ierr
+ PetscInt                           :: nev, ncv, mpd, maxit, its, nconv, n, i, j
+ PetscInt                           :: idx(2)
+ PetscScalar                        :: kr, ki
+ PetscScalar, pointer               :: xsr(:), xsi(:), xsr_left(:), xsi_left(:)
+ PetscScalar, pointer               :: M(:,:)          !pointer to matrix
+ Vec                                :: xr, xi, xr_left, xi_left
+ Vec, dimension (:), allocatable    :: voutr, vouti, voutr_left, vouti_left
+                                    !These are local varibles and are destroyed after used
+ PetscViewer                        :: viewer, hdf5v
+ PetscMPIInt                        :: rank
+ VecScatter, dimension (:), allocatable     ::  ctxr, ctxi, ctxr_left, ctxi_left
+                                    !These are local varibles and are destroyed after used
  !
  logical           :: l_precondition
  character(len=30) :: rowfmt
@@ -228,6 +231,9 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  tol      = BSS_slepc_tol
  call EPSSetTolerances(eps,tol,maxit, ierr)
  !
+ !
+ !free the M_slepc matrix
+ call MatDestroy(M_slepc,ierr)
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  !     Optional: Get some information from the solver and display it
  ! - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -259,20 +265,23 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
  call EPSGetConverged(eps,nconv,ierr)
  call msg( 'srn', '[SLEPC] Number of converged states        ', int(nconv))
  if ( nconv < n_eig ) then
-   call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(nconv))//' eigenvalues')
+   call warning(' [SLEPC] requested '//trim(intc(n_eig))//' but converged '//trim(intc(int(nconv,4)))//' eigenvalues')
    n_eig = nconv
  endif
  !
  if (n_eig==0) call error(' [SLEPC] 0 eigenvectors converged')
  !
- !free the M_slepc matrix
- call MatDestroy(M_slepc,ierr)
+ !
  !
  !open file for output
  !call PetscViewerHDF5Open(PETSC_COMM_WORLD, 'hdb.BS_slepc', FILE_MODE_WRITE, hdf5v, ierr)
  !
  !calculate eigenvalues and relative errors
  !
+ allocate(voutr(n_eig),ctxr(n_eig)) ! Allocate n_eig structs
+
+ if (present(V_left)) allocate(ctxr_left(n_eig),voutr_left(n_eig))
+
  do i=0,n_eig-1
    !Get converged eigenpairs: i-th eigenvalue is stored in kr
    !(real part) and ki (imaginary part)
@@ -294,64 +303,69 @@ subroutine MATRIX_slepc(M_slepc,l_target_energy,n_eig,V_right,V_left,E_real,E_cm
    !
    if (present(V_left)) then
      !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr,voutr,ierr)
+     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
      !call VecScatterCreateToAll(xi,ctxi,vouti,ierr)
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterBegin(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterEnd(ctxi,xi,vouti,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(voutr,xsr,ierr)
+     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
      !call VecGetArrayReadF90(vouti,xsi,ierr)
      V_right(:, i+1) = cmplx(xsr,kind=SP)
      !if (BSS_slepc_double_grp) V_right(BS_K_dim(1)+1:,i+1) =cI*V_right(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr,xsr,ierr)
+     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
      !call VecRestoreArrayReadF90(vouti,xsi,ierr)
      !
+     call VecScatterDestroy(ctxr(i+1),ierr)
+     call VecDestroy(voutr(i+1),ierr)
+     !call VecScatterDestroy(ctxi,ierr)
+     !call VecDestroy(vouti,ierr)
+     !
      !save the eigenvectors
-     call VecScatterCreateToAll(xr_left,ctxr_left,voutr_left,ierr)
+     call VecScatterCreateToAll(xr_left,ctxr_left(i+1),voutr_left(i+1),ierr)
      !call VecScatterCreateToAll(xi_left,ctxi_left,vouti_left,ierr)
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr_left,xr_left,voutr_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr_left,xr_left,voutr_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterBegin(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr_left(i+1),xr_left,voutr_left(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterBegin(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !call VecScatterEnd(ctxi_left,xi_left,vouti_left,INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(voutr_left,xsr_left,ierr)
+     call VecGetArrayReadF90(voutr_left(i+1),xsr_left,ierr)
      !call VecGetArrayReadF90(vouti_left,xsi_left,ierr)
      V_left(:, i+1) = cmplx(xsr_left,kind=SP)
      !if (BSS_slepc_double_grp) V_left(BS_K_dim(1)+1:,i+1) =cI*V_left(BS_K_dim(1)+1:,i+1)
-     call VecRestoreArrayReadF90(voutr_left,xsr_left,ierr)
+     call VecRestoreArrayReadF90(voutr_left(i+1),xsr_left,ierr)
      !call VecRestoreArrayReadF90(vouti_left,xsi_left,ierr)
+     !
+     !
+     call VecScatterDestroy(ctxr_left(i+1),ierr)
+     call VecDestroy(voutr_left(i+1),ierr)
+     !call VecScatterDestroy(ctxi_left,ierr)
+     !call VecDestroy(vouti_left,ierr)
    else
      !save the eigenvectors
-     call VecScatterCreateToAll(xr,ctxr,voutr,ierr)
+     call VecScatterCreateToAll(xr,ctxr(i+1),voutr(i+1),ierr)
      ! scatter as many times as you need
-     call VecScatterBegin(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
-     call VecScatterEnd(ctxr,xr,voutr,INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterBegin(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
+     call VecScatterEnd(ctxr(i+1),xr,voutr(i+1),INSERT_VALUES,SCATTER_FORWARD,ierr)
      !
-     call VecGetArrayReadF90(voutr,xsr,ierr)
+     call VecGetArrayReadF90(voutr(i+1),xsr,ierr)
      V_right(:, i+1) = xsr
-     call VecRestoreArrayReadF90(voutr,xsr,ierr)
+     call VecRestoreArrayReadF90(voutr(i+1),xsr,ierr)
+     call VecScatterDestroy(ctxr(i+1),ierr)
+     call VecDestroy(voutr(i+1),ierr)
    endif
    !
  enddo
  !
+ deallocate(voutr,ctxr)
+ !
+ if (present(V_left)) deallocate(ctxr_left,voutr_left)
+ !
  ! destroy scatter context and local vector when no longer needed
- if (present(V_left)) then
-   call VecScatterDestroy(ctxr,ierr)
-   call VecDestroy(voutr,ierr)
-   !call VecScatterDestroy(ctxi,ierr)
-   !call VecDestroy(vouti,ierr)
-   call VecScatterDestroy(ctxr_left,ierr)
-   call VecDestroy(voutr_left,ierr)
-   !call VecScatterDestroy(ctxi_left,ierr)
-   !call VecDestroy(vouti_left,ierr)
- else
-   call VecScatterDestroy(ctxr,ierr)
-   call VecDestroy(voutr,ierr)
- endif
+ !
  !
  call EPSDestroy(eps,ierr)
  call VecDestroy(xr,ierr)
@@ -397,8 +411,8 @@ subroutine MyEPSMonitor(eps,its,nconv,eigr,eigi,errest,nest,dummy,ierr)
  endif
  !
  ! write the number of converged eigenvalues
- call msg('s', '[SLEPC] Iteration #'// trim(intc(its))// ' - converged States '&
-&           // trim(intc(nconv)) //' - error ', maxerror)
+ call msg('s', '[SLEPC] Iteration #'// trim(intc(int(its,4)))// ' - converged States '&
+&           // trim(intc(int(nconv,4))) //' - error ', maxerror)
  !
  !Slepc_v%it=0 !Slepc_v%it+1 !its
  !
@@ -556,4 +570,4 @@ end subroutine
  !PCDEFLATION       "deflation"
  !PCHPDDM           "hpddm"
  !PCHARA            "hara"
-
+ 

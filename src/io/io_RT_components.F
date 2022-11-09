@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -23,7 +23,7 @@
 !
 integer function io_RT_components(what,ID)
  !
- ! What can be E WF V OBSERV(J,P,M,...) G
+ ! What can be E WF V OBSERV(J,P,M,...) G_lesser G_lesser_RESTART
  !
  ! def/io_variable_bulk VAR_ID table
  ! VAR_ID=1 is used by io_bulk and should never be used by def/io_variable_bulk
@@ -62,20 +62,18 @@ integer function io_RT_components(what,ID)
  !  4 THETA
  !
  !
- use pars,           ONLY:SP,lchlen
+ use pars,           ONLY:SP,schlen
  use drivers,        ONLY:l_real_time
  use R_lattice,      ONLY:nqbz
  use stderr,         ONLY:intc
  use timing_m,       ONLY:timing
- use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
-&                         def_variable_bulk,io_variable_bulk
+ use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,def_variable_bulk,io_variable_bulk
  use IO_m,           ONLY:io_sec,read_is_on,write_is_on,io_file
- use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step, &
-&                         RT_carriers,RT_nbands,G_MEM_steps
- use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,GF_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
-&                         SAVE_G_history,CACHE_OBS_steps,RT_DB_file_name
+ use real_time,      ONLY:NE_i_time,RT_step,RT_dyn_step,RT_carriers,RT_nbands,G_MEM_steps
+ use RT_control,     ONLY:RT_carriers_object,CARR_RT_IO_t,Gless_RESTART_RT_IO_t,OBS_RT_IO_t,CACHE_OBS_steps_now,&
+&                         CACHE_OBS_steps,RT_DB_file_name,Gless_RT_IO_t,&
+&                         RT_DB_name,RT_define_the_IO_DB_identifier,RT_do_IO,RT_current_DB_identifier,RT_return_db_ID
 #if defined _PAR_IO
- use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,mpi_comm_world
 #endif
 #if defined _ELPH_ITERATIVE
  use RT_iterative,   ONLY:THETA_matrix
@@ -86,100 +84,59 @@ integer function io_RT_components(what,ID)
  !
  implicit none
  !
- integer,      intent(in) :: ID
- character(*), intent(in) :: what
- !
- integer, external     :: variables_RT_dynamic
+ character(*), intent(in) ::what
+ integer,        optional ::ID
  !
  ! Work Space
- !
- character(lchlen)     :: db_name
- !
-#if defined _PAR_IO
- integer               :: local_COMM
-#endif
- integer               :: ik,db_type,T_size,G_IO_steps,ID_frag
- logical               :: l_G,l_OBS,l_THETA,l_REF,l_carriers,l_JP_REF,l_JP,l_M,l_D,&
-&                         loading_carr_before_neq,par_IO
- !
- ! DB kind and name...
- !=====================
- l_carriers   =what=="carriers"
- l_THETA      =what=="THETA"
- l_G          =what=="G"
- l_REF        =what=="REF"
- !
- !...OBSERVABLES
- !===============
- l_JP_REF     =what=="JP_REF".or.what=="OBSERVABLES_REF"
- l_JP         =what=="JP".or.what=="OBSERVABLES"
- l_M          =what=="M".or.what=="OBSERVABLES"
- l_D          =what=="D".or.what=="OBSERVABLES"
- l_OBS        =l_JP.or.l_M.or.l_D.or.l_JP_REF
+ character(schlen)     ::db_name
+ integer               ::ik,db_kind,T_size,G_IO_steps,ID_frag
+ logical               ::loading_carr_before_neq
+ integer, external     ::variables_RT_dynamic
  !
  call timing('io_RT_components',OPR='start')
  !
- db_name="RT_"//trim(what)
- if (l_OBS)    db_name="RT_OBSERVABLES"
- if (l_JP_REF) db_name="RT_OBSERVABLES_REF"
- if (l_REF)    db_name="RT_reference_components"
+ ! Datbase Name and identifier 
+ !=============================
+ ! .. at this point it is crucial to define the RT_current_DB_identifier 
  !
- ID_frag=0
+ !... using what
+ call RT_define_the_IO_DB_identifier(what)
  !
- db_type=2
- if (.not.any((/l_OBS,l_carriers,l_THETA,l_G,l_REF/))) then
-   db_name=trim(what)
-   l_carriers=.TRUE.
-   db_type=-3
+ !... carriers specific procedure (RT_apply related)
+ db_kind=2
+ if (.not.RT_do_IO("ANY")) then
+   if (index(what,"_carriers")>0) then
+     RT_current_DB_identifier=RT_return_db_ID("carriers")
+     RT_DB_name(RT_current_DB_identifier)="carriers"
+   endif
+   db_kind=-3
  endif
- !
- loading_carr_before_neq = (db_type==-3.and.l_real_time) 
- !
- par_IO=.false.
-#if defined _PAR_IO
- if (l_G) then
-   if (write_is_on(ID)) local_COMM=PAR_COM_Xk_ibz_INDEX%COMM
-   if ( read_is_on(ID)) local_COMM=mpi_comm_world
-   par_IO=.true.
- endif
-#endif
+ loading_carr_before_neq = (db_kind==-3.and.l_real_time) 
  !
  ! ACTION
  !========
- !
- if(l_G.and.any((/io_sec(ID,:)>=3/))) then
-#if defined _PAR_IO
-   io_RT_components=io_connect(desc=trim(db_name)//"_PAR",type=db_type,ID=ID,COMM=local_COMM)
-#else
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID,FORCE_READ_MODE=.true.)
-#endif
+ if (RT_do_IO("ANY_G")) then 
+   io_RT_components=io_connect(desc="RT_"//trim(RT_DB_name(RT_current_DB_identifier)),type=db_kind,ID=ID)
    if (io_RT_components/=0) goto 1
  else
-   io_RT_components=io_connect(desc=trim(db_name),type=db_type,ID=ID)
+   if (db_kind>0) db_name="RT_"//trim(RT_DB_name(RT_current_DB_identifier))
+   if (db_kind<0) db_name=trim(what)
+   io_RT_components=io_connect(desc=trim(db_name),type=db_kind,ID=ID)
    if (io_RT_components/=0) goto 1
  endif
  !
- if (read_is_on(ID)) then
-   if (l_OBS     ) db_type=4
-   if (l_G       ) db_type=5
-   if (l_carriers) db_type=6
-   if (l_THETA   ) db_type=7
-   if (l_REF     ) db_type=8
-   RT_DB_file_name(db_type)=io_file(ID)
- endif
+ if (read_is_on(ID)) RT_DB_file_name(RT_current_DB_identifier)=io_file(ID)
  !
  ! 1st SECTION
  !=============
- if (any((/io_sec(ID,:)==1/))) then
+ if (any((/io_sec(ID,:)==1/)).and..not.RT_do_IO("ANY_K_section")) then
    !
-   if (.not.l_JP_REF) then
-     call io_RT_components_header(ID,what,loading_carr_before_neq,l_carriers,l_OBS,l_G,l_THETA,l_REF,io_RT_components)
-     if (io_RT_components/=0) goto 1
-   endif
+   call io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
+   if (io_RT_components/=0) goto 1
    !
-   if (l_OBS)  call io_RT_components_OBS(ID,l_JP.or.l_JP_REF,l_M,"DEF")
+   if (RT_do_IO("OBSERVABLES")) call io_RT_components_OBS(ID,"DEF")
    !
-   if ( l_carriers .and. .not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
+   if (RT_do_IO("carriers").and..not.loading_carr_before_neq) call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="ref_io")
    !
  endif
  !
@@ -187,7 +144,7 @@ integer function io_RT_components(what,ID)
  !
  ! REFERENCE Lifetimes and Green function
  !========================================
- if ( l_REF ) call io_RT_components_Reference(ID)
+ if (RT_do_IO("REFERENCE")) call io_RT_components_Reference(ID)
  !
  ! 2nd SECTION
  !=============
@@ -195,25 +152,27 @@ integer function io_RT_components(what,ID)
  ! Time size
  !
  T_size=1
- if ( (write_is_on(ID) .or. l_real_time) .and. l_G ) then
-   G_IO_steps=GF_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
-   if(NE_i_time> 1 .and. .not.SAVE_G_history) T_size=    G_MEM_steps
-   if(NE_i_time> 1 .and.      SAVE_G_history) T_size=min(G_MEM_steps,G_IO_steps)
+ if ((write_is_on(ID).or.l_real_time).and. RT_do_IO("ANY_G") ) then
+   G_IO_steps=Gless_RESTART_RT_IO_t%INTERVAL_steps/nint(RT_dyn_step/RT_step)
+   if(NE_i_time> 1 .and. (RT_do_IO("G_lesser_RESTART").or.RT_do_IO("G_lesser_RESTART_K_section"))) T_size= G_MEM_steps
+   if(NE_i_time> 1 .and. (RT_do_IO("G_lesser")        .or.RT_do_IO("G_lesser_K_section")        )) T_size= 1
  endif
- if(l_OBS .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
+ if(RT_do_IO("OBSERVABLES") .and. NE_i_time> 1) T_size=CACHE_OBS_steps_now
  !
  if (any((/io_sec(ID,:)==2/))) then
    !
-   if(any((/l_OBS,l_G,l_carriers/)) .and. .not.(loading_carr_before_neq.or.l_JP_REF) ) then
+   if(RT_do_IO("DYN_VARS") .and. .not.loading_carr_before_neq ) then
      io_RT_components=variables_RT_dynamic(ID)
      if (io_RT_components/=0) goto 1
    endif
    !
-   if (l_G)        call io_RT_components_TIME_points(ID,T_size,.false.,SAVE_G_history,l_G,GF_RT_IO_t)
+   if (RT_do_IO("G_lesser"))          call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,Gless_RT_IO_t)
    !
-   if (l_carriers) call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.true.,l_G,CARR_RT_IO_t)
+   if (RT_do_IO("G_lesser_RESTART"))  call io_RT_components_TIME_points(ID,T_size,.FALSE.,.FALSE.,Gless_RESTART_RT_IO_t)
    !
-   if (l_OBS)      call io_RT_components_TIME_points(ID,T_size,.false.,.true.,l_G,OBS_RT_IO_t)
+   if (RT_do_IO("carriers"))          call io_RT_components_TIME_points(ID,1,.not.loading_carr_before_neq,.TRUE.,CARR_RT_IO_t)
+   !
+   if (RT_do_IO("OBSERVABLES"))       call io_RT_components_TIME_points(ID,T_size,.FALSE.,.TRUE.,OBS_RT_IO_t)
    !
  endif
  !
@@ -221,8 +180,7 @@ integer function io_RT_components(what,ID)
  !
  ! 3rd SECTION
  !=============
- !
- if (l_THETA.or.l_G) then
+ if (RT_do_IO("K_SECTION")) then
 #if defined _PAR_IO
    ID_frag=ID
 #else
@@ -236,7 +194,7 @@ integer function io_RT_components(what,ID)
  !
  ! ELPH Kernel THETA Matrix 
  !==========================
- if ( l_THETA ) then
+ if (RT_do_IO("THETA")) then
    !
    ! This should be replaced by call THETA_IO
    !
@@ -246,13 +204,13 @@ integer function io_RT_components(what,ID)
  !
 #endif
  !
- ! lesser Green Function
+ ! Lesser Green Function
  !=======================
- if ( l_G ) call io_RT_components_G_lesser(ID_frag,T_size)
+ if (RT_do_IO("ANY_G")) call io_RT_components_G_lesser(ID_frag,T_size)
  !
  ! Carrier components
  !====================
- if ( l_carriers) then
+ if (RT_do_IO("carriers")) then
    !
    if (CARR_RT_IO_t%first_IO(3).or.read_is_on(ID)) then
      call RT_carriers_object(RT_carriers,DB_id=ID,WHAT="def_io_variables")
@@ -266,14 +224,14 @@ integer function io_RT_components(what,ID)
  !
  ! Current and Polarization
  !==========================
- if (l_OBS) call io_RT_components_OBS(ID,l_JP.or.l_JP_REF,l_M,"FILL")
+ if (RT_do_IO("OBSERVABLES")) call io_RT_components_OBS(ID,"FILL")
  !
+ ! End
+ !=====
 #if !defined _PAR_IO
- if (l_THETA.or.l_G) call io_fragment_disconnect(ID,ID_frag)
+ if (RT_do_IO("K_SECTION")) call io_fragment_disconnect(ID,ID_frag)
 #endif
- !
 1 call io_disconnect(ID=ID)
- !
  call timing('io_RT_components',OPR='stop')
  !
 end function

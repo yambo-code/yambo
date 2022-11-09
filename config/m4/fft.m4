@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -23,23 +23,16 @@
 #
 AC_DEFUN([AC_HAVE_FFT],[
 
-AC_ARG_WITH(fft_libs,AC_HELP_STRING([--with-fft-libs=<libs>],
-            [Link to FFT libraries],[32]),[],[])
-AC_ARG_WITH(fft_path,AC_HELP_STRING([--with-fft-path=<path>],
-            [Path to the FFT install directory],[32]),[],[])
-AC_ARG_WITH(fft_libdir,AC_HELP_STRING([--with-fft-libdir=<path>],
-            [Path to the FFT lib directory],[32]),[],[])
-AC_ARG_WITH(fft_includedir,AC_HELP_STRING([--with-fft-includedir=<path>],
-            [Path to the FFT include directory],[32]),[],[])
+AC_ARG_WITH(fft_libs,AS_HELP_STRING([--with-fft-libs=<libs>],[Link to FFT libraries],[32]),[],[])
+AC_ARG_WITH(fft_path,AS_HELP_STRING([--with-fft-path=<path>],[Path to the FFT install directory],[32]),[],[])
+AC_ARG_WITH(fft_libdir,AS_HELP_STRING([--with-fft-libdir=<path>],[Path to the FFT lib directory],[32]),[],[])
+AC_ARG_WITH(fft_includedir,AS_HELP_STRING([--with-fft-includedir=<path>],[Path to the FFT include directory],[32]),[],[])
 #
-AC_ARG_ENABLE(internal_fftqe,AC_HELP_STRING([--enable-internal-fftqe],
-            [Use internal QE FFT library]),[],[enable_internal_fftqe=no])
-AC_ARG_ENABLE(internal_fftsg,AC_HELP_STRING([--enable-internal-fftsg],
-            [Use internal Goedecker FFT library]),[],[enable_internal_fftsg=no])
-AC_ARG_ENABLE(3d_fft,AC_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),[],[])
+AC_ARG_ENABLE(internal_fftqe,AS_HELP_STRING([--enable-internal-fftqe],[Use internal QE FFT library]),[],[enable_internal_fftqe=no])
+AC_ARG_ENABLE(internal_fftsg,AS_HELP_STRING([--enable-internal-fftsg],[Use internal Goedecker FFT library]),[],[enable_internal_fftsg=no])
+AC_ARG_ENABLE(3d_fft,AS_HELP_STRING([--enable-3d-fft],[Use 3D FFT]),[],[])
 #
-AC_ARG_WITH(fftsg_fac, AC_HELP_STRING([--with-fftsg-fac=<val>],
-            [Change default Goedecker FFT cache factor],[32]))
+AC_ARG_WITH(fftsg_fac, AS_HELP_STRING([--with-fftsg-fac=<val>],[Change default Goedecker FFT cache factor],[32]))
 
 #
 HAVE_FFT="no"
@@ -109,6 +102,21 @@ if test -d "$try_fft_libdir" && test -d "$try_fft_incdir" ; then
        try_fft_libs="-lfftw3"
    fi
    #
+fi
+#
+# check for MKL
+#
+if test -d "${MKLROOT}" &&  test x"$try_fft_libs" = "x" ; then
+   try_fft_incdir="${MKLROOT}/include"
+   mkl_libdir="${MKLROOT}/lib/intel64"
+   case "${FCKIND}" in
+   *gfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm"
+    ;;
+    *intel* | *pgi* | *nvfortran* )
+   	try_fft_libs="-L${mkl_libdir} -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm"
+    ;;
+    esac 
 fi
 #
 if ! test x"$try_fft_libs" = "x" ; then

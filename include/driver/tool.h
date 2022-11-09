@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2021 the YAMBO team
+         Copyright (C) 2000-2022 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): DS
@@ -30,7 +30,7 @@
 #endif
 #if defined _ypp
  char *tool="ypp";
- char *tool_desc="Y(ambo) P(ost) P(rocessor)";
+ char *tool_desc="Y(ambo) P(ost)/(re) P(rocessor)";
 #endif
 #if defined _a2y
  char *tool="a2y";

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -40,7 +40,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  use interfaces,    ONLY:WF_load,WF_free,DESC_write
  use wave_func,     ONLY:WF,WF_symm,wf_ng
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
- use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  use openmp,        ONLY:OPENMP_update,master_thread
  use LIVE_t,        ONLY:live_timing
  use wrapper,       ONLY:V_dot_V
@@ -132,7 +132,7 @@ subroutine exciton_WFs(Xk,BS_E_degs,iq)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/nr_tot/))
- call PP_redux_wait
+ call PP_wait()
  !
  ! Loop on exc states
  !===================

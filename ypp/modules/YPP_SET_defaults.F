@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS,AM
@@ -49,13 +49,16 @@ subroutine YPP_SET_defaults()
 &                         Eh_pumped_pair_deltaE,Eh_pumped_pair_energy,Eh_pumped_pair_width,l_RealTime,l_RT_dos,&
 &                         l_RT_abs,l_RT_bands,l_RT_DBs,l_RT_density,l_RT_energy,l_RT_lifetimes,l_RT_occupations,&
 &                         l_RT_time,l_RT_X,Eh_pumped_pair_n_BZ_regions,Probe_Keyword ,Pump_Keyword,X_order,&
-&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format,l_RT_G_two_times,X_kind
+&                         Eh_mu,Eh_temp,h_mu_autotune_thr,RT_p_format,l_RT_G_two_times,X_kind,Pump_path
  use fields,         ONLY:n_ext_fields
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,       ONLY:elph_dbs_path, elph_Ef, elph_gamma_broad, elph_steps, l_atomic_amplitude, l_eliashberg,&
 &                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
  use ELPH,           ONLY:gsqF_energy_steps
+#endif
+#if defined _YPP_NL
+ use YPP_real_time,  ONLY:Pump_path
 #endif
  !
  implicit none
@@ -212,6 +215,10 @@ subroutine YPP_SET_defaults()
  SOC_bands_to_map=(/ 1, n_bands /)
  SOC_bands_buffer=1
  SOC_split=0.1_SP/HA2EV
+ !
+#if defined _YPP_NL
+ Pump_path     ="none"
+#endif
  !
 #if defined _YPP_RT
  !

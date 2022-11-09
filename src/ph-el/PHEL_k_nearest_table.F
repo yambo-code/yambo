@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): FP
@@ -29,7 +29,7 @@ subroutine PHEL_k_nearest_table(k)
  !
  use R_lattice,      ONLY:bz_samp,k_the_nearest
  use ELPH,           ONLY:PH_qpt
- use PHEL,           ONLY:KpQ_IO_map,PH_Q
+ use PHEL,           ONLY:KpQ_io_map,PH_Q
  use parallel_m,     ONLY:PARs_PH_K_bz,PARs_PH_Q_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
@@ -47,7 +47,7 @@ subroutine PHEL_k_nearest_table(k)
  !
  call timing("K-Q indexing",OPR='start')
  !
- KpQ_IO_map=0
+ KpQ_io_map=0
  !
  do iq=PH_Q(1),PH_Q(2)
    !
@@ -58,7 +58,7 @@ subroutine PHEL_k_nearest_table(k)
      if (.not.PARs_PH_K_bz%IND%element_1D(ikbz)) cycle
      !
      ! Notice that k-q_yambo ==> k+q_PH because of the MinusQ convention
-     KpQ_IO_map(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,k%nbz,i_err=i_err)
+     KpQ_io_map(iq,ikbz) = k_the_nearest(k%ptbz(ikbz,:)+PH_qpt(iq,:),k%ptbz,k%nbz,i_err=i_err)
      !
      call live_timing( steps=1 )
      !
@@ -67,8 +67,8 @@ subroutine PHEL_k_nearest_table(k)
  enddo
  !
  ! Only PARALLEL_wait in k and q, NOT in bands
- call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_K_bz%COMM_i%COMM)
- call PP_redux_wait(KpQ_IO_map,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
+ call PP_redux_wait(KpQ_io_map,COMM=PARs_PH_K_bz%COMM_i%COMM)
+ call PP_redux_wait(KpQ_io_map,COMM=PARs_PH_Q_ibz%COMM_i%COMM)
  !
  call live_timing( )
  !

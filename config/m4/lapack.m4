@@ -8,7 +8,7 @@ acx_lapack_ok=no
 
 LAPACK_LIBS=""
 AC_ARG_WITH(lapack_libs,
-        [AC_HELP_STRING([--with-lapack-libs=<libs>], [Use LAPACK libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-lapack-libs=<libs>],[Use LAPACK libraries <libs>],[32])])
 case $with_lapack_libs in
         yes | "") ;;
         no) acx_lapack_ok=disable ;;

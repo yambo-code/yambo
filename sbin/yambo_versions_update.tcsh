@@ -84,10 +84,12 @@ if ( "$argv[1]" == "r" || "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" =
   set hash_new     = $hash_HEAD
 endif
 #
+set v_string_old=$version_old"."$subver_old"."$patch_old" r."$revision_old" h."$hash_old
+set v_string_new=$version_new"."$subver_new"."$patch_new" r."$revision_new" h."$hash_new
+#
 if ( "$argv[1]" != "save" ) then
   echo 
-  echo "v."$version_old"."$subver_old"."$patch_old " r."$revision_old " h."$hash_old" => " \
-       "v."$version_new"."$subver_new"."$patch_new " r."$revision_new " h."$hash_new""
+  echo $v_string_old "=>" $v_string_new
   echo 
 else
  set source_dir="yambo-"$version_new"."$subver_new"."$patch_new
@@ -117,13 +119,23 @@ cat << EOF > configure.awk
 }
 EOF
 endif
-cat << EOF > version.awk
+cat << EOF > version.h.awk
 {
  gsub("_VERSION $version_old"  ,"_VERSION $version_new"  ,\$0)
  gsub("_SUBVERSION $subver_old","_SUBVERSION $subver_new",\$0)
  gsub("_PATCHLEVEL $patch_old" ,"_PATCHLEVEL $patch_new", \$0)
  gsub("_REVISION $use_rev_old" ,"_REVISION $use_rev_new" ,\$0)
  gsub("_HASH \"$hash_old\""    ,"_HASH \"$hash_new\"" ,   \$0)
+ print \$0 > "NEW"
+}
+EOF
+cat << EOF > version.m4.awk
+{
+ gsub("$v_string_old","$v_string_new",\$0)
+ gsub("SVERSION=\"$subver_old\"","SVERSION=\"$subver_new\"",\$0)
+ gsub("SPATCHLEVEL=\"$patch_old\"" ,"SPATCHLEVEL=\"$patch_new\"", \$0)
+ gsub("SREVISION=\"$use_rev_old\"" ,"SREVISION=\"$use_rev_new\"" ,\$0)
+ gsub("SHASH=\"$hash_old\""    ,"SHASH=\"$hash_new\"" ,   \$0)
  print \$0 > "NEW"
 }
 EOF
@@ -134,10 +146,12 @@ if ( "$argv[1]" != "save" ) then
    mv NEW configure
    chmod a+x configure
  endif
- $awk -f version.awk include/driver/version.h
+ $awk -f version.h.awk include/driver/version.h
  mv NEW include/driver/version.h
+ $awk -f version.m4.awk config/version/version.m4
+ mv NEW config/version/version.m4
 endif
-rm -fr version.awk configure.awk
+rm -fr version.*.awk configure.awk 
 #
 exit 0
 

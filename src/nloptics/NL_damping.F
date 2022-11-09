@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -27,8 +27,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  use pars,           ONLY:SP,cI
  use zeros,          ONLY:zero_dfl
- use electrons,      ONLY:levels,n_sp_pol
- use QP_m,           ONLY:QP_nk
+ use electrons,      ONLY:levels
  use real_time,      ONLY:Phase_LifeTime,RAD_LifeTime
  use nl_optics,      ONLY:I_relax,NL_bands
  use parallel_m,     ONLY:PAR_Xk_ibz_index
@@ -43,7 +42,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  ! Working Space
  !
  integer          :: ib,i1,i2,ik_mem
- real(SP)         :: W_,Gamma_ij
+ real(SP)         :: Gamma_ij
  !
  ! Damping
  !=========
@@ -59,6 +58,9 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  !  In the 2021 version diagonal and off-diagonal contribution are separated
  !
+ if(Phase_LifeTime<zero_dfl) return
+ !
+!$omp parallel do default(shared), private(i1,i2,Gamma_ij)
  do i1=NL_bands(1),NL_bands(2)
    do i2=i1+1,NL_bands(2)
      !
@@ -78,9 +80,11 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
      !
    enddo
  enddo
+!$omp end parallel do
  !
  if(RAD_LifeTime>zero_dfl) then
    !      
+!$omp parallel do default(shared), private(i1,i2,ib)
    do i1=NL_bands(1),NL_bands(2)
      !
      do ib=1,E%nbf(i_sp_pol)
@@ -92,18 +96,21 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
      do i2=i1+1,NL_bands(2)
        if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
          do ib=1,E%nbf(i_sp_pol)
-           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i2,ib))
+           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
            I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
          enddo
      enddo
      !
    enddo
+!$omp end parallel do
    !
    ! Remove the equilibrium contribution
    !
+!$omp parallel do default(shared), private(ib)
    do ib=NL_bands(1),E%nbf(i_sp_pol)
      I_relax(ib,ib,ib,ik_mem,i_sp_pol)=I_relax(ib,ib,ib,ik_mem,i_sp_pol)+cI*2._SP/RAD_LifeTime
    enddo
+!$omp end parallel do
    !
  endif
  !

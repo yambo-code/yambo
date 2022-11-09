@@ -2,7 +2,7 @@
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2021 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -26,7 +26,7 @@
 #
 
 mpibuild="yes" 
-AC_ARG_ENABLE(mpi, AC_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
+AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi],[Enable mpi parallelization . Default is yes.]))
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 CC_serial=$CC
@@ -83,10 +83,10 @@ fi
 AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
 
-AC_ARG_WITH(mpi_libs,AC_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
-AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
-AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
-AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
+AC_ARG_WITH(mpi_libs,AS_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
+AC_ARG_WITH(mpi_path, AS_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
+AC_ARG_WITH(mpi_libdir,AS_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
+AC_ARG_WITH(mpi_includedir,AS_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
 
 mpif_found="no"
 
@@ -107,10 +107,10 @@ if test "$mpibuild" = "yes"; then
   `rm config_openmpi.err config_others.err` ;
   #
   if test x"$CHECK_openmpi" = "x" ; then  MPI_INC_DIRS_LIST=`$CC --showme:incdirs` ;
-  elif test x"$CHECK_others" = "x"; then  MPI_INC_DIRS_LIST=`$CC -c -show| sed "s/.*${IFLAG}//g"` ;
+  elif test x"$CHECK_others" = "x"; then  MPI_INC_DIRS_LIST=`$CC -c -show| sed "s/.*${IFLAG}//g" | sed "s/\"//g"` ;
   fi
   #
-  if test x"$CHECK_others" = "x" ; then   MPI_LIBS=`$CC -show | sed "s/.*-L/-L/g"` ; fi
+  if test x"$CHECK_others" = "x" ; then   MPI_LIBS=`$CC -show | sed "s/.*-L/-L/g" | sed "s/\"//g"` ; fi
   #
   if test -d "$with_mpi_path"; then
     MPI_PATH="$with_mpi_path";

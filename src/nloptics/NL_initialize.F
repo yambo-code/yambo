@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -30,18 +30,18 @@ subroutine NL_initialize(E,k)
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
+ use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
- use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
+ use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe
- use electric,       ONLY:l_force_SndOrd
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe,DephMult
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc
  !
@@ -53,7 +53,7 @@ subroutine NL_initialize(E,k)
  ! Working space
  !
  real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
- integer  :: i1
+ integer  :: i1,n_active_fields
  !
  ! Parser
  ! ============
@@ -61,8 +61,10 @@ subroutine NL_initialize(E,k)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
+ call parser('FrPolPerdic' ,         l_P_periodic)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Check double-precision and other possible errors
  ! ================================================
@@ -119,7 +121,8 @@ subroutine NL_initialize(E,k)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=2
+ n_ext_fields=3
+ n_active_fields=0
  !
  do i1=1,n_ext_fields
    !
@@ -143,27 +146,35 @@ subroutine NL_initialize(E,k)
    !
    Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
    Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
-   Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+   ! t_initial_indx cannot be 1, a previouss time step is always needed
+   ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
+   Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
    Efield(i1)%ef_pol        ="linear"
    !
    call Check_symmetries(Efield(i1)%versor,"electric")
    !
+   n_active_fields=n_active_fields+1
+   !
  enddo
  !
- if((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none') then
+ if(n_active_fields==0) call error('Not valid external field present!')
+ !
+ call msg('s','[NL] Number of active fields : ',n_active_fields)
+ !
+ if(n_active_fields>1.or.all(NL_er<0._SP)) then
    l_pump_and_probe=.true.
+   l_NE_with_fields=.true.
+   call msg('s', '[NL] Variables NLEnSteps and NLEnRange are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
-   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
+   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe ")
    NL_verbosity=VERB_HIGH
- elseif((Efield(1)%ef_name/='none').and.Efield(2)%ef_name=='none') then
+ elseif((Efield(1)%ef_name/='none').and.all(Efield(2:3)%ef_name=='none')) then
    call msg('sr','[NL] Non-linear optics configuration')
- else
-   call error(" Please set at least one external field ! ")
  endif
  !
- if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
-    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
+ if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
+    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
@@ -200,17 +211,17 @@ subroutine NL_initialize(E,k)
      !  
      ! Run length is 6*Phase_lifeTime + 4 fs for response analysis
      !
-     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
+     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0 ") 
      !
      ! Dephasing Time
      !
-     NE_tot_time=Phase_LifeTime*5._SP
+     NE_tot_time=Phase_LifeTime*DephMult
      !
      ! Add time to sample the response
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time              ',5._SP*Phase_LifeTime*AUT2FS,"[fs]")
+     call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
      call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
@@ -221,7 +232,7 @@ subroutine NL_initialize(E,k)
      call msg('sr','Dephasing                   ',Phase_LifeTime*AUT2FS,"[fs]")
      !
    else
-     call error("Negative total simulation time! ")
+     call error("Negative total simulation time ")
    endif
    ! 
  else
@@ -244,9 +255,6 @@ subroutine NL_initialize(E,k)
  ! NB.: This part duplicates what is in
  !      INIT.F 
  !
- !COLLISIONS_CV_only=.true.
- COLLISIONS_CV_only=.false.
- ! 
  select case (trim(NL_Correlation))
     case('IPA')
         Correlation=IPA
@@ -296,6 +304,8 @@ subroutine NL_initialize(E,k)
         call error("Unknow correlation in the response function")
  end select
  !
+ if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+ ! 
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
@@ -367,6 +377,7 @@ subroutine NL_initialize(E,k)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
  call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

@@ -77,10 +77,6 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  select case(ENVIRONMENT)
    case("DIPOLES")
      call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
-#if defined _SURF
-   case("DIPOLES_CUT")
-     call GIMME_a_parallel_proposal(3,(/"v","c","k"/))
-#endif
    case("DIPOLES_SHIFTED")
      call GIMME_a_parallel_proposal(2,(/"c","k"/))
    case("Response_G_space_and_IO","Response_G_space")

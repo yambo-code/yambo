@@ -240,7 +240,7 @@ end subroutine init_bulk
       !  Do Kramig-Kroners transform to obtain e1
       !
       eps= 0d0
-      e2(0) = 0
+      e2(1) = 0
       e2(nw) = 0
       eps_b(:) = 0
       do i = 1,nw

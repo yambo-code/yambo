@@ -6,7 +6,6 @@ subroutine surfdriver(Xen,Xk,q,wv,X,Dip)
   use com,                     only : msg
   use DIPOLES,                 only : DIPOLE_t
   use parser_m,                only : parser
-  use openmp,                  only : n_threads_X
   use optcut,                  only : setup_cutoff, print_cutoff, dc
   use electrons,               only : levels
   use R_lattice,               only : bz_samp, bare_qpg, q_norm
@@ -14,7 +13,7 @@ subroutine surfdriver(Xen,Xk,q,wv,X,Dip)
   use IO_m,                    only : OP_RD_CL, OP_WR_CL, VERIFY, REP, DUMP
   use X_m,                     only : X_t, Alpha, X_par, X_par_lower_triangle
   use frequency,               only : w_samp 
-  use optcut,                  only : loptcut, DIP_q_dot_iR_cut, setup_cutmat 
+  use optcut,                  only : loptcut
   use vec_operate,             only : v_norm
   use parallel_int,            only : PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
   use parallel_m,              only : master_cpu
@@ -68,10 +67,6 @@ subroutine surfdriver(Xen,Xk,q,wv,X,Dip)
   call print_surface_geometry
   call setup_cutoff(lfail)
   call print_cutoff
-  if(loptcut) then
-    call setup_gvecaff
-    call setup_cutmat
-  endif
   !
   ! REELS input parameters
   !
@@ -118,8 +113,6 @@ subroutine surfdriver(Xen,Xk,q,wv,X,Dip)
   call X_pre_setup(Xen,Xk,X)
   allocate(X_par(1))
   ! 
-  if (loptcut) n_threads_X=1
-
   do ipol = 1, npol 
 
   call PARALLEL_global_indexes(Xen,Xk,q,"Response_G_space",X=X)

@@ -72,7 +72,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use timing_m,      ONLY:timing
 #if defined _SURF
  use ras_module,    ONLY: lras, lreels
- use optcut,        ONLY: loptcut, DIP_iR_cut,DIP_alloc_cut
+ use optcut,        ONLY: loptcut
 #endif
  !
 #include<dev_defs.h>
@@ -139,9 +139,6 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Dipoles
  !=========
-#if defined _SURF
- if (iq == 1.and.(lras.or.lreels).and.loptcut) call Dipole_driver_cut(Xen,Xk,Dip)
-#endif
 if (iq==1) then
    call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
    call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,'X')
@@ -459,9 +456,6 @@ if (iq==1) then
  YAMBO_FREE(Xo_res)
  YAMBO_FREE(Xo_res_d)
  YAMBO_FREE(rhotw_save_d)
-#if defined _SURF
- call DIP_alloc_cut('DIP_iR_cut')
-#endif
  call elemental_collision_free(Xo_scatt)
  !
 #if !defined _CUDA
@@ -470,6 +464,7 @@ if (iq==1) then
  !
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_iR_cut')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_v')
    call DIP_alloc('DIP_spin')

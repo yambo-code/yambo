@@ -23,7 +23,8 @@ module optcut
   !
   use pars,                  ONLY : schlen, SP, pi
   use electrons,             ONLY : levels
-! use R_lattice,             ONLY : bz_samp
+  use D_lattice,             ONLY : alat
+  use com,                   ONLY : msg
   use surface_geometry
 #include <memory.h>
 
@@ -46,8 +47,6 @@ module optcut
   complex, allocatable      :: Fzg(:,:)
   complex, allocatable      :: Fzgp(:,:)
 
-  complex(SP), allocatable  :: DIP_iR_cut(:,:,:,:,:)
-  complex(SP), allocatable  :: DIP_q_dot_iR_cut(:,:,:,:)
   complex(SP), allocatable  :: cutmat(:,:)
 
   real(SP)                  :: dcf,dc ! fractional/cartesian cut length
@@ -58,8 +57,7 @@ module optcut
   save
   public  :: init_cutoff
   public  :: loptcut, dc  
-  public  :: DIP_iR_cut, DIP_q_dot_iR_cut, DIP_alloc_cut
-  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut , PScut_slow, setup_cutmat, DIP_rotated_cut
+  public  :: setup_gvecaff, nG_limits, setup_optcut, PScut_slow, setup_cutmat, Dipole_p_matrix_elements_cut
   public  :: end_optcut, setup_cutoff, print_cutoff, z0f, dcf
 
 contains 
@@ -170,7 +168,7 @@ end subroutine init_cutoff
     nxx%max(2) = maxval( nxk(:)%max(2) )
     nxx%max(3) = maxval( nxk(:)%max(3) )
 
-    call msg('nr','Wavefunction nG limits: ',(/ (nxx%min(i1),nxx%max(i1),i1=1,3) /) )
+    !call msg('nr','Wavefunction nG limits: ',(/ (nxx%min(i1),nxx%max(i1),i1=1,3) /) )
 
     if(allocated(igtab)) deallocate(igtab)
     if(allocated(n3limit)) deallocate(n3limit)
@@ -390,17 +388,38 @@ end subroutine init_cutoff
     return
   end subroutine PScut_slow
    
-  subroutine PScut(PS,wfv,wfc,kg)
+  subroutine Dipole_p_matrix_elements_cut(Xk,iv_wf, ic_wf, ik, rho_cut)
+    use R_lattice,     ONLY:g_vec,bz_samp
+    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk,wf_ng
+    use electrons,     ONLY:n_spinor
+    use parallel_m,    ONLY:PAR_DIPk_nibz
     implicit none
-    complex(SP),   intent(out)   :: PS(3)
-    real(SP), optional, intent(in)    :: kg(:,:)
-    complex(SP),   intent(in)    :: wfv(:),wfc(:)
-!   logical,       intent(in)    :: use_trans_gauge
+    type(bz_samp), intent(in)  :: Xk
+    integer,       intent(in)  :: iv_wf,ic_wf,ik
+    complex(SP),   intent(out)   :: rho_cut(3)
    ! ws
-    integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p
+    integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p,i_spinor,i1,ic,ig
+    real(SP)                     :: kg(3,wf_ng)
+    complex(SP)                  :: wfv(wf_ncx),wfc(wf_ncx)
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
-   
+
+    call nG_limits(PAR_DIPk_nibz) 
+
+     do i1 = 1,3
+        kg(i1,:)=(Xk%pt(ik,i1)+g_vec(1:wf_ng,i1))*2.0_SP*pi/alat(i1)
+     enddo
+
+     call setup_optcut( ik )
+
+    do i_spinor=1,n_spinor 
+       do ic=1,wf_nc_k(ik)
+          ig=wf_igk(ic,ik)
+          wfv(ic)=WF%c(ic,i_spinor,iv_wf)
+          wfc(ic)=WF%c(ic,i_spinor,ic_wf)
+       enddo 
+    enddo    
+
     PSx = 0
     PSy = 0
     PSz = 0
@@ -411,16 +430,16 @@ end subroutine init_cutoff
        if(gfound(n1,n2)) then ! Avoid cases outside the cutoff
 
           n3min = n3limit(n1,n2,1)
-          n3max = n3limit(n1,n2,2) 
+          n3max = n3limit(n1,n2,2)
 !         Ignore Gz for now. Thus any n3 will do.
-          if(present(kg)) kgxy(ix) = kg(ix,igtab(n1,n2,0)) ! crystal frame
-          if(present(kg)) kgxy(iy) = kg(iy,igtab(n1,n2,0)) ! crystal frame
+          kgxy(ix) = kg(ix,igtab(n1,n2,0)) ! crystal frame
+          kgxy(iy) = kg(iy,igtab(n1,n2,0)) ! crystal frame
           do n3 = n3min,n3max
              ig1 = igtab(n1,n2,n3)
              wfc1(n3) = conjg(wfv(ig1))
              wfc2(n3) = wfc(ig1)
           enddo
-          ! Calculate matrix element: replace 
+          ! Calculate matrix element: replace
           ! [loop on G,G'; if(G.ne.G')..] with known sum on n3/n3'
           do n3 = n3min,n3max
           do n3p = n3min,n3max
@@ -429,94 +448,25 @@ end subroutine init_cutoff
              PSy = PSy + wfc1(n3) * wfc2(n3p) * kgxy(iy)* Fzg(n3,n3p) ! surface frame
 ! PSz = PSz + wfc1(n3) * wfc2(n3p) * kg(iz)* Fzg(n3,n3p) ! surface frame, iz incorrect
 !            PSz = 0 ! if want this, need to code kg(n3p)
-             if(present(kg)) kgxy(iz) = kg(iz,igtab(n1,n2,n3p)) ! crystal frame
-!         PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) 
+             kgxy(iz) = kg(iz,igtab(n1,n2,n3p)) ! crystal frame
+!         PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p)
           PSz = PSz + wfc1(n3) * wfc2(n3p) * kgxy(iz)* Fzg(n3,n3p) + &
  &                  0.5 * wfc1(n3) * wfc2(n3p) * Fzgp(n3,n3p)
 !   write(*,*) "In pscut:",n1,n2,n3,PSx,PSy,wfc1(n3),wfc2(n3p),kgxy(ix),Fzg(n3,n3p)," XXX"
           enddo
           enddo
        endif ! end on gfound(n1,n2)
-    enddo 
+    enddo
     enddo ! end loop n1,n2
-   
+
    ! Convert to crystal frame (i.e the REAL cartesian axes)
-    PS(ix) = PSx
-    PS(iy) = PSy
-    PS(iz) = PSz
+    rho_cut(ix) = PSx
+    rho_cut(iy) = PSy
+    rho_cut(iz) = PSz 
 
-   
     return
-  end subroutine PScut
+  end subroutine
 
-  function DIP_rotated_cut(ic,iv,ik_bz,i_sp_pol,what,kpt)
-     !
-     use pars,           ONLY:cZERO
-     use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
-     use electrons,      ONLY:n_spinor
-     use parallel_m,     ONLY:PAR_K_scheme
-     use R_lattice,      ONLY:bz_samp
-     use matrix_operate, ONLY:m3det
-     !
-     implicit none
-     !
-     integer,       intent(in) :: ic,iv,ik_bz,i_sp_pol
-     character(*),  intent(in) :: what
-     type(bz_samp), intent(in) :: kpt
-     !
-     complex(SP), dimension(3) :: DIP_rotated_cut
-     !
-     ! Work space
-     !
-     complex(SP) :: DIP_in(3)
-     real(SP)    :: tmp_sop(3,3)
-     integer :: ik,is,ik_mem
-     logical :: t_rev
-     !
-     ik=kpt%sstar(ik_bz,1)
-     is=kpt%sstar(ik_bz,2)
-     !
-     ik_mem    = PAR_K_scheme%ibz_index(ik)
-     !
-     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
-     !
-     tmp_sop=dl_sop(:,:,is)
-     !
-     !
-     DIP_in=cZERO
-     if(trim(what)=="DIP_iR_cut") DIP_in=DIP_iR_cut(:,ic,iv,ik_mem,i_sp_pol)
-     !
-     DIP_rotated_cut = matmul( tmp_sop , DIP_in  )
-     !
-     if (t_rev) DIP_rotated_cut = conjg( DIP_rotated_cut )
-     !
-   end function 
- 
-   subroutine DIP_alloc_cut(what,d)
-     !
-     use electrons, ONLY:n_sp_pol,n_spinor
-     use pars,      ONLY:cZERO
-     !
-     character(*)      :: what
-     integer, optional :: d(:)
-     !
-     if (present(d)) then
-       select case(what)
-       case('DIP_iR_cut')
-         if (allocated(DIP_iR_cut)) return
-         YAMBO_ALLOC(DIP_iR_cut,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
-         DIP_iR_cut=cZERO
-       end select
-     else
-       select case(what)
-       case('DIP_iR_cut')
-         if (.not.allocated(DIP_iR_cut)) return
-         YAMBO_FREE(DIP_iR_cut)
-       end select
-     endif
-   end subroutine
-   
 !<-------------------------------------------------------------------->! 
    
   subroutine endcut

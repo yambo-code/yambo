@@ -47,7 +47,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  use DIPOLES,        ONLY:DIP_alloc,DIPOLE_t,DIP_iR,use_covariant_approach,use_real_space_approach,&
 &                         Vnl_commutator_warning,use_g_space_approach,&
 &                         use_shifted_grids_approach,DIP_P,DIP_v,DIP_S,eval_OVERLAPS,&
-&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles
+&                         compute_P2_dipoles,compute_Orb_dipoles,compute_Spin_dipoles,DIP_iR_cut
  use IO_int,         ONLY:IO_and_Messaging_switch
  use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_nibz,PAR_COM_DIPk_ibz_A2A,&
 &                         PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
@@ -246,6 +246,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  if (.not.io_DIP) return
  !
  call DIP_alloc('DIP_iR')
+ call DIP_alloc('DIP_iR_cut')
  call DIP_alloc('DIP_P')
  call DIP_alloc('DIP_v')
  if (use_covariant_approach) call DIP_alloc('DIP_S')
@@ -263,9 +264,11 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    subroutine DIPOLES_alloc()
      !
      call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
+     call DIP_alloc('DIP_iR_cut',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_DIPk_nibz/))
      DIP_iR=cZERO
+     DIP_iR_cut=cZERO
      DIP_P=cZERO
      DIP_v=cZERO
      !
@@ -323,6 +326,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         ik_mem=PAR_DIPk_ibz_index(ik)
         !
         call PP_redux_wait(DIP_iR(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
+        call PP_redux_wait(DIP_iR_cut(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_P(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         call PP_redux_wait( DIP_v(:,:,:,ik_mem,i_sp_pol),COMM=PAR_COM_DIPk_ibz_A2A%COMM)
         !

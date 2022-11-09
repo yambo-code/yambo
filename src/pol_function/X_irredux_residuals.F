@@ -44,7 +44,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use deviceXlib_m
 #if defined _SURF
  use ras_module,    ONLY: lras, lreels
- use optcut,        ONLY: loptcut, DIP_iR_cut, DIP_rotated_cut
+ use optcut,        ONLY: loptcut
 #endif
  !
 #include<dev_defs.h>
@@ -211,7 +211,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        !-----------------------------------------------------------------------------
        if(lras.or.lreels) then
          if(loptcut) then
-           DIP_projected_cut=dot_product(field_dir,DIP_rotated_cut(ic,iv,ikbz,i_spin,"DIP_iR_cut",Xk))
+           DIP_projected_cut=dot_product(field_dir,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR_cut",Xk))
            iscut= -conjg(DIP_projected_cut)
          else
            iscut= -conjg(DIP_projected)

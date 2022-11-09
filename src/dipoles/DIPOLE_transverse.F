@@ -31,13 +31,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use LIVE_t,              ONLY:live_timing
  use electrons,           ONLY:levels,n_spinor,n_sp_pol,spin_string
  use parallel_m,          ONLY:PAR_IND_DIPk_ibz,PAR_DIPk_ibz_index,PAR_IND_DIPk_ibz_ID,&
-&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
+&                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP,PAR_DIPk_nibz
  use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
  use R_lattice,           ONLY:bz_samp
  use R_lattice,           ONLY:g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
-&                              compute_P2_dipoles,compute_Spin_dipoles
+&                              compute_P2_dipoles,compute_Spin_dipoles,DIP_iR_cut
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
@@ -46,6 +46,12 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use timing_m,            ONLY:timing
  use cuda_m,              ONLY:have_cuda
  use deviceXlib_m,        ONLY:dev_memcpy
+#if defined _SURF
+ use ras_module,          ONLY: lras
+ use surface_geometry,    ONLY: setup_gvecaff,setup_surface_geometry
+ use optcut,              ONLY: loptcut,Dipole_p_matrix_elements_cut
+#endif
+
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -57,14 +63,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! Work Space
  !
  character(schlen)            :: live_t_string
- logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
+ logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check,lfail
  logical, allocatable         :: element_1D_spin(:)
  integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: XX(:,:,:,:,:)
- complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),P2
+ complex(SP)                  :: rho_spinor(3,n_spinor,n_spinor),rho(3),rho_cut(3),P2
  real(SP)                     :: Ev_m_Ev_KS,Dipole_Energy_treshold
  !
  !I/O and external functions
@@ -101,6 +107,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
+#if defined _SURF
+ if (lras.and.loptcut) then
+    lfail=.false.
+    call setup_surface_geometry(lfail)
+    call setup_gvecaff
+ endif
+#endif
  !
  if(l_use_comm) then
    !
@@ -152,6 +165,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_V ) live_t_string='Dipoles: P, V and P2 (T)'
  if (l_eval_DIP_P2.and.l_eval_DIP_iR) live_t_string='Dipoles: iR, P, V and P2 (T)'
+#if defined _SURF
+ if (lras.and.loptcut) live_t_string='Dipoles with cutoff: P, V, and iR (T)'
+#endif
+
  !
  ! Main loop over k in IBZ
  !
@@ -244,6 +261,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !================================
          call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
+#if defined _SURF
+         if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
+#endif 
+         !
          !=====
          ! <P>
          !=====
@@ -314,6 +335,13 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
            if (abs(Ev_m_Ev_KS)> Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=rho/Ev_m_Ev_KS
            if (abs(Ev_m_Ev_KS)<=Dipole_Energy_treshold) DIP_iR(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           !
+#if defined _SURF
+           if (lras.and.loptcut) then
+              if (abs(Ev_m_Ev_KS)> Dipole_Energy_treshold) DIP_iR_cut(:,ic,iv,ik_mem,i_sp_pol)=rho_cut/Ev_m_Ev_KS
+              if (abs(Ev_m_Ev_KS)<=Dipole_Energy_treshold) DIP_iR_cut(:,ic,iv,ik_mem,i_sp_pol)=cZERO
+           endif
+#endif
            !
          endif
          !

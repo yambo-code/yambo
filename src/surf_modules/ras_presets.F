@@ -30,36 +30,8 @@
    use model_loss_function,   only : model
    use optcut,                only : z0f, dcf, loptcut
    use ras_module,            only : locfac, loctype
-   use parallel_m,            only : n_CPU_str_max,CPU_structure,ncpu
 
    implicit none
-  
-   character(schlen) :: string,name
-   integer           :: max_val,min_val
-  
-   if (mod(ncpu,2)==0) then
-      if (mod(ncpu,4)==0) then
-         max_val=max(4,ncpu/4)
-         min_val=min(4,ncpu/4)
-      else 
-         max_val=max(2,ncpu/2)
-         min_val=min(2,ncpu/2)
-      endif
-   else 
-      if (mod(ncpu,3)==0) then
-         max_val=max(3,ncpu/3)
-         min_val=min(3,ncpu/3)
-      else 
-         max_val=ncpu
-         min_val=1
-      endif  
-   endif 
-   write(string,'(I0,1X,I0)') max_val,min_val
-   name=trim(string)
-   !name='"'//trim(string)//'"'
-   CPU_structure(3)%CPU_string=name
-   CPU_structure(3)%ROLE_string="c.v"
-   !write(*,*) CPU_structure(3)%CPU_string
    !
    ! mod_surface_geometry
    !

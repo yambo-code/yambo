@@ -29,9 +29,13 @@ full_path=`find $srcdir -name $file_src`
 if [ -z "$full_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
  full_path=`find $srcdir -name $file_src`
- if [ -z "$full_path" ] ; then
-   return
- fi
+fi
+if [ -z "$full_path" ] ; then
+ file_src=`echo $file | sed "s/.$/f/"`
+ full_path=`find $srcdir -name $file_src`
+fi
+if [ -z "$full_path" ] ; then
+ return
 fi
 #
 file_obj=`echo $file | sed 's/.$/o/'`

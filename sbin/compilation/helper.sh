@@ -102,6 +102,9 @@ do
  touch $cdir/${flag}.lock
 done
 #
+echo "libs are $libs"
+echo "precomp flags are $precomp_flags"
+#
 # Makefile (I): variables
 cat <<EOF > $cdir/dyn_variables.mk
 compdir =$compdir

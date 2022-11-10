@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
 subroutine io_RT_components_Reference(ID)
  !
  use pars,           ONLY:SP
@@ -95,3 +96,4 @@ subroutine io_RT_components_Reference(ID)
    end subroutine
    !
 end subroutine io_RT_components_Reference
+#endif

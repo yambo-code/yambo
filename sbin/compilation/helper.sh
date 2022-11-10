@@ -22,6 +22,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+DRY_RUN=0
 VERB=0
 #
 # make sure there is no locale setting creating unneeded differences.
@@ -55,6 +56,7 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
      source ./sbin/compilation/check_updated_locks.sh 
    fi
    if [ "$DIR_is_to_recompile" == 1 ] ; then
+     if [ $VERB = 1 ] ; then echo "$dir is to be recompiled $goal $target" ; fi
      source ./sbin/compilation/stamp_remove.sh "goal"
      source ./sbin/compilation/stamp_remove.sh "target.a"
      source ./sbin/compilation/stamp_remove.sh "exe"

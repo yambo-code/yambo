@@ -66,16 +66,19 @@ if [[ -z $new ]] && [[ -z $missing ]]; then
  return
 fi
 #
-#echo "D" $dir 
-#echo "L" $lock_string
-#echo "F" $flag_string
-#echo "M" $missing 
-#echo "N" $new 
-#echo "SAVE" $save_dir 
-#echo "RESTORE" $restore_dir 
+if [ "$VERB" == 1 ] ; then
+ echo "D" $dir
+ echo "L" $lock_string
+ echo "F" $flag_string
+ echo "M" $missing
+ echo "N" $new
+ echo "SAVE" $save_dir
+ echo "RESTORE" $restore_dir
+fi
 #
 # SAVE (step #1) & RESTORE (step #2) PJ dependent objects (from .dep files)
 #
+path_back=$PWD
 step=1
 while [ $step -le 2 ]
 do
@@ -83,22 +86,37 @@ do
  do
   #
   if test -f "$dir/${lock}_project.dep"; then
-   deps=`cat $dir/${lock}_project.dep`
+   if [ $step == 1 ] ; then
+    deps=""
+    count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then
+     cd $dir;
+     deps=`ls *.o`;
+     cd $path_back ;
+    fi
+   elif [ $step == 2 ]; then
+    deps=`cat $dir/${lock}_project.dep` ;
+   fi
    for file in $deps
    do
-     if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
-     if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
+    if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
+    if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
+    if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
    done
+  fi
+  #
+  # This would not be needed if sbin/compilation/object_save_restore_remove.sh "restore" were able to deal also with libs
+  if [ "$DIR_is_to_recompile" == 0 ] ; then
+    if [ $VERB = 1 ] ; then echo "$dir setting lib to be recreated $target" ; fi
+    source ./sbin/compilation/stamp_remove.sh "target.a" ;
   fi
   #
   # Remove the lock 
   #
-  if [ "$VERB" == 1 ] && [ $step == 2 ] ; then
-   echo "rm -f $dir/$lock.lock"
-  else
-   rm -f $dir/$lock.lock
+  if [ $step == 2 ] ; then
+    if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
+    if [ "$DRY_RUN" == 0 ] ; then        rm -f $dir/$lock.lock ; fi
   fi
-  DIR_is_to_recompile=1
   #
  done
  ((step++))

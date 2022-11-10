@@ -39,6 +39,7 @@ if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
 fi
 for file in $candidates
 do
+  if [ "$VERB" == 1 ] ; then echo "$file updated and to be recompiled"; fi
   file=`basename $file`
   obj=`echo $file | sed "s/\.o/\.X/"`
   obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`

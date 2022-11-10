@@ -39,7 +39,7 @@ Nd=$((Nd-1))
 #
 BASE=$PWD
 #
-proj_dep_stamp=config/stamps_and_lists/use_existent_project_dependencies
+proj_dep_stamp=config/stamps_and_lists/project_dependencies.stamp
 if [ ! -f $proj_dep_stamp ] ; then
 idir=0
 for CDIR in $directories

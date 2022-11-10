@@ -48,6 +48,9 @@ if [ ${#sources} -eq 2 ]; then
   continue 
 fi
 #
+dep_proj_file=$compdir/$CDIR/${PREFIX}_project.dep
+if [ -f $dep_proj_file ] ; then rm $dep_proj_file ; fi
+#
 # Projects 
 #==========
 for PJ in _SC _RT _RT_SCATT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
@@ -87,7 +90,7 @@ do
  done
  PREFIX=`echo $PJ | sed 's/_//'`
  if [ ${#sources_pj_dependent} -gt 1 ]; then
-  echo -e "$sources_pj_dependent" >>  $compdir/$CDIR/${PREFIX}_project.dep
+  echo -e "$sources_pj_dependent" >>  $dep_proj_file
  fi
 done
 #

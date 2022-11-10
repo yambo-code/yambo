@@ -25,21 +25,21 @@
 operate=$1
 #
 file_src=`echo $file | sed 's/.$/F/'`
-source_path=`find $srcdir -name $file_src`
-if [ -z "$source_path" ] ; then
+source_path=$srcdir/$dir/$file_src
+if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- source_path=`find $srcdir -name $file_src`
+ source_path=$srcdir/$dir/$file_src
  f90_file_src=""
  f90_source_path=""
 else
  f90_file_src=`echo $file | sed 's/.$/f90/'`
- f90_source_path=`find $compdir -name $f90_file_src`
+ f90_source_path=$srcdir/$dir/$f90_file_src
 fi
-if [ -z "$source_path" ] ; then
+if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/f/"`
- source_path=`find $srcdir -name $file_src`
+ source_path=$srcdir/$dir/$file_src
 fi
-if [ -z "$source_path" ] ; then
+if [ ! -f "$source_path" ] ; then
  if [ "$VERB" == 1 ] ; then
   echo "$file_src not found for src in $operate mode in $srcdir"
   echo "full path was set to $source_path $PWD"
@@ -49,22 +49,22 @@ fi
 #
 file_obj=`echo $file | sed 's/.$/o/'`
 obj_path=`echo $source_path | sed 's/.$/o/'`
-if [ -z "$obj_path" ] ; then
-  if [ "$VERB" == 1 ] ; then
-    echo "$file_src not found for obj in $operate mode in $srcdir"
-    echo "full path was set to $obj_path"
-  fi
- return
-fi
-#
 ldir=`dirname $obj_path`
 llib=`basename $ldir`
+library="${target}.a"
+#
 fstamp=$compdir/config/stamps_and_lists/mods_${llib}_restored.stamp
-rstamp=$compdir/config/stamps_and_lists/mods_${llib}_removed.stamp
-
+rstamp=$compdir/config/stamps_and_lists/mods_${llib}_saved_removed.stamp
+lstamp=$compdir/config/stamps_and_lists/lib_${llib}_restored.stamp
+sstamp=$compdir/config/stamps_and_lists/lib_${llib}_saved_removed.stamp
+#
 if [ "$VERB" == 1 ] ; then
  echo "source path is $source_path"
+ echo "f90 source path is $f90_source_path"
  echo "obj path is $obj_path"
+ echo "library is $library"
+ echo "dir is $dir"
+ echo "ldir is $ldir"
 fi
 #
 if [[ "$operate" == "remove" ]] ; then
@@ -89,13 +89,18 @@ if [[ "$operate" == "save" ]] ; then
   count_loc=`ls -1 $ldir/*.mod 2>/dev/null | wc -l`
   count_sav=`ls -1 $ldir/$save_dir/*.mod 2>/dev/null | wc -l`
   if [ "$VERB" == 1 ] ; then
-   echo "mkdir -p $ldir/$save_dir"
    echo "saving $obj_path to $save_dir"
    echo "saving $f90_source_path to $save_dir"
    echo "mv $obj_path $ldir/$save_dir"
   fi
   if [ "$DRY_RUN" == 0 ] ; then
-   mkdir -p $ldir/$save_dir
+   # save of library
+   if [ -f $compdir/lib/$library ] ; then
+    rm -f $lstamp 
+    if [   -f $ldir/$save_dir/$library ] ; then rm $compdir/lib/$library ; fi
+    if [ ! -f $ldir/$save_dir/$library ] ; then mv $compdir/lib/$library $ldir/$save_dir ; fi
+   fi
+   # save of objects
    if [   -f $ldir/$save_dir/$file_obj ] ; then  rm $obj_path ; fi
    if [ ! -f $ldir/$save_dir/$file_obj ] ; then  mv $obj_path $ldir/$save_dir ; fi
    back_dir=$PWD
@@ -103,6 +108,7 @@ if [[ "$operate" == "save" ]] ; then
     if [   -f $ldir/$save_dir/$f90_file_src ] ; then rm $f90_source_path ; fi
     if [ ! -f $ldir/$save_dir/$f90_file_src ] ; then mv $f90_source_path $ldir/$save_dir ; fi
    fi
+   # save of modules
    if [ "$count_loc" -gt "0" ] ; then
      rm -f $fstamp ;
      cd $ldir ;
@@ -140,8 +146,15 @@ if [[ "$operate" == "restore" ]] ; then
       if [ -f "$ldir/$restore_dir/$f90_file_src" ] ; then echo "cp $ldir/$restore_dir/$f90_file_src $ldir" ; fi
     fi
     if [ "$DRY_RUN" == 0 ] ; then
+     # objects
      cp $ldir/$restore_dir/$file_obj $ldir
      if [   -f "$ldir/$restore_dir/$f90_file_src" ] ; then cp $ldir/$restore_dir/$f90_file_src $ldir ; fi
+     # library
+     if [ ! -f $lstamp ] && [ -f $ldir/$restore_dir/$library ] ; then
+       cp $ldir/$restore_dir/$library $compdir/lib/
+       touch $lstamp
+     fi 
+     # modules
      if [ ! -f $fstamp ] && [ "$count_sav" -gt "0" ] ; then
       #rm $ldir/*.mod ; 
       #cp $ldir/$restore_dir/*.mod $ldir ;

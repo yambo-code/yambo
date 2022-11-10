@@ -55,10 +55,20 @@ do
  sources_pj_dependent=""
  for file in $sources
  do
-  if [ "$PJ" = "_DOUBLE" ] ; then
+  if [ "$PJ" == "_DOUBLE" ] ; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
     sources_pj_dependent+=" ${obj}\n"
-  elif test `grep $PJ $file | grep '#'| wc -l` -ge 1 ; then
+  elif [ "$PJ" == "_RT"  ] ; then
+    if test `grep $PJ $file | grep '#' | grep -v RT_SCATT | wc -l` -ge 1 ; then
+      obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
+      sources_pj_dependent+=" ${obj}\n"
+    fi
+  elif [ "$PJ" == "_SC"  ] ; then
+    if test `grep $PJ $file | grep '#' | grep -v SCALAPACK | wc -l` -ge 1 ; then
+      obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
+      sources_pj_dependent+=" ${obj}\n"
+    fi
+  elif test `grep $PJ $file | grep '#' | wc -l` -ge 1 ; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
     sources_pj_dependent+=" ${obj}\n"
   fi

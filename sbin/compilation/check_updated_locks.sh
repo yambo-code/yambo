@@ -88,27 +88,33 @@ do
   if test -f "$dir/${lock}_project.dep"; then
    if [ $step == 1 ] ; then
     deps=""
+    refs=""
+    if [ ! -d $dir/$save_dir ] ; then
+     if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
+     mkdir -p $dir/$save_dir
+    fi
     count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
     if [ $count != 0 ]; then
      cd $dir;
      deps=`ls *.o`;
+     refs=$deps ;
+     if [ ! -f "$save_dir/files.dep" ] ; then
+      for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
+     fi
      cd $path_back ;
     fi
    elif [ $step == 2 ]; then
     deps=`cat $dir/${lock}_project.dep` ;
+    refs=$deps ;
+    if [ -f $dir/$restore_dir/files.dep ] ; then refs=`cat $dir/$restore_dir/files.dep` ; fi
    fi
-   for file in $deps
-   do
-    if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
-    if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
-    if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
+   for file in $deps; do
+    if [[ "$refs" == *"$file"* ]]; then
+     if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
+     if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
+     if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
+    fi
    done
-  fi
-  #
-  # This would not be needed if sbin/compilation/object_save_restore_remove.sh "restore" were able to deal also with libs
-  if [ "$DIR_is_to_recompile" == 0 ] ; then
-    if [ $VERB = 1 ] ; then echo "$dir setting lib to be recreated $target" ; fi
-    source ./sbin/compilation/stamp_remove.sh "target.a" ;
   fi
   #
   # Remove the lock 

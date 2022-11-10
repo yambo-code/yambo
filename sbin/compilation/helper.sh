@@ -39,6 +39,11 @@ source ./sbin/compilation/options.sh
 # Projects
 source ./sbin/compilation/projects.sh
 #
+if [ "$VERB" == 1 ] ; then
+ echo "cdir is $cdir"
+ echo "target is $target"
+fi
+#
 if [ "$global" == "yes" ]  ; then
  source ./sbin/compilation/global_conf_check.sh
  exit 0
@@ -49,7 +54,7 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
  dirs_to_check=`cat $compdir/config/stamps_and_lists/active_directories.list`
  for dir in $dirs_to_check
  do
-  if [[ "$dir" == "./$cdir"* ]]; then
+  if [[ "$dir" == "./$cdir" ]]; then
    DIR_is_to_recompile=0
    source ./sbin/compilation/check_updated_sources.sh 
    if [ ! "$mode" == "fast" ] ; then
@@ -60,6 +65,11 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
      source ./sbin/compilation/stamp_remove.sh "goal"
      source ./sbin/compilation/stamp_remove.sh "target.a"
      source ./sbin/compilation/stamp_remove.sh "exe"
+   fi
+   # The driver library always needs to be recompiled since it is not copied in the save folders
+   # due to the name which depends on the exectuable
+   if [[ "$dir" == *"yambo/driver"* ]]; then
+     source ./sbin/compilation/stamp_remove.sh "target.a"
    fi
  fi
  done

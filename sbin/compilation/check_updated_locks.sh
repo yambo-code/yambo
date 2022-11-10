@@ -117,15 +117,26 @@ do
    done
   fi
   #
-  # Remove the lock 
-  #
-  if [ $step == 2 ] ; then
-    if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
-    if [ "$DRY_RUN" == 0 ] ; then        rm -f $dir/$lock.lock ; fi
-  fi
-  #
  done
  ((step++))
+done
+#
+for lock in $missing ; do
+  #
+  # Remove old lock 
+  #
+ if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
+ if [ "$DRY_RUN" == 0 ] ; then        rm -f $dir/$lock.lock ; fi
+ #
+done
+#
+for lock in $new ; do
+  #
+  # Add new lock 
+  #
+ if [ "$VERB" == 1    ] ; then  echo "touch $dir/$lock.lock"; fi
+ if [ "$DRY_RUN" == 0 ] ; then        touch $dir/$lock.lock ; fi
+ #
 done
 #
 #

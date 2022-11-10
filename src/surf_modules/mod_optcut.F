@@ -392,7 +392,6 @@ end subroutine init_cutoff
     use R_lattice,     ONLY:g_vec,bz_samp
     use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk,wf_ng
     use electrons,     ONLY:n_spinor
-    use parallel_m,    ONLY:PAR_DIPk_nibz
     implicit none
     type(bz_samp), intent(in)  :: Xk
     integer,       intent(in)  :: iv_wf,ic_wf,ik
@@ -404,7 +403,7 @@ end subroutine init_cutoff
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
 
-    call nG_limits(PAR_DIPk_nibz) 
+    call nG_limits(ik)
 
      do i1 = 1,3
         kg(i1,:)=(Xk%pt(ik,i1)+g_vec(1:wf_ng,i1))*2.0_SP*pi/alat(i1)

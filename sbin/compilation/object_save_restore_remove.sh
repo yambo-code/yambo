@@ -40,7 +40,7 @@ if [ "$file_obj" == "driver.o" ] ; then
 fi
 #
 if [ -z "$obj_path" ] ; then
-  if [ "$operate" == "remove_child" ]; then return ; fi
+  if [[ "$operate" == "remove_child"* ]]; then return ; fi
   # if the onject does not exist yet I set the path from the external loop
   # then I cannot be in the case "remove" or "restore"
   if [ "$operate" == "remove" ]; then

@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -24,34 +24,85 @@
 #
 operate=$1
 #
+file_obj=`echo $file | sed 's/.$/o/'`
+if [ "$file_obj" != "driver.o" ] ; then
+ obj_path=`find $compdir -name $file_obj -not -path "/*.save/*"`;
+fi
+#
+if [ "$file_obj" == "driver.o" ] ; then
+ if [ "$VERB" == 1 ] ; then
+   echo "WARNING driver.o case is problematic. "
+   echo "Mode is $operate. File $file. Skipping it."
+   echo "The file is created at the linking step. See config/mk/local/functions.mk, define_link"
+ fi
+ return
+ #echo "Setting to external value $obj_path"
+fi
+#
+if [ -z "$obj_path" ] ; then
+  if [ "$operate" == "remove_child" ]; then return ; fi
+  # if the onject does not exist yet I set the path from the external loop
+  # then I cannot be in the case "remove" or "restore"
+  if [ "$operate" == "remove" ]; then
+    if [ "$VERB" == 1 ] ; then
+      echo "Remove mode and $file_obj not found"
+      echo "Setting to external value"
+    fi
+    obj_path=$srcdir/$dir/$file_obj
+  fi
+  if [ "$operate" == "save" ]; then
+    if [ "$VERB" == 1 ] ; then
+      echo "Save mode and $file_obj not found"
+      echo "Setting to external value"
+    fi
+    obj_path=$srcdir/$dir/$file_obj
+  fi
+  if [ "$operate" == "restore" ]; then
+    if [ "$VERB" == 1 ] ; then
+      echo "Restore mode and $file_obj not found"
+      echo "Setting to external value"
+    fi
+    obj_path=$srcdir/$dir/$file_obj
+  fi
+fi
+#
 file_src=`echo $file | sed 's/.$/F/'`
-source_path=$srcdir/$dir/$file_src
+source_path=`echo $obj_path | sed 's/.$/F/'`
 if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- source_path=$srcdir/$dir/$file_src
+ source_path=`echo $obj_path | sed 's/.$/c/'`
  f90_file_src=""
  f90_source_path=""
 else
  f90_file_src=`echo $file | sed 's/.$/f90/'`
- f90_source_path=$srcdir/$dir/$f90_file_src
+ f90_source_path=`echo $obj_path | sed 's/.$/f90/'`
 fi
 if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/f/"`
- source_path=$srcdir/$dir/$file_src
-fi
-if [ ! -f "$source_path" ] ; then
- if [ "$VERB" == 1 ] ; then
-  echo "$file_src not found for src in $operate mode in $srcdir"
-  echo "full path was set to $source_path $PWD"
- fi
- return
+ source_path=`echo $obj_path | sed 's/.$/f/'`
 fi
 #
-file_obj=`echo $file | sed 's/.$/o/'`
-obj_path=`echo $source_path | sed 's/.$/o/'`
+if [ ! -f "$source_path" ] ; then
+ echo "********* ERROR ************"
+ echo "$file_src not found for src in $operate mode in $srcdir"
+ echo "full path was set to $source_path"
+ #exit()
+fi
+#
 ldir=`dirname $obj_path`
 llib=`basename $ldir`
-library="${target}.a"
+library="lib${llib}.a"
+if [[ "$ldir" == *"ypp"* ]] ; then  library="lib${llib}.a" ; fi
+if [[ "$ldir" == *"yambo/driver"* ]] ; then
+ Ydrfolder=`basename $ldir`
+ #Still not working since goal is not defined
+ library="lib${goal}_Ydriver_${Ydrfolder}.a"
+ #echo "library $library"
+fi
+if [[ "$goal" == "$target" ]] ; then
+ if [ "$VERB" == 1 ] ; then echo "here I'm doing the driver folder, but there is no connected library"; fi
+ library=""
+fi
 #
 fstamp=$compdir/config/stamps_and_lists/mods_${llib}_restored.stamp
 rstamp=$compdir/config/stamps_and_lists/mods_${llib}_saved_removed.stamp
@@ -67,7 +118,7 @@ if [ "$VERB" == 1 ] ; then
  echo "ldir is $ldir"
 fi
 #
-if [[ "$operate" == "remove" ]] ; then
+if [[ "$operate" == *"remove"* ]] ; then
   if [ $VERB == 1 ] ; then echo "[WARNING] removing lib stamp" ; fi
   source ./sbin/compilation/stamp_remove.sh "lib"
   if [[ -f "$obj_path" ]]  ; then
@@ -148,6 +199,8 @@ if [[ "$operate" == "restore" ]] ; then
     if [ "$DRY_RUN" == 0 ] ; then
      # objects
      cp $ldir/$restore_dir/$file_obj $ldir
+     #if [ -f "$ldir/$file_obj" ] && [ ! -f ] ; then source ./sbin/compilation/check_object_childs.sh "restore" ; fi
+     #if [ -f $compdir/stamps_and_lists/check_object_loop.stamp] ; then rm $compdir/stamps_and_lists/check_object_loop.stamp ; fi
      if [   -f "$ldir/$restore_dir/$f90_file_src" ] ; then cp $ldir/$restore_dir/$f90_file_src $ldir ; fi
      # library
      if [ ! -f $lstamp ] && [ -f $ldir/$restore_dir/$library ] ; then
@@ -171,8 +224,7 @@ if [[ "$operate" == "restore" ]] ; then
      DIR_is_to_recompile=1
      rm -f $rstamp
      obj=$file_obj
-     if [ -f "$ldir/$file_obj" ] ; then source ./sbin/compilation/check_object_childs.sh; fi
-     #if [ -f $ldir/$file_obj ] ; then  rm $ldir/$file_obj; fi
+     source ./sbin/compilation/check_object_childs.sh "remove" ;
      #source ./sbin/compilation/stamp_remove.sh "lib"
     fi
   fi

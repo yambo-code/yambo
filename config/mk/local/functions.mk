@@ -16,6 +16,7 @@ define link
  eval $(fc) $(fcflags) $(lf90include) $(lf90libinclude) -o $(target) driver.o $(objs) $(libs) >> $(STDLOG) 2>&1;\
  $(ECHO) "\t[$(wdir)] $(target) (link)";\
  if test -f $(target); then \
+   rm driver.o \
    rm -f $(compdir)/config/stamps_and_lists/compiling_$(target).stamp; \
    touch $(compdir)/config/stamps_and_lists/$(target).stamp; \
  fi )
@@ -74,6 +75,7 @@ endef
 define mk_lib
  $(PREFIX)(echo "$(ar) $(arflags) $(target) $(objs)"  >> $(STDLOG) )
  $(PREFIX)(eval $(ar) $(arflags) $(target) $(objs)  >> $(STDLOG) 2>&1  )
+ $(PREFIX)(echo "mv $(target) $(libdir)" >> $(STDLOG) )
  $(PREFIX)(mv $(target) $(libdir))
  $(PREFIX)(chmod u+x $(libdir)/$(target))
  $(PREFIX)($(ECHO) "\t[$(wdir)] $(target) (lib)")

@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM, DS
 # 
 # This file is distributed under the terms of the GNU 
 # General Public License. You can redistribute it and/or 
@@ -42,11 +42,19 @@ source ./sbin/compilation/projects.sh
 if [ "$VERB" == 1 ] ; then
  echo "cdir is $cdir"
  echo "target is $target"
+ echo "lib is $lib"
+ echo "goal is $goal"
 fi
 #
 if [ "$global" == "yes" ]  ; then
  source ./sbin/compilation/global_conf_check.sh
  exit 0
+fi
+#
+if [ "$target" == "$goal" ] ; then
+ if [ ! -f bin/$goal ] ; then
+  source ./sbin/compilation/stamp_remove.sh "exe"
+ fi
 fi
 #
 # Check what has to be done
@@ -56,12 +64,12 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
  do
   if [[ "$dir" == "./$cdir" ]]; then
    DIR_is_to_recompile=0
-   source ./sbin/compilation/check_updated_sources.sh 
    if [ ! "$mode" == "fast" ] ; then
-     source ./sbin/compilation/check_updated_locks.sh 
+     source ./sbin/compilation/check_updated_locks.sh
    fi
+   source ./sbin/compilation/check_updated_sources.sh
    if [ "$DIR_is_to_recompile" == 1 ] ; then
-     if [ $VERB = 1 ] ; then echo "$dir is to be recompiled $goal $target" ; fi
+     if [ $VERB = 1 ] ; then echo "$dir is to be recompiled $goal, $target" ; fi
      source ./sbin/compilation/stamp_remove.sh "goal"
      source ./sbin/compilation/stamp_remove.sh "target.a"
      source ./sbin/compilation/stamp_remove.sh "exe"
@@ -102,8 +110,10 @@ do
  touch $cdir/${flag}.lock
 done
 #
-echo "libs are $libs"
-echo "precomp flags are $precomp_flags"
+if [ "$VERB" == 1 ] ; then
+ echo "libs are $libs"
+ echo "precomp flags are $precomp_flags"
+fi
 #
 # Makefile (I): variables
 cat <<EOF > $cdir/dyn_variables.mk

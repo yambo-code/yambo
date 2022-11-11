@@ -44,7 +44,7 @@ if [ ! -f $proj_dep_stamp ] ; then
 idir=0
 for CDIR in $directories
 do
- echo -en "\t[SETUP] Projects detection [ "
+ echo -en "\t[SETUP] Projects dependencies [ "
  for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'
@@ -77,7 +77,7 @@ idir=0
 for CDIR in $directories
 do
  cd $CDIR
- echo -en "\t[SETUP] Dependencies [ "
+ echo -en "\t[SETUP] Modules dependencies [ "
  for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'

@@ -76,6 +76,30 @@ if [ "$VERB" == 1 ] ; then
  echo "RESTORE" $restore_dir
 fi
 #
+#library="${target}.a"
+##
+#count_modr=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
+#count_mods=`ls -1 $dir/$save_dir/*.mod 2>/dev/null | wc -l`
+#count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
+#if [ -f $dir/$restore_dir/$library ] && [ -f $dir/$save_dir/$library ] ; then
+#  rm $dir/*.o
+#  cp $dir/$restore_dir/*.o $compdir/include/ ;
+#  if [ "$count_mods" -gt "0" ] ; then
+#    for mod in $dir/$save_dir/*.mod ; do
+#      rm $mod
+#    done
+#  fi
+#  if [ "$count_modr" -gt "0" ] ; then
+#    cp $dir/$restore_dir/*.mod $compdir/include/ ;
+#  fi
+#  if [ "$count_f90" -gt "0" ] ; then
+#    rm $dir/*.f90
+#    cp $dir/$restore_dir/*.f90 $compdir/include/ ;
+#  fi
+#  cp $dir/$restore_dir/$library $compdir/lib/ ;
+#  return
+#fi 
+#
 # SAVE (step #1) & RESTORE (step #2) PJ dependent objects (from .dep files)
 #
 path_back=$PWD

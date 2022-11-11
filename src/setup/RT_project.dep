@@ -1,4 +1,3 @@
  External_corrections.o
- PARALLEL_and_IO_Setup.o
  QP_state_table_setup.o
 

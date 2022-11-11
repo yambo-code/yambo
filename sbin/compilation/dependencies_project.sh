@@ -59,18 +59,23 @@ do
   if [ "$PJ" == "_DOUBLE" ] ; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
     sources_pj_dependent+=" ${obj}\n"
+  elif [ "$PJ" == "_NL"  ] ; then
+    if test `grep $PJ $file | grep '#' | grep -v _YPP_NL | wc -l` -ge 1 ; then
+      obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
+      sources_pj_dependent+=" ${obj}\n"
+    fi
   elif [ "$PJ" == "_RT"  ] ; then
-    if test `grep $PJ $file | grep '#' | grep -v _RT_SCATT | wc -l` -ge 1 ; then
+    if test `grep $PJ $file | grep '#' | grep -v _RT_SCATT | grep -v _YPP_RT | wc -l` -ge 1 ; then
       obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
       sources_pj_dependent+=" ${obj}\n"
     fi
   elif [ "$PJ" == "_ELPH"  ] ; then
-    if test `grep $PJ $file | grep '#' | grep -v _ELPH_ITERATIVE | wc -l` -ge 1 ; then
+    if test `grep $PJ $file | grep '#' | grep -v _ELPH_ITERATIVE | grep -v _YPP_ELPH | wc -l` -ge 1 ; then
       obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
       sources_pj_dependent+=" ${obj}\n"
     fi
   elif [ "$PJ" == "_SC"  ] ; then
-    if test `grep $PJ $file | grep '#' | grep -v _SCALAPACK | wc -l` -ge 1 ; then
+    if test `grep $PJ $file | grep '#' | grep -v _SCALAPACK | grep -v _YPP_SC | wc -l` -ge 1 ; then
       obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
       sources_pj_dependent+=" ${obj}\n"
     fi

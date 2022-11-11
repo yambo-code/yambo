@@ -92,7 +92,7 @@ fi
 ldir=`dirname $obj_path`
 llib=`basename $ldir`
 library="lib${llib}.a"
-if [[ "$ldir" == *"ypp"* ]] ; then  library="lib${llib}.a" ; fi
+if [[ "$ldir" == *"ypp"* ]] ; then  library="lib_ypp_${llib}.a" ; fi
 if [[ "$ldir" == *"yambo/driver"* ]] ; then
  Ydrfolder=`basename $ldir`
  #Still not working since goal is not defined

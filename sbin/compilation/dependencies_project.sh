@@ -48,13 +48,11 @@ if [ ${#sources} -eq 2 ]; then
   continue 
 fi
 #
-dep_proj_file=$compdir/$CDIR/${PREFIX}_project.dep
-if [ -f $dep_proj_file ] ; then rm $dep_proj_file ; fi
-#
 # Projects 
 #==========
-for PJ in _SC _RT _RT_SCATT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
+for PJ in _SC _RT _RT_SCATT _ELPH _ELPH_ITERATIVE _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
 do
+ #
  sources_pj_dependent=""
  for file in $sources
  do
@@ -76,22 +74,19 @@ do
       obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
       sources_pj_dependent+=" ${obj}\n"
     fi
-  elif [ "$PJ" == "_RT_SCATT"  ] ; then
-    test1=`grep _RT_SCATT $file | grep '#' | wc -l`
-    test2=`grep _ELPH_ITERATIVE $file | grep '#' | wc -l`
-    if [ "$test1" -ge 1 ] || [ "$test2" -ge 1  ] ; then
-      obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
-      sources_pj_dependent+=" ${obj}\n"
-    fi
   elif test `grep $PJ $file | grep '#' | wc -l` -ge 1 ; then
     obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'| sed 's/\.f/\.o/g'`
     sources_pj_dependent+=" ${obj}\n"
   fi
  done
- PREFIX=`echo $PJ | sed 's/_//'`
+ #
  if [ ${#sources_pj_dependent} -gt 1 ]; then
+  PREFIX=`echo $PJ | sed 's/_//'`
+  dep_proj_file=$compdir/$CDIR/${PREFIX}_project.dep
+  if [ -f $dep_proj_file ] ; then rm $dep_proj_file ; fi
   echo -e "$sources_pj_dependent" >>  $dep_proj_file
  fi
+ #
 done
 #
 cd $BASE

@@ -64,6 +64,7 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
  do
   if [[ "$dir" == "./$cdir" ]]; then
    DIR_is_to_recompile=0
+   FOLDER_OK=0
    if [ ! "$mode" == "fast" ] ; then
      source ./sbin/compilation/check_updated_locks.sh
    fi
@@ -76,7 +77,7 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
    fi
    # The driver library always needs to be recompiled since it is not copied in the save folders
    # due to the name which depends on the exectuable
-   if [[ "$dir" == *"yambo/driver"* ]]; then
+   if [[ "$dir" == *"yambo/driver"* ]] && [ "$FOLDER_OK" == 0 ]; then
      source ./sbin/compilation/stamp_remove.sh "target.a"
    fi
  fi

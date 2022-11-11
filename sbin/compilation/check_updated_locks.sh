@@ -76,91 +76,32 @@ if [ "$VERB" == 1 ] ; then
  echo "RESTORE" $restore_dir
 fi
 #
-#library="${target}.a"
-##
-#count_modr=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
-#count_mods=`ls -1 $dir/$save_dir/*.mod 2>/dev/null | wc -l`
-#count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
-#if [ -f $dir/$restore_dir/$library ] && [ -f $dir/$save_dir/$library ] ; then
-#  rm $dir/*.o
-#  cp $dir/$restore_dir/*.o $compdir/include/ ;
-#  if [ "$count_mods" -gt "0" ] ; then
-#    for mod in $dir/$save_dir/*.mod ; do
-#      rm $mod
-#    done
-#  fi
-#  if [ "$count_modr" -gt "0" ] ; then
-#    cp $dir/$restore_dir/*.mod $compdir/include/ ;
-#  fi
-#  if [ "$count_f90" -gt "0" ] ; then
-#    rm $dir/*.f90
-#    cp $dir/$restore_dir/*.f90 $compdir/include/ ;
-#  fi
-#  cp $dir/$restore_dir/$library $compdir/lib/ ;
-#  return
-#fi 
+source ./sbin/compilation/object_save_and_restore.sh 
+if [ "$FOLDER_OK" == 1 ] ; then
+ return ;
+fi
 #
-# SAVE (step #1) & RESTORE (step #2) PJ dependent objects (from .dep files)
+# tag new objects to be compiled
 #
-path_back=$PWD
-step=1
-while [ $step -le 2 ]
-do
  for lock in $unmatched
  do
   #
   if test -f "$dir/${lock}_project.dep"; then
-   if [ $step == 1 ] ; then
-    deps=""
-    refs=""
-    if [ ! -d $dir/$save_dir ] ; then
-     if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
-     mkdir -p $dir/$save_dir
-    fi
-    count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
-    if [ $count != 0 ]; then
-     cd $dir;
-     deps=`ls *.o`;
-     refs=$deps ;
-     if [ ! -f "$save_dir/files.dep" ] ; then
-      for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
-     fi
-     cd $path_back ;
-    fi
-   elif [ $step == 2 ]; then
-    deps=`cat $dir/${lock}_project.dep` ;
-    refs=$deps ;
-    if [ -f $dir/$restore_dir/files.dep ] ; then refs=`cat $dir/$restore_dir/files.dep` ; fi
-   fi
+   deps=`cat $dir/${lock}_project.dep` ;
+   refs=$deps ;
+   if [ -f $dir/$restore_dir/files.dep ] ; then refs=`cat $dir/$restore_dir/files.dep` ; fi
    for file in $deps; do
     if [[ "$refs" == *"$file"* ]]; then
      if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
-     if [ $step == 1 ]; then source ./sbin/compilation/object_save_restore_remove.sh "save"; fi
-     if [ $step == 2 ]; then source ./sbin/compilation/object_save_restore_remove.sh "restore"; fi
+     if [ "$DRY_RUN" == 0 ] ; then
+      DIR_is_to_recompile=1
+      obj=$file
+      source ./sbin/compilation/check_object_childs.sh ;
+     fi
     fi
    done
   fi
   #
  done
- ((step++))
-done
 #
-for lock in $missing ; do
-  #
-  # Remove old lock 
-  #
- if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
- if [ "$DRY_RUN" == 0 ] ; then        rm -f $dir/$lock.lock ; fi
- #
-done
-#
-for lock in $new ; do
-  #
-  # Add new lock 
-  #
- if [ "$VERB" == 1    ] ; then  echo "touch $dir/$lock.lock"; fi
- if [ "$DRY_RUN" == 0 ] ; then        touch $dir/$lock.lock ; fi
- #
-done
-#
-#
+source ./sbin/compilation/fix_locks.sh

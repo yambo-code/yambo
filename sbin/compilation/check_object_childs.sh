@@ -26,16 +26,11 @@
 # - tags the library to be compiled
 # - remove the object file
 #
-operate=$1
-if [ "$operate" == "restore" ] ; then
- echo "WARNING: new featur in place "
- touch $compdir/stamps_and_lists/check_object_loop.stamp ;
-fi
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
 file=$obj
-source ./sbin/compilation/object_save_restore_remove.sh $operate
+source ./sbin/compilation/object_remove.sh "remove"
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
@@ -51,6 +46,6 @@ if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
  for file in $first_level_dep
  do
-  source ./sbin/compilation/object_save_restore_remove.sh "${operate}_child"
+  source ./sbin/compilation/object_remove.sh "remove_child"
  done
 fi

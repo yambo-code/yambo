@@ -83,23 +83,23 @@ fi
 #
 # tag new objects to be compiled
 #
- for lock in $unmatched
- do
-  #
-  if test -f "$dir/${lock}_project.dep"; then
-   deps=`cat $dir/${lock}_project.dep` ;
-   refs=$deps ;
-   if [ -f $dir/$restore_dir/files.dep ] ; then refs=`cat $dir/$restore_dir/files.dep` ; fi
-   for file in $deps; do
-    if [[ "$refs" == *"$file"* ]]; then
-     if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
-     DIR_is_to_recompile=1
-     obj=$file
-     source ./sbin/compilation/check_object_childs.sh ;
-    fi
-   done
-  fi
-  #
- done
+for lock in $unmatched
+do
+ #
+ if test -f "$dir/${lock}_project.dep"; then
+  deps=`cat $dir/${lock}_project.dep` ;
+  refs=$deps ;
+  if [ -f $dir/$restore_dir/files.dep ] ; then refs=`cat $dir/$restore_dir/files.dep` ; fi
+  for file in $deps; do
+   if [[ "$refs" == *"$file"* ]]; then
+    if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
+    DIR_is_to_recompile=1
+    obj=$file
+    source ./sbin/compilation/check_object_childs.sh ;
+   fi
+  done
+ fi
+ #
+done
 #
 source ./sbin/compilation/fix_locks.sh

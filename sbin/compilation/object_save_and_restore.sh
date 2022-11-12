@@ -52,9 +52,12 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/driver"* ]] ; then
    if [ $count != 0 ]; then cp $dir/*.f90 $dir/$save_dir ; fi
   else
    deps=`cat $dir/$save_dir/files.dep`
-   found=`ls $dir/$save_dir/*.o`
+   cd $dir/$save_dir
+   found=`ls *.o`
+   cd $path_back
    missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
    for file in $missing_files ; do
+    ls -ltr driver
     cp $dir/$file $dir/$save_dir
     filef90=`echo $file | sed 's/.$/f90/'`
     if [ -f $dir/$filef90 ] ; then cp $dir/$file $dir/$save_dir  ; fi
@@ -78,27 +81,46 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/driver"* ]] ; then
  found=`ls *.o`
  cd $path_back
  missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
- cp $dir/$restore_dir/*.o $dir/ ;
+ cd $dir
+ ln -s $restore_dir/*.o ./ ;
+ cd $path_back
+ #cp $dir/$restore_dir/*.o $dir/ ;
  count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
  if [ "$count_mod" -gt "0" ] ; then
   cd $dir
   for mod in *.mod ; do
    rm $compdir/include/$mod
   done
+  rm *.mod
   cd $path_back
-  rm $dir/*.mod
  fi
  count_mod=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
  if [ "$count_mod" -gt "0" ] ; then
-  cp $dir/$restore_dir/*.mod $dir/ ;
-  cp $dir/*.mod include/ ;
+  cd $dir
+  ln -s $restore_dir/*.mod ./
+  cd $compdir/include
+  ln -s $compdir/$dir/*.mod ./
+  cd $path_back
+  #cp $dir/$restore_dir/*.mod $dir/ ;
+  #cp $dir/*.mod include/ ;
  fi
  count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
  if [ $count_f90 != 0 ]; then rm $dir/*.f90  ; fi
  count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
- if [ $count_f90 != 0 ]; then  cp $dir/$restore_dir/*.f90 $dir/ ; fi
+ if [ $count_f90 != 0 ]; then
+  cd $dir
+  ln -s $restore_dir/*.f90 ./
+  cd $path_back
+  #cp $dir/$restore_dir/*.f90 $dir/ ;
+ fi
  if [[ -f $dir/$restore_dir/$library ]] || [ "$library" == "NONE" ]; then
-  if [[ -f $dir/$restore_dir/$library ]] ; then cp $dir/$restore_dir/$library lib/ ; fi
+  if [[ -f $dir/$restore_dir/$library ]] ; then
+   cd $compdir/lib
+   rm $library
+   ln -s $compdir/$dir/$restore_dir/$library ./
+   cd $path_back
+   #cp $dir/$restore_dir/$library lib/ ;
+  fi
   if [[ "$missing_files" == "" ]] ; then
    FOLDER_OK=1
    source ./sbin/compilation/fix_locks.sh

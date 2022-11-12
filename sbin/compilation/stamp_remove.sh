@@ -24,18 +24,17 @@
 #
 if [ $1 == "goal" ] ; then
  if [ "$VERB" == 1    ] ; then  echo "remove goal | rm -f $compdir/config/stamps_and_lists/${goal}.stamp"; fi
- if [ "$DRY_RUN" == 0 ] ; then        rm -f $compdir/config/stamps_and_lists/${goal}.stamp ; fi
+ rm -f $compdir/config/stamps_and_lists/${goal}.stamp
 fi
 if [ $1 == "target.a" ] ; then
  if [ "$VERB" == 1    ] ; then echo "remove target | rm -f $compdir/config/stamps_and_lists/${target}.a.stamp"; fi
- if [ "$DRY_RUN" == 0 ] ; then       rm -f $compdir/config/stamps_and_lists/${target}.a.stamp ; fi
+ rm -f $compdir/config/stamps_and_lists/${target}.a.stamp
 fi
 if [ $1 == "lib" ] ; then
  if [ "$VERB" == 1    ] ; then echo "remove lib | rm -f $compdir/config/stamps_and_lists/lib${llib}.a.stamp"; fi
- if [ "$DRY_RUN" == 0 ] ; then       rm -f $compdir/config/stamps_and_lists/lib${llib}.a.stamp ; fi
+ rm -f $compdir/config/stamps_and_lists/lib${llib}.a.stamp
 fi
 if [ $1 == "exe" ] ; then
   stamp=`find $compdir/config/stamps_and_lists/ -name "compiling*"  | sed "s/compiling_//"`
   rm -f $stamp
 fi
-

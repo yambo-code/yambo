@@ -28,7 +28,7 @@ for lock in $missing ; do
   # Remove old lock 
   #
  if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
- if [ "$DRY_RUN" == 0 ] ; then        rm -f $dir/$lock.lock ; fi
+ rm -f $dir/$lock.lock
  #
 done
 #
@@ -37,7 +37,7 @@ for lock in $new ; do
   # Add new lock 
   #
  if [ "$VERB" == 1    ] ; then  echo "touch $dir/$lock.lock"; fi
- if [ "$DRY_RUN" == 0 ] ; then        touch $dir/$lock.lock ; fi
+ touch $dir/$lock.lock
  #
 done
 #

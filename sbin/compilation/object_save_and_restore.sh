@@ -60,7 +60,8 @@ if [[ -f $dir/$restore_dir/$library ]] ; then
  count_mods=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
  count_modr=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
  count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
- rm $dir/*.o
+ count_obj=`ls -1 $dir/*.o 2>/dev/null | wc -l`
+ if [ $count != 0 ]; then rm $dir/*.o  ; fi
  cp $dir/$restore_dir/*.o $dir/ ;
  if [ "$count_mods" -gt "0" ] ; then
   cd $dir

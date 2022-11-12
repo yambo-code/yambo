@@ -97,7 +97,6 @@ if [[ "$operate" == *"remove"* ]] ; then
     if [ "$DRY_RUN" == 0 ] ; then
      rm -f $obj_path
      if [ -f "$f90_source_path" ] ; then rm -f $f90_source_path ; fi
-     rm -f config/stamps_and_lists/lib${llib}.a.stamp 
     fi
   fi
 fi

@@ -85,7 +85,6 @@ if [ "$VERB" == 1 ] ; then
  echo "ldir is $ldir"
 fi
 #
-if [[ "$operate" == *"remove"* ]] ; then
   if [ $VERB == 1 ] ; then echo "[WARNING] removing lib stamp" ; fi
   source ./sbin/compilation/stamp_remove.sh "lib"
   if [[ -f "$obj_path" ]]  ; then
@@ -94,10 +93,7 @@ if [[ "$operate" == *"remove"* ]] ; then
      echo "remove f90 source | rm -f  $f90_source_path"
      echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp"
     fi
-    if [ "$DRY_RUN" == 0 ] ; then
-     rm -f $obj_path
-     if [ -f "$f90_source_path" ] ; then rm -f $f90_source_path ; fi
-    fi
+    rm -f $obj_path
+    if [ -f "$f90_source_path" ] ; then rm -f $f90_source_path ; fi
   fi
-fi
 #

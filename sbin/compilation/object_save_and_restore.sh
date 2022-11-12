@@ -33,52 +33,75 @@ if [[ "$goal" == "$target" ]] ; then
 fi
 if [ "$VERB" == 1 ] ; then echo "library is $library" ; fi
 #
-# Save all files
+# Save files
 #
-count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
-if [ ! -d $dir/$save_dir ] && [ "$count" -gt 0 ] ; then
- if [ "$DRY_RUN" == 0 ] ; then
+if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/driver"* ]] ; then
+ if [ ! -d $dir/$save_dir ] ; then
   if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
   mkdir -p $dir/$save_dir
-  count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
-  cd $dir;
-  deps=`ls *.o`;
-  for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
-  cd $path_back ;
-  if [ $count != 0 ]; then cp $dir/*.o $dir/$save_dir ; fi
-  if [ -f lib/$library ] ; then  cp $compdir/lib/$library $dir/$save_dir ; fi
-  count=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
-  if [ $count != 0 ]; then cp $dir/*.f90 $dir/$save_dir ; fi
+ fi
+ count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
+ if [ $count != 0 ] ; then
+  if [ ! -f $dir/$save_dir/files.dep ] ; then
+   cd $dir;
+   deps=`ls *.o`;
+   for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
+   cd $path_back ;
+   cp $dir/*.o $dir/$save_dir/
+   count=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
+   if [ $count != 0 ]; then cp $dir/*.f90 $dir/$save_dir ; fi
+  else
+   deps=`cat $dir/$save_dir/files.dep`
+   found=`ls $dir/$save_dir/*.o`
+   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+   for file in $missing_files ; do
+    cp $dir/$file $dir/$save_dir
+    filef90=`echo $file | sed 's/.$/f90/'`
+    if [ -f $dir/$filef90 ] ; then cp $dir/$file $dir/$save_dir  ; fi
+   done
+  fi
+ fi
+ if [ -f lib/$library ] ; then
+  cp $compdir/lib/$library $dir/$save_dir
   count=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
   if [ $count != 0 ]; then cp $dir/*.mod $dir/$save_dir ; fi
  fi
 fi
 #
-# Restore all files
+# Restore files
 #
-if [[ -f $dir/$restore_dir/$library ]] ; then
- count_mods=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
- count_modr=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
- count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
- count_obj=`ls -1 $dir/*.o 2>/dev/null | wc -l`
+if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/driver"* ]] ; then
+ count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then rm $dir/*.o  ; fi
+ deps=`cat $dir/$restore_dir/files.dep`
+ cd $dir/$restore_dir
+ found=`ls *.o`
+ cd $path_back
+ missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
  cp $dir/$restore_dir/*.o $dir/ ;
- if [ "$count_mods" -gt "0" ] ; then
+ count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
+ if [ "$count_mod" -gt "0" ] ; then
   cd $dir
   for mod in *.mod ; do
-    rm $compdir/include/$mod
+   rm $compdir/include/$mod
   done
   cd $path_back
   rm $dir/*.mod
  fi
- if [ "$count_modr" -gt "0" ] ; then
+ count_mod=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
+ if [ "$count_mod" -gt "0" ] ; then
   cp $dir/$restore_dir/*.mod $dir/ ;
   cp $dir/*.mod include/ ;
  fi
- if [ $count_f90 != 0 ]; then
-  cp $dir/$restore_dir/*.f90 $dir/ ;
+ count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
+ if [ $count_f90 != 0 ]; then rm $dir/*.f90  ; fi
+ count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
+ if [ $count_f90 != 0 ]; then  cp $dir/$restore_dir/*.f90 $dir/ ; fi
+ if [[ -f $dir/$restore_dir/$library ]] || [ "$library" == "NONE" ]; then
+  if [[ -f $dir/$restore_dir/$library ]] ; then cp $dir/$restore_dir/$library lib/ ; fi
+  if [[ "$missing_files" == "" ]] ; then
+   FOLDER_OK=1
+   source ./sbin/compilation/fix_locks.sh
+  fi
  fi
- cp $dir/$restore_dir/$library lib/
- FOLDER_OK=1
- source ./sbin/compilation/fix_locks.sh 
 fi

@@ -77,13 +77,16 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/driver"* ]] ; then
  count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then rm $dir/*.o  ; fi
  deps=`cat $dir/$restore_dir/files.dep`
- cd $dir/$restore_dir
- found=`ls *.o`
- cd $path_back
- missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
- cd $dir
- ln -s $restore_dir/*.o ./ ;
- cd $path_back
+ count=`ls -1 $dir/$restore_dir/*.o 2>/dev/null | wc -l`
+ if [ $count != 0 ]; then
+  cd $dir/$restore_dir
+  found=`ls *.o`
+  cd $path_back
+  missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+  cd $dir
+  ln -s $restore_dir/*.o ./ ;
+  cd $path_back
+ fi
  #cp $dir/$restore_dir/*.o $dir/ ;
  count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
  if [ "$count_mod" -gt "0" ] ; then

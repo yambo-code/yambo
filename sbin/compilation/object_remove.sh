@@ -96,7 +96,7 @@ fi
      echo "remove f90 source | rm -f  $f90_source_path"
      echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp"
     fi
-    rm -f $obj_path
+    rm $obj_path
     if [ -f "$f90_source_path" ] ; then rm -f $f90_source_path ; fi
   fi
 #

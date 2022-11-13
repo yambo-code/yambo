@@ -47,15 +47,19 @@ if [ -z "$obj_path" ] ; then
       echo "Remove mode and $file_obj not found"
       echo "Setting to external value"
     fi
-    obj_path=$srcdir/$dir/$file_obj
+    obj_path=$compdir/$dir/$file_obj
   fi
 fi
 #
 file_src=`echo $file | sed 's/.$/F/'`
 source_path=`echo $obj_path | sed 's/.$/F/'`
+if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+ # replace compdir with srcdir in source_path
+ source_path=${srcdir}${source_path/$compdir/}
+fi
 if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- source_path=`echo $obj_path | sed 's/.$/c/'`
+ source_path=`echo $source_path | sed 's/.$/c/'`
  f90_file_src=""
  f90_source_path=""
 else
@@ -64,14 +68,12 @@ else
 fi
 if [ ! -f "$source_path" ] ; then
  file_src=`echo $file | sed "s/.$/f/"`
- source_path=`echo $obj_path | sed 's/.$/f/'`
+ source_path=`echo $source_path | sed 's/.$/f/'`
 fi
 #
 if [ ! -f "$source_path" ] ; then
- echo "********* ERROR ************"
  echo "$file_src not found for src in $operate mode in $srcdir"
  echo "full path was set to $source_path"
- #exit()
 fi
 #
 ldir=`dirname $obj_path`

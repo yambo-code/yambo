@@ -32,8 +32,9 @@ fi
 if [ "$file_obj" == "driver.o" ] ; then
  if [ "$VERB" == 1 ] ; then
    echo "WARNING driver.o case is problematic. "
-   echo "Mode is $operate. File $file. Skipping it."
-   echo "The file is created at the linking step. See config/mk/local/functions.mk, define_link"
+   echo "Mode is $operate. Skipping it."
+   echo "driver.o is created at the linking step. "
+   echo "See config/mk/local/functions.mk, define_link"
  fi
  return
  #echo "Setting to external value $obj_path"
@@ -41,7 +42,7 @@ fi
 #
 if [ -z "$obj_path" ] ; then
   if [[ "$operate" == "remove_child"* ]]; then return ; fi
-  # if the onject does not exist yet I set the path from the external loop
+  # if the object does not exist yet, I set the path from the external loop
   if [ "$operate" == "remove" ]; then
     if [ "$VERB" == 1 ] ; then
       echo "Remove mode and $file_obj not found"

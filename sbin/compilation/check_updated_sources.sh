@@ -45,8 +45,9 @@ do
   file_obj=`echo $file | sed 's/.$/o/'`
   file_name=`basename $file_obj`
   file_path=`dirname $file_obj`
-  #echo "path= $file_path"
-  #echo "restore= $restore_dir"
+  if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+    file_path=${compdir}${source_path/$srcdir/}
+  fi
   count=`ls -1 $file_path/*_.save/$file_name 2>/dev/null | wc -l`
   if [ $count != 0 ]; then
     if [ "$VERB" == 1 ] ; then echo "rm $file_path/*_.save/$file_name" ; fi

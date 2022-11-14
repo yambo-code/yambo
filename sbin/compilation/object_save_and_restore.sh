@@ -76,7 +76,11 @@ fi
 if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/driver"* ]] ; then
  count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then rm $dir/*.o  ; fi
- deps=`cat $dir/$restore_dir/files.dep`
+ if [ ! -f $dir/$restore_dir/files.dep ]; then
+   deps=""
+ else
+  deps=`cat $dir/$restore_dir/files.dep`
+ fi
  count=`ls -1 $dir/$restore_dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then
   cd $dir/$restore_dir

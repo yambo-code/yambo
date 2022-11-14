@@ -75,9 +75,12 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
      source ./sbin/compilation/stamp_remove.sh "exe"
    fi
    # The driver library always needs to be recompiled since it is not copied in the save folders
-   # due to the name which depends on the exectuable
+   # due to the name which depends on the exectuable. This causes the exe to be relinked.
+   # Without I could avoid to remove the "exe" stamp.
+   # However in such case I should remove somehow the copiling stamp.
    if [[ "$dir" == *"yambo/driver"* ]] && [ "$FOLDER_OK" == 0 ]; then
      source ./sbin/compilation/stamp_remove.sh "target.a"
+     source ./sbin/compilation/stamp_remove.sh "exe"
    fi
  fi
  done

@@ -17,8 +17,6 @@ all: $(EXT_LIBS)
 #
 Ydriver:
 	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
-devxlib:
-	@+URL="$(url_devxlib)" ;  GBRANCH="$(branch_devxlib)" ;  GIT="$(git_devxlib)"; LIB="$(pkgname_devxlib)" ; $(getsrc_git) #; $(call link_it,"devxlib")
 #
 # Libraries (archives)
 #
@@ -54,6 +52,8 @@ fftw:
 	@+URL="$(url_fftw)"     ; LIB="$(pkgname_fftw)"; $(getsrc)
 fftqe:
 	@+URL="$(url_fftqe)"    ; LIB="$(pkgname_fftqe)"; $(getsrc)
+devxlib:
+	@+URL="$(url_devxlib)"  ; LIB="$(pkgname_devxlib)"; $(getsrc)
 #
 # cleaning
 #

@@ -1,80 +1,53 @@
-
+#
+#===============================
+# Yambo package
+#===============================
+#
 include ../../config/setup
 include ../archive/package.list
 
-LIBNAME=libdevxlib.a
-LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}/
+LIBNAME=libdevXlib.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_devxlib)
-TARBALL=$(tarball_devxlib)
-
-
-AUXFLAGS="--prefix=$(LIBPATH) $(devxlib_flgs)"
-
-
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Flags
+#
+CUDA_LIBS="$(lcudalib)"
+CUDA_INCS="$(icudalib)"
+BLAS_LIBS="$(lblas)"
+LAPACK_LIBS="$(llapack)"
+CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
+		F90="$(fc)" \
+		MPIF90="$(fc)" 
 #
 # MAIN target
 #
 all: $(LIBRARY)
-
+#
 uncompress:
-	(if ! test -d ../archive/$(PACKAGE) && ! test -d ../archive/$(TARBALL) && ! test -e $(PACKAGE) ; then \
-	cd ../archive ; cp Makefile.loc Makefile ; $(make) $(MAKEFLAGS) $(devxlib) ; cd - ; fi )
-	if test -d ../archive/$(TARBALL) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
-	if test -d ../archive/$(PACKAGE) && ! test -e $(PACKAGE) ; then (ln -s ../archive/$(PACKAGE) ./); fi
-	if ! test -f Makefile ; then (cp Makefile.loc Makefile); fi
-	touch uncompressed.stamp
+	@$(uncompress)
 
 configure: uncompress
-	if test -e $(PACKAGE) && ! test -f configured.stamp ; then ( cd $(PACKAGE);  \
-	      export CUDA_LIBS="$(lcudalib)"; \
-	      export CUDA_INCS="$(icudalib)"; \
-	      export BLAS_LIBS="$(lblas)"; \
-	      export LAPACK_LIBS="$(llapack)"; \
-	      ./configure $(AUXFLAGS) --with-cuda-int-libs="$(devxlib_clib)" \
-	      CC="$(cc)" \
-	      F90="$(fc)" \
-	      FC="$(fc)" \
-	      F77="$(f77)" \
-	      MPICC="$(cc)" \
-	      MPIF90="$(fc)" \
-	      MPIFC="$(fc)" ); \
-	fi
-	touch configured.stamp
+	@$(configure)
 
 compile: uncompress configure
-	if test -e $(PACKAGE) && ! test -f compiled.stamp ; then \
-	( cd $(PACKAGE);  $(make) core; cd .. ) ; fi
-	touch compiled.stamp
-#	@$(call compile,core)
-       
+	@$(call compile,all)
+	
 install: uncompress configure compile
-	@if ! test -e installed.stamp ; then \
-	 echo "\t[$(PACKAGE)] installation"; \
-	 ($(install));\
-	 touch installed.stamp;\
-	fi
+	@$(call install_via_make,devXlib)
 
 $(LIBRARY): uncompress configure compile install
-
 #
 # cleaning
 #
 clean:
-	@if test -e $(PACKAGE) && test -e configure.stamp ; then ( cd $(PACKAGE);  $(make) -s clean ) ; fi
-	@- rm -rf compiled.stamp configured.stamp installed.stamp
+	@$(call clean_the_lib,distclean-recursive)
 
 clean_all: clean
-	@if test -e $(PACKAGE) ; then ( rm -rf $(PACKAGE) ) ; fi 
-	@- rm -rf uncompressed.stamp 
-
-define install
- if ! test -d $(LIBPATH) ; then \
-   mkdir $(LIBPATH) ; mkdir $(LIBPATH)/lib ; mkdir $(LIBPATH)/include ; mkdir $(LIBPATH)/bin ; \
- fi ; \
- cd $(PACKAGE);  cp src/libdevXlib.a $(LIBPATH)/lib/ ; chmod u+x $(LIBPATH)/lib/libdevXlib.a ; cp src/*.mod $(LIBPATH)/include/ ;
-endef
-
-# At present we are relying on the yambo headers. To check if we can also switch to the headers of the library
-# cp include/* $(LIBPATH)/include/ ;
+	@$(rm_the_lib)
+#

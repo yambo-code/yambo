@@ -135,6 +135,13 @@ subroutine EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
      enddo
      !
+   enddo
+   !
+ enddo !Loop i_beta
+ !
+ do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+   !
+   do i_H=1,BS_H_dim
      ! Valence Scattering
      ! =========================
      !

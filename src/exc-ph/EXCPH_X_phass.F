@@ -49,6 +49,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use D_lattice,     ONLY:Boltz_Temp
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
@@ -288,6 +289,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call k_ibz2bz(q,'a',.true.)
    ! Write on disk
    do iq_bz=1,q%nbz
+     !
+     iq_ibz = q%sstar(iq_bz,1)
+     if(.not.use_PH_DbGd.and.abs(BS_all_E(EXCPH_sum(1),iq_ibz)-min_EXC_E)<3.0*Boltz_Temp) cycle
+     !
      pl_file_name ='pl_bse_resolved_q'//intc(iq_bz)
      iq_ibz = q%sstar(iq_bz,1)
      !

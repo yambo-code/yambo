@@ -354,18 +354,26 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    ! Work Space
    !
-   integer :: i1
+   integer  :: i1
+   real(SP) :: max_Sat(EXCPH_states(1):EXCPH_states(2))
+   real(SP) :: max_Sat_PH_abs(EXCPH_states(1):EXCPH_states(2))
    !      
    ! Find the maximum weight of the satellites
    ! 
    do i1=EXCPH_states(1),EXCPH_states(2)
-     if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
-        max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+     max_Sat(i1)       =maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+     max_Sat_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+   enddo
+   !
+   do i1=EXCPH_states(1),EXCPH_states(2)
+     if(max_Sat_weight(i1)<max_Sat(i1)) then
+        max_Sat_weight(i1)=max_Sat(i1)
         max_Sat_pos(i1,1) =iq_bz
         max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
      endif
-     if(max_Sat_weight_PH_abs(i1)<maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))) then
-        max_Sat_weight_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+     !
+     if(max_Sat_weight_PH_abs(i1)<max_Sat_PH_abs(i1)) then
+        max_Sat_weight_PH_abs(i1)=max_Sat_PH_abs(i1)
         max_Sat_pos_PH_abs(i1,1) =iq_bz
         max_Sat_pos_PH_abs(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
       endif

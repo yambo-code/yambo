@@ -291,7 +291,10 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    do iq_bz=1,q%nbz
      !
      iq_ibz = q%sstar(iq_bz,1)
-     if(.not.use_PH_DbGd.and.abs(BS_all_E(EXCPH_sum(1),iq_ibz)-min_EXC_E)<3.0*Boltz_Temp) cycle
+     if(.not.use_PH_DbGd.and.abs(BS_all_E(EXCPH_sum(1),iq_ibz)-min_EXC_E)>3.0*Boltz_Temp)  then
+       call msg('s','Too weak signal at q-point '//intc(iq_bz)//' skipped ')
+       cycle
+     endif
      !
      pl_file_name ='pl_bse_resolved_q'//intc(iq_bz)
      iq_ibz = q%sstar(iq_bz,1)

@@ -46,6 +46,9 @@ subroutine EXCPH_eval_sat(iq_bz,q)
  !
  iq_ibz=q%sstar(iq_bz,1)
  !
+ BS_Sat_WEIGHT       =rZERO
+ BS_Sat_WEIGHT_PH_abs=rZERO
+ !
  do il=elph_branches(1),elph_branches(2)
    !
    iq_db=Q_io_map(iq_bz)

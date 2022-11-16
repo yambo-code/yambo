@@ -62,7 +62,7 @@ clean_git_folders:
 	if test ! -e keep-extlibs-stamp ; then \
           if test -d $(pkgname_Ydriver)  ; then \
 	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
-	    rm $(pkgname_Ydriver)".pulled" ; \
+	    rm -f $(pkgname_Ydriver)".pulled" ; \
 	  fi ; \
 	fi
 #

@@ -18,6 +18,7 @@ define clean_driver
    EXTS="Makefile .stamp";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
+ if [ "$(1)" = "projects-stamp" ] ; then $(clean_projects_stamp); fi; \
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
@@ -158,6 +159,10 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/mods*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*.lock;\
  rm -fr $(prefix)/include/*.save
+endef
+define clean_projects_stamp
+ $(ECHO) "\t[CLEANING] Project stamps" ; \
+ rm -fr $(prefix)/config/stamps_and_lists/project_dependencies.stamp
 endef
 define clean_dependencies
  $(ECHO) "\t[CLEANING] Dependencies" ; \

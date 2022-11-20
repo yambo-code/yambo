@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -23,8 +23,9 @@
 !
 module DIPOLES
  !
- use pars,  ONLY:SP,lchlen,schlen
- use units, ONLY:HA2EV
+ use pars,          ONLY:SP,lchlen,schlen
+ use units,         ONLY:HA2EV
+ use descriptors,   ONLY:IO_desc
  !
 #include <memory.h>
  !
@@ -34,12 +35,19 @@ module DIPOLES
  logical                  :: use_shifted_grids_approach
  logical                  :: use_g_space_approach
  logical                  :: use_real_space_approach
+ logical                  :: compute_P2_dipoles
+ logical                  :: compute_Spin_dipoles
+ logical                  :: compute_Orb_dipoles
  logical                  :: Vnl_commutator_warning
  ! 
  ! other
  !
  integer                  :: num_shifted_grids
  logical                  :: eval_OVERLAPS
+ ! 
+ ! Descriptor
+ !
+ type(IO_desc)            :: DIP_desc
  !
  ! Allocs
  !
@@ -48,14 +56,14 @@ module DIPOLES
  complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
  complex(SP), allocatable :: DIP_orbital(:,:,:,:,:,:)
- complex(SP), allocatable :: DIP_spin(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_spin(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
  !
  type DIPOLE_t
    integer    :: iq(2)
-   integer    :: ib(2)
-   integer    :: ib_lim(2)
+   integer    :: ib(2)     !> @var ib(1)  lowest valence, ib(2)     upper conduction
+   integer    :: ib_lim(2) !> @var ib_lim(1) top valence, ib_lim(2) bottom conduction  
    integer    :: db_ib(2)
    integer    :: db_ib_lim(2)
    integer    :: ng
@@ -86,10 +94,6 @@ module DIPOLES
      character(*)      :: what
      integer, optional :: d(:)
      !
-     ! Work Space
-     !
-     integer :: err
-     !
      if (present(d)) then
        select case(what)
        case('DIP_iR')
@@ -110,11 +114,11 @@ module DIPOLES
          DIP_S=cZERO
        case('DIP_orbital')
          if (allocated(DIP_orbital)) return
-         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,2))
+         YAMBO_ALLOC(DIP_orbital,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,d(7)))
          DIP_orbital=cZERO
        case('DIP_spin')
          if (allocated(DIP_spin)) return
-         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         YAMBO_ALLOC(DIP_spin,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol,3))
          DIP_spin=cZERO
        case('DIP_P_spinor')
          if (allocated(DIP_P_spinor).or.n_spinor==1) return
@@ -193,15 +197,17 @@ module DIPOLES
      Dip%bands_ordered=.true.
      Dip%force_v_g_space=.false.
      Dip%approach="G-space v"
-     Dip%computed="R P"
+     Dip%computed="R P V"
    end subroutine DIPOLES_reset
    !
    function DIP_rotated(ic,iv,ik_bz,i_sp_pol,what,kpt)
      !
      use pars,           ONLY:cZERO
      use D_lattice,      ONLY:i_time_rev,dl_sop,sop_inv,nsym
+     use electrons,      ONLY:n_spinor
      use parallel_m,     ONLY:PAR_K_scheme
      use R_lattice,      ONLY:bz_samp
+     use matrix_operate, ONLY:m3det
      !
      implicit none
      !
@@ -214,6 +220,7 @@ module DIPOLES
      ! Work space
      !
      complex(SP) :: DIP_in(3)
+     real(SP)    :: tmp_sop(3,3)
      integer :: ik,is,ik_mem
      logical :: t_rev
      !
@@ -221,17 +228,38 @@ module DIPOLES
      is=kpt%sstar(ik_bz,2)
      !
      ik_mem    = PAR_K_scheme%ibz_index(ik)
-     !is = sop_inv( is )
+     !
+     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
+     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     !
+     tmp_sop=dl_sop(:,:,is)
+     !
+     if(trim(what)=="DIP_S" ) then
+       if (n_spinor==2) then
+         ! pseudo vectors are invariant under inversion but reverse under t_rev
+         tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+         if( t_rev ) tmp_sop=-tmp_sop
+       else
+         ! in case n_sp_pol==2 the spin is assumed to be independent on symmetries
+         tmp_sop=dl_sop(:,:,1)
+         t_rev=.false.
+       endif
+     endif
+     !
+     if(trim(what)=="DIP_L" ) then
+       ! pseudo vectors are invariant under inversion but reverse under t_rev
+       tmp_sop=tmp_sop*m3det(dl_sop(:,:,is))
+       if( t_rev ) tmp_sop=-tmp_sop
+     endif
      !
      DIP_in=cZERO
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol,1)
+     if(trim(what)=="DIP_L" ) DIP_in=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)  
      !
-     DIP_rotated = matmul( dl_sop(:,:,is) , DIP_in  )
-     !
-     if ( is<= nsym/(i_time_rev+1) ) t_rev=.false.
-     if ( is > nsym/(i_time_rev+1) ) t_rev=.true.
+     DIP_rotated = matmul( tmp_sop , DIP_in  )
      !
      if (t_rev) DIP_rotated = conjg( DIP_rotated )
      !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA   
@@ -48,13 +48,14 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
  use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev
  use FFT_m,         ONLY:fft_size,fft_rot_r
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,PAR_Xk_nibz
+ use parallel_int,  ONLY:PP_redux_wait
  !
  implicit none
  type(bz_samp),intent(in)  :: Xk
  type(levels), intent(in)  :: en       
  real(SP),     intent(out) :: rho(fft_size)
- complex(SP),  intent(in)  :: VAL_BANDS(fft_size,en%nbf,PAR_Xk_nibz,n_sp_pol)
+ complex(SP),  intent(in)  :: VAL_BANDS(fft_size,maxval(en%nbf),PAR_Xk_nibz,n_sp_pol)
  !
  ! Work Space 
  !
@@ -72,7 +73,7 @@ subroutine el_density_vbands(en,Xk,rho,VAL_BANDS)
 !$omp parallel do default(shared), private(ir,is)
    do ir=1,fft_size
      do is=1,n_sp_pol
-       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*sum(abs(VAL_BANDS(ir,:,ik_mem,is))**2._SP)
+       rho_no_sym(ir)=rho_no_sym(ir)+real(spin_occ,SP)*Xk%weights(ik)*sum(abs(VAL_BANDS(ir,:en%nbf(is),ik_mem,is))**2._SP)
      enddo
    enddo
 !$omp end parallel do

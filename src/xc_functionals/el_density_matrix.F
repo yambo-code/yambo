@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -34,8 +34,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
  use D_lattice,      ONLY:nsym,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF,WAVEs
- use real_time,      ONLY:RT_bands,RT_ibz_coo,RT_Nk_ibz
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use real_time,      ONLY:RT_bands,RTibz
+ use parallel_m,     ONLY:PAR_IND_WF_k,PAR_IND_B_mat_ordered,PAR_IND_WF_linear,PAR_G_k_range
+ use parallel_int,   ONLY:PP_redux_wait
  use matrix_operate, ONLY:UP_matrix_index
  use timing_m,       ONLY:timing
  !
@@ -63,9 +64,9 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
    !
    do i_sp_pol=1,n_sp_pol
      do ik=1,Xk%nibz
-       if (.not.any(PAR_IND_WF_linear%element_2D(:,ik))) cycle
+       if (.not.any(PAR_IND_WF_linear%element_2D(lowest_band:RT_bands(1)-1,ik))) cycle
        call WF_load(WF_tmp,WF_G_max,WF_Go_indx,(/1,RT_bands(1)-1/),(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
-       &                      space='R',title='-RT',keep_states_to_load=.true.)
+&                   space='R',title='-RT',keep_states_to_load=.true.)
        do ib1=lowest_band,RT_bands(1)-1
          !
          if (.not.PAR_IND_WF_linear%element_2D(ib1,ik)) cycle
@@ -99,22 +100,21 @@ subroutine el_density_matrix(G_lesser,en,Xk,rho,lowest_band)
        !
        do ib2=ib1,RT_bands(2)
          !
-         !
 #if !defined _YPP_RT
          if (.not.PAR_IND_B_mat_ordered%element_1D(  UP_matrix_index(ib1-RT_bands(1)+1,ib2-RT_bands(1)+1)-1 )) cycle
 #endif
          !
          f_occ=cZERO
-         do ik_RT=RT_ibz_coo(ik,1),RT_ibz_coo(ik,2)
+         do ik_RT=RTibz%k_range(ik,1),RTibz%k_range(ik,2)
            if (ib1==ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)
            if (ib1/=ib2) f_occ=f_occ-cI*G_lesser(ib1,ib2,ik_RT,i_sp_pol)*2._SP
+           f_occ=f_occ*RTibz%weights(ik_RT)
          enddo
-         f_occ=f_occ/real(RT_Nk_ibz(ik),SP)
          !
          i_wf1=WF%index(ib1,ik,i_sp_pol)
          i_wf2=WF%index(ib2,ik,i_sp_pol)
          do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+Xk%weights(ik)*real(f_occ*WF%c(:,i_spinor,i_wf1)*conjg(WF%c(:,i_spinor,i_wf2)),SP)
+           rho_no_sym(:)=rho_no_sym(:)+real(f_occ*WF%c(:,i_spinor,i_wf1)*conjg(WF%c(:,i_spinor,i_wf2)),SP)
          enddo
          !
        enddo

@@ -89,26 +89,17 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
   !
   IF ( nkb == 0 .OR. .NOT. okvan ) RETURN
   !
-!  CALL start_clock( 's_psi' )  
   !
   ! ... The product with the beta functions
   !
   IF ( gamma_only ) THEN
      !
-!     IF (real_space ) THEN
-!        !
-!        DO ibnd = 1, m, 2
-!           !   transform the orbital to real space
-!           CALL invfft_orbital_gamma(psi,ibnd,m) 
-!           CALL s_psir_gamma(ibnd,m)
-!           CALL fwfft_orbital_gamma(spsi,ibnd,m)
-!        END DO
-!        !
-!     ELSE
-        !
-        CALL s_psi_gamma()
-        !
-!     END IF
+#if defined _TOSOLVE
+     CALL s_psi_gamma()
+#else
+     CALL error(&
+          "s_psi, the process flow should not go through gamma only.")
+#endif
      !
   ELSE IF ( noncolin ) THEN
      !
@@ -139,6 +130,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
   !
   CONTAINS
      !
+#if defined _TOSOLVE
      !-----------------------------------------------------------------------
      SUBROUTINE s_psi_gamma()
        !-----------------------------------------------------------------------
@@ -158,7 +150,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
 !         ! data distribution indexes
 !       INTEGER, EXTERNAL :: ldim_block, gind_block
          ! data distribution functions
-       REAL(SP), ALLOCATABLE :: ps(:,:)
+       REAL(SP), ALLOCATABLE :: ps(:,:), qqs(:,:)
          ! the product vkb and psi
        !
 !       IF( becp%comm == mp_get_comm_null() ) THEN
@@ -191,8 +183,10 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
        !
        DO nt = 1, nsp
           IF ( upf(nt)%tvanp ) THEN
+             ALLOCATE( qqs(nh(nt),nh(nt)) )
              DO na = 1, nat
                 IF ( ityp(na) == nt ) THEN
+                   qqs(:,:) = REAL ( qq_at(1:nh(nt),1:nh(nt),na), KIND=SP )
                    !
                    ! Next operation computes ps(l',i)=\sum_m qq(l,m) becp(m',i)
                    ! (l'=l+ijkb0, m'=m+ijkb0, indices run from 1 to nh(nt))
@@ -200,16 +194,17 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
                    IF ( m_loc > 0 ) THEN
 #if defined _DOUBLE
                       CALL DGEMM('N', 'N', nh(nt), m_loc, nh(nt), 1.0_dp, &
-                                  qq_at(1,1,na), nhm, becp%r(indv_ijkb0(na)+1,1),&
+                                  qqs, nhm, becp%r(indv_ijkb0(na)+1,1),&
                                   nkb, 0.0_dp, ps(indv_ijkb0(na)+1,1), nkb )
 #else
                       CALL SGEMM('N', 'N', nh(nt), m_loc, nh(nt), 1.0_SP, &
-                                  qq_at(1,1,na), nhm, becp%r(indv_ijkb0(na)+1,1),&
+                                  qqs, nhm, becp%r(indv_ijkb0(na)+1,1),&
                                   nkb, 0.0_SP, ps(indv_ijkb0(na)+1,1), nkb )
 #endif
                    END IF
                 END IF
              END DO
+             DEALLOCATE( qqs )
           END IF
        END DO
        !
@@ -265,6 +260,7 @@ SUBROUTINE s_psi_( lda, n, m, psi, spsi )
        RETURN
        !
      END SUBROUTINE s_psi_gamma
+#endif
      !
      !-----------------------------------------------------------------------
      SUBROUTINE s_psi_k()

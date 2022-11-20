@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -57,7 +57,7 @@ subroutine X_GreenF_remap(bands,E,W)
  do i_b=bands(1),bands(2)
    do i_k=1,E%nk
      do i_spin=1,n_sp_pol
-       if (i_b>E%nbf) then
+       if (i_b>E%nbf(i_spin)) then
          proposed_GF_E_range(1)=minval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
          proposed_GF_E_range(2)=maxval(real(E%GreenF_W(i_b,i_k,i_spin,:)))
        else
@@ -95,7 +95,7 @@ subroutine X_GreenF_remap(bands,E,W)
    do i_k=1,E%nk
      do i_spin=1,n_sp_pol
        !
-       if ( i_b> E%nbf ) then
+       if ( i_b> E%nbf(i_spin) ) then
          !
          ! Conduction
          !

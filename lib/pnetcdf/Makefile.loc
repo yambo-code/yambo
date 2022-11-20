@@ -1,0 +1,61 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libpnetcdf.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${netcdf_ver}/${io_lib_ver}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_pnetcdf)
+TARBALL=$(tarball_pnetcdf)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Configure flags
+#
+CONFFLAGS=--prefix=$(LIBPATH) \
+         --without-pic --enable-static --disable-shared --disable-cxx \
+              CC="$(cc)" \
+	      CFLAGS="$(cflags)" \
+	      CPP="$(cpp)" \
+	      FC="$(fc)" \
+	      CPPFLAGS="$(netcdf_flag) $(inetcdf)" \
+	      F77="$(f77)" 
+
+# DEBUG <
+# This option is useful for debugging netcdf4 problems
+# --enable-logging
+# See also the connected call in src/setup/setup.F
+# call netcdf_call(nf90_set_log_level(3),1)
+# DEBUG >
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(get_the_lib)
+	@$(uncompress)
+
+configure: uncompress
+	@$(configure)
+
+compile: uncompress configure
+	@$(call compile)
+	
+install: uncompress configure compile
+	@$(call install_via_make,pnetcdf)
+
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(call clean_the_lib,clean)
+
+clean_all: clean
+	@$(rm_the_lib)
+#

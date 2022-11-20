@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  ! Eq.(1) JCTC 11, 4870 (2015)
  !
  use electrons,      ONLY:n_spin,n_spinor,spin
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cZERO
  use D_lattice,      ONLY:sigma_x,sigma_y,sigma_z
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WAVEs,WF_x,WF_y,WF_z
@@ -52,6 +52,8 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
  !
  call timing('Vgrad_to_H',OPR='start')
  !
+ c_ws  =cZERO
+ !
  ! Fill ...
  !
  do ib=H_ref_bands(1),H_ref_bands(2)
@@ -70,6 +72,7 @@ subroutine Vgrad_real_space_to_H(ik,H,WF,V_grad)
      c_ws_y(:,i_spinor)=-V_grad(:,1)*WF_z(:,i_spinor,ip_wf)+V_grad(:,3)*WF_x(:,i_spinor,ip_wf)
      ! z
      c_ws_z(:,i_spinor)= V_grad(:,1)*WF_y(:,i_spinor,ip_wf)-V_grad(:,2)*WF_x(:,i_spinor,ip_wf)
+     !
    enddo
    !
    do j_spinor=1,n_spinor

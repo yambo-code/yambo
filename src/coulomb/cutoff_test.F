@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM,DV
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
+subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut,q)
  !
  use pars,          ONLY:SP,schlen,pi
  use vec_operate,   ONLY:v_norm
@@ -31,11 +31,11 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  use wave_func,     ONLY:wf_ng
  use com,           ONLY:msg,of_open_close
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  implicit none
  type(bz_samp):: q
- logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut(3)
+ logical      :: cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,cut_is_slab,is_cut(3)
  !
  ! Work Space
  !
@@ -65,7 +65,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
  dummy=(/v_norm(a(1,:)),v_norm(a(2,:)),v_norm(a(3,:))/)
  !
  if (cut_is_sphere) dummy=2._SP*plot_factor*cyl_ph_radius
- if (cut_is_ws) then 
+ if (cut_is_ws.or.cut_is_slab) then
    !
    ! build the superperiodicity direct lattice
    !
@@ -127,7 +127,7 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
        v_yz(ip,1)=V_in_cyl( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_cyl( pl_xz_pt(ip,:) )
      endif
-     if (cut_is_ws) then
+     if (cut_is_ws.or.cut_is_slab) then
        v_xy(ip,1)=V_in_ws( pl_xy_pt(ip,:) )
        v_yz(ip,1)=V_in_ws( pl_yz_pt(ip,:) )
        v_xz(ip,1)=V_in_ws( pl_xz_pt(ip,:) )
@@ -280,5 +280,5 @@ subroutine cutoff_test(cut_is_sphere,cut_is_box,cut_is_cyl,cut_is_ws,is_cut,q)
 &         (.not.is_cut(2).or.abs(r(2))<atws(2,2)/2.).and.&
 &         (.not.is_cut(3).or.abs(r(3))<atws(3,3)/2.)) V_in_ws=1./v_norm(r)
    end function
- !
+   !
 end subroutine

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -36,7 +36,7 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  use xc_functionals, ONLY:E_xc,XC_potential_driver
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
- use RT_interfaces,  ONLY:RT_average_operator
+ use RT_operations,  ONLY:RT_average_operator
  !
  implicit none 
  !
@@ -154,7 +154,6 @@ subroutine RT_energy_components(en,k,dG_lesser,Energies,dE_IP,what)
  dE_h   = dE_h   +dE_h_sc
  dE_xc  = dE_xc  +dE_xc_sc
  dE_hxc = dE_hxc +dE_hxc_sc
- !
  !
  ! Transfer the shadow variables
  !

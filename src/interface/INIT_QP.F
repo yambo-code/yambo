@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -35,7 +35,6 @@ subroutine INIT_QP(comment)
  character(*) ::comment
  ! 
  ! Work Space
- !
  integer              :: n_states
  integer ,allocatable :: I_states(:,:)
  real(SP),allocatable :: R_states(:,:)

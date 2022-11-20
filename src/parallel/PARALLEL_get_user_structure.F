@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,8 +24,6 @@
 subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
  !
  use pars,         ONLY:schlen
- use R_lattice,    ONLY:nXkibz
- use D_lattice,    ONLY:nsym
  use parallel_m,   ONLY:CPU_structure,n_CPU_str_max,PARALLEL_CPU_role,PARALLEL_CPU_used,&
 &                       PARALLEL_n_structures_active,ncpu,i_PAR_structure
  use stderr,       ONLY:STRING_split
@@ -92,14 +90,6 @@ subroutine PARALLEL_get_user_structure(ENVIRONMENT,RUNNING_ENVIRONMENT)
    if (trim(CPU_structure(i_PAR_structure)%ROLE(i_c))=="q") q_found=.TRUE.
    !
  enddo
- !
- if (ENVIRONMENT=="Response_T_space") then
-   !
-   if (n_eh_grps>1 .and. nXkibz>1 .and. nsym>1 .and. n_k_cpus<nXkibz .and. n_t_blks<nXkibz) then
-     call warning(' n_eh_CPU > 1 in a system with symmetries and k-points is not efficient. Try distributing first "k" and "t" ')
-   endif
-   !
- endif
  !
  if (.not.RUNNING_ENVIRONMENT) return
  !

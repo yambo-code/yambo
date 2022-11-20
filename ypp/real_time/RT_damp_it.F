@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA
@@ -25,6 +25,7 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !
  use YPP_real_time,  ONLY:RT_time,RT_conf
  use pars,           ONLY:SP,DP
+ use fields,         ONLY:Efield
  !
  implicit none
  !
@@ -35,14 +36,17 @@ subroutine RT_damp_it(damp_type,damp_factor,ft,lda)
  !                          
  ! Work Space 
  !
- integer  :: i_t
- real(SP) :: damp_function(RT_conf%T_n_steps)
+ integer  :: i_t,i_Probe
+ real(SP) :: damp_function(RT_conf%T_n_steps),T_ref
+ !
+ i_Probe=1
+ T_ref=Efield(i_Probe)%t_initial
  !
  select case ( trim(damp_type) )
    case("LORENTZIAN")  
-     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs(RT_time(i_t)*damp_factor))
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-abs((RT_time(i_t)-T_ref)*damp_factor))
    case("GAUSSIAN") 
-     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-RT_time(i_t)**2*damp_factor**2)
+     forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = exp(-(RT_time(i_t)-T_ref)**2*damp_factor**2)
    case("NONE") 
      forall(i_t=1:RT_conf%T_n_steps) damp_function(i_t) = 1._SP
    case default

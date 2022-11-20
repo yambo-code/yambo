@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,6 @@ subroutine XC_additional_SC_potentials()
  use hamiltonian,    ONLY:H_kind,H_perturbation
 #if defined _SC
  use SC,             ONLY:OEP_approx,l_oep_EWeight,l_oep_iterative
-#endif
-#if defined _MAGNETIC
  use drivers,        ONLY:l_sc_magnetic
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
  use magnetic,       ONLY:MAG_landau,MAG_pauli
@@ -86,7 +84,7 @@ subroutine XC_additional_SC_potentials()
  !
  H_perturbation=EXT_NONE
  !
-#if defined _MAGNETIC
+#if defined _SC
  if (l_sc_magnetic) then
    if (MAG_pauli)  H_perturbation=EXT_B_PAULI
    if (MAG_landau) H_perturbation=EXT_B_LANDAU

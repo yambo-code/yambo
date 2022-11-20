@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,13 +23,13 @@
 !
 subroutine PARALLEL_SND_RCV_plan( COMM, N )
  !
- use parallel_m,     ONLY:MPI_comm,N_SND_RCV_operations,SND_RCV_op
+ use parallel_m,     ONLY:yMPI_comm,N_SND_RCV_operations,SND_RCV_op
  use LIVE_t,         ONLY:LIVE_message
  use stderr,         ONLY:intc
  !
  implicit none
  !
- type(MPI_comm), intent(in) :: COMM
+ type(yMPI_comm), intent(in) :: COMM
  integer,        intent(in) :: N
  !
  ! Work Space

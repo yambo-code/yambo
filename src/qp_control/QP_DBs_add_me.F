@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERATION,PRE_FAC)
+subroutine QP_DBs_add_me(qp_base,qp2add,plan_EWZG,SAME_states,SAME_desc,OP,PRE_FAC)
  !
  ! This routine just adds to qp_base qp with the plan plan_EWZG
  !
@@ -31,15 +31,15 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  !
 #include<memory.h>
  !
- type(QP_t)         ::qp_base,qp_to_add
+ type(QP_t)         ::qp_base,qp2add
  logical            ::plan_EWZG(4),SAME_states,SAME_desc
- character(*)       ::OPERATION
+ character(*)       ::OP
  real(SP)           ::PRE_FAC
  !
  ! Work Space
 
  logical    ::l_QP_db,CONDITION
- integer    ::N_states,i_s,i_d,i_sp
+ integer    ::N_states,i_s,i_sp
  type(QP_t) ::qp
  real(SP)   ::PRE_SIGN
  complex(SP)::dE
@@ -47,16 +47,16 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  !
  ! Check if there is any new state to fill
  !
- YAMBO_ALLOC(dummy_table,(qp_base%n_states+qp_to_add%n_states,3+n_sp_pol-1))
+ YAMBO_ALLOC(dummy_table,(qp_base%n_states+qp2add%n_states,3+n_sp_pol-1))
  dummy_table=0
  dummy_table(:qp_base%n_states,:)=qp_base%table
  N_states=qp_base%n_states
- I_S_LOOP: do i_s=1,qp_to_add%n_states
+ I_S_LOOP: do i_s=1,qp2add%n_states
    do i_sp=1,qp_base%n_states
-     if (all(qp_to_add%table(i_s,:)==qp_base%table(i_sp,:))) cycle I_S_LOOP
+     if (all(qp2add%table(i_s,:)==qp_base%table(i_sp,:))) cycle I_S_LOOP
    enddo
    N_states=N_states+1
-   dummy_table(N_states,:)=qp_to_add%table(i_s,:)
+   dummy_table(N_states,:)=qp2add%table(i_s,:)
  enddo I_S_LOOP
  !
  ! Prepare the new QP type
@@ -66,9 +66,9 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  ! Add new descs/k-points
  !
  call ADD_descs(.FALSE.,qp_base)
- if (.not.SAME_desc)   call ADD_descs(.FALSE.,qp_to_add)
+ if (.not.SAME_desc)   call ADD_descs(.FALSE.,qp2add)
  call ADD_descs(.TRUE.,qp_base)
- if (.not.SAME_states) call ADD_descs(.TRUE.,qp_to_add)
+ if (.not.SAME_states) call ADD_descs(.TRUE.,qp2add)
  !
  qp%nb=maxval(dummy_table(:,1))
  qp%nk=maxval(dummy_table(:,3))
@@ -109,48 +109,48 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
  ! Adding/Merging |
  !
  PRE_SIGN=1.
- if (OPERATION=="-") PRE_SIGN=-1
+ if (OP=="-") PRE_SIGN=-1
  !
  do i_s=1,qp%n_states
-   do i_sp=1,qp_to_add%n_states
-     if (all(qp_to_add%table(i_sp,:)==qp%table(i_s,:))) then
+   do i_sp=1,qp2add%n_states
+     if (all(qp2add%table(i_sp,:)==qp%table(i_s,:))) then
        !
        if (l_QP_db) then
          !
          if (i_s>qp_base%n_states) then
-           qp%E_bare(i_s)=qp_to_add%E_bare(i_sp)
-           qp%E(i_s)=qp_to_add%E_bare(i_sp)
+           qp%E_bare(i_s)=qp2add%E_bare(i_sp)
+           qp%E(i_s)=qp2add%E_bare(i_sp)
          endif
          !
          if (plan_EWZG(1)) then
-           dE=qp_to_add%E(i_sp)-qp_to_add%E_bare(i_sp)
+           dE=qp2add%E(i_sp)-qp2add%E_bare(i_sp)
            qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*real(dE)
          endif
-         if (plan_EWZG(2)) qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*cI*aimag(qp_to_add%E(i_sp))
+         if (plan_EWZG(2)) qp%E(i_s)=qp%E(i_s)+PRE_SIGN*PRE_FAC*cI*aimag(qp2add%E(i_sp))
          if (plan_EWZG(3)) then
-           if (OPERATION=="x") then
-             dE=qp_to_add%E(i_sp)-qp_to_add%E_bare(i_sp)
-             qp%E(i_s)=qp%E(i_s)-dE+qp_to_add%Z(i_sp)*dE
+           if (OP=="x") then
+             dE=qp2add%E(i_sp)-qp2add%E_bare(i_sp)
+             qp%E(i_s)=qp%E(i_s)-dE+qp2add%Z(i_sp)*dE
            endif
-           qp%Z(i_s)=1.+(qp%Z(i_s)-1.)+(qp_to_add%Z(i_sp)-1.)
+           qp%Z(i_s)=1.+(qp%Z(i_s)-1.)+(qp2add%Z(i_sp)-1.)
          endif
        else
          if (plan_EWZG(4)) then
            if (i_s>qp_base%n_states) then
              CONDITION=.TRUE.
            else
-             CONDITION=abs(qp%GreenF_W(i_s,qp%GreenF_n_steps)-qp_to_add%GreenF_W(i_sp,qp%GreenF_n_steps))<1.E-5.and.&
-&                      abs(qp%GreenF_W(i_s,1)-qp_to_add%GreenF_W(i_sp,1))<1.E-5
+             CONDITION=abs(qp%GreenF_W(i_s,qp%GreenF_n_steps)-qp2add%GreenF_W(i_sp,qp%GreenF_n_steps))<1.E-5.and.&
+&                      abs(qp%GreenF_W(i_s,1)-qp2add%GreenF_W(i_sp,1))<1.E-5
            endif
            if (CONDITION) then
-             qp%S_total(i_s,:)=qp%S_total(i_s,:)+qp_to_add%S_total(i_sp,:)
-             qp%GreenF(i_s,:)=qp%GreenF(i_s,:)+qp_to_add%GreenF(i_sp,:)
-             qp%GreenF_W(i_s,:)=qp_to_add%GreenF_W(i_sp,:)
+             qp%S_total(i_s,:)=qp%S_total(i_s,:)+qp2add%S_total(i_sp,:)
+             qp%GreenF(i_s,:)=qp%GreenF(i_s,:)+qp2add%GreenF(i_sp,:)
+             qp%GreenF_W(i_s,:)=qp2add%GreenF_W(i_sp,:)
            endif
          endif
        endif
-       qp%k(qp%table(i_s,3),:)=qp_to_add%k( qp_to_add%table(i_sp,3),:)
-       qp%wk(qp%table(i_s,3) )=qp_to_add%wk( qp_to_add%table(i_sp,3) )
+       qp%k(qp%table(i_s,3),:)=qp2add%k( qp2add%table(i_sp,3),:)
+       qp%wk(qp%table(i_s,3) )=qp2add%wk( qp2add%table(i_sp,3) )
      endif
    enddo
  enddo
@@ -167,14 +167,16 @@ subroutine QP_DBs_add_me(qp_base,qp_to_add,plan_EWZG,SAME_states,SAME_desc,OPERA
    !
    subroutine ADD_descs(STATES,qp_in)
      use descriptors,  ONLY:IO_desc_element_duplicate
+     integer    :: i_d_in,i_d_out
      logical    :: STATES
      type(QP_t) :: qp_in
-     do i_d=1,qp_in%desc%n
-       if (     STATES.and.index(qp_in%desc%str(i_d),"QP @ state") == 0) cycle
-       if (.not.STATES.and.index(qp_in%desc%str(i_d),"QP @ state") >  0) cycle
-       if (len_trim(qp_in%desc%str(i_d)) == 0) cycle
+     do i_d_in=1,qp_in%desc%n
+       if (     STATES.and.index(qp_in%desc%str(i_d_in),"QP @ state") == 0) cycle
+       if (.not.STATES.and.index(qp_in%desc%str(i_d_in),"QP @ state") >  0) cycle
+       if (len_trim(qp_in%desc%str(i_d_in)) == 0) cycle
        qp%desc%n=qp%desc%n+1
-       call IO_desc_element_duplicate(qp_in%desc,qp%desc,i_d,qp%desc%n)
+       i_d_out=qp%desc%n
+       call IO_desc_element_duplicate(qp_in%desc,qp%desc,i_d_in,i_d_out)
      enddo
    end subroutine
 end subroutine

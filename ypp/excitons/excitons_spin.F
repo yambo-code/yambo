@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,19 +26,18 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  use pars,          ONLY:SP,cZERO,rZERO
  use BS,            ONLY:BS_bands
  use BS_solvers,    ONLY:BS_mat,BSS_n_eig
- use com,           ONLY:msg
  use FFT_m,         ONLY:fft_size
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:n_spinor,n_sp_pol,n_spin
  use LIVE_t,        ONLY:live_timing
- use com,           ONLY:msg
- use interfaces,    ONLY:WF_load,WF_free,WF_apply_symm,PARALLEL_index
+ use interfaces,    ONLY:WF_load,WF_free,WF_apply_symm
  use wave_func,     ONLY:WF,wf_ng
  use wrapper,       ONLY:Vstar_dot_V
  use YPP_interfaces,ONLY:excitons_sort_and_report
  use YPPm,          ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states,&
 &                        EXCITON_kin,excitons_degeneracy_average,EXCITON_spin,BSiq
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_index
  !
 #include<memory.h>
  !
@@ -83,7 +82,7 @@ subroutine excitons_spin(Xk,BS_R_right,BS_E,BS_E_degs)
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/BSS_n_eig/))
- call PP_redux_wait
+ call PP_wait()
  !
  call live_timing('Excitonic Spin',px%n_of_elements(myid+1)) 
  !

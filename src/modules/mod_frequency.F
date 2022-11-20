@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,6 +25,7 @@ module frequency
  !
  use pars,  ONLY:SP
  use units, ONLY:HA2EV
+ !
 #include<memory.h>
  !
  ! Bare 2 Coarse grid

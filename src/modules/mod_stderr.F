@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,7 @@ module stderr
  !
  ! Slash
  !
-#if defined _aix || defined _XLF || defined _PGI
+#if defined _aix || defined _XLF || defined _PGI || defined _NV
  character(2), parameter :: slash="\\"
 #else 
  character(1), parameter :: slash="\"
@@ -308,8 +308,8 @@ module stderr
      !
      integer(LP) :: i
      !
-     if(i==1) int2log=.true.
-     if(i==0) int2log=.false.
+     if(i==int(1,LP)) int2log=.true.
+     if(i==int(0,LP)) int2log=.false.
      !
    end function int2log
    !

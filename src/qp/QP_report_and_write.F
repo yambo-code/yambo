@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,8 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
 #endif
  use electrons,     ONLY:n_sp_pol,spin,levels
  use stderr,        ONLY:gen_fmt
- use IO_m,          ONLY:io_control,OP_WR_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP
  use R_lattice,     ONLY:bz_samp
  implicit none
  !
@@ -123,7 +124,9 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  ! and define a logical that define the first band of each
  ! k-point
  !
- forall (iqp=1:QP_n_states) i_k(iqp)=QP_table(iqp,3)
+ do iqp=1,QP_n_states
+   i_k(iqp)=QP_table(iqp,3)
+ enddo
  !
  i_spin=0
  !
@@ -174,8 +177,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      shadow(n_shadows)=100._SP-int(dSc_diff*100._SP)
    endif
    !
-   ! GPL_EXCLUDE_START
-   !
 #if defined _ELPH
    if (l_elph_corr) then
      n_shadows=n_shadows+1
@@ -194,8 +195,6 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
      endif
    endif 
 #endif
-   !
-   ! GPL_EXCLUDE_END
    !
    if (l_life) then
      !
@@ -272,9 +271,7 @@ subroutine QP_report_and_write(k,qp,en,QPdb_read_err)
  !
  call QP_reset(qp_expanded)
  !
- ! GPL_EXCLUDE_START
  if (l_QP_Expand) call QP_expand(k,qp,qp_expanded)
- ! GPL_EXCLUDE_END
  !
  ! QP DATABASE i/o
  !=================

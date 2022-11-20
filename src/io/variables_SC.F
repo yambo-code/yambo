@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -31,15 +31,12 @@ integer function variables_SC(ID,what)
 &                         SC_xc_functional,l_NSC_shot,SC_fft_size,SC_up_W_iters,&
 &                         SC_ng_Sx,SC_X_bands,SC_X_size,SC_desc
  use hamiltonian,    ONLY:l_sc_V_is_local,H_ref_bands
- use IO_m,           ONLY:io_elemental,io_status,IO_INCOMPATIBLE_VAR,read_is_on
-#if defined _MAGNETIC
+ use IO_int,         ONLY:io_elemental
+ use IO_m,           ONLY:io_status,IO_INCOMPATIBLE_VAR,read_is_on
  use magnetic,       ONLY:MAG_hamiltonian_type,MAG_B,MAG_radius,MAG_gauge,MAG_theta,MAG_psi
  use global_XC,      ONLY:EXT_B_LANDAU,EXT_B_PAULI,EXT_B_MAGNETISM
-#endif
-#if defined _ELECTRIC
  use drivers,        ONLY:l_sc_electric
  use fields,         ONLY:Efield
-#endif
  use descriptors,    ONLY:IO_desc_reset
  use global_XC,      ONLY:H_SE_EXX,H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX,H_SE_EXXC,H_SE_HARTREE
  !
@@ -91,48 +88,33 @@ integer function variables_SC(ID,what)
  !
  call io_elemental(ID,VAR="LOCAL_ITER_BANDS_MIX",VAR_SZ=6,MENU=0) 
  !
- call io_elemental(ID,L0=l_sc_V_is_local,&
-&     VAR='[SC] Local Potential            ',DESCRIPTOR=SC_desc)
- call io_elemental(ID,I0=it_now,DB_I0=it_now,&
-&     VAR='[SC] Iteration                  ',DESCRIPTOR=SC_desc)
- call io_elemental(ID,I1=SC_bands,&
-&     VAR='[SC] Bands                      ',CHECK=CHECK_,OP=(/"==","=="/),&
-&     DESCRIPTOR=SC_desc)
+ call io_elemental(ID,L0=l_sc_V_is_local,VAR='[SC] Local Potential',DESCRIPTOR=SC_desc)
+ call io_elemental(ID,I0=it_now,DB_I0=it_now,VAR='[SC] Iteration',DESCRIPTOR=SC_desc)
+ call io_elemental(ID,I1=SC_bands,VAR='[SC] Bands',CHECK=CHECK_,OP=(/"==","=="/),DESCRIPTOR=SC_desc)
  if (read_is_on(ID)) H_ref_bands=SC_bands
- call io_elemental(ID,I0=nkibz,&
-&     VAR='[SC] K-points                   ',CHECK=CHECK_,OP=(/"=="/),&
-&     DESCRIPTOR=SC_desc)
- call io_elemental(ID,R0=SC_band_mixing,&
-&     VAR='[SC] Bands mixing               ',CHECK=CHECK_,OP=(/"=="/),&
-&     DESCRIPTOR=SC_desc)
+ call io_elemental(ID,I0=nkibz,VAR='[SC] K-points',CHECK=CHECK_,OP=(/"=="/),DESCRIPTOR=SC_desc)
+ call io_elemental(ID,R0=SC_band_mixing,VAR='[SC] Bands mixing',CHECK=CHECK_,OP=(/"=="/),DESCRIPTOR=SC_desc)
  !
  if (any(SC_kind_disk==(/H_SE_EXX,H_SE_EXXC,H_SE_FOCK,H_SE_SEX,H_SE_COHSEX/)).or.&
 &    any(SC_kind_disk-H_SE_Hartree==(/H_SE_EXX,H_SE_EXXC,H_SE_FOCK,H_SE_SEX,H_SE_COHSEX/))) then
    call io_elemental(ID,VAR="SIGMAx_G",VAR_SZ=1,MENU=0) 
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-   call io_elemental(ID,I0=SC_ng_Sx,&
-&       VAR='[SC] Sx RL components           ',CHECK=CHECK_,OP=(/"=="/),&
-&       DESCRIPTOR=SC_desc)
+   call io_elemental(ID,I0=SC_ng_Sx,VAR='[SC] Sx RL components',CHECK=CHECK_,OP=(/"=="/),DESCRIPTOR=SC_desc)
  endif
  !
  if (any(SC_kind_disk==(/H_SE_COH,H_SE_SEX,H_SE_COHSEX/)).or.&
 &    any(SC_kind_disk-H_SE_Hartree==(/H_SE_COH,H_SE_SEX,H_SE_COHSEX/))) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="X_bands_size",VAR_SZ=6,MENU=0) 
-   call io_elemental(ID,I1=SC_X_bands,&
-&       VAR='[SC] Response function bands    ',CHECK=CHECK_,OP=(/"==","=="/),&
+   call io_elemental(ID,I1=SC_X_bands,VAR='[SC] Response function bands',CHECK=CHECK_,OP=(/"==","=="/),&
 &       DESCRIPTOR=SC_desc)
-   call io_elemental(ID,I0=SC_X_size,&
-&       VAR='[SC] Response function size     ',CHECK=CHECK_,OP=(/"=="/),&
+   call io_elemental(ID,I0=SC_X_size,VAR='[SC] Response function size',CHECK=CHECK_,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
-   call io_elemental(ID,L0=COHSEX_use_empties,&
-&     VAR="[SC] COHSEX use empty bands      ", CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,L0=COHSEX_use_empties,VAR="[SC] COHSEX use empty bands", CHECK=.true.,OP=(/"=="/),&
 &     DESCRIPTOR=SC_desc)
-   call io_elemental(ID,I0=SC_up_W_iters,&
-&     VAR='[SC] W update steps             ',CHECK=CHECK_,OP=(/"=="/),&
+   call io_elemental(ID,I0=SC_up_W_iters,VAR='[SC] W update steps',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTOR=SC_desc)
-   call io_elemental(ID,L0=l_sc_diagonal,&
-&     VAR='[SC] Diagonal approximation     ',CHECK=CHECK_,OP=(/"=="/),&
+   call io_elemental(ID,L0=l_sc_diagonal,VAR='[SC] Diagonal approximation',CHECK=CHECK_,OP=(/"=="/),&
 &     DESCRIPTOR=SC_desc)
  endif
  !
@@ -140,8 +122,7 @@ integer function variables_SC(ID,what)
 &    all(SC_kind_disk-H_SE_HARTREE/=(/H_SE_FOCK,H_SE_COHSEX,H_SE_COH,H_SE_SEX/)).or.l_MP) then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="FFT_SIZE",VAR_SZ=1,MENU=0,DESCRIPTOR=SC_desc)
-   call io_elemental(ID,I0=SC_fft_size,&
-&       VAR='[SC] FFT mesh points            ',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,I0=SC_fft_size,VAR='[SC] FFT mesh points',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
  endif
  !
@@ -150,59 +131,45 @@ integer function variables_SC(ID,what)
    if (l_NSC_shot) io_status(ID)=0
  endif
  !
-#if defined _MAGNETIC
  if (any((/SC_perturbation_disk==EXT_B_LANDAU,SC_perturbation_disk==EXT_B_PAULI,&
 &          SC_perturbation_disk==EXT_B_MAGNETISM/))) then
    !
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    call io_elemental(ID,VAR="MAG_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
-   call io_elemental(ID,CH0=MAG_hamiltonian_type, &
-&       VAR='[MAG] Hamiltonian kind          ',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,CH0=MAG_hamiltonian_type, VAR='[MAG] Hamiltonian kind',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR='B_FIELD_parameters',VAR_SZ=4,MENU=0) 
-   call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B,&
-&       VAR='[MAG] B modulus              ',TERMINATOR='T',CHECK=.true.,OP=(/"=="/),&
+   call io_elemental(ID,UNIT=AU2Tesla,R0=MAG_B,VAR='[MAG] B modulus',TERMINATOR='[T]',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
    !
    call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_theta,& 
-&       VAR='[MAG] B theta angle    ',TERMINATOR='degrees',CHECK=.true.,OP=(/"=="/),&
+&       VAR='[MAG] B theta angle',TERMINATOR='[degrees]',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
    call io_elemental(ID,UNIT=(1./DEG2RAD),R0=MAG_psi,& 
-&       VAR='[MAG] B psi angle      ',TERMINATOR='degrees',CHECK=.true.,OP=(/"=="/),&
+&       VAR='[MAG] B psi angle',TERMINATOR='[degrees]',CHECK=.true.,OP=(/"=="/),&
 &       DESCRIPTOR=SC_desc)
    !
    if (SC_perturbation_disk/=EXT_B_PAULI) then
-     call io_elemental(ID,R0=MAG_radius,&
-&       VAR='[MAG] B flux radius             ',CHECK=.true.,OP=(/"=="/),&
-&       DESCRIPTOR=SC_desc)
+     call io_elemental(ID,R0=MAG_radius,VAR='[MAG] B flux radius',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=SC_desc)
    endif
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
    !
    call io_elemental(ID,VAR='MAG_GAUGE',CH0="",VAR_SZ=1,MENU=0)
-   call io_elemental(ID,CH0=MAG_gauge,&
-&       VAR='[MAG] Gauge                     ',CHECK=CHECK_,OP=(/"=="/),&
-&       DESCRIPTOR=SC_desc)
+   call io_elemental(ID,CH0=MAG_gauge,VAR='[MAG] Gauge',CHECK=CHECK_,OP=(/"=="/),DESCRIPTOR=SC_desc)
    !
  endif
- !
-#endif
- !
-#if defined _ELECTRIC
  !
  if(l_sc_electric) then
    call io_elemental(ID,VAR="ELECTRIC_hamiltonian",CH0="",VAR_SZ=1,MENU=0) 
    call io_elemental(ID,VAR='E_FIELD_parameters',VAR_SZ=4,MENU=0) 
    call io_elemental(ID,UNIT=AU2VMm1,R0=Efield(1)%amplitude,&
-&     VAR='[ELECTRIC] E intensity           ',TERMINATOR='v/m',CHECK=.true.,OP=(/"=="/),&
-&     DESCRIPTOR=SC_desc)
-   call io_elemental(ID,VAR="[ELECTRIC] E Versor             ",R1=Efield(1)%versor, &
+&     VAR='[ELECTRIC] E intensity',TERMINATOR='[v/m]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=SC_desc)
+   call io_elemental(ID,VAR="[ELECTRIC] E Versor",R1=Efield(1)%versor, &
 &     WARN=.true.,OP=(/"==","==","=="/),DESCRIPTOR=SC_desc)
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)
  endif
- !
-#endif
  !
  if (what/="carriers".and.what/="THETA".and.what/="OBS".and.what/="G".and.what/="REF") then
    call io_elemental(ID,VAR="",VAR_SZ=0,MENU=1)

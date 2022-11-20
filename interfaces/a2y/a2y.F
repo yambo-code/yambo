@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -33,11 +33,11 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use parallel_m,          ONLY: ncpu,myid
  use electrons,           ONLY: levels,E_reset,n_spinor,n_sp_pol
  use D_lattice,           ONLY: n_atoms_species_max
- use pseudo,              ONLY: PP_free
+ use pseudo,              ONLY: PP_free,pp_n_l_times_proj_max
  use R_lattice,           ONLY: bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY: wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io,wf_igk,wf_nc_k
- use IO_m,                ONLY: io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number,&
-&                               IO_and_Messaging_switch
+ use IO_int,              ONLY: io_control,IO_and_Messaging_switch
+ use IO_m,                ONLY: OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY: interface_presets, force_noWFs
  use mod_wf2y,            ONLY: WF_splitter
  !
@@ -89,6 +89,7 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call E_reset(en)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
+ call MEM_treshold_estimate( )
 #endif
  !
  ! Switch off report file support & Handle logs
@@ -158,12 +159,11 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! WF & PP
  !==========================================
  !
- if(trim(NETCDF_kind)=='KSS') then
-   call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
- endif
+ if(trim(NETCDF_kind)=='KSS') call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
  !
  if(trim(NETCDF_kind)=='WFK') then
-   call msg('s',' == Writing DB2 (wavefunctions) ...') 
+   if ( pp_n_l_times_proj_max == -1) call msg('s',' == Writing DB2 (wavefunctions) ...') 
+   if ( pp_n_l_times_proj_max /= -1) call msg('s',' == Writing DB2 (wavefunctions) + nlPP ...') 
  endif
  !
  allocate(wf_disk(wf_ncx,n_spinor,wf_nb_io))
@@ -189,11 +189,13 @@ integer function a2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
        io_err=io_WF(ID,wf_disk)
        !
        if(trim(NETCDF_kind)=='KSS') call a2y_kb_pp(ik,ncid) 
-       if(trim(NETCDF_kind)=='WFK') call a2y_kb_pp_wfk(ik,ncid) 
-       if (n_atoms_species_max>0.and.ib_grp==1) then
-         if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
-         if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
-         io_err=io_KB_abinit(ID) 
+       if( pp_n_l_times_proj_max/=-1 ) then
+         if(trim(NETCDF_kind)=='WFK') call a2y_kb_pp_wfk(ik,ncid) 
+         if (n_atoms_species_max>0.and.ib_grp==1) then
+           if (ifrag==1) call io_control(ACTION=OP_WR_CL,COM=NONE,SEC=(/1,2/),ID=ID)
+           if (ifrag> 1) call io_control(ACTION=OP_APP_CL,COM=NONE,SEC=(/ifrag+1/),ID=ID)
+           io_err=io_KB_abinit(ID) 
+         endif
        endif
        !
      enddo

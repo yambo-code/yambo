@@ -1,6 +1,6 @@
 !
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,CA
@@ -50,8 +50,9 @@ subroutine NL_start_and_restart(E,k,Dip)
  use nl_optics,      ONLY:Correlation,IPA,E_full,full_rho,V_bands,TDDFT,n_freqs_todo,NL_LRC_alpha,NL_bands, &
 &                         V_xc_0,NL_initial_P,l_use_DIPOLES,n_frequencies,freqs_done,JGM,E_xc_0,I_relax,l_use_DIPOLES, &
 &                         VAL_BANDS,l_eval_CURRENT,NL_initial_J,NL_P
- use IO_m,           ONLY:OP_RD_CL,io_control,NONE,file_is_present,VERIFY
- use parallel_m,     ONLY:PP_redux_wait
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,NONE,file_is_present,VERIFY
+ use parallel_int,   ONLY:PP_redux_wait
  use stderr,         ONLY:intc
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
@@ -64,14 +65,14 @@ subroutine NL_start_and_restart(E,k,Dip)
  !
  ! Working space
  !
- integer :: i1,ib,i_f
+ integer :: i1,ib,i_f,i_sp_pol
  integer :: ID,io_NonLinear
  integer, external::io_NL
  !
  !
  ! Initialize the Gf and potentials
  !==================================
- rho_reference     =rZERO
+ if(allocated(rho_reference))   rho_reference=rZERO
  if(allocated(full_rho))        full_rho    =rZERO
  if(allocated(V_xc_sc))         V_xc_sc     =rZERO
  if(allocated(V_hartree_sc))    V_hartree_sc=rZERO
@@ -79,10 +80,12 @@ subroutine NL_start_and_restart(E,k,Dip)
  I_relax           =cZERO
  V_bands           =cZERO
  !
- if(NL_bands(2)<=E%nbf.or.NL_bands(1)>E%nbf) &
+ if(NL_bands(2)<=minval(E%nbf).or.NL_bands(1)>maxval(E%nbf)) &
      & call error(" Wrong bands range!")
  !
- forall(i1=1:E%nbf) V_bands(i1,i1,:,:)=cONE
+ do i_sp_pol=1,n_sp_pol
+   forall(i1=1:E%nbf(n_sp_pol)) V_bands(i1,i1,:,i_sp_pol)=cONE
+ enddo
  !
  if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE) then
    !  
@@ -137,9 +140,11 @@ subroutine NL_start_and_restart(E,k,Dip)
  call DIP_polarization(E,k,V_bands,NL_initial_P(4:6))
  !
  if(.not.l_use_DIPOLES) then
-   !   
+   !
    ! This subroutine update also the Sm1_plus,Sm1_minus and All_S_det matrices
-   call Berry_Polarization_NEQ(E,k,V_bands,NL_initial_P(1:3))
+   do i_sp_pol=1,n_sp_pol
+     call Berry_Polarization_NEQ(E,k,i_sp_pol,V_bands(:,:E%nbf(i_sp_pol),:,i_sp_pol),NL_initial_P(1:3))
+   enddo
    !
  else
    NL_initial_P(1:3)=NL_initial_P(4:6)
@@ -166,7 +171,7 @@ subroutine NL_start_and_restart(E,k,Dip)
  if(master_cpu) then
    !      
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=VERIFY,ID=ID)
-   io_NonLinear=io_NL(ID)
+   io_NonLinear=io_NL("Nonlinear",ID)
    !
    if(io_NonLinear==0) then
      do i_f=1,n_frequencies

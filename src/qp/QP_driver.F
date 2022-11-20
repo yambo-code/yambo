@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,25 +25,25 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr
+ use drivers,       ONLY:l_life,l_ppa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr,l_RIM_W
  use electrons,     ONLY:levels,n_sp_pol,spin
- use R_lattice,     ONLY:bz_samp
+ use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng,RIM_W_for_graph
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
  use X_m,           ONLY:X_t
- use parser_m,      ONLY:parser
- use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,&
+ use QP_m,          ONLY:QP_t,QP_dSc,QP_dSc_steps,QP_Vxc,QP_Sc,QP_solver,QP_table,QP_n_G_bands,&
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
-&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,&
+&                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
-&                        GWo_iterations,COHSEX_use_empties,On_Mass_Shell_approx,use_GreenF_to_eval_QP,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_extended_output,l_update_W,&
-&                        l_GW_terminator,GW_terminator_Kind,l_QP_Expand,QP_G_info,GW_iterations
+&                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
+&                        l_GW_terminator,QP_G_info,GW_iterations,GWo_iterations
+ use parser_m,      ONLY:parser
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
 #endif
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,VERIFY,REP,NONE,IO_NO_BINDING_ERROR
  use global_XC,     ONLY:QP_DB_kind,QP_SE_COHSEX,QP_SE_GoWo_PPA,QP_SE_GoWo,QP_SE_GWo_PPA,&
 &                        QP_SE_GWo,QP_SE_POLARON,QP_SE_GW_QED,QP_SE_GW_PPA
  use interfaces,    ONLY:eval_G_minus_G
@@ -53,36 +53,33 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
 #include<memory.h>
  !
- type(levels) ::en,Xen
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(w_samp) ::Xw
+ type(levels)  ::en,Xen
+ type(bz_samp) ::Xk,k,q
+ type(X_t)     ::X
+ type(w_samp)  ::Xw
  type(DIPOLE_t)::Dip
  !
  ! Work Space
  !
  type(QP_t)        ::qp
  integer           ::i1,io_QP_and_GF_err,io_G_err,ID_QP,ID_G,i_spin
- integer           :: lw_bnd
+ integer           ::lw_bnd
  integer, external ::io_QP_and_GF
  real(SP),external ::G2E
  !
- ! Driver Logicals
- !=================
+ ! Logicals
+ !==========
+ call QP_logicals( )
  !
- call parser('NewtDchk',   QP_dSc_test)
- call parser('OnMassShell',On_Mass_Shell_approx)
- call parser('QPExpand'   ,l_QP_Expand)
- call parser('UseEbands',  COHSEX_use_empties)
- ! GPL_EXCLUDE_START
- call parser('GreenF2QP',  use_GreenF_to_eval_QP)
- use_GreenF_Zoom=QP_G_Zoom_treshold>0._SP
- ! GPL_EXCLUDE_END
- call parser('ExtendOut',  l_extended_output)
+ ! Some check
+ if (QP_n_G_bands(2)>en%nb) call error("Too many bands required in Green's function. Run DFT with more bands!")
  !
- if (On_Mass_Shell_approx) QP_dSc_test=.FALSE.
+ if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
  !
- l_GW_terminator=GW_terminator_Kind/='none'
+ call parser('RIM_W',l_RIM_W)
+ call parser('RIM_W_diag',RIM_W_is_diagonal)
+ call parser('RIM_W_graph',RIM_W_for_graph)
+ if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
  ! 
@@ -93,7 +90,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (.not.allocated(QP_Vnl_xc).and..not.allocated(QP_Vxc).and.l_elel_corr.and..not.l_life) return
 #endif
  !
- if (.not.l_elel_corr.and..not.l_elph_corr.and..not.l_elphoton_corr) then
+ if (.not.any((/l_elel_corr,l_elph_corr,l_elphoton_corr/))) then
    call warning('e-p, e-e and e-photon correlation switched off')
    return
  endif
@@ -104,8 +101,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  ! Some checks for the self-consistent GW
  ! =======================================
- if (GW_iterations/=0.and.GWo_iterations/=0) &
- &   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ if (GW_iterations/=0.and.GWo_iterations/=0) then
+   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
+ endif
  if (GW_iterations/=0) l_update_W=.TRUE.
  !
  ! Setup Temperature pre-factor
@@ -137,8 +135,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  else if (trim(QP_solver)=='g') then
    call section('*','Dyson equation: full Green`s function')
    call msg('r', '[Green] Sc steps                                         ',QP_Sc_steps)
-   call msg('r', '[Green] Sc energy range (centered in the bare value) [ev]',QP_G_er*HA2EV)
-   call msg('rn','[Green] Sc damping range                             [ev]',QP_G_dr*HA2EV)
+   call msg('r', '[Green] Sc energy range (centered in the bare value)     ',QP_G_er*HA2EV,"[eV]")
+   call msg('rn','[Green] Sc damping range                                 ',QP_G_dr*HA2EV,"[eV]")
    !
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Full Green`s function",check=.TRUE.,ops=(/"=="/))
    !
@@ -235,9 +233,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  endif
  !
  if (l_ppa.and.l_GW_terminator) then
-     X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
-     call warning(' Response block size in GW reduced to '//intc(X%ng) &
-&     //'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
+   X%ng=eval_G_minus_G(X%ng,0,COMM=PAR_COM_WORLD)
+   call warning(' Response block size in GW reduced to '//intc(X%ng)//'RL ('//intc(int(1000.*G2E(X%ng)))//'mHa)')
  endif
  !
  ! Local Allocations
@@ -374,13 +371,14 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (l_life) then
    !
+   ! GW Lifetimes 
+   !==============
    if (l_elel_corr)     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0) 
    !
 #if defined _QED
    !
    ! Radiative Lifetimes (Using <p>)
    !=================================
-   !
    if (l_elphoton_corr) call QED_Radiative_Lifetimes(en,k,q,qp,X,Dip)
    !
 #endif
@@ -472,7 +470,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    end subroutine
    !
 end subroutine
-
+!
 subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !
   ! Check if qp-indexes are continous for SC-GW

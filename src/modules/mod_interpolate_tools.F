@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,8 +25,8 @@ module interpolate_tools
  !
  use pars,         ONLY:SP,schlen,rZERO
  use interpolate,  ONLY:interpls,INTERP_obj,l_INTERP_dE,l_INTERP_E,l_INTERP_f,max_interpls,INTERP_mode,&
-&                       l_INTERP_W,NN_nk_exact,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
-&                       INTERPOLATE_msg_fmt,OUT_k_nk
+&                       l_INTERP_W,NN_nk_exact,NN_nk_border,NN_MAX_real_nearest,NN_n_of_nearest,l_INTERP_Z,&
+&                       INTERPOLATE_msg_fmt,OUT_k_nk,INTERP_FineGd
  use electrons,    ONLY:n_sp_pol
  !
 #include<memory.h>
@@ -37,23 +37,40 @@ module interpolate_tools
      !
      use com,   ONLY:msg
      !
-     integer, intent(in) :: ID
+     integer,      intent(in) :: ID
+     !
+     integer             :: IDs_todo(2),ID_
      real(SP)            :: dummy
      character(schlen)   :: title
      !
      if (ID==0) return
-     if (.not.INTERP_obj(ID)%in_use) return
+     if (ID< 0) IDs_todo=(/1,max_interpls/)
+     if (ID> 0) IDs_todo=ID
      !
-     title=trim(INTERP_obj(ID)%what)//"-Nearest K"
-     !
-     dummy=real(NN_nk_exact)/real(OUT_k_nk)*100._SP
-     call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches  [o/o]',dummy)
-     if (NN_nk_exact<OUT_k_nk) then
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
-       dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
-       call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations [o/o]',dummy)
-     endif
+     do ID_=IDs_todo(1),IDs_todo(2)
+       !
+       if (.not.INTERP_obj(ID_)%in_use) return
+       !
+       title=trim(INTERP_obj(ID_)%what)//"-Nearest K"
+       if (trim(INTERP_FineGd)/="NONE") title=trim(title)//"-"//trim(INTERP_FineGd)//" FineGd"
+       !
+       dummy=real(NN_nk_exact/real(OUT_k_nk))*100._SP
+       call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Exact matches       ',dummy,"[o/o]")
+       if (NN_nk_border>0) then
+          call msg('n'//trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Border points       ',NN_nk_border)
+       endif
+       if (NN_nk_exact<OUT_k_nk) then
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Neighbours    [user]',NN_n_of_nearest)
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//']               [real]',NN_MAX_real_nearest)
+         dummy=real(OUT_k_nk-NN_nk_exact)/real(OUT_k_nk)*100._SP
+         call msg(trim(INTERPOLATE_msg_fmt),'['//trim(title)//'] Interpolations      ',dummy,"[o/o]")
+       endif
+       !
+       OUT_k_nk=0
+       NN_nk_exact=0
+       NN_nk_border=0
+       !
+     enddo
      !
    end subroutine
    !
@@ -72,6 +89,7 @@ module interpolate_tools
      INTERP_obj(ID)%in_use=.FALSE.
      INTERP_obj(ID)%seed_kind=" "
      INTERP_obj(ID)%what=" "
+     INTERP_FineGd="NONE"
      YAMBO_FREE(INTERP_obj(ID)%k)
      YAMBO_FREE(INTERP_obj(ID)%weights)
      YAMBO_FREE(INTERP_obj(ID)%SEED)
@@ -79,15 +97,15 @@ module interpolate_tools
      !
    end subroutine
    !
-   subroutine init_ID(ID,bands,k,operation,seed_kind)
+   subroutine init_ID(ID,dims,k,operation,seed_kind)
      !
      use R_lattice,   ONLY:bz_samp
      !
-     integer      , intent(in) :: ID,bands(2)
+     integer      , intent(in) :: ID,dims(2)
      type(bz_samp), intent(in) :: k
      character(*) , intent(in) :: operation,seed_kind
      !
-     INTERP_obj(ID)%nb=bands
+     INTERP_obj(ID)%nb=dims
      INTERP_obj(ID)%nk=k%nibz
      INTERP_obj(ID)%in_use=.TRUE.
      INTERP_obj(ID)%use_NN=trim(INTERP_mode)=="NN"
@@ -103,7 +121,7 @@ module interpolate_tools
      INTERP_obj(ID)%weights=k%weights
      !
      YAMBO_FREE(INTERP_obj(ID)%SEED)
-     YAMBO_ALLOC(INTERP_obj(ID)%SEED,(bands(1):bands(2),k%nibz,INTERP_obj(ID)%D))
+     YAMBO_ALLOC(INTERP_obj(ID)%SEED,(dims(1):dims(2),k%nibz,INTERP_obj(ID)%D))
      INTERP_obj(ID)%SEED=rZERO
      !
    end subroutine init_ID
@@ -202,7 +220,7 @@ module interpolate_tools
       !
       ik   =SEED_RT%table(i_RT,3)
       i_s  =SEED_RT%table(i_RT,4)
-      if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_f(i_RT) 
+      if (l_INTERP_f ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%OCC_el%dN(i_RT) 
       if (l_INTERP_W ) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%NEQ_Lifetime(i_RT) 
       if (l_INTERP_dE) INTERP_obj(ID)%SEED(ib,ik,i_s)=SEED_RT%delta_E(i_RT) 
       !

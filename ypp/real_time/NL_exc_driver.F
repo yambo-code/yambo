@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -32,7 +32,6 @@ subroutine NL_exc_driver(en,k)
  type(bz_samp) :: k
  !
  ! Working Space
- !
  !
  call section("*",'NL Exc Post Processing')
  !

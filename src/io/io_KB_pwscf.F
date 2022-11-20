@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -28,9 +28,9 @@ integer function io_KB_pwscf(ID)
  use R_lattice,        ONLY:nkibz
  use D_lattice,        ONLY:n_atomic_species,atom_pos,n_atoms_species, &
 &                           n_atoms_species_max
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on,io_fragment,frag_WF
+ use IO_m,             ONLY:io_sec,read_is_on,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect,io_elemental,&
+&                           io_bulk,io_header,io_fragment
  use pseudo,           ONLY:pp_n_l_times_proj_max,pp_table,pp_n_l_max,&
 &                           pp_n_l_comp,pp_kbs,pp_kb,pp_kbd, &
 &                           PP_alloc_pwscf
@@ -43,7 +43,7 @@ integer function io_KB_pwscf(ID)
  ! Work Space
  !
  logical :: force_io_mode
- integer :: ifrag,ik,i_sp_pol
+ integer :: ifrag,ik,i_sp_pol,ID_frag
  !
  call timing('io_KB_pwscf',OPR='start')
  !
@@ -121,18 +121,20 @@ integer function io_KB_pwscf(ID)
    call io_bulk(ID,R2=pp_kbs)
  endif
  !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  if (read_is_on(ID)) then
    pp_kb=0._SP
    pp_kbd=0._SP
  endif
  !
- call io_bulk(ID,VAR="PP_KB_K"//trim(intc(ik)),VAR_SZ=shape(pp_kb(:,:,:,1)))
- call io_bulk(ID,R3=pp_kb(:,:,:,1))
+ call io_bulk(ID_frag,VAR="PP_KB_K"//trim(intc(ik)),VAR_SZ=shape(pp_kb(:,:,:,1)))
+ call io_bulk(ID_frag,R3=pp_kb(:,:,:,1))
  !
- call io_bulk(ID,VAR="PP_KBD_K"//trim(intc(ik)),VAR_SZ=shape(pp_kbd(:,:,:,1)))
- call io_bulk(ID,R3=pp_kbd(:,:,:,1))
+ call io_bulk(ID_frag,VAR="PP_KBD_K"//trim(intc(ik)),VAR_SZ=shape(pp_kbd(:,:,:,1)))
+ call io_bulk(ID_frag,R3=pp_kbd(:,:,:,1))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

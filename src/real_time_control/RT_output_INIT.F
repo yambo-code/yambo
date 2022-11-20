@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,23 +25,23 @@ subroutine RT_output_INIT( )
  !
  ! RT File Names & HEADERS
  ! 
- use pars,           ONLY:schlen,SP
+ use pars,           ONLY:schlen
  use RT_output_m,    ONLY:RT_FILE_add,YPP_append,N_MAX_RT_X_order
  use electrons,      ONLY:n_spin
  use com,            ONLY:msg
  use drivers,        ONLY:l_use_Hxc_collisions,l_elel_scatt,l_elph_scatt
  use stderr,         ONLY:intc
- use real_time,      ONLY:l_lftm_fit_temperatures
+ use RT_lifetimes,   ONLY:l_RT_lifetimes_Tfit,RT_EP_abs_life
+ use RT_control,     ONLY:l_project_spin_dipoles
  use C_driver,       ONLY:code_bin
  use timing_m,       ONLY:timing
- use D_lattice,      ONLY:Bose_Temp
  !
  implicit none
  !
  ! Work space
  !
  integer                  :: i_f,i_fp,i_c,i_order,il
- character(schlen)        :: dumb_ch,dumb_ch2
+ character(schlen)        :: dumb_ch
  character(2)             :: chart_string(3)
  !
  call msg('s','Output files definition ...')
@@ -54,22 +54,21 @@ subroutine RT_output_INIT( )
  !=================
  !
  call RT_FILE_add(name='current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
- !
  call RT_FILE_add(name='polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
+ call RT_FILE_add(name='probe-current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
+ call RT_FILE_add(name='probe-polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
+ call RT_FILE_add(name='pump-current',TITLES=(/"Time[fs]","j_x     ","j_y     ","j_z     "/))
+ call RT_FILE_add(name='pump-polarization',TITLES=(/"Time[fs]","Pol_x   ","Pol_y   ","Pol_z   "/))
  !
- call RT_FILE_add('total_field',TITLES=(/"Time[fs]"/))
- call RT_FILE_add(TITLES=(/"E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
- !
- do i_fp=1,2
+ do i_fp=1,3
    if (i_fp==1) dumb_ch="external_field"
    if (i_fp==2) dumb_ch="induced_field"
+   if (i_fp==3) dumb_ch="total_field"
    call RT_FILE_add(trim(dumb_ch),&
 &                 TITLES=(/"Time[fs]   ","E_x/Re[V/m]","E_y/Re[V/m]","E_z/Re[V/m]","E_x/Im[V/m]","E_y/Im[V/m]","E_z/Im[V/m]"/))
-   if (i_fp==1) call RT_FILE_add(TITLES=(/"Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
+   if (i_fp==1) call RT_FILE_add(TITLES=(/"Profile  [V/m]  ","Int. [kW/cm^2]  ","Fluence[nJ/cm^2]"/))
  enddo
  !
- ! GPL_EXCLUDE_START 
- ! 
  call RT_FILE_add('energy',TITLES=(/"Time[fs]  ","dE_kin[eV]","dE_ion[eV]"/))
  if(     l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Hxc[eV]","dE_tot[eV]"/))
  if(.not.l_use_Hxc_collisions) call RT_FILE_add(TITLES=(/"dE_Har[eV]","dE_xc [eV]","dE_tot[eV]"/))
@@ -77,13 +76,11 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('carriers',TITLES=(/"Time[fs]"/))
  call RT_FILE_add(TITLES=(/"d(N_hole-N_elec)"/))
  call RT_FILE_add(TITLES=(/"dN_hole","dN_elec"/))
- if (l_elel_scatt.or.l_elph_scatt) call RT_FILE_add(TITLES=(/"T_hole [K]","T_elec [K]"/))
+ if (l_elel_scatt.or.l_elph_scatt) call RT_FILE_add(TITLES=(/"T_hole [K]","T_elec [K]","Ef(h) [eV]","Ef(e) [eV]"/))
  !
  call RT_FILE_add('thermodynamics',&
 &  TITLES=(/"Time[fs]   ","dE   [eV]  ","dE(h)[eV]  ","dE(e)[eV]  ","dS   [eV/K]",&
 &           "dS(h)[eV/K]","dS(e)[eV/K]","T    [K]   ","T(h) [K]   ","T(e) [K]   "/))
- !
- ! GPL_EXCLUDE_END
  !
  do i_order=0,N_MAX_RT_X_order,1
    call RT_FILE_add('dP_order_'//trim(intc(i_order)),TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
@@ -91,39 +88,23 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add('P_minus_P_pump',TITLES=(/"Time[fs]","dPol_x  ","dPol_y  ","dPol_z  "/))
  !
- ! GPL_EXCLUDE_START 
- ! 
- call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time[fs]     ","Ho.(em) [meV]","El.(em) [meV]"/))
- if(Bose_Temp>0._SP ) then
-   call RT_FILE_add(TITLES=(/"Ho.(abs)[meV]","El.(abs)[meV]"/))
- endif
- if(l_lftm_fit_temperatures) then
-   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
- endif
+ call RT_FILE_add('mean_EPlifetimes',TITLES=(/"Time [fs]       ","Hole  Abs  [meV]","Elec  Emit [meV]"/))
+ if(RT_EP_abs_life%active) call RT_FILE_add(TITLES=(/"Hole Emit [meV]","Elec Abs  [meV]"/))
+ if(l_RT_lifetimes_Tfit) call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  !
- call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time[fs]  ","Hole [meV]","Elec [meV]"/))
- if(l_lftm_fit_temperatures) then
-   call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
- endif
+ call RT_FILE_add('mean_EElifetimes',TITLES=(/"Time [fs]       ","Hole  Abs  [meV]","Elec  Emit [meV]"/))
+ if(l_RT_lifetimes_Tfit) call RT_FILE_add(TITLES=(/" T Hole  [K] "," T Elec  [K] "/))
  !
  call RT_FILE_add('mean_RADlifetimes',(/"Time[fs] ","Hole [ps]","Elec [ps]"/))
  !
  call RT_FILE_add('N_dN_E_conservation_factors',(/"Time[fs] "/))
- if(l_elph_scatt) then
-   call RT_FILE_add(TITLES=(/"e-p val","e-p con"/))
-   if(Bose_Temp>0._SP) then
-     call RT_FILE_add(TITLES=(/"e-p (abs) val","e-p (abs) con"/))
-   endif
- endif
- if(l_elel_scatt) then
-   call RT_FILE_add(TITLES=(/"e-e val","e-e con"/))
- endif
+ if(l_elph_scatt) call RT_FILE_add(TITLES=(/"e-p Hole Abs ","e-p Elec Emit"/))
+ if (RT_EP_abs_life%active) call RT_FILE_add(TITLES=(/"e-p Elec Abs ","e-p Hole Emit"/))
+ if(l_elel_scatt) call RT_FILE_add(TITLES=(/"e-e Hole","e-e Elec"/))
  !
  call RT_FILE_add('BGR',(/"Time[fs]  "/))
  call RT_FILE_add(TITLES=(/"DirGap [meV]","IndGap [meV]"/))
  call RT_FILE_add(TITLES=(/"DeltaDirGap [meV]","DeltaIndGap [meV]"/))
- !
- ! GPL_EXCLUDE_END
  !
  ! ... energy resolved ...
  !=========================
@@ -163,8 +144,6 @@ subroutine RT_output_INIT( )
  !
  call RT_FILE_add('X_effective',TITLES=(/'T [fs]','E [eV]','X/Im  ','X/Re  '/))
  !
- ! GPL_EXCLUDE_START 
- ! 
  call RT_FILE_add('single_time_dos',TITLES=(/'E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
@@ -177,43 +156,19 @@ subroutine RT_output_INIT( )
  call RT_FILE_add('TD_INTERPOLATED_dos',TITLES=(/'T [fs]','E [eV]','DOS   '/))
  if (n_spin==2) call RT_FILE_add(TITLES=(/'up','dn'/))
  !
+ call RT_FILE_add('TD_P_decomposition',TITLES=(/'T        [fs]','deltaE   [eV]',&
+                                                'deltaF*Dip(x)','deltaF*Dip(y)','deltaF*Dip(z)'/))
+ !
  if (n_spin>1) then
-   call RT_FILE_add('magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
+   if (l_project_spin_dipoles) then
+     call RT_FILE_add('spin_magnetization',&
+     &                TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  ","Mv_x  ","Mv_y  ","Mv_z  ","Mc_x  ","Mc_y  ","Mc_z  "/))
+   else 
+     call RT_FILE_add('spin_magnetization',TITLES=(/'T [fs]',"Ms_x  ","Ms_y  ","Ms_z  "/))
+   endif
+   call RT_FILE_add('orbt_magnetization',TITLES=(/'T [fs]',"Ml_x  ","Ml_y  ","Ml_z  ","Mi_x  ","Mi_y  ","Mi_z  "/))
  endif
  !
- call RT_FILE_add('trans_residual',TITLES=(/'T [fs]','E [eV]'/))
- call RT_FILE_add(TITLES=(/'Residual'/))
- !
- do i_f=1,3
-   if (i_f==1) dumb_ch='trans_eps_real'
-   if (i_f==2) dumb_ch='trans_eps_imag'
-   if (i_f==3) dumb_ch='eps_eq'
-   if(i_f<3) then
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]','Eps   '/))
-   else
-    call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]','EPS-Im','EPS-Re'/))
-   endif
- enddo
- !
- do i_fp=1,2
-   if (i_fp==1) dumb_ch2="refl"
-   if (i_fp==2) dumb_ch2="transm"
-   do i_f=1,3
-     if (i_f==1) dumb_ch='trans_'//trim(dumb_ch2)//'_rel'
-     if (i_f==2) dumb_ch='trans_'//trim(dumb_ch2)//'_abs'
-     if (i_f==3) dumb_ch=trim(dumb_ch2)//'_eq'
-     if(i_f<3) then
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'T [fs]','E [eV]'/))
-     else
-       call RT_FILE_add(trim(dumb_ch),TITLES=(/'E [eV]'/))
-     endif
-     if (i_fp==1) call RT_FILE_add(TITLES=(/'Reflectivity'/))
-     if (i_fp==2) call RT_FILE_add(TITLES=(/'Transmission'/))
-   enddo
- enddo
- !
- ! GPL_EXCLUDE_END 
- ! 
  call msg('l','done')
  !
  call timing('RT output (INIT)',OPR='stop')

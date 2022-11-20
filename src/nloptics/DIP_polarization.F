@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -36,7 +36,7 @@ subroutine DIP_polarization(Xen,Xk,V_bands,Polarization)
  implicit none           
  type(bz_samp), intent(in)  :: Xk
  type(levels),  intent(in)  :: Xen
- complex(SP),   intent(in)  :: V_bands(NL_bands(2),Xen%nbf,QP_nk,n_sp_pol)
+ complex(SP),   intent(in)  :: V_bands(NL_bands(2),maxval(Xen%nbf),QP_nk,n_sp_pol)
  complex(SP),   intent(out) :: Polarization(3)
  !
  ! Evaluate polarization in terms of dipoles only

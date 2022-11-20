@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,7 +59,7 @@ subroutine QP_apply_QP(i_ACTION,bands,en,k,qp)
  !
  ! Interpolation
  !
- call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
+ if (.not.QP_action(i_ACTION)%plan(7)) call QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
  !
  ! FIT?
  !

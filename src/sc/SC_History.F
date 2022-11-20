@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,7 +29,7 @@ subroutine SC_History(it,E)
  use R_lattice,      ONLY:nkibz
  use com,            ONLY:of_open_close,msg
  use stderr,         ONLY:intc
- use SC,             ONLY:SC_bands,it_now,SC_desc
+ use SC,             ONLY:SC_nbands,it_now,SC_desc
  use interfaces,     ONLY:DESC_write
  !
  implicit none
@@ -39,15 +39,21 @@ subroutine SC_History(it,E)
  !
  ! Work Space
  !
- integer  :: ik,ib,i_spin,n_headers,i_d,max_kpt,b_range(2)
+ integer  :: ik,ib,i_spin,n_headers,max_kpt,b_range(2)
  character(schlen), SAVE :: E_file_name(2)
- character(schlen)       :: headers(SC_bands(2)*nkibz)
+ character(schlen)       :: headers(SC_nbands*nkibz)
  !
- b_range(1)=max(n_full_bands-1,1)
- b_range(2)=b_range(1)+2
  max_kpt=min(nkibz,6) ! print only the fist 6 kpoints
  !
  do i_spin=1,n_sp_pol
+   !
+   ! 2021/11/09 DS
+   ! The commented lin is more correct for the definition of b_range(1).
+   ! However the other one is kept to avoid problems with the test-suite
+   !b_range(1)=max(n_full_bands(i_spin)-1,1)
+   !
+   b_range(1)=max(minval(n_full_bands)-1,1)
+   b_range(2)=b_range(1)+2
    !
    if ( it == 1 ) then
      !
@@ -65,17 +71,15 @@ subroutine SC_History(it,E)
      if (n_sp_pol==2.and.i_spin==2) E_file_name(i_spin)='SC_E_History'//'_spin_ch_DN'
      call of_open_close(E_file_name(i_spin),'ot')
      !
-     call DESC_write("o History","#",SC_desc,skip_patt="Iteration")
+     call DESC_write("o "//trim(E_file_name(i_spin)),"#",SC_desc,skip_patt="Iteration")
      !
-     if (i_spin==1)  then
-       call msg('o History','#',headers(1:n_headers),INDENT=0,USE_TABS=.TRUE.)
-       call msg('o History','#')
-     endif
+     call msg('o '//trim(E_file_name(i_spin)),'#',headers(1:n_headers),INDENT=0,USE_TABS=.TRUE.)
+     call msg('o '//trim(E_file_name(i_spin)),'#')
      !
    endif
    !
    if ( it >  0 ) then
-     call msg('o E_History','',(/real(it_now,SP),&
+     call msg("o "//trim(E_file_name(i_spin)),'',(/real(it_now,SP),&
 &                             ((E%E(ib,ik,i_spin)*HA2EV,ib=b_range(1),b_range(2)),ik=1,max_kpt) &
 &                             /),INDENT=-2,USE_TABS=.true.)
      call of_open_close(E_file_name(i_spin),'f')

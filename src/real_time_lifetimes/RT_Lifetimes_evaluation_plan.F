@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,8 +27,8 @@ integer function RT_Lifetimes_evaluation_plan( )
  !
  use pars,           ONLY:SP
  use RT_control,     ONLY:NE_i_start_time
- use real_time,      ONLY:RT_TIME_status,NE_steps,RT_life_extrap_times,&
-&                         RT_dyn_step,l_RT_lifetimes_extrapolation,Life_MEM_steps,NE_i_time
+ use RT_lifetimes,   ONLY:RT_life_extrap_times,l_RT_lifetimes_extrapolation,Life_MEM_steps
+ use real_time,      ONLY:RT_TIME_status,NE_steps,RT_dyn_step,NE_i_time
  !
 #include<memory.h>
  !

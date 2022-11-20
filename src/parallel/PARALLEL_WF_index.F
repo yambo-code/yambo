@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,16 +25,16 @@ subroutine PARALLEL_WF_index(COMM)
  !
  ! Here I used states_to_load to define the WF_linear index.
  ! I avoid overlaps so that those two indexes can be used at any time
- ! to loop on the total k and b in the MPI_comm_world
+ ! to loop on the total k and b in the yMPI_comm_world
  !
  use parallel_m,      ONLY:PP_indexes,ncpu,PAR_IND_WF_linear,&
-&                          PP_indexes_reset,myid,PAR_COM_WORLD,MPI_comm,&
+&                          PP_indexes_reset,myid,PAR_COM_WORLD,yMPI_comm,&
 &                          COMM_copy,PAR_COM_density
  use wave_func,       ONLY:states_to_load
- use parallel_m,      ONLY:PP_redux_wait
+ use parallel_int,    ONLY:PP_redux_wait
 #include<memory.h>
  !
- type(MPI_comm), optional :: COMM
+ type(yMPI_comm), optional :: COMM
  !
  ! Work Space
  !

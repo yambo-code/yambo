@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -46,19 +46,20 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  use frequency,       ONLY:w_samp
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc,elemental_collision_free
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
  use SC,              ONLY:it_now
- use IO_m,            ONLY:io_control,manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
- use X_m,             ONLY:X_alloc,X_mat,X_t
+ use IO_int,          ONLY:io_control
+ use IO_m,            ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_IF_START_RD_CL_IF_END
+ use X_m,             ONLY:X_ALLOC_elemental,X_mat,X_t
  !
  ! I/O
  !
 #include<memory.h>
- complex(SP),intent(inout)  :: U_csx(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(inout)  :: U_csx(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in)   :: E
  type(bz_samp), intent(in)  :: k,q
  type(X_t),intent(in)       :: X  
@@ -89,7 +90,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  io_err=io_X(X,Xw,ID)
  if (io_err<0) call error('Incomplete and/or broken static diel. fun. database')
  !
- call X_alloc('X',(/X%ng,X%ng,1/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))
  YAMBO_ALLOC(PPaR_ws,(X%ng,X%ng))
  YAMBO_ALLOC(PPaR,(X%ng,X%ng))
  !
@@ -103,10 +104,10 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
  isc%qs=1
  !call scatterGamp(isc,'c') !???
  Vcoh =(0._DP,0._DP)
- call PARALLEL_index(px,(/q%nbz,E%nbm/))
- call PP_redux_wait
+ call PARALLEL_index(px,(/q%nbz,maxval(E%nbm)/))
+ call PP_wait()
  ch="Sigma_csX|WF>@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*k%nibz)
+ call live_timing(trim(ch),px%n_of_elements(myid+1)*maxval(E%nbm)*k%nibz)
  do iq=1,q%nbz
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    iqibz=isc%qs(2)
@@ -141,11 +142,11 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
    !
    ! SX applied to the WF
    !
-   do iv1 = 1 ,E%nbm
+   do iv1 = 1 ,E%nbm(1)
      if (.not.px%element_2D(iq,iv1)) cycle
      do ik = 1,k%nibz
        is = k%sstar(ik,2)
-       do iv2 = 1 ,E%nbm
+       do iv2 = 1 ,E%nbm(1)
          u =(0._DP,0._DP)
          u_rs =(0._DP,0._DP) 
          local_u =(0._DP,0._DP)
@@ -197,7 +198,7 @@ subroutine OEP_ApplySigmaCSX(X,Xw,E,k,q,U_csx)
 ! #else
 !  call fft_3d(Vcoh_rs,fft_dim,1)
 ! #endif       
-!  do iv1 = 1 ,E%nbm
+!  do iv1 = 1 ,E%nbm(1)
 !    do ik = 1,k%nibz
 !      ifft=wf_state(iv1,ik,1)
 !      U_csx(ik,iv1,:) = U_csx(ik,iv1,:)+Vcoh_rs(:)*wf(:,ifft)     

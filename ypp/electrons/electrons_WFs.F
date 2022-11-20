@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -37,7 +37,8 @@ subroutine electrons_WFs(Xen)
  use YPPm,           ONLY:V_value,l_mean_potential
  use QP_m,           ONLY:QP_nk
  use wave_func,      ONLY:wf_ng
- use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,io_control,manage_action,DUMP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD,RD_CL_IF_END,LOG,NONE,manage_action,DUMP
  use SC,             ONLY:V_mean,SC_bands,SC_fft_size
  use R_lattice,      ONLY:qindx_S
 #endif
@@ -120,8 +121,6 @@ subroutine electrons_WFs(Xen)
  !
  ! SYMMETRIZED WAVEFUNCTIONS (summed over all symmetries and degenerate states)
  !==============================================================================
- !
- ! GPL_EXCLUDE_END
  !
 #if defined _YPP_ELPH
  if (l_polaronic_wf) then
@@ -207,8 +206,6 @@ subroutine electrons_WFs(Xen)
  endif
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! WAVEFUNCTIONS (and Mean Potential)
  !====================================

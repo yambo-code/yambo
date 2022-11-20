@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -23,18 +23,19 @@
 !
 subroutine XCo_driver(E,k,Xk,q)
  !
+ use zeros,         ONLY:zero_dfl
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
- use pars,          ONLY:schlen,rZERO,SP,cZERO
+ use pars,          ONLY:schlen,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY,REP
- use QP_m,          ONLY:QP_n_states,XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,VERIFY,REP
+ use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
 &                        QP_Vxc,QP_Vnl_xc,QP_Vnl_sex,QP_XCo_alloc,QP_XCo_free
  use interfaces,    ONLY:WF_free
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
- use pseudo,        ONLY:PP_nlcc_free
 #if defined _SC
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
@@ -79,12 +80,13 @@ subroutine XCo_driver(E,k,Xk,q)
  !
 #endif
  !
- !
  ! Logicals setup
  !
  l_Vxc   =.not.l_sc_run.and..not.l_real_time
  l_Vnl_xc=.TRUE.
- l_screen_hyb=(WF_exx_screening > rZERO) 
+ !
+ ! AM, 22/4/2021: a tiny WF_exx_screening causes NaN in the call to scatter_ModScr
+ l_screen_hyb=(WF_exx_screening > zero_dfl) 
  !
 #if defined _SC
  WF_kind_no_H=WF_kind
@@ -168,10 +170,6 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (l_Vxc) then
    !
-   ! non-linear core corrections (NLCC)
-   !
-   call XC_nlcc_setup()
-   !
    call XCo_local(E,Xk)
    !
    if (.not.l_screen_hyb) then
@@ -180,8 +178,6 @@ subroutine XCo_driver(E,k,Xk,q)
      QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
      call QP_XCo_free(l_screen_hyb=.true.)
    endif
-   !
-   call PP_nlcc_free()
    !
  endif
  !

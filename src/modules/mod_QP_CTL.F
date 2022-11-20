@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -121,7 +121,7 @@ module QP_CTL_m
  ! "ACTION" type (can be a fit/interpolation/QP/...)
  !===============
  type QP_action_t
-   logical              :: plan(6) ! E W Z ukI ueI ubI
+   logical              :: plan(7) ! E W Z ukI ueI ubI fit
    logical              :: active
    character(schlen)    :: what 
    character(lchlen)    :: desc 
@@ -196,7 +196,7 @@ module QP_CTL_m
    !
    subroutine QP_actions_reset
 #include<memory.h>
-     integer :: i_a,i_s
+     integer :: i_a
      n_QP_actions=0
      do i_a=1,n_QP_actions_MAX
        QP_action(i_a)%plan=.FALSE.

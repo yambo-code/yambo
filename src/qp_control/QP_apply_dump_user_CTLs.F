@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -74,6 +74,7 @@ subroutine QP_apply_dump_user_CTLs( E, object )
          if (STRING_same(trim(db_piece(i2)),"uki")) QP_action(n_QP_actions)%plan(4)=.TRUE.
          if (STRING_same(trim(db_piece(i2)),"uei")) QP_action(n_QP_actions)%plan(5)=.TRUE.
          if (STRING_same(trim(db_piece(i2)),"ubi").and.nkibz>1) QP_action(n_QP_actions)%plan(6)=.TRUE.
+         if (STRING_same(trim(db_piece(i2)),"fit" )) QP_action(n_QP_actions)%plan(7)=.TRUE.
        enddo
        if (.not.any((/QP_action(n_QP_actions)%plan(4:6)/))) QP_action(n_QP_actions)%plan(4)=.TRUE.
        !

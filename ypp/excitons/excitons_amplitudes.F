@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DV
@@ -21,45 +21,62 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
+subroutine excitons_amplitudes(Xk,Xen,q,BS_E_degs,iq)
  !
- use pars,          ONLY:SP,schlen,pi,cI
- use units,         ONLY:HA2EV
- use R_lattice,     ONLY:bz_samp,qindx_X
- use electrons,     ONLY:levels,n_sp_pol,spin
- use stderr,        ONLY:intc,real2ch
- use YPPm,          ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states
- use BS_solvers,    ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
- use BS,            ONLY:BS_H_dim
- use com,           ONLY:msg,of_open_close
- use vec_operate,   ONLY:sort
- use interfaces,    ONLY:DESC_write
+ use pars,           ONLY:SP,schlen,pi,cI
+ use units,          ONLY:HA2EV
+ use R_lattice,      ONLY:bz_samp,qindx_X
+ use electrons,      ONLY:levels,n_sp_pol,spin
+ use stderr,         ONLY:intc,real2ch
+ use OUTPUT,         ONLY:OUTPUT_driver
+ use YPPm,           ONLY:EXCITON_weight_treshold,EXCITONS_user_indexes,EXCITONS_n_user_states,DIPs,&
+&                         DIPs_direction,l_dipoles,BSiq
+ use BS_solvers,     ONLY:BS_mat,BSS_eh_table,BSS_desc,BSS_n_eig
+ use DIPOLES,        ONLY:DIP_rotated,DIP_alloc,DIPOLES_reset
+ use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:sort,v_norm
+ use interfaces,     ONLY:DESC_write
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PP_redux_wait
+ use parallel_m,     ONLY:PAR_IND_DIPk_ibz,PAR_IND_CON_BANDS_DIP,PAR_IND_VAL_BANDS_DIP
  !
  implicit none
  !
- type(bz_samp)    :: Xk
+ type(bz_samp)    :: Xk,q
  type(levels)     :: Xen
  integer          :: BS_E_degs(BSS_n_eig),iq
  !
- integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim)
- integer          :: ikpbz,ikp,isp
- real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),value,dip_factor,norm_
- character(schlen):: titles(9),ch_dummy(2)
- !
+ ! Workspace
+ integer          :: j1,j2,i_l,i_l_grp,i_lambda,neh,i_spin,iv,ic,ikbz,ikibz,is,n_lambda_deg,S_indx(BS_H_dim),&
+&                    ikpbz,ikp,isp,io_err
+ real(SP)         :: A_weight(BS_H_dim),K_weight(Xk%nibz),dip_factor,norm_
+ character(schlen):: titles(9),o_file(2)
  integer, parameter   :: amp_steps=1000
  integer              :: amp_n_trans
  real(SP)             :: amp_range(2),amp_damping,amp_I(amp_steps),amp_trans(BS_H_dim,2)
  complex(SP)          :: amp_E(amp_steps) 
  !
  call section('=','Amplitude and weights')
- !==================================================
+ !========================================
  !
- !call parser('DipWeight',l_weight_with_dipoles)
- !!
- !if(l_weight_with_dipoles) then
- !  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- !  io_err=io_DIPOLES(Dip,io_ID)
- !endif
+ ! Dipoles
+ !---------
+ if (l_dipoles) then
+   !
+   ! ... Dimensions
+   DIPs%ib    =BS_bands
+   DIPs%ib_lim=(/maxval(Xen%nbm),minval(Xen%nbf)+1/)
+   !
+   ! ... PARALLEL setup
+   call PARALLEL_global_indexes(Xen,Xk,q," ",RESET=.TRUE.)
+   call PARALLEL_global_indexes(Xen,Xk,q,"DIPOLES",Dip=DIPs,Dip_limits_pre_defined=.TRUE.)
+   !
+   ! ... IO
+   call DIPOLE_IO(Xk,Xen,DIPs,'read ',io_err,'DIP')
+   !
+   DIPs_direction=BSqpts(:,BSiq)/v_norm(BSqpts(:,BSiq))
+   !
+ endif
  !
  call msg('s','Processing '//trim(intc(EXCITONS_n_user_states))//' states')
  !
@@ -79,13 +96,17 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
      !
      dip_factor=1._SP
      !
-     !if(l_weight_with_dipoles) then
-     !  ikbz  = BSS_eh_table(neh,1)
-     !  iv    = BSS_eh_table(neh,2)
-     !  ic    = BSS_eh_table(neh,3)
-     !  i_spin= spin(BSS_eh_table(neh,:))
-     !  dip_factor=conjg(DIP_projected(ic,iv,ikbz,i_spin))*DIP_projected(ic,iv,ikbz,i_spin)
-     !endif
+     if (l_dipoles) then
+       ikbz  = BSS_eh_table(neh,1)
+       ikibz = Xk%sstar(ikbz,1)
+       iv    = BSS_eh_table(neh,2)
+       ic    = BSS_eh_table(neh,3)
+       i_spin= spin(BSS_eh_table(neh,:))
+       if (.not.PAR_IND_DIPk_ibz%element_1D(ikibz)) cycle
+       if (.not.PAR_IND_CON_BANDS_DIP%element_1D(ic)) cycle
+       if (.not.PAR_IND_VAL_BANDS_DIP%element_1D(iv)) cycle
+       dip_factor=abs(dot_product(DIPs_direction,DIP_rotated(ic,iv,ikbz,i_spin,"DIP_iR",Xk)))**2.
+     endif
      !
      do i_l=BS_E_degs(i_l_grp),BS_E_degs(i_l_grp)+n_lambda_deg-1
        A_weight(neh)=A_weight(neh)+BS_mat(neh,i_l)*conjg(BS_mat(neh,i_l))*dip_factor
@@ -93,8 +114,10 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
      !
    enddo
    !
+   if (l_dipoles) call PP_redux_wait( A_weight )
+   !
    norm_ = sqrt(dot_product(A_weight,A_weight))
-   !if(l_weight_with_dipoles.and.norm_>0._SP) A_weight=A_weight/norm_
+   if(l_dipoles.and.norm_>0._SP) A_weight=A_weight/norm_
    !
    ! Sort the weights
    !
@@ -105,23 +128,20 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
    ! 
    ! ... first open the file.
    ! 
-   ch_dummy(1)='exc_qpt'//trim(intc(iq))//'_weights_at_'//trim(intc(i_l_grp))
-   ch_dummy(2)='exc_qpt'//trim(intc(iq))//'_amplitude_at_'//trim(intc(i_l_grp))
-   call of_open_close(ch_dummy(1),'ot')
-   call of_open_close(ch_dummy(2),'ot')
-   
-!
-!Note that BSS_description is empty as io_BS it is not called anymore 
-!
+   o_file(1)='exc_qpt'//trim(intc(iq))//'_weights_at_'//trim(intc(i_l_grp))
+   if (l_dipoles) o_file(1)='exc_qpt'//trim(intc(iq))//'_weights_and_dipoles_at_'//trim(intc(i_l_grp))
+   o_file(2)='exc_qpt'//trim(intc(iq))//'_amplitude_at_'//trim(intc(i_l_grp))
    !
-   call DESC_write('o weight amp','#',BSS_desc)
-   
-
-   call msg('o weight amp',"#")
-   call msg('o weight amp',&
-&   '# Electron-Hole pairs that contribute to Excitonic State '//&
-&   trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(EXCITON_weight_treshold*100)) //'%')
-   call msg('o weight amp','#')
+   do j1=1,2
+     call OUTPUT_driver(o_file(j1),action="reset")
+     call OUTPUT_driver(o_file(j1),action="open")
+     call DESC_write('o '//o_file(j1),'#',BSS_desc)
+   enddo
+   !
+   ! Note that BSS_description is empty as io_BS it is not called anymore 
+   call msg('o weight',"#")
+   call msg('o weight','# Electron-Hole pairs that contribute to Excitonic State '//&
+&           trim(intc(i_l_grp))//' for iq='//trim(intc(iq))//' more than '// trim(real2ch(EXCITON_weight_treshold*100)) //'%')
    !
    ! First summarize the total weight vs K-points
    !
@@ -139,21 +159,7 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
        call msg('o weight','# ',(/Xk%pt(ikibz,:),K_weight(ikibz)/),INDENT=0,USE_TABS=.true.)
      endif
    enddo
-   !
-   ! Then report the detailed list of transitions & calculate the amplitude
-   !
    call msg('o weight','#','',INDENT=0,USE_TABS=.true.)
-   titles(1:6)=(/'Band_V  ','Band_C  ','Kv-q ibz','Symm_kv ', 'Kc ibz  ', 'Symm_kc '/)
-   if(n_sp_pol==1) then
-     titles(7:8)=(/'Weight','Energy'/)
-     call msg('o weight','#',titles(:8),INDENT=0,USE_TABS=.true.)
-   else
-     titles(7:9)=(/'Spin  ','Weight','Energy'/)
-     call msg('o weight','#',titles(:7),INDENT=0,USE_TABS=.true.)
-   endif
-   titles(1:2)=(/'E    [eV]','Amplitude'/)
-   call msg('o amp','#',titles(:2),INDENT=0,USE_TABS=.true.)
-   call msg('o weight amp','#','',INDENT=0,USE_TABS=.true.)
    !
    amp_n_trans=0
    !
@@ -165,6 +171,8 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
      iv = BSS_eh_table(S_indx(neh),2)
      ic = BSS_eh_table(S_indx(neh),3)
      i_spin= spin(BSS_eh_table(S_indx(neh),:))
+     if (i_spin==1) j1= 1
+     if (i_spin==2) j1=-1
      !
      ikibz = Xk%sstar(ikbz,1)
      is = Xk%sstar(ikbz,2)
@@ -179,25 +187,19 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
      !
      if (A_weight(neh)<EXCITON_weight_treshold) cycle
      !
-     if(n_sp_pol==1) then
-       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikp,SP),real(isp,SP),& 
-&                              real(ikibz,SP),real(is,SP),&
-&                             A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
-&            INDENT=-2,USE_TABS=.FALSE.)
-     else
-       if(i_spin==1) value= 1._SP
-       if(i_spin==2) value=-1._SP
-       call msg('o weight','',(/real(iv,SP),real(ic,SP),real(ikibz,SP),real(is,SP),&
-                              real(ikp,SP),real(isp,SP),&
-&                           value,A_weight(neh),amp_trans(amp_n_trans,1)*HA2EV/),&
-&                 INDENT=-2,USE_TABS=.FALSE.)
-     endif
+     call OUTPUT_driver('weight',TITLES=(/"Band_V","Band_C"/),I_VALUES=(/iv,ic/))
+     call OUTPUT_driver('weight',TITLES=(/"Kv-q ibz","Symm_kv "/),I_VALUES=(/ikp,isp/))
+     call OUTPUT_driver('weight',TITLES=(/"Kc q ibz","Symm_kc "/),I_VALUES=(/ikibz,is/))
+     if (n_sp_pol>1) call OUTPUT_driver('weight',TITLES=(/"Spin"/),I_VALUES=(/j1/))
+     call OUTPUT_driver('weight',TITLES=(/"Weight"/),R_VALUES=(/A_weight(neh)/))
+     call OUTPUT_driver('weight',TITLES=(/"Energy"/),R_VALUES=(/amp_trans(amp_n_trans,1)/),UNIT="eV")
+     call OUTPUT_driver("weight",action="write")
+     !
    enddo
    !
    ! Excitonic Amplitude
    !
-   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5_SP/HA2EV,&
-&              maxval(amp_trans(:amp_n_trans,1))+0.5_SP/HA2EV/)
+   amp_range=(/minval(amp_trans(:amp_n_trans,1))-0.5_SP/HA2EV,maxval(amp_trans(:amp_n_trans,1))+0.5_SP/HA2EV/)
    amp_damping=(amp_range(2)-amp_range(1))/100._SP
    amp_I=0._SP
    do j2=1,amp_steps
@@ -208,13 +210,23 @@ subroutine excitons_amplitudes(Xk,Xen,BS_E_degs,iq)
    enddo
    amp_I=amp_I/maxval(amp_I)
    do j1=1,amp_steps
-     call msg('o amp','',(/real(amp_E(j1),SP)*HA2EV,amp_I(j1)/),INDENT=-2,USE_TABS=.FALSE.)
+     call OUTPUT_driver('_amp',TITLES=(/"Energy"/),R_VALUES=(/real(amp_E(j1),SP)/),UNIT="eV")
+     call OUTPUT_driver('_amp',TITLES=(/"Amplitude"/),R_VALUES=(/amp_I(j1)/))
+     call OUTPUT_driver("_amp",action="write")
    enddo
    !
-   call of_open_close(ch_dummy(1))
-   call of_open_close(ch_dummy(2))
+   do j1=1,2
+     call OUTPUT_driver(o_file(j1),action="close")
+   enddo
    !
  enddo
+ !
+ if (l_dipoles) then
+   call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_P')
+   call DIP_alloc('DIP_v')
+   call DIPOLES_reset(DIPs)
+ endif
  !
  return
  !

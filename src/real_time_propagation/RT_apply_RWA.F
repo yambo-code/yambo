@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -23,10 +23,11 @@
 !
 subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  !
- use pars,           ONLY:SP
+ use pars,           ONLY:SP,cONE
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use real_time,      ONLY:RT_E_and_k,RT_Deph_Matrix,RT_all2ibz,l_RT_EXP,RT_is_statically_dephased,RT_bands
+ use real_time,      ONLY:RT_levels,RT_Deph_Matrix,RT_deph_range,RTibz,&
+&                         l_RT_EXP,RT_is_statically_dephased,RT_bands,NE_time
  !
  implicit none
  !
@@ -44,7 +45,10 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
  real(SP) :: deltaE,sumGAMMA,alpha,dec_exp
  complex(SP) :: phase
  !
- ik_ibz=RT_all2ibz(ik)
+ ik_ibz=RTibz%k_map(ik)
+ !
+ phase  =cONE
+ dec_exp=1._SP
  !
  do i_n=RT_bands(1),RT_bands(2)
    do i_np=i_n,RT_bands(2)
@@ -53,7 +57,10 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
      !
      if (RT_is_statically_dephased) sumGAMMA=RT_Deph_Matrix(i_n,i_np,ik_ibz)
      !
-     deltaE=RT_E_and_k%E(i_n,ik,1)-RT_E_and_k%E(i_np,ik,1)
+     if (NE_time<RT_deph_range(1).and.RT_deph_range(1)>0._SP) sumGAMMA=0._SP
+     if (NE_time>RT_deph_range(2).and.RT_deph_range(2)>0._SP) sumGAMMA=0._SP
+     !
+     deltaE=RT_levels%E(i_n,ik,1)-RT_levels%E(i_np,ik,1)
      !
      if (l_RT_EXP) then
        !
@@ -99,7 +106,7 @@ subroutine RT_apply_RWA(ik,E,k,dT,dTp,dG_out,dG_in)
    ! This explains the need for the special definition
    !    sumGAMMA=abs(E%W(i_n,ik,1))+abs(E%W(i_np,ik,1))           (2)
    ! instead of
-   !    sumGAMMA=sum(REF_lifetimes(i_n,ik,:))                     (3)
+   !    sumGAMMA=sum(REF_lifetime(i_n,ik,:))                     (3)
    ! with i_n=i_np.
    ! 
    ! This difference is due to two reasons:

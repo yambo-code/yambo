@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -31,17 +31,17 @@ subroutine RT_density(en,kpt,qpt)
  use parser_m,       ONLY:parser
  use stderr,         ONLY:intc,real2ch
  use com,            ONLY:msg,of_open_close
- use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,io_control,LOG,&
-&                         manage_action
- use RT_control,     ONLY:TIME_string,RT_apply,SAVE_G_history,GF_RT_IO_t,CARR_RT_IO_t
- use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step,&
-&                         G_MEM_steps,RT_delta_occupations
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:DUMP,OP_RD_CL,OP_IF_START_RD_CL_IF_END,NONE,LOG,manage_action
+ use RT_control,     ONLY:TIME_string,RT_apply,Gless_RT_IO_t,CARR_RT_IO_t
+ use RT_occupations, ONLY:RT_el_occ,RT_occupation_alloc,RT_occupation_free
+ use real_time,      ONLY:RT_nk,RT_bands,NE_i_time,dG_lesser,G_lesser_reference,RT_step
  use YPPm,           ONLY:v2plot,output_fname,plot_dim,plot_title,&
 &                         use_xcrysden,use_gnuplot,use_cube,nr,nr_tot,l_norm_to_one
- use YPP_real_time,  ONLY:RT_time,RT_conf
+ use YPP_real_time,  ONLY:RT_time,RT_conf,gimme_a_G_Time_Point
  use interfaces,     ONLY:WF_load,WF_free,el_density_and_current
  use wave_func,      ONLY:WF,wf_ng
- use interfaces,     ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  !
 #include<memory.h>
  !
@@ -50,8 +50,7 @@ subroutine RT_density(en,kpt,qpt)
  !
  ! Workspace
  !
- integer               :: ID,ik,io_err,i_t,i_t_tmp,i_dir,Nt,IO_ACT
- real(SP)              :: TIME_diff,REF_diff
+ integer               :: ID,ik,io_err,i_t,i_dir,IO_ACT
  character(schlen)     :: ch_ws(3)
  logical               :: load_G_history,include_eq_occ
  !
@@ -72,9 +71,9 @@ subroutine RT_density(en,kpt,qpt)
  ! I/O
  !=====
  if(load_G_history) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1,2/),ID=ID) 
-   io_err=io_RT_components('G',ID)
-   if(.not.SAVE_G_history) then
+   call io_control(ACTION=OP_RD_CL,COM=LOG,MODE=DUMP,SEC=(/1,2/),ID=ID) 
+   io_err=io_RT_components('G_lesser',ID)
+   if (io_err/=0) then
      call warning(" History of G_lesser not found. Density will be computed using the occupations")
      load_G_history=.false.
    endif
@@ -90,18 +89,17 @@ subroutine RT_density(en,kpt,qpt)
      YAMBO_ALLOC(G_lesser_reference,(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),RT_nk))
      G_lesser_reference=cZERO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/2/),ID=ID) 
-     io_err=io_RT_components('REF',ID)
+     io_err=io_RT_components('REFERENCE',ID)
    endif
    call msg('s',trim(ch_ws(1)))
-   call RT_time_configuration_setup("G-DENSITY",GF_RT_IO_t)
+   call RT_time_configuration_setup("G-DENSITY",Gless_RT_IO_t)
  else
    ch_ws(1)="Computing the density from the occupations"
-   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.)
-   YAMBO_ALLOC(RT_delta_occupations,(RT_bands(1):RT_bands(2),RT_nk))
+   call RT_apply(RT_bands,En,kpt,IO_COM=LOG,TIMES_ONLY=.TRUE.,skip_interpolation=.TRUE.)
+   call RT_occupation_alloc("electrons",RT_el_occ,RT_bands,RT_nk)
    call msg('s',trim(ch_ws(1)))
    call RT_time_configuration_setup("f-DENSITY",CARR_RT_IO_t)
  endif
- !
  !
  ! Parallel Setups & WF_load
  !===========================
@@ -127,31 +125,22 @@ subroutine RT_density(en,kpt,qpt)
  !
  call plot_check_and_launch(.true.)
  !
- Nt=GF_RT_IO_t%N
- !
  do i_T=1,RT_conf%T_n_steps
    !
    call msg('s','RT density at time '//trim(real2ch(real(RT_time(i_T)/FS2AUT,SP)))//' fs')
    !
    if (load_G_history) then
      !
-     REF_diff=GF_RT_IO_t%Time(Nt)-GF_RT_IO_t%Time(Nt-G_MEM_steps)
-     do i_t_tmp=1,Nt
-       TIME_diff= abs ( GF_RT_IO_t%Time(i_t_tmp) - RT_time(i_T) )
-       if (abs(TIME_diff)<REF_diff ) then 
-         REF_diff=TIME_diff
-         GF_RT_IO_t%N=i_t_tmp
-       endif
-     enddo
+     call gimme_a_G_Time_Point(i_T)
      !
 #if defined _PAR_IO
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),ID=ID)
-     io_err=io_RT_components('G',ID)
+     io_err=io_RT_components('G_lesser_K_section',ID)
 #else
      do ik = 1, RT_nk 
        IO_ACT=manage_action(OP_IF_START_RD_CL_IF_END,ik,1,RT_nk)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ik+2/),ID=ID)
-       io_err=io_RT_components('G',ID)
+       io_err=io_RT_components('G_lesser_K_section',ID)
      enddo
 #endif
      !
@@ -232,7 +221,7 @@ subroutine RT_density(en,kpt,qpt)
    YAMBO_FREE(G_lesser_reference)
    YAMBO_FREE(G_loc)
  else
-   YAMBO_FREE(RT_delta_occupations)
+   call RT_occupation_free(RT_el_occ)
  endif
  YAMBO_FREE(drho)
  !

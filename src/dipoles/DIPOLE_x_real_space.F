@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  use drivers,            ONLY:l_sc_run
  use pars,               ONLY:SP,cI,cZERO
- use D_lattice,          ONLY:x_cc
+ use D_lattice,          ONLY:x_cc,molecule_position,a
  use wave_func,          ONLY:WF
  use interfaces,         ONLY:WF_load,WF_free
  use wrapper_omp,        ONLY:Vstar_dot_V_omp
@@ -50,14 +50,19 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
  !
  integer                      :: ik,ik_mem,i_sp_pol,i_spinor,ic,iv,ic_min,&
 &                                ic_wf,iv_wf,idir,n_LT_steps
- real(SP)                     :: Ev_m_Ec_KS
+ real(SP)                     :: Ev_m_Ec_KS,x_center(3)
  complex(SP)                  :: DIP_tmp(3,Dip%ib_lim(2):Dip%ib(2),Dip%ib(1):Dip%ib_lim(1))
+ !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
  ! 
  call fft_setup(0,1,.true.)      ! FFT size
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
- call load_cc(.false.,(/0._SP,0._SP,0._SP/),1)
+ x_center(1)=molecule_position(1)*a(1,1)
+ x_center(2)=molecule_position(2)*a(2,2)
+ x_center(3)=molecule_position(3)*a(3,3)
+ call load_cc(.false.,x_center,1)
  !
  n_LT_steps=n_sp_pol*PAR_IND_DIPk_ibz%n_of_elements(PAR_IND_DIPk_ibz_ID+1)*&
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
@@ -135,7 +140,7 @@ subroutine DIPOLE_x_real_space(Xen,Xk,Dip,idir_todo)
            if (allocated(Xen%Eo)) Ev_m_Ec_KS=Xen%Eo(iv,ik,i_sp_pol)-Xen%Eo(ic,ik,i_sp_pol)
            do idir=1,3
              if(.not.idir_todo(idir)) cycle
-             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=DIP_v(idir,ic,iv,ik_mem,i_sp_pol)*Ev_m_Ec_KS
+             DIP_v(idir,ic,iv,ik_mem,i_sp_pol)=cI*DIP_tmp(idir,ic,iv)*Ev_m_Ec_KS
            enddo
          enddo
        enddo

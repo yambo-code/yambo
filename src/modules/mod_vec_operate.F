@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -164,29 +164,45 @@ module vec_operate
      if (     present(zero_)) rlu_v_is_zero=v_is_zero(u,zero_)
    end function rlu_v_is_zero
    !
-   subroutine rot_v_xy_plane(t,v_in,v_out)
+   subroutine v_rotate(plane,t,v_in,v_out)
      !
-     ! Rotates v_in of theta in the xy plane
+     ! Rotates v_in of angle t in the 'plane'
      !
      use pars,     ONLY:rZERO,rONE
      !
+     character(2)      :: plane
      real(SP)          :: v_in(3),t
      real(SP), optional:: v_out(3)
-     !
+     ! ws
      real(SP)          :: M(3,3),v_loc(3)
      !
-     !     ( cos(t) -sin(t)  0 )
-     ! M = ( sin(t)  cos(t)  0 )
-     !     (   0       0     1 )
+     ! In the rotation plane
      !
-     M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+     !     ( cos(t) -sin(t) )
+     ! M = ( sin(t)  cos(t) )
+     !
+     select case(plane)
+       case('xy')
+         M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+       case('xz')
+         M=reshape((/cos(t),rZERO,-sin(t),sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+       case('yz')
+         M=reshape((/rZERO,cos(t),-sin(t),rZERO,sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+     end select
+     !
      v_loc=matmul(M,v_in)
      if (     present(v_out)) v_out=v_loc
      if (.not.present(v_out)) v_in =v_loc
      !
-   end subroutine rot_v_xy_plane
+   end subroutine v_rotate
    !
    subroutine c2a(b_in,v_in,v_out,mode)
+     !
+     ! rlu = Reduced Lattice Units (crystal coordinated in Quantum-Espresso)
+     ! cc  = Cartesian Coordinates (atomic units)
+     ! iku = Internal K-Units (internal Yambo units similar to 2pi/Alat in QE but with 3 scaling foctors)
+     ! 
+     ! Nota bene: "a" stands for "rlu" for no obvious reason  
      !
      ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
      ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)
@@ -368,7 +384,7 @@ module vec_operate
      !
    end subroutine get_id_perpendicular
    !
-   subroutine r_sort(arrin,arrout,indx,indx_m1)                             
+   subroutine r_sort(arrin,arrout,indx,indx_m1,r_zero)                             
      !
      ! Sort real(dt) values from arrin into array 
      ! arrout and give permutations in indx, indx_m1.
@@ -380,13 +396,17 @@ module vec_operate
      real(SP), optional::  arrout(:)
      integer,  optional::  indx(:)
      integer,  optional::  indx_m1(:)
+     real(SP), optional :: r_zero
      !
      ! local variables
      !
      integer  :: j, i,n, ir, l, indxt
-     real(SP) :: q
+     real(SP) :: q,r_zero_
      integer, allocatable:: l_indx(:)
      real(SP),allocatable:: l_arrout(:)
+     !
+     r_zero_=0._SP
+     if(present(r_zero)) r_zero_=r_zero
      !
      n=size(arrin)
      allocate(l_indx(n),l_arrout(n))
@@ -424,9 +444,9 @@ module vec_operate
      j=l+l
   2  if (j.le.ir)then
       if (j.lt.ir) then
-        if (arrin(l_indx(j)).lt.arrin(l_indx(j+1)))j=j+1
+        if (arrin(l_indx(j))<arrin(l_indx(j+1))-r_zero_) j=j+1
       endif
-      if (q.lt.arrin(l_indx(j))) then
+      if (q<arrin(l_indx(j))-r_zero_) then
         l_indx(i)=l_indx(j)
         i=j
         j=j+j

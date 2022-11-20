@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -25,11 +25,12 @@ subroutine of_open_close(of_name_extension,mode)
  !
  use pars,            ONLY:lchlen
  use com,             ONLY:of_name,of_opened,of_unit,write_to_of,n_ofs_defined
- use IO_m,            ONLY:get_name
+ use IO_int,          ONLY:get_name
 #if defined _NC_OUTPUT
  use stderr,          ONLY:STRING_remove
  use com,             ONLY:of_nc_pos,of_nc_var_names,of_nc_IDs
- use IO_m,            ONLY:io_control,io_connect,io_disconnect,OP_WR,WR_CL,NONE
+ use IO_int,          ONLY:io_control,io_connect,io_disconnect
+ use IO_m,            ONLY:OP_WR,WR_CL,NONE
 #endif
 #if defined _YAML_OUTPUT
  use f_utils,         ONLY:f_get_free_unit
@@ -55,6 +56,8 @@ subroutine of_open_close(of_name_extension,mode)
  if (len_trim(of_name_extension)==0) return
  !
  if (present(mode)) then
+   !
+   if (.not.write_to_of) return
    !
    ! Get full filename, including path and jobname, from extension
    !  
@@ -82,7 +85,7 @@ subroutine of_open_close(of_name_extension,mode)
      of_name_complete=of_name(file_index)
    endif
    !
-   if ( (index(mode,'o')==0.and.index(mode,'O')==0) .or. .not.write_to_of) return
+   if ( (index(mode,'o')==0.and.index(mode,'O')==0)) return
    !
    ! Here I open the unit using file_name to define the name
    !
@@ -147,6 +150,7 @@ subroutine of_open_close(of_name_extension,mode)
  !
 end subroutine of_open_close
 !
+#if !defined _io_lib
 subroutine write_the_logo(unit_,comment_)
  !
  use LIVE_t,       ONLY:LIVE_message
@@ -182,6 +186,7 @@ subroutine write_the_logo(unit_,comment_)
  if (unit_/=6.and.trim(comment_)=='#') write (unit_,'(a)') '#'
  !
 end subroutine write_the_logo
+#endif
 !
 subroutine rename_file(name)
  !
@@ -208,7 +213,9 @@ end subroutine rename_file
 !
 subroutine warning(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message
+#endif
  use stderr,     ONLY:STRING_pack
  use com,        ONLY:msg
  !
@@ -216,13 +223,17 @@ subroutine warning(mesg)
  !
  character(*) :: mesg
  call msg('nr',STRING_pack('[WARNING] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[WARNING] ',trim(mesg)),"n","","%s")
+#endif
  !
 end subroutine warning
 !
 subroutine error(mesg)
  !
+#if !defined _io_lib
  use LIVE_t,     ONLY:LIVE_message,live_timing_is_on
+#endif
  use stderr,     ONLY:STRING_pack,logfile_unit,log_as_a_file
  use com,        ONLY:secnm,msg
 #if defined _MPI
@@ -240,11 +251,15 @@ subroutine error(mesg)
  !
  if (len_trim(secnm)>0) then
    call msg('nr',STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)))
+#if !defined _io_lib
    call LIVE_message(STRING_pack('[ERROR] STOP signal received while in ',trim(secnm)),"nn","","%s")
+#endif
  endif
  call msg('nr',STRING_pack('[ERROR] ',trim(mesg)))
+#if !defined _io_lib
  call LIVE_message(STRING_pack('[ERROR] ',trim(mesg)),"n","","%s")
  call LIVE_message("","n","","%s")
+#endif
  if(log_as_a_file) call yambo_flush(logfile_unit)
  !
 #if defined _MPI
@@ -257,12 +272,10 @@ end subroutine error
 !
 subroutine yambo_flush(unit)
   !
-  !use com_interfcs,  ONLY:fsync
   !
   implicit none
   !
   integer, intent(in) :: unit
-  !integer :: ierr
   !
   flush(unit)
   !

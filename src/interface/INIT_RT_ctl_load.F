@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -32,7 +32,7 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  !
  use it_tools,      ONLY:it
  use it_m,          ONLY:initdefs,V_real_time
- use RT_control,    ONLY:RT_ctl_db,RT_ctl_interp_neigh
+ use RT_control,    ONLY:RT_ctl_db,RT_ctl_interp_neigh,N_RT_ctl_controls
  !
  implicit none
  integer, intent(in) :: i_type
@@ -40,14 +40,13 @@ subroutine INIT_RT_ctl_load(defs,i_type)
  ! 
  ! Work Space
  ! 
- character(1)      ::prefix(4)
- character(7)      ::description_ch(4)
+ character(1)      ::prefix(N_RT_ctl_controls)
+ character(7)      ::description_ch(N_RT_ctl_controls)
  !
- prefix=(/'X','K','G','R'/)
+ prefix=(/'X','K','G'/)
  description_ch(1)='Xd'
  description_ch(2)='BSK BSS'
  description_ch(3)='G'
- description_ch(4)='R'
  !
  call it(defs,prefix(i_type)//'fnRTdb',&
 &        '[EXTRT '//trim(description_ch(i_type))//'] Database',&

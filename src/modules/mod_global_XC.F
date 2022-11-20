@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -118,7 +118,11 @@ module global_XC
    H_SE_COH           = 326, &  ! Coulomb-Hole 
    H_SE_SEX           = 327, &  ! Screened-eXchange
    H_SE_COHSEX        = H_SE_SEX+H_SE_COH  ! Coulomb-Hole + Screened-eXchange
-   !
+ !
+ ! Phonons
+ integer, public, parameter :: &
+   QPH_X_RPA         = 501    ! Simple RPA PH self-energy
+ !
  contains
    !
    subroutine  setup_global_XC(what,kind,xc_functional,perturbation,exx_fraction,exx_screening,STRING)
@@ -138,6 +142,7 @@ module global_XC
      local_xc_functional=0
      local_perturbation=EXT_NONE
      local_exx_fraction = RZERO
+     local_exx_screening = RZERO
      if (present(xc_functional)) local_xc_functional=xc_functional
      if (present(perturbation))  local_perturbation=perturbation
      if (present(exx_fraction))  local_exx_fraction=exx_fraction
@@ -242,11 +247,11 @@ module global_XC
         case(QP_SE_COHSEX)
           global_XC_string='COHSEX'
         case(QP_SE_GoWo_PPA)
-          global_XC_string='GoWo Plasmon Pole appox.'
+          global_XC_string='GoWo Plasmon Pole approx.'
         case(QP_SE_GoWo)
           global_XC_string='GoWo on real axis'
         case(QP_SE_GWo_PPA)
-          global_XC_string='GWo Plasmon Pole appox.'
+          global_XC_string='GWo Plasmon Pole approx.'
         case(QP_SE_GWo)
           global_XC_string='GWo on real axis'
         case(QP_SE_POLARON)
@@ -255,6 +260,8 @@ module global_XC
           global_XC_string='OUT-of-EQ GW'
         case(QP_SE_GW_QED)
           global_XC_string='QED-based GW'
+        case(QPH_X_RPA)
+          global_XC_string='QPH RPA approx'
         case default
           if(trim(global_XC_string)/="".and.local_kind>1000) global_XC_string='SC HARTREE +'//trim(global_XC_string)
       end select

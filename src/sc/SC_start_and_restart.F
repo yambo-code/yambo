@@ -1,5 +1,5 @@
 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,14 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine SC_start_and_restart(X,E,Xk)
+subroutine SC_start_and_restart(X,E,Xk,Dip)
  !
  use pars,           ONLY:schlen
  use electrons,      ONLY:levels,n_spin
  use parser_m,       ONLY:parser 
  use com,            ONLY:msg
  use electrons,      ONLY:E_reset,E_duplicate
- use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_use_Hxc_collisions,&
+ use dipoles,        ONLY:DIPOLE_t
+ use drivers,        ONLY:l_sc_exx,l_sc_magnetic,l_sc_electric,l_use_Hxc_collisions,&
 &                         l_oep_exact,l_oep_kli,l_oep_slater, l_oep_ceda
  use units,          ONLY:HA2EV
  use R_lattice,      ONLY:bz_samp
@@ -44,7 +45,8 @@ subroutine SC_start_and_restart(X,E,Xk)
 &                         SC_fft_size,l_oep_EWeight,SC_cycle_mixing,SC_desc,  &
 &                         l_Mean_Potential,l_SC_nl_mix,magn_convergence,l_froze_density
  use X_m,            ONLY:X_t
- use IO_m,           ONLY:OP_RD_CL,io_control,REP,VERIFY,NONE,io_COLLs
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,REP,VERIFY,NONE,io_COLLs
  use FFT_m,          ONLY:fft_size
  use collision_ext,  ONLY:COLLISIONS_naming,COLLISIONS_have_HARTREE
  use descriptors,    ONLY:IO_desc_reset
@@ -54,6 +56,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  type(levels) ::E
  type(X_t)    ::X(2)  ! Xx Em1s
  type(bz_samp)::Xk
+ type(DIPOLE_t)::Dip
  !
  ! Workspace I/O
  !
@@ -80,19 +83,12 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Magnetic logical setup
  !========================
  !
-#if defined _MAGNETIC
- !
  if (l_sc_magnetic) call MAG_initial_check()
  !
-#endif
- !
-#if defined _ELECTRIC
- !
- call ELECTR_initial_check(Xk)
- !
- if(.not.associated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
- !
-#endif
+ if(l_sc_electric) then
+   call ELECTR_initial_check(Xk)
+   if(.not.allocated(Xk%k_table))      call k_build_up_BZ_tables(Xk)
+ endif
  !
  ! Switch to the user defined potential (if appropriate)
  !========
@@ -107,7 +103,7 @@ subroutine SC_start_and_restart(X,E,Xk)
  ! Dipoles & dimensions
  !======================
  ! 
- call WF_and_dipole_dimensions(X)
+ call WF_and_dipole_dimensions(X,Xk)
  !
  ! Before reading the SC energies save the KS one in E_reference
  !
@@ -145,8 +141,8 @@ subroutine SC_start_and_restart(X,E,Xk)
    !
    call msg('nr','[SC] Found   accuracy on density      ',rho_convergence)
    call msg('nr','[SC] Found   accuracy on magnetization',magn_convergence)
-   call msg('rn','[SC]                  on energies [ev]',E_convergence*HA2EV)
-   l_SC_cycle=.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
+   call msg('rn','[SC]                  on energies     ',E_convergence*HA2EV,"[eV]")
+   l_SC_cycle=.true. !.not.(E_convergence<SC_E_threshold.and.rho_convergence<SC_rho_threshold.and.magn_convergence<SC_rho_threshold)
    !
    ! Even if the accuracy on DB is not small enough with 0 iterations
    ! I can skip the SC cycle
@@ -185,7 +181,7 @@ subroutine SC_start_and_restart(X,E,Xk)
    call msg('r' ,'[SC] N (N-1) order mixing             ',SC_cycle_mixing)
    call msg('r' ,'[SC] Imposed accuracy on density      ',SC_rho_threshold)
    if(n_spin>1) call msg('r' ,'[SC]                  on magnetization',SC_rho_threshold)
-   call msg('rn','[SC]                  on energies [ev]',SC_E_threshold*HA2EV)
+   call msg('rn','[SC]                  on energies     ',SC_E_threshold*HA2EV,"[eV]")
  endif
  if (l_sc_exx) then
    if (.not.l_oep_slater) &

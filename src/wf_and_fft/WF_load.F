@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -21,7 +21,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
-&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load)
+&                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
@@ -36,15 +36,13 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                        fftw_plan,cufft_plan,fft_g_table_d
  use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
-&                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,QUIET_alloc,&
-&                        QUIET_free,WAVEs,states_to_load
- use IO_m,          ONLY:io_control,OP_RD,NONE,VERIFY,RD,RD_CL,&
-&                        DUMP,IO_and_Messaging_switch
+&                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
+ use IO_int,        ONLY:io_control,IO_and_Messaging_switch
+ use IO_m,          ONLY:OP_RD,NONE,VERIFY,RD,RD_CL,DUMP
  use wrapper,       ONLY:Vstar_dot_V
 #if defined _SC
  use SC,            ONLY:compatible_SC_DB,load_SC_components,SC_bands,found_SC_DB,SC_bands
- use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string,&
-&                        loaded_WF_xc_string
+ use global_XC,     ONLY:WF_kind,WF_xc_functional,WF_perturbation,global_XC_string
 #endif
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
@@ -62,6 +60,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  logical,     optional :: impose_free_and_alloc
  logical,     optional :: force_WFo
  logical,     optional :: keep_states_to_load
+ logical,     optional, intent(in) :: quiet
  !
  ! Work Space
  !
@@ -72,7 +71,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 &                   npwk
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
- logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_
+ logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_,QUIET_wf,SIZE_msg
  complex(SP), allocatable :: wf_disk(:,:,:)
  complex(DP), allocatable :: wf_DP(:)
  !
@@ -180,13 +179,11 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! In case of k by k I/O prevent multiple free/alloc
  !
- QUIET_alloc   =.FALSE.
- QUIET_free    =.FALSE.
- if (kpts_to_load(1)==kpts_to_load(2)) then
-   QUIET_alloc    =kpts_to_load(1)>1
-   QUIET_free     =kpts_to_load(2)<nkibz
-   if (QUIET_alloc) call IO_and_Messaging_switch("-report -log")
- endif
+ QUIET_wf = .false.
+ if (kpts_to_load(1)==kpts_to_load(2).and.kpts_to_load(2)>1) QUIET_wf = .true.
+ if (present(quiet))                                         QUIET_wf = quiet
+ if (QUIET_wf) call IO_and_Messaging_switch("-report -log")
+ SIZE_msg=.not.QUIET_wf.and.(any((/fft_dim_loaded/=fft_dim/)).or.any((/fft_dim==0/)))
  !
  ! First WF_free then fft_setup.
  !
@@ -251,7 +248,6 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #endif
  !
- !
  ! Init USPP if needed
  !
  call PP_uspp_init()
@@ -275,7 +271,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! LOG the states loaded
  !
- if (.not.(QUIET_alloc.or.QUIET_free).and.fat_log) then
+ if ((.not.QUIET_wf).and.fat_log) then
    if (buffer_is_ok.and.WF%space/="B") then
      call msg('rns','[WF'//trim(wf_title)//'] Loading Wave-Functions from buffer')
    else
@@ -283,8 +279,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    endif
  endif
  !
- if (WF%space=='R'.and..not.(QUIET_alloc.or.QUIET_free)) call msg('rns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
-
+ if (WF%space=='R'.and.SIZE_msg) call msg('ns','[FFT'//trim(wf_title)//'] Mesh size',fft_dim)
  !
  ! actual IO
  !
@@ -537,7 +532,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,wf,wf_grid_size)
+       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
      enddo
    enddo
    !
@@ -548,7 +543,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
 #endif
  !
  if (.not.wf_norm_test) then
-   if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
+   if (QUIET_wf) call IO_and_Messaging_switch("+report +log ")
    return
  endif
  !
@@ -572,7 +567,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  wf_norm_test=.false.
  call msg('rn','[WF'//trim(wf_title)//' loader] Normalization (few states)  min/max  ',(/mndp,mxdp/))
  !
- if (QUIET_alloc) call IO_and_Messaging_switch("+report +log ")
+ if (QUIET_wf) call IO_and_Messaging_switch("+report +log ")
  !
  contains
    !

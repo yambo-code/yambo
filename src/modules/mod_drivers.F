@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,12 +33,12 @@ module drivers
  !
  logical :: l_setup              =.FALSE.
  logical :: l_rim                =.FALSE.
+ logical :: l_RIM_W              =.FALSE.
  logical :: l_col_cut            =.FALSE.
  logical :: l_acfdt              =.FALSE.
  !
  ! Real Time
  !
- logical :: l_photolum           =.FALSE.
  logical :: l_real_time          =.FALSE.
  logical :: l_sc_run             =.FALSE.
  logical :: l_sc_electric        =.FALSE.
@@ -47,18 +47,21 @@ module drivers
  logical :: l_eval_collisions    =.FALSE.
  logical :: l_use_collisions     =.FALSE.
  logical :: l_nl_optics          =.FALSE.
+ logical :: l_nl_p_and_p         =.FALSE.
  !
  ! The self-energy correlation "kind"
  !
  logical :: l_elphoton_corr      =.FALSE.
  logical :: l_elel_corr          =.FALSE.
  logical :: l_elph_corr          =.FALSE.
+ logical :: l_phel_corr          =.FALSE.
  !
  ! The non-eq. self-energy scattering "kind"
  !
  logical :: l_elphoton_scatt     =.FALSE.
  logical :: l_elel_scatt         =.FALSE.
  logical :: l_elph_scatt         =.FALSE.
+ logical :: l_phel_scatt         =.FALSE.
  !
  ! Electron-Phonon specific flags
  !
@@ -76,13 +79,16 @@ module drivers
  !
  logical :: l_optics             =.FALSE.
  logical :: l_chi                =.FALSE.
- logical :: l_em1d               =.FALSE.
- logical :: l_em1s               =.FALSE.
  logical :: l_dipoles            =.FALSE.
  logical :: l_bse                =.FALSE.
  logical :: l_bss                =.FALSE.
- logical :: l_kerr               =.FALSE.
- logical :: l_anomalous_Hall     =.FALSE.
+ !
+ ! The screening runlevels ...
+ !
+ logical :: l_screen             =.FALSE.
+ logical :: l_X                  =.FALSE.
+ logical :: l_em1d               =.FALSE.
+ logical :: l_em1s               =.FALSE.
  !
  ! ... and the kernel
  !
@@ -94,9 +100,7 @@ module drivers
  logical :: l_lrc_fxc            =.FALSE.
  logical :: l_pf_fxc             =.FALSE.
  logical :: l_td_hf              =.FALSE.
- logical :: l_W_eh               =.FALSE.
- logical :: l_W_eh_diag          =.FALSE.
- logical :: l_W_eh_cpl           =.FALSE.
+ logical :: l_td_sex             =.FALSE.
  !
  ! XC kinds (Potential)
  !

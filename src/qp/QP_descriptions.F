@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! WARNING ! Changes here must be updated in io_QP_and_GF as well.
  !
  use units,         ONLY:HA2EV
- use X_m,           ONLY:X_t,use_X_DbGd
+ use X_m,           ONLY:X_t,use_X_DbGd,OPTICAL_averaged_dirs_string
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
 &                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
@@ -37,10 +37,10 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use R_lattice,     ONLY:RIM_qpg,RIM_n_rand_pts,RIM_ng
  use interfaces,    ONLY:QP_state_print
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:ver_is_gt_or_eq
+ use IO_int,        ONLY:ver_is_gt_or_eq
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr 
- use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nDBs_used,&
+ use ELPH,          ONLY:QP_PH_n_G_bands,elph_branches,elph_nQ_used,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
 #if defined _QED
@@ -58,6 +58,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! 
  ! Work Space
  !
+ integer           :: id
  integer, save     :: n_descs_save
  !
  if (.not.Update) n_descs_save=qp%desc%n
@@ -97,7 +98,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='X e/h E range',term='ev',SZ=2,kind='r',R=X%ehe*HA2EV)
    !
    if (ver_is_gt_or_eq(-1,(/3,0,5/))) then
-     call IO_desc_add(qp%desc,str='X xc-Kernel',kind='s',S=trim(X%f_xc))
+     call IO_desc_add(qp%desc,str='X Hxc Kernel',kind='s',S=trim(X%KERNEL))
    endif
    !
    if (.not.l_ppa.and..not.l_cohsex) then
@@ -111,6 +112,12 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    if (ver_is_gt_or_eq(-1,(/3,0,1/))) then
      !
      call IO_desc_add(qp%desc,str='X BZ energy Double Grid',kind='l',L=use_X_DbGd)
+     !
+   endif
+   !
+   if (ver_is_gt_or_eq(-1,(/5,1,1/))) then
+     !
+     call IO_desc_add(qp%desc,str='X Optical Averaged directions',kind='s',S=OPTICAL_averaged_dirs_string)
      !
    endif
    !
@@ -185,14 +192,14 @@ subroutine QP_descriptions(qp,X,Xw,Update)
      !
      call IO_desc_add(qp%desc,str='El-Ph correlation',kind='l',L=l_elph_corr)
      !
-     call IO_desc_add(qp%desc,str='El-Ph Sc. G bands',SZ=2,kind='i',I=(/1,QP_PH_n_G_bands/))
+     call IO_desc_add(qp%desc,str='El-Ph Sc. G bands',SZ=2,kind='i',I=(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/))
      !
      if (ver_is_gt_or_eq(-1,(/3,2,2/))) then
        call IO_desc_add(qp%desc,str='El-Ph phonon branches',SZ=2,kind='i',I=elph_branches)
      endif
      !
      if (ver_is_gt_or_eq(-1,(/4,0,0/))) then
-       call IO_desc_add(qp%desc,str='El-Ph momenta used',kind='i',I=(/elph_nDBs_used/))
+       call IO_desc_add(qp%desc,str='El-Ph momenta used',kind='i',I=(/elph_nQ_used/))
      endif
      !
      if (ver_is_gt_or_eq(-1,revision=4400)) then
@@ -224,6 +231,13 @@ subroutine QP_descriptions(qp,X,Xw,Update)
    call IO_desc_add(qp%desc,str='[GF] Damping',term='ev',SZ=2,kind='r',R=QP_G_dr*HA2EV)
    !
  endif
+ !
+ ! Force all desc components to be checked at the I/O time
+ !
+ do id=1,qp%desc%n
+   qp%desc%ops(1,id)="=="
+   qp%desc%check(id)=.TRUE.
+ enddo
  !
  ! QP states
  !

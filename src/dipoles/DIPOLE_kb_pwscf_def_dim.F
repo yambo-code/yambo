@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2017 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -32,7 +32,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  use R_lattice,     ONLY:b
  use wave_func,     ONLY:wf_ncx,wf_nc_k
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species
- use pseudo,        ONLY:pp_n_l_times_proj_max,pp_table, &
+ use pseudo,        ONLY:pp_n_l_times_proj_max,pp_table,pp_kbv_dim_atom, &
 &                        pp_kbs,pp_kb,pp_kbd,pp_kbv_dim,pp_kbv_dim_yambo,   &
 &                        pp_kbv_table
  !
@@ -42,7 +42,7 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  complex(SP) :: tmp_var(wf_ncx,n_spinor,2),check(2)
  !
- integer     :: ic,i2,i1,is,ia,i_spinor
+ integer     :: ic,i2,i1,i3,is,ia,i_spinor
  integer     :: im,il,i_pp,j2p1
  !
  allocate(pp_kbv_table(pp_kbv_dim))
@@ -50,9 +50,11 @@ subroutine Dipole_kb_pwscf_def_dim()
  !
  i1=0
  i2=0
+ pp_kbv_dim_atom=0
  !
  do is = 1,n_atomic_species
    do ia = 1,n_atoms_species(is)
+     i3=0
      do i_pp=1,pp_n_l_times_proj_max
        !
        il      = pp_table(1,is,i_pp)
@@ -63,6 +65,7 @@ subroutine Dipole_kb_pwscf_def_dim()
          !
          i1=i1+1
          i2=i2+1
+         i3=i3+1
          !
          do i_spinor=1,n_spinor
            do ic=1,wf_nc_k(1)
@@ -83,6 +86,7 @@ subroutine Dipole_kb_pwscf_def_dim()
          !
        enddo
      enddo
+     pp_kbv_dim_atom=max(pp_kbv_dim_atom,i3)
    enddo
  enddo
  !

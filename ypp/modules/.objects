@@ -1,8 +1,6 @@
-RT_obj =
 #if defined _YPP_RT || YPP_NL
 RT_obj = mod_YPP_real_time.o
 #endif
-ELPH_obj =
 #if defined _YPP_ELPH || defined _YPP_RT
 ELPH_obj = mod_YPP_ELPH.o
 #endif

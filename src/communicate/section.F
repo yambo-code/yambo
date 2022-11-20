@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,19 +27,20 @@ subroutine section(mode,name)
  !      =  +     : increase level
  !      =  -     : decrease level
  !      =  p     : increase the level ONLY in this section
- !      = +P     : increase the level and save the current level
+ !      = +P     : save the current level and increase it 
  !      = -P     : restore the level saved with +P and exit
  !      =  #     : increase level #
  !      =  r     : reset to zero level end exit
  !
- use pars,       ONLY:lchlen,schlen,DP
- use it_tools,   ONLY:ofiles_append
- use stderr,     ONLY:STRING_pack
- use LIVE_t,     ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
- use parallel_m, ONLY:PP_redux_wait,ncpu
- use com,        ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
-&                     write_to_report,repfile_unit,repfile,previous_secmode
- use timing_m,   ONLY:timing_upto_now
+ use pars,            ONLY:lchlen,schlen,DP
+ use it_tools,        ONLY:ofiles_append
+ use stderr,          ONLY:STRING_pack
+ use LIVE_t,          ONLY:time_string,ct,date_time_at_start,cput_tot,cput_sec,date_and_time_string
+ use parallel_m,      ONLY:ncpu
+ use parallel_int,    ONLY:PP_wait,PP_redux_wait
+ use com,             ONLY:msg,depth,isec,secnm,depth_SAVE_pp,isec_SAVE_pp,depth_SAVE_p,isec_SAVE_p,&
+&                          write_to_report,repfile_unit,repfile,previous_secmode
+ use timing_m,        ONLY:timing_upto_now
 #if defined _YAML_OUTPUT
  use pars,            ONLY:repfile_index
  use com,             ONLY:of_yaml_IDs,depth_yaml
@@ -91,7 +92,7 @@ subroutine section(mode,name)
    depth_SAVE_p=depth 
  endif
  !
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Get HostName date & time etc...
  !
@@ -212,6 +213,6 @@ subroutine section(mode,name)
    !
  endif
  !
- call PP_redux_wait
+ call PP_wait()
  !
 end subroutine

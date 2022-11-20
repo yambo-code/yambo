@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -53,7 +53,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  implicit none
  real(SP),  intent(inout) :: Voep(fft_size)
  real(SP),  intent(in)    :: Vslt(fft_size),rho(fft_size)
- complex(SP), intent(in)  :: U(nkibz,n_met_bands,fft_size)
+ complex(SP), intent(in)  :: U(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k
  !
@@ -71,8 +71,8 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  ik_max = 0
  ev_max = -1000._SP
  do ik = 1, nkibz 
-   if (E%E(E%nbf,ik,1).gt.ev_max) then
-     ev_max = E%E(E%nbf,ik,1)
+   if (E%E(E%nbf(1),ik,1).gt.ev_max) then
+     ev_max = E%E(E%nbf(1),ik,1)
      ik_max = ik
    endif
  enddo
@@ -81,10 +81,10 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
  !
  if (l_oep_kli) then
    timing_str='[KLI] Cycle'
-   max_bands =  E%nbf 
+   max_bands =  E%nbf(1) 
  elseif (l_oep_ceda) then
    timing_str='[CED] Cycle'
-   max_bands = E%nbf 
+   max_bands = E%nbf(1) 
  elseif (l_oep_exact) then
    timing_str='[OEP] Cycle'
    max_bands = SC_bands(2)
@@ -98,12 +98,12 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
    V_nm1 = V_io
      V_resp = 0._SP
      do ik = 1, nkibz 
-       do iv1 = 1, E%nbf 
+       do iv1 = 1, E%nbf(1) 
          ifft = WF%index(iv1,ik,1)
          do iv2 = 1, max_bands
            if  (l_oep_kli.and.(iv1.ne.iv2)) cycle
            if  ((iv1.eq.iv2).and.(ik.eq.ik_max).and.&
-                &((iv2.eq.E%nbf).or.(abs(E%E(iv2,ik_max,1)-E%E(E%nbf,ik_max,1)).lt.1.e-4))) cycle 
+                &((iv2.eq.E%nbf(1)).or.(abs(E%E(iv2,ik_max,1)-E%E(E%nbf(1),ik_max,1)).lt.1.e-4))) cycle 
            offt = WF%index(iv2,ik,1)
            DeltaEps = 0._SP
            do ir = 1, fft_size
@@ -111,7 +111,7 @@ subroutine OEP_iterative(E,k,Voep,Vslt,U,rho)
 &             U(ik,iv2,ir)*conjg(WF%c(ir,1,ifft))
            end do
            if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
-           if ((l_oep_EWeight).and.(iv2.gt.E%nbf)) &
+           if ((l_oep_EWeight).and.(iv2.gt.E%nbf(1))) &
            &EWeight = EWeight*((E%E(iv2,ik,1)-E%E(iv1,ik,1))/(E%E(iv2,ik,1)+ E%E_Fermi))    
            V_resp(:) = V_resp(:) + E%f(iv1,ik,1)*k%weights(ik)*real((DeltaEps)*&
                 &conjg(WF%c(:,1,ifft))*WF%c(:,1,offt))/EWeight

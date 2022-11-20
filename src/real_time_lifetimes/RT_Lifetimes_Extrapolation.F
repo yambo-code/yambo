@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine RT_Lifetimes_Extrapolation(Life,Time,Life_SAVED,Times_SAVED)
  !
  use pars,           ONLY:SP
- use real_time,      ONLY:Life_MEM_steps,l_RT_lifetimes_extrapolation
+ use RT_lifetimes,   ONLY:Life_MEM_steps,l_RT_lifetimes_extrapolation
  use POL_FIT_m,      ONLY:POL_LK_fit
  !
  implicit none

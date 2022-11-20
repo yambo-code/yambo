@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -193,18 +193,16 @@ module LIVE_t
      cd=" "
      if (d>0) then
        write (cd,'(i2.2,a)') d,'d'
-       if (h>0)  write (ch,'(a,i2.2,a)') '-',h,'h'
-       if (m>0)  write (ch,'(a,i2.2,a)') '-',m,'m'
-       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+       write (ch,'(a,i2.2,a)') '-',h,'h'
+       write (cm,'(a,i2.2,a)') '-',m,'m'
      else if (h>0) then
-       write (cd,'(i2.2,a)') h,'h'
-       if (m>0)  write (ch,'(a,i2.2,a)') '-',m,'m'
-       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+       write (ch,'(i2.2,a)') h,'h'
+       write (cm,'(a,i2.2,a)') '-',m,'m'
      else if (m>0) then
-       write (cd,'(i2.2,a)') m,'m'
-       if (s>0)  write (ch,'(a,i2.2,a)') '-',s,'s'
+       write (cm,'(i2.2,a)') m,'m'
+       write (cs,'(a,i2.2,a)') '-',s,'s'
      else if (s>1) then
-       write (cd,'(i2.2,a)') s,'s'
+       write (cs,'(i2.2,a)') s,'s'
      endif
      time_string=trim(cd)//trim(ch)//trim(cm)//trim(cs)
    end function
@@ -218,7 +216,7 @@ module LIVE_t
      ! rfmt    =right formatting (n nn r)
      ! sfmt    =Message formatting
      !
-     use stderr,     ONLY : c_print,logfile,logfile_unit,write_to_log,intc,logfile_unit
+     use stderr,     ONLY : c_print,logfile_unit,write_to_log,intc
      use parallel_m, ONLY : myid,ncpu,n_nodes,host_name
      implicit none
      character(*)          :: message
@@ -235,8 +233,7 @@ module LIVE_t
      !
      rfmt_=" "
      sfmt_="%s"
-     if (.not.log_as_a_file) lfmt_="r"
-     if (     log_as_a_file) lfmt_="n"
+     lfmt_="n"
      !
      if (present(lfmt)) lfmt_=trim(lfmt)
      if (present(rfmt)) rfmt_=trim(rfmt)
@@ -338,12 +335,10 @@ module LIVE_t
    end subroutine
    !
    subroutine live_timing_close( )
+     use stderr,  ONLY:log_as_a_file,logfile_unit
      implicit none
-     ! 
-     if (steps_done==time_steps) return
-     !
-     call live_timing_add(steps=time_steps-steps_done)
-     !
+     if (.not.steps_done==time_steps) call live_timing_add(steps=time_steps-steps_done)
+     if(log_as_a_file) flush(logfile_unit)
    end subroutine
    !
    !

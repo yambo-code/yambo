@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -61,31 +61,30 @@ subroutine MAG_Hamiltonian()
  use R_lattice,      ONLY:nkibz
  use magnetic,       ONLY:MAG_B,MAG_landau,MAG_pauli,ir_table, &
 &                         A_magn_x,A_magn_y,A_magn_z,Bx,By,Bz
- use electrons,      ONLY:n_sp_pol,n_spinor,n_spin
+ use electrons,      ONLY:n_sp_pol,n_spinor,n_spin,spin
+ use hamiltonian,    ONLY:H_ref_bands
  use SC,             ONLY:SC_bands
  use wave_func,      ONLY:WF,wf_x,wf_y,wf_z,WF_derivative_free
  use LIVE_t,         ONLY:live_timing
- use parallel_m,     ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
+ use interfaces,     ONLY:WF_load,WF_free
  use wrapper,        ONLY:Vstar_dot_V
+ use parallel_m,     ONLY:PAR_IND_QP,HEAD_QP_cpu
+ use QP_m,           ONLY:QP_table,QP_n_states
  !
 #include<memory.h>
  !
- ! Parallelization indexes
- !
- type(PP_indexes) ::px
- !
  ! Dummies
  !
- integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_spinor,j_spinor
- logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on,timing_init
+ integer    :: ir,i_sp_pol,i_wf,ip_wf,ik,ib,ibp,i_qp,i_spinor,j_spinor,n_par_el
+ logical    :: do_derivatives(3),H_magn_x_on,H_magn_y_on,H_magn_z_on
+ logical    :: PAR_IND_local(H_ref_bands(1):H_ref_bands(2),H_ref_bands(1):H_ref_bands(2))
  !
  ! Allocs
  !
  real(SP),    allocatable :: r_cell_cc(:,:)
  complex(SP), allocatable :: H_tmp(:,:,:),H_pauli(:,:,:,:)
  real(SP),    allocatable :: H_paramagn_x(:),H_paramagn_y(:),H_paramagn_z(:),&
-&                            H_diamagn(:) 
+&                            H_diamagn(:)
  !
  call MAG_common_build_A(.true.)
  !
@@ -94,7 +93,7 @@ subroutine MAG_Hamiltonian()
  H_magn_z_on=allocated(A_magn_z)
  !
  ! Symmetries check
- call Check_symmetries((/Bx,By,Bz/))
+ call Check_symmetries((/Bx,By,Bz/),"magnetic")
  !
  call local_alloc(0) 
  !
@@ -148,13 +147,6 @@ subroutine MAG_Hamiltonian()
  call local_free(1)
  call local_alloc(1)
  !
- ! Parallel indexes
- !
- call PP_indexes_reset(px)
- call PARALLEL_index(px,(/nkibz,SC_bands(2)/))
- call PP_redux_wait
- !==================================================
- !
  if (MAG_landau) then
    do_derivatives(:)=.false.
    if(H_magn_x_on) do_derivatives(1)=.true.
@@ -162,28 +154,45 @@ subroutine MAG_Hamiltonian()
    if(H_magn_z_on) do_derivatives(3)=.true.
  endif
  !
- timing_init=.true.
+ PAR_IND_local=.false.
+ do i_qp=1,QP_n_states
+   if (.not.HEAD_QP_cpu)                 cycle
+   if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+   ib =QP_table(i_qp,1)
+   ibp=QP_table(i_qp,2)
+   PAR_IND_local(ib,ibp)=.TRUE.
+ enddo 
+ n_par_el=n_sp_pol*nkibz*count(PAR_IND_local)
+ if(n_par_el>0) call live_timing('MAG-Hamiltonian',n_par_el)
  !
- do ik=1,nkibz   
-   ! 
-   if( any(px%element_2D(ik,:)) ) then
-     if (MAG_landau) call WF_derivative((/1,SC_bands(2)/),(/ik,ik/),do_derivatives)
-     call WF_load(WF,0,1,(/1,SC_bands(2)/),(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
-     if(timing_init) call live_timing('MAG-Hamiltonian',px%n_of_elements(myid+1)*n_sp_pol)
-     timing_init=.false.
-   endif
+ do i_sp_pol=1,n_sp_pol   
    !
-   do i_sp_pol=1,n_sp_pol   
+   do ik=1,nkibz   
      !
-     do ib=1,SC_bands(2)
-       !
-       if (.not.px%element_2D(ik,ib)) cycle
+     if (MAG_landau) call WF_derivative(SC_bands,(/ik,ik/),(/i_sp_pol,i_sp_pol/),do_derivatives,.false.)
+     call WF_load(WF,0,1,SC_bands,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+     &    impose_free_and_alloc=.true.,title='-MAG',keep_states_to_load=.true.)
+     ! 
+     PAR_IND_local=.false.
+     do i_qp=1,QP_n_states
+       if (.not.HEAD_QP_cpu)                 cycle
+       if (     QP_table(i_qp,3) /=ik      ) cycle
+       if (spin(QP_table(i_qp,:))/=i_sp_pol) cycle
+       if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
+       ib =QP_table(i_qp,1)
+       ibp=QP_table(i_qp,2)
+       PAR_IND_local(ib,ibp)=.TRUE.
+     enddo 
+     !
+     do ib=SC_bands(1),SC_bands(2)
        !
        i_wf=WF%index(ib ,ik,i_sp_pol)
        !
-       do ibp=1,SC_bands(2)
+       do ibp=ib,SC_bands(2)
          !
          ip_wf=WF%index(ibp,ik,i_sp_pol)
+         !
+         if (.not.PAR_ind_local(ib,ibp) ) cycle
          !
          do j_spinor=1,n_spinor
            !
@@ -213,7 +222,10 @@ subroutine MAG_Hamiltonian()
 &              Vstar_dot_V(fft_size,WF%c(:,i_spinor,i_wf),H_tmp(:,i_spinor,j_spinor))
              !
            enddo
+           !
          enddo
+         !
+         if(ib/=ibp) Hzero(ibp,ib,ik,i_sp_pol)=conjg(Hzero(ib,ibp,ik,i_sp_pol))
          !
        enddo
        !
@@ -221,17 +233,14 @@ subroutine MAG_Hamiltonian()
        !
      enddo
      !
+     if(MAG_landau) call WF_derivative_free()
+     call WF_free(WF)
+     !
    enddo
-   !
-   if(MAG_landau) call WF_derivative_free()
-   call WF_free(WF)
-   !
-   call PP_redux_wait(Hzero(:,:,ik,:))
    !
  enddo
  !
- call live_timing()
- call PP_indexes_reset(px)
+ if(n_par_el>0) call live_timing()
  !
  ! Clean Up
  !

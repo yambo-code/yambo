@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS, AF
@@ -41,7 +41,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  complex(SP), pointer     DEV_ATTR :: WF_p(:,:,:)
  integer  :: i_wf
- integer  :: ifft,i_spinor,isymm
+ integer  :: ifft,isymm
 
  i_wf=WF%index(isc(1),isc(2),isc(4))
  !
@@ -57,6 +57,7 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  if(isc(3)==idt_index) then
    !
    call dev_memcpy(WF_symm,DEV_VAR(WF%c)(:,:,i_wf))
+   return
    !
  endif
  !

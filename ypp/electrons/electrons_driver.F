@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -32,9 +32,11 @@ subroutine electrons_driver(Xk,Xen,Xq)
  use YPP_interfaces, ONLY:PROJECTION_setup
  use YPPm,           ONLY:l_density,l_mag,v2plot,&
 &                         nr,l_sp_wf,DOS_bands,plot_title,l_dos,l_bands,l_current,&
-&                         l_angular_momentum,l_position,l_mean_potential
+&                         l_angular_momentum,l_position,l_mean_potential,INTERP_input_mode
  use xc_functionals, ONLY:magn
- use interfaces,     ONLY:WF_load,WF_free,PARALLEL_WF_index,PARALLEL_global_indexes,PARALLEL_WF_distribute
+ use interfaces,     ONLY:WF_load,WF_free
+ use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interpolate,    ONLY:INTERP_mode
  !
 #include<memory.h>
  !
@@ -51,6 +53,8 @@ subroutine electrons_driver(Xk,Xen,Xq)
  if ( .not. any((/l_density,l_mag,l_sp_wf,l_dos,l_bands,l_current,&
 &                 l_mean_potential,l_angular_momentum,l_position/)) ) return
  !
+ INTERP_input_mode=INTERP_mode
+ !
  ! Projection
  !============
  call PROJECTION_setup("setup")
@@ -62,7 +66,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  ! States selector
  !=================
  !
- NB=(/1,Xen%nbm/)
+ NB=(/1,maxval(Xen%nbm)/)
  NK=(/1,Xk%nibz/)
  !
  if ( any((/l_sp_wf,l_angular_momentum,l_position,l_mean_potential/)) ) then
@@ -112,9 +116,7 @@ subroutine electrons_driver(Xk,Xen,Xq)
  !===============
  if (l_mag) call electrons_magnetization(Xk,Xen)
  !
- ! GPL_EXCLUDE_START
- !
-#if defined _YPP_MAGNETIC
+#if defined _YPP_SC
  !
  ! Angular momentum 
  !==================
@@ -125,8 +127,6 @@ subroutine electrons_driver(Xk,Xen,Xq)
  if (l_position)         call electrons_position(NK,NB,1.,'cylindrical','2d')
  !
 #endif
- !
- ! GPL_EXCLUDE_END
  !
  ! CURRENT
  !=========

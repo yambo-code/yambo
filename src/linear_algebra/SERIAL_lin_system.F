@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -88,7 +88,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  character(64)     :: subname="SERIAL_lin_system_gpu"
  type(LALGEBRA_WS) :: WS
  integer :: lwork
- integer, device:: i_fail_d
  !
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='start')
  !

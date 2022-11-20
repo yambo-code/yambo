@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -26,9 +26,9 @@ integer function io_NLCC_pwscf(ID)
  use pars,             ONLY:SP
  use D_lattice,        ONLY:n_atomic_species
  use R_lattice,        ONLY:ng_vec
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
-&                           io_elemental,io_bulk,io_header,&
-&                           read_is_on
+ use IO_m,             ONLY:io_sec,read_is_on
+ use IO_int,           ONLY:io_connect,io_disconnect, &
+&                           io_elemental,io_bulk,io_header
  use pseudo,           ONLY:pp_rhog_nlcc,pp_has_nlcc_atom,PP_nlcc_alloc
  !
  implicit none

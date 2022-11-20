@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM FP AMS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_Fermi_excitation(E,k,SUCCESS)
+subroutine RT_Fermi_excitation(E,k,do_kpt,SUCCESS)
  !
  ! What I want is:
  ! [i]   Select arbitrarily chemical potentials for holes and electrons 
@@ -42,6 +42,7 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
  !
  type(levels),  intent(in) :: E
  type(bz_samp), intent(in) :: k
+ logical,       intent(in) :: do_kpt(RT_carriers%nk)
  logical,       intent(out):: SUCCESS
  !
  ! Work Space
@@ -49,7 +50,7 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
  integer  :: i_RT,ib,ik,i_mu
  real(SP) :: mu_elec,mu_hole,delta_Nel,delta_Nho,mu_step
  !
- RT_carriers%delta_f=0._SP
+ RT_carriers%OCC_el%dN=0._SP
  mu_hole=Eh_mu(1)+E%E_VBM(1) ! Negative wrt VBM
  mu_elec=Eh_mu(2)+E%E_CBm(1)
  !
@@ -75,9 +76,11 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
      endif ! increase or reduce h_mu
      !
      call msg('sr','[RT] Autotuning of mu_hole - step ',abs(i_mu))
-     call msg('sr','[RT] Chemical potentials (holes, electrons)     [eV]', HA2EV*(/mu_hole-E%E_VBM(1),Eh_mu(2)/))
-     call msg('sr','[RT] Pumped holes     number and density [none,cm-3]',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
-     call msg('sr','[RT] Pumped electrons number and density [none,cm-3]',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+     call msg('sr','[RT] Chemical potentials (holes, electrons)         ', HA2EV*(/mu_hole-E%E_VBM(1),Eh_mu(2)/),"[eV]")
+     call msg('sr','[RT] Pumped holes     number and density            ',&
+&                  delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/),'[none,cm-3]')
+     call msg('sr','[RT] Pumped electrons number and density            ',&
+&                  delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/),'[none,cm-3]')
    enddo ! autotune loop
    !
  else  ! independent e_mu and h_mu   
@@ -86,8 +89,10 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
    !
    call pump_Fermi()
    !
-   call msg('sr','[RT] Pumped holes     number and density [none,cm-3]',delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
-   call msg('sr','[RT] Pumped electrons number and density [none,cm-3]',delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/))
+   call msg('sr','[RT] Pumped holes     number and density            ',&
+&                  delta_Nho*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/),'[none,cm-3]')
+   call msg('sr','[RT] Pumped electrons number and density            ',&
+&                  delta_Nel*(/1._SP,1._SP/(DL_vol*BO2ANG**3*1.E-24_SP)/),'[none,cm-3]')
  endif ! autotune or not
  !
  SUCCESS=.TRUE.
@@ -101,17 +106,20 @@ subroutine RT_Fermi_excitation(E,k,SUCCESS)
        ib = RT_carriers%table(i_RT,1)
        ik = RT_carriers%table(i_RT,2)
        !
+       if(.not.do_kpt(ik)) cycle
+       !
        if(E%E(ib,ik,1)<=E%E_VBM(1)) then
-         RT_carriers%delta_f(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-mu_hole),Eh_temp(1))
-         delta_Nho=delta_Nho+RT_carriers%delta_f(i_RT)*k%weights(ik)
+         RT_carriers%OCC_el%dN(i_RT)=-spin_occ*Fermi_fnc(-(E%E(ib,ik,1)-mu_hole),Eh_temp(1))
+         delta_Nho=delta_Nho+RT_carriers%OCC_el%dN(i_RT)*k%weights(ik)
        endif
        !
        if(E%E(ib,ik,1)>=E%E_CBm(1)) then !.and. i_mu==0) then
-         RT_carriers%delta_f(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,1)-mu_elec),Eh_temp(2)) !k%weights is here non in Delta_Nel
-         delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weights(ik)
+         RT_carriers%OCC_el%dN(i_RT)= spin_occ*Fermi_fnc( (E%E(ib,ik,1)-mu_elec),Eh_temp(2)) !k%weights is here non in Delta_Nel
+         delta_Nel=delta_Nel+RT_carriers%OCC_el%dN(i_RT)*k%weights(ik)
        endif
        !
      enddo
+     !
    end subroutine
    !
 end subroutine RT_Fermi_excitation

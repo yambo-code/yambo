@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,19 +40,26 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  !
  ! Work Space
  !
- integer :: i1,i2,ik,ikp,iv,ic,Nv,Nc,i_sp,i_pole,ic_min,Nc_XTerm
+ integer :: ik_bz,i_sym,ik,ik_m_q,iv,ic,Nv(n_sp_pol),Nc(n_sp_pol),i_sp,i_pole,ic_min,Nc_XTerm(n_sp_pol),N_tot
  logical :: MPI_logicals_on,l_XTerm_vv
  real(SP):: E_eh,E_in,f_eh,local_tresh
  real(SP), allocatable :: poles(:),Ein_poles(:)
  !
- Nv=Xen%nbm-X%ib(1)+1
- Nc=X%ib(2)-Xen%nbf
+ do i_sp=1,n_sp_pol
+   Nv(i_sp)=Xen%nbm(i_sp)-X%ib(1)+1
+   Nc(i_sp)=X%ib(2)-Xen%nbf(i_sp)
+ enddo
  !
  Nc_XTerm=0
  if (l_X_terminator) Nc_XTerm=Nv
  !
- YAMBO_ALLOC(poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
- YAMBO_ALLOC(Ein_poles,(Xk%nbz*Nv*(Nc+Nc_XTerm)*n_sp_pol))
+ N_tot=0
+ do i_sp=1,n_sp_pol
+   N_tot=N_tot+Nv(i_sp)*(Nc(i_sp)+Nc_XTerm(i_sp))
+ enddo
+ !
+ YAMBO_ALLOC(poles,(Xk%nbz*N_tot))
+ YAMBO_ALLOC(Ein_poles,(Xk%nbz*N_tot))
  !
  MPI_logicals_on=allocated(PAR_IND_Xk_bz%element_1D)
  !
@@ -65,43 +72,43 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
  X_eh_setup=0
  local_tresh=epsilon(1._SP)
  !
- do i1=1,Xk%nbz
+ do i_sp=1,n_sp_pol
+ do ik_bz=1,Xk%nbz
    !
    if (MPI_logicals_on) then
-     if (.not.PAR_IND_Xk_bz%element_1D(i1)) cycle 
+     if (.not.PAR_IND_Xk_bz%element_1D(ik_bz)) cycle 
    endif
    !
-   do iv=X%ib(1),X%ib(1)+Nv-1
+   do iv=X%ib(1),X%ib(1)+Nv(i_sp)-1
      !
      if (MPI_logicals_on) then
        if (.not.PAR_IND_VAL_BANDS_X(X%whoami)%element_1D(iv)) cycle 
      endif
      !
      ! setting terminator bnd range
-     ic_min = X%ib(2)-Nc+1
+     ic_min = X%ib(2)-Nc(i_sp)+1
      if (l_X_terminator) ic_min=X%ib(1) 
      !
      do  ic=ic_min,X%ib(2)
-       do i_sp=1,n_sp_pol
          !
          if (MPI_logicals_on) then
            if (.not.PAR_IND_CON_BANDS_X(X%whoami)%element_1D(ic)) cycle 
          endif
          !
-         i2=qindx_X(iabs(iq),i1,1)
-         ik=Xk%sstar(i1,1) 
-         ikp=Xk%sstar(i2,1)
+         i_sym  =qindx_X(iabs(iq),ik_bz,1)
+         ik     =Xk%sstar(ik_bz,1) 
+         ik_m_q =Xk%sstar(i_sym,1)
          !
          ! terminator handling
-         if (ic>=X%ib(1).and.ic<=Xen%nbm.and.l_X_terminator) then
+         if (ic>=X%ib(1).and.ic<=Xen%nbm(i_sp).and.l_X_terminator) then
            l_XTerm_vv=.TRUE.
-           E_eh=X_term_E-Xen%E(iv,ikp,i_sp)       
+           E_eh=X_term_E-Xen%E(iv,ik_m_q,i_sp)       
          else
            l_XTerm_vv=.FALSE.
-           E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ikp,i_sp)
+           E_eh=Xen%E(ic,ik,i_sp)-Xen%E(iv,ik_m_q,i_sp)
          endif 
          !
-         E_in=Xen%E(iv,ikp,i_sp)
+         E_in=Xen%E(iv,ik_m_q,i_sp)
          !
          ! Note that all possible E_eh signs are accepted. Negative
          ! transitions energies appear at finite temperature.
@@ -123,16 +130,14 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          !   both transitions 1->3 , 2->4 are resonant but 2->4 has negative energy
          !
-         if (.not.l_XTerm_vv) then
-           f_eh=Xen%f(iv,ikp,i_sp)*(spin_occ-Xen%f(ic,ik,i_sp))/spin_occ
-         else
-           f_eh=Xen%f(iv,ikp,i_sp)*Xen%f(ic,ik,i_sp)/spin_occ
-         endif
-         !
-         if (abs(f_eh)<local_tresh)  cycle  
          ! When iv--> iv transitions are counted, f_eh=0. 
          ! Therefore  if (abs(f_eh)<local_tresh) cycle hold only 
          ! when the terminator  is off 
+         !
+         if (.not.l_XTerm_vv) f_eh=Xen%f(iv,ik_m_q,i_sp)*(spin_occ-Xen%f(ic,ik,i_sp))/spin_occ
+         if (     l_XTerm_vv) f_eh=Xen%f(iv,ik_m_q,i_sp)*Xen%f(ic,ik,i_sp)/spin_occ
+         !
+         if (abs(f_eh)<local_tresh)  cycle  
          !                                                              
          if (any((/abs(E_eh)<X%ehe(1),abs(E_eh)>X%ehe(2).and.X%ehe(2)>0._SP/))) cycle
          !
@@ -142,7 +147,7 @@ integer function X_eh_setup(iq,X,Xen,Xk,minmax_ehe)
          !
          i_pole=X_eh_setup
          if (allocated(ordered_grid_index)) i_pole=ordered_grid_index(X_eh_setup)
-         if (iq>0) X_poles_tab(i_pole,:)=(/i1,iv,ic,i_sp/)
+         if (iq>0) X_poles_tab(i_pole,:)=(/ik_bz,iv,ic,i_sp/)
          !
        enddo
      enddo

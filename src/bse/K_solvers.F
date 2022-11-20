@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,34 +27,27 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  use frequency,      ONLY:w_samp
  use electrons,      ONLY:levels
  use R_lattice,      ONLY:bz_samp
- use X_m,            ONLY:X_t,Joint_DOS
- use BS_solvers,     ONLY:BSS_mode,BSS_desc,BSS_eval_JDOS,BSS_free,BS_mat,&
-&                         run_Haydock,run_inversion,run_Diago
-#if defined _SLEPC && !defined _SLEPC_OFF
+ use X_m,            ONLY:X_t
+ use BS_solvers,     ONLY:BSS_desc,BSS_free,BS_mat,run_Haydock,run_inversion,run_Diago
+#if defined _SLEPC && !defined _NL
  use BS_solvers,     ONLY:run_Slepc
 #endif
- use BS,             ONLY:BS_not_const_eh_f,BSE_mode,BS_K_has_been_calculated_loaded,BS_blks_free
+ use BS,             ONLY:BS_K_has_been_calculated_loaded,&
+&                         BS_blks_free,l_BS_abs,l_BS_kerr,l_BS_magnons
  use parallel_m,     ONLY:master_cpu,CPU_structure
- use IO_m,           ONLY:IO_and_Messaging_switch
+ use IO_int,         ONLY:IO_and_Messaging_switch
  use linear_algebra, ONLY:INV,DIAGO
-#if defined _PL
- use drivers,        ONLY:l_photolum
  use PHOTOLUM,       ONLY:BSS_PL_free
-#endif
-#if defined _KERR
- use KERR,           ONLY:BSS_KERR_free
-#endif
+ use MAGNONS,        ONLY:BSS_MAGN_free
+ use DICHROISM,      ONLY:BSS_DICH_free
  !
 #include<memory.h>
+ !
  type(levels) ::Ken
  type(bz_samp)::Xk,q
  type(X_t)    ::X_static
  type(w_samp) ::W_bss
  integer      ::iq
- !
- ! Work Space
- !
- logical           ::stop_Haydock
  !
  ! Check first if the BS database has been calculated/loaded in K.F
  !
@@ -62,42 +55,18 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  !
  call section('-','BSE solver(s) @q'//trim(intc(iq)))
  !
- ! GPL_EXCLUDE_START
- !
  ! The TDDFT way 
- !
-! if (index(BSS_mode,'t')/=0) then
-!   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
-!   l_bs_fxc=.true.
-! endif
- !
- ! GPL_EXCLUDE_END
- !
+ ! DEBUG_AM
+ ! if (index(BSS_mode,'t')/=0) then
+ !   call tddft_BSK_disk_2_FXC(iq,Xk,W_bss,X_static) 
+ !   l_bs_fxc=.true.
+ ! endif
+ ! DEBUG_AM
  ! Solvers
- !
- run_Diago     = index(BSS_mode,'d')/=0
- run_Haydock   = index(BSS_mode,'h')/=0
- run_inversion = index(BSS_mode,'i')/=0
-#if defined _SLEPC && !defined _SLEPC_OFF
- run_Slepc     = index(BSS_mode,'s')/=0
-#endif
- !
-#if defined _PL
- !
- if (l_photolum.and.run_Haydock) then
-   call warning('PL currently implemented only using the diagonalization/inversion solver')
-   run_Haydock  =.false.
- endif
-#endif
  !
  ! I/O. All read. Only master writes.
  ! 
  call IO_and_Messaging_switch("+io_out",CONDITION=master_cpu)
- !
- if (run_Haydock.and.allocated(Ken%W)) then
-   call warning('K with QP widths not supported in the Haydock solver')
-   run_Haydock=.false.
- endif
  !
  ! Diagonalization
  !
@@ -109,15 +78,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
  endif
  !
-#if defined _SLEPC && !defined _SLEPC_OFF
- if (run_Slepc)           call K_diago_driver(iq,W_bss,X_static)
+#if defined _SLEPC && !defined _NL
+ if (run_Slepc) call K_diago_driver(iq,W_bss,X_static)
 #endif
- !
- ! No JDOS in Inversion/Hadydock
- !
- if (BSS_eval_JDOS) then
-   YAMBO_FREE(Joint_DOS)
- endif
  !
  ! Inversion
  !
@@ -132,6 +95,9 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
  ! CLEAN: diago/invertion workspace
  !
  call BSS_free( )
+ call BSS_MAGN_free( )
+ call BSS_DICH_free( )
+ call BSS_PL_free( )
  !
  ! CLEAN: BS_mat
  !
@@ -143,27 +109,23 @@ subroutine K_solvers(iq,Ken,Xk,q,X_static,W_bss)
    !
    ! Remove Inv specific descriptors
    !
-   if (run_inversion) BSS_desc%n=BSS_desc%n-3
+   if (run_inversion.and.master_cpu) BSS_desc%n=BSS_desc%n-3
    !
-   stop_Haydock = (BS_not_const_eh_f.and.index(BSE_mode,'coupling')>0)
-   if (stop_Haydock) call warning('Fractional occupations and coupling still unsupported (Haydock)')
+   ! Note: for developers (DS 2021/01/03)
+   ! The jdos (l_BS_jdos) cannot be computed easely via the Haydock solver.
+   ! it could be obtained as the average of N calls to K_Haydock
+   ! with random intial vectors. See https://doi.org/10.1002/nla.2170
+   ! A possible alternative could be to use the algorithm with Cf
+   ! from both the left and the right hand side to get from a single Haydock loop
    !
-   if(.not.stop_Haydock) then
-     call K_output_file(iq,"open Haydock")
-     call K_Haydock(iq,W_bss)
-   endif
+   if (l_BS_abs)     call K_Haydock(iq,W_bss,"optics",Xk)
+   if (l_BS_kerr)    call K_Haydock(iq,W_bss,"kerr",Xk)
+   if (l_BS_magnons) call K_Haydock(iq,W_bss,"magnons",Xk)
    !
  endif
  !
  ! CLEAN (final)
  !
-#if defined _KERR
- call BSS_KERR_free( )
-#endif
- !
-#if defined _PL
- call BSS_PL_free( )
-#endif
- call BS_blks_free( )
+ call BS_blks_free(1)
  !
 end subroutine

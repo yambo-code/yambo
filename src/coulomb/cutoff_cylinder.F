@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -28,8 +28,8 @@ subroutine cutoff_cylinder(q,is_cut)
  use D_lattice,     ONLY:alat
  use R_lattice,     ONLY:cyl_ph_radius,bare_qpg,cyl_length,cyl_cut,g_vec,&
 &                        bz_samp,cyl_vr_save,cyl_vz_save
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,    ONLY:PARALLEL_index
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  !
@@ -81,7 +81,7 @@ subroutine cutoff_cylinder(q,is_cut)
  cyl_cut=cyl_length
  if (infcyl) then
   cyl_cut=abs(1/(q%pt(2,ipar))*alat(ipar))-1.
-  call msg('r','Infinite cylinder: Length set to 1/dq [au]',cyl_cut)
+  call msg('r','Infinite cylinder: Length set to 1/dq     ',cyl_cut,"[a.u.]")
  endif
  !
  cyl_cut2 = cyl_cut**2

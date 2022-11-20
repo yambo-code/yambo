@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS
@@ -86,6 +86,7 @@ integer function e2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call E_reset(en)
 #if defined _MEM_CHECK 
  call MEM_defaults( )
+ call MEM_treshold_estimate( )
 #endif
  !
  ! S/N

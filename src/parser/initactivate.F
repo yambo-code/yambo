@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -26,6 +26,7 @@ subroutine initactivate(mode,names)
  use it_tools
  use it_m
  !
+ ! mode =  2 : force activate regardless of the verbosity
  ! mode =  1 : activate var names
  ! mode = -1 : deactivate var names
  !

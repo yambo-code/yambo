@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,21 +27,26 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  ! This function has to take the same arguments as MatMult from PETSC
  !
  use pars,          ONLY : SP
- use BS_solvers,    ONLY : Slepc_v
- use BS,            ONLY : BS_T_grp,BS_nT_grps
+ use BS_solvers,    ONLY : Slepc_v,BSS_Slepc_double_grp
+ use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_K_dim
  use parallel_m,    ONLY : PAR_IND_T_Haydock
- !
- implicit none
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- PetscFortranComplex  :: tmp_value(1)
- PetscFortranInt      :: H_pos(1)
+ use petscmat
+ use slepcsys
+ use petscmatdef
+ use slepcsysdef
+ !
+ implicit none
+ !
+ PetscScalar          :: tmp_value(1)
+ PetscInt             :: H_pos(1), pet_one
  PetscErrorCode       :: ierr
  !
  VecScatter           :: ctx
@@ -49,10 +54,12 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  Vec                  :: vi,vo,x
  Mat                  :: slepc_mat
  !
- integer              :: n, i_g, i_c, start_index
+ integer              :: fac
+ integer              :: n, i_g, i_g_start, i_c, start_index, start_index_dg
  !
  ! create scattering context vi (distributed) -> x (local)
  !
+ pet_one = 1
  call VecScatterCreateToAll(vi,ctx,x,ierr);
  !
  ! scatter from vi (distributed) -> x (local)
@@ -64,12 +71,13 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-   start_index = sum(BS_T_grp(:i_g-1)%size)-1
+   i_g_start=BS_T_grp(i_g)%i_T_ref
+   start_index = sum(BS_T_grp(i_g_start:i_g-1)%size)-1+(BS_T_grp(i_g)%i_res_ares-1)*BS_K_dim(1)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecGetValues( x, 1, H_pos, tmp_value, ierr )
-     Slepc_v%Vi(i_g)%fragment(i_c)=cmplx(tmp_value(1),kind=SP)
+     call VecGetValues( x, pet_one, H_pos, tmp_value, ierr )
+     Slepc_v%Vi(i_g)%fragment(i_c,1)=cmplx(tmp_value(1),kind=SP)
    enddo
  enddo
  !
@@ -78,22 +86,35 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  call VecScatterDestroy(ctx,ierr);
  call VecDestroy(x,ierr);
  !
- ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian
- ! matrix-vector product
+ ! fac needed for K_multiply_by_v
+ fac=1
+ if(BSS_Slepc_double_grp) fac=(-1)**(Slepc_v%it(1)+1)
+ ! use the haydock routine to calculate the BSE auxiliaxy hamiltonian matrix-vector product
  ! Slepc_v%Vo = H Slepc_v%Vi
- !
- call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo, 1 )
+ call K_multiply_by_V( Slepc_v%Vi, Slepc_v%Vo,fac)
  !
  ! copy output vector Vo -> vo (distributed)
  !
+ ! fac needed for expanding vo to anti-resonant block
+ if(BSS_Slepc_double_grp) then
+   Slepc_v%it(1)=Slepc_v%it(1)+1
+   fac=(-1)**(Slepc_v%it(1)+1)
+ endif
  do i_g=1,BS_nT_grps
    if (.not.PAR_IND_T_Haydock%element_1D(i_g)) cycle
-   start_index = sum(BS_T_grp(:i_g-1)%size)-1
+   i_g_start=BS_T_grp(i_g)%i_T_ref
+   start_index = sum(BS_T_grp(i_g_start:i_g-1)%size)-1+(BS_T_grp(i_g)%i_res_ares-1)*BS_K_dim(1)
+   if(BSS_slepc_double_grp) start_index_dg = sum(BS_T_grp(i_g_start:i_g-1)%size)-1+BS_K_dim(1)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
-     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c))
+     tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c,1))
      !SLEPC funcitons expect C indexes both in Fortran and C
-     call VecSetValues( vo, 1, H_pos, tmp_value, INSERT_VALUES, ierr )
+     call VecSetValues( vo, pet_one, H_pos, tmp_value, INSERT_VALUES, ierr )
+     if(BSS_slepc_double_grp) then
+       ! Expand vo to anti-resonant block
+       H_pos=start_index_dg+i_c
+       call VecSetValues( vo, pet_one, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
+     endif
    enddo
  enddo
  !

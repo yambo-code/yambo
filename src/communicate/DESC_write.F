@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -65,7 +65,8 @@ subroutine DESC_write(dest,prefix,desc,range,skip_patt)
    local_var=com_compose_msg(pre=prefix//space(1:i_space),body=trim(desc%str(i_d)))
    local_term=""
    if (len_trim(desc%term(i_d))>0) then
-     local_term="["//trim(desc%term(i_d))//"]"
+     local_term=trim(desc%term(i_d))
+     if (index(desc%term(i_d),"[")==0) local_term="["//trim(desc%term(i_d))//"]"
    endif
    if (n_val==0) call msg(dest,local_var)
    if (n_val> 0) then
@@ -74,10 +75,10 @@ subroutine DESC_write(dest,prefix,desc,range,skip_patt)
      if(desc%kind(i_d)=='d') call msg(dest,local_var,real(desc%dval(i_d),SP),INDENT=0,after_msg=local_term)
      if(desc%kind(i_d)=='c') call msg(dest,local_var,&
 &                                     (/real(desc%cval(i_d)),aimag(desc%cval(i_d))/),INDENT=0,after_msg=local_term)
-     if(desc%kind(i_d)=='s') call msg(dest,local_var,desc%sval(i_d),INDENT=0)
+     if(desc%kind(i_d)=='s') call msg(dest,local_var,trim(desc%sval(i_d)),INDENT=0,after_msg=local_term)
      if(desc%kind(i_d)=='l') then
-       if(     desc%lval(i_d)) call msg(dest,local_var,'yes',INDENT=0)
-       if(.not.desc%lval(i_d)) call msg(dest,local_var,'no',INDENT=0)
+       if(     desc%lval(i_d)) call msg(dest,local_var,'yes',INDENT=0,after_msg=local_term)
+       if(.not.desc%lval(i_d)) call msg(dest,local_var,'no',INDENT=0,after_msg=local_term)
      endif
    endif
  enddo

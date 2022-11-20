@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details):
@@ -27,8 +27,9 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  use wave_func,      ONLY:WF
  use FFT_m,          ONLY:fft_size
  use LIVE_t,         ONLY:live_timing
- use interfaces,     ONLY:PARALLEL_index,WF_load,WF_free
- use parallel_m,     ONLY:PP_indexes,myid,PP_redux_wait,PP_indexes_reset
+ use interfaces,     ONLY:WF_load,WF_free
+ use parallel_m,     ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
@@ -38,19 +39,25 @@ subroutine electrons_magn_factors(kpts,bands,magn_factors)
  !
  ! Work Space
  ! 
- integer               :: ik,ib,i_wf(2)
+ integer               :: ik,ib,i_wf
  type(PP_indexes)      :: px
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/kpts(2)-kpts(1)+1,bands(2)-bands(1)+1/))
  !
- call live_timing('Magn-factor',px%n_of_elements(myid+1))
- !
  magn_factors=0._SP
  !
  do ik=kpts(1),kpts(2)
-   if( .not.any(px%element_2D(ik-kpts(1)+1,:)) ) cycle
+   !
+   if( .not.any(px%element_2D(ik-kpts(1)+1,:)) ) then
+     if (ik==kpts(1)) call live_timing('Magn-factor',px%n_of_elements(myid+1))
+     cycle
+   endif
+   !
    call WF_load(WF,0,1,bands,(/ik,ik/),title='-Magn-factor',impose_free_and_alloc=.TRUE.)
+   !
+   if (ik==1) call live_timing('Magn-factor',px%n_of_elements(myid+1))
+   !
    do ib=bands(1),bands(2)
      if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
      i_wf=WF%index(ib,ik,1)

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA MG
@@ -23,14 +23,14 @@
 !
 ! This subroutine fill the W_electric matrix 
 !
-subroutine SC_add_efield(V_bands,E,k,Pol)
+subroutine SC_add_efield(E,k,i_sp_pol,V_bands,Pol)
  !
  use pars,           ONLY:SP,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
- use fields,         ONLY:A_vecpot,Efield
+ use fields,         ONLY:A_tot,A_ext,Efield
  use R_lattice,      ONLY:bz_samp
  use QP_m,           ONLY:QP_nk
- use electrons,      ONLY:n_sp_pol,levels
+ use electrons,      ONLY:levels
  use electric,       ONLY:W_electric
  use SC,             ONLY:SC_bands
  !
@@ -38,30 +38,36 @@ subroutine SC_add_efield(V_bands,E,k,Pol)
  !
  type(bz_samp), intent(in)  :: k
  type(levels),  intent(in)  :: E
- complex(SP),   intent(in)  :: V_bands(SC_bands(2),QP_nk,n_sp_pol)
+ integer,       intent(in)  :: i_sp_pol
+ complex(SP),   intent(in)  :: V_bands(SC_bands(1):SC_bands(2),E%nbf(i_sp_pol),QP_nk)
  complex(SP),   intent(out) :: Pol(3)
  !
  ! Working space
  !
- integer :: i_sp_pol,ik
+ integer :: ik
+ logical :: l_induced_field=.false.
  !
  ! Calculate the Berry Polarization and update the Overlaps
  !
- Pol=cZERO
- call Berry_polarization_NEQ(E,k,V_bands,Pol)
+ if (i_sp_pol==1) Pol=cZERO
+ !
+ call Berry_polarization_NEQ(E,k,i_sp_pol,V_bands,Pol)
+ !
+ if( Efield(1)%ef_name=="NONE") return
  !
  ! External Field
  !
- A_vecpot%vecpot_vel=-SPEED_OF_LIGHT*Efield(1)%amplitude*Efield(1)%versor
+ A_ext%vecpot_vel=-SPEED_OF_LIGHT*Efield(1)%amplitude*Efield(1)%versor
+ !
+ A_tot%vecpot_vel=A_ext%vecpot_vel
+ if (l_induced_field) A_tot%vecpot_vel=A_tot%vecpot_vel+Pol
  !
  ! Calculated in the WFo basis
  !
  W_electric=cZERO
  !
- do i_sp_pol=1,n_sp_pol
-   do ik=1,QP_nk
-     call Build_W_operator(V_bands,E,k,A_vecpot,ik,i_sp_pol,W_electric(:,:,ik,i_sp_pol))
-   enddo
+ do ik=1,QP_nk
+   call Build_W_operator(E,k,A_tot,ik,i_sp_pol,V_bands,W_electric(:,:,ik,i_sp_pol))
  enddo
  !
 end subroutine SC_add_efield

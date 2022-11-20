@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,6 +33,9 @@ module collision_ext
  implicit none
  !
  integer :: COLL_bands(2)
+ integer :: COLL_ID
+ integer :: LAST_COLL_sync
+ integer :: PAR_COLL_min
  !
  ! Cut off on exchange matrix elements
  ! Sx_cutoff=0 all, (Sx_cutoff>1 or Sx_cutoff<0)=none
@@ -45,6 +48,7 @@ module collision_ext
  logical :: COLLISIONS_HXC_local=.FALSE.
  logical :: COLLISIONS_HXC_MB=.FALSE.
  logical :: COLLISIONS_HXC_use_TDDFT=.FALSE.
+ logical :: COLLISIONS_CV_only=.FALSE.
  !
  ! Elements used in the code
  !

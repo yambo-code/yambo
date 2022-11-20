@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -28,7 +28,8 @@ subroutine of_netcdf_shadow_real(i1,mesg,val,nval)
  use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
  use netcdf,   ONLY:nf90_unlimited
- use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
+ use IO_m,     ONLY:WR,NONE
+ use IO_int,   ONLY:io_control,io_variable_bulk,def_variable_bulk
 #endif
  !
  implicit none
@@ -103,7 +104,8 @@ subroutine of_netcdf_shadow_char(i1,nval,val)
 #if defined _NC_OUTPUT
  use stderr,   ONLY:intc
  use com,      ONLY:of_nc_pos,of_nc_IDs,of_nc_var_names
- use IO_m,     ONLY:WR,NONE,io_control,io_variable_bulk,def_variable_bulk
+ use IO_m,     ONLY:WR,NONE
+ use IO_int,   ONLY:io_control,io_variable_bulk,def_variable_bulk
 #endif
  !
  implicit none

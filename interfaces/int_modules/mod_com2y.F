@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -254,8 +254,8 @@ module mod_com2y
      type(bz_samp),    intent(in)   :: k      ! K/Q points
      ! 
      call msg('s',' Electrons             ',default_nel)
-     call msg('s',' Temperature       [ev]',input_GS_Tel)
-     call msg('s',' Lattice factors [a.u.]',alat)
+     call msg('s',' Temperature           ',input_GS_Tel,"[eV]")
+     call msg('s',' Lattice factors       ',alat,"[a.u.]")
      call msg('s',' K-points              ',k%nibz)
      call msg('s',' Bands                 ',en%nb)
      call msg('s',' Spinor components     ',n_spinor)

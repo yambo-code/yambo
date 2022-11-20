@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -36,9 +36,8 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  use drivers,       ONLY:l_col_cut
  use collision_el,  ONLY:elemental_collision
  use R_lattice,     ONLY:d3q_factor,RIM_ng,RIM_qpg,RIM_is_diagonal,&
-&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts
+&                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab
  use R_lattice,     ONLY:RIM_qpg_d,bare_qpg_d
- use cuda_m,        ONLY:have_cuda
  use deviceXlib_m
  use timing_m
  !
@@ -52,7 +51,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  integer :: ng(2),ig1,ig2,iq,i1,i2
  logical :: l_RIM
  real(SP):: reg_q_m2,q_weight,R_sphere
-
+ !
  complex(SP), pointer DEV_ATTR :: gamp_p(:,:)
  integer :: ng1, ng2
 #ifdef _CUDA_LOC
@@ -60,7 +59,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
 #else
  character(32) :: subname="scatter_Gamp"
 #endif
-
+ !
  call timing(subname,opr="start")
  !
  ! q_weight = 1./(DL_vol*q%nbz)
@@ -95,7 +94,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  else
    reg_q_m2=RIM_qpg(iq,1,1)/2._SP
  endif
-
+ !
 #ifdef _CUDA_LOC
  if (allocated(RIM_qpg).and..not.allocated(RIM_qpg_d)) then
    YAMBO_ALLOC_SOURCE(RIM_qpg_d,RIM_qpg)
@@ -108,7 +107,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  ng=shape(isc%gamp)
  ng1=ng(1)
  ng2=ng(2)
-
+ !
  gamp_p => DEV_VAR(isc%gamp)
  !
 #ifdef _CUDA_LOC
@@ -129,7 +128,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
      l_RIM=(ig1<=RIM_ng .and. ig2<=RIM_ng)
      if (RIM_is_diagonal.and.l_RIM) l_RIM=(ig1==ig2)
      !
-     if (l_RIM.and..not.l_col_cut) then
+     if (l_RIM.and.(.not.l_col_cut.or.cut_is_slab)) then
        gamp_p(i1,i2)=DEV_VAR(RIM_qpg)(iq,ig1,ig2)/2._SP
        cycle
      else
@@ -193,5 +192,6 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  endif
  !
  call timing(subname,opr="stop")
+ !
 end subroutine
 

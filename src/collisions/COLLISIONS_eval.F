@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -38,24 +38,25 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! In the \Sigma_s case also yambo_sc can evaluate
  !
- use drivers,       ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
-&                        l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
- use electrons,     ONLY:levels
- use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:i_time_rev
- use wave_func,     ONLY:WF
- use hamiltonian,   ONLY:H_potential,H_kind
- use global_XC,     ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
- use collision_ext, ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
+ use drivers,        ONLY:l_elel_scatt,l_use_collisions,l_use_Hxc_collisions,&
+&                         l_use_COH_collisions,l_elphoton_scatt,l_real_time,l_sc_run
+ use electrons,      ONLY:levels
+ use R_lattice,      ONLY:bz_samp
+ use D_lattice,      ONLY:i_time_rev
+ use wave_func,      ONLY:WF
+ use hamiltonian,    ONLY:H_potential,H_kind
+ use global_XC,      ONLY:QP_SE_GW_NEQ,QP_SE_GW_QED
+ use collision_ext,  ONLY:COLLISIONS_parallel_SC_structure,COLLISIONS_group,&
 &                        COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions,COLLISIONS_naming
- use X_m,           ONLY:X_t
- use plasma,        ONLY:EH_gas
- use frequency,     ONLY:w_samp
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP,io_COLLs
- use interfaces,    ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index,WF_free
- use COLL_interfaces,ONLY:io_COLLISIONS
- use parallel_m,    ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma,PP_redux_wait
- use timing_m,      ONLY:timing
+ use X_m,            ONLY:X_t
+ use plasma,         ONLY:EH_gas
+ use frequency,      ONLY:w_samp
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,OP_RD,RD_CL_IF_END,VERIFY,REP,io_COLLs,manage_action
+ use parallel_m,     ONLY:PAR_IND_G_k,PAR_IND_Bp_mat,PAR_IND_Plasma
+ use parallel_int,   ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
+ use interfaces,     ONLY:WF_free
+ use timing_m,       ONLY:timing
  !
  implicit none
  !
@@ -66,7 +67,7 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  !
  ! WorkSpace
  !
- integer       :: ID,IO_err
+ integer       :: ID,IO_err,IO_ACT
  character(20) :: PAR_ch,FREE_ch
  !
  call timing('COLLISIONS_eval',OPR='start')
@@ -98,12 +99,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_basic_operations( "alloc",    COH_collisions )
  if (l_use_Hxc_collisions) call COLLISIONS_basic_operations( "alloc",    HXC_collisions )
  !
- ! GPL_EXCLUDE_START
- !
  if (l_elphoton_scatt)     call COLLISIONS_basic_operations( "alloc",      P_collisions )
  if (l_elel_scatt)         call COLLISIONS_basic_operations( "alloc", GW_NEQ_collisions )
- !
- ! GPL_EXCLUDE_END
  !
  ! PARALLEL Setup
  !================
@@ -155,8 +152,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    endif
    !
  endif
- !
- ! GPL_EXCLUDE_START
  !
 #if defined _QED
  !
@@ -212,8 +207,6 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
    !
  endif
  !
- ! GPL_EXCLUDE_END
- !
  ! CLEAN
  !=======
  !
@@ -232,12 +225,8 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      call COLLISIONS_basic_operations( "clean",    HXC_collisions )
      call COLLISIONS_basic_operations( "clean",    COH_collisions )
      !
-     ! GPL_EXCLUDE_START
-     !
      call COLLISIONS_basic_operations( "clean",      P_collisions )
      call COLLISIONS_basic_operations( "clean", GW_NEQ_collisions )
-     !
-     ! GPL_EXCLUDE_END
      !
    endif
    !
@@ -250,18 +239,25 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
  if (l_use_COH_collisions) call COLLISIONS_alloc_and_free("COH"      ,trim(FREE_ch),"clean",1)
  if (l_use_Hxc_collisions) call COLLISIONS_alloc_and_free("HXC"      ,trim(FREE_ch),"clean",1)
  !
- ! GPL_EXCLUDE_START
- !
  if (l_elel_scatt)         call COLLISIONS_alloc_and_free("GW_NEQ"   ,trim(FREE_ch),"clean",1)
  if (l_elphoton_scatt)     call COLLISIONS_alloc_and_free("Momentum" ,trim(FREE_ch),"clean",1)
- !
- ! GPL_EXCLUDE_END
  !
  call timing('COLLISIONS_eval',OPR='stop')
  !
  contains
    !
    subroutine CHECK_and_ALLOC(COLL)
+     !
+#include<collisions.h>
+     !
+     ! Define io_COLLs_header to handle either serial or parallel I/O
+     !
+     use COLL_interfaces,   ONLY:io_COLLISIONS
+#if defined _PAR_IO
+     integer, external :: io_COLLs_header
+#endif
+     !
+     integer :: i_coll
      !
      type(COLLISIONS_group) :: COLL
      !
@@ -270,14 +266,26 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
      if (io_COLLs) then
        COLL%IO_status=-1
        call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID)
-       IO_err=io_COLLISIONS(ID,COLL)
+       IO_err=io_COLLs_header(ID,COLL)
+#if defined _PAR_IO
+       call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+       io_err=io_COLLISIONS(ID,COLL)
+       if(io_err==0) then
+         call warning(" Restarting from previous database")
+         do i_coll=1,COLL%N
+           IO_ACT=manage_action(RD_CL_IF_END,i_coll,1,COLL%N)
+           call io_control(ACTION=IO_ACT,COM=REP,SEC=(/4/),ID=ID)
+           io_err=io_COLLISIONS(ID,COLL,i_coll=i_coll)
+         enddo
+       endif
+#endif
        if (any(COLL%IO_status/=1)) IO_err=-1
      endif
      !
      ! In case io_Colls is /=0 all CPU have to sincronize before starting
      ! to compute the collisions and write a new header
      !
-     call PP_redux_wait()
+     call PP_wait()
      !
      if (IO_err==0) return
      !
@@ -286,16 +294,12 @@ subroutine COLLISIONS_eval(E,X,k,xk,q,Xw)
        call COLLISIONS_alloc_and_free(trim(COLL%name),"v3 table","alloc",1)
      else
        call COLLISIONS_alloc_and_free(trim(COLL%name),"collision","alloc",0)
-       ! GPL_EXCLUDE_START
        if (COLL%kind==QP_SE_GW_NEQ.or.COLL%kind==QP_SE_GW_QED) then
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc distribute",0)
        else
-       ! GPL_EXCLUDE_END
          call COLLISIONS_alloc_and_free(trim(COLL%name),"v3","alloc",1)
          call COLLISIONS_alloc_and_free(trim(COLL%name),"table","alloc",0)
-       ! GPL_EXCLUDE_START
        endif
-       ! GPL_EXCLUDE_END
      endif
      !
    end subroutine

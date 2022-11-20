@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF, IM
@@ -33,7 +33,8 @@ subroutine PP_uspp_init()
  use D_lattice,     ONLY:nsym,dl_sop,atom_mapper
  use R_lattice,     ONLY:b,g_vec,ng_vec
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,PP_uspp_free,qe_atoms_map
- use IO_m,          ONLY:io_control,OP_RD_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,REP
  !
  use qe_pseudo_m,   ONLY:qe_alat=>alat,qe_tpiba=>tpiba,qe_nat=>nat,qe_tau=>tau,qe_nsp=>nsp,qe_ityp=>ityp
  use qe_pseudo_m,   ONLY:nkb,qe_nsym=>nsym,d1,d2,d3

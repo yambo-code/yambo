@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-complex(SP) function QP_eval_the_FIT(i_ACTION,i_sp_pol,Energy,E_ref_in,bands,E,k,what)
+complex(SP) function QP_eval_the_FIT(i_ACTION,i_sp_pol,Energy,E_ref_in,bands,E,k,what,is_valence)
  !
  use pars,          ONLY:SP,cZERO
  use units,         ONLY:HA2EV
@@ -36,17 +36,16 @@ complex(SP) function QP_eval_the_FIT(i_ACTION,i_sp_pol,Energy,E_ref_in,bands,E,k
  type(bz_samp)   ::k
  integer         ::i_ACTION,i_sp_pol,bands(2)
  real(SP)        ::Energy,E_ref_in(2)
- character(1)    ::what
+ character(1), intent(in) ::what
+ logical,      intent(in) ::is_valence
  !
  ! Work Space
  !
  real(SP)    :: dos_factor(n_spin),M_factor,E_ref
- logical     :: is_valence
  integer     :: iref,jref,i_p
  !
  ! Valence or conduction
  !-----------------------
- is_valence=Energy<=1.E-5
  iref=0
  jref=0
  QP_eval_the_FIT=cZERO

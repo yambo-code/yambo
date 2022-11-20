@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA
@@ -62,8 +62,8 @@ module Overlaps_m
      type(levels),  intent(in) :: Xen
      !
      YAMBO_ALLOC(S_det,(3,Xk%nbz))
-     YAMBO_ALLOC(Sm1_plus,(3,Xen%nbf,Xen%nbf,Xk%nbz))
-     YAMBO_ALLOC(Sm1_minus,(3,Xen%nbf,Xen%nbf,Xk%nbz))
+     YAMBO_ALLOC(Sm1_plus,(3,maxval(Xen%nbf),maxval(Xen%nbf),Xk%nbz))
+     YAMBO_ALLOC(Sm1_minus,(3,maxval(Xen%nbf),maxval(Xen%nbf),Xk%nbz))
      !
    end subroutine S_alloc
    !

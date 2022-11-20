@@ -44,9 +44,9 @@ PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 # YAMBO sources needed by Interfaces
 #
 2YLIBS       = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
-               setup interface stop_and_restart bz_ops 
+               setup interface stop_and_restart wf_and_fft bz_ops 
 2YLIBS_LD    = tools memory allocations communicate modules matrices linear_algebra parallel parser output common timing Yio io $(IO_MODE) \
-               setup interface stop_and_restart bz_ops 
+               setup interface stop_and_restart wf_and_fft bz_ops 
 #
 # YPP
 #

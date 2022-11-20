@@ -48,6 +48,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
+ use environ_m,     ONLY:l_environ
  !
 #include<memory.h>
  !
@@ -60,7 +61,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  !
  ! External
  !
- integer, external    :: io_X,X_eh_setup
+ integer, external    :: io_X,X_eh_setup,io_ENVIRON_pwscf
  !
  ! Work Space
  !
@@ -73,6 +74,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! logicals and control
  !
  self_detect_E_range=.false.
+ X%ngostnts=Dip%ng
+ !
+ ! TERMINATORS
  !
  ! Check if there is a Efield directions average to be done
  !
@@ -87,7 +91,15 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    call error(' [X] unknown X_terminator_Kind = '//trim(X_terminator_Kind))
  endif
  !
- X%ngostnts=Dip%ng
+ ! ENVIRON
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),ID=ID(1))
+ i_err=io_ENVIRON_pwscf(ID(1))
+ l_environ=(i_err==0)
+ !
+ ! v X is not symmetrized on output
+ X%is_symm=.not.l_environ     
+ !
  !
  ! TDDFT KERNEL SETUP (-1 argument)
  !

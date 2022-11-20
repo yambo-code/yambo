@@ -26,7 +26,7 @@ module hamiltonian
  use pars,       ONLY:SP,schlen
  use electrons,  ONLY:levels
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: H_ref_bands(2)
  integer           :: H_ref_nbands

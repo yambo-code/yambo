@@ -23,11 +23,13 @@
 !
 subroutine WF_free(WF,keep_fft)
  !
- use wave_func,  ONLY:WAVEs
- use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
- use cuda_m,     ONLY:have_cuda
+ use wave_func,    ONLY:WAVEs
+ use pseudo,       ONLY:pp_is_uspp,PP_uspp_free
+ use cuda_m_y,     ONLY:have_cuda
+ use deviceXlib_m, ONLY:dev_allocated
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(WAVEs)       :: WF
  logical, optional :: keep_fft 
@@ -43,14 +45,14 @@ subroutine WF_free(WF,keep_fft)
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_cuda) then
-   if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
+   if (.not. ( allocated(WF%c) .eqv. dev_allocated(DEV_VAR(WF%c)) ) ) &
 &    call error("[WF] inconsistent alloc of GPU wfcs")
  endif
  !
  if (.not.allocated(WF%c)) return
  !
+ YAMBO_FREE_GPU(DEV_VAR(WF%c))
  YAMBO_FREE(WF%c)
- YAMBO_FREE(WF%c_d)
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)
  !

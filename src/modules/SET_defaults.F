@@ -85,7 +85,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
- use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
+ use y_memory,   ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
  use xc_functionals,  ONLY:GS_xc_FUNCTIONAL,GS_xc_KIND,GS_exx_FRACTION,GS_exx_SCREENING 
  use BS,         ONLY:l_BS_anomalous_Hall
  use PHOTOLUM,   ONLY:PL_weights
@@ -133,7 +133,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m,      ONLY:cuda_setup,have_cuda
+ use cuda_m_y,    ONLY:cuda_setup,have_cuda
  !
  implicit none
  !

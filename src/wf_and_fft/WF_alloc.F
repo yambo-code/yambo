@@ -28,9 +28,11 @@ subroutine WF_alloc(WF)
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
+ use deviceXlib_m
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  type(WAVEs)           :: WF
  !
@@ -67,7 +69,7 @@ subroutine WF_alloc(WF)
  !
  YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
  if (have_cuda) then
-   YAMBO_ALLOC_MOLD(WF%c_d,WF%c)
+   YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
  endif
  !
  call PARALLEL_live_message("Wave-Function states",LOADED=WF%N,TOTAL=N_total)
@@ -75,7 +77,7 @@ subroutine WF_alloc(WF)
  YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
- if (have_cuda) WF%c_d=cZERO
+ if (have_cuda) call dev_memset(DEV_VAR(WF%c),cZERO)
  !
  WF%index=0
  !

@@ -27,7 +27,7 @@ module R_lattice
  use descriptors, ONLY:IO_desc
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer, parameter:: MAX_kpts_to_report=50
  !

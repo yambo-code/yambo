@@ -36,7 +36,7 @@ subroutine K_inversion_restart(iq,W)
  use BS_solvers,     ONLY:K_INV_PL
  use PHOTOLUM,       ONLY:PL
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,             intent(inout) :: iq
  type(w_samp)        ,intent(inout) :: W

@@ -40,7 +40,7 @@ integer function io_X(X,Xw,ID)
  use X_m,           ONLY:X_par
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)   :: X
  type(w_samp):: Xw

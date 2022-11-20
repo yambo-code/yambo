@@ -29,9 +29,9 @@ subroutine X_ALLOC_parallel(X_par,NG,NW,mode)
  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
 &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(PAR_matrix) :: X_par
  integer          :: NG,NW

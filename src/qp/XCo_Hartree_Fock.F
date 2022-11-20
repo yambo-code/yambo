@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  ! Hartree-Fock
@@ -46,14 +48,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  use openmp,        ONLY:OPENMP_update,master_thread,n_threads_SE
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
  use interfaces,    ONLY:WF_load,QP_state_print
- use wrapper,       ONLY:Vstar_dot_VV
+ use wrapper,       ONLY:DEV_SUB(Vstar_dot_VV)
  use global_XC,     ONLY:WF_exx_screening
  use pseudo,        ONLY:becp, pp_is_uspp
  use qe_pseudo_m,   ONLY:beccopy
  use deviceXlib_m,  ONLY:dev_memcpy
  !
-#include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
@@ -64,7 +65,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  type(elemental_collision), target::isc,iscp
  integer                  ::iq,iq_ibz,is_ibz,ib,ibp,jb,i_qp,Sx_lower_band,Sx_upper_band(2),n_lt_bands,n_lt_steps
  complex(DP)              ::DP_Sx, DP_Sx_l
- complex(SP),allocatable  ::local_rhotw(:)
  character(schlen)        ::ch,mode_
  !
  !QP list
@@ -152,10 +152,10 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    !
    DP_Sx = 0.0d0
    !
-#if !defined _CUDA
+#if !defined _GPU
    !  !!! num_threads(n_outthr)
    !$omp parallel default(shared), &
-   !$omp          private(isc,iscp,local_rhotw,iq,iq_ibz,is_ibz,ikp,iGp,jb), reduction(+:DP_sx)
+   !$omp          private(isc,iscp,iq,iq_ibz,is_ibz,ikp,iGp,jb), reduction(+:DP_sx)
 #endif
    !
    call OPENMP_update(master_thread)
@@ -168,14 +168,13 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
    call elemental_collision_alloc(isc,NG=QP_ng_Sx,NG_GAMP=(/QP_ng_Sx,1/),TITLE="HF")
    call elemental_collision_alloc(iscp,NG=QP_ng_Sx,TITLE="HF")
    !
-   YAMBO_ALLOC(local_rhotw,(QP_ng_Sx))
    isc%qs    =1
    !
    call DEV_SUB(scatter_Gamp)(isc,'x')
    !
    if (trim(mode_)=='hyb') call scatter_ModScr(isc,WF_exx_screening)
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp do schedule(dynamic)
 #endif
    do iq=1,q%nbz
@@ -244,12 +243,12 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
        if (isc%is(1)/=iscp%is(1)) then
          call DEV_SUB(scatter_Bamp)(iscp)
        else
-         ! iscp%rhotw = isc%rhotw
+         ! dev2dev, iscp%rhotw = isc%rhotw
          call dev_memcpy(DEV_VAR(iscp%rhotw),DEV_VAR(isc%rhotw))
        endif
        !
-       DP_Sx_l=Vstar_dot_VV(isc%ngrho,DEV_VAR(iscp%rhotw),&
-&                                     DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
+       DP_Sx_l=DEV_SUB(Vstar_dot_VV)(isc%ngrho,DEV_VAR(iscp%rhotw),&
+&                                    DEV_VAR(isc%rhotw),DEV_VAR(isc%gamp)(:,1))
        DP_Sx=DP_Sx + DP_Sx_l * ( -4._SP/spin_occ*pi*E%f(jb,ikp,i_sp_pol) )
        !
        if (master_thread.and.is_ibz==1.and.n_lt_steps>0) call live_timing(steps=1)
@@ -257,15 +256,14 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
      enddo
      !
    enddo
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end do
 #endif
    !
    call elemental_collision_free(isc)
    call elemental_collision_free(iscp)
-   YAMBO_FREE(local_rhotw)
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end parallel
 #endif
    !
@@ -275,9 +273,6 @@ subroutine XCo_Hartree_Fock(E,k,Xk,q,mode)
  !
  if(n_lt_steps>0) call live_timing()
  !
- call elemental_collision_free(isc)
- call elemental_collision_free(iscp) 
- YAMBO_FREE(local_rhotw)
  !
  call timing('HF',OPR='stop')
  call timing('HF(REDUX)',OPR='start')

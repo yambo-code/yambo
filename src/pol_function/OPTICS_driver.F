@@ -47,7 +47,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use matrix,        ONLY:MATRIX_reset
  use IO_int,        ONLY:IO_and_Messaging_switch
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  :: Xen
  type(bz_samp) :: Xk,q

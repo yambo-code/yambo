@@ -30,12 +30,20 @@
 #  define CAT(a,b) PASTE(a)b
 #endif
 
-#ifdef _CUDA
+#ifdef _CUDAF
 #  define DEV_SUBNAME(x)        CAT(x,_gpu)
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_gpu)
 #  define DEV_VARNAME(x)        CAT(x,_d)
 #  define DEV_ATTRIBUTE         , device
 #  define DEV_PINNED            , pinned
+
+#elif defined _OPENACC || defined _OPENMP5
+#  define DEV_SUBNAME(x)        CAT(x,_gpu)
+#  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
+#  define DEV_VARNAME(x)        x
+#  define DEV_ATTRIBUTE
+#  define DEV_PINNED
+
 #else
 #  define DEV_SUBNAME(x)        x
 #  define DEV_SUBNAME_ALT(x)    CAT(x,_cpu)
@@ -50,11 +58,21 @@
 #define DEV_ATTR            DEV_ATTRIBUTE
 #define DEV_PIN             DEV_PINNED
 
-!#ifdef CUDA
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$cuf kernel do(nloop) <<<*,*>>>
-!  #define YAMBO_CUDA_OR_OMP_END
-!#else 
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$omp parallel do default(shared), private(private_list), collapse(nloop)
-!  #define YAMBO_CUDA_OR_OMP_END               !$omp end parallel do
-!#endif
 
+#if defined _OPENACC
+#  define DEV_ACC $acc
+#else
+#  define DEV_ACC !!!!
+#endif
+
+#if defined _CUDAF
+#  define DEV_CUF $cuf
+#else
+#  define DEV_CUF !!!!
+#endif
+
+#if defined _OPENMP && !defined (_GPU)
+#  define DEV_OMP $omp
+#else
+#  define DEV_OMP !!!!
+#endif

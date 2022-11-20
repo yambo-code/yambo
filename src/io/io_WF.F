@@ -21,7 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_WF(ID,wf,wf_d)
+#include<dev_defs.h>
+!
+integer function io_WF(ID,wf)
  !
  use pars,             ONLY:SP,schlen
  use electrons,        ONLY:n_spinor
@@ -32,13 +34,11 @@ integer function io_WF(ID,wf,wf_d)
  use IO_int,           ONLY:io_connect,io_disconnect,io_bulk,io_header,&
 &                           io_fragment,io_elemental
  use timing_m,         ONLY:timing
+ use deviceXlib_m
+ !
  implicit none
  integer,       intent(in) :: ID
  complex(SP),   optional   :: wf(:,:,:)
- complex(SP),   optional   :: wf_d(:,:,:)
-#ifdef _CUDA
- attributes(device) :: wf_d
-#endif
  !
  integer                   :: nb_io,i_sp_pol,ik,ifrag,ib_grp,ib_block,n_blocks,ib,ib_io,ib_prev,ib_lim(3,wf_nb_io),head_io,ID_frag
  character(schlen)         :: VAR_NAME
@@ -153,11 +153,6 @@ integer function io_WF(ID,wf,wf_d)
  do ib_block=1,n_blocks
    if(ib_grp>1) ib_lim(1,ib_block)=mod(ib_lim(1,ib_block)-1,wf_nb_io)+1
    call io_bulk(ID_frag,C3=wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)),IPOS=(/1,1,1,ib_lim(1,ib_block)/))
-#ifdef _CUDA
-   if(present(wf_d)) then
-      wf_d(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block)) = wf(:,:,ib_lim(2,ib_block):ib_lim(3,ib_block))
-   endif
-#endif
  enddo
  !
  call io_fragment_disconnect(ID,ID_frag)

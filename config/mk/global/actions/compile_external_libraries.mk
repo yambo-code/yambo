@@ -7,7 +7,9 @@
 libxc: 
 	@+if test "$(do_libxc)" = yes ; then LIBS="libxc" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) libxc-dl; $(mk_external_lib); fi
 lapack: 
-	@+if test "$(do_lapack)" = yes ; then LIBS="lapack" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) lapack-dl;  $(mk_external_lib); fi
+	@+if test "$(do_lapack)" = yes ; then LIBS="lapack" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) lapack-dl; $(mk_external_lib); fi
+devxlib: 
+	@+if test "$(do_devxlib)" = yes ; then LIBS="devxlib" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) devxlib-dl; $(mk_external_lib); fi
 fftw: 
 	@+if test "$(do_fftw)" = yes ; then LIBS="fftw" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) fftw-dl; $(mk_external_lib); fi
 fftqe: 

@@ -21,18 +21,21 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
 &                        X_fxc,EEL,Alpha,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
+ use cuda_m_y,      ONLY:have_cuda
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
 #endif
  use stderr,        ONLY:STRING_match
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)      :: WHAT
  integer, optional :: DIM(:)
@@ -78,9 +81,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(X_mat)) return
      YAMBO_ALLOC(X_mat,(DIM(1),DIM(2),DIM(3)))
      X_mat=cZERO
-#ifdef _CUDA
-     allocate(X_mat_d, source=X_mat)
-#endif
+     if (have_cuda) then
+       YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(X_mat),X_mat)
+     endif
    end select
    return
  endif
@@ -122,10 +125,8 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    YAMBO_FREE(X_RLcomp_ig)
    !
    ! and the matrix itself
+   YAMBO_FREE_GPU(DEV_VAR(X_mat))
    YAMBO_FREE(X_mat)
-#ifdef _CUDA
-   YAMBO_FREE(X_mat_d)
-#endif
    !
  endif
  !

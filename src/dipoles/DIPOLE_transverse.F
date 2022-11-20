@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! This routine returns <iR> and <P^2>.
@@ -34,21 +36,19 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
- use R_lattice,           ONLY:bz_samp
- use R_lattice,           ONLY:g_vec_d,g_vec
+ use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
-&                              compute_P2_dipoles,compute_Spin_dipoles
+&                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:manage_action,RD_CL_IF_END,OP_RD,OP_RD_CL
+ use IO_m,                ONLY:manage_action,OP_IF_START_RD_CL_IF_END,OP_RD_CL
  use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
- use cuda_m,              ONLY:have_cuda
- use deviceXlib_m,        ONLY:dev_memcpy
+ use cuda_m_y,            ONLY:have_cuda
+ use deviceXlib_m,        ONLY:dev_memcpy_h2d,dev_memset
  !
-#include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)    :: Xk
  type(levels),  intent(in)    :: Xen
@@ -59,7 +59,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
@@ -97,7 +97,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  !
  ! Synchronize some memory
  if (have_cuda) then
-   YAMBO_ALLOC_SOURCE(g_vec_d,g_vec)
+   YAMBO_FREE_GPU(DEV_VAR(g_vec))
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !
  l_use_comm=l_eval_dip_V.or.l_eval_dip_iR
@@ -109,32 +110,33 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    io_KB_abinit_err= io_err(1)
    io_KB_pwscf_err = io_err(2)
    !
-   IO_ACT_NOW=OP_RD
-   if (N_elements_todo==0) IO_ACT_NOW=OP_RD_CL
-   !
    ! Define pp_kbv_dim_yambo and pp_kbv_table
    !
    if (io_KB_pwscf_err==0) then
-     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_KB_pwscf_err=io_KB_pwscf(ID)
      call DIPOLE_kb_pwscf_def_dim()
    endif
    !
    if (io_KB_abinit_err==0) then
-     call io_control(ACTION=IO_ACT_NOW,SEC=(/2/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,SEC=(/2/),ID=ID)
      io_KB_abinit_err=io_KB_abinit(ID)
      call DIPOLE_kb_abinit_def_dim()
    endif
    !
    l_use_comm=l_use_comm.and.(io_KB_abinit_err==0.or.io_KB_pwscf_err==0).and.pp_kbv_dim_yambo>0
    !
-   if(l_use_comm) then
-     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_kbv_dim_yambo,Dip%ib(1):Dip%ib(2)))
-     YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
-     if (have_cuda) then
-       YAMBO_ALLOC(kbv_d,(wf_ncx,n_spinor,4,pp_kbv_dim_atom))
-       kbv_d=cZERO
-     endif
+ endif
+ !
+ if(l_use_comm) then
+   ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
+   pp_dim_yambo=max(pp_kbv_dim_yambo,1)
+   pp_dim_atom =max(pp_kbv_dim_atom, 1)
+   YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
+   YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
+   if (have_cuda) then
+     YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
+     call dev_memset(DEV_VAR(kbv),cZERO)
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -145,8 +147,11 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    allocate(element_1D_spin(Xk%nibz*n_sp_pol))
    element_1D_spin=(/PAR_IND_DIPk_ibz%element_1D(:),PAR_IND_DIPk_ibz%element_1D(:)/)
    !
+   ! sum_kb workspace
+   !
+   call DIP_alloc("DIP_work",[pp_dim_yambo,nc])
+   !
  endif
- !
                                       live_t_string='Dipoles: P (T)'
  if (l_eval_DIP_V)                    live_t_string='Dipoles: P and v (T)'
  if (l_eval_DIP_V .and.l_eval_DIP_iR) live_t_string='Dipoles: P, V and iR (T)'
@@ -171,7 +176,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      if(l_use_comm) then
        !
-       IO_ACT_NOW=manage_action(RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol,element_1D=element_1D_spin)
+       IO_ACT_NOW=manage_action(OP_IF_START_RD_CL_IF_END,ifrag,1,Xk%nibz*n_sp_pol,element_1D=element_1D_spin)
        call io_control(ACTION=IO_ACT_NOW,SEC=(/ifrag+1/),ID=ID)
        !
        if (io_KB_pwscf_err==0 .and.ifrag>1)  io_KB_pwscf_err=io_KB_pwscf(ID)
@@ -188,6 +193,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
      !
      if (l_use_comm) then
        !
+       npp=0
        npp_tab=0
        pp_range(2)=0
        XX=cZERO
@@ -203,7 +209,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
            pp_range(2)=pp_range(1)+npp-1
            !
-           if (have_cuda) call dev_memcpy(kbv_d,kbv)
+           if (have_cuda) call dev_memcpy_h2d(kbv_d,kbv)
            !
            !nc=wf_nc_k(ik)
            nc=wf_ncx
@@ -332,16 +338,16 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  ! CLEAN
  !
  if (l_use_comm) then
+   call DIP_alloc("DIP_work")
+   YAMBO_FREE_GPU(DEV_VAR(kbv))
    YAMBO_FREE(XX)
-   YAMBO_FREE(kbv)
-   YAMBO_FREE(kbv_d)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
    YAMBO_FREE(pp_kbv_table)
    YAMBO_FREE(pp_factor)
    call PP_free()
  endif
- YAMBO_FREE(g_vec_d)
+ YAMBO_FREE_GPU(DEV_VAR(g_vec))
  !
  call timing('DIPOLE_transverse',OPR='stop')
  !

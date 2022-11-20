@@ -39,9 +39,12 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use parser_m,       ONLY:parser
  use wave_func,      ONLY:WF_buffered_IO
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
- use memory,         ONLY:USER_MEM_limit_string
+ use y_memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
- use cuda_m,         ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+ use cuda_m_y,       ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+#if defined _GPU
+ use cuda_m_y,       ONLY:cudaGetDevice
+#endif
  !
  implicit none
  !
@@ -53,9 +56,6 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  integer           :: ID,i_err,i_s,n_max_threads,i_cpu,i_dev,ierr
  character(lchlen) :: dumb_ch
  integer, external :: io_DB1
-#ifdef _CUDA
- integer, external :: cudaGetDevice
-#endif
  !
  !
  call section('*','MPI/OPENMP structure, Files & I/O Directories') 
@@ -122,7 +122,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Threads total       ',n_max_threads*ncpu)
  call msg('r', 'Nodes Computing     ',n_nodes(1))
  call msg('r', 'Nodes IO            ',n_IO_nodes)
-#ifdef _CUDA
+#ifdef _GPU
  call msg('r', 'CUDA support        ',"yes")
  call msg('r', 'CUDA devices        ',have_cuda_devices)
  if (len_trim(cuda_visible_devices)>0) call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
@@ -149,7 +149,7 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  !=================================
  !
  if (len_trim(USER_wall_time_string)>0)  call msg('r','User walltime limit ',trim(USER_wall_time_string))
- if (len_trim(USER_MEM_limit_string)>0)  call msg('r','User Memory   limit ',trim(USER_MEM_limit_string))
+ if (len_trim(USER_MEM_limit_string)>0) call msg('r','User Memory   limit ',trim(USER_MEM_limit_string))
  !
  ! Strings & Dirs
  !-----------------

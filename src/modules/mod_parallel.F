@@ -59,7 +59,7 @@ module parallel_m
 #endif
  !
 #if !defined _io_lib
-#include<memory.h>
+#include<y_memory.h>
 #endif
  !
 #if defined _MPI

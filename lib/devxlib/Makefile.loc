@@ -1,0 +1,53 @@
+#
+#===============================
+# Yambo package
+#===============================
+#
+include ../../config/setup
+include ../archive/package.list
+
+LIBNAME=libdevXlib.a
+LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
+LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+#
+PACKAGE=$(pkgname_devxlib)
+#
+include ../config/external_libs_commons.mk
+include ../config/external_libs_defs.mk
+#
+# Flags
+#
+CUDA_LIBS="$(lcudalib)"
+CUDA_INCS="$(icudalib)"
+BLAS_LIBS="$(lblas)"
+LAPACK_LIBS="$(llapack)"
+CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
+		F90="$(fc)" \
+		MPIF90="$(fc)" 
+#
+# MAIN target
+#
+all: $(LIBRARY)
+#
+uncompress:
+	@$(uncompress)
+
+configure: uncompress
+	@$(configure)
+
+compile: uncompress configure
+	@$(call compile,all)
+	
+install: uncompress configure compile
+	@$(call install_via_make,devXlib)
+
+$(LIBRARY): uncompress configure compile install
+#
+# cleaning
+#
+clean:
+	@$(call clean_the_lib,distclean-recursive)
+
+clean_all: clean
+	@$(rm_the_lib)
+#

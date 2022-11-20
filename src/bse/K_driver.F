@@ -42,7 +42,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use interfaces,     ONLY:eval_G_minus_G
  use R_lattice,      ONLY:bz_samp,qindx_B,qindx_X,qindx_B_max,qindx_free
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)  ::Xen,Ken
  type(bz_samp) ::Xk,q

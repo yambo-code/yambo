@@ -26,7 +26,7 @@
 #
 
 mpibuild="yes" 
-AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi],[Enable mpi parallelization . Default is yes.]))
+AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 CC_serial=$CC

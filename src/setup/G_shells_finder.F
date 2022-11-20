@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine G_shells_finder()
  !
  ! Output: g_rot(nsym,ng_closed)
@@ -33,17 +35,16 @@ subroutine G_shells_finder()
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
 &                       g_vec,g_rot,E_of_shell,rl_sop,minus_G
-#ifdef _CUDA
- use R_lattice,    ONLY:g_rot_d,minus_G_d
-#endif
+ use R_lattice,    ONLY:DEV_VAR(g_rot),DEV_VAR(minus_G)
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
+ use cuda_m_y,     ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !
@@ -64,9 +65,12 @@ subroutine G_shells_finder()
  io_err=io_GROT(ID)
  !
  if (io_err==0) then
+   !
    if(inv_index<0) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
+     YAMBO_FREE_GPU(DEV_VAR(g_rot))
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
      call io_control(ACTION=OP_RD_CL,SEC=(/1,2/),MODE=VERIFY,ID=ID)
@@ -74,12 +78,6 @@ subroutine G_shells_finder()
      !
    endif
    !
-#ifdef _CUDA
-   if (allocated(g_rot_d)) deallocate(g_rot_d)
-   allocate(g_rot_d,source=g_rot)
-   if (allocated(minus_G_d)) deallocate(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
-#endif
    return
    !
  else
@@ -87,12 +85,11 @@ subroutine G_shells_finder()
    if (allocated(g_rot)) then
      YAMBO_FREE(ng_in_shell)
      YAMBO_FREE(E_of_shell)
+     !
+     YAMBO_FREE_GPU(DEV_VAR(g_rot))
+     YAMBO_FREE_GPU(DEV_VAR(minus_G))
      YAMBO_FREE(g_rot)
      YAMBO_FREE(minus_G)
-#ifdef _CUDA
-     if (allocated(g_rot_d))   deallocate(g_rot_d)
-     if (allocated(minus_G_d)) deallocate(minus_G_d)
-#endif
    endif
    !
  endif
@@ -135,7 +132,7 @@ subroutine G_shells_finder()
    !
    if (.not.px%element_1D(i_m)) cycle
    !
-!$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
+   !$omp parallel do default(shared), private(i_1,ig_1,i_s,g_rotated,i_2,ig_2)
    do i_1=first_G_in_shell(i_m),first_G_in_shell(i_m)+ng_in_shell_TMP(i_m)-1
      !
      ig_1=G_mod_indx(i_1)
@@ -163,7 +160,7 @@ subroutine G_shells_finder()
      enddo
      !
    enddo
-!$omp end parallel do
+   !$omp end parallel do
    !
    call live_timing(steps=1)
    !
@@ -174,9 +171,9 @@ subroutine G_shells_finder()
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
  !
-#ifdef _CUDA
- allocate(g_rot_d,source=g_rot)
-#endif
+ if (have_cuda) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
+ endif
  !
  ! Redefine ng_in_shell_TMP witg actual position of the last element of the
  ! degenerate group
@@ -222,6 +219,7 @@ subroutine G_shells_finder()
  ! will fail as the shells are not closed anymore with respect to the inversion.
  !
  if (inv_index<0) then
+   !
    YAMBO_ALLOC(minus_G,(ng_closed))
    call eval_minus_G()
    do while (  count(minus_G==0)>0 ) 
@@ -230,10 +228,11 @@ subroutine G_shells_finder()
      call eval_minus_G()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
-#ifdef _CUDA
-   if (allocated(minus_G_d)) deallocate(minus_G_d)
-   allocate(minus_G_d,source=minus_G)
-#endif
+   !
+   if (have_cuda) then
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
+   endif
+   !
  endif
  !
  E_of_shell(:n_g_shells)=E_of_shell_TMP(:n_g_shells)

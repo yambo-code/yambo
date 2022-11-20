@@ -26,7 +26,7 @@ module SC
  use descriptors,     ONLY:IO_desc
  use pars,            ONLY:SP,schlen,lchlen
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer           :: SC_bands(2)
  integer           :: SC_nbands

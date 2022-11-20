@@ -53,7 +53,7 @@ subroutine XCo_local(E,Xk)
 #endif
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::E       
  type(bz_samp)::Xk

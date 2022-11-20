@@ -43,30 +43,67 @@
 !
 !=====================================================================
 !
+#include<dev_defs.h>
+!
 subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
- use cudafor
+ use dev_openacc_m
+#if defined _CUDAF
  use cufft
+#endif
+#if defined _OPENACC
+ use cudafor_m_y
+ use cufft_m_y
+#endif
+ use cuda_m_y,  only: cuda_devsync
  !
- implicit none
+#include<y_memory.h> 
+ !
  integer   :: fft_sign,n(3)
  integer   :: cufft_plan
- complex(DP), device :: c_d(n(1),n(2),n(3))
+ complex(DP) DEV_ATTR :: c_d(n(1),n(2),n(3))
+ !
  ! 
  ! Work Space
  !
- integer             :: i_sign,istat
+ integer              :: i_sign,istat
+ complex(DP), allocatable :: tmp_d(:,:,:)
  !
  if (fft_sign>0) i_sign=CUFFT_INVERSE
  if (fft_sign<0) i_sign=CUFFT_FORWARD
  !
  if (cufft_plan==0) then
    !
+#ifdef _OPENACC
+   ! 2022-02-02 DS and AF TO BE FIXED
+   !istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
+   istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
+   !istat = cufftSetStream( cufft_plan, stream_default )
+   !istat = cuda_devsync()
+#endif
    istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
  endif
  !
+#ifdef _OPENACC
+ ! 2022-02-02 DS and AF TO BE FIXED
+ !DEV_ACC wait(acc_async_noval)
+ !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
+ istat = cuda_devsync()
+#endif
+ !
+ !DEV_ACC data present(c_d)
+ !DEV_ACC host_data use_device(c_d)
  istat = cufftExecZ2Z( cufft_plan, c_d, c_d, i_sign )
+ !DEV_ACC end host_data
+ !DEV_ACC end data
+ !
+#ifdef _OPENACC
+ !DEV_ACC wait(acc_async_noval)
+ !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
+ istat = cuda_devsync()
+#endif
  !
 end subroutine fft_3d_cuda
+

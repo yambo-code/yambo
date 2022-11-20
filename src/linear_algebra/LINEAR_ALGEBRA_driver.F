@@ -47,9 +47,9 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer                    :: idriver
  integer,          optional :: lib_in
@@ -289,10 +289,10 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-#ifdef _CUDA
+#ifdef _GPU
      call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
 #else
-     call error('[LA] CUDA support required but not present')
+     call error('[LA] GPU support required but not present')
 #endif
    endif
    !

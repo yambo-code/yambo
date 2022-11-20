@@ -31,7 +31,7 @@ subroutine X_ALLOC_global(WHAT,W)
  use PHOTOLUM,      ONLY:PL,PL_init
  use BS,            ONLY:l_BS_anomalous_Hall
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(*)   :: WHAT
  type(w_samp)   :: W

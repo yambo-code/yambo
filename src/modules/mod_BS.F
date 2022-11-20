@@ -23,10 +23,12 @@
 !
 module BS
  !
- use pars,          ONLY:IP,IPL,SP,schlen,lchlen
- use collision_el,  ONLY:elemental_collision
+ use pars,          ONLY: IP,IPL,SP,schlen,lchlen
+ use collision_el,  ONLY: elemental_collision
+ use cuda_m_y,      ONLY: have_cuda
  !
-#include<memory.h>
+#include<dev_defs.h>
+#include<y_memory.h>
  !
  ! Modes and logicals
  !====================
@@ -201,9 +203,7 @@ module BS
    ! Exchange Oscillators
    !
    complex(SP), allocatable      :: O_x(:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device :: O_x_d(:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: O_x_d(:,:)
    !
  end type BS_T_group
  !
@@ -243,9 +243,7 @@ module BS
    integer,     allocatable      :: kp_table(:,:)           ! 2,nkibz @ k = (i_kmq,i_pmq)
    integer,     allocatable      :: O_table(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
    complex(SP), allocatable      :: O_c(:,:)
-#ifdef _CUDA
-   complex(SP), allocatable, device :: O_c_d(:,:)
-#endif
+   complex(SP), allocatable DEV_ATTR :: O_c_d(:,:)
    !
  end type BS_block
  !
@@ -259,10 +257,7 @@ module BS
  !
  ! Screened interaction
  !======================
- complex(SP),allocatable ::BS_W(:,:,:)
-#ifdef _CUDA
- attributes(device)      ::BS_W
-#endif
+ complex(SP),allocatable DEV_ATTR ::BS_W(:,:,:)
  !
  contains
    !
@@ -292,18 +287,19 @@ module BS
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
-#ifdef _CUDA
-       allocate(BS_T_grp(iG)%O_x_d,mold=BS_T_grp(iG)%O_x)
-#endif
-
+       if (have_cuda) then
+         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_T_grp(iG)%O_x),BS_T_grp(iG)%O_x)
+         YAMBO_ALLOC_GPU(DEV_VAR(BS_T_grp(iG)%O_x),(BS_n_g_exch,BS_T_grp(iG)%size))
+       endif
      endif
      !
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
-#ifdef _CUDA
-       allocate(BS_blk(iB)%O_c_d,mold=BS_blk(iB)%O_c)
-#endif
+       if (have_cuda) then
+         !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_blk(iB)%O_c),BS_blk(iB)%O_c)
+         YAMBO_ALLOC_GPU(DEV_VAR(BS_blk(iB)%O_c),(O_ng,BS_blk(iB)%N_oscillators))
+       endif
      endif
      !
    end subroutine
@@ -313,10 +309,8 @@ module BS
      integer, intent(in) :: iG_ref,iB_ref
      integer :: iG,iB,ik_loop,ip_loop,ik_now,ip_now
      do iG=iG_ref,1,-1
+       YAMBO_FREE_GPU(DEV_VAR(BS_T_grp(iG)%O_x))
        YAMBO_FREE(BS_T_grp(iG)%O_x)
-#ifdef _CUDA
-       if (allocated(BS_T_grp(iG)%O_x_d)) deallocate(BS_T_grp(iG)%O_x_d)
-#endif
      enddo
      if(iB_ref==0) return
      ik_now=BS_blk(iB_ref)%ik
@@ -331,12 +325,10 @@ module BS
        if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
+       YAMBO_FREE_GPU(DEV_VAR(BS_blk(iB)%O_c))
        YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table)
        YAMBO_FREE(BS_blk(iB)%kp_table)
-#ifdef _CUDA
-       if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)
-#endif
+       YAMBO_FREE_NO_DEV_CHECK(BS_blk(iB)%O_table)  ! O_table has rank>7, there is not interface for dev_allocated function
      enddo
      !
    end subroutine

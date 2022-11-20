@@ -28,10 +28,10 @@ module X_m
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
  use OUTPUT,         ONLY:N_MAX_columns
- use cuda_m,         ONLY:have_cuda
+ use cuda_m_y,       ONLY:have_cuda
  !
 #include <dev_defs.h>
-#include <memory.h>
+#include <y_memory.h>
  !
  ! Observables
  !
@@ -70,10 +70,6 @@ module X_m
  real(SP)             :: X_DbGd_percentual
  integer ,allocatable :: X_DbGd_nkpt_at_q(:)
  integer ,allocatable :: X_DbGd_nkpt_at_q_table(:,:,:)
- !
- ! workspace for X_irredux_residuals on GPUs
- !
- complex(SP), allocatable DEV_ATTR :: rhotw_save_d(:), rhotw_save2_d(:)
  !
  ! Absorption & Polarizability
  !

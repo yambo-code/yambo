@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  !
  use pars,           ONLY:SP,pi
@@ -29,18 +31,17 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use matrix_operate, ONLY:m3inv
  use FFT_m,          ONLY:fft_dim,fft_size,fft_rot_r,fft_rot_r_inv,&
 &                         fft_norm,fft_g_table,fft_multiplier,modx,&
-&                         fft_g_table_d,fft_rot_r_d,fft_rot_r_inv_d
+&                         DEV_VAR(fft_g_table),DEV_VAR(fft_rot_r),DEV_VAR(fft_rot_r_inv)
  use FFT_m,          ONLY:fftw_plan,cufft_plan
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
  use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
- use cuda_m,         ONLY:have_cuda
- use deviceXlib_m,   ONLY:dev_memcpy,dev_memset
+ use cuda_m_y,       ONLY:have_cuda
+ use deviceXlib_m,   ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_memset
  !
-#include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer :: iG_max,iGo_max
  logical :: ONLY_SIZE
@@ -54,7 +55,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  real(SP) :: v1(3),M1(3,3),M2(3,3),mat(3,3),scal(3)
  real(SP), allocatable :: g_vec_rot(:,:)
  real(SP), allocatable DEV_ATTR :: g_vec_rot_d(:,:)
-#ifdef _CUDA
+#ifdef _GPU
  integer :: ln_1,ln_2,ln_3,iv_1,iv_2,iv_3
  integer :: fft_dim_1,fft_dim_2,fft_dim_3
  integer :: temp_1,temp_2,temp_3,i1_max
@@ -74,7 +75,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  g_vec_rot=transpose(matmul(mat,transpose(g_vec)))
  !
  if (have_cuda) then
-   YAMBO_ALLOC_SOURCE(g_vec_rot_d,g_vec_rot)
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec_rot),g_vec_rot)
  endif
  !
  if (.not.ONLY_SIZE) then
@@ -84,16 +85,16 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    fft_g_table=0
    !
    if (have_cuda) then
-     YAMBO_FREE(fft_g_table_d)
-     YAMBO_ALLOC(fft_g_table_d,(max(iG_max,wf_ng),iGo_max))
-     call dev_memset(fft_g_table_d,val=0)
+     YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
+     YAMBO_ALLOC_GPU(DEV_VAR(fft_g_table),(max(iG_max,wf_ng),iGo_max))
+     call dev_memset(DEV_VAR(fft_g_table),val=0)
    endif
    !
  endif
  !
  ! SIZE estimation
  !
-#ifdef _CUDA
+#ifdef _GPU
  ln_1=-1
  ln_2=-1
  ln_3=-1
@@ -106,19 +107,21 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    if (i4>0.and..not.ONLY_SIZE) call fft_desc_init(fft_dim,iGo_max,dffts)
 #endif
    !
-#ifdef _CUDA
+#ifdef _GPU
    fft_dim_1 = fft_dim(1)
    fft_dim_2 = fft_dim(2)
    fft_dim_3 = fft_dim(3)
    i1_max = min(max(iG_max,wf_ng),ng_vec)
-   ! TODO: i1 should be inner loop for performance?
-   !$cuf kernel do(2)
+   !
+   !DEV_ACC data present(g_vec_rot,fft_g_table)
+   !DEV_ACC parallel loop collapse(2)
+   !DEV_CUF kernel do(2)
    do i1=1,i1_max
      do i2=1,iGo_max
        !
-       iv_1 = nint(g_vec_rot_d(i1,1) - g_vec_rot_d(i2,1))
-       iv_2 = nint(g_vec_rot_d(i1,2) - g_vec_rot_d(i2,2))
-       iv_3 = nint(g_vec_rot_d(i1,3) - g_vec_rot_d(i2,3))
+       iv_1 = nint(DEV_VAR(g_vec_rot)(i1,1) - DEV_VAR(g_vec_rot)(i2,1))
+       iv_2 = nint(DEV_VAR(g_vec_rot)(i1,2) - DEV_VAR(g_vec_rot)(i2,2))
+       iv_3 = nint(DEV_VAR(g_vec_rot)(i1,3) - DEV_VAR(g_vec_rot)(i2,3))
        !
        if (i2==1.or.i1<=iG_max) then
          ln_1=max(ln_1,iv_1)
@@ -127,7 +130,6 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
        endif
        !
        if (i4>0.and..not.ONLY_SIZE) then
-
                        temp_1 = mod(iv_1,fft_dim_1)
                        temp_2 = mod(iv_2,fft_dim_2)
                        temp_3 = mod(iv_3,fft_dim_3)
@@ -135,14 +137,15 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
             if(iv_2<0) temp_2 = mod(temp_2 + fft_dim_2, fft_dim_2)
             if(iv_3<0) temp_3 = mod(temp_3 + fft_dim_3, fft_dim_3)
 
-            fft_g_table_d(i1,i2)=1+temp_1+&
+            DEV_VAR(fft_g_table)(i1,i2)=1+temp_1+&
 &                                  temp_2*fft_dim_1+&
 &                                  temp_3*fft_dim_1*fft_dim_2
        endif
        !
      enddo
    enddo
-
+   !DEV_ACC end data
+   !
 #else
    do i1=1,min(max(iG_max,wf_ng),ng_vec)
      do i2=1,iGo_max
@@ -162,10 +165,10 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    enddo
 #endif
    !
-#ifdef _CUDA
+#ifdef _GPU
    if (i4>0.and..not.ONLY_SIZE) then
-     ! fft_g_table <= fft_g_table_d
-     call dev_memcpy(fft_g_table,fft_g_table_d)
+     ! D2H fft_g_table <= fft_g_table_d
+     call dev_memcpy_d2h(fft_g_table,DEV_VAR(fft_g_table))
    endif
    ln(1) = ln_1
    ln(2) = ln_2
@@ -177,6 +180,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    call fft_best_size(ln)
    if (i4>0) then
       call timing("FFT_setup",opr="stop")
+      YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
       YAMBO_FREE(g_vec_rot)
       return
    endif
@@ -188,16 +192,16 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      cycle
    endif
    !
+   YAMBO_FREE_GPU(DEV_VAR(fft_rot_r))
    YAMBO_FREE(fft_rot_r)
-   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
+   YAMBO_FREE_GPU(DEV_VAR(fft_rot_r_inv))
    YAMBO_FREE(fft_rot_r_inv)
-   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
    !
+   YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))
+   YAMBO_ALLOC(fft_rot_r_inv,(fft_size))
    if (have_cuda) then
-     YAMBO_FREE(fft_rot_r_d)
-     YAMBO_ALLOC(fft_rot_r_d,(fft_size,nsym))
-     YAMBO_FREE(fft_rot_r_inv_d)
-     YAMBO_ALLOC(fft_rot_r_inv_d,(fft_size))
+     YAMBO_ALLOC_GPU(DEV_VAR(fft_rot_r),(fft_size,nsym))
+     YAMBO_ALLOC_GPU(DEV_VAR(fft_rot_r_inv),(fft_size))
    endif
 
    !
@@ -245,8 +249,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    i4=1
    !
    if (have_cuda) then
-     call dev_memcpy(fft_rot_r_d,fft_rot_r)
-     call dev_memcpy(fft_rot_r_inv_d,fft_rot_r_inv)
+     call dev_memcpy_h2d(DEV_VAR(fft_rot_r),fft_rot_r)
+     call dev_memcpy_h2d(DEV_VAR(fft_rot_r_inv),fft_rot_r_inv)
    endif
    !
  enddo
@@ -254,10 +258,11 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _FFTW
  fftw_plan=0
 #endif
-#if defined _CUDA
+#if defined _GPU
  cufft_plan=0
 #endif
  !
+ YAMBO_FREE_GPU(DEV_VAR(g_vec_rot))
  YAMBO_FREE(g_vec_rot)
  call timing("FFT_setup",opr="stop")
  !

@@ -27,7 +27,7 @@ module matrix
  use parallel_m, ONLY:yMPI_comm
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Distributed Matrix structure
  !

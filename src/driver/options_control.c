@@ -23,7 +23,7 @@
 
 */
 #include <stdio.h>
-#include <kind.h>
+#include <ykind.h>
 
 void options_control(struct options_struct options[],int *i_opt)
 { 
@@ -100,6 +100,12 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].yambo_string="slktest";
  options[*i_opt].section=desc;
 #endif
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="GPU test";
+ options[*i_opt].long_opt="gputest";
+ options[*i_opt].bin="yambo";
+ options[*i_opt].yambo_string="gputest";
+ options[*i_opt].section=desc;
  /* 
   Job control 
  */

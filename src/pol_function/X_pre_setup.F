@@ -35,7 +35,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  use parallel_m,    ONLY:PAR_COM_WORLD
  use stderr,        ONLY:intc
  use parser_m,      ONLY:parser
- use cuda_m,        ONLY:have_cuda
+ use cuda_m_y,      ONLY:have_cuda
  !
  implicit none
  !

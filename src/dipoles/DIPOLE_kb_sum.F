@@ -25,20 +25,17 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
+ use iso_c_binding, ONLY:C_F_POINTER,C_LOC
  use pars,          ONLY:SP,cONE,cZERO
- use wrapper,       ONLY:M_by_M
+ use wrapper,       ONLY:M_by_M,DEV_SUB(M_by_M)
  use electrons,     ONLY:n_spinor
- use deviceXlib_m,  ONLY:dev_memcpy
- use iso_c_binding, ONLY:C_F_POINTER
-#if defined _CUDA
+#if defined _CUDAF
  use cudafor,       ONLY:C_DEVLOC
-#else
- use iso_c_binding, ONLY:C_LOC
 #endif
-!
-#include<dev_defs.h>
  !
  implicit none
  !
@@ -62,7 +59,7 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  call C_F_POINTER(C_LOC(XX),  XX_p, (/n_spinor,dim_flat/) )
 #endif
  !
- call M_by_M('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
+ call M_by_M_gpu('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
  !
 end subroutine DIPOLE_kb_project
 !
@@ -72,8 +69,11 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
- use cuda_m,        ONLY:have_cuda
- use deviceXlib_m,  ONLY:dev_memcpy
+ use cuda_m_y,      ONLY:have_cuda
+ use deviceXlib_m,  ONLY:dev_memcpy_d2h
+#if defined _CUDAF
+ use DIPOLES,       ONLY:DEV_VAR(drho)=>DEV_VAR(DIP_work_drho)
+#endif
  !
 #include<dev_defs.h>
  !
@@ -86,17 +86,14 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor
+ complex(SP) :: drho(n_spinor,3,pp_kbv_dim_yambo)
  !
- complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
-#ifdef _CUDA
- complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
-#endif
+ if (pp_kbv_dim_yambo==0) return
  !
-#if defined _CUDA
- !$cuf kernel do(3) <<<*,*>>>
-#else
- !$omp parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
-#endif
+ !DEV_ACC data present(DEV_VAR(drho),XXv,XXc)
+ !DEV_ACC parallel loop collapse(3) async
+ !DEV_CUF kernel do(3)
+ !DEV_OMP parallel do default(shared), private(i1,i2,i_spinor), collapse(3)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
@@ -105,8 +102,9 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
      enddo
    enddo
  enddo
+ !DEV_ACC end data
  !
- if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
+ if (have_cuda) call dev_memcpy_d2h(drho,DEV_VAR(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine DIPOLE_kb_sum

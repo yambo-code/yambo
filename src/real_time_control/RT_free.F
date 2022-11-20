@@ -42,7 +42,7 @@ subroutine RT_free( )
 #endif
  use RT_lifetimes,   ONLY:RT_ALL_lifetimes_free,q_weight_RT
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  call H_free()
  !

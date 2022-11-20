@@ -49,7 +49,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Notice that E is never changed!
  !

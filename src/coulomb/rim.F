@@ -37,7 +37,7 @@ subroutine rim(mode)
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  character(1)       :: mode
  !

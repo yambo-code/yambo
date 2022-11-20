@@ -37,6 +37,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+ use drivers,        ONLY:l_gpu_test
  use pars,           ONLY:SP
  use parser_m,       ONLY:parser
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
@@ -76,7 +77,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use yaml_output,    ONLY:yaml_close_stream
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)    ::en
  type(bz_samp)   ::q,k
@@ -331,6 +332,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
 #endif
+       l_gpu_test =runlevel_is_on('gputest')
 #if defined _RT
        l_real_time=runlevel_is_on('negf')
        l_elel_scatt =runlevel_is_on('el_el_scatt')

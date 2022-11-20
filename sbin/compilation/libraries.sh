@@ -37,7 +37,7 @@ llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"
 lSL="\$(lslepc) \$(lpetsc)"
 lIO="\$(liotk) \$(lpnetcdf) \$(lnetcdff) \$(lnetcdf) \$(lhdf5)"
-lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)"
+lextlibs="\$(llibxc) \$(lfft) \$(lfutile) \$(lyaml)  \$(ldevxlib) \$(lcudalib)"
 #
 case $target in
   yambo_nl)

@@ -7,13 +7,13 @@ AC_PREREQ([2.71])
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
-AC_ARG_WITH(blas_libs,[AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
+AC_ARG_WITH(blas_libs,[AS_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
 AC_ARG_ENABLE(int_linalg,   AS_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
 AC_ARG_ENABLE(openmp_int_linalg,   AS_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
-        [AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
 case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;

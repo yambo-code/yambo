@@ -36,7 +36,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  use matrix_operate,    ONLY:m3inv
  use com,               ONLY:msg
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp) :: Xk
  !

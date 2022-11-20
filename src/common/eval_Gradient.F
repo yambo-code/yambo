@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#include<dev_defs.h>
+!
 subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! The gradient of a periodic function f(r):
@@ -31,15 +33,18 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  ! \sum f'(G) exp(iGr)       => FFT^-1
  !
- use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
- use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
-#if defined _FFTW
- use FFT_m,         ONLY:fftw_plan
-#endif
- use R_lattice,     ONLY:g_vec,ng_vec
- use wave_func,     ONLY:wf_ng
+ ! Exploitation of GPU is done when cards are available
  !
-#include<memory.h>
+ use pars,          ONLY:SP,DP,cI,cZERO,cZERO_DP
+ use FFT_m,         ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
+ use FFT_m,         ONLY:fftw_plan,cufft_plan
+ use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
+ use wave_func,     ONLY:wf_ng
+ use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_allocated,dev_memset
+ use cuda_m_y,      ONLY:have_cuda,have_openacc
+ use timing_m
+ !
+#include<y_memory.h>
  !
  integer,          intent(in) ::spinor_size
  complex(SP),      intent(in) ::f(fft_size,spinor_size)
@@ -49,55 +54,109 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  ! Work Space 
  !
  integer :: ng_,ic,ig,i_spinor
- complex(DP), allocatable :: Vr(:), V3g(:,:)
+ complex(DP), allocatable,          target :: Vr(:), V3g(:,:)
+ complex(DP), allocatable DEV_ATTR, target :: Vr_d(:), V3g_d(:,:)
+ complex(DP), pointer DEV_ATTR :: Vr_p(:), V3g_p(:,:)
+ complex(DP), pointer          :: Vr_h(:)
+ !
+ call timing("eval_Gradient","start")
  !
  select case( trim(f_type) )
  case( "wave" )
-   ng_=min(wf_ng,size(fft_g_table,1))
+   ng_=min(wf_ng,size(DEV_VAR(fft_g_table),1))
  case( "density")
-   ng_=min(ng_vec,size(fft_g_table,1))
+   ng_=min(ng_vec,size(DEV_VAR(fft_g_table),1))
  case( "potential")
-   ng_=min(ng_vec,size(fft_g_table,1))
+   ng_=min(ng_vec,size(DEV_VAR(fft_g_table),1))
  case default
    call error(' [FFT] unknown f_type when computing gradient')
  end select
  !
  YAMBO_ALLOC(Vr,(fft_size))
- YAMBO_ALLOC(V3g,(ng_,3))
- V3g(:,:) = cZERO_DP
+ if (have_openacc) then
+   YAMBO_ALLOC(V3g,(ng_,3))
+ endif
+ YAMBO_ALLOC_GPU(DEV_VAR(Vr),(fft_size))
+ YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
+ !
+ ! Synchronize g_vec host/dev if needed
+ if (have_cuda.and..not.dev_allocated(DEV_VAR(g_vec))) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
+ endif
  !
  f_gradient = cZERO
  !
+ ! f, f_gradient are on host memory
+ ! Vr, V3g on GPU memory if CUDA support is enabled
+ !
+ Vr_h  => Vr
+ Vr_p  => DEV_VAR(Vr)
+ V3g_p => DEV_VAR(V3g)
+ !
  do i_spinor=1,spinor_size
    !
-   Vr=cmplx(f(:,i_spinor),kind=DP)
+   Vr_h=cmplx(f(:,i_spinor),kind=DP)
+   call dev_memcpy_h2d(Vr_p,Vr_h)
    !
-#if defined _FFTW
- call dfftw_destroy_plan(fftw_plan)
- fftw_plan = 0
- call fft_3d(Vr,fft_dim,-1,fftw_plan)
+#if defined _GPU
+   call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan) 
 #else
- call fft_3d(Vr,fft_dim,-1)
-#endif
-   !
-   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*real(g_vec(ig,ic),DP)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
-   !
-   do ic = 1,3
-     Vr = cZERO_DP
-     Vr(fft_g_table(1:ng_,1)) = V3g(1:ng_,ic)
-#if defined _FFTW
+#  if defined _FFTW
    call dfftw_destroy_plan(fftw_plan)
    fftw_plan = 0
-   call fft_3d(Vr,fft_dim,1,fftw_plan)
-#else
-   call fft_3d(Vr,fft_dim,1)
+   call fft_3d(Vr_p,fft_dim,-1,fftw_plan)
+#  else
+   call fft_3d(Vr_p,fft_dim,-1)
+#  endif
 #endif
-     f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=SP)
+   !
+   call dev_memset(V3g_p,cZERO_DP)
+   !
+   !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
+   !DEV_ACC parallel loop collapse(2) async
+   !DEV_CUF kernel do(2) <<<*,*>>>
+   do ic = 1,3
+   do ig = 1,ng_
+      V3g_p(ig,ic)=cI*real(DEV_VAR(g_vec)(ig,ic),DP)*Vr_p(DEV_VAR(fft_g_table)(ig,1))/real(fft_size,DP)
+   enddo
+   enddo
+   !DEV_ACC end data
+   !
+   do ic = 1,3
+     !
+     call dev_memset(Vr_p,cZERO_DP)
+     !
+     !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     do ig = 1, ng_
+       Vr_p(DEV_VAR(fft_g_table)(ig,1)) = V3g_p(ig,ic)
+     enddo
+     !DEV_ACC end data
+     !
+#if defined _GPU
+     call fft_3d_cuda(Vr_p,fft_dim,1,cufft_plan) 
+#else
+#    if defined _FFTW
+     call dfftw_destroy_plan(fftw_plan)
+     fftw_plan = 0
+     call fft_3d(Vr_p,fft_dim,1,fftw_plan)
+#    else
+     call fft_3d(Vr_p,fft_dim,1)
+#    endif
+#endif
+     !
+     call dev_memcpy_d2h(Vr_h,Vr_p)
+     f_gradient(:,i_spinor,ic) = cmplx(Vr_h(:),kind=SP)
    enddo
    !
  enddo
  !
+ YAMBO_FREE_GPU(DEV_VAR(Vr))
+ YAMBO_FREE_GPU(DEV_VAR(V3g))
  YAMBO_FREE(Vr)
  YAMBO_FREE(V3g)
+ !
+ call timing("eval_Gradient","stop")
  !
 end subroutine eval_Gradient

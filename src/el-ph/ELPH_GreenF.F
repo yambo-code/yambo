@@ -50,7 +50,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  use R_lattice,     ONLY:bz_samp
  use functions,     ONLY:Fermi_fnc_derivative
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,      intent(in) :: i_qp
  integer,      intent(in) :: ob

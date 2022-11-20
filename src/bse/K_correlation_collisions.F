@@ -51,7 +51,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  use timing_m,      ONLY:timing
  !
 #include<dev_defs.h>
-#include<memory.h>
+#include<y_memory.h>
  !
  integer,       intent(in)  :: iq,i_block,qindx_ID_frag
  type(bz_samp), intent(in)  :: Xk,q
@@ -210,7 +210,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
  !
-#if !defined _CUDA
+#if !defined _GPU
  !$omp parallel default(shared), private(i_Tk,i_Tp, &
  !$omp &          i_kp_s,i_s_star,H_pos,&
  !$omp &          i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
@@ -229,7 +229,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  select case (mode_now)
  case("R","A","F")
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp do collapse(2), schedule(dynamic)
 #endif
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
@@ -265,13 +265,13 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
      enddo
    enddo
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end do
 #endif
    !
  case("C","Q")
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp do collapse(2), schedule(dynamic)
 #endif
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
@@ -308,14 +308,14 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      enddo
    enddo
    !
-#if !defined _CUDA
+#if !defined _GPU
    !$omp end do
 #endif
    !
  end select
  !
  call elemental_collision_free(K_CORR_collision)
-#if !defined _CUDA
+#if !defined _GPU
  !$omp end parallel
 #endif
  !

@@ -66,7 +66,7 @@ subroutine RT_start_and_restart(E,k,q)
  use parallel_int,   ONLY:PP_wait,PP_redux_wait
  use RT_output_m,    ONLY:RT_desc,TIME_STEP_desc,Gr_desc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)      :: E
  type(bz_samp)     :: k,q

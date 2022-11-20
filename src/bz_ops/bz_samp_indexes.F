@@ -68,7 +68,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 #endif
  use parallel_m
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels) ::en
  type(bz_samp)::k,Xk,q

@@ -26,7 +26,7 @@ module YPP_real_time
  use units,    ONLY:HA2EV
  use pars,     ONLY:schlen,SP,DP,rZERO
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! RT
  !

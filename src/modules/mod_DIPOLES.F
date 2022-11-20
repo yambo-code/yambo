@@ -26,8 +26,10 @@ module DIPOLES
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
+ use cuda_m_y,      ONLY:have_cuda,have_openacc
  !
-#include <memory.h>
+#include <dev_defs.h>
+#include <y_memory.h>
  !
  ! Logicals
  !
@@ -59,6 +61,13 @@ module DIPOLES
  complex(SP), allocatable :: DIP_spin(:,:,:,:,:,:)
  complex(SP), allocatable :: DIP_P_spinor(:,:,:,:,:,:)
  complex(SP), allocatable :: P_square(:,:,:,:)
+ !
+ ! DIP Transverse workspace
+ !
+ complex(SP), allocatable          :: DIP_work_drho(:,:,:)
+ complex(SP), allocatable DEV_ATTR :: DIP_work_drho_d(:,:,:)
+ !
+ ! type def
  !
  type DIPOLE_t
    integer    :: iq(2)
@@ -93,6 +102,7 @@ module DIPOLES
      !
      character(*)      :: what
      integer, optional :: d(:)
+     integer           :: d_tmp
      !
      if (present(d)) then
        select case(what)
@@ -128,6 +138,11 @@ module DIPOLES
          if (allocated(P_square)) return
          YAMBO_ALLOC(P_square,(d(1):d(2),d(3):d(4),d(5),n_sp_pol))
          P_square=cZERO
+       case('DIP_work')
+         YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
+         if (have_cuda) then
+           YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
+         endif
        end select
      else
        select case(what)
@@ -155,6 +170,9 @@ module DIPOLES
        case('P_square')
          if (.not.allocated(P_square)) return
          YAMBO_FREE(P_square)
+       case('DIP_work')
+         YAMBO_FREE_GPU(DEV_VAR(DIP_work_drho))
+         YAMBO_FREE(DIP_work_drho)
        end select
      endif
    end subroutine

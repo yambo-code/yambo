@@ -284,8 +284,7 @@ module interfaces
  end interface
  !
  interface WF_shift_kpoint
-   !
-   subroutine DEV_SUB_ALT(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
+   subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out)
      use pars,          ONLY:SP
      use electrons,     ONLY:n_spinor,n_sp_pol
      use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
@@ -299,9 +298,8 @@ module interfaces
    end subroutine
  end interface 
  !
- interface WF_symm_kpoint
-   !
-   subroutine WF_symm_kpoint_cpu(b_to_load,ikbz,Xk,WF_k_out)
+ interface
+   subroutine WF_symm_kpoint(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
      use wave_func,     ONLY:wf_ng_1st_BZ
@@ -309,9 +307,11 @@ module interfaces
      integer,       intent(in)  :: ikbz,b_to_load(2)
      type(bz_samp), intent(in)  :: Xk
      complex(SP),   intent(out) :: WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
-   end subroutine WF_symm_kpoint_cpu
+   end subroutine WF_symm_kpoint
+ end interface 
    !
-#ifdef _CUDA
+#ifdef _GPU
+ interface
    subroutine WF_symm_kpoint_gpu(b_to_load,ikbz,Xk,WF_k_out)
      use pars,          ONLY:SP 
      use R_lattice,     ONLY:bz_samp
@@ -322,20 +322,21 @@ module interfaces
      complex(SP),   intent(out) DEV_ATTR :: &
 &       WF_k_out(wf_ng_1st_BZ,n_spinor,b_to_load(1):b_to_load(2),n_sp_pol)
    end subroutine WF_symm_kpoint_gpu
-#endif
  end interface
+#endif
  !
- interface WF_apply_symm
-   !
-   subroutine WF_apply_symm_cpu(isc,WF_symm)
+ interface
+   subroutine WF_apply_symm(isc,WF_symm)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
      use electrons,     ONLY:n_spinor
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) :: WF_symm(fft_size,n_spinor)
-   end subroutine WF_apply_symm_cpu
-   !
-#ifdef _CUDA
+   end subroutine WF_apply_symm
+ end interface
+ !
+#ifdef _GPU
+ interface
    subroutine WF_apply_symm_gpu(isc,WF_symm_d)
      use pars,          ONLY:SP
      use FFT_m,         ONLY:fft_size
@@ -343,7 +344,7 @@ module interfaces
      integer,     intent(in)  :: isc(4)
      complex(SP), intent(out) DEV_ATTR :: WF_symm_d(fft_size,n_spinor)
    end subroutine WF_apply_symm_gpu
-#endif
  end interface
+#endif
  !
 end module interfaces

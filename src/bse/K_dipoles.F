@@ -46,7 +46,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  use timing_m,      ONLY:timing
  use vec_operate,   ONLY:v_rotate
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  integer       ::iq
  type(levels)  ::Ken

@@ -42,7 +42,7 @@ subroutine k_map_fine_to_coarse_init(Xk,Xen,FineGd_k,FineGd_is_expanded,PH_grid)
  use vec_operate,         ONLY:c2a
 #endif
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(bz_samp), intent(in)     :: Xk
  type(levels),  intent(inout)  :: Xen

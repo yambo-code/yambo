@@ -52,7 +52,7 @@ subroutine K_WF_phases(Xk)
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  ! Work Space
  !

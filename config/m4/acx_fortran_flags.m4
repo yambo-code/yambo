@@ -31,7 +31,8 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
-AC_ARG_ENABLE(debug-flags, AS_HELP_STRING([--enable-debug-flags],[Debug flags are set for compilation. Default is no.]))
+AC_ARG_ENABLE(debug-flags, AS_HELP_STRING([--enable-debug-flags],
+              [Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
 HDF5_MODE="production";
@@ -79,7 +80,7 @@ i?86*linux*)
     DEBUG_FLAGS="-Wall -pedantic -fbounds-check -ftrace=full"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -208,7 +209,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
@@ -280,7 +281,7 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame  -Mbackslash -cpp"
     ;;
   *gfortran*)
-    SYSFLAGS="-O3 -g -mtune=native"
+    SYSFLAGS="-O3 -g -mtune=native -fno-lto"
     FUFLAGS="-O0 -g -mtune=native"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"

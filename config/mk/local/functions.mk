@@ -5,8 +5,8 @@
 # Driver
 #--------
 define driver
- $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c" >> $(STDLOG) )
- $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/yambo/driver/src/driver/driver.c >> $(STDLOG) 2>&1  )
+ $(PREFIX)(echo "$(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/Ydriver/src/driver/driver.c" >> $(STDLOG) )
+ $(PREFIX)(eval $(cc) $(cflags) $(precomp_flags) $(lf90include) -L$(libdir) -D_$(target) -c $(srcdir)/lib/Ydriver/src/driver/driver.c >> $(STDLOG) 2>&1  )
 endef
 #
 # Linking

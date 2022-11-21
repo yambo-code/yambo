@@ -776,7 +776,7 @@ internal_blas
 FLIBS
 YDB_dir
 GIT
-with_yambo_libs_branch
+with_ydriver_branch
 DRIVER_INCS
 Ydriver_check
 Ydriver_LIB
@@ -929,7 +929,7 @@ with_mpi_libs
 with_mpi_path
 with_mpi_libdir
 with_mpi_includedir
-with_yambo_libs_branch
+with_ydriver_branch
 enable_ydb
 with_blas_libs
 enable_int_linalg
@@ -1696,9 +1696,8 @@ Optional Packages:
   --with-mpi-path=<path>        Path to the MPI install directory
   --with-mpi-libdir=<path>      Path to the MPI lib directory
   --with-mpi-includedir=<path>  Path to the MPI include directory
-  --with-yambo-libs-branch=<branch>
-                                Use the <branch> of the yambo-libraries
-                                repository.
+  --with-ydriver-branch=<branch>
+                                Use the <branch> of the ydriver repository.
   --with-blas-libs=<libs>       Use BLAS libraries <libs>
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
   --with-fft-libs=<libs>        Link to FFT libraries
@@ -10605,24 +10604,24 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 # Yambo Libs
 
 
-DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
+DRIVER_INCS="-I$PWD/lib/Ydriver/include/ -I$PWD/include/driver"
 #
 
-# Check whether --with-yambo-libs-branch was given.
-if test ${with_yambo_libs_branch+y}
+# Check whether --with-ydriver-branch was given.
+if test ${with_ydriver_branch+y}
 then :
-  withval=$with_yambo_libs_branch;
+  withval=$with_ydriver_branch;
 else $as_nop
-  with_yambo_libs_branch=master
+  with_ydriver_branch=master
 fi
 
 #
-if test x"$with_yambo_libs_branch" = "xnone"; then
+if test x"$with_ydriver_branch" = "xnone"; then
  Ydriver_check="D";
  Ydriver_LIB="Download"
 else
  Ydriver_check="G";
- Ydriver_LIB="GIT, branch $with_yambo_libs_branch"
+ Ydriver_LIB="GIT, branch $with_ydriver_branch"
 fi
 
 

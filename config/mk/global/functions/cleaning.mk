@@ -23,9 +23,9 @@ define clean_driver
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
-   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
+   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
    WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
-   WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
+   WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
    $(clean_libs_using_stamps_driver); \

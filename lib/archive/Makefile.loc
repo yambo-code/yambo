@@ -6,7 +6,7 @@ ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
 else
- git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+ git_Ydriver=git@github.com:yambo-code/Ydriver.git
  branch_Ydriver=none
 endif
 #
@@ -17,7 +17,7 @@ all: $(EXT_LIBS)
 # Libraries (GIT + archives)
 #
 Ydriver:
-	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"Ydriver")
 #
 # Libraries (archives)
 #

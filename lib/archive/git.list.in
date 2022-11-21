@@ -1,5 +1,5 @@
 #
 # GIT's repositories and branches
 #
-git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
-branch_Ydriver=@with_yambo_libs_branch@
+git_Ydriver=git@github.com:yambo-code/Ydriver.git
+branch_Ydriver=@with_ydriver_branch@

@@ -25,7 +25,7 @@ AC_DEFUN([AC_YAMBO_LIBRARIES],[
 
 DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
 #
-AC_ARG_WITH(yambo-libs-branch,[AS_HELP_STRING([--with-yambo-libs-branch=<branch>],[Use the <branch> of the yambo-libraries repository.],[32])],,[with_yambo_libs_branch=none])
+AC_ARG_WITH(yambo-libs-branch,[AS_HELP_STRING([--with-yambo-libs-branch=<branch>],[Use the <branch> of the yambo-libraries repository.],[32])],,[with_yambo_libs_branch=master])
 #
 if test x"$with_yambo_libs_branch" = "xnone"; then
  Ydriver_check="D"; 

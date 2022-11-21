@@ -10613,7 +10613,7 @@ if test ${with_yambo_libs_branch+y}
 then :
   withval=$with_yambo_libs_branch;
 else $as_nop
-  with_yambo_libs_branch=none
+  with_yambo_libs_branch=master
 fi
 
 #

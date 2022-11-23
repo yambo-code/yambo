@@ -25,7 +25,7 @@ AC_DEFUN([AC_YDRIVER],[
 
 DRIVER_INCS="-I$PWD/lib/Ydriver/include/ -I$PWD/include/driver"
 #
-AC_ARG_WITH(ydriver-branch,[AS_HELP_STRING([--with-ydriver-branch=<branch>],[Use the <branch> of the ydriver repository.],[32])],,[with_ydriver_branch=master])
+AC_ARG_WITH(ydriver-branch,[AS_HELP_STRING([--with-ydriver-branch=<branch>],[Use the <branch> of the ydriver repository.],[32])],,[with_ydriver_branch=none])
 #
 if test x"$with_ydriver_branch" = "xnone"; then
  Ydriver_check="D"; 

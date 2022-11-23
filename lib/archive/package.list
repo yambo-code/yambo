@@ -25,7 +25,7 @@ keep_hdf5=no
 #
 # package versions
 #
-version_Ydriver=1.1.0
+version_Ydriver=1.2.0
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -45,7 +45,7 @@ version_futile=missing
 #
 # package names
 #
-pkgname_Ydriver=Ydriver-$(version_Ydriver)
+pkgname_Ydriver=$(version_Ydriver)
 pkgname_iotk=iotk-$(version_iotk)
 pkgname_netcdf=netcdf-c-$(version_netcdf)
 pkgname_netcdff=netcdf-fortran-$(version_netcdff)

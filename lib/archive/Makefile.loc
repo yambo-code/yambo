@@ -17,7 +17,7 @@ all: $(EXT_LIBS)
 # Libraries (GIT + archives)
 #
 Ydriver:
-	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"Ydriver")
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
 #
 # Libraries (archives)
 #
@@ -107,19 +107,19 @@ endef
 define getsrc_git
  mkdir -p  ../../log; \
  if [ ! "$$GBRANCH" = "none" ] ; then \
-  if test ! -e $$LIB".pulled"; then \
-   if test ! -d $$LIB ; then \
-    echo "\t[$$LIB] clone via $$GIT" ; \
-    git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; \
+  if test ! -e $(1)".pulled"; then \
+   if test ! -d $(1) ; then \
+    echo "\t[$(1)] clone via $$GIT" ; \
+    git clone $$GIT $(1) >> ../../log/clone_$(1).log 2>&1; \
    fi ; \
-   echo "\t[$$LIB] $$GBRANCH switch and update"; \
-   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; \
-   git pull >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
-   touch $$LIB".pulled" ; \
+   echo "\t[$(1)] $$GBRANCH switch and update"; \
+   cd $(1) ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
+   git pull >> ../../../log/clone_$(1).log 2>&1; cd ../ ; \
+   touch $(1)".pulled" ; \
   fi ; \
  else \
   if test ! -s $$LIB".tar.gz" ; then \
-   echo "\t[$$LIB] download";\
+   echo "\t[$(1)] download $$LIB.tar.gz";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \

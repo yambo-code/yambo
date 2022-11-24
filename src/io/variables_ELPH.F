@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _ELPH
 integer function variables_ELPH(ID,what)
  !
  use pars,           ONLY:SP
@@ -115,3 +116,4 @@ integer function variables_ELPH(ID,what)
  variables_ELPH=io_status(ID)
  !
 end function
+#endif

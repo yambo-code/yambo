@@ -15,9 +15,9 @@ YLIBIO_LD     = $(YLIBIO)
 #
 # Source code
 #
-BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio io $(IO_MODE) \
+BASIC_LIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio surf_modules io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb
-BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio io $(IO_MODE) \
+BASIC_LIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio surf_modules io $(IO_MODE) \
                xc_functionals interface stop_and_restart wf_and_fft coulomb
 
 MAIN_LIBS    = $(BASIC_LIBS) interpolate qp_control setup tddft dipoles pol_function qp acfdt bse
@@ -40,6 +40,10 @@ PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
 
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
+
+PJ_SURFLIBS =  $(BASIC_LIBS) interpolate qp_control setup tddft surf dipoles pol_function qp acfdt bse
+PJ_SURFLIBS_LD = $(BASIC_LIBS_LD) interpolate qp_control setup tddft surf dipoles pol_function qp acfdt bse
+
 #
 # YAMBO sources needed by Interfaces
 #

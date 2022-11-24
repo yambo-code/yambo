@@ -63,6 +63,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #if defined  _ELPH
  use ELPH,           ONLY:elph_nQ,elph_nQ_used
 #endif
+#if defined _SURF
+ use ras_module,     ONLY:lras, lreels
+#endif
 #if defined _SC
  use QP_m,           ONLY:QP_ng_Sx
  use SC,             ONLY:SC_ng_Sx,SC_X_bands,SC_X_size
@@ -347,6 +350,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
 #if defined _NL
        l_nl_optics=runlevel_is_on('nloptics')
+#endif
+#if defined  _SURF
+       lreels=runlevel_is_on('reels')
+       lras=runlevel_is_on('ras')
 #endif
 #if defined  _ELPH || defined _PHEL
        l_elph_Hamiltonian=runlevel_is_on('ElPhHam')

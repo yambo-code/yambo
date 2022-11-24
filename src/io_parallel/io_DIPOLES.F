@@ -24,7 +24,7 @@
 integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen,SP
- use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_iR_cut,DIP_alloc
  use electrons,     ONLY:n_spin,n_sp_pol
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
@@ -39,6 +39,9 @@ integer function io_DIPOLES(Dip,ID)
  use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
+#if defined _SURF
+ use optcut,        ONLY : loptcut
+#endif
  !
  implicit none
  !
@@ -75,6 +78,9 @@ integer function io_DIPOLES(Dip,ID)
  call timing('io_DIPOLES',OPR='start')
  !
  io_extension(ID)='dipoles'
+#if defined _SURF
+ if (loptcut) io_extension(ID)='dipoles_cut'
+#endif
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID)
  if (io_DIPOLES/=0) goto 1
@@ -124,6 +130,9 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+#if defined _SURF
+   if(loptcut) call DIP_alloc('DIP_iR_cut',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+#endif
    !
    if (compute_Orb_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
@@ -224,6 +233,19 @@ integer function io_DIPOLES(Dip,ID)
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
+ !
+#if defined _SURF
+ if (loptcut) then 
+   !
+   ! Real-space cutoff
+   !
+   VAR_ID=10
+   VAR_name='DIP_iR_cut'
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_iR_cut(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
+ endif
+ !
+#endif
  !
 1 call io_disconnect(ID=ID)
  !

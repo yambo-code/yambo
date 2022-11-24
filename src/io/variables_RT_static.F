@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
 integer function variables_RT_static(ID)
  !
  use pars,           ONLY:SP,LP,IP
@@ -200,3 +201,4 @@ integer function variables_RT_static(ID)
  variables_RT_static     =io_status(ID)
  !
 end function variables_RT_static
+#endif

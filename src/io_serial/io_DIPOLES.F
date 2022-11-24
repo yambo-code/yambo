@@ -24,7 +24,7 @@
 integer function io_DIPOLES(Dip,ID)
  !
  use pars,          ONLY:schlen
- use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_alloc
+ use DIPOLES,       ONLY:DIPOLE_t,DIP_iR,DIP_P,DIP_v,DIP_iR_cut,DIP_alloc
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:nXkibz
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,&
@@ -40,6 +40,9 @@ integer function io_DIPOLES(Dip,ID)
  use BS,            ONLY:l_BS_dichroism
  use parallel_m,    ONLY:PAR_K_scheme
  use timing_m,      ONLY:timing
+#if defined _SURF
+ use optcut,        ONLY : loptcut
+#endif
  !
  implicit none
  !
@@ -65,6 +68,9 @@ integer function io_DIPOLES(Dip,ID)
  call timing('io_DIPOLES',OPR='start')
  !
  io_extension(ID)='dipoles'
+#if defined _SURF
+ if (loptcut) io_extension(ID)='dipoles_cut'
+#endif
  !
  io_DIPOLES=io_connect(desc=trim(io_extension(ID)),type=2,ID=ID,FORCE_READ_MODE=.not.any((/io_sec(ID,:)==1/)).and.frag_DIP)
  if (io_DIPOLES/=0) goto 1
@@ -115,6 +121,9 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_iR',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+#if defined _SURF
+   if(loptcut) call DIP_alloc('DIP_iR_cut',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
+#endif 
    !
    if (compute_Orb_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
@@ -214,6 +223,17 @@ integer function io_DIPOLES(Dip,ID)
    call io_bulk(ID_frag,C3=DIP_orbital(:,:,:,ik_mem,i_sp_pol,1),IPOS=DIP_ipos)
    !
  endif
+ !
+#if defined _SURF 
+ if (loptcut) then
+   !
+   ! Real-space cutoff
+   !
+    write (VAR_name,'(3(a,i4.4))') 'DIP_iR_cut_k_',ik,'_spin_',i_sp_pol
+    call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=DIP_size)
+    call io_bulk(ID_frag,C3=DIP_iR_cut(:,:,:,ik_mem,i_sp_pol),IPOS=DIP_ipos)
+ endif
+#endif
  ! 
  call io_fragment_disconnect(ID,ID_frag)
  !

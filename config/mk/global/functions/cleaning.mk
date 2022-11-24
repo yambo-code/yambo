@@ -23,7 +23,7 @@ define clean_driver
   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
-   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
+   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/yambo/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
    WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
    WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
@@ -172,8 +172,8 @@ define clean_dependencies
 endef
 define clean_log_and_Ydriver_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
- rm -fr $(srcdir)/lib/Ydriver;\
- rm -fr $(prefix)/lib/Ydriver;\
+ rm -fr $(srcdir)/lib/yambo;\
+ rm -fr $(prefix)/lib/yambo;\
  rm -fr $(prefix)/log 
 endef
 define clean_archive

@@ -78,7 +78,7 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
    # due to the name which depends on the exectuable. This causes the exe to be relinked.
    # Without I could avoid to remove the "exe" stamp.
    # However in such case I should remove somehow the copiling stamp.
-   if [[ "$dir" == *"Ydriver"* ]] && [ "$FOLDER_OK" == 0 ]; then
+   if [[ "$dir" == *"yambo/Ydriver"* ]] && [ "$FOLDER_OK" == 0 ]; then
      source ./sbin/compilation/stamp_remove.sh "target.a"
      source ./sbin/compilation/stamp_remove.sh "exe"
    fi

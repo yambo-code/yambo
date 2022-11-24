@@ -108,12 +108,12 @@ define getsrc_git
  mkdir -p  ../../log; \
  if [ ! "$$GBRANCH" = "none" ] ; then \
   if test ! -e $(1)".pulled"; then \
-   if test ! -d $(1) ; then \
+   if test ! -d $(1)"-src" ; then \
     echo "\t[$(1)] clone via $$GIT" ; \
-    git clone $$GIT $(1) >> ../../log/clone_$(1).log 2>&1; \
+    git clone $$GIT $(1)"-src" >> ../../log/clone_$(1).log 2>&1; \
    fi ; \
    echo "\t[$(1)] $$GBRANCH switch and update"; \
-   cd $(1) ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
+   cd $(1)"-src" ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
    git pull >> ../../../log/clone_$(1).log 2>&1; cd ../ ; \
    touch $(1)".pulled" ; \
   fi ; \
@@ -139,17 +139,18 @@ define link_it
 endef
 #
 define copy_driver
- if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
- if test -s $$LIB".tar.gz" ; then \
+ if ! test -d $(srcdir)/lib/yambo/$(1); then mkdir -p $(srcdir)/lib/yambo/$(1); fi; \
+ if test -s $$LIB".tar.gz" && ! test -d $(1)"-src" ; then \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-  mv $(1)-$$LIB $(1) ; \
+  mv $$LIB $(1)"-src" ; \
  fi;\
- if test -d $(1) &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
-  cp -R $(1)/* $(srcdir)/lib/$(1)/; \
-  touch $(srcdir)/lib/$(1)/installed.stamp; \
+ if test -d $(1)"-src" &&  test ! -f $(srcdir)/lib/yambo/$(1)-installed.stamp ; then \
+  cp -R $(1)"-src"/* $(srcdir)/lib/yambo/$(1)/; \
+  touch $(srcdir)/lib/yambo/$(1)-installed.stamp; \
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \
-   rm -rf $(compdir)/lib/$(1) ]; \
-   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+   rm -rf $(compdir)/lib/yambo/$(1) ; \
+   if ! test -d $(compdir)/lib/yambo; then mkdir -p $(compdir)/lib/yambo; fi; \
+   cp -R $(srcdir)/lib/yambo/$(1) $(compdir)/lib/yambo/$(1); \
  fi
 endef

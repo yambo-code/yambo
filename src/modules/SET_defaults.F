@@ -682,7 +682,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Integrator_name='INVINT'
  NL_bands      =(/0,0/)
  NL_correlation="IPA"
- NL_er         =(/0.2_SP,8._SP/)/HA2EV
+ NL_er         =(/-1._SP,-1._SP/)/HA2EV
  n_frequencies =1
  n_order    = 0
  NL_damping    =0.2_SP/HA2EV

@@ -142,7 +142,6 @@ define copy_driver
  if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
  if test -s $$LIB".tar.gz" ; then \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-  echo "mv $(1)-$$LIB $(1)" ; \
   mv $(1)-$$LIB $(1) ; \
  fi;\
  if test -d $(1) &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \

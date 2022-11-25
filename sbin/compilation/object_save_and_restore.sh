@@ -35,7 +35,7 @@ if [ "$VERB" == 1 ] ; then echo "library is $library" ; fi
 #
 # Save files
 #
-if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"Ydriver"* ]] ; then
+if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  if [ ! -d $dir/$save_dir ] ; then
   if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
   mkdir -p $dir/$save_dir
@@ -73,7 +73,7 @@ fi
 #
 # Restore files
 #
-if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"Ydriver"* ]] ; then
+if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then rm $dir/*.o  ; fi
  if [ ! -f $dir/$restore_dir/files.dep ]; then

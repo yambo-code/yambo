@@ -167,12 +167,12 @@ endef
 define clean_log_and_Ydriver_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
  rm -fr $(srcdir)/lib/yambo;\
+ rm -fr $(prefix)/lib/yambo;\
  rm -fr $(prefix)/log 
 endef
 define clean_archive
  $(ECHO) "\t[CLEANING] Libraries archive" ; \
  CWD=`pwd`;\
- cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD;\
- find lib/archive/* -type d  |xargs rm -fr
+ cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD
 endef
 

@@ -128,17 +128,19 @@ module R_lattice
  !
  ! SYMs
  !
- real(SP),allocatable :: rl_sop(:,:,:)
+ real(SP),allocatable :: rl_sop(:,:,:)  ! Symmetry matrices in reciprocal space
  !
  ! RL lattice
  !
- integer              :: n_g_shells,ng_vec,ng_closed
- integer ,allocatable :: ng_in_shell(:)
+ integer              :: n_g_shells     ! Number of G-shells
+ integer              :: ng_vec         ! Number of G-vectors
+ integer              :: ng_closed      ! Number of G closed
+ integer ,allocatable :: ng_in_shell(:) ! Number of G in each shell
  integer ,allocatable :: g_rot(:,:)
  integer ,allocatable :: G_m_G(:,:)
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
- real(SP),allocatable :: E_of_shell(:)
+ real(SP),allocatable :: E_of_shell(:)  ! Energy associated at each shell
  ! GPUs
  real(SP),allocatable DEV_ATTR :: g_vec_d(:,:)
  integer ,allocatable DEV_ATTR :: g_rot_d(:,:)

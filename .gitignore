@@ -105,6 +105,7 @@ commit.msg
 *.jar
 *.rar
 *.tar
+*.pulled
 *.zip
 
 # Logs and databases #

@@ -60,10 +60,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Work space
  !
- integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR
+ integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR,Indexes(5)
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),Indexes(5),&
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
 &                    para_term_w0,diam_term_used,Z_eh,E_eh
  !
  integer       :: i_ColFG

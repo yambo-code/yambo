@@ -116,6 +116,10 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      X_obs(1)%COL_header(1)   = 'E'
      X_obs(1)%COL_header(2:3) = (/'Re(q^2Fxc)','Re(q^2Fxc)'/)
    endif
+   if (X_do_obs("indexes")) then
+     X_obs(2)%N_columns=6
+     X_obs(2)%COL_header(1:6)  = (/' E  ','ikbz','ib1 ','ib2 ','isp1','isp2'/)
+   endif
    if (X_do_obs("Esort")) then
      do ic=3,4
        X_obs(ic)%N_columns=2
@@ -133,10 +137,6 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
          X_obs(ic)%COL_header(X_obs(ic)%N_columns) =trim(X_obs(it)%what) 
        enddo
      enddo
-   endif
-   if (X_do_obs("indexes")) then
-     X_obs(2)%N_columns=5
-     X_obs(2)%COL_header(1:2)  = (/' E  ','ikbz','ib1 ','ib2 ','i_sp1','i_sp2'/)
    endif
    if (X_do_obs("PL")) then
      X_obs(5)%N_columns=3

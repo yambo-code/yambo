@@ -184,7 +184,7 @@ module X_m
      character(*), optional :: MORE
    end subroutine
    !
-   subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
+   subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
      use pars,           ONLY:SP
      use frequency,      ONLY:w_samp
      use descriptors,    ONLY:IO_desc
@@ -194,6 +194,7 @@ module X_m
      integer,      optional:: IQ,IG
      type(IO_desc),optional:: DESC
      real(SP),     optional:: data(:)
+     integer,      optional:: indexes(:)
    end subroutine
    !
    subroutine X_Double_Grid_setup(iq,k,k_FGbz,nTrans_percent,Radius)

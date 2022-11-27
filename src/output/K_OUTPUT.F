@@ -47,10 +47,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Work Space
  !
  character(2)      :: ordering
- integer           :: id,it
+ integer           :: id,it,index_sort(5)
  character(10)     :: solver
  complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3)
- real(SP)          :: data_sort(N_BS_E_sorted+1),index_sort(6)
+ real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
  ! 
  if (STRING_match(WHAT,"open")) then
@@ -148,13 +148,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      call X_OUTPUT_driver("WRITE E_IP",data=data_sort(:N_BS_E_sorted))
    enddo
    do id=1,min(BS_H_dim,1000)
-     index_sort(1)=real(BS_E_sorted(id,1,1),SP)
-     if (index_sort(1)==0._SP) cycle
+     data_sort(1)=real(BS_E_sorted(id,1,1),SP)
+     if (data_sort(1)==0._SP) cycle
      do it=1,18
        if (BS_E_sorted_indx(id,it,1)==-1) exit
-       index_sort(1)=real(BS_E_sorted(id,1,1),SP)
-       index_sort(2:6)=real(BS_E_sorted_indx(id,it,1:5),SP)
-       call X_OUTPUT_driver("WRITE E_INDX_IP",data=index_sort)
+       data_sort(1)=real(BS_E_sorted(id,1,1),SP)
+       index_sort(1:5)=real(BS_E_sorted_indx(id,it,1:5),SP)
+       call X_OUTPUT_driver("WRITE E_INDX_IP",data=data_sort(1:1),indexes=index_sort)
      enddo
    enddo
  endif

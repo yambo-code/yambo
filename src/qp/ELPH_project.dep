@@ -1,0 +1,5 @@
+ QP_descriptions.o
+ QP_driver.o
+ QP_newton.o
+ QP_report_and_write.o
+

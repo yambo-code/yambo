@@ -39,9 +39,32 @@ if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
 fi
 for file in $candidates
 do
-  file=`basename $file`
-  obj=`echo $file | sed "s/\.o/\.X/"`
-  obj=`echo $file | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
+  #
+  # remove all related stored objects
+  #
+  file_obj=`echo $file | sed 's/.$/o/'`
+  file_name=`basename $file_obj`
+  file_path=`dirname $file_obj`
+  if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
+    file_path=${compdir}${source_path/$srcdir/}
+  fi
+  count=`ls -1 $file_path/*_.save/$file_name 2>/dev/null | wc -l`
+  if [ $count != 0 ]; then
+    if [ "$VERB" == 1 ] ; then echo "rm $file_path/*_.save/$file_name" ; fi
+    rm $file_path/*_.save/$file_name
+    # remove related library
+    count=`ls -1 $file_path/*_.save/*.a 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then rm $file_path/*_.save/*.a ; fi
+    # remove related modules
+    count=`ls -1 $file_path/*_.save/*.mod 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then rm $file_path/*_.save/*.mod ; fi
+  fi
+  #
+  # check for childs
+  #
+  if [ "$VERB" == 1 ] ; then echo "$file updated and to be recompiled"; fi
+  file_name=`basename $file`
+  obj=`echo $file_name | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
   DIR_is_to_recompile=1
   source ./sbin/compilation/check_object_childs.sh
 done

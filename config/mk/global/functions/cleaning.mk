@@ -155,13 +155,14 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/yambo*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/compiling*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/mods*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*.lock;\
  rm -fr $(prefix)/include/*.save
 endef
 define clean_dependencies
  $(ECHO) "\t[CLEANING] Dependencies" ; \
- find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
-           -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
+ find . \( -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
+           -o -name 'global_modules_dep.list' -o -name 'local_modules.dep' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
 endef
 define clean_log_and_Ydriver_folder

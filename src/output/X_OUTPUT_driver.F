@@ -200,13 +200,12 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
    do it=1,N_X_obs
      if (.not.IS_this_ok(it)) cycle
      call OUTPUT_driver(trim(X_obs(it)%prefix),R_VALUES=data(1:1),TITLES=X_obs(it)%COL_header(1:1),UNIT="eV")
+     do ic=2,size(data)
+       call OUTPUT_driver(trim(X_obs(it)%prefix),R_VALUES=data(ic:ic),TITLES=X_obs(it)%COL_header(ic:ic))
+     enddo
      if (present(indexes)) then
        do ic=1,size(indexes)
          call OUTPUT_driver(trim(X_obs(it)%prefix),I_VALUES=indexes(ic:ic),TITLES=X_obs(it)%COL_header(ic+1:ic+1))
-       enddo
-     else
-       do ic=2,size(data)
-         call OUTPUT_driver(trim(X_obs(it)%prefix),R_VALUES=data(ic:ic),TITLES=X_obs(it)%COL_header(ic:ic))
        enddo
      endif
      call OUTPUT_driver(trim(X_obs(it)%prefix),action="write")

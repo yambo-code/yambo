@@ -78,6 +78,7 @@ module X_m
  ! Absorption & Polarizability
  !
  integer                  :: N_BS_E_sorted=0
+ integer,     allocatable :: BS_E_sorted_indx(:,:,:)
  complex(SP), allocatable :: BS_E_sorted(:,:,:)
  complex(SP), allocatable :: Epsilon_ii(:,:)
  complex(SP), allocatable :: Epsilon_ij(:,:)

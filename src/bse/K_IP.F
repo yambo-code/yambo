@@ -63,13 +63,14 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer           ::i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
+ complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),Indexes(5),&
 &                    para_term_w0,diam_term_used,Z_eh,E_eh
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
  !
  complex(SP)       ::P_weighted(3),res_kerr,res_magn(2),res_dich
+ integer,        allocatable :: vtmpI(:,:)
  complex(SP),    allocatable :: vtmpC(:,:)
  !
  if (l_bs_fxc) return
@@ -114,13 +115,15 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Sorting pre-setup
  !-------------------
  if(l_BS_esort) then
-   N_BS_E_sorted=2 ! Energies (IP + degeneracy)
+   N_BS_E_sorted=2    ! Energies (IP + degeneracy)
    if(l_BS_abs)       n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_kerr)      n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_dichroism) n_BS_E_sorted=n_BS_E_sorted+1
    if(l_BS_magnons)   n_BS_E_sorted=n_BS_E_sorted+n_spinor
    YAMBO_ALLOC(vtmpC,(BS_H_dim,n_BS_E_sorted))
    vtmpC=cZERO
+   YAMBO_ALLOC(vtmpI,(BS_H_dim,5))
+   vtmpI=-1
  endif
  !
  if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then
@@ -145,6 +148,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      ! Energy
      !========
      !
+     Indexes=BS_T_grp(i_T_g)%table(i_T,:)
      E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)
      if(allocated(BS_T_grp(i_T_g)%W)) then
        E_plus_W0=BS_T_grp(i_T_g)%E(i_T,1)-cI*BS_T_grp(i_T_g)%W(i_T)
@@ -164,7 +168,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      enddo
      !
      if (l_BS_esort.and.i_res_ares==1) then
-       call K_IP_sort("add",i_sort,nVAR,E_plus_W0,vtmpC)
+       call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,E_plus_W0,vtmpC)
        nVAR=nVAR+1
      endif
      !
@@ -191,7 +195,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          &        BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)))/3._SP
        endif
        res_abs=res_abs*f_eh*Z_eh*E_eh
-       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_abs,vtmpC)
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_abs,vtmpC)
      endif
      !
      if (l_BS_kerr) then
@@ -201,7 +205,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          &         BS_T_grp(i_T_g)%dipoles_opt(2,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_opt(1,i_T,1)))/2._SP
        endif
        res_kerr=res_kerr*Z_eh*E_eh*f_eh
-       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_kerr,vtmpC)
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_kerr,vtmpC)
      endif
      !
      if (l_BS_photolum) then
@@ -225,7 +229,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          &         BS_T_grp(i_T_g)%dipoles_opt(3,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_dic(3,i_T,1)))/3._SP
        endif
        res_dich=res_dich*f_eh*Z_eh/(q0_def_norm)
-       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,res_dich,vtmpC)
+       if (l_BS_esort.and.i_res_ares==1) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_dich,vtmpC)
      endif
      !
      ! Magnons
@@ -237,8 +241,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        res_magn(:)=BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1)*conjg(BS_T_grp(i_T_g)%dipoles_mag(:,i_T,1))
        res_magn=res_magn*f_eh*Z_eh
        if (l_BS_esort.and.i_res_ares==1) then
-         call K_IP_sort("add",i_sort,nVAR,res_magn(1),vtmpC)
-	 if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,res_magn(2),vtmpC)
+         call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(1),vtmpC)
+	 if(n_spinor==2) call K_IP_sort("add",i_sort,nVAR,Indexes,vtmpI,res_magn(2),vtmpC)
        endif
      endif
      !
@@ -330,7 +334,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Sorting procedure
  !===================
- if (l_BS_esort) call K_IP_sort("sort",0,nVAR,cZERO,vtmpC)
+ if (l_BS_esort) call K_IP_sort("sort",0,nVAR,(/0,0,0,0,0/),vtmpI,cZERO,vtmpC)
  !
  ! ALL 2 ALL
  !==============
@@ -433,7 +437,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_magnons) X_magnons(:,:,3)=X_magnons(:,:,3)*Co_factor/(4._SP*pi)
  !
  if (     l_rpa_IP) call K_OUTPUT(iq,W_bss,"open dump IP close reset","optics kerr magnons PL dichroism")
- call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP")
+ call K_OUTPUT(iq,W_bss,"open dump close reset bare","E_IP E_INDX_IP")
  !
  ! Clean
  ! 

@@ -147,6 +147,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (data_sort(1)==0._SP) cycle
      call X_OUTPUT_driver("WRITE E_IP",data=data_sort(:N_BS_E_sorted))
    enddo
+   do id=1,min(BS_H_dim,1000)
+     data_sort(1)=real(BS_E_sorted(id,1,1),SP)
+     if (data_sort(1)==0._SP) cycle
+     do it=1,18
+       if (BS_E_sorted_indx(id,it,1)==-1) exit
+       data_sort(2:6)=BS_E_sorted_indx(id,it,1:4)
+       call X_OUTPUT_driver("WRITE E_INDX_IP",data=data_sort(:N_BS_E_sorted))
+     enddo
+   enddo
  endif
  !
  ! E sorted

@@ -53,20 +53,21 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  if (STRING_match(WHAT,"DEF")) then
    call ELEMENTAL_init(1,"fxc","Exchange-Correlation Kernel","optics")
-   call ELEMENTAL_init(2,"E_IP","Sorted IP Energies","sort")
-   call ELEMENTAL_init(3,"Esort","Sorted Interacting Energies","sort")
-   call ELEMENTAL_init(4,"pl","Photoluminescence","PL")
-   call ELEMENTAL_init(5,"eps","Absorption","optics")
-   call ELEMENTAL_init(6,"refl","Reflectivity","optics")
-   call ELEMENTAL_init(7,"eel","Electron Energy Loss","optics")
-   call ELEMENTAL_init(8,"alpha","Polarizability  ( -<<X>> )","optics")
-   call ELEMENTAL_init(9,"off","Off-diagonal Absorption","kerr")
-   call ELEMENTAL_init(10,"beta","Off-diagonal Polarizability","kerr")
-   call ELEMENTAL_init(11,"moke","MOKE parameters","kerr")
-   call ELEMENTAL_init(12,"jdos","Joint Density of states","optics")
-   call ELEMENTAL_init(13,"CD","Dichroism","dichroism")
-   call ELEMENTAL_init(14,"Spm","Magnons (S+-)","magnons")
-   call ELEMENTAL_init(15,"Smp","Magnons (S-p)","magnons")
+   call ELEMENTAL_init(2,"E_INDX_IP","Sorted IP Energies indexes","indexes")
+   call ELEMENTAL_init(3,"E_IP","Sorted IP Energies","sort")
+   call ELEMENTAL_init(4,"Esort","Sorted Interacting Energies","sort")
+   call ELEMENTAL_init(5,"pl","Photoluminescence","PL")
+   call ELEMENTAL_init(6,"eps","Absorption","optics")
+   call ELEMENTAL_init(7,"refl","Reflectivity","optics")
+   call ELEMENTAL_init(8,"eel","Electron Energy Loss","optics")
+   call ELEMENTAL_init(9,"alpha","Polarizability  ( -<<X>> )","optics")
+   call ELEMENTAL_init(10,"off","Off-diagonal Absorption","kerr")
+   call ELEMENTAL_init(11,"beta","Off-diagonal Polarizability","kerr")
+   call ELEMENTAL_init(12,"moke","MOKE parameters","kerr")
+   call ELEMENTAL_init(13,"jdos","Joint Density of states","optics")
+   call ELEMENTAL_init(14,"CD","Dichroism","dichroism")
+   call ELEMENTAL_init(15,"Spm","Magnons (S+-)","magnons")
+   call ELEMENTAL_init(16,"Smp","Magnons (S-p)","magnons")
  endif
  !
  if (STRING_match(WHAT,"INIT")) then
@@ -91,7 +92,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    endif
    if (l_BS_jdos) call X_obs_onoff("+ jdos")
    if (trim(alpha_dim)/='adim'.and.X_do_obs("eps")) call X_obs_onoff("+ alpha")
-   if (l_BS_esort) call X_obs_onoff("+ Esort E_IP")
+   if (l_BS_esort) call X_obs_onoff("+ Esort E_IP E_INDX_IP")
    if (l_BS_kerr) call X_obs_onoff("+ off")
    if (X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ beta")
    if (.not.X_do_obs("alpha") .and. l_BS_kerr) call X_obs_onoff("+ moke")
@@ -102,9 +103,9 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    !...solvers specific
    if (present(solver)) then
      if (STRING_match(solver,"Slepc")) call X_obs_onoff("- eel")
-     if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP kerr magnons jdos")
-     if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP")
-     if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP")
+     if (STRING_match(solver,"Inversion")) call X_obs_onoff("- Esort E_IP E_INDX_IP kerr magnons jdos")
+     if (STRING_match(solver,"Haydock")) call X_obs_onoff("- Esort jdos E_IP E_INDX_IP")
+     if (STRING_match(solver,"Diago").or.STRING_match(solver,"Slepc")) call X_obs_onoff("- E_IP E_INDX_IP")
    endif
    !
    ! Headers...
@@ -116,7 +117,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      X_obs(1)%COL_header(2:3) = (/'Re(q^2Fxc)','Re(q^2Fxc)'/)
    endif
    if (X_do_obs("Esort")) then
-     do ic=2,3
+     do ic=3,4
        X_obs(ic)%N_columns=2
        X_obs(ic)%COL_header(1:2)  = (/'E    ','N_deg'/)
      enddo
@@ -127,16 +128,20 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle
        if (.not.any(trim(X_obs(it)%what)==((/"eps","Spm","Smp","off"/))).and..not.trim(X_obs(it)%what)=="CD") cycle
-       do ic=2,3
+       do ic=3,4
          X_obs(ic)%N_columns=X_obs(ic)%N_columns+1
          X_obs(ic)%COL_header(X_obs(ic)%N_columns) =trim(X_obs(it)%what) 
        enddo
      enddo
    endif
+   if (X_do_obs("indexes")) then
+     X_obs(2)%N_columns=5
+     X_obs(2)%COL_header(1:2)  = (/' E  ','ikbz','ib1 ','ib2 ','i_sp1','i_sp2'/)
+   endif
    if (X_do_obs("PL")) then
-     X_obs(4)%N_columns=3
-     X_obs(4)%COL_header(1)   = 'E'
-     X_obs(4)%COL_header(2:3) = (/'PL  ','PL_o'/)
+     X_obs(5)%N_columns=3
+     X_obs(5)%COL_header(1)   = 'E'
+     X_obs(5)%COL_header(2:3) = (/'PL  ','PL_o'/)
    endif
    !
    ! ... pre-formatted
@@ -144,7 +149,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    BASIC_col(2:3) = (/'Im(XXX)', 'Re(XXX)'/)
    BASIC_col(4:5) = (/'Im(XXX_o)', 'Re(XXX_o)'/)
    BASIC_col(6:7) = (/'Im(XXX`)','Re(XXX`)'/)
-   do it=5,N_X_obs
+   do it=6,N_X_obs
      X_obs(it)%N_columns=7 
      do ic=1,X_obs(it)%N_columns
        X_obs(it)%COL_header(ic)=STRING_remove(BASIC_col(ic),"XXX",trim(X_obs(it)%what))

@@ -30,6 +30,7 @@
 dot_files=`find . -name '.objects'`
 for file in $dot_files
 do
+ if [[ "$file" == *"archive"* ]]; then continue ; fi
  directories+=" "
  directories+=`dirname $file`
 done

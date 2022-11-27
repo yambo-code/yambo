@@ -22,8 +22,8 @@ CONFFLAGS=--prefix="$(LIBPATH)" \
          --with-ssl=0 \
          --with-x=0 \
          --with-cxx=0 \
-         --with-shared-libraries=0 \
-         --with-blaslapack-lib="$(llapack) $(lblas)" \
+         --with-shared-libraries=$(spetsc) \
+         --with-blaslapack-lib="$(llapackso) $(lblasso)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}" \
          --with-cc=$(cc) --with-fc=$(fc)
@@ -57,7 +57,7 @@ install: uncompress configure compile
 	@if ! test -f installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
          ( cd $(PACKAGE); $(make) PETSC_DIR=$(PWD)/$(PACKAGE) PETSC_ARCH=$(PETSC_ARCH) install >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ); \
-         chmod u+x $(LIBPATH)/lib/*petsc*.a; \
+         #chmod u+x $(LIBPATH)/lib/*petsc*.a; \
 	 touch installed.stamp; \
 	fi
 

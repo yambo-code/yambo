@@ -92,6 +92,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg', '[R] Eliashberg')
  call it('r',defs,'gkkp_db',    '[R] GKKP database')
+ call it('r',defs,'gkkp_sngl',  '[R] GKKP single q-database')
  call it('r',defs,'gkkp_dg',    '[R] GKKP double grid')
  call it('r',defs,'gkkp_plot',  '[R] GKKP plot')
  call it('r',defs,'ph_ass_dos', '[R] Phonon-assisted DOS')
@@ -326,6 +327,7 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  call it('f',defs,'GkkpExpOnlyK','Expand only k-points and not the q-points (that should be already in BZ)')
  call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
+ call it('f',defs,'UseKSymm','Use symmetries to expand the k-points (default no)')
  !
 #endif
  !

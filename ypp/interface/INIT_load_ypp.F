@@ -327,7 +327,6 @@ subroutine INIT_ypp_load(defs)
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  call it('f',defs,'GkkpExpOnlyK','Expand only k-points and not the q-points (that should be already in BZ)')
  call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
- call it('f',defs,'UseKSymm','Use symmetries to expand the k-points (default no)')
  !
 #endif
  !

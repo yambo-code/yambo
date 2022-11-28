@@ -294,6 +294,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
        l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
        l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
+       l_gkkp_s_db =STRING_match(rstr_piece(i1+1),'s')
      endif
 #endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
@@ -393,7 +394,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
  !
  if (l_eliashberg)        call initactivate(1,'eliashberg')
- if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp.or.l_gkkp_db.or.l_gkkp_s_db) call initactivate(1,'gkkp')
  if (l_gkkp_db)           call initactivate(1,'gkkp_db')
  if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
  if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')

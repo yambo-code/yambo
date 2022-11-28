@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
+subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  !
  use pars,           ONLY:SP,cONE,cZERO,cI,pi
  use units,          ONLY:HA2EV
@@ -46,6 +46,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  type(bz_samp), intent(in)     :: k
  complex(SP),   intent(inout)  :: FL_V_bands(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  real(SP),      intent(inout)  :: FL_QE(NL_bands(2),QP_nk,n_sp_pol)
+ integer,       intent(in)     :: iter_num
  !
  ! Work Space
  !
@@ -54,7 +55,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
  integer     :: ik_bz,i_sp_pol,is,size_Hamiltonian,i_m,ik_mem
  integer     :: i1,i2,i1_fl,i2_fl,i1_fks,i2_fks,i3_fks
  integer     :: FL_chosen_bands(NL_bands(1):maxval(E%nbf)),i1_fks_eigenvec
- character(4) :: filename
+ character(4) :: filename,filename2
  integer     :: line_counter,i_central_fks,trial_chosen_band_QE
  complex(SP) :: Vtmp(FL_states(1):FL_states(2)),Vzero(FL_states(1):FL_states(2))
  complex(SP) :: ref_vec(FL_states(1):FL_states(2)),trial_vec(FL_states(1):FL_states(2))
@@ -125,6 +126,21 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        !
      endif
      !
+     !aim137 DEBUG<
+     write(filename,'(i0)') ik_bz
+     open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
+     write(111,*) 'Quasi-energies [eV]'
+     write(111,'(100(1f8.3))') FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
+     write(111,*) 'Eigenvectors'
+     do i1_fks=FL_states(1),FL_states(2)
+       !
+       write(111,*) 'evec ',i1_fks
+       write(111,'(100(1f7.4))') abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks,ik_mem,is))
+       !
+     enddo
+     close(111)
+     !aim137 DEBUG>
+     !
      FL_chosen_bands = 0
      !
      ! Populate FL_V_bands
@@ -160,13 +176,22 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        !i1_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !trial_vec = trial_vec * conjg(trial_vec(i1_fks)) / abs(trial_vec(i1_fks))
        !
+       ! Average Energy eigenproblem
+       !
+       call FL_average_energy(&
+       &    FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
+       &     FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
+       &      FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is),&
+       &           trial_vec(FL_states(1):FL_states(2)),&
+       &           FL_chosen_bands(i_m))
+       !
        ! Detect population inversion
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
        !
        do i1_fks=FL_states(1),FL_states(2)
          !
-         if (abs(trial_vec(i1_fks)) > 0.5_SP .and. i1_fks /= i_central_fks) then
+         if (abs(trial_vec(i1_fks)) > 10.005_SP .and. i1_fks /= i_central_fks) then !aim137 critical BORRAR ESTE 10.005 for DEBUG
            !
            i1 = nint(real(i1_fks/n_tot_fl_modes,SP))+1
            i1_fl = mod(i1_fks,n_tot_fl_modes)
@@ -196,6 +221,16 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
           !call msg('r','Floquet mode on second band: ',i1_fl)
           !call msg('r','Population on second band: ',abs(trial_vec(i1_fks)))
           !call warning ('  [FL] There was a large population inversion in the system')
+          !
+          !aim137 DEBUG<
+         !write(filename,'(i0)') ik_bz
+         !open(111,file='FL_population_inversion'//trim(adjustl(filename))//'.dat')
+         !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
+         !!write(111,*) 'Real and imaginary parts of eigenvector:'
+         !write(111,*) trial_vec
+         !write(111,*) FL_eigenvectors(FL_states(1):FL_states(2),i1_fks_eigenvec,ik_mem,is)
+         !close(111)
+          !aim137 DEBUG>
            !
          endif
          !
@@ -227,9 +262,30 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
        !
+       !aim137 DEBUG AVERAGE ENERGY<
+  !!!  write(filename ,'(i0)') ik_bz
+  !!!  write(filename2,'(i0)') i_m
+  !!!  open(111,file='FL_near_degeneracies_band_'//trim(adjustl(filename2))//'_kpt_'//trim(adjustl(filename))//'.dat')
+  !!!  write(111,*) 'BAND ',i_m
+  !!!  do i2_fks=FL_states(1),FL_states(2)
+  !!!  if (abs(trial_val - FL_eigenvalues(i2_fks,ik_bz,is)) < 0.1/HA2EV) then
+  !!!  write(111,*) FL_eigenvalues(i2_fks,ik_bz,is)*HA2EV
+  !!!  write(111,*) FL_eigenvectors(FL_states(1):FL_states(2),i2_fks,ik_mem,is)
+  !!!  endif
+  !!!  enddo
+  !!!  close(111)
+       !aim137 DEBUG AVERAGE ENERGY>
        !
      enddo ! loop i_m
      !
+ !!! !aim137 DEBUG AVERAGE ENERGY<
+ !!! write(filename,'(i0)') ik_bz
+ !!! open(111,file='FL_Hamiltonian'//trim(adjustl(filename))//'.dat')
+ !!! do i2_fks=FL_states(1),FL_states(2)
+ !!! write(111,*) FL_Ho_plus_Sigma(i2_fks,FL_states(1):FL_states(2),ik_mem,is)*HA2EV
+ !!! enddo
+ !!! close(111)
+ !!! !aim137 DEBUG AVERAGE ENERGY>
    enddo
    !
  enddo
@@ -246,11 +302,11 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE)
 !do is=1,n_sp_pol
 !write(filename,'(i0)') ik_bz
 !open(111,file='FL_eigenvectors'//trim(adjustl(filename))//'.dat')
-!do i_m=1,E%nbf(1)
+!do i_m=NL_bands(1),E%nbf(1)
 !write(111,*) 'BAND ',i_m,', eigenvalue =',FL_QE(i_m,ik_bz,is)
 !!write(111,*) 'Real and imaginary parts of eigenvector:'
-!do i1=1,NL_bands(2)
-!write(111,'(100(1f20.14))') abs(FL_V_bands(i1,:,i_m,ik_bz,is))
+!do i1=NL_bands(1),NL_bands(2)
+!write(111,'(100(2(1f20.14),A1))') ( FL_V_bands(i1,i1_fl,i_m,ik_bz,is),',', i1_fl=1,n_tot_fl_modes )
 !!write(111,'(100(1f20.14))') atan(real(FL_V_bands(i1,:,i_m,ik_bz,is)),aimag(FL_V_bands(i1,:,i_m,ik_bz,is)))
 !enddo
 !write(111,*) ''

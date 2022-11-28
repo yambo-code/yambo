@@ -273,11 +273,12 @@ subroutine FL_driver(E,X,k,q,Dip)
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
+     !if (master_cpu) print*, 'Starting iteration number ',FL_iteration, ' --------------'
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
-     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration)
+     call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration) !aim137 check, there should be (1) after frequency
      !
-     call FL_diagonalization(E,k,FL_V_bands,FL_QE)
+     call FL_diagonalization(E,k,FL_V_bands,FL_QE,FL_iteration)
      !
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
@@ -287,7 +288,7 @@ subroutine FL_driver(E,X,k,q,Dip)
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
      !
      !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy), aimag(accuracy)
-     if (FL_iteration == FL_max_iterations) then
+     if (FL_iteration >= FL_max_iterations) then
        l_FL_sc_reached = .true.
        print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
 &      ' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy), aimag(accuracy)

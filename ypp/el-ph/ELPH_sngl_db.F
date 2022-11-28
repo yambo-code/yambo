@@ -27,8 +27,18 @@ subroutine ELPH_sngl_db(k,E,q)
  use pars,                ONLY:schlen,SP
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
+ use YPP_ELPH,            ONLY:l_gkkp_expand_only_k
  use R_lattice,           ONLY:bz_samp
+ use parser_m,            ONLY:parser
  !
 #include<memory.h>
+ !
+ type(bz_samp) ::k,q
+ type(levels)  ::E
+ integer       ::qindx_ID,qindx_ID_frag
+ !
+ call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
+ !
+ if(l_gkkp_expand_only_k) call ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  !
 end subroutine

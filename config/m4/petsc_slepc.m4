@@ -142,13 +142,20 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   internal_petsc="yes"
   #
-  PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+  if test "x$lapack_shared" = "x1" ; then
+    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+  else
+    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+  fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
   #
   petsc=yes
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ; then
+    compile_petsc="no" ;
+    AC_MSG_RESULT([already compiled]) ;
+  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ; then
     compile_petsc="no" ;
     AC_MSG_RESULT([already compiled]) ;
   else
@@ -241,11 +248,18 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
-  SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+  if test "x$lapack_shared" = "x1" ; then
+    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
+  else
+    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+  fi
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ; then
+    compile_slepc="no" ;
+    AC_MSG_RESULT([already compiled]) ;
+  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so" ; then
     compile_slepc="no" ;
     AC_MSG_RESULT([already compiled]) ;
   else

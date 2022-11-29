@@ -70,7 +70,12 @@ define F90_elemental_compilation
  $(msg)
 endef
 define modmove
- $(PREFIX)(MODS=`find $(compdir)/$(wdir) -name '*.mod' -not -path "$(compdir)/$(wdir)/*_.save/*"`; for modfile in $$MODS ; do cp $$modfile $(compdir)/include; done)
+ $(PREFIX)(MODS=`find $(compdir)/$(wdir) -name '*.mod' -not -path "$(compdir)/$(wdir)/*_.save/*"`;\
+ for modfile in $$MODS ; do \
+  modfname=`basename $$modfile` ;\
+  rm -f $(compdir)/include/$$modfname ;\
+  cp $$modfile $(compdir)/include/ ;\
+ done)
 endef
 define mk_lib
  $(PREFIX)(echo "$(ar) $(arflags) $(target) $(objs)"  >> $(STDLOG) )

@@ -3,7 +3,7 @@
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
 AC_DEFUN([ACX_BLAS], [
-AC_PREREQ([2.71])
+AC_PREREQ([2.50])
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 

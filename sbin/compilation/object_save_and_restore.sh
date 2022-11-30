@@ -36,6 +36,7 @@ if [ "$VERB" == 1 ] ; then echo "library is $library" ; fi
 # Save files
 #
 if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
+ if [ "$VERB" == 1 ] ; then echo "Saving files " ; fi
  if [ ! -d $dir/$save_dir ] ; then
   if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
   mkdir -p $dir/$save_dir
@@ -74,6 +75,7 @@ fi
 # Restore files
 #
 if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
+ if [ "$VERB" == 1 ] ; then echo "Restoring files " ; fi
  count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then rm $dir/*.o  ; fi
  if [ ! -f $dir/$restore_dir/files.dep ]; then
@@ -91,7 +93,6 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   ln -s $restore_dir/*.o ./ ;
   cd $path_back
  fi
- #cp $dir/$restore_dir/*.o $dir/ ;
  count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
  if [ "$count_mod" -gt "0" ] ; then
   cd $dir
@@ -104,12 +105,15 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  count_mod=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
  if [ "$count_mod" -gt "0" ] ; then
   cd $dir
-  ln -s $restore_dir/*.mod ./
-  cd $compdir/include
-  ln -s $compdir/$dir/*.mod ./
+  for mod in $restore_dir/*.mod ; do
+   ln -s $mod ./
+   mod_filename=`basename $mod`
+   cd $compdir/include
+   if test -f $mod_filename ; then  rm $mod_filename; fi
+   ln -s $compdir/$dir/$mod_filename ./
+   cd $path_back/$dir
+  done
   cd $path_back
-  #cp $dir/$restore_dir/*.mod $dir/ ;
-  #cp $dir/*.mod include/ ;
  fi
  count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
  if [ $count_f90 != 0 ]; then rm $dir/*.f90  ; fi
@@ -118,7 +122,6 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   cd $dir
   ln -s $restore_dir/*.f90 ./
   cd $path_back
-  #cp $dir/$restore_dir/*.f90 $dir/ ;
  fi
  if [[ -f $dir/$restore_dir/$library ]] || [ "$library" == "NONE" ]; then
   if [[ -f $dir/$restore_dir/$library ]] ; then
@@ -126,7 +129,6 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
    rm $library
    ln -s $compdir/$dir/$restore_dir/$library ./
    cd $path_back
-   #cp $dir/$restore_dir/$library lib/ ;
   fi
   if [[ "$missing_files" == "" ]] ; then
    FOLDER_OK=1

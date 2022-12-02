@@ -249,7 +249,7 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   internal_slepc="yes";
   #
   if test "x$lapack_shared" = "x1" ; then
-    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so" ;
+    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
   else
     SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
   fi

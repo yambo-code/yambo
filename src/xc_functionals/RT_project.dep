@@ -1,0 +1,5 @@
+ XC_libxc_driver.o
+ XC_potential_driver.o
+ el_density_and_current.o
+ el_magnetization.o
+

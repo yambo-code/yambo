@@ -1,0 +1,7 @@
+ INIT.o
+ INIT_activate.o
+ INIT_check_databases.o
+ INIT_load.o
+ INIT_q_points.o
+ INIT_read_command_line.o
+

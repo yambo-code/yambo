@@ -76,7 +76,7 @@ if [ "$VERB" == 1 ] ; then
  echo "RESTORE" $restore_dir
 fi
 #
-source ./sbin/compilation/object_save_and_restore.sh 
+source ./sbin/compilation/object_save_and_restore.sh
 if [ "$FOLDER_OK" == 1 ] ; then
  return ;
 fi
@@ -95,7 +95,7 @@ do
     if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
     DIR_is_to_recompile=1
     obj=$file
-    source ./sbin/compilation/check_object_childs.sh ;
+    source ./sbin/compilation/check_object_childs.sh "locks"
    fi
   done
  fi

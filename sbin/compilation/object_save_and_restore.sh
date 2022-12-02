@@ -45,7 +45,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  if [ $count != 0 ] ; then
   if [ ! -f $dir/$save_dir/files.dep ] ; then
    cd $dir;
-   deps=`ls *.o`;
+   deps=`ls *.o 2>/dev/null`;
    for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
    cd $path_back ;
    cp $dir/*.o $dir/$save_dir/
@@ -54,21 +54,26 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   else
    deps=`cat $dir/$save_dir/files.dep`
    cd $dir/$save_dir
-   found=`ls *.o`
+   found=`ls *.o 2>/dev/null`
    cd $path_back
    missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
    for file in $missing_files ; do
-    ls -ltr driver
-    cp $dir/$file $dir/$save_dir
+    if [ -f $dir/$file ] ; then cp $dir/$file $dir/$save_dir ; fi
     filef90=`echo $file | sed 's/.$/f90/'`
-    if [ -f $dir/$filef90 ] ; then cp $dir/$file $dir/$save_dir  ; fi
+    if [ -f $dir/$filef90 ] ; then cp $dir/$filef90 $dir/$save_dir  ; fi
    done
   fi
  fi
  if [ -f lib/$library ] ; then
   cp $compdir/lib/$library $dir/$save_dir
   count=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
-  if [ $count != 0 ]; then cp $dir/*.mod $dir/$save_dir ; fi
+  if [ $count != 0 ]; then
+    cd $dir
+    for mod in *.mod ; do
+      if [ ! -f $save_dir/$mod ] ; then cp $mod $save_dir/ ; fi
+    done
+    cd $path_back
+  fi
  fi
 fi
 #
@@ -86,7 +91,7 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  count=`ls -1 $dir/$restore_dir/*.o 2>/dev/null | wc -l`
  if [ $count != 0 ]; then
   cd $dir/$restore_dir
-  found=`ls *.o`
+  found=`ls *.o 2>/dev/null`
   cd $path_back
   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
   cd $dir

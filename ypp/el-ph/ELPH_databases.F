@@ -54,7 +54,7 @@ subroutine ELPH_databases(k,E,q)
  !
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
  character(schlen)  ::what,db_name
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH,qindx_B_init
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save

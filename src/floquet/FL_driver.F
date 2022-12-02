@@ -266,14 +266,14 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
+   print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
    call msg('r','Frequency step    :',i_f)
    call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
    !
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
-     !if (master_cpu) print*, 'Starting iteration number ',FL_iteration, ' --------------'
+     if (master_cpu) print*, 'Starting iteration number ',FL_iteration, ' --------------'
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration) !aim137 check, there should be (1) after frequency

@@ -127,18 +127,19 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
      endif
      !
      !aim137 DEBUG<
-     write(filename,'(i0)') ik_bz
-     open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
-     write(111,*) 'Quasi-energies [eV]'
-     write(111,'(100(1f8.3))') FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
-     write(111,*) 'Eigenvectors'
-     do i1_fks=FL_states(1),FL_states(2)
-       !
-       write(111,*) 'evec ',i1_fks
-       write(111,'(100(1f7.4))') abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks,ik_mem,is))
-       !
-     enddo
-     close(111)
+     print*, 'kpt = ',ik_bz
+    !write(filename,'(i0)') ik_bz
+    !open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
+    !write(111,*) 'Quasi-energies [eV]'
+    !write(111,'(100(1f8.3))') FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
+    !write(111,*) 'Eigenvectors'
+    !do i1_fks=FL_states(1),FL_states(2)
+    !  !
+    !  write(111,*) 'evec ',i1_fks
+    !  write(111,'(100(1f7.4))') abs(FL_eigenvectors(FL_states(1):FL_states(2),i1_fks,ik_mem,is))
+    !  !
+    !enddo
+    !close(111)
      !aim137 DEBUG>
      !
      FL_chosen_bands = 0

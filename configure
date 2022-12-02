@@ -654,6 +654,7 @@ CUDA_check
 MEM_profile_check
 TIME_profile_check
 KEEP_OBJS_check
+GAMMA_ONLY_check
 DP_check
 CUDA_FLAGS
 def_cuda
@@ -738,12 +739,12 @@ FFT_INCS
 FFT_LIBS
 fft_cfactor
 lapack_shared
-LAPACK_SO_LIBS
+LAPACK_PETSC_LIBS
 LAPACK_LIBS
 compile_lapack
 internal_lapack
 blas_shared
-BLAS_SO_LIBS
+BLAS_PETSC_LIBS
 BLAS_info
 BLAS_LIBS
 compile_blas
@@ -835,6 +836,8 @@ MKMF_PREFIX
 def_memory_profile
 def_uspp
 def_time_profile
+def_gamma_only
+enable_gamma_only
 build_precision
 def_dp
 enable_dp
@@ -893,6 +896,7 @@ enable_keep_objects
 enable_keep_src
 enable_keep_extlibs
 enable_dp
+enable_gamma_only
 enable_time_profile
 enable_uspp
 enable_memory_profile
@@ -1615,6 +1619,7 @@ Optional Features:
   --enable-keep-src       Keep preprocessed.f90 file. Default is yes.
   --enable-keep-extlibs   Keep downloaded packages as tar.gz . Default is yes.
   --enable-dp             Double-precision build. Default is no.
+  --enable-gamma-only     Gamma only build. Default is no.
   --enable-time-profile   Extended timing profile of specific sections.
                           Default is yes.
   --enable-uspp           Enable Ultrasoft PP support
@@ -3044,6 +3049,19 @@ def_dp=""
 if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
 
+
+
+#
+# ============================================================================
+# VERSION for gamma only case
+# Check whether --enable-gamma_only was given.
+if test "${enable_gamma_only+set}" = set; then :
+  enableval=$enable_gamma_only;
+fi
+
+def_gamma_only=""
+if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
+if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
 
 
 #
@@ -11161,23 +11179,26 @@ if test x"$enable_openmp_int_linalg" = "xyes" ; then
 fi
 
 # Test for shared BLAS
-BLAS_SO_LIBS=""
+BLAS_PETSC_LIBS=""
 if test "$internal_blas" = "yes"; then
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so || test $compile_blas = "yes" ; then
-    BLAS_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
+    BLAS_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
   fi
 fi
+if test "$acx_blas_ok" = "yes" ; then
+  BLAS_PETSC_LIBS=`echo "$BLAS_LIBS" | sed "s/\.a//g" | sed "s/\.so//g" | sed "s/\-L//g" | sed "s/\-l/lib/g" | sed "s/\ //g" `
+  BLAS_PETSC_LIBS="${BLAS_PETSC_LIBS}.so"
+  if ! test -e $BLAS_PETSC_LIBS ; then BLAS_PETSC_LIBS="" ; fi
+fi
 if test $acx_blas_ok = yes && test -d "${MKLROOT}" ; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 fi
-if test $acx_blas_ok = yes && test "${BLAS_LIBS}" = "*.so"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
-fi
-blas_shared="no"
-if test x"${BLAS_SO_LIBS}" = "x"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+#
+blas_shared="0"
+if test x"${BLAS_PETSC_LIBS}" = "x"; then
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 else
-  blas_shared="yes"
+  blas_shared="1"
 fi
 
 
@@ -11680,23 +11701,27 @@ if test "$internal_lapack" = "yes"; then
 fi
 
 # Test for shared LAPACK
-LAPACK_SO_LIBS=""
+LAPACK_PETSC_LIBS=""
 if test "$internal_lapack" = "yes"; then
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so || test $compile_lapack = "yes"; then
-    LAPACK_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
+    LAPACK_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
   fi
 fi
-if test $acx_lapack_ok = yes && test "${lapack_LIBS}" = "*.so"; then
-  LAPACK_SO_LIBS=${LAPACK_LIBS}
+if test "$acx_lapack_ok" = "yes" ; then
+  LAPACK_PETSC_LIBS=`echo "$LAPACK_LIBS" | sed "s/\.a//g" | sed "s/\.so//g" | sed "s/\-L//g" | sed "s/\-l/lib/g" |  sed "s/\ //g" `
+  LAPACK_PETSC_LIBS="${LAPACK_PETSC_LIBS}.so"
+  echo "Davide $LAPACK_PETSC_LIBS"
+  if ! test -e $LAPACK_PETSC_LIBS ; then LAPACK_PETSC_LIBS="" ; fi
 fi
+if test "$acx_lapack_ok" = "yes" && test -d "${MKLROOT}" ; then
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
+fi
+#
 lapack_shared="0"
-if test "x${LAPACK_SO_LIBS}" = "x"; then
-  LAPACK_SO_LIBS=${LAPACK_LIBS}
-  if test $blas_shared = yes && test -d "${MKLROOT}" ; then
-    lapack_shared="1"
-  fi
+if test "x${LAPACK_PETSC_LIBS}" = "x"; then
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
 else
-  lapack_shared="1"
+  if test "x$blas_shared" = "x1" ; then lapack_shared="1" ; fi
 fi
 
 
@@ -14895,6 +14920,9 @@ fi
 DP_check="-"
 if test "$enable_dp" = "yes" ; then DP_check="X"; fi
 #
+GAMMA_ONLY_check="-"
+if test "$enable_gamma_only" = "yes" ; then GAMMA_ONLY_check="X"; fi
+#
 KEEP_OBJS_check="-"
 if test "$enable_keep_objects" = "yes" ; then KEEP_OBJS_check="X"; fi
 #
@@ -15073,6 +15101,7 @@ if test "$hdf5" = "yes" ; then
   fi
 fi
 #
+
 
 
 

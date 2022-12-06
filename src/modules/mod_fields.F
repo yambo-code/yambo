@@ -286,6 +286,7 @@ module fields
          case('SPULSE')
            T_0=sigma
            W_0=W_field
+           f_now=cZERO
            if(abs((T-T_0))< sigma) then
              if (order==0 ) f_now=(4.0*W_0*(T-T_0)*f0t*(-sigma**2*W_0**2+W_0**2*(T-T_0)**2-6.0)   &
 &              +f1t*(sigma**4*W_0**4-2.0*sigma**2*W_0**2*(W_0**2*(T-T_0)**2-2.0)+W_0**4*(T-T_0)**4-12.0* &

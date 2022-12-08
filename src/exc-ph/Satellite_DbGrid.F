@@ -38,9 +38,11 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
  use frequency,     ONLY:w_samp
  use R_lattice,     ONLY:bz_samp
  use units,         ONLY:HA2EV
+ use electrons,     ONLY:nel_cond
  use pars,          ONLY:SP,cZERO,rZERO
  use EXCPH,         ONLY:BS_all_E,BS_E_in,min_EXC_E_DbGd,EXC_E_DbGd,l_DbGd_PH_only,BS_Sat_E_PH_abs, &
-                         BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,min_EXC_E,l_no_matrix_elements
+&                        BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,min_EXC_E,l_no_matrix_elements,         &
+&                        EXC_occ,EXC_occ_DbGd                         
  use ELPH,          ONLY:PH_freqs,FAN_deltaE_treshold,PH_freqs_sq,Q_io_map
  use functions,     ONLY:bose_f,boltzman_f
  !
@@ -105,7 +107,11 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
      iq_ibz = q%sstar(iq_bz,1)
      E_beta  =BS_all_E(i_beta,iq_ibz)
      !
-     boltzm_factor=boltzman_f(E_beta-min_EXC_E)
+     if(nel_cond/=rZERO) then
+       boltzm_factor=EXC_occ(i_beta,iq_ibz)
+     else
+       boltzm_factor=boltzman_f(E_beta-min_EXC_E)
+     endif
      !
    else
      !      
@@ -115,7 +121,11 @@ subroutine Satellite_DbGrid(iq_bz,q,il,i_alpha,i_beta,W,Sat_absorption,Sat_emiss
      !
      ! Boltzman factor for the luminescence
      !
-     boltzm_factor=boltzman_f(E_beta-min_EXC_E_DbGd)
+     if(nel_cond/=rZERO) then
+       boltzm_factor=abs(EXC_occ_DbGd(i_beta,iq_fg)) ! Fourier interpolation can generate negative occupations I take abs()
+     else
+       boltzm_factor=boltzman_f(E_beta-min_EXC_E_DbGd)
+     endif
      !
    endif
    !

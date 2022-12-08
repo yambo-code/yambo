@@ -186,6 +186,8 @@ module YPPm
  real(SP)     ::EXCITON_Res_treshold
  real(SP)     ::EXCITON_weight_treshold   
  real(SP)     ::WF_multiplier   
+ logical      ::l_exc_occ_interp=.FALSE.
+ real(SP)     ::EXC_min
  character(schlen)    :: AVE_exc
  character(schlen)    :: state_ctl 
  integer              :: EXCITONS_n_user_states=0

@@ -47,6 +47,7 @@ module YPP_ELPH
  ! ...GKKP I/O
  logical :: l_gkkp
  logical :: l_gkkp_db
+ logical :: l_gkkp_sngl
  logical :: l_gkkp_dg
  logical :: l_gkkp_plot
  logical :: l_use_qindxB

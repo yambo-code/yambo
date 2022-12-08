@@ -54,7 +54,7 @@ subroutine ELPH_databases(k,E,q)
  !
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
  character(schlen)  ::what,db_name
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH,qindx_B_init
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
@@ -66,50 +66,14 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
- call parser('UseQindxB',l_use_qindxB)
  !
  if(l_gkkp_expand.and.l_gkkp_expand_only_k) &
 &  call error(' Both flags "GkkpExpand" and "GkkpExpOnlyK" cannot be present at the same moment! ')
  !
- if(l_gkkp_expand.or.l_gkkp_expand_only_k) then
-   !      
-   ! Setup parallelization to load qindx_B
-   ! ======================================
-   !
-   call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
-   call PARALLEL_SETUP_K_scheme("BZINDX")
-   !
-   if(l_use_qindxB) then
-     !
-     if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
-     !
-     ! here qindx_B is allocated
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-     io_err(1)=io_QINDX(k,q,ID)
-     if (io_err(1)/=0) then
-       call msg('s',"Missing k/q scattering database")
-       call error("Please run a setup with the BSEscatt flag activated")
-     endif
-     !
-     ! Initialize qindx_B IO
-     ! =============================
-     io_err(2)=qindx_B_init(qindx_ID,qindx_ID_frag) 
-     if(io_err(2)/=0) call error("Error reading qindx_B")
-     !
-   else
-     ! otherwise qindx_C is allocated
-     if(.not.allocated(qindx_C)) then
-       if(coll_scattering.eqv..FALSE.) call error('Please run again the setup with: K_grids= "X B C S" ')
-       call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
-       io_err(1)=io_QINDX(k,q,ID)
-       if (io_err(1)/=0) then
-         call msg('s',"Missing k/q scattering database")
-         call error('Please (re)run the setup K_grids="C"')
-       endif
-     endif
-   endif
-   !
- endif
+ ! Load symmetry indexes if expantion is required
+ ! =================================================
+ ! 
+ if(l_gkkp_expand.or.l_gkkp_expand_only_k) call ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  !
  ! Existence and dimensions 
  !==========================

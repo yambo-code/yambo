@@ -42,17 +42,20 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use units,         ONLY:HA2EV,HA2CMm1
  use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,&
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,EXC_occ,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
 &                        EXCPH_Renorm_PL,EXCPH_Renorm_PL_PH_abs,Renorm_alloc,Renorm_free,l_DbGd_WEIGHTs
  use ELPH,          ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs_sq
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
- use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
+ use D_lattice,     ONLY:Boltz_Temp
  use functions,     ONLY:boltzman_f,bose_f
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
+ use electrons,     ONLY:nel_cond
+ use parser_m,      ONLY:parser
+ use com,           ONLY:msg,of_open_close
  !
 #include<memory.h>
  !
@@ -63,11 +66,17 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  ! Work space
  !
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
- real(SP)      :: min_E,exc_E,PH_E
+ real(SP)      :: min_E,exc_E,PH_E,occ_fact,v(3)
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: iq_db
+ integer       :: iq_db,iq_ibz
  integer       :: elph_branches_save(2)
  type(PP_indexes)::px
+ logical       :: l_prt_pl_q_res
+ complex(SP), allocatable :: PL_ii_q(:,:,:)
+ character(schlen) :: pl_file_name
+ integer, parameter  :: n_output=7
+ real(SP)            :: output_data(n_output)
+ character(schlen)   :: headers(n_output)
  !
  real(SP), allocatable  :: max_Sat_weight(:)
  integer,  allocatable  :: max_Sat_pos(:,:)
@@ -94,6 +103,12 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  if(io_err/=0) call error('gkkp_expanded databases not found!')
  elph_branches=elph_branches_save
  !
+ call parser('PLqres',l_prt_pl_q_res)
+ if(l_prt_pl_q_res) then
+   YAMBO_ALLOC(PL_ii_q,(wv%n_freqs,3,q%nibz))
+   PL_ii_q=cZERO
+ endif
+ !
  ! Renormalization factors
  !
  call Renorm_alloc()
@@ -117,12 +132,16 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  max_Sat_weight_PH_abs=rZERO
  max_Sat_pos_PH_abs   =0
  !
+ if(.not.allocated(q%k_table)) call k_build_up_BZ_tables(q)
+ !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/wv%n_freqs/)) 
  ! 
- call live_timing('Satellites',px%n_of_elements(myid+1)*q%nbz)
+ call live_timing('Satellites',px%n_of_elements(myid+1)*q%nibz)
  !
- do iq_bz=1,q%nbz
+ do iq_ibz=1,q%nibz
+   !
+   iq_bz=q%k_table(iq_ibz,1)
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
@@ -175,11 +194,16 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
            !
            ! Add the satellites to the dielectric constant and luminescence
            !
-           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
-           Epsilon_ii(iw,3)=Epsilon_ii(iw,3)+Sat_alpha_abs*BS_R(i_alpha)/real(q%nbz,SP)
+           Epsilon_ii(iw,1)=Epsilon_ii(iw,1)+Sat_alpha_abs*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
+           Epsilon_ii(iw,3)=Epsilon_ii(iw,3)+Sat_alpha_abs*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
            !
-           PL_ii(iw,1)     =PL_ii(iw,1)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
-           PL_ii(iw,3)     =PL_ii(iw,3)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)/real(q%nbz,SP)
+           PL_ii(iw,1)     =PL_ii(iw,1)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
+           PL_ii(iw,3)     =PL_ii(iw,3)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
+           !
+           if(l_prt_pl_q_res) then
+              PL_ii_q(iw,1,iq_ibz)     =PL_ii_q(iw,1,iq_ibz)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
+              PL_ii_q(iw,3,iq_ibz)     =PL_ii_q(iw,3,iq_ibz)+(W+2.*ph_E)**2*Sat_alpha_emiss*BS_R(i_alpha)*q%weights(iq_ibz) !/real(q%nbz,SP)
+           endif
            !
          enddo
          !
@@ -232,8 +256,15 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
      !
      exc_E=BS_E_in(i_alpha)-min_E
      pole =BS_E_in(i_alpha)          
+     !
+     if(nel_cond/=rZERO) then
+       occ_fact=EXC_occ(i_alpha,1)
+     else
+       occ_fact=boltzman_f(exc_E)
+     endif
+     !
      PL_ii(iw,1:2)     =PL_ii(iw,1:2)  + W**3*(1._SP-EXCPH_Renorm_PL(i_alpha)-EXCPH_Renorm_PL_PH_abs(i_alpha))*BS_R(i_alpha) &
-&                                      /(W-pole)*boltzman_f(exc_E)
+&                                      /(W-pole)*occ_fact
      !
    enddo
    !
@@ -252,10 +283,63 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    W=wv%p(iw)
    Epsilon_ii(iw,:)=1._SP-Epsilon_ii(iw,:)
    PL_ii(iw,:)=-W*PL_ii(iw,:)
+   if(l_prt_pl_q_res) then
+     PL_ii_q(iw,:,:)=-W*PL_ii_q(iw,:,:)
+   endif
+   !
  enddo
+ !
+ if(l_prt_pl_q_res) then
+   call k_ibz2bz(q,'a',.true.)
+   ! Write on disk
+   do iq_ibz=1,q%nibz
+     !
+!     iq_ibz = q%sstar(iq_bz,1)
+     if(.not.use_PH_DbGd.and.abs(BS_all_E(EXCPH_sum(1),iq_ibz)-min_EXC_E)>3.0*Boltz_Temp)  then
+       call msg('s','Too weak signal at q-point '//intc(iq_bz)//' skipped ')
+       cycle
+     endif
+     !
+     pl_file_name ='pl_bse_resolved_q'//intc(iq_ibz)
+!     iq_ibz = q%sstar(iq_bz,1)
+     !
+     call of_open_close(pl_file_name,'ot')
+     !
+     call msg('o pl_bse','# EXCITON PHONON')    
+     call msg('o pl_bse','# Exciton_states    :',EXCPH_states,INDENT=0)    
+     call msg('o pl_bse','# EXciton sum       :',EXCPH_sum,INDENT=0)    
+     call msg('o pl_bse','#')
+     headers(1)='E[eV]'
+     headers(2:n_output)=(/'Im(pl_ph )','Re(pl_ph )','Im(pl_nos)','Re(pl_nos)','Re(pl_sat)','Im(pl_sat)'/)
+     call msg('o pl_bse','#',headers,INDENT=0,USE_TABS=.TRUE.)
+     call msg('o pl_bse','#')
+     call msg('o pl_bse','# iq_ibz = '//intc(iq_ibz))
+     call msg('o pl_bse','# q_pt_bz(rlu)   = ',q%pt(iq_ibz,:))
+!     call msg('o pl_bse','# q_pt_bz(rlu)   = ',q%ptbz(iq_bz,:))
+     !
+     ! Write output on file
+     !
+     do iw=1,wv%n_freqs
+       !
+       ! Luminescence
+       !
+       output_data=(/real(wv%p(iw))*HA2EV,aimag(PL_ii_q(iw,1,iq_ibz)),real(PL_ii_q(iw,1,iq_ibz)),          &
+&               aimag(PL_ii_q(iw,2,iq_ibz)),real(PL_ii_q(iw,2,iq_ibz)),aimag(PL_ii_q(iw,3,iq_ibz)),real(PL_ii_q(iw,3,iq_ibz))/)
+       call msg('o pl_bse','',output_data,INDENT=-2,USE_TABS=.true.)
+       !
+     enddo
+     !
+     ! Close files
+     !
+     call of_open_close(pl_file_name)
+   enddo
+   !
+ endif
+ ! 
  !
  call PP_redux_wait(Epsilon_ii)
  call PP_redux_wait(PL_ii) 
+ if(l_prt_pl_q_res) call PP_redux_wait(PL_ii_q) 
  !
  ! Free
  !
@@ -270,18 +354,26 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    ! Work Space
    !
-   integer :: i1
+   integer  :: i1
+   real(SP) :: max_Sat(EXCPH_states(1):EXCPH_states(2))
+   real(SP) :: max_Sat_PH_abs(EXCPH_states(1):EXCPH_states(2))
    !      
    ! Find the maximum weight of the satellites
    ! 
    do i1=EXCPH_states(1),EXCPH_states(2)
-     if(max_Sat_weight(i1)<maxval(abs(BS_Sat_WEIGHT(:,:,i1)))) then
-        max_Sat_weight(i1)=maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+     max_Sat(i1)       =maxval(abs(BS_Sat_WEIGHT(:,:,i1)))
+     max_Sat_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+   enddo
+   !
+   do i1=EXCPH_states(1),EXCPH_states(2)
+     if(max_Sat_weight(i1)<max_Sat(i1)) then
+        max_Sat_weight(i1)=max_Sat(i1)
         max_Sat_pos(i1,1) =iq_bz
         max_Sat_pos(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT(:,:,i1)))
      endif
-     if(max_Sat_weight_PH_abs(i1)<maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))) then
-        max_Sat_weight_PH_abs(i1)=maxval(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
+     !
+     if(max_Sat_weight_PH_abs(i1)<max_Sat_PH_abs(i1)) then
+        max_Sat_weight_PH_abs(i1)=max_Sat_PH_abs(i1)
         max_Sat_pos_PH_abs(i1,1) =iq_bz
         max_Sat_pos_PH_abs(i1,2:3) =maxloc(abs(BS_Sat_WEIGHT_PH_abs(:,:,i1)))
       endif
@@ -304,6 +396,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    call msg('sr',' Max satellite weight: ')
    do i1=EXCPH_states(1),EXCPH_states(2)
      iq_bz  = max_Sat_pos(i1,1) 
+     write(*,*) 'passo qui ',iq_bz
      iq_db  =Q_io_map(iq_bz)
      iq_ibz =q%sstar(iq_bz,1)
      ph_E=sqrt(abs(ph_freqs_sq(iq_db,max_Sat_pos(i1,2))))

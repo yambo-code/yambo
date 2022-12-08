@@ -27,6 +27,7 @@ module EXCPH
  use BS_solvers,     ONLY:BSS_n_eig
  use BS,             ONLY:BS_H_dim
  use ELPH,           ONLY:ph_modes
+ use R_lattice,      ONLY:bz_samp
  !
 #include<memory.h>
  !
@@ -94,7 +95,9 @@ module EXCPH
  !
  integer  :: ID_EXC,ID_EXC_obj
  real(SP) :: min_EXC_E_DbGd
+ integer  :: min_pos_E_DbGd(1)
  real(SP), allocatable :: EXC_E_DbGd(:,:)
+ type(bz_samp) :: q_DbGd 
  !
  ! Life Times
  !
@@ -109,6 +112,13 @@ module EXCPH
  logical       :: l_DbGd_WEIGHTs ! Double-Grid for Satellite weights
  logical       :: l_DbGd_PH_only ! Double-Grid only for phonon energies
  logical       :: l_no_matrix_elements  ! Set EXC-PH matrix elements to 1 (in lifetime and satellites)
+ !
+ ! Excitonic occupations
+ !
+ real(SP), allocatable :: EXC_occ(:,:)
+ integer  :: ID_occ,ID_occ_obj
+ real(SP), allocatable :: EXC_occ_DbGd(:,:)
+ real(SP) :: alphaQ
  !
  contains
    !      
@@ -248,7 +258,7 @@ module EXCPH
    subroutine build_Q_map(q)
     use R_lattice,      ONLY:bz_samp
     use zeros,          ONLY:k_iku_zero
-    use vec_operate,    ONLY:v_is_zero
+    use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
     use ELPH,           ONLY:PH_qpt
     use com,            ONLY:msg
     !
@@ -256,6 +266,7 @@ module EXCPH
     type(bz_samp) ::q
     !
     integer :: iq,idb
+    real(SP) :: v_rlu(3)
     !
     YAMBO_ALLOC(DB_Q_map,(q%nbz))
     !
@@ -264,7 +275,10 @@ module EXCPH
     DB_Q_map=0
     do iq=1,q%nbz
       do idb=1,q%nbz
-        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
+        v_rlu=q%ptbz(iq,:)-PH_qpt(idb,:)
+        call c2a(v_in=v_rlu,mode='ki2a')
+!        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
+        if(.not.rlu_v_is_zero(v_rlu)) cycle
         DB_Q_map(iq)=idb
         exit
       enddo

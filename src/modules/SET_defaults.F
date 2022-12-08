@@ -55,7 +55,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn,nel_cond
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log
@@ -83,7 +83,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
- use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -320,6 +320,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spin_den=1
  l_spin_orbit       = .FALSE.
  filled_tresh=0.00001
+ nel_cond=rZERO
  !
  ! Magnetization and density
  !
@@ -542,6 +543,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  EXCPH_sum=(/1,1/)
  L_damping=0.0005/HA2EV ! set to 0.5 meV
  EXC_q0=(/0.0,0.0,0.0/)
+ alphaQ=rZERO
  !
 #endif
  !

@@ -26,15 +26,18 @@
 subroutine EXCPH_optics(E,k,q,X,wv)
  !
  use units,          ONLY:HA2EV
- use pars,           ONLY:SP,cZERO,schlen
- use electrons,      ONLY:levels
+ use pars,           ONLY:SP,cZERO,schlen,rZERO
+ use vec_operate,    ONLY:iku_v_2D_norm,c2a
+ use electrons,      ONLY:levels,nel_cond,E_reset
  use R_lattice,      ONLY:bz_samp,bare_qpg,d3k_factor
+ use D_lattice,      ONLY:Boltz_Temp
  use X_m,            ONLY:X_t
  use com,            ONLY:msg,of_open_close
- use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in, &
-&                         BS_R_left,BS_R_right,BS_R,BSE_alloc,BSE_free,                      &
-&                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,     &
-&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free
+ use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,L_kind_in,L_kind_out,BS_E,BS_all_E,BS_E_in,   &
+&                         BS_R_left,BS_R_right,BS_R,BSE_alloc,BSE_free,EXC_occ,alphaQ,q_DbGd,  &
+&                         RESIDUALS_and_EIGENVALUES_free, RESIDUALS_and_EIGENVALUES_alloc,EXC_E_DbGd,  &
+&                         l_DbGd_PH_only,l_DbGd_WEIGHTs,l_no_matrix_elements,Sat_alloc,Sat_free, &
+&                         min_EXC_E_DbGd,min_pos_E_DbGd
  use ELPH,           ONLY:use_PH_DbGd,ph_modes
  use BS_solvers,     ONLY:BSS_eh_table,BSS_alloc,BSS_free
  use BS,             ONLY:BSE_prop,BS_dip_size
@@ -52,10 +55,14 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  complex(SP), allocatable :: PL_ii(:,:),Epsilon_ii(:,:)
  integer, parameter  :: n_output=7
- real(SP)            :: output_data(n_output)
+ real(SP)            :: output_data(n_output),E_fermi_h,E_fermi_e,v(3)
  character(schlen)   :: headers(n_output)
- integer             :: iw,iq,i_alpha,max_filling
+ integer             :: iw,iq,i_alpha,max_filling,EXC_n_sum,i_beta
+ integer, allocatable:: EXC_indexes(:)
  character(schlen)   :: dbgd_string
+ character(schlen) :: q_point 
+ type(levels)        :: E_QF
+ logical :: l_sat_from_Hpert
  !
  call section('*','EXCPH-Optics')
  !
@@ -90,9 +97,31 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  !
  call EXC_dipole(k,E,q,X)
  !
+ ! Excitonic occupation
+ !
+ if(nel_cond/=rZERO) then
+   call msg('rs','Excitonic quasi-fermi distribution interpolation')
+   call E_reset(E_QF)
+   call OCCUPATIONS_Quasi_Fermi(E,k,E_QF,E_fermi_h,E_fermi_e)
+   EXC_n_sum=EXCPH_sum(2)-EXCPH_sum(1)+1
+   YAMBO_ALLOC(EXC_occ,(EXC_n_sum,q%nibz))
+   YAMBO_ALLOC(EXC_indexes,(EXC_n_sum))
+   if(.not.allocated(q%k_table))  call k_build_up_BZ_tables(q)   
+   if(EXCPH_sum(1)/=1) call error("This part of the code does not work for ELPhExcSum(1)/=1")
+   do i_beta=EXCPH_sum(1),EXCPH_sum(2)
+      EXC_indexes(i_beta)=i_beta 
+   enddo
+   if(Boltz_Temp/=rZERO) call warning('Excitonic Occupation, EXCTemp ignored, use ElecTemp!')
+ endif
+ !
  do iq=1,q%nibz
-   call EXCPH_load_L(iq,X,'eigenvalues','Lout')
-   BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
+   if(nel_cond/=rZERO) then
+     call EXCPH_load_L(iq,X,'load','Lout')
+     call EXC_occupations(E_QF,k,q,iq,EXC_n_sum,EXC_indexes,EXC_occ(:,iq))
+   else
+     call EXCPH_load_L(iq,X,'eigenvalues','Lout')
+   endif
+     BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
  enddo
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
@@ -124,9 +153,44 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  YAMBO_ALLOC(Epsilon_ii,(wv%n_freqs,3))
  YAMBO_ALLOC(PL_ii,(wv%n_freqs,3))
  !
- ! Calculate X(w) include phonon assisted transitions
+ ! Band structure distortion
  !
- call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
+ if(alphaQ/=rZERO) then
+   call msg('rs','Excitonic bands stretching :',alphaQ)
+   do iq=1,q%nibz
+      BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_2D_norm(q%pt(iq,:3))
+   enddo
+   if(use_PH_DbGd) then
+      do iq=1,q_DbGd%nibz
+         EXC_E_DbGd(:,iq)=EXC_E_DbGd(:,iq)+alphaQ*iku_v_2D_norm(q_DbGd%pt(iq,:3))
+      enddo
+       min_EXC_E_DbGd=minval(EXC_E_DbGd(1,:))
+       min_pos_E_DbGd=minloc(EXC_E_DbGd(1,:))
+       call c2a(v_in=q_DbGd%pt(min_pos_E_DbGd,:),v_out=v,mode="ki2a")
+       call msg('rs','NEW!!! Minimum excitonic energy with DbGd: ',min_EXC_E_DbGd*HA2EV,'eV')
+       write(q_point,'(3f12.6,a)') v(:),' [rlu] '
+       call msg('rs','NEW!!!! Minimum q-point in the DbGrid : '//q_point)
+   endif
+ endif
+ !
+ call parser('SatFromHPert',l_sat_from_Hpert)
+ if (l_sat_from_Hpert) then
+   !
+   ! This option only computes phonon-assisted emission satellites
+   ! using perturbation-theory formula from excitonic Hamiltonian
+   ! (i.e. |sum_in BS_R (in) G (in,out)|^2 instead of sum_in BS_R(in)**2! G(in,out)**2 )
+   !
+   call warning(' Calculating only modified satellites for PL')
+   call EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
+   !
+ else
+   !
+   ! Calculate X(w) including phonon-assisted transitions as
+   ! derived from exciton-phonon self-energy
+   !
+   call EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
+   !
+ endif
  !
 ! call X_setup_file_names(1,'bse ','phass',dbgd_string) 
  !

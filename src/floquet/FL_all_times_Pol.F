@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_time_dep_variables(E,k)
+subroutine FL_all_times_pol(E,k)
  !
  ! Subroutine to interace with ypp
  !
@@ -85,7 +85,7 @@ subroutine FL_time_dep_variables(E,k)
            idx=k_periodic_idx(idx,k_map)
            ikp=k_map%k_map_dir(idx(1),idx(2),idx(3))
            !
-           call FL_all_time_determinants(E,ik_bz,ikp,is,FL_S_plus(:,:E%nbf(is),:E%nbf(is),id+(istep-1)*3,ik_bz,is),&
+           call FL_all_times_determinants(E,ik_bz,ikp,is,FL_S_plus(:,:E%nbf(is),:E%nbf(is),id+(istep-1)*3,ik_bz,is),&
            &                                            FL_all_time_S_det(:,id+(istep-1)*3,ik_bz,is))
          enddo
        endif
@@ -173,7 +173,7 @@ close(111)
 !aim137 DEBUG >
 end subroutine
 !
-subroutine FL_all_time_determinants(en,ikbz,ikp,i_sp,FL_S_plus,FL_all_time_S_det)
+subroutine FL_all_times_determinants(en,ikbz,ikp,i_sp,FL_S_plus,FL_all_time_S_det)
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
  use units,          ONLY:HA2FSm1,HA2EV

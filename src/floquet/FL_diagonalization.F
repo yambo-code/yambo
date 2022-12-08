@@ -36,7 +36,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  use nl_optics,      ONLY:NL_bands,E_full,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_QE_hist,FL_ac_phase,&
-&                         FL_eigenvectors,FL_eigenvalues,FL_beta
+&                         FL_eigenvectors,FL_eigenvalues,FL_beta,l_FL_avEnergy
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
  !
@@ -127,7 +127,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
      endif
      !
      !aim137 DEBUG<
-     print*, 'kpt = ',ik_bz
+     !print*, ' =========================================== kpt = ',ik_bz
     !write(filename,'(i0)') ik_bz
     !open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
     !write(111,*) 'Quasi-energies [eV]'
@@ -179,7 +179,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        !
        ! Average Energy eigenproblem
        !
-       call FL_average_energy(&
+       if (l_FL_avEnergy) call FL_average_energy(&
        &    FL_Ho_plus_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
        &     FL_eigenvectors(FL_states(1):FL_states(2),FL_states(1):FL_states(2),ik_mem,is),&
        &      FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is),&
@@ -262,6 +262,13 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
          enddo
        enddo
        FL_QE(i_m,ik_bz,is) = trial_val
+       !
+       !aim137 DEBUG <
+       !central component
+       !print*, atan(aimag(FL_V_bands(4,max_fl_mode+1,4,ik_bz,is))/real(FL_V_bands(4,max_fl_mode+1,4,ik_bz,is)))
+       !coupling component
+       !print*, atan(aimag(FL_V_bands(5,max_fl_mode+2,4,ik_bz,is))/real(FL_V_bands(5,max_fl_mode+2,4,ik_bz,is)))
+       !aim137 DEBUG >
        !
        !aim137 DEBUG AVERAGE ENERGY<
   !!!  write(filename ,'(i0)') ik_bz

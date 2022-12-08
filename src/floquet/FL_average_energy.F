@@ -32,7 +32,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver
  use wrapper,        ONLY:M_by_V,Vstar_dot_V
  use nl_optics,      ONLY:NL_damping,NL_bands
- use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_states
+ use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_states,l_FL_foldBZ
  !
  implicit none
  !
@@ -52,7 +52,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  integer     :: qe_shift(FL_states(1):FL_states(2))
  complex(SP) :: tmp_vec(FL_states(1):FL_states(2))
  complex(SP) :: Hamiltonian(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- logical     :: l_assume_Hermitian,l_reset_qe
+ logical     :: l_assume_Hermitian
  complex(SP),allocatable :: av_Hamiltonian(:,:),subspace_vecs(:,:)
  real(SP),allocatable    :: av_energies(:)
  complex(SP),allocatable :: NHM_Left_Vec(:,:),NHM_Right_Vec(:,:),NHM_Cmpl_Val(:)
@@ -67,9 +67,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  w0 = Efield(1)%frequency(1)
  i_central_fks = (NL_bands(1)-1)*n_tot_fl_modes + (max_fl_mode+1)
  !
- l_reset_qe = .false.
- !
- if (l_reset_qe) then
+ if (l_FL_foldBZ) then
    ref_interval = floor(eigenvalues(i_chosen_fks)/w0)
    do i1_fks=FL_states(1),FL_states(2)
      qe_shift(i1_fks) = floor(eigenvalues(i1_fks)/w0)-ref_interval
@@ -94,7 +92,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  !
  do i1_fks=FL_states(1),FL_states(2)
    !
-   if (abs(qe_in_wBZ(i_chosen_fks)-qe_in_wBZ(i1_fks)) < 2.0_SP * NL_damping) then
+   if (abs(qe_in_wBZ(i_chosen_fks)-qe_in_wBZ(i1_fks)) < 0.002_SP * NL_damping) then
      !
      selected_vectors(i1_fks) = .true.
      if (qe_in_wBZ(i1_fks) > qe_near_deg_max) qe_near_deg_max = qe_in_wBZ(i1_fks)
@@ -119,7 +117,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  write(*,'(100(1f8.3))') eigenvalues*HA2EV
  write(*,'(100(1f12.6))') abs(eigenvectors(FL_states(1):FL_states(2),i_chosen_fks))
  !
- if (l_reset_qe) then
+ if (l_FL_foldBZ) then
    print*, '-- reset eigenvalues around qe =',qe_in_wBZ(i_chosen_fks)*HA2EV
    write(*,'(100(1f8.3))') qe_in_wBZ*HA2EV
  endif
@@ -142,8 +140,10 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
    if (selected_vectors(i1_fks)) then
      !
      subspace_vecs(FL_states(1):FL_states(2),i1_deg) = eigenvectors(FL_states(1):FL_states(2),i1_fks)
-     if (l_reset_qe) subspace_vecs(FL_states(1):FL_states(2),i1_deg) =&
+     write(*,'(A5,100(1f12.6))') 'old: ',abs(subspace_vecs(FL_states(1):FL_states(2),i1_deg))
+     if (l_FL_foldBZ) subspace_vecs(FL_states(1):FL_states(2),i1_deg) =&
      &    shifted_vec(eigenvectors(FL_states(1):FL_states(2),i1_fks),qe_shift(i1_fks))
+     write(*,'(A5,100(1f12.6))') 'new: ',abs(subspace_vecs(FL_states(1):FL_states(2),i1_deg))
      i1_deg = i1_deg + 1
      !
    endif
@@ -187,7 +187,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  !
  ! Diagonalisation
  !
- l_assume_Hermitian = .false.
+ l_assume_Hermitian = .true.
  !
  if (l_assume_Hermitian) then
    !
@@ -237,9 +237,9 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  i_central_fks = (NL_bands(1)-1)*n_tot_fl_modes + (max_fl_mode+1)
  phase_orig = atan(real(eigenvectors(i_central_fks,i_chosen_fks)),aimag(eigenvectors(i_central_fks,i_chosen_fks)))
  phase_new = atan(real(AE_vec(i_central_fks)),aimag(AE_vec(i_central_fks)))
- print*, eigenvectors(i_central_fks,i_chosen_fks),'orig phase = ',phase_orig
+ !print*, eigenvectors(i_central_fks,i_chosen_fks),'orig phase = ',phase_orig
  AE_vec = AE_vec * conjg(AE_vec(i_central_fks))/abs(AE_vec(i_central_fks))
- print*, AE_vec(i_central_fks),'aven phase = ', phase_new
+ !print*, AE_vec(i_central_fks),'aven phase = ', phase_new
  !
  write(*,'(A5,100(1f8.3))') 'avE= ',av_energies*HA2EV
  print*, i_av_energy

@@ -21,6 +21,8 @@
  OCCUPATIONS_Extend_Double_Grid.o
  OCCUPATIONS_Fermi.o
  OCCUPATIONS_Gaps.o
+ OCCUPATIONS_Merge.o
+ OCCUPATIONS_Quasi_Fermi.o
  QP_state_group.o
  QP_state_print.o
  QPartilize.o

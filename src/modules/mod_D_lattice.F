@@ -53,7 +53,7 @@ module D_lattice
                         ! on the value of i_time_rev and i_space_inv
  integer :: idt_index   ! Indentity I  index
  logical :: mag_syms
- real(SP),allocatable    :: dl_sop(:,:,:)
+ real(SP),allocatable    :: dl_sop(:,:,:)   ! Symmetry operation in real-space
  complex(SP),allocatable :: spin_sop(:,:,:)
  integer, allocatable    :: sop_tab(:,:)
  integer, allocatable    :: sop_inv(:)

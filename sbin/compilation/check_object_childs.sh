@@ -22,10 +22,15 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
+# This script:
+# - tags the library to be compiled
+# - remove the object file
+#
+#
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
 file=$obj
-source ./sbin/compilation/object_save_restore_remove.sh "remove"
+source ./sbin/compilation/object_remove.sh "remove" $1
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
@@ -41,6 +46,6 @@ if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
  for file in $first_level_dep
  do
-  source ./sbin/compilation/object_save_restore_remove.sh "remove"
+  source ./sbin/compilation/object_remove.sh "remove_child" $1
  done
 fi

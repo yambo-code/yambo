@@ -23,16 +23,11 @@
 #
 AC_DEFUN([AC_HAVE_ETSF_IO],[
 
-AC_ARG_ENABLE(etsf_io, AC_HELP_STRING([--enable-etsf-io],
-   [Activate the ETSF_IO support]),[],[enable_etsf_io="no"])
-AC_ARG_WITH(etsf_io_libs, AC_HELP_STRING([--with-etsf-io-libs=<libs>],
-   [Use the ETSF_IO libraries in <libs>],[32]))
-AC_ARG_WITH(etsf_io_path, AC_HELP_STRING([--with-etsf-io-path=<path>],
-   [Path to the ETSF_IO install directory],[32]))
-AC_ARG_WITH(etsf_io_libdir, AC_HELP_STRING([--with-etsf-io-libdir=<path>],
-   [Path to the ETSF_IO lib directory],[32]))
-AC_ARG_WITH(etsf_io_includedir, AC_HELP_STRING([--with-etsf-io-includedir=<path>],
-   [Path to the ETSF_IO include directory],[32]))
+AC_ARG_ENABLE(etsf_io, AS_HELP_STRING([--enable-etsf-io],[Activate the ETSF_IO support]),[],[enable_etsf_io="no"])
+AC_ARG_WITH(etsf_io_libs, AS_HELP_STRING([--with-etsf-io-libs=<libs>],[Use the ETSF_IO libraries in <libs>],[32]))
+AC_ARG_WITH(etsf_io_path, AS_HELP_STRING([--with-etsf-io-path=<path>],[Path to the ETSF_IO install directory],[32]))
+AC_ARG_WITH(etsf_io_libdir, AS_HELP_STRING([--with-etsf-io-libdir=<path>],[Path to the ETSF_IO lib directory],[32]))
+AC_ARG_WITH(etsf_io_includedir, AS_HELP_STRING([--with-etsf-io-includedir=<path>],[Path to the ETSF_IO include directory],[32]))
 
 compile_e2y="no"
 compile_etsf="no"

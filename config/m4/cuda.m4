@@ -24,10 +24,10 @@
 AC_DEFUN([AC_HAVE_CUDA],[
 #
 AC_ARG_ENABLE(cuda,
-        [AC_HELP_STRING([--enable-cuda=<opt>], [Enable CUDA support])],[],[])
+        [AS_HELP_STRING([--enable-cuda=<opt>],[Enable CUDA support])],[],[])
 #
 AC_ARG_ENABLE(nvtx,
-        [AC_HELP_STRING([--enable-nvtx=<path>], [Enable NVTX support])],[],[])
+        [AS_HELP_STRING([--enable-nvtx=<path>],[Enable NVTX support])],[],[])
 if test x"$enable_nvtx" = "x";  then enable_nvtx="no" ; fi
 #
 def_cuda=""

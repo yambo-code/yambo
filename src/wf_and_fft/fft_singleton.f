@@ -1,3 +1,4 @@
+#if defined _YPP_RT || defined _YPP_NL
       subroutine fft_singleton(a,b,ntot,n,nspan,isn)
 c  multivariate complex fourier transform, computed in place
 c    using mixed-radix fast fourier transform algorithm.
@@ -549,3 +550,4 @@ c  error finish, insufficient array storage
       stop
   999 format(44h0array bounds exceeded within subroutine fft)
       end
+#endif

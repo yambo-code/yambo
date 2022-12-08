@@ -8,7 +8,7 @@ acx_lapack_ok=no
 
 LAPACK_LIBS=""
 AC_ARG_WITH(lapack_libs,
-        [AC_HELP_STRING([--with-lapack-libs=<libs>], [Use LAPACK libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-lapack-libs=<libs>],[Use LAPACK libraries <libs>],[32])])
 case $with_lapack_libs in
         yes | "") ;;
         no) acx_lapack_ok=disable ;;
@@ -97,9 +97,31 @@ if test "$internal_lapack" = "yes"; then
   fi
 fi
 
+# Test for shared LAPACK
+LAPACK_SO_LIBS=""
+if test "$internal_lapack" = "yes"; then
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so || test $compile_lapack = "yes"; then
+    LAPACK_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
+  fi
+fi
+if test $acx_lapack_ok = yes && test "${lapack_LIBS}" = "*.so"; then
+  LAPACK_SO_LIBS=${LAPACK_LIBS}
+fi
+lapack_shared="0"
+if test "x${LAPACK_SO_LIBS}" = "x"; then
+  LAPACK_SO_LIBS=${LAPACK_LIBS}
+  if test $blas_shared = yes && test -d "${MKLROOT}" ; then
+    lapack_shared="1"
+  fi
+else
+  lapack_shared="1"
+fi
+
 AC_SUBST(internal_lapack)
 AC_SUBST(compile_lapack)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(LAPACK_SO_LIBS)
+AC_SUBST(lapack_shared)
 
 ])dnl ACX_LAPACK
 

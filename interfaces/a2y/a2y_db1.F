@@ -115,6 +115,7 @@ contains
   subroutine import_geometry_group
     use vec_operate,          only : cross_product
     use matrix_operate,       only : m3det_i
+    use units,                only : Da2AU
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                    DL_vol, a, alat, &
@@ -208,6 +209,9 @@ contains
     varid = netcdf_inquire_varid(ncid, "amu")
     netcdf_error = nf90_get_var(ncid, varid, atom_mass)
     call netcdf_check(ncid,netcdf_error,varid)
+    do i1 = 1, n_atomic_species
+     atom_mass(i1) = real(atom_mass(i1),SP)*Da2AU   ! Mass are stored in Atomic Units
+    enddo
 
     !
     ! Symmetry 

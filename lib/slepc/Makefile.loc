@@ -49,7 +49,7 @@ install: uncompress configure compile
          echo "\t[$(PACKAGE)] installation"; \
 	 cd $(PACKAGE); \
          $(make) -j1 SLEPC_DIR=$(PWD)/$(PACKAGE) PETSC_DIR=$(LIBPATH) install  >> ${compdir}/log/compile_$(PACKAGE).log 2>&1; \
-         chmod u+x $(LIBPATH)/lib/*slepc*.a; \
+         #chmod u+x $(LIBPATH)/lib/*slepc*.a; \
 	 touch ../installed.stamp; \
 	fi
 

@@ -59,7 +59,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
- logical             :: WARN,WARN_SERIAL,xc_kind_force,l_IMPOSE,l_R_LATT
+ logical             :: WARN,WARN_SERIAL,xc_kind_force,l_IMPOSE
  logical             :: QPTS_,R_LATT_,WF_,IMPOSE_SN_,T_EL_,KPTS_,CUTOFF_,GAUGE_,IMPOSE_GAUGE_,ACCEPT_SPIN_,FRAG_,D_LATT_
  character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
@@ -94,8 +94,17 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  l_IMPOSE=.false.
  if (present(IMPOSE)) l_IMPOSE=IMPOSE
  !
- l_R_LATT=.false.
- if (present(R_LATT)) l_R_LATT=R_LATT
+ R_LATT_=.false.
+ if (present(R_LATT)) R_LATT_=R_LATT
+ !
+ QPTS_=.false.
+ if (present(QPTS)) QPTS_=QPTS
+ !
+ KPTS_=.false.
+ if (present(KPTS)) KPTS_=KPTS
+ !
+ WF_=.false.
+ if (present(WF)) WF_=WF
  !
  MENU=1
  MODE=io_mode(ID)
@@ -179,7 +188,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! RL lattice
  !
- if (l_R_LATT) then
+ if (R_LATT_) then
    R_LATT_vec=(/nqibz,nqbz,nkibz,nkbz/)
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
    MENU=0
@@ -195,7 +204,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! Wave Functions RL vectors
  !
- if (present(WF)) then
+ if (WF_) then
    call io_elemental(ID,VAR="HEAD_WF",VAR_SZ=1,MENU=MENU)
    MENU=0
    call io_elemental(ID,I0=wf_ng,&
@@ -207,7 +216,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! Q points
  !
- if (present(QPTS)) then
+ if (QPTS_) then
+   !
+   if (.not.R_LATT_) call error(" QPTS is true, but R_LATT is false. nqibz_disk is not defined")
    !
    allocate(l_pt(nqibz_disk,3))
    !
@@ -235,7 +246,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! K points
  !
- if (present(KPTS)) then
+ if (KPTS_) then
    !
    allocate(l_pt(nkibz_disk,3))
    !

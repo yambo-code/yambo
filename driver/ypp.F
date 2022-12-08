@@ -47,6 +47,12 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
 &                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
 #endif
+#if defined _YPP_SC
+ ! DS This is needed otherwise ypp_sc fails if compiling after ypp_ph and later yambo_sc
+ !    The reason os that SC locks are set inside driver folder dispite
+ !    only yambo_sc was compiled with them. Alternative solution could
+ !    be to always recompile ypp.F and yambo.F
+#endif
  !
  implicit none
  !

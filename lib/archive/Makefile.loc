@@ -56,9 +56,17 @@ fftqe:
 #
 # cleaning
 #
-clean: clean_all
+clean: clean_git_folders clean_tgz
 #
-clean_all:
+clean_git_folders:
+	if test ! -e keep-extlibs-stamp ; then \
+          if test -d $(pkgname_Ydriver)  ; then \
+	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
+	    rm $(pkgname_Ydriver)".pulled" ; \
+	  fi ; \
+	fi
+#
+clean_tgz:
 	if test ! -e keep-extlibs-stamp ; then \
           if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
@@ -97,21 +105,27 @@ define getsrc
 endef
 #
 define getsrc_git
- if test ! -s $$LIB".tar.gz" && test ! -d $$LIB ; then \
-  mkdir -p  ../../log;\
-  if [ ! "$$GBRANCH" = "none" ] ; then \
-   echo "\t[$$LIB] clone";\
-   echo " via $$GIT" ; \
-   if [ ! -d $$LIB ]; then git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; fi ; \
-   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
-  else \
+ mkdir -p  ../../log; \
+ if [ ! "$$GBRANCH" = "none" ] ; then \
+  if test ! -e $$LIB".pulled"; then \
+   if test ! -d $$LIB ; then \
+    echo "\t[$$LIB] clone via $$GIT" ; \
+    git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; \
+   fi ; \
+   echo "\t[$$LIB] $$GBRANCH switch and update"; \
+   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; \
+   git pull >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
+   touch $$LIB".pulled" ; \
+  fi ; \
+ else \
+  if test ! -s $$LIB".tar.gz" ; then \
    echo "\t[$$LIB] download";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
     curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
-   fi \
-  fi;\
+   fi ; \
+  fi ; \
  fi
 endef
 #

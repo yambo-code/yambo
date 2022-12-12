@@ -24,9 +24,9 @@
 #
 AC_DEFUN([AC_SLK_SETUP],[
 
-AC_ARG_ENABLE(par_linalg,   AC_HELP_STRING([--enable-par-linalg],         [Use parallel linear algebra. Default is no]))
-AC_ARG_WITH(blacs_libs,    [AC_HELP_STRING([--with-blacs-libs=(libs|mkl)],    [Use BLACS libraries <libs> or setup MKL],    [32])])
-AC_ARG_WITH(scalapack_libs,[AC_HELP_STRING([--with-scalapack-libs=(libs|mkl)],[Use SCALAPACK libraries <libs> or setup MKL],[32])])
+AC_ARG_ENABLE(par_linalg,   AS_HELP_STRING([--enable-par-linalg],[Use parallel linear algebra. Default is no]))
+AC_ARG_WITH(blacs_libs,    [AS_HELP_STRING([--with-blacs-libs=(libs|mkl)],[Use BLACS libraries <libs> or setup MKL],[32])])
+AC_ARG_WITH(scalapack_libs,[AS_HELP_STRING([--with-scalapack-libs=(libs|mkl)],[Use SCALAPACK libraries <libs> or setup MKL],[32])])
 
 SCALAPACK_LIBS=""
 BLACS_LIBS=""

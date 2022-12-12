@@ -26,7 +26,7 @@
 #
 
 mpibuild="yes" 
-AC_ARG_ENABLE(mpi, AC_HELP_STRING([--enable-mpi], [Enable mpi parallelization . Default is yes.]))
+AC_ARG_ENABLE(mpi, AS_HELP_STRING([--enable-mpi],[Enable mpi parallelization . Default is yes.]))
 if test "$enable_mpi" = "no"; then mpibuild="no"; fi
 #
 CC_serial=$CC
@@ -83,10 +83,10 @@ fi
 AC_SUBST(def_mpi)
 AC_SUBST(mpibuild)
 
-AC_ARG_WITH(mpi_libs,AC_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
-AC_ARG_WITH(mpi_path, AC_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
-AC_ARG_WITH(mpi_libdir,AC_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
-AC_ARG_WITH(mpi_includedir,AC_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
+AC_ARG_WITH(mpi_libs,AS_HELP_STRING([--with-mpi-libs=<libs>],[Use MPI libraries <libs>],[32]))
+AC_ARG_WITH(mpi_path, AS_HELP_STRING([--with-mpi-path=<path>],[Path to the MPI install directory],[32]),[],[])
+AC_ARG_WITH(mpi_libdir,AS_HELP_STRING([--with-mpi-libdir=<path>],[Path to the MPI lib directory],[32]))
+AC_ARG_WITH(mpi_includedir,AS_HELP_STRING([--with-mpi-includedir=<path>],[Path to the MPI include directory],[32]))
 
 mpif_found="no"
 

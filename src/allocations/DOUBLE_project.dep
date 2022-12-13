@@ -1,0 +1,5 @@
+ ELPH_alloc.o
+ X_ALLOC_elemental.o
+ X_ALLOC_global.o
+ X_ALLOC_parallel.o
+

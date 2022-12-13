@@ -1,0 +1,13 @@
+ excitons_WFs.o
+ excitons_amplitudes.o
+ excitons_bands.o
+ excitons_degeneracy_average.o
+ excitons_driver.o
+ excitons_find_degeneracies.o
+ excitons_interpolate_setup.o
+ excitons_kinematics.o
+ excitons_ph_ass_dos.o
+ excitons_read.o
+ excitons_sort_and_report.o
+ excitons_spin.o
+

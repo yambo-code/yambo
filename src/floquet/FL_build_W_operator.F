@@ -36,7 +36,8 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  use D_lattice,      ONLY:a
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field,Efield
- use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,max_duffin_mode
+ use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,&
+&                         max_duffin_mode,FL_E_field_phase
  !
  implicit none
  !
@@ -63,8 +64,8 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
  E_vec_pot=-A_input%vecpot_vel/SPEED_OF_LIGHT
  !
  Wk=cZERO
- ph_p = cONE!exp(+cI*pi/4._SP)
- ph_m = cONE!exp(-cI*pi/4._SP)
+ ph_p = exp(+cI*pi*FL_E_field_phase)
+ ph_m = exp(-cI*pi*FL_E_field_phase)
  !
  ikbz=Xk%k_table(ik,1)
  !
@@ -155,7 +156,7 @@ subroutine FL_build_W_operator(en,Xk,A_input,ik,i_sp,FL_V_bands,H_nl_sc)
            i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
            Wop(i1_fks,:,istep) = &
          & Wop(i1_fks,:,istep)* &
-         & cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP)) / (2._SP*cI) * exp(+cI*pi)!*3._SP/4._SP)! added factor due to E field Sin
+         & cI*k_map%max_kdir(id_red)/(4._SP*pi*real(istep,SP)) / (2._SP*cI) ! added factor due to E field Sin
            !
          enddo
        enddo

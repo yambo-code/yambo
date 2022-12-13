@@ -26,7 +26,7 @@ subroutine FL_all_times_pol(E,k)
  ! Subroutine to interace with ypp
  !
  use pars,           ONLY:DP,SP,cZERO,pi,cONE,cI
- use units,          ONLY:HA2FSm1,HA2EV,SPEED_OF_LIGHT
+ use units,          ONLY:HA2FSm1,HA2EV,SPEED_OF_LIGHT,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,spin_occ,n_spin
  use fields,         ONLY:Efield,Divide_by_Field,A_ext
  use D_lattice,      ONLY:a,DL_vol
@@ -38,7 +38,7 @@ subroutine FL_all_times_pol(E,k)
  use nl_optics,      ONLY:NL_bands,NL_initial_P,NL_damping,NL_P_t,E_tot,E_ext,E_ks
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
 &                         FL_states,FL_Ho_plus_Sigma,FL_Chi_order,&
-&                         max_time_step
+&                         max_time_step,FL_E_field_phase
  !
  implicit none
  !
@@ -55,9 +55,10 @@ subroutine FL_all_times_pol(E,k)
  integer      :: ik_ibz,max_step,istep,ikp
  complex(DP)  :: zeta
  real(DP)     :: imag_zeta
- real(SP)     :: time,w0_sm1
+ real(SP)     :: time,w0_sm1,w0
  character(4) :: filename
  integer,allocatable      :: phase_correction(:,:)
+ complex(SP) :: FL_E_field
  !
  ! Update Floquet Overlaps and determinant
  ! ===================================================================
@@ -163,11 +164,21 @@ write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV
 w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
 open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
 write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
-write(111,*) 't_step  time   Pol_x   Pol_y   Pol_z'
-do i_t=1,NE_steps
+write(111,*) 't_step  time[fs]   Pol_x   Pol_y   Pol_z'
+do i_t=1,2000
 time=real(i_t-1,SP)*RT_step
 !time = 1/(w0_sm1) * (i_t-1)/NE_steps ! when i_t=1, time = 0
-write(111,*) i_t, time, real(NL_P_t(i_t,1)),real(NL_P_t(i_t,2)),real(NL_P_t(i_t,3))
+write(111,*) i_t, time*AUT2FS, real(NL_P_t(i_t,1)),real(NL_P_t(i_t,2)),real(NL_P_t(i_t,3))
+enddo
+close(111)
+w0 = Efield(1)%frequency(1)
+open(111,file='FL_E_field.dat')
+write(111,*) '#time step - time[fs] - real and imag part of Efield'
+do i_t=1,2000
+  time=real(i_t-1,SP)*RT_step
+  FL_E_field = (exp(+1*cI*w0*time) * exp(+cI*pi*FL_E_field_phase) &
+          &  -  exp(-1*cI*w0*time) * exp(-cI*pi*FL_E_field_phase))/(2._SP*cI)
+  write(111,'(I8,100(1e19.10))') i_t, time*AUT2FS, real(FL_E_field), aimag(FL_E_field)
 enddo
 close(111)
 !aim137 DEBUG >

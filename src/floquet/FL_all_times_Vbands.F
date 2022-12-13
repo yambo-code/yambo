@@ -34,7 +34,7 @@ subroutine FL_all_times_Vbands(E,k,l_include_qe)
  use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
  use nl_optics,      ONLY:NL_bands,NL_initial_P,NL_damping,NL_P_t,E_tot,E_ext,E_ks
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_S_plus,FL_S_minus,&
-&                         max_time_step,FL_V_bands,FL_QE
+&                         max_time_step,FL_V_bands,FL_QE,FL_E_field_phase
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX,master_cpu
  !
@@ -49,6 +49,8 @@ subroutine FL_all_times_Vbands(E,k,l_include_qe)
  integer       :: i_t,i1_fl,i1_extra,i1_shifted_fl,i1,i2,ik_bz,is,i_m
  real(SP)      :: time,w0,T_period
  complex(SP)   :: FL_V_bands_time(NL_bands(2),NE_steps,maxval(E%nbf),QP_nk,n_sp_pol)
+ character(4)  :: filename,filename2
+ complex(SP)   :: FL_E_field
  !
  !
  FL_V_bands_time = cZERO
@@ -104,12 +106,29 @@ subroutine FL_all_times_Vbands(E,k,l_include_qe)
  !
  !aim137 DEBUG<
 if (master_cpu) then
-  print*, '#k-point 6 - band 4'
-  print*, '#time step - time[fs] - real part of coeffs for all KS bands - imag part of coeffs for all KS bands'
-  do i_t=1,NE_steps
-    time=real(i_t-1,SP)*RT_step
-    write(*,'(I8,100(1e19.10))') i_t, time*AUT2FS, real(FL_V_bands_time(:,i_t,4,6,1)),aimag(FL_V_bands_time(:,i_t,4,6,1))
+  i_m = 4 ! only valence band
+  do ik_bz=1,QP_nk
+    write(filename ,'(i0)') ik_bz
+    write(filename2,'(i0)') i_m
+    open(111,file='FL_RT_Vbands_band'//trim(adjustl(filename2))//'_kpt_'//trim(adjustl(filename))//'.dat')
+    write(111,*) '#BAND ',i_m,' kpt',ik_bz,' - with QE:',l_include_qe
+    write(111,*) '#time step - time[fs] - real and imag part of coeffs for all KS bands'
+    do i_t=1,2000
+      time=real(i_t-1,SP)*RT_step
+      write(111,'(I8,100(1e19.10))') i_t, time*AUT2FS,&
+      & (real(FL_V_bands_time(i1,i_t,i_m,ik_bz,1)),aimag(FL_V_bands_time(i1,i_t,i_m,ik_bz,1)),i1=1,NL_bands(2))
+    enddo
+    close(111)
   enddo
+  open(111,file='FL_E_field.dat')
+  write(111,*) '#time step - time[fs] - real and imag part of Efield'
+  do i_t=1,2000
+    time=real(i_t-1,SP)*RT_step
+    FL_E_field = (exp(+1*cI*w0*time) * exp(+cI*pi*FL_E_field_phase) &
+            &  -  exp(-1*cI*w0*time) * exp(-cI*pi*FL_E_field_phase))/(2._SP*cI)
+    write(111,'(I8,100(1e19.10))') i_t, time*AUT2FS, real(FL_E_field), aimag(FL_E_field)
+  enddo
+  close(111)
 endif
  !aim137 DEBUG>
 end subroutine

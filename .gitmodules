@@ -1,3 +1,0 @@
-[submodule "lib/yambo"]
-	path = lib/yambo
-	url = https://github.com/yambo-code/yambo-libraries.git

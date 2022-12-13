@@ -1,0 +1,19 @@
+ INIT.o
+ INIT_C_driver_runlevels.o
+ INIT_DephMatrix.o
+ INIT_QP.o
+ INIT_QP_ctl_load.o
+ INIT_QP_ctl_switch.o
+ INIT_RT_ctl_load.o
+ INIT_RT_ctl_switch.o
+ INIT_activate.o
+ INIT_barriers.o
+ INIT_check_databases.o
+ INIT_input_file.o
+ INIT_load.o
+ INIT_q_points.o
+ INIT_read_command_line.o
+ INIT_read_command_line_corr_scatt.o
+ INIT_read_command_line_potentials.o
+ INIT_report_and_log_files.o
+

@@ -1,0 +1,11 @@
+ PHEL_Lifetimes.o
+ PHEL_Self_Energy.o
+ PHEL_double_grid_subset.o
+ PHEL_driver.o
+ PHEL_from_GF_to_quasiphonons.o
+ PHEL_k_nearest_table.o
+ PHEL_screening.o
+ PH_Grid_Check_Transitions.o
+ PH_Transitions_Report.o
+ PH_of.o
+

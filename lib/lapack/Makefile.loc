@@ -15,6 +15,8 @@ PACKAGE=$(pkgname_lapack)
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
 #
+#CONFFLAGS=-DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib
+#
 all: $(LIBRARY)
 #
 uncompress:
@@ -23,23 +25,31 @@ uncompress:
 configure: uncompress
 	@if test -d $(PACKAGE) && ! test -f configured.stamp ; then \
          echo "\t[$(PACKAGE)] configuration"; \
-	 cd $(PACKAGE);  \
-	 cat $(prefix)/config/setup $(srcdir)/lib/lapack/make.inc_lib > make.inc ; \
-	 cp  $(srcdir)/lib/lapack/Makefile.lib  Makefile;  \
-	 touch ../configured.stamp;\
- 	fi
-	
+	 cd $(PACKAGE); \
+	 mkdir build_static ; cd build_static ; \
+	 ( cmake -DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib -DBUILD_SHARED_LIBS=OFF .. ) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
+	 cd .. ; mkdir build_shared ; cd build_shared ; \
+	 ( cmake -DCMAKE_INSTALL_LIBDIR=$(LIBPATH)/lib -DBUILD_SHARED_LIBS=ON .. ) >> ${compdir}/log/config_$(PACKAGE).log 2>&1 ; \
+	 cd .. ; \
+	 touch ../configured.stamp ; \
+	fi
+
 compile: uncompress configure
-	@$(call compile,blaslib)
-	@$(call compile,lapacklib)
+	@if test -d $(PACKAGE) && ! test -f compiled.stamp ; then \
+         echo "\t[$(PACKAGE)] compilation"; \
+         cd $(PACKAGE); \
+	 cd build_static ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ; cd .. ; \
+	 cd build_shared ; ( cmake --build . ) >> ${compdir}/log/compile_$(PACKAGE).log 2>&1 ; cd .. ; \
+	 touch compiled.stamp; \
+	fi
 
 install: uncompress configure compile
 	@if ! test -e installed.stamp ; then \
          echo "\t[$(PACKAGE)] installation"; \
-         cd $(PACKAGE); cp SRC/*.a $(LIBPATH)/lib ; \
-	 chmod +x $(LIBPATH)/lib/*lapack*.a ; \
-	 chmod +x $(LIBPATH)/lib/*blas*.a; \
-	 touch ../installed.stamp;\
+         cd $(PACKAGE); \
+	 cd build_static ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ; cd .. ; \
+	 cd build_shared ; ( cmake --build . --target install ) >> ${compdir}/log/install_$(PACKAGE).log 2>&1 ; cd .. ; \
+	 touch ../installed.stamp; \
 	fi
 
 $(LIBRARY): uncompress configure compile install
@@ -47,7 +57,11 @@ $(LIBRARY): uncompress configure compile install
 # cleaning
 #
 clean:
-	@$(call clean_the_lib,cleanlib)
+	@if test -d $(PACKAGE) && test -f configured.stamp ; then \
+	 rm -rf compiled.stamp configured.stamp installed.stamp; \
+	 cd $(PACKAGE);  \
+	 rm -rf build_static build_shared ; \
+	fi
 
 clean_all: clean
 	@$(rm_the_lib)

@@ -32,9 +32,9 @@ module wrapper
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
  use pars,   ONLY:SP,cI
- use device_linalg_m,   only: M_by_M_gpu=>dev_xGEMM_gpu,dev_xGEMM_gpu,dev_xGEMV_gpu,&
-&                             dev_xAXPY_gpu,dev_xDOTC_gpu,dev_xDOTU_gpu
- use dev_cublas_m
+ use devxlib_linalg,   only: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
+&                            devxlib_xAXPY_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
+ use cublas
  !
  implicit none
  !
@@ -42,7 +42,7 @@ module wrapper
    module procedure :: mm_cgemm
    module procedure :: mm_c,mm_cg
 #ifdef _CUDAF
-!          procedure :: dev_xGEMM_gpu
+!          procedure :: devxlib_xGEMM_gpu
 #endif
  end interface
  !
@@ -50,7 +50,7 @@ module wrapper
    module procedure :: mv_cgemv,mv_sgemv,mv_c,mv_r
 #ifdef _CUDAF
    module procedure :: mv_c_gpu
-!          procedure :: dev_xGEMV_gpu
+!          procedure :: devxlib_xGEMV_gpu
 #endif
  end interface
  !
@@ -58,7 +58,7 @@ module wrapper
    module procedure :: vv_s,vv_c,vv_saxpy,vv_caxpy,MM_caxpy
 #ifdef _CUDAF
    module procedure :: vv_c_gpu
-!          procedure :: dev_xAXPY_gpu
+!          procedure :: devxlib_xAXPY_gpu
 #endif
  end interface
  !
@@ -259,7 +259,7 @@ module wrapper
      complex(SP) DEV_ATTR, intent(out):: Y(msize)
      character,            intent(in) :: TRANS
      !
-     call dev_xGEMV_gpu(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
+     call devxlib_xGEMV_gpu(TRANS,msize,msize,(1._SP,0._SP),A,msize,X,1,(0._SP,0._SP),Y,1)
      !
    end subroutine mv_c_gpu
    !
@@ -327,7 +327,7 @@ module wrapper
      complex(SP) DEV_ATTR, intent(in)  :: CX(N)
      complex(SP) DEV_ATTR, intent(out) :: CY(N)
      !
-     call dev_xAXPY_gpu(N,CA,CX,1,CY,1)
+     call devxlib_xAXPY_gpu(N,CA,CX,1,CY,1)
    end subroutine vv_c_gpu
    !
    subroutine vv_s(N, CA, CX, CY )
@@ -406,7 +406,7 @@ module wrapper
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
-     Vstar_dot_V_c1_gpu=dev_xDOTC_gpu(N,CX,1,CY,1)
+     Vstar_dot_V_c1_gpu=devxlib_xDOTC_gpu(N,CX,1,CY,1)
      !
    end function Vstar_dot_V_c1_gpu
    !
@@ -517,7 +517,7 @@ module wrapper
      integer,              intent(in) :: N
      complex(SP) DEV_ATTR, intent(in) :: CX(:),CY(:)
      !
-     V_dot_V_c1_gpu=dev_xDOTU_gpu(N,CX,1,CY,1)
+     V_dot_V_c1_gpu=devxlib_xDOTU_gpu(N,CX,1,CY,1)
      !
    end function V_dot_V_c1_gpu
    !

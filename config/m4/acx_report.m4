@@ -162,7 +162,7 @@ if test "$internal_devxlib" = "yes" ; then
 fi
 #
 LIBCUDA_check="-"
-if test "$use_libcuda" = "yes" ; then LIBCUDA_check=" E "; fi
+if test "$use_libcuda" = "yes" ; then LIBCUDA_check="E"; fi
 
 GPU_libinfo=""
 if test "$GPU_SUPPORT" = "cudaf" && test "$LIBCUDA_check" = "-" ; then GPU_libinfo="with internal cuda library"; fi 

@@ -25,7 +25,7 @@ module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
  use cuda_m_y,    ONLY:have_cuda
- use deviceXlib_m
+ use devxlib
  !
 #include<dev_defs.h>
 #include<y_memory.h>

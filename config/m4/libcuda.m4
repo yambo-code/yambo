@@ -52,8 +52,9 @@ use_libcuda="no"
 
 # Cuda libraries are needed only in one of the three following cases
 
-if test x"$enable_cuda_fortran" != "xno" || test x"$enable_openacc" != "xno" || test x"$enable_openmp" != "xno" ; then
+if test x"$enable_cuda_fortran" != "xno" || test x"$enable_openacc" != "xno" ; then
 
+if test -z "$NVHPC" ; then
 #
 dnl Heuristics to detect CUDA dir
 if test "x$with_cuda_path" = "x" ; then with_cuda_path="$CUDA_PATH" ; fi
@@ -166,6 +167,13 @@ AC_LANG_POP(Fortran)
 #  fi
 #fi 
 
+else
+  use_libcuda=yes
+  compile_libcuda=no
+  internal_libcuda=no
+  AC_DEFINE(HAVE_LIBCUDA, 1, [Defined if you have the LIBCUDA library.])
+  AC_MSG_RESULT([yes.])
+fi
 fi
 
 

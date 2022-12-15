@@ -69,8 +69,9 @@ subroutine K_diago_non_hermitian_residuals(BS_E,BS_R_left,BS_R_right,BS_V_left,B
  !
  tmp_res = conjg(BSS_dipoles_opt(1,:))*sqrt(cmplx(BSS_eh_f,kind=SP))
  !
- if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
+ ! DS. Note. Velocity gauge fixing does not work if neq occupations are loaded. Not sure why.
  if (trim(global_gauge)=="velocity") tmp_res=tmp_res/BSS_eh_E
+ if (allocated(BSS_eh_Z)           ) tmp_res=tmp_res*sqrt(BSS_eh_Z)
  !
  do i1=1,BSS_n_eig
    if (.not.px%element_1D(i1)) cycle

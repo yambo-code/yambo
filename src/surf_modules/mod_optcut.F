@@ -379,10 +379,6 @@ end subroutine init_cutoff
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
 
-    call nG_limits(ik)
-
-    call setup_optcut( ik )
-
     do i1=1,3
        do i_spinor=1,n_spinor
           do ic=1,wf_nc_k(ik)

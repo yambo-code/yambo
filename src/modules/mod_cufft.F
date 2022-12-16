@@ -3,6 +3,7 @@
 !
 module cufft_m_y
   use iso_c_binding
+#if !defined _CUDAF 
   use dev_openacc_m
   implicit none
 
@@ -76,4 +77,7 @@ module cufft_m_y
 
   end interface
 
+#else
+  integer :: cufft_dummy
+#endif
 end module cufft_m_y

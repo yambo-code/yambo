@@ -1,24 +1,4 @@
 !
-! Copyright (C) 2000-2016 C. Hogan  and the YAMBO team 
-!              http://www.yambo-code.org
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
 module optcut
   !
   use pars,                  ONLY : schlen, SP, pi
@@ -145,7 +125,7 @@ end subroutine init_cutoff
     integer                    :: ngw_k, ik, i1
     if(allocated(nxk)) deallocate(nxk)
     allocate( nxk(nkibz) )
-    ngw_k = wf_ng
+    ngw_k = wf_ncx
     
     do ik = 1,nkibz
 
@@ -198,7 +178,7 @@ end subroutine init_cutoff
 !ws
     integer                    :: ig,ngw_k,n1,n2,n3
     
-    ngw_k = wf_ng
+    ngw_k = wf_ncx
     n = nxk(ik) 
 
     ! Set up igtab array
@@ -275,7 +255,7 @@ end subroutine init_cutoff
                 endif
                 icount = icount + 1
                 ig1=igtab(n1,n2,n3)
-                if (ig1.lt.1.or.ig1.gt.wf_ng) then
+                if (ig1.lt.1.or.ig1.gt.wf_ncx) then
 !               if (ig1.lt.1.or.ig1.gt.wf_ncx) then !CHECK THIS
                  write (*,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:))
                  write (*,*) wf_ncx,wf_ng
@@ -345,10 +325,6 @@ end subroutine init_cutoff
     return
   end subroutine PScut_better
 
-
-
-
-
   subroutine PScut_slow(PS,wfv,wfc,kg)
     use wave_func,         ONLY : wf_ng, wf_ncx
     implicit none
@@ -390,7 +366,7 @@ end subroutine init_cutoff
    
   subroutine Dipole_p_matrix_elements_cut(Xk,iv_wf, ic_wf, ik, rho_cut)
     use R_lattice,     ONLY:g_vec,bz_samp
-    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk,wf_ng
+    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk
     use electrons,     ONLY:n_spinor
     implicit none
     type(bz_samp), intent(in)  :: Xk
@@ -398,26 +374,25 @@ end subroutine init_cutoff
     complex(SP),   intent(out)   :: rho_cut(3)
    ! ws
     integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p,i_spinor,i1,ic,ig
-    real(SP)                     :: kg(3,wf_ng)
+    real(SP)                     :: kg(3,wf_ncx)
     complex(SP)                  :: wfv(wf_ncx),wfc(wf_ncx)
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
 
     call nG_limits(ik)
 
-     do i1 = 1,3
-        kg(i1,:)=(Xk%pt(ik,i1)+g_vec(1:wf_ng,i1))*2.0_SP*pi/alat(i1)
-     enddo
+    call setup_optcut( ik )
 
-     call setup_optcut( ik )
-
-    do i_spinor=1,n_spinor 
-       do ic=1,wf_nc_k(ik)
-          ig=wf_igk(ic,ik)
-          wfv(ic)=WF%c(ic,i_spinor,iv_wf)
-          wfc(ic)=WF%c(ic,i_spinor,ic_wf)
-       enddo 
-    enddo    
+    do i1=1,3
+       do i_spinor=1,n_spinor
+          do ic=1,wf_nc_k(ik)
+             ig=wf_igk(ic,ik)
+             kg(i1,ic)=(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
+             wfv(ic)=WF%c(ic,i_spinor,iv_wf)
+             wfc(ic)=WF%c(ic,i_spinor,ic_wf)
+          enddo
+       enddo
+    enddo
 
     PSx = 0
     PSy = 0

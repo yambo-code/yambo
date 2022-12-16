@@ -1,0 +1,4 @@
+ mod_bulkeps.o
+ mod_eels_detector.o
+ mod_eels_kinematics.o
+

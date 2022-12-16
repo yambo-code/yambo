@@ -26,48 +26,35 @@
 #
 AC_DEFUN([AC_HAVE_NETCDF_F90],[
 
-AC_ARG_WITH(netcdf_libs,AC_HELP_STRING([--with-netcdf-libs=<libs>],
-            [Use NetCDF libraries <libs>],[32]))
-AC_ARG_WITH(netcdf_path, AC_HELP_STRING([--with-netcdf-path=<path>],
-            [Path to the NetCDF install directory],[32]),[],[])
-AC_ARG_WITH(netcdf_libdir,AC_HELP_STRING([--with-netcdf-libdir=<path>],
-            [Path to the NetCDF lib directory],[32]))
-AC_ARG_WITH(netcdf_includedir,AC_HELP_STRING([--with-netcdf-includedir=<path>],
-            [Path to the NetCDF include directory],[32]))
+AC_ARG_WITH(netcdf_libs,AS_HELP_STRING([--with-netcdf-libs=<libs>],[Use NetCDF libraries <libs>],[32]))
+AC_ARG_WITH(netcdf_path, AS_HELP_STRING([--with-netcdf-path=<path>],[Path to the NetCDF install directory],[32]),[],[])
+AC_ARG_WITH(netcdf_libdir,AS_HELP_STRING([--with-netcdf-libdir=<path>],[Path to the NetCDF lib directory],[32]))
+AC_ARG_WITH(netcdf_includedir,AS_HELP_STRING([--with-netcdf-includedir=<path>],[Path to the NetCDF include directory],[32]))
 #
-AC_ARG_WITH(netcdff_libs,AC_HELP_STRING([--with-netcdff-libs=<libs>],
-            [Use NetCDFF libraries <libs>],[32]))
-AC_ARG_WITH(netcdff_path, AC_HELP_STRING([--with-netcdff-path=<path>],
-            [Path to the NetCDFF install directory],[32]),[],[])
-AC_ARG_WITH(netcdff_libdir,AC_HELP_STRING([--with-netcdff-libdir=<path>],
-            [Path to the NetCDFF lib directory],[32]))
-AC_ARG_WITH(netcdff_includedir,AC_HELP_STRING([--with-netcdff-includedir=<path>],
-            [Path to the NetCDFF include directory],[32]))
+AC_ARG_WITH(netcdff_libs,AS_HELP_STRING([--with-netcdff-libs=<libs>],[Use NetCDFF libraries <libs>],[32]))
+AC_ARG_WITH(netcdff_path, AS_HELP_STRING([--with-netcdff-path=<path>],[Path to the NetCDFF install directory],[32]),[],[])
+AC_ARG_WITH(netcdff_libdir,AS_HELP_STRING([--with-netcdff-libdir=<path>],[Path to the NetCDFF lib directory],[32]))
+AC_ARG_WITH(netcdff_includedir,AS_HELP_STRING([--with-netcdff-includedir=<path>],[Path to the NetCDFF include directory],[32]))
 #
 # Large Databases Support (LFS)
 #
-AC_ARG_ENABLE(netcdf_classic, AC_HELP_STRING([--enable-netcdf-classic],
-             [Switch to OLD NetCDF classic. Default is no.]))
+AC_ARG_ENABLE(netcdf_classic, AS_HELP_STRING([--enable-netcdf-classic],[Switch to OLD NetCDF classic. Default is no.]))
 #
 # NETCDF PAR IO
 #
-AC_ARG_ENABLE(netcdf_par_io,AC_HELP_STRING([--enable-netcdf-par-io],
-             [Activate the NETCDF parallel io. Default is no.]))
+AC_ARG_ENABLE(netcdf_par_io,AS_HELP_STRING([--enable-netcdf-par-io],[Activate the NETCDF parallel io. Default is no.]))
 #
 # HDF5 support
 #
-AC_ARG_ENABLE(netcdf_v3,AC_HELP_STRING([--enable-netcdf-v3],
-             [Switch to OLD NETCD v3 format. Default is no.]))
+AC_ARG_ENABLE(netcdf_v3,AS_HELP_STRING([--enable-netcdf-v3],[Switch to OLD NETCD v3 format. Default is no.]))
 #
 # HDF5 data compression
 #
-AC_ARG_ENABLE(hdf5_compression,AC_HELP_STRING([--enable-hdf5-compression],
-             [Activate the HDF5 data compression. Default is no.]))
+AC_ARG_ENABLE(hdf5_compression,AS_HELP_STRING([--enable-hdf5-compression],[Activate the HDF5 data compression. Default is no.]))
 #
 # NETCDF SHODOW FOR OUTPUT FILES
 #
-AC_ARG_ENABLE(netcdf_output,AC_HELP_STRING([--enable-netcdf-output],
-             [Activate the netcdf copy for some output files. Default is no.]))
+AC_ARG_ENABLE(netcdf_output,AS_HELP_STRING([--enable-netcdf-output],[Activate the netcdf copy for some output files. Default is no.]))
 #
 enable_hdf5="yes" ;
 enable_pnetcdf="no" ;

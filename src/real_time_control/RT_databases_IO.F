@@ -46,6 +46,9 @@ subroutine RT_databases_IO(E,DO_IT)
  use real_time,      ONLY:RTibz
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,ncpu,myid
 #endif
+#if defined _ELPH_ITERATIVE
+ use RT_iterative,   ONLY:THETA_matrix
+#endif
  !
  implicit none
  !
@@ -61,6 +64,9 @@ subroutine RT_databases_IO(E,DO_IT)
  ! ... G_lesser
  !
  integer           :: ik,G_IO_steps,io_G,i_cpu,i_G_db,i_G_k_db,i_G_RES_db,i_G_RES_k_db
+#if defined _ELPH_ITERATIVE
+ integer           :: io_THETA
+#endif
  !
  call timing('RT databases IO',OPR='start')
  !

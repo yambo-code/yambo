@@ -39,7 +39,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
  use wave_func,      ONLY:wf_ng
  use timing_m,       ONLY:timing
  use cuda_m_y,       ONLY:have_cuda
- use deviceXlib_m,   ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_memset
+ use devxlib,        ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memory_set
  !
 #include<y_memory.h>
  !
@@ -87,7 +87,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    if (have_cuda) then
      YAMBO_FREE_GPU(DEV_VAR(fft_g_table))
      YAMBO_ALLOC_GPU(DEV_VAR(fft_g_table),(max(iG_max,wf_ng),iGo_max))
-     call dev_memset(DEV_VAR(fft_g_table),val=0)
+     call devxlib_memory_set(DEV_VAR(fft_g_table),val=0)
    endif
    !
  endif
@@ -168,7 +168,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #ifdef _GPU
    if (i4>0.and..not.ONLY_SIZE) then
      ! D2H fft_g_table <= fft_g_table_d
-     call dev_memcpy_d2h(fft_g_table,DEV_VAR(fft_g_table))
+     call devxlib_memcpy_d2h(fft_g_table,DEV_VAR(fft_g_table))
    endif
    ln(1) = ln_1
    ln(2) = ln_2
@@ -249,8 +249,8 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    i4=1
    !
    if (have_cuda) then
-     call dev_memcpy_h2d(DEV_VAR(fft_rot_r),fft_rot_r)
-     call dev_memcpy_h2d(DEV_VAR(fft_rot_r_inv),fft_rot_r_inv)
+     call devxlib_memcpy_h2d(DEV_VAR(fft_rot_r),fft_rot_r)
+     call devxlib_memcpy_h2d(DEV_VAR(fft_rot_r_inv),fft_rot_r_inv)
    endif
    !
  enddo

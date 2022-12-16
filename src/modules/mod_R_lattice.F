@@ -140,7 +140,7 @@ module R_lattice
  real(SP),allocatable :: g_vec(:,:)
  real(SP),allocatable :: E_of_shell(:)
  ! GPUs
- real(SP),allocatable DEV_ATTR :: g_vec_d(:,:)
+ real(SP),allocatable, target DEV_ATTR :: g_vec_d(:,:)
  integer ,allocatable DEV_ATTR :: g_rot_d(:,:)
  integer ,allocatable DEV_ATTR :: G_m_G_d(:,:)
  integer ,allocatable DEV_ATTR :: minus_G_d(:)

@@ -34,7 +34,7 @@ integer function io_WF(ID,wf)
  use IO_int,           ONLY:io_connect,io_disconnect,io_bulk,io_header,&
 &                           io_fragment,io_elemental
  use timing_m,         ONLY:timing
- use deviceXlib_m
+ !use devxlib
  !
  implicit none
  integer,       intent(in) :: ID

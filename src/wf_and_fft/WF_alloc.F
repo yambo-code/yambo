@@ -29,7 +29,7 @@ subroutine WF_alloc(WF)
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
  use cuda_m_y,      ONLY:have_cuda
- use deviceXlib_m
+ use devxlib,       ONLY:devxlib_memory_set
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -77,7 +77,7 @@ subroutine WF_alloc(WF)
  YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
- if (have_cuda) call dev_memset(DEV_VAR(WF%c),cZERO)
+ if (have_cuda) call devxlib_memory_set(DEV_VAR(WF%c),cZERO)
  !
  WF%index=0
  !

@@ -6,8 +6,7 @@ subroutine GPU_test(N)
   use iso_c_binding
   use cuda_m_y,         ONLY: GPU_test_dim, cuda_devsync
   use gpu_m,            ONLY: have_device
-  use device_memcpy_m,  ONLY: dev_memcpy_d2h, dev_memcpy_h2d
-  use dev_linalg_m,     ONLY: dev_saxpy
+  use devxlib,          ONLY: devxlib_memcpy_d2h, devxlib_memcpy_h2d, devxlib_xaxpy, devxlib_xaxpy_gpu
   use data_m,           ONLY: data_t, data_alloc, data_free
   use pars,             ONLY: SP
   implicit none
@@ -83,7 +82,7 @@ subroutine GPU_test(N)
   ! prototype of a standard explicit loop to be computed on CPU
   !----------
   !
-  call saxpy_cpu(var_cpu%N, a, var_cpu%x, var_cpu%y)
+  call SAXPY(var_cpu%N, a, var_cpu%x, var_cpu%y)
   t1=qe_cclock()
   write(*,*) "Timing (CPU): ", t1-t0
   write(*,*) "Results CPU"
@@ -111,8 +110,8 @@ subroutine GPU_test(N)
   ! data transfer host2dev
   !
   write(*,*) "Memcpy host2dev",cuda_devsync()
-  call dev_memcpy_h2d(var_x_p,var_gpu%x)
-  call dev_memcpy_h2d(var_y_p,var_gpu%y)
+  call devxlib_memcpy_h2d(var_x_p,var_gpu%x)
+  call devxlib_memcpy_h2d(var_y_p,var_gpu%y)
   !
   ! running on GPUs
   !
@@ -128,7 +127,7 @@ subroutine GPU_test(N)
   !
   ! data transfer dev2host
   !
-  call dev_memcpy_d2h(var_gpu%y,var_y_p)
+  call devxlib_memcpy_d2h(var_gpu%y,var_y_p)
   !
   ! Check
   !
@@ -161,22 +160,22 @@ subroutine GPU_test(N)
   ! data transfer host2dev
   !
   write(*,*) "Memcpy host2dev"
-  call dev_memcpy_h2d(var_x_p,var_gpu%x)
-  call dev_memcpy_h2d(var_y_p,var_gpu%y)
+  call devxlib_memcpy_h2d(var_x_p,var_gpu%x)
+  call devxlib_memcpy_h2d(var_y_p,var_gpu%y)
   !
   ! running on GPUs
   !
   write(*,*) "Compute with BLAS/CUBLAS"
   t0=qe_cclock()
   !
-  call dev_saxpy(var_gpu%N, a, var_x_p, 1, var_y_p, 1)
+  call devxlib_xaxpy_gpu(var_gpu%N, a, var_x_p, 1, var_y_p, 1)
   !
   t1=qe_cclock()
   write(*,*) "Timing ("//trim(device_str)//"_CUBLAS): ", t1-t0
   !
   ! data transfer dev2host
   !
-  call dev_memcpy_d2h(var_gpu%y,var_y_p)
+  call devxlib_memcpy_d2h(var_gpu%y,var_y_p)
   !
   ! Check
   !

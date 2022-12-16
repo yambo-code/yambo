@@ -40,7 +40,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use FFT_m,         ONLY:fftw_plan,cufft_plan
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
- use deviceXlib_m,  ONLY:dev_memcpy_h2d,dev_memcpy_d2h,dev_allocated,dev_memset
+ use devXlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memory_set
  use cuda_m_y,      ONLY:have_cuda,have_openacc
  use timing_m
  !
@@ -58,6 +58,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  complex(DP), allocatable DEV_ATTR, target :: Vr_d(:), V3g_d(:,:)
  complex(DP), pointer DEV_ATTR :: Vr_p(:), V3g_p(:,:)
  complex(DP), pointer          :: Vr_h(:)
+ real(SP), pointer DEV_ATTR :: g_vec_p(:,:)
  !
  call timing("eval_Gradient","start")
  !
@@ -80,7 +81,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
  ! Synchronize g_vec host/dev if needed
- if (have_cuda.and..not.dev_allocated(DEV_VAR(g_vec))) then
+ g_vec_p => DEV_VAR(g_vec)
+ if (have_cuda.and..not.devxlib_allocated(g_vec_p)) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !
@@ -96,7 +98,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  do i_spinor=1,spinor_size
    !
    Vr_h=cmplx(f(:,i_spinor),kind=DP)
-   call dev_memcpy_h2d(Vr_p,Vr_h)
+   call devxlib_memcpy_h2d(Vr_p,Vr_h)
    !
 #if defined _GPU
    call fft_3d_cuda(Vr_p,fft_dim,-1,cufft_plan) 
@@ -110,7 +112,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #  endif
 #endif
    !
-   call dev_memset(V3g_p,cZERO_DP)
+   call devxlib_memory_set(V3g_p,cZERO_DP)
    !
    !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
    !DEV_ACC parallel loop collapse(2) async
@@ -124,7 +126,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    !
    do ic = 1,3
      !
-     call dev_memset(Vr_p,cZERO_DP)
+     call devxlib_memory_set(Vr_p,cZERO_DP)
      !
      !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
      !DEV_ACC parallel loop async
@@ -146,7 +148,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #    endif
 #endif
      !
-     call dev_memcpy_d2h(Vr_h,Vr_p)
+     call devxlib_memcpy_d2h(Vr_h,Vr_p)
      f_gradient(:,i_spinor,ic) = cmplx(Vr_h(:),kind=SP)
    enddo
    !

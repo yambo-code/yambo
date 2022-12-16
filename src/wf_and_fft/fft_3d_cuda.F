@@ -48,11 +48,11 @@
 subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
- use dev_openacc_m
 #if defined _CUDAF
  use cufft
 #endif
 #if defined _OPENACC
+ use dev_openacc_m
  use cudafor_m_y
  use cufft_m_y
 #endif

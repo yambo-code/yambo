@@ -26,7 +26,7 @@ subroutine WF_free(WF,keep_fft)
  use wave_func,    ONLY:WAVEs
  use pseudo,       ONLY:pp_is_uspp,PP_uspp_free
  use cuda_m_y,     ONLY:have_cuda
- use deviceXlib_m, ONLY:dev_allocated
+ use devxlib,      ONLY:devxlib_allocated
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -45,7 +45,7 @@ subroutine WF_free(WF,keep_fft)
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_cuda) then
-   if (.not. ( allocated(WF%c) .eqv. dev_allocated(DEV_VAR(WF%c)) ) ) &
+   if (.not. ( allocated(WF%c) .eqv. devxlib_allocated(DEV_VAR(WF%c)) ) ) &
 &    call error("[WF] inconsistent alloc of GPU wfcs")
  endif
  !

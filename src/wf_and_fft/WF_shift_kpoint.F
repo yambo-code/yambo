@@ -30,7 +30,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
  use R_lattice,     ONLY:k_map,bz_samp
  use R_lattice,     ONLY:DEV_VAR(G_m_G)
  use wave_func,     ONLY:wf_ng_1st_BZ,wf_ng_overlaps
- use deviceXlib_m,  ONLY:dev_memcpy
+ use devxlib,       ONLY:devxlib_memcpy_d2d
  !
  implicit none
  !
@@ -54,7 +54,7 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
  !
  WF_tmp=cZERO
  ! dev2dev
- call dev_memcpy(WF_tmp,WF_k_in, range1=(/1,wf_ng_1st_BZ/))
+ call devxlib_memcpy_d2d(WF_tmp,WF_k_in, range1=(/1,wf_ng_1st_BZ/))
  !
  do id=1,3
    !
@@ -84,11 +84,11 @@ subroutine DEV_SUB(WF_shift_kpoint)(b_to_shift,ikbz,wf_shift,Xk,WF_k_in,WF_k_out
      !
    else
      ! dev2dev
-     call dev_memcpy(WF_k_out,WF_tmp)
+     call devxlib_memcpy_d2d(WF_k_out,WF_tmp)
    endif
    ! dev2dev
    WF_tmp  =cZERO
-   call dev_memcpy(WF_tmp,WF_k_out)
+   call devxlib_memcpy_d2d(WF_tmp,WF_k_out)
    !
  enddo
  !

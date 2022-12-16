@@ -8,12 +8,7 @@ module dev_linalg_m
   use gpu_m
   use pars,   ONLY:SP
   !
-#if defined _CUDAF
-  use cublas
-#endif
-#if defined _OPENACC || defined _OPENMP5
-  use cublas_m
-#endif
+  use devxlib_cublas
   !
   implicit none
 

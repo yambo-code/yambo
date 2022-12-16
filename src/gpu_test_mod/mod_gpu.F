@@ -4,12 +4,7 @@ module gpu_m
   !=================
   !
   use cusolverdn_y
-#if defined _CUDAF
-  use cublas
-#elif defined _OPENACC
-  use cublas_m
-  use cublas_core_m
-#endif
+  use devxlib_cublas
   implicit none
   private
 

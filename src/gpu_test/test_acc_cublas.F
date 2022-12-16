@@ -1,5 +1,5 @@
 program test
-  use cublas_m
+  use devxlib_cublas
   implicit none
 
   integer, parameter :: N = 10

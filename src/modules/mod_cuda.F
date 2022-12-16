@@ -28,7 +28,7 @@ module cuda_m_y
   !use dev_openacc_m
   ! 2022-02-02 DS and AF TO BE FIXED
   !use dev_cudafor_m
-  use cublas_m
+  use devxlib_cublas
   use devxlib_memcpy
   use cusolverdn_y
 # if defined _CUDAF

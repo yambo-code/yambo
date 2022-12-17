@@ -264,7 +264,6 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #if defined _SURF
         if (lras.and.loptcut) then
            call nG_limits(ik)     
-           call setup_optcut( ik )
            call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
         endif  
 #endif 

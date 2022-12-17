@@ -125,7 +125,12 @@ end subroutine init_cutoff
     integer                    :: ngw_k, ik, i1
     if(allocated(nxk)) deallocate(nxk)
     allocate( nxk(nkibz) )
-    ngw_k = wf_ncx
+
+    if (wf_ng .gt. wf_ncx) then
+       ngw_k = wf_ncx
+    else
+       ngw_k = wf_ng
+    endif
     
     do ik = 1,nkibz
 
@@ -177,8 +182,12 @@ end subroutine init_cutoff
     integer, intent (in)       :: ik
 !ws
     integer                    :: ig,ngw_k,n1,n2,n3
-    
-    ngw_k = wf_ncx
+
+    if (wf_ng .gt. wf_ncx) then
+       ngw_k = wf_ncx
+    else
+       ngw_k = wf_ng
+    endif 
     n = nxk(ik) 
 
     ! Set up igtab array
@@ -255,7 +264,7 @@ end subroutine init_cutoff
                 endif
                 icount = icount + 1
                 ig1=igtab(n1,n2,n3)
-                if (ig1.lt.1.or.ig1.gt.wf_ncx) then
+                if (ig1.lt.1.or.ig1.gt.wf_ng) then
 !               if (ig1.lt.1.or.ig1.gt.wf_ncx) then !CHECK THIS
                  write (*,224) n1,n2,n3,ig1,gvecaff(ig1,xyz(:))
                  write (*,*) wf_ncx,wf_ng
@@ -378,6 +387,8 @@ end subroutine init_cutoff
     complex(SP)                  :: wfv(wf_ncx),wfc(wf_ncx)
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
+
+    call setup_optcut(ik)
 
     do i1=1,3
        do i_spinor=1,n_spinor

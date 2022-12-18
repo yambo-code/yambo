@@ -49,7 +49,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 #if defined _SURF
  use ras_module,          ONLY: lras
  use surface_geometry,    ONLY: setup_gvecaff,setup_surface_geometry
- use optcut,              ONLY: loptcut,Dipole_p_matrix_elements_cut,nG_limits,setup_optcut
+ use optcut,              ONLY: loptcut,Dipole_p_matrix_elements_cut
 #endif
 
  !
@@ -262,10 +262,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
 #if defined _SURF
-        if (lras.and.loptcut) then
-           call nG_limits(ik)     
-           call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
-        endif  
+        if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
 #endif 
          !
          !=====

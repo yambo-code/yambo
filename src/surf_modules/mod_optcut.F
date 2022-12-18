@@ -188,6 +188,7 @@ end subroutine init_cutoff
     else
        ngw_k = wf_ng
     endif 
+
     n = nxk(ik) 
 
     ! Set up igtab array
@@ -375,7 +376,7 @@ end subroutine init_cutoff
    
   subroutine Dipole_p_matrix_elements_cut(Xk,iv_wf, ic_wf, ik, rho_cut)
     use R_lattice,     ONLY:g_vec,bz_samp
-    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_igk
+    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_ng
     use electrons,     ONLY:n_spinor
     implicit none
     type(bz_samp), intent(in)  :: Xk
@@ -383,21 +384,22 @@ end subroutine init_cutoff
     complex(SP),   intent(out)   :: rho_cut(3)
    ! ws
     integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p,i_spinor,i1,ic,ig
-    real(SP)                     :: kg(3,wf_ncx)
+    real(SP)                     :: kg(3,wf_ng)
     complex(SP)                  :: wfv(wf_ncx),wfc(wf_ncx)
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
 
+    call nG_limits(ik)
     call setup_optcut(ik)
 
     do i1=1,3
-       do i_spinor=1,n_spinor
-          do ic=1,wf_nc_k(ik)
-             ig=wf_igk(ic,ik)
-             kg(i1,ic)=(Xk%pt(ik,i1)+g_vec(ig,i1))*2.0_SP*pi/alat(i1)
-             wfv(ic)=WF%c(ic,i_spinor,iv_wf)
-             wfc(ic)=WF%c(ic,i_spinor,ic_wf)
-          enddo
+       kg(i1,:)=(Xk%pt(ik,i1)+g_vec(1:wf_ng,i1))*2.0_SP*pi/alat(i1)
+    enddo
+
+    do i_spinor=1,n_spinor
+       do ic=1,wf_nc_k(ik)
+          wfv(ic)=WF%c(ic,i_spinor,iv_wf)
+          wfc(ic)=WF%c(ic,i_spinor,ic_wf)
        enddo
     enddo
 

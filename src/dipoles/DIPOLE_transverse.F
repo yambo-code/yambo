@@ -262,7 +262,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          call DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_DIP_P2)
          !
 #if defined _SURF
-         if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
+        if (lras.and.loptcut) call Dipole_p_matrix_elements_cut(Xk,iv_wf,ic_wf,ik,rho_cut)
 #endif 
          !
          !=====

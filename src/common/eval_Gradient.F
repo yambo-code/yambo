@@ -40,7 +40,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use FFT_m,         ONLY:fftw_plan,cufft_plan
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
- use devXlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memory_set
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memory_set
  use cuda_m_y,      ONLY:have_cuda,have_openacc
  use timing_m
  !

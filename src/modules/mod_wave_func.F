@@ -40,7 +40,7 @@ module wave_func
    integer    , allocatable :: index(:,:,:)
    logical    , allocatable :: state(:,:,:)
    logical                  :: to_load = .TRUE.
-   complex(SP), pointer, contiguous DEV_ATTR :: c_d(:,:,:)
+   complex(SP), allocatable DEV_ATTR :: c_d(:,:,:)
  end type WAVEs
  !
  ! Buffered WFs

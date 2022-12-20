@@ -58,7 +58,6 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  complex(DP), allocatable DEV_ATTR, target :: Vr_d(:), V3g_d(:,:)
  complex(DP), pointer DEV_ATTR :: Vr_p(:), V3g_p(:,:)
  complex(DP), pointer          :: Vr_h(:)
- real(SP), pointer DEV_ATTR :: g_vec_p(:,:)
  !
  call timing("eval_Gradient","start")
  !
@@ -81,8 +80,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
  ! Synchronize g_vec host/dev if needed
- g_vec_p => DEV_VAR(g_vec)
- if (have_cuda.and..not.devxlib_allocated(g_vec_p)) then
+ if (have_cuda.and..not.devxlib_allocated(DEV_VAR(g_vec))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !

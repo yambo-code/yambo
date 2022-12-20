@@ -105,7 +105,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call msg('rs','Use coupling convention from',trim(EXCPH_kind_name)) 
  !
  elph_branches_save  =elph_branches
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  elph_branches =elph_branches_save
  !
@@ -173,7 +173,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Check if gkkp_expanded is present
  !
  elph_branches_save  =elph_branches
- call io_control(ACTION=OP_RD,COM=REP,MODE=DUMP,SEC=(/1/),ID=ID_gkkp)
+ call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID_gkkp)
  io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
  call deliver_IO_error_message(io_err,"GKKP")
  elph_branches =elph_branches_save

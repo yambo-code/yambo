@@ -45,7 +45,13 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
 #endif
 #if defined _YPP_ELPH
  use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
-&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
+&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db,l_gkkp_sngl
+#endif
+#if defined _YPP_SC
+ ! DS This is needed otherwise ypp_sc fails if compiling after ypp_ph and later yambo_sc
+ !    The reason os that SC locks are set inside driver folder dispite
+ !    only yambo_sc was compiled with them. Alternative solution could
+ !    be to always recompile ypp.F and yambo.F
 #endif
  !
  implicit none
@@ -260,7 +266,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                call ELPH_databases(k,en,q)
+   if (l_gkkp_db)             call ELPH_databases(k,en,q)
+   if (l_gkkp_sngl)           call ELPH_sngl_db(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
    if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)

@@ -258,7 +258,7 @@ module EXCPH
    subroutine build_Q_map(q)
     use R_lattice,      ONLY:bz_samp
     use zeros,          ONLY:k_iku_zero
-    use vec_operate,    ONLY:v_is_zero
+    use vec_operate,    ONLY:v_is_zero,c2a,rlu_v_is_zero
     use ELPH,           ONLY:PH_qpt
     use com,            ONLY:msg
     !
@@ -266,6 +266,7 @@ module EXCPH
     type(bz_samp) ::q
     !
     integer :: iq,idb
+    real(SP) :: v_rlu(3)
     !
     YAMBO_ALLOC(DB_Q_map,(q%nbz))
     !
@@ -274,7 +275,10 @@ module EXCPH
     DB_Q_map=0
     do iq=1,q%nbz
       do idb=1,q%nbz
-        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
+        v_rlu=q%ptbz(iq,:)-PH_qpt(idb,:)
+        call c2a(v_in=v_rlu,mode='ki2a')
+!        if(.not.v_is_zero(q%ptbz(iq,:)-PH_qpt(idb,:),zero_=k_iku_zero)) cycle
+        if(.not.rlu_v_is_zero(v_rlu)) cycle
         DB_Q_map(iq)=idb
         exit
       enddo

@@ -92,6 +92,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  call it('r',defs,'eliashberg', '[R] Eliashberg')
  call it('r',defs,'gkkp_db',    '[R] GKKP database')
+ call it('r',defs,'gkkp_sngl',  '[R] GKKP single q-database')
  call it('r',defs,'gkkp_dg',    '[R] GKKP double grid')
  call it('r',defs,'gkkp_plot',  '[R] GKKP plot')
  call it('r',defs,'ph_ass_dos', '[R] Phonon-assisted DOS')

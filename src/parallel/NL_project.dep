@@ -1,0 +1,4 @@
+ PARALLEL_global_dimensions.o
+ PARALLEL_global_indexes.o
+ PARALLEL_global_reset.o
+

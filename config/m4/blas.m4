@@ -3,17 +3,17 @@
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
 AC_DEFUN([ACX_BLAS], [
-AC_PREREQ(2.50)
+AC_PREREQ([2.50])
 AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
 acx_blas_ok=no
 
-AC_ARG_WITH(blas_libs,[AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
-AC_ARG_ENABLE(int_linalg,   AC_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
-AC_ARG_ENABLE(openmp_int_linalg,   AC_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
+AC_ARG_WITH(blas_libs,[AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
+AC_ARG_ENABLE(int_linalg,   AS_HELP_STRING([--enable-int-linalg],[Force internal linear algebra. Default is no]))
+AC_ARG_ENABLE(openmp_int_linalg,   AS_HELP_STRING([--enable-openmp-int-linalg],[Use openmp internal linear algebra for few selected operations. Default is no]))
 
 BLAS_LIBS=""
 AC_ARG_WITH(blas_libs,
-        [AC_HELP_STRING([--with-blas-libs=<libs>], [Use BLAS libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-blas-libs=<libs>],[Use BLAS libraries <libs>],[32])])
 case $with_blas_libs in
         yes | "") ;;
         no) acx_blas_ok=disable ;;
@@ -191,6 +191,26 @@ if test x"$enable_openmp_int_linalg" = "xyes" ; then
   fi
 fi
 
+# Test for shared BLAS
+BLAS_SO_LIBS=""
+if test "$internal_blas" = "yes"; then
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so || test $compile_blas = "yes" ; then
+    BLAS_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
+  fi
+fi
+if test $acx_blas_ok = yes && test -d "${MKLROOT}" ; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+fi
+if test $acx_blas_ok = yes && test "${BLAS_LIBS}" = "*.so"; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+fi
+blas_shared="no"
+if test x"${BLAS_SO_LIBS}" = "x"; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+else
+  blas_shared="yes"
+fi
+
 AC_SUBST(internal_blas)
 AC_SUBST(enable_int_linalg)
 AC_SUBST(enable_openmp_int_linalg)
@@ -198,6 +218,8 @@ AC_SUBST(def_openmp_int_linalg)
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(BLAS_info)
+AC_SUBST(BLAS_SO_LIBS)
+AC_SUBST(blas_shared)
 
 ])dnl ACX_BLAS
 

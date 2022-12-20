@@ -70,6 +70,9 @@ subroutine ELPH_databases_grids_map(k,q)
  call k_ibz2bz(q,'i',.false.)
  do i1=1,nQ
    do i2=1,elph_nQ
+     ! For abinit I may need a -1 ?!
+     !call c2a(v_in=q%ptbz(i1,:)+PH_qpt(i2,:),v_out=v,mode="ki2a")
+     ! For pwscf no need for -1 (see comment below)
      call c2a(v_in=q%ptbz(i1,:)-PH_qpt(i2,:),v_out=v,mode="ki2a")
      ! DS comment 2022/04/23:
      ! - these if are useless, if l_GKKP_DB_exists the code exits before (see return)

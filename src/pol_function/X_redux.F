@@ -52,7 +52,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
  use cuda_m_y
- use deviceXlib_m
+ use devxlib        ONLY:devxlib_memory_set,devxlib_memcpy_h2d,devxlib_memcpy_h2d,&
+                    devxlib_stream_sync,devxlib_memcpy_d2h_async
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -120,9 +121,9 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
    YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
    YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
-   call dev_memset(KERNEL%blc_d,cZERO)
-   call dev_memset(BUFFER%blc_d,cZERO)
-   call dev_memset(Xo%blc_d,cZERO)   
+   call devxlib_memory_set(KERNEL%blc_d,cZERO)
+   call devxlib_memory_set(BUFFER%blc_d,cZERO)
+   call devxlib_memory_set(Xo%blc_d,cZERO)   
  endif
  !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
@@ -176,7 +177,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    iw         = PAR_FREQS_index(iw_par)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
-   if (compute_on_gpu) call dev_memset(KERNEL%blc_d,cZERO)
+   if (compute_on_gpu) call devxlib_memory_set(KERNEL%blc_d,cZERO)
    !
    Xo_cols(:)=Xo%cols(:)
    Xo_rows(:)=Xo%rows(:)
@@ -220,8 +221,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    endif
    !
    if (compute_on_gpu) then
-     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
-     call dev_memcpy(Xo%blc_d,Xo%blc)
+     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call devxlib_memcpy_h2d(KERNEL%blc_d,KERNEL%blc)
+     call devxlib_memcpy_h2d(Xo%blc_d,Xo%blc)
    endif
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
@@ -235,7 +236,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      ! Linear System
      !
      if (compute_on_gpu) then
-       call dev_memcpy(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
+       call devxlib_memcpy_d2d(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
      else
                        BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      endif
@@ -266,8 +267,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
           enddo
         enddo
         !
-        call dev_stream_sync(stream_default)
-        call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+        call devxlib_stream_sync(stream_default)
+        call devxlib_memcpy_d2h_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
         !
      else
         !
@@ -287,7 +288,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
  enddo
  !
- call dev_stream_sync(stream_d2h)
+ call devxlib_stream_sync(stream_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !

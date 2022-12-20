@@ -36,7 +36,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use IO_int,       ONLY:io_control
  use IO_m,         ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,&
 &                       OP_RD,RD,RD_CL,RD_CL_IF_END
- use deviceXlib_m, ONLY:dev_memcpy
+ use devxlib,      ONLY:devxlib_memcpy
  use cuda_m_y,     ONLY:have_cuda
  !
 #include<dev_defs.h>
@@ -222,7 +222,12 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      !
    else
      !
-     call dev_memcpy(BS_W(:,1,iq_W),DEV_VAR(isc%gamp)(:,1))
+! NS: to be cleaned
+#if defined _CUDA
+     call devxlib_memcpy_d2h(BS_W(:,1,iq_W),DEV_VAR(isc%gamp)(:,1))
+#else
+     call devxlib_memcpy_h2h(BS_W(:,1,iq_W),DEV_VAR(isc%gamp)(:,1))
+#endif
      !
    endif
    ! 

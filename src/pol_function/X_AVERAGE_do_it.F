@@ -30,7 +30,7 @@ subroutine X_AVERAGE_do_it(what,X_par)
  use pars,          ONLY:cZERO,SP
  use cuda_m_y,      ONLY:have_cuda
  use X_m,           ONLY:X_par_average,n_OPTICAL_dir_to_eval
- use deviceXlib_m,  ONLY:dev_memcpy
+ use devxlib,       ONLY:devxlib_memcpy_h2d
  use matrix,        ONLY:PAR_matrix,MATRIX_reset
  !
  implicit none
@@ -45,7 +45,7 @@ subroutine X_AVERAGE_do_it(what,X_par)
      ! DS+AF: This call assumes that Host and Device are syncronized
      !        It should be the case here, since blc_d is computed on the Device
      !        in X_redux, and then transferred to the Host before exiting 
-     call dev_memcpy(X_par_average%blc_d,X_par_average%blc)
+     call devxlib_memcpy_h2d(X_par_average%blc_d,X_par_average%blc)
      X_par%blc_d=cZERO
    endif
    return

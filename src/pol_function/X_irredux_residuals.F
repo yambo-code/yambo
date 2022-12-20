@@ -44,7 +44,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use deviceXlib_m
+ use devxlib,       ONLY:devxlib_memcpy_d2d_p,devxlib_conjg
  !
  implicit none
  !
@@ -148,7 +148,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
          call DEV_SUB(scatter_Bamp)(Xo_scatt)
          !
          ! dev2dev, rhotw_save=Xo_scatt%rhotw
-         call dev_memcpy(rhotw_save,Xo_scatt_rhotw_p)
+         call devxlib_memcpy_d2d_p(rhotw_save,Xo_scatt_rhotw_p)
          !
          isave=(/iv,ic,ik,i_spin/)
          !
@@ -167,7 +167,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
        !DEV_ACC end data
        !
        if (is>nsym/(i_time_rev+1)) then
-         call dev_conjg( Xo_scatt_rhotw_p )
+         call devxlib_conjg( Xo_scatt_rhotw_p )
        endif
        !
      endif
@@ -239,7 +239,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      Xo_scatt%qs = (/1,1,1/)
      !
      ! dev2dev
-     call dev_memcpy(rhotw_save2,Xo_scatt_rhotw_p)
+     call devxlib_memcpy_d2d_p(rhotw_save2,Xo_scatt_rhotw_p)
      !
      if (X%ng==1) then
        !DEV_ACC data present(Xo_scatt_rhotw_p)
@@ -251,7 +251,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !
      ! symm
      ! dev2dev, rhotw_save=Xo_scatt%rhotw
-     call dev_memcpy(rhotw_save,Xo_scatt_rhotw_p)
+     call devxlib_memcpy_d2d_p(rhotw_save,Xo_scatt_rhotw_p)
      !
      sop_inv_l=sop_inv(is)
      !
@@ -266,7 +266,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      !DEV_ACC end data
      !
      if (is>nsym/(i_time_rev+1)) then
-       call dev_conjg(Xo_scatt_rhotw_p)
+       call devxlib_conjg(Xo_scatt_rhotw_p)
      endif
      !
 #ifdef _GPU
@@ -289,7 +289,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
      enddo
 #endif
      ! dev2dev
-     call dev_memcpy(Xo_scatt_rhotw_p,rhotw_save2)
+     call devxlib_memcpy_d2d_p(Xo_scatt_rhotw_p,rhotw_save2)
      !
    endif
    !

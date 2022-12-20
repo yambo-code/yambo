@@ -51,7 +51,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
  use cuda_m_y,      ONLY:have_cuda, cuda_devsync, cuda_getstat
- use deviceXlib_m
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,devxlib_allocated
  !
 #include<y_memory.h>
  !
@@ -354,7 +354,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
          call io_control(ACTION=RD,COM=NONE,SEC=(/ifrag+1,ib_grp/),ID=ID)
          !
          io_err=io_WF(ID,wf_disk)
-         call dev_memcpy_h2d(DEV_VAR(wf_disk),wf_disk)
+         call devxlib_memcpy_h2d(DEV_VAR(wf_disk),wf_disk)
          !
          if (pp_is_uspp) then
             call PP_compute_becp( becp(ikibz,i_sp_pol), wf_nc_k(ikibz), wf_nb_to_load, wf_disk, wf_b_indx)
@@ -383,7 +383,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !
             do i_spinor=1,n_spinor
               !
-              call dev_memset(DEV_VAR(wf_DP), cZERO_DP)
+              call devxlib_memory_set(DEV_VAR(wf_DP), cZERO_DP)
               !
               npwk=wf_nc_k(ikibz)
               !
@@ -469,10 +469,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then
      ! dev2host
-     call dev_memcpy_d2h(WF%c, DEV_VAR(WF%c))
+     call devxlib_memcpy_d2h(WF%c, DEV_VAR(WF%c))
    else
      ! host2dev
-     call dev_memcpy_h2d( DEV_VAR(WF%c), WF%c)
+     call devxlib_memcpy_h2d( DEV_VAR(WF%c), WF%c)
    endif
    !
  endif

@@ -448,7 +448,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_sp_pol_i,i_sp_pol_o,ibi,ibo,iq_W_in,i_s_collision,isc)
      use collision_el,  ONLY:elemental_collision
-     use deviceXlib_m,  ONLY:dev_memcpy
+     use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2h
      implicit none
      integer,intent(in) :: iB,iki,iko,ikit,ikot,ibi,ibo,i_sp_pol_i,i_sp_pol_o,iq_W_in,i_s_collision
      type(elemental_collision),intent(inout) :: isc
@@ -461,7 +461,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)
      !
      call DEV_SUB(scatter_Bamp)(isc)
-     call dev_memcpy( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
+! NS: to be cleaned
+#ifdef _CUDA
+     call devxlib_memcpy_d2d( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
+#else
+     call devxlib_memcpy_h2h( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
+#endif
      !
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine

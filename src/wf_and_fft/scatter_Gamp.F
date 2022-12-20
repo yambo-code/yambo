@@ -39,7 +39,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab
  use R_lattice,     ONLY:DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
  use cuda_m_y
- use deviceXlib_m
+ use devxlib,       ONLY:devxlib_allocated
  use timing_m
  !
 #include<y_memory.h>
@@ -98,10 +98,10 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
  endif
  !
 #ifdef _GPU_LOC
- if (allocated(RIM_qpg).and..not.dev_allocated(DEV_VAR(RIM_qpg))) then
+ if (allocated(RIM_qpg).and..not.devxlib_allocated(DEV_VAR(RIM_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_qpg),RIM_qpg)
  endif
- if (.not.dev_allocated(DEV_VAR(bare_qpg))) then
+ if (.not.devxlib_allocated(DEV_VAR(bare_qpg))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)
  endif
 #endif

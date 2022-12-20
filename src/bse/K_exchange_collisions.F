@@ -33,7 +33,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  use timing_m,       ONLY:timing
  use openmp,         ONLY:OPENMP_update,master_thread
  use collision_el,   ONLY:elemental_collision_free,elemental_collision_alloc
- use deviceXlib_m,   ONLY:dev_memcpy,dev_conjg
+ use devxlib,        ONLY:devxlib_memcpy_h2h,devxlib_memcpy_d2d,devxlib_memcpy_h2d,devxlib_conjg
  !
 #include<dev_defs.h>
  !
@@ -130,9 +130,9 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
        !
 #ifdef _CUDA
-       call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
+       call devxlib_memcpy_h2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
 #else
-       call dev_memcpy(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw,range1=(/2,BS_n_g_exch/) )
+       call devxlib_memcpy_h2h(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw,range1=(/2,BS_n_g_exch/) )
 #endif
        !
      else
@@ -159,7 +159,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !$omp end parallel do
        !
 #endif
-       if (i_s>nsym/(i_time_rev+1)) call dev_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
+       if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !
      endif
      !
@@ -173,9 +173,9 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      if (STRING_match(BSE_L_kind,"bar"))  i_g0=2
      !
 #ifdef _CUDA
-     call dev_memcpy(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))
+     call devxlib_memcpy_d2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))
 #else
-     call dev_memcpy(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw, range1=(/i_g0,BS_n_g_exch/))
+     call devxlib_memcpy_h2h(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw, range1=(/i_g0,BS_n_g_exch/))
 #endif
      !
    endif

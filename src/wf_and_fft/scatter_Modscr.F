@@ -34,7 +34,7 @@ subroutine scatter_ModScr(isc,mu)
  use global_XC,      ONLY:WF_xc_functional
  use xc_functionals, ONLY:XC_HYB_GGA_XC_GAUPBE,XC_FACTOR
  use cuda_m_y,       ONLY:have_cuda
- use deviceXlib_m,   ONLY:dev_memcpy_h2d
+ use devxlib,        ONLY:devxlib_memcpy_h2d
  !
  implicit none
  !
@@ -85,7 +85,7 @@ subroutine scatter_ModScr(isc,mu)
    enddo
  enddo
  !
- if (have_cuda) call dev_memcpy_h2d(DEV_VAR(isc%gamp),isc%gamp)
+ if (have_cuda) call devxlib_memcpy_h2d(DEV_VAR(isc%gamp),isc%gamp)
  !
  contains
    !

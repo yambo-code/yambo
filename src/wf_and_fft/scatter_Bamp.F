@@ -44,7 +44,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
  use FFT_m,          ONLY:fftw_plan,cufft_plan
  use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
- use deviceXlib_m
+ use devxlib,        ONLY:devxlib_memory_set
  !
  implicit none
  !
@@ -220,8 +220,8 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! q=0, G=0 case
  !
- if (isc%qs(2)==1.and.isc%is(1)==isc%os(1)) call dev_memset(rhotw_p, cONE,  range1=[1,1])
- if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call dev_memset(rhotw_p, cZERO, range1=[1,1])
+ if (isc%qs(2)==1.and.isc%is(1)==isc%os(1)) call devxlib_memory_set(rhotw_p, cONE,  range1=[1,1])
+ if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call devxlib_memory_set(rhotw_p, cZERO, range1=[1,1])
  !
 end subroutine DEV_SUB(scatter_Bamp)
 

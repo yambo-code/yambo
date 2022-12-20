@@ -70,7 +70,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use cuda_m_y,      ONLY:have_cuda
- use deviceXlib_m,  ONLY:dev_memcpy_d2h
+ use devxlib,       ONLY:devxlib_memcpy_d2h
 #if defined _CUDAF
  use DIPOLES,       ONLY:DEV_VAR(drho)=>DEV_VAR(DIP_work_drho)
 #endif
@@ -104,7 +104,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  enddo
  !DEV_ACC end data
  !
- if (have_cuda) call dev_memcpy_d2h(drho,DEV_VAR(drho))
+ if (have_cuda) call devxlib_memcpy_d2h(drho,DEV_VAR(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine DIPOLE_kb_sum

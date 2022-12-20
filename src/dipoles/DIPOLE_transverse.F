@@ -46,7 +46,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
  use cuda_m_y,            ONLY:have_cuda
- use deviceXlib_m,        ONLY:dev_memcpy_h2d,dev_memset
+ use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memory_set
  !
 #include<y_memory.h>
  !
@@ -136,7 +136,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    if (have_cuda) then
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
-     call dev_memset(DEV_VAR(kbv),cZERO)
+     call devxlib_memory_set(DEV_VAR(kbv),cZERO)
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -209,7 +209,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
            pp_range(2)=pp_range(1)+npp-1
            !
-           if (have_cuda) call dev_memcpy_h2d(kbv_d,kbv)
+           if (have_cuda) call devxlib_memcpy_h2d(kbv_d,kbv)
            !
            !nc=wf_nc_k(ik)
            nc=wf_ncx

@@ -1,8 +1,8 @@
 gitclean: clean_all
 	@git clean -fdx
-distclean: dependencies
-	@$(call clean_driver,all)
-clean_all: 
+clean_all: distclean 
+	@$(call clean_driver,"projects-stamp")
+distclean:
 	@$(call clean_driver,all)
 clean: 
 	@$(call clean_driver,$(what))

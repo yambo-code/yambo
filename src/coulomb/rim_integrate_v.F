@@ -23,7 +23,7 @@
 !
 subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  !
- use pars,          ONLY:SP,DP,pi
+ use pars,          ONLY:SP,DP,pi,pi_DP
  use vec_operate,   ONLY:iku_v_norm
  use R_lattice,     ONLY:g_vec,RIM_n_rand_pts,k_grid_uc_vol,RIM_qpg,q0_def_norm,&
 &                        RIM_is_diagonal,RIM_ng,q_pt,RIM_anisotropy,b,cut_is_slab,idir
@@ -37,10 +37,10 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
  !
  integer  :: i1,i1min,i2,i2max,i3,n_idx,n_max
  real(SP) :: v1(3),v2(3),factorial,G_circ
- real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis
- real(SP) :: slab_vz,slab_vplane,lcut,pre_factor
+ real(DP) :: r1,rfac,RIM_acc(RIM_ng),RIM_acc_anis,pre_factor
+ real(SP) :: slab_vz,slab_vplane,lcut
  !
- rfac=8.*k_grid_uc_vol/real(N_out)/(2._SP*pi)**3
+ rfac=8._DP*real(k_grid_uc_vol,DP)/real(N_out,DP)/(2._DP*pi_DP)**3
  !
  if (cut_is_slab) lcut=alat(idir(1))/2._SP
  !
@@ -65,14 +65,14 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
          !
          !Evaluate v_slab
          !kz
-         slab_vz=(q_pt(iq,idir(1))+qr(idir(1),i3)+g_vec(i1,idir(1)) )*2.*pi/alat(idir(1))
+         slab_vz=(q_pt(iq,idir(1))+qr(idir(1),i3)+g_vec(i1,idir(1)))*2._SP*pi/alat(idir(1))
          !kxy
-         slab_vplane=sqrt(((q_pt(iq,idir(2))+qr(idir(2),i3)+g_vec(i1,idir(2)))*2.*pi/alat(idir(2)))**2+&
-&                         ((q_pt(iq,idir(3))+qr(idir(3),i3)+g_vec(i1,idir(3)))*2.*pi/alat(idir(3)))**2)
+         slab_vplane=sqrt(((q_pt(iq,idir(2))+qr(idir(2),i3)+g_vec(i1,idir(2)))*2._SP*pi/alat(idir(2)))**2 &
+&                     +((q_pt(iq,idir(3))+qr(idir(3),i3)+g_vec(i1,idir(3)))*2._SP*pi/alat(idir(3)))**2)
          !
          r1 = (slab_vplane**2+slab_vz**2)
-         pre_factor=1.-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
-         RIM_acc(1)=RIM_acc(1)+2._DP*pre_factor*rfac/r1
+         pre_factor=1._DP-exp(-real(slab_vplane*lcut,DP))*cos(real(slab_vz*lcut,DP))
+         RIM_acc(1)=RIM_acc(1)+2._DP*real(pre_factor,DP)*rfac/r1
          !
        end do
        RIM_qpg(iq,i1,i2)=RIM_acc(1)
@@ -107,18 +107,19 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
    pre_factor = 0.0_SP
    do n_idx=1,n_max
      factorial = factorial*n_idx
-     pre_factor = pre_factor+(-1.0_SP)**(n_idx+1)/n_idx/factorial*(G_radii*lcut)**n_idx
+     pre_factor = pre_factor+(-1.0_DP)**(n_idx+1)/real(n_idx,DP) &
+     &            /real(factorial,DP)*real(G_radii*lcut,DP)**n_idx
    enddo
-   RIM_acc(1) = pre_factor/(2.0_SP*pi*lcut)
-   RIM_acc_anis = pre_factor/(2.0_SP*pi*lcut)/3.0_DP*sum(em1_anis)
+   RIM_acc(1)   = pre_factor/(2.0_DP*pi_DP*lcut)
    !
  else
    !
    G_radii=(3.0_DP*0.2_DP/(4.0_DP*pi)*k_grid_uc_vol)**(1.0_DP/3.0_DP)
-   RIM_acc(1)  =2.0_DP*4.0_DP*pi*G_radii/(2.0_DP*pi)**3.0_DP
-   RIM_acc_anis=2.0_DP*4.0_DP*pi/3.0_DP*G_radii/(2.0_DP*pi)**3*sum(em1_anis)
+   RIM_acc(1)  =2.0_DP*4.0_DP*pi_DP*real(G_radii,DP)/(2.0_DP*pi_DP)**3
    !
  endif
+ !
+ RIM_acc_anis = RIM_acc(1)/3.0_DP*sum(real(em1_anis,DP))
  !
  N_out_G=0
  i2max=RIM_ng 
@@ -140,8 +141,8 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
        !kz
        slab_vz=qr(idir(1),i1)*2.*pi/alat(idir(1))
        !kxy
-       slab_vplane=sqrt((qr(idir(2),i1)*2.*pi/alat(idir(2)))**2+&
-&                       (qr(idir(3),i1)*2.*pi/alat(idir(3)))**2)
+       slab_vplane=sqrt((qr(idir(2),i1)*2._SP*pi/alat(idir(2)))**2+&
+&                       (qr(idir(3),i1)*2._SP*pi/alat(idir(3)))**2)
        if (slab_vplane < q0_def_norm) slab_vplane = q0_def_norm
        !
        pre_factor=1.0_SP-exp(-slab_vplane*lcut)*cos(slab_vz*lcut)
@@ -150,7 +151,7 @@ subroutine rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
      else
        !
        RIM_acc(1)=RIM_acc(1)+2._DP*rfac/(r1**2)
-       RIM_acc_anis=RIM_acc_anis+2._DP*rfac*dot_product(em1_anis,v1)
+       RIM_acc_anis=RIM_acc_anis+2._DP*rfac*real(dot_product(em1_anis,v1),DP)
        !
      endif
      !

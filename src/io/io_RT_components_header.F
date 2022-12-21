@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
 subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
  !
  use pars,           ONLY:IP,SP,LP
@@ -84,3 +85,4 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_compone
  io_RT_components=io_status(ID)
  !
 end subroutine io_RT_components_header
+#endif

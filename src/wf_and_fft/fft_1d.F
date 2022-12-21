@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _YPP_RT || defined _YPP_NL
 #if defined _FFTW
 subroutine fft_1d(c,n,fft_sign,fftw_plan)
  !
@@ -75,4 +76,5 @@ subroutine fft_1d(c,n,fft_sign,fftw_plan)
  !
  end subroutine
  !
+#endif
 #endif

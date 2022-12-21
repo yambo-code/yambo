@@ -286,7 +286,7 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
      ! See eq.(5) of the notes of Fulvio
      do i_n=1,elph_nb
        do i_m=1,elph_nb
-         GKKP%dVc(i_modes,i_n,i_m,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
+         GKKP%dVc(i_modes,i_m,i_n,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
          &                                   -gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
        enddo
      enddo

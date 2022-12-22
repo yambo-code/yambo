@@ -310,8 +310,8 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  ipos(1:5) =(/1,1,1,1,iq/)
  isize(1:5)=(/2,3,n_atoms,ph_modes,1/)
  !
- !varid = netcdf_inquire_varid(ncid, "pheigvec_cart_ibz")
- varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
+ varid = netcdf_inquire_varid(ncid, "pheigvec_cart_ibz")
+ !varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
  netcdf_error = nf90_get_var(ncid, varid, pheigvec_cart_ibz, ipos(1:5), isize(1:5))
  !
  do xyz=1,3

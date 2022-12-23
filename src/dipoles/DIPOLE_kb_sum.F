@@ -31,16 +31,17 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  use iso_c_binding, ONLY:C_F_POINTER,C_LOC
  use pars,          ONLY:SP,cONE,cZERO
- use wrapper,       ONLY:M_by_M,DEV_SUB(M_by_M)
+ use wrapper,       ONLY:DEV_SUB(M_by_M)
  use electrons,     ONLY:n_spinor
 #if defined _CUDAF
  use cudafor,       ONLY:C_DEVLOC
 #endif
+ use devxlib,       ONLY:DEV_SUB(devxlib_xGEMM)
  !
  implicit none
  !
  integer,                      intent(in)    :: pp_range(2),npp,ncomp
- complex(SP) DEV_ATTR,         intent(in)    :: WF_ib(ncomp,n_spinor)
+ complex(SP) DEV_ATTR, target, intent(in)    :: WF_ib(ncomp,n_spinor)
  complex(SP) DEV_ATTR, target, intent(in)    :: kbv(ncomp,n_spinor,4,npp)
  complex(SP) DEV_ATTR, target, intent(out)   :: XX(n_spinor,n_spinor,4,pp_range(1):pp_range(1))
  ! 
@@ -48,6 +49,12 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  integer     :: dim_flat
  complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
+ character :: TRANSA,TRANSB
+ complex(SP), target :: ALPHA,BETA
+ TRANSA='T'
+ TRANSB='N'
+ ALPHA=cONE
+ BETA=CZERO
  !
  dim_flat=n_spinor*4*npp
  !
@@ -59,7 +66,9 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  call C_F_POINTER(C_LOC(XX),  XX_p, (/n_spinor,dim_flat/) )
 #endif
  !
- call M_by_M_gpu('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
+ !call M_by_M_gpu('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
+ call DEV_SUB(devxlib_xGEMM)(TRANSA,TRANSB, n_spinor, dim_flat, ncomp, ALPHA, WF_ib, ncomp, reshape(kbv, (/ncomp,dim_flat/)), &
+                 ncomp, BETA, reshape(XX, (/n_spinor,dim_flat/)), n_spinor)
  !
 end subroutine DIPOLE_kb_project
 !

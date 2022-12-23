@@ -25,7 +25,7 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 AC_DEFUN([ACX_MPI], [
-AC_PREREQ([2.71]) dnl for AC_LANG_CASE
+AC_PREREQ([2.50]) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
 AC_LANG_CASE([C], [

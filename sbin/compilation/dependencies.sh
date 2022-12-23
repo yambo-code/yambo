@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -30,6 +30,7 @@
 dot_files=`find . -name '.objects'`
 for file in $dot_files
 do
+ if [[ "$file" == *"archive"* ]]; then continue ; fi
  directories+=" "
  directories+=`dirname $file`
 done
@@ -38,6 +39,26 @@ Nd=`echo $directories | wc -w`
 Nd=$((Nd-1))
 #
 BASE=$PWD
+#
+proj_dep_stamp=config/stamps_and_lists/project_dependencies.stamp
+if [ ! -f $proj_dep_stamp ] ; then
+idir=0
+for CDIR in $directories
+do
+ echo -en "\t[SETUP] Projects dependencies [ "
+ for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
+ for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
+ echo -n " ] $idir/$Nd " $'\r'
+ ((i=i%N)); ((i++==0)) && wait
+ idir=$((idir+1))
+ source ./sbin/compilation/dependencies_project.sh  &
+ #
+done
+touch $proj_dep_stamp
+wait
+echo
+fi
+#
 idir=0
 for CDIR in $directories
 do
@@ -57,7 +78,7 @@ idir=0
 for CDIR in $directories
 do
  cd $CDIR
- echo -en "\t[SETUP] Dependencies [ "
+ echo -en "\t[SETUP] Modules dependencies [ "
  for ((i = 0 ; i <= $idir; i++)); do echo -n "#"; done
  for ((j = i ; j <= $Nd  ; j++)); do echo -n " "; done
  echo -n " ] $idir/$Nd " $'\r'

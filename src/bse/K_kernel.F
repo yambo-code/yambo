@@ -34,7 +34,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:G_m_G_maxval,qindx_X,bz_samp,ng_closed,&
-&                        qindx_B,qindx_B_max,qindx_B_load,&
+&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
@@ -222,6 +222,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_PL_free( )
    !
    YAMBO_FREE(BS_W)
+   YAMBO_FREE(RIM_W)
    !
    return
    !
@@ -736,6 +737,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(WF_phase)
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
    YAMBO_FREE(BS_W)
+   YAMBO_FREE(RIM_W)
  endif
  !
  call WF_free(WF,keep_states_to_load=iHxc<3)

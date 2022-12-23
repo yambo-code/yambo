@@ -31,7 +31,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_COM_eh_INDEX,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX
  use BS_solvers,     ONLY:BSS_eh_E_SOC_corr,&
-&                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_W,BSS_eh_Z,BSS_alloc
+&                         BSS_dipoles_opt,BSS_eh_table,BSS_eh_E,BSS_eh_f,BSS_eh_f_RES,BSS_eh_W,BSS_eh_Z,BSS_alloc
  use BS,             ONLY:BS_K_dim,BS_nT_grps,BS_T_grp,BS_K_coupling,BS_perturbative_SOC,&
 &                         BS_n_eh_spaces,l_BS_optics,l_BS_magnons,l_BS_dichroism,l_BS_photolum
  use timing_m,       ONLY:timing
@@ -107,6 +107,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        BSS_eh_E(H_pos)=BS_T_grp(i_g)%E(i_Tr,1)*ares_fac
        BSS_eh_f(H_pos)=BS_T_grp(i_g)%f(i_Tr)*ares_fac
+       BSS_eh_f_RES(H_pos)=BS_T_grp(i_g)%f_RES(i_Tr)*ares_fac
        if (allocated(BS_T_grp(i_g)%Z)) BSS_eh_Z(H_pos)=BS_T_grp(i_g)%Z(i_Tr)*ares_fac
        if (allocated(BS_T_grp(i_g)%W)) BSS_eh_W(H_pos)=BS_T_grp(i_g)%W(i_Tr)*ares_fac
        !
@@ -144,6 +145,8 @@ subroutine K_components_folded_in_serial_arrays(iq)
  call PP_redux_wait(BSS_eh_E,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_f,COMM=PAR_COM_eh_INDEX%COMM)
+ call PP_redux_wait(BSS_eh_f_RES,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(BSS_eh_f_RES,COMM=PAR_COM_eh_INDEX%COMM)
  call PP_redux_wait(BSS_eh_table,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(BSS_eh_table,COMM=PAR_COM_eh_INDEX%COMM)
  if (allocated(BSS_eh_W)) then

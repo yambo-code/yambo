@@ -146,6 +146,7 @@ module BS_solvers
  real(SP)   , allocatable :: BSS_eh_f(:)
  real(SP)   , allocatable :: BSS_eh_W(:)
  complex(SP), allocatable :: BSS_eh_Z(:)
+ real(SP)   , allocatable :: BSS_eh_f_RES(:)
  real(SP)   , allocatable :: BSS_eh_E_SOC_corr(:,:)
  complex(SP), allocatable :: BSS_dipoles_opt(:,:)
  !
@@ -314,7 +315,7 @@ module BS_solvers
    subroutine BSS_alloc( )
      use pars,      ONLY:IP,cZERO,rZERO
      use electrons, ONLY:n_sp_pol
-     use BS,        ONLY:BS_dip_size,l_BS_abs,l_BS_kerr,l_BS_dichroism
+     use BS,        ONLY:BS_dip_size,l_BS_optics
      integer :: i_g,i_size
      logical :: W_is_allocated,Z_is_allocated,E_SOC_is_allocated
      YAMBO_ALLOC(BSS_eh_table,(BS_H_dim,5))
@@ -323,7 +324,7 @@ module BS_solvers
      BSS_eh_table = 0
      BSS_eh_E     = rZERO
      BSS_eh_f     = rZERO
-     if (l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism) then
+     if (l_BS_optics) then
        YAMBO_ALLOC(BSS_dipoles_opt,(BS_dip_size,BS_H_dim))
        BSS_dipoles_opt = cZERO
      endif
@@ -343,6 +344,8 @@ module BS_solvers
        YAMBO_ALLOC(BSS_eh_Z,(BS_H_dim))
        BSS_eh_Z = cZERO
      endif
+     YAMBO_ALLOC(BSS_eh_f_RES,(BS_H_dim))
+     BSS_eh_f_RES = rZERO
      if (E_SOC_is_allocated) then
        YAMBO_ALLOC(BSS_eh_E_SOC_corr,(2/n_sp_pol,BS_H_dim))
        BSS_eh_E_SOC_corr = rZERO
@@ -356,6 +359,7 @@ module BS_solvers
      YAMBO_FREE(BSS_eh_W)
      YAMBO_FREE(BSS_eh_f)
      YAMBO_FREE(BSS_eh_Z)
+     YAMBO_FREE(BSS_eh_f_RES)
      YAMBO_FREE(BSS_eh_E_SOC_corr)
    end subroutine
    !

@@ -20,6 +20,22 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Load wave-function in different forms
+!!
+!! @param[in]       iG_in                       max-number of G-vectors
+!! @param[in]       iGo_max_in                  ???
+!! @param[in]       bands_to_load               bands range 
+!! @param[in]       kpts_to_load                k-points range 
+!! @param[in]       sp_pol_to_load              spin-polarization range 
+!! @param[in]       space                       R = real-space,  G = G-space, C = ?, B = ?
+!! @param[in]       title                       purpose of the wave-function loading
+!! @param[in]       impose_free_and_alloc       force deallocation of already loaded WF 
+!! @param[in]       force_WFo                   do not rotate the WF (for yambo_sc)
+!! @param[in]       keep_states_to_load         keep (.TRUE.) or not (.FALSE.) states already loaded 
+!! @param[in]       quiet                       turn off report and log for the WF_laod 
+!!
+!! @param[out]      WF                  Wave-function object
+!
 subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load,&
 &                  space,title,impose_free_and_alloc,force_WFo,keep_states_to_load,quiet)
  !

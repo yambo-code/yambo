@@ -94,6 +94,7 @@ do
    if [[ "$refs" == *"$file"* ]]; then
     if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
     DIR_is_to_recompile=1
+    if [ "$lock" == "DOUBLE" ]; then continue; fi
     obj=$file
     source ./sbin/compilation/check_object_childs.sh "locks"
    fi

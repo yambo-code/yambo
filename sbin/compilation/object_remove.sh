@@ -115,16 +115,18 @@ if [[ -f "$file_with_path_obj" ]]  ; then
     fi
     #
     count=`ls -1 $path_obj/*_.save/*.a 2>/dev/null | wc -l`
-    if [ $count != 0 ]; then rm $path_obj/*_.save/*.a ; fi
+    if [ $count != 0 ]; then rm -f $path_obj/*_.save/*.a ; fi
     count=`ls -1 $path_obj/*_.save/$file_obj 2>/dev/null | wc -l`
     if [ $count != 0 ] ; then
-      if [ "$VERB" == 1 ] ; then echo "rm $path_obj/*_.save/$file_obj" ; fi
-      rm $path_obj/*_.save/$file_obj
+      if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*_.save/$file_obj" ; fi
+      rm -f $path_obj/*_.save/$file_obj
     fi
-    count=`ls -1 $path_obj/*_.save/$file_f90 2>/dev/null | wc -l`
-    if [ $count != 0 ] ; then
-      if [ "$VERB" == 1 ] ; then echo "rm $path_obj/*_.save/$file_f90" ; fi
-      rm $path_obj/*_.save/$file_f90
+    if [ ! "$file_f90" == "" ]; then
+      count=`ls -1 $path_obj/*_.save/$file_f90 2>/dev/null | wc -l`
+      if [ $count != 0 ] ; then
+        if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*_.save/$file_f90" ; fi
+        rm -f $path_obj/*_.save/$file_f90
+      fi
     fi
   fi
   #

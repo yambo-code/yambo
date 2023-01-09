@@ -99,10 +99,12 @@ if [[ -f "$file_with_path_obj" ]]  ; then
   if [ "$VERB" == 1 ] ; then
    echo "remove object | rm -f  $file_with_path_obj"
    echo "remove f90 source | rm -f  $file_with_path_f90"
+   echo "touch file source | touch  $file_with_path_src"
   fi
   #
   rm $file_with_path_obj
   if [ -f "$file_with_path_f90" ] ; then rm -f $file_with_path_f90 ; fi
+  if [ -f "$file_with_path_src" ] ; then touch $file_with_path_src ; fi
   #
   # In sources mode remove all corresponding saved objects
   #
@@ -132,7 +134,7 @@ if [[ -f "$file_with_path_obj" ]]  ; then
   #
   # Remove corresponding mod files
   #
-  modfile=`grep -i module $file_with_path_src | grep -i -v end | grep -i -v procedure | grep -v !`
+  modfile=`grep -i module $file_with_path_src | grep -i -v end | grep -i -v use | grep -i -v procedure | grep -v !`
   for modname in $modfile; do
     if [ -f "$path_obj/$modname.mod" ]; then
       if [ "$VERB" == 1 ] ; then echo "remove module | rm $path_obj/$modname.mod $compdir/include/$modname.mod"; fi

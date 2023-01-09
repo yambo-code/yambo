@@ -28,7 +28,10 @@ path_back=$PWD
 #
 library="${target}.a"
 if [[ "$goal" == "$target" ]] ; then
- if [ "$VERB" == 1 ] ; then echo "here I'm doing the driver folder, but there is no connected library"; fi
+ if [ "$VERB" == 1 ] ; then
+   echo "goal= $goal, target= $target";
+   echo "here I'm doing the driver folder, but there is no connected library";
+ fi
  library="NONE"
 fi
 if [ "$VERB" == 1 ] ; then echo "library is $library" ; fi

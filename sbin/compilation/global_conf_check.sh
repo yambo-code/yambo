@@ -82,6 +82,3 @@ do
  exit 1
 done
 #
-candidates=`find $dir -type f  -name 'objects.mk'`
-candidates+=" include/pars.mod"
-#

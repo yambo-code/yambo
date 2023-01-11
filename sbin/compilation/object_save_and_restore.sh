@@ -44,13 +44,31 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
   mkdir -p $dir/$save_dir
  fi
+ deps_rm=""
+ count_obj_tr=`ls -1 $dir/*.o_to_remove 2>/dev/null | wc -l`
+ count_mod_tr=`ls -1 $dir/*.mod_to_remove 2>/dev/null | wc -l`
+ if [ $count_obj_tr != 0 ] || [ $count_mod_tr != 0 ] ; then
+  if [ ! -f $dir/$save_dir/files.dep ] ; then
+    cd $dir
+    for file in *.o_to_remove; do
+      deps_rm="$deps_rm ${file/_to_remove/}"
+    done
+    for mod in *.o_to_remove; do
+      deps_rm="$deps_rm ${mod/_to_remove/}"
+    done
+    cd $path_back
+  fi
+  if [ $count_obj_tr != 0 ]; then rm $dir/*.o_to_remove ; fi
+  if [ $count_mod_tr != 0 ]; then rm $dir/*.mod_to_remove ; fi
+ fi
  count_obj=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
  count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
- if [ $count_obj != 0 ] || [ $count_mod != 0 ] ; then
+ if [ $count_obj != 0 ] || [ $count_mod != 0 ] || [ $count_obj_tr != 0 ] || [ $count_mod_tr != 0 ]  ; then
   if [ ! -f $dir/$save_dir/files.dep ] ; then
    cd $dir;
    deps=`ls *.o *.mod 2>/dev/null`;
+   deps="$deps $deps_rm"
    for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
    cd $path_back ;
    if [ $count_obj != 0 ] ; then cp $dir/*.o    $dir/$save_dir/ ; fi

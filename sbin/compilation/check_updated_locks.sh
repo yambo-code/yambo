@@ -38,7 +38,7 @@ do
    save_dir="${lock}_${save_dir}"
  fi
 done
-if [[ -z $save_dir ]] ; then
+if [[ -z $lock_string ]] ; then
  return
 fi
 save_dir="${save_dir}.save"

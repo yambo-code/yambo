@@ -31,8 +31,8 @@ module wrapper
  ! TRANSA = 'T' or 't',  op( A ) = A'.
  ! TRANSA = 'C' or 'c',  op( A ) = conjg( A' ).
  !
- use pars,   ONLY:SP,cI
- use devxlib_linalg,   only: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
+ use pars,      ONLY: SP,cI
+ use devxlib_linalg,   ONLY: M_by_M_gpu=>devxlib_xGEMM_gpu,devxlib_xGEMM_gpu,devxlib_xGEMV_gpu,&
 &                            devxlib_xAXPY_gpu,devxlib_xDOTC_gpu,devxlib_xDOTU_gpu
  use devxlib_cublas
  !

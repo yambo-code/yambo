@@ -257,7 +257,7 @@ module BS
  !
  ! Screened interaction
  !======================
- complex(SP),allocatable DEV_ATTR ::BS_W(:,:,:)
+ complex(SP),allocatable DEV_ATTR :: BS_W(:,:,:)
  !
  contains
    !

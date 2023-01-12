@@ -130,7 +130,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
        !
 #ifdef _CUDA
-       call devxlib_memcpy_h2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
+       call devxlib_memcpy_d2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
 #else
        call devxlib_memcpy_h2h(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw,range1=(/2,BS_n_g_exch/) )
 #endif

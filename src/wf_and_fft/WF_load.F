@@ -51,7 +51,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
  use cuda_m_y,      ONLY:have_cuda, cuda_devsync, cuda_getstat
- use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,devxlib_allocated
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
+                         devxlib_allocated,devxlib_memory_set
  !
 #include<y_memory.h>
  !

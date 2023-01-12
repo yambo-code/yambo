@@ -63,8 +63,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt,work,lwork)
  ! AF: rhotw_save, rhotw_save2 are on GPU mem if _GPU is active
  !     pointing to work, allocated in the parent routine for performance
  !
- complex(SP), pointer DEV_ATTR :: Xo_scatt_rhotw_p(:)
- complex(SP), pointer DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
+ complex(SP), pointer, contiguous DEV_ATTR :: Xo_scatt_rhotw_p(:)
+ complex(SP), pointer, contiguous DEV_ATTR :: rhotw_save(:), rhotw_save2(:)
  integer            :: sop_inv_l,X_ng
  complex(SP)        :: ctmp,Z_
  real(SP)           :: Z_eh_occ

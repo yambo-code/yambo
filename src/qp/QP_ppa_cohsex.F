@@ -60,7 +60,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use parallel_m,    ONLY:PAR_COM_QP_A2A
  use SC,            ONLY:it_now,it_to_start
 #endif
- use devxlib,       ONLY:devxlib_memcpy,devxlib_memcpy_h2d,devxlib_memcpy_d2h
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h
  use cuda_m_y,      ONLY:have_cuda
 #ifdef _CUDA
  use drivers,       ONLY:Finite_Tel

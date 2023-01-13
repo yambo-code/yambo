@@ -28,7 +28,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !   H_k=Ho_k+U_k+ V_k^H-V_k^H[rho_ref]+V_xc[rho]
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE
- use units,          ONLY:SPEED_OF_LIGHT
+ use units,          ONLY:SPEED_OF_LIGHT,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol
  use R_lattice,      ONLY:bz_samp
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -99,6 +99,17 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
    endif
    !
  endif
+ !
+ !aim137 DEBUG<
+ if (Time*AUT2FS > 233) then
+ write(111,'(10000(1e19.10))') Time*AUT2FS,(rho_n(i1)-rho_reference(i1),i1=1,fft_size)
+ endif
+ !aim137 DEBUG>
+ !aim137 DEBUG<
+ if (Time*AUT2FS > 233) then
+ write(112,'(10000(1e19.10))') Time*AUT2FS,(V_hartree_sc(i1,1),i1=1,fft_size)
+ endif
+ !aim137 DEBUG>
  !
  ! Evaluate the Polarization 
  ! ===================================================================
@@ -207,6 +218,13 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
      !
    endif
    !
+  !!aim137 DEBUG<
+  !write(110+ik,'(100(1e19.10))') Time*AUT2FS,&
+  !&   real(H_nl_sc(4,4)),aimag(H_nl_sc(4,4)),&
+  !&   real(H_nl_sc(4,5)),aimag(H_nl_sc(4,5)),&
+  !&   real(H_nl_sc(5,4)),aimag(H_nl_sc(5,4)),&
+  !&   real(H_nl_sc(5,5)),aimag(H_nl_sc(5,5))
+  !!aim137 DEBUG>
    ! Add Ho = T+V_ion+V_h+V_xc
    !==================
    !

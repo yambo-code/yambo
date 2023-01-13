@@ -306,7 +306,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    !aim137 prelim - msg is working only for one of the cores (i.e., one freq pool).
    !
    !
-   call FL_all_times_pol(E,k) !this was to interface with ypp
+   !call FL_all_times_pol(E,k) !this was to interface with ypp
    !call FL_all_times_Vbands(E,k,.false.)
    !
    !call NL_databases_IO(i_f,'write')

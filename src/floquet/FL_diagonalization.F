@@ -127,7 +127,9 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
      endif
      !
      !aim137 DEBUG<
-     !print*, ' =========================================== kpt = ',ik_bz
+      print*, ' =========================================== kpt = ',ik_bz
+      !print*, 'eigenvalues:'
+      !print*, FL_eigenvalues(FL_states(1):FL_states(2),ik_bz,is)*HA2EV
     !write(filename,'(i0)') ik_bz
     !open(111,file='FL_QEeigensolution_kpt'//trim(adjustl(filename))//'.dat')
     !write(111,*) 'Quasi-energies [eV]'
@@ -186,6 +188,7 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
        &           trial_vec(FL_states(1):FL_states(2)),&
        &           FL_chosen_bands(i_m))
        !
+       print*, 'AE_vec',abs(trial_vec(FL_states(1):FL_states(2)))
        ! Detect population inversion
        !
        i_central_fks = (i_m-1)*n_tot_fl_modes + (max_fl_mode+1)
@@ -294,6 +297,9 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  !!! enddo
  !!! close(111)
  !!! !aim137 DEBUG AVERAGE ENERGY>
+     !
+     !call FL_fix_band_phases(FL_V_bands(NL_bands(1):NL_bands(2),:,:,ik_bz,is),E%nbf(1),iter_num)
+     !
    enddo
    !
  enddo

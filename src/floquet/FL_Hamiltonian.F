@@ -28,7 +28,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  ! Add diagonal part
  !                                        
  use pars,           ONLY:SP,cZERO,pi,cONE,cI,rZERO
- use units,          ONLY:SPEED_OF_LIGHT,HA2EV
+ use units,          ONLY:SPEED_OF_LIGHT,HA2EV,AUT2FS
  use electrons,      ONLY:levels,n_sp_pol,n_spin
  use R_lattice,      ONLY:bz_samp
  use zeros,          ONLY:zero_dfl
@@ -87,6 +87,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FKS_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP)  :: FL_Sigma_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  complex(SP)  :: FL_Sigma_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
+ real(SP)     :: Time
  !
 #if defined _TIMING
  call timing('FL Hamiltonian',OPR='start')
@@ -503,4 +504,12 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 !enddo
 !enddo
  !aim137 END DEBUG
+ !aim137 DEBUG <
+!open(111,file='FL_density.dat')
+!do i_t=1,n_tot_extra_modes
+!Time = 1/Efield(1)%frequency(1) * 2._SP*pi * (i_t-1)/n_tot_extra_modes
+!write(111,'(10000(1e19.10))') Time*AUT2FS,(FL_delta_rho(i1,i_t),i1=1,fft_size)
+!enddo
+!close(111)
+ !aim137 DEBUG >
 end subroutine FL_Hamiltonian

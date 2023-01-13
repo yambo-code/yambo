@@ -165,7 +165,7 @@ w0_sm1 = Efield(1)%frequency(1)*HA2FSm1
 open(111,file='FL_time_Pol_at_w_'//trim(adjustl(filename))//'.dat')
 write(111,*) 'Frequency[eV] = ',Efield(1)%frequency(1)*HA2EV
 write(111,*) 't_step  time[fs]   Pol_x   Pol_y   Pol_z'
-do i_t=1,2000
+do i_t=1,1990
 time=real(i_t-1,SP)*RT_step
 !time = 1/(w0_sm1) * (i_t-1)/NE_steps ! when i_t=1, time = 0
 write(111,*) i_t, time*AUT2FS, real(NL_P_t(i_t,1)),real(NL_P_t(i_t,2)),real(NL_P_t(i_t,3))
@@ -174,7 +174,7 @@ close(111)
 w0 = Efield(1)%frequency(1)
 open(111,file='FL_E_field.dat')
 write(111,*) '#time step - time[fs] - real and imag part of Efield'
-do i_t=1,2000
+do i_t=1,1990
   time=real(i_t-1,SP)*RT_step
   FL_E_field = (exp(+1*cI*w0*time) * exp(+cI*pi*FL_E_field_phase) &
           &  -  exp(-1*cI*w0*time) * exp(-cI*pi*FL_E_field_phase))/(2._SP*cI)

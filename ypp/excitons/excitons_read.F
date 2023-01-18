@@ -66,6 +66,7 @@ subroutine excitons_read(k,Xk,en,Xen,iq,what,io_err)
    if(n_spin==1) then
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
      io_err=io_E_SOC_map(en,k,io_ID)
+     if(io_err/=0) call error('Error reading E_SOC_map database')
    endif
    !
    YAMBO_ALLOC(BSqpts,(3,iq))

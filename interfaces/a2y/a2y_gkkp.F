@@ -282,12 +282,20 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  do ik=1,elph_nk_bz
    do i_modes=1,ph_modes
-     ! Invert the band indexes and do the complex conjugate
+     ! Here we should invert the band indexes and do the complex conjugate
      ! See eq.(5) of the notes of Fulvio
+     ! This operation however is already performed inside the subrtouine
+     ! src/el-ph/ELPH_databases_load.F
+     !
+     ! See comment there, reported also here.
+     ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
+     ! where the band indexes have been exchanged. Instead of doing a global change of the notes
+     ! and of the code I decided, here, to exchange the indexes:
+     !
      do i_n=1,elph_nb
        do i_m=1,elph_nb
-         GKKP%dVc(i_modes,i_n,i_m,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
-         &                                   -gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
+         GKKP%dVc(i_modes,i_m,i_n,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
+         &                                    gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
        enddo
      enddo
    enddo
@@ -303,6 +311,7 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  isize(1:5)=(/2,3,n_atoms,ph_modes,1/)
  !
  varid = netcdf_inquire_varid(ncid, "pheigvec_cart_ibz")
+ !varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
  netcdf_error = nf90_get_var(ncid, varid, pheigvec_cart_ibz, ipos(1:5), isize(1:5))
  !
  do xyz=1,3

@@ -125,10 +125,13 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
          if (i_Hp==0) cycle
          !
+         ! [NB] Here we apply the conj and SWAP band indices in the matrix elements
+         !      Notes: (iv,ivp) => Code: (ivp,iv)
+         !      See issues #690 and #609
          if (.not.l_const_elph) then
            ik_db=K_io_map(ik_bz)
-           if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,iv,ivp,ik_db,1) /sqrt(2._SP*ph_E)
-           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,iv,ivp,ik_db,1))/sqrt(2._SP*ph_E)
+           if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ivp,iv,ik_db,1)) /sqrt(2._SP*ph_E)
+           if(     l_abs_elph) elph_gkkp=  abs(GKKP%dVc(il,ivp,iv,ik_db,1))/sqrt(2._SP*ph_E)
            !ik_db=K_io_map(ik_minus_iq_bz)
            !elph_gkkp=GKKP%dVc(il,ivp,iv,ik_db,1)/sqrt(2._SP*ph_E)
          endif
@@ -158,11 +161,13 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          if (i_Hp==0) cycle
-         !
+         ! [NB] Here we apply the conj and SWAP band indices in the matrix elements
+         !      Notes: (icp,ic) => Code: (ic,icp)
+         !      See issues #690 and #609
          if (.not.l_const_elph) then
            ik_db=K_io_map(ik_plus_iq_bz)
-           if(.not.l_abs_elph) elph_gkkp=    GKKP%dVc(il,icp,ic,ik_db,1) /sqrt(2._SP*ph_E)
-           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,icp,ic,ik_db,1))/sqrt(2._SP*ph_E)
+           if(.not.l_abs_elph) elph_gkkp=conjg(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
+           if(     l_abs_elph) elph_gkkp=abs(GKKP%dVc(il,ic,icp,ik_db,1))/sqrt(2._SP*ph_E)
            !ik_db=K_io_map(ik_bz)
            !elph_gkkp=GKKP%dVc(il,ic,icp,ik_db,1)/sqrt(2._SP*ph_E)
          endif

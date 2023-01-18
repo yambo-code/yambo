@@ -411,9 +411,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! 
    if (trim(BSE_L_kind)/="tilde") then
      call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-     !
      if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
-     !
    endif
    !
    ! Exchange oscillators

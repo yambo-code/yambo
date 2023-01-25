@@ -23,7 +23,7 @@
 
 */
 #include <stdio.h>
-#include <ykind.h>
+#include <kind.h>
 
 void options_ypp(struct options_struct options[],int *i_opt)
 {

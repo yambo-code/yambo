@@ -3,7 +3,7 @@
 !
 module cufft_m_y
   use iso_c_binding
-#if !defined _CUDAF 
+#if defined _GPU && !defined _CUDAF 
   use dev_openacc_m
   implicit none
 

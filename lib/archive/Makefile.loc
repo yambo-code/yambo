@@ -146,20 +146,11 @@ define copy_driver
  if ! test -d $(srcdir)/lib/yambo/$(1); then mkdir -p $(srcdir)/lib/yambo/$(1); fi; \
  if test -s $$LIB".tar.gz" && ! test -d $(1)"-src" ; then \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-<<<<<<< HEAD
-  cd $(compdir)/lib/archive; \
- fi;\
- if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
-  cp -R $$LIB/*    $(srcdir)/lib/$(1)/; \
-  cp -R $$LIB/.git $(srcdir)/lib/$(1)/; \
-  touch $(srcdir)/lib/$(1)/installed.stamp; \
-=======
   mv $$LIB $(1)"-src" ; \
  fi;\
  if test -d $(1)"-src" &&  test ! -f $(srcdir)/lib/yambo/$(1)-installed.stamp ; then \
   cp -R $(1)"-src"/* $(srcdir)/lib/yambo/$(1)/; \
   touch $(srcdir)/lib/yambo/$(1)-installed.stamp; \
->>>>>>> develop
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \
    rm -rf $(compdir)/lib/yambo/$(1) ; \

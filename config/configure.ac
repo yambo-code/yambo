@@ -41,7 +41,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
-m4_include([config/m4/yambo_libraries.m4])
+m4_include([config/m4/ydriver.m4])
 # 
 #  General
 #
@@ -80,7 +80,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_FUNC_SETVBUF_REVERSED
+# AC_FUNC_SETVBUF_REVERSE # This is reported as obsolete
 AC_FUNC_STAT
 AC_PROG_MAKE_SET
 # ============================================================================
@@ -275,7 +275,7 @@ m4_include([config/m4/device_xlib.m4])
 AC_LANG_PUSH(Fortran)
 # ============================================================================
 # Yambo Libs
-AC_YAMBO_LIBRARIES
+AC_YDRIVER
 # ============================================================================
 # YDB/YAMBOpy
 ACX_SCRIPTS

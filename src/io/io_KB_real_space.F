@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _SC ||  defined _RT
 integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
  !
  use pars,             ONLY:SP
@@ -86,3 +87,4 @@ integer function io_KB_real_space(ID,kbv_real_space,kbv_real_space_table)
 1 call io_disconnect(ID=ID)
  !
 end function io_KB_real_space
+#endif

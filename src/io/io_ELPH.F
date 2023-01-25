@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _ELPH
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:schlen
@@ -152,3 +153,4 @@ integer function io_ELPH(ID,what)
  call timing("io_ELPH",OPR="STOP")
  !
 end function
+#endif

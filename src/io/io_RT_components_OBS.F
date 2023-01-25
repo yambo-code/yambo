@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _RT
 subroutine io_RT_components_OBS(ID,what)
  !
  use pars,        ONLY:SP,schlen
@@ -95,3 +96,4 @@ subroutine io_RT_components_OBS(ID,what)
  end select
  !
 end subroutine
+#endif

@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM
+# Authors (see AUTHORS file for details): AM DS
 #
 # This file is distributed under the terms of the GNU
 # General Public License. You can redistribute it and/or
@@ -33,32 +33,15 @@ sources=" "
 if test `find . -maxdepth 1 -name '*.F' | wc -l` -ge 1 ; then
  sources+=`echo *.F`
 fi
-sources+=" " 
+sources+=" "
 if test `find . -maxdepth 1 -name '*.c' | wc -l` -ge 1 ; then
  sources+=`echo *.c`
 fi
-if [ ${#sources} -eq 2 ]; then 
- cd $BASE
- continue 
-fi
 #
-# Projects 
-#==========
-for PJ in _SC _RT _RT_SCATT _ELPH _PHEL _NL _QED _YPP_ELPH _YPP_RT _YPP_NL _YPP_SC _yambo _ypp _a2y _p2y _c2y _DOUBLE
-do
- sources_pj_dependent=" "
- for file in $sources
- do
-  if test `grep $PJ $file | grep '#'| wc -l` -ge 1; then
-    obj=`echo $file| sed 's/\.F/\.o/g'| sed 's/\.c/\.o/g'`
-    sources_pj_dependent+=" ${obj}\n"
-  fi
- done
- PREFIX=`echo $PJ | sed 's/_//'`
- if [ ${#sources_pj_dependent} -gt 1 ]; then
-  echo -e "$sources_pj_dependent" >>  $compdir/$CDIR/${PREFIX}_project.dep
- fi
-done
+if [ ${#sources} -eq 2 ]; then
+  cd $BASE
+  continue 
+fi
 #
 # Modules. Step I: get the list of modules used and defined
 #===========================================================

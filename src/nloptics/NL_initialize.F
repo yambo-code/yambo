@@ -34,7 +34,7 @@ subroutine NL_initialize(E,k)
  use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
- use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
+ use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field,l_NE_with_fields, &
 &                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
@@ -53,7 +53,7 @@ subroutine NL_initialize(E,k)
  ! Working space
  !
  real(SP) :: Time, WF_sample_range(2),W_0,T_0,sigma 
- integer  :: i1
+ integer  :: i1,n_active_fields
  !
  ! Parser
  ! ============
@@ -121,7 +121,8 @@ subroutine NL_initialize(E,k)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=2
+ n_ext_fields=3
+ n_active_fields=0
  !
  do i1=1,n_ext_fields
    !
@@ -145,28 +146,35 @@ subroutine NL_initialize(E,k)
    !
    Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
    Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
-   Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+   ! t_initial_indx cannot be 1, a previouss time step is always needed
+   ! see definition of "step_case" in function "theta_function" in src/modules/mod_functions.F
+   Efield(i1)%t_initial_indx=max(nint(Efield(i1)%t_initial/RT_step)+1,2)
    Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
    Efield(i1)%ef_pol        ="linear"
    !
    call Check_symmetries(Efield(i1)%versor,"electric")
    !
+   n_active_fields=n_active_fields+1
+   !
  enddo
  !
- if(((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none').or.n_frequencies==1) then
+ if(n_active_fields==0) call error('Not valid external field present!')
+ !
+ call msg('s','[NL] Number of active fields : ',n_active_fields)
+ !
+ if(n_active_fields>1.or.all(NL_er<0._SP)) then
    l_pump_and_probe=.true.
-   call msg('sl','[NL] Variables NLEnSteps and NLEnRange are ignored!!! ')
+   l_NE_with_fields=.true.
+   call msg('s', '[NL] Variables NLEnSteps and NLEnRange are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
-   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
+   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe ")
    NL_verbosity=VERB_HIGH
- elseif((Efield(1)%ef_name/='none').and.Efield(2)%ef_name=='none') then
+ elseif((Efield(1)%ef_name/='none').and.all(Efield(2:3)%ef_name=='none')) then
    call msg('sr','[NL] Non-linear optics configuration')
- else
-   call error(" Please set at least one external field ! ")
  endif
  !
- if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
-    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
+ if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
+    call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only')
  !
  ! For short pulses field (PULSE, QSSIN, QSFIELD, SPULSE)
  ! calcualte the T_0
@@ -203,7 +211,7 @@ subroutine NL_initialize(E,k)
      !  
      ! Run length is 6*Phase_lifeTime + 4 fs for response analysis
      !
-     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
+     if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0 ") 
      !
      ! Dephasing Time
      !
@@ -224,7 +232,7 @@ subroutine NL_initialize(E,k)
      call msg('sr','Dephasing                   ',Phase_LifeTime*AUT2FS,"[fs]")
      !
    else
-     call error("Negative total simulation time! ")
+     call error("Negative total simulation time ")
    endif
    ! 
  else

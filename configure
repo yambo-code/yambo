@@ -756,9 +756,13 @@ def_fft
 FFT_INCS
 FFT_LIBS
 fft_cfactor
+lapack_shared
+LAPACK_SO_LIBS
 LAPACK_LIBS
 compile_lapack
 internal_lapack
+blas_shared
+BLAS_SO_LIBS
 BLAS_info
 BLAS_LIBS
 compile_blas
@@ -769,7 +773,7 @@ internal_blas
 FLIBS
 YDB_dir
 GIT
-with_yambo_libs_branch
+with_ydriver_branch
 DRIVER_INCS
 Ydriver_check
 Ydriver_LIB
@@ -930,7 +934,7 @@ with_mpi_libs
 with_mpi_path
 with_mpi_libdir
 with_mpi_includedir
-with_yambo_libs_branch
+with_ydriver_branch
 enable_ydb
 with_blas_libs
 enable_int_linalg
@@ -1705,9 +1709,8 @@ Optional Packages:
   --with-mpi-path=<path>        Path to the MPI install directory
   --with-mpi-libdir=<path>      Path to the MPI lib directory
   --with-mpi-includedir=<path>  Path to the MPI include directory
-  --with-yambo-libs-branch=<branch>
-                                Use the <branch> of the yambo-libraries
-                                repository.
+  --with-ydriver-branch=<branch>
+                                Use the <branch> of the ydriver repository.
   --with-blas-libs=<libs>       Use BLAS libraries <libs>
   --with-lapack-libs=<libs>     Use LAPACK libraries <libs>
   --with-fft-libs=<libs>        Link to FFT libraries
@@ -2996,6 +2999,7 @@ if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h.F'        --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.h'          --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*.objects'    --exclude='*' $srcdir/ $compdir
+ rsync -az --exclude="$basecomp/"  --include='*/' --include='*.dep'        --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile.lo' --exclude='*' $srcdir/ $compdir
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*Makefile*'   --exclude='*' $srcdir/lib $compdir/
  rsync -az --exclude="$basecomp/"  --include='*/' --include='*list*'       --exclude='*' $srcdir/lib $compdir/
@@ -3004,9 +3008,9 @@ if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
  #
  if test ! -d "$compdir/log"        ; then mkdir "$compdir/log"; fi
  if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
- if test ! -d "$compdir/lib/archive"; then mkdir "$compdir/lib/archive"; fi
- cp     $srcdir/lib/archive/*         $compdir/lib/archive
- cp     $srcdir/lib/config/*          $compdir/lib/config
+ if test ! -d "$compdir/lib/config";  then mkdir "$compdir/lib/config"; fi
+ cp -r  $srcdir/lib/archive/*         $compdir/lib/archive/
+ cp     $srcdir/lib/config/*          $compdir/lib/config/
  #
 fi
 
@@ -5455,13 +5459,7 @@ $as_echo "#define realloc rpl_realloc" >>confdefs.h
 fi
 
 
-if ${ac_cv_func_setvbuf_reversed+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_cv_func_setvbuf_reversed=no
-fi
-
-
+# AC_FUNC_SETVBUF_REVERSE # This is reported as obsolete
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether lstat correctly handles trailing slash" >&5
 $as_echo_n "checking whether lstat correctly handles trailing slash... " >&6; }
 if ${ac_cv_func_lstat_dereferences_slashed_symlink+:} false; then :
@@ -9021,7 +9019,7 @@ rm -f core conftest.err conftest.$ac_objext \
 
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -9354,7 +9352,7 @@ rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -9549,7 +9547,7 @@ fi
 
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -10134,25 +10132,24 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 # Yambo Libs
 
 
-DRIVER_INCS="-I$PWD/lib/yambo/driver/include/ -I$PWD/include/driver"
+DRIVER_INCS="-I$PWD/lib/yambo/Ydriver/include/ -I$PWD/include/driver"
 #
 
-# Check whether --with-yambo-libs-branch was given.
-if test "${with_yambo_libs_branch+set}" = set; then :
-  withval=$with_yambo_libs_branch;
+# Check whether --with-ydriver-branch was given.
+if test "${with_ydriver_branch+set}" = set; then :
+  withval=$with_ydriver_branch;
 else
-  with_yambo_libs_branch=devel-gpuhack21
+  with_ydriver_branch=none
 fi
 
 #
-if test x"$with_yambo_libs_branch" = "xnone"; then
+if test x"$with_ydriver_branch" = "xnone"; then
  Ydriver_check="D";
  Ydriver_LIB="Download"
 else
  Ydriver_check="G";
- Ydriver_LIB="GIT, branch $with_yambo_libs_branch"
+ Ydriver_LIB="GIT, branch $with_ydriver_branch"
 fi
-
 
 
 
@@ -11373,6 +11370,28 @@ if test x"$enable_openmp_int_linalg" = "xyes" ; then
   fi
 fi
 
+# Test for shared BLAS
+BLAS_SO_LIBS=""
+if test "$internal_blas" = "yes"; then
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so || test $compile_blas = "yes" ; then
+    BLAS_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
+  fi
+fi
+if test $acx_blas_ok = yes && test -d "${MKLROOT}" ; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+fi
+if test $acx_blas_ok = yes && test "${BLAS_LIBS}" = "*.so"; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+fi
+blas_shared="no"
+if test x"${BLAS_SO_LIBS}" = "x"; then
+  BLAS_SO_LIBS=${BLAS_LIBS}
+else
+  blas_shared="yes"
+fi
+
+
+
 
 
 
@@ -11869,6 +11888,28 @@ if test "$internal_lapack" = "yes"; then
     compile_lapack="yes";
   fi
 fi
+
+# Test for shared LAPACK
+LAPACK_SO_LIBS=""
+if test "$internal_lapack" = "yes"; then
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so || test $compile_lapack = "yes"; then
+    LAPACK_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
+  fi
+fi
+if test $acx_lapack_ok = yes && test "${lapack_LIBS}" = "*.so"; then
+  LAPACK_SO_LIBS=${LAPACK_LIBS}
+fi
+lapack_shared="0"
+if test "x${LAPACK_SO_LIBS}" = "x"; then
+  LAPACK_SO_LIBS=${LAPACK_LIBS}
+  if test $blas_shared = yes && test -d "${MKLROOT}" ; then
+    lapack_shared="1"
+  fi
+else
+  lapack_shared="1"
+fi
+
+
 
 
 
@@ -12593,13 +12634,21 @@ $as_echo_n "checking for internal Petsc library... " >&6; }
   #
   internal_petsc="yes"
   #
-  PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+  if test "x$lapack_shared" = "x1" ; then
+    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+  else
+    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+  fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
   #
   petsc=yes
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ; then
+    compile_petsc="no" ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ; then
     compile_petsc="no" ;
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 $as_echo "already compiled" >&6; } ;
@@ -12713,11 +12762,19 @@ $as_echo_n "checking for internal Slepc library... " >&6; }
   #
   internal_slepc="yes";
   #
-  SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+  if test "x$lapack_shared" = "x1" ; then
+    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
+  else
+    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+  fi
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes
   if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ; then
+    compile_slepc="no" ;
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
+$as_echo "already compiled" >&6; } ;
+  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so" ; then
     compile_slepc="no" ;
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: already compiled" >&5
 $as_echo "already compiled" >&6; } ;
@@ -14164,7 +14221,6 @@ fi
 
 
 
-
 # Check whether --with-futile_libs was given.
 if test "${with_futile_libs+set}" = set; then :
   withval=$with_futile_libs;
@@ -14395,7 +14451,7 @@ fi
 # ============================================================================
 # IOTK library
 
-
+#
 # Check whether --enable-iotk was given.
 if test "${enable_iotk+set}" = set; then :
   enableval=$enable_iotk;

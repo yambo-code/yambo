@@ -53,7 +53,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use timing_m,      ONLY:timing
  use cuda_m_y
  use devxlib,       ONLY:devxlib_memory_set,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&
-                         dev_stream_sync,devxlib_memcpy_d2h
+                         devxlib_memcpy_d2h
+ use devxlib_async, ONLY:devxlib_async_synchronize
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -267,7 +268,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
           enddo
         enddo
         !
-        call dev_stream_sync(stream_default)
+        call devxlib_async_synchronize(stream_default)
         call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
         !
      else
@@ -288,7 +289,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
  enddo
  !
- call dev_stream_sync(stream_d2h)
+ call devxlib_async_synchronize(stream_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !

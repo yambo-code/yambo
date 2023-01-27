@@ -83,7 +83,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
 &                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
- use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
+&                     EXCPH_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -528,8 +529,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01_SP
- DW_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on electronic energy differences
- FAN_deltaE_treshold=1.E-6_SP/HA2EV  ! This is a cutoff on phonon energies
+ DW_deltaE_treshold=1.E-6_SP/HA2EV    ! This is a cutoff on electronic energy differences
+ FAN_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on phonon energies
  use_PH_DbGd=.FALSE.
  EkplusQ_mode='interp' ! E(k+q) energies (interp | dftp )
  gkkp_db='gkkp'        ! gkkp_db ( gkkp | gkkp_expanded | genFroh )
@@ -542,6 +543,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  EXCPH_kind_name='PALEARI'
  EXCPH_sum=(/1,1/)
  L_damping=0.0005/HA2EV ! set to 0.5 meV
+ EXCPH_deltaE_treshold=1.E-6_SP/HA2EV ! This is a cutoff for denominator in the exc-ph spectra
  EXC_q0=(/0.0,0.0,0.0/)
  alphaQ=rZERO
  !

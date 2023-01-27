@@ -458,7 +458,7 @@ subroutine INIT_activate()
  if (l_EXCPH_lifetime) call initactivate(1,'BoseTemp ElPhModes EXCTemp NoMatrxEl')
  if (l_EXCPH_optics)  then
    call initactivate(1,'EXCTemp AlphaQ PLqres DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
-   call initactivate(1,'DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
+   call initactivate(1,'EXCPHdEtresh DbGdOnlyPh DbGdWEIGHTs NoMatrxEl EnRngeXd DmRngeXd ETStpsXd')
  endif
  !
 #endif

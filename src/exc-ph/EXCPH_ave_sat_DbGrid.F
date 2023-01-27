@@ -27,7 +27,7 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
  use pars,           ONLY:SP,cZERO,rZERO,cI
  use R_lattice,      ONLY:bz_samp
  use ELPH,           ONLY:elph_branches,FAN_deltaE_treshold,Q_io_map,PH_freqs,PH_freqs_sq
- use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs, &
+ use EXCPH,          ONLY:BS_Sat_E,BS_Sat_E_PH_abs,BS_Sat_WEIGHT,BS_Sat_WEIGHT_PH_abs,EXCPH_deltaE_treshold, &
 &                         BS_E_in,EXCPH_Gkkp_sq,EXCPH_sum,EXCPH_states,L_damping,EXC_E_DbGd
  !
 #include<memory.h>
@@ -81,12 +81,12 @@ subroutine EXCPH_ave_sat_DbGrid(iq_bz,q)
          !
          E_beta  =EXC_E_DbGd(i_beta,iq_fg)
          !
-         if(abs(E_beta-E_alpha+ph_E)>FAN_deltaE_treshold) then
+         if(abs(E_beta-E_alpha+ph_E)>EXCPH_deltaE_treshold) then
            W_DG        =W_DG + 1._SP/(E_beta-E_alpha+ph_E+cI*L_damping)
            weight_dbgd =weight_dbgd+1._SP
          endif
          !  
-         if(abs(E_beta-E_alpha-ph_E)>FAN_deltaE_treshold) then
+         if(abs(E_beta-E_alpha-ph_E)>EXCPH_deltaE_treshold) then
            W_DG_PH_abs        =W_DG_PH_abs       + 1._SP/(E_beta-E_alpha-ph_E+cI*L_damping)
            weight_dbgd_PH_abs =weight_dbgd_PH_abs+1._SP
          endif

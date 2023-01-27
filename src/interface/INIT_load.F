@@ -108,7 +108,8 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
- use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,EXCPH_kind_name,alphaQ
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
+&                        EXCPH_deltaE_treshold
  use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
@@ -678,6 +679,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
  call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
+ call it(defs,'EXCPHdEtresh','[ELPH] Energy treshold for exc-ph denominator',EXCPH_deltaE_treshold,unit=E_unit)
  !
  ! GPL_EXCLUDE_START
  !

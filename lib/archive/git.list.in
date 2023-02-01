@@ -3,3 +3,6 @@
 #
 git_Ydriver=git@github.com:yambo-code/Ydriver.git
 branch_Ydriver=@with_ydriver_branch@
+#
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
+branch_devxlib=@with_devxlib_branch@

@@ -69,7 +69,7 @@
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS@ 
 #                 @SLEPC_INCS@ 
 #
-# > OTHERs
+# > OTHERs: @DEVXLIB_info@
 #
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS@
 #                 @LIBXC_INCS@

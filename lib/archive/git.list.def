@@ -2,4 +2,7 @@
 # GIT's repositories and branches
 #
 git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
-branch_Ydriver=devel-gpuhack21
+branch_Ydriver=none
+#
+git_devxlib=git@gitlab.com:max-centre/components/devicexlib.git
+branch_devxlib=none

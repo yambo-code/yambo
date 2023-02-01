@@ -6,8 +6,7 @@ ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
 else
- git_Ydriver=git@github.com:yambo-code/Ydriver.git
- branch_Ydriver=none
+  include ./git.list.def
 endif
 #
 WGETFLAGS=--no-check-certificate -v
@@ -18,6 +17,8 @@ all: $(EXT_LIBS)
 #
 Ydriver:
 	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
+devxlib:
+	@+URL="$(url_devxlib)" ;  GBRANCH="$(branch_devxlib)" ;  GIT="$(git_devxlib)"; LIB="$(pkgname_devxlib)" ; $(call getsrc_git,"devxlib")
 #
 # Libraries (archives)
 #
@@ -53,8 +54,6 @@ fftw:
 	@+URL="$(url_fftw)"     ; LIB="$(pkgname_fftw)"; $(getsrc)
 fftqe:
 	@+URL="$(url_fftqe)"    ; LIB="$(pkgname_fftqe)"; $(getsrc)
-devxlib:
-	@+URL="$(url_devxlib)"  ; LIB="$(pkgname_devxlib)"; $(getsrc)
 #
 # cleaning
 #
@@ -92,7 +91,7 @@ clean_tgz:
 #
 define getsrc
  if test ! -s $$LIB".tar.gz" ; then \
-  echo "\t[$$LIB] download";\
+  echo "\t[$$LIB] download $$LIB.tar.gz";\
   if ! test -d  ../../log; then mkdir ../../log; fi; \
   if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
    wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL > ../../log/download_$$LIB.log 2>&1; \
@@ -122,23 +121,18 @@ define getsrc_git
   fi ; \
  else \
   if test ! -s $$LIB".tar.gz" ; then \
-   echo "\t[$(1)] download $$LIB.tar.gz";\
+   echo "\t[$$LIB] download $$LIB.tar.gz";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
     curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    fi ; \
+   if test ! -s $$LIB".tar.gz" ; then \
+    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
+    echo "*** if you have direct access to the internet." ; \
+    echo "*** If not, copy $$LIB".tar.gz" into extlibs/archive/" ; \
+   fi; \
   fi ; \
- fi
-endef
-#
-define link_it
- if ! test -d $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
- if test -s $$LIB".tar.gz" ; then \
-  if ! test -d  ../$(1); then mkdir ../$(1); fi; \
-  cd ../$(1); \
-  gunzip < ../archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-  cd ../archive; \
  fi
 endef
 #
@@ -158,16 +152,3 @@ define copy_driver
    cp -R $(srcdir)/lib/yambo/$(1) $(compdir)/lib/yambo/$(1); \
  fi
 endef
-
-  #  if test ! -s $$TARBALL ; then \
-  #    echo "*** Unable to download $$LIB. Test whether curl or wget is installed and working," ; \
-  #    echo "*** if you have direct access to the internet." ; \
-  #    echo "*** If not, copy $$TARBALL into extlibs/archive/" ; \
-  #  else \
-  #    cp $$TARBALL ../$$LIBNAME ; \
-  #    cd ../$$LIBNAME ; \
-  #  	gunzip < $$TARBALL | ../../config/missing --run tar xf - ; \
-	#    touch uncompress-stamp ; \
-	#    cd ../archive ; \
-  #  fi \
-

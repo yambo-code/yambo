@@ -23,7 +23,7 @@
 
 */
 #include <stdio.h>
-#include <kind.h>
+#include <ykind.h>
 
 void options_projects(struct options_struct options[],int *i_opt)
 {

@@ -36,9 +36,14 @@ AC_ARG_WITH(devxlib_libdir, [AS_HELP_STRING([--with-devxlib-libdir=<path>],
 AC_ARG_WITH(devxlib_includedir, [AS_HELP_STRING([--with-devxlib-includedir=<path>], 
             [Path to the devxlib include directory],[32])])
 
+AC_ARG_WITH(devxlib-branch,[AS_HELP_STRING([--with-devxlib-branch=<branch>],[Use the <branch> of the devxlib repository.],[32])],,[with_devxlib_branch=none])
+
+
 acx_devxlib_ok="no"
 internal_devxlib="no"
 compile_devxlib="no"
+
+DEVXLIB_info=""
 
 if test -d "$with_devxlib_path"; then
    devxlib_incdir="$with_devxlib_path/include"
@@ -131,6 +136,11 @@ if test x"$acx_devxlib_ok" = xno; then
     compile_devxlib="no"
     AC_MSG_RESULT([Compatible external DevXlib not found/specified. Found internal already compiled.])
   else
+    if test x"$with_devxlib_branch" = "xnone"; then
+      DEVXLIB_info="(devxlib tarball)"
+    else
+      DEVXLIB_info="(devxlib $with_devxlib_branch branch)"
+    fi
     compile_devxlib="yes"
     AC_MSG_RESULT([Compatible external DevXlib not found/specified. Internal to be compiled.])
   fi
@@ -142,6 +152,9 @@ AC_SUBST(DEVXLIB_LIBS)
 AC_SUBST(DEVXLIB_INCS)
 AC_SUBST(compile_devxlib)
 AC_SUBST(internal_devxlib)
+
+AC_SUBST(DEVXLIB_info)
+AC_SUBST(with_devxlib_branch)
 
 
 ])

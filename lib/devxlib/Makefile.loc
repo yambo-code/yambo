@@ -11,6 +11,7 @@ LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}/${gpu_support}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
 #
 PACKAGE=$(pkgname_devxlib)
+TARBALL=$(tarball_devxlib)
 #
 include ../config/external_libs_commons.mk
 include ../config/external_libs_defs.mk
@@ -30,7 +31,10 @@ CONFFLAGS=--prefix=$(LIBPATH) $(devxlib_flgs) \
 all: $(LIBRARY)
 #
 uncompress:
-	@$(uncompress)
+	@if test -e ../archive/$(TARBALL)  && ! test -e $(PACKAGE) ; then (gunzip < ../archive/$(TARBALL) | ../../config/missing --run tar xf -); fi
+	@if test -d ../archive/devxlib-src && ! test -e $(PACKAGE) ; then (ln -s ../archive/devxlib-src ./$(PACKAGE)); fi
+	@if ! test -f Makefile ; then (cp Makefile.loc Makefile); fi
+	@touch uncompressed.stamp
 
 configure: uncompress
 	@$(configure)

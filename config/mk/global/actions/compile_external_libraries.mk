@@ -1,5 +1,6 @@
 #
 # BLACS& SLK : Parallel compilation of blacs and scalapack fails
+# DEVXLIB: Parallel compilation fails
 # SLEPC&PETSC: The internal build system of petsc and slepc already compiles the two libraries in parallel.
 #
 # Thus for these libraries the instruction to build in parallel (@+if) is not used
@@ -9,7 +10,7 @@ libxc:
 lapack: 
 	@+if test "$(do_lapack)" = yes ; then LIBS="lapack" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) lapack-dl; $(mk_external_lib); fi
 devxlib: 
-	@+if test "$(do_devxlib)" = yes ; then LIBS="devxlib" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) devxlib-dl; $(mk_external_lib); fi
+	@if test "$(do_devxlib)" = yes ; then LIBS="devxlib" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) devxlib-dl; $(mk_external_lib); fi
 fftw: 
 	@+if test "$(do_fftw)" = yes ; then LIBS="fftw" ; BASE="lib" ; $(MAKE) $(MAKEFLAGS) fftw-dl; $(mk_external_lib); fi
 fftqe: 

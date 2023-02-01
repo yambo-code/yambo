@@ -261,7 +261,7 @@ subroutine K_Transitions_setup(mode,iq,Ken,Xk,Dip)
                end if
                !
                ! To be fixed
-               if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,1) =f_eh_PL
+               if (l_BS_photolum) BS_T_grp(i_T_group_now)%f_PL(i_T_in_the_grp,i_res_ares) =f_eh_PL
                !
                BS_T_grp(i_T_group_now)%f_RES(i_T_in_the_grp)=f_eh_RES
                !

@@ -35,7 +35,7 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  use parallel_int,   ONLY:PP_redux_wait,PARALLEL_index 
  use LIVE_t,         ONLY:live_timing
  use X_m,            ONLY:global_gauge
- use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f,BS_mat,BSS_n_eig
+ use BS_solvers,     ONLY:BSS_dipoles_opt,BSS_eh_E,BSS_eh_Z,BSS_eh_f_RES,BS_mat,BSS_n_eig
  use BS,             ONLY:BS_K_dim
  !
  implicit none
@@ -59,8 +59,9 @@ subroutine K_diago_hermitian_residuals(i_BS_mat,BS_E_real,BS_R_left,BS_R_right)
  BS_R_right=cZERO
  call live_timing('EPS R residuals',px%n_of_elements(myid+1))
  !
- tmp_res = BSS_dipoles_opt(1,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f(i_range(1):i_range(2)),kind=SP))
+ tmp_res = BSS_dipoles_opt(1,i_range(1):i_range(2))*sqrt(cmplx(BSS_eh_f_RES(i_range(1):i_range(2)),kind=SP))
  !
+ ! DS. Note. Velocity gauge fixing does not work if neq occupations are loaded. Not sure why.
  if (trim(global_gauge)=="velocity") tmp_res =tmp_res/BSS_eh_E(i_range(1):i_range(2))
  if (allocated(BSS_eh_Z))            tmp_res =tmp_res*sqrt(BSS_eh_Z(i_range(1):i_range(2)))
  !

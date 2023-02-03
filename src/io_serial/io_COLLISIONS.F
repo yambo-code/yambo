@@ -22,6 +22,7 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 #if defined _SC || _RT || _QED
+!
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  use pars,          ONLY:schlen,IP,SP
@@ -251,4 +252,5 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  call timing('io_COLLISIONS',OPR='stop')
  !
 end function io_COLLISIONS
+!
 #endif

@@ -28,15 +28,17 @@ sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
 # Locks -> string
 #
 lock_string=""
-save_dir=""
+save_dir="objects"
 for lock in $sorted_locks
 do
  lock=`echo $lock | sed "s/.lock//"`
  lock=`basename $lock`
  lock_string="${lock} ${lock_string}"
- save_dir="${lock}_${save_dir}"
+ if test -f "$dir/${lock}_project.dep"; then
+   save_dir="${lock}_${save_dir}"
+ fi
 done
-if [[ -z $save_dir ]] ; then
+if [[ -z $lock_string ]] ; then
  return
 fi
 save_dir="${save_dir}.save"
@@ -44,12 +46,14 @@ save_dir="${save_dir}.save"
 # -D* -> string
 #
 flag_string=""
-restore_dir=""
+restore_dir="objects"
 for flag in $sorted_precomps
 do
  flag=`echo $flag | sed "s/\-D_//"`
  flag_string="${flag} ${flag_string}"
- restore_dir="${flag}_${restore_dir}"
+ if test -f "$dir/${flag}_project.dep"; then
+   restore_dir="${flag}_${restore_dir}"
+ fi
 done
 restore_dir="${restore_dir}.save"
 #
@@ -94,6 +98,11 @@ do
    if [[ "$refs" == *"$file"* ]]; then
     if [ "$VERB" == 1 ] ; then echo "$step preparing $file"; fi
     DIR_is_to_recompile=1
+    if [ "$lock" == "DOUBLE" ]; then
+      obj=$file
+      source ./sbin/compilation/object_remove.sh "remove" "locks"
+      continue;
+    fi
     obj=$file
     source ./sbin/compilation/check_object_childs.sh "locks"
    fi

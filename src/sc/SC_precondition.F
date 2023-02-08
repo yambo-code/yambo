@@ -46,8 +46,8 @@ subroutine SC_precondition(delta_rho)
  !
  ! Define Qtf 
  !
- rs = (3.*DL_vol/4./pi/nel)**(1./3.)
- qtf2 = (12/pi)**(2./3.)/rs 
+ rs = (3._SP*DL_vol/4./pi/nel)**(1._SP/3._SP)
+ qtf2 = (12._SP/pi)**(2._SP/3._SP)/rs
  !
  ! FFT call: delta_rho in reciprocal space
  !
@@ -58,8 +58,8 @@ subroutine SC_precondition(delta_rho)
  call fft_3d(D_rho_G,fft_dim,-1)
 #endif
  !
- D_rho_G(fft_g_table(2:wf_ng,1))=D_rho_G(fft_g_table(2:wf_ng,1))*bare_qpg(1,2:wf_ng)**2./(bare_qpg(1,2:wf_ng)**2.+qTF2)
- D_rho_G(1) = (0.,0.)
+ D_rho_G(fft_g_table(2:wf_ng,1))=D_rho_G(fft_g_table(2:wf_ng,1))*bare_qpg(1,2:wf_ng)**2/(bare_qpg(1,2:wf_ng)**2+qTF2)
+ D_rho_G(1) = (0._DP,0._DP)
  !
  ! FFT call: delta_rho in direct space
  !
@@ -72,6 +72,6 @@ subroutine SC_precondition(delta_rho)
  !
  fftw_plan = 0
  !
- delta_rho = real(D_rho_G)/fft_size
+ delta_rho = real(D_rho_G,SP)/fft_size
  !
 end subroutine SC_precondition

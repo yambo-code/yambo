@@ -25,6 +25,15 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,c
  !
  ! Electronic density (and current).
  !
+ ! When defining the density there are two possible conventions.
+ ! a) "physical density", rho(r)=rho_phys(r) is independent on the fft_size
+ ! b) "computationally convenient density": rho(r)=rho_comp(r) is such that $sum_i rho(r_i) = n_{el}$
+ !
+ ! The difference is that "rho comp" includes the "dr" factor which is obtained from the conversion of the integral into a sum.
+ ! $\int dr rho(r) --> \sum_i V/fft_size rho(r_i) = \sum_i rho_comp(r_i)$
+ !
+ ! In yambo rho=rho_comp. The libxc_library for example usese rho=rho_phys and in XC_libxc_driver.F there is a $dr$ conversion factor.
+ !
  ! Note that here the identity
  !
  ! \sum_{S_k} F(S_k r) = 1/R_k \sum_{S} F(S r) (1)

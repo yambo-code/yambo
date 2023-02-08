@@ -163,9 +163,11 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  do i1=1,fft_size
    do i2=1,n_spin
      spin_rho_DP(i2,i1)=real(spin_rho_SP(i1,i2),DP)*real(fft_size,DP)/real(DL_vol,DP)
+     ! DEBUG <
      ! This was needed for absorption using old libxc
      ! Keeping it with magnons gives numberical noise
      !if (spin_rho_DP(i2,i1)<1.E-10_DP) spin_rho_DP(i2,i1)=0._DP
+     ! DEBUG >
    enddo
  enddo
  !

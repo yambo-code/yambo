@@ -71,16 +71,17 @@ subroutine K_observables( )
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif
- if (l_BS_photolum) then
-   !l_BS_trace  = .true.
-   global_gauge="velocity"
- endif
+ if (l_BS_photolum) global_gauge="velocity"
  if ((l_BS_photolum.or.l_BS_kerr).and.l_BS_trace) then
    call warning(" Trace not compatible with kerr or pl. Switching it off")
    l_BS_trace  = .false.
  endif
- if (l_BS_trace.or.l_BS_dichroism) BS_dip_size = 3
+ if (l_BS_dichroism.and..not.l_BS_trace) then
+   call warning(" Trace is automatically switched of with dichroism")
+   l_BS_trace=.true.
+ endif
  !
+ if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum

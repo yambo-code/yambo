@@ -26,6 +26,11 @@ subroutine V_Hartree(rho,vhr)
  !  Hartree potential (vhr)
  !  sum_G 4pi*rho(G)/|G|**2.  with G!=0, for G=0 vhr(0)=0 
  !
+ ! V_H(r) is define as the "physical hartree potential".
+ ! The density in yambo rho_y is instead the "computationally more convenient" (See comment in src/xc_functionals/el_density_and_current.F)
+ ! This means, V_H(r) should be constructed from rho_y(r)*fft_size/V
+ ! This explains the 1/V factor (DL_vol) in V_Hartree and the missing 1/fft_size after the Fourier transform compared to other subroutines
+ !
  use pars,          ONLY:pi,SP,DP
  use electrons,     ONLY:n_spin
  use R_lattice,     ONLY:bare_qpg
@@ -59,8 +64,6 @@ subroutine V_Hartree(rho,vhr)
 #else
  call fft_3d(rhog,fft_dim,-1)
 #endif
- ! 
- vhg(2:QP_ng_SH)=((4._DP*pi/DL_vol)*(rhog(fft_g_table(2:QP_ng_SH,1))))/bare_qpg(1,2:QP_ng_SH)**2
  !
  !$omp parallel do default(shared), private(ig)
  do ig=2,QP_ng_SH

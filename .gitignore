@@ -30,7 +30,8 @@ lib/archive/git.list
 *.a
 *.so
 *.mod
-*.dep
+*modules.dep
+*.save
 *.f90
 *.s
 *.sw*

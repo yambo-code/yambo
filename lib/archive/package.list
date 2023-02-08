@@ -25,7 +25,7 @@ keep_hdf5=no
 #
 # package versions
 #
-version_Ydriver=1.1.0
+version_Ydriver=1.2.0
 version_iotk=y1.2.2
 version_netcdf=4.9.0
 version_netcdff=4.6.0
@@ -65,7 +65,7 @@ pkgname_futile=futile-yambo
 #
 # tarball names
 #
-tarball_Ydriver=$(pkgname_Ydriver).tar.gz
+tarball_Ydriver=$(version_Ydriver).tar.gz
 tarball_iotk=$(pkgname_iotk).tar.gz
 tarball_netcdf=v$(version_netcdf).tar.gz
 tarball_netcdff=v$(version_netcdff).tar.gz
@@ -85,6 +85,7 @@ tarball_futile=$(pkgname_futile).tar.gz
 #
 # External URL's on Github
 #
+url_Ydriver=https://github.com/yambo-code/Ydriver/archive/refs/tags/$(tarball_Ydriver)
 url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
 url_lapack=https://github.com/Reference-LAPACK/lapack/archive/refs/tags/$(tarball_lapack)
 url_scalapack=https://github.com/Reference-ScaLAPACK/scalapack/archive/refs/tags/$(tarball_scalapack)
@@ -108,7 +109,6 @@ url_libxc=https://www.tddft.org/programs/libxc/down/$(version_libxc)/$(tarball_l
 #
 url_base=https://github.com/yambo-code/yambo-libraries/raw/master/external/
 #
-url_Ydriver=$(url_base)/$(tarball_Ydriver)
 url_pnetcdf=$(url_base)/$(tarball_pnetcdf)
 url_iotk=$(url_base)/$(tarball_iotk)
 url_etsf_io=$(url_base)/$(tarball_etsf_io)

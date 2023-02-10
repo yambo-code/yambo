@@ -55,11 +55,13 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
- logical  :: l_keep_deg
+ logical  :: l_keep_deg,l_extend_output
  real(SP) :: ExcPhM,EXC_life_average
+ real(SP) , allocatable :: EXC_life_of_q(:,:)
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
+ call parser('ExtendOutput', l_extend_output)
  !
  call section('*','EXCPH-LifTime')
  !
@@ -75,6 +77,10 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Allocations 
  !
  call RESIDUALS_and_EIGENVALUES_alloc(q)
+ if (l_extend_output) then
+   allocate(EXC_life_of_q(EXCPH_states(1):EXCPH_states(2),q%nbz))
+   EXC_life_of_q=rZERO
+ endif
  !
  ! Load excitonic energies 
  !
@@ -143,8 +149,14 @@ subroutine EXCPH_lifetime(k,q,X)
          !
          if(use_PH_DbGd) then
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
+           if (l_extend_output) then
+             EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*DbGrid_pole()
+           endif
          else
            EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
+           if (l_extend_output) then
+             EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Simple_pole()
+           endif
            ! DS Debug <
            ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
            ! DS Debug >
@@ -172,15 +184,21 @@ subroutine EXCPH_lifetime(k,q,X)
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
+ if (l_extend_output) EXC_life_of_q=EXC_life_of_q*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !
  call print_and_write()
+ ! Here I need to create a netCDF database... che palle
+ !if (l_extend_output) call extended_print_and_write()
  !
  ! Deallocations
  !
  YAMBO_FREE(EXC_LifeTime)
  call RESIDUALS_and_EIGENVALUES_free()
+ if (l_extend_output) then
+   deallocate(EXC_life_of_q)
+ endif
  !
  contains
   !
@@ -208,10 +226,11 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
     !
-    ! if(iq_db==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-    ! if(iq_db==1.and.i_alpha==i_beta) return
-    !
-    if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
+    if(iq_db==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+    ! even if keeping deg states, still remove the one where i_alpha=i_beta
+    if(iq_db==1.and.i_alpha==i_beta .and. l_keep_deg) return
+    ! [FP] This removes resonances, I think it is not correct
+    !if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
     !
     N_bose  =bose_f(ph_E)
     !

@@ -75,8 +75,8 @@ module electrons
  !--------
  type levels
    !
-   integer         :: nb
-   integer         :: nk
+   integer         :: nb                 ! Number of bands
+   integer         :: nk                 ! Numbef of k-points
    integer         :: nbf(2)             ! 1-2 refers to spin polarizations
    integer         :: nbm(2)
    integer         :: nbc(2)             ! Number of bands with NEQ carriers for yambo_rt

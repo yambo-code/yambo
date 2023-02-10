@@ -34,7 +34,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,&
+ use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
 &                        qindx_X,qindx_B_max,qindx_B_load,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
@@ -220,6 +220,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_PL_free( )
    !
    YAMBO_FREE(BS_W)
+   YAMBO_FREE(RIM_W)
    !
    return
    !
@@ -685,6 +686,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  YAMBO_FREE(BS_W)
+ YAMBO_FREE(RIM_W)
  call WF_free(WF)
  !
  call timing('X T_space Kernel',OPR='stop')

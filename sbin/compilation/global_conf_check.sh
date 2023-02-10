@@ -28,18 +28,14 @@ sorted_locks=$(echo "$lock_files"|tr " " "\n"|sort|uniq|tr "\n" " ")
 # Locks -> string
 #
 lock_string=""
-single_save_dir=""
-double_save_dir=""
+save_dir=""
 for lock in $sorted_locks
 do
  lock=`echo $lock | sed "s/.lock//"`
  lock=`basename $lock`
  lock_string="${lock} ${lock_string}"
- if [ $lock = "DOUBLE" ]; then continue; fi
- single_save_dir="${lock}_${single_save_dir}"
+ save_dir="${lock}_${single_save_dir}"
 done
-double_save_dir="DOUBLE_${single_save_dir}.save"
-single_save_dir="SINGLE_${single_save_dir}.save"
 #
 # -D* -> string
 #
@@ -66,102 +62,23 @@ fi
 missing=`comm -23 <(tr ' ' $'\n' <<< $lock_string | sort) <(tr ' ' $'\n' <<< $flag_string | sort)`
 new=`comm -23 <(tr ' ' $'\n' <<< $flag_string | sort) <(tr ' ' $'\n' <<< $lock_string | sort)`
 #
-SRC_IS_DOUBLE="no"
-COMPILATION_IS_DOUBLE="no"
-#
 for lock in $missing
 do
- if [ $lock == "DOUBLE" ]; then
-   SRC_IS_DOUBLE="yes"
- else
-  echo -e "\n Global compilation $flag is not in the new configure setup."
-  echo -e " Use "
-  echo -e "  >make clean_all "
-  echo -e " and restart the configuration procedure."
-  echo -e " Compilation aborted.\n"
-  exit 1
- fi
+ echo -e "\n Global compilation $flag is not in the new configure setup."
+ echo -e " Use "
+ echo -e "  >make clean_all "
+ echo -e " and restart the configuration procedure."
+ echo -e " Compilation aborted.\n"
+ exit 1
 done
 #
 for lock in $new
 do
- if [ $lock == "DOUBLE" ]; then
-   COMPILATION_IS_DOUBLE="yes"
- else
-  echo -e "\n New global compilation $flag is not in the existing configure setup."
-  echo -e " Use "
-  echo -e "  >make clean_all "
-  echo -e " and restart the configuration procedure."
-  echo -e " Compilation aborted.\n"
-  exit 1
- fi
+ echo -e "\n New global compilation $flag is not in the existing configure setup."
+ echo -e " Use "
+ echo -e "  >make clean_all "
+ echo -e " and restart the configuration procedure."
+ echo -e " Compilation aborted.\n"
+ exit 1
 done
-#
-candidates=`find $dir -type f  -name 'objects.mk'`
-candidates+=" include/pars.mod"
-#
-# NEW source is in DOUBLE => SAVE the current state 
-#
-if [ $COMPILATION_IS_DOUBLE == "yes" ]; then
- echo -e "\t[DOUBLE compilation] Saving the current SINGLE source state"
- if test -d $dir/${double_save_dir} ; then
-  echo -e "\t[SINGLE compilation] Restoring the previous DOUBLE compiled source"
- fi
- for file in $candidates
- do
-   dir=`dirname $file`
-   lib=`basename $dir`
-   mkdir -p $dir/${single_save_dir}
-   files_to_move=`find $dir  -maxdepth 1  -type f -name "*.o" -o -name "*.mod"` 
-   N=`echo $files_to_move |wc -w`
-   for el in $files_to_move
-   do
-     mv $el $dir/${single_save_dir}
-   done
-   rm -f $compdir/config/stamps_and_lists/lib${lib}.a.stamp
-   rm -f $compdir/config/stamps_and_lists/lib_ypp_${lib}.a.stamp
-   rm -f $compdir/config/stamps_and_lists/lib_Ydriver_${lib}.a.stamp
-   touch $compdir/config/stamps_and_lists/DOUBLE.lock
-   if test -d $dir/${double_save_dir} ; then
-    files_to_move=`find $dir/${double_save_dir} -type f -name "*.o" -o -name "*.mod"` 
-    for el in $files_to_move
-    do
-      mv $el $dir
-    done
-    rmdir $dir/${double_save_dir}
-   fi
- done
-fi
-#
-# OLD source is in DOUBLE => SAVE the current state 
-#
-if [ $SRC_IS_DOUBLE == "yes" ]; then
- echo -e "\t[SINGLE compilation] Saving the current DOUBLE source state"
- if test -d $dir/${single_save_dir} ; then
-  echo -e "\t[SINGLE compilation] Restoring the previous SINGLE compiled source"
- fi
- for file in $candidates
- do
-   dir=`dirname $file`
-   lib=`basename $dir`
-   mkdir -p $dir/${double_save_dir}
-   files_to_move=`find $dir -maxdepth 1 -type f  -name "*.o" -o -name "*.mod"` 
-   for el in $files_to_move
-   do
-     mv $el $dir/${double_save_dir}
-   done
-   rm -f $compdir/config/stamps_and_lists/lib${lib}.a.stamp
-   rm -f $compdir/config/stamps_and_lists/lib_ypp_${lib}.a.stamp
-   rm -f $compdir/config/stamps_and_lists/lib_Ydriver_${lib}.a.stamp
-   rm -f $compdir/config/stamps_and_lists/DOUBLE.lock
-   if test -d $dir/${single_save_dir} ; then
-    files_to_move=`find $dir/${single_save_dir} -type f -name "*.o" -o -name "*.mod"` 
-    for el in $files_to_move
-    do
-      mv $el $dir
-    done
-    rmdir $dir/${single_save_dir}
-   fi
- done
-fi
 #

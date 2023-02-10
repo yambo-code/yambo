@@ -39,7 +39,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use parallel_int,  ONLY:PARALLEL_index
  use ELPH,          ONLY:FAN_deltaE_treshold,elph_branches
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
- use stderr,        ONLY:STRING_same
+ use stderr,        ONLY:STRING_same,intc
  !
 #include<memory.h> 
  !
@@ -157,7 +157,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !  ph_ass_dos(w) = \sum_{Q,l,n} Bose(E^exc_{l,Q}, T) * Bose(w_{n,q}, T) \delta { E^exc_{l,Q} - w_{n,q} - w } \delta {Q,q}
  !
  if(elph_branches(1)<=0) elph_branches(1)=1
- if(elph_branches(1)>ph_modes) call error('Max number of phonon modes ',ph_modes)
+ if(elph_branches(1)>ph_modes) call error('Max number of phonon modes '//trim(intc(ph_modes)))
  if(elph_branches(2)==-1) elph_branches(2)=ph_modes
  !
  do i_idx=1,n_full_q

@@ -21,6 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+#if defined _NL
 integer function variables_NL(ID)
  !
  use units,         ONLY:AUT2FS, HA2EV, AU2KWCMm2
@@ -139,3 +140,4 @@ integer function variables_NL(ID)
  variables_NL=io_status(ID)
  !
 end function
+#endif

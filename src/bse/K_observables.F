@@ -26,6 +26,8 @@ subroutine K_observables( )
 #if defined _SLEPC && !defined _NL
  use BS_solvers,   ONLY:run_Slepc
 #endif
+ use drivers,      ONLY:l_rpa_IP
+ use X_m,          ONLY:global_gauge
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
@@ -68,8 +70,9 @@ subroutine K_observables( )
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif
- if (l_BS_photolum) l_BS_trace  = .false.
+ if (l_BS_photolum) global_gauge="velocity"
  if (l_BS_trace   ) BS_dip_size = 3
+ if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !

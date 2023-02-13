@@ -53,7 +53,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
     for file in *.o_to_remove; do
       deps_rm="$deps_rm ${file/_to_remove/}"
     done
-    for mod in *.o_to_remove; do
+    for mod in *.mod_to_remove; do
       deps_rm="$deps_rm ${mod/_to_remove/}"
     done
     cd $path_back

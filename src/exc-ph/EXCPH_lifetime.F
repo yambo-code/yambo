@@ -190,7 +190,10 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  call print_and_write()
  ! Here I need to create some specialised output... check those for exciton interpolation
- !if (l_extend_output) call extended_print_and_write()
+ if (l_extend_output) then
+   call print_LifeTimes_of_q()
+   !call print_LifeTime_resonances()
+ endif
  !
  ! Deallocations
  !
@@ -350,7 +353,7 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     use vec_operate,   ONLY:iku_v_norm
     use com,           ONLY:of_open_close
-    use YPPm,          ONLY:K_transform
+    !use YPPm,          ONLY:K_transform
     !
     implicit none
     !
@@ -380,7 +383,7 @@ subroutine EXCPH_lifetime(k,q,X)
       !
       tmp_q = q%pt(iq,:3)
       !
-      call K_transform(tmp_q,'iku')
+      !call K_transform(tmp_q,'iku')
       values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq)**HA2EV*1000._SP
       values(n_exc_in+2:n_exc_in+4)=tmp_q
       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)

@@ -189,7 +189,7 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Print output and write on file
  !
  call print_and_write()
- ! Here I need to create a netCDF database... che palle
+ ! Here I need to create some specialised output... check those for exciton interpolation
  !if (l_extend_output) call extended_print_and_write()
  !
  ! Deallocations
@@ -344,5 +344,82 @@ subroutine EXCPH_lifetime(k,q,X)
     call OUTPUT_driver(what,action="close")
     !
   end subroutine 
+  !
+  subroutine print_LifeTimes_of_q()
+    ! print q-map of lifetimes for each exc_in state for q-space plot
+    !
+    use vec_operate,   ONLY:iku_v_norm
+    use com,           ONLY:of_open_close
+    use YPPm,          ONLY:K_transform
+    !
+    implicit none
+    !
+    character(schlen), allocatable :: headings(:)
+    character(schlen)              :: file_name
+    real(SP), allocatable          :: values(:)
+    real(SP)                       :: tmp_q(3)
+    !
+    allocate(headings(n_exc_in+4))
+    YAMBO_ALLOC(values,(n_exc_in+4))
+    !
+    headings(1)=" |q| (a.u.) "
+    do i_alpha=EXCPH_states(1),EXCPH_states(2)
+      headings(i_alpha+1)=' e'//intc(i_alpha)
+    enddo
+    headings(n_exc_in+2:n_exc_in+4)=&
+&           (/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
+    !
+    file_name="LifeTimes_of_q"
+    call of_open_close(trim(file_name),'ot')
+    call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+    call msg('o '//trim(file_name),"#")
+    !
+    do iq=1,q%nbz
+      !
+      if (iq>1) values(1)=iku_v_norm(q%pt(iq,:3))
+      !
+      tmp_q = q%pt(iq,:3)
+      !
+      call K_transform(tmp_q,'iku')
+      values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq)**HA2EV*1000._SP
+      values(n_exc_in+2:n_exc_in+4)=tmp_q
+      call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+    enddo
+    call of_open_close(trim(file_name))
+    !
+  end subroutine print_LifeTimes_of_q
+  !
+!   subroutine print_LifeTime_resonances()
+!     ! Print resonance energies E_in - E_out(q) \pm E_ph(q) for
+!     ! each exc_in state for 2D plot 
+!     implicit none
+!     !
+!     headings(1)=" |q| (a.u.) "
+!     do i_c=1,EXCITONS_n_user_states
+!       i_l=EXCITONS_user_indexes(i_c)
+!       headings(i_c+1)=' e'//intc(i_l)
+!     enddo
+!     headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
+! &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
+!     !
+!     file_name="excitons_interpolated_IBZ"
+!     call of_open_close(trim(file_name),'ot')
+!     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+!     call msg('o '//trim(file_name),"#")
+!     !
+!     do iq=1,GRID_q%nibz
+!       !
+!       if (iq>1) values(1)=iku_v_norm(GRID_q%pt(iq,:3))
+!       !
+!       tmp_q = GRID_q%pt(iq,:3)
+!       !
+!       call K_transform(tmp_q,'iku')
+!       values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
+!       values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
+!       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+!     enddo
+!     call of_open_close(trim(file_name))
+!     !
+!   end subroutine print_LifeTime_resonances
   !
 end subroutine

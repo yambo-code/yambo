@@ -1480,7 +1480,7 @@ CONTAINS
       integer :: nbnd_, nkpts_, nspin_, ik, ndim
       integer :: nbnd_up_, nbnd_dw_
       logical :: lsda_, noncolin_, lfound
-      real(dbl) :: rvec(3)
+      real(dbl) :: rvec(3),fermi_energy_updw_(2)
       real(dbl), allocatable :: eig_(:), occ_(:)
       character(256) :: chval
       !
@@ -1560,10 +1560,19 @@ CONTAINS
          if (.not.lfound) homo_energy=-100000
       endif
       !
+      call iotk_scan_dat( iunit, "two_fermi_energies",fermi_energy_updw_, FOUND=lfound, IERR=ierr)
+      if ( lfound ) then
+	 chval=' two_fermi_energis. Action: run pwscf without fixed_magnetization.'
+	 if ( abs(fermi_energy_updw_(2)-fermi_energy_updw_(1)) > 1.E-5 ) then
+           call errore('qexsd_read_band_structure',chval,1)
+	 else
+           call warning('qexsd_read_band_structure:'//trim(chval))
+	 endif
+      endif
+      if (ierr/=0) return
       if (present(fermi_energy_updw)) then
-         call iotk_scan_dat( iunit, "two_fermi_energies", fermi_energy_updw, FOUND=lfound, IERR=ierr)
-         if (ierr/=0) return
-         if (.not.lfound) fermi_energy_updw=-100000
+        if (     lfound) fermi_energy_updw=fermi_energy_updw_
+        if (.not.lfound) fermi_energy_updw=-100000
       endif
       !
       if (present(nk) .or. present(sk)) then

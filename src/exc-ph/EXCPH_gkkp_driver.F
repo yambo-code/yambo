@@ -122,7 +122,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! and are consistent with the Lin and Lout specified in input
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1/),MODE=VERIFY,ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp)!,'all')
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  !
  if(io_err==0) return
  if(io_err/=0) call warning("[EXCPH] Exc-ph matrix elements not correct or missing. To be computed")
@@ -183,7 +183,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Write headers
  !
  call io_control(ACTION=OP_WR,SEC=(/1/),ID=ID_exc_gkkp)
- io_err=io_EXCPH_gkkp(ID_exc_gkkp)!,'all')
+ io_err=io_EXCPH_gkkp(ID_exc_gkkp)
  !
  ! Get q-point coordinates in the q-BZ
  YAMBO_ALLOC(EXCPH_q,(q%nbz,3))
@@ -231,7 +231,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      ! I/O
      !=====
      call io_control(ACTION=WR_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
-     io_err=io_EXCPH_gkkp(ID_exc_gkkp,"all")
+     io_err=io_EXCPH_gkkp(ID_exc_gkkp)
      !
    enddo
    !

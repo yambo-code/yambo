@@ -231,7 +231,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      ! I/O
      !=====
      call io_control(ACTION=WR_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
-     io_err=io_EXCPH_gkkp(ID_exc_gkkp)!,"all")
+     io_err=io_EXCPH_gkkp(ID_exc_gkkp)!,'all')
      !
    enddo
    !

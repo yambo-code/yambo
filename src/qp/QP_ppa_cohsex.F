@@ -282,7 +282,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
-       !$omp parallel do default(shared), private(ig1,ig2)
+       !$omp parallel do default(shared), private(ig1,ig2,l_RIM_W_g)
        do ig2=1,X%ng
          do ig1=1,X%ng
            if (l_ppa) then

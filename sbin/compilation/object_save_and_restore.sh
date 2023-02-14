@@ -53,7 +53,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
     for file in *.o_to_remove; do
       deps_rm="$deps_rm ${file/_to_remove/}"
     done
-    for mod in *.o_to_remove; do
+    for mod in *.mod_to_remove; do
       deps_rm="$deps_rm ${mod/_to_remove/}"
     done
     cd $path_back
@@ -79,7 +79,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
    cd $dir/$save_dir
    found=`ls *.o *.mod 2>/dev/null`
    cd $path_back
-   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort| uniq) <(tr ' ' $'\n' <<< $found | sort | uniq)`
    for file in $missing_files ; do
     if [ -f $dir/$file ] ; then cp $dir/$file $dir/$save_dir ; fi
     filef90=`echo $file | sed 's/.$/f90/'`

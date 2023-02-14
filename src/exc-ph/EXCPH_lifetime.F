@@ -59,7 +59,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg,l_extend_output
- real(SP) :: ExcPhM,EXC_life_average
+ real(SP) :: ExcPhM,EXC_life_average,Pole
  real(SP) , allocatable :: EXC_life_of_q(:,:)
  type(PP_indexes)::px
  !
@@ -168,20 +168,16 @@ subroutine EXCPH_lifetime(k,q,X)
          ExcPhM=EXCPH_Gkkp_sq(il,i_beta,i_alpha)
          if(l_no_matrix_elements) ExcPhM=1._SP 
          !
-         if(use_PH_DbGd) then
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
-           if (l_extend_output) then
-             EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*DbGrid_pole()
-           endif
-         else
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
-           if (l_extend_output) then
-             EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Simple_pole()
-           endif
-           ! DS Debug <
-           ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
-           ! DS Debug >
+         if(.not.use_PH_DbGd) Pole=Simple_pole()
+         if(use_PH_DbGd)      Pole=DbGrid_pole()
+         !
+         EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
+         if (l_extend_output) then
+           EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
          endif
+         ! DS Debug <
+         ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
+         ! DS Debug >
          !
        enddo
        !
@@ -213,12 +209,12 @@ subroutine EXCPH_lifetime(k,q,X)
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
- if (l_extend_output) EXC_life_of_q=EXC_life_of_q*2._SP*pi/real(q%nbz,SP)
+ !if (l_extend_output) EXC_life_of_q=EXC_life_of_q*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !
  call print_and_write()
- ! Here I need to create some specialised output... check those for exciton interpolation
+ !
  if (l_extend_output) then
    call print_LifeTimes_of_q()
    !call print_LifeTime_resonances()
@@ -380,6 +376,7 @@ subroutine EXCPH_lifetime(k,q,X)
   !
   subroutine print_LifeTimes_of_q()
     ! print q-map of lifetimes for each exc_in state for q-space plot
+    ! We print l(q)/sum_q l(q)
     !
     use vec_operate,   ONLY:iku_v_norm
     use com,           ONLY:of_open_close
@@ -394,10 +391,13 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     allocate(headings(n_exc_in+4))
     YAMBO_ALLOC(values,(n_exc_in+4))
+    values=rZERO
     !
     headings(1)=" |q| (a.u.) "
     do i_alpha=EXCPH_states(1),EXCPH_states(2)
       headings(i_alpha+1)=' e'//intc(i_alpha)
+      !
+      EXC_life_of_q(i_alpha,:)=EXC_life_of_q(i_alpha,:)/SUM(EXC_life_of_q(i_alpha,:))
     enddo
     headings(n_exc_in+2:n_exc_in+4)=&
 &           (/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
@@ -407,16 +407,22 @@ subroutine EXCPH_lifetime(k,q,X)
     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
     call msg('o '//trim(file_name),"#")
     !
-    do iq=1,q%nbz
+    do iq=1,q%nibz
+    do i_star=1,q%nstar(iq)
       !
-      if (iq>1) values(1)=iku_v_norm(q%ptbz(iq,:3))
+      iq_s=q%star(iq,i_star)
+      iq_bz = q%k_table(iq, iq_s)
       !
-      tmp_q = q%pt(iq,:3)
+      if (iq_bz>1) values(1)=iku_v_norm(q%ptbz(iq_bz,:3))
+      !
+      tmp_q = q%ptbz(iq_bz,:3)
       !
       !call K_transform(tmp_q,'iku')
-      values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq)**HA2EV*1000._SP
+      values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq_bz)
       values(n_exc_in+2:n_exc_in+4)=tmp_q
       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+      !
+    enddo
     enddo
     call of_open_close(trim(file_name))
     !

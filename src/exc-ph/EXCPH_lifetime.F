@@ -36,9 +36,9 @@ subroutine EXCPH_lifetime(k,q,X)
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
 &                         EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements, &
-&                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free 
+&                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free,alphaQ 
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
- use vec_operate,    ONLY:degeneration_finder
+ use vec_operate,    ONLY:degeneration_finder,iku_v_norm,iku_v_2D_norm
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
  !
@@ -86,6 +86,16 @@ subroutine EXCPH_lifetime(k,q,X)
    BS_all_E(:,iq)=real(BS_E(:)) ! I suppose the BSE eigenvalues are real
    !write(*,*) iq,BS_all_E(:,iq)
  enddo
+ !
+ if(alphaQ/=rZERO) then
+   !      
+   call msg('rs','Excitonic bands 2D stretching :',alphaQ)
+   !
+   do iq=1,q%nibz
+     BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_2D_norm(q%pt(iq,:3))
+   enddo
+   !
+ endif
  !
  ! Load the Exciton-phonon elements and phonon energies
  !

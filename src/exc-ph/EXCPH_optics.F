@@ -156,8 +156,11 @@ subroutine EXCPH_optics(E,k,q,X,wv)
  ! Band structure distortion
  !
  if(alphaQ/=rZERO) then
-   call msg('rs','Excitonic bands stretching :',alphaQ)
+   call msg('rs','Excitonic bands 2D stretching :',alphaQ)
    do iq=1,q%nibz
+      ! In a general case here we should use iku_v_norm
+      ! we modified to the iku_v_2D_norm for the AB-hBN case
+      ! one can restore the original one
       BS_all_E(:,iq)=BS_all_E(:,iq)+alphaQ*iku_v_2D_norm(q%pt(iq,:3))
    enddo
    if(use_PH_DbGd) then

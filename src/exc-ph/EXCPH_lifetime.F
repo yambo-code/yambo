@@ -41,6 +41,9 @@ subroutine EXCPH_lifetime(k,q,X)
  use vec_operate,    ONLY:degeneration_finder,iku_v_norm,iku_v_2D_norm
  use frequency,      ONLY:w_samp
  use stderr,         ONLY:intc
+ use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,  ONLY:PP_redux_wait,PARALLEL_index
+ use LIVE_t,        ONLY:live_timing
  !
 #include<memory.h>
  !
@@ -57,6 +60,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg
  real(SP) :: ExcPhM,EXC_life_average
+ type(PP_indexes)::px
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
@@ -126,11 +130,18 @@ subroutine EXCPH_lifetime(k,q,X)
  YAMBO_ALLOC(EXC_LifeTime,(EXCPH_states(1):EXCPH_states(2)))
  EXC_LifeTime=rZERO
  !
+ call PP_indexes_reset(px)
+ call PARALLEL_index(px,(/q%nbz/))
+ !
+ call live_timing('Lifetimes',px%n_of_elements(myid+1))
+ !
  do iq=1,q%nibz
  do i_star=1,q%nstar(iq)
    !
    iq_s=q%star(iq,i_star)
    iq_bz = q%k_table(iq, iq_s)
+   !
+   if (.not.px%element_1D(iq_bz)) cycle
    !
    call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
@@ -166,8 +177,16 @@ subroutine EXCPH_lifetime(k,q,X)
      !
    enddo
    !
+   call live_timing(steps=1)
+   !
  enddo
  enddo
+ !
+ call live_timing( )
+ !
+ call PP_redux_wait(EXC_LifeTime)
+ !
+ call PP_indexes_reset(px)
  !
  ! Perform average
  !

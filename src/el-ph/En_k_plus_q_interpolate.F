@@ -95,7 +95,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
    ! For metals occuations are recalculated
    ! using the Fine-grid fermi energy
    !
-   call f_build(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
+   call f_build_ext(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
  endif
  !
  ! Store E(k+q) energies in the GKKP

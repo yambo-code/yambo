@@ -101,7 +101,7 @@ subroutine excitons_bands(k,Xk,en,Xen,q)
    call INTERPOLATION_BZ(K=CIRCUIT_k,NK=CIRCUIT_k%nbz,R1D=BSE_interp_E,ID=ID_INTERP_EXC)
    !
    if(alphaQ/=rZERO) then
-     call msg('rs','Excitonic bands stretching :',alphaQ)
+     call msg('rs','Excitonic 2D bands stretching :',alphaQ)
       do iq=1,CIRCUIT_k%nibz
         BSE_interp_E(:,iq)=BSE_interp_E(:,iq)+alphaQ*iku_v_2D_norm(CIRCUIT_k%pt(iq,:3))
       enddo

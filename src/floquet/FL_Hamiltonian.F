@@ -47,7 +47,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
 &                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
-&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,l_Broyden_mixing
+&                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,l_Broyden_mixing,FL_FT_extra_M
  use global_XC,      ONLY:WF_xc_functional,WF_kind
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_m,     ONLY:master_cpu
@@ -87,6 +87,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  complex(SP)  :: FKS_Sigma(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  complex(SP)  :: FL_Sigma_time(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
  complex(SP)  :: FL_Sigma_prev(NL_bands(1):NL_bands(2),NL_bands(1):NL_bands(2),QP_nk,n_tot_extra_modes)
+ complex(SP)  :: CHECK_V_H_ij(n_tot_extra_modes)
  real(SP)     :: Time
  !
 #if defined _TIMING
@@ -117,6 +118,9 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          !
          !if (i_t == 1) print*, sum(real(FL_delta_rho(:,i_t))),sum(rho_reference)
          !
+         !aim137 check - I do not think I need to normalise the sum(rho) with this ...
+         !FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) / sum(FL_delta_rho(:,i_t))*sum(rho_reference)
+         !
          FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) - rho_reference(:)
          !
          if (.not. l_Broyden_mixing) then
@@ -128,6 +132,13 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
            !
            FL_delta_rho(:,i_t) = FL_res_rho_at_t * FL_beta + &
                                & FL_delta_rho_hist(:,i_t)
+           ! or
+           !
+         ! if (l_FL_precond) call FL_precondition(FL_delta_rho(:,i_t))
+         ! !
+         ! !
+         ! FL_delta_rho(:,i_t) = FL_delta_rho(:,i_t) * FL_beta + &
+         !                     & FL_delta_rho_hist(:,i_t) * (1._SP - FL_beta)
            !
          else
            !
@@ -278,6 +289,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
  do i_sp_pol=1,n_sp_pol
   do ik_bz=1,QP_nk
    !
+   !print*, '------ K-point: ',ik_bz
    if (.not.PAR_IND_Xk_ibz%element_1D(ik_bz)) cycle
    !
    ! ik_mem is for FL_Ho_plus_Sigma, which is allocated
@@ -328,6 +340,17 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
          enddo
        enddo
        !
+       !aim137 DEBUG FT<
+       !
+       !CHECK_V_H_ij = cZERO
+       !call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_M,&
+       !&n_tot_extra_modes,FL_V_Hartree_KS(5,4,:),1,cZERO,CHECK_V_H_ij(:),1)
+       !print*, 'Initial:'
+       !print*, FL_V_Hartree_KS_time(5,4,:)
+       !print*, 'Final:'
+       !print*, CHECK_V_H_ij(:)
+       !
+       !aim137 DEBUG FT>
        !
        do i1=NL_bands(1),NL_bands(2)
          do i1_fl=1,n_tot_fl_modes

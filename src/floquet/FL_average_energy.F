@@ -154,22 +154,15 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
  !
  ! Remove time derivative
  !
- Hamiltonian = FL_Hamiltonian
-     !aim137 DEBUG< try new matrix
-     Hamiltonian = cZERO
-     !aim137 DEBUG>
+ !Hamiltonian = FL_Hamiltonian
+ Hamiltonian = cZERO
  !
  do i1=NL_bands(1),NL_bands(2)
    do i1_fl=1,n_tot_fl_modes
      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
      i_shifted_fl = i1_fl - (max_fl_mode+1)
      !
-!!!!!!!!!!1     Hamiltonian(i1_fks,i1_fks) = &
-!!!!!!!!!!1&    Hamiltonian(i1_fks,i1_fks) + real(i_shifted_fl,SP) * w0 
-!!!!!!!!!!1     !
-     !aim137 DEBUG< try new matrix
      Hamiltonian(i1_fks,i1_fks) = real(i_shifted_fl,SP) * w0 
-     !aim137 DEBUG>
      !
    enddo
  enddo
@@ -196,7 +189,7 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
    enddo
  enddo
  !
- !aim137 DEBUG<
+ !aim137 DEBUG< add broadening to the average energy Hamiltonian
  !av_Hamiltonian(2,2) = av_Hamiltonian(2,2) + cI * NL_damping / 2._SP
  !aim137 DEBUG<
  !
@@ -266,12 +259,17 @@ subroutine FL_average_energy(FL_Hamiltonian,eigenvectors,eigenvalues,AE_vec,i_ch
 !!!!!! AE_vec(i1_fks) = AE_vec(i1_fks) * exp(-1._SP*cI*phase_new) * exp(cI*phase_orig)
 !!!!!! enddo
  !
-!do i1_fks=FL_states(1),FL_states(2)
-! !
-! phase_orig = atan2(aimag(eigenvectors(i1_fks,i_chosen_fks)),real(eigenvectors(i1_fks,i_chosen_fks)))
-! AE_vec(i1_fks) = abs(AE_vec(i1_fks)) * exp(cI*phase_orig)
-! !
-!enddo
+!!!!!! print*, 'i1_fks phase_orig phase_new'
+!!!!!!do i1_fks=FL_states(1),FL_states(2)
+!!!!!! !
+!!!!!! phase_orig = atan2(aimag(eigenvectors(i1_fks,i_chosen_fks)),real(eigenvectors(i1_fks,i_chosen_fks)))
+!!!!!! phase_new  = atan2(aimag(AE_vec(i1_fks)),real(AE_vec(i1_fks)))
+!!!!!! print*, i1_fks,phase_orig,phase_new
+!!!!!! !
+!!!!!! ! this was to keep the phases but it is wrong
+!!!!!! !AE_vec(i1_fks) = abs(AE_vec(i1_fks)) * exp(cI*phase_orig)
+!!!!!! !
+!!!!!!enddo
  !
 !print*, AE_vec(i_coupling_fks),'aven phase = ', phase_new
  !

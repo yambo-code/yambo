@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
+subroutine FL_dephasing(en,Xk,ik,i_sp,FL_V_bands,H_nl_sc)
  !
  use pars,           ONLY:SP,cI,cZERO,pi,cONE
  use units,          ONLY:SPEED_OF_LIGHT
@@ -34,91 +34,116 @@ subroutine FL_dephasing(en,Xk,ik,i_sp_pol,FL_V_bands,H_nl_sc)
  use matrix_operate, ONLY:hermitian
  use fields,         ONLY:gauge_field,Efield
  use nl_optics,      ONLY:NL_damping,NL_bands
- use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,&
-&                         n_tot_duffin_modes,max_duffin_mode
+ use fl_optics,      ONLY:max_fl_mode,FL_space_dim,n_tot_fl_modes,FL_states,n_tot_duffin_modes,max_duffin_mode
  !
  implicit none
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
  integer,      intent(in)      :: ik
- integer,      intent(in)      :: i_sp_pol
- complex(SP),  intent(in)      :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf(i_sp_pol))
+ integer,      intent(in)      :: i_sp
+ complex(SP),  intent(in)      :: FL_V_bands(NL_bands(2),n_tot_fl_modes,en%nbf(i_sp))
  complex(SP),  intent(inout)   :: H_nl_sc(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
  !
  ! Work Space
  !
  integer :: i1,i2,im,id,id_red
  integer :: ikbz,istep,max_step
- integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
  complex(SP) :: I_deph(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
- character(4) :: filename
+ complex(SP) :: I_stabilization(FL_states(1):FL_states(2),FL_states(1):FL_states(2))
+ integer :: i1_fl,i2_fl,i3_fl,i4_fl,i_m,i_comb_fl,i_shift_comb_fl,i1_fks,i2_fks
+ logical :: l_stabilization,l_force_Hermitian
  !
  I_deph=cZERO
  !
- do i1=H_ref_bands(1),H_ref_bands(2)        !i
-   do i1_fl=1,n_tot_fl_modes                !eta
-     i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
-     !
-     do i2=H_ref_bands(1),H_ref_bands(2)        !j
-       do i2_fl=1,n_tot_fl_modes                !gamma
+ ! off diagonal part
+ !
+ do i1=H_ref_bands(1),H_ref_bands(2) !i
+   do i2=H_ref_bands(1),H_ref_bands(2) !j
+     do i1_fl=1,n_tot_fl_modes !eta
+       i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
+       do i2_fl=1,n_tot_fl_modes !gamma
          i2_fks = i2_fl + (i2-1)*n_tot_fl_modes !j,gamma
          !
-         ! A term
-         !
+         !aim137 DEBUG< trato de hacer esto solo en la diagonal
+         !if ( i1_fks /= i2_fks ) cycle
+         !aim137 DEBUG>
          do i3_fl=1,n_tot_fl_modes
-           !
-           i_shift_comb_fl = (i3_fl-(max_fl_mode+1)) &
-                          &+ (i2_fl-(max_fl_mode+1)) &
-                          &- (i1_fl-(max_fl_mode+1))
-           !
-           if (abs(i_shift_comb_fl) > max_fl_mode) cycle 
-           i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
-           !
-	   do im=1,en%nbf(i_sp_pol)
-             I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) + & 
-                                   & (conjg(FL_V_bands(i2,i_comb_fl,im)) * &
-                                   & FL_V_bands(i1,i3_fl,im))
-           enddo
-           !
+             !
+             i_shift_comb_fl = (i3_fl-(max_fl_mode+1)) &
+                            &+ (i2_fl-(max_fl_mode+1)) &
+                            &- (i1_fl-(max_fl_mode+1))
+             !
+             if (abs(i_shift_comb_fl) > max_fl_mode) cycle 
+             i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
+             !
+             do i_m=H_ref_bands(1),en%nbf(i_sp)
+               I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) + & 
+                                     & (conjg(FL_V_bands(i2,i_comb_fl,i_m)) * &
+                                     & FL_V_bands(i1,i3_fl,i_m))
+             enddo
+             !
          enddo ! i3_fl
          !
-         ! B term
-         !
-         if (i1>en%nbf(i_sp_pol)) cycle            ! i (only occ)
-         i_shift_comb_fl = (i2_fl-(max_fl_mode+1)) &
-                        &- (i1_fl-(max_fl_mode+1))
-         !
-         if (abs(i_shift_comb_fl) > max_fl_mode) cycle 
-         i_comb_fl = i_shift_comb_fl + (max_fl_mode+1)
-         !
-         I_deph(i1_fks,i2_fks) = I_deph(i1_fks,i2_fks) - & 
-                               & conjg(FL_V_bands(i2,i_comb_fl,i1))
-         !
        enddo ! i2_fl
-     enddo   ! i2 band
-     !
-   enddo ! i1_fl
+     enddo ! i1_fl
+   enddo ! i2 band
  enddo ! i1 band
  !
- ! $omp parallel do default(shared), private(i1,i1_fl,i1_fks)
- do i1=H_ref_bands(1),H_ref_bands(2)
-   do i1_fl=1,n_tot_fl_modes
-     i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+ ! diagonal part
+ !
+ !aim137 DEBUG <
+ !if (ik == 6) then
+ !print*, '---------------------- kpoint ',ik
+ !do i1_fks=FL_states(1),FL_states(2)
+ !print*, I_deph(i1_fks,:)
+ !enddo
+ !end if
+ !call error('..')
+ !aim137 DEBUG >
+ !
+ do i1=H_ref_bands(1),en%nbf(i_sp) !i
+   do i1_fl=1,n_tot_fl_modes !eta
      !
-     H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
-     &         cI * NL_damping * I_deph(i1_fks,:)
+     i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
+     !
+     I_deph(i1_fks,i1_fks) = I_deph(i1_fks,i1_fks) - 1._SP
+     !
+!    I_deph(i1_fks,i1_fks) = cZERO
      !
    enddo
  enddo
+ !
+ l_force_Hermitian = .true.
+ if (l_force_Hermitian) then
+   !
+   I_deph = (I_deph + conjg(I_deph))
+   !
+ endif
+ !
+ !
+!!!!!!!!!!1 ! Claudio's dephasing
+!!!!!!!!!!1!!
+!!!!!!!!!!1!I_deph = cZERO
+!!!!!!!!!!1!!
+!!!!!!!!!!1!do i1=en%nbf(i_sp)+1,H_ref_bands(2) !i
+!!!!!!!!!!1!  do i1_fl=1,n_tot_fl_modes !eta
+!!!!!!!!!!1!    !
+!!!!!!!!!!1!    i1_fks = i1_fl + (i1-1)*n_tot_fl_modes !i,eta
+!!!!!!!!!!1!    !
+!!!!!!!!!!1!    I_deph(i1_fks,i1_fks) = 1._SP
+!!!!!!!!!!1!    !
+!!!!!!!!!!1!  enddo
+!!!!!!!!!!1!enddo
+ !
+ ! $omp parallel do default(shared), private(i1,id)
+  do i1=H_ref_bands(1),H_ref_bands(2)
+    do i1_fl=1,n_tot_fl_modes
+      i1_fks = i1_fl + (i1-1)*n_tot_fl_modes
+        H_nl_sc(i1_fks,:)=H_nl_sc(i1_fks,:) - &
+ &      cI * NL_damping * I_deph(i1_fks,:)
+    enddo
+  enddo
  ! $omp end parallel do
  !
- !aim137 DEBUG
-!write(filename,'(i0)') ik
-!open(111,file='FL_I_deph_at_kpt'//trim(adjustl(filename))//'.dat')
-!do i1_fks=FL_states(1),FL_states(2)
-!write(111,'(100(1f8.4))') abs(I_deph(i1_fks,:))
-!enddo
-!close(111)
- !aim137 END DEBUG
 end subroutine FL_dephasing

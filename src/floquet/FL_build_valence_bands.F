@@ -31,9 +31,10 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands,NL_damping
  use fl_optics,      ONLY:max_fl_mode,max_extra_mode,n_tot_fl_modes,FL_states,&
-&                         n_tot_extra_modes,FL_QE,max_fl_mode
+&                         n_tot_extra_modes,FL_QE,max_fl_mode,FL_FT_extra_M,FL_FT_extra_Mm1
  use parallel_int,   ONLY:PP_redux_wait
  use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX,master_cpu
+ use wrapper,        ONLY:M_by_V
 #if defined _TIMING
  use timing_m,       ONLY:timing
 #endif
@@ -47,12 +48,16 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
  !
  ! Work Space
  !
- integer       :: i_t,i1_fl,i1_extra,i1_shifted_fl,i1,i2,ik_bz,is
+ integer       :: i_t,i1_fl,i1_extra,i1_shifted_fl,i1,i2,ik_bz,is,i_damping
  real(SP)      :: time,w0,T_period,t_samples(n_tot_extra_modes)
+ complex(SP)   :: CHECK_FL_V_bands(n_tot_extra_modes)
+ complex(SP)   :: CHECK_FL_V_bands_time(n_tot_extra_modes)
  !
 #if defined _TIMING
  call timing('FL Density',OPR='start')
 #endif
+ !
+ w0 = Efield(1)%frequency(1) ! in Ha
  !
  FL_V_bands_time = cZERO 
  !
@@ -70,15 +75,18 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
        do i1_fl=1,n_tot_fl_modes
          !
          i1_shifted_fl = i1_fl -(max_fl_mode+1)
+         i_damping = 1; if (i1_shifted_fl == 0) i_damping = 0
          !
          FL_V_bands_time(:,i_t,:,ik_bz,is) = &
        & FL_V_bands_time(:,i_t,:,ik_bz,is) + &
        & exp(-1*cI*real(i1_shifted_fl,SP)*2._SP*pi*(i_t-1)/n_tot_extra_modes) * &
        & FL_V_bands(:,i1_fl,:,ik_bz,is)
          !
-        !print*, '------------------'
-        !print*, i1_shifted_fl
-        !print*, FL_V_bands(:,:,i1_extra)
+         !& exp(NL_damping/w0*real(i_damping,SP)*2._SP*pi*(i_t-1)/n_tot_extra_modes) * &
+         !
+         !print*, '------------------'
+         !print*, i1_shifted_fl
+         !print*, FL_V_bands(:,:,i1_extra)
        enddo
      ! print*, exp(-1*cI*2*pi*(i_t-1)/n_tot_extra_modes)
        !
@@ -103,4 +111,44 @@ subroutine FL_build_valence_bands(en,Xk,FL_V_bands,FL_V_bands_time)
 !  enddo
 !endif
  !aim137 DEBUG>
+ !aim137 DEBUG check normalisation <
+ !do ik_bz=1,QP_nk
+ ! print*, '------ K-point: ',ik_bz
+ ! do i_t=1,n_tot_extra_modes
+ !  !
+ !  print*, sum(conjg(FL_V_bands_time(:,i_t,4,ik_bz,1))*FL_V_bands_time(:,i_t,4,ik_bz,1))
+ !  !
+ ! enddo
+ !enddo
+ !aim137 DEBUG check normalisation >
+ !aim137 DEBUG check FT <
+ !do ik_bz=1,QP_nk
+ ! print*, '------ K-point: ',ik_bz,' -- proj. of band 4 over band 5'
+ ! CHECK_FL_V_bands = cZERO
+ ! CHECK_FL_V_bands_time = cZERO
+ ! do i1_fl=1,n_tot_fl_modes
+ !  i1_shifted_fl = i1_fl -(max_fl_mode+1)
+ !  i1_extra = i1_shifted_fl +(max_extra_mode+1)
+ !  CHECK_FL_V_bands(i1_extra) = FL_V_bands(4,i1_fl,4,ik_bz,1)
+ ! enddo
+ ! print*, 'Initial:',CHECK_FL_V_bands
+ ! !
+ ! !from FL_V_bands to time and back
+ ! call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_M,&
+ ! &n_tot_extra_modes,CHECK_FL_V_bands(:),1,cZERO,CHECK_FL_V_bands_time(:),1)
+ ! !
+ ! CHECK_FL_V_bands = cZERO
+ ! call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_Mm1,&
+ ! &n_tot_extra_modes,CHECK_FL_V_bands_time(:),1,cZERO,CHECK_FL_V_bands(:),1)
+ ! print*, 'Final 1:',CHECK_FL_V_bands
+ ! !
+ ! !from FL_V_bands_time to FKS
+ ! CHECK_FL_V_bands = cZERO
+ ! call M_by_V('N',n_tot_extra_modes,n_tot_extra_modes,cONE,FL_FT_extra_Mm1,&
+ ! &n_tot_extra_modes,FL_V_bands_time(4,:,4,ik_bz,1),1,cZERO,CHECK_FL_V_bands(:),1)
+ ! print*, 'Final 2:',CHECK_FL_V_bands
+ ! !
+ !enddo
+ !aim137 DEBUG check FT >
+ !
 end subroutine FL_build_valence_bands

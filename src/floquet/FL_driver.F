@@ -72,7 +72,9 @@ subroutine FL_driver(E,X,k,q,Dip)
  integer  :: i_f,i1,N_sample_size,wf_ng_save,io_err,i_k_bz,i_sp_pol,i_err
  integer  :: FL_iteration,fl_shifted_zero_mode,ID_FL
  logical  :: l_FL_sc_reached
- complex(DP) :: accuracy
+ integer  :: iterations(n_frequencies)
+ logical  :: converged(n_frequencies)
+ complex(SP) :: accuracy(n_frequencies)
  character(4) :: filename
  integer     :: line_counter,i_m
  !
@@ -207,6 +209,9 @@ subroutine FL_driver(E,X,k,q,Dip)
  call live_timing('[FL] Frequencies ',PAR_IND_freqs%n_of_elements(PAR_IND_freqs_ID+1))
  !
  FL_Chi_pol(:,:,:,:) = cZERO
+ converged = .false.
+ iterations = 0
+ accuracy = cZERO
  !
  call section('*','FL self-consistency')
  do i_f=1,n_frequencies
@@ -266,14 +271,12 @@ subroutine FL_driver(E,X,k,q,Dip)
    ! Efield
    ! ================
    Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
-   print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
-   call msg('r','Frequency step    :',i_f)
-   call msg('r','Frequency [eV]    :',Efield(1)%frequency(1)*HA2EV)
+   !print*, 'Frequency [eV] = ',Efield(1)%frequency(1)*HA2EV
    !
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
-     if (master_cpu) print*, 'Starting iteration number ',FL_iteration, ' --------------'
+     print*, 'Starting iteration number ',FL_iteration, ' --------------'
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration) !aim137 check, there should be (1) after frequency
@@ -283,28 +286,31 @@ subroutine FL_driver(E,X,k,q,Dip)
      call FL_polarization(E,k,FL_V_bands,FL_Chi_pol(i_f,:,:,1))
      !
      if (FL_iteration>1)&
-&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy)
+&    call FL_check_convergence(FL_Chi_pol(i_f,:,:,:),l_FL_conv_Chi,accuracy(i_f))
      !
      l_FL_sc_reached = l_FL_conv_Chi .and. l_FL_conv_Rho
+     if (l_FL_sc_reached) converged(i_f) = .true.
      !
-     !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy), aimag(accuracy)
+     !if (FL_iteration <= 10) l_FL_sc_reached = .false.
+     !if (master_cpu) print*, FL_iteration, '--------------', real(accuracy(i_f)), aimag(accuracy(i_f))
      if (FL_iteration >= FL_max_iterations) then
+       !
        l_FL_sc_reached = .true.
-       print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
-&      ' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy), aimag(accuracy)
+       !
+       !aim137 DEBUG<
+       !print*, 'Frequency step',i_f,' -- ',Efield(1)%frequency(1)*HA2EV,&
+       !&' eV -- unconverged after',FL_iteration,' iter. -- acc=',real(accuracy(i_f)), aimag(accuracy(i_f))
+       !aim137 DEBUG>
+       !
      endif
      !
      FL_loc_S_inv_mode = FL_S_inv_mode ! D=Duffin / N=numerical / P=perturbative
      !
    enddo
    !
+   iterations(i_f) = FL_iteration
+   !
    call live_timing(steps=1)
-   !
-   call msg('r','No. of iterations :',FL_iteration)
-   call msg('r','Absolute error    :', abs(accuracy))
-   call msg('r','------------------------------------')
-   !aim137 prelim - msg is working only for one of the cores (i.e., one freq pool).
-   !
    !
    !call FL_all_times_pol(E,k) !this was to interface with ypp
    !call FL_all_times_Vbands(E,k,.false.)
@@ -317,6 +323,20 @@ subroutine FL_driver(E,X,k,q,Dip)
  enddo
  !
  call PP_redux_wait( FL_Chi_pol ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( iterations ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( converged  ,COMM=PAR_COM_freqs_INDEX%COMM )
+ call PP_redux_wait( accuracy   ,COMM=PAR_COM_freqs_INDEX%COMM )
+ !
+ do i_f=1,n_frequencies
+   call msg('r','Frequency step    :',i_f)
+   call msg('r','Frequency [eV]    :',(NL_er(1)+real(i_f-1,SP)*NL_estep)*HA2EV)
+   call msg('r','No. of iterations :',iterations(i_f))
+   call msg('r','Absolute error    :',abs(accuracy(i_f)))
+   call msg('r','Converged         : ',converged(i_f))
+   call msg('r','------------------------------------')
+ enddo
+ call msg('r','Total       frequencies :',n_frequencies)
+ call msg('r','Unconverged frequencies :',count(.not. converged))
  !
  call FL_output
  !

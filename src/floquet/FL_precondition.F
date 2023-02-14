@@ -28,10 +28,11 @@ subroutine FL_precondition(delta_rho)
   !
  use pars,          ONLY: pi,DP,SP
  use R_lattice,     ONLY: bare_qpg
- use D_lattice,     ONLY: DL_vol
+ use D_lattice,     ONLY: DL_vol,a
  use fft_m,         ONLY: fft_size,fft_dim,fftw_plan,fft_g_table
  use wave_func,     ONLY: wf_ng
  use electrons,     ONLY: nel
+ use fl_optics,     ONLY: FL_ild
  !
  implicit none
  !
@@ -40,15 +41,18 @@ subroutine FL_precondition(delta_rho)
  ! Work Space
  !
  real(SP)    ::  rs
- real(SP)    :: qTF2
+ real(SP)    :: eff_vol,qTF2
  complex(DP) :: D_rho_G(fft_size)
+ integer     :: i
  !
  D_rho_G  = delta_rho
  !
  ! Define Qtf 
  !
- rs = (3.*DL_vol/4./pi/nel)**(1./3.)
- qtf2 = (12/pi)**(2./3.)/rs 
+ eff_vol = DL_vol
+ if (FL_ild > 0._SP) eff_vol = DL_vol * FL_ild / a(3,3)
+ rs = (3.*eff_vol/4./pi/nel)**(1./3.)
+ qtf2 = (12/pi)**(2./3.)/rs
  !
  ! FFT call: delta_rho in reciprocal space
  !

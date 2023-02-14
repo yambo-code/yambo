@@ -63,8 +63,8 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  do i_t=1,M_size
    M(i_t,1) = cONE
    do i_n=2,nP_components
-     M(i_t,i_n        ) = exp( cI*W(i_n)*T_i(i_t))
-     M(i_t,i_n+X_order) = exp(-cI*W(i_n)*T_i(i_t))
+     M(i_t,i_n        ) = exp(-cI*W(i_n)*T_i(i_t))
+     M(i_t,i_n+X_order) = exp( cI*W(i_n)*T_i(i_t))
    end do
  end do
  !

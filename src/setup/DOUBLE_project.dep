@@ -1,0 +1,12 @@
+ External_corrections.o
+ G_shells_finder.o
+ PARALLEL_and_IO_Setup.o
+ QP_state_table_setup.o
+ SET_job_strings_and_dirs.o
+ build_spin_sop.o
+ build_xc_spin_map.o
+ check_periodic_directions.o
+ eval_Mtot.o
+ eval_minus_G.o
+ setup.o
+

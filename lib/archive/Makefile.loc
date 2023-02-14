@@ -6,7 +6,7 @@ ifeq ($(wildcard ./git.list),./git.list)
   include ./git.list
   include ../../config/setup
 else
- git_Ydriver=git@github.com:yambo-code/yambo-libraries.git
+ git_Ydriver=git@github.com:yambo-code/Ydriver.git
  branch_Ydriver=none
 endif
 #
@@ -17,7 +17,7 @@ all: $(EXT_LIBS)
 # Libraries (GIT + archives)
 #
 Ydriver:
-	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(getsrc_git); $(call copy_driver,"yambo")
+	@+URL="$(url_Ydriver)"  ;  GBRANCH="$(branch_Ydriver)"  ;  GIT="$(git_Ydriver)"; LIB="$(pkgname_Ydriver)"; $(call getsrc_git,"Ydriver"); $(call copy_driver,"Ydriver")
 #
 # Libraries (archives)
 #
@@ -56,9 +56,17 @@ fftqe:
 #
 # cleaning
 #
-clean: clean_all
+clean: clean_git_folders clean_tgz
 #
-clean_all:
+clean_git_folders:
+	if test ! -e keep-extlibs-stamp ; then \
+          if test -d $(pkgname_Ydriver)  ; then \
+	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
+	    rm -f Ydriver.pulled ; \
+	  fi ; \
+	fi
+#
+clean_tgz:
 	if test ! -e keep-extlibs-stamp ; then \
           if test -s $(tarball_Ydriver)  && test "$(keep_Ydriver)"   != "yes" ;  then rm $(tarball_Ydriver)   ; fi ; \
           if test -s $(tarball_libxc)    && test "$(keep_libxc)"     != "yes" ;  then rm $(tarball_libxc)     ; fi ; \
@@ -97,21 +105,27 @@ define getsrc
 endef
 #
 define getsrc_git
- if test ! -s $$LIB".tar.gz" && test ! -d $$LIB ; then \
-  mkdir -p  ../../log;\
-  if [ ! "$$GBRANCH" = "none" ] ; then \
-   echo "\t[$$LIB] clone";\
-   echo " via $$GIT" ; \
-   if [ ! -d $$LIB ]; then git clone $$GIT $$LIB >> ../../log/clone_$$LIB.log 2>&1; fi ; \
-   cd $$LIB ; git checkout $$GBRANCH >> ../../../log/clone_$$LIB.log 2>&1; cd ../ ; \
-  else \
-   echo "\t[$$LIB] download";\
+ mkdir -p  ../../log; \
+ if [ ! "$$GBRANCH" = "none" ] ; then \
+  if test ! -e $(1)".pulled"; then \
+   if test ! -d $(1)"-src" ; then \
+    echo "\t[$(1)] clone via $$GIT" ; \
+    git clone $$GIT $(1)"-src" >> ../../log/clone_$(1).log 2>&1; \
+   fi ; \
+   echo "\t[$(1)] $$GBRANCH switch and update"; \
+   cd $(1)"-src" ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
+   git pull >> ../../../log/clone_$(1).log 2>&1; cd ../ ; \
+   touch $(1)".pulled" ; \
+  fi ; \
+ else \
+  if test ! -s $$LIB".tar.gz" ; then \
+   echo "\t[$(1)] download $$LIB.tar.gz";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
     curl -L --progress-bar -o $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
-   fi \
-  fi;\
+   fi ; \
+  fi ; \
  fi
 endef
 #
@@ -125,17 +139,18 @@ define link_it
 endef
 #
 define copy_driver
- if ! test -d  $(srcdir)/lib/$(1); then mkdir $(srcdir)/lib/$(1); fi; \
- if test -s $$LIB".tar.gz" ; then \
-  cd $(srcdir)/lib/$(1); \
+ if ! test -d $(srcdir)/lib/yambo/$(1); then mkdir -p $(srcdir)/lib/yambo/$(1); fi; \
+ if test -s $$LIB".tar.gz" && ! test -d $(1)"-src" ; then \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
+  mv $$LIB $(1)"-src" ; \
  fi;\
- if test -d $$LIB &&  test ! -f $(srcdir)/lib/$(1)/installed.stamp ; then \
-  cp -R $$LIB/* $(srcdir)/lib/$(1)/; \
-  touch $(srcdir)/lib/$(1)/installed.stamp; \
+ if test -d $(1)"-src" &&  test ! -f $(srcdir)/lib/yambo/$(1)-installed.stamp ; then \
+  cp -R $(1)"-src"/* $(srcdir)/lib/yambo/$(1)/; \
+  touch $(srcdir)/lib/yambo/$(1)-installed.stamp; \
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \
-   rm -rf $(compdir)/lib/$(1) ]; \
-   cp -R $(srcdir)/lib/$(1) $(compdir)/lib/$(1); \
+   rm -rf $(compdir)/lib/yambo/$(1) ; \
+   if ! test -d $(compdir)/lib/yambo; then mkdir -p $(compdir)/lib/yambo; fi; \
+   cp -R $(srcdir)/lib/yambo/$(1) $(compdir)/lib/yambo/$(1); \
  fi
 endef

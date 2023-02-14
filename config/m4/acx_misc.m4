@@ -37,12 +37,12 @@ void main()
   printf("%ld", sizeof(void *));
 }
 EOF
-  ac_try='$CC $CFLAGS -o pointertest.x pointertest.c 1>&AC_FD_CC'
+  ac_try='$CC $CFLAGS -o pointertest.x pointertest.c 1>&AS_MESSAGE_LOG_FD'
   if AC_TRY_EVAL(ac_try); then
     ac_try=""
   else
-    echo "configure: failed program was:" >&AC_FD_CC
-    cat pointertest.c >&AC_FD_CC
+    echo "configure: failed program was:" >&AS_MESSAGE_LOG_FD
+    cat pointertest.c >&AS_MESSAGE_LOG_FD
     rm -rf pointertest*
     AC_MSG_ERROR(failed to compile c program to find the size of a pointer)
   fi

@@ -117,7 +117,7 @@ integer function io_connect(desc,subfolder,type,no_full_RESET,FORCE_READ_MODE,ID
    par_IO=io_PAR_comm(ID)/=mpi_comm_null.and.ncpu>1
    !
    ! DEBUG <
-   !write(*,*) myid,"writing to file ",trim(io_file(ID)),file_exists(trim(io_file(ID)))
+   !write(*,*) myid,"writing to file ",trim(io_file(ID)),file_exists(trim(io_file(ID))),par_IO
    ! DEBUG >
    !
    if ( (io_action(ID)==OP_APP_CL.or.io_action(ID)==OP_APP) .and. file_exists(trim(io_file(ID))) ) then

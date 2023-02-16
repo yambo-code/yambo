@@ -52,9 +52,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #include<memory.h>
  !
- type(X_t)        :: X(4),Xbsk
+ type(X_t)        :: X(5),Xbsk
  type(QP_t)       :: qp
- type(w_samp)     :: Xxcw,Xw(4)
+ type(w_samp)     :: Xxcw,Xw(5)
  type(levels)     :: en,en_sc
  type(bz_samp)    :: q,k
  type(DIPOLE_t)   :: Dip
@@ -62,7 +62,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
  !
  ! Workspace
  !
@@ -220,7 +220,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- do i_io=1,4 ! Xx Xs Xd Xp
+ do i_io=1,5 ! Xx Xs Xd Xp Xm
    ! .a
    X(i_io)%ib=(/1,en%nb/)
    ! .b
@@ -229,7 +229,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  if (nqibz>0) then
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
-   do i_io=1,4 ! Xx Xs Xd Xp
+   do i_io=1,5 ! Xx Xs Xd Xp Xm
      X(i_io)%iq=(/1,nqibz/)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
      io_X_err(i_io)=io_X(X(i_io),Xw(i_io),io_ID)
@@ -321,3 +321,4 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 #endif
  !
 end subroutine
+

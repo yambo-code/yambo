@@ -26,7 +26,7 @@ operate=$1
 #
 file_obj=`echo $file | sed 's/.$/o/'`
 if [ "$file_obj" != "driver.o" ] ; then
- file_with_path_obj=`find $compdir -name $file_obj -not -path "/*.save/*"`;
+ file_with_path_obj=`find $compdir -name $file_obj -not -path "/*objects.save/*"`;
 else
  if [ "$VERB" == 1 ] ; then
    echo "WARNING driver.o case is problematic. "
@@ -38,7 +38,7 @@ else
 fi
 #
 if [ -z "$file_with_path_obj" ] ; then
-  if [[ "$operate" == "remove_child"* ]]; then return ; fi
+  if [ "$operate" == "remove_child" ]; then return ; fi
   # if the object does not exist yet, I set the path from the external loop
   if [ "$operate" == "remove" ]; then
     if [ "$VERB" == 1 ] ; then
@@ -89,65 +89,92 @@ if [ "$VERB" == 1 ] ; then
  echo "obj path is $path_obj"
  echo "dir is $dir"
  echo "ldir is $ldir"
+ #echo "operate is $operate"
 fi
 #
-if [ $VERB == 1 ] ; then echo echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp" ; fi
-source ./sbin/compilation/stamp_remove.sh "lib"
+if [[  "$path_obj" == *"${dir/\./}" ]] || [ "$2" == "locks" ]; then
+ if [ $VERB == 1 ] ; then echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp" ; fi
+ source ./sbin/compilation/stamp_remove.sh "lib"
+fi
 #
 if [[ -f "$file_with_path_obj" ]]  ; then
   #
   if [ "$VERB" == 1 ] ; then
-   echo "remove object | rm -f  $file_with_path_obj"
-   echo "remove f90 source | rm -f  $file_with_path_f90"
+    if [[  "$path_obj" == *"${dir/\./}" ]]; then echo "remove object | rm -f  $file_with_path_obj"; fi
+    echo "remove f90 source | rm -f  $file_with_path_f90"
   fi
-  #
-  rm $file_with_path_obj
+  if [[  "$path_obj" == *"${dir/\./}" ]]; then rm $file_with_path_obj ; fi
   if [ -f "$file_with_path_f90" ] ; then rm -f $file_with_path_f90 ; fi
+  #
+  if [ "$2" == "locks" ] && [[  ! "$path_obj" == *"${dir/\./}" ]]; then
+    if [ "$VERB" == 1 ] ; then echo "remove object | mv  $file_with_path_obj ${file_with_path_obj}_to_remove "; fi
+    mv  $file_with_path_obj ${file_with_path_obj}_to_remove
+  fi
   #
   # In sources mode remove all corresponding saved objects
   #
   if [ "$2" == "sources" ]; then
     #
+    if [ "$VERB" == 1 ] ; then echo "touch file source | touch  $file_with_path_src" ; fi
+    if [ -f "$file_with_path_src" ] ; then touch $file_with_path_src ; fi
+    #
     if [ "$VERB" == 1 ] ; then
-     echo "remove stored objects in .save folders | rm $path_obj/*_.save/$file_obj"
-     echo "remove .f90 files in .save folders | $path_obj/*_.save/$file_f90"
-     echo "remove .a libraries in | rm $path_obj/*_.save/*.a"
+     echo "remove stored objects in .save folders | rm $path_obj/*objects.save/$file_obj"
+     echo "remove .f90 files in .save folders | $path_obj/*objects.save/$file_f90"
+     echo "remove .a libraries in | rm $path_obj/*objects.save/*.a"
     fi
     #
-    count=`ls -1 $path_obj/*_.save/*.a 2>/dev/null | wc -l`
-    if [ $count != 0 ]; then rm $path_obj/*_.save/*.a ; fi
-    count=`ls -1 $path_obj/*_.save/$file_obj 2>/dev/null | wc -l`
+    count=`ls -1 $path_obj/*objects.save/*.a 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then rm -f $path_obj/*objects.save/*.a ; fi
+    count=`ls -1 $path_obj/*objects.save/$file_obj 2>/dev/null | wc -l`
     if [ $count != 0 ] ; then
-      if [ "$VERB" == 1 ] ; then echo "rm $path_obj/*_.save/$file_obj" ; fi
-      rm $path_obj/*_.save/$file_obj
+      if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*objects.save/$file_obj" ; fi
+      rm -f $path_obj/*objects.save/$file_obj
     fi
-    count=`ls -1 $path_obj/*_.save/$file_f90 2>/dev/null | wc -l`
-    if [ $count != 0 ] ; then
-      if [ "$VERB" == 1 ] ; then echo "rm $path_obj/*_.save/$file_f90" ; fi
-      rm $path_obj/*_.save/$file_f90
+    if [ ! "$file_f90" == "" ]; then
+      count=`ls -1 $path_obj/*objects.save/$file_f90 2>/dev/null | wc -l`
+      if [ $count != 0 ] ; then
+        if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*objects.save/$file_f90" ; fi
+        rm -f $path_obj/*objects.save/$file_f90
+      fi
     fi
   fi
-  #
-  # Remove corresponding mod files
-  #
-  modfile=`grep -i module $file_with_path_src | grep -i -v end | grep -i -v procedure | grep -v !`
-  for modname in $modfile; do
+fi
+#
+# Remove corresponding mod files
+#
+if [[ -f "$file_with_path_src" ]]  ; then
+  modfile=`grep -i module $file_with_path_src | grep -i -v end | grep -i -v use | grep -i -v procedure | grep -v !`
+  for modname_tmp in $modfile; do
+    # Global
+    modname=`echo "$modname_tmp" | tr '[:upper:]' '[:lower:]'`
+    if [ -f "$compdir/include/$modname.mod" ]; then
+      if [ "$VERB" == 1 ] ; then echo "remove global module | rm -f $compdir/include/$modname.mod"; fi
+      rm -f $compdir/include/$modname.mod
+    fi
+    # Local
     if [ -f "$path_obj/$modname.mod" ]; then
-      if [ "$VERB" == 1 ] ; then echo "remove module | rm $path_obj/$modname.mod $compdir/include/$modname.mod"; fi
-      rm $path_obj/$modname.mod ;
-      rm $compdir/include/$modname.mod ;
+      #
+      if [[  "$path_obj" == *"${dir/\./}" ]]; then
+        if [ "$VERB" == 1 ]; then echo "remove local module | rm -f $path_obj/$modname.mod"; fi
+        rm -f $path_obj/$modname.mod ;
+      fi
+      #
+      if [ "$2" == "locks" ] && [[  ! "$path_obj" == *"${dir/\./}" ]]; then
+        if [ "$VERB" == 1 ] ; then echo "remove local module | mv $path_obj/$modname.mod $path_obj/$modname.mod_to_remove "; fi
+        mv $path_obj/$modname.mod $path_obj/$modname.mod_to_remove
+      fi
       #
       # In sources mode remove all corresponding saved modules
       #
       if [ "$2" == "sources" ]; then
-        count=`ls -1 $path_obj/*_.save/$modname.mod 2>/dev/null | wc -l`
+        count=`ls -1 $path_obj/*objects.save/$modname.mod 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          if [ "$VERB" == 1 ] ; then echo "remove module in .save folders | rm $path_obj/*_.save/$modname.mod" ; fi
-          rm $path_obj/*_.save/$modname.mod
+          if [ "$VERB" == 1 ] ; then echo "remove module in .save folders | rm $path_obj/*objects.save/$modname.mod" ; fi
+          rm $path_obj/*objects.save/$modname.mod
         fi
       fi
     fi
   done
   #
 fi
-#

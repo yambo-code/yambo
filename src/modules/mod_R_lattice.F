@@ -168,6 +168,7 @@ module R_lattice
  real(SP),   allocatable          :: RIM_W(:,:,:),RIM_W_E(:,:)
  real(SP),   allocatable DEV_ATTR :: RIM_W_d(:,:,:)
  real(DP),   allocatable :: f_coeff(:,:,:,:,:)
+ character(schlen)       :: rimw_type
  !
  ! Coulomb (including Cutoff)
  !

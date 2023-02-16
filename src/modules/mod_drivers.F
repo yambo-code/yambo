@@ -33,7 +33,7 @@ module drivers
  !
  logical :: l_setup              =.FALSE.
  logical :: l_rim                =.FALSE.
- logical :: l_RIM_W              =.FALSE.
+ logical :: l_rim_w              =.FALSE.
  logical :: l_col_cut            =.FALSE.
  logical :: l_acfdt              =.FALSE.
  !

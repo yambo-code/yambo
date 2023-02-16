@@ -48,9 +48,10 @@ function Lorentzian_FT(W,pole,ordering)
  complex(SP)  ::pole,W,Lorentzian_FT
  character(*) ::ordering
  !              
- logical      ::ord_t_ordered,ord_retarded_,ord_resonant_,ord_ares_tord,ord_ares_reta
+ logical      ::ord_t_ordered,ord_true_t_or,ord_retarded_,ord_resonant_,ord_ares_tord,ord_ares_reta
  !
  ord_t_ordered= trim(ordering)=="T"      ! T-ordered
+ ord_true_t_or= trim(ordering)=="t"      ! T-ordered with null damping !DALV: true time ordering for MPA
  ord_retarded_= trim(ordering)=="R"      ! Retarded 
  ord_resonant_= trim(ordering)=="r"      ! Resonant      part of the T-ordered/Retarded
  ord_ares_tord= trim(ordering)=="Ta"     ! Anti-resonant part of the T-ordered
@@ -59,6 +60,7 @@ function Lorentzian_FT(W,pole,ordering)
  !                                  RESONANT       ANTIRESONANT
  !
  if ( ord_t_ordered ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(conjg(W)+      pole )
+ if ( ord_true_t_or ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(      W +      pole ) 
  if ( ord_retarded_ ) Lorentzian_FT=1._SP/(W-pole)-1._SP/(      W +conjg(pole))       
  if ( ord_resonant_ ) Lorentzian_FT=1._SP/(W-pole)
  if ( ord_ares_tord ) Lorentzian_FT=              -1._SP/(conjg(W)+      pole )

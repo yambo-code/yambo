@@ -48,6 +48,7 @@ module IO_m
  character(lchlen) :: DBs_IO_control_string = "none"
  logical           :: io_DIP
  logical           :: io_RESPONSE
+ logical           :: io_MULTIPOLE
  logical           :: io_HF
  logical           :: io_COLLs
  logical           :: io_OBSERVABLES
@@ -61,6 +62,7 @@ module IO_m
  logical           :: frag_DIP
  logical           :: frag_DG
  logical           :: frag_RESPONSE
+ logical           :: frag_MULTIPOLE
  logical           :: frag_WF
  logical           :: frag_QINDX
  logical           :: frag_HF

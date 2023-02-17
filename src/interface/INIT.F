@@ -30,10 +30,10 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 2  : DB listing mode
  !
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
-&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_X,l_screen
+&                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
@@ -80,9 +80,9 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  type(levels)    ::en
  type(bz_samp)   ::q,k
- type(X_t)       ::X(4)
+ type(X_t)       ::X(5)
  type(DIPOLE_t)  ::Dip
- type(w_samp)    ::Xw(4)
+ type(w_samp)    ::Xw(5)
  integer         ::lnstr
  character(lnstr)::instr
  logical         ::CLOSE_Gs,FINALIZE,QP_field
@@ -98,7 +98,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  type(QP_t)       ::qp
  type(w_samp)     ::Xxcw
  type(levels)     ::en_sc
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err,i_r
  !
  logical, external:: file_exists
  !
@@ -122,10 +122,12 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    call W_reset(Xw(2),damping=0.001_SP)
    call W_reset(Xw(3))
    call W_reset(Xw(4))
+   call W_reset(Xw(5))
    call X_reset(X(1),type=1)
    call X_reset(X(2),type=2)
    call X_reset(X(3),type=3)
    call X_reset(X(4),type=4)
+   call X_reset(X(5),type=5)
    Xw(2)%n_freqs=1
    Xw(4)%n_freqs=2
    call DIPOLES_reset(Dip)
@@ -320,13 +322,15 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_em1d=runlevel_is_on('em1d')
        l_em1s=runlevel_is_on('em1s')
        l_ppa=runlevel_is_on('ppa')
+       l_mpa=runlevel_is_on('mpa')
+       l_cohsex=runlevel_is_on('cohsex')
        l_dipoles=runlevel_is_on('dipoles')
        l_HF_and_locXC=runlevel_is_on('HF_and_locXC')
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
        l_rim=runlevel_is_on('rim_cut')
-       l_col_cut=runlevel_is_on('rim_cut')
-       l_cohsex=runlevel_is_on('cohsex')
+       l_rim_w=runlevel_is_on('rim_w')
+       l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')
@@ -418,13 +422,18 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
 #endif
      if (l_gw0.and.l_elel_corr) call initactivate(1,'HF_and_locXC')
      !
-     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa/)))   call initactivate(1,'dipoles')
-     if (l_ppa)    call initactivate(1,'em1d')
-     if (l_gw0.and..not.any((/l_ppa,l_cohsex,l_HF_and_locXC,&
+     if (any((/l_em1s,l_em1d,l_X,l_optics,l_ppa,l_mpa/)))   call initactivate(1,'dipoles')
+     if (l_ppa.or.l_mpa)                                    call initactivate(1,'em1d')
+     if (l_gw0.and..not.any((/l_ppa,l_mpa,l_cohsex,l_HF_and_locXC,&
 &                             l_elph_corr,l_phel_corr,l_elphoton_corr/))) call initactivate(1,'em1d dipoles')
      if (l_cohsex) call initactivate(1,'em1s dipoles')
      if (l_bss)    call initactivate(1,'optics dipoles bse')
      if (l_bs_fxc) BSS_mode="t"
+     !
+     if (l_mpa) then
+       Xw(5)%n_freqs=4
+       Xw(5)%dr=(/0._SP,0.1_SP/)!/HA2EV !damping for MPA
+     endif
      !
      if (l_bse) then
        !
@@ -456,12 +465,13 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
      if (l_dipoles) then
        n_threads_DIP=0
      endif
-     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_bse,l_X/))) then
+     if (any((/l_optics,l_em1s,l_em1d,l_ppa,l_mpa,l_bse,l_X/))) then
        n_threads_K=0
        n_threads_X=0
        n_threads_DIP=0
      endif
-     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run) n_threads_SE=0
+     if (l_HF_and_locXC.or.l_gw0.or.l_cohsex.or.l_sc_run&
+&                               .or.l_ppa.or.l_mpa)       n_threads_SE=0
      if (l_real_time)                                     n_threads_RT=0
      if (l_nl_optics)                                     n_threads_NL=0
 #endif
@@ -516,7 +526,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        !
        if (io_BS_err==0) then
          if (     l_ppa) call X_duplicate(Xbsk,X(4))
-         if (.not.l_ppa) call X_duplicate(Xbsk,X(2))
+         if (     l_mpa) call X_duplicate(Xbsk,X(5))
+         if (.not.l_ppa.and..not.l_mpa) call X_duplicate(Xbsk,X(2))
        endif
        !
      endif

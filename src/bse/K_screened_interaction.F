@@ -26,7 +26,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
  use frequency,    ONLY:w_samp
- use drivers,      ONLY:l_td_hf,l_tddft,l_RIM_W
+ use drivers,      ONLY:l_td_hf,l_tddft,l_rim_w
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,RIM_W,RIM_W_d,RIM_W_is_diagonal,&
 &                       RIM_W_ng
@@ -74,8 +74,8 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    !
  else
    !
-   if(.not.l_RIM_W) call section('+','Screened interaction header I/O')
-   if(     l_RIM_W) call section('=','Screened interaction header I/O')
+   if(.not.l_rim_w) call section('+','Screened interaction header I/O')
+   if(     l_rim_w) call section('=','Screened interaction header I/O')
    !===================================================
    !
    if (X%ng<BS_n_g_W) call warning(" Using screening with less G than Weh interaction")
@@ -156,7 +156,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      nibz=q%nibz
 #endif
      !
-     if(l_RIM_W) then
+     if(l_rim_w) then
        !$cuf kernel do(2) <<<*,*>>>
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
@@ -190,7 +190,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
            i_g2_mat=min(i_g2,X%ng)
            !
            !RIM_W support
-           l_RIM_W_g=(l_RIM_W.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
+           l_RIM_W_g=(l_rim_w.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
            if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(i_g2==i_g3)
            !
            if (l_RIM_W_g) then

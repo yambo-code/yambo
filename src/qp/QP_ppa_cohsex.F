@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
@@ -78,6 +78,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(w_samp) ::Xw
  integer      ::GW_iter
  !
+ ! DALV: this is the frequency grid for Sc,
+ !       now set in the solvers('n','s','g')
+ !
+ real(SP),intent(in) ::W(QP_dSc_steps)
+ !
  ! Work Space
  !
  integer          :: i_qp,i_w,iqbz,iqibz,ib,ig1,ig2,alloc_err,iqs,iscs_save(2,4),&
@@ -109,6 +114,10 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
+ !
+ integer      :: first_el(QP_n_states),n_of_el(QP_n_states),n_deg_grp,i_c
+ integer      :: PPcond_rate,TO_rate
+ real(SP)     :: PP_err
  !
  ! Reset & checks
  !
@@ -302,9 +311,14 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      if (l_sc_run .and. it_now==it_to_start.or.io_RESPONSE) then
 #endif
        !
+       PPcond_rate=0
+       TO_rate=0
+       PP_err=0.0_SP
+       !
        if (l_ppa) then
          !
-         !$omp parallel do default(shared), private(ig1,ig2,l_RIM_W_g), collapse(2)
+         !$omp     parallel do default(shared), private(ig1,ig2,l_RIM_W_g), &
+         !$omp &   reduction(+:PPcond_rate,TO_rate,PP_err), collapse(2)
          do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
          do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
            !
@@ -319,15 +333,24 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            else
              if (real(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2))<=1._SP) then
                X_par(iq_mem)%blc(ig1,ig2,X_range2)=X_ppaE
+               !
+               PP_err=PP_err+abs( X_par(iq_mem)%blc(ig1,ig2,X_range1)/(X_ppaE**2+1._SP)-X_par(iq_mem)%blc(ig1,ig2,X_range2) )/&
+&                              maxval( abs( X_par(iq_mem)%blc(ig1,ig2,X_range1:X_range2) ) )
+               PPcond_rate=PPcond_rate+1
              else
                X_par(iq_mem)%blc(ig1,ig2,X_range2)=sqrt(X_par(iq_mem)%blc(ig1,ig2,X_range1)/X_par(iq_mem)%blc(ig1,ig2,X_range2)-1)
+               !
+               if(real(1._SP/X_par(iq_mem)%blc(ig1,ig2,X_range2),SP)*aimag( 1._SP/X_par(iq_mem)%blc(ig1,ig2,X_range1) )>0._SP) then
+                   TO_rate=TO_rate+1
+                 endif
              endif
+           !
            endif
            !
          enddo
          enddo
          !
-       else
+       else ! COHSEX
          !
          ! GAMP
          !
@@ -348,6 +371,11 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
          YAMBO_FREE(isc%gamp_d)
          !
        endif
+       !
+       call msg('r',' Current Q-pt index             ',iqibz)
+       call msg('r',' :: PP condition fails/total    ',real(PPcond_rate,SP)/X%ng**2)
+       call msg('r',' :: Time ordering fails/rest    ',real(TO_rate,SP)/(X%ng**2-PPcond_rate))
+       call msg('r',' :: Mean rel dev of PP cond     ',PP_err/X%ng**2)
        !
 #if defined _SC
      endif
@@ -601,7 +629,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
            !
          endif
          !
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+         ! DALV: here the grid is center in E0
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -699,7 +728,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      if(l_ppa.and.l_GW_terminator) then
        !
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+real(i_w-1,SP)*QP_dSc_delta+cI*QP_G_damp
+       ! DALV: here the grid is center in E0
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
        !
        do i_w=1,QP_dSc_steps
          !

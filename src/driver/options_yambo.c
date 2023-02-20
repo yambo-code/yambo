@@ -39,7 +39,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
- options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
+ options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis";
 #if defined _ELPH
  i_desc=i_desc+1;
  options[*i_opt].long_desc[i_desc]="<string>=fan";
@@ -109,7 +109,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="screen";
  options[*i_opt].section=desc;
- options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/(d)ynamical dielectric matrix";
+ options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/m(PA)/(d)ynamical dielectric matrix";
  options[*i_opt].long_desc[1]="<string>=(X) dynamical response matrix";
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;

@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex,l_RIM_W
+ use drivers,       ONLY:l_ppa,l_mpa,l_elel_corr,l_cohsex,l_RIM_W
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
@@ -82,10 +82,21 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  do while((iter<=SC_iterations.or.SC_iterations<0).and..not.GWo_SC_done) 
    !
    if (l_elel_corr) then
-     if (l_ppa.or.l_cohsex) then
+     !
+     ! AF,DALV: use of RIM_W to be extended beyond PPA
+     !
+     if (l_ppa) then
        !
        if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+       !
+     else if (l_mpa) then
+       !
+       call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
+       !
+     else if (l_cohsex) then
+       !
+       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
        !
      else 
        !

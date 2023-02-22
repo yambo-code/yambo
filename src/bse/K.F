@@ -28,13 +28,13 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,          ONLY:SP,schlen,pi,cZERO,cI
  use stderr,        ONLY:intc
  use LOGO,          ONLY:pickup_a_random
- use drivers,       ONLY:l_bs_fxc,l_tddft,l_RIM_W
+ use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,&
+ use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
 &                        qindx_X,qindx_B_max,qindx_B_load,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
@@ -202,11 +202,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Screened interaction
  !======================
  !
- !Check if there is RIM_W
- call parser('RIM_W',l_RIM_W)
+ !Check if RIM_W is diagonal
  call parser('RIM_W_diag',RIM_W_is_diagonal)
- if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
- if (l_RIM_W) call interpolate_W(X,Xw,q,'BSE')
+ if(l_rim_w .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
+ if (l_rim_w) call interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
@@ -220,6 +219,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    call BSS_PL_free( )
    !
    YAMBO_FREE(BS_W)
+   YAMBO_FREE(RIM_W)
    !
    return
    !
@@ -685,6 +685,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
  !
  YAMBO_FREE(BS_W)
+ YAMBO_FREE(RIM_W)
  call WF_free(WF)
  !
  call timing('X T_space Kernel',OPR='stop')

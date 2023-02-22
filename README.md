@@ -17,7 +17,7 @@ For specific documentation visit the [educational web-site](www.yambo-code.eu/wi
 * [Download](www.yambo-code.eu/wiki/index.php?title=Download)
 * [Install](www.yambo-code.eu/wiki/index.php?title=Installation)
 
-For support please refer to the Yambo [forum web-site](http://www.yambo-code.eu/forum/viewtopic.php?t=1767) 
+For support please refer to the Yambo [forum web-site](http://www.yambo-code.eu/forum) 
 
 ## License
 All the material included in this distribution is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as

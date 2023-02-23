@@ -157,7 +157,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  ! Elemental Collisions
  !====================== 
  isc%iqref=0
- call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
+ call elemental_collision_alloc(isc,NG=isc%ngrho,GAMP_NG=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
  call timing('GW(mpa)',OPR='start')

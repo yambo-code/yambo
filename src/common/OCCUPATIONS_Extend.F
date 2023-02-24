@@ -56,7 +56,7 @@ subroutine OCCUPATIONS_Extend(Xe,E,k)
  E%E_Fermi=Xe%E_Fermi
  E%E_VBM =Xe%E_VBM
  E%E_CBm =Xe%E_CBm
- call f_build_ext(E,Xe%E_Fermi)
+ call f_build_ext(E,E%E_Fermi)
  call OCCUPATIONS_Gaps(E)
  !
  ! If Xe and E have same metallic character then

@@ -40,7 +40,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  use vec_operate,   ONLY:c2a
  use pars,          ONLY:SP,cZERO,rZERO,schlen
  use units,         ONLY:HA2EV,HA2CMm1
- use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
+ use IO_m,          ONLY:manage_action,NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_Sat_WEIGHT,EXCPH_Renorm,BS_all_E,BS_R,EXC_occ,&
 &                        BS_Sat_WEIGHT_PH_abs,BS_E_in,EXCPH_Renorm_PH_abs,Sat_free,min_EXC_E,min_EXC_E_DbGd, &
@@ -68,7 +68,7 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
  complex(SP)   :: pole,W,Sat_alpha_abs,Sat_alpha_emiss
  real(SP)      :: min_E,exc_E,PH_E,occ_fact,v(3)
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: iq_db,iq_ibz
+ integer       :: iq_db,iq_ibz,IO_ACT
  integer       :: elph_branches_save(2)
  type(PP_indexes)::px
  logical       :: l_prt_pl_q_res
@@ -143,11 +143,13 @@ subroutine EXCPH_X_phass(wv,q,Epsilon_ii,PL_ii)
    !
    iq_bz=q%k_table(iq_ibz,1)
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
+   IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+   !
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    !
    iq_db=Q_io_map(iq_bz)
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    ! Add the contribution of q-point transition to the renormalization factors

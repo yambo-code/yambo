@@ -45,7 +45,7 @@ subroutine EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
  use vec_operate,   ONLY:c2a
  use pars,          ONLY:pi,SP,cZERO,rZERO,schlen
  use units,         ONLY:HA2EV,HA2CMm1
- use IO_m,          ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
+ use IO_m,          ONLY:manage_action,NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,REP,VERIFY
  use IO_int,        ONLY:io_control
  use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,BS_all_E,BS_R,EXC_occ,EXCPH_Gkkp,&
 &                        BS_E_in,Sat_free,min_EXC_E,BS_R_left,BS_Sat_E_PH_abs,BS_Sat_E
@@ -71,7 +71,7 @@ subroutine EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
  complex(SP)   :: pole,W,Sat_emission,Sat_absorption,EXCPH_gaux,BS_aux
  real(SP)      :: min_E,exc_E,ph_E,bose_factor,boltzm_factor,E_alpha,E_beta
  integer       :: i_alpha,i_beta,il,iq_bz,iw,io_err,ID_exc_gkkp,ID_gkkp,min_pos(1)
- integer       :: iq_db,iq_ibz
+ integer       :: iq_db,iq_ibz,IO_ACT
  integer       :: elph_branches_save(2)
  type(PP_indexes)::px
  complex(SP),allocatable :: BS_Sat_AMPLITUDE(:,:), BS_Sat_AMPLITUDE_PH_abs(:,:)
@@ -118,11 +118,13 @@ subroutine EXCPH_X_phass_from_Hpert(wv,q,PL_ii)
  !
  do iq_bz=1,q%nbz
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
+   IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz)
+   !
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    !
    iq_db=Q_io_map(iq_bz)
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    !
    ! Add the contribution of q-point transition to the renormalization factors

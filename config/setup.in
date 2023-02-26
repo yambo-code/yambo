@@ -23,6 +23,7 @@ fc_version  = @FCVERSION@
 mpi_kind    = @MPIKIND@
 fcflags     = @FCFLAGS@ @FCMFLAG@ @OPENMPLIBS@ @CUDA_FLAGS@
 fcuflags    = @FCUFLAGS@ @FCMFLAG@ @CUDA_FLAGS@
+slkfcflags  = @SLK_FC_FLAGS@
 f90suffix   = @F90SUFFIX@
 f77         = @F77@
 fflags      = @FFLAGS@

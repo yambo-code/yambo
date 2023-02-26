@@ -24,7 +24,7 @@
 integer function io_EXCPH_SE(ID,what)
  !
  use pars,           ONLY:SP,schlen
- use IO_m,           ONLY:io_sec,read_is_on,RD_CL,RD_CL_IF_END,io_action,frag_ELPH,io_status
+ use IO_m,           ONLY:io_sec,read_is_on,frag_ELPH,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                         def_variable_bulk,io_variable_bulk,io_fragment
  use EXCPH,          ONLY:EXCPH_Gkkp,EXCPH_Gkkp_sq,EXCPH_kind,EXCPH_sum,EXCPH_states,&
@@ -122,10 +122,6 @@ integer function io_EXCPH_SE(ID,what)
    io_EXCPH_gkkp=-1
    goto 1
  endif
- !
- ! Manage RD_CL_IF_END
- !
- if (io_action(ID)==RD_CL_IF_END.and.iq==nqibz) io_action(ID)=RD_CL
  !
  ! Excitonic Gkkp (and SE) fragments
  !=========================

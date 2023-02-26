@@ -404,7 +404,7 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
          ! I/O [H_nl_sc]
          !
          IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
-	 call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/ifrag+1/),ID=ID(3))
+	 call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/i_frag+1/),ID=ID(3))
          io_V=io_SC_components('V',E,ID(3))
          !
          ! Mixing for non-local self-energies

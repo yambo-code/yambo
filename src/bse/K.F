@@ -28,7 +28,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use pars,          ONLY:SP,schlen,pi,cZERO,cI
  use stderr,        ONLY:intc
  use LOGO,          ONLY:pickup_a_random
- use drivers,       ONLY:l_bs_fxc,l_tddft,l_RIM_W
+ use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin
  use FFT_m,         ONLY:fft_size
@@ -202,11 +202,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! Screened interaction
  !======================
  !
- !Check if there is RIM_W
- call parser('RIM_W',l_RIM_W)
+ !Check if RIM_W is diagonal
  call parser('RIM_W_diag',RIM_W_is_diagonal)
- if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
- if (l_RIM_W) call interpolate_W(X,Xw,q,'BSE')
+ if(l_rim_w .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
+ if (l_rim_w) call interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)

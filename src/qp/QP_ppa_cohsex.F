@@ -33,7 +33,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
-&                        l_rt_carriers_in_use,l_RIM_W
+&                        l_rt_carriers_in_use,l_rim_w
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -148,7 +148,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  endif
  !
  if (GW_iter==0) then
-   if(l_RIM_W) then
+   if(l_rim_w) then
      call section('-',trim(SECTION_name))
    else
      call section('+',trim(SECTION_name))
@@ -305,7 +305,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
              !
              ! RIM W support
              !
-             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
+             l_RIM_W_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
              if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
              !
              if (l_RIM_W_g) then
@@ -557,7 +557,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                !
                ! RIM W support
                !
-               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               l_RIM_W_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then

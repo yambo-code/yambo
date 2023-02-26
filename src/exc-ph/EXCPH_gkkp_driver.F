@@ -42,7 +42,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use BS,             ONLY:BS_H_dim,BS_bands,BSqpts
  use ELPH,           ONLY:elph_branches,Q_io_map,l_GKKP_expanded_DB_exists
  use IO_m,           ONLY:NONE,OP_APP_CL,OP_RD_CL,DUMP,OP_RD,RD_CL_IF_END,OP_WR_CL,deliver_IO_error_message, &
-&                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END
+&                         REP,VERIFY,WR_CL,OP_WR,WR_CL_IF_END,manage_action
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,build_Q_map,EXCPH_q, &
@@ -61,7 +61,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  ! Work Space
  !
  integer, external :: io_ELPH,io_EXCPH_gkkp,io_RIM
- integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID
+ integer  :: ID_gkkp,ID_exc_gkkp,io_err,io_ID,IO_ACT
  integer  :: il,iq_bz,iq,i_star,iq_s,iq_db,elph_branches_save(2)
  ! Debug
  !integer :: ik
@@ -230,7 +230,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      ! I/O
      !=====
-     call io_control(ACTION=WR_CL_IF_END,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
+     IO_ACT=manage_action(WR_CL_IF_END,iq_bz,1,q%nbz)
+     call io_control(ACTION=IO_ACT,SEC=(/iq_bz+1/),ID=ID_exc_gkkp)
      io_err=io_EXCPH_gkkp(ID_exc_gkkp)
      !
    enddo

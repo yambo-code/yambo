@@ -53,7 +53,7 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  ! Work space
  !
- integer  :: ID_exc_gkkp,ID_gkkp,io_err
+ integer  :: ID_exc_gkkp,ID_gkkp,io_err,IO_ACT
  integer, external :: io_EXCPH_gkkp,io_ELPH
  integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
@@ -149,13 +149,15 @@ subroutine EXCPH_lifetime(k,q,X)
    !
    if (.not.px%element_1D(iq_bz)) cycle
    !
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
+   IO_ACT=manage_action(RD_CL_IF_END,iq_bz,1,q%nbz,PAR_INDEX=px)
+   !
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_bz/),MODE=DUMP,ID=ID_exc_gkkp)
    io_err=io_EXCPH_gkkp(ID_exc_gkkp)
    if(io_err/=0) call error('excph_gkkp databases not found!')
    !
    !iq_db=DB_Q_map(iq_bz)
    iq_db=Q_io_map(iq_bz)
-   call io_control(ACTION=RD_CL_IF_END,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
+   call io_control(ACTION=IO_ACT,COM=REP,SEC=(/1+iq_db/),MODE=DUMP,ID=ID_gkkp)
    io_err=io_ELPH(ID_gkkp,'gkkp_expanded no_matrix_elements')
    if(io_err/=0) call error('gkkp_expanded databases not found!')
    !

@@ -31,18 +31,18 @@ subroutine environ_test(q,v_environ,label)
  ! * the FFT of v_G is computed
  ! * the potential is plotted in real space and dumped in CUBE fmt
  ! 
- use pars,          ONLY:SP,DP,pi,cONE,cZERO,CI
- use com,           ONLY:msg
- use vec_operate,   ONLY:iku_v_norm,c2a
- use matrix,        ONLY:PAR_matrix,MATRIX_reset
- use wrapper,       ONLY:M_by_V
- use parallel_m,    ONLY:PP_redux_wait
- use linear_algebra,ONLY:INV
- use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_duplicate
- use environ_m,     ONLY:l_environ,eps_env_g, eps0, A0
- use R_lattice,     ONLY:b,G_m_G,g_vec,ng_vec,q_norm,minus_G
- use D_lattice,     ONLY:DL_vol
- use FFT_m,         ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ use pars,           ONLY:SP,DP,pi,cONE,cZERO,CI
+ use com,            ONLY:msg
+ use vec_operate,    ONLY:iku_v_norm,c2a
+ use matrix,         ONLY:PAR_matrix,MATRIX_reset
+ use wrapper,        ONLY:M_by_V
+ use linear_algebra, ONLY:INV
+ use interfaces,     ONLY:LINEAR_ALGEBRA_driver,MATRIX_duplicate
+ use environ_m,      ONLY:l_environ, eps0, A0
+ use R_lattice,      ONLY:b,G_m_G,g_vec,ng_vec,q_norm,minus_G
+ use D_lattice,      ONLY:DL_vol
+ use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
+ !
 #include<memory.h>
  !
  real(SP),         intent(in) :: q(3)

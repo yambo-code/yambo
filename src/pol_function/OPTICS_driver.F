@@ -45,8 +45,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 &                        F_xc_gspace,FXC_K_diagonal
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
- use IO_int,        ONLY:IO_and_Messaging_switch
- use IO_m,          ONLY:io_control,OP_RD_CL,REP
+ use IO_int,        ONLY:IO_and_Messaging_switch,io_control
+ use IO_m,          ONLY:OP_RD_CL,REP
  use environ_m,     ONLY:l_environ
  !
 #include<memory.h>

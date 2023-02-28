@@ -23,6 +23,8 @@
 !
 subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  !
+ ! BROKEN AS i_t_start not in YPP module anymore
+ !
  use pars,            ONLY:SP,cI,cONE,cZERO,rZERO
  use YPP_real_time,   ONLY:X_order,RT_conf
  use real_time,       ONLY:RT_step,NE_steps
@@ -58,7 +60,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  X_here=cZERO
  !
  do i_t=1,M_size
-   T_i(i_t)= ((i_t_start-1._SP)+i_deltaT*(i_t-1._SP))*RT_step-Efield(1)%t_initial
+   T_i(i_t)= ((i_t_start-1._SP)+i_deltaT*(i_t-1._SP))*RT_step
    P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
  enddo
  !

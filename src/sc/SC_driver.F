@@ -383,6 +383,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
      !
      do ik = 1, QP_nk 
        !
+       i_frag=ik+(i_sp_pol-1)*QP_nk
+       !
        H_nl_sc=cZERO
        !
        ! Build H_nl_sc
@@ -426,7 +428,6 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
        !
        if (l_sc_XC_is_local.and..not.l_use_collisions)     call V_real_space_to_H(ik,i_sp_pol,H_nl_sc,WFo,'xc ',Vxc=V_xc_sc)
        !
-       i_frag=ik+(i_sp_pol-1)*QP_nk
        IO_ACT=manage_action(WR_CL_IF_END,i_frag,1,QP_nk*n_sp_pol)
        call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/1+i_frag/),ID=ID(3))
        io_V=io_SC_components('V',E,ID(3))

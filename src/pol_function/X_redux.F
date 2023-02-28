@@ -133,13 +133,11 @@ subroutine X_redux(iq,X_par,Xw,X)
    YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
    v_environ%blc=cZERO
    work%blc=cZERO
-   call environ_vcoul(q_pt(iq,:),v_environ,.true.)
-   !
-   ! debug
-! XXX
-   call environ_test(q_pt(iq,:),v_environ,"onsager")
-   STOP
-! XXX
+   call environ_vcoul(q_pt(iq,:),v_environ,.false.)
+   !!
+   !! debug
+   !call environ_test(q_pt(iq,:),v_environ,"onsager")
+   !STOP
    !
  endif
  !

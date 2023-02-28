@@ -105,16 +105,26 @@ subroutine p2y_environ(filename)
  enddo
 
  !
- ! (b) get PCM epsilon(r)
+ ! PDA:
+ ! (b) get PCM epsilon(r). The epsilon(r) func is first read and then converted
+ ! to [1 + (eps_infty - 1)/(eps_0 - 1) * (eps(r) - 1)]. The transformation
+ ! simply takes the initial eps(r) calculated for an environment with eps_0 and
+ ! rescale it to the fast optical eps_infty because the subsequent screening
+ ! for the GW correction takes into account fast optical electronic transitions.
+ ! In this case the values are for water (TOBE FIXED).
  !
  YAMBO_ALLOC(eps,(fft_size))
  YAMBO_ALLOC(eps_fft,(fft_size))
  call environ_alloc(ng_vec)
  !
  call cube_read_base(filename,dat=eps,orig=r0,IERR=io_err)
- if (io_err/=0) call error(' [ENVIRON] reading data from '//trim(filename))
- !
+ if (io_err/=0)    call error(' [ENVIRON] reading data from '//trim(filename))
  if (any(r0/=0.0)) call error(' [ENVIRON] invalid r0 /= 0')
+ !
+! XXX
+ ! Water specific values
+ eps(:) = 1 + ((1.78-1)/(78.5-1))*(eps(:) - 1)
+! XXX
 
  !
  ! (c) compute eps in reciprocal space

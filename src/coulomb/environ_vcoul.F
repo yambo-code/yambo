@@ -58,7 +58,7 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  integer     :: ig1,ig2,ng_loc,ig_m_g
  real(SP)    :: bare_qpg_v1(3),bare_qpg_v2(3),q_loc(3),q_vers(3),scal,scalp
  logical     :: l_this_is_q0,compute_on_gpu
- complex(DP) :: dp_dummy
+ complex(DP) :: dp_dummy, ctmp(1)
  real(SP), allocatable :: g_vec_loc(:,:)
  type(PAR_matrix) :: Kbar
 
@@ -147,7 +147,10 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! Once the kernel is inverted, 
  ! the value 1/q0^2 is assigned to the v(0,0,0) element
  !
- v_environ%blc(1,1,1) = v_environ%blc(1,1,1)/q_norm(1)**2
+ call dev_mempcy(ctmp,DEV_VAR(v_environ%blc)(1:1,1,1))
+ v_environ%blc(1,1,1) = ctmp(1)/q_norm(1)**2 
+ !
+ if (have_cuda) call dev_memcpy(DEV_VAR(v_environ%blc)(1:1,1,1),ctmp)
 
  !
  ! Asymptotics

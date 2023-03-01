@@ -21,9 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Polarization coefficient inversion see Sec. III in PRB 88, 235113 (2013) 
+!!
+!! @param[in]       NW          order of the response functions 
+!! @param[in]       NX          numer of coefficents required
+!! @param[in]       P           real-time polarization 
+!! @param[in]       W           multiples of the laser frequency
+!! @param[in]       T_prediod   shorted cicle period
+!! @param[out]      X           coefficents of the response functions X1,X2,X3... 
+!
 subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
- !
- ! BROKEN AS i_t_start not in YPP module anymore
  !
  use pars,            ONLY:SP,cI,cONE,cZERO,rZERO
  use YPP_real_time,   ONLY:X_order,RT_conf
@@ -60,7 +67,7 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  X_here=cZERO
  !
  do i_t=1,M_size
-   T_i(i_t)= ((i_t_start-1._SP)+i_deltaT*(i_t-1._SP))*RT_step
+   T_i(i_t)= ((i_t_start-1._SP)+i_deltaT*(i_t-1._SP))*RT_step-Efield(1)%t_initial
    P_i(i_t)=P(i_t_start+i_deltaT*(i_t-1))
  enddo
  !

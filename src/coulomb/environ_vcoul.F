@@ -113,13 +113,13 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
      !
      ig_m_g=G_m_G(ig1,ig2)
      !
-     if (ig1==1.and.ig2==1) then 
+     if (ig1==1.and.ig2==1.and.l_this_is_q0) then 
        !
        ! We impose K(0,0,0) = 1 in order to avoid problems arising from the
        ! "infinitesimal" value of q0 when making the inversion. We restore the
-       ! value V(0,0,0) = 1/q0^2 after the inversion.
+       ! value V(0,0,0) = 4pi/q0^2 after the inversion.
        !
-       v_environ%blc(ig1,ig2,1)=1.0_SP/(4.0_SP*pi)
+       v_environ%blc(ig1,ig2,1)=1.0_SP
        !
      else
        !
@@ -146,12 +146,12 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  call LINEAR_ALGEBRA_driver(INV,M_slk=v_environ)
  !
  ! Once the kernel is inverted, 
- ! the value 1/q0^2 is assigned to the v(0,0,0) element
+ ! the value 4pi/eps(0)/q0^2 is assigned to the v(0,0,0) element
  !
- call dev_memcpy(ctmp,DEV_VAR(v_environ%blc)(1:1,1,1))
- v_environ%blc(1,1,1) = ctmp(1)/q_norm(1)**2
- !
- if (have_cuda) call dev_memcpy(DEV_VAR(v_environ%blc)(1:1,1,1),ctmp)
+ if (l_this_is_q0) then
+   ctmp(1)=4.0_SP*pi/eps_env_RL(1)/q_norm(1)**2
+   DEV_VAR(v_environ%blc)(1,1,1) = ctmp(1)
+ endif
 
  !
  ! Asymptotics

@@ -118,11 +118,11 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
        ! "infinitesimal" value of q0 when making the inversion. We restore the
        ! value V(0,0,0) = 1/q0^2 after the inversion.
        !
-       v_environ%blc(ig1,ig2,1)=1.0_SP
+       v_environ%blc(ig1,ig2,1)=1.0_SP/(4.0_SP*pi)
        !
      else
        !
-       v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)
+       v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)
        !
      endif
      !

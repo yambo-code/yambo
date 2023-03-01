@@ -296,7 +296,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
          !$cuf kernel do(2)
          do ig2=Xo_cols(1),Xo_cols(2)
            do ig1=Xo_rows(1),Xo_rows(2)
-             BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*bare_qpg_d(iq,ig1)*bare_qpg_d(iq,ig2)
+             BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*bare_qpg_d(iq,ig1)*bare_qpg_d(iq,ig2)/(4.0_SP*pi)
            enddo
          enddo
          !
@@ -326,7 +326,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
          !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
          do ig2=Xo%cols(1),Xo%cols(2)
            do ig1=Xo%rows(1),Xo%rows(2)
-             BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*bare_qpg(iq,ig1)*bare_qpg(iq,ig2)
+             BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*bare_qpg(iq,ig1)*bare_qpg(iq,ig2)/(4.0_SP*pi)
            enddo
          enddo
          !$omp end parallel do

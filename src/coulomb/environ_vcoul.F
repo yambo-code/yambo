@@ -58,7 +58,8 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  integer     :: ig1,ig2,ng_loc,ig_m_g
  real(SP)    :: bare_qpg_v1(3),bare_qpg_v2(3),q_loc(3),q_vers(3),scal,scalp
  logical     :: l_this_is_q0,compute_on_gpu
- complex(DP) :: dp_dummy, ctmp(1)
+ complex(SP) :: ctmp(1)
+ complex(DP) :: dp_dummy
  real(SP), allocatable :: g_vec_loc(:,:)
  type(PAR_matrix) :: Kbar
 
@@ -112,7 +113,7 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
      !
      ig_m_g=G_m_G(ig1,ig2)
      !
-     if (ig1==1 .and. ig2==1) then 
+     if (ig1==1.and.ig2==1) then 
        !
        ! We impose K(0,0,0) = 1 in order to avoid problems arising from the
        ! "infinitesimal" value of q0 when making the inversion. We restore the
@@ -147,8 +148,8 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! Once the kernel is inverted, 
  ! the value 1/q0^2 is assigned to the v(0,0,0) element
  !
- call dev_mempcy(ctmp,DEV_VAR(v_environ%blc)(1:1,1,1))
- v_environ%blc(1,1,1) = ctmp(1)/q_norm(1)**2 
+ call dev_memcpy(ctmp,DEV_VAR(v_environ%blc)(1:1,1,1))
+ v_environ%blc(1,1,1) = ctmp(1)/q_norm(1)**2
  !
  if (have_cuda) call dev_memcpy(DEV_VAR(v_environ%blc)(1:1,1,1),ctmp)
 

@@ -38,7 +38,7 @@ subroutine environ_test(q,v_environ,label)
  use wrapper,        ONLY:M_by_V
  use linear_algebra, ONLY:INV
  use interfaces,     ONLY:LINEAR_ALGEBRA_driver,MATRIX_duplicate
- use environ_m,      ONLY:l_environ, eps0, A0
+ use environ_m,      ONLY:l_environ, eps0, A0, eps_env_RL
  use R_lattice,      ONLY:b,G_m_G,g_vec,ng_vec,q_norm,minus_G
  use D_lattice,      ONLY:DL_vol
  use FFT_m,          ONLY:fft_size,fft_dim,fftw_plan,fft_g_table
@@ -101,7 +101,7 @@ subroutine environ_test(q,v_environ,label)
  write(iun,"('# Gx, Gy, Gz, |G|, rho')")
  do ig1 = 1, ng_loc
    scal=sqrt(dot_product(g_vec_loc(:,ig1),g_vec_loc(:,ig1)))
-   write(iun,"(3f25.15, f25.9, f25.9, 2f25.15)") g_vec_loc(:,ig1), scal, eps_env_g(ig1)
+   write(iun,"(3f25.15, f25.9, f25.9, 2f25.15)") g_vec_loc(:,ig1), scal, eps_env_RL(ig1)
  enddo
  close(iun)
 
@@ -111,7 +111,7 @@ subroutine environ_test(q,v_environ,label)
  !
  do ig1 = 1, ng_loc
    ifft = fft_g_table(ig1,1)
-   eps_env_DP(ifft) = eps_env_g(ig1)
+   eps_env_DP(ifft) = eps_env_RL(ig1)
  enddo
  !
 #if defined _FFTW
@@ -296,7 +296,7 @@ subroutine environ_test(q,v_environ,label)
  ! compute the kernel of the reaction potential V^reac_G = V - 4pi/G^2
  !
  !$omp parallel do default(shared), &
- !$omp &           private(ig1,ig2,bare_qpg_v1,bare_qpg_v2,scal,ig_m_g)
+ !$omp &           private(ig1,ig2,bare_qpg_v1,bare_qpg_v2,scal)
  do ig2=v_environ_react%cols(1),v_environ_react%cols(2)
    !
    bare_qpg_v2(:)=g_vec_loc(:,ig2)

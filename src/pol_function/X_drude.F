@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM,DS
+! Authors (see AUTHORS file for details): AM,DS,AG
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -28,10 +28,8 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
- use R_lattice,     ONLY:bz_samp,q_norm
- use D_lattice,     ONLY:DL_vol
+ use R_lattice,     ONLY:bz_samp,q_norm,RIM_W_for_graph
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
- use stderr,        ONLY:intc,real2ch
  use parser_m,      ONLY:parser
  !
  implicit none
@@ -44,7 +42,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  complex(SP)  ,intent(inout):: Wd
  complex(SP)  ,intent(out)  :: drude_GreenF(Xw%n_freqs)
  !
- real(SP)             :: drude_factor,f_eh,f_occ
+ real(SP)             :: f_eh,f_occ
  logical              :: Drude_term(4),l_Jellium,l_Classical
  integer              :: iw,ik,ib,is
  !
@@ -70,17 +68,17 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    enddo
  enddo
  !
- f_eh=f_eh/real(drude_n_states,SP)
+ if(drude_n_states>0) f_eh=f_eh/real(drude_n_states,SP)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================
- !  . Non zero Drude Freq.
+ !  . Non zero Drude Freq. or graphene model
  !  . Metallic system 
  !  . Metallic occupations
  !  . Optical response @ q = Gamma
  !
- Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
- Drude_term(2) = Xen%nbf/=Xen%nbm
+ Drude_term(1) = ((real(Wd)>0._SP .and. aimag(Wd)>0._SP) .or. (RIM_W_for_graph))
+ Drude_term(2) = any( (/Xen%nbf(:n_sp_pol)/=Xen%nbm(:n_sp_pol)/) )
  Drude_term(3) = (f_eh>0._SP) 
  Drude_term(4) = (iq==1)
  !
@@ -105,15 +103,22 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  l_drude=all(Drude_term)
  if(.not.l_drude) return
  !
- call parser('DrClassic',l_Classical)
- l_Jellium=.not.l_Classical
+ if(RIM_W_for_graph) then
+   l_Classical = .False.
+   l_Jellium = .False.
+ else
+   call parser('DrClassic',l_Classical)
+   l_Jellium=.not.l_Classical
+ end if
  if(.not.all(Drude_term)) return
  !
  call msg(' rs','[X/K] Drude nstates            ',drude_n_states)
  call msg(' rs','[X/K] Drude average occ        ',f_eh)
  call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
+ if(RIM_W_for_graph) call msg('r', 'Graphene analytical model of intraband transitions')
  !
  do iw=1,Xw%n_freqs
+   if(RIM_W_for_graph.and.iw==1) drude_GreenF(iw) = Graphene_drude(Wd,q_norm(1))
    if(l_Jellium)   drude_GreenF(iw)=  Jellium_drude(real(Xw%p(iw)),Wd,q_norm(1))
    if(l_Classical) drude_GreenF(iw)=Classical_drude(real(Xw%p(iw)),Wd,q_norm(1))
  enddo
@@ -180,5 +185,29 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
    Classical_drude =  -Classical_drude* ( q0_norm**2/(4._SP*pi) )
    !
  end function Classical_drude
+ !
+ !
+ function Graphene_drude(Wd,q0_norm)
+   !
+   !
+   use pars,       ONLY:SP,pi
+   use R_lattice,  ONLY:idir
+   use D_lattice,  ONLY:alat
+   !
+   implicit none
+   !
+   real(SP)    :: lcut,q0_norm
+   complex(SP) :: Graphene_drude,Wd
+   !
+   !Get graph_v in a.u.
+   !
+   lcut = alat(idir(1))
+   !
+   !Analytical model for graphene:
+   !X_D(w=0) = -1/(4*vf)*q/L
+   !real(Wd) = 1/(4*vf)
+   Graphene_drude = -real(Wd)*q0_norm/lcut
+   !
+ end function Graphene_drude
  !
 end subroutine

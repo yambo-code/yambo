@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -85,7 +85,7 @@ subroutine QP_DB_message( i_ACTION, qp )
      if (index(qp%desc%str(i1),trim(field(if,1)))/=0.or.index(qp%desc%sval(i1),trim(field(if,1)))/=0) then
        if (len_trim(field(if,3))>0 .and. index(qp%desc%term(i1),trim(field(if,3)))==0) cycle
        if (.not.am_i_first) then
-         QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' = '//trim(field(if,2))
+         QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' * '//trim(field(if,2))
        else
          QP_action(i_ACTION)%desc=trim(QP_action(i_ACTION)%desc)//' '//trim(field(if,2))
        endif

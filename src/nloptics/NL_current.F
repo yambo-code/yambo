@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -46,7 +46,7 @@ subroutine NL_current(k,E,V_input,NL_J)
  ! 
  type(bz_samp),     intent(in)  :: k
  type(levels),      intent(in)  :: E
- complex(SP),       intent(in)  :: V_input(NL_bands(2),E%nbf,QP_nk,n_sp_pol) 
+ complex(SP),       intent(in)  :: V_input(NL_bands(2),maxval(E%nbf),QP_nk,n_sp_pol) 
  complex(SP),       intent(out) :: NL_J(6)
  !
  ! Work Space

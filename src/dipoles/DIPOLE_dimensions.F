@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -54,13 +54,15 @@ subroutine DIPOLE_dimensions(Xen,Dip,bands,q0)
  l_X_terminator = X_terminator_Kind/='none'
  !
  if (     l_col_cut) q_norm(1)    =q0_def_norm
- if (.not.l_col_cut) bare_qpg(1,1)=q0_def_norm
+ if (.not.l_col_cut.and.allocated(bare_qpg)) then
+   bare_qpg(1,1)=q0_def_norm
+ endif
  !
  ! Set up band limits
  !
  if (Dip%bands_ordered.or.Dip%Energy_treshold<0._SP) then
-   Dip%ib_lim(1)=Xen%nbm
-   Dip%ib_lim(2)=Xen%nbf+1
+   Dip%ib_lim(1)=maxval(Xen%nbm)
+   Dip%ib_lim(2)=minval(Xen%nbf)+1
    if (l_X_terminator) Dip%ib_lim(2)=Dip%ib(1)
  else
    Dip%ib_lim(1)=Dip%ib(2)

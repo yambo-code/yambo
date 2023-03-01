@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,9 +28,10 @@ integer function io_ATMPROJ_pwscf(ID)
  use electrons,        ONLY:n_sp_pol
  use stderr,           ONLY:intc
  use R_lattice,        ONLY:nkibz
- use IO_m,             ONLY:io_connect,io_disconnect,io_sec, &
+ use IO_m,             ONLY:io_sec,read_is_on,frag_WF
+ use IO_int,           ONLY:io_connect,io_disconnect, &
 &                           io_elemental,io_variable_bulk,def_variable_bulk, &
-&                           io_header,read_is_on,io_fragment,frag_WF
+&                           io_header,io_fragment
  use timing_m,       ONLY:timing
  !
 #include<memory.h>
@@ -39,7 +40,7 @@ integer function io_ATMPROJ_pwscf(ID)
  ! 
  ! Work Space
  !
- integer           :: ifrag,ik,i_sp_pol
+ integer           :: ifrag,ik,i_sp_pol,ID_frag
  character(schlen) :: varname
  !
  call timing('io_ATMPROJ_pwscf',OPR='start')
@@ -60,7 +61,7 @@ integer function io_ATMPROJ_pwscf(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.true.,FRAG=frag_WF)
+   io_ATMPROJ_pwscf=io_header(ID,IMPOSE_SN=.false.,FRAG=frag_WF)
    if (io_ATMPROJ_pwscf/=0) goto 1
    !
    call io_elemental(ID,VAR="PARS",VAR_SZ=2,MENU=0)
@@ -88,11 +89,13 @@ integer function io_ATMPROJ_pwscf(ID)
    endif
  endif
  !
- call io_fragment(ID,i_fragment=ik)
+ call io_fragment(ID,ID_frag,i_fragment=ik)
  !
  varname="ATOM_PROJ_IK"//trim(intc(ik))//"_SP_POL"//trim(intc(i_sp_pol))
- call def_variable_bulk(ID,trim(varname),1,(/2,n_atom_wfc,n_proj_bands/),SP)
- call  io_variable_bulk(ID,1,C2=atomic_projections(:,:,ik,i_sp_pol))
+ call def_variable_bulk(ID_frag,trim(varname),1,(/2,n_atom_wfc,n_proj_bands/),SP)
+ call  io_variable_bulk(ID_frag,1,C2=atomic_projections(:,:,ik,i_sp_pol))
+ !
+ call io_fragment_disconnect(ID,ID_frag)
  !
 1 call io_disconnect(ID=ID)
  !

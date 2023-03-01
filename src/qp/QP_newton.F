@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO,schlen
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex
+ use drivers,       ONLY:l_ppa,l_elel_corr,l_cohsex,l_RIM_W
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
@@ -37,7 +37,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use R_lattice,     ONLY:bz_samp
  use interfaces,    ONLY:OCCUPATIONS_Fermi
  use stderr,        ONLY:intc
- use IO_m,          ONLY:IO_and_Messaging_switch
+ use IO_int,        ONLY:IO_and_Messaging_switch
 #if defined _ELPH
  use drivers,       ONLY:l_elph_corr
 #endif
@@ -65,7 +65,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  if (l_cohsex) then
    !
-   call msg('r', '[Newton] Sc step   [ev]',QP_dSc_delta*HA2EV)
+   call msg('r', '[Newton] Sc step       ',QP_dSc_delta*HA2EV,"[eV]")
    call msg('r', '[Newton] Sc steps      ',QP_dSc_steps)
    !
  endif
@@ -84,6 +84,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    if (l_elel_corr) then
      if (l_ppa.or.l_cohsex) then
        !
+       if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else 
@@ -166,8 +167,8 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
    GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations
    !
-   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle [ev]',&
-&                      (/SC_corr_prev,SC_corr_now/)*HA2EV)
+   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle',&
+&                      (/SC_corr_prev,SC_corr_now/)*HA2EV,"[eV]")
    SC_corr_prev=SC_corr_now
    !
    if (.not.GWo_SC_done.and.SC_iterations/=0) then
@@ -197,7 +198,7 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      !
      ! Find new Fermi Energy
      !
-     call OCCUPATIONS_Fermi(en,k,mode="OCCUPATIONS")
+     call OCCUPATIONS_Fermi(en,k,"E",mode="OCCUPATIONS")
      !
      ! Write QP on file
      !
@@ -208,6 +209,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      endif
      report_Sc=.true.
      call QP_of(qp,en,-1,FILE_name)
+     !
+     ! Restore k-points that are set to zero in QP_of
+     !
+     do i1=1,QP_n_states
+       qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
+     enddo
      !
      if(l_update_W) then
         !
@@ -243,3 +250,4 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  if (GW_iterations<0)  GW_iterations =iter
  !
 end subroutine
+

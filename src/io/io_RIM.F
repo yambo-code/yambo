@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,9 +27,11 @@ integer function io_RIM(ID)
  use R_lattice,      ONLY:RIM_ng,RIM_n_rand_pts,RIM_is_diagonal,RL_vol,RIM_RL_vol,&
 &                         RIM_id_epsm1_reference,RIM_epsm1,RIM_anisotropy,RIM_qpg,&
 &                         nqibz
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,&
-&                         io_elemental,io_status,io_bulk,read_is_on
+ use IO_m,           ONLY:io_sec,read_is_on,io_status,write_is_on
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,ver_is_gt_or_eq
+ !
 #include <memory.h>
+ !
  integer :: ID
  ! 
  ! Work Space
@@ -43,7 +45,15 @@ integer function io_RIM(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_RIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.)
+   ! First get the DB version
+   io_RIM=io_header(ID)
+   if (io_RIM/=0) goto 1   
+   !
+   if (ver_is_gt_or_eq(ID,(/5,1,0/)).or.write_is_on(ID)) then
+     io_RIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.,CUTOFF=.true.)
+   else
+     io_RIM=io_header(ID,QPTS=.true.,R_LATT=.true.,IMPOSE_SN=.true.,CUTOFF=.false.)
+   endif
    if (io_RIM/=0) goto 1   
    !
    RL_vol_disk=RL_vol

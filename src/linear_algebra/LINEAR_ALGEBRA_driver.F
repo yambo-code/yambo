@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM,AF
@@ -106,8 +106,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! whether to use CUDA lib
  !
- if (idriver==SVD_INV.or.idriver==INV.or.idriver==DIAGO&
-&                    .or.idriver==MAT_MUL) USE_CUDA=.false.
+ if (idriver==SVD_INV.or.idriver==DIAGO) USE_CUDA=.false.
  if (USE_CUDA) lib_in_use=USE_LK
  !
 #if defined _SCALAPACK
@@ -286,15 +285,31 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  if (lib_in_use==USE_LK.and.USE_CUDA) then
    !
+#if defined _CUDA
+   !
    ! ####> LINEAR SYSTEM SOLUTION
    !
    if (idriver==LIN_SYS) then
-#ifdef _CUDA
      call SERIAL_lin_system_gpu(N,N,M_slk%blc_d(:,:,M_slk%I),B_slk%blc_d(:,:,B_slk%I))
-#else
-     call error('[LA] CUDA support required but not present')
-#endif
    endif
+   !
+   ! ###> SERIAL INVERSION 
+   !
+   if (idriver==INV) then
+     call SERIAL_inversion_gpu(N,M_slk%blc_d(:,:,M_slk%I),det_,present(det))
+     if(present(det)) det=det_
+   endif
+   !
+   ! ####> MAT_MUL
+   ! C = M * B
+   if (idriver==MAT_MUL) then
+     call M_by_M('N','N',N,N,N,cONE,M_slk%blc_d(:,:,M_slk%I),N,&
+&                        B_slk%blc_d(:,:,B_slk%I),N,cZERO,C_slk%blc_d(:,:,C_slk%I),N)
+   endif
+   !
+#else
+   call error('[LA] CUDA support required but not present')
+#endif
    !
  endif
  !

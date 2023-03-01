@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -28,8 +28,8 @@ integer function io_BSS_invert(iq,W,ID)
  use frequency,     ONLY:w_samp
  use BS,            ONLY:BS_identifier
  use BS_solvers,    ONLY:BSS_q0,BSS_uses_DbGd,BSS_dr,BSS_damp_reference,K_INV_EPS,K_INV_PL
- use IO_m,          ONLY:io_connect,io_disconnect,io_sec,io_elemental,io_status,io_bulk,&
-&                        io_header,read_is_on
+ use IO_m,          ONLY:io_sec,io_status,read_is_on
+ use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header
  use timing_m,      ONLY:timing
 #include<memory.h>
  integer      :: iq

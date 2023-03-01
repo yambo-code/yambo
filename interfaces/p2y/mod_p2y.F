@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF, DV
@@ -27,17 +27,19 @@ module P2Ym
  use qexml_module
  use qexsd_module
  use pw_data
- use pars,                  ONLY : lchlen,SP,DP
+ use pars,                  ONLY : lchlen,SP,DP,rZERO
  use electrons,             ONLY : levels
  use R_lattice,             ONLY : bz_samp
  use mod_com2y,             ONLY : verboseIO
- use parallel_m,            ONLY : myid,PP_bcast   
+ use parallel_m,            ONLY : myid
+ use parallel_int,          ONLY : PP_bcast   
+ use units,                 ONLY : Da2AU
  ! 
 #include<memory.h>
- 
  !
  character(lchlen) :: index_filename
  character(lchlen) :: dftdata_fmt
+ character(lchlen) :: dftdata_dir
  !
  integer, public  :: pw_unit 
  integer, private :: i1,i2,ierr
@@ -53,22 +55,22 @@ contains
  !    Select and open XML files                                        *
  !---------------------------------------------------------------------*
  !
- subroutine pw_init(instr,inf)
+ subroutine pw_init(instr,indir)
    !
    use pars,  ONLY:lchlen
    use com,   ONLY:msg
-   character(*)  :: instr,inf
+   character(*)  :: instr,indir
    !
    ! Work Space
    !
    integer           :: rhounit_ 
    character(lchlen) :: lch
    logical           :: lexist
-
    !
    ! data fmt detection
    !
-   call p2y_get_dftdata_fmt(dftdata_fmt)
+   call p2y_get_dftdata_fmt(dftdata_fmt,indir)
+   dftdata_dir=trim(indir)
    !
    select case(trim(dftdata_fmt))
    case("pw_export","qexml","qexsd","qexsd-hdf5")
@@ -79,7 +81,6 @@ contains
       call msg('s','detected QE data format ',trim(dftdata_fmt))
       call errore("p2y_init","QE format not recognised/compatible (was wf_collect set to true?)",1)
    end select
-      
    !
    ! settings
    !
@@ -89,17 +90,17 @@ contains
    select case (trim(dftdata_fmt))
    case("pw_export")
       !
-      index_filename = 'index.xml'
+      index_filename = indir//'/index.xml'
       write(lch,'(a)') '== pw_export generated data =='
       !
    case("qexml")   
       !
-      index_filename = 'data-file.xml'
+      index_filename = indir//'/data-file.xml'
       write(lch,'(a)') '== PWscf > v5.x generated data (QEXML fmt) =='
       !
    case("qexsd-hdf5")   
       !
-      index_filename = 'data-file-schema.xml'
+      index_filename = indir//'/data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD-HDF5 fmt) =='
       !
 #if !defined _P2Y_QEXSD_HDF5
@@ -107,7 +108,7 @@ contains
 #endif
    case ("qexsd")
       !
-      index_filename = 'data-file-schema.xml'
+      index_filename = indir//'/data-file-schema.xml'
       write(lch,'(a)') '== PWscf v.6.x generated data (QEXSD fmt) =='
       !
    case default
@@ -117,25 +118,24 @@ contains
    call msg('s',lch)
    !
    ! check again for file existence ?
-
    !
    ! file opening
    !
    select case (trim(dftdata_fmt))
    case("pw_export")
       ! 
-      call pw_openindex(pw_unit,index_filename,ierr=ierr) 
+      call pw_openindex(pw_unit,index_filename,ierr=ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexml")
       !
-      call qexml_init(pw_unit) 
+      call qexml_init(pw_unit,dir=indir)
       call qexml_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
    case("qexsd","qexsd-hdf5")
       !
-      call qexsd_init(pw_unit) 
+      call qexsd_init(pw_unit,dir=indir)
       call qexsd_openfile( index_filename, "read", .false., ierr)
       if (ierr/=0) call errore('p2y_init','opening '//trim(index_filename),10)
       !
@@ -241,7 +241,7 @@ contains
      call qexsd_read_ions(nat=nat_, nsp=nsp_, ierr=ierr)
      if (ierr/=0) call errore('qexsd_read_ions','fmt problem I',ABS(ierr))
      call qexsd_read_symmetry(nsym=nsym_, ierr=ierr)
-     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem',ABS(ierr))
+     if (ierr/=0) call errore('qexsd_read_symmetry','fmt problem I',ABS(ierr))
      call qexsd_read_planewaves(gamma_only=gamma_only_, npwx=npwx_,&
 &                               ngm=ngm_, nr1=nr1_,nr2=nr2_,nr3=nr3_,&
 &                               ngms=ngms_, nr1s=nr1s_,nr2s=nr2s_,nr3s=nr3s_, ierr=ierr)
@@ -324,19 +324,22 @@ contains
  !
  subroutine get_atoms
    use D_lattice,   ONLY:n_atoms_species_max,n_atomic_species,n_atoms_species, &
-&                        atom_pos, Z_species,atomic_number
+&                        atom_pos, Z_species,atomic_number,atom_mass,atoms_map
    ! 
 #include<memory.h>
    !
    ! Work Space
    !
    real(DP)                       :: tau_units
+   real(DP), allocatable          :: amass_(:)
    real(SP)                       :: z
    integer                        :: i1,i2,u
    !
    YAMBO_ALLOC(ityp_,(nat_))
    YAMBO_ALLOC(tau_,(3,nat_))
-
+   YAMBO_ALLOC(amass_,(n_atomic_species))
+   amass_=rZERO
+   !
    select case(trim(dftdata_fmt))
    case("pw_export")
       !
@@ -369,7 +372,7 @@ contains
       YAMBO_ALLOC(nmesh,(n_atomic_species))
       YAMBO_ALLOC(nbeta,(n_atomic_species))
       !
-      call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      call qexml_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, amass=amass_, ierr=ierr)
       if (ierr/=0) call errore('qexml_read_ions','fmt problem',ABS(ierr))  
       !
    case("qexsd","qexsd-hdf5")
@@ -380,7 +383,7 @@ contains
       YAMBO_ALLOC(nmesh,(n_atomic_species))
       YAMBO_ALLOC(nbeta,(n_atomic_species))
       !
-      call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, ierr=ierr)
+      call qexsd_read_ions( atm=atm_, ityp=ityp_, psfile=psfile, tau=tau_, amass=amass_, ierr=ierr)
       if (ierr/=0) call errore('qexsd_read_ions','fmt problem II',ABS(ierr))
       !
    case default
@@ -389,22 +392,32 @@ contains
    !
    ! init
    !
+   if (len_trim(dftdata_dir)>0) then
+     do i1=1,n_atomic_species
+        psfile(i1)=trim(dftdata_dir)//"/"//trim(psfile(i1))
+     enddo
+   endif
+   !
    YAMBO_ALLOC(n_atoms_species,(n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
    enddo
    n_atoms_species_max = maxval(n_atoms_species)
+   YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
    YAMBO_ALLOC(atom_pos,(3,n_atoms_species_max,n_atomic_species))
    n_atoms_species(:)=0
    do i1 = 1, nat_
      n_atoms_species( ityp_(i1) ) = n_atoms_species( ityp_(i1) ) +1
      atom_pos(:, n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = tau_(:,i1)*tau_units
+     atoms_map( n_atoms_species( ityp_(i1) ) , ityp_(i1) ) = i1
    enddo
    !
    YAMBO_ALLOC(Z_species,(n_atomic_species))
+   YAMBO_ALLOC(atom_mass,(n_atomic_species))
    do i1 = 1, n_atomic_species
      Z_species(i1) = atomic_number(atm_(i1))
+     atom_mass(i1) = real(amass_(i1),SP)*Da2AU   ! Mass are stored in Atomic Units
    enddo
    !
    return
@@ -489,7 +502,7 @@ contains
       !
       call qexsd_read_symmetry(invsym=invsym_, trevsym=trevsym_, trasl=trasl_(:,1:nsym_), &
 &                              s=rsym_(:,:,1:nsym_), t_rev=t_rev_ , ierr=ierr)
-      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem',ABS(ierr))
+      if (ierr/=0) call errore('qexml_read_symmetry','fmt problem II',ABS(ierr))
       !
       ! convert to integers
       !
@@ -549,12 +562,14 @@ contains
    ! 
    use R_lattice,   ONLY:bz_samp
    use D_lattice,   ONLY:alat
-   use vec_operate, ONLY:v_is_zero
-#include<memory.h>
+   use vec_operate, ONLY:v_is_zero 
+   !
+#include<memory.h> 
+   !
    type(bz_samp) :: k
    !
    YAMBO_ALLOC(xk_,(3,k%nibz))
-
+   !
    select case (trim(dftdata_fmt))
    case ("pw_export")
       !
@@ -643,7 +658,6 @@ contains
    case default
      call errore("get_R_vectors"," Invalid dftdata fmt "//trim(dftdata_fmt),1)
    end select
-   
    !
    ! PW integer units of b1/b2/b3    -> 2pi/alat(:) units, cartesian, real
    ! b(:,:) is in a.u.
@@ -853,7 +867,7 @@ contains
       if (ierr/=0) call errore('qexml_read_xc','IOTK error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3
@@ -892,7 +906,7 @@ contains
       if (ierr/=0) call errore('qexsd_read_xc','fmt error',abs(ierr))
       !
       if (trim(pw_dft)=="B3LYP") call warning('For a full compatible B3LYP calculation consider to use input_dft=B3LYP-V1R')
-      if(pw_lda_plus_u) call warning(' LDA+U. Hubbard correction is not considered in yambo.')
+      if(pw_lda_plus_u) call error(' LDA+U. Hubbard correction is not considered in yambo.')
       GS_xc_FUNCTIONAL = XC_yamboID('pwscf_',pw_func=pw_dft)
       if (GS_xc_FUNCTIONAL.eq.XC_HYB_GGA_XC_GAUPBE*XC_FACTOR) then
         GS_xc_KIND = 3
@@ -930,27 +944,28 @@ contains
 
  end subroutine get_xc
  !
- subroutine p2y_get_dftdata_fmt(dftdata_fmt)
+ subroutine p2y_get_dftdata_fmt(dftdata_fmt,indir)
+    !
     implicit none
-    character(len=*) :: dftdata_fmt
-
+    character(len=*) :: dftdata_fmt,indir
+    !
     dftdata_fmt="unknown"
     !
     if (myid==0) then
       !
-      if ( fmt_is_qexml(dirname="./") ) then
+      if ( fmt_is_qexml(dirname=indir) ) then
         !
         dftdata_fmt="qexml"
         !
-      elseif ( fmt_is_qexsd(dirname="./") ) then
+      elseif ( fmt_is_qexsd(dirname=indir) ) then
         !
         dftdata_fmt="qexsd"
         !
-      elseif ( fmt_is_qexsd_hdf5(dirname="./") ) then
+      elseif ( fmt_is_qexsd_hdf5(dirname=indir) ) then
         !
         dftdata_fmt="qexsd-hdf5"
         !
-      elseif ( fmt_is_pwexport(dirname="./") ) then
+      elseif ( fmt_is_pwexport(dirname=indir) ) then
         !
         dftdata_fmt="pw_export"
         !

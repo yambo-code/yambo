@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -40,7 +40,7 @@ module NL_interfaces
      !
      type(bz_samp), intent(in) :: k
      type(levels),  intent(in) :: en
-     complex(SP),   intent(in) :: V_bands(NL_bands(2),en%nbf,QP_nk, n_sp_pol)
+     complex(SP),   intent(in) :: V_bands(NL_bands(2),maxval(en%nbf),QP_nk, n_sp_pol)
      integer,       intent(in) :: nK_mem
      !
      ! Optionals

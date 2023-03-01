@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,26 +24,28 @@
 integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
  use drivers,             ONLY:infile_editing
- use stderr,              ONLY:write_to_log
+ use stderr,              ONLY:write_to_log,STRING_same
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,&
-&                              nXkibz,nqibz,k_pt,q_pt
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
- use IO_m,                ONLY:io_control,OP_RD_CL,NONE,DUMP
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL,NONE,DUMP
  use com,                 ONLY:msg
  use it_tools,            ONLY:it_reset
  use it_m,                ONLY:infile
  use wave_func,           ONLY:io_WF
- use interfaces,          ONLY:PARALLEL_global_indexes
- use YPPm,                ONLY:l_bxsf,l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_map_WFs,&
+ use parallel_int,        ONLY:PARALLEL_global_indexes
+ use YPPm,                ONLY:l_bz_grids,l_dos,l_electrons,l_fix_syms,l_map_kpts,l_SOC_map,&
 &                              l_QP_DBs_create_and_modify,l_QP_DBs_manipulate,l_excitons,l_wannier,&
-&                              l_fix_save,alat_used_for_output,l_QP_DB_expand
+&                              alat_used_for_output,l_QP_DB_expand,coo_out,coo_in,l_dipoles,&
+&                              DIPs_kind,l_sp_wf,l_mean_potential
 #if defined _YPP_RT
- use YPP_real_time,       ONLY:l_RealTime,l_RT_abs,l_RT_DBs,l_NL_X,l_NL_exc
+ use YPP_real_time,       ONLY:l_RealTime,l_RT_DBs,l_NL_X,l_NL_exc,l_RT_abs
 #endif
 #if defined _YPP_ELPH
- use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq
+ use YPP_ELPH,            ONLY:l_atomic_amplitude,l_eliashberg,l_phonons,l_gkkp,ELPH_general_gFsq, &
+&                              l_gkkp_dg,l_gkkp_plot,l_gkkp_db
 #endif
  !
  implicit none
@@ -59,17 +61,13 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  character(ijs),   intent(in) :: js
  character(icd),   intent(in) :: com_dir
  ! 
- ! I/O 
- !
+ ! ... I/O 
  logical           :: l_flag
  integer           :: ID,i_err
  integer, external :: io_DB1,io_QINDX,io_GROT
  integer           :: i_err_DbGd
  integer, external :: io_Double_Grid
-#if defined _YPP_ELPH
- integer, external :: ELPH_databases
-#endif
- !
+ ! 
  ! Presets
  !
  iinf   =0
@@ -151,25 +149,40 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  call section('*','Core DB')
  call msg('s',':: Electrons             :',default_nel)
- call msg('s',':: Temperature       [ev]:',input_GS_Tel)
- call msg('s',':: Lattice factors [a.u.]:',alat)
+ call msg('s',':: Temperature           :',input_GS_Tel,"[eV]")
+ call msg('s',':: Lattice factors       :',alat,"[a.u.]")
  call msg('s',':: K points              :',nkibz)
  call msg('s',':: Bands                 :',n_bands)
  call msg('s',':: Symmetries            :',nsym)
  call msg('s',':: RL vectors            :',ng_vec)
  !
- alat_used_for_output=alat(1)
+ if (STRING_same(trim(coo_out),"alat").or.STRING_same(trim(coo_in),"alat")) then
+   if (alat_used_for_output==0.) then
+     call warning("Input alat undefined. Using the DB value")
+     alat_used_for_output=alat(1)
+   endif
+   call msg('s',':: Lattice constant (used to define "alat" unit) [a.u.]:',alat_used_for_output)
+ endif
  !
  ! BZ sampling index 
  !
  call section('*','K-point grid')
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
+#if defined _YPP_ELPH
+ if(l_gkkp_db.or.l_sp_wf.or.l_mean_potential) then    ! I need qindx_S to expand gkkp and load WF
+#else
+ if(l_sp_wf.or.l_mean_potential) then  
+#endif
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3,4/),MODE=DUMP,ID=ID)
+ else
+   call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
+ endif
  i_err=io_QINDX(k,q,ID)
+ if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,ID=ID)
- i_err_DbGd=io_Double_Grid(en,k,ID)
+ i_err_DbGd=io_Double_Grid(en,k,ID,'electrons')
  ! 
  ! Allocate and fill the k_pt/q_pt array for the DBs header
  !
@@ -197,13 +210,13 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! Specific SECTIONS
  !===================
  !
+ if (l_dipoles.and.trim(DIPs_kind)=="IP") call DIPOLE_ypp_driver(Xk,Xen,q)
+ !
  if (l_bz_grids) call k_grids(en,k,Xk,q)
  !
  if (l_map_kpts) call k_map_fine_to_coarse_driver(Xk,Xen)
  !
- if (l_map_WFs) call WF_map_perturbative_SOC(Xk,Xen)
- !
- if (l_bxsf)  call bxsf_read(Xk,Xen)
+ if (l_SOC_map) call WF_map_perturbative_SOC(Xk,Xen)
  !
  if (l_QP_DBs_create_and_modify)  call QP_DBs_create_and_modify(en,k)
  !
@@ -211,53 +224,47 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  !
  if (l_QP_DBs_manipulate)  call QP_DBs_manipulate( en )
  !
- if (l_wannier) call WANNIER_driver(k,en)
+ if (l_wannier)  call WANNIER_driver(k,en)
  !
  if (l_fix_syms) call symmetries_driver(en,k)
  !
- if (l_fix_save) call WF_format_converter(en,k,q)
- !
 #if defined _YPP_RT
- !
- ! GPL_EXCLUDE_START
  !
  if (l_RT_DBs)   call RT_DBs_carriers_setup(en,k,q)
  !
- ! GPL_EXCLUDE_END
- !
- if (l_RealTime) call RT_driver(en,k,q)
+ if (l_RealTime) call RT_ypp_driver(en,k,q)
  !
 #endif
  !
 #if defined _YPP_NL
  !
- if (l_NL_X) call NL_driver(en,k)
- if (l_NL_exc) call NL_Exc_driver(en,k)
- !   ======
+ if (l_NL_X  ) call NL_ypp_driver(en,k)
+ if (l_NL_exc) call NL_exc_driver(en,k)
+ !
 #endif
  !
- l_flag=l_excitons
+ l_flag=l_excitons.or.(l_dipoles.and.trim(DIPs_kind)=="EXCITONIC")
 #if defined _YPP_RT
  l_flag=l_flag.or.l_RT_abs
 #endif
- if (l_flag) call excitons_driver(k,Xk,en,Xen,q)
+ if (l_flag)    call excitons_driver(k,Xk,en,Xen,q)
  !
  l_flag=l_electrons
 #if defined _YPP_ELPH && !defined _YPP_RT
  l_flag=l_flag.and.(.not.l_eliashberg)
 #endif
  !
- if (l_flag) call electrons_driver(Xk,Xen,q)
+ if (l_flag)    call electrons_driver(Xk,Xen,q)
  !
 #if defined _YPP_ELPH
  !
  if ((l_gkkp.and..not.l_excitons).or.l_phonons) then
    ! =====     ========
-   if (l_gkkp)                i_err=ELPH_databases(k,en,q)
+   if (l_gkkp)                call ELPH_databases(k,en,q)
    if (l_eliashberg.or.l_dos) call ELPH_eliashberg_dos(k,en,q)
-   ! GPL_EXCLUDE_START
    if (l_atomic_amplitude)    call ELPH_atomic_amplitude(q)
-   ! GPL_EXCLUDE_END
+   if (l_gkkp_dg)             call ELPH_double_grid(k,en,q)
+   if (l_gkkp_plot)           call ELPH_plot_gkkp(k,en,q)
  endif
  !
  if (l_electrons.and.l_eliashberg) call ELPH_general_gFsq(k,en,Xk,Xen,q)

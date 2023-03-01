@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG AF
@@ -80,7 +80,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  call fft_3d(Vr,fft_dim,-1)
 #endif
    !
-   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*g_vec(ig,ic)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
+   forall (ic=1:3,ig=1:ng_) V3g(ig,ic)=cI*real(g_vec(ig,ic),DP)*Vr(fft_g_table(ig,1))/real(fft_size,DP)
    !
    do ic = 1,3
      Vr = cZERO_DP

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -24,7 +24,7 @@
 module SLK_m
  !
  use pars,       ONLY: SP
- use parallel_m, ONLY: MPI_comm
+ use parallel_m, ONLY: yMPI_comm
 #include<memory.h>
  !
  integer              :: n_pools = 1 ! number of pools
@@ -69,8 +69,8 @@ module SLK_m
  type(POOL_group ),SAVE :: SLK_POOL
  type(ORTHO_group),SAVE :: SLK_ORTHO
  !
- type(MPI_comm),SAVE    :: SLK_COM_INDEX(2)
- type(MPI_comm),SAVE    :: SLK_COM_A2A(2)
+ type(yMPI_comm),SAVE    :: SLK_COM_INDEX(2)
+ type(yMPI_comm),SAVE    :: SLK_COM_A2A(2)
  !
  contains
    !
@@ -85,7 +85,7 @@ module SLK_m
    subroutine SLK_POOL_init(POOL,COMM)
      use parallel_m, ONLY:myid
      type(POOL_group) :: POOL
-     type(MPI_comm)   :: COMM
+     type(yMPI_comm)   :: COMM
      POOL%CPU_id      = COMM%CPU_id
      POOL%n_CPU       = COMM%n_CPU
      POOL%ID          = myid/POOL%n_CPU

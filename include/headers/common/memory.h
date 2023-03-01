@@ -1,5 +1,5 @@
 /*
-        Copyright (C) 2000-2020 the YAMBO team
+        Copyright (C) 2000-2022 the YAMBO team
               http://www.yambo-code.org
 
  Authors (see AUTHORS file for details): HM AM
@@ -22,7 +22,7 @@
  MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
  
 */
- use memory, ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
+ use memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_global_mesg,IPL
  implicit none
 
 #if defined _MPI
@@ -39,7 +39,7 @@
     call MEM_global_mesg(QUOTES x QUOTES,kind(x),HOST_SIZE) NEWLINE \
     deallocate(x) NEWLINE \
   endif NEWLINE \
-  call PP_redux_wait(COMM=PAR_COM_HOST%COMM)
+  call PP_wait(COMM=PAR_COM_HOST%COMM)
 
 
 #define YAMBO_PAR_ALLOC_CHECK1(x,SIZE) \

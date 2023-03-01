@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -30,13 +30,15 @@ subroutine XC_nlcc_setup()
  use pars,          ONLY:DP
  use D_lattice,     ONLY:DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
+ use com,           ONLY:msg
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use pseudo,        ONLY:PP_nlcc_free,pp_rho_nlcc,pp_rhog_nlcc,&
+ use pseudo,        ONLY:pp_rho_nlcc,pp_rhog_nlcc,&
 &                        use_nlcc,pp_has_nlcc,pp_has_nlcc_atom
  use parser_m,      ONLY:parser
- use IO_m,          ONLY:io_control,OP_RD_CL,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,REP
 #include <memory.h>
  !
  ! Work Space 
@@ -56,10 +58,9 @@ subroutine XC_nlcc_setup()
  pp_has_nlcc=(io_err==0)
  if (.not.use_nlcc) pp_has_nlcc=.false.
  !
- if (.not.pp_has_nlcc) then
-   call PP_nlcc_free()
-   return
- endif
+ if (.not.pp_has_nlcc) return
+ !
+ call msg('s','[xc] Including NLCC, core corrections density loaded from pseudo')
  !
  if (all(pp_has_nlcc_atom(:)==0)) call error(' [xc] Unexpected zero NLCC')
  !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,9 +25,10 @@ integer function io_GROT(io_db)
  !
  use D_lattice,      ONLY:nsym,inv_index
  use R_lattice,      ONLY:n_g_shells,ng_closed,ng_in_shell,E_of_shell,g_rot,&
-&                         minus_G,minus_G_d
- use IO_m,           ONLY:io_connect,io_disconnect,io_elemental,read_is_on,&
-&                         io_status,io_bulk,io_header,io_sec,ver_is_gt_or_eq
+                          minus_G,minus_G_d
+ use IO_m,           ONLY:io_status,io_sec,read_is_on
+ use IO_int,         ONLY:io_connect,io_disconnect,io_elemental,&
+&                         io_bulk,io_header,ver_is_gt_or_eq
  use timing_m,       ONLY:timing
  use cuda_m,         ONLY:have_cuda
  !

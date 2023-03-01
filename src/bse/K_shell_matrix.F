@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): HM
+! Authors (see AUTHORS file for details): HM IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,42 +21,56 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_shell_matrix(slepc_mat)
+subroutine K_shell_matrix(i_BS_mat,slepc_mat)
  !
  ! Create a PETSC ShellMatrix and define the matrix-vector product
  ! function using the routine K_multiply_by_V 
+ !
+ use BS,             ONLY:BS_H_dim, BS_nT_grps,BS_res_ares_n_mat,BS_K_coupling,&
+&                         BS_Blocks_symmetrize_K
  !
  !      | (K_r)     (cI*K_c)    |  
  !  K = |                       |
  !      | (-cI*K_c^*)  (-K_r^*) |
  !
- use BS,             ONLY:BS_H_dim, BS_nT_grps, BS_blk, n_BS_blks
  use BS_solvers,     ONLY:Slepc_v,BS_HAYVEC_alloc
- !
-#include <memory.h>
  !
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>
+#include <petsc/finclude/petscvec.h>
 #include <slepc/finclude/slepcsys.h>
 #include <slepc/finclude/slepceps.h>
  !
- integer          :: i_B, i_r, i_c, i_Tk, i_Tp
- PetscFortranInt  :: SL_H_dim,SL_K_dim
- Mat              :: slepc_mat
+ use petscmat
+ use slepceps
+ use petscmatdef
+ use slepcepsdef
+ !
+#include <memory.h>
+ !
+ integer, intent(in)  :: i_BS_mat
+ Mat,     intent(out) :: slepc_mat
+ !
+ integer          :: i_B,domk(BS_nT_grps)
+ PetscInt         :: SL_H_dim,SL_K_dim
  PetscErrorCode   :: ierr
  external K_multiply_by_V_slepc
+ external K_multiply_by_V_transpose_slepc
+ !
+ if (BS_res_ares_n_mat==2) call error(" Slepc with shells and multiple BS_mat not coded")
  !
  SL_H_dim=BS_H_dim
  !
  ! Allocate haydock vectors
  ! 
  call PARALLEL_Haydock_VEC_COMMs('assign')
+ Slepc_v%it=1
  allocate(Slepc_v%Vi(BS_nT_grps))
  allocate(Slepc_v%Vo(BS_nT_grps))
- call BS_HAYVEC_alloc(Slepc_v%Vi)
- call BS_HAYVEC_alloc(Slepc_v%Vo) 
+ domk=1
+ call BS_HAYVEC_alloc(Slepc_v%Vi,domk)
+ call BS_HAYVEC_alloc(Slepc_v%Vo,domk)
  !
  ! Allocate slepc shell matrix
  !
@@ -65,31 +79,21 @@ subroutine K_shell_matrix(slepc_mat)
  ! to avoid the scattering vi (distributed) -> x (local) in K_multiply_by_V_slepc
  !
  call MatCreateShell(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,SL_H_dim,SL_H_dim,0,slepc_mat,ierr)
- call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
- call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ ! Are the following needed ??
+ !call MatAssemblyBegin(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !call MatAssemblyEnd(slepc_mat,MAT_FINAL_ASSEMBLY,ierr)
+ !
  call MatShellSetOperation(slepc_mat,MATOP_MULT,K_multiply_by_V_slepc,ierr)
- call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ if(BS_K_coupling) then
+   call MatShellSetOperation(slepc_mat,MATOP_MULT_TRANSPOSE,K_multiply_by_V_transpose_slepc,ierr)
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_FALSE,ierr)
+ else
+   call MatSetOption(slepc_mat,MAT_HERMITIAN,PETSC_TRUE,ierr)
+ endif
  call MatSetUp(slepc_mat,ierr)
  !
- ! Allocate BS stuff
+ ! Symmetrize BS_blk%mat to be used in K_multiply_by_V
  !
- do i_B=1,n_BS_blks
-   !
-   i_Tk  =BS_blk(i_B)%iT_k
-   i_Tp  =BS_blk(i_B)%iT_p
-   !
-   if (i_Tk==i_Tp) then
-     do i_r=1,BS_blk(i_B)%size(1)
-       ! make the diagonal of the matrix real
-       BS_blk(i_B)%mat(i_r,i_r) = real(BS_blk(i_B)%mat(i_r,i_r))
-       ! make the matrix hermitian
-       do i_c=i_r,BS_blk(i_B)%size(2)
-         BS_blk(i_B)%mat(i_c,i_r) = conjg(BS_blk(i_B)%mat(i_r,i_c))
-       enddo
-     enddo
-     !
-   endif
-   !
- enddo
+ call BS_blocks_symmetrize_K()
  !
 end subroutine K_shell_matrix

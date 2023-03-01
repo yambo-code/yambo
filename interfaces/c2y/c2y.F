@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DV
@@ -30,10 +30,11 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use electrons,           ONLY:levels,E_reset,n_spinor,n_sp_pol
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz
  use wave_func,           ONLY:wf_ncx,io_WF,wf_nb_io_groups,wf_nb_io
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,serial_number
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,serial_number
  use mod_com2y,           ONLY:interface_presets,force_noWFs
  use mod_wf2y,            ONLY:WF_splitter
- use interfaces,          ONLY:PARALLEL_live_message
+ use parallel_int,        ONLY:PARALLEL_live_message
  !
 #include<memory.h>
  type(levels)                 :: en 
@@ -73,6 +74,7 @@ integer function c2y(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  call E_reset(en) 
 #if defined _MEM_CHECK 
  call MEM_defaults( )
+ call MEM_treshold_estimate( )
 #endif
  !
  ! S/N

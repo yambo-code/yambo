@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
+subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_derivative,use_live_timing)
  !
  !  Remember wf_t = -i \der_t wf   with t=x,y,z
  !  is the periodic part of the derivative
@@ -29,27 +29,28 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  use pars,           ONLY:SP,DP,pi,cZERO
  use interfaces,     ONLY:WF_load,WF_free
  use wave_func,      ONLY:WF,wf_ng,wf_x,wf_y,wf_z,WF_derivative_alloc
- use electrons,      ONLY:n_sp_pol,n_spinor
+ use electrons,      ONLY:n_spinor
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,fft_norm,fftw_plan
- use R_lattice,      ONLY:g_vec,nkibz
+ use R_lattice,      ONLY:g_vec
  use stderr,         ONLY:intc
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:k_pt
  use D_lattice,      ONLY:alat
- use parallel_m,     ONLY:PAR_IND_WF_linear
-#if defined _MAGNETIC
+ !use parallel_m,     ONLY:PAR_IND_WF_linear
+#if defined _SC
  use SC,             ONLY:SC_bands,found_SC_DB
 #endif
  !
 #include<memory.h>
  ! Input variables
- integer :: derivative_bands(2)
- integer :: derivative_kpt(2)
- logical :: do_derivative(3)
+ integer,intent(in) :: derivative_bands(2)
+ integer,intent(in) :: derivative_kpt(2)
+ integer,intent(in) :: derivative_sppol(2)
+ logical,intent(in) :: do_derivative(3)
+ logical,intent(in) :: use_live_timing
  !
  ! Internal variables
  integer :: bands_to_load(2)
- logical :: use_live_timing
  complex(SP), allocatable  :: wf_der(:,:)
  complex(DP), allocatable  :: wf_DP(:)
  ! Dummys
@@ -60,13 +61,14 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  !
  ! Wavefunctions in G space 
  !==========================
- call WF_load(WF,0,1,bands_to_load,derivative_kpt,space='G',title='-DERIV',impose_free_and_alloc=.TRUE.,keep_states_to_load=.true.)
+ call WF_load(WF,0,1,bands_to_load,derivative_kpt,sp_pol_to_load=derivative_sppol,&
+         &    space='G',title='-DERIV',impose_free_and_alloc=.true.,keep_states_to_load=.true.)
  !
  ! Need to call fft_setup to know the size of the FFT mesh
  ! 
  call fft_setup(0,1,.false.)
  !
-#if defined _MAGNETIC
+#if defined _SC
  if (found_SC_DB.and.any ( bands_to_load/=(/1,SC_bands(2)/) )) then
    bands_to_load=(/1,SC_bands(2)/)
    call warning(' [WF-DERIV] Forced '//trim(intc(SC_bands(2)))//' bands to be derived')
@@ -78,20 +80,20 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,do_derivative)
  YAMBO_ALLOC(wf_der,(wf_ng,n_spinor))   ! reciprocal space
  YAMBO_ALLOC(wf_DP,(fft_size))          ! direct     space
  !
- use_live_timing=.false.
- if (derivative_kpt(1)==1 .and. derivative_kpt(2)==nkibz) use_live_timing=.true.
  if (use_live_timing) call live_timing('[WF-DERIV] Evaluation loop',WF%N)
 #if defined _FFTW
  fftw_plan = 0
 #endif
  !
- do i_sp_pol=1,n_sp_pol
+ do i_sp_pol=derivative_sppol(1),derivative_sppol(2)
    do ik=derivative_kpt(1),derivative_kpt(2)
      do ib=bands_to_load(1),bands_to_load(2)
        !
-       if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
+       !if (.not.PAR_IND_WF_linear%element_2D(ib,ik)) cycle
        !
        i_wf=WF%index(ib,ik,i_sp_pol)
+       !
+       if (i_wf==0) cycle
        !
        ! Evaluate the wf_derivative in G space
        ! wf_derivative(:,i)=-i grad_i wf(:)=p_i wf(:)    i=x,y

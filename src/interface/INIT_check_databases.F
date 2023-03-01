@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -22,7 +22,8 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
-&                          io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err)
+&                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
+&                               io_ELPH_err,io_SC_E_err)
  !
  use electrons,      ONLY:levels,n_spinor
  use C_driver,       ONLY:code_branch
@@ -30,17 +31,24 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  use X_m,            ONLY:X_t
  use DIPOLES,        ONLY:DIPOLE_t
  use frequency,      ONLY:w_samp
- use BS,             ONLY:BS_n_g_exch,BS_q
+ use BS,             ONLY:BS_n_g_exch,BS_n_g_fxc,BS_q,BSqpts
  use R_lattice,      ONLY:ng_closed,nqibz,bz_samp
  use QP_m,           ONLY:QP_t,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc
  use wave_func,      ONLY:io_WF
  use TDDFT,          ONLY:io_BS_Fxc
  use it_tools,       ONLY:switch_off_runlevel
- use IO_m,           ONLY:io_control,OP_RD_CL,DUMP,NONE
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,DUMP,NONE
 #if defined _SC || defined _RT
  use collision_ext,  ONLY:COH_collisions,HXC_collisions,P_collisions,GW_NEQ_collisions
+# if !defined _PAR_IO
  use COLL_interfaces,ONLY:io_COLLISIONS
+# endif
 #endif
+ !
+ ! Define io_COLLs_header to handle either serial or parallel I/O
+ !
+#include<collisions.h>
  !
 #include<memory.h>
  !
@@ -54,15 +62,21 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err,io_SC_E_err
+ integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
  !
  ! Workspace
  !
- integer           :: i1,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
+ integer           :: i_io,io_ID,io_err,io_DIP_err,io_WF_err,io_KB_abinit_err,io_KB_pwscf_err,io_ATMPROJ_pwscf_err
  !
  integer, external :: io_X,io_DIPOLES,io_GROT,io_QINDX,io_RIM,&
-&                     io_HF_and_locXC,io_QP_and_GF,io_BS,io_DB1,io_KB_abinit,io_KB_pwscf,&
-&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf, io_ENVIRON_pwscf
+&                     io_HF_and_locXC,io_QP_and_GF,io_DB1,io_KB_abinit,io_KB_pwscf,&
+&                     io_COL_CUT,io_E_SOC_map,io_ATMPROJ_pwscf,io_ENVIRON_pwscf
+#if !defined _PAR_IO
+ integer, external :: io_BS
+#endif
+#if defined _PAR_IO
+ integer, external :: io_COLLs_header,io_BS_header
+#endif
  !
  logical           :: OSTNTS_Vnl_included
  !
@@ -122,6 +136,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  QP_ng_SH   =ng_closed
  QP_ng_Vxc  =ng_closed
  BS_n_g_exch=ng_closed
+ BS_n_g_fxc =ng_closed
  !
  ! kindx
  !
@@ -210,26 +225,44 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- do i1=1,4 ! Xx Xs Xd Xp
+ do i_io=1,4 ! Xx Xs Xd Xp
    ! .a
-   X(i1)%ib=(/1,en%nb/)
+   X(i_io)%ib=(/1,en%nb/)
    ! .b
-   X(i1)%Vnl_included=OSTNTS_Vnl_included
+   X(i_io)%Vnl_included=OSTNTS_Vnl_included
  enddo
  !
  if (nqibz>0) then
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
-   do i1=1,4 ! Xx Xs Xd Xp
-     X(i1)%iq=(/1,nqibz/)
+   do i_io=1,4 ! Xx Xs Xd Xp
+     X(i_io)%iq=(/1,nqibz/)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
-     io_X_err(i1)=io_X(X(i1),Xw(i1),io_ID)
+     io_X_err(i_io)=io_X(X(i_io),Xw(i_io),io_ID)
    enddo
  endif
  !
  ! BS
  !
- call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_BS_err=io_BS(1,Xbsk,io_ID)
+ !
+ if (nqibz>0) then
+   YAMBO_ALLOC(BSqpts,(3,nqibz))
+   do i_io=1,nqibz
+     call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+     io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
+     io_BS_err=io_BS(i_io,Xbsk,io_ID)
+#endif
+   enddo
+   YAMBO_FREE(BSqpts)
+ else
+   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+# if defined _PAR_IO
+   io_BS_err=io_BS_header(i_io,Xbsk,io_ID,"full")
+#else
+   io_BS_err=io_BS(1,Xbsk,io_ID)
+#endif
+ endif
  !
  ! When a PPA screen is used to build the kernel the %ppaE component of Xbsk must be overwritten.
  ! Otherwise yambo will re-calculate the ppa interaction when the %ppaE is changed with respect to 
@@ -242,26 +275,18 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
  io_ATMPROJ_pwscf_err=io_ATMPROJ_pwscf(io_ID)
  !
- ! GPL_EXCLUDE_START
- !
  ! bs_fxc
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_BS_Fxc_err=io_BS_Fxc(1,Xxcw,io_ID,X=Xbsk)
  !
- ! GPL_EXCLUDE_END
- !
  ! ELPH 
  !
 #if defined _ELPH 
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_ELPH_err=io_ELPH(io_ID,'gkkp')
- !
- if (io_ELPH_err/=0) then
-   call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
-   io_ELPH_err=io_ELPH(io_ID,'gkkp_expanded')
- endif
- !
+ io_ELPH_err(1)=io_ELPH(io_ID,'gkkp')
+ call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
+ io_ELPH_err(2)=io_ELPH(io_ID,'gkkp_expanded')
 #endif
  !
  ! RT 
@@ -270,7 +295,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
  io_OBS=io_RT_components('OBSERVABLES',io_ID)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_G=io_RT_components('G',io_ID)
+ io_G=io_RT_components('G_lesser_RESTART',io_ID)
 #endif
  !
  ! SC 
@@ -287,17 +312,17 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #if defined _SC || defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,COH_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,COH_collisions)
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,HXC_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,HXC_collisions)
 #endif
 #if defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,GW_NEQ_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,GW_NEQ_collisions)
 #endif
 #if defined _QED && defined _RT
  call io_control(ACTION=OP_RD_CL,COM=NONE,MODE=DUMP,SEC=(/1/),ID=io_ID)
- io_COLLISIONS_err=io_COLLISIONS(io_ID,P_collisions)
+ io_COLLISIONS_err=io_COLLs_header(io_ID,P_collisions)
 #endif
  !
 end subroutine

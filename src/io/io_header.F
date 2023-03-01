@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,8 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,&
-&                          CUTOFF,GAUGE,IMPOSE_GAUGE,PARALLEL_STRUCTURE,FRAG,IMPOSE)
+integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,&
+&                          CUTOFF,GAUGE,IMPOSE_GAUGE,ACCEPT_SPIN,PARALLEL_STRUCTURE,FRAG,IMPOSE,NOWARN_SER)
  !
  use pars,          ONLY:SP,schlen,lchlen
  use units,         ONLY:HA2KEL
@@ -36,11 +36,11 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  use R_lattice,     ONLY:nqibz,nqbz,nkibz,nkbz,q_pt,k_pt,cut_description
  use wave_func,     ONLY:wf_ng
  use vec_operate,   ONLY:v_is_zero
- use IO_m,          ONLY:io_elemental,io_bulk,io_code_version,io_status,&
+ use IO_int,        ONLY:io_elemental,io_bulk,ver_is_gt_or_eq
+ use IO_m,          ONLY:io_code_version,io_status,&
 &                        read_is_on,write_is_on,serial_number,variable_exist,&
 &                        io_serial_number,io_file,io_com,io_mode,&
-&                        DUMP,VERIFY,NONE,ver_is_gt_or_eq,&
-&                        db_alat,io_code_revision,read_is_on
+&                        DUMP,VERIFY,NONE,db_alat,io_code_revision
  use zeros,         ONLY:define_zeros
  use global_XC,     ONLY:G_E_xc_string,X_E_xc_string,K_E_xc_string,loaded_WF_xc_string,&
 &                        G_WF_xc_string,X_WF_xc_string,K_WF_xc_string
@@ -48,7 +48,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  implicit none
  !
  integer               :: ID
- logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,FRAG,IMPOSE
+ logical,     optional :: QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,CUTOFF,GAUGE,IMPOSE_GAUGE,ACCEPT_SPIN,FRAG,IMPOSE,NOWARN_SER
  character(*),optional :: XC_KIND,PARALLEL_STRUCTURE
  !
  ! Work Space
@@ -59,7 +59,8 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  real(SP),allocatable:: l_pt(:,:)
  real(SP)            :: local_zero(3),D_LATT_vec_disk(3),D_LATT_vec(3),&
 &                       save_Tel(2)
- logical             :: WARN,xc_kind_force,l_IMPOSE
+ logical             :: WARN,WARN_SERIAL,xc_kind_force,l_IMPOSE,l_R_LATT
+ logical             :: QPTS_,R_LATT_,WF_,IMPOSE_SN_,T_EL_,KPTS_,CUTOFF_,GAUGE_,IMPOSE_GAUGE_,ACCEPT_SPIN_,FRAG_,D_LATT_
  character(schlen)   :: xc_string_kinds(10),PARALLEL_STRUCTURE_
  !
  io_header=0
@@ -68,8 +69,33 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  WARN=.true.
  if (list_dbs) WARN=.false.
+ !
+ ACCEPT_SPIN_=.false.
+ if(present(ACCEPT_SPIN)) ACCEPT_SPIN_=ACCEPT_SPIN
+ !
+ IMPOSE_SN_=.false.
+ if(present(IMPOSE_SN)) IMPOSE_SN_=IMPOSE_SN
+ !
+ GAUGE_=.false.
+ if(present(GAUGE)) GAUGE_=GAUGE
+ !
+ CUTOFF_=.false.
+ if(present(CUTOFF)) CUTOFF_=CUTOFF
+ !
+ D_LATT_=.false.
+ if(present(D_LATT)) D_LATT_=D_LATT
+ !
+ IMPOSE_GAUGE_=.false.
+ if(present(IMPOSE_GAUGE)) IMPOSE_GAUGE_=IMPOSE_GAUGE
+ !
+ WARN_SERIAL=.true.
+ if(present(NOWARN_SER)) WARN_SERIAL=.not.NOWARN_SER
+ !
  l_IMPOSE=.false.
  if (present(IMPOSE)) l_IMPOSE=IMPOSE
+ !
+ l_R_LATT=.false.
+ if (present(R_LATT)) l_R_LATT=R_LATT
  !
  MENU=1
  MODE=io_mode(ID)
@@ -102,7 +128,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  endif
  !
  call io_elemental(ID,VAR="SERIAL_NUMBER",VAR_SZ=1,MENU=0)
- call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number)
+ call io_elemental(ID,DB_I0=io_serial_number(ID),I0=serial_number,WARN=WARN_SERIAL)
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
  !
  call io_elemental(ID,VAR="SPIN_VARS",VAR_SZ=2,MENU=0)
@@ -112,15 +138,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! Serial Number
  !
  if (io_serial_number(ID)/=serial_number) then
-   if (present(IMPOSE_SN)) then 
-     if (IMPOSE_SN) then
-       io_header=-1
-       if (io_com(ID)/=NONE) &
-&        call warning('Incompatible serial number for '//trim(io_file(ID)))
-       goto 1
-     endif
+   if (IMPOSE_SN_) then
+     io_header=-1
+     if (io_com(ID)/=NONE) call warning('Incompatible serial number for '//trim(io_file(ID)))
+     goto 1
    endif
-   if (io_com(ID)/=NONE) then 
+   if (WARN_SERIAL.and.io_com(ID)/=NONE) then 
      call warning('Wrong serial number for '//trim(io_file(ID)))
    endif
  endif
@@ -128,16 +151,22 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  ! SPIN polarizations/spinors
  !
  if (SPIN_vec_disk(1)/=n_sp_pol.or.SPIN_vec_disk(2)/=n_spinor) then
-   io_header=-1
-   if (io_com(ID)/=NONE) call warning('Incompatible SPIN pol/spinors for '//trim(io_file(ID)))
-   goto 1
+   if(ACCEPT_SPIN_ .and. n_spinor==2 .and. SPIN_vec_disk(2)==1) then
+     if (io_com(ID)/=NONE) call warning(' Accepting DB computed without SOC '//trim(io_file(ID)))
+   else
+     if (io_com(ID)/=NONE) call warning(' Refusing incompatible SPIN pol/spinors for '//trim(io_file(ID)))
+     io_header=-1
+     goto 1
+   endif
+ else
+   if(ACCEPT_SPIN_) ACCEPT_SPIN=.FALSE.
  endif
  !
  ! DL lattice
  !
  db_alat=alat
  !
- if (present(D_LATT)) then
+ if (D_LATT_) then
    D_LATT_vec=alat
    call io_elemental(ID,VAR="HEAD_D_LATT",VAR_SZ=3,MENU=MENU)
    MENU=0
@@ -150,7 +179,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! RL lattice
  !
- if (present(R_LATT)) then
+ if (l_R_LATT) then
    R_LATT_vec=(/nqibz,nqbz,nkibz,nkbz/)
    call io_elemental(ID,VAR="HEAD_R_LATT",VAR_SZ=4,MENU=MENU)
    MENU=0
@@ -236,15 +265,13 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! Cutoff
  !
- if (present(CUTOFF)) then
-   if (CUTOFF) then
-     call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
-     MENU=0
-     call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential          ",WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
-     call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
-     io_header=io_status(ID)
-     if (io_header/=0) goto 1
-   endif
+ if (CUTOFF_) then
+   call io_elemental(ID,VAR="CUTOFF",CH0='',VAR_SZ=1,MENU=MENU)
+   MENU=0
+   call io_elemental(ID,CH0=cut_description,VAR=" Coulomb cutoff potential          ",WARN=WARN,CHECK=l_IMPOSE,OP=(/"=="/))
+   call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)
+   io_header=io_status(ID)
+   if (io_header/=0) goto 1
  endif
  !
  PARALLEL_STRUCTURE_="NONE"
@@ -292,7 +319,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! Temperature
  !
- if (present(T_EL)) then
+ if (present(TEMP)) then
    !
    io_mode(ID)=MODE
    !
@@ -357,17 +384,12 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,T_EL,KPTS,D_LATT,XC_KIND,
  !
  ! GAUGE
  !
- if (present(GAUGE)) then
+ if (GAUGE_) then
    call io_elemental(ID,VAR='GAUGE',CH0="",VAR_SZ=1,MENU=MENU)
    MENU=0
-   if (present(IMPOSE_GAUGE)) then
-     if (IMPOSE_GAUGE) then
-       call io_elemental(ID,CH0=global_gauge,&
-&           VAR='Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
-     else
-       call io_elemental(ID,CH0=global_gauge,&
-&           VAR='Global Gauge                     ',WARN=.true.,OP=(/"=="/))
-     endif
+   if (IMPOSE_GAUGE_) then
+     call io_elemental(ID,CH0=global_gauge,&
+&         VAR='Global Gauge                     ',CHECK=.true.,OP=(/"=="/))
    else
      call io_elemental(ID,CH0=global_gauge,&
 &         VAR='Global Gauge                     ',WARN=.true.,OP=(/"=="/))

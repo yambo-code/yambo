@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -929,10 +929,17 @@ CONTAINS
       !
       CALL iotk_scan_begin( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
+      !
       CALL qexsd_scan_logical( iunit, "noncolin", noncolin, IERR=ierr)
       IF (ierr/=0) RETURN
-      CALL qexsd_scan_logical( iunit, "do_magnetization", domag, IERR=ierr)
+      !
+      CALL qexsd_scan_logical( iunit, "do_magnetization", domag, LFOUND=lfound, IERR=ierr)
+      IF (.not.lfound) then
+         domag=.false.
+         ierr=0
+      ENDIF
       IF (ierr/=0) RETURN
+      !
       CALL iotk_scan_end( iunit, "magnetization", IERR=ierr)
       IF (ierr/=0) RETURN
       !
@@ -976,8 +983,7 @@ CONTAINS
       INTEGER,                INTENT(OUT) :: ierr
       !
       INTEGER        :: iunit_aux
-      CHARACTER(256) :: filename, str_tmp
-      
+      CHARACTER(256) :: str_tmp
       ierr = 0
       !
       call iotk_scan_begin( iunit, "basis_set", IERR=ierr )
@@ -1455,7 +1461,6 @@ CONTAINS
       !
     end subroutine qexsd_read_bands_info
     !
-    !
     !------------------------------------------------------------------------
     SUBROUTINE qexsd_read_band_structure( nspin, lsda, noncolin, spinorbit, nbnd, nbnd_up, nbnd_dw, &
                                           nelec, natomwfc, fermi_energy, homo_energy, fermi_energy_updw, &
@@ -1478,7 +1483,7 @@ CONTAINS
       real(dbl) :: rvec(3)
       real(dbl), allocatable :: eig_(:), occ_(:)
       character(256) :: chval
- 
+      !
       ierr = 0
       !
       call iotk_scan_begin( iunit, "band_structure", IERR=ierr )
@@ -1910,7 +1915,6 @@ CONTAINS
       type(qeh5_dataset) :: h5dset_wfc, h5dset_mill
       character(len=8)   :: char_buf 
 #endif  
-
       !
       ! defs
       !
@@ -1924,7 +1928,6 @@ CONTAINS
          ierr=71
          return
       endif
-
       !
       ! set filename
       !
@@ -1943,8 +1946,8 @@ CONTAINS
       if (file_is_hdf5) then 
          ierr=42; return
       endif
-#endif
-
+#endif 
+      !
 #if defined(_QE_HDF5)
       if (file_is_hdf5) then
          call qeh5_openfile( h5file, TRIM(filename)//'hdf5', ACTION = 'read', ERROR = ierr)

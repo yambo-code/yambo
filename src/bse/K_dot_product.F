@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): MG, DS
+! Authors (see AUTHORS file for details): MG DS IMA
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,35 +21,43 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_dot_product(dot,V,W)
+subroutine K_dot_product(dot,V,W,i_kind)
  !
  ! Dot product between distributed vectors 
+ ! i_kind==1 -->        F dot product
+ ! i_kind==0 --> standard dot product
  !
  use pars,           ONLY:SP,cZERO
  use BS_solvers,     ONLY:Haydock_vector
  use BS,             ONLY:BS_nT_grps,BS_T_grp
- use parallel_m,     ONLY:PP_redux_wait,PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_m,     ONLY:PAR_IND_T_groups,PAR_COM_Xk_ibz_INDEX,PAR_COM_eh_INDEX
+ use parallel_int,   ONLY:PP_redux_wait
  use wrapper_omp,    ONLY:Vstar_dot_V_omp
  !
  implicit none
  !
- complex(SP),          intent(out):: dot
+ integer,              intent(in) :: i_kind
  type(Haydock_vector), intent(in) :: V(BS_nT_grps),W(BS_nT_grps)
+ complex(SP),          intent(out):: dot
  !
  ! Workspace
  !
- integer       :: i_T_g
+ integer       :: i_T_g,i_factor,i_ColFG,ColsFG_T
  !
  dot = cZERO
  ! 
  ! NOTE FOR DEVELOPERS:
  ! Anti-block contains the same vector components as the corresponding 
  ! res-block. Sum on all blocks will give twice the value in the case
- ! with coupling. So anti-blocks are skipped.
+ ! with coupling. So anti-blocks are skipped if BS_res_ares_dim=1
  !
  do i_T_g=1,BS_nT_grps
    if (.not.PAR_IND_T_groups%element_1D(i_T_g)) cycle
-   dot = dot + Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment,W(i_T_g)%fragment)
+   i_factor= ( (-1)**(BS_T_grp(i_T_g)%i_res_ares-1) )**i_kind
+   ColsFG_T = size(V(i_T_g)%fragment,2)
+   do i_ColFG=1,ColsFG_T
+     dot=dot+ i_factor*Vstar_dot_V_omp(BS_T_grp(i_T_g)%size,V(i_T_g)%fragment(:,i_ColFG),W(i_T_g)%fragment(:,i_ColFG))
+   enddo
  enddo
  !
  ! Reduce all

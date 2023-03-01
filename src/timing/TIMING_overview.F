@@ -1,6 +1,6 @@
 ! 
 !        Copyright (C) 2004 WanT Group
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, AF
@@ -29,7 +29,8 @@ subroutine TIMING_overview(list,main_name)
  use LIVE_t,        ONLY:LIVE_message
  use com,           ONLY:msg
  use stderr,        ONLY:log_as_a_file
- use parallel_m,    ONLY:ncpu,myid,master_cpu,PP_redux_wait,PP_bcast
+ use parallel_m,    ONLY:ncpu,myid,master_cpu
+ use parallel_int,  ONLY:PP_redux_wait,PP_bcast
  use vec_operate,   ONLY:sort
  !
  implicit none
@@ -47,6 +48,9 @@ subroutine TIMING_overview(list,main_name)
  INTEGER            :: i,j,k,call_number(ncpu),i_cpu,n_clocks(ncpu),cpu_id(ncpu),bcast_id
  real(DP)           :: total_time(ncpu),min_max_time(2)
  character(lchlen)  :: clock_name
+ !
+ integer,  allocatable :: tmp_int(:)
+ real(SP), allocatable :: tmp_real(:)
  !
  integer, allocatable :: sorted_times_index(:)
  real(SP),allocatable :: sorted_times(:)
@@ -78,6 +82,9 @@ subroutine TIMING_overview(list,main_name)
    call PP_redux_wait(n_clocks)
    !
    allocate(list_all_cpu%clock(sum(n_clocks)))
+   allocate(tmp_int(sum(n_clocks)))
+   allocate(tmp_real(sum(n_clocks)))
+   !
    list_all_cpu%name=list%name
    list_all_cpu%nclock=sum(n_clocks)
    do i=1,list_all_cpu%nclock 
@@ -96,9 +103,19 @@ subroutine TIMING_overview(list,main_name)
      endif
    enddo
    !
-   call PP_redux_wait(list_all_cpu%clock(:)%total_time)
-   call PP_redux_wait(list_all_cpu%clock(:)%call_number)
-   call PP_redux_wait(list_all_cpu%clock(:)%cpu_id)
+   tmp_real(:)=list_all_cpu%clock(:)%total_time
+   call PP_redux_wait(tmp_real)
+   list_all_cpu%clock(:)%total_time=tmp_real(:)
+   !
+   tmp_int(:)=list_all_cpu%clock(:)%call_number
+   call PP_redux_wait(tmp_int)
+   list_all_cpu%clock(:)%call_number=tmp_int
+   !
+   tmp_int(:)=list_all_cpu%clock(:)%cpu_id
+   call PP_redux_wait(tmp_int)
+   list_all_cpu%clock(:)%cpu_id=tmp_int(:)
+   !
+   deallocate(tmp_int,tmp_real)
    !
    do i=1,list_all_cpu%nclock 
      if (list_all_cpu%clock(i)%cpu_id<=0) cycle

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AC MG
@@ -21,12 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine ELECTR_initial_check(k)
+subroutine ELECTR_initial_check(k,Dip)
  !
  use pars,        ONLY:SP
  use units,       ONLY:AU2VMm1
- use com,         ONLY:error,msg,warning
- use X_m,         ONLY:Dipole_approach
+ use com,         ONLY:msg
+ use DIPOLES,     ONLY:DIPOLE_t
  use vec_operate, ONLY:normalize_v
  use SC,          ONLY:SC_potential
  use fields,      ONLY:Efield,Efield_strength
@@ -35,6 +35,7 @@ subroutine ELECTR_initial_check(k)
  implicit none
  !
  type(bz_samp) ::k
+ type(DIPOLE_t)::Dip
  !
  ! Workspace
  !
@@ -42,6 +43,7 @@ subroutine ELECTR_initial_check(k)
  !
  if(Efield(1)%intensity==0._SP) then
    call warning("Zero electric field. Turned off")
+   Efield(1)%ef_name="NONE"
    return
  endif
  !
@@ -64,9 +66,9 @@ subroutine ELECTR_initial_check(k)
  Efield(1)%t_initial     =0._SP
  Efield(1)%ef_pol        ="linear"
  !
- call Check_symmetries(Efield(1)%versor)
+ call Check_symmetries(Efield(1)%versor,"electric")
  !
- Dipole_approach='Covariant'
+ Dip%approach='Covariant'
  !
  call k_map_nearest_by_dir(k,k_map) 
  !
@@ -75,6 +77,6 @@ subroutine ELECTR_initial_check(k)
  !
  call msg( 'sr', 'Static Electric Field ')
  call msg( 'sr', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'sr', 'Efield Amplitude    [kV/cm]',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP)
+ call msg( 'sr', 'Efield Amplitude           ',Efield(1)%amplitude*AU2VMm1/100._SP/1000._SP,"[kV/cm]")
  !
 end subroutine

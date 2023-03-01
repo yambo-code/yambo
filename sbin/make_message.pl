@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-#        Copyright (C) 2000-2020 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): CH
@@ -35,7 +35,7 @@ use Getopt::Long;
 # 
 # ... modified
 #
-$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\' |";
+$gitcommand = "git status | sed -n '/not staged/q;p' | grep 'modified' | awk \'{printf\" %s \",\$2 }\'|";
 open(GIT, $gitcommand);
 $changedfiles = <GIT>;
 close(GIT);
@@ -92,13 +92,13 @@ print "RENAMED files: $rinamefiles\n\n";
 #
 # Versions
 #
-open(VER,"<","config/version.m4");
+open(VER,"<","include/driver/version.h");
 while($line = <VER>) {
   chomp $line;
-  #$ID  = substr $line, 13, 1;
-  if ( $line =~ /SVERSION=/ ) {$SV = substr $line, 10, 1};
-  if ( $line =~ /SSUBVERSION=/ ) {$SS = substr $line, 13, 1};
-  if ( $line =~ /SPATCHLEVEL=/ ) {$SP = substr $line, 13, 1};
+  my @VERS = split / /, $line;
+  if ( $line =~ /YAMBO_VERSION/ ) {$SV = $VERS[2]};
+  if ( $line =~ /YAMBO_SUBVERSION/ ) {$SS = $VERS[2]};
+  if ( $line =~ /YAMBO_PATCHLEVEL/ ) {$SP = $VERS[2]};
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;

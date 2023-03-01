@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -24,7 +24,7 @@
 subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID,&
 &                                   IND_q,COMM,q_range,k,q)
  !
- use parallel_m,    ONLY:PP_indexes,MPI_comm
+ use parallel_m,    ONLY:PP_indexes,yMPI_comm
  use R_lattice,     ONLY:qindx_X,nkbz,nkibz,bz_samp,nqbz,qindx_S,qindx_B
  use QP_m,          ONLY:QP_n_states,QP_table
  use R_lattice,     ONLY:k_map
@@ -35,11 +35,11 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
  character(*)           ::ZONE
  type(PP_indexes)       ::IND_in,IND_k_out,IND_q
  integer                ::IND_in_ID,IND_k_out_ID,q_range(2)
- type(MPI_comm)         ::COMM
+ type(yMPI_comm)         ::COMM
  type(bz_samp)          ::k,q
  !
  integer :: iq,ikp,ikbz,ik,ikpbz,iqp,iqbz
- integer :: id,istep,idx(3),idx_kp(3),idx_k(3),max_step,ikbzp
+ integer :: id,istep,idx_kp(3),idx_k(3),max_step,ikbzp
  !
  IND_k_out_ID=IND_in_ID
  !
@@ -95,6 +95,8 @@ subroutine PARALLEL_add_Q_to_K_list(ZONE,IND_in,IND_in_ID,IND_k_out,IND_k_out_ID
      do iq=1,nqbz
        !
        if (.not.IND_q%element_1D(iq)) cycle
+       !
+       ! This is strange qindx_B is allocated nK,nK, why ranging over q ?
        !
        ikpbz=qindx_B(ikbz,iq,1)
        ikp  =k%sstar(ikpbz,1)

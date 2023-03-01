@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AF
@@ -25,9 +25,9 @@ integer function io_USPP_pwscf(ID)
  !
  use pars,             ONLY: SP,LP
  use stderr,           ONLY: intc
- use IO_m,             ONLY: io_connect,io_disconnect,io_sec, &
-&                            io_elemental,io_bulk,io_header,&
-&                            read_is_on,write_is_on
+ use IO_m,             ONLY: io_sec,read_is_on,write_is_on
+ use IO_int,           ONLY: io_connect,io_disconnect, &
+&                            io_elemental,io_bulk,io_header
  use D_lattice,        ONLY: n_atoms,n_atomic_species
  use electrons,        ONLY: l_spin_orbit,n_spinor,n_sp_pol
  !

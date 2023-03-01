@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -67,13 +67,13 @@ subroutine SLK_communicators(INTRA_world,INTER_world,N)
  ! b. PAR_COM_SLK_INDEX_global
  ! c. PAR_COM_SLK_INDEX_local
  !
- use parallel_m,    ONLY:MPI_comm,COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_global,&
+ use parallel_m,    ONLY:yMPI_comm,COMM_copy,PAR_COM_SLK,PAR_COM_SLK_INDEX_global,&
 &                        PAR_COM_SLK_INDEX_local,PAR_COM_NULL,&
 &                        PAR_COM_WORLD,myid,i_INTER_CHAIN,CREATE_the_COMM
  !
  implicit none
  !
- type(MPI_comm) :: INTRA_world,INTER_world
+ type(yMPI_comm) :: INTRA_world,INTER_world
  integer        :: N
  !
  ! First the simple cases where all (or none) CPU's of the "world" (/= from the MPI world) are used.

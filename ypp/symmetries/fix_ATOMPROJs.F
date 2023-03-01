@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,8 @@ subroutine fix_ATOMPROJs(E,k,k_save,kpoints_map,old_nsym,old_dl_sop,old_sop_inv,
  !
  use pars,                ONLY:SP,lchlen,cZERO
  use com,                 ONLY:msg,core_io_path,more_io_path
- use IO_m,                ONLY:io_control,OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,VERIFY,&
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_WR_CL,NONE,OP_APP_CL,OP_WR,OP_RD,VERIFY,&
 &                              OP_APP,cp_file,OP_RD_CL,RD_CL,RD,DUMP
  use electrons,           ONLY:n_sp_pol
  use LIVE_t,              ONLY:live_timing

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, AF
@@ -25,11 +25,51 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
+subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  use pars,          ONLY:SP,cONE,cZERO
  use wrapper,       ONLY:M_by_M
- use wave_func,     ONLY:WF,wf_ng
+ use electrons,     ONLY:n_spinor
+ use deviceXlib_m,  ONLY:dev_memcpy
+ use iso_c_binding, ONLY:C_F_POINTER
+#if defined _CUDA
+ use cudafor,       ONLY:C_DEVLOC
+#else
+ use iso_c_binding, ONLY:C_LOC
+#endif
+!
+#include<dev_defs.h>
+ !
+ implicit none
+ !
+ integer,                      intent(in)    :: pp_range(2),npp,ncomp
+ complex(SP) DEV_ATTR,         intent(in)    :: WF_ib(ncomp,n_spinor)
+ complex(SP) DEV_ATTR, target, intent(in)    :: kbv(ncomp,n_spinor,4,npp)
+ complex(SP) DEV_ATTR, target, intent(out)   :: XX(n_spinor,n_spinor,4,pp_range(1):pp_range(1))
+ ! 
+ ! Work Space
+ !
+ integer     :: dim_flat
+ complex(SP) DEV_ATTR, pointer :: kbv_p(:,:),XX_p(:,:)
+ !
+ dim_flat=n_spinor*4*npp
+ !
+#if defined _CUDA
+ call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/ncomp,dim_flat/) )
+ call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat/) )
+#else
+ call C_F_POINTER(C_LOC(kbv), kbv_p, (/ncomp,dim_flat/) )
+ call C_F_POINTER(C_LOC(XX),  XX_p, (/n_spinor,dim_flat/) )
+#endif
+ !
+ call M_by_M('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
+ !
+end subroutine DIPOLE_kb_project
+!
+!
+subroutine DIPOLE_kb_sum(rho,XXv,XXc)
+ !
+ use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use cuda_m,        ONLY:have_cuda
@@ -39,52 +79,18 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  !
  implicit none
  !
- integer     :: iv_wf,ic_wf
- complex(SP) :: rho(3)
- complex(SP) DEV_ATTR :: kbv(wf_ng,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP),          intent(inout) :: rho(3)
+ complex(SP) DEV_ATTR, intent(in)    :: XXv(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
+ complex(SP) DEV_ATTR, intent(in)    :: XXc(n_spinor,n_spinor,4,pp_kbv_dim_yambo)
  ! 
  ! Work Space
  !
- integer     :: i1,i2,i_spinor,dims(2)
- complex(SP) DEV_ATTR, pointer :: WF_p(:,:,:)
- complex(SP) DEV_ATTR :: XX(n_spinor,n_spinor,4,pp_kbv_dim_yambo,2)
+ integer     :: i1,i2,i_spinor
+ !
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
 #ifdef _CUDA
  complex(SP) DEV_ATTR :: DEV_VAR(drho)(n_spinor,3,pp_kbv_dim_yambo)
 #endif
- !
- if (pp_kbv_dim_yambo==0) return
- !
- WF_p => DEV_VAR(WF%c)
- !
- ! This is the fortran expanded code for the M?by?M calls below
- ! note that an extra i_spinor index is added for the sake of using ZGEMM
- !
- ! XX=cZERO
- ! do i1=1,pp_kbv_dim_yambo
- !   do i2=1,4
- !     do i_spinor=1,n_spinor
- !       do ig=1,wf_ng
- !         XX(i_spinor,i2,i1,1)=XX(i_spinor,i2,i1,1)+WF_p(ig,i_spinor,iv_wf)*kbv(ig,i_spinor,i2,i1)
- !         XX(i_spinor,i2,i1,2)=XX(i_spinor,i2,i1,2)+WF_p(ig,i_spinor,ic_wf)*kbv(ig,i_spinor,i2,i1)
- !       enddo
- !     enddo
- !   enddo
- ! enddo
- !
- dims=(/n_spinor, n_spinor*4*pp_kbv_dim_yambo/)
- !
- ! here I use the interface with all scalars instead of that for
- ! rank 2 objects because reshape seems not to work properly on
- ! "device" data (at least using PGI 19.10).
- ! A direct call to CGEMM/cublasCGEMM is also possible, but I think
- ! the wrapped M_by_M interface is cleaner
- !
- call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(1,1,iv_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
-              cZERO, XX(1,1,1,1,1), n_spinor)
- call M_by_M('T','N', dims(1), dims(2), wf_ng, cONE, WF_p(1,1,ic_wf), wf_ng, kbv(1,1,1,1), wf_ng, &
-              cZERO, XX(1,1,1,1,2), n_spinor)
- !
  !
 #if defined _CUDA
  !$cuf kernel do(3) <<<*,*>>>
@@ -94,8 +100,8 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  do i1=1,pp_kbv_dim_yambo
    do i2=1,3
      do i_spinor=1,n_spinor
-       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XX(i_spinor,i_spinor,1,i1,1))*XX(i_spinor,i_spinor,i2+1,i1,2)+ &
-&                                    conjg(XX(i_spinor,i_spinor,i2+1,i1,1))*XX(i_spinor,i_spinor,1,i1,2)
+       DEV_VAR(drho)(i_spinor,i2,i1)=conjg(XXv(i_spinor,i_spinor,1,i1))*XXc(i_spinor,i_spinor,i2+1,i1)+ &
+&                                    conjg(XXv(i_spinor,i_spinor,i2+1,i1))*XXc(i_spinor,i_spinor,1,i1)
      enddo
    enddo
  enddo
@@ -103,4 +109,4 @@ subroutine DIPOLE_kb_sum(ic_wf,iv_wf,rho,kbv)
  if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
-end subroutine
+end subroutine DIPOLE_kb_sum

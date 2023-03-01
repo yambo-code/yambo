@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -26,7 +26,8 @@ subroutine QP_DB_expand( k )
  use pars,          ONLY:schlen
  use R_lattice,     ONLY:bz_samp_reset,bz_samp
  use YPPm,          ONLY:QP_DB_to_expand
- use IO_m,          ONLY:io_control,OP_WR_CL,DUMP,OP_RD_CL,LOG
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,DUMP,OP_RD_CL,LOG
  use QP_m,          ONLY:QP_t,QP_reset
  !
 #include<memory.h>

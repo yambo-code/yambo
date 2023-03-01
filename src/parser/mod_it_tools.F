@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -112,6 +112,7 @@ module it_tools
      if (what=="resp"     ) check_verbosity=infile_verbosity==V_resp.or.infile_verbosity==V_all
      if (what=="real_time") check_verbosity=infile_verbosity==V_real_time.or.infile_verbosity==V_all
      if (what=="parallel" ) check_verbosity=infile_verbosity==V_parallel.or.infile_verbosity==V_all
+     if (what=="nl" )      check_verbosity=infile_verbosity==V_nl_optics.or.infile_verbosity==V_all
      if (.not.infile_editing) check_verbosity=.TRUE.
    end function
    !
@@ -158,16 +159,21 @@ module it_tools
      !
      ! Work Space
      !
-     character(schlen):: on_names(maxrnlvls)
+     character(schlen):: on_names(maxrnlvls),off_names(maxrnlvls)
      integer          :: i2,i3
      call STRING_split(on_name,on_names)
+     call STRING_split(off_name,off_names)
      ext_loop: do i2=1,nrnlvls
        if (rstatus(i2)==0) cycle
        do i3=1,maxrnlvls
          if (len_trim(on_names(i3))==0) cycle
          if (trim(rnlvls(i2,1))==trim(on_names(i3))) cycle ext_loop
        enddo
-       if (trim(rnlvls(i2,1))==off_name.or.off_name=='all') rstatus(i2)=0
+       do i3=1,maxrnlvls
+         if (len_trim(off_names(i3))==0) cycle
+         if (trim(off_names(i3))=="all"             ) rstatus(i2)=0
+         if (trim(rnlvls(i2,1))==trim(off_names(i3))) rstatus(i2)=0
+       enddo
      enddo ext_loop
    end subroutine
    ! 
@@ -234,11 +240,13 @@ module it_tools
      end select
    end subroutine
    !
-   subroutine loadi1var(defs,name,description,defval,unit,verb_level)
+   subroutine loadi1var(defs,name,description,defval,unit,verb_level,protect)
      use parser_m,       ONLY:parser
+     use drivers,        ONLY:infile_editing
      character(*)::name,description
      character(*), optional :: unit
      integer,optional :: verb_level
+     logical,optional :: protect
      integer :: defval
      type(initdefs)::defs
      integer :: v_id
@@ -254,7 +262,12 @@ module it_tools
      else
        do i1=1,ni1v
          if (trim(i1vars(i1,1))==trim(name)) then
-           if (initmode==4) call parser(trim(name),defs%i1def(i1))
+           if (initmode==4) then
+             if (present(protect)) then
+               if (.not.protect.and.infile_editing) cycle
+             endif
+             call parser(trim(name),defs%i1def(i1))
+           endif
            if (initmode==2) call PARSER_convert_INT(defval,i1vars(i1,3),.TRUE.)
            if (initmode<=3) defs%i1def(i1)=defval
            defval=defs%i1def(i1)

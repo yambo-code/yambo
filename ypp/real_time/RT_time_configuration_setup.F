@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -24,10 +24,10 @@
 subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !
  use units,          ONLY:AUT2FS,pi,HA2EV
- use YPP_real_time,  ONLY:RT_conf,RT_time
+ use YPP_real_time,  ONLY:RT_conf,RT_time,RT_conf_save,RT_conf_duplicate
  use pars,           ONLY:SP
  use com,            ONLY:msg
- use real_time,      ONLY:RT_step,G_MEM_steps
+ use real_time,      ONLY:RT_step
  use RT_control,     ONLY:TIME_adjust,RT_IO_t
  !
 #include<memory.h>
@@ -38,28 +38,31 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  ! Work Space
  !
  integer  :: i_t,i_ref(2),j_ref
- logical  :: UNIFORM,l_carriers,l_current,l_G_lesser,l_rho_f,l_rho_G
+ logical  :: UNIFORM,l_current,l_G_lesser,l_reset
  real(SP) :: STEP,TIME,TIME_diff,REF_diff(2)
  integer, allocatable :: i_table(:)
  !
+ ! Backup
+ !========
+ if (RT_conf_save%delta_T==0._SP) call RT_conf_duplicate(RT_conf,RT_conf_save)
+ !
  ! Definitions
  !==============
+ l_current =index(what,"CURRENT")>0
+ l_G_lesser=index(what,"Glesser")>0
+ l_reset   =index(what,"reset")>0
  !
- l_carriers=(what=="CARRIERS")
- l_current =(what=="CURRENT")
- l_G_lesser=(what=="Glesser")
- l_rho_G   =(what=="G-DENSITY")
- l_rho_f   =(what=="f-DENSITY")
+ ! Reset
+ !========
+ if (l_reset) call RT_conf_duplicate(RT_conf_save,RT_conf)
  !
  TIME  = GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)
  STEP  = RT_step
- if (GENERAL_RT_IO_t%N> 1) then
-   STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
-   if (l_rho_G) then
-    TIME_diff = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-G_MEM_steps))
-    if( .not. (TIME_diff-STEP*G_MEM_steps)<1.E-5) STEP=TIME_diff
-   endif
- endif
+ if (GENERAL_RT_IO_t%N> 1) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1))
+ !
+ !  In the case of non-uniform T samplings the last time points can be imposed by the total time and, hence, the
+ !  STEP can appear even smaller than the effective step.
+ if (GENERAL_RT_IO_t%N> 2) STEP  = (GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-1)-GENERAL_RT_IO_t%Time(GENERAL_RT_IO_t%N-2))
  !
  ! Time range ...
  !===============
@@ -70,7 +73,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    RT_conf%T_range(2)=TIME_adjust( RT_conf%T_range(2), STEP )
    !
    i_ref      = 0
-   REF_diff   = STEP
+   REF_diff   = 100.*STEP
    !
    do i_t=1,GENERAL_RT_IO_t%N
      !
@@ -101,6 +104,7 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
    !
  endif
  !
+ RT_conf%T_n_range=i_ref
  RT_conf%T_range=(/GENERAL_RT_IO_t%Time(i_ref(1)),GENERAL_RT_IO_t%Time(i_ref(2))/)
  !
  ! Uniform time sampling?
@@ -169,19 +173,19 @@ subroutine RT_time_configuration_setup(what,GENERAL_RT_IO_t)
  !===========
  !
  call msg('s','['//what//'] Uniform grid       :',UNIFORM)
- call msg('s','['//what//'] Time range     [fs]:',RT_conf%T_range*AUT2FS)
- call msg('s','['//what//'] Time step      [fs]:',RT_conf%delta_T*AUT2FS)
+ call msg('s','['//what//'] Time range         :',(/minval(RT_time),maxval(RT_time)/)*AUT2FS,"[fs]")
+ call msg('s','['//what//'] Time step          :',RT_conf%delta_T*AUT2FS,"[fs]")
  call msg('s','['//what//'] Time steps         :',RT_conf%T_n_steps)
  !
  if (.not.(l_current.or.l_G_lesser)) return
  !
- call msg('s','['//what//'] Damping       [meV]:',RT_conf%damp_factor*1000._SP*HA2EV)
+ call msg('s','['//what//'] Damping            :',RT_conf%damp_factor*1000._SP*HA2EV,"[meV]")
  !
  if (.not.l_current) return
  !
  ! Field deduced dumping
  !=======================
  RT_conf%Field_damp_factor= 2._SP*pi/(real(RT_conf%T_n_steps-1,SP)*RT_conf%delta_T)
- call msg('s','['//what//'] Field damping [meV]:',RT_conf%Field_damp_factor*1000._SP*HA2EV)
+ call msg('s','['//what//'] Field damping      :',RT_conf%Field_damp_factor*1000._SP*HA2EV,"[meV]")
  !
 end subroutine RT_time_configuration_setup

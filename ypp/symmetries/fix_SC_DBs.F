@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA DS
@@ -26,7 +26,8 @@ subroutine fix_SC_DBs(k,k_save,kpoints_map,action_kind)
  use pars,                ONLY:SP,lchlen
  use drivers,             ONLY:l_sc_run
  use com,                 ONLY:core_io_path,more_io_path
- use IO_m,                ONLY:io_control,manage_action,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:manage_action,OP_WR_CL,NONE,OP_WR,OP_RD,VERIFY,&
 &                              OP_RD_CL,DUMP,RD_CL_IF_END,WR_CL_IF_END
  use SC,                  ONLY:SC_bands
  use hamiltonian,         ONLY:H_rotation,H_nl_sc,l_sc_V_is_local,H_potential

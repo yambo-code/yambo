@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -35,7 +35,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  use pars,            ONLY:SP,DP
  use D_lattice,       ONLY:DL_vol,i_time_rev,sop_inv,nsym,i_space_inv
- use X_m,             ONLY:X_t, X_alloc,X_mat,X_poles_tab,current_iq 
+ use X_m,             ONLY:X_t, X_ALLOC_elemental,X_mat,X_poles_tab,current_iq 
  use electrons,       ONLY:levels,n_met_bands
  use R_lattice,       ONLY:bz_samp,g_rot,nkibz,nkbz
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan
@@ -49,7 +49,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
 #include<memory.h>
  real(SP),intent(out)    :: Voep(fft_size)
- complex(SP),intent(in)  :: W_x(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(in)  :: W_x(nkibz,maxval(n_met_bands),fft_size)
  type(X_t)    :: X
  type(levels),intent(in) :: E
  type(bz_samp),intent(in):: k
@@ -75,7 +75,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  Xw%n_freqs = 1
  call FREQUENCIES_setup(Xw)
  Xw%p(1)=real(Xw%p(1))+(0.,1.)*epsilon(1._SP)
- call X_alloc('X',(/X%ng,X%ng,Xw%n_freqs/))
+ call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
  X%ordering='c'
  !
  ! 2:
@@ -85,7 +85,7 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  ! 3:
  YAMBO_ALLOC(Xo_inverse,(X%ng-1,X%ng-1))
  Xo_inverse(:X%ng-1,:X%ng-1) =  X_mat(2:X%ng,2:X%ng,1) 
- call X_alloc('X')
+ call X_ALLOC_elemental('X')
  ! 4:
  call LINEAR_ALGEBRA_driver(INV,M=Xo_inverse)
  !
@@ -112,8 +112,8 @@ subroutine OEP_exact_inversion(X,E,k,Voep,W_x)
  !
  ! 3:
  do ik = 1, nkibz 
-   do iv = 1 ,E%nbf
-     do ic = E%nbf+1, X%ib(2)
+   do iv = 1 ,E%nbf(1)
+     do ic = E%nbf(1)+1, X%ib(2)
        ifft=WF%index(iv,ik,1)
        offt=WF%index(ic,ik,1)
        SigmaXC = dot_product(WF%c(:,1,offt),W_x(ik,iv,:)) !<ic|Sigma_xc|iv>

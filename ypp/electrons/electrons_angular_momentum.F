@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM DS
@@ -146,7 +146,7 @@ subroutine electrons_angular_momentum(nkpt_angular,nband_angular)
  do ik=nkpt_angular(1),nkpt_angular(2)
    !
    ! First wf_derivative (important)
-   call WF_derivative(nband_angular,(/ik,ik/),do_derivative)
+   call WF_derivative(nband_angular,(/ik,ik/),(/1,n_sp_pol/),do_derivative,.false.)
    call WF_load(WF,0,1,nband_angular,(/ik,ik/),title='-MAG',impose_free_and_alloc=.TRUE.)
    !
    if(ik==nkpt_angular(1)) then

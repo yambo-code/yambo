@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -25,7 +25,7 @@ subroutine PLASMA_parallel_setup(EH_gas)
  !
  use parallel_m,    ONLY:PAR_IND_Plasma,PAR_COM_PLASMA_INDEX,PAR_IND_PLASMA_ID,PAR_PLASMA_index,&
 &                        PAR_nPlasma
- use interfaces,    ONLY:PARALLEL_live_message,PARALLEL_index
+ use parallel_int,  ONLY:PARALLEL_live_message,PARALLEL_index
  use plasma,        ONLY:plasma_gas
  !
 #include<memory.h>

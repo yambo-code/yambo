@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CH DS HM
@@ -28,9 +28,10 @@ subroutine a2y_db1(en,k,ncid)
  use pars,                 only : SP,pi
  use com,                  only : msg
  use electrons,            only : levels, n_bands, n_spin,n_sp_pol,n_spinor, l_spin_orbit
+ use pseudo,               only : pp_n_l_times_proj_max
  use wave_func,            only : wf_ncx
  use R_lattice,            only : ng_vec, bz_samp, nkibz
- use D_lattice,            only : nsym, n_atoms, n_atomic_species
+ use D_lattice,            only : nsym, n_atoms, n_atomic_species, atom_mass
  use mod_com2y,            only : print_interface_dimensions,  artificial_spin_pol
  !
 #include<memory.h>
@@ -87,7 +88,7 @@ subroutine a2y_db1(en,k,ncid)
  call msg('s','Pseudopotential...')
  if(trim(NETCDF_kind)=='KSS') call import_gwdata_group_kss
  if(trim(NETCDF_kind)=='WFK') call import_gwdata_group_wfk
- call msg('l','done')
+ if ( pp_n_l_times_proj_max /= -1) call msg('l','done')
  !
  ! G-vectors grids and indices
  !
@@ -116,7 +117,7 @@ contains
     use R_lattice,            only : b
     use D_lattice,            only : nsym, i_time_rev, i_space_inv, dl_sop, &
 &                                    DL_vol, a, alat, &
-&                                    n_atomic_species,n_atoms_species,&
+&                                    n_atomic_species,n_atoms_species,atoms_map, &
 &                                    n_atoms_species_max,atom_pos, n_atoms, Z_species
     use mod_com2y,            only : symmetries_check_and_load, alat_mult_factor
     implicit none
@@ -179,11 +180,13 @@ contains
     ! Reset n_atoms, and fill _natoms and  atom_pos arrays
     n_atoms_species(:) = 0 
     YAMBO_ALLOC( atom_pos, (3, n_atoms_species_max, n_atomic_species) )
+    YAMBO_ALLOC(atoms_map,(n_atoms_species_max,n_atomic_species))
     do i1 = 1, n_atoms
       a_species = atom_species_(i1)
       n_atoms_species( a_species ) = n_atoms_species( a_species ) + 1
       atom_pos(:, n_atoms_species( a_species ) , a_species ) = &
 &                 matmul( transpose(a), reduced_atom_positions_(:,i1) )
+      atoms_map( n_atoms_species( a_species ) , a_species ) = i1
     enddo
     YAMBO_FREE( reduced_atom_positions_ )
     YAMBO_FREE( atom_species_ )
@@ -194,6 +197,13 @@ contains
     YAMBO_ALLOC( Z_species, (n_atomic_species) )
     varid = netcdf_inquire_varid(ncid, "atomic_numbers")
     netcdf_error = nf90_get_var(ncid, varid, Z_species)
+    call netcdf_check(ncid,netcdf_error,varid)
+    !
+    ! Get atomic masses
+    !
+    YAMBO_ALLOC( atom_mass, (n_atomic_species) )
+    varid = netcdf_inquire_varid(ncid, "amu")
+    netcdf_error = nf90_get_var(ncid, varid, atom_mass)
     call netcdf_check(ncid,netcdf_error,varid)
 
     !
@@ -222,7 +232,7 @@ contains
     n_sp_pol_abinit=n_sp_pol
     if (artificial_spin_pol) n_sp_pol_abinit=1
 
-    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, 1 ) )
+    YAMBO_ALLOC( eigenvalues_, (n_bands, nkibz, n_sp_pol_abinit ) )
 
     varid = netcdf_inquire_varid(ncid, "number_of_electrons")
     netcdf_error = nf90_get_var(ncid, varid, default_nel)
@@ -315,12 +325,12 @@ contains
     !
     implicit none
     !
-    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),max_size
-    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, g_vec_tmp1(3),varid
+    integer                       :: i1,i2,i3,n1,n2,n3,max_nx,max_ny,max_nz,npw,igv(3),igv_shift(3),max_size
+    integer                       :: g_lim(6), ig_wf, ng_vec_old, ig, ic, ik, varid
     integer,     allocatable      :: igk(:,:), igk_tmp(:,:), istwfk(:), inv_map_k(:,:), map_gamma(:,:,:)
     integer,     allocatable      :: G_mod_indx(:)
     logical                       :: gamma_only,l_new
-    real(SP)                      :: ecut, norm_2, b_transpose(3,3)
+    real(SP)                      :: ecut, ecut_low, ecut_max, norm_2, max_norm_2, b_transpose(3,3), g_vec_tmp1(3), k_shift(3)
     real(SP),    allocatable      :: G_mod(:), g_vec_tmp(:,:)
     integer,   allocatable, target :: reduced_coordinates_of_plane_waves(:,:,:)
     !
@@ -358,8 +368,42 @@ contains
    
     ! 1.
     ! Get dimensions of sphere
-    ecut = 1
-   
+    !
+    ! Calculate G-vectors inside the sphere
+    ecut_low = 0
+    b_transpose = transpose(b)
+    npw=size(reduced_coordinates_of_plane_waves(1,:,1))
+    k_shift=k%pt(1,:)/alat(:)*2.0_SP*pi
+    do ig=1,npw
+      igv = reduced_coordinates_of_plane_waves(:,ig,1)
+      if(igv(1)==nf90_fill_int) cycle
+      g_vec_tmp1 = matmul(b_transpose,real(igv,SP))+k_shift !*alat(:)/2.0_SP/pi
+      norm_2 = (g_vec_tmp1(1)**2 + g_vec_tmp1(2)**2 + g_vec_tmp1(3)**2)/2._SP
+      ecut_low=max(ecut_low,norm_2)
+    end do
+    !
+    ecut_max=ecut_low*10
+    do i1=-1,1
+      do i2=-1,1
+        do i3=-1,1
+          igv_shift = [i1,i2,i3]
+          if(all(igv_shift==0))  cycle
+          do ig=1,npw
+            igv = reduced_coordinates_of_plane_waves(:,ig,1)
+            if(igv(1)==nf90_fill_int) cycle
+            igv = igv+igv_shift
+            g_vec_tmp1 = matmul(b_transpose,real(igv,SP))+k_shift
+            norm_2 = (g_vec_tmp1(1)**2 + g_vec_tmp1(2)**2 + g_vec_tmp1(3)**2)/2._SP
+            if(norm_2 <= ecut_low) cycle
+            ecut_max=min(ecut_max,norm_2)
+          end do
+        enddo
+      enddo
+    enddo
+    call msg("s","Energy cutoff on WFs estimate (min/max)",(/ecut_low,ecut_max/),"Ha")
+    !
+    ecut=(ecut_low+ecut_max)/2._SP
+    !
     max_nx = 0
     max_ny = 0
     max_nz = 0
@@ -370,38 +414,40 @@ contains
       max_nz = max(max_nz,maxval(reduced_coordinates_of_plane_waves(3,:,ik)))
     end do
     !write(*,*) max_nx, max_ny, max_nz
-    n1 = 4*max_nx
-    n2 = 4*max_ny
-    n3 = 4*max_nz
-   
-    ! Calculate G-vectors inside the sphere
-    b_transpose = transpose(b)
-    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1) !max possible number of components
+    !write(*,*) max_nx, max_ny, max_nz
+    n1 = 5*max_nx+10
+    n2 = 5*max_ny+10
+    n3 = 5*max_nz+10
+    !
+    max_size = (2*n1+1)*(2*n2+1)*(2*n3+1)  !max possible number of components
     YAMBO_ALLOC( g_vec_tmp, (max_size,3) )
     YAMBO_ALLOC( igk_tmp, (3,max_size) )
     npw = 0
+    max_norm_2 = 0
     do i1=-n1,n1
       do i2=-n2,n2
         do i3=-n3,n3
           igv = [i1,i2,i3]
-          g_vec_tmp1 = matmul(b_transpose,igv)/2.0_SP/pi
-          norm_2 = g_vec_tmp1(1)**2 + &
-                   g_vec_tmp1(2)**2 + &
-                   g_vec_tmp1(3)**2
-          if (ecut .gt. 0.25_SP*norm_2) then
-              npw = npw+1
-              igk_tmp(:,npw) = igv
-              g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
-          end if
+          g_vec_tmp1 = matmul(b_transpose,igv)
+          norm_2 = (g_vec_tmp1(1)**2 + g_vec_tmp1(2)**2 + g_vec_tmp1(3)**2)/2._SP
+          if (norm_2 > ecut*4._SP) cycle
+          max_norm_2=max(norm_2,max_norm_2)
+          npw = npw+1
+          igk_tmp(:,npw) = igv
+          g_vec_tmp(npw,:) = matmul(b_transpose,igv)*alat(:)/2.0_SP/pi
           !this check is not needed anymore in principle
-          if (npw > max_size) then
-              call error('an error has occurred: npw > max_size')
-          end if
+          if (npw > max_size) call error('an error has occurred: npw > max_size')
         end do
       end do
     end do
     ng_vec = npw
-   
+    !
+    call msg("s","Maximum energy cutoff for rho ",max_norm_2,"Ha")
+    !
+    n1=n1+1
+    n2=n2+1
+    n3=n3+1
+    !
     ! can sort the G vectors in whatever way here
     YAMBO_ALLOC(G_mod,(ng_vec))
     YAMBO_ALLOC(G_mod_indx,(ng_vec))
@@ -420,10 +466,10 @@ contains
    
     ! 2.
     allocate(map_gamma(n1,n2,n3), inv_map_k(3,npw))
-    open(2,file='gs.dat')
-    do ic=1,ng_vec
-      write(2,*) igk(:,ic)
-    end do
+    !open(2,file='gs.dat')
+    !do ic=1,ng_vec
+    !  write(2,*) igk(:,ic)
+    !end do
     call gsphere_abinit(n1,n2,n3,igk,npw,1,map=map_gamma)
    
     ! 3.
@@ -437,11 +483,11 @@ contains
     wf_igk = -1
     do ik=1,k%nibz
       npw = wf_nc_k(ik)
-      write(2,*)
-      write(2,*)
-      do ic=1,npw
-        write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
-      end do
+      !write(2,*)
+      !write(2,*)
+      !do ic=1,npw
+      !  write(2,*) reduced_coordinates_of_plane_waves(:,ic,ik)
+      !end do
       call gsphere_abinit(n1,n2,n3,reduced_coordinates_of_plane_waves(:,:,ik),npw,istwfk(ik),inv_map=inv_map_k)
       ! 4.
       ! Do the wf_igk mapping
@@ -650,6 +696,11 @@ contains
     ! Get kb related dimensions
     !
     lmnmax                = netcdf_get_dimension(ncid,"lmnmax")
+    if (lmnmax==-1) then
+      call warning(" abinit WFK file was generated without prtkbff 1 variable in input")
+      pp_n_l_times_proj_max = -1
+      return
+    endif
     pp_n_l_times_proj_max = lmnmax
     !
     ! read abinit indlmn

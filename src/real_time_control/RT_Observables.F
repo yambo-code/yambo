@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -32,7 +32,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  use R_lattice,      ONLY:bz_samp
  use electrons,      ONLY:levels
  use real_time,      ONLY:RT_nk,RT_bands
- use RT_control,     ONLY:RT_do_it
  use fields,         ONLY:A_tot
  use timing_m,       ONLY:timing
  !
@@ -46,9 +45,9 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  ! Workspace
  !
  real(SP) :: NCarr(3),TFit(2),EfFit(2),Ener(5),Entr(3),TEntr(3),EnEntr(3),E_IP
- logical, external :: RT_Dynamics_is_over
+ logical, external :: RT_do_it
  !
- if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') .or. RT_Dynamics_is_over(.false.) ) ) return
+ if ( .not. ( RT_do_it('OUT') .or. RT_do_it('OBS_cache') .or. RT_do_it('deltaT') ) ) return
  !
  call timing('RT observables',OPR='start')
  !
@@ -56,14 +55,13 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !=========================================
  ! (evaluated also in RT_integrator when an induced field is included, l_RT_induced_field=.true.)
  !
- call RT_current_AND_polarization(k,en,dG_lesser,A_tot)
+ call RT_carriers_number(en,k,NCarr)
+ call RT_current_AND_polarization(k,en,dG_lesser,A_tot,Ncarr)
  !
  if (.not. RT_do_it('OUT') ) then
    call timing('RT observables',OPR='stop')
    return
  endif
- !
- ! GPL_EXCLUDE_START
  !
  ! Carriers number
  !================
@@ -71,7 +69,7 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  !
  ! Temperature
  !=============
- call RT_temperature(TFit,EfFit)
+ call RT_carriers_temperature(TFit,EfFit)
  !
  ! Energy
  !========
@@ -82,8 +80,6 @@ subroutine RT_Observables(en,k,dG_lesser,OBSERVABLES)
  call RT_entropy(en,k,dG_lesser,Entr,TEntr,EnEntr,E_IP)
  !
  OBSERVABLES(1:21)=(/NCarr(:),TFit(:),EfFit(:),Ener(:),Entr(:),TEntr(:),EnEntr(:)/)
- !
- ! GPL_EXCLUDE_END
  !
  call timing('RT observables',OPR='stop')
  !

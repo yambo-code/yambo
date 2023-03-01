@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM
@@ -21,34 +21,56 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
+subroutine COLLISIONS_linearize_and_IO(what,i_coll,last_coll,COLL,COLL_element,COLL_ID,COMM)
  !
- use pars,            ONLY:SP
- use parallel_m,      ONLY:master_cpu,PP_redux_wait
+ use pars,            ONLY:SP,cZERO
+ use parallel_m,      ONLY:master_cpu,yMPI_comm
+ use parallel_int,    ONLY:PP_wait
  use collision_ext,   ONLY:COLLISIONS_element,COLLISIONS_cutoff,COLLISIONS_group
- use IO_m,            ONLY:io_control,REP,OP_APP_CL,OP_WR_CL,io_COLLs
+ use IO_int,          ONLY:io_control
+ use IO_m,            ONLY:REP,OP_APP_CL,OP_WR_CL,OP_APP,WR,WR_CL,io_COLLs
  use COLL_interfaces, ONLY:io_COLLISIONS
  use timing_m,        ONLY:timing
  !
  implicit none                                              
  !
+#include<collisions.h>
+ !
  character(*)                            :: what
- integer,                  intent(in)    :: i_coll
+ integer,                  intent(in)    :: i_coll,last_coll
+ type(yMPI_comm),          intent(in)    :: COMM
+ integer,                  intent(inout) :: COLL_ID
  type(COLLISIONS_group),   intent(inout) :: COLL
  type(COLLISIONS_element), intent(inout) :: COLL_element(COLL%N)
  !
  ! Work Space
  !
- integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref,ID
+ integer   :: ic,i1,i2,i3,i_cycle,io_err,i_ref
  logical   :: store_it,l_HXC,l_GW_NEQ,l_QED_P,l_COH
  real(SP)  :: COLLISIONS_max
  !
+#if defined _PAR_IO
+ integer, external :: io_COLLs_header
+#endif
+ !
  if (i_coll==0) then
-   if(io_COLLs.and.master_cpu) then
-     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-     io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+   if(io_COLLs) then
+     if(master_cpu) then
+       !Only the master writes the header
+       call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=COLL_ID)
+       io_err=io_COLLs_header(COLL_ID,COLL)
+     endif
+     call PP_wait()
+#if defined _PAR_IO
+     !Here I could let all processors write.
+     !call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,DO_IT=.TRUE.)
+     !However, since there is a partial redux of the collisions, only few in practice are writing
+     !Setting DO_IT=.true. would also work. However some info would be written twice in the same place
+     call io_control(ACTION=OP_APP,COM=REP,SEC=(/1,2/),ID=COLL_ID,COMM=COMM)
+     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+#endif
    endif
-   call PP_redux_wait()
+   call PP_wait()
    return
  endif
  !
@@ -68,6 +90,7 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  if ( l_HXC .or. l_COH ) COLLISIONS_max=maxval(abs(COLL_element(1)%v3_c(:,:,:)))        
  !
  COLL_element(i_ref)%table(:,:,:)='f'
+ store_it=.true.
  !
  do i_cycle=1,2
    !
@@ -82,8 +105,12 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
          if (l_HXC.or.l_COH) then
            store_it=abs(COLL_element(1)%v3_c(i1,i2,i3))>=COLLISIONS_max*COLLISIONS_cutoff .or. COLLISIONS_cutoff<0.0
          endif
-         !
-         if (l_GW_NEQ .or. l_QED_P ) store_it=.TRUE.
+#if defined _PAR_IO
+         if (.not.store_it) then
+           COLL_element(1)%v3_c(i1,i2,i3)=cZERO
+           store_it=.true.
+         endif
+#endif
          !
          if (store_it) then
            ic=ic+1
@@ -108,10 +135,22 @@ subroutine COLLISIONS_linearize_and_IO(what,i_coll,COLL,COLL_element)
  !
  if (IO_colls) then
    !
-   call io_control(ACTION=OP_APP_CL,SEC=(/2,3/),ID=ID)
-   io_err=io_COLLISIONS(ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+#if defined _PAR_IO
+   call io_control(ACTION=WR,SEC=(/3,4/),ID=COLL_ID)
+#else
+   call io_control(ACTION=OP_APP_CL,SEC=(/2,3/),ID=COLL_ID)
+#endif
+   io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
    !
    call COLLISIONS_alloc_and_free(what,"v1","clean",1)
+   !
+#if defined _PAR_IO
+   if(i_coll==last_coll) then
+     call PP_wait()
+     call io_control(ACTION=WR_CL,SEC=(/5/),ID=COLL_ID)
+     io_err=io_COLLISIONS(COLL_ID,COLL,COLL_element=COLL_element(1),i_coll=i_coll)
+   endif
+#endif
    !
  endif
  !

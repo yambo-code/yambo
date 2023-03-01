@@ -30,7 +30,7 @@ module environ_m
  !
  integer  :: nr1,nr2,nr3
  integer  :: ng_env
- complex(SP), allocatable :: eps_env_g(:)
+ complex(SP), allocatable :: eps_env_RL(:)
  !
  ! asymptitic values (q->0)
  ! v_env(q,G=G'=0) ~ 4pi/[q^2 (eps0+A0)]
@@ -44,11 +44,11 @@ contains
    implicit none 
    integer :: ng_env_
    ng_env=ng_env_
-   YAMBO_ALLOC(eps_env_g,(ng_env))
+   YAMBO_ALLOC(eps_env_RL,(ng_env))
  end subroutine environ_alloc
  !
  subroutine environ_free() 
-   YAMBO_FREE(eps_env_g)
+   YAMBO_FREE(eps_env_RL)
  end subroutine environ_free
  !
 end module environ_m

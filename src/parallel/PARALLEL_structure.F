@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -30,10 +30,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
 &                      ncpu_chain,mpi_comm_world,CREATE_the_COMM
  use parallel_m,  ONLY:PAR_Q_ibz_range,PAR_QP_range,PAR_n_v_bands,PAR_n_c_bands,PAR_K_range,PAR_n_bands,&
 &                      PAR_EH_range,PAR_n_G_vectors,PAR_n_freqs
- use interfaces,  ONLY:PARALLEL_check_phase_space
-!#ifdef _CUDA
-! use mpiDeviceUtil
-!#endif
+ use parallel_int,ONLY:PARALLEL_check_phase_space
  !
  implicit none
  !
@@ -86,7 +83,7 @@ subroutine PARALLEL_structure(n_elements,ROLE)
        if (trim(ROLE(i_order))=="v" ) PHASE_space=PAR_n_v_bands(2)-PAR_n_v_bands(1)+1
        if (trim(ROLE(i_order))=="w" ) PHASE_space=PAR_n_freqs
        !
-       if (PARALLEL_CPU_used(i_structure)>PHASE_space) then
+       if (PARALLEL_CPU_used(i_structure)>PHASE_space.and.trim(ROLE(i_order))/="eh") then
          USER_structure_msg=trim(intc(PARALLEL_CPU_used(i_structure)))//" CPU for "//&
 &                           trim(intc(PHASE_space))//" elements (ROLE is '"//trim(ROLE(i_order))//"')"
          call PARALLEL_check_phase_space(PHASE_space/PARALLEL_CPU_used(i_structure),MSG=trim(USER_structure_msg))
@@ -149,10 +146,6 @@ subroutine PARALLEL_structure(n_elements,ROLE)
    tmp_comm_inter = INTER_CHAIN(i_chain)%COMM
    !
  enddo
- !
-!#ifdef _CUDA
-! call assignDevice(mycuda_dev)
-!#endif
  !
 #endif
  !

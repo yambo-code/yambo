@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA AM DS
@@ -30,10 +30,11 @@ subroutine COLLISIONS_compose_rt(dG_in)
  use collision_ext,    ONLY:HXC_COLL_element,COLL_bands,HXC_collisions
  use electrons,        ONLY:spin
  use R_lattice,        ONLY:nXkibz
- use parallel_m,       ONLY:PP_redux_wait,PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
+ use parallel_int,     ONLY:PP_redux_wait
+ use parallel_m,       ONLY:PAR_COM_Xk_ibz_INDEX,PAR_COM_Q_INDEX,&
 &                           PAR_IND_Xk_ibz,PAR_IND_Bp_mat,PAR_G_k_range
  use hamiltonian,      ONLY:B_mat_index
- use real_time,        ONLY:RT_ibz_coo,RT_Nk_ibz,RT_Vnl_xc,RT_bands
+ use real_time,        ONLY:RTibz,RT_Vnl_xc,RT_bands
  use timing_m,         ONLY:timing
  !
  implicit none
@@ -43,11 +44,21 @@ subroutine COLLISIONS_compose_rt(dG_in)
  ! Work Space
  !
  integer           :: i_coll,i_comp,i_coll_mem,i_spin,i_n,i_m,i_kmq,ib,ibp,i_k,i_k_RT
+ logical           :: do_collisions(COLL_bands(1):COLL_bands(2),COLL_bands(1):COLL_bands(2))
  complex(SP)       :: G_avg(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),nXkibz)
  !
  if(.not.l_sc_fock.and..not.l_sc_coh.and..not.l_sc_sex.and..not.l_sc_exx.and..not.l_sc_hartree) return
  !
  call timing('COLLISIONS (compose)',OPR='start')
+ !
+ do_collisions=.false.
+ !
+ do ibp=COLL_bands(1),COLL_bands(2)
+   do ib=COLL_bands(1),COLL_bands(2)
+     if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+     do_collisions(ib,ibp)=.true.
+   enddo
+ enddo
  !
  G_avg=cZERO
  !
@@ -55,14 +66,14 @@ subroutine COLLISIONS_compose_rt(dG_in)
    !
    if (.not.PAR_IND_Xk_ibz%element_1D(i_k) ) cycle
    !
-   do i_k_RT=RT_ibz_coo(i_k,1),RT_ibz_coo(i_k,2)
+   do i_k_RT=RTibz%k_range(i_k,1),RTibz%k_range(i_k,2)
      G_avg(:,:,i_k)=G_avg(:,:,i_k)+dG_in(:,:,i_k_RT)
    enddo
    !
-   ! The 1/real(RT_Nk_ibz(i_k),SP) factor is needed here because I'm integrating
+   ! The 1/real(RT_k_FT%N_mapped(i_k),SP) factor is needed here because I'm integrating
    ! over kmq. With the DbGd the size of the integrating factor has to be reduced
    ! 
-   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RT_Nk_ibz(i_k),SP)/real(PAR_COM_Q_INDEX%n_CPU)
+   G_avg(:,:,i_k)=G_avg(:,:,i_k)/real(RTibz%N_mapped(i_k),SP)/real(PAR_COM_Q_INDEX%n_CPU)
    !
  enddo
  !
@@ -104,7 +115,7 @@ subroutine COLLISIONS_compose_rt(dG_in)
          !
          i_comp=i_comp+1
          !
-         if (.not.PAR_IND_Bp_mat%element_1D( B_mat_index(ib,ibp,COLL_bands) ) ) cycle
+         if (.not.do_collisions(ib,ibp)) cycle
          !
          RT_Vnl_xc(i_n,i_m,i_k,i_spin)=RT_Vnl_xc(i_n,i_m,i_k,i_spin) &
 &                                      -cI*HXC_COLL_element(i_coll_mem)%v_c(i_comp)*G_avg(ib,ibp,i_kmq)

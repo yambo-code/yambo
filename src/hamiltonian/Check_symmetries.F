@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM CA
+! Authors (see AUTHORS file for details): AM CA DS
 !
 ! This file is distributed under the terms of the GNU
 ! General Public License. You can redistribute it and/or
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Check_symmetries(field_dir)
+subroutine Check_symmetries(field_dir,field_kind)
   !
   use pars,          ONLY:SP
   use vec_operate,   ONLY:v_norm
@@ -32,7 +32,8 @@ subroutine Check_symmetries(field_dir)
   use stderr,        ONLY:intc
   implicit none
   !
-  real(SP), intent(in)  :: field_dir(3)
+  real(SP),     intent(in)  :: field_dir(3)
+  character(*), intent(in)  :: field_kind
   !
   ! Work space
   !
@@ -43,36 +44,32 @@ subroutine Check_symmetries(field_dir)
   !
   nsym_wrong=0
   !
-  do is=1,nsym
-    !      
-    v(:) = matmul( rl_sop(:,:,is), field_dir )
-    !
-#if defined _MAGNETIC
-    !
-    i_wrong=0
-    !
-    if( all( abs(v(:)-field_dir(:))<1E-5 )) i_wrong=+1
-    if( all( abs(v(:)+field_dir(:))<1E-5 )) i_wrong=-1
-    !
-    if(i_wrong==0) then
-      nsym_wrong=nsym_wrong+1
-      cycle
-    else
-      if( m3det(rl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
-    endif
-    !
-#else
-    !
-    if( v_norm(v(:)-field_dir(:))>1.E-5) nsym_wrong=nsym_wrong+1
-    !
-#endif
-    !
-  enddo
+  select case(field_kind)
+  case("magnetic")
+    do is=1,nsym
+      v(:) = matmul( rl_sop(:,:,is), field_dir )
+      i_wrong=0
+      if( all( abs(v(:)-field_dir(:))<1E-5 )) i_wrong=+1
+      if( all( abs(v(:)+field_dir(:))<1E-5 )) i_wrong=-1
+      if(i_wrong==0) then
+        nsym_wrong=nsym_wrong+1
+      else
+        if( m3det(rl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
+      endif
+    enddo
+  case("electric")
+    do is=1,nsym
+      v(:) = matmul( rl_sop(:,:,is), field_dir )
+      i_wrong=0
+      if( v_norm(v(:)-field_dir(:))>1.E-5) nsym_wrong=nsym_wrong+1
+    enddo
+  case default
+    call error(" wrong field kind")  
+  end select
   !
   if(nsym_wrong/=0) then
     call msg('s','Detected '//intc(nsym_wrong)//' wrong symmetries (out of '//intc(nsym)//' )')
     call error(' Use ypp -y to repair the symmetry group and restart Yambo ')
-    stop '  '
   endif
   !
 end subroutine Check_symmetries

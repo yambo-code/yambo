@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -45,7 +45,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  !
  use BS_solvers,     ONLY:K_INV_EPS,BS_mat,K_slk
  use pars,           ONLY:SP,cZERO,cONE
- use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp
+ use wrapper_omp,    ONLY:Vstar_dot_V_omp,M_by_V_omp,V_dot_V_omp
  !
  implicit none
  !
@@ -67,7 +67,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  fo=C*Vstar_dot_V_omp(n,D,R_x_D_nm1(:,1))
  if(n_loop==2) then
    R_x_D_nm1(:,2)=Lo(:,2)*conjg(D(:))
-   fo=fo+C*Vstar_dot_V_omp(n,conjg(D),R_x_D_nm1(:,2))
+   fo=fo+C*V_dot_V_omp(n,D,R_x_D_nm1(:,2))
  endif
  !
  ! Iterative Cycle 
@@ -75,7 +75,7 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
  it=1
  !
  f=fo
- delta_f=0._SP
+ delta_f=cZERO
  !
  if (K_INV_EPS%treshold<0) fo=cONE
  !
@@ -92,17 +92,17 @@ integer function EPS_via_perturbative_inversion(n,m,n_loop,D,C,f,Lo)
    endif
    !
    R_x_D_n(:,1)=Lo(:,1)*R_x_D_n(:,1)
-   delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(:,1))
+   delta_f=C*Vstar_dot_V_omp(n,D,R_x_D_n(1:n,1))
    if (n_loop==2) then 
      R_x_D_n(:,2)=Lo(:,2)*R_x_D_n(:,2)
-     delta_f=delta_f+C*Vstar_dot_V_omp(n,conjg(D),R_x_D_n(:,2))
+     delta_f=delta_f+C*V_dot_V_omp(n,D,R_x_D_n(:,2))
    endif
    !
    f=f+delta_f
    !
    if (abs(delta_f)/abs(fo)<abs(K_INV_EPS%treshold)) return
    !
-   if (abs(delta_f)>40._SP) exit
+   if (abs(delta_f)>K_INV_EPS%max_treshold) exit
    !
    R_x_D_nm1=R_x_D_n
    !

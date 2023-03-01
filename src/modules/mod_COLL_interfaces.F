@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -42,12 +42,12 @@ module COLL_interfaces
      real(SP),      OPTIONAL   ::Ek,Ekmq,E_diff
    end subroutine
    !
-   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll)
+   integer function io_COLLISIONS(ID,COLL_grp,COLL_element,i_coll,COMM)
      use collision_ext,  ONLY:COLLISIONS_element,COLLISIONS_group
      integer, intent(inout)             ::ID
      type(COLLISIONS_group)             ::COLL_grp
      type(COLLISIONS_element), optional ::COLL_element
-     integer, intent(in)     , optional ::i_coll
+     integer, intent(in)     , optional ::i_coll,COMM
    end function
    !
  end interface

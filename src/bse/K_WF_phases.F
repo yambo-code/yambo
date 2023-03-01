@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -46,7 +46,8 @@ subroutine K_WF_phases(Xk)
  use R_lattice,     ONLY:bz_samp
  use BS,            ONLY:WF_phase,BS_res_K_corr,BS_bands
  use com,           ONLY:msg
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_WF_linear
+ use parallel_m,    ONLY:PAR_IND_WF_linear
+ use parallel_int,  ONLY:PP_redux_wait
  use electrons,     ONLY:n_sp_pol,n_spinor
  use interfaces,    ONLY:WF_apply_symm
  use timing_m,      ONLY:timing
@@ -123,7 +124,7 @@ subroutine K_WF_phases(Xk)
  call PP_redux_wait(WF_phase)
  call PP_redux_wait(n_phases)
  !
- call msg('r','[BSE] WF phases found  [o/o]',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP)
+ call msg('r','[BSE] WF phases found       ',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP,"[o/o]")
  !
  call timing("K_WF_phases","stop")
  !

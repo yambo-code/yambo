@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine XCo_report(qp,E,k)
  !
  use drivers,       ONLY:l_real_time,l_gw0
  use units,         ONLY:HA2EV
- use parallel_m,    ONLY:PP_redux_wait
+ use parallel_int,  ONLY:PP_wait
  use pars,          ONLY:schlen
  use R_lattice,     ONLY:bz_samp
  use electrons,     ONLY:levels,n_sp_pol,spin,E_reset,E_duplicate
@@ -106,10 +106,8 @@ subroutine XCo_report(qp,E,k)
    if (n_sp_pol==2.and.i_s==1) ch_spin='(up)'
    if (n_sp_pol==2.and.i_s==2) ch_spin='(dn)'
    ! 
-   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))&
-      //trim(ch_spin)//'> ='
-   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))&
-      //trim(ch_spin)//'> ='
+   nloc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|nlXC|'//trim(intc(ibp))//trim(ch_spin)//'> ='
+   loc_fmt='<'//trim(intc(ib))//trim(ch_spin)//'|lXC|'//trim(intc(ibp))//trim(ch_spin)//'> ='
    !
    if (l_Vnl_xc) then
      ch=trim(nloc_fmt)//' '//&
@@ -139,7 +137,7 @@ subroutine XCo_report(qp,E,k)
  !
  ! MPI barrier
  !
- call PP_redux_wait
+ call PP_wait
  !
  ! Clean up
  !

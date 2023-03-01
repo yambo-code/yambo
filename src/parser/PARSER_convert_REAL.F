@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -53,7 +53,7 @@ subroutine PARSER_convert_REAL(rfac,v_descr)
  else if (index(trim(v_descr),'THz')/=0) then
    rfac=HA2THZ
  else if (index(trim(v_descr),'ps')/=0) then
-   rfac=1./PS2AUT
+   rfac=1._SP/PS2AUT
  else if (index(trim(v_descr),'fs')/=0) then
    rfac=1./FS2AUT
  else if (index(trim(v_descr),'as')/=0) then

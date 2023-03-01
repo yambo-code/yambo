@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -59,7 +59,7 @@ module functions
    end function infinity
    !
    logical function NAN(E)
-#if defined(_XLF) || defined(_PGI)
+#if defined(_XLF) || defined(_PGI) || defined(_NV)
      use ieee_arithmetic
      real(SP) :: E
      NAN= ieee_is_nan(E)
@@ -115,6 +115,21 @@ module functions
      !
    end function
    !
+   ! Lorentzian function
+   !
+   pure function Lorentzian_func(x, damp)
+     !
+     ! From Mathworld
+     ! https://mathworld.wolfram.com/LorentzianFunction.html
+     !
+     use pars, ONLY:pi
+     real(SP), intent(in) :: x,damp
+     real(SP) :: Lorentzian_func
+     !
+     Lorentzian_func=1.0/pi*(0.5*damp)/(x**2+(0.5*damp)**2)
+     !
+   end
+   !
    ! Fermi functions
    !-----------------
    !
@@ -131,25 +146,27 @@ module functions
      !
    end function
    !
-   function Fermi_fnc_derivative(E,T)
+   pure function Fermi_fnc_derivative(E,T)
      !
      ! This is the energy derivative of the Fermi-Dirac function.
      ! It can be considered and approximation to the delta function.
      !
      ! Note that the function defined here is integrated to 1.
      !
-     real(SP) :: E,T,Fermi_fnc_derivative
+     real(SP) ::Fermi_fnc_derivative
+     real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_derivative=0._SP
      if (T/=0._SP) Fermi_fnc_derivative=1._SP/(2._SP+exp(E/T)+exp(-E/T))/T
      if (Fermi_fnc_derivative<tresh)  Fermi_fnc_derivative=0._SP
    end function
    !
-   function Fermi_fnc_T_derivative(E,T)
+   pure function Fermi_fnc_T_derivative(E,T)
      !
      ! This is the Temperature derivative of the Fermi-Dirac function.
      !
-     real(SP) :: E,T,Fermi_fnc_T_derivative
+     real(SP) :: Fermi_fnc_T_derivative
+     real(SP), intent(in) :: E,T
      real(SP),parameter :: tresh=0._SP
      Fermi_fnc_T_derivative=0._SP
      if (T/=0._SP) Fermi_fnc_T_derivative=E/(2._SP+exp(E/T)+exp(-E/T))/T**2
@@ -191,6 +208,20 @@ module functions
      if (abs(E)<=bose_E_cut*Tel) bose_decay=E**2./(Tel*bose_E_cut)**2.
      !
    end function
+   !
+   ! Boltzman function
+   !----------------
+   !
+   pure function boltzman_f(Eb)
+     !
+     use D_lattice, ONLY:Bose_Temp
+     real(SP), intent(in):: Eb
+     real(SP)            :: boltzman_f
+     !
+     boltzman_f=exp(-Eb/Bose_Temp)
+     !
+   end function
+
    !
    logical function K_scatter(E,Ep,Er,Dr)
      !

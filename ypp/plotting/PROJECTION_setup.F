@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,11 +29,12 @@ subroutine PROJECTION_setup( what ,bands )
  use electrons,      ONLY:n_sp_pol,E_reset
  use vec_operate,    ONLY:c2a
  use com,            ONLY:msg,of_open_close
- use YPPm,           ONLY:PROJECT_mode,PROJECT_path,CIRCUIT_k,PROJECT_steps,PROJECT_depth,&
-&                         l_PROJECT_line,CIRCUIT_k_label,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
-&                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom,output_fname
+ use YPPm,           ONLY:PROJECT_mode,PROJECT_path,CIRCUIT_k,PROJECT_steps,PROJECT_N_perp,&
+&                         l_PROJECT_line,l_PROJECT_plane,SLICE_k,SLICE_E,BANDS_steps,&
+&                         PROJECT_plane_X,PROJECT_plane_Y,l_PROJECT_atom,output_fname,PROJECT_N_par
  use YPP_interfaces, ONLY:k_special
  use interpolate,    ONLY:GRID_k
+ use LIVE_t,         ONLY:live_timing
  !
  implicit none
  !
@@ -42,8 +43,8 @@ subroutine PROJECTION_setup( what ,bands )
  !
  ! Work Space
  !
- integer  :: i_k,n_axis,i_p1,i_p2
- real(SP) :: axis(10,3),O(3),k_trial(3)
+ integer  :: i_k,i_p1,i_p2
+ real(SP) :: axis(3,3),O(3),k_trial(3)
  type(bz_samp) :: PLANE_k
  !
  if (trim(PROJECT_mode)=="none") return
@@ -57,12 +58,9 @@ subroutine PROJECTION_setup( what ,bands )
  !
  call section('p',what//' projection:'//trim(PROJECT_mode))
  !
- if (what=="DOS") then
-   !
+ if (what=="DOS".or.what=="DIPOLES") then
    call k_special( )
-   !
    call k_circuit_driver(PROJECT_path,PROJECT_steps)
-   !
  else
    PROJECT_steps=BANDS_steps
  endif
@@ -70,27 +68,25 @@ subroutine PROJECTION_setup( what ,bands )
  call bz_samp_reset(GRID_k)
  GRID_k%description="PROJECT@"//trim(PROJECT_mode)
  !
- if (PROJECT_depth<0) PROJECT_depth=1
- !
  ! Find the axis
  !===============
- n_axis=count(len_trim(CIRCUIT_k_label(:))>0)
- !
- call PROJECTION_axis( n_axis, axis(:n_axis,:), O )
+ call PROJECTION_axis( axis, O )
  !
  ! GRID creation
  !===============
- !
  if (l_PROJECT_line) then
-   call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(n_axis,:))
+   PROJECT_N_par=CIRCUIT_k%nbz
+   call PROJECTION_perpendicular_sampling(CIRCUIT_k,axis(3,:))
  endif
  !
  if (l_PROJECT_plane) then
    !
-   if (n_axis>3) call error("Too many axis found to define a plane")
+   call msg("sr","[PROJECT] Direction#1 // plane      ",axis(1,:),"[iku]")
+   call msg("sr","          Direction#2 // plane      ",axis(2,:),"[iku]")
+   call msg("sr","          Direction  _|_ plane      ",axis(3,:),"[iku]")
+   call msg("sr","          Plane Origin              ",O,"[iku]")
    !
-   call msg("sr","[PROJECT] Direction#1 // plane [iku]",axis(1,:))
-   call msg("sr","          Direction#2 // plane [iku]",axis(2,:))
+   call live_timing('[PROJECT] Points output file',PROJECT_steps+1)
    !
    output_fname="plane_points"
    !
@@ -115,11 +111,18 @@ subroutine PROJECTION_setup( what ,bands )
        call c2a(v_in= k_trial,mode='ki2c')
        call msg('o plane',' ',k_trial,INDENT=0,USE_TABS=.true.)
      enddo
+     call live_timing(steps=1)
    enddo
+   !
+   PROJECT_N_par=PLANE_k%nbz
    !
    call of_open_close(trim(output_fname))
    !
+   call live_timing()
+   !
    call PROJECTION_perpendicular_sampling(PLANE_k,axis(3,:))
+   !
+   call bz_samp_reset(PLANE_k)
    !
  endif
  !
@@ -133,14 +136,14 @@ subroutine PROJECTION_setup( what ,bands )
    !============
    call E_reset(SLICE_E)
    call bz_samp_reset(SLICE_k)
-   allocate(SLICE_k%weights(PROJECT_depth))
-   allocate(SLICE_k%sstar(PROJECT_depth,2))
-   allocate(SLICE_E%E(bands(1):bands(2),PROJECT_depth,n_sp_pol))
-   allocate(SLICE_E%f(bands(1):bands(2),PROJECT_depth,n_sp_pol))
-   SLICE_k%nibz=PROJECT_depth
-   SLICE_k%nbz =PROJECT_depth
-   SLICE_k%weights=1./float(PROJECT_depth)
-   do i_k=1,PROJECT_depth
+   allocate(SLICE_k%weights(PROJECT_N_perp))
+   allocate(SLICE_k%sstar(PROJECT_N_perp,2))
+   allocate(SLICE_E%E(bands(1):bands(2),PROJECT_N_perp,n_sp_pol))
+   allocate(SLICE_E%f(bands(1):bands(2),PROJECT_N_perp,n_sp_pol))
+   SLICE_k%nibz=PROJECT_N_perp
+   SLICE_k%nbz =PROJECT_N_perp
+   SLICE_k%weights=1./float(PROJECT_N_perp)
+   do i_k=1,PROJECT_N_perp
      SLICE_k%sstar(i_k,1)=i_k
    enddo
  endif

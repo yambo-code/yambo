@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,8 @@ subroutine QP_DBs_manipulate( E )
  use YPPm,          ONLY:QP_db_operation,QP_db_prefactor,n_QP_dbs,QP_db,QP_db_what,QP_db_name,QP_db_input_control
  use stderr,        ONLY:intc,real2ch
  use com,           ONLY:msg
- use IO_m,          ONLY:io_control,OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_WR_CL,REP,DUMP,NONE,OP_RD_CL
  use QP_m,          ONLY:QP_t,QP_reset,QP_solver,QP_table,QP_n_states
  use interfaces,    ONLY:QP_DBs_merge,DESC_write
  use electrons,     ONLY:levels,n_sp_pol
@@ -38,15 +39,14 @@ subroutine QP_DBs_manipulate( E )
  !
  ! Work Space
  !
- integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c
+ integer                 :: i_qp,i_db,i_d,i_err,ID,n_GROUNDS,i_c,i_loop
  integer,    external    :: io_QP_and_GF
- character(schlen)       :: QP_merged_name,QP_db_kind,ACTION
+ character(schlen)       :: QP_merged_name,QP_db_kind,ACTION,kind_to_add
  logical,           allocatable :: plan_EWZG(:,:)
  type(QP_t),        allocatable :: qp(:)
  !
  ! Setup
  !--------
- !
  do i_c=1,2
    n_QP_dbs=0
    do i_qp=1,size(QP_db_input_control,1)
@@ -61,7 +61,7 @@ subroutine QP_DBs_manipulate( E )
        call io_control(ACTION=OP_RD_CL,SEC=(/1,2,3/),COM=NONE,MODE=DUMP,ID=ID)
        i_err=io_QP_and_GF(trim(QP_db_input_control(i_qp,4)),QP_db(n_QP_dbs),ID)
        if (i_err/=0) then
-         call warning("QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
+         call warning(" Error in reading QP DB "//trim(QP_db_input_control(i_qp,4))//" not found")
          call QP_reset(QP_db(n_QP_dbs))
          n_QP_dbs=n_QP_dbs-1
        endif
@@ -101,38 +101,42 @@ subroutine QP_DBs_manipulate( E )
    !
    call DESC_write('s','[DB #'//trim(intc(i_db))//']',QP_db(i_db)%desc)
    !
-   if (i_db==n_QP_dbs) call msg('s',repeat("-",len_trim(QP_db_name(i_db))+13))
+   call msg('s',repeat("-",msg_len))
    !
  enddo
  !
  call msg('s','Merging...')
  !==========================
- !
  n_GROUNDS=-1
- call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
- allocate(qp(n_GROUNDS))
- do i_qp=1,n_GROUNDS
-   call QP_reset(qp(i_qp))
+ do i_loop=1,2
+   if (i_loop==2) then
+     allocate(qp(n_GROUNDS))
+     do i_qp=1,n_GROUNDS
+       call QP_reset(qp(i_qp))
+     enddo
+   endif
+   call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,&
+&                    qp=qp,OP=QP_db_operation,PRE_FAC=QP_db_prefactor,FILES=QP_db_input_control(:,4))
  enddo
- call QP_DBs_merge(n_QP_dbs,QP_db,plan_EWZG,n_GROUNDS,qp=qp,OP=QP_db_operation,PRE_FAC=QP_db_prefactor)
- !
- call msg('s','done')
+ call msg('l','done')
  !
  call msg('s','I/O...')
  !=====================
  do i_qp=1,n_GROUNDS
    !
    QP_db_kind=" "
-   call msg('s',repeat("-",msg_len))
    do i_d=1,qp(i_qp)%desc%n
-     if (index(qp(i_qp)%desc%sval(i_d),"Real")>0) QP_db_kind=trim(QP_db_kind)//"_gw_real_axis"
-     if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)  QP_db_kind=trim(QP_db_kind)//"_el_ph"
-     if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0) QP_db_kind=trim(QP_db_kind)//"_el_photon"
-     if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)  QP_db_kind=trim(QP_db_kind)//"_gw_ppa"
+     kind_to_add=" "
+     if (index(qp(i_qp)%desc%sval(i_d),"Real")>0)    kind_to_add="_gw_real_axis"
+     if (index(qp(i_qp)%desc%sval(i_d),"Fan")>0)     kind_to_add="_el_ph"
+     if (index(qp(i_qp)%desc%sval(i_d),"Lamb")>0)    kind_to_add="_el_photon"
+     if (index(qp(i_qp)%desc%sval(i_d),"PPA")>0)     kind_to_add="_gw_ppa"
+     if (index(qp(i_qp)%desc%sval(i_d),"COHSEX")>0)  kind_to_add="_gw_cohsex"
+     if (len_trim(kind_to_add)==0) cycle
+     if (index(QP_db_kind,trim(kind_to_add))==0)     QP_db_kind=trim(QP_db_kind)//trim(kind_to_add)
    enddo
    !
    QP_merged_name='QP_merged_'//trim(intc(i_qp))//trim(QP_db_kind)
-   call DESC_write('s','['//trim(QP_merged_name)//']',qp(i_qp)%desc)
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2,3/),ID=ID)
    i_err=io_QP_and_GF(trim(QP_merged_name),qp(i_qp),ID)
@@ -147,7 +151,7 @@ subroutine QP_DBs_manipulate( E )
    call QP_of(qp(i_qp),E,0,"qp"//trim(QP_db_kind))
    !
  enddo
- call msg('s',repeat("-",60))
+ call msg('l','done')
  !
  deallocate(qp)
  YAMBO_FREE(plan_EWZG)

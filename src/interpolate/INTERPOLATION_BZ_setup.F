@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -27,7 +27,8 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  ! http://www.icams.de/content/departments/ams/madsen/boltztrap.html
  !
  use pars,              ONLY:SP,pi
- use interpolate,       ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,metric,int_sop
+ use interpolate,       ONLY:nshells,lattice_vectors,INTERP_shell_factor,int_sop,metric,int_sop,&
+&                       INTERPOLATE_use_symm              
  use interpolate_tools, ONLY:make_star
  use D_lattice,         ONLY:nsym,DL_vol,a,dl_sop
  use R_lattice,         ONLY:bz_samp,b
@@ -42,14 +43,20 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  !Work Space
  !
  real(SP)                  :: sphere_radius,a_inv(3,3),b_inv(3,3)
- real(SP)                  :: vec(3),vec_mod,star_vec(3,nsym)
+ real(SP)                  :: vec(3),vec_mod
+ real(SP), allocatable     :: star_vec(:,:)
  real(SP), allocatable     :: all_vec(:,:),all_vec_mod(:),lattice_vec_mod(:),tmp_vec(:,:)
  integer,  allocatable     :: indx(:)
  integer                   :: i1,i2,i3,is,R_max(3),nR_max,n_vec,istart,iend,nstar
  logical                   :: add_vec,INTERPOLATION_vec_in_star
  real(SP),  parameter      :: zero=2e-05
+ integer                   :: nsym_interp
  !
- YAMBO_ALLOC(int_sop,(3,3,nsym))
+ nsym_interp=nsym
+ if(.not.INTERPOLATE_use_symm) nsym_interp=1
+ !
+ YAMBO_ALLOC(int_sop,(3,3,nsym_interp))
+ YAMBO_ALLOC(star_vec,(3,nsym_interp))
  ! 
  metric=matmul(a,transpose(a))
  !
@@ -63,7 +70,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
    R_max(i1)=sphere_radius*sqrt(dot_product(a_inv(:,i1),a_inv(:,i1)))+1
  enddo
  !
- do is=1,nsym
+ do is=1,nsym_interp
    !
    int_sop(:,:,is)=dl_sop(:,:,is)*(2._SP*pi)
    int_sop(:,:,is)=matmul(transpose(a_inv),int_sop(:,:,is))
@@ -128,7 +135,7 @@ subroutine INTERPOLATION_BZ_setup(Xk)
    !
    if(.not.add_vec) then
      !  
-     call make_star(all_vec(:,i2),nsym,int_sop,nstar,star_vec)
+     call make_star(all_vec(:,i2),nsym_interp,int_sop,nstar,star_vec)
      add_vec=.true.
      !
      do i3=istart,iend
@@ -165,5 +172,6 @@ subroutine INTERPOLATION_BZ_setup(Xk)
  YAMBO_FREE(all_vec)
  YAMBO_FREE(all_vec_mod)
  YAMBO_FREE(indx)
+ YAMBO_FREE(star_vec)
  !
 end subroutine INTERPOLATION_BZ_setup

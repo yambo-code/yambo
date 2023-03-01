@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -21,16 +21,16 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
+subroutine Build_tilde_vbands(en,Xk,ikbz,i_sp,istep,id_red,V_bands,V_tilde)
  !
  ! Build the \tilde Valence bands as defined in Eq. 53 of
  ! PRB 69, 085106 (2004), in terms of Kohn-Sham orbitals
  !
  use pars,           ONLY:SP,cZERO,cONE
- use electrons,      ONLY:levels,n_sp_pol
+ use electrons,      ONLY:levels
  use electric,       ONLY:Sm1_plus,Sm1_minus
  use QP_m,           ONLY:QP_nk
- use nl_optics,      ONLY:NL_bands,NL_nbands
+ use hamiltonian,    ONLY:H_ref_bands,H_ref_nbands
  use R_lattice,      ONLY:bz_samp,k_map
  use vec_operate,    ONLY:k_periodic_idx
  use DIPOLES,        ONLY:DIP_S
@@ -40,18 +40,18 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  !
  type(levels), intent(in)      :: en
  type(bz_samp),intent(in)      :: Xk
- complex(SP),  intent(in)      :: V_bands(NL_bands(2),en%nbf,QP_nk,n_sp_pol)
  integer,      intent(in)      :: ikbz
  integer,      intent(in)      :: i_sp
  integer,      intent(in)      :: istep
  integer,      intent(in)      :: id_red
- complex(SP),  intent(out)     :: V_tilde(en%nbf,NL_bands(2),2)
+ complex(SP),  intent(in)      :: V_bands(H_ref_bands(2),en%nbf(i_sp),QP_nk)
+ complex(SP),  intent(out)     :: V_tilde(en%nbf(i_sp),H_ref_bands(2),2)
  !
  ! Work Space
  !
  integer :: i2,iv1,im,idx(3),id,ikp,ikm
  integer :: ikm_ibz,ikp_ibz
- complex(SP) :: tmp_Vp(NL_bands(2),en%nbf),tmp_Vm(NL_bands(2),en%nbf)
+ complex(SP) :: tmp_Vp(H_ref_bands(2),en%nbf(i_sp)),tmp_Vm(H_ref_bands(2),en%nbf(i_sp))
  !
  V_tilde=cZERO
  !
@@ -89,23 +89,23 @@ subroutine Build_tilde_vbands(V_bands,en,Xk,ikbz,i_sp,istep,id_red,V_tilde)
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
- call M_by_M_omp('N','N',NL_nbands,en%nbf,NL_bands(2),cONE,  &
-&  DIP_S(NL_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),NL_nbands, &
-&  V_bands(:,:,ikp_ibz,i_sp),NL_bands(2),cZERO,tmp_Vp(NL_bands(1):,:),NL_nbands)
+ call M_by_M_omp('N','N',H_ref_nbands,en%nbf(i_sp),H_ref_bands(2),cONE,  &
+&  DIP_S(H_ref_bands(1):,:,id_red+(istep-1)*3,ikbz,i_sp),H_ref_nbands, &
+&  V_bands(:,:en%nbf(i_sp),ikp_ibz),H_ref_bands(2),cZERO,tmp_Vp(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
  !
- call M_by_M_omp('C','N',NL_nbands,en%nbf,NL_bands(2),cONE,  &
-&  DIP_S(:,NL_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),NL_bands(2), &
-&  V_bands(:,:,ikm_ibz,i_sp),NL_bands(2),cZERO,tmp_Vm(NL_bands(1):,:),NL_nbands)
+ call M_by_M_omp('C','N',H_ref_nbands,en%nbf(i_sp),H_ref_bands(2),cONE,  &
+&  DIP_S(:,H_ref_bands(1):,id_red+(istep-1)*3,ikm ,i_sp),H_ref_bands(2), &
+&  V_bands(:,:en%nbf(i_sp),ikm_ibz),H_ref_bands(2),cZERO,tmp_Vm(H_ref_bands(1):,:en%nbf(i_sp)),H_ref_nbands)
  !
  ! Build \tilde V(k+delta) - \tilde V(k-delta)
  ! ===========================================
  ! where \tilde V(k+delta,n,:) = \sum_m \tilde S^-1(k,k+delta)_{m,n} * Vp(m,:)
  ! 
-!$omp parallel do default(shared), private(i2,iv1)
- do i2=NL_bands(1),NL_bands(2)
-   do iv1=1,en%nbf
-     V_tilde(iv1,i2,1)=sum( Sm1_plus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:)) 
-     V_tilde(iv1,i2,2)=sum(Sm1_minus(:,iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:))
+!$omp parallel do default(shared), private(i2,iv1), collapse(2)
+ do i2=H_ref_bands(1),H_ref_bands(2)
+   do iv1=1,en%nbf(i_sp)
+     V_tilde(iv1,i2,1)=sum( Sm1_plus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vp(i2,:en%nbf(i_sp)))
+     V_tilde(iv1,i2,2)=sum(Sm1_minus(:en%nbf(i_sp),iv1,id_red+(istep-1)*3,ikbz,i_sp)*tmp_Vm(i2,:en%nbf(i_sp)))
    enddo
  enddo
 !$omp end parallel do

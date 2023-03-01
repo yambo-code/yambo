@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -55,11 +55,13 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use frequency,     ONLY:w_samp,W_reset
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t
- use parallel_m,    ONLY:PP_redux_wait,PAR_IND_Q_ibz
+ use parallel_m,    ONLY:PAR_IND_Q_ibz
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait
  use QP_m,          ONLY:QP_t,QP_Vxc,QP_Vnl_xc,QP_Sc,QP_n_W_freqs,QP_W,QP_n_states,&
 &                        QP_solver_state,QP_dSc_steps,QP_dSc,&
 &                        QP_W_dr,QP_W_er,QP_dSc_delta
- use IO_m,          ONLY:io_control,NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:NONE,RD,RD_CL,OP_RD,OP_RD_CL,io_SCREEN
  use stderr,        ONLY:intc
  !
 #include<memory.h>
@@ -125,7 +127,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Root
  !
@@ -161,7 +163,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    call W2Sc_local_call()
  enddo
  call live_timing()
- call PP_redux_wait()
+ call PP_wait()
  !
  ! Analytic continuation 
  !
@@ -196,7 +198,7 @@ subroutine QP_secant_driver(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  YAMBO_FREE(QP_W)
  YAMBO_FREE(QP_W_dr)
  YAMBO_FREE(QP_W_er)
- call PP_redux_wait()
+ call PP_wait()
  !
  contains 
    !

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG, CA, DS
@@ -38,9 +38,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  use com,            ONLY:msg
  use D_lattice,      ONLY:a
  use parser_m,       ONLY:parser
-
+ use timing_m,       ONLY:timing
  !
- implicit none
+#include<memory.h>
  !
  type(levels),           intent(in)     :: Xen
  type(bz_samp),          intent(inout)  :: Xk
@@ -53,13 +53,17 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  integer     :: ik,iv,ic,ic_min,iv_max,i_sp_pol,ikm1,id_red,idir,idx(3),ikbz,ik_mem
  integer     :: istep,max_step
  real(SP)    :: Ev_m_Ec_KS
- complex(SP) :: Sm1_plus (Xen%nbf,Xen%nbm,6)
- complex(SP) :: Sm1_minus(Xen%nbf,Xen%nbm,6)
+ complex(SP), allocatable :: Sm1_plus (:,:,:)
+ complex(SP), allocatable :: Sm1_minus(:,:,:)
  complex(SP) :: S_det(6)
  complex(SP) :: Wop(Dip%ib(2),Dip%ib(2),2),DIP_tmp(6,Dip%ib(2),Dip%ib(2))
  complex(SP) :: S_tmp(Dip%ib(2),Dip%ib(2),2)
  !
- if (Xen%nbf/=Xen%nbm) call error(' Covariant dipoles not implemented for metals')
+ call timing("DIPOLE_buil_covariants",OPR="start")
+ !
+ if(.not.Dip%force_v_g_space) Dip%Vnl_included=.true.
+ !
+ if (any(Xen%nbf/=Xen%nbm)) call error(' Covariant dipoles not implemented for metals')
  !
  call parser('EvPolarization'  ,l_eval_polarization)
  call parser('FrSndOrd'        ,l_force_SndOrd)
@@ -87,6 +91,9 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  ! while the overlaps are in the BZ 
  !
  do i_sp_pol=1,n_sp_pol
+   !
+   YAMBO_ALLOC(Sm1_plus, (Xen%nbf(i_sp_pol),Xen%nbm(i_sp_pol),6))
+   YAMBO_ALLOC(Sm1_minus,(Xen%nbf(i_sp_pol),Xen%nbm(i_sp_pol),6))
    !
    do ik=1,Xk%nibz 
      !
@@ -123,13 +130,13 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
          !
          Wop(:,:,istep)=cZERO
          !
-         iv_max=min(Dip%ib_lim(1),Xen%nbm)
+         iv_max=min(Dip%ib_lim(1),Xen%nbm(i_sp_pol))
          do iv=Dip%ib(1),iv_max
            ic_min=max(iv,Dip%ib_lim(2))
            do ic=ic_min,Dip%ib(2)
              !
-             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf,1)* Sm1_plus(1:Xen%nbf,iv,id_red + (istep-1)*3))- &
-&                             sum(S_tmp(ic,1:Xen%nbf,2)*Sm1_minus(1:Xen%nbf,iv,id_red + (istep-1)*3))
+             Wop(ic,iv,istep)=sum(S_tmp(ic,1:Xen%nbf(i_sp_pol),1)* Sm1_plus(1:Xen%nbf(i_sp_pol),iv,id_red + (istep-1)*3))- &
+&                             sum(S_tmp(ic,1:Xen%nbf(i_sp_pol),2)*Sm1_minus(1:Xen%nbf(i_sp_pol),iv,id_red + (istep-1)*3))
              !
            enddo
          enddo
@@ -196,6 +203,10 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
      call live_timing(steps=1)
      !
    enddo ! ik
+   !
+   YAMBO_FREE(Sm1_plus)
+   YAMBO_FREE(Sm1_minus)
+   !
  enddo ! i_sp_pol
  !
  call live_timing()
@@ -206,6 +217,7 @@ subroutine DIPOLE_build_covariants(Xen,Xk,Dip)
  !
  if(any(idir_not_done)) call DIPOLE_x_real_space(Xen,Xk,Dip,idir_not_done)
  !
+ call timing("DIPOLE_buil_covariants",OPR="stop")
  return
  !
 end subroutine DIPOLE_build_covariants

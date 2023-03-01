@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,9 +29,10 @@ integer function io_HF_and_locXC(ID)
  use electrons,      ONLY:n_met_bands,n_sp_pol
  use QP_m,           ONLY:QP_Vnl_xc,QP_ng_Sx,QP_nb,QP_nk,QP_Vxc,QP_n_states,&
 &                         QP_table,QP_state
- use IO_m,           ONLY:io_connect,io_disconnect,io_sec,io_header,io_HF,frag_HF,&
-&                         io_elemental,io_status,io_bulk,read_is_on,IO_NOT_ALLOWED,&
-&                         write_is_on,io_mode,DUMP,ver_is_gt_or_eq,IO_INCOMPATIBLE_VAR
+ use IO_m,           ONLY:io_sec,io_HF,frag_HF,io_status,read_is_on,IO_NOT_ALLOWED,&
+&                         write_is_on,io_mode,DUMP,IO_INCOMPATIBLE_VAR
+ use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
+&                         ver_is_gt_or_eq
  use timing_m,       ONLY:timing
 #include<memory.h>
  integer :: ID
@@ -59,11 +60,9 @@ integer function io_HF_and_locXC(ID)
  endif
  if (io_HF_and_locXC/=0) goto 1
  !
- bands=(/1,n_met_bands/)
- !
  if (any((/io_sec(ID,:)==1/))) then
    !
-   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,T_EL=.true.,&
+   io_HF_and_locXC=io_header(ID,QPTS=.true.,R_LATT=.true.,WF=.true.,IMPOSE_SN=.true.,TEMP=.true.,&
 &                               XC_KIND="G_WF force",CUTOFF=l_col_cut,FRAG=frag_HF)
    !
    if (io_HF_and_locXC/=0) goto 1
@@ -77,12 +76,8 @@ integer function io_HF_and_locXC(ID)
    call io_elemental(ID,I0=QP_ng_Sx,&
 &       VAR=' Exchange RL vectors             ',CHECK=.true.,OP=(/"=="/))
    !
-   if (ver_is_gt_or_eq(ID,revision=498)) then
-     call io_elemental(ID,I0=n_met_bands,VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"=="/))
-   else
-     call io_elemental(ID,I1=bands,&
-&         VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"==","=="/))
-   endif
+   if(n_sp_pol==1) call io_elemental(ID,I0=n_met_bands(1),VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"=="/))
+   if(n_sp_pol==2) call io_elemental(ID,I1=n_met_bands   ,VAR=' Exchange summation bands        ',CHECK=.true.,OP=(/"==","=="/))
    !
    call io_elemental(ID,I0=RIM_ng,&
 &       VAR=' RIM RL components               ',CHECK=.true.,OP=(/"=="/))

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -45,8 +45,9 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  use QP_m,            ONLY:QP_ng_Sx
  use SC,              ONLY:it_now,l_oep_EWeight
  use drivers,         ONLY:l_oep_kli,l_oep_ceda
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index,LINEAR_ALGEBRA_driver 
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
+ use interfaces,      ONLY:LINEAR_ALGEBRA_driver 
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -56,7 +57,7 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
 #include<memory.h>
  real(SP),    intent(out):: Vkli(fft_size)
  real(SP),    intent(in) :: Vslt(fft_size),rho(fft_size)
- complex(SP), intent(in) :: U(nkibz,n_met_bands,fft_size)
+ complex(SP), intent(in) :: U(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in):: E
  type(bz_samp),intent(in):: k
  !
@@ -112,17 +113,17 @@ subroutine OEP_app_inversion(E,k,Vkli,Vslt,U,rho)
  YAMBO_ALLOC(rhotw_ds,(fft_size))
  YAMBO_ALLOC(rhotw_rs,(QP_ng_Sx))
  !
- call PARALLEL_index(px,(/nkibz,E%nbf/))
- call PP_redux_wait
+ call PARALLEL_index(px,(/nkibz,E%nbf(:)/))
+ call PP_wait()
  if (l_oep_kli) ch="KLI@it"//trim(intc(it_now))
  if (l_oep_ceda) ch="CED@it"//trim(intc(it_now))
  call live_timing(trim(ch),px%n_of_elements(myid+1))
  EWeight = 1._SP
  rhotw_prd = (0._SP,0._SP)
  do ik = 1, nkibz
-   do iv1 = 1, E%nbf
+   do iv1 = 1, E%nbf(1)
      if (l_oep_EWeight) EWeight = E%E(iv1,ik,1)+ E%E_Fermi 
-     do iv2 = 1, iv1!E%nbf
+     do iv2 = 1, iv1!E%nbf(1)
        if (l_oep_kli.and.(iv2.ne.iv1)) cycle
        ifft=WF%index(iv1,ik,1)
        offt=WF%index(iv2,ik,1)

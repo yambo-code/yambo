@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -53,6 +53,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  real(SP)           :: k_l(3),k_lp1(3),K_norm
  integer            :: i_Uk,i_sp,ik,i_plus,i_minus,n_Uk,&
 &                      n_SPACE_strings,n_P_strings,n_M_strings,n_X_strings
+ logical            :: minus_prefactor
  character(schlen)  :: SPACE_string(MAX_n_lines),dumb_ch,k_f_name(2)
  character(schlen)  :: P_string(MAX_n_lines),M_string(MAX_n_lines),X_string(MAX_n_lines),k_label
  !
@@ -76,6 +77,9 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
      !
      do i_minus=1,n_M_strings
        !
+       dumb_ch=P_string(i_plus)
+       minus_prefactor=i_minus>1.or.dumb_ch(1:1)=="-"
+       !
        call STRING_split(M_string(i_minus),X_string,space="x",n_non_empty_strings=n_X_strings)
        !
        if  (n_X_strings==1) ik=which_K(X_string(1))
@@ -93,8 +97,8 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
            Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)=1.
          else
            read(X_string(1),*) Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)
-           if (i_minus>1) Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)=&
-&                        -Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)
+           if (minus_prefactor) Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)=&
+&                              -Uk(n_Uk)%iK_prefactor(Uk(n_Uk)%n_operations)
          endif
        endif
        !
@@ -108,7 +112,7 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  if (n_Uk==0) return
  !
  if (n_points==0) then
-   call msg('s','Found '//trim(intc(n_Uk))//' user special points')
+   call msg('rs','Found '//trim(intc(n_Uk))//' user special points')
    CIRCUIT_k%nbz = n_Uk
    YAMBO_ALLOC(CIRCUIT_k%pt,(CIRCUIT_k%nbz,3))
    allocate(CIRCUIT_k_label(CIRCUIT_k%nbz))
@@ -120,10 +124,10 @@ subroutine k_circuit_made_of_special_points( PATH, n_points )
  endif
  !
  if (n_Uk>1) then
-   call msg('s','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
+   call msg('rs','Found '//trim(intc(n_Uk-1))//' segments with  '//trim(intc(n_points))//' points each')
    do i_Uk=1,n_Uk-1
      dumb_ch='Segment #'//trim(intc(i_Uk))//': '//trim(Uk(i_Uk)%string)//' to '//trim(Uk(i_Uk+1)%string)
-     call msg('s',trim(dumb_ch))
+     call msg('rs',trim(dumb_ch))
    enddo
  endif
  !

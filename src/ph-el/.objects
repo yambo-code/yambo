@@ -1,0 +1,4 @@
+#if defined _PHEL 
+objs = PHEL_driver.o PH_Grid_Check_Transitions.o PHEL_Self_Energy.o PHEL_from_GF_to_quasiphonons.o \
+       PH_of.o PHEL_double_grid_subset.o PHEL_k_nearest_table.o PH_Transitions_Report.o PHEL_screening.o
+#endif

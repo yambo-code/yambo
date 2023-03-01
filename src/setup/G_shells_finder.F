@@ -1,8 +1,8 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -28,6 +28,7 @@ subroutine G_shells_finder()
  ! R_is G_ig = G_{g_rot(ig,is)}
  !
  use pars,         ONLY:SP
+ use com,          ONLY:msg
  use LIVE_t,       ONLY:live_timing
  use D_lattice,    ONLY:nsym,inv_index
  use R_lattice,    ONLY:n_g_shells,ng_in_shell,ng_closed,&
@@ -36,10 +37,11 @@ subroutine G_shells_finder()
  use R_lattice,    ONLY:g_rot_d,minus_G_d
 #endif
  use vec_operate,  ONLY:iku_v_norm,v_is_zero,sort,degeneration_finder
- use IO_m,         ONLY:io_control,OP_RD_CL,OP_WR_CL,VERIFY
- use zeros,        ONLY:G_iku_zero
- use interfaces,   ONLY:PARALLEL_index
- use parallel_m,   ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
+ use IO_int,       ONLY:io_control
+ use IO_m,         ONLY:OP_RD_CL,OP_WR_CL,VERIFY
+ use zeros,        ONLY:G_iku_zero,G_mod_zero
+ use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
  !
 #include<memory.h>
  !
@@ -106,8 +108,10 @@ subroutine G_shells_finder()
  ! Shells build-up by finding equal module G_vectors
  ! ==================================================
  !
+ if(G_mod_zero/=1.E-5) call msg('r','Shells accuracy on Gmod is ',G_mod_zero)
+ !
  call degeneration_finder(G_mod,ng_closed,first_G_in_shell,ng_in_shell_TMP,n_g_shells,&
-&                        1.E-5_SP,Include_single_values=.TRUE.)
+&                        G_mod_zero,Include_single_values=.TRUE.)
  !
  ! Init
  !
@@ -193,6 +197,13 @@ subroutine G_shells_finder()
    endif
    !
  enddo
+ !
+ if (n_g_shells_no_holes/=n_g_shells) then
+   call warning(' Found non closed shells. Max cutoff will be reduced.')
+   call warning(' Set Gthresh>1.E-5 in input to avoid this. Too big Gthresh will pack shells together')
+   call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
+ endif
+ !
  n_g_shells=n_g_shells_no_holes
  !
  ! Shells Allocation & Transfer 

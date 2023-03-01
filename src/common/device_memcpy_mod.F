@@ -16,7 +16,7 @@
 module device_memcpy_m
   implicit none
 
-#include<../src/common/device_memcpy_interf.F>
+#include<../src/common/device_memcpy_interf.h.F>
 
 end module device_memcpy_m
 

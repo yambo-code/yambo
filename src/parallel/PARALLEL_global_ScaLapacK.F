@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,7 +25,7 @@ subroutine PARALLEL_global_ScaLapacK( )
  !
  use linear_algebra,ONLY:INV
  use parallel_m,    ONLY:CPU_structure
- use interfaces,    ONLY:PARALLEL_assign_chains_and_COMMs
+ use parallel_int,  ONLY:PARALLEL_assign_chains_and_COMMs
  use SLK_m,         ONLY:SLK_COM_INDEX,SLK_COM_A2A
  !
  implicit none

@@ -25,14 +25,15 @@ subroutine p2y_environ(filename)
  !
  use pars,           ONLY:SP,DP,schlen
  use vec_operate,    ONLY:c2a
- use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP,io_control
+ use IO_m,           ONLY:OP_WR_CL,OP_APP_CL,REP
+ use IO_int,         ONLY:io_control
  use pw_data,        ONLY:nr1_,nr2_,nr3_,a1_,a2_,a3_
  use R_lattice,      ONLY:b,g_vec,ng_vec
  use FFT_m,          ONLY:fft_size,fft_dim,fft_g_table,modx
 #if defined _FFTW
  use FFT_m,          ONLY:fftw_plan
 #endif
- use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_g,environ_alloc,environ_free
+ use environ_m,      ONLY:nr1,nr2,nr3,ng_env,eps_env_RL,environ_alloc,environ_free
  use cube_m,         ONLY:cube_read_base
  !
 #include<memory.h>
@@ -144,7 +145,7 @@ subroutine p2y_environ(filename)
  eps_fft=eps_fft/real(fft_size,DP)
  !
  do ig = 1, ng_vec
-   eps_env_g(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
+   eps_env_RL(ig)= cmplx(eps_fft(fft_g_table(ig,1)),kind=SP)
  enddo
  !
  call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)

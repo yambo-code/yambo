@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM (AF)
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine X_redux(iq,X_par,Xw,X)
+subroutine X_redux(iq,what,X_par,Xw,X)
  !
  ! Here we solve the Dyson equation using a combination of Serial(SER)/Parallel(PAR)/SLK environments.
  !
@@ -38,7 +38,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  use com,           ONLY:msg
  use drivers,       ONLY:l_bs_fxc,l_alda_fxc,l_lrc_fxc
  use LIVE_t,        ONLY:live_timing
- use parallel_m,    ONLY:PP_redux_wait,PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,PP_bcast,&
+ use parallel_int,  ONLY:PP_wait,PP_redux_wait,PP_bcast
+ use parallel_m,    ONLY:PP_indexes,PP_indexes_reset,PAR_COM_X_WORLD_RL_resolved,&
 &                        PAR_COM_X_WORLD,PAR_COM_SLK_INDEX_local,PAR_COM_SLK,PAR_n_freqs,PAR_FREQS_index
  use R_lattice,     ONLY:bare_qpg,bare_qpg_d,q_norm,q_pt
  use frequency,     ONLY:w_samp
@@ -48,7 +49,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  use interfaces,    ONLY:LINEAR_ALGEBRA_driver,MATRIX_transfer
  use stderr,        ONLY:intc
  use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
- use TDDFT,         ONLY:FXC_n_g_corr,FXC,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
+ use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use environ_m,     ONLY:l_environ
  use timing_m,      ONLY:timing
  use cuda_m
@@ -61,6 +62,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(X_t)        :: X
  type(w_samp)     :: Xw
  integer          :: iq
+ character(*)     :: what
  !
  ! Work Space
  !
@@ -72,22 +74,28 @@ subroutine X_redux(iq,X_par,Xw,X)
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix) :: v_environ, work
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
- complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
+ complex(SP), pointer DEV_ATTR :: BUFFER_p(:,:,:)
  !
  ! Setup 
  !
- call timing('X (procedure)',OPR='start')
+ call timing(what//' (procedure)',OPR='start')
  !
  ! Barrier... 
  !
- call PP_redux_wait(COMM=PAR_COM_X_WORLD%COMM)
+ call PP_wait(COMM=PAR_COM_X_WORLD%COMM)
  !
  ! compute X on GPU if compiled with GPU support,
- ! unless GPU-usage is switchoff from input
+ ! unless GPU-usage is switch-off from input
+ ! 
+ ! Main logic:
+ ! if SLK are present .and. ncpu_SLK >1 .and. CUDA => SLK on CPU
+ ! otherwise a problem is obtained since SLK doesn't work on GPU yet
  !
  compute_on_gpu=have_cuda.and.X_use_gpu
- if (have_cuda) call msg('s','[LA] X compute_on_gpu ',compute_on_gpu )
  !
+ if (PAR_COM_SLK%n_CPU>=4.and.have_cuda) compute_on_gpu=.false.
+ !
+ if (have_cuda) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution
  !         ========================
@@ -96,7 +104,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  PAR_n_freqs_global(PAR_COM_SLK_INDEX_local%CPU_id+1)=PAR_n_freqs
  call PP_redux_wait(PAR_n_freqs_global,COMM=PAR_COM_SLK_INDEX_local%COMM)
  !
- if (PAR_n_freqs>0) call live_timing('X@q['//trim(intc(iq))//'] ',PAR_n_freqs)
+ if (PAR_n_freqs>0) call live_timing(what//'@q['//trim(intc(iq))//'] ',PAR_n_freqs)
  !
  ! ... and local BLACS structures for the response function components
  !         ======================
@@ -123,21 +131,29 @@ subroutine X_redux(iq,X_par,Xw,X)
    call MATRIX_init( "SLK", K_FXC , FXC_n_g_corr, 1 )
    YAMBO_ALLOC(K_FXC%blc,(K_FXC%BLCrows(1):K_FXC%BLCrows(2),K_FXC%BLCcols(1):K_FXC%BLCcols(2),1))
    K_FXC%blc=cZERO
-   call MATRIX_transfer(M=-FXC(:,:,1),M_out=K_FXC)
+   call MATRIX_transfer(M=-F_xc_gspace(:,:,1),M_out=K_FXC)
  endif
  !
  if (l_environ) then
+   !
    call MATRIX_init( "SLK", v_environ , X%ng, 1 )
    call MATRIX_init( "SLK", work ,      X%ng, 1 )
+   !
    YAMBO_ALLOC(v_environ%blc,(v_environ%BLCrows(1):v_environ%BLCrows(2),v_environ%BLCcols(1):v_environ%BLCcols(2),1))
    YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
    v_environ%blc=cZERO
    work%blc=cZERO
+   !
+   if (compute_on_gpu) then
+      YAMBO_ALLOC_SOURCE(v_environ%blc_d,v_environ%blc)
+      YAMBO_ALLOC_SOURCE(work%blc_d,work%blc)
+   endif
+   !
    call environ_vcoul(q_pt(iq,:),v_environ,.false.)
    !!
    !! debug
+   !call environ_vcoul(q_pt(iq,:),v_environ,.true.)
    !call environ_test(q_pt(iq,:),v_environ,"onsager")
-   !STOP
    !
  endif
  !
@@ -224,18 +240,18 @@ subroutine X_redux(iq,X_par,Xw,X)
        call error("[LA] SLK library required but not available")
 #endif
      else
-       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,cONE,-Xo%blc(:,:FXC_n_g_corr,1),X%ng,&
-&                  FXC(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:,:FXC_n_g_corr,1),X%ng)
+       call M_by_M('N','N',X%ng,FXC_n_g_corr,FXC_n_g_corr,-cONE,Xo%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng,&
+&                  F_xc_gspace(:,:,1),FXC_n_g_corr,cZERO,KERNEL%blc(:FXC_n_g_corr,:FXC_n_g_corr,1),X%ng)
      endif
      !
    endif
    !
-   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
-   !
    if (compute_on_gpu) then
-      if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
-      call dev_memcpy(Xo%blc_d,Xo%blc)
+     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call dev_memcpy(KERNEL%blc_d,KERNEL%blc)
+     call dev_memcpy(Xo%blc_d,Xo%blc)
    endif
+   !
+   ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
    !
    call X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols,v_environ)
    !
@@ -261,58 +277,74 @@ subroutine X_redux(iq,X_par,Xw,X)
      call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=KERNEL,B_slk=Xo,C_slk=BUFFER)
      !
    endif
-
    !
-   ! update X by multiplying left and right for v_coul^1/2 (diagonal in reciprocal space)
+   ! When calculating EPS1 multiply X left and right by v_coul^1/2 (diagonal in reciprocal space)
    !
-   if (compute_on_gpu) then
-      !
-      if (l_environ) call error("[X]i environ + GPU not implemented")
-      !
-!      call dev_mat_upd_dMd(Xo_rows(2)-Xo_rows(1)+1,Xo_cols(2)-Xo_cols(1)+1,BUFFER%blc_d(:,:,iw_par),&
-!&                          bare_qpg_d(Xo_rows(1):,iq),"R",bare_qpg_d(iq,Xo_cols(1):),"R",scal=cmplx(4._SP*pi,kind=SP)) 
-      !
-      BUFFER_blc_d => BUFFER%blc_d
-      !
-      !$cuf kernel do(2)
-      do ig2=Xo_cols(1),Xo_cols(2)
-        do ig1=Xo_rows(1),Xo_rows(2)
-          BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
-        enddo
-      enddo
-      !
-      call dev_stream_sync(stream_default)
-      call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
-      !
-   else
-      !
-      if (l_environ) then
-        !
-        ! BUFFER = bare_qpg1 * v_environ * X * v_environ * bare_qpg2
-        !
-        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=work)
-        call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=work,C_slk=BUFFER)
-        !
-        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-        do ig2=Xo%cols(1),Xo%cols(2)
-        do ig1=Xo%rows(1),Xo%rows(2)
-          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*bare_qpg(iq,ig1)*bare_qpg(iq,ig2)
-        enddo
-        enddo
-        !$omp end parallel do
-        !
-      else
-        !
-        !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
-        do ig2=Xo%cols(1),Xo%cols(2)
-        do ig1=Xo%rows(1),Xo%rows(2)
-          BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-        enddo
-        enddo
-        !$omp end parallel do
-        !
-      endif
-      !
+   if (X%whoami/=1) then
+     !
+     if (compute_on_gpu) then
+       !
+       BUFFER_p => BUFFER%blc_d
+       !
+       if (l_environ) then
+         !
+         ! BUFFER = bare_qpg1 * v_environ * X * v_environ * bare_qpg2
+         !
+         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=work)
+         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=work,C_slk=BUFFER)
+         !
+         !$cuf kernel do(2)
+         do ig2=Xo_cols(1),Xo_cols(2)
+           do ig1=Xo_rows(1),Xo_rows(2)
+             BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*bare_qpg_d(iq,ig1)*bare_qpg_d(iq,ig2)
+           enddo
+         enddo
+         !
+       else
+         !
+         !$cuf kernel do(2)
+         do ig2=Xo_cols(1),Xo_cols(2)
+           do ig1=Xo_rows(1),Xo_rows(2)
+             BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
+           enddo
+         enddo
+         !
+       endif
+       !
+       call dev_stream_sync(stream_default)
+       call dev_memcpy_async(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+       !
+     else
+       !
+       if (l_environ) then
+         !
+         ! BUFFER = bare_qpg1 * v_environ * X * v_environ * bare_qpg2
+         !
+         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=BUFFER,B_slk=v_environ,C_slk=work)
+         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=v_environ,B_slk=work,C_slk=BUFFER)
+         !
+         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+         do ig2=Xo%cols(1),Xo%cols(2)
+           do ig1=Xo%rows(1),Xo%rows(2)
+             BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*bare_qpg(iq,ig1)*bare_qpg(iq,ig2)
+           enddo
+         enddo
+         !$omp end parallel do
+         !
+       else
+         !
+         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+         do ig2=Xo%cols(1),Xo%cols(2)
+           do ig1=Xo%rows(1),Xo%rows(2)
+             BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+           enddo
+         enddo
+         !$omp end parallel do
+         !
+       endif
+       !
+     endif
+     !
    endif
    !
    if (PAR_n_freqs>0) call live_timing(steps=1)
@@ -331,8 +363,8 @@ subroutine X_redux(iq,X_par,Xw,X)
  if (l_environ) call MATRIX_reset(work)
  if (l_alda_fxc.and.Xo%kind=="SLK") call MATRIX_reset(K_FXC)
  !
- call timing('X (procedure)',OPR='stop')
- call timing('X (REDUX)',OPR='start')
+ call timing(what//' (procedure)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='start')
  !
  ! [3] Interface SER/SLK(X_redux) => SER/PAR(X)
  ! ============================================
@@ -342,7 +374,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  if (X_par%INTER_comm%n_CPU>1) then
    !
    call MATRIX_reset(X_par)
-   call X_PARALLEL_alloc(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
+   call X_ALLOC_parallel(X_par,X%ng,Xw%n_freqs,"X,CPU_ONLY")
    !
  endif
  !
@@ -381,7 +413,7 @@ subroutine X_redux(iq,X_par,Xw,X)
  !
  call PP_bcast(X_par%blc,node=0,COMM=PAR_COM_X_WORLD_RL_resolved%COMM)
  !
- call timing('X (REDUX)',OPR='stop')
+ call timing(what//' (REDUX)',OPR='stop')
  !
  ! Clean-up of FREQ structure
  !==========
@@ -402,30 +434,50 @@ contains
      type(PAR_matrix)         :: v_environ
      !
      integer :: ig1,ig2
-     complex(SP), pointer DEV_ATTR :: KERNEL_blc_d(:,:,:)
-     complex(SP), pointer DEV_ATTR :: Xo_blc_d(:,:,:)
-     type(PAR_matrix)         :: work
+     complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
+     complex(SP), pointer DEV_ATTR :: Xo_p(:,:,:)
+     complex(SP), pointer DEV_ATTR :: work_p(:,:,:)
+     type(PAR_matrix), target      :: work
      !
      if (l_environ) then
        call MATRIX_init( "SLK", work, X%ng, 1 )
        YAMBO_ALLOC(work%blc,(work%BLCrows(1):work%BLCrows(2),work%BLCcols(1):work%BLCcols(2),1))
        work%blc=cZERO
+       if (compute_on_gpu) then
+          YAMBO_ALLOC_SOURCE(work%blc_d,work%blc)
+       endif
      endif
      !
      if (compute_on_gpu) then
        !
-       if (l_environ) call error("[X] environ + GPU not implemented")
+       KERNEL_p => KERNEL%blc_d(:,:,:)
+       Xo_p     => Xo%blc_d(:,:,:)
+       if (l_environ) work_p   => work%blc_d(:,:,:)
        !
-       KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
-       Xo_blc_d    => Xo%blc_d(:,:,:)
-       !
-       !$cuf kernel do(2) <<<*,*>>>
-       do ig2=Xo_cols(1),Xo_cols(2)
-       do ig1=Xo_rows(1),Xo_rows(2)
-         KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
-         if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
-       enddo
-       enddo
+       if (l_environ) then
+         !
+         ! work = Xo * v_environ
+         call LINEAR_ALGEBRA_driver(MAT_MUL,M_slk=Xo,B_slk=v_environ,C_slk=work)
+         !
+         !$cuf kernel do(2) <<<*,*>>>
+         do ig2=Xo_cols(1),Xo_cols(2)
+           do ig1=Xo_rows(1),Xo_rows(2)
+             KERNEL_p(ig1,ig2,1) = KERNEL_p(ig1,ig2,1)-work_p(ig1,ig2,1)
+             if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
+           enddo
+         enddo
+         !
+       else 
+         !
+         !$cuf kernel do(2) <<<*,*>>>
+         do ig2=Xo_cols(1),Xo_cols(2)
+           do ig1=Xo_rows(1),Xo_rows(2)
+             KERNEL_p(ig1,ig2,1) =KERNEL_p(ig1,ig2,1)-Xo_p(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
+             if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
+           enddo
+         enddo
+         !
+       endif
        !
      else
        !
@@ -436,10 +488,10 @@ contains
          !
          !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
          do ig2=Xo%cols(1),Xo%cols(2)
-         do ig1=Xo%rows(1),Xo%rows(2)
-           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-work%blc(ig1,ig2,1)
-           if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-         enddo
+           do ig1=Xo%rows(1),Xo%rows(2)
+             KERNEL%blc(ig1,ig2,1) = KERNEL%blc(ig1,ig2,1)-work%blc(ig1,ig2,1)
+             if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+           enddo
          enddo
          !$omp end parallel do
          !
@@ -447,10 +499,10 @@ contains
          !
          !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
          do ig2=Xo%cols(1),Xo%cols(2)
-         do ig1=Xo%rows(1),Xo%rows(2)
-           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-           if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-         enddo
+           do ig1=Xo%rows(1),Xo%rows(2)
+             KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+             if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
+           enddo
          enddo
          !$omp end parallel do
          !

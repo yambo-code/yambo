@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -28,7 +28,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
  use electrons,     ONLY:n_spinor
  use FFT_m,         ONLY:fft_size
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species,n_atoms,atom_pos,x_cc,a
-#if defined _MAGNETIC
+#if defined _SC
  use drivers,       ONLY:l_sc_magnetic
  use magnetic,      ONLY:Bz,phase_trick,MAG_radius,n_loops
 #endif
@@ -52,7 +52,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
  !
  if (n_spinor>1) call warning('new kb implementation to be tested for the case n_spinor>1')
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) then
    YAMBO_ALLOC(x_cc,(fft_size,3,1))
    call load_cc(.true.,(/0._SP,0._SP,0._SP/),1)
@@ -66,7 +66,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
      !
      i_atom=i_atom+1
      !
-#if defined _MAGNETIC
+#if defined _SC
      if(l_sc_magnetic) then
        if(MAG_radius==0) then
          ! int_A_dl (R-->r') = 0.5 B_0/c (x_R y' - y_R x') (landau)
@@ -103,7 +103,7 @@ subroutine Pseudo_KB_gauge_factor(gauge_factor)
    enddo   ! ia
  enddo  ! is
  !
-#if defined _MAGNETIC
+#if defined _SC
  if(l_sc_magnetic) then
    YAMBO_FREE(x_cc)
  endif

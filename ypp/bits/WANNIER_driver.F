@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM AR
@@ -36,7 +36,8 @@ subroutine WANNIER_driver(k,E)
  use vec_operate,    ONLY:rlu_v_is_zero
  use zeros,          ONLY:k_rlu_zero
  use QP_m,           ONLY:QP_t,QP_reset
- use IO_m,           ONLY:io_control,OP_RD_CL,LOG,DUMP
+ use IO_int,         ONLY:io_control
+ use IO_m,           ONLY:OP_RD_CL,LOG,DUMP
 #include<memory.h>
  !
  type(bz_samp) ::k

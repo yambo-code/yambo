@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -31,14 +31,13 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  use YPP_real_time,  ONLY:RT_time
  use RT_control,     ONLY:RT_apply
  use RT_output_m,    ONLY:RT_desc,Gr_desc,TIME_STEP_desc
- use D_lattice,      ONLY:Bose_Temp
- use R_lattice,      ONLY:bz_samp
+ use R_lattice,      ONLY:bz_samp,FineGd_desc
  use electrons,      ONLY:levels,spin,spin_occ,filled_tresh,n_spinor,n_sp_pol
  use vec_operate,    ONLY:sort
  use functions,      ONLY:Fermi_fnc
  use com,            ONLY:msg,of_open_close
  use stderr,         ONLY:intc,real2ch
- use real_time,      ONLY:RT_carriers,l_RT_CCA_Kernel,RT_bands
+ use real_time,      ONLY:RT_carriers,RT_bands
  use QP_m,           ONLY:QP_table,QP_n_states
  use interfaces,     ONLY:DESC_write
  !
@@ -53,7 +52,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
  integer, parameter    :: fit_dim=1000,N_max_files=8
  integer               :: n_groups,i_g,i_g_ep,i_g_ee,i_T,i_RT,ib,ik,ik_ibz,i_f,i_fit,i_qp,i_spin,i_RT_s
  integer               :: E_sort_index(RT_carriers%nstates)
- logical               :: l_ep_lifetimes,l_sum_equilibrium,l_skip_fit,&
+ logical               :: l_sum_equilibrium,l_skip_fit,&
 &                         do_state(RT_carriers%nb(1):RT_carriers%nb(2),kpt%nibz,n_sp_pol)
  real(SP)              :: RT_E_sorted(RT_carriers%nstates)
  real(SP),allocatable  :: spin_factors(:,:,:)
@@ -134,16 +133,15 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    call Load_and_Fit_alloc(DATA_grp(n_groups),2,"e-photon")
  endif
  !
- l_ep_lifetimes = l_elph_scatt.and.l_RT_CCA_Kernel
  i_g_ep=0
- if (l_ep_lifetimes) then
+ if (l_elph_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),4,"e-p")
    i_g_ep=n_groups
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"e-p-ratio")
  endif
- if (l_elel_scatt.or.l_ep_lifetimes) then
+ if (l_elel_scatt.or.l_elph_scatt) then
    n_groups=n_groups+1
    call Load_and_Fit_alloc(DATA_grp(n_groups),1,"neq")
  endif
@@ -156,7 +154,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
    !
    ! Part 1: IO and store history
    !==============================
-   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.)
+   call RT_apply(RT_bands,En,kpt,Time=RT_time(i_T),keep_RT_carriers=.TRUE.,skip_interpolation=.TRUE.)
    !
    ! Fill the large arrays to be used for the fitting procedure.
    !
@@ -164,9 +162,9 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      ! Occupations
      !============
-     DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%delta_f(i_RT)
+     DATA_grp(1)%data(i_RT,1,i_T)=RT_carriers%OCC_el%dN(i_RT)
      !
-     if (l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%f_bare(i_RT)
+     if (l_sum_equilibrium) DATA_grp(1)%data(i_RT,1,i_T)=DATA_grp(1)%data(i_RT,1,i_T)+RT_carriers%OCC_el%N_ref(i_RT)
      !
      ! Spin occupations
      !==================
@@ -184,22 +182,22 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      do i_g=1,n_groups
        select case (trim(DATA_grp(i_g)%kind))
          case("e-e")
-           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_E_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,1)
-           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_E_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,2)
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%GAMMA_EE%abs(i_RT)+RT_carriers%GAMMA_EE%abs_bare(i_RT)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%GAMMA_EE%emit(i_RT)+RT_carriers%GAMMA_EE%emit_bare(i_RT)
          case("e-p")
-           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_P_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,3)
-           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_P_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,4)
-           if (Bose_Temp > 0._SP) then
-             DATA_grp(i_g)%data(i_RT,3,i_T)=RT_carriers%dGAMMA_E_P_Ho_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,5)
-             DATA_grp(i_g)%data(i_RT,4,i_T)=RT_carriers%dGAMMA_E_P_El_abs(i_RT)  +RT_carriers%GAMMA_bare(i_RT,6)
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%GAMMA_EP_emit%abs(i_RT)+RT_carriers%GAMMA_EP_emit%abs_bare(i_RT)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%GAMMA_EP_emit%emit(i_RT)+RT_carriers%GAMMA_EP_emit%emit_bare(i_RT)
+           if (RT_carriers%GAMMA_EP_abs%active ) then
+             DATA_grp(i_g)%data(i_RT,3,i_T)=RT_carriers%GAMMA_EP_abs%emit(i_RT)+RT_carriers%GAMMA_EP_abs%emit_bare(i_RT)
+             DATA_grp(i_g)%data(i_RT,4,i_T)=RT_carriers%GAMMA_EP_abs%abs(i_RT)+RT_carriers%GAMMA_EP_abs%abs_bare(i_RT)
            endif
          case("e-p-ratio")
            call LIFE_ratio( DATA_grp(i_g_ep), DATA_grp(i_g) )
          case("e-e-ratio")
            call LIFE_ratio( DATA_grp(i_g_ee), DATA_grp(i_g) )
          case("e-photon")
-           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%dGAMMA_E_PHOT_Hole(i_RT)    +RT_carriers%GAMMA_bare(i_RT,7)
-           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%dGAMMA_E_PHOT_Electron(i_RT)+RT_carriers%GAMMA_bare(i_RT,8)
+           DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%GAMMA_EH%abs(i_RT)+RT_carriers%GAMMA_EH%abs_bare(i_RT)
+           DATA_grp(i_g)%data(i_RT,2,i_T)=RT_carriers%GAMMA_EH%emit(i_RT)+RT_carriers%GAMMA_EH%emit_bare(i_RT)
          case("neq")
            DATA_grp(i_g)%data(i_RT,1,i_T)=RT_carriers%NEQ_lifetime(i_RT)
        end select
@@ -283,6 +281,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      call of_open_close(trim(Ef_and_T_fname(i_f)),'ot')
      call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',RT_desc)
      call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',Gr_desc)
+     call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',FineGd_desc)
      call DESC_write('o '//trim(Ef_and_T_fname(i_f)),'#',TIME_STEP_desc)
      n_titles =1
      titles(1)='Time [fs]'
@@ -530,7 +529,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
          TYP%n_files=2
          TYP%file(1)='YPP-RT_EP_Hole_linewidths'
          TYP%file(2)='YPP-RT_EP_Elec_linewidths'
-         if (Bose_Temp > 0._SP) then
+         if (RT_carriers%GAMMA_EP_abs%active ) then
            TYP%n_files=4
            TYP%file(3)='YPP-RT_EP_Hole_abs_linewidths'
            TYP%file(4)='YPP-RT_EP_Elec_abs_linewidths'
@@ -566,7 +565,7 @@ subroutine RT_components_energy_plot(En,kpt,n_T_steps)
      !
      GAMMA_holes=TYP%data(i_RT,1,i_T)
      GAMMA_elecs=TYP%data(i_RT,2,i_T)
-     if (trim(TYP%kind)=="e-p".and.Bose_Temp > 0._SP) then
+     if (trim(TYP%kind)=="e-p".and.RT_carriers%GAMMA_EP_abs%active) then
        GAMMA_holes=GAMMA_holes+TYP%data(i_RT,3,i_T)
        GAMMA_elecs=GAMMA_elecs+TYP%data(i_RT,4,i_T)
      endif

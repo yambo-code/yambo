@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG,DV
@@ -23,10 +23,7 @@
 !
 module mod_xc2y
  !
- use xc_f90_types_m
- use libxc_funcs_m
- use xc_f90_lib_m,   ONLY:xc_f90_func_init, xc_f90_func_end, &
-&                         xc_f90_info_kind, XC_UNPOLARIZED
+ use xc_f03_lib_m
  use xc_functionals, ONLY:XC_FACTOR, XC_NOT_AVAILABLE, NOXC, XC_libxcID,XC_HYB_GGA_XC_GAUPBE 
  !
  implicit none
@@ -150,7 +147,8 @@ module mod_xc2y
    integer function XC_yamboID2kind(yamboID)
      integer, intent(in) :: yamboID 
      !
-     type(xc_f90_pointer_t)  p, info
+     type(xc_f03_func_t)      :: xc_func
+     type(xc_f03_func_info_t) :: xc_info
      integer ifunc, func
      !
      if (yamboID == XC_NOT_AVAILABLE) return
@@ -158,9 +156,10 @@ module mod_xc2y
      do ifunc = 1,2
        func = XC_libxcID(yamboID,ifunc)
        if (func == NOXC) cycle
-       call xc_f90_func_init(p, info, func, XC_UNPOLARIZED) ! I put  XC_UNPOLARIZED, I think it is not relevant here
-       XC_yamboID2kind = XC_yamboID2kind + (xc_f90_info_kind(info) + 1) ! In yambo the type are shifted by +1 wrt libxc 
-       call xc_f90_func_end(p)
+       call xc_f03_func_init(xc_func, func, XC_UNPOLARIZED) ! I put  XC_UNPOLARIZED, I think it is not relevant here
+       xc_info = xc_f03_func_get_info(xc_func)
+       XC_yamboID2kind = XC_yamboID2kind + (xc_f03_func_info_get_kind(xc_info) + 1) ! In yambo the type are shifted by +1 wrt libxc 
+       call xc_f03_func_end(xc_func)
      end do
      !
    end function XC_yamboID2kind

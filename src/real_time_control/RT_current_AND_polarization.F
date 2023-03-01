@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !                  
-subroutine RT_current_AND_polarization(k,E,G_input,A_input)
+subroutine RT_current_AND_polarization(k,E,G_input,A_input,Ncarr)
  !
  ! Evalute current and polarization.
  ! The current includes the diamagnetic contribution only in the velocity gauge.
@@ -35,7 +35,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  !  each time step. When devel-dipoles will be finally merged inside the master
  !  this will be avoided by expanding the dipoles once for all
  !
- use pars,           ONLY:SP,cI
+ use pars,           ONLY:SP,cI,cZERO
  use units,          ONLY:SPEED_OF_LIGHT
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol
@@ -46,8 +46,8 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  use fields,         ONLY:gauge_field
  use DIPOLES,        ONLY:DIP_iR,DIP_v,DIP_spin,DIP_orbital
  use parallel_m,     ONLY:PAR_DIPk_nibz,PAR_G_k_range
- use RT_interfaces,  ONLY:RT_average_operator
- use RT_control,     ONLY:RT_do_it
+ use RT_control,     ONLY:l_project_spin_dipoles
+ use RT_operations,  ONLY:RT_average_operator
  !
  implicit none
  !
@@ -55,10 +55,11 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
  type(levels),      intent(in) :: E
  complex(SP),       intent(in) :: G_input(RT_bands(1):RT_bands(2),RT_bands(1):RT_bands(2),PAR_G_k_range(1):PAR_G_k_range(2))
  type(gauge_field), intent(in) :: A_input
+ real(SP),          intent(in) :: Ncarr(3)
  !
  ! Work Space
  !
- complex(SP)   :: RT_M_tmp(3)
+ complex(SP)         :: RT_M_tmp(3)
  !
  if ( .not. l_NE_dynamics ) return
  !
@@ -89,8 +90,7 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !     This expression is exact up to linear order in the field.
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_P, V_MATRIX=cI*DIP_iR,G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   !
-   RT_P    =RT_P/DL_vol
+   RT_P=RT_P/DL_vol
    !
  else
    !
@@ -98,52 +98,63 @@ subroutine RT_current_AND_polarization(k,E,G_input,A_input)
    !     This expression is exact to all orders in the field.
    !     (to be fixed, it is not stable ...)
    !
-   if(integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
-   if(integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
+   if (integrator_step==1) RT_P=RT_P_prev+RT_ind_J_prev*RT_dyn_step/2._SP
+   if (integrator_step==2) RT_P=RT_P_prev+RT_ind_J     *RT_dyn_step/2._SP
    !
  endif
  !
- ! GPL_EXCLUDE_START
- !
  if(n_spin>1) then
+   !
+   RT_spin_magn=cZERO
    !
    ! C : Spin magnetization
    !
-   call RT_average_operator(N_V=3,V_VALUE=RT_spin_magn,PV_MATRIX=DIP_spin(:,:,:,:,:),&
+   call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+   RT_spin_magn(:,1)=RT_M_tmp
+   !
+   if (l_project_spin_dipoles) then
+     if(Ncarr(2)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,2),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,2)=RT_M_tmp/Ncarr(2)
+     endif
+     !
+     if(Ncarr(3)>0._SP) then
+       call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,3),&
+       &                        G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
+       RT_spin_magn(:,3)=RT_M_tmp/Ncarr(3)
+     endif
+   endif
    !
    if(NE_i_time==1) then
-     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:),&
+     call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_spin(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
      Spin_magn=real(RT_M_tmp,SP)
    endif
-   !
-   if (.not.(RT_do_it('OUT').or.RT_do_it('OBS'))) return
    !
    ! D : Orbital magentization (local and itinerant contributions)
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,1)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,1)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    !
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,1),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Orbital_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Orbital_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    !
    call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                           G=G_input,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-   RT_orbt_magn(:,2)=RT_M_tmp/(2._SP*SPEED_OF_LIGHT)
+   RT_orbt_magn(:,2)=RT_M_tmp !/(2._SP*SPEED_OF_LIGHT)
    ! 
    if(NE_i_time==1) then
      call RT_average_operator(N_V=3,V_VALUE=RT_M_tmp,PV_MATRIX=DIP_orbital(:,:,:,:,:,2),&
 &                             G=G_lesser_reference,k=k,en=E,TRANS=.TRUE.,nK_mem=PAR_DIPk_nibz)
-     Itinerant_magn=real(RT_M_tmp,SP)/(2._SP*SPEED_OF_LIGHT)
+     Itinerant_magn=real(RT_M_tmp,SP) !/(2._SP*SPEED_OF_LIGHT)
    endif
    ! 
  endif
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine RT_current_AND_polarization

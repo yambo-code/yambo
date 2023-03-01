@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA, DS
@@ -41,7 +41,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  use wrapper_omp,    ONLY:M_by_M_omp
  !use linear_algebra, ONLY:LIN_SYS
  !use interfaces,     ONLY:LINEAR_ALGEBRA_driver
- use pointers,       ONLY:linkM2V
+ use iso_c_binding,  ONLY:C_LOC,C_F_POINTER
  use real_time,      ONLY:Ho_plus_Sigma,RT_bands,RT_nbands,&
 &                         G_lesser_reference,I1_matrix
  !
@@ -98,7 +98,7 @@ subroutine RT_INV_step_accurate(dG_old,dG_inp,dG_out,ik,deltaT)
  !call M_by_M_omp('n','n',RT_nbands,M2_tmp,U_k   ,dG_out)
  !!*******************************************************
  !
- vec_dG_out => linkM2V(dG_out,(/RT_nbands**2/))
+ call C_F_POINTER(C_LOC(dG_out), vec_dG_out, (/RT_nbands**2/) )
  !
  AdA_k=cZERO
  do ib1=RT_bands(1),RT_bands(2)

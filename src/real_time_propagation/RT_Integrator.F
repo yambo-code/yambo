@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -107,15 +107,11 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Glesser_evolve(E,k,dG_old,dG_tmp(:,:,:,i_step-1),dG_tmp(:,:,:,i_step),delta_T1,delta_T3)
    !
-   ! GPL_EXCLUDE_START
-   !
    ! ... Update of logicals before the occupations update
    !
    call RT_relaxation_logicals( )
    !
-   call RT_occupations(dG_tmp(:,:,:,i_step))
-   !
-   ! GPL_EXCLUDE_END
+   call RT_occupations_eval(dG_tmp(:,:,:,i_step))
    !
    ! Fields @ T+dt2
    !
@@ -129,11 +125,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    !
-   ! GPL_EXCLUDE_START
-   !
    call RT_relaxation(E,k,q,NE_time+delta_T1)                                 ! since nothing explicitely depends on time
-   !
-   ! GPL_EXCLUDE_END
    !
    call timing('RT integrator',OPR='start')
    !
@@ -146,17 +138,13 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
  !
  call RT_build_dG_new()
  !
- ! GPL_EXCLUDE_START
- !
  ! Rotate the G_lesser in the instaneous basis
  !
  call RT_Glesser_rotate(dG_new)
  !
  ! Occupations @ T+dT
  !
- call RT_occupations(dG_new)
- !
- ! GPL_EXCLUDE_END
+ call RT_occupations_eval(dG_new)
  !
  ! Fields @ T+dT
  !
@@ -179,7 +167,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    subroutine RT_build_dG_new()
      !
      use parallel_m,     ONLY:PAR_IND_Xk_ibz
-     use real_time,      ONLY:RT_all2ibz
+     use real_time,      ONLY:RTibz
      !
      ! Now I remove dG_old from dG_tmp and rescale to a_tableau
      !
@@ -187,7 +175,7 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
      !
      do ik=1,RT_nk
        !
-       if (.not.PAR_IND_Xk_ibz%element_1D(RT_all2ibz(ik)) ) cycle
+       if (.not.PAR_IND_Xk_ibz%element_1D(RTibz%k_map(ik)) ) cycle
        !
        do i_step=1,Integrator_nsteps
          if (a_tableau(i_step)==0._SP) cycle 

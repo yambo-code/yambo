@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -78,6 +78,7 @@ module hamiltonian
    end function
    !
    subroutine H_QP_table_setup(E)
+     use drivers,        ONLY:l_use_collisions
      use R_lattice,      ONLY:nkibz
      use electrons,      ONLY:levels
      use QP_m,           ONLY:QP_nk,QP_state,QP_nb
@@ -91,11 +92,15 @@ module hamiltonian
      ! 
      ! QP_state my be read from DBs at start-up
      !
-     YAMBO_FREE(QP_state)
-     !
-     YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
-     QP_state=.TRUE.
-     call QP_state_table_setup(E)
+     if (.not.l_use_collisions) then
+       !
+       YAMBO_FREE(QP_state)
+       !
+       YAMBO_ALLOC(QP_state,(QP_nb,QP_nk))
+       QP_state=.TRUE.
+       call QP_state_table_setup(E)
+       !
+     endif
      !
    end subroutine
    !
@@ -104,7 +109,6 @@ module hamiltonian
      use drivers,        ONLY:l_nl_optics,l_sc_run
      use electrons,      ONLY:n_spin,n_sp_pol,levels,E_reset,E_duplicate
      use FFT_m,          ONLY:fft_size
-     use QP_m,           ONLY:QP_n_states,QP_nk,QP_Sc
      use xc_functionals, ONLY:magn,V_xc
      !
      implicit none
@@ -147,10 +151,8 @@ module hamiltonian
    end subroutine
    !
    subroutine H_free()
-     use drivers,        ONLY:l_real_time
-     use QP_m,           ONLY:QP_Sc
      use xc_functionals, ONLY:magn,V_xc
-     use X_m,            ONLY:X_alloc
+     use X_m,            ONLY:X_ALLOC_elemental
      !
      implicit none
      !

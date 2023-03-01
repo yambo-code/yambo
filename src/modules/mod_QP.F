@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -29,11 +29,11 @@ module QP_m
 #include<memory.h>
  !
  ! Mixing for non perturbative calculations
- !
  integer           :: SC_bands_mixed
  real(SP)          :: SC_band_mixing
  real(SP)          :: SC_E_threshold
  !
+ ! Sigma_c
  integer           :: QP_dSc_steps
  integer           :: QP_Sc_steps
  integer           :: QP_n_W_freqs
@@ -48,12 +48,11 @@ module QP_m
  integer           :: QP_n_G_bands(2)
  integer           :: GWo_iterations
  integer           :: GW_iterations
- logical           :: QP_dSc_test
  logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
+ logical           :: l_QP_symmetrize=.FALSE.
  logical           :: l_GW_terminator=.FALSE.
  logical           :: l_update_W=.FALSE.
- logical           :: On_Mass_Shell_approx
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
@@ -63,7 +62,6 @@ module QP_m
  real(SP)          :: QP_G_Zoom_treshold
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
- real(SP)          :: QP_dSc_delta
  real(SP)          :: QP_G_er(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
@@ -82,7 +80,13 @@ module QP_m
  complex(SP),allocatable:: QP_Vxc(:)
  integer,    allocatable:: QP_solver_state(:)
  integer,    allocatable:: QP_table(:,:)
+ integer,    allocatable:: QP_W_table(:,:)
  logical,    allocatable:: QP_state(:,:)
+ !
+ ! Solver...
+ real(SP)          :: QP_dSc_delta
+ logical           :: QP_dSc_test
+ logical           :: On_Mass_Shell_approx
  ! 
  ! QED
  !
@@ -95,6 +99,8 @@ module QP_m
  logical           :: report_Sc
  logical           :: report_dSc
  logical           :: l_extended_output
+ logical           :: l_QP_eval_GF=.FALSE.
+ logical           :: l_QP_eval_Z=.FALSE.
  character(schlen) :: Vnlxc_kind
  character(schlen) :: Vxc_kind
  !
@@ -253,7 +259,7 @@ module QP_m
      qp%nb=qp%nb
      qp%n_states=qp_in%n_states
      qp%GreenF_n_steps=qp_in%GreenF_n_steps
-     call IO_desc_duplicate(qp_in%desc,qp%desc)
+     if (what=="ALL") call IO_desc_duplicate(qp_in%desc,qp%desc)
      YAMBO_ALLOC(qp%k,(qp%nk,3))
      YAMBO_ALLOC(qp%table,(qp%n_states,3+n_sp_pol-1))
      YAMBO_ALLOC(qp%wk,(qp%nk))
@@ -333,7 +339,6 @@ module QP_m
      !
      use functions,   ONLY:bose_f
      use electrons,   ONLY:levels
-     use drivers,     ONLY:Finite_Tel
      use electrons,   ONLY:spin_occ
      integer      ::is(3),os(3),e2et
      type(levels) ::E

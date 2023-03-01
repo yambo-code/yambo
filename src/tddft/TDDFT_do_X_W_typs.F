@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -25,17 +25,20 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! Prepare X and wv types for a TDDFT calculation
  !
- use drivers,       ONLY:l_bss,l_tddft,l_bs_fxc,l_alda_fxc,l_lrc_fxc,l_pf_fxc
+ use drivers,       ONLY:l_bss,l_bs_fxc,l_alda_fxc,l_lrc_fxc,l_pf_fxc,l_rpa_IP,l_td_hartree
  use stderr,        ONLY:real2ch,intc
  use frequency,     ONLY:w_samp
  use X_m,           ONLY:X_t,X_poles
  use BS,            ONLY:BS_bands,BS_eh_en,BS_K_dim
  use BS_solvers,    ONLY:BSS_q0
- use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,FXC,FXC_n_g_corr,&
+ use TDDFT,         ONLY:FXC_type,FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,&
 &                        FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded,&
 &                        FXC_LRC_alpha,FXC_LRC_beta,io_BS_Fxc
- use IO_m,          ONLY:io_control,OP_RD_CL,VERIFY,REP
+ use IO_int,        ONLY:io_control
+ use IO_m,          ONLY:OP_RD_CL,VERIFY,REP
+ !
 #include<memory.h>
+ !
  type(X_t)   :: X
  type(w_samp):: wv
  integer     :: iq
@@ -44,18 +47,27 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  integer           ::ioFxc_err,ID
  !
- ! Reset X%f_xc as it is dumped when reading the DB during
- ! the initilization
+ ! Reset X%KERNEL as it is dumped when reading the DB during the initilization
  !
- X%f_xc='none'
+ X%KERNEL='none'
  !
- if (.not.l_tddft) return
+ if (l_rpa_IP) then
+   X%KERNEL='IP'
+   return
+ endif
+ !
+ ! Hartree
+ !
+ if (l_td_hartree) then
+   X%KERNEL='HARTREE'
+   return
+ endif
  !
  ! LRC setup
  !
  if (l_lrc_fxc) then
    FXC_type='LRC'
-   X%f_xc='LRC '//trim(real2ch(FXC_LRC_alpha))//'(alpha) '//trim(real2ch(FXC_LRC_beta))//'(beta)'
+   X%KERNEL='LRC '//trim(real2ch(FXC_LRC_alpha))//'(alpha) '//trim(real2ch(FXC_LRC_beta))//'(beta)'
    return
  endif
  !
@@ -63,7 +75,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  if (l_alda_fxc) then
    FXC_type='alda'
-   X%f_xc='ALDA '//trim(intc(FXC_n_g_corr))//'(Gs)'
+   X%KERNEL='ALDA '//trim(intc(FXC_n_g_corr))//'(Gs)'
    return
  endif
  !
@@ -71,13 +83,11 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  if (l_pf_fxc) then
    FXC_type='pf'
-   X%f_xc='PF '
+   X%KERNEL='PF '
    return
  endif
  !
  if (iq<0) return
- !
- ! GPL_EXCLUDE_START
  !
  ! Fxc DB
  !
@@ -91,8 +101,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  !
  ! FXC_K_diagonal has been allocated in ioFxc_err
  !
- YAMBO_ALLOC(FXC,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
- !
+ YAMBO_ALLOC(F_xc_gspace,(FXC_n_g_corr,FXC_n_g_corr,FXC_n_mem_freqs))
  !
  ! As wv%p is read from DB %n_freqs is not setup in freqs_setup.
  ! Note that wv%n_freqs MUST respect the FXC_n_mem_freqs value.
@@ -110,7 +119,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  ! the BS/BSS and FXC components are read from the FXC file
  !
  FXC_type='BSFxc'
- X%f_xc='BS'
+ X%KERNEL='BS'
  !
  X%ib= BS_bands
  X%ehe=BS_eh_en
@@ -118,9 +127,7 @@ subroutine TDDFT_do_X_W_typs(iq,X,wv)
  X%ordering="R"
  if (.not.FXC_is_retarded) X%ordering="r"
  !
- YAMBO_ALLOC(X_poles,(BS_K_dim))
+ YAMBO_ALLOC(X_poles,(BS_K_dim(1)))
  X_poles=FXC_K_diagonal
- !
- ! GPL_EXCLUDE_END
  !
 end subroutine

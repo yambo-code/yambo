@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG
@@ -43,8 +43,8 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  use FFT_m,           ONLY:fft_size,fft_g_table,fft_dim,fftw_plan,fft_rot_r
  use QP_m,            ONLY:QP_ng_Sx
  use collision_el,    ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
- use parallel_m,      ONLY:PP_redux_wait,PP_indexes,myid,PP_indexes_reset
- use interfaces,      ONLY:PARALLEL_index
+ use parallel_m,      ONLY:PP_indexes,myid,PP_indexes_reset
+ use parallel_int,    ONLY:PP_wait,PARALLEL_index 
  use wave_func,       ONLY:WF
  use LIVE_t,          ONLY:live_timing
  use stderr,          ONLY:intc
@@ -53,7 +53,7 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  ! I/O
  !
 #include<memory.h>
- complex(SP),intent(out)  :: U_x(nkibz,n_met_bands,fft_size)
+ complex(SP),intent(out)  :: U_x(nkibz,maxval(n_met_bands),fft_size)
  type(levels), intent(in) :: E
  type(bz_samp), intent(in):: k,q
  !
@@ -80,18 +80,18 @@ subroutine OEP_ApplySigmaX(E,k,q,U_x)
  isc%qs=1
  call scatter_Gamp(isc,'x')
  U_x=(0._SP,0._SP)
- call PARALLEL_index(px,(/q%nbz,E%nbm/))
- call PP_redux_wait
+ call PARALLEL_index(px,(/q%nbz,maxval(E%nbm)/))
+ call PP_wait()
  ch="Sigma_X|WF>@it"//trim(intc(it_now))
- call live_timing(trim(ch),px%n_of_elements(myid+1)*E%nbm*k%nibz)
+ call live_timing(trim(ch),px%n_of_elements(myid+1)*maxval(E%nbm)*k%nibz)
  do iq=1,q%nbz
    isc%qs(2:)=(/q%sstar(iq,1),q%sstar(iq,2)/)
    if (isc%qs(2)/=isc%iqref)    call scatter_Gamp(isc,'x')
-   do iv1 = 1 ,E%nbm
+   do iv1 = 1 ,maxval(E%nbm)
      if (.not.px%element_2D(iq,iv1)) cycle
      do ik = 1,k%nibz
        is = k%sstar(ik,2)
-       do iv2 = 1 ,E%nbm
+       do iv2 = 1 ,maxval(E%nbm)
          u =(0._DP,0._DP)
          u_rs =(0._DP,0._DP) 
          local_u =(0._DP,0._DP)

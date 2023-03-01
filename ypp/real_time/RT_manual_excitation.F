@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS AM
@@ -21,77 +21,53 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine RT_manual_excitation(E,k,SUCCESS)
+subroutine RT_manual_excitation(E_RT,k,do_kpt,SUCCESS)
  !
  use pars,           ONLY:SP
- use units,          ONLY:BO2ANG,HA2EV
+ use units,          ONLY:BO2ANG
  use D_lattice,      ONLY:DL_vol
- use R_lattice,      ONLY:bz_samp,k_the_nearest
+ use R_lattice,      ONLY:bz_samp
  use stderr,         ONLY:intc
  use electrons,      ONLY:levels,spin_occ
  use com,            ONLY:msg
- use real_time,      ONLY:RT_carriers,RT_bands,RT_Nk_ibz
- use YPPm,           ONLY:BANDS_path,CIRCUIT_k,CIRCUIT_k_label
- use YPP_interfaces, ONLY:k_special
- use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,        &
-&                         Eh_pumped_pair_BZ_regions,Eh_pumped_pair_deltaE,  &
-&                         Eh_pumped_pair_BZ_width,Eh_pumped_Nel,Eh_pumped_pair_n_BZ_regions,   &
-&                         l_RTpump_energy,l_RTpump_kspace
+ use real_time,      ONLY:RT_carriers,RT_bands,RTibz
+ use YPP_real_time,  ONLY:Eh_pumped_pair_energy,Eh_pumped_pair_width,&
+&                         Eh_pumped_pair_deltaE,Eh_pumped_Nel
  !
  implicit none
  !
- type(levels),  intent(in) :: E
+ type(levels),  intent(in) :: E_RT
  type(bz_samp), intent(in) :: k
+ logical,       intent(in) :: do_kpt(RT_carriers%nk)
  logical,       intent(out):: SUCCESS
  !
  ! Work Space
  !
- integer :: i_pump_level,i_region,ib,ibp,iv,ic,ik,i_RT,Pump_level(E%nb,E%nk),i_k_near,i_err
- real(SP):: local_E_window,coeff,delta_Nel,occupation,local_energy(2),local_k(3),k_dist(E%nk)
- logical :: Pumped_state(E%nb,E%nk),do_kpt(E%nk)
+ integer      :: i_pump_level,ib,ibp,iv,ic,ik,i_RT,Pump_level(E_RT%nb,RT_carriers%nk)
+ real(SP)     :: local_E_window,delta_Nel,occupation,local_energy(2),k_weights(RT_carriers%nk)
+ logical      :: Pumped_state(E_RT%nb,RT_carriers%nk),RT_uses_Fine_Grid,STOP_the_LOOP,l_select_energy,l_select_deltaE
  !
  ! Possibility to pump by hand one or more electrons up
  !======================================================
+ RT_uses_Fine_Grid=k%FGibz%N>0
  !
  ! Shift energy with respect to VBM/CBm
  !
- local_energy(1)=Eh_pumped_pair_energy(1)+E%E_VBM(1)
- local_energy(2)=Eh_pumped_pair_energy(2)+E%E_CBm(1)
+ l_select_energy=abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))>1.E-5_SP
+ l_select_deltaE=    Eh_pumped_pair_deltaE>1.E-5
  !
- if (l_RTpump_energy.and.abs(Eh_pumped_pair_energy(2)-Eh_pumped_pair_energy(1))<1.E-5_SP &
-&                   .and.Eh_pumped_pair_energy(1)<0._SP) return
+ if (.not.(l_select_energy.or.l_select_deltaE)) return
  !
- ! Use special points to select the region
+ local_energy(1)=Eh_pumped_pair_energy(1)+E_RT%E_VBM(1)
+ local_energy(2)=Eh_pumped_pair_energy(2)+E_RT%E_CBm(1)
  !
- do_kpt      =.FALSE.
- !
- if(l_RTpump_kspace) then
-   !
-   call k_special( )
-   !
-   call k_circuit_driver( BANDS_path, 0 )
-   !
-   do i_region=1,Eh_pumped_pair_n_BZ_regions
-     local_k=Eh_pumped_pair_BZ_regions(i_region,:)
-     i_k_near=k_the_nearest(local_k,k%pt,k%nibz,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
-     if (k_dist(i_k_near)<Eh_pumped_pair_BZ_width.or.Eh_pumped_pair_BZ_width<0) then
-       do_kpt(i_k_near)=.TRUE. 
-       call NEAR_k_report(i_k_near,local_k," ")
-     endif
-   enddo
-   !
-   do i_region=1,CIRCUIT_k%nbz
-     i_k_near=k_the_nearest(CIRCUIT_k%pt(i_region,:),k%pt,k%nibz,k_dist,ROTATE_k_ref=.TRUE.,i_err=i_err)
-     if (k_dist(i_k_near)<Eh_pumped_pair_BZ_width.or.Eh_pumped_pair_BZ_width<0) then
-       do_kpt(i_k_near)=.TRUE. 
-       call NEAR_k_report(i_k_near,CIRCUIT_k%pt(i_region,:),CIRCUIT_k_label(i_region))
-     endif
-   enddo
-   !
+ if (RT_uses_Fine_Grid) then
+   k_weights=RT_carriers%k_weight
+ else
+   k_weights=k%weights
  endif
  !
  delta_Nel   =0._SP
- coeff       =0._SP
  Pumped_state=.FALSE.
  Pump_level  =0
  i_pump_level=1
@@ -99,23 +75,25 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
  !
  do while(local_E_window<Eh_pumped_pair_width)
    !
-   K_LOOP: do ik=1,E%nk
+   K_LOOP: do ik=1,E_RT%nk
+     !
+     if(.not.do_kpt(ik)) cycle
      !
      iv=0
      !
      do ibp=1,RT_bands(2)
        do ib=RT_bands(1),RT_bands(2)
          !
-         if(l_RTpump_energy) then
+         if(l_select_energy) then
            !
            if (Pumped_state(ib,ik)) cycle
            !
            if(ib<iv) cycle
            !
            if (iv==0) then
-             if(abs(E%E(ib,ik,1)-local_energy(1))<local_E_window) iv=ib
+             if(abs(E_RT%E(ib,ik,1)-local_energy(1))<local_E_window) iv=ib
            else
-             if(abs(E%E(ib,ik,1)-local_energy(2))<local_E_window) then
+             if(abs(E_RT%E(ib,ik,1)-local_energy(2))<local_E_window) then
                ic=ib
                Pumped_state(ic,ik)=.TRUE.
                Pumped_state(iv,ik)=.TRUE.
@@ -127,20 +105,20 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
              endif
            endif
            !
-         else if (l_RTpump_kspace.and.do_kpt(ik)) then
+         else if (l_select_deltaE) then
            !
            iv=ibp
            ic=ib
            !
-           if (ic <=E%nbf) cycle
-           if (iv > E%nbm) cycle
+           if (ic <=E_RT%nbf(1)) cycle
+           if (iv > E_RT%nbm(1)) cycle
            !
            if (Pumped_state(iv,ik)) cycle
            if (Pumped_state(ic,ik)) cycle
            !
            if (ic<=iv) cycle
            !
-           if(abs((E%E(ic,ik,1)-E%E(iv,ik,1))-Eh_pumped_pair_deltaE)<local_E_window) then
+           if(abs((E_RT%E(ic,ik,1)-E_RT%E(iv,ik,1))-Eh_pumped_pair_deltaE)<local_E_window) then
              Pumped_state(ic,ik)=.TRUE.
              Pumped_state(iv,ik)=.TRUE.
              Pump_level(ic,ik)= i_pump_level
@@ -154,11 +132,6 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
        enddo
      enddo
      !
-     do ib=RT_bands(1),RT_bands(2)
-       if(Pumped_state(ib,ik).and.Pump_level(ib,ik)==i_pump_level) coeff=coeff+spin_occ*k%weights(ik)/ &
-&                                                                        sqrt(abs(real(Pump_level(ib,ik),SP)))
-     enddo
-     !
    enddo K_LOOP
    !
    i_pump_level=i_pump_level+1
@@ -167,45 +140,37 @@ subroutine RT_manual_excitation(E,k,SUCCESS)
    !
  enddo
  !
- coeff=coeff/Eh_pumped_Nel
- !
  SUCCESS=any(Pumped_state)
- !
  if (.not.SUCCESS) return
  !
- RT_carriers%delta_f=0._SP
+ RT_carriers%OCC_el%dN=0._SP
+ ic=0
+ STOP_the_LOOP=.FALSE.
  !
- do i_RT=1,RT_carriers%nstates
-   !
-   ib     = RT_carriers%table(i_RT,1)
-   ik     = RT_carriers%table(i_RT,2)
-   !
-   if (.not.Pumped_state(ib,ik)) cycle
-   !
-   occupation=min(1._SP,1._SP/sqrt(abs(real(Pump_level(ib,ik),SP)))/coeff)
-   !
-   if (Pump_level(ib,ik)>0) then
-     RT_carriers%delta_f(i_RT)= spin_occ*occupation
-     delta_Nel=delta_Nel+RT_carriers%delta_f(i_RT)*k%weights(ik)*2._SP/real(RT_Nk_ibz(ik),SP)
-   else if (Pump_level(ib,ik)<0) then
-     RT_carriers%delta_f(i_RT)=-spin_occ*occupation
-   endif
-   !
- enddo
+ do while(.not.STOP_the_LOOP)
+   delta_Nel=0._SP
+   ic=ic+1
+   do i_RT=1,RT_carriers%nstates
+     ib = RT_carriers%table(i_RT,1)
+     ik = RT_carriers%table(i_RT,3)
+     if (.not.Pumped_state(ib,ik)) cycle
+     occupation=1._SP/sqrt(real(iabs(Pump_level(ib,ik)),SP))*real(ic)/50._SP
+     if (occupation>1.) then
+       STOP_the_LOOP=.TRUE.
+       occupation=1.
+     endif
+     if (Pump_level(ib,ik)>0) then
+       RT_carriers%OCC_el%dN(i_RT)= spin_occ*occupation
+       delta_Nel=delta_Nel+RT_carriers%OCC_el%dN(i_RT)*2._SP*RTibz%weights(ik)
+     else if (Pump_level(ib,ik)<0) then
+       RT_carriers%OCC_el%dN(i_RT)=-spin_occ*occupation
+     endif
+   enddo
+   if (.not.STOP_the_LOOP) STOP_the_LOOP=delta_Nel>Eh_pumped_Nel
+ enddo 
  !
- call msg('sr','[RT] Carrier number        ',delta_Nel)
- call msg('sr','[RT]         density [cm-3]',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP))
+ call msg('sr','[RT] Carrier number  [USER]',Eh_pumped_Nel)
+ call msg('sr','[RT]                 [GRID]',delta_Nel)
+ call msg('sr','[RT]         density       ',delta_Nel/(DL_vol*BO2ANG**3*1.E-24_SP),"[cm-3]")
  !
- contains
-   !
-   subroutine NEAR_k_report( ik, u_k, label )
-     integer      :: ik
-     real(SP)     :: u_k(3)
-     character(*) :: label
-     call msg('s','User    defined',u_k,after_msg="[iku]"//" "//trim(label))
-     call msg('s','Nearest k-point',k%pt(ik,:),after_msg="[ik="//trim(intc(ik))//"]")
-     call msg('s','Distance       ',k_dist(ik),after_msg="[iku]")
-     call msg('s','Minimum Gap    ',(E%E(E%nbm+1,ik,1)-E%E(E%nbm,ik,1))*HA2EV,after_msg="[ev]")
-   end subroutine NEAR_k_report
-   !
 end subroutine RT_manual_excitation

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -68,8 +68,13 @@ subroutine SET_job_strings_and_dirs(JS)
      jobstr=job
      jobdir=path
      if (len_trim(path)>0) then
-       com_path=path
-       if (len_trim(more_io_path)>0) com_path=trim(more_io_path)//"/"//trim(path)
+       if (len_trim(com_path)>0) then
+         com_path=trim(com_path)//"/"//trim(path)
+       else if (len_trim(more_io_path)>0) then
+         com_path=trim(more_io_path)//"/"//trim(path)
+       else
+         com_path=trim(path)
+       endif
      endif
    else
      alt_jobstr(i_j-1)=job

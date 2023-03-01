@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2020 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -21,32 +21,34 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine NL_initialize(E,k,q)
+subroutine NL_initialize(E,k)
  ! 
  use pars,           ONLY:SP,DP,pi
  use drivers,        ONLY:l_sc_fock,l_sc_coh,l_sc_sex,l_sc_hartree
  use vec_operate,    ONLY:normalize_v
+ use collision_ext,  ONLY:COLLISIONS_CV_only
  use hamiltonian,    ONLY:H_potential
  use units,          ONLY:AU2VMm1,AUT2FS,HA2EV
  use electrons,      ONLY:levels,n_sp_pol
- use com,            ONLY:msg
  use zeros,          ONLY:zero_dfl
+ use com,            ONLY:msg
  use R_lattice,      ONLY:bz_samp,k_map
  use fields,         ONLY:Efield,Efield_strength,n_ext_fields,EtoT
  use real_time,      ONLY:RT_step,NE_steps,NE_tot_time,eval_HARTREE,eval_DFT,l_RT_induced_field, &
-&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential
+&                         Phase_LifeTime,Integrator_name,RT_dyn_step,NE_i_time,RT_potential,RAD_LifeTime
  use RT_control,     ONLY:SETUP_RT_IO_type,OBS_RT_IO_t
  use nl_optics,      ONLY:l_use_DIPOLES,EULER,EULEREXP,RK2,RK4,RK2EXP,RK4EXP,HEUN,INVINT,Integrator,CRANK_NICOLSON, &
 &                         NL_damping,NL_correlation,Correlation,NL_er,NL_estep,n_frequencies,IPA,TDDFT,HARTREE,LRC,JGM, &
 &                         LRCW,SEX,HF,eval_dG,eval_COLLISIONS,NL_bands,NL_verb_name,VERB_HIGH,VERB_LOW,NL_verbosity, &
-&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT
- use electric,       ONLY:l_force_SndOrd
+&                         n_order,WF_sample,NL_set_WF_sample,NL_INIT_WF_sample,l_eval_CURRENT,l_pump_and_probe,DephMult
+ use electric,       ONLY:l_force_SndOrd,l_P_periodic
  use parser_m,       ONLY:parser
+ use stderr,         ONLY:intc
  !
 #include<memory.h>
  !
  type(levels), intent(in) :: E
- type(bz_samp),intent(in) :: q,k
+ type(bz_samp),intent(in) :: k
  !
  ! Working space
  !
@@ -59,8 +61,10 @@ subroutine NL_initialize(E,k,q)
  call parser('FrSndOrd',             l_force_SndOrd)
  call parser('InducedField' ,        l_RT_induced_field)
  call parser('EvalCurrent' ,         l_eval_CURRENT)
+ call parser('FrPolPerdic' ,         l_P_periodic)
  !
  if(l_use_DIPOLES) call warning(' Fixed dipoles: only linear response properties are correct!')
+ if(l_P_periodic)  call msg('sr','[NL] Enforce periodicity of the polarization repect to Efield')
  !
  ! Check double-precision and other possible errors
  ! ================================================
@@ -117,29 +121,49 @@ subroutine NL_initialize(E,k,q)
  !
  ! This part of the code works with only one field
  !
- n_ext_fields=1
+ n_ext_fields=2
  !
  do i1=1,n_ext_fields
    !
    Efield(i1)%ef_name=trim(Efield(i1)%ef_name)      
-   !
    if((Efield(i1)%ef_name=='none')) cycle
    !
-   if(Efield(i1)%intensity==0._SP) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has zero intensity.")
-     !
-   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) &
-&    call error(" External "//trim(Efield(i1)%ef_name)//" field has undefined direction.")
-     !
-     Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
-     Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
-     Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
-     Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
-     Efield(i1)%ef_pol        ="linear"
-     !
-     call Check_symmetries(Efield(i1)%versor)
-     !
+   if(all(abs(Efield(i1)%versor(:))<epsilon(1.))) then
+     call msg('rs',"External field "//intc(i1)//" versor is zero.")
+     Efield(i1)%ef_name='none'
+     cycle
+   endif
+   !
+   if(Efield(i1)%intensity==0._SP) then
+     call msg('rs'," External field "//intc(i1)//" field has zero intensity.")
+     Efield(i1)%ef_name='none'
+     cycle
+   elseif(Efield(i1)%intensity<0._SP.and.i1>1) then
+     call msg('rs'," External field "//intc(i1)//" intensity set to External Field 1 insensity.")
+     Efield(i1)%intensity=Efield(1)%intensity
+   endif
+   !
+   Efield(i1)%versor        =normalize_v(Efield(i1)%versor)
+   Efield(i1)%amplitude     =Efield_strength(Efield(i1)%intensity,'AU')
+   Efield(i1)%t_initial_indx=nint(Efield(i1)%t_initial/RT_step)+1
+   Efield(i1)%t_initial     =real(Efield(i1)%t_initial_indx-1)*RT_step
+   Efield(i1)%ef_pol        ="linear"
+   !
+   call Check_symmetries(Efield(i1)%versor,"electric")
+   !
  enddo
+ !
+ if(((Efield(1)%ef_name/='none').and.Efield(2)%ef_name/='none').or.n_frequencies==1) then
+   l_pump_and_probe=.true.
+   call msg('sl','[NL] Variables NLEnSteps and NLEnRange are ignored!!! ')
+   call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
+   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe!!! ")
+   NL_verbosity=VERB_HIGH
+ elseif((Efield(1)%ef_name/='none').and.Efield(2)%ef_name=='none') then
+   call msg('sr','[NL] Non-linear optics configuration')
+ else
+   call error(" Please set at least one external field ! ")
+ endif
  !
  if(Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &
     call warning(' Non-linear optics properties can be obtained with SOFTSIN/SIN fields only!')
@@ -156,7 +180,20 @@ subroutine NL_initialize(E,k,q)
  ! the Phase_LifeTime is 1/2 of the one used in the 
  ! Non-Equilibrium Green's Function
  !
- Phase_LifeTime=2._SP/NL_damping
+ if(NL_damping>zero_dfl) then
+   Phase_LifeTime=2._SP/NL_damping
+ else
+   Phase_LifeTime=0._SP
+ endif
+ !
+ if(RAD_LifeTime<0._SP) then
+   if(Phase_LifeTime/=0._SP) then
+     RAD_LifeTime=Phase_LifeTime
+     call msg('sr','Radiative life-time sets equal to the phase lifetime: ',RAD_LifeTime*AUT2FS,'fs')
+   else
+     call msg('sr','Radiative life-time equal to zero')
+   endif
+ endif
  !
  ! Determine the total time from the damping or from T_0
  !
@@ -164,37 +201,38 @@ subroutine NL_initialize(E,k,q)
    !
    if(Efield(1)%ef_name=='SOFTSIN'.or.Efield(1)%ef_name=='SIN') then
      !  
-     ! Run lenght is 6*Phase_lifeTime + 4 fs for response analysis
+     ! Run length is 6*Phase_lifeTime + 4 fs for response analysis
      !
      if(NL_damping<zero_dfl) call error(" Error damping=0 and NLtime<0!! ") 
      !
      ! Dephasing Time
      !
-     NE_tot_time=Phase_LifeTime*5._SP
+     NE_tot_time=Phase_LifeTime*DephMult
      !
      ! Add time to sample the response
      !
      NE_tot_time=NE_tot_time+EtoT(E=NL_er(1))+5._SP*RT_step
      !
-     call msg('sr','Dephasing Time          [fs]',5._SP*Phase_LifeTime*AUT2FS)
-     call msg('sr','Sampling  Time          [fs]',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS)
+     call msg('sr','Dephasing Time              ',DephMult*Phase_LifeTime*AUT2FS,"[fs]")
+     call msg('sr','Sampling  Time              ',(EtoT(E=NL_er(1))+5._SP*RT_step)*AUT2FS,"[fs]")
      !
    elseif(Efield(1)%ef_name=='PULSE'.or.Efield(1)%ef_name=='QSSIN' &
 &     .or.Efield(1)%ef_name=='QSFIELD'.or.Efield(1)%ef_name=='SPULSE') then
      !
      NE_tot_time=3*T_0
-     call msg('sr','Time T_0                [fs]',T_0*AUT2FS)
-     call msg('sr','Dephasing               [fs]',Phase_LifeTime*AUT2FS)
+     call msg('sr','Time T_0                    ',T_0*AUT2FS,"[fs]")
+     call msg('sr','Dephasing                   ',Phase_LifeTime*AUT2FS,"[fs]")
      !
    else
      call error("Negative total simulation time! ")
    endif
    ! 
  else
-   call msg('s',' Total simulation time read from input') 
+   call msg('s','Total simulation time read from input') 
  endif
  !
- call msg('sr','Total simulation time   [fs]',NE_tot_time*AUT2FS)
+ call msg('sr','Total simulation time       ',NE_tot_time*AUT2FS,"[fs]")
+ call msg('sr','Simulation time step        ',RT_step*AUT2FS,"[fs]")
  !
  NE_steps=int(NE_tot_time/RT_step)+1
  !
@@ -208,7 +246,7 @@ subroutine NL_initialize(E,k,q)
  !
  ! NB.: This part duplicates what is in
  !      INIT.F 
- ! 
+ !
  select case (trim(NL_Correlation))
     case('IPA')
         Correlation=IPA
@@ -258,6 +296,8 @@ subroutine NL_initialize(E,k,q)
         call error("Unknow correlation in the response function")
  end select
  !
+ if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
+ ! 
  H_potential = RT_potential
  !
  ! Deallocate bare_qpg if not required
@@ -282,8 +322,8 @@ subroutine NL_initialize(E,k,q)
  !
  RT_dyn_step=RT_step
  OBS_RT_IO_t%INTERVAL_time     =RT_step
- OBS_RT_IO_t%INTERVAL_time_SAVE=RT_step
- call SETUP_RT_IO_type(OBS_RT_IO_t,.TRUE.)
+ OBS_RT_IO_t%INTERVAL_time_INPUT=RT_step
+ call SETUP_RT_IO_type(OBS_RT_IO_t,who="OBS",what="INIT")
  YAMBO_ALLOC(OBS_RT_IO_t%Time,(NE_steps))
  do NE_i_time=1,NE_steps
    Time=real(NE_i_time-1,SP)*RT_step
@@ -305,20 +345,23 @@ subroutine NL_initialize(E,k,q)
  ! LOG
  ! ===
  !
- call section('=','Messaging')
+ call section('+','Messaging')
  !
  call msg( 'r','---General---')
  call msg( 'r', 'Integrator                 ',trim(Integrator_name))
- call msg( 'r', 'Simulation time        [fs]',real(NE_steps-1)*RT_step*AUT2FS)
- call msg( 'r', 'Step length            [fs]',RT_step*AUT2FS)
+ call msg( 'r', 'Simulation time            ',real(NE_steps-1)*RT_step*AUT2FS,"[fs]")
+ call msg( 'r', 'Step length                ',RT_step*AUT2FS,"[fs]")
  call msg( 'r', 'NE Steps                   ',NE_steps)
  call msg( 'r', 'Correlation                '//trim(NL_correlation))
- call msg( 'r', 'Damping                [eV]',NL_damping*HA2EV)
- call msg( 'r', 'Dephasing              [fs]',Phase_LifeTime*AUT2FS)
- call msg( 'r', 'Efield                     '//trim(Efield(1)%ef_name))
- call msg( 'r', 'Efield width           [fs]',Efield(1)%width*AUT2FS)
- call msg( 'r', 'Efield T_0             [fs]',T_0)
- call msg( 'r', 'Efield Amplitude      [V/m]',Efield(1)%amplitude*AU2VMm1)
+ call msg( 'r', 'Damping                    ',NL_damping*HA2EV,"[eV]")
+ call msg( 'r', 'Dephasing                  ',Phase_LifeTime*AUT2FS,"[fs]")
+ call msg( 'r', 'Radiative LifeTime         ',RAD_LifeTime*AUT2FS,"[fs]")
+ do i1=1,n_ext_fields
+   call msg( 'r', 'Efield                     '//trim(Efield(i1)%ef_name))
+   call msg( 'r', 'Efield width               ',Efield(i1)%width*AUT2FS,"[fs]")
+   call msg( 'r', 'Efield Amplitude      [V/m]',Efield(i1)%amplitude*AU2VMm1)
+ enddo
+ call msg( 'r', 'Efield T_0                 ',T_0,"[fs]")
  call msg( 'r', 'Frequencies range          ',NL_er*HA2EV)
  call msg( 'sr','Frequencies steps          ',n_frequencies)
  call msg( 'r', 'Frequency   step           ',NL_estep*HA2EV)
@@ -326,6 +369,7 @@ subroutine NL_initialize(E,k,q)
  call msg( 'r', 'Induced Field              ',l_RT_induced_field)
  call msg( 'r', 'Force Snd Order Dipoles    ',l_force_SndOrd)
  call msg( 'r', 'Evaluate Current           ',l_eval_CURRENT)
+ call msg( 'r', 'Enforce periodic pol.      ',l_P_periodic)
  call msg( 'r', 'WF sampling                ',WF_sample%ison) 
  !
 end subroutine NL_initialize

@@ -1,0 +1,63 @@
+#
+#        Copyright (C) 2000-2022 the YAMBO team
+#              http://www.yambo-code.org
+#
+# Authors (see AUTHORS file for details): AM
+#
+# This file is distributed under the terms of the GNU
+# General Public License. You can redistribute it and/or
+# modify it under the terms of the GNU General Public
+# License as published by the Free Software Foundation;
+# either version 2, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will
+# be useful, but WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
+# You should have received a copy of the GNU General Public
+# License along with this program; if not, write to the Free
+# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
+# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+#
+cpu         = @build_cpu@
+os          = @build_os@
+mpi         = @def_mpi@
+make        = @MAKE@
+netcdf      = @def_netcdf@
+scalapack   = @def_scalapack@
+slepc       = @def_slepc@
+fft         = @def_fft@
+xcpp        = @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_memory_profile@ @def_uspp@ @def_cuda@ @def_yaml@
+p2ycpp      = @PW_CPP@
+keep_objs   = @enable_keep_objects@
+do_blacs    = @compile_blacs@
+do_slk      = @compile_slk@
+do_lapack   = @compile_lapack@
+do_fftw     = @compile_fftw@
+do_fftqe    = @compile_fftqe@
+do_iotk     = @compile_iotk@
+do_futile   = @compile_futile@
+do_yaml     = @compile_yaml@
+do_hdf5     = @compile_hdf5@
+do_netcdf   = @compile_netcdf@
+do_pnetcdf  = @compile_pnetcdf@
+do_etsf     = @compile_etsf@
+do_p2y      = @compile_p2y@
+do_e2y      = @compile_e2y@
+do_libxc    = @compile_libxc@
+do_petsc    = @compile_petsc@
+do_slepc    = @compile_slepc@
+shell       = @SHELL@
+package_bugreport = @PACKAGE_BUGREPORT@
+prefix      = @prefix@
+srcdir      = @abs_top_srcdir@
+compdir     = @compdir@
+exec_prefix = @exec_prefix@
+libs_prefix = @extlibs_path@
+bindir      = @bindir@
+libdir      = @prefix@/lib
+includedir  = @prefix@/include
+libbindir   = @prefix@/lib/bin
+y_version   = "YAMBO ver. @SVERSION@"

@@ -30,7 +30,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! INIT = 2  : DB listing mode
  !
  use drivers,        ONLY:infile_editing,l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hartree,l_tddft,list_dbs,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_mpa,l_phel_corr,l_X,l_screen
@@ -329,7 +329,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
        l_gw0=runlevel_is_on('gw0')
        l_life=runlevel_is_on('life')
        l_rim=runlevel_is_on('rim_cut')
-       l_col_cut=runlevel_is_on('rim_cut')
+       l_rim_w=runlevel_is_on('rim_w')
+       l_col_cut=l_rim.or.l_rim_w
        l_acfdt=runlevel_is_on('acfdt')
 #if defined _SCALAPACK
        l_slk_test =runlevel_is_on('slktest')

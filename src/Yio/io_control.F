@@ -37,7 +37,7 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  use parallel_int,  ONLY:PP_bcast,PP_redux_wait
  use parallel_m,    ONLY:master_cpu,mpi_comm_null,yMPI_comm,mpi_comm_world,ncpu,myid
  use IO_m,          ONLY:io_unit,io_mode,io_com,io_action,io_sec,max_io_units, &
-&                        OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,&
+&                        RD,WR,RD_CL,WR_CL,OP_APP,OP_APP_CL,OP_WR,OP_RD,OP_WR_CL,OP_RD_CL,&
 &                        io_reset,io_PAR_comm,io_PAR_cpu,IO_read,IO_write,&
 &                        read_is_on,write_is_on
  !
@@ -53,6 +53,11 @@ subroutine io_control(ACTION,MODE,COM,SEC,ID,COMM,DO_IT)
  !
  integer :: i1,local_COMM,my_max_ID
  logical :: define_ID_RD,define_ID_WR,HEAD_cpu
+ !
+ if ( .not. any( (/ ACTION==RD_CL, ACTION==OP_RD_CL, ACTION==OP_WR_CL,   &
+&                   ACTION==OP_APP_CL, ACTION==OP_RD, ACTION==OP_APP,    &
+&                   ACTION==OP_WR, ACTION==RD, ACTION==WR,ACTION==WR_CL/) ) ) &
+&  call error("io_control called with a non proper action")
  !
  ! Assign a new ID if the unit is not already open
  !

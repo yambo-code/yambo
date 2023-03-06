@@ -60,7 +60,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg,l_extend_output
  real(SP) :: ExcPhM,EXC_life_average,Pole
- real(SP) , allocatable :: EXC_life_of_q(:,:)
+ real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
@@ -83,7 +83,9 @@ subroutine EXCPH_lifetime(k,q,X)
  call RESIDUALS_and_EIGENVALUES_alloc(q)
  if (l_extend_output) then
    allocate(EXC_life_of_q(EXCPH_states(1):EXCPH_states(2),q%nbz))
+   allocate(EXC_pole_of_q(EXCPH_states(1):EXCPH_states(2),q%nbz))
    EXC_life_of_q=rZERO
+   EXC_pole_of_q=rZERO
  endif
  !
  ! Load excitonic energies 
@@ -176,6 +178,7 @@ subroutine EXCPH_lifetime(k,q,X)
          EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
          if (l_extend_output) then
            EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
+           EXC_pole_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+Pole
          endif
          ! DS Debug <
          ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
@@ -218,8 +221,8 @@ subroutine EXCPH_lifetime(k,q,X)
  call print_and_write()
  !
  if (l_extend_output) then
-   call print_LifeTimes_of_q()
-   !call print_LifeTime_resonances()
+   call print_LifeTimes_of_q("L")
+   call print_LifeTimes_of_q("P")
  endif
  !
  ! Deallocations
@@ -376,9 +379,13 @@ subroutine EXCPH_lifetime(k,q,X)
     !
   end subroutine 
   !
-  subroutine print_LifeTimes_of_q()
-    ! print q-map of lifetimes for each exc_in state for q-space plot
-    ! We print l(q)/sum_q l(q)
+  subroutine print_LifeTimes_of_q(MODE)
+    ! MODE="L"[ife]:
+    !   - print q-map of lifetimes for each exc_in state for q-space plot
+    !     We print l(q)/sum_q l(q)
+    ! MODE="P"[ole]:
+    !   - Print value of the Pole [F_occ*delta(...)] for each exc_in state for q-space plot
+    !     We print sum_{beta,mu} Pole_{beta,mu}(q)
     !
     use vec_operate,   ONLY:iku_v_norm
     use com,           ONLY:of_open_close
@@ -386,6 +393,7 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     implicit none
     !
+    character(1) :: MODE
     character(schlen), allocatable :: headings(:)
     character(schlen)              :: file_name
     real(SP), allocatable          :: values(:)
@@ -399,12 +407,17 @@ subroutine EXCPH_lifetime(k,q,X)
     do i_alpha=EXCPH_states(1),EXCPH_states(2)
       headings(i_alpha+1)=' e'//intc(i_alpha)
       !
-      EXC_life_of_q(i_alpha,:)=EXC_life_of_q(i_alpha,:)/SUM(EXC_life_of_q(i_alpha,:))
+      if (MODE=="L") then
+        EXC_life_of_q(i_alpha,:)=EXC_life_of_q(i_alpha,:)/SUM(EXC_life_of_q(i_alpha,:))
+      endif
+      !
     enddo
     headings(n_exc_in+2:n_exc_in+4)=&
 &           (/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
     !
-    file_name="LifeTimes_of_q"
+    if (MODE=="L") file_name="LifeTimes_of_q"
+    if (MODE=="P") file_name="Resonance_of_q"
+    !
     call of_open_close(trim(file_name),'ot')
     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
     call msg('o '//trim(file_name),"#")
@@ -420,7 +433,8 @@ subroutine EXCPH_lifetime(k,q,X)
       tmp_q = q%ptbz(iq_bz,:3)
       !
       !call K_transform(tmp_q,'iku')
-      values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq_bz)
+      if (MODE=="L") values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq_bz)
+      if (MODE=="P") values(1+1:n_exc_in+1)=EXC_pole_of_q(:,iq_bz)
       values(n_exc_in+2:n_exc_in+4)=tmp_q
       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
       !
@@ -429,38 +443,5 @@ subroutine EXCPH_lifetime(k,q,X)
     call of_open_close(trim(file_name))
     !
   end subroutine print_LifeTimes_of_q
-  !
-!   subroutine print_LifeTime_resonances()
-!     ! Print resonance energies E_in - E_out(q) \pm E_ph(q) for
-!     ! each exc_in state for 2D plot 
-!     implicit none
-!     !
-!     headings(1)=" |q| (a.u.) "
-!     do i_c=1,EXCITONS_n_user_states
-!       i_l=EXCITONS_user_indexes(i_c)
-!       headings(i_c+1)=' e'//intc(i_l)
-!     enddo
-!     headings(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=&
-! &           (/"q_x ("//trim(coo_out)//")","q_y ("//trim(coo_out)//")","q_z ("//trim(coo_out)//")"/)
-!     !
-!     file_name="excitons_interpolated_IBZ"
-!     call of_open_close(trim(file_name),'ot')
-!     call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
-!     call msg('o '//trim(file_name),"#")
-!     !
-!     do iq=1,GRID_q%nibz
-!       !
-!       if (iq>1) values(1)=iku_v_norm(GRID_q%pt(iq,:3))
-!       !
-!       tmp_q = GRID_q%pt(iq,:3)
-!       !
-!       call K_transform(tmp_q,'iku')
-!       values(1+1:EXCITONS_n_user_states+1)=BSE_interp_E(:,iq)*HA2EV
-!       values(EXCITONS_n_user_states+2:EXCITONS_n_user_states+4)=tmp_q
-!       call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
-!     enddo
-!     call of_open_close(trim(file_name))
-!     !
-!   end subroutine print_LifeTime_resonances
   !
 end subroutine

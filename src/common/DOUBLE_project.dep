@@ -4,6 +4,7 @@
  FREQUENCIES_coarse_grid.o
  FREQUENCIES_damping.o
  FREQUENCIES_merge.o
+ FREQUENCIES_mpa_sampling.o
  FREQUENCIES_reset.o
  FREQUENCIES_set_reference_point.o
  FREQUENCIES_setup.o

@@ -51,7 +51,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
 &                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
-&                        E_kpq_sh_fact,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
+&                        E_kpq_sh_fact,Efermi_DbGd,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
 &                        elph_branches,QP_DW,QP_OMS_Fan,FAN_deltaE_treshold
  use interfaces,    ONLY:QP_state_print,ELPH_alloc
  use interpolate,   ONLY:INTERPOLATE_is_serial,INTERPOLATION_coefficients,INTERP_obj,INTERP_shell_factor,&
@@ -76,6 +76,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  real(SP)         ::ph_E,factor,elph_gkkp_sq,E_random_shift
  logical          ::l_WRgFsq,l_GF_from_CA,load_gkkp_DB
  real(SP), allocatable :: q_weight(:)
+ real(SP), external :: Eval_Efermi_DbGd
  ! 
  call timing('GW(e-p)',OPR='start')
  !
@@ -231,6 +232,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
      call msg('sr','PH-double-grid not yet compatible with Random q-grids and Eliashberg functions!')
      use_PH_DbGd=.FALSE.
    endif
+   !
  endif
  !
  ! Interpolate the E(k+q) energies for the double-grid
@@ -244,6 +246,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
    call INTERPOLATION_BZ_setup(k)
    INTERP_obj(ID_E_kpq_obj)%what="E(k+q)"
    call INTERPOLATION_coefficients(E=en,k=k,ID=ID_E_kpq,ID_obj=ID_E_kpq_obj)
+   !
+   ! Evaluate the new Fermi-Energy
+   !
+   if(any(en%nbm/=en%nbf)) Efermi_DbGd=Eval_Efermi_DbGd(k,q,en)
    !
    call En_k_plus_q_interpolate(k,q,en,1)  ! I need them for the DW term
    !
@@ -394,9 +400,10 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
          elph_gkkp_sq=real(conjg(GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1))*&
 &                           GKKP%dVc(il,ob_gkkp,ib_gkkp,ik_bz_gkkp,1)/2._SP/ph_E,SP)
          !
-         ! ELPH_GreenF evaluate real and imaginary part of the electron-phonon self-energy
+         ! ELPH_Sigma_c_engine evaluates real and imaginary part of the electron-phonon self-energy
          !
-         call ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W(i_qp),q_weight(iq_bz))
+         call ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,& 
+&                                 Sc_W(i_qp),q_weight(iq_bz))
          !
        enddo
        !

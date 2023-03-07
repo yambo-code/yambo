@@ -170,11 +170,11 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  BSS_eh_table_m1_in=BSS_eh_table_m1
  BS_E_in           =BS_E
  !
- ! Check if gkkp_expanded is present
+ ! Open gkkp_expanded
  !
  elph_branches_save  =elph_branches
- call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID_gkkp)
- io_err=io_ELPH(ID_gkkp,'gkkp_expanded') ! For now we have to work in the full BZ by turning all symmetries off.
+ call io_control(ACTION=OP_RD,COM=REP,MODE=VERIFY,SEC=(/1/),ID=ID_gkkp)
+ io_err=io_ELPH(ID_gkkp,'gkkp_expanded')
  call deliver_IO_error_message(io_err,"GKKP")
  elph_branches =elph_branches_save
  !
@@ -226,7 +226,6 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      ! Add the WEIGHTs factor to calculate the renormalization factors
      !
      iq_db=Q_io_map(iq_bz)
-     !
      !
      ! I/O
      !=====

@@ -54,8 +54,8 @@ integer function io_EXCPH_gkkp(ID)
  !
  db_name='excph_gkkp'
  !
- io_EXCPH_gkkp=io_connect(desc=trim(db_name),type=2,ID=ID)
- if (io_EXCPH_gkkp/=0) goto 1
+ io_EXCPH_gkkp=io_connect(desc=trim(db_name),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_ELPH)
+ if (io_EXCPH_gkkp/=0) goto 2
  !
  if (any((/io_sec(ID,:)==1/))) then
    !
@@ -103,7 +103,7 @@ integer function io_EXCPH_gkkp(ID)
  io_EXCPH_gkkp=io_status(ID)
  !
  iq=maxval(io_sec(ID,:))-1
- if (iq<=0) goto 1
+ if (iq<=0) goto 2
  !
  ! Fragmentation
  !
@@ -146,7 +146,7 @@ integer function io_EXCPH_gkkp(ID)
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !
- call io_disconnect(ID=ID)
+2 call io_disconnect(ID=ID)
  !
  call timing('io_EXCPH_gkkp',OPR='stop')
  !

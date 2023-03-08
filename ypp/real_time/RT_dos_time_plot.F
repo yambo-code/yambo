@@ -164,7 +164,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    !... DOS
    !
-   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,ID_spin,ID_pdos,&
+   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,spin_fac,pdos_fac,&
 &                               USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
@@ -178,7 +178,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E)
      !
      !... DOS
-     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,ID_spin,ID_pdos,&
+     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,spin_fac,pdos_fac,&
 &                                 USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol

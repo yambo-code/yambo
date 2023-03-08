@@ -51,9 +51,11 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ ! -f $dir/$save_dir/files.dep ] ; then
     cd $dir
     for file in *.o_to_remove; do
+      [ -f "$file" ] || break
       deps_rm="$deps_rm ${file/_to_remove/}"
     done
-    for mod in *.o_to_remove; do
+    for mod in *.mod_to_remove; do
+      [ -f "$mod" ] || break
       deps_rm="$deps_rm ${mod/_to_remove/}"
     done
     cd $path_back
@@ -68,7 +70,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ ! -f $dir/$save_dir/files.dep ] ; then
    cd $dir;
    deps=`ls *.o *.mod 2>/dev/null`;
-   deps="$deps $deps_rm"
+   deps=$(echo $deps $deps_rm |tr " " "\n"|sort|uniq|tr "\n" " ")
    for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
    cd $path_back ;
    if [ $count_obj != 0 ] ; then cp $dir/*.o    $dir/$save_dir/ ; fi
@@ -79,7 +81,7 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
    cd $dir/$save_dir
    found=`ls *.o *.mod 2>/dev/null`
    cd $path_back
-   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort| uniq) <(tr ' ' $'\n' <<< $found | sort | uniq)`
    for file in $missing_files ; do
     if [ -f $dir/$file ] ; then cp $dir/$file $dir/$save_dir ; fi
     filef90=`echo $file | sed 's/.$/f90/'`
@@ -108,13 +110,14 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.mod " ; fi
   cd $dir
   for mod in *.mod ; do
+   [ -f "$mod" ] || break
    rm $compdir/include/$mod
   done
   rm *.mod
   cd $path_back
  fi
  if [ $count_f90 != 0 ]; then
-  if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.mod " ; fi
+  if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.f90 " ; fi
   rm $dir/*.f90
  fi
  if [ ! "$library" == "NONE" ] && [ -f $compdir/lib/$library ]; then
@@ -143,6 +146,7 @@ if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ $count_mod_res != 0 ] ; then
    # modules need to be linked also inside $compdir/include
    for mod in $restore_dir/*.mod ; do
+    [ -f "$mod" ] || break
     ln -s $mod ./
     mod_filename=`basename $mod`
     cd $compdir/include

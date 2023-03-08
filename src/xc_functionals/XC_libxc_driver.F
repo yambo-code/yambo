@@ -30,6 +30,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !        To do: compute a more precise drho also in the case n_spin>1 (see comment around line 200)
  !
  use pars,           ONLY:SP,DP,IPL,pi,pi_DP,RZERO
+ use com,            ONLY:msg
+ use parser_m,       ONLY:parser
  use R_lattice,      ONLY:bz_samp
  use D_lattice,      ONLY:DL_vol,alat
  use drivers,        ONLY:l_real_time,l_nl_optics
@@ -82,7 +84,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  real(DP),allocatable :: v1rho(:,:),v1sigma(:,:)
  real(DP),allocatable :: vx1(:,:),vx2(:,:)
  real(DP),allocatable :: v2rho2(:,:),v2rhosigma(:,:),v2sigma2(:,:)
- logical              :: EvaluateDGradient
+ logical              :: EvaluateDGradient,l_Fxc_Libxc
  !
  ! Functional and Functional infos
  !
@@ -92,7 +94,8 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  ! Convert and Initialize
  !===============================
  !
- l_Fxc_from_Vxc=(n_spin==1)
+ call parser('FxcLibxc',l_Fxc_Libxc)
+ l_Fxc_from_Vxc=(n_spin==1).and..not.l_Fxc_Libxc
  !
  exsr=0._DP
  FUNCTIONALTMP=0
@@ -267,7 +270,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  ORDER_NOW=ORDER
  if (l_Fxc_from_Vxc.and.ORDER==2) then
-   call warning(' Evaluating Fxc as numerical functional derivative of Vxc')
+   call msg('s',' Evaluating Fxc as numerical functional derivative of Vxc')
    PERT_FAC=1.000001_DP
    ORDER_NOW=1
    YAMBO_ALLOC(V_xc_pert,(fft_size,n_spin))

@@ -64,7 +64,7 @@ m4_include([config/m4/acx_IO_wrap_up.m4])
 m4_include([config/m4/acx_report.m4])
 # ============================================================================
 # Echo
-AC_PROG_ECHO
+# AC_PROG_ECHO # This is reported as obsolete
 # ============================================================================
 # Current branch
 ACX_BRANCH

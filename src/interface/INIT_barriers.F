@@ -141,7 +141,7 @@ subroutine INIT_barriers()
  endif
  !
  if (gw0_ppa) then
-   on_runlevels='dyson gw0 ppa em1d el_el_corr el_ph_corr ph_el_corr HF_and_locXC'
+   on_runlevels='dyson gw0 ppa em1d el_el_corr el_ph_corr ph_el_corr HF_and_locXC rim_w'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif
@@ -161,7 +161,7 @@ subroutine INIT_barriers()
  !
  l_flag=l_bss.or.l_bse
  if (l_flag) then
-   on_runlevels='optics bse bss tddft em1s dipoles em1d ppa photolum'
+   on_runlevels='optics bse bss tddft em1s dipoles em1d ppa photolum rim_w'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif

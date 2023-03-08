@@ -39,5 +39,6 @@
  device_memcpy_mod.o
  eval_G_minus_G.o
  eval_Gradient.o
+ f_build_ext.o
  spline_fit.o
 

@@ -694,7 +694,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(tddft_wf%WF_symm1)
    YAMBO_FREE(tddft_wf%WF_symm2)
    !
-   YAMBO_FREE(F_xc)
    YAMBO_FREE(F_xc_mat)
    !
  endif

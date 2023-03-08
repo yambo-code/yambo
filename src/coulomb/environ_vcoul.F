@@ -89,12 +89,19 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! here we deal with the q-> term numerically
  call c2a(b,q,q_loc,'ki2c')
  !
- l_this_is_q0 = (iku_v_norm(q)<q_norm(1)*1.5_SP)
+!***************************************************************
+! l_this_is_q0 = (iku_v_norm(q)<q_norm(1)*1.5_SP)              
+ !                                                             
+ ! AF: probably not needed if q(3) passed in input is already  
+ ! taking care of properly defining q0.                        
+ !                                                             
+! if (l_this_is_q0) q_loc(:)=0.0_SP                            
+!***************************************************************
  !
- ! AF: probably not needed if q(3) passed in input is already
- ! taking care of properly defining q0.
+ if (iku_v_norm(q)<1.0d-6) then
+   q_loc(:)=q_norm(1)*(/1.0_SP,0.0_SP,0.0_SP/)
+ endif
  !
- if (l_this_is_q0) q_loc(:)=0.0_SP
  ! 
  ! main loop
  ! 
@@ -113,19 +120,22 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
      !
      ig_m_g=G_m_G(ig1,ig2)
      !
-     if (ig1==1.and.ig2==1.and.l_this_is_q0) then 
-       !
-       ! We impose K(0,0,0) = 1 in order to avoid problems arising from the
-       ! "infinitesimal" value of q0 when making the inversion. We restore the
-       ! value V(0,0,0) = 4pi/q0^2 after the inversion.
-       !
-       v_environ%blc(ig1,ig2,1)=1.0_SP
-       !
-     else
-       !
-       v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)
-       !
-     endif
+     v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)
+!*********************************************************************************
+!     if (ig1==1.and.ig2==1.and.l_this_is_q0) then                                 
+       !                                                                                       
+       ! We impose K(0,0,0) = 1 in order to avoid problems arising from the       
+       ! "infinitesimal" value of q0 when making the inversion. We restore the     
+       ! value V(0,0,0) = 4pi/q0^2 after the inversion.                             
+       !                                                                            
+!       v_environ%blc(ig1,ig2,1)=1.0_SP                                            
+       !                                                                             
+!     else                                                                           
+       !                                                                           
+!       v_environ%blc(ig1,ig2,1)=scal*eps_env_RL(ig_m_g)/(4.0_SP*pi)                  
+       !                                                                           
+!     endif                                                                          
+!*********************************************************************************
      !
    enddo
  enddo
@@ -144,15 +154,16 @@ subroutine environ_vcoul(q,v_environ,lcomp_asympt)
  ! compute v_environ
  !
  call LINEAR_ALGEBRA_driver(INV,M_slk=v_environ)
- !
- ! Once the kernel is inverted, 
- ! the value 4pi/eps(0)/q0^2 is assigned to the v(0,0,0) element
- !
- if (l_this_is_q0) then
-   ctmp(1)=4.0_SP*pi/eps_env_RL(1)/q_norm(1)**2
-   DEV_VAR(v_environ%blc)(1,1,1) = ctmp(1)
- endif
-
+!*****************************************************************
+ !                                                                 
+ ! Once the kernel is inverted,                                   
+ ! the value 4pi/eps(0)/q0^2 is assigned to the v(0,0,0) element   
+ !                                                                
+! if (l_this_is_q0) then                                          
+!   ctmp(1)=4.0_SP*pi/eps_env_RL(1)/q_norm(1)**2                   
+!   DEV_VAR(v_environ%blc)(1,1,1) = ctmp(1)                       
+! endif                                                           
+!******************************************************************
  !
  ! Asymptotics
  !

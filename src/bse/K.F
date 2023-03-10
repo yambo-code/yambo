@@ -290,10 +290,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
-   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
-     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   endif
+   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
    !
  endif
  !

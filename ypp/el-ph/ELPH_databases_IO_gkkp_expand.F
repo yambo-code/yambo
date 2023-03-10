@@ -27,7 +27,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_C
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
- use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
+ use ELPH,                ONLY:elph_bands,GKKP_me,PH_qpt
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
  use parser_m,            ONLY:parser
  !
@@ -174,8 +174,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    endif
    !
-   do ib=1,elph_nb
-     do ob=1,elph_nb
+   do ib=elph_bands(1),elph_bands(2)
+     do ob=elph_bands(1),elph_bands(2)
        if (l_bands_reverted) then
          GKKP_expanded%dVc(:,ob,ib,ik_bz,1)=conjg(GKKP%dVc(:,ib,ob,ik_bz_gkkp,1))
        else

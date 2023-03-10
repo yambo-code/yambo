@@ -31,7 +31,7 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  use interfaces,            ONLY:ELPH_alloc
  use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt,k_sstar,q_pt,q_sstar
  use D_lattice,             ONLY:n_atoms
- use ELPH,                  ONLY:ph_modes,elph_nb,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
+ use ELPH,                  ONLY:ph_modes,elph_nb,elph_bands,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
 &                                elph_nQ,elph_nk_bz,elph_grids_are_expanded,elph_use_q_grid,&
 &                                PH_qpt,PH_kpt_bz,GKKP,PH_freqs_sq
  !
@@ -67,7 +67,9 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  elph_nk_bz = netcdf_get_dimension(grpid, "glob_nk")
  elph_nQ    = netcdf_get_dimension(grpid, "glob_nq")
  !
- call msg('s','ELPH dims',(/elph_nb,ph_modes,elph_nk_bz,elph_nQ/))
+ elph_bands=(/1,elph_nb/)
+ !
+ call msg('s','ELPH dims',(/elph_bands,ph_modes,elph_nk_bz,elph_nQ/))
  !
  call ELPH_alloc("PHONONS dV LEVELS",GKKP=GKKP)
  !

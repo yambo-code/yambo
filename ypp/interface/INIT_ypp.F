@@ -722,7 +722,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand GkkpExpOnlyK UseQindxB")
+ if (l_gkkp_db) then
+   call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand GkkpExpOnlyK UseQindxB")
+   call initactivate(1,"GkkpBands GkkpSkipDW")
+ endif
  if (l_gkkp_sngl)               call initactivate(1,"DBsPATH GkkpExpOnlyK UseQindxB")
  if (l_gkkp_dg.or.l_gkkp_db)    call initactivate(1,"PHfreqF PHmodeF")
  if (l_gkkp_dg.or.l_gkkp_db.or.l_gkkp_sngl)  call initactivate(-1,"ElecTemp")

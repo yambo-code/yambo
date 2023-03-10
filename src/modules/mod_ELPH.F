@@ -30,12 +30,13 @@ module ELPH
 #include<memory.h>
  !
  ! Dumensions
- integer   :: ph_modes=0
- integer   :: elph_nb=0
+ integer   :: ph_modes
+ integer   :: elph_bands(2)
+ integer   :: elph_nb
  integer   :: elph_nk_bz=0
  integer   :: elph_nQ=0
  integer   :: elph_nQ_used=0
- integer   :: elph_branches(2)=0
+ integer   :: elph_branches(2)
  !
  logical   :: elph_use_q_grid=.FALSE.
  logical   :: elph_grids_are_expanded=.FALSE.
@@ -168,8 +169,8 @@ module ELPH
      !
      type(E_kpq_fine_grid):: E
      !
-     YAMBO_ALLOC(E%E_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
-     YAMBO_ALLOC(E%f_kpq,(elph_nb,E%nk,n_sp_pol,E%nq_around))
+     YAMBO_ALLOC(E%E_kpq,(elph_bands(1):elph_bands(2),E%nk,n_sp_pol,E%nq_around))
+     YAMBO_ALLOC(E%f_kpq,(elph_bands(1):elph_bands(2),E%nk,n_sp_pol,E%nq_around))
      !
    end subroutine
    !

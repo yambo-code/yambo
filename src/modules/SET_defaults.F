@@ -82,7 +82,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,&
+&                     elph_bands
  use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
 &                     EXCPH_deltaE_treshold
 #endif
@@ -524,6 +525,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
+ elph_bands=-1
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.FALSE.

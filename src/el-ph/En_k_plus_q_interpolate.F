@@ -26,7 +26,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
- use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
+ use ELPH,                ONLY:elph_bands,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
 #include<memory.h>
@@ -100,8 +100,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  do ik=1,k%nibz
   do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
     iq_idx=iq_fine-q%FGbz%k_range(iqbz,1)
-    GKKP%E_dg_kpq(iqbz)%E_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%E(:elph_nb,ic,:)
-    GKKP%E_dg_kpq(iqbz)%f_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%f(:elph_nb,ic,:)
+    GKKP%E_dg_kpq(iqbz)%E_kpq(elph_bands(1):elph_bands(2),ik,:,iq_idx)=E_kpq%E(elph_bands(1):elph_bands(2),ic,:)
+    GKKP%E_dg_kpq(iqbz)%f_kpq(elph_bands(1):elph_bands(2),ik,:,iq_idx)=E_kpq%f(elph_bands(1):elph_bands(2),ic,:)
     ic=ic+1
    enddo
  enddo

@@ -40,9 +40,9 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
  !use X_m,            ONLY:X_t
  use BS,             ONLY:BS_H_dim,BS_bands
  use ELPH,           ONLY:ph_freqs_sq,elph_branches,FAN_deltaE_treshold,GKKP,Q_io_map,K_io_map
- use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,&
+ use EXCPH,          ONLY:BS_mat_in,EXCPH_gkkp,EXCPH_gkkp_sq,Xi,BSS_eh_table_in,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,&
-&                         l_const_elph,l_abs_elph,l_abs_exc,BSS_eh_table_in
+&                         l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only
  !
 #include<memory.h>
  !
@@ -117,10 +117,12 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        ip_bz = elemental_scattering(iq_s,ik_bz)
        !
-       ! 1=DOWN
+       ! 1=DOWN (hole contribution)
        !========
        !
        do ivp=BS_bands(1),BS_bands(2)
+         !
+         if (l_elec_only) exit
          !
          i_Hp=BSS_eh_table_m1(ip_bz,ivp,ic)
          if (i_Hp==0) cycle
@@ -154,10 +156,12 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
        !
        ip_bz = elemental_scattering(iq_s,ik_plus_iq_bz)
        !
-       ! 2=UP
+       ! 2=UP (electron contribution)
        !======
        !
        do icp=BS_bands(1),BS_bands(2)
+         !
+         if (l_hole_only) exit
          !
          i_Hp=BSS_eh_table_m1(ip_bz,iv,icp)
          if (i_Hp==0) cycle
@@ -210,8 +214,13 @@ subroutine EXCPH_gkkp_eval_pal(iq_s,iq_bz,il,k,q,ID_gkkp)
          !aux_phase_1 = EXP( (0.0,1.0)*ATAN2( AIMAG(Xi(i_H,1)), REAL(Xi(i_H,1)) ) )
          !aux_phase_2 = EXP( (0.0,1.0)*ATAN2( AIMAG(Xi(i_H,2)), REAL(Xi(i_H,2)) ) )
          !
-         EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
-&                                      BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))!*conjg(aux_phase_2)*aux_phase_1)
+         if (l_abs_exc) then
+           EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
+&                                        abs(BS_mat_in(i_H,i_alpha))*(Xi(i_H,1)-Xi(i_H,2))!*conjg(aux_phase_2)*aux_phase_1)
+         else
+           EXCPH_Gkkp(il,i_beta,i_alpha)=EXCPH_Gkkp(il,i_beta,i_alpha)+&
+&                                        BS_mat_in(i_H,i_alpha)*(Xi(i_H,1)-Xi(i_H,2))!*conjg(aux_phase_2)*aux_phase_1)
+         endif
          !
        enddo
      enddo

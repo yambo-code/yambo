@@ -36,7 +36,7 @@ module EXCPH
  !
  ! ... GKKP & EXC-PH Interaction
  !
- logical  :: l_const_elph,l_abs_elph,l_abs_exc 
+ logical  :: l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only 
  complex(SP), allocatable :: EXCPH_Gkkp(:,:,:)
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: n_exc_in

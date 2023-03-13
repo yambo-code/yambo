@@ -65,7 +65,7 @@ subroutine EXCPH_lifetime(k,q,X)
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
  !
- call section('*','EXCPH-LifTime')
+ call section('*','EXCPH-LifeTime')
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -164,13 +164,13 @@ subroutine EXCPH_lifetime(k,q,X)
          ExcPhM=EXCPH_Gkkp_sq(il,i_beta,i_alpha)
          if(l_no_matrix_elements) ExcPhM=1._SP 
          !
-         if(use_PH_DbGd) then
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*DbGrid_pole()
-         else
-           EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Simple_pole()
-           ! DS Debug <
-           ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
-           ! DS Debug >
+         if(.not.use_PH_DbGd) Pole=Simple_pole()
+         if(use_PH_DbGd)      Pole=DbGrid_pole()
+         !
+         EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
+         if (l_extend_output) then
+           EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
+           EXC_pole_of_q(i_alpha,iq_bz)=EXC_pole_of_q(i_alpha,iq_bz)+Pole
          endif
          !
        enddo
@@ -187,6 +187,10 @@ subroutine EXCPH_lifetime(k,q,X)
  call live_timing( )
  !
  call PP_redux_wait(EXC_LifeTime)
+ if (l_extend_output) then
+   call PP_redux_wait(EXC_life_of_q)
+   call PP_redux_wait(EXC_pole_of_q)
+ endif
  !
  call PP_indexes_reset(px)
  !

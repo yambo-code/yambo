@@ -67,7 +67,7 @@ subroutine EXCPH_lifetime(k,q,X)
  call parser('KeepDeg',  l_keep_deg)
  call parser('ExtendOutput', l_extend_output)
  !
- call section('*','EXCPH-LifTime')
+ call section('*','EXCPH-LifeTime')
  !
  call k_build_up_BZ_tables(k)
  call k_build_up_BZ_tables(q)
@@ -178,7 +178,7 @@ subroutine EXCPH_lifetime(k,q,X)
          EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
          if (l_extend_output) then
            EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
-           EXC_pole_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+Pole
+           EXC_pole_of_q(i_alpha,iq_bz)=EXC_pole_of_q(i_alpha,iq_bz)+Pole
          endif
          ! DS Debug <
          ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
@@ -198,6 +198,10 @@ subroutine EXCPH_lifetime(k,q,X)
  call live_timing( )
  !
  call PP_redux_wait(EXC_LifeTime)
+ if (l_extend_output) then
+   call PP_redux_wait(EXC_life_of_q)
+   call PP_redux_wait(EXC_pole_of_q)
+ endif
  !
  call PP_indexes_reset(px)
  !

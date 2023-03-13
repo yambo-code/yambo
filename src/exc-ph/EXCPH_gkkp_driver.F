@@ -46,8 +46,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  use IO_int,         ONLY:io_control
  use EXCPH,          ONLY:BS_mat_in,BSS_eh_table_in,EXCPH_gkkp,EXCPH_gkkp_sq,BS_E_in,BS_E,BSS_eh_table_m1_in,&
 &                         EXCPH_states,EXCPH_sum,BSS_eh_table_m1,k_plus_q_table,build_Q_map,EXCPH_q, &
-&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,n_exc_in, &
-&                         EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
+&                         EXCPH_gkkp_alloc,EXCPH_gkkp_free,l_const_elph,l_abs_elph,l_abs_exc,l_elec_only,l_hole_only, &
+&                         n_exc_in,EXCPH_kind,EXCPH_kind_name,PALEARI,BERNARDI,BSE_alloc,BSE_free
  use LIVE_t,         ONLY:live_timing
  use timing_m,       ONLY:timing
  use com,            ONLY:msg
@@ -90,6 +90,8 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  call parser('ConstElph',l_const_elph)
  call parser('AbsElph',  l_abs_elph)
  call parser('AbsExc',   l_abs_exc)
+ call parser('ElectronContributionOnly', l_elec_only)
+ call parser('HoleContributionOnly', l_hole_only)
  !
  ! Exciton-phonon kind
  !

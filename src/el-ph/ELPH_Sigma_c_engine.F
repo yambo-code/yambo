@@ -45,10 +45,11 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
 &                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,PH_freqs,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd, &
-&                        elph_grids_are_expanded
+&                        elph_grids_are_expanded,Efermi_DbGd
  use QP_m,          ONLY:QP_table,QP_time_order_sign
  use R_lattice,     ONLY:bz_samp
- use functions,     ONLY:Fermi_fnc_derivative
+ use D_lattice,     ONLY:Tel
+ use functions,     ONLY:Fermi_fnc_derivative,Fermi_fnc
  !
 #include<memory.h>
  !
@@ -117,6 +118,11 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
    E_kpq=GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
  endif
+ !
+ ! If use Double-Grid occupation can be different
+ ! due to the change in the Fermi energy, I read them from the DbGrid
+ !
+ if(use_PH_DbGd) f_occ=Fermi_fnc(E_kpq-Efermi_DbGd,Tel)
  !
  ! Frequency Loop
  !
@@ -209,6 +215,10 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
      f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik,1,iq_idx)/spin_occ
+     ! DEBUG>
+     ! E_kpq=en%E(ob,ok,1)
+     ! f_occ=en%f(ob,ok,1)/spin_occ
+     ! DEBUG<
      !
      do iw=1,gsqF_energy_steps
        ! 
@@ -239,6 +249,9 @@ subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en
      do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around  ! Numbere of q-points around Gamma
        !
        delta_E_at_gamma=en%E(ib,ik,1) - GKKP%E_dg_kpq(1)%E_kpq(ob,ik,1,iq_idx)
+       ! DEBUG>
+       ! delta_E_at_gamma=en%E(ib,ik,1)               -en%E(ob,ik,1)
+       ! DEBUG<
        !
        if(abs(delta_E_at_gamma)>DW_deltaE_treshold) then
          gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E

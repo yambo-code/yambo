@@ -93,6 +93,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
        if (local_K_found(ik_bz)) cycle
        if (l_debug) write (*,*) "Expanding k ",ik_bz," from ",ik
        GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik,1)
+       GKKP%Ovlp (:,:,ik_bz,1)=GKKP%Ovlp (:,:,ik,1)
        if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik,1)
        GKKP%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq)%E(:,ik,1)
        local_K_found(ik_bz)=.TRUE.
@@ -178,8 +179,10 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      do ob=elph_bands(1),elph_bands(2)
        if (l_bands_reverted) then
          GKKP_expanded%dVc(:,ob,ib,ik_bz,1)=conjg(GKKP%dVc(:,ib,ob,ik_bz_gkkp,1))
+         GKKP_expanded%Ovlp (ob,ib,ik_bz,1)=conjg(GKKP%Ovlp (ib,ob,ik_bz_gkkp,1))
        else
          GKKP_expanded%dVc(:,ib,ob,ik_bz,1)=GKKP%dVc(:,ib,ob,ik_bz_gkkp,1)
+         GKKP_expanded%Ovlp (ib,ob,ik_bz,1)=GKKP%Ovlp (ib,ob,ik_bz_gkkp,1)
        endif
        !
      enddo
@@ -234,6 +237,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  enddo
  !
  GKKP%dVc=GKKP_expanded%dVc
+ GKKP%Ovlp=GKKP_expanded%Ovlp
  GKKP%E_kpq(iq)%E=GKKP_expanded%E_kpq(iq)%E
  !
  if(l_use_qindxB) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)

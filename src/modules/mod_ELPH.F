@@ -81,6 +81,7 @@ module ELPH
    ! dVr/c(Nmodes,Nb,Nb,Nk,Nq)
    real(SP),    allocatable :: dVr(:,:,:,:,:)
    complex(SP), allocatable :: dVc(:,:,:,:,:)
+   complex(SP), allocatable :: Ovlp(:,:,:,:)
    !
    ! Phonon assisted energy/occupation levels
    type(levels),allocatable :: E_kpq(:)
@@ -130,6 +131,7 @@ module ELPH
  ! Databases
  logical :: l_GKKP_hosts_bare_dV=.FALSE.
  logical :: l_GKKP_hosts_DW     =.TRUE.
+ logical :: l_GKKP_hosts_Ovlp   =.FALSE.
  logical :: l_GKKP_DB_exists    =.FALSE.
  logical :: l_GKKP_expanded_DB_exists=.FALSE.
  character(schlen) :: gkkp_db ! Database type for el-ph calculation (gkkp | expanded | genFroh )

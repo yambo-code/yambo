@@ -83,6 +83,8 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          GKKP%KIND=trim(strings(is))
          YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
          GKKP%dVc=cZERO
+         YAMBO_ALLOC(GKKP%Ovlp,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
+         GKKP%Ovlp=cZERO
        endif
        !
      case ('LEVELS')
@@ -168,6 +170,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
        else
          YAMBO_FREE(GKKP%dVr)
          YAMBO_FREE(GKKP%dVc)
+         YAMBO_FREE(GKKP%Ovlp)
          if (allocated(GKKP%E_kpq)) then
            do iq=1,elph_nQ
              call E_reset( GKKP%E_kpq(iq) )

@@ -138,7 +138,7 @@ integer function io_ELPH(ID,what)
    !
    ! OVERLAPS 
    !
-   call io_bulk(ID_frag,VAR="ELPH_OVLP_Q"//trim(intc(iq)),VAR_SZ=(/elph_nb,elph_nb,nkbz/))
+   call io_bulk(ID_frag,VAR="ELPH_OVLP_Q"//trim(intc(iq)),VAR_SZ=(/2,elph_nb,elph_nb,nkbz/))
    call io_bulk(ID_frag,C3=GKKP%Ovlp(:,:,:,1))
    !
  endif

@@ -24,10 +24,11 @@
 subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  use pars,                ONLY:SP,DP,cZERO
- use R_lattice,           ONLY:bz_samp,qindx_X
- use wave_func,           ONLY:WF,wf_ng
+ use R_lattice,           ONLY:bz_samp,qindx_X,nkibz
+ use wave_func,           ONLY:WF
+ use electrons,           ONLY:n_bands
  use interfaces,          ONLY:WF_load,WF_free
- use parallel_m,          ONLY:PAR_IND_WF_k,PP_indexes_reset
+ use parallel_m,          ONLY:PAR_IND_WF_b_and_k,PP_indexes_reset
  use parallel_int,        ONLY:PARALLEL_WF_distribute
  use ELPH,                ONLY:elph_use_q_grid
  use YPP_ELPH,            ONLY:DB_K_map,DB_nk,DB_gkkp,DB_Ovlp,DB_nb,DB_ph_modes,DB_Q_map
@@ -49,11 +50,13 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  if (elph_use_q_grid) iq=DB_Q_map(IDB)
  !
  i_sp_pol=1
+ n_bands=DB_nb
+ nkibz=kpts%nibz
  !
  Y_overlap=cZERO
  !
- call PP_indexes_reset(PAR_IND_WF_k)
- allocate(PAR_IND_WF_k%element_1D(kpts%nibz))
+ call PP_indexes_reset(PAR_IND_WF_b_and_k)
+ allocate(PAR_IND_WF_b_and_k%element_2D(DB_nb,nkibz))
  !
  ! GKKP & Levels
  !===============
@@ -70,11 +73,12 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    ok   =kpts%sstar(ok_bz,1)
    osymm=kpts%sstar(ok_bz,2)
    !
-   PAR_IND_WF_k%element_1d(:)=.false.
-   PAR_IND_WF_k%element_1d(ik)=.true.
-   PAR_IND_WF_k%element_1d(ok)=.true.
-   call PARALLEL_WF_distribute(K_index=PAR_IND_WF_k,CLEAN_UP=.FALSE.)
-   call WF_load(WF,wf_ng,iGo,(/1,DB_nb/),(/1,DB_nk/),(/i_sp_pol,i_sp_pol/),space='G',title='Fix GKKP phases')
+   PAR_IND_WF_b_and_k%element_2d(:,:)=.false.
+   PAR_IND_WF_b_and_k%element_2d(:,ik)=.true.
+   PAR_IND_WF_b_and_k%element_2d(:,ok)=.true.
+   !
+   call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
+   call WF_load(WF,1,iGo,(/1,DB_nb/),(/1,nkibz/),(/i_sp_pol,i_sp_pol/),title='Fix GKKP phases',quiet=.true.)
    !
    call elemental_collision_alloc(YPP_scatt,NG=1,TITLE="BSE") 
    !

@@ -94,8 +94,8 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,GKKP)
    do ib1=elph_bands(1),elph_bands(2)
      do ib2=elph_bands(1),elph_bands(2)
        !
-       GKKP%dVc(:,ib1,ib2,ik_bz,1)=DB_gkkp(ib1,ib2,:,ik_db)
-       GKKP%Ovlp(ib1,ib2,ik_bz,1)=DB_Ovlp(ib1,ib2,ik_db)
+       GKKP%dVc(:,ib1,ib2,ik_bz,1)=cmplx(DB_gkkp(ib1,ib2,:,ik_db),kind=SP)
+       GKKP%Ovlp(ib1,ib2,ik_bz,1)= cmplx(DB_Ovlp(ib1,ib2,ik_db),kind=SP)
        !
        if (trim(GKKP%KIND)=="dV_bare") cycle
        !

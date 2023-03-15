@@ -182,7 +182,7 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  else
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)
  endif
- i_err=io_QINDX(k,q,ID)
+ i_err=io_QINDX(k,q,ID,"minus_q")
  if(i_err/=0) call error(' Error reading K-point grid, please run setup again!')
  !
  ! Rim energies and kpts

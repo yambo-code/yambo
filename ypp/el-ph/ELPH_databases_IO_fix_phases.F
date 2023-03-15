@@ -43,7 +43,8 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  type(elemental_collision):: YPP_scatt
  !
- complex(SP) :: Y_overlap(DB_nb,DB_nb),PHASES_MATRIX(DB_nb,DB_nb),det_tmp
+ complex(DP) :: PHASES_MATRIX(DB_nb,DB_nb)
+ complex(SP) :: Y_overlap(DB_nb,DB_nb),det_tmp
  integer     :: ik_DB,iq,ik,ok,ik_bz,ok_bz,isymm,osymm,ib1,ib2,i_sp_pol,i_l,iGo
  !
  iq=IDB
@@ -91,7 +92,8 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
        !
        call scatter_Bamp(YPP_scatt)
        !
-       Y_overlap(ib1,ib2)=-conjg(YPP_scatt%rhotw(1))
+       ! To be fixed
+       Y_overlap(ib1,ib2)=YPP_scatt%rhotw(1)
        !
      enddo
    enddo
@@ -99,8 +101,9 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    call WF_free(WF)
    call elemental_collision_free(YPP_scatt)
    !
+   ! Serial inversion probably not needed, part to be fixed
    call SERIAL_inversion(DB_nb,Y_overlap,det_tmp,.false.)
-   PHASES_MATRIX=matmul(Y_overlap,DB_Ovlp(:,:,ik_db))
+   PHASES_MATRIX=matmul(cmplx(Y_overlap,kind=DP),DB_Ovlp(:,:,ik_db))
    !
    do i_l=1,DB_ph_modes
      DB_gkkp(:,:,i_l,ik_db)=matmul(PHASES_MATRIX,DB_gkkp(:,:,i_l,ik_db))

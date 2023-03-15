@@ -33,7 +33,7 @@ subroutine ELPH_databases(k,E,q)
 &                              l_GKKP_hosts_bare_dV,l_GKKP_hosts_Ovlp,l_GKKP_hosts_DW
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqbz,nqibz,bse_scattering,qindx_C,coll_scattering
+ use R_lattice,           ONLY:bz_samp,nqbz,nqibz
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
@@ -56,7 +56,7 @@ subroutine ELPH_databases(k,E,q)
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
  logical            ::l_GKKP_skip_DW
  character(schlen)  ::what,db_name
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH,qindx_B_init
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
@@ -288,6 +288,8 @@ subroutine ELPH_databases(k,E,q)
  db_name='gkkp'
  if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
  !
+ call ELPH_switch_X_indexes_convention(k,q,"plus_q")
+ !
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -338,6 +340,8 @@ subroutine ELPH_databases(k,E,q)
    !
  enddo
  call live_timing()
+ !
+ call ELPH_switch_X_indexes_convention(k,q,"minus_q")
  !
  ! Clean
  !=======

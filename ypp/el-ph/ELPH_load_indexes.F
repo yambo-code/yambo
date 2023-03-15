@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -52,7 +52,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_err(1)=io_QINDX(k,q,ID)
+   io_err(1)=io_QINDX(k,q,ID,'minus_q')
    if (io_err(1)/=0) then
      call msg('s',"Missing k/q scattering database")
      call error("Please run a setup with the BSEscatt flag activated")
@@ -69,11 +69,40 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
    if(.not.coll_scattering) call error(' Please run setup with COLLscatt flag ')
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
-   io_err(1)=io_QINDX(k,q,ID)
+   io_err(1)=io_QINDX(k,q,ID,'minus_q')
    if (io_err(1)/=0) then
      call msg('s',"Missing k/q scattering database")
      call error("Please (re)run the setup")
    endif
  endif
+ !
+end subroutine
+!
+!
+subroutine ELPH_switch_X_indexes_convention(kpts,qpts,convention)
+ !
+ use com,                 ONLY:msg
+ use IO_m,                ONLY:OP_RD_CL,DUMP,NONE
+ use IO_int,              ONLY:io_control
+ use R_lattice,           ONLY:bz_samp,qindx_free
+ !
+ implicit none
+ !
+ type(bz_samp)            :: kpts,qpts
+ character(*), intent(in) :: convention
+ !
+ integer, external :: io_QINDX
+ integer           :: ID_qindx,io_err_qindx
+ !
+ call msg('s',' Switching qindx_X table to '//convention//' convention')
+ call qindx_free('X') 
+ call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID_qindx)
+ io_err_qindx=io_QINDX(kpts,qpts,ID_qindx,convention)
+ !
+ if (io_err_qindx/=0 .and. convention=="plus_q") &
+ & call error("Run yambo_ph setup setting K_grids='X plus_q'")
+ !
+ if (io_err_qindx/=0 .and. convention=="minus_q") &
+ & call error("ndb.kindx file missing, please run yambo setup")
  !
 end subroutine

@@ -113,7 +113,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
- if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q") 
  !
  do ik_bz=1,k%nbz
    !

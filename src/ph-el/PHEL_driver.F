@@ -29,7 +29,7 @@ subroutine PHEL_driver(E,k,q)
  use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
  use interfaces,     ONLY:ELPH_alloc
  use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,&
-&                         l_GKKP_expanded_DB_exists,elph_nb,elph_use_q_grid
+&                         l_GKKP_expanded_DB_exists,elph_bands,elph_use_q_grid
  use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&
 &                         PH_DbGd_points,PH_energy,KpQ_io_map,phel_info,PHEL_fit_Energies,&
 &                         QPH_OMS,QPH_OMS_bare_Pole,QPH_full,QPH,QPHt_alloc,QPH_DDFPT
@@ -70,7 +70,7 @@ subroutine PHEL_driver(E,k,q)
  ! El-Ph databases check
  !=======================
  call section('+',"Databases I/O")
- call ELPH_databases_check(elph_nb)
+ call ELPH_databases_check(elph_bands)
  !
  if (.not.any((/l_GKKP_DB_exists,l_GKKP_expanded_DB_exists/))) call error("GKKP databases absent or damaged")
  !
@@ -213,11 +213,11 @@ subroutine PHEL_driver(E,k,q)
  !
  ! ... grids
  if (l_RT_uses_E_FineGd .or. l_PH_uses_E_FineGd) then
-   YAMBO_ALLOC(E_FG%E,(elph_nb,k_FG%N,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(elph_nb,k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(elph_bands(1):elph_bands(2),k_FG%N,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_bands(1):elph_bands(2),k_FG%N,n_sp_pol))
  else
-   YAMBO_ALLOC(E_FG%E,(elph_nb,nk_CG,n_sp_pol))
-   YAMBO_ALLOC(E_FG%W,(elph_nb,nk_CG,n_sp_pol))
+   YAMBO_ALLOC(E_FG%E,(elph_bands(1):elph_bands(2),nk_CG,n_sp_pol))
+   YAMBO_ALLOC(E_FG%W,(elph_bands(1):elph_bands(2),nk_CG,n_sp_pol))
  endif
  !
  ! ... occupations & levels

@@ -69,7 +69,7 @@ subroutine excitons_interpolate_setup(k,Xk,en,Xen,q,ID_INTERP_EXC,ID_INTERP_OCC,
    if(.not.allocated(qindx_C)) then
      if(coll_scattering.eqv..FALSE.) call error('Please run again the setup with: K_grids= "X B C S" ')
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
-     io_err=io_QINDX(k,q,ID)
+     io_err=io_QINDX(k,q,ID,'minus_q')
      if (io_err/=0) then
        call msg('s',"Missing k/q scattering database")
        call error('Please (re)run the setup K_grids="C"')

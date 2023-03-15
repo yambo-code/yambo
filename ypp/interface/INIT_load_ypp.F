@@ -57,7 +57,7 @@ subroutine INIT_ypp_load(defs)
 #if defined _YPP_ELPH
  use YPP_ELPH,      ONLY:elph_dbs_path,elph_Ef,elph_gamma_broad,elph_residual_treshold,elph_steps,&
 &                        ph_broad,ph_freqs_file,ph_modes_file
- use ELPH,          ONLY:EkplusQ_mode
+ use ELPH,          ONLY:EkplusQ_mode,elph_bands,elph_branches
  use EXCPH,         ONLY:alphaQ
 #endif
  !
@@ -314,18 +314,22 @@ subroutine INIT_ypp_load(defs)
  !
  !EL-PH
  !
+   call initactivate(1,"GkkpBands SkipDW")
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)
+ call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
  call it(defs,'EkplusQmode',  'E(k+q) energies calculation mode (interp | dftp)',EkplusQ_mode)
  call it(defs,'EfGbroad', 'Fermi surface broadening (Gamma)',elph_gamma_broad,E_unit)
  call it(defs,'PhBroad','Phonon broadening (Eliashberg & DOS)',ph_broad,E_unit)
  call it(defs,'EE_Fermi','External Fermi Level (Eliashberg)',elph_Ef,E_unit)
  call it(defs,'PhStps', 'Energy steps',elph_steps)
+ call it(defs,'GkkpBands', 'Bands to be used',elph_bands)
  call it('f',defs,'TestPHDGrid','Test double-grid: set all values of the fine grid equal to the couse ones')
  call it('f',defs,'GkkpReadBare','Read the bare gkkp')
  call it('f',defs,'GkkpExpand','Expand the gkkp in the whole BZ')
  call it('f',defs,'GkkpExpOnlyK','Expand only k-points and not the q-points (that should be already in BZ)')
+ call it('f',defs,'GkkpSkipDW','Do not include the DW factor in the databases')
  call it('f',defs,'UseQindxB','Use qindx_B to expand gkkp (for testing purposes)')
  !
 #endif

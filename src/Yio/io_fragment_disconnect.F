@@ -38,7 +38,7 @@ subroutine io_fragment_disconnect(ID,ID_frag)
  select case (trim(io_raw_extension(ID)))
    case("Vnl","wf","kb_pp","kb_pp_pwscf")
      if (.not.frag_WF) return
-   case("kindx")
+   case("kindx","kindx_pq")
      if (.not.frag_QINDX) return
    case("dip_iR_and_P","Overlaps")
      if (.not.frag_DIP) return

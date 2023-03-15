@@ -30,7 +30,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  use QP_m,          ONLY:QP_n_states
  use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
-&                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_nb,elph_nQ,eval_G_using_KK,&
+&                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_bands,elph_nQ,eval_G_using_KK,&
 &                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
  use parallel_m,    ONLY:PAR_nQ_bz
  use stderr,        ONLY:STRING_split
@@ -50,7 +50,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  !
  if (present(GKKP)) then
    GKKP%Nq_mem=1
-   GKKP%Nb=(/1,elph_nb/)
+   GKKP%Nb=elph_bands
    GKKP%Nmodes=(/1,ph_modes/)
    GKKP%Nk_mem=nkbz
    if (present(Nq_mem)) then
@@ -83,14 +83,16 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          GKKP%KIND=trim(strings(is))
          YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
          GKKP%dVc=cZERO
+         YAMBO_ALLOC(GKKP%Ovlp,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
+         GKKP%Ovlp=cZERO
        endif
        !
      case ('LEVELS')
        if (.not.allocated(GKKP%E_kpq)) then
          allocate(GKKP%E_kpq(elph_nQ))
          do iq=1,elph_nQ
-           YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(elph_nb,nkbz,1))
-           YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(elph_nb,nkbz,1))
+           YAMBO_ALLOC(GKKP%E_kpq(iq)%E,(GKKP%Nb(1):GKKP%Nb(2),nkbz,1))
+           YAMBO_ALLOC(GKKP%E_kpq(iq)%f,(GKKP%Nb(1):GKKP%Nb(2),nkbz,1))
            GKKP%E_kpq(iq)%E=0._SP
          enddo
        endif
@@ -168,6 +170,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
        else
          YAMBO_FREE(GKKP%dVr)
          YAMBO_FREE(GKKP%dVc)
+         YAMBO_FREE(GKKP%Ovlp)
          if (allocated(GKKP%E_kpq)) then
            do iq=1,elph_nQ
              call E_reset( GKKP%E_kpq(iq) )

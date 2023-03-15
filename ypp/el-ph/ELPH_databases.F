@@ -28,11 +28,12 @@ subroutine ELPH_databases(k,E,q)
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use interfaces,          ONLY:ELPH_alloc
- use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
-&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
+ use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_bands,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
+&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,&
+&                              l_GKKP_hosts_bare_dV,l_GKKP_hosts_Ovlp,l_GKKP_hosts_DW
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqbz,nqibz,bse_scattering,qindx_C,coll_scattering
+ use R_lattice,           ONLY:bz_samp,nqbz,nqibz
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
@@ -53,8 +54,9 @@ subroutine ELPH_databases(k,E,q)
  ! Work Space...
  !
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
+ logical            ::l_GKKP_skip_DW
  character(schlen)  ::what,db_name
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH,qindx_B_init
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
@@ -66,6 +68,9 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
+ call parser('GkkpSkipDW',l_GKKP_skip_DW)
+ l_GKKP_hosts_DW=.not.l_GKKP_skip_DW
+ l_GKKP_hosts_Ovlp=.TRUE.
  !
  if(l_gkkp_expand.and.l_gkkp_expand_only_k) &
 &  call error(' Both flags "GkkpExpand" and "GkkpExpOnlyK" cannot be present at the same moment! ')
@@ -214,7 +219,12 @@ subroutine ELPH_databases(k,E,q)
  ! ... Transfer and write ...
  !----------------------------
  ph_modes   =DB_ph_modes
- elph_nb    =DB_nb
+ if(elph_bands(1)>=1 .and. elph_bands(2)<DB_nb) then
+   elph_nb=elph_bands(2)-elph_bands(1)+1
+ else
+   elph_nb    =DB_nb
+   elph_bands=(/1,elph_nb/)
+ endif
  elph_nQ    =DB_nq
  elph_nk_bz =k%nbz
  if (l_gkkp_expand) elph_nQ=q%nbz
@@ -230,7 +240,8 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Q-points(read)        :',DB_nq)
  call msg('s',':: Q-points(written)     :',elph_nQ)
  call msg('s',':: K-points              :',DB_nk)
- call msg('s',':: Bands                 :',DB_nb)
+ call msg('s',':: Bands (all)           :',DB_nb)
+ call msg('s',':: Bands (loading)       :',elph_bands)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
  if(l_gkkp_expand_only_k) call msg('s',':: Q-points in the BZ     :',l_gkkp_expand_only_k)
@@ -277,6 +288,8 @@ subroutine ELPH_databases(k,E,q)
  db_name='gkkp'
  if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
  !
+ call ELPH_switch_X_indexes_convention(k,q,"plus_q")
+ !
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -287,6 +300,7 @@ subroutine ELPH_databases(k,E,q)
    !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
+   call ELPH_databases_IO_fix_phases(idb,k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP)
    call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,qindx_ID_frag,GKKP)
    !
@@ -326,6 +340,8 @@ subroutine ELPH_databases(k,E,q)
    !
  enddo
  call live_timing()
+ !
+ call ELPH_switch_X_indexes_convention(k,q,"minus_q")
  !
  ! Clean
  !=======

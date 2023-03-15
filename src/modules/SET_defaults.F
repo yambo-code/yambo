@@ -54,7 +54,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
-&                     cutoff_presets,k_map
+&                     cutoff_presets,k_map,k_GRIDS_string
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn,nel_cond
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
@@ -82,7 +82,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,&
+&                     elph_bands
  use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
 &                     EXCPH_deltaE_treshold
 #endif
@@ -283,6 +284,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  k_map%g0_idx  =-1
  k_map%q_step  =-1
  k_map%max_kdir= 0
+ k_GRIDS_string="X S B C minus_q"
  !
  ! RIM
  !
@@ -321,7 +323,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh=0.00001
+ filled_tresh       = 0.00001_SP
  nel_cond=rZERO
  !
  ! Magnetization and density
@@ -524,6 +526,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
+ elph_bands=-1
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.FALSE.

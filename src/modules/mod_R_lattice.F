@@ -39,7 +39,7 @@ module R_lattice
  real(SP)          :: k_grid_b(3,3)
  logical           :: Xk_grid_is_uniform
  logical           :: Xk_grid_new_mapping
- character(schlen) :: k_GRIDS_string="X S B C"
+ character(schlen) :: k_GRIDS_string
  !
  ! Q/K-sampling
  !

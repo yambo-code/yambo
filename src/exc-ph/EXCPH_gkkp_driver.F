@@ -327,7 +327,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
      !
      ! here qindx_B is allocated
      call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-     io_err=io_QINDX(k,q,ID)
+     io_err=io_QINDX(k,q,ID,'minus_q')
      if (io_err/=0) then
        call msg('s',"Missing k/q scattering database")
        call error("Please run a setup with the BSEscatt flag activated")

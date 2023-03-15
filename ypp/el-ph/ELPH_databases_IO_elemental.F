@@ -30,6 +30,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !   read (99) ph_freqs_sq
  !   DO ik=1,nksq
  !     read (99) elph_gkkp_disk
+ !     read (99) overlap_disk
  !     read (99) polarization_vec
  !     read (99) grad_at_gamma (only at Gamma)
  !     read (99) Ek
@@ -40,7 +41,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  use ELPH,           ONLY:PH_W_debye
  use YPP_ELPH,       ONLY:DB_kind,DB_ph_modes,DB_nk,DB_nb,DB_ph_kpt,DB_PH_qpt,&
 &                         DB_ph_pol_vec,DB_ph_freq_sq,DB_alat,DB_E_k,DB_E_k_plus_q,&
-&                         DB_grad_at_gamma,DB_gkkp,elph_dbs_path,DB_K_map
+&                         DB_grad_at_gamma,DB_gkkp,DB_Ovlp,elph_dbs_path,DB_K_map
  use IO_int,         ONLY:io_control,io_connect,io_disconnect
  use IO_m,           ONLY:OP_RD,RD_CL,io_unit
  use D_lattice,      ONLY:alat
@@ -107,6 +108,7 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  if (index(what,"POL_VEC")>0) then
    read (io_unit(ID)) 
+   read (io_unit(ID)) 
    read (io_unit(ID)) DB_ph_pol_vec(IDB,:,:,:)
  endif
  !
@@ -137,12 +139,14 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  if (IDB==1) DB_grad_at_gamma=cZERO
                       DB_gkkp=cZERO
+                   DB_Ovlp=cZERO
  !
  do ik=1,DB_nk
    !
    ik_yambo=DB_K_map(ik)
    !
    read (io_unit(ID)) DB_gkkp(:,:,:,ik)
+   read (io_unit(ID)) DB_Ovlp(:,:,ik)
    read (io_unit(ID)) 
    !
    DB_gkkp(:,:,:,ik)=DB_gkkp(:,:,:,ik)*dVRY2Ha

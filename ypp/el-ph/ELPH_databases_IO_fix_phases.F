@@ -26,7 +26,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  use pars,                ONLY:SP,DP,cZERO
  use R_lattice,           ONLY:bz_samp,qindx_X,nkibz
  use wave_func,           ONLY:WF
- use electrons,           ONLY:n_bands
+ use electrons,           ONLY:n_bands,n_sp_pol
  use interfaces,          ONLY:WF_load,WF_free
  use parallel_m,          ONLY:PAR_IND_WF_b_and_k,PP_indexes_reset
  use parallel_int,        ONLY:PARALLEL_WF_distribute
@@ -49,6 +49,8 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  iq=IDB
  if (elph_use_q_grid) iq=DB_Q_map(IDB)
+ !
+ if (n_sp_pol==2) call error(' gkkp phase fixing not coded for n_sp_pol==2')
  !
  i_sp_pol=1
  n_bands=DB_nb
@@ -93,6 +95,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
        call scatter_Bamp(YPP_scatt)
        !
        ! To be fixed
+       ! rhotw(1)=<ib ik_is i_sp| e^[-iG0.r] | ob ok_os o_sp>
        Y_overlap(ib1,ib2)=YPP_scatt%rhotw(1)
        !
      enddo

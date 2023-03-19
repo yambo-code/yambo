@@ -314,7 +314,6 @@ subroutine INIT_ypp_load(defs)
  !
  !EL-PH
  !
-   call initactivate(1,"GkkpBands SkipDW")
  call it(defs,'DBsPATH',  'Path to the PW el-ph databases',elph_dbs_path)
  call it(defs,'PHfreqF',  'PWscf format file containing the phonon frequencies',ph_freqs_file)
  call it(defs,'PHmodeF',  'PWscf format file containing the phonon modes',ph_modes_file)

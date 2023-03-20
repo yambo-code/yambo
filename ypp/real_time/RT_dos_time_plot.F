@@ -50,8 +50,10 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  ! 
  real(SP)              :: el_dos(DOS_E_steps,n_spin,2),dos_E(DOS_E_steps),el_dos_max(2),el_dos_integral(n_T_steps,2)
  real(SP),allocatable  :: TMP_fac(:,:,:)
+ real(SP), pointer     :: spin_fac(:,:,:) => null()
+ real(SP), pointer     :: pdos_fac(:,:,:) => null()
  real(SP),   external  :: RIntegrate
- integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos,ID_bare_spin,ID_bare_pdos
+ integer               :: i_E,i_T,ib,N_files,i_f,i_RT,ID_E,ID_f,ID_spin,ID_pdos
  logical               :: space_printed,l_interp
  type(levels)          :: RT_E,GRID_E
  type(bz_samp)         :: RT_k
@@ -90,27 +92,22 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  ! Load the PDOS coefficient
  !-----------------------------
- ID_bare_pdos=0
  if (l_PROJECT_atom) then
-   ID_bare_pdos=1
-   INTERP_obj(ID_bare_pdos)%in_use=.TRUE.
    YAMBO_ALLOC(TMP_fac,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_sp_pol))
-   YAMBO_ALLOC(INTERP_obj(ID_bare_pdos)%INTERP,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
+   YAMBO_ALLOC_P(pdos_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_sp_pol))
    call electrons_pdos_factors((/1,k%nibz/),RT_carriers%nb,TMP_fac)
    do i_RT=1,RT_carriers%nstates
-     INTERP_obj(ID_bare_pdos)%INTERP(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
+     pdos_fac(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
    enddo
    YAMBO_FREE(TMP_fac)
  endif
  !
- ID_bare_spin=0
  if (n_spinor==2) then
-   ID_bare_spin=ID_bare_pdos+1
    YAMBO_ALLOC(TMP_fac,(RT_carriers%nb(1):RT_carriers%nb(2),k%nibz,n_spinor))
-   YAMBO_ALLOC(INTERP_obj(ID_bare_spin)%INTERP,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_spinor))
+   YAMBO_ALLOC_P(spin_fac,(RT_carriers%nb(1):RT_carriers%nb(2),RT_carriers%nk,n_spinor))
    call electrons_spin_factors((/1,k%nibz/),RT_carriers%nb,TMP_fac)
    do i_RT=1,RT_carriers%nstates
-     INTERP_obj(ID_bare_spin)%INTERP(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
+     spin_fac(:,RT_carriers%table(i_RT,3),:)=TMP_fac(:, RT_carriers%table(i_RT,2), :)
    enddo
    YAMBO_FREE(TMP_fac)
  endif
@@ -128,12 +125,12 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    call INTERPOLATION_create_the_grid(INTERP_grid)
    !
    if (l_PROJECT_atom) then
-     call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=INTERP_obj(ID_bare_pdos)%INTERP)
+     call INTERPOLATION_driver_seed("PDOS_factors_on_RT_grid",ID_pdos,RT_bands,RT_k,SEED_R3=spin_fac)
      call INTERPOLATION_driver_do("PDOS_factors_on_RT_grid",ID_pdos,GRID_k)
    endif
    !
    if (n_spinor==2) then
-     call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=INTERP_obj(ID_bare_spin)%INTERP)
+     call INTERPOLATION_driver_seed("SPIN_fac_on_RT_grid",ID_spin,RT_bands,RT_k,SEED_R3=pdos_fac)
      call INTERPOLATION_driver_do("SPIN_fac_on_RT_grid",ID_spin,GRID_k)
    endif
    !
@@ -167,7 +164,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
    !
    !... DOS
    !
-   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,ID_spin,ID_pdos,&
+   call electrons_dos_elemental(RT_k,RT_E,RT_bands,el_dos(:,:,1),dos_E,spin_fac,pdos_fac,&
 &                               USE_the_DbGd=.FALSE.,quiet=.TRUE.,FORCE_occ=.not.l_skip_occ)
    !
    if (n_spin==1) el_dos_integral(i_T,1)=RIntegrate(el_dos(:,1,1),dos_E,DOS_E_steps)*DL_vol
@@ -181,7 +178,7 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
      call INTERPOLATION_driver_do("f_on_RT_grid",ID_f,GRID_k,OUT_E=GRID_E)
      !
      !... DOS
-     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,ID_spin,ID_pdos,&
+     call electrons_dos_elemental(GRID_k,GRID_E,RT_bands,el_dos(:,:,2),dos_E,spin_fac,pdos_fac,&
 &                                 USE_the_DbGd=.FALSE.,QUIET=.TRUE.,FORCE_occ=.TRUE.)
      !
      if (n_spin==1) el_dos_integral(i_T,2)=RIntegrate(el_dos(:,1,2),dos_E,DOS_E_steps)*DL_vol
@@ -257,7 +254,5 @@ subroutine RT_dos_time_plot(En,k,n_T_steps)
  !
  call INTERPOLATION_driver_end(ID_pdos)
  call INTERPOLATION_driver_end(ID_spin)
- call INTERPOLATION_driver_end(ID_bare_spin)
- call INTERPOLATION_driver_end(ID_bare_pdos)
  !
 end subroutine RT_dos_time_plot

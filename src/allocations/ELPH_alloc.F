@@ -28,7 +28,7 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
  use R_lattice,     ONLY:nkbz,nqbz
  use electrons,     ONLY:E_reset
  use QP_m,          ONLY:QP_n_states
- use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,&
+ use ELPH,          ONLY:GKKP_me,PH_pol_vector,ph_modes,PH_freqs_sq,l_GKKP_hosts_Ovlp,&
 &                        PH_acoustic_speed,PH_acoustic_branch,gsqF_life_f,gsqF_life_bose,gsqF_fan,&
 &                        gsqF_ca_corr,gsqF_dw,PH_Q_modulus,PH_qpt,elph_bands,elph_nQ,eval_G_using_KK,&
 &                        gsqF_energy_steps,PH_kpt_bz,elph_nk_bz,elph_use_q_grid,FineGd_E_kpq_components_reset
@@ -83,8 +83,10 @@ subroutine ELPH_alloc(what,GKKP,Nb,Nm,Nk_mem,Nq_mem)
          GKKP%KIND=trim(strings(is))
          YAMBO_ALLOC(GKKP%dVc,(GKKP%Nmodes(1):GKKP%Nmodes(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
          GKKP%dVc=cZERO
-         YAMBO_ALLOC(GKKP%Ovlp,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
-         GKKP%Ovlp=cZERO
+         if (l_GKKP_hosts_Ovlp) then
+           YAMBO_ALLOC(GKKP%Ovlp,(GKKP%Nb(1):GKKP%Nb(2),GKKP%Nb(1):GKKP%Nb(2),GKKP%Nk_mem,GKKP%Nq_mem))
+           GKKP%Ovlp=cZERO
+	 endif
        endif
        !
      case ('LEVELS')

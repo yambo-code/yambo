@@ -66,11 +66,11 @@ subroutine ELPH_databases(k,E,q)
  ! Logicals & Init
  !=================
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
+ call parser('GkkpIncludeOvlp',l_GKKP_hosts_Ovlp)
  call parser('GkkpExpand',l_gkkp_expand)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
  call parser('GkkpSkipDW',l_GKKP_skip_DW)
  l_GKKP_hosts_DW=.not.l_GKKP_skip_DW
- l_GKKP_hosts_Ovlp=.TRUE.
  !
  if(l_gkkp_expand.and.l_gkkp_expand_only_k) &
 &  call error(' Both flags "GkkpExpand" and "GkkpExpOnlyK" cannot be present at the same moment! ')
@@ -288,7 +288,7 @@ subroutine ELPH_databases(k,E,q)
  db_name='gkkp'
  if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
  !
- call ELPH_switch_X_indexes_convention(k,q,"plus_q")
+ if (l_GKKP_hosts_Ovlp) call ELPH_switch_X_indexes_convention(k,q,"plus_q")
  !
  do idb=1,DB_nq
    !
@@ -300,7 +300,7 @@ subroutine ELPH_databases(k,E,q)
    !
    io_err(1)=ELPH_databases_IO_elemental("dV KPT GKKP",idb)
    call ELPH_databases_IO_grids_check(k)
-   call ELPH_databases_IO_fix_phases(idb,k)
+   if (l_GKKP_hosts_Ovlp) call ELPH_databases_IO_fix_phases(idb,k)
    call ELPH_databases_IO_transfer_and_write(idb,k,E,GKKP)
    call ELPH_databases_IO_gkkp_expand("K",iq,1,k,q,qindx_ID,qindx_ID_frag,GKKP)
    !
@@ -341,7 +341,7 @@ subroutine ELPH_databases(k,E,q)
  enddo
  call live_timing()
  !
- call ELPH_switch_X_indexes_convention(k,q,"minus_q")
+ if (l_GKKP_hosts_Ovlp) call ELPH_switch_X_indexes_convention(k,q,"minus_q")
  !
  ! Clean
  !=======

@@ -28,6 +28,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  use wave_func,           ONLY:WF
  use electrons,           ONLY:n_bands,n_sp_pol
  use interfaces,          ONLY:WF_load,WF_free
+ use matrix_operate,      ONLY:hermitian
  use parallel_m,          ONLY:PAR_IND_WF_b_and_k,PP_indexes_reset
  use parallel_int,        ONLY:PARALLEL_WF_distribute
  use ELPH,                ONLY:elph_use_q_grid
@@ -43,9 +44,9 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  type(elemental_collision):: YPP_scatt
  !
- complex(DP) :: PHASES_MATRIX(DB_nb,DB_nb)
+ complex(SP) :: PHASES_MATRIX(DB_nb,DB_nb),M_tmp(DB_nb,DB_nb)
  complex(SP) :: Y_overlap(DB_nb,DB_nb),det_tmp
- integer     :: ik_DB,iq,ik,ok,ik_bz,ok_bz,isymm,osymm,ib1,ib2,i_sp_pol,i_l,iGo
+ integer     :: ik_DB,iq,ik,ikpq,ik_bz,ikpq_bz,isymm1,isymm2,ib1,ib2,i_sp_pol,i_l,iGo
  !
  iq=IDB
  if (elph_use_q_grid) iq=DB_Q_map(IDB)
@@ -67,18 +68,18 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    !
    ik_bz=DB_K_map(ik_db)
    !
-   ok_bz=qindx_X(iq,ik_bz,1)
-   iGo  =qindx_X(iq,ik_bz,2)
+   ikpq_bz=qindx_X(iq,ik_bz,1)
+   iGo    =qindx_X(iq,ik_bz,2)
    !
-   ik   =kpts%sstar(ik_bz,1) 
-   isymm=kpts%sstar(ik_bz,2) 
+   ik    =kpts%sstar(ik_bz,1) 
+   isymm1=kpts%sstar(ik_bz,2) 
    !
-   ok   =kpts%sstar(ok_bz,1)
-   osymm=kpts%sstar(ok_bz,2)
+   ikpq  =kpts%sstar(ikpq_bz,1)
+   isymm2=kpts%sstar(ikpq_bz,2)
    !
    PAR_IND_WF_b_and_k%element_2d(:,:)=.false.
    PAR_IND_WF_b_and_k%element_2d(:,ik)=.true.
-   PAR_IND_WF_b_and_k%element_2d(:,ok)=.true.
+   PAR_IND_WF_b_and_k%element_2d(:,ikpq)=.true.
    !
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
    call WF_load(WF,1,iGo,(/1,DB_nb/),(/1,nkibz/),(/i_sp_pol,i_sp_pol/),title='Fix GKKP phases',quiet=.true.)
@@ -88,15 +89,15 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    do ib1=1,DB_nb
      do ib2=1,DB_nb
        !
-       YPP_scatt%is=(/ib1,ik,isymm,i_sp_pol/)
-       YPP_scatt%os=(/ib2,ok,osymm,i_sp_pol/)
+       YPP_scatt%is=(/ib2,ikpq,isymm2,i_sp_pol/)
+       YPP_scatt%os=(/ib1,ik,  isymm1,i_sp_pol/)
        YPP_scatt%qs=(/iGo,iq,1/)
        !
+       ! rhotw(1)= < b2 k+q | b1 k>
        call scatter_Bamp(YPP_scatt)
        !
-       ! To be fixed
-       ! rhotw(1)=<ib ik_is i_sp| e^[-iG0.r] | ob ok_os o_sp>
-       Y_overlap(ib1,ib2)=YPP_scatt%rhotw(1)
+       ! Y_overlap= < b2 k+q | b1 k>
+       Y_overlap(ib2,ib1)=YPP_scatt%rhotw(1)
        !
      enddo
    enddo
@@ -104,12 +105,19 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    call WF_free(WF)
    call elemental_collision_free(YPP_scatt)
    !
-   ! Serial inversion probably not needed, part to be fixed
-   call SERIAL_inversion(DB_nb,Y_overlap,det_tmp,.false.)
-   PHASES_MATRIX=matmul(cmplx(Y_overlap,kind=DP),DB_Ovlp(:,:,ik_db))
+   ! Eq. 6 notes Fulvio
+   ! PHASES_MATRIX= (QE_overlap)^-1 * Y_overlap
+   M_tmp=cmplx(DB_Ovlp(:,:,ik_db),kind=SP)
+   call SERIAL_inversion(DB_nb,M_tmp,det_tmp,.false.)
+   PHASES_MATRIX=matmul(M_tmp,Y_overlap)
    !
+   ! Eq. 8 notes Fulvio
+   ! U = (PHASES_MATRIX^dag)^-1
+   PHASES_MATRIX=hermitian(PHASES_MATRIX)
+   call SERIAL_inversion(DB_nb,PHASES_MATRIX,det_tmp,.false.)
    do i_l=1,DB_ph_modes
-     DB_gkkp(:,:,i_l,ik_db)=matmul(PHASES_MATRIX,DB_gkkp(:,:,i_l,ik_db))
+     ! Gkkp^y = U Gkkp^QE
+     DB_gkkp(:,:,i_l,ik_db)=matmul(cmplx(PHASES_MATRIX,kind=DP),DB_gkkp(:,:,i_l,ik_db))
    enddo
    !
  enddo

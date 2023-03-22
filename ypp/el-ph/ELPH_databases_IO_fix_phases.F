@@ -48,6 +48,10 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  complex(SP) :: Y_overlap(DB_nb,DB_nb),det_tmp
  real(SP)    :: Ovlp_trace(DB_nb)
  integer     :: ik_DB,iq,ik,ikpq,ik_bz,ikpq_bz,isymm1,isymm2,ib1,ib2,i_sp_pol,i_l,iGo
+ logical     :: l_invert,l_dagger
+ !
+ l_invert=.false.
+ l_dagger=.true.
  !
  iq=IDB
  if (elph_use_q_grid) iq=DB_Q_map(IDB)
@@ -115,12 +119,16 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    ! PHASES_MATRIX= (QE_overlap)^-1 * Y_overlap
    !
    ! option a)
-   M_tmp=cmplx(DB_Ovlp(:,:,ik_db),kind=SP)
-   call SERIAL_inversion(DB_nb,M_tmp,det_tmp,.true.)
+   if (l_invert) then
+     M_tmp=cmplx(DB_Ovlp(:,:,ik_db),kind=SP)
+     call SERIAL_inversion(DB_nb,M_tmp,det_tmp,.true.)
+   endif
    !
    ! option b) (QE_overlap)^-1=(QE_overlap)^dag
-   !det_tmp=cZERO
-   !M_tmp=hermitian(cmplx(DB_Ovlp(:,:,ik_db),kind=SP))
+   if (l_dagger) then
+     det_tmp=cZERO
+     M_tmp=hermitian(cmplx(DB_Ovlp(:,:,ik_db),kind=SP))
+   endif
    !
    PHASES_MATRIX=matmul(M_tmp,Y_overlap)
    !
@@ -153,31 +161,42 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
      write(*,*) "QE OVERLAP TRACE ",Ovlp_trace
      write(*,*) ""
      !
-     write(*,*) "QE OVERLAP inverted (det)",det_tmp
+     if (l_invert) write(*,*) "QE OVERLAP inverted (det)",det_tmp
+     if (l_dagger) write(*,*) "QE OVERLAP dagger"
      do ib1=1,DB_nb
        write(*,*) abs(M_tmp(ib1,:))
      enddo
      Ovlp_trace=0._SP
      do ib1=1,DB_nb
        do ib2=1,DB_nb
-         Ovlp_trace(ib1)=Ovlp_trace(ib1)+real(abs(DB_Ovlp(ib1,ib2,ik_db)),kind=SP)**2
+         Ovlp_trace(ib1)=Ovlp_trace(ib1)+abs(M_tmp(ib1,ib2))**2
        enddo
      enddo
-     write(*,*) "QE OVERLAP inverted TRACE ",Ovlp_trace
+     if (l_invert) write(*,*) "QE OVERLAP inverted TRACE ",Ovlp_trace
+     if (l_dagger) write(*,*) "QE OVERLAP dagger   TRACE ",Ovlp_trace
      write(*,*) ""
      !
      write(*,*) "PHASES MATRIX "
      do ib1=1,DB_nb
        write(*,*) abs(PHASES_MATRIX(ib1,:))
      enddo
+     Ovlp_trace=0._SP
+     do ib1=1,DB_nb
+       do ib2=1,DB_nb
+         Ovlp_trace(ib1)=Ovlp_trace(ib1)+abs(PHASES_MATRIX(ib1,ib2))**2
+       enddo
+     enddo
+     write(*,*) "PHASES MATRIX TRACE ",Ovlp_trace
      write(*,*) ""
    endif
    ! DEBUG >
    !
    ! Eq. 8 notes Fulvio
-   ! U = (PHASES_MATRIX^dag)^-1
-   PHASES_MATRIX=hermitian(PHASES_MATRIX)
-   call SERIAL_inversion(DB_nb,PHASES_MATRIX,det_tmp,.false.)
+   ! U = (PHASES_MATRIX^dag)^-1 = PHASE_MATRIX
+   if (l_invert) then
+     PHASES_MATRIX=hermitian(PHASES_MATRIX)
+     call SERIAL_inversion(DB_nb,PHASES_MATRIX,det_tmp,.false.)
+   endif
    do i_l=1,DB_ph_modes
      ! Gkkp^y = U Gkkp^QE
      DB_gkkp(:,:,i_l,ik_db)=matmul(cmplx(PHASES_MATRIX,kind=DP),DB_gkkp(:,:,i_l,ik_db))

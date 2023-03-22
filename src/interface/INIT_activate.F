@@ -28,8 +28,8 @@ subroutine INIT_activate()
  use stderr,         ONLY:intc,STRING_match
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
-&                         l_real_time,l_ppa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
+&                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
 #if defined _SC || defined _RT
@@ -73,8 +73,8 @@ subroutine INIT_activate()
  !
  ! CPU structure
  !
- if ((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
-     if (l_em1s.or.l_em1d.or.l_ppa.or.l_life.or.l_X) then
+ if((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life.or.l_X) then
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life.or.l_X) then      
        call CPU_activate("X_and_IO")
      else
        call CPU_activate("X")
@@ -150,6 +150,10 @@ subroutine INIT_activate()
  !
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
  !
+ !RIM_W
+ !
+ if (l_rim_w) call initactivate(1,'RandQpts RandGvecW rimw_type')
+ !
  !Col CUTOFF 
  !
  if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test')
@@ -187,7 +191,7 @@ subroutine INIT_activate()
  !
  ! Optics(not bse) or GW (no PP)
  !
- if ((l_optics.and.l_chi).or.(l_em1d.and..not.l_life.and..not.l_ppa.and..not.l_gw0).or.l_X) then
+ if ((l_optics.and.l_chi).or.(l_em1d.and..not.(l_life.or.l_ppa.or.l_mpa.or.l_gw0)).or.l_X) then
    !
    X_kind         ="Xd"
    if (l_X) X_kind="Xx"
@@ -316,9 +320,9 @@ subroutine INIT_activate()
    call initactivate(1,'XTermEn')
  endif
  !
- ! GW (PPA & COHSEX) 
+ ! GW (PPA, MPA, & COHSEX) 
  !
- if ( (l_em1d.and.l_ppa) .or. (l_em1s.and.l_cohsex)) then
+ if ( (l_em1d.and.l_ppa) .or. (l_em1d.and.l_mpa) .or. (l_em1s.and.l_cohsex)) then
    call INIT_QP_ctl_switch('X')
    call initactivate(1,'RIM_W RIM_W_diag RIM_W_graph')
    !
@@ -330,6 +334,11 @@ subroutine INIT_activate()
    if (l_ppa) then
      call X_activate('Xp',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
 &                           'EhEngy','LongDr','PPAPnt'/))
+   endif
+   if (l_mpa) then
+     call X_activate('Xm',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
+&                           'EhEngy','LongDr','EnSamp','EnRnge','ImRnge','DmRnge','ETStps','IntSol'/))
+     call initactivate(1,'mpERdb')
    endif
    if (l_cohsex) then
      call X_activate('Xs',(/'QpntsR','BndsRn','NGsBlk','EhEngy','LongDr'/))
@@ -392,7 +401,7 @@ subroutine INIT_activate()
        if (.not.l_cohsex.and.trim(QP_solver)/='g') call initactivate(1,'GDamping') 
        if (.not.l_cohsex) call initactivate(1,'dScStep') 
        if (.not.l_elphoton_corr) then
-         if (.not.l_ppa.and..not.l_cohsex) &
+         if (.not.l_ppa.and..not.l_mpa.and..not.l_cohsex) &
 &          call X_activate('Xd',(/'BndsRn','NGsBlk',&
 &                          'DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                          'DrudeW','EhEngy','LongDr'/)) 
@@ -440,8 +449,8 @@ subroutine INIT_activate()
    !
  endif
  !
- if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
- if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
+ if(l_alda_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'FxcGRLc')
+ if( l_lrc_fxc.and.any((/l_em1s,l_em1d,l_acfdt,l_ppa,l_mpa,l_cohsex,l_gw0/)) ) call initactivate(1,'LRC_alpha LRC_beta')
  !
  ! El-Ph: Frohlich Hamiltonian
  !

@@ -28,7 +28,10 @@ path_back=$PWD
 #
 library="${target}.a"
 if [[ "$goal" == "$target" ]] ; then
- if [ "$VERB" == 1 ] ; then echo "here I'm doing the driver folder, but there is no connected library"; fi
+ if [ "$VERB" == 1 ] ; then
+   echo "goal= $goal, target= $target";
+   echo "here I'm doing the driver folder, but there is no connected library";
+ fi
  library="NONE"
 fi
 if [ "$VERB" == 1 ] ; then echo "library is $library" ; fi
@@ -41,22 +44,44 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
   if [ "$VERB" == 1 ] ; then echo "mkdir -p $dir/$save_dir" ; fi
   mkdir -p $dir/$save_dir
  fi
- count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
- if [ $count != 0 ] ; then
+ deps_rm=""
+ count_obj_tr=`ls -1 $dir/*.o_to_remove 2>/dev/null | wc -l`
+ count_mod_tr=`ls -1 $dir/*.mod_to_remove 2>/dev/null | wc -l`
+ if [ $count_obj_tr != 0 ] || [ $count_mod_tr != 0 ] ; then
+  if [ ! -f $dir/$save_dir/files.dep ] ; then
+    cd $dir
+    for file in *.o_to_remove; do
+      [ -f "$file" ] || break
+      deps_rm="$deps_rm ${file/_to_remove/}"
+    done
+    for mod in *.mod_to_remove; do
+      [ -f "$mod" ] || break
+      deps_rm="$deps_rm ${mod/_to_remove/}"
+    done
+    cd $path_back
+  fi
+  if [ $count_obj_tr != 0 ]; then rm $dir/*.o_to_remove ; fi
+  if [ $count_mod_tr != 0 ]; then rm $dir/*.mod_to_remove ; fi
+ fi
+ count_obj=`ls -1 $dir/*.o 2>/dev/null | wc -l`
+ count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
+ count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
+ if [ $count_obj != 0 ] || [ $count_mod != 0 ] || [ $count_obj_tr != 0 ] || [ $count_mod_tr != 0 ]  ; then
   if [ ! -f $dir/$save_dir/files.dep ] ; then
    cd $dir;
-   deps=`ls *.o 2>/dev/null`;
+   deps=`ls *.o *.mod 2>/dev/null`;
+   deps=$(echo $deps $deps_rm |tr " " "\n"|sort|uniq|tr "\n" " ")
    for file in $deps; do echo " $file" >> "$save_dir/files.dep"; done
    cd $path_back ;
-   cp $dir/*.o $dir/$save_dir/
-   count=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
-   if [ $count != 0 ]; then cp $dir/*.f90 $dir/$save_dir ; fi
+   if [ $count_obj != 0 ] ; then cp $dir/*.o    $dir/$save_dir/ ; fi
+   if [ $count_mod != 0 ] ; then cp $dir/*.mod  $dir/$save_dir/ ; fi
+   if [ $count_f90 != 0 ] ; then cp $dir/*.f90  $dir/$save_dir/ ; fi
   else
    deps=`cat $dir/$save_dir/files.dep`
    cd $dir/$save_dir
-   found=`ls *.o 2>/dev/null`
+   found=`ls *.o *.mod 2>/dev/null`
    cd $path_back
-   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+   missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort| uniq) <(tr ' ' $'\n' <<< $found | sort | uniq)`
    for file in $missing_files ; do
     if [ -f $dir/$file ] ; then cp $dir/$file $dir/$save_dir ; fi
     filef90=`echo $file | sed 's/.$/f90/'`
@@ -66,72 +91,79 @@ if [ ! -f $dir/$save_dir/$library ] && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
  fi
  if [ -f lib/$library ] ; then
   cp $compdir/lib/$library $dir/$save_dir
-  count=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
-  if [ $count != 0 ]; then
-    cd $dir
-    for mod in *.mod ; do
-      if [ ! -f $save_dir/$mod ] ; then cp $mod $save_dir/ ; fi
-    done
-    cd $path_back
-  fi
  fi
 fi
 #
 # Restore files
 #
 if [[ -d $dir/$restore_dir/ ]]  && [[ ! $dir == *"yambo/Ydriver"* ]] ; then
- if [ "$VERB" == 1 ] ; then echo "Restoring files " ; fi
- count=`ls -1 $dir/*.o 2>/dev/null | wc -l`
- if [ $count != 0 ]; then rm $dir/*.o  ; fi
- if [ ! -f $dir/$restore_dir/files.dep ]; then
-   deps=""
- else
-  deps=`cat $dir/$restore_dir/files.dep`
- fi
- count=`ls -1 $dir/$restore_dir/*.o 2>/dev/null | wc -l`
- if [ $count != 0 ]; then
-  cd $dir/$restore_dir
-  found=`ls *.o 2>/dev/null`
-  cd $path_back
-  missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
-  cd $dir
-  ln -s $restore_dir/*.o ./ ;
-  cd $path_back
- fi
+ # Restore operation starts
+ # remove files from previous compilation
+ count_obj=`ls -1 $dir/*.o 2>/dev/null | wc -l`
  count_mod=`ls -1 $dir/*.mod 2>/dev/null | wc -l`
+ count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
+ if [ $count_obj != 0 ]; then
+  if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.o " ; fi
+  rm $dir/*.o  ;
+ fi
  if [ "$count_mod" -gt "0" ] ; then
+  if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.mod " ; fi
   cd $dir
   for mod in *.mod ; do
+   [ -f "$mod" ] || break
    rm $compdir/include/$mod
   done
   rm *.mod
   cd $path_back
  fi
- count_mod=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
- if [ "$count_mod" -gt "0" ] ; then
+ if [ $count_f90 != 0 ]; then
+  if [ "$VERB" == 1 ] ; then echo "Removing $dir/*.f90 " ; fi
+  rm $dir/*.f90
+ fi
+ if [ ! "$library" == "NONE" ] && [ -f $compdir/lib/$library ]; then
+  if [ "$VERB" == 1 ] ; then echo "Removing $compdir/lib/$library " ; fi
+  rm -f $compdir/lib/$library
+ fi
+ # check for files
+ if [ ! -f $dir/$restore_dir/files.dep ]; then
+   deps=""
+ else
+  deps=`cat $dir/$restore_dir/files.dep`
+ fi
+ found=""
+ missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
+ count_obj_res=`ls -1 $dir/$restore_dir/*.o   2>/dev/null | wc -l`
+ count_mod_res=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
+ count_f90_res=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
+ if [ $count_obj_res != 0 ] || [ $count_mod_res != 0 ] ; then
+  cd $dir/$restore_dir
+  found=`ls *.o *.mod 2>/dev/null`
+  cd $path_back
+  missing_files=`comm -23 <(tr ' ' $'\n' <<< $deps | sort) <(tr ' ' $'\n' <<< $found | sort)`
   cd $dir
-  for mod in $restore_dir/*.mod ; do
-   ln -s $mod ./
-   mod_filename=`basename $mod`
-   cd $compdir/include
-   if test -f $mod_filename ; then  rm $mod_filename; fi
-   ln -s $compdir/$dir/$mod_filename ./
-   cd $path_back/$dir
-  done
+  if [ $count_obj_res != 0 ] ; then ln -s $restore_dir/*.o   ./ ; fi
+  if [ $count_f90_res != 0 ] ; then ln -s $restore_dir/*.f90 ./ ; fi
+  if [ $count_mod_res != 0 ] ; then
+   # modules need to be linked also inside $compdir/include
+   for mod in $restore_dir/*.mod ; do
+    [ -f "$mod" ] || break
+    ln -s $mod ./
+    mod_filename=`basename $mod`
+    cd $compdir/include
+    if test -f $mod_filename ; then  rm $mod_filename; fi
+    ln -s $compdir/$dir/$mod_filename ./
+    cd $path_back/$dir
+   done
+  fi
   cd $path_back
  fi
- count_f90=`ls -1 $dir/*.f90 2>/dev/null | wc -l`
- if [ $count_f90 != 0 ]; then rm $dir/*.f90  ; fi
- count_f90=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
- if [ $count_f90 != 0 ]; then
-  cd $dir
-  ln -s $restore_dir/*.f90 ./
-  cd $path_back
+ if [[ ! "$missing_files" == "" ]] && [ ! "$library" == "NONE" ]; then
+  rm -f $dir/$restore_dir/$library
+  DIR_is_to_recompile=1
  fi
  if [[ -f $dir/$restore_dir/$library ]] || [ "$library" == "NONE" ]; then
   if [[ -f $dir/$restore_dir/$library ]] ; then
    cd $compdir/lib
-   rm $library
    ln -s $compdir/$dir/$restore_dir/$library ./
    cd $path_back
   fi

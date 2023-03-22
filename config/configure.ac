@@ -247,6 +247,7 @@ m4_include([config/m4/iotk.m4])
 m4_include([config/m4/etsf_io.m4])
 m4_include([config/m4/scalapack.m4])
 m4_include([config/m4/petsc_slepc.m4])
+m4_include([config/m4/magma.m4])
 #
 AC_LANG_PUSH(Fortran)
 # ============================================================================
@@ -292,6 +293,9 @@ ACX_LIBXC
 # ============================================================================
 # CUDA
 AC_HAVE_CUDA
+# ============================================================================
+# MAGMA
+AC_MAGMA_SETUP
 # ============================================================================
 # Prepare the REPORT file variables
 ACX_REPORT()

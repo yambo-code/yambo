@@ -68,6 +68,8 @@
 #                 @PETSC_INCS@ 
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS@ 
 #                 @SLEPC_INCS@ 
+# [@MAGMA_check@] MAGMA     : @MAGMA_LIBS@
+#                 @MAGMA_INCS@
 #
 # > OTHERs
 #
@@ -81,8 +83,8 @@
 # FC kind = @FCKIND@ @FCVERSION@
 # MPI kind= @MPIKIND@
 #
-# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@ @PW_CPP@
-# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@
+# [ CPP ] @CPP@ @CPPFLAGS_yambo@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@ @PW_CPP@ @def_magma@
+# [ FPP ] @FPP@ @def_netcdf@ @def_mpi@ @def_fft@ @def_slepc@ @def_scalapack@ @def_compiler@ @def_dp@ @def_openmp@ @def_time_profile@ @def_uspp@ @def_cuda@ @def_yaml@ @def_magma@
 # [ CC  ] @CC@ @CFLAGS@
 # [ FC  ] @FC@ @FCFLAGS@ @OPENMPLIBS@ @CUDA_FLAGS@
 # [ FCUF] @FCUFLAGS@ @CUDA_FLAGS@

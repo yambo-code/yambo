@@ -30,7 +30,7 @@ subroutine ELPH_databases(k,E,q)
  use interfaces,          ONLY:ELPH_alloc
  use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_bands,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,&
-&                              l_GKKP_hosts_bare_dV,l_GKKP_hosts_Ovlp,l_GKKP_hosts_DW
+&                              l_GKKP_debug,l_GKKP_hosts_bare_dV,l_GKKP_hosts_Ovlp,l_GKKP_hosts_DW
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
  use R_lattice,           ONLY:bz_samp,nqbz,nqibz
@@ -68,6 +68,7 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpIncludeOvlp',l_GKKP_hosts_Ovlp)
  call parser('GkkpExpand',l_gkkp_expand)
+ call parser('GkkpDebug',l_GKKP_debug)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
  call parser('GkkpSkipDW',l_GKKP_skip_DW)
  l_GKKP_hosts_DW=.not.l_GKKP_skip_DW
@@ -282,13 +283,17 @@ subroutine ELPH_databases(k,E,q)
  enddo
  !
  !... GKKP
- call live_timing('ELPH databases: transfer and I/O',DB_nq)
  call section("*","== Q-points list in Yambo (iku units) ==")
  !
  db_name='gkkp'
  if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
  !
- if (l_GKKP_hosts_Ovlp) call ELPH_switch_X_indexes_convention(k,q,"plus_q")
+ if (l_GKKP_hosts_Ovlp) then
+   call msg('s',' Starting procedure to fix phases')
+   call ELPH_switch_X_indexes_convention(k,q,"plus_q")
+ endif
+ !
+ call live_timing('ELPH databases: transfer and I/O',DB_nq)
  !
  do idb=1,DB_nq
    !

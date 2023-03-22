@@ -31,7 +31,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  use matrix_operate,      ONLY:hermitian
  use parallel_m,          ONLY:PAR_IND_WF_b_and_k,PP_indexes_reset
  use parallel_int,        ONLY:PARALLEL_WF_distribute
- use ELPH,                ONLY:elph_use_q_grid
+ use ELPH,                ONLY:elph_use_q_grid,l_GKKP_debug
  use YPP_ELPH,            ONLY:DB_K_map,DB_nk,DB_gkkp,DB_Ovlp,DB_nb,DB_ph_modes,DB_Q_map
  use collision_el,        ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  !
@@ -46,6 +46,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  complex(SP) :: PHASES_MATRIX(DB_nb,DB_nb),M_tmp(DB_nb,DB_nb)
  complex(SP) :: Y_overlap(DB_nb,DB_nb),det_tmp
+ real(SP)    :: Ovlp_trace(DB_nb)
  integer     :: ik_DB,iq,ik,ikpq,ik_bz,ikpq_bz,isymm1,isymm2,ib1,ib2,i_sp_pol,i_l,iGo
  !
  iq=IDB
@@ -57,13 +58,16 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  n_bands=DB_nb
  nkibz=kpts%nibz
  !
- Y_overlap=cZERO
- !
  call PP_indexes_reset(PAR_IND_WF_b_and_k)
  allocate(PAR_IND_WF_b_and_k%element_2D(DB_nb,nkibz))
  !
  ! GKKP & Levels
  !===============
+ !
+ ! DEBUG <
+ if (l_GKKP_debug) write(*,*) "Transferred momentum index q= ",iq
+ ! DEBUG >
+ !
  do ik_db=1,DB_nk
    !
    ik_bz=DB_K_map(ik_db)
@@ -86,6 +90,8 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    !
    call elemental_collision_alloc(YPP_scatt,NG=1,TITLE="BSE") 
    !
+   Y_overlap=cZERO
+   !
    do ib1=1,DB_nb
      do ib2=1,DB_nb
        !
@@ -107,9 +113,66 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    !
    ! Eq. 6 notes Fulvio
    ! PHASES_MATRIX= (QE_overlap)^-1 * Y_overlap
+   !
+   ! option a)
    M_tmp=cmplx(DB_Ovlp(:,:,ik_db),kind=SP)
-   call SERIAL_inversion(DB_nb,M_tmp,det_tmp,.false.)
+   call SERIAL_inversion(DB_nb,M_tmp,det_tmp,.true.)
+   !
+   ! option b) (QE_overlap)^-1=(QE_overlap)^dag
+   !det_tmp=cZERO
+   !M_tmp=hermitian(cmplx(DB_Ovlp(:,:,ik_db),kind=SP))
+   !
    PHASES_MATRIX=matmul(M_tmp,Y_overlap)
+   !
+   ! DEBUG <
+   if (l_GKKP_debug) then
+     write(*,*) "O_Y, O_QE and U at k ",ik_bz
+     write(*,*) "Y OVERLAP MATRIX "
+     do ib1=1,DB_nb
+       write(*,*) abs(Y_overlap(ib1,:))
+     enddo
+     Ovlp_trace=0._SP
+     do ib1=1,DB_nb
+       do ib2=1,DB_nb
+         Ovlp_trace(ib1)=Ovlp_trace(ib1)+abs(Y_overlap(ib1,ib2))**2
+       enddo
+     enddo
+     write(*,*) "Y OVERLAP TRACE ",Ovlp_trace
+     write(*,*) ""
+     !
+     write(*,*) "QE OVERLAP MATRIX"
+     do ib1=1,DB_nb
+       write(*,*) real(abs(DB_Ovlp(ib1,:,ik_db)),kind=SP)
+     enddo
+     Ovlp_trace=0._SP
+     do ib1=1,DB_nb
+       do ib2=1,DB_nb
+         Ovlp_trace(ib1)=Ovlp_trace(ib1)+real(abs(DB_Ovlp(ib1,ib2,ik_db)),kind=SP)**2
+       enddo
+     enddo
+     write(*,*) "QE OVERLAP TRACE ",Ovlp_trace
+     write(*,*) ""
+     !
+     write(*,*) "QE OVERLAP inverted (det)",det_tmp
+     do ib1=1,DB_nb
+       write(*,*) abs(M_tmp(ib1,:))
+     enddo
+     Ovlp_trace=0._SP
+     do ib1=1,DB_nb
+       do ib2=1,DB_nb
+         Ovlp_trace(ib1)=Ovlp_trace(ib1)+real(abs(DB_Ovlp(ib1,ib2,ik_db)),kind=SP)**2
+       enddo
+     enddo
+     write(*,*) "QE OVERLAP inverted TRACE ",Ovlp_trace
+     write(*,*) ""
+     !
+     write(*,*) "PHASES MATRIX "
+     do ib1=1,DB_nb
+       write(*,*) abs(PHASES_MATRIX(ib1,:))
+     enddo
+     write(*,*) ""
+   endif
+   ! DEBUG >
    !
    ! Eq. 8 notes Fulvio
    ! U = (PHASES_MATRIX^dag)^-1
@@ -121,5 +184,9 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    enddo
    !
  enddo
+ !
+ ! DEBUG <
+ if (l_GKKP_debug) write(*,*) ""
+ ! DEBUG >
  !
 end subroutine

@@ -37,7 +37,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
+&                        GF_is_causal,QP_G_amplitude_integral,use_GreenF_to_eval_QP,&
 &                        l_GW_terminator,QP_G_info
  use parser_m,      ONLY:parser
 #if defined _ELPH
@@ -462,7 +462,7 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !
   ! Check if qp-indexes are continous for SC-GW
   !  
-  use QP_m,          ONLY:QP_t,l_update_W
+  use QP_m,          ONLY:QP_t
   use electrons,     ONLY:n_sp_pol,levels
 #include<memory.h>
   !
@@ -481,17 +481,9 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   if(any(QP_state(lw_bnd:qp%nb,:).eqv..FALSE.).or.qp%nk/=en%nk) &
       & call error("Not continous QP-indexes not suppoerted in self-consistent GW")
   !
-  if(l_update_W.and.(Xen%nb/=en%nb.or.Xen%nk/=en%nk)) then
-    call error("Different number of k-points/bands in G and X not supported in SC-GW")
-  endif
-  !
   if(.not.allocated(en%Eo)) then
     YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
     en%Eo=en%E            
-  endif
-  if(.not.allocated(Xen%Eo).and.l_update_W) then
-    YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
-    Xen%Eo=Xen%E            
   endif
   !
 end subroutine check_qp_states

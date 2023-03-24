@@ -25,10 +25,12 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  !
  use pars,                ONLY:SP,DP,cZERO
  use R_lattice,           ONLY:bz_samp,qindx_X,nkibz
- use wave_func,           ONLY:WF
+ use wave_func,           ONLY:WF,wf_ng
+ use wrapper,             ONLY:Vstar_dot_V
  use electrons,           ONLY:n_bands,n_sp_pol
  use interfaces,          ONLY:WF_load,WF_free
  use matrix_operate,      ONLY:hermitian
+ use FFT_m,               ONLY:fft_size
  use parallel_m,          ONLY:PAR_IND_WF_b_and_k,PP_indexes_reset
  use parallel_int,        ONLY:PARALLEL_WF_distribute
  use ELPH,                ONLY:elph_use_q_grid,l_GKKP_debug
@@ -47,7 +49,8 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
  complex(SP) :: PHASES_MATRIX(DB_nb,DB_nb),M_tmp(DB_nb,DB_nb)
  complex(SP) :: Y_overlap(DB_nb,DB_nb),det_tmp
  real(SP)    :: Ovlp_trace(DB_nb)
- integer     :: ik_DB,iq,ik,ikpq,ik_bz,ikpq_bz,isymm1,isymm2,ib1,ib2,i_sp_pol,i_l,iGo
+ integer     :: ik_DB,iq,ik,ikpq,ik_bz,ikpq_bz,isymm1,isymm2,ib1,ib2, &
+                i_sp_pol,i_l,iGo,i_wf1,i_wf2
  logical     :: l_invert,l_dagger
  !
  l_invert=.false.
@@ -90,7 +93,15 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    PAR_IND_WF_b_and_k%element_2d(:,ikpq)=.true.
    !
    call PARALLEL_WF_distribute(B_and_K_index=PAR_IND_WF_b_and_k,CLEAN_UP=.TRUE.)
-   call WF_load(WF,1,iGo,(/1,DB_nb/),(/1,nkibz/),(/i_sp_pol,i_sp_pol/),title='Fix GKKP phases',quiet=.true.)
+   call WF_load(WF,1,iGo,(/1,DB_nb/),(/1,nkibz/),(/i_sp_pol,i_sp_pol/),&
+                title='Fix GKKP phases',quiet=.true.)
+   !
+   ! DEBUG <
+   ! Alternative, compute explicitely the overlaps
+   ! Implementation does not take into account symmetries and shifts
+   !call WF_load(WF,1,iGo,(/1,DB_nb/),(/1,nkibz/),(/i_sp_pol,i_sp_pol/),&
+   !             space="G",title='Fix GKKP phases',quiet=.true.)
+   ! DEBUG >
    !
    call elemental_collision_alloc(YPP_scatt,NG=1,TITLE="BSE") 
    !
@@ -103,11 +114,21 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
        YPP_scatt%os=(/ib1,ik,  isymm1,i_sp_pol/)
        YPP_scatt%qs=(/iGo,iq,1/)
        !
-       ! rhotw(1)= < b2 k+q | b1 k>
+       ! rhotw(1)= < b2 k+q | e^{-iG0*r} | b1 k>
        call scatter_Bamp(YPP_scatt)
        !
        ! Y_overlap= < b2 k+q | b1 k>
        Y_overlap(ib2,ib1)=YPP_scatt%rhotw(1)
+       !
+       ! DEBUG <
+       ! Alternative, compute explicitely the overlaps
+       ! Implementation does not take into account symmetries and shifts
+       !i_wf2=WF%index(ib2,ikpq,i_sp_pol)
+       !i_wf1=WF%index(ib1,ik,  i_sp_pol)
+       !!
+       !Y_overlap(ib2,ib1)=Vstar_dot_V(wf_ng,WF%c(1:wf_ng,1,i_wf2), &
+       !&                                     WF%c(1:wf_ng,1,i_wf1))
+       ! DEBUG >
        !
      enddo
    enddo
@@ -175,7 +196,18 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
      if (l_invert) write(*,*) "QE OVERLAP inverted TRACE ",Ovlp_trace
      if (l_dagger) write(*,*) "QE OVERLAP dagger   TRACE ",Ovlp_trace
      write(*,*) ""
-     !
+   endif
+   ! DEBUG >
+   !
+   ! Eq. 8 notes Fulvio
+   ! U = (PHASES_MATRIX^dag)^-1 = PHASE_MATRIX
+   if (l_invert) then
+     PHASES_MATRIX=hermitian(PHASES_MATRIX)
+     call SERIAL_inversion(DB_nb,PHASES_MATRIX,det_tmp,.false.)
+   endif
+   !
+   ! DEBUG <
+   if (l_GKKP_debug) then
      write(*,*) "PHASES MATRIX "
      do ib1=1,DB_nb
        write(*,*) abs(PHASES_MATRIX(ib1,:))
@@ -191,12 +223,7 @@ subroutine ELPH_databases_IO_fix_phases(IDB,kpts)
    endif
    ! DEBUG >
    !
-   ! Eq. 8 notes Fulvio
-   ! U = (PHASES_MATRIX^dag)^-1 = PHASE_MATRIX
-   if (l_invert) then
-     PHASES_MATRIX=hermitian(PHASES_MATRIX)
-     call SERIAL_inversion(DB_nb,PHASES_MATRIX,det_tmp,.false.)
-   endif
+   ! Final rotation of GKKP coefficients
    do i_l=1,DB_ph_modes
      ! Gkkp^y = U Gkkp^QE
      DB_gkkp(:,:,i_l,ik_db)=matmul(cmplx(PHASES_MATRIX,kind=DP),DB_gkkp(:,:,i_l,ik_db))

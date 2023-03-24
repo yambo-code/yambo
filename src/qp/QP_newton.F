@@ -67,6 +67,11 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
+ ! Self-consisnte GW or GWo can be performed using external scripts
+ ! see the wiki 
+ ! https://www.yambo-code.eu/wiki/index.php/Self-consistent_GW_on_eigenvalues_only
+ ! in this subroutine iter is always 0
+ !
  iter=0
  !
  if (l_elel_corr) then

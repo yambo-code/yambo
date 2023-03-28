@@ -3,7 +3,7 @@
 #        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
-# Authors (see AUTHORS file for details): AM, DS
+# Authors (see AUTHORS file for details): AM DS
 # 
 # This file is distributed under the terms of the GNU 
 # General Public License. You can redistribute it and/or 
@@ -21,13 +21,11 @@
 # License along with this program; if not, write to the Free 
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-#
-VERB=0
-#
 # make sure there is no locale setting creating unneeded differences.
 #
 LC_ALL=C
 export LC_ALL
+#
 #
 ARGS=$@;
 source ./sbin/compilation/helper.inc.sh
@@ -35,15 +33,13 @@ source ./sbin/compilation/helper.inc.sh
 # OPTIONS
 source ./sbin/compilation/options.sh
 #
+# Verbosity
+source ./sbin/compilation/verbosity.sh "init"
+#
 # Projects
 source ./sbin/compilation/projects.sh
 #
-if [ "$VERB" == 1 ] ; then
- echo "cdir is $cdir"
- echo "target is $target"
- echo "lib is $lib"
- echo "goal is $goal"
-fi
+source ./sbin/compilation/verbosity.sh "options"
 #
 if [ "$global" == "yes" ]  ; then
  source ./sbin/compilation/global_conf_check.sh
@@ -56,31 +52,36 @@ if [ "$target" == "$goal" ] ; then
  fi
 fi
 #
+# IO(avoid)path
+#
+if [ "$IO_dir" == "io_serial"   ] ; then IO_no_dir="io_parallel"; fi
+if [ "$IO_dir" == "io_parallel" ] ; then IO_no_dir="io_serial"; fi
+#
 # Check what has to be done
 if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directories.list ]] ; then 
  dirs_to_check=`cat $compdir/config/stamps_and_lists/active_directories.list`
  for dir in $dirs_to_check
  do
   if [[ "$dir" == "./$cdir" ]]; then
+   #
+   # Global logicals
+   #
+   DIR_saved=""
+   DIR_restored=""
    DIR_is_to_recompile=0
-   FOLDER_OK=0
    if [ ! "$mode" == "fast" ] ; then
-     source ./sbin/compilation/check_updated_locks.sh
+    source ./sbin/compilation/verbosity.sh "helper.sh: call check_update_locks.sh"
+    source ./sbin/compilation/check_updated_locks.sh
    fi
+   source ./sbin/compilation/verbosity.sh "helper.sh: call check_update_sources.sh"
    source ./sbin/compilation/check_updated_sources.sh
    if [ "$DIR_is_to_recompile" == 1 ] ; then
-     if [ $VERB = 1 ] ; then echo "$dir is to be recompiled $goal, $target" ; fi
+     source ./sbin/compilation/verbosity.sh "helper.sh: locks force $dir to be recompiled"
      source ./sbin/compilation/stamp_remove.sh "goal"
      source ./sbin/compilation/stamp_remove.sh "target.a"
      source ./sbin/compilation/stamp_remove.sh "exe"
-   fi
-   # The driver library always needs to be recompiled since it is not copied in the save folders
-   # due to the name which depends on the exectuable. This causes the exe to be relinked.
-   # Without I could avoid to remove the "exe" stamp.
-   # However in such case I should remove somehow the copiling stamp.
-   if [[ "$dir" == *"yambo/Ydriver"* ]] && [ "$FOLDER_OK" == 0 ]; then
-     source ./sbin/compilation/stamp_remove.sh "target.a"
-     source ./sbin/compilation/stamp_remove.sh "exe"
+   else
+     source ./sbin/compilation/verbosity.sh "helper.sh: $dir must NOT to be recompiled"
    fi
   fi
  done
@@ -102,7 +103,10 @@ if [ "$dep" == "yes" ] ; then
 fi
 #
 # CHECK
-if [ ! -f $cdir/$ofile ]; then exit 0; fi
+if [ ! -f $cdir/$ofile ]; then 
+ source ./sbin/compilation/verbosity.sh "WARNING helper.sh: $cdir/$ofile is not there. Exiting"
+ exit 0 
+fi
 #
 # CLEAN
 if [ -f $cdir/Makefile ] ; then rm -f $cdir/Makefile ;  fi
@@ -120,11 +124,6 @@ do
  touch $cdir/${flag}.lock
 done
 #
-if [ "$VERB" == 1 ] ; then
- echo "libs are $libs"
- echo "precomp flags are $precomp_flags"
-fi
-#
 # Makefile (I): variables
 cat <<EOF > $cdir/dyn_variables.mk
 compdir =$compdir
@@ -134,6 +133,7 @@ wdir    =$cdir
 EOF
 #
 # Makefile (II): OBJECTS list
+source ./sbin/compilation/verbosity.sh "helper.sh. objects.mk=$cpp $cppflags $precomp_flags -D_$DTARG $cdir/objects.c"
 cp $cdir/.objects $cdir/objects.c
 DTARG=`echo $target | sed "s/\.a//" | sed "s/\-//"`
 $cpp $cppflags $precomp_flags -D_$DTARG $cdir/objects.c  > $cdir/objects.mk

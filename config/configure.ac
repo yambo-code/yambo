@@ -41,7 +41,7 @@ AC_CONFIG_SRCDIR([driver/yambo.F])
 #
 m4_include([config/m4/yambo_remote_compilation_setup.m4])
 m4_include([config/m4/yambo_specific.m4])
-m4_include([config/m4/ydriver.m4])
+m4_include([config/m4/yambo_driver.m4])
 # 
 #  General
 #
@@ -63,9 +63,6 @@ m4_include([config/m4/acx_IO_wrap_up.m4])
 #
 m4_include([config/m4/acx_report.m4])
 # ============================================================================
-# Echo
-# AC_PROG_ECHO # This is reported as obsolete
-# ============================================================================
 # Current branch
 ACX_BRANCH
 #
@@ -77,7 +74,6 @@ AC_C_CONST
 AC_C_INLINE
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-# AC_FUNC_SETVBUF_REVERSE # This is reported as obsolete
 AC_FUNC_STAT
 AC_PROG_MAKE_SET
 # ============================================================================
@@ -304,9 +300,7 @@ AC_CONFIG_FILES([
  config/setup config/mk/global/defs.mk config/report config/msg_ydb
  src/wf_and_fft/sgfft.F src/tools/.objects  
  config/mk/local/defs.mk config/mk/defs.mk sbin/compilation/helper.inc.sh
- include/branch.inc include/driver/editor.h 
- lib/archive/git.list
-])
+ include/branch.inc include/driver/editor.h lib/archive/git.list ])
 #
 AC_OUTPUT
 #

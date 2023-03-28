@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _PHEL
 integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
@@ -138,4 +137,3 @@ integer function io_PH(ID)
  call io_disconnect(ID=ID)
  !
 end function
-#endif

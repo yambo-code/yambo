@@ -89,7 +89,9 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
  !
  call parser('ConstElph',l_const_elph)
  call parser('AbsElph',  l_abs_elph)
+ if(l_abs_elph) call warning('Absolute value of electron-phonon coupling ')
  call parser('AbsExc',   l_abs_exc)
+ if(l_abs_exc)  call warning('Absolute value of exciton-phonon coupling  ') 
  call parser('ElectronContributionOnly', l_elec_only)
  call parser('HoleContributionOnly', l_hole_only)
  !

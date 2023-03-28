@@ -82,7 +82,6 @@ module ELPH
    ! dVr/c(Nmodes,Nb,Nb,Nk,Nq)
    real(SP),    allocatable :: dVr(:,:,:,:,:)
    complex(SP), allocatable :: dVc(:,:,:,:,:)
-   complex(SP), allocatable :: Ovlp(:,:,:,:)
    !
    ! Phonon assisted energy/occupation levels
    type(levels),allocatable :: E_kpq(:)

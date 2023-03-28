@@ -128,7 +128,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-   io_err=io_QINDX(Xk,q,ID)
+   io_err=io_QINDX(Xk,q,ID,'minus_q')
    !
    YAMBO_ALLOC(qindx_B_max_CPU,(PAR_K_scheme%COM_ibz_INDEX%n_CPU))
    qindx_B_max_CPU=0

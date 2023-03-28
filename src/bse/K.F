@@ -195,9 +195,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if( l_BSE_kernel_complete ) return
  !
- io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
- if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
+ if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
+   io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q")
+   if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
+ endif
  !
  ! Screened interaction
  !======================

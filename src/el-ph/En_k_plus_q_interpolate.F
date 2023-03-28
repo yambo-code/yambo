@@ -26,7 +26,7 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  use pars,                ONLY:pi,rZERO
  use electrons,           ONLY:levels,n_sp_pol,E_reset,spin_occ
  use R_lattice,           ONLY:bz_samp,bz_samp_reset
- use ELPH,                ONLY:elph_nb,ID_E_kpq,GKKP,FineGd_E_kpq_alloc
+ use ELPH,                ONLY:elph_bands,ID_E_kpq,GKKP,FineGd_E_kpq_alloc,Efermi_DbGd
  use interpolate,         ONLY:INTERPOLATION_BZ
  !
 #include<memory.h>
@@ -36,8 +36,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  !
  ! Work space
  !
- integer               :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
- integer               :: nq_around
+ integer       :: iqbz,ik,n_k_plus_q,ic,iq_fine,iq_idx
+ integer       :: nq_around
  type(bz_samp) :: k_plus_q
  type(levels)  :: E_kpq
  !
@@ -80,15 +80,23 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  YAMBO_ALLOC(E_kpq%E,(E%nb,n_k_plus_q, n_sp_pol))
  call INTERPOLATION_BZ(K=k_plus_q,NK=n_k_plus_q,ID=ID_E_kpq,E=E_kpq)
  !
- ! Calculate the new occupations (only for semiconductors) 
+ ! Calculate the new occupations 
  ! ==============================
- ! This part has to be generilized to metals, taking into account 
- ! the fact the the Fermi energy can change due to the presence of E(k+q) states
- ! For the moment I set all valence occupations to 1(or 2 without spin)
+ ! For semiconductors I do not recalculate occupations
+ ! I supposed fine and course grid have the same metallicity
+ ! and I set all valence occupations to 1(or 2 without spin)
  !
  YAMBO_ALLOC(E_kpq%f,(E%nb,n_k_plus_q, n_sp_pol))
- E_kpq%f(1:E%nbf(1),:,1)=spin_occ
- E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
+ if(all(E%nbm==E%nbf)) then
+   E_kpq%f(1:E%nbf(1),:,1) =spin_occ
+   E_kpq%f(E%nbf(1)+1:,:,1)=rZERO
+ else 
+   !
+   ! For metals occuations are recalculated
+   ! using the Fine-grid fermi energy
+   !
+   call f_build_ext(E_kpq,Efermi_DbGd) ! Interpolate levels are already aligned
+ endif
  !
  ! Store E(k+q) energies in the GKKP
  ! ==========================================
@@ -100,8 +108,8 @@ subroutine En_k_plus_q_interpolate(k,q,E,iqbz)
  do ik=1,k%nibz
   do iq_fine=q%FGbz%k_range(iqbz,1)+1,q%FGbz%k_range(iqbz,2),1
     iq_idx=iq_fine-q%FGbz%k_range(iqbz,1)
-    GKKP%E_dg_kpq(iqbz)%E_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%E(:elph_nb,ic,:)
-    GKKP%E_dg_kpq(iqbz)%f_kpq(:elph_nb,ik,:,iq_idx)=E_kpq%f(:elph_nb,ic,:)
+    GKKP%E_dg_kpq(iqbz)%E_kpq(elph_bands(1):elph_bands(2),ik,:,iq_idx)=E_kpq%E(elph_bands(1):elph_bands(2),ic,:)
+    GKKP%E_dg_kpq(iqbz)%f_kpq(elph_bands(1):elph_bands(2),ik,:,iq_idx)=E_kpq%f(elph_bands(1):elph_bands(2),ic,:)
     ic=ic+1
    enddo
  enddo

@@ -136,7 +136,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  ! kindx
  !
  call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1/),MODE=DUMP,ID=io_ID)
- io_QINDX_err=io_QINDX(k,q,io_ID) 
+ io_QINDX_err=io_QINDX(k,q,io_ID,'minus_q') 
  if (io_QINDX_err==0) call initactivate(-1,'IkSigLim IkXLim')
  !
  ! If the GROT/KINDX DBs are not present, reset to setup run

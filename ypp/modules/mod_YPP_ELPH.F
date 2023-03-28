@@ -123,7 +123,7 @@ module YPP_ELPH
  !
  contains
    !
-   subroutine ELPH_DB_alloc()  
+   subroutine ELPH_DB_alloc()
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
      DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))

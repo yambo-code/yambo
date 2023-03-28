@@ -28,7 +28,8 @@ subroutine ELPH_double_grid(k,E,q)
  use R_lattice,           ONLY:bz_samp,bz_samp_reset,BZ_FineGd_mode,nkibz,bz_samp_FineGd_reset
  use YPP_ELPH,            ONLY:ph_modes_file,ph_freqs_file
  use stderr,              ONLY:STRING_same,intc
- use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,elph_nb,PH_freqs,elph_nQ,EkplusQ_mode, &
+ use ELPH,                ONLY:PH_freqs_sq,elph_use_q_grid,ph_modes,GKKP,&
+&                              elph_bands,PH_freqs,elph_nQ,EkplusQ_mode, &
 &                              elph_grids_are_expanded         
  use com,                 ONLY:msg
  use parser_m,            ONLY:parser
@@ -94,7 +95,8 @@ subroutine ELPH_double_grid(k,E,q)
  !
  if(.not.elph_use_q_grid) call error('Random q-grid not implemented yet ')
  !
- if(elph_nb/=E%nb) call warning('Nypp/el-ph/ELPH_double_grid.Fumber of bands in the GKKP different from the total number of bands!')
+ if(elph_bands(1)/=1 .or. elph_bands(2)/=E%nb) &
+& call warning('ypp/el-ph/ELPH_double_grid.F: umber of bands in the GKKP different from the total number of bands')
  !
  call E_reset(PH_freqs)
  PH_freqs%nb=ph_modes
@@ -221,7 +223,7 @@ subroutine ELPH_double_grid(k,E,q)
    !
  endif
  !
- if(any(E%nbm/=E%nbf)) call error("ELPH_double_grid: This code for the moment works only for semiconductors/insulators")
+ if(any(E%nbm/=E%nbf)) call warning("Metallic system")
  !
  ! Final I/O
  !===========

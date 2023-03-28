@@ -27,7 +27,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_C
  use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
- use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
+ use ELPH,                ONLY:elph_bands,GKKP_me,PH_qpt,l_GKKP_debug
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
  use parser_m,            ONLY:parser
  !
@@ -49,9 +49,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  !
  ! Debug: print kpt/qpt coordinates for plotting
  integer :: iaux
- logical :: l_debug
- call parser('GKKPDebug',l_debug)
- if (l_debug) then
+ if (l_GKKP_debug) then
    open(1, file='K_grid_bz.dat')
    open(2, file='Q_grid_bz.dat')
    open(3, file='PH_Q_grid_bz.dat')
@@ -91,7 +89,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      do is=1,nsmall
        ik_bz=DB_ph_K_sym_table(ik,sop_inv(small(is)))
        if (local_K_found(ik_bz)) cycle
-       if (l_debug) write (*,*) "Expanding k ",ik_bz," from ",ik
+       if (l_GKKP_debug) write (*,*) "Expanding k ",ik_bz," from ",ik
        GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik,1)
        if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik,1)
        GKKP%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq)%E(:,ik,1)
@@ -112,7 +110,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
- if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q") 
  !
  do ik_bz=1,k%nbz
    !
@@ -174,16 +172,16 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    endif
    !
-   do ib=1,elph_nb
-     do ob=1,elph_nb
+   do ib=elph_bands(1),elph_bands(2)
+     do ob=elph_bands(1),elph_bands(2)
        if (l_bands_reverted) then
          GKKP_expanded%dVc(:,ob,ib,ik_bz,1)=conjg(GKKP%dVc(:,ib,ob,ik_bz_gkkp,1))
        else
          GKKP_expanded%dVc(:,ib,ob,ik_bz,1)=GKKP%dVc(:,ib,ob,ik_bz_gkkp,1)
        endif
-       !
      enddo
    enddo
+   !
  enddo
  !
  ! For the energies E(k+q)

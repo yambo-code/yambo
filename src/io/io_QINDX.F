@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function io_QINDX(Xk,q,io_db)
+integer function io_QINDX(Xk,q,io_db,convention)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:SP,IP,schlen
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
@@ -38,16 +38,23 @@ integer function io_QINDX(Xk,q,io_db)
  !
 #include<memory.h>
  !
- type(bz_samp)::q,Xk
- integer      ::io_db,i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
+ type(bz_samp), intent(inout) :: q
+ type(bz_samp), intent(in)    :: Xk
+ integer      , intent(in)    :: io_db
+ character(*) , intent(in)    :: convention
  !
  ! Work Space
  !
- integer      :: ioScatt,id_frag
+ integer    :: ioScatt,id_frag
+ integer    :: i3,i2,i2_dn,i2_up,i2_mem,i2_step,IO_size
+ character(schlen) :: filename
  !
  call timing('io_QINDX',OPR='start')
  !
- io_QINDX=io_connect(desc='kindx',type=1,ID=io_db)
+ if(trim(convention)=="minus_q" ) filename="kindx"     ! standard yambo convention
+ if(trim(convention)=="plus_q"  ) filename="kindx_pq"  ! QE convention
+ !
+ io_QINDX=io_connect(desc=trim(filename),type=1,ID=io_db)
  if (io_QINDX/=0) goto 1
  !
  if (any((/io_sec(io_db,:)==1/))) then
@@ -128,7 +135,7 @@ integer function io_QINDX(Xk,q,io_db)
      !
      ! Fragmentation (1): eXchange indx
      !
-     io_extension(io_db)='kindx'
+     io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=1)
      call def_variable_bulk(id_frag,"Qindx",1,shape(qindx_X),IP+100)
      call  io_variable_bulk(id_frag,1,I3=qindx_X)
@@ -143,7 +150,7 @@ integer function io_QINDX(Xk,q,io_db)
      !
      ! Fragmentation (2): Self-Energy indx
      !
-     io_extension(io_db)='kindx'
+     io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=2)
      call def_variable_bulk(id_frag,"Sindx",2,shape(qindx_S),IP+100)
      call  io_variable_bulk(id_frag,2,I3=qindx_S)
@@ -158,7 +165,7 @@ integer function io_QINDX(Xk,q,io_db)
      !
      ! Fragmentation (3): BSE indx
      !
-     io_extension(io_db)='kindx'
+     io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=3)
      call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
      ! 46341 is the sqare root of the maximum integer 2147483647
@@ -198,7 +205,7 @@ integer function io_QINDX(Xk,q,io_db)
      !
      ! Fragmentation (4): COLL indx
      !
-     io_extension(io_db)='kindx'
+     io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=4)
      call def_variable_bulk(id_frag,"Cindx",4,shape(qindx_C),IP+100)
      call  io_variable_bulk(id_frag,4,I3=qindx_C)
@@ -212,9 +219,9 @@ integer function io_QINDX(Xk,q,io_db)
  !
 end function io_QINDX
 !
-integer function qindx_B_init(ID,ID_frag)
+integer function qindx_B_init(ID,ID_frag,convention)
  !
- use pars,       ONLY:IP
+ use pars,       ONLY:IP,schlen
  use R_lattice,  ONLY:nXkbz
  use IO_m,       ONLY:OP_RD,RD,io_status
  use IO_int,     ONLY:io_control,io_connect,def_variable_bulk,io_fragment
@@ -222,9 +229,15 @@ integer function qindx_B_init(ID,ID_frag)
  implicit none
  !
  integer  :: ID,ID_frag
+ character(*) , intent(in)    :: convention
+ !
+ character(schlen) :: filename
+ !
+ if(trim(convention)=="minus_q" ) filename="kindx"     ! standard yambo convention
+ if(trim(convention)=="plus_q"  ) filename="kindx_pq"  ! QE convention
  !
  call io_control(ACTION=OP_RD,ID=ID)
- qindx_B_init=io_connect(desc='kindx',type=1,ID=ID)
+ qindx_B_init=io_connect(desc=trim(filename),type=1,ID=ID)
  !
  call io_fragment(ID,ID_frag,i_fragment=3)
  call def_variable_bulk(ID_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')

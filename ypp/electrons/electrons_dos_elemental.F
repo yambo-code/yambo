@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_the_DbGd,QUIET,FORCE_occ)
+subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_the_DbGd,QUIET,FORCE_occ)
  !
  use pars,           ONLY:SP,rZERO
  use electrons,      ONLY:levels,n_spin
@@ -39,15 +39,17 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_th
  !
  type(bz_samp),     intent(in) :: k
  type(levels),      intent(in) :: E
- integer,           intent(in) :: bands(2),ID_spin,ID_pdos
+ integer,           intent(in) :: bands(2)
  real(SP),          intent(in) :: dos_E(DOS_E_steps)
  real(SP),          intent(out):: el_dos(DOS_E_steps,n_spin)
+ real(SP),pointer, optional, intent(in):: spin_fac(:,:,:)
+ real(SP),pointer, optional, intent(in):: pdos_fac(:,:,:)
  logical, optional, intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
  !
  ! Work Space
  ! 
  integer               :: i_E
- logical               :: LIVE_t_,USE_occ
+ logical               :: LIVE_t_,USE_occ,l_spin,l_pdos
  type(PP_indexes)      :: px
  !
  ! Use occupations?
@@ -62,6 +64,12 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_th
  LIVE_t_=.TRUE.
  if (present(QUIET)) LIVE_t_=.not.QUIET
  !
+ l_spin=.false.
+ if (present(spin_fac)) l_spin=associated(spin_fac)
+ !
+ l_pdos=.false.
+ if (present(pdos_fac)) l_pdos=associated(pdos_fac)
+ !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/DOS_E_steps/))
  !
@@ -74,22 +82,9 @@ subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_th
    !
    if (.not.px%element_1D(i_E)) cycle
    !
-   if (ID_spin==0.and.ID_pdos==0) then
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
-&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ) 
-   else if (ID_spin>0.and.ID_pdos==0) then
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
+   call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
 &                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
-&                              WF_fac=INTERP_obj(ID_spin)%INTERP) 
-   else if (ID_spin==0.and.ID_pdos>0) then
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
-&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
-&                              PDOS_fac=INTERP_obj(ID_pdos)%INTERP) 
-   else if (ID_spin>0.and.ID_pdos>0) then
-     call el_density_of_states(k,E,dos_E(i_E),DOS_broadening,bands,el_dos(i_E,:),  &             
-&                              USE_W=.true.,USE_the_DbGd=USE_the_DbGd,USE_occupations=USE_occ,&
-&                              WF_fac=INTERP_obj(ID_spin)%INTERP,PDOS_fac=INTERP_obj(ID_pdos)%INTERP) 
-   endif
+&                              WF_fac=spin_fac,PDOS_fac=pdos_fac) 
    !
    if (LIVE_t_) call live_timing(steps=1)
    !

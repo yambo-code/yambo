@@ -37,9 +37,9 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  use LIVE_t,        ONLY:live_timing
  use parallel_m,    ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int,  ONLY:PARALLEL_index
- use ELPH,          ONLY:FAN_deltaE_treshold
+ use ELPH,          ONLY:FAN_deltaE_treshold,elph_branches
  use functions,     ONLY:Lorentzian_func,boltzman_f,bose_f
- use stderr,        ONLY:STRING_same
+ use stderr,        ONLY:STRING_same,intc
  !
 #include<memory.h> 
  !
@@ -156,6 +156,10 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
  !
  !  ph_ass_dos(w) = \sum_{Q,l,n} Bose(E^exc_{l,Q}, T) * Bose(w_{n,q}, T) \delta { E^exc_{l,Q} - w_{n,q} - w } \delta {Q,q}
  !
+ if(elph_branches(1)<=0) elph_branches(1)=1
+ if(elph_branches(1)>ph_modes) call error('Max number of phonon modes '//trim(intc(ph_modes)))
+ if(elph_branches(2)==-1) elph_branches(2)=ph_modes
+ !
  do i_idx=1,n_full_q
    !  
    i_q=iq_indx(i_idx)
@@ -166,7 +170,7 @@ subroutine excitons_ph_ass_dos(k,Xk,en,Xen,q_exc)
      !
      exc_OCC=exc_OCC+Boltz_F_exc*q_matdyn%weights(i_q)
      !
-     do i_l=1,ph_modes
+     do i_l=elph_branches(1),elph_branches(2)
        !
        if(ph_freqs(i_l,i_q)<FAN_deltaE_treshold) cycle
        !

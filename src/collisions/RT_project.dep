@@ -1,3 +1,4 @@
+ COLLISIONS_compose_rt.o
  COLLISIONS_eval.o
  COLLISIONS_load.o
 

@@ -32,12 +32,12 @@
 !! @param[in]       elph_gkkp_sq        electron-phonon matrix elements squares <ib,k | \partial V /\partial u_il | ob, k-q>
 !!
 !! @param[out]      gsqF_fan            Fan self-energy, real-part
-!! @param[out]      gsqF_dw             Debye-Waller sefl-energy
+!! @param[out]      gsqF_dw             Debye-Waller self-energy
 !! @param[out]      gsqF_ca_corr        Additional term in Fan self-energy for metals [A. Marini]
 !! @param[out]      gsqF_life_bose      Imaginary part Fan self-energy Bose part
 !! @param[out]      gsqF_life_f         Imaginary part Fan self-energy Fermi part
 !
-subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
+subroutine ELPH_Sigma_c_engine(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_W,q_weight)
  !
  use pars,          ONLY:SP,pi,cZERO
  use electrons,     ONLY:levels,spin_occ
@@ -45,10 +45,11 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  use ELPH,          ONLY:gsqF_fan,gsqF_dw,gsqF_ca_corr,gsqF_life_bose,gsqF_life_f,GKKP,&
 &                        gsqF_energy_steps,gsqF_dw,eval_G_using_KK,elph_use_q_grid,PH_freqs,&
 &                        FAN_deltaE_treshold,DW_deltaE_treshold,PH_freqs_sq,use_PH_DbGd, &
-&                        elph_grids_are_expanded
+&                        elph_grids_are_expanded,Efermi_DbGd
  use QP_m,          ONLY:QP_table,QP_time_order_sign
  use R_lattice,     ONLY:bz_samp
- use functions,     ONLY:Fermi_fnc_derivative
+ use D_lattice,     ONLY:Tel
+ use functions,     ONLY:Fermi_fnc_derivative,Fermi_fnc
  !
 #include<memory.h>
  !
@@ -70,6 +71,7 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  real(SP) :: delta_E_at_gamma,f_occ,E_kpq
  real(SP) :: one_minus_2f_occ,gsqF_damping,ph_E
  real(SP) :: weight_dbg,DW_weight
+ real(SP), external :: get_ph_E_DbGd
  !
  logical  :: eval_DW
  !
@@ -97,6 +99,11 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
  !
  ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
  !
+ ! If there is the double-grid I read the gamma phonons from there
+ ! because they include the LO-TO splitting and the acustic sum rule
+ !
+ if(use_PH_DbGd.and.iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
+ !
  ! Skip modes @ Gamma (1st point is always gamma, either with random
  ! or uniform grids, as it is needed to evaluate the DW factor) 
  !
@@ -111,6 +118,11 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    E_kpq=GKKP%E_kpq(iq_bz)%E(ob,ik_bz,1)
    f_occ=GKKP%E_kpq(iq_bz)%f(ob,ik_bz,1)/spin_occ
  endif
+ !
+ ! If use Double-Grid occupation can be different
+ ! due to the change in the Fermi energy, I read them from the DbGrid
+ !
+ if(use_PH_DbGd) f_occ=Fermi_fnc(E_kpq-Efermi_DbGd,Tel)
  !
  ! Frequency Loop
  !
@@ -199,11 +211,14 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    do iq_fg=q%FGbz%k_range(iq_bz,1)+1,q%FGbz%k_range(iq_bz,2),1
      !
      iq_idx=iq_fg-q%FGbz%k_range(iq_bz,1)
-     iE_fg =q%FGbz%E_map(iq_fg)                             ! Map w(q) from BZ to IBZ
-     ph_E  =PH_freqs%FG%E(il,iE_fg,1)                       ! w(q_db) phonon energy in the D-Grid
+     ph_E  =get_ph_E_DbGd(il,iq_fg,iq_bz,q)                     ! w(q_db) phonon energy in the D-Grid
      !
      E_kpq       =GKKP%E_dg_kpq(iq_bz)%E_kpq(ob,ik,1,iq_idx)    ! E(k+q_dg)  q_db in the D-Grid
      f_occ       =GKKP%E_dg_kpq(iq_bz)%f_kpq(ob,ik,1,iq_idx)/spin_occ
+     ! DEBUG>
+     ! E_kpq=en%E(ob,ok,1)
+     ! f_occ=en%f(ob,ok,1)/spin_occ
+     ! DEBUG<
      !
      do iw=1,gsqF_energy_steps
        ! 
@@ -229,10 +244,14 @@ subroutine ELPH_GreenF(i_qp,ob,ok,iq_bz,iq_ibz,iq_mem,il,elph_gkkp_sq,en,k,q,Sc_
    if (eval_DW) then  
      !      
      ph_E=sqrt(abs(PH_freqs_sq(iq_ibz,il)))
+     if(use_PH_DbGd.and.iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
      !
      do iq_idx=1,GKKP%E_dg_kpq(1)%nq_around  ! Numbere of q-points around Gamma
        !
        delta_E_at_gamma=en%E(ib,ik,1) - GKKP%E_dg_kpq(1)%E_kpq(ob,ik,1,iq_idx)
+       ! DEBUG>
+       ! delta_E_at_gamma=en%E(ib,ik,1)               -en%E(ob,ik,1)
+       ! DEBUG<
        !
        if(abs(delta_E_at_gamma)>DW_deltaE_treshold) then
          gsqF_DEN_DW=gsqF_DEN_DW+1._SP/delta_E_at_gamma/ph_E

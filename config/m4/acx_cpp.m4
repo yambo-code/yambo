@@ -28,6 +28,9 @@ case "${CPP}" in
  *icc* )
    if test -z "$CPPFLAGS"; then CPPFLAGS="-ansi"; fi
    ;;
+ *icx* )
+   if test -z "$CPPFLAGS"; then CPPFLAGS="-ansi"; fi
+   ;;
  *gcc* )
    case "${host}" in
      *86*apple* )

@@ -41,7 +41,7 @@ module YPP_interfaces
    !
 #endif
    !
-   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_the_DbGd,QUIET,FORCE_occ)
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels,n_spin
      use R_lattice,      ONLY:bz_samp 
@@ -50,9 +50,11 @@ module YPP_interfaces
      implicit none
      type(bz_samp),    intent(in) :: k
      type(levels),     intent(in) :: E
-     integer,          intent(in) :: bands(2),ID_spin,ID_pdos
+     integer,          intent(in) :: bands(2)
      real(SP),         intent(in) :: dos_E(DOS_E_steps)
      real(SP),         intent(out):: el_dos(DOS_E_steps,n_spin)
+     real(SP),pointer, optional, intent(in):: spin_fac(:,:,:)
+     real(SP),pointer, optional, intent(in):: pdos_fac(:,:,:)
      logical, optional,intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
    end subroutine electrons_dos_elemental
    !

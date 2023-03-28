@@ -131,7 +131,6 @@ module ELPH
  ! Databases
  logical :: l_GKKP_hosts_bare_dV=.FALSE.
  logical :: l_GKKP_hosts_DW     =.TRUE.
- logical :: l_GKKP_hosts_Ovlp   =.FALSE.
  logical :: l_GKKP_DB_exists    =.FALSE.
  logical :: l_GKKP_expanded_DB_exists=.FALSE.
  logical :: l_GKKP_debug=.FALSE.

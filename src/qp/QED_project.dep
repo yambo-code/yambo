@@ -4,5 +4,4 @@
  QP_driver.o
  QP_newton.o
  QP_of.o
- objects.o
 

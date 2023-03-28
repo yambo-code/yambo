@@ -24,5 +24,4 @@
  XCo_driver.o
  XCo_local.o
  XCo_report.o
- objects.o
 

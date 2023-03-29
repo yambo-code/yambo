@@ -159,8 +159,8 @@ module interfaces
      integer,       intent(in)  :: DOS_bands(2)
      real(SP),      intent(out) :: dos_value(n_spin)
      logical,  optional, intent(in) :: USE_Eo,USE_W,USE_occupations,USE_the_DbGd
-     real(SP), optional, intent(in) :: WF_fac(:,:,:)
-     real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
+     real(SP), pointer, optional, intent(in) :: WF_fac(:,:,:)
+     real(SP), pointer, optional, intent(in) :: PDOS_fac(:,:,:)
    end subroutine el_density_of_states
    !
 #if defined _SLEPC && !defined _NL
@@ -305,6 +305,15 @@ module interfaces
      type(GKKP_me), optional:: GKKP
      integer,       optional:: Nb(2),Nk_mem,Nm(2),Nq_mem
    end subroutine
+   !
+   function TDDFT_ALDA_R_space(is,os,isp,osp,tddft_wf,mode)
+     use pars,           ONLY:SP
+     use TDDFT,          ONLY:tddft_wf_t
+     complex(SP) :: TDDFT_ALDA_R_space
+     integer,          intent(in)  :: is(4),os(4),isp(4),osp(4)
+     character(3),     intent(in)  :: mode
+     type(tddft_wf_t), target, intent(inout) :: tddft_wf
+   end function TDDFT_ALDA_R_space
    !
  end interface
  !

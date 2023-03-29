@@ -31,7 +31,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,spin,n_spin,n_spinor,n_sp_pol
  use FFT_m,         ONLY:fft_size
- use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
+ use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_R_space
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:G_m_G_maxval,qindx_X,bz_samp,ng_closed,&
 &                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
@@ -54,7 +54,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
- use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc,ALDA_cut_scheme
+ use TDDFT,         ONLY:FXC_K_diagonal,F_xc_gspace,FXC_n_g_corr,io_BS_Fxc, &
+&                        ALDA_cut_scheme,tddft_wf_t
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
  use wave_func,     ONLY:WF,rho_map,rho_map_thresh
@@ -76,6 +77,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Work Space ...
  !
+ type(tddft_wf_t), target  :: tddft_wf
  character(schlen) :: section_title
  character(1)      :: mode_now
  !
@@ -99,7 +101,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP):: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:),rho(:)
  !
- complex(SP),   external ::TDDFT_ALDA_R_space
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
@@ -319,13 +320,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
-   if (trim(ALDA_cut_scheme)=="lower_Gmax") then
-     call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-     call msg('s','[BSE] Fxc components ',BS_n_g_fxc)
-   endif
-   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
    !
    QP_ng_Vxc=BS_n_g_fxc
+   !
+   YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+   YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+   !
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
    YAMBO_ALLOC(V_xc,(fft_size,n_spin))
    V_xc=0._SP
    !
@@ -495,7 +499,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp )
+   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
 #endif
    !
    call OPENMP_update(master_thread)   
@@ -640,7 +644,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
-         if (iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'RES')
+         if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
          if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
@@ -658,7 +662,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
-         if (iHxc==2) H_x=TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,'CPL')
+         if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
          if (BS_cpl_K_corr.and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
@@ -720,6 +724,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if(iHxc==1) call BS_oscillators_free(BS_nT_grps,0)
  !
  if(iHxc==2) then
+   !
+   YAMBO_FREE(tddft_wf%rhotwr1)
+   YAMBO_FREE(tddft_wf%rhotwr2)
+   YAMBO_FREE(tddft_wf%WF_symm1)
+   YAMBO_FREE(tddft_wf%WF_symm2)
    !
    if(rho_map_thresh>0._SP) deallocate(rho_map)
    !

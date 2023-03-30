@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
+logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -33,10 +33,12 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
  logical              :: be_verbose
  character(2)         :: ordering
  complex(SP) ,optional:: eps(nw),eel(nw)
+ logical,     optional:: l_off_diago
  !
  ! Work Space
  !
  integer            :: iw
+ logical            :: l_off_diago_
  complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
  !
  EPS_2_eels=.TRUE.
@@ -64,6 +66,9 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
    !
  endif
  !
+ l_off_diago_=.false.
+ if (present(l_off_diago)) l_off_diago_=l_off_diago
+ !
  ! extend eps to the negative frequencies
  !
  eps_kk         =-1._SP/pi*aimag(eps)
@@ -80,6 +85,7 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
  eps_kk(nw)     =cZERO
  call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
- eel=-1._SP/(eps_extended+1._SP)
+ if(.not.l_off_diago_) eel=-1._SP/(eps_extended+1._SP)
+ if(     l_off_diago_) eel=-1._SP/(eps_extended)
  !
 end function

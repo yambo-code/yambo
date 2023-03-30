@@ -175,9 +175,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (     l_rpa_IP) then
        Alpha(:,2)=Alpha(:,1)
      else
-       if (.not.l_col_cut) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
-       ! Here I assume X_par is small and I use 1/(1+x)~1-x 
-       if (     l_col_cut) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       if (.not.l_0D) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
+       if (     l_0D) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
    endif
    call PP_redux_wait(Alpha(:,2),COMM=PAR_COM_RL_INDEX%COMM)
@@ -234,8 +233,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      ! alpha = -eps_2_alpha X(1,1) / |q|^2    
      !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
      !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     if (      l_col_cut.or.l_0D ) Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
-     if (.not.(l_col_cut.or.l_0D)) Alpha(:,1:2)=(1._SP+EEL(:,1:2))*eps_2_alpha/4._SP/pi
+     if (     l_0D) Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
+     if (.not.l_0D) Alpha(:,1:2)=(1._SP+EEL(:,1:2))*eps_2_alpha/4._SP/pi
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))

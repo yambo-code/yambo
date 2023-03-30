@@ -54,15 +54,6 @@ PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                real_time_hamiltonian real_time_propagation real_time_lifetimes \
                real_time_initialize ph-el real_time_drivers
 
-PJ_MODLIBS    = $(BASIC_LIBS) models interpolate qp_control setup \
-               tddft dipoles pol_function collisions el-ph qp acfdt bse hamiltonian \
-               real_time_control real_time_hamiltonian real_time_propagation real_time_lifetimes \
-               real_time_initialize ph-el real_time_drivers
-PJ_MODLIBS_LD = $(BASIC_LIBS_LD) models interpolate real_time_control qp_control setup \
-               tddft dipoles pol_function collisions el-ph qp acfdt bse hamiltonian \
-               real_time_hamiltonian real_time_propagation real_time_lifetimes \
-               real_time_initialize ph-el real_time_drivers
-
 PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
 PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
 #
@@ -79,13 +70,11 @@ YPP_BASIC_LIBS     = modules interface qp plotting k-points symmetries bits elec
 YPP_LIBS           = $(YPP_BASIC_LIBS) excitons
 YPPPH_LIBS         = $(YPP_BASIC_LIBS) el-ph excitons
 YPPRT_LIBS         = $(YPP_BASIC_LIBS) el-ph real_time excitons
-YPPMOD_LIBS        = $(YPPPH_LIBS) models 
 # .. LD
 YPP_BASIC_LIBS_LD  = $(YPP_BASIC_LIBS)
 YPP_LIBS_LD        = $(YPP_LIBS) 
 YPPPH_LIBS_LD      = $(YPPPH_LIBS)
 YPPRT_LIBS_LD      = $(YPPRT_LIBS)
-YPPMOD_LIBS_LD     = $(YPPMOD_LIBS)
 #
 # YAMBO sources needed by YPP
 #=============================
@@ -101,6 +90,3 @@ YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setu
                      dipoles pol_function collisions el-ph qp bse hamiltonian nloptics 
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function collisions el-ph qp bse hamiltonian nloptics 
-YPPMOD_MAIN_LIBS   = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function collisions el-ph ph-el qp bse
-YPPMOD_MAIN_LIBS_LD= $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function collisions el-ph ph-el qp bse
-

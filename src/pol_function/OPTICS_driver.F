@@ -31,7 +31,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
- use D_lattice,     ONLY:l_0D
+ use D_lattice,     ONLY:l_0D,l_1D,l_2D
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
@@ -58,10 +58,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! Work Space
  !
  integer          :: iw,iq,i_G_shift
+ complex(SP)      :: fac
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
- logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
+ logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps
  !
  integer,external :: OPTICS_select_q_and_G
+ logical,external :: EPS_2_eels_check
  !
  call section('*','Optics')
  !
@@ -135,7 +137,14 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_ALLOC_global("ALLOC",wv)
    !
    ! Check if EELS can be evaluated
-   if (X_do_obs("eel")) l_eels=EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   ! This should not be needed, in G-space I directly obtain the eels
+   if (X_do_obs("eel")) l_eels=EPS_2_eels_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   !if (.not.l_eels) call X_obs_onoff("- eel")
+   !
+   ! in 0D, and in (2D or 1D) at q=0, it is convinient to define alpha as proportional to epsilon
+   !-------
+   l_alpha_from_eps=.false.
+   if ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) l_alpha_from_eps=.true.
    !
    ! OutPut files...
    if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -158,10 +167,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Irredux (Xo) 
    call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
-   ! Without LF eps
-   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*4.0_SP*pi/Q_plus_G_sq_modulus
+   ! Without LF eps and alpha
+   !
+   ! NB: this is the "IP alpha", while the "RPA eps",
+   !     since eps defined here contains the G=0 term of v
+   !     We should discuss how to eventually change this
+   !
+   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/Q_plus_G_sq_modulus
    call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
-   Epsilon_ii(:,1)=1._SP+Alpha(:,1)
+   Epsilon_ii(:,1)=1._SP+Alpha(:,1)*4.0_SP*pi
    !
    ! X Dyson equation solver
    if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
@@ -173,19 +187,24 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (Macroscopic_CPU) then
      !
      if (     l_rpa_IP) then
+       Epsilon_ii(:,2)=Epsilon_ii(:,1)
        Alpha(:,2)=Alpha(:,1)
      else
-       if (.not.l_0D) Alpha(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)-1._SP
-       if (     l_0D) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       ! WARNING: at variance with the IP case, after the call to X_redux,
+       !          X_par now contains the factor 4*pi/bare_qpg**2
+       Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
+       if (     l_alpha_from_eps) Alpha(:,2)= Epsilon_ii(:,2)-1._SP
+       if (.not.l_alpha_from_eps) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
      endif
    endif
-   call PP_redux_wait(Alpha(:,2),COMM=PAR_COM_RL_INDEX%COMM)
+   call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_RL_INDEX%COMM)
+   call PP_redux_wait(Alpha(:,2),     COMM=PAR_COM_RL_INDEX%COMM)
    !
-   Epsilon_ii(:,2)=1._SP+Alpha(:,2)
+   ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+   fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
    !
-   ! I make alpha consistent with the above, IP, definition
-   ! To check if this need to be fixed with i_G_shift/=1
-   if (l_col_cut.or.l_0D) Alpha(:,2)=Alpha(:,2)*bare_qpg(iq,1)**2/q_norm(iq)**2
+   Epsilon_ii(:,2)=(Epsilon_ii(:,2)-1._SP)*fac+1._SP
+   Alpha(:,2)=Alpha(:,2)*fac
    !
    if (l_pf_fxc) then
      call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
@@ -217,10 +236,20 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    enddo
    !
    ! EEL
-   if (X_do_obs("eel")) then 
-     l_eels= EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
+   if (X_do_obs("eel")) then
+     !! DS DEBUG <
+     !! Why do I get the eels from eps here ?
+     !! I could use the following:
+     !! alpha = ( 1 +eels )/4/pi  
+     !! eels =    1 -alpha*4*pi  
+     !EEL = 1 - Alpha*4._SP*pi
+     !  And remove the next three lines
+     !! DS DEBUG >
+     ! 
+     call EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
      if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) l_eels= EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     if(.not.l_rpa_IP) call EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
@@ -230,11 +259,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     ! alpha = -eps_2_alpha X(1,1) / |q|^2    
-     !       =  (1 -eps_M^-1) eps_2_alpha/4/pi
-     !       =  (1 +eels    ) eps_2_alpha/4/pi  
-     if (     l_0D) Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha/4._SP/pi
-     if (.not.l_0D) Alpha(:,1:2)=(1._SP+EEL(:,1:2))*eps_2_alpha/4._SP/pi
+     Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))

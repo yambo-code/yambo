@@ -30,10 +30,11 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
-&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
+&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
+&                         X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
- use D_lattice,      ONLY:l_0D
+ use D_lattice,      ONLY:l_1D,l_2D,l_3D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
  use PHOTOLUM,       ONLY:PL
@@ -43,6 +44,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  integer      :: iq
  type(w_samp) :: W
  character(*) :: WHAT,OBS
+ !
+ logical, external :: EPS_2_eels_check
  !
  ! Work Space
  !
@@ -96,7 +99,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  if (.not.STRING_match(WHAT,"dump")) return
  !
- fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
+ fac=eps_2_alpha/4._SP/pi
+ if (l_col_cut) fac=fac*bare_qpg(iq,1)**2/q_norm(iq)**2
  !
  ! ABSORPTION
  !
@@ -140,14 +144,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Check if eels can be evaluated
  !-------
  if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
+   eval_eels=EPS_2_eels_check(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
    if (.not.eval_eels) call X_obs_onoff("- eel")
  endif
  !
- ! in D>0 alpha and beta depend on eels
+ ! in 3D, and in (2D or 1D) at q>0, alpha and beta depend on eels
  !-------
  l_ab_from_eels=.false.
- if ( .not.l_0D ) then
+ if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) ) then
    l_ab_from_eels = eval_eels
    if ( .not.l_ab_from_eels .and. X_do_obs("alpha") ) call X_obs_onoff("- alpha")
    if ( .not.l_ab_from_eels .and. X_do_obs("beta")  ) call X_obs_onoff("- beta")
@@ -156,9 +160,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! EELS and/or alpha preliminary 
  !-------------------------------
  if (X_do_obs("eel") .or. (l_ab_from_eels .and. X_do_obs("alpha")) ) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,eel(:,1))
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,eel(:,2))
-   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,eel(:,3))
+   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,eel(:,1))
+   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,eel(:,2))
+   if (l_last_col) call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,eel(:,3))
    ! EELS 
    call ELEMENTAL_dump("eel",eel)
  endif
@@ -166,17 +170,17 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !              beta preliminary 
  !-------------------------------
  if (                       (l_ab_from_eels .and. X_do_obs("beta")) ) then
-   l_ab_from_eels=EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),eel_off(:,1),l_off_diago=.true.)
-   l_ab_from_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),eel_off(:,2),l_off_diago=.true.)
+   call EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),eel_off(:,1),l_off_diago=.true.)
+   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),eel_off(:,2),l_off_diago=.true.)
    if (l_last_col) &
-   & l_ab_from_eels=EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),eel_off(:,3),l_off_diago=.true.)
+   & call EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),eel_off(:,3),l_off_diago=.true.)
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (     l_0D) spectra(:,1:3)=Epsilon_ii(:,2:4) *fac
-   if (.not.l_0D) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
+   if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ii(:,2:4) *fac
+   if (     l_ab_from_eels) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
@@ -184,8 +188,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("beta")) then
    spectra=0._SP
-   if (     l_0D) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
-   if (.not.l_0D) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
+   if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
+   if (     l_ab_from_eels) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  !

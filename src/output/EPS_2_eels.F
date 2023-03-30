@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -21,7 +21,31 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
+logical function EPS_2_eels_check(wv,nw,be_verbose,ordering)
+ ! 
+ use pars,          ONLY:SP
+ !
+ implicit none
+ !
+ integer              :: nw
+ complex(SP)          :: wv(nw)
+ logical              :: be_verbose
+ character(2)         :: ordering
+ !
+ EPS_2_eels_check=.TRUE.
+ !
+ if (ordering=='Tr'.or.ordering=='Ta') then
+   if (real(wv(1))<-real(wv(1))) then
+     EPS_2_eels_check=.FALSE.
+     if (be_verbose) call warning(' [EPS_2_eels] Impossible to evaluate the EELS')
+     return
+   endif
+ endif
+ !
+end function EPS_2_eels_check
+!
+!
+subroutine EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -32,27 +56,14 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  complex(SP)          :: wv(nw)
  logical              :: be_verbose
  character(2)         :: ordering
- complex(SP) ,optional:: eps(nw),eel(nw)
- logical,     optional:: l_off_diago
+ complex(SP)          :: eps(nw),eel(nw)
+ logical,    optional :: l_off_diago
  !
  ! Work Space
  !
  integer            :: iw
  logical            :: l_off_diago_
  complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
- !
- EPS_2_eels=.TRUE.
- !
- if (.not.present(eps)) then
-   if (ordering=='Tr'.or.ordering=='Ta') then
-     if (real(wv(1))<-real(wv(1))) then
-       EPS_2_eels=.FALSE.
-       if (be_verbose) call warning(' [EPS_2_eels] Impossible to evaluate the EELS')
-       return
-     endif
-   endif
-   return
- endif
  !
  if (trim(ordering)=='T'.or.trim(ordering)=='R') then
    eel(:)=-1._SP/eps(:)
@@ -88,4 +99,4 @@ logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  if(.not.l_off_diago_) eel=-1._SP/(eps_extended+1._SP)
  if(     l_off_diago_) eel=-1._SP/(eps_extended)
  !
-end function
+end subroutine EPS_2_eels

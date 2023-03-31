@@ -144,7 +144,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! in 0D, and in (2D or 1D) at q=0, it is convinient to define alpha as proportional to epsilon
    !-------
    l_alpha_from_eps=.false.
-   if ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) l_alpha_from_eps=.true.
+   if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
    !
    ! OutPut files...
    if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -203,7 +203,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
    fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
    !
-   Epsilon_ii(:,2)=(Epsilon_ii(:,2)-1._SP)*fac+1._SP
    Alpha(:,2)=Alpha(:,2)*fac
    !
    if (l_pf_fxc) then
@@ -227,7 +226,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
-   ! Epsilon
+   ! Epsilon (This is always the 3D one for now)
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
@@ -235,15 +234,21 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
    enddo
    !
-   ! EEL
+   ! TODO: FIX EEL - ADD CHI
+   !
    if (X_do_obs("eel")) then
+     !
      !! DS DEBUG <
+     !! Relation between eels and alpha is dimension dependent
+     !!
      !! Why do I get the eels from eps here ?
      !! I could use the following:
      !! alpha = ( 1 +eels )/4/pi  
      !! eels =    1 -alpha*4*pi  
-     !EEL = 1 - Alpha*4._SP*pi
-     !  And remove the next three lines
+     !if(l_3D) EEL = 1 - Alpha*4._SP*pi
+     !if(l_2D) EEL = ??? Alpha ???
+     !if(l_1D) EEL = ??? Alpha ???
+     !! And remove the next three lines
      !! DS DEBUG >
      ! 
      call EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))

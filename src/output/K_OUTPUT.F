@@ -149,9 +149,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  endif
  !
  ! in 3D, and in (2D or 1D) at q>0, alpha and beta depend on eels
+ ! This logic is because standard BSE is with Lbar, i.e. something
+ ! proportional to eps
+ ! For the case Lfull we could use the same logic of G-space since
+ ! we have something proportional to eps^-1
  !-------
  l_ab_from_eels=.false.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) ) then
+ if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) then
    l_ab_from_eels = eval_eels
    if ( .not.l_ab_from_eels .and. X_do_obs("alpha") ) call X_obs_onoff("- alpha")
    if ( .not.l_ab_from_eels .and. X_do_obs("beta")  ) call X_obs_onoff("- beta")
@@ -180,6 +184,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ii(:,2:4) *fac
+   ! This relation is the one for 3D.
+   ! Here "eel"=eps^-1_3D and not what measired in an eel exp on 2D / 1D materials
+   ! Accordingly the relation is ok.
    if (     l_ab_from_eels) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif

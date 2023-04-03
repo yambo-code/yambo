@@ -163,8 +163,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
        !
        Sc_local=(0.,0.)
        !
-       call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p) ,QP_Sc_steps,&
-&                          Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
+       call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p),QP_Sc_steps,&
+&                                    Sc_local,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
        !
        QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+Sc_local(:)+DP_DW
        !

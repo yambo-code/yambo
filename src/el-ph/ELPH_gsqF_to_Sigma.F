@@ -67,12 +67,12 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  ! If the self-energy has to be plotted, instead, the contribution from the
  ! lifetimes-related gsqF must be real (spectral function).
  !
- coefficient=(0.,1.,DP)
+ coefficient=cmplx(0.,1.,kind=DP)
  !
  ! Setup energy range for Sc/G plotting (I)
  !
  if ( trim(QP_solver)=='g' ) then
-   coefficient=(1.,0.,DP)
+   coefficient=cmplx(1.,0.,kind=DP)
    call W_reset(Sc_local_W)
    Sc_local_W%n_freqs =QP_Sc_steps
  endif
@@ -94,8 +94,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
    ib   =QP_table(i_qp,1)
    ik   =QP_table(i_qp,3)
    !
-   DP_FAN=cmplx(0.,0.,DP)
-   DP_DW =cmplx(0.,0.,DP)
+   DP_FAN=cmplx(0.,0.,kind=DP)
+   DP_DW =cmplx(0.,0.,kind=DP)
    !
    do iq_loop=1,nq
      !

@@ -12479,15 +12479,16 @@ if test "$internal_lapack" = "yes"; then
     LAPACK_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
   fi
 fi
+if test $acx_lapack_ok = yes && test -d "${MKLROOT}"; then
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
+fi
 if test $acx_lapack_ok = yes && test "${lapack_LIBS}" = "*.so"; then
   LAPACK_PETSC_LIBS=${LAPACK_LIBS}
 fi
+
 lapack_shared="0"
 if test "x${LAPACK_PETSC_LIBS}" = "x"; then
   LAPACK_PETSC_LIBS=${LAPACK_LIBS}
-  if test $blas_shared = yes && test -d "${MKLROOT}" ; then
-    lapack_shared="1"
-  fi
 else
   lapack_shared="1"
 fi

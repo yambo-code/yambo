@@ -142,22 +142,30 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   internal_petsc="yes"
   #
+  PETSC_LIBS_DN="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+  PETSC_LIBS_ST="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
   if test "x$lapack_shared" = "x1" ; then
-    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+    PETSC_LIBS="$PETSC_LIBS_DN" ;
   else
-    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+    PETSC_LIBS="$PETSC_LIBS_ST" ;
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
   #
   petsc=yes
-  if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ; then
+  if test -e "$PETSC_LIBS_DN" ; then
     compile_petsc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
-  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ; then
-    compile_petsc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
+    PETSC_LIBS="$PETSC_LIBS_DN" ;
+    AC_MSG_RESULT([dynamic already compiled]) ;
+  elif test -e "$PETSC_LIBS_ST" ; then
+    if test "x$lapack_shared" = "x1" ; then
+      compile_petsc="yes" ;
+      AC_MSG_RESULT([static found, but dynamic needed. To be compiled]) ;
+    else
+      compile_petsc="no" ;
+      AC_MSG_RESULT([static already compiled]) ;
+    fi
   else
     compile_petsc="yes" ;
     AC_MSG_RESULT([to be compiled]) ;
@@ -248,20 +256,28 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
+  SLEPC_LIBS_DN=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so
+  SLEPC_LIBS_ST=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a
   if test "x$lapack_shared" = "x1" ; then
-    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
+    SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
   else
-    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+    SLEPC_LIBS="$SLEPC_LIBS_ST" ;
   fi
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes
-  if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ; then
+  if test -e "$SLEPC_LIBS_DN" ; then
     compile_slepc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
-  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so" ; then
-    compile_slepc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
+    SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
+    AC_MSG_RESULT([dynamic already compiled]) ;
+  elif test -e "$SLEPC_LIBS_ST" ; then
+    if test "x$lapack_shared" = "x1" ; then
+      compile_slepc="yes" ;
+      AC_MSG_RESULT([static found, but dynamic needed. To be compiled]) ;
+    else
+      compile_slepc="no" ;
+      AC_MSG_RESULT([static already compiled]) ;
+    fi
   else
     compile_slepc="yes" ;
     AC_MSG_RESULT([to be compiled]) ;

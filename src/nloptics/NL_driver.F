@@ -115,6 +115,12 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
  !
+ ! Deallocate bare_qpg if not required
+ !=============================
+ if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
+   YAMBOX_FREE(bare_qpg)
+ endif
+ !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
  call qindx_free('ALL')

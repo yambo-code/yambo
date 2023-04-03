@@ -764,12 +764,12 @@ FFT_INCS
 FFT_LIBS
 fft_cfactor
 lapack_shared
-LAPACK_SO_LIBS
+LAPACK_PETSC_LIBS
 LAPACK_LIBS
 compile_lapack
 internal_lapack
 blas_shared
-BLAS_SO_LIBS
+BLAS_PETSC_LIBS
 BLAS_info
 BLAS_LIBS
 compile_blas
@@ -11947,21 +11947,21 @@ if test x"$enable_openmp_int_linalg" = "xyes" ; then
 fi
 
 # Test for shared BLAS
-BLAS_SO_LIBS=""
+BLAS_PETSC_LIBS=""
 if test "$internal_blas" = "yes"; then
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so || test $compile_blas = "yes" ; then
-    BLAS_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
+    BLAS_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
   fi
 fi
 if test $acx_blas_ok = yes && test -d "${MKLROOT}" ; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 fi
 if test $acx_blas_ok = yes && test "${BLAS_LIBS}" = "*.so"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 fi
 blas_shared="no"
-if test x"${BLAS_SO_LIBS}" = "x"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+if test x"${BLAS_PETSC_LIBS}" = "x"; then
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 else
   blas_shared="yes"
 fi
@@ -12473,18 +12473,18 @@ if test "$internal_lapack" = "yes"; then
 fi
 
 # Test for shared LAPACK
-LAPACK_SO_LIBS=""
+LAPACK_PETSC_LIBS=""
 if test "$internal_lapack" = "yes"; then
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so || test $compile_lapack = "yes"; then
-    LAPACK_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
+    LAPACK_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
   fi
 fi
 if test $acx_lapack_ok = yes && test "${lapack_LIBS}" = "*.so"; then
-  LAPACK_SO_LIBS=${LAPACK_LIBS}
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
 fi
 lapack_shared="0"
-if test "x${LAPACK_SO_LIBS}" = "x"; then
-  LAPACK_SO_LIBS=${LAPACK_LIBS}
+if test "x${LAPACK_PETSC_LIBS}" = "x"; then
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
   if test $blas_shared = yes && test -d "${MKLROOT}" ; then
     lapack_shared="1"
   fi

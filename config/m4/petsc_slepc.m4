@@ -155,15 +155,21 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
-    compile_petsc="no" ;
     PETSC_LIBS="$PETSC_LIBS_DN" ;
-    AC_MSG_RESULT([dynamic already compiled]) ;
-  elif test -e "$PETSC_LIBS_ST" ; then
+    compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
-      compile_petsc="yes" ;
-      AC_MSG_RESULT([static found, but dynamic needed. To be compiled]) ;
+      AC_MSG_RESULT([dynamic already compiled]) ;
     else
-      compile_petsc="no" ;
+      AC_MSG_RESULT([dynamic found, despite no dynamic lapack detected.]) ;
+      AC_MSG_RESULT([The compilation may fail. In case remove the dynamic petsc libs.]) ;
+    fi
+  elif test -e "$PETSC_LIBS_ST" ; then
+    PETSC_LIBS="$PETSC_LIBS_ST" ;
+    compile_petsc="no" ;
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([static found, despite dynamic lapack.]) ;
+      AC_MSG_RESULT([You may delete the static petsc and re-run the configure to get smaller executables]) ;
+    else
       AC_MSG_RESULT([static already compiled]) ;
     fi
   else
@@ -267,15 +273,21 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   slepc=yes
   if test -e "$SLEPC_LIBS_DN" ; then
-    compile_slepc="no" ;
     SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
-    AC_MSG_RESULT([dynamic already compiled]) ;
-  elif test -e "$SLEPC_LIBS_ST" ; then
+    compile_slepc="no" ;
     if test "x$lapack_shared" = "x1" ; then
-      compile_slepc="yes" ;
-      AC_MSG_RESULT([static found, but dynamic needed. To be compiled]) ;
+      AC_MSG_RESULT([dynamic already compiled]) ;
     else
-      compile_slepc="no" ;
+      AC_MSG_RESULT([dynamic found, despite no dynamic lapack detected.]) ;
+      AC_MSG_RESULT([The compilation may fail. In case remove the dynamic slepc libs.]) ;
+    fi
+  elif test -e "$SLEPC_LIBS_ST" ; then
+    SLEPC_LIBS="$SLEPC_LIBS_ST" ;
+    compile_slepc="no" ;
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([static found, despite dynamic lapack.]) ;
+      AC_MSG_RESULT([You may delete the static slepc and re-run the configure to get smaller executables]) ;
+    else
       AC_MSG_RESULT([static already compiled]) ;
     fi
   else

@@ -13253,17 +13253,26 @@ printf %s "checking for internal Petsc library... " >&6; }
   #
   petsc=yes
   if test -e "$PETSC_LIBS_DN" ; then
-    compile_petsc="no" ;
     PETSC_LIBS="$PETSC_LIBS_DN" ;
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
-printf "%s\n" "dynamic already compiled" >&6; } ;
-  elif test -e "$PETSC_LIBS_ST" ; then
+    compile_petsc="no" ;
     if test "x$lapack_shared" = "x1" ; then
-      compile_petsc="yes" ;
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, but dynamic needed. To be compiled" >&5
-printf "%s\n" "static found, but dynamic needed. To be compiled" >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
+printf "%s\n" "dynamic already compiled" >&6; } ;
     else
-      compile_petsc="no" ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic found, despite no dynamic lapack detected." >&5
+printf "%s\n" "dynamic found, despite no dynamic lapack detected." >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: The compilation may fail. In case remove the dynamic petsc libs." >&5
+printf "%s\n" "The compilation may fail. In case remove the dynamic petsc libs." >&6; } ;
+    fi
+  elif test -e "$PETSC_LIBS_ST" ; then
+    PETSC_LIBS="$PETSC_LIBS_ST" ;
+    compile_petsc="no" ;
+    if test "x$lapack_shared" = "x1" ; then
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, despite dynamic lapack." >&5
+printf "%s\n" "static found, despite dynamic lapack." >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: You may delete the static petsc and re-run the configure to get smaller executables" >&5
+printf "%s\n" "You may delete the static petsc and re-run the configure to get smaller executables" >&6; } ;
+    else
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static already compiled" >&5
 printf "%s\n" "static already compiled" >&6; } ;
     fi
@@ -13389,17 +13398,26 @@ printf %s "checking for internal Slepc library... " >&6; }
   #
   slepc=yes
   if test -e "$SLEPC_LIBS_DN" ; then
-    compile_slepc="no" ;
     SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
-printf "%s\n" "dynamic already compiled" >&6; } ;
-  elif test -e "$SLEPC_LIBS_ST" ; then
+    compile_slepc="no" ;
     if test "x$lapack_shared" = "x1" ; then
-      compile_slepc="yes" ;
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, but dynamic needed. To be compiled" >&5
-printf "%s\n" "static found, but dynamic needed. To be compiled" >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic already compiled" >&5
+printf "%s\n" "dynamic already compiled" >&6; } ;
     else
-      compile_slepc="no" ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: dynamic found, despite no dynamic lapack detected." >&5
+printf "%s\n" "dynamic found, despite no dynamic lapack detected." >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: The compilation may fail. In case remove the dynamic slepc libs." >&5
+printf "%s\n" "The compilation may fail. In case remove the dynamic slepc libs." >&6; } ;
+    fi
+  elif test -e "$SLEPC_LIBS_ST" ; then
+    SLEPC_LIBS="$SLEPC_LIBS_ST" ;
+    compile_slepc="no" ;
+    if test "x$lapack_shared" = "x1" ; then
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static found, despite dynamic lapack." >&5
+printf "%s\n" "static found, despite dynamic lapack." >&6; } ;
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: You may delete the static slepc and re-run the configure to get smaller executables" >&5
+printf "%s\n" "You may delete the static slepc and re-run the configure to get smaller executables" >&6; } ;
+    else
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: static already compiled" >&5
 printf "%s\n" "static already compiled" >&6; } ;
     fi

@@ -43,7 +43,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
  use pars,           ONLY:SP,lchlen,zero_dfl
- use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
+ use drivers,        ONLY:l_bse,l_elel_scatt,l_setup,l_nl_optics
  use com,            ONLY:msg,fat_log
  use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_global_indexes
@@ -96,6 +96,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  sigma_scattering=index(k_GRIDS_string,"S")>0
  bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
+#if defined _NL
+ if(l_nl_optics) X_scattering=.FALSE.
+#endif
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"

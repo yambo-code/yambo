@@ -120,7 +120,16 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+#ifdef _NL
+ if(l_nl_optics) then  ! in NL mode qindx_X is not loaded
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,4,6/),MODE=VERIFY,ID=io_db)
+ else
+#endif _NL
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+#ifdef _NL
+ endif
+#endif _NL
+ !
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)

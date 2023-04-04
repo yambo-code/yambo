@@ -109,17 +109,15 @@ subroutine NL_driver(E,X,k,q,Dip)
  call PARALLEL_WF_distribute(K_index=PAR_IND_Xk_ibz,CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
+ ! Generate bare_qpg if required
+ !=============================
+ if(eval_HARTREE.or.CORRELATION==JGM)  call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ !
  !Load Dipole after the NL parallelization
  ! ========================================
  call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
- !
- ! Deallocate bare_qpg if not required
- !=============================
- if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
-   YAMBO_FREE(bare_qpg)
- endif
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================

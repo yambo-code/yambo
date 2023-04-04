@@ -23,7 +23,7 @@
 !
 subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
   !
-  use wrapper_omp,    ONLY:M_by_M_omp,M_by_V_omp
+  use wrapper,        ONLY:M_by_M,M_by_V
   use pars,           ONLY:SP,cI,cZERO,cONE
   use nl_optics,      ONLY:NL_bands,NL_nbands
   use openmp,         ONLY:OPENMP_update,master_thread
@@ -63,7 +63,7 @@ subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
     if (l_use_inv) then
       !
       call SERIAL_inversion(NL_nbands,Hp,tmp_det,.false.)
-      call M_by_M_omp('n','n',NL_nbands,Hm,Hp,Hm)
+      call M_by_M('n','n',NL_nbands,Hm,Hp,Hm)
       !
     else if (l_use_lin) then
       !
@@ -71,7 +71,7 @@ subroutine INVINT_step(V_out,V_in,H_in,I_in,nbf,dT)
       !
     endif
     !
-    call M_by_V_omp('n',NL_nbands,Hm,V_in(NL_bands(1):,ib),V_out(NL_bands(1):,ib))
+    call M_by_V('n',NL_nbands,Hm,V_in(NL_bands(1):,ib),V_out(NL_bands(1):,ib))
     !
     if(NL_bands(1)/=1) V_out(:NL_bands(1)-1,ib)=V_in(:NL_bands(1)-1,ib)
     !

@@ -111,7 +111,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Generate bare_qpg if required
  !=============================
- if(eval_HARTREE.or.CORRELATION==JGM)  call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(eval_HARTREE.or.CORRELATION==JGM) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  !Load Dipole after the NL parallelization
  ! ========================================

@@ -38,7 +38,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
- use R_lattice,      ONLY:qindx_S,bare_qpg
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,l_pump_and_probe, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
@@ -93,10 +92,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! Dipoles & WF dimensions
  !=========================
  call WF_and_dipole_dimensions(X,k)
- !
- ! Deallocate qindx_S (used only in previous subroutine)
- ! ========================
- YAMBO_FREE(qindx_S)
  !
  ! QP dimensions
  !================

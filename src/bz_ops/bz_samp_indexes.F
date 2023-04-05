@@ -96,9 +96,6 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  sigma_scattering=index(k_GRIDS_string,"S")>0
  bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
-#if defined _NL
- if(l_nl_optics) X_scattering=.FALSE.
-#endif
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
@@ -120,15 +117,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  q%description='q'
  !
-#ifdef _NL
- if(l_nl_optics) then  ! in NL mode qindx_X is not loaded
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,4,6/),MODE=VERIFY,ID=io_db)
- else
-#endif _NL
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
-#ifdef _NL
- endif
-#endif _NL
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
  !
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then

@@ -21,6 +21,15 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Read and write scattering indexes
+!
+! io_sec=1   general parameters   
+! io_sec=2   q-points   
+! io_sec=3   qindx_X   
+! io_sec=4   qindx_S   
+! io_sec=5   qindx_B          
+! io_Sec=6   qindx_C
+!
 integer function io_QINDX(Xk,q,io_db)
  !
  use pars,           ONLY:SP,IP

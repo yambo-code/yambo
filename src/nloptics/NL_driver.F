@@ -35,7 +35,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
- use R_lattice,      ONLY:bz_samp,qindx_free
+ use R_lattice,      ONLY:bz_samp,qindx_free,sigma_scattering
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
@@ -96,6 +96,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !=========================
  ! I need qindx_S to estimate the number of g-vectors
  !
+ sigma_scattering=.TRUE.
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
  io_err=io_QINDX(k,q,ID)
  if(io_err/=0) call error('Error loading qindx_S, run setup again ')

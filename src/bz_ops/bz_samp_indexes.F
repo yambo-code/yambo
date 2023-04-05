@@ -117,7 +117,19 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  q%description='q'
  !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+#if defined _NL
+ if(l_nl_optics) then
+   !      
+   ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
+   !
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
+   !
+ else
+#endif
+   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+#if defined _NL
+ endif
+#endif
  !
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then

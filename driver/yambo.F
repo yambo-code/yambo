@@ -47,7 +47,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use QP_m,          ONLY:QP_ng_Sx,QP_ng_SH
  use wave_func,     ONLY:wf_ng
  use electrons,     ONLY:levels,E_reset
- use R_lattice,     ONLY:bz_samp,bz_samp_reset,k_GRIDS_string
+ use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
  !
  implicit none
@@ -140,9 +140,6 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! BZ sampling
  !==============
  !
-#if defined _NL
- if(l_nl_optics) k_GRIDS_string=" " ! In nl-optics I do not need qindx_* grids
-#endif
  call bz_samp_indexes(en,k,Xk,q) 
  !
  ! COLOUMB DRIVER

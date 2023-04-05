@@ -47,6 +47,8 @@ subroutine NL_driver(E,X,k,q,Dip)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
+ use IO_int,              ONLY:io_control
+ use IO_m,                ONLY:OP_RD_CL
  !
 #include<memory.h>
  !
@@ -58,10 +60,11 @@ subroutine NL_driver(E,X,k,q,Dip)
  type(DIPOLE_t)    :: Dip
  !
  logical, external :: stop_now
+ integer, external :: io_QINDX
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,i_sp_pol,N_sample_size,wf_ng_save,io_err
+ integer           :: i_f,i1,i_sp_pol,N_sample_size,ID,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !
@@ -91,7 +94,16 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Dipoles & WF dimensions
  !=========================
+ ! I need qindx_S to estimate the number of g-vectors
+ !
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
+ io_err=io_QINDX(k,q,ID)
+ if(io_err/=0) call error('Error loading qindx_S, run setup again ')
+ !
  call WF_and_dipole_dimensions(X,k)
+ !
+ ! I do not need anymore qindx_S for the rest of the code
+ YAMBO_FREE(qindx_S)
  !
  ! QP dimensions
  !================

@@ -35,7 +35,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
- use R_lattice,      ONLY:bz_samp,qindx_free,sigma_scattering
+ use R_lattice,      ONLY:bz_samp,qindx_free,sigma_scattering,qindx_S
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
@@ -48,7 +48,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
  use IO_int,              ONLY:io_control
- use IO_m,                ONLY:OP_RD_CL
+ use IO_m,                ONLY:REP,OP_RD_CL
  !
 #include<memory.h>
  !

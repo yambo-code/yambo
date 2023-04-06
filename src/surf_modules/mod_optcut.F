@@ -1,4 +1,26 @@
 !
+!        Copyright (C) 2000-2022 the YAMBO team
+!              http://www.yambo-code.org
+!
+! Authors (see AUTHORS file for details): CH, JK
+! 
+! This file is distributed under the terms of the GNU 
+! General Public License. You can redistribute it and/or 
+! modify it under the terms of the GNU General Public 
+! License as published by the Free Software Foundation; 
+! either version 2, or (at your option) any later version.
+!
+! This program is distributed in the hope that it will 
+! be useful, but WITHOUT ANY WARRANTY; without even the 
+! implied warranty of MERCHANTABILITY or FITNESS FOR A 
+! PARTICULAR PURPOSE.  See the GNU General Public License 
+! for more details.
+!
+! You should have received a copy of the GNU General Public 
+! License along with this program; if not, write to the Free 
+! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
+! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+!
 module optcut
   !
   use pars,                  ONLY : schlen, SP, pi
@@ -126,12 +148,13 @@ end subroutine init_cutoff
     if(allocated(nxk)) deallocate(nxk)
     allocate( nxk(nkibz) )
 
+
     if (wf_ng .gt. wf_ncx) then
        ngw_k = wf_ncx
     else
        ngw_k = wf_ng
     endif
-    
+
     do ik = 1,nkibz
 
 ! wf and g_vec are on same 1:ngw_k grid (wf reordered on reading).
@@ -177,7 +200,7 @@ end subroutine init_cutoff
    
   subroutine setup_optcut( ik )
     use com,   ONLY:msg
-    use wave_func,         ONLY : wf_ng, wf_ncx
+    use wave_func,         ONLY : wf_ng, wf_ncx, wf_nc_k
     implicit none
     integer, intent (in)       :: ik
 !ws
@@ -376,16 +399,16 @@ end subroutine init_cutoff
    
   subroutine Dipole_p_matrix_elements_cut(Xk,iv_wf, ic_wf, ik, rho_cut)
     use R_lattice,     ONLY:g_vec,bz_samp
-    use wave_func,     ONLY:WF,wf_ncx,wf_nc_k,wf_ng
+    use wave_func,     ONLY:WF,wf_ncx,wf_ng
     use electrons,     ONLY:n_spinor
     implicit none
     type(bz_samp), intent(in)  :: Xk
     integer,       intent(in)  :: iv_wf,ic_wf,ik
     complex(SP),   intent(out)   :: rho_cut(3)
    ! ws
-    integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p,i_spinor,i1,ic,ig
+    integer                      :: n3min,n3max,ig1,n1,n2,n3,n3p,i_spinor,i1,ic
     real(SP)                     :: kg(3,wf_ng)
-    complex(SP)                  :: wfv(wf_ncx),wfc(wf_ncx)
+    complex(SP)                  :: wfv(wf_ng),wfc(wf_ng)
     real(SP)                     :: kgxy(3)
     complex(SP)                  :: PSx,PSy,PSz
 
@@ -397,7 +420,7 @@ end subroutine init_cutoff
     enddo
 
     do i_spinor=1,n_spinor
-       do ic=1,wf_nc_k(ik)
+       do ic=1,wf_ng
           wfv(ic)=WF%c(ic,i_spinor,iv_wf)
           wfc(ic)=WF%c(ic,i_spinor,ic_wf)
        enddo

@@ -21,6 +21,8 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!@brief Newton solver for the quasi-particle equation
+!
 subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  use pars,          ONLY:SP,cZERO,schlen
@@ -29,9 +31,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  use com,           ONLY:msg
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,current_iq,l_recalculate_X
- use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,l_update_W,QP_table,&
-&                        QP_n_states,QP_dSc,QP_dSc_delta,GW_iterations,report_Sc,&
-&                        GWo_SC_done,GWo_iterations,SC_E_threshold,On_Mass_Shell_approx
+ use QP_m,          ONLY:QP_t,QP_dSc_steps,QP_Vnl_xc,QP_Vxc,QP_Sc,QP_table,&
+&                        QP_n_states,QP_dSc,QP_dSc_delta,report_Sc,&
+&                        On_Mass_Shell_approx
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,n_bands,spin
  use R_lattice,     ONLY:bz_samp
@@ -54,12 +56,9 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
  !
  ! Work Space
  !
- integer     :: i1,i2,iter,SC_iter,SC_iterations,io_X_err
- integer     :: ik,lowest_bnd,highest_bnd,is,ib
- real(SP)    :: SC_corr_prev,SC_corr_now
+ integer     :: i1,i2,iter
+ integer     :: ik,is,ib
  complex(SP) :: Z(QP_dSc_steps-1),Eqp(QP_dSc_steps-1)
- integer, external ::  X_dielectric_matrix
- character(schlen) :: FILE_name
  !
  ! Dyson equation: Newton solver 
  !
@@ -70,195 +69,106 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
    !
  endif
  !
- call msg('rn','[Newton] SC iterations ',GWo_iterations)
+ ! Self-consisnte GW or GWo can be performed using external scripts
+ ! see the wiki 
+ ! https://www.yambo-code.eu/wiki/index.php/Self-consistent_GW_on_eigenvalues_only
+ ! in this subroutine iter is always 0
  !
  iter=0
- SC_corr_prev=1._SP
  !
- SC_iterations=0
- if(GWo_iterations/=0) SC_iterations=GWo_iterations
- if(GW_iterations /=0) SC_iterations=GW_iterations
- !
- do while((iter<=SC_iterations.or.SC_iterations<0).and..not.GWo_SC_done) 
+ if (l_elel_corr) then
    !
-   if (l_elel_corr) then
+   ! AF,DALV: use of RIM_W to be extended beyond PPA
+   !
+   if (l_ppa) then
      !
-     ! AF,DALV: use of RIM_W to be extended beyond PPA
+     if (l_rim_w) call interpolate_W(X,Xw,q,'PPA')
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
      !
-     if (l_ppa) then
-       !
-       if (l_rim_w) call interpolate_W(X,Xw,q,'PPA')
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
-       !
-     else if (l_mpa) then
-       !
-       call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
-       !
-     else if (l_cohsex) then
-       !
-       call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
-       !
-     else 
-       !
-       call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,iter)
-       !
-     endif
-   else
-     QP_Sc=cZERO
+   else if (l_mpa) then
+     !
+     call QP_mpa(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter) 
+     !
+   else if (l_cohsex) then
+     !
+     call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,(/0._SP,QP_dSc_delta/),iter)
+     !
+   else 
+     !
+     call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,iter)
+     !
    endif
-   !
+ else
+   QP_Sc=cZERO
+ endif
+ !
 # if defined _ELPH 
-   !
-   if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
-   !
+ !
+ if (l_elph_corr)     call ELPH_Sigma_c(en,k,q,qp)
+ !
 #endif
-   !
+ !
 # if defined _QED 
+ !
+ if (l_elphoton_corr) then
    !
-   if (l_elphoton_corr) then
-     !
-     QP_dSc=cZERO
-     !
-     call QED_Sigma_c(en,k,q,qp)
-     !
-   endif
+   QP_dSc=cZERO
    !
+   call QED_Sigma_c(en,k,q,qp)
+   !
+ endif
+ !
 #endif
+ !
+ do i1=1,QP_n_states
    !
-   do i1=1,QP_n_states
-     !
-     if(.not.l_cohsex) then
-       !     
+   if(.not.l_cohsex) then
+     !     
 # if defined _QED 
+     !
+     ! In the e-gamma case the derivative is calculated analitically
+     !     
+     if (.not.l_elphoton_corr) then
+#endif
        !
-       ! In the e-gamma case the derivative is calculated analitically
+       QP_dSc(i1,1)=cZERO
        !     
-       if (.not.l_elphoton_corr) then
-#endif
-         !
-         QP_dSc(i1,1)=cZERO
-         !     
-         if (.not.On_Mass_Shell_approx) then
-           do i2=1,QP_dSc_steps-1
-             QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
-           enddo
-         endif
-         !
-# if defined _QED 
+       if (.not.On_Mass_Shell_approx) then
+         do i2=1,QP_dSc_steps-1
+           QP_dSc(i1,i2)=(QP_Sc(i1,i2+1)-QP_Sc(i1,i2))/QP_dSc_delta
+         enddo
        endif
+       !
+# if defined _QED 
+     endif
 #endif
-       !
-       do i2=1,QP_dSc_steps-1
-         !
-         Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
-         !
-         Eqp(i2)=qp%E(i1)+Z(i2)*QP_Sc(i1,1)
-         !
-         if (l_elel_corr.and.allocated(QP_Vnl_xc)) Eqp(i2)=Eqp(i2)+Z(i2)*QP_Vnl_xc(i1)
-         if (l_elel_corr.and.allocated(QP_Vxc)   ) Eqp(i2)=Eqp(i2)-Z(i2)*QP_Vxc(i1)
-         !
-       enddo
-       !
-       qp%E(i1)=Eqp(1)+Z(1)*(qp%E_bare(i1)-qp%E(i1))  ! See Eq.3 of PRB 75, 235102(2007)
-       qp%Z(i1)=Z(1)
-       !
-     else
-       !
-       ! COHSEX: no energy dependence
-       !
-       qp%E(i1)=qp%E_bare(i1)+QP_Sc(i1,1)
-       if (allocated(QP_Vnl_xc)) qp%E(i1)=qp%E(i1)+QP_Vnl_xc(i1)
-       if (allocated(QP_Vxc)   ) qp%E(i1)=qp%E(i1)-QP_Vxc(i1)
-       qp%Z(i1)=1._SP
-       !
-     endif
      !
-   enddo
-   !
-   SC_corr_now= maxval(real(qp%E(:)-qp%E_bare(:)))
-   GWo_SC_done=abs( SC_corr_prev-SC_corr_now )<SC_E_threshold.or.iter==SC_iterations
-   !
-   if (iter>0) call msg('rs','[SC] Max corrections at prev/current cycle',&
-&                      (/SC_corr_prev,SC_corr_now/)*HA2EV,"[eV]")
-   SC_corr_prev=SC_corr_now
-   !
-   if (.not.GWo_SC_done.and.SC_iterations/=0) then
-     !
-     ! Now I need to transfer the calculated QP corrections to the "en" type
-     !
-     do i1=1,QP_n_states
-        ib =QP_table(i1,1)
-        ik =QP_table(i1,3)
-        is=spin(QP_table(i1,:))
-        en%E(ib,ik,is)=qp%E(i1)
+     do i2=1,QP_dSc_steps-1
+       !
+       Z(i2)=1._SP/(1._SP-QP_dSc(i1,i2))
+       !
+       Eqp(i2)=qp%E(i1)+Z(i2)*QP_Sc(i1,1)
+       !
+       if (l_elel_corr.and.allocated(QP_Vnl_xc)) Eqp(i2)=Eqp(i2)+Z(i2)*QP_Vnl_xc(i1)
+       if (l_elel_corr.and.allocated(QP_Vxc)   ) Eqp(i2)=Eqp(i2)-Z(i2)*QP_Vxc(i1)
+       !
      enddo
      !
-     ! Shift the missing bands 
-     ! Notice that there is a control in QP_driver to avoid strange QP ranges
+     qp%E(i1)=Eqp(1)+Z(1)*(qp%E_bare(i1)-qp%E(i1))  ! See Eq.3 of PRB 75, 235102(2007)
+     qp%Z(i1)=Z(1)
      !
-     lowest_bnd =minval(QP_table(:,1))
-     highest_bnd=maxval(QP_table(:,1))
+   else
      !
-     do ib=1,lowest_bnd-1
-       en%E(ib,:,:)=en%Eo(ib,:,:)+en%E(lowest_bnd,:,:)-en%Eo(lowest_bnd,:,:)
-     enddo
+     ! COHSEX: no energy dependence
      !
-     do ib=highest_bnd+1,n_bands
-       en%E(ib,:,:)=en%Eo(ib,:,:)+en%E(highest_bnd,:,:)-en%Eo(highest_bnd,:,:)
-     enddo
-     !
-     ! Find new Fermi Energy
-     !
-     call OCCUPATIONS_Fermi(en,k,"E",mode="OCCUPATIONS")
-     !
-     ! Write QP on file
-     !
-     if(l_update_W) then
-        FILE_name='qp_G'//trim(intc(iter))//'W'//trim(intc(iter))
-     else
-        FILE_name='qp_G'//trim(intc(iter))//'W0'
-     endif
-     report_Sc=.true.
-     call QP_of(qp,en,-1,FILE_name)
-     !
-     ! Restore k-points that are set to zero in QP_of
-     !
-     do i1=1,QP_n_states
-       qp%k(QP_table(i1,3),:)=k%pt(QP_table(i1,3),:)
-     enddo
-     !
-     if(l_update_W) then
-        !
-        ! Copy quasi-particle in Xen
-        !
-        Xen%E=en%E
-        Xen%f=en%f
-        !
-        call msg('s','Updating W...')
-        !
-        ! Recalculate W
-        !
-        current_iq=0
-        call IO_and_Messaging_switch("-report")
-        l_recalculate_X=.true.
-        io_X_err=X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,.true.)
-        l_recalculate_X=.false.
-        call IO_and_Messaging_switch("+report")
-        !
-     endif
+     qp%E(i1)=qp%E_bare(i1)+QP_Sc(i1,1)
+     if (allocated(QP_Vnl_xc)) qp%E(i1)=qp%E(i1)+QP_Vnl_xc(i1)
+     if (allocated(QP_Vxc)   ) qp%E(i1)=qp%E(i1)-QP_Vxc(i1)
+     qp%Z(i1)=1._SP
      !
    endif
-   !
-   ! Increase the counter
-   !
-   iter=iter+1
    !
  enddo
- !
- ! Update GWo_iterations
- !
- if (GWo_iterations<0) GWo_iterations=iter
- if (GW_iterations<0)  GW_iterations =iter
  !
 end subroutine
 

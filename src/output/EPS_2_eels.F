@@ -21,7 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-logical function EPS_2_eels_check(wv,nw,be_verbose,ordering)
+logical function EPS_check(wv,nw,be_verbose,ordering)
+ !
+ ! Check if epsilon is computed or if it can be extended to the negative axes
  ! 
  use pars,          ONLY:SP
  !
@@ -32,20 +34,23 @@ logical function EPS_2_eels_check(wv,nw,be_verbose,ordering)
  logical              :: be_verbose
  character(2)         :: ordering
  !
- EPS_2_eels_check=.TRUE.
+ EPS_check=.TRUE.
  !
  if (ordering=='Tr'.or.ordering=='Ta') then
    if (real(wv(1))<-real(wv(1))) then
-     EPS_2_eels_check=.FALSE.
-     if (be_verbose) call warning(' [EPS_2_eels] Impossible to evaluate the EELS')
+     EPS_check=.FALSE.
+     if (be_verbose) call warning(' [EPS_check] Impossible to obtain EPS in the negative w axis')
      return
    endif
  endif
  !
-end function EPS_2_eels_check
+end function EPS_check
 !
 !
-subroutine EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
+subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
+ !
+ ! extend epsilon to the negative axes if needed
+ ! This subroutines always works with (eps - 1.) to avoid numerical noise
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
@@ -56,29 +61,24 @@ subroutine EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  complex(SP)          :: wv(nw)
  logical              :: be_verbose
  character(2)         :: ordering
- complex(SP)          :: eps(nw),eel(nw)
- logical,    optional :: l_off_diago
+ complex(SP)          :: eps(nw),eps_extended(nw)
  !
  ! Work Space
  !
  integer            :: iw
- logical            :: l_off_diago_
- complex(SP)        :: eps_extended(nw),eps_kk(nw),wv_kk(nw)
+ complex(SP)        :: eps_kk(nw),wv_kk(nw)
  !
  if (trim(ordering)=='T'.or.trim(ordering)=='R') then
-   eel(:)=-1._SP/eps(:)
+   eps_extended=eps
    return
  endif
  !
  if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or. &
 &      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose) then
    !
-   call warning(' [EPS_2_eels] Possible inaccuracy in the EPS prolungation')
+   call warning(' [EPS_extend] Possible inaccuracy in the EPS prolungation')
    !
  endif
- !
- l_off_diago_=.false.
- if (present(l_off_diago)) l_off_diago_=l_off_diago
  !
  ! extend eps to the negative frequencies
  !
@@ -89,14 +89,11 @@ subroutine EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel,l_off_diago)
  call Kramers_Kronig(eps_kk,real(wv),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
  do iw=1,nw
-   eps_kk(iw)=1./pi*aimag(eps(nw-iw+1))
+   eps_kk(iw)=1._SP/pi*aimag(eps(nw-iw+1))
    wv_kk(iw)=-wv(nw-iw+1)
  enddo
  eps_kk(1)      =cZERO
  eps_kk(nw)     =cZERO
  call Kramers_Kronig(eps_kk,real(wv_kk),nw,eps_extended,real(wv)+cI*1.E-4_SP/HA2EV,nw,cZERO)
  !
- if(.not.l_off_diago_) eel=-1._SP/(eps_extended+1._SP)
- if(     l_off_diago_) eel=-1._SP/(eps_extended)
- !
-end subroutine EPS_2_eels
+end subroutine EPS_extend

@@ -41,7 +41,7 @@ subroutine K_observables( W )
  !
  type(w_samp)   :: W
  !
- logical, external :: EPS_2_eels_check
+ logical, external :: EPS_check
  !
  ! Work space
  !
@@ -110,6 +110,6 @@ subroutine K_observables( W )
  !-------
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
  if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
- eval_eels=EPS_2_eels_check(W%p,W%n_freqs,.TRUE.,ordering)
+ eval_eels=EPS_check(W%p,W%n_freqs,.TRUE.,ordering)
  !
 end subroutine

@@ -30,7 +30,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 &                         eval_eels,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
- use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
+ use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         X_magnons
  use com,            ONLY:msg,com_compose_msg
@@ -50,7 +50,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),eel_off(BSS_n_freqs,3),fac
+ complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),spectra2(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col
  !
@@ -147,30 +147,30 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! EELS and/or alpha preliminary 
  !-------------------------------
  if (X_do_obs("eel") .or. (l_ab_from_eels .and. X_do_obs("alpha")) ) then
-   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,eel(:,1))
-   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,eel(:,2))
-   if (l_last_col) call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,eel(:,3))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),spectra(:,1))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),spectra(:,2))
+   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),spectra(:,3))
    ! EELS 
+   ! Here "eel"=eps^-1_3D and not what measired in an eel exp on 2D / 1D materials
+   eel= -1._SP/(spectra+1._SP)
    call ELEMENTAL_dump("eel",eel)
  endif
  !
  !              beta preliminary 
  !-------------------------------
  if (                       (l_ab_from_eels .and. X_do_obs("beta")) ) then
-   call EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),eel_off(:,1),l_off_diago=.true.)
-   call EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),eel_off(:,2),l_off_diago=.true.)
-   if (l_last_col) &
-   & call EPS_2_eels(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),eel_off(:,3),l_off_diago=.true.)
+   call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),spectra2(:,1))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),spectra2(:,2))
+   if (l_last_col) call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),spectra2(:,3))
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
    if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ii(:,2:4) *fac
-   ! This relation is the one for 3D.
-   ! Here "eel"=eps^-1_3D and not what measired in an eel exp on 2D / 1D materials
-   ! Accordingly the relation is ok.
-   if (     l_ab_from_eels) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
+   ! spectra=eps-1 , eel=-1./(spectra+1.) ;  alpha=(1+eel)*fac
+   ! accordingly alpha=spectra/(1+spectra)
+   if (     l_ab_from_eels) spectra(:,1:3)=spectra/(spectra+1._SP)*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
@@ -179,7 +179,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (X_do_obs("beta")) then
    spectra=0._SP
    if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
-   if (     l_ab_from_eels) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
+   if (     l_ab_from_eels) spectra(:,1:3)=  spectra2(:,1:3)*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  !

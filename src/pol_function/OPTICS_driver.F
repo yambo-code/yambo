@@ -35,7 +35,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
-&                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
+&                        use_X_DbGd,eps_2_alpha,X_par_lower_triangle,X_OUTPUT_messages,&
 &                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
@@ -63,7 +63,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps
  !
  integer,external :: OPTICS_select_q_and_G
- logical,external :: EPS_2_eels_check
+ logical,external :: EPS_check
  !
  call section('*','Optics')
  !
@@ -136,15 +136,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Observables allocation
    call X_ALLOC_global("ALLOC",wv)
    !
-   ! Check if EELS can be evaluated
-   ! This should not be needed, in G-space I directly obtain the eels
-   if (X_do_obs("eel")) l_eels=EPS_2_eels_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
-   !if (.not.l_eels) call X_obs_onoff("- eel")
-   !
    ! in 0D, and in (2D or 1D) at q=0, it is convinient to define alpha as proportional to epsilon
    !-------
    l_alpha_from_eps=.false.
    if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
+   !
+   ! Check if EELS can be evaluated
+   ! This should not be needed, in G-space I directly obtain the eels
+   if (X_do_obs("eel")) l_eels=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+   !if (.not.l_eels.and.l_alpha_from_eps) call X_obs_onoff("- eel")
    !
    ! OutPut files...
    if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -175,7 +175,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/Q_plus_G_sq_modulus
    call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
-   Epsilon_ii(:,1)=1._SP+Alpha(:,1)*4.0_SP*pi
+   Epsilon_ii(:,1)=1._SP+Alpha(:,1)*4._SP*pi
    !
    ! X Dyson equation solver
    if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
@@ -238,22 +238,28 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    if (X_do_obs("eel")) then
      !
-     !! DS DEBUG <
-     !! Relation between eels and alpha is dimension dependent
-     !!
-     !! Why do I get the eels from eps here ?
-     !! I could use the following:
-     !! alpha = ( 1 +eels )/4/pi  
-     !! eels =    1 -alpha*4*pi  
-     !if(l_3D) EEL = 1 - Alpha*4._SP*pi
-     !if(l_2D) EEL = ??? Alpha ???
-     !if(l_1D) EEL = ??? Alpha ???
-     !! And remove the next three lines
-     !! DS DEBUG >
-     ! 
-     call EPS_2_eels(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1),EEL(:,1))
-     if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-     if(.not.l_rpa_IP) call EPS_2_eels(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2),EEL(:,2))
+     ! Relation between eels and alpha is dimension dependent
+     !
+     ! I'm using:
+     ! alpha = ( 1 +eels )/4/pi  
+     ! 3D case: eels =    1 -alpha*4*pi  
+     ! 2D case: eels = ??? Alpha ???
+     ! 1D case: eels = ??? Alpha ???
+     ! 0D case: eels cannot be measured
+     !! 2D, 1D and 0D cases to be fixed
+     !
+     if(.not.l_alpha_from_eps) EEL=1._SP-Alpha*4._SP*pi/fac
+     !
+     if(     l_alpha_from_eps) then
+       ! This is used only without col-cut: for 0D, or 1D and 2D at q=0
+       call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
+       EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
+       if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
+       if(.not.l_rpa_IP) then
+         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
+         EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
+       endif
+     endif
      !
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)

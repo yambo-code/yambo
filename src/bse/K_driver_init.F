@@ -101,8 +101,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Need to convert eels to epsilon ? (part A, part B in K_driver)
  !================================================================
  !
- ! If the Coulomb cutoff is not used (ie the system is 3D) eps/=eps^-1
- if (.not.l_col_cut)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
+ ! If the system is 3D eps/=eps^-1
+ if (l_3D)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
  !
  ! If the Coulomb cutoff is     used ...
  if (l_col_cut) then
@@ -115,18 +115,17 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      if (iq==1) BSS_eels_to_eps=.false.
      if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
    endif
+   !
  endif
  !
  ! The following logical could be merged with the BSS_eels_to_eps logical
  !
  ! in 3D, and in (2D or 1D) at q>0, alpha and beta depend on eels
- ! This logic is because standard BSE is with Lbar, i.e. something
- ! proportional to eps
- ! For the case Lfull we could use the same logic of G-space since
- ! we have something proportional to eps^-1
+ ! This logic is because standard BSE is with Lbar, i.e. something proportional to eps
+ ! For the case Lfull we could use the same logic of G-space since we have something proportional to eps^-1
  !-------
  l_ab_from_eels=.false.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) l_ab_from_eels = eval_eels
+ if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = eval_eels
  !
  if (what=="loop-init") return
  !

@@ -26,10 +26,8 @@ operate=$1
 #
 file_obj=`echo $file | sed 's/.$/o/'`
 if [ "$file_obj" != "driver.o" ] ; then
- obj_path=`find $compdir -name $file_obj -not -path "/*.save/*"`;
-fi
-#
-if [ "$file_obj" == "driver.o" ] ; then
+ file_with_path_obj=`find $compdir -name $file_obj -not -path "/*objects.save/*"`;
+else
  if [ "$VERB" == 1 ] ; then
    echo "WARNING driver.o case is problematic. "
    echo "Mode is $operate. Skipping it."
@@ -37,66 +35,146 @@ if [ "$file_obj" == "driver.o" ] ; then
    echo "See config/mk/local/functions.mk, define_link"
  fi
  return
- #echo "Setting to external value $obj_path"
 fi
 #
-if [ -z "$obj_path" ] ; then
-  if [[ "$operate" == "remove_child"* ]]; then return ; fi
+if [ -z "$file_with_path_obj" ] ; then
+  if [ "$operate" == "remove_child" ]; then return ; fi
   # if the object does not exist yet, I set the path from the external loop
   if [ "$operate" == "remove" ]; then
     if [ "$VERB" == 1 ] ; then
       echo "Remove mode and $file_obj not found"
       echo "Setting to external value"
     fi
-    obj_path=$compdir/$dir/$file_obj
+    file_with_path_obj=$compdir/$dir/$file_obj
   fi
 fi
 #
+path_obj=`dirname $file_with_path_obj`
+#
 file_src=`echo $file | sed 's/.$/F/'`
-source_path=`echo $obj_path | sed 's/.$/F/'`
+file_with_path_src=`echo $file_with_path_obj | sed 's/.$/F/'`
 if [[ "$compdir" != "$srcdir" ]] && [[ "$srcdir" != "." ]] ; then
- # replace compdir with srcdir in source_path
- source_path=${srcdir}${source_path/$compdir/}
+ # replace compdir with srcdir in file_with_path_src
+ file_with_path_src=${srcdir}${file_with_path_src/$compdir/}
 fi
-if [ ! -f "$source_path" ] ; then
+if [ ! -f "$file_with_path_src" ] ; then
  file_src=`echo $file | sed "s/.$/c/"`
- source_path=`echo $source_path | sed 's/.$/c/'`
- f90_file_src=""
- f90_source_path=""
+ file_with_path_src=`echo $file_with_path_src | sed 's/.$/c/'`
+ file_f90=""
+ file_with_path_f90=""
 else
- f90_file_src=`echo $file | sed 's/.$/f90/'`
- f90_source_path=`echo $obj_path | sed 's/.$/f90/'`
+ file_f90=`echo $file | sed 's/.$/f90/'`
+ file_with_path_f90=`echo $file_with_path_obj | sed 's/.$/f90/'`
 fi
-if [ ! -f "$source_path" ] ; then
+if [ ! -f "$file_with_path_src" ] ; then
  file_src=`echo $file | sed "s/.$/f/"`
- source_path=`echo $source_path | sed 's/.$/f/'`
+ file_with_path_src=`echo $file_with_path_src | sed 's/.$/f/'`
 fi
 #
-if [ ! -f "$source_path" ] ; then
+if [ ! -f "$file_with_path_src" ] ; then
  echo "$file_src not found for src in $operate mode in $srcdir"
- echo "full path was set to $source_path"
+ echo "full path was set to $file_with_path_src"
 fi
 #
-ldir=`dirname $obj_path`
+ldir=`dirname $file_with_path_obj`
 llib=`basename $ldir`
 #
 if [ "$VERB" == 1 ] ; then
- echo "source path is $source_path"
- echo "f90 source path is $f90_source_path"
- echo "obj path is $obj_path"
+ echo "source file name is $file_src"
+ echo "source file with path is $file_with_path_src"
+ echo "f90 file name is $file_f90"
+ echo "f90 file with path is $file_with_path_f90"
+ echo "obj file name is $file_obj"
+ echo "obj file with path is $file_with_path_obj"
+ echo "obj path is $path_obj"
  echo "dir is $dir"
  echo "ldir is $ldir"
+ #echo "operate is $operate"
 fi
 #
-  if [ $VERB == 1 ] ; then echo "[WARNING] removing lib stamp" ; fi
-  source ./sbin/compilation/stamp_remove.sh "lib"
-  if [[ -f "$obj_path" ]]  ; then
-    if [ "$VERB" == 1 ] ; then
-     echo "remove object | rm -f  $obj_path"
-     echo "remove f90 source | rm -f  $f90_source_path"
-     echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp"
-    fi
-    rm $obj_path
-    if [ -f "$f90_source_path" ] ; then rm -f $f90_source_path ; fi
-  fi
+if [[  "$path_obj" == *"${dir/\./}" ]] || [ "$2" == "locks" ]; then
+ if [ $VERB == 1 ] ; then echo "remove lib | rm -f config/stamps_and_lists/lib${llib}.a.stamp" ; fi
+ source ./sbin/compilation/stamp_remove.sh "lib"
+fi
 #
+if [[ -f "$file_with_path_obj" ]]  ; then
+  #
+  if [ "$VERB" == 1 ] ; then
+    if [[  "$path_obj" == *"${dir/\./}" ]]; then echo "remove object | rm -f  $file_with_path_obj"; fi
+    echo "remove f90 source | rm -f  $file_with_path_f90"
+  fi
+  if [[  "$path_obj" == *"${dir/\./}" ]]; then rm $file_with_path_obj ; fi
+  if [ -f "$file_with_path_f90" ] ; then rm -f $file_with_path_f90 ; fi
+  #
+  if [ "$2" == "locks" ] && [[  ! "$path_obj" == *"${dir/\./}" ]]; then
+    if [ "$VERB" == 1 ] ; then echo "remove object | mv  $file_with_path_obj ${file_with_path_obj}_to_remove "; fi
+    mv  $file_with_path_obj ${file_with_path_obj}_to_remove
+  fi
+  #
+  # In sources mode remove all corresponding saved objects
+  #
+  if [ "$2" == "sources" ]; then
+    #
+    if [ "$VERB" == 1 ] ; then echo "touch file source | touch  $file_with_path_src" ; fi
+    if [ -f "$file_with_path_src" ] ; then touch $file_with_path_src ; fi
+    #
+    if [ "$VERB" == 1 ] ; then
+     echo "remove stored objects in .save folders | rm $path_obj/*objects.save/$file_obj"
+     echo "remove .f90 files in .save folders | $path_obj/*objects.save/$file_f90"
+     echo "remove .a libraries in | rm $path_obj/*objects.save/*.a"
+    fi
+    #
+    count=`ls -1 $path_obj/*objects.save/*.a 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then rm -f $path_obj/*objects.save/*.a ; fi
+    count=`ls -1 $path_obj/*objects.save/$file_obj 2>/dev/null | wc -l`
+    if [ $count != 0 ] ; then
+      if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*objects.save/$file_obj" ; fi
+      rm -f $path_obj/*objects.save/$file_obj
+    fi
+    if [ ! "$file_f90" == "" ]; then
+      count=`ls -1 $path_obj/*objects.save/$file_f90 2>/dev/null | wc -l`
+      if [ $count != 0 ] ; then
+        if [ "$VERB" == 1 ] ; then echo "rm -f $path_obj/*objects.save/$file_f90" ; fi
+        rm -f $path_obj/*objects.save/$file_f90
+      fi
+    fi
+  fi
+fi
+#
+# Remove corresponding mod files
+#
+if [[ -f "$file_with_path_src" ]]  ; then
+  modfile=`grep -i module $file_with_path_src | grep -i -v end | grep -i -v use | grep -i -v procedure | grep -v !`
+  for modname_tmp in $modfile; do
+    # Global
+    modname=`echo "$modname_tmp" | tr '[:upper:]' '[:lower:]'`
+    if [ -f "$compdir/include/$modname.mod" ]; then
+      if [ "$VERB" == 1 ] ; then echo "remove global module | rm -f $compdir/include/$modname.mod"; fi
+      rm -f $compdir/include/$modname.mod
+    fi
+    # Local
+    if [ -f "$path_obj/$modname.mod" ]; then
+      #
+      if [[  "$path_obj" == *"${dir/\./}" ]]; then
+        if [ "$VERB" == 1 ]; then echo "remove local module | rm -f $path_obj/$modname.mod"; fi
+        rm -f $path_obj/$modname.mod ;
+      fi
+      #
+      if [ "$2" == "locks" ] && [[  ! "$path_obj" == *"${dir/\./}" ]]; then
+        if [ "$VERB" == 1 ] ; then echo "remove local module | mv $path_obj/$modname.mod $path_obj/$modname.mod_to_remove "; fi
+        mv $path_obj/$modname.mod $path_obj/$modname.mod_to_remove
+      fi
+      #
+      # In sources mode remove all corresponding saved modules
+      #
+      if [ "$2" == "sources" ]; then
+        count=`ls -1 $path_obj/*objects.save/$modname.mod 2>/dev/null | wc -l`
+        if [ $count != 0 ]; then
+          if [ "$VERB" == 1 ] ; then echo "remove module in .save folders | rm $path_obj/*objects.save/$modname.mod" ; fi
+          rm $path_obj/*objects.save/$modname.mod
+        fi
+      fi
+    fi
+  done
+  #
+fi

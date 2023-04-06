@@ -27,9 +27,10 @@ subroutine SET_logicals()
  use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report,fat_log
- use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
-&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
-&                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,frag_DG,   &
+ use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string, &
+&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,&
+&                     io_BS_K,io_SCREEN,io_MULTIPOLE, &
+&                     frag_DIP,frag_RESPONSE,frag_MULTIPOLE,frag_HF,frag_SC,frag_DG,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,STRING_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
@@ -68,6 +69,7 @@ subroutine SET_logicals()
  !========
  io_DIP         =.TRUE.
  io_RESPONSE    =.TRUE.
+ io_MULTIPOLE   =.TRUE.
  io_SCREEN      =.FALSE.
  io_HF          =.TRUE.
  io_COLLs       =.TRUE.
@@ -103,16 +105,17 @@ subroutine SET_logicals()
  !
  ! DBs fragmentation
  !===================
- frag_DIP     =.TRUE.
- frag_RESPONSE=.TRUE.
- frag_SCREEN  =.TRUE.
- frag_HF      =.FALSE.
- frag_SC      =.TRUE.
- frag_RT      =.TRUE.
- frag_ELPH    =.TRUE.
- frag_QINDX   =.FALSE.
- frag_BS_K    =.FALSE.
- frag_DG      =.TRUE.
+ frag_DIP      =.TRUE.
+ frag_RESPONSE =.TRUE.
+ frag_MULTIPOLE=.TRUE.
+ frag_SCREEN   =.TRUE.
+ frag_HF       =.FALSE.
+ frag_SC       =.TRUE.
+ frag_RT       =.TRUE.
+ frag_ELPH     =.TRUE.
+ frag_QINDX    =.FALSE.
+ frag_BS_K     =.FALSE.
+ frag_DG       =.TRUE.
  !
  ch_piece=' '
  call STRING_split(DBs_FRAG_control_string,ch_piece)

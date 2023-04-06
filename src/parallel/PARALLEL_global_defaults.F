@@ -48,9 +48,9 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  ! In the SLK case the default = nxn (with n=2,4,6)
  !
- if (ncpu>=4 ) n_par_la=4
- if (ncpu>=16) n_par_la=16
- if (ncpu>=36) n_par_la=36
+ if (ncpu>=8 ) n_par_la=4
+ if (ncpu>=32) n_par_la=16
+ if (ncpu>=64) n_par_la=36
  !
 #endif
  !
@@ -66,7 +66,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now/=ncpu.and.ENVIRONMENT=="BZ_Indexes") then
    call warning("MPI for BZ indexes is "//trim(intc(ncpu_now))//&
-   &" while number of cores is"//trim(intc(ncpu))//". Assuming expert user.")
+   &" while number of cores is "//trim(intc(ncpu))//". Assuming expert user.")
    return
  endif
  !

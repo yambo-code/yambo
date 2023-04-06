@@ -30,7 +30,7 @@
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
 file=$obj
-source ./sbin/compilation/object_remove.sh "remove"
+source ./sbin/compilation/object_remove.sh "remove" $1
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
@@ -46,6 +46,6 @@ if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
  for file in $first_level_dep
  do
-  source ./sbin/compilation/object_remove.sh "remove_child"
+  source ./sbin/compilation/object_remove.sh "remove_child" $1
  done
 fi

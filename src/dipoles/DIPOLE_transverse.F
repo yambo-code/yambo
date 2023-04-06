@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM, DS, JK
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -294,6 +294,10 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
          if (l_use_comm) call DIPOLE_kb_sum(rho,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
+         !
+#if defined _SURF
+         if (lras.and.loptcut) call DIPOLE_kb_sum(rho_cut,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
+#endif
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)

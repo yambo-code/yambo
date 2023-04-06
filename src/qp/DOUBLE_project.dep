@@ -10,6 +10,7 @@
  QP_life_transitions.o
  QP_load_SC_xc.o
  QP_logicals.o
+ QP_mpa.o
  QP_newton.o
  QP_of.o
  QP_ppa_EET_terminator.o

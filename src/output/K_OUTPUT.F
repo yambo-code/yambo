@@ -71,8 +71,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    endif
    !
    if (X_do_obs("eel")   .and. .not.eval_eels     ) call X_obs_onoff("- eel")
-   if (X_do_obs("alpha") .and. .not.l_ab_from_eels) call X_obs_onoff("- alpha")
-   if (X_do_obs("beta")  .and. .not.l_ab_from_eels) call X_obs_onoff("- beta")
+   !if (X_do_obs("alpha") .and. .not.l_ab_from_eels) call X_obs_onoff("- alpha")
+   !if (X_do_obs("beta")  .and. .not.l_ab_from_eels) call X_obs_onoff("- beta")
    !
    call X_OUTPUT_driver("open "//OBS)
    !

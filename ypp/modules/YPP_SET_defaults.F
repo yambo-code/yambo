@@ -55,7 +55,7 @@ subroutine YPP_SET_defaults()
 #if defined _YPP_ELPH
  use YPP_ELPH,       ONLY:elph_dbs_path, elph_Ef, elph_gamma_broad, elph_steps, l_atomic_amplitude, l_eliashberg,&
 &                         l_gkkp, l_phonons, ph_broad, ph_freqs_file, ph_modes_file
- use ELPH,           ONLY:gsqF_energy_steps
+ use ELPH,           ONLY:gsqF_energy_steps,elph_branches
 #endif
 #if defined _YPP_NL
  use YPP_real_time,  ONLY:Pump_path
@@ -192,6 +192,7 @@ subroutine YPP_SET_defaults()
  ph_freqs_file='none'
  ph_modes_file='none'
  gsqF_energy_steps=1
+ elph_branches=(/-1,-1/)
  !
 #endif
  !

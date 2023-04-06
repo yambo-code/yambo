@@ -41,7 +41,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
-&                     GWo_SC_done,GWo_iterations,GW_iterations,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
@@ -318,7 +317,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh=0.00001
+ filled_tresh       =0.00001_SP
  !
  ! Magnetization and density
  !
@@ -393,9 +392,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100._SP
- GWo_iterations=0
- GW_iterations =0
- GWo_SC_done=.FALSE.
  COHSEX_use_empties=.FALSE.
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV

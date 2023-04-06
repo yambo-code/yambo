@@ -195,15 +195,14 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
        if (     l_alpha_from_eps) Alpha(:,2)= Epsilon_ii(:,2)-1._SP
        if (.not.l_alpha_from_eps) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+       fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus/4._SP/pi
+       Alpha(:,2)=Alpha(:,2)*fac
      endif
    endif
    call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_RL_INDEX%COMM)
    call PP_redux_wait(Alpha(:,2),     COMM=PAR_COM_RL_INDEX%COMM)
    !
-   ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
-   fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
-   !
-   Alpha(:,2)=Alpha(:,2)*fac
    !
    if (l_pf_fxc) then
      call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
@@ -216,7 +215,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        enddo
      end if
    end if
-   !
    !
    ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
    call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
@@ -238,27 +236,34 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    if (X_do_obs("eel")) then
      !
-     ! Relation between eels and alpha is dimension dependent
+     ! The RPA part is always defined in the same way
+     ! otherwise I get IP instead of RPA without LF.
+     ! This is like the Lbar case in BSE.
+     call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
+     EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
      !
-     ! I'm using:
-     ! alpha = ( 1 +eels )/4/pi  
-     ! 3D case: eels =    1 -alpha*4*pi  
-     ! 2D case: eels = ??? Alpha ???
-     ! 1D case: eels = ??? Alpha ???
-     ! 0D case: eels cannot be measured
-     !! 2D, 1D and 0D cases to be fixed
+     if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
      !
-     if(.not.l_alpha_from_eps) EEL=1._SP-Alpha*4._SP*pi/fac
-     !
-     if(     l_alpha_from_eps) then
-       ! This is used only without col-cut: for 0D, or 1D and 2D at q=0
-       call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
-       EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
-       if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
-       if(.not.l_rpa_IP) then
+     if(.not.l_rpa_IP) then
+       !
+       ! Relation between eels and alpha is dimension dependent
+       !
+       ! I'm using:
+       ! alpha = ( 1 +eels )/4/pi  
+       ! 3D case: eels =    1 -alpha*4*pi  
+       ! 2D case: eels = ??? Alpha ???
+       ! 1D case: eels = ??? Alpha ???
+       ! 0D case: eels cannot be measured
+       !! 2D, 1D and 0D cases to be fixed
+       !
+       if(.not.l_alpha_from_eps) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
+       !
+       if(     l_alpha_from_eps) then
+         ! This is used only without col-cut: for 0D, or 1D and 2D at q=0
          call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
        endif
+       !
      endif
      !
      do iw=1,wv%n_freqs

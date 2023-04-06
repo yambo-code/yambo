@@ -54,6 +54,7 @@ subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
  ! 
  use pars,          ONLY:SP,pi,cZERO,cI
  use units,         ONLY:HA2EV
+ use com,           ONLY:msg
  !
  implicit none
  !
@@ -72,6 +73,8 @@ subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
    eps_extended=eps
    return
  endif
+ !
+ call msg('s',' EPS prolungation into the w<0 axis')
  !
  if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or. &
 &      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose) then

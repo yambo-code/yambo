@@ -80,6 +80,11 @@ integer function io_QINDX(Xk,q,io_db)
    call io_variable_elemental(io_db,VAR="QP states",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
    call io_variable_elemental(io_db,I0=q%nibz)
    call io_variable_elemental(io_db,I0=q%nbz)
+   if (     ver_is_gt_or_eq(io_db,revision=22014)) then
+     call io_variable_elemental(io_db,I0=qindx_S_max_Go)
+   else
+     qindx_S_max_Go=-1
+   endif
    call io_variable_elemental(io_db,VAR="X grid is uniform",L0=Xk_grid_is_uniform)
    io_QINDX=io_status(io_db)
    if (ver_is_gt_or_eq(io_db,revision=18984)) then
@@ -96,11 +101,6 @@ integer function io_QINDX(Xk,q,io_db)
      call io_variable_elemental(io_db,VAR="X scattering",L0=X_scattering,CHECK=.true.,OP=(/"=="/))
    endif
    !
-   if (     ver_is_gt_or_eq(io_db,revision=22014)) then
-     call io_variable_elemental(io_db,I0=qindx_S_max_Go)
-   else
-     qindx_S_max_Go=-1
-   endif
    call def_variable_elemental(io_db,"",0,0,1)
    ioScatt=io_status(io_db)
    nqbz=q%nbz

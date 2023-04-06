@@ -26,7 +26,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use pars,           ONLY:pi,SP,cI
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
- use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
+ use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
+&                         eval_eels,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
@@ -34,7 +35,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
 &                         X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
- use D_lattice,      ONLY:l_1D,l_2D,l_3D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
  use PHOTOLUM,       ONLY:PL
@@ -45,8 +45,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  type(w_samp) :: W
  character(*) :: WHAT,OBS
  !
- logical, external :: EPS_2_eels_check
- !
  ! Work Space
  !
  character(2)      :: ordering
@@ -54,8 +52,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(10)     :: solver
  complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),eel_off(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
- logical           :: l_last_col,eval_eels,l_ab_from_eels
- ! 
+ logical           :: l_last_col
+ !
  if (STRING_match(WHAT,"open")) then
    !
    if (STRING_match(WHAT,"Haydock"))   solver="haydock"
@@ -72,7 +70,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
    endif
    !
+   if (X_do_obs("eel")   .and. .not.eval_eels     ) call X_obs_onoff("- eel")
+   if (X_do_obs("alpha") .and. .not.l_ab_from_eels) call X_obs_onoff("- alpha")
+   if (X_do_obs("beta")  .and. .not.l_ab_from_eels) call X_obs_onoff("- beta")
+   !
    call X_OUTPUT_driver("open "//OBS)
+   !
  endif
  !
  if (STRING_match(WHAT,"append"))    call X_OUTPUT_driver("append "//OBS)
@@ -139,26 +142,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! ... Eps_ij
    call ELEMENTAL_dump("off",Epsilon_ij(:,2:))
    !
- endif
- !
- ! Check if eels can be evaluated
- !-------
- if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels_check(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
-   if (.not.eval_eels) call X_obs_onoff("- eel")
- endif
- !
- ! in 3D, and in (2D or 1D) at q>0, alpha and beta depend on eels
- ! This logic is because standard BSE is with Lbar, i.e. something
- ! proportional to eps
- ! For the case Lfull we could use the same logic of G-space since
- ! we have something proportional to eps^-1
- !-------
- l_ab_from_eels=.false.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) then
-   l_ab_from_eels = eval_eels
-   if ( .not.l_ab_from_eels .and. X_do_obs("alpha") ) call X_obs_onoff("- alpha")
-   if ( .not.l_ab_from_eels .and. X_do_obs("beta")  ) call X_obs_onoff("- beta")
  endif
  !
  ! EELS and/or alpha preliminary 

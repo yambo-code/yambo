@@ -183,7 +183,7 @@ subroutine INIT_activate()
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc UseNLCC')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc FxcLibxc FxcCutScheme UseNLCC')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
@@ -234,7 +234,7 @@ subroutine INIT_activate()
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
    if(l_alda_fxc) then
-     call initactivate(1,'BSENGfxc')
+     call initactivate(1,'BSENGfxc FxcLibxc FxcCutScheme')
      if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
    endif
    !
@@ -375,7 +375,7 @@ subroutine INIT_activate()
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
-         call initactivate(1,'GWoIter GWIter SCEtresh')
+         call initactivate(1,'SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
      else if (l_life) then
@@ -410,7 +410,7 @@ subroutine INIT_activate()
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
-           call initactivate(1,'GWoIter GWIter SCEtresh')
+           call initactivate(1,'SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif
@@ -481,8 +481,8 @@ subroutine INIT_activate()
    call initactivate(-1,'QpntsRXs')
    !
    if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC')
+   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC FxcLibxc')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&

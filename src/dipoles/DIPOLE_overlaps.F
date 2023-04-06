@@ -21,6 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt. 
 !      
+!> @brief Calculate overlaps between wave-function <\psi_k | \psi_{k+q} > for q = 1,2
+!
+!! @param[out]      DIP_S               Overlap matrices
+!
 subroutine DIPOLE_overlaps(Xk,Dip)
  !    
  use pars,              ONLY:SP,cZERO,pi

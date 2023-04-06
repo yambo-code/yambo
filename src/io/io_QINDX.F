@@ -36,7 +36,7 @@ integer function io_QINDX(Xk,q,io_db)
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
-&                         sigma_scattering,X_scattering,k_GRIDS_string
+&                         sigma_scattering,X_scattering,k_GRIDS_string,qindx_S_max_Go
  use IO_m,           ONLY:io_sec,frag_QINDX,io_status,read_is_on,IO_OUTDATED_DB, &
 &                         write_is_on,io_extension
  use IO_int,         ONLY:io_connect,io_disconnect,&
@@ -52,7 +52,7 @@ integer function io_QINDX(Xk,q,io_db)
  !
  ! Work Space
  !
- integer      :: ioScatt,id_frag
+ integer      :: ioScatt,id_frag,n_pars
  !
  call timing('io_QINDX',OPR='start')
  !
@@ -70,8 +70,10 @@ integer function io_QINDX(Xk,q,io_db)
    if (.not.ver_is_gt_or_eq(io_db,revision=5545)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
-   if (.not.ver_is_gt_or_eq(io_db,revision=18984)) call def_variable_elemental(io_db,"PARS",9,SP,0)
-   if (     ver_is_gt_or_eq(io_db,revision=18984)) call def_variable_elemental(io_db,"PARS",7,SP,0)
+   if (.not.ver_is_gt_or_eq(io_db,revision=18984)) n_pars=9
+   if (     ver_is_gt_or_eq(io_db,revision=18984)) n_pars=7
+   if (     ver_is_gt_or_eq(io_db,revision=22014)) n_pars=n_pars+1
+   call def_variable_elemental(io_db,"PARS",n_pars,SP,0)
    !
    call io_variable_elemental(io_db,I0=nXkbz)
    call io_variable_elemental(io_db,VAR="Polarization last K",I0=nXkibz)
@@ -94,6 +96,11 @@ integer function io_QINDX(Xk,q,io_db)
      call io_variable_elemental(io_db,VAR="X scattering",L0=X_scattering,CHECK=.true.,OP=(/"=="/))
    endif
    !
+   if (     ver_is_gt_or_eq(io_db,revision=22014)) then
+     call io_variable_elemental(io_db,I0=qindx_S_max_Go)
+   else
+     qindx_S_max_Go=-1
+   endif
    call def_variable_elemental(io_db,"",0,0,1)
    ioScatt=io_status(io_db)
    nqbz=q%nbz

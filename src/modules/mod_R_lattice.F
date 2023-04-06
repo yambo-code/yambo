@@ -125,6 +125,7 @@ module R_lattice
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
  integer  :: qindx_B_max
+ integer  :: qindx_S_max_Go
  !
  ! SYMs
  !

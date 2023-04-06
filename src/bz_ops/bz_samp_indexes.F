@@ -56,7 +56,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
+&                         q_sstar,coll_scattering,q_source,smallest_q_norm,qindx_S_max_Go,&
 &                         Xk_grid_new_mapping,k_GRIDS_string,X_scattering,sigma_scattering
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
@@ -490,6 +490,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        exit K_LOOP
      endif
    enddo K_LOOP
+   !
+   qindx_S_max_Go=maxval(qindx_S(:,:,2))
+   !
  endif
  !
  ! Grids string update

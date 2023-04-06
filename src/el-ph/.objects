@@ -1,6 +1,6 @@
 #if defined _ELPH && !defined _YPP_ELPH
-EQ_objs = ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o \
-          ELPH_gsqF_to_Sigma.o ELPH_GreenF.o En_k_plus_q_interpolate.o
+EQ_objs = ELPH_Sigma_c.o ELPH_Hamiltonian.o ELPH_simmetrize_and_distribute_gsqF.o Eval_Efermi_DbGd.o \
+          ELPH_gsqF_to_Sigma.o ELPH_Sigma_c_engine.o En_k_plus_q_interpolate.o get_ph_E_DbGd.o
 #endif
 #if defined _RT || defined _PHEL
 RT_objs = ELPH_databases_load.o ELPH_databases_check.o ELPH_databases_grids_map.o \

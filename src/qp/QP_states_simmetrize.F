@@ -21,6 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!@brief Enforce symmetry between degenerate states 
+!       it may induce errors in case of accidental degeneracies
+!
 subroutine QP_states_simmetrize(en,what,V_real,V_complex,state_is_2do,warn_me)
  !
  use pars,          ONLY:SP,schlen

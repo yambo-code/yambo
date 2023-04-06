@@ -41,7 +41,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
 &                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
-&                     GWo_SC_done,GWo_iterations,GW_iterations,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
@@ -53,7 +52,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
-&                     RIM_anisotropy,RIM_ng,RIM_W_ng,RIM_n_rand_pts,nqibz,q0_def_norm,&
+&                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map
  use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
@@ -292,6 +291,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  ! RIM-W
  !
  RIM_W_ng=0
+ RIMW_type="default"
  !
  ! CUTOFF
  !
@@ -317,7 +317,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh=0.00001
+ filled_tresh       =0.00001_SP
  !
  ! Magnetization and density
  !
@@ -392,9 +392,6 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100._SP
- GWo_iterations=0
- GW_iterations =0
- GWo_SC_done=.FALSE.
  COHSEX_use_empties=.FALSE.
  On_Mass_Shell_approx=.FALSE.
  SC_E_threshold=0.01/HA2EV

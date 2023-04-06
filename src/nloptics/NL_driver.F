@@ -35,7 +35,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  use wave_func,      ONLY:WF,wf_ng
  use interfaces,     ONLY:WF_load,WF_free
  use hamiltonian,    ONLY:WF_Go_indx,H_QP_table_setup,H_potential
- use R_lattice,      ONLY:bz_samp,qindx_free,qindx_S
+ use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
@@ -47,8 +47,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
  use collision_ext,  ONLY:COLLISIONS_have_HARTREE
- use IO_int,              ONLY:io_control
- use IO_m,                ONLY:REP,OP_RD_CL
  !
 #include<memory.h>
  !
@@ -60,7 +58,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  type(DIPOLE_t)    :: Dip
  !
  logical, external :: stop_now
- integer, external :: io_QINDX
  ! 
  ! Work Space
  !
@@ -94,16 +91,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  !
  ! Dipoles & WF dimensions
  !=========================
- ! I need qindx_S to estimate the number of g-vectors
- !
- call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
- io_err=io_QINDX(k,q,ID)
- if(io_err/=0) call error('Error loading qindx_S, run setup again ')
- !
  call WF_and_dipole_dimensions(X,k)
- !
- ! I do not need anymore qindx_S for the rest of the code
- YAMBO_FREE(qindx_S)
  !
  ! QP dimensions
  !================

@@ -54,10 +54,6 @@ integer function io_QINDX(Xk,q,io_db)
    !
    io_QINDX=io_header(io_db,IMPOSE_SN=.true.,FRAG=frag_QINDX)
    !
-   ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
-   ! In revision 3085 the coll indx has been ceated with two new logicals
-   ! in the header
-   !
    if (.not.ver_is_gt_or_eq(io_db,revision=22000)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
@@ -195,7 +191,7 @@ integer function io_QINDX(Xk,q,io_db)
  endif
  !
  if (any((/io_sec(io_db,:)==6/))) then 
-   if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
+   if (coll_scattering) then
      if (read_is_on(io_db)) call qindx_alloc('C')
      !
      ! Fragmentation (4): COLL indx

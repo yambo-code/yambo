@@ -23,6 +23,22 @@
 !
 subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
+ ! This subroutine performes a double FFT of F_xc
+ ! F_xc(r) --> F_xc(G_l) --> F_xc(r)
+ !
+ ! Before performing the FFT bach to r space, it can lower the cutoff of F_xc(G)
+ ! There are  three options
+ ! a) "lower_GmGp" --> F_xc(G_l) with G_l=G-G' and a maximum cutoff is applied to G and G'
+ ! b) "lower_Gmax" --> a cutoff is applied directly to G_l
+ ! c) "full_grid"  --> no cutoff is applied (for debugging purposes)
+ !
+ ! The three options can be controlled from input. Notice that full grid 
+ ! means Ng = fft_size, where Ng is the number of G-vectors is reciprocal space
+ ! This means Ng >> ng_closed because F_xc is not at all smooth
+ !
+ ! The main goal of this subrotuine is to allow comparison between a
+ ! TDDFT run in G-space and one in eh-space
+ !
  use pars,          ONLY:DP,SP,cZERO
  use TDDFT,         ONLY:FXC_n_g_corr
  use BS,            ONLY:BS_n_g_fxc,l_BS_magnons

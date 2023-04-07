@@ -61,7 +61,7 @@ subroutine NL_driver(E,X,k,q,Dip)
  ! 
  ! Work Space
  !
- integer           :: i_f,i1,i_sp_pol,N_sample_size,ID,wf_ng_save,io_err
+ integer           :: i_f,i1,i_sp_pol,N_sample_size,wf_ng_save,io_err
  logical           :: l_dynamics_is_over
  real(SP)          :: Time
  !

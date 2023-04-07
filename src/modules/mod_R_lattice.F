@@ -40,6 +40,7 @@ module R_lattice
  logical           :: Xk_grid_is_uniform
  logical           :: Xk_grid_new_mapping
  character(schlen) :: k_GRIDS_string="X S B C"
+ integer           :: k_GRIDS_vector(4)=(/1,1,1,1/)
  !
  ! Q/K-sampling
  !

@@ -59,7 +59,7 @@ function TDDFT_ALDA_R_space(is,os,isp,osp,tddft_wf,mode)
  ! Work Space
  !
  logical     :: l_use_rho_map
- integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irhotw,is_yambo,os_yambo,i_spinor_y,j_spinor_y
+ integer     :: i_spinor,j_spinor,ip_spinor,jp_spinor,ifft,irho,irhotw,is_yambo,os_yambo,i_spinor_y,j_spinor_y
  !
  complex(SP), pointer :: rhotwr1_p(:)
  complex(SP), pointer :: rhotwr2_p(:)

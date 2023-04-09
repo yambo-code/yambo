@@ -31,7 +31,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
- use D_lattice,     ONLY:l_0D,l_1D,l_2D
+ use D_lattice,     ONLY:l_0D,l_1D,l_2D,l_3D
  use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
@@ -60,7 +60,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  integer          :: iw,iq,i_G_shift
  complex(SP)      :: fac
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
- logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps
+ logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps,&
+&                    l_eels_from_ext_eps
  !
  integer,external :: OPTICS_select_q_and_G
  logical,external :: EPS_check
@@ -140,6 +141,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !-------
    l_alpha_from_eps=.false.
    if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
+   !
+   ! If possible and ordering is not T or R I extend the epsilon
+   !
+   l_eels_from_ext_eps= .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_3D
    !
    ! Check if EELS can be evaluated
    ! This should not be needed, in G-space I directly obtain the eels
@@ -246,22 +251,36 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      if(.not.l_rpa_IP) then
        !
-       ! Relation between eels and alpha is dimension dependent
-       !
-       ! I'm using:
-       ! alpha = ( 1 +eels )/4/pi  
-       ! 3D case: eels =    1 -alpha*4*pi  
-       ! 2D case: eels = ??? Alpha ???
-       ! 1D case: eels = ??? Alpha ???
-       ! 0D case: eels cannot be measured
-       !! 2D, 1D and 0D cases to be fixed
-       !
-       if(.not.l_alpha_from_eps) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
-       !
-       if(     l_alpha_from_eps) then
-         ! This is used only without col-cut: for 0D, or 1D and 2D at q=0
+       if(l_alpha_from_eps .or. l_eels_from_ext_eps) then
+	 !
+	 ! Yambo original version
+         ! This is now used only:
+         ! a) without col-cut: for 0D, or 1D and 2D at q=0
+         ! b) when ordering not R or T for 3D materials
+	 !
          call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
+	 !
+       else
+	 !
+	 ! In the other cases it is convinient to get EEL directly
+	 ! from the definition of Alpha. In particular,
+         ! relation between eels and alpha is dimension dependent.
+	 ! Accordingly this corresponds to the above procedure only in 3D
+         !
+         ! I'm using:
+         ! alpha = ( 1 +eels )/4/pi  
+         ! 3D case: eels =    1 -alpha*4*pi  
+         ! 2D case: eels = ??? Alpha ???
+         ! 1D case: eels = ??? Alpha ???
+         ! 0D case: eels cannot be measured
+         !! 2D, 1D and 0D cases to be fixed
+	 !
+         if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
+         & call warning(" Res (or ares) only eels")
+         !
+         EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
+	 !
        endif
        !
      endif

@@ -39,7 +39,7 @@ logical function EPS_check(wv,nw,be_verbose,ordering)
  if (ordering=='Tr'.or.ordering=='Ta') then
    if (real(wv(1))<-real(wv(1))) then
      EPS_check=.FALSE.
-     if (be_verbose) call warning(' [EPS_check] Impossible to obtain EPS in the negative w axis')
+     if (be_verbose) call warning(' [EPS_check] Impossible to extend EPS in the negative w axis')
      return
    endif
  endif
@@ -74,12 +74,13 @@ subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
    return
  endif
  !
- call msg('s',' EPS prolungation into the w<0 axis')
- !
- if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP   .or. &
-&      maxval(aimag(eps))/aimag(eps(nw))<100._SP) .and. be_verbose) then
+ if ( be_verbose ) then
    !
-   call warning(' [EPS_extend] Possible inaccuracy in the EPS prolungation')
+   call msg('s',' EPS prolungation into the w<0 axis')
+   !
+   if ( (maxval(aimag(eps))/aimag(eps(1))<100._SP .or. &
+&        maxval(aimag(eps))/aimag(eps(nw))<100._SP)  ) &
+&    call warning(' [EPS_extend] Possible inaccuracy in the EPS prolungation')
    !
  endif
  !

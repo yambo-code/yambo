@@ -137,7 +137,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Observables allocation
    call X_ALLOC_global("ALLOC",wv)
    !
-   ! in 0D, and in (2D or 1D) at q=0, it is convinient to define alpha as proportional to epsilon
+   ! In 0D, and in (2D or 1D) at q=0, eps=eels.
+   ! However it is convinient to define alpha as proportional to epsilon
+   ! since the latter converges faster to the V --> infinity limit
+   ! This is not needed anymore with coulomb cut-off
    !-------
    l_alpha_from_eps=.false.
    if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
@@ -176,7 +179,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! NB: this is the "IP alpha", while the "RPA eps",
    !     since eps defined here contains the G=0 term of v
-   !     We should discuss how to eventually change this
+   !     This isa why "IP alpha" is re-defined later
    !
    if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/Q_plus_G_sq_modulus
    call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
@@ -198,6 +201,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        ! WARNING: at variance with the IP case, after the call to X_redux,
        !          X_par now contains the factor 4*pi/bare_qpg**2
        Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
+       ! See l_alpha_from_eps definition
        if (     l_alpha_from_eps) Alpha(:,2)= Epsilon_ii(:,2)-1._SP
        if (.not.l_alpha_from_eps) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
        ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
@@ -255,7 +259,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 	 !
 	 ! Yambo original version
          ! This is now used only:
-         ! a) without col-cut: for 0D, or 1D and 2D at q=0
+	 ! a) without col-cut: for 0D, or 1D and 2D at q=0 
+         ! (see l_alpha_from_eps definition)
          ! b) when ordering not R or T for 3D materials
 	 !
          call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
@@ -263,9 +268,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 	 !
        else
 	 !
-	 ! In the other cases it is convinient to get EEL directly
-	 ! from the definition of Alpha. In particular,
-         ! relation between eels and alpha is dimension dependent.
+	 ! In the other cases we obtain EEL directly
+	 ! from the definition of Alpha, using exact equations.
+         ! The relation between eels and alpha is dimension dependent.
 	 ! Accordingly this corresponds to the above procedure only in 3D
          !
          ! I'm using:
@@ -294,7 +299,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     Alpha(:,1:2)=Alpha(:,1:2)*eps_2_alpha
+     ! The RPA part is always re-defined from EELS,
+     ! otherwise I get IP instead of RPA without LF.
+     ! This is like the Lbar case in BSE.
+     Alpha(:,1)=(1._SP+EEL(:,1))*eps_2_alpha/4._SP/pi
+     Alpha(:,2)=Alpha(:,2)*eps_2_alpha
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))

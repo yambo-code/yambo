@@ -29,7 +29,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_same
  use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
-&                       l_ab_from_eels,eval_eels,BSS_slepc_double_grp
+&                       l_ab_from_eels,BSS_slepc_double_grp
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -118,14 +118,18 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    !
  endif
  !
- ! The following logical could be merged with the BSS_eels_to_eps logical
+ ! In general alpha depend on eels
+ ! Without cutoff, this is used only in 3D, and in (2D or 1D) at q>0,
+ ! otherwise eps=eel and eps converges faster to the +inf volume limit,
+ ! thus it is convenient un relate alpha to eps
  !
- ! in 3D, and in (2D or 1D) at q>0, alpha and beta depend on eels
- ! This logic is because standard BSE is with Lbar, i.e. something proportional to eps
+ ! Also to remember that standard BSE is with Lbar, i.e. something proportional to eps
  ! For the case Lfull we could use the same logic of G-space since we have something proportional to eps^-1
+ ! The following logical could be merged with the BSS_eels_to_eps logical
  !-------
  l_ab_from_eels=.false.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = eval_eels
+ !if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = .true.
+ if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) l_ab_from_eels = .true.
  !
  if (what=="loop-init") return
  !

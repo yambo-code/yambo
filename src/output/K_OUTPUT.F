@@ -23,11 +23,11 @@
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
- use pars,           ONLY:pi,SP,cI
+ use pars,           ONLY:pi,SP,cI,cZERO
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
-&                         eval_eels,l_ab_from_eels
+&                         l_eps_res_ares,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
@@ -70,7 +70,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
    endif
    !
-   if (X_do_obs("eel")   .and. .not.eval_eels     ) call X_obs_onoff("- eel")
+   ! If epsilon is not evaluated or extendable to the negative axis,
+   ! eels is not evaluated
+   if (X_do_obs("eel")   .and. .not.l_eps_res_ares     ) call X_obs_onoff("- eel")
    !if (X_do_obs("alpha") .and. .not.l_ab_from_eels) call X_obs_onoff("- alpha")
    !if (X_do_obs("beta")  .and. .not.l_ab_from_eels) call X_obs_onoff("- beta")
    !
@@ -147,40 +149,57 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! EELS and/or alpha preliminary 
  !-------------------------------
  if (X_do_obs("eel") .or. (l_ab_from_eels .and. X_do_obs("alpha")) ) then
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),spectra(:,1))
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),spectra(:,2))
-   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),spectra(:,3))
-   ! EELS 
-   ! Here "eel"=eps^-1_3D and not what measired in an eel exp on 2D / 1D materials
-   eel= -1._SP/(spectra+1._SP)
-   call ELEMENTAL_dump("eel",eel)
+   spectra=cZERO
+   if (l_eps_res_ares) then
+     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)-1._SP,spectra(:,1))
+     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)-1._SP,spectra(:,2))
+     if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)-1._SP,spectra(:,3))
+   else
+     spectra(:,1)=Epsilon_ii(:,2)-1._SP
+     spectra(:,2)=Epsilon_ii(:,3)-1._SP
+     if (l_last_col) spectra(:,3)=Epsilon_ii(:,4)-1._SP
+   endif
  endif
  !
  !              beta preliminary 
  !-------------------------------
  if (                       (l_ab_from_eels .and. X_do_obs("beta")) ) then
-   call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),spectra2(:,1))
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),spectra2(:,2))
-   if (l_last_col) call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),spectra2(:,3))
+   if (l_eps_res_ares) then
+     call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,2),spectra2(:,1))
+     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,3),spectra2(:,2))
+     if (l_last_col) call EPS_extend(Epsilon_ij(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ij(:,4),spectra2(:,3))
+   else
+     spectra2(:,1)=Epsilon_ij(:,2)
+     spectra2(:,2)=Epsilon_ij(:,3)
+     if (l_last_col) spectra2(:,3)=Epsilon_ij(:,4)
+   endif
+ endif
+ !
+ ! EELS 
+ ! Here "eel"=eps^-1_3D and not what measired in an eel exp on 2D / 1D materials
+ if (X_do_obs("eel")) then
+   eel= -1._SP/(spectra+1._SP)
+   call ELEMENTAL_dump("eel",eel)
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ii(:,2:4) *fac
+   if (.not.l_ab_from_eels) spectra=spectra*fac
    ! spectra=eps-1 , eel=-1./(spectra+1.) ;  alpha=(1+eel)*fac
-   ! accordingly alpha=spectra/(1+spectra)
-   if (     l_ab_from_eels) spectra(:,1:3)=spectra/(spectra+1._SP)*fac
+   ! accordingly alpha=spectra/(1+spectra)*fac
+   if (     l_ab_from_eels) spectra=spectra/(spectra+1._SP)*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
  ! Beta
  !------
  if (X_do_obs("beta")) then
-   spectra=0._SP
-   if (.not.l_ab_from_eels) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
-   if (     l_ab_from_eels) spectra(:,1:3)=  spectra2(:,1:3)*fac
-   call ELEMENTAL_dump("beta",spectra)
+   ! spectra2=eps , eel=-1./(spectra2) ;  alpha=(eel)*fac
+   ! accordingly alpha=-1./(spectra2)*fac
+   if (.not.l_ab_from_eels) spectra2=       spectra2*fac
+   if (     l_ab_from_eels) spectra2=-1._SP/spectra2*fac
+   call ELEMENTAL_dump("beta",spectra2)
  endif
  !
  !  DICHROISM

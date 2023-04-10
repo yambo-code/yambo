@@ -29,7 +29,7 @@ subroutine K_observables( W )
  use drivers,      ONLY:l_rpa_IP
  use frequency,    ONLY:w_samp
  use X_m,          ONLY:global_gauge
- use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,eval_eels
+ use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,l_eps_res_ares
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,BSE_mode
@@ -110,6 +110,6 @@ subroutine K_observables( W )
  !-------
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
  if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
- eval_eels=EPS_check(W%p,W%n_freqs,.TRUE.,ordering)
+ l_eps_res_ares=EPS_check(W%p,W%n_freqs,.TRUE.,ordering)
  !
 end subroutine

@@ -284,9 +284,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
          if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
          & call warning(" Res (or ares) only eels")
          !
-	 if(l_3D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
-	 if(l_2D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
-	 if(l_1D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
+         if(l_3D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
+         if(l_2D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
+         if(l_1D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
+	 ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
 	 !
        endif
        !

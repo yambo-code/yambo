@@ -257,11 +257,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        !
        if(l_alpha_from_eps .or. l_eels_from_ext_eps) then
 	 !
-	 ! Yambo original version
-         ! This is now used only:
-	 ! a) without col-cut: for 0D, or 1D and 2D at q=0 
+         ! Yambo original version
+         ! This is now used only without coulomb cutoff
+         ! a) for 0D, or 1D and 2D at q=0 
          ! (see l_alpha_from_eps definition)
-         ! b) when ordering not R or T for 3D materials
+         ! b) for 3D materials when ordering not R or T
 	 !
          call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
@@ -284,7 +284,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
          if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
          & call warning(" Res (or ares) only eels")
          !
-         EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
+	 if(l_3D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
+	 if(l_2D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
+	 if(l_1D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
 	 !
        endif
        !

@@ -151,13 +151,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (X_do_obs("eel") .or. (l_ab_from_eels .and. X_do_obs("alpha")) ) then
    spectra=cZERO
    if (l_eps_res_ares) then
-     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)-1._SP,spectra(:,1))
-     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)-1._SP,spectra(:,2))
-     if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)-1._SP,spectra(:,3))
+     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),spectra(:,1))
+     call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),spectra(:,2))
+     if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),spectra(:,3))
    else
-     spectra(:,1)=Epsilon_ii(:,2)-1._SP
-     spectra(:,2)=Epsilon_ii(:,3)-1._SP
-     if (l_last_col) spectra(:,3)=Epsilon_ii(:,4)-1._SP
+     spectra(:,1)=Epsilon_ii(:,2)
+     spectra(:,2)=Epsilon_ii(:,3)
+     if (l_last_col) spectra(:,3)=Epsilon_ii(:,4)
    endif
  endif
  !

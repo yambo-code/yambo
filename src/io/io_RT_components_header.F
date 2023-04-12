@@ -24,7 +24,7 @@
 #if defined _RT
 subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
  !
- use pars,           ONLY:IP,SP,LP,IP_YIO
+ use pars,           ONLY:IP,SP,LP,IP_YIO,LP_YIO
  use R_lattice,      ONLY:nqbz
  use IO_int,         ONLY:io_header,def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk

@@ -24,7 +24,7 @@
 #if defined _RT || defined _SC || defined _QED
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,IP,SP,IP_YIO
+ use pars,          ONLY:schlen,IP,SP,IP_YIO,CR_YIO
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min
@@ -113,7 +113,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
  endif
  !
- if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),0,par_io_kind='independent')
+ if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),CR_YIO,par_io_kind='independent')
  !
  if (io4) then
    if (write_is_on(ID)) then

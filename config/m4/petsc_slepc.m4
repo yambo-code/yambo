@@ -115,7 +115,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>]),
+#include <petsc/finclude/petscvec.h>]),
        [petsc=yes], [petsc=no]);
   #
   if test "x$petsc" = "xyes"; then

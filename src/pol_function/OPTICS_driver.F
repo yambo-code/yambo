@@ -302,10 +302,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     ! The RPA part is always re-defined from EELS,
+     ! The RPA part is always re-defined from the extended eps,
      ! otherwise I get IP instead of RPA without LF.
      ! This is like the Lbar case in BSE.
-     Alpha(:,1)=(1._SP+EEL(:,1))*eps_2_alpha/4._SP/pi
+     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
+     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
      Alpha(:,2)=Alpha(:,2)*eps_2_alpha
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)

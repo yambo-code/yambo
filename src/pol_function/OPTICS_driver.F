@@ -137,22 +137,20 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Observables allocation
    call X_ALLOC_global("ALLOC",wv)
    !
-   ! In 0D, and in (2D or 1D) at q=0, eps=eels.
+   ! Old Yambo implementation, needed without cut-off
+   ! In 0D, and in 2D/1D at q=0, eps=eels.
    ! However it is convinient to define alpha as proportional to epsilon
    ! since the latter converges faster to the V --> infinity limit
    ! This is not needed anymore with coulomb cut-off
-   !-------
    l_alpha_from_eps=.false.
    if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
    !
-   ! If possible and ordering is not T or R I extend the epsilon
-   !
-   l_eels_from_ext_eps= .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_3D
-   !
    ! Check if EELS can be evaluated
-   ! This should not be needed, in G-space I directly obtain the eels
+   ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
+   ! Not needed for "R" or "T" orderings. Used only for 3D materials now
+   l_eels=.false.
    if (X_do_obs("eel")) l_eels=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
-   !if (.not.l_eels.and.l_alpha_from_eps) call X_obs_onoff("- eel")
+   l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels .and. l_3D
    !
    ! OutPut files...
    if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -259,9 +257,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 	 !
          ! Yambo original version
          ! This is now used only without coulomb cutoff
-         ! a) for 0D, or 1D and 2D at q=0 
+         ! a) for 0D, or 1D and 2D at q=0
          ! (see l_alpha_from_eps definition)
-         ! b) for 3D materials when ordering not R or T
+         ! b) for 3D when ordering not R or T
 	 !
          call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
@@ -281,6 +279,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
          ! 0D case: eels cannot be measured
          !! 2D, 1D and 0D cases to be fixed
 	 !
+	 ! MAybe we could extend Alpha ??
          if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
          & call warning(" Res (or ares) only eels")
          !
@@ -302,11 +301,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     ! The RPA part is always re-defined from the extended eps,
-     ! otherwise I get IP instead of RPA without LF.
-     ! This is like the Lbar case in BSE.
-     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
-     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
+     if(.not.l_alpha_from_eps) then
+       ! The RPA part is always re-defined from the extended eps,
+       ! otherwise I get IP instead of RPA without LF.
+       ! This is like the Lbar case in BSE.
+       call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
+       Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
+     else
+       Alpha(:,1)=Alpha(:,1)*eps_2_alpha
+     endif
      Alpha(:,2)=Alpha(:,2)*eps_2_alpha
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)

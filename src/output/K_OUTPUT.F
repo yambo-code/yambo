@@ -170,10 +170,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    spectra(:,2)=Epsilon_ij(:,3)
    if (l_last_col) spectra(:,3)=Epsilon_ij(:,4)
    !
-   ! eel3D_ij=-1./(eps_ij) ;  beta=(eel3D_ij)*fac
-   ! accordingly beta=-1./(eps_ij)*fac
-   if (.not.l_ab_from_eels) spectra=       spectra*fac
-   if (     l_ab_from_eels) spectra=-1._SP/spectra*fac
+   ! This would be the equivalent of alpha
+   ! but it needs to be checked
+   !! eel3D_ij=-1./(eps_ij) ;  beta=(eel3D_ij)*fac
+   !! accordingly beta=-1./(eps_ij)*fac
+   !if (.not.l_ab_from_eels) spectra=       spectra*fac
+   !if (     l_ab_from_eels) spectra=-1._SP/spectra*fac
+   spectra=       spectra*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  !

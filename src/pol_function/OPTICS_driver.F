@@ -183,6 +183,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
    Epsilon_ii(:,1)=1._SP+Alpha(:,1)*4._SP*pi
    !
+   if(.not.l_alpha_from_eps) then
+     ! The RPA part is always re-defined from the extended eps,
+     ! otherwise I get IP instead of RPA without LF.
+     ! This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
+     ! included in coupling mode regardless or the ordering
+     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
+     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
+   endif
+   !
    ! X Dyson equation solver
    if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
    !
@@ -196,15 +205,19 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        Epsilon_ii(:,2)=Epsilon_ii(:,1)
        Alpha(:,2)=Alpha(:,1)
      else
+       !
        ! WARNING: at variance with the IP case, after the call to X_redux,
        !          X_par now contains the factor 4*pi/bare_qpg**2
        Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
        ! See l_alpha_from_eps definition
        if (     l_alpha_from_eps) Alpha(:,2)= Epsilon_ii(:,2)-1._SP
        if (.not.l_alpha_from_eps) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
+       !
        ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+       ! To check if this is correct
        fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus/4._SP/pi
        Alpha(:,2)=Alpha(:,2)*fac
+       !
      endif
    endif
    call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_RL_INDEX%COMM)
@@ -231,13 +244,23 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
-   ! Epsilon (This is always the 3D one for now)
+   ! Epsilon. This is always the 3D one (for now)
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
      if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
      if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
    enddo
+   !
+   ! Alpha
+   if (X_do_obs("alpha")) then 
+     Alpha=Alpha*eps_2_alpha
+     do iw=1,wv%n_freqs
+       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
+       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
+       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
+     enddo
+   endif
    !
    ! TODO: FIX EEL - ADD CHI
    !
@@ -296,25 +319,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
        if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data)
-     enddo
-   endif
-   !
-   ! Alpha
-   if (X_do_obs("alpha")) then 
-     if(.not.l_alpha_from_eps) then
-       ! The RPA part is always re-defined from the extended eps,
-       ! otherwise I get IP instead of RPA without LF.
-       ! This is like the Lbar case in BSE.
-       call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
-       Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
-     else
-       Alpha(:,1)=Alpha(:,1)*eps_2_alpha
-     endif
-     Alpha(:,2)=Alpha(:,2)*eps_2_alpha
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
      enddo
    endif
    !

@@ -57,7 +57,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq,i_G_shift
+ integer          :: iw,iq,i_G_shift,n_data
  complex(SP)      :: fac,spectra(wv%n_freqs,2)
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps,&
@@ -167,7 +167,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift,MORE="X_size")
    if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
    !
-   if (iq==1) call PP_wait
+   if (iq==1) call PP_wait()
    if (iq> 1) call PP_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
    ! Irredux (Xo) 
@@ -187,14 +187,16 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Alpha
    if(.not.l_alpha_from_eps) then
-     ! Do I need to extend alpha
-     !   The RPA part is always re-defined from the extended eps,
-     !   otherwise I get IP instead of RPA without LF.
-     !   This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
-     !   included in coupling mode regardless or the ordering
+     ! ******* Point 1 to discuss *********
+     ! Do I need to extend spectra to get alpha ...
+     !   In case the alpha is defined from the extended eps,
+     !   which includes v(G=0) in coupling mode regardless or the X%ordering.
+     !   This is like the Lbar case in BSE.
      call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,1),Alpha(:,1))
-     ! or not ??
+     ! .. or not ??
+     !   In case I'm not sure at which level the v(G=0) term is accounted for
      !Alpha(:,1)=spectra(:,1)
+     ! ******* End of Point 1     *********
      Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))/4._SP/pi
    else
      Alpha(:,1)=spectra(:,1)/4._SP/pi
@@ -238,30 +240,36 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      endif
      call PP_redux_wait(spectra(:,2),COMM=PAR_COM_RL_INDEX%COMM)
      !
+     ! ******* Point 2 to discuss *********
+     ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+     ! To check
+     !  (i) if this is correct
+     !  (ii) why it is done for alpha and not for Epsilon_ii
+     fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+     !
      ! Epsilon. This is always the 3D one (for now)
      Epsilon_ii(:,2)=spectra(:,2)+1._SP
+     !Epsilon_ii(:,2)=spectra(:,2)*fac+1._SP
+     ! ******* End of Point 2     *********
      !
      ! Alpha
      if (.not.l_alpha_from_eps) then
-       ! Do I need to extend alpha
-       !   The RPA part is always re-defined from the extended eps,
-       !   otherwise I get IP instead of RPA without LF.
-       !   This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
-       !   included in coupling mode regardless or the ordering
+       ! ******* Point 1 to discuss *********
+       ! See IP above.
+       ! Here the opposite choice, compared to IP, was done by yambo
        !call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,2),Alpha(:,2))
-       ! or not ??
        Alpha(:,2)=spectra(:,2)
+       ! ******* End of Point 1     *********
        Alpha(:,2)=Alpha(:,2)/(1._SP+Alpha(:,2))/4._SP/pi
      else
        Alpha(:,2)=spectra(:,2)/4._SP/pi
      endif
      !
-     ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
-     ! To check
-     !  (i) if this is correct
-     !  (ii) why the same is not done with Epsilon_ii
-     fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+     ! ******* Point 2 to discuss *********
+     ! See above
+     !Alpha(:,2)=Alpha(:,2)
      Alpha(:,2)=Alpha(:,2)*fac
+     ! ******* End of Point 2     *********
      !
      ! EEL: TO FIX EEL as function of dimensions
      if (X_do_obs("eel")) then
@@ -328,12 +336,14 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
+   if (     l_rpa_IP) n_data=3
+   if (.not.l_rpa_IP) n_data=5
+   !
    ! Epsilon output
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
-     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
+     call X_OUTPUT_driver("WRITE eps",data=output_data(:n_data))
    enddo
    !
    ! Alpha output
@@ -341,8 +351,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      Alpha=Alpha*eps_2_alpha
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
+       call X_OUTPUT_driver("WRITE alpha",data=output_data(:n_data))
      enddo
    endif
    !
@@ -350,8 +359,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    if (X_do_obs("eel")) then
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data)
+       call X_OUTPUT_driver("WRITE eel",data=output_data(:n_data))
      enddo
    endif
    !

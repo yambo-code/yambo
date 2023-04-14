@@ -58,7 +58,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! Work Space
  !
  integer          :: iw,iq,i_G_shift
- complex(SP)      :: fac
+ complex(SP)      :: fac,spectra(wv%n_freqs,2)
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps,&
 &                    l_eels_from_ext_eps
@@ -173,118 +173,108 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Irredux (Xo) 
    call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
-   ! Without LF eps and alpha
-   !
-   ! NB: this is the "IP alpha", while the "RPA eps",
-   !     since eps defined here contains the G=0 term of v
-   !     This isa why "IP alpha" is re-defined later
-   !
-   if (Macroscopic_CPU) Alpha(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/Q_plus_G_sq_modulus
-   call PP_redux_wait(Alpha(:,1),COMM=PAR_COM_RL_INDEX%COMM)
-   Epsilon_ii(:,1)=1._SP+Alpha(:,1)*4._SP*pi
-   !
-   if(.not.l_alpha_from_eps) then
-     ! The RPA part is always re-defined from the extended eps,
-     ! otherwise I get IP instead of RPA without LF.
-     ! This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
-     ! included in coupling mode regardless or the ordering
-     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,1)-1._SP,Alpha(:,1))
-     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))*eps_2_alpha/4._SP/pi
-   endif
-   !
-   ! X Dyson equation solver
-   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
-   !
-   ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
-   Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
-&                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
-   !
+   ! Without LF. I start defining spectra=eps-1
    if (Macroscopic_CPU) then
-     !
-     if (     l_rpa_IP) then
-       Epsilon_ii(:,2)=Epsilon_ii(:,1)
-       Alpha(:,2)=Alpha(:,1)
-     else
-       !
-       ! WARNING: at variance with the IP case, after the call to X_redux,
-       !          X_par now contains the factor 4*pi/bare_qpg**2
-       Epsilon_ii(:,2)=1._SP/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP)
-       ! See l_alpha_from_eps definition
-       if (     l_alpha_from_eps) Alpha(:,2)= Epsilon_ii(:,2)-1._SP
-       if (.not.l_alpha_from_eps) Alpha(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)
-       !
-       ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
-       ! To check if this is correct
-       fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus/4._SP/pi
-       Alpha(:,2)=Alpha(:,2)*fac
-       !
-     endif
+     ! I start defining spectra=eps-1
+     ! using the definition of epsilon-1 in terms of chi-bar
+     fac=4._SP*pi/Q_plus_G_sq_modulus
+     spectra(:,1)=-X_par(1)%blc(i_G_shift,i_G_shift,:)*fac
    endif
-   call PP_redux_wait(Epsilon_ii(:,2),COMM=PAR_COM_RL_INDEX%COMM)
-   call PP_redux_wait(Alpha(:,2),     COMM=PAR_COM_RL_INDEX%COMM)
-   !
-   !
-   if (l_pf_fxc) then
-     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
-     if (abs(b_xc).le.1.e-5) then
-       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
-     else
-       do iw=1,wv%n_freqs
-         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
-&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
-       enddo
-     end if
-   end if
-   !
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
-   call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
-   !
-   ! Descriptors 
-   call X_OUTPUT_driver("DESC",DESC=DIP_desc)
-   call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
-   if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
+   call PP_redux_wait(spectra(:,1),COMM=PAR_COM_RL_INDEX%COMM)
    !
    ! Epsilon. This is always the 3D one (for now)
-   do iw=1,wv%n_freqs
-     output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
-&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
-     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
-   enddo
+   Epsilon_ii(:,1)=spectra(:,1)+1._SP
    !
    ! Alpha
-   if (X_do_obs("alpha")) then 
-     Alpha=Alpha*eps_2_alpha
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
-       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
-     enddo
+   if(.not.l_alpha_from_eps) then
+     ! Do I need to extend alpha
+     !   The RPA part is always re-defined from the extended eps,
+     !   otherwise I get IP instead of RPA without LF.
+     !   This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
+     !   included in coupling mode regardless or the ordering
+     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,1),Alpha(:,1))
+     ! or not ??
+     !Alpha(:,1)=spectra(:,1)
+     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))/4._SP/pi
+   else
+     Alpha(:,1)=spectra(:,1)/4._SP/pi
    endif
    !
-   ! TODO: FIX EEL - ADD CHI
-   !
+   ! EEL: TO FIX EEL as function of dimensions
    if (X_do_obs("eel")) then
      !
      ! The RPA part is always defined in the same way
      ! otherwise I get IP instead of RPA without LF.
-     ! This is like the Lbar case in BSE.
+     ! This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
+     ! included in coupling mode regardless or the ordering
      call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
      EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
      !
-     if(     l_rpa_IP) EEL(:,2) = EEL(:,1)
+   endif
+   !
+   if (     l_rpa_IP) then
+     Epsilon_ii(:,2)=Epsilon_ii(:,1)
+     Alpha(:,2)=Alpha(:,1)
+     if(X_do_obs("eel")) EEL(:,2) = EEL(:,1)
+   else
      !
-     if(.not.l_rpa_IP) then
+     ! X Dyson equation solver
+     call X_redux(iq,"X",X_par(1),wv,X)
+     !
+     !
+     ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
+     Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
+&                    X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
+     !
+     if (Macroscopic_CPU) then
+       !
+       ! With LF. I start defining spectra=eps-1
+       ! using the definition of epsilon-1 in terms of chi
+       ! (1) at variance with the IP case, after the call to X_redux,
+       !     X_par now contains the factor 4*pi/bare_qpg**2
+       ! (2) the factor is with the coulomb cutoff-term
+       spectra(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP) 
+       !
+     endif
+     call PP_redux_wait(spectra(:,2),COMM=PAR_COM_RL_INDEX%COMM)
+     !
+     ! Epsilon. This is always the 3D one (for now)
+     Epsilon_ii(:,2)=spectra(:,2)+1._SP
+     !
+     ! Alpha
+     if (.not.l_alpha_from_eps) then
+       ! Do I need to extend alpha
+       !   The RPA part is always re-defined from the extended eps,
+       !   otherwise I get IP instead of RPA without LF.
+       !   This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
+       !   included in coupling mode regardless or the ordering
+       !call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,2),Alpha(:,2))
+       ! or not ??
+       Alpha(:,2)=spectra(:,2)
+       Alpha(:,2)=Alpha(:,2)/(1._SP+Alpha(:,2))/4._SP/pi
+     else
+       Alpha(:,2)=spectra(:,2)/4._SP/pi
+     endif
+     !
+     ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+     ! To check
+     !  (i) if this is correct
+     !  (ii) why the same is not done with Epsilon_ii
+     fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+     Alpha(:,2)=Alpha(:,2)*fac
+     !
+     ! EEL: TO FIX EEL as function of dimensions
+     if (X_do_obs("eel")) then
        !
        if(l_alpha_from_eps .or. l_eels_from_ext_eps) then
-	 !
+         !
          ! Yambo original version
          ! This is now used only without coulomb cutoff
          ! a) for 0D, or 1D and 2D at q=0
          ! (see l_alpha_from_eps definition)
          ! b) for 3D when ordering not R or T
 	 !
-         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,Epsilon_ii(:,2)-1._SP,EEL(:,2))
+         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,2),EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
 	 !
        else
@@ -302,7 +292,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
          ! 0D case: eels cannot be measured
          !! 2D, 1D and 0D cases to be fixed
 	 !
-	 ! MAybe we could extend Alpha ??
+	 ! Maybe we could extend Alpha ??
          if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
          & call warning(" Res (or ares) only eels")
          !
@@ -315,6 +305,49 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        !
      endif
      !
+   endif
+   !
+   if (l_pf_fxc) then
+     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
+     if (abs(b_xc).le.1.e-5) then
+       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
+     else
+       do iw=1,wv%n_freqs
+         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+       enddo
+     end if
+   end if
+   !
+   ! Prepare output
+   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
+   call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
+   !
+   ! Descriptors 
+   call X_OUTPUT_driver("DESC",DESC=DIP_desc)
+   call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
+   if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
+   !
+   ! Epsilon output
+   do iw=1,wv%n_freqs
+     output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
+&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
+     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
+     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
+   enddo
+   !
+   ! Alpha output
+   if (X_do_obs("alpha")) then 
+     Alpha=Alpha*eps_2_alpha
+     do iw=1,wv%n_freqs
+       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
+       if (     l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data(:3))
+       if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE alpha",data=output_data)
+     enddo
+   endif
+   !
+   ! EEL output
+   if (X_do_obs("eel")) then
      do iw=1,wv%n_freqs
        output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
        if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eel",data=output_data(:3))

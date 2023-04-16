@@ -2,7 +2,7 @@
 !        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM, DS
 ! 
 ! This file is distributed under the terms of the GNU 
 ! General Public License. You can redistribute it and/or 
@@ -27,7 +27,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
- use pars,          ONLY:pi,SP
+ use pars,          ONLY:pi,SP,cZERO
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
@@ -174,6 +174,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_irredux(iq,"Xo",X_par(1),Xen,Xk,wv,X,Dip)
    !
    ! Without LF. I start defining spectra=eps-1
+   spectra=cZERO
    if (Macroscopic_CPU) then
      ! I start defining spectra=eps-1
      ! using the definition of epsilon-1 in terms of chi-bar

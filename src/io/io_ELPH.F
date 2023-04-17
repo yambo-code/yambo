@@ -29,7 +29,7 @@ integer function io_ELPH(ID,what)
  use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
 &                         io_bulk,io_header
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
-&                         l_GKKP_hosts_DW,l_GKKP_hosts_Ovlp,PH_pol_vector,&
+&                         l_GKKP_hosts_DW,PH_pol_vector,&
 &                         GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
  use interfaces,     ONLY:ELPH_alloc
@@ -134,14 +134,6 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID_frag,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
  call io_bulk(ID_frag,C4=GKKP%dVc(:,:,:,:,1))
  !
- if (l_GKKP_hosts_Ovlp) then
-   !
-   ! OVERLAPS 
-   !
-   call io_bulk(ID_frag,VAR="ELPH_OVLP_Q"//trim(intc(iq)),VAR_SZ=(/2,elph_nb,elph_nb,nkbz/))
-   call io_bulk(ID_frag,C3=GKKP%Ovlp(:,:,:,1))
-   !
- endif
  !
  if (l_GKKP_hosts_bare_dV) then
    ! 

@@ -77,32 +77,3 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  endif
  !
 end subroutine
-!
-!
-subroutine ELPH_switch_X_indexes_convention(kpts,qpts,convention)
- !
- use com,                 ONLY:msg
- use IO_m,                ONLY:OP_RD_CL,DUMP,NONE
- use IO_int,              ONLY:io_control
- use R_lattice,           ONLY:bz_samp,qindx_free
- !
- implicit none
- !
- type(bz_samp)            :: kpts,qpts
- character(*), intent(in) :: convention
- !
- integer, external :: io_QINDX
- integer           :: ID_qindx,io_err_qindx
- !
- call msg('s',' Switching qindx_X table to '//convention//' convention')
- call qindx_free('X') 
- call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/3/),MODE=DUMP,ID=ID_qindx)
- io_err_qindx=io_QINDX(kpts,qpts,ID_qindx,convention)
- !
- if (io_err_qindx/=0 .and. convention=="plus_q") &
- & call error("Run yambo_ph setup setting K_grids='X plus_q'")
- !
- if (io_err_qindx/=0 .and. convention=="minus_q") &
- & call error("ndb.kindx file missing, please run yambo setup")
- !
-end subroutine

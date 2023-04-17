@@ -77,7 +77,6 @@ module YPP_ELPH
  real(DP),    allocatable :: DB_E_k_plus_q(:,:)
  complex(DP), allocatable :: DB_grad_at_gamma(:,:,:,:,:)
  complex(DP), allocatable :: DB_gkkp(:,:,:,:)
- complex(DP), allocatable :: DB_Ovlp(:,:,:)
  !
  interface
    !
@@ -124,7 +123,7 @@ module YPP_ELPH
  !
  contains
    !
-   subroutine ELPH_DB_alloc()  
+   subroutine ELPH_DB_alloc()
      YAMBO_ALLOC(DB_Q_map,(DB_nq))
      DB_Q_map=0
      YAMBO_ALLOC(DB_K_map,(nkbz))
@@ -133,7 +132,6 @@ module YPP_ELPH
      YAMBO_ALLOC(DB_ph_kpt,(3,nkbz))
      YAMBO_ALLOC(DB_grad_at_gamma,(DB_nb,DB_nb,n_atoms,3,nkbz))
      YAMBO_ALLOC(DB_gkkp,(DB_nb,DB_nb,DB_ph_modes,nkbz))
-     YAMBO_ALLOC(DB_Ovlp,(DB_nb,DB_nb,nkbz))
      YAMBO_ALLOC(DB_ph_pol_vec,(DB_nq,DB_ph_modes,n_atoms,3))
      YAMBO_ALLOC(DB_ph_freq_sq,(DB_nq,DB_ph_modes))
      YAMBO_ALLOC(DB_E_k,(DB_nb,nkbz))
@@ -148,7 +146,6 @@ module YPP_ELPH
      YAMBO_FREE(DB_ph_kpt)
      YAMBO_FREE(DB_grad_at_gamma)
      YAMBO_FREE(DB_gkkp)
-     YAMBO_FREE(DB_Ovlp)
      YAMBO_FREE(DB_ph_pol_vec)
      YAMBO_FREE(DB_ph_freq_sq)
      YAMBO_FREE(DB_E_k)

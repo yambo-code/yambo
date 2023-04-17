@@ -58,12 +58,14 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: iq,iq_s,iq_bz,i_alpha,j_alpha,i_beta,il,i_star,iq_db,igrp
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
- logical  :: l_keep_deg
- real(SP) :: ExcPhM,EXC_life_average
+ logical  :: l_keep_deg,l_extend_output
+ real(SP) :: ExcPhM,EXC_life_average,EXC_energy_average,Pole
+ real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
+ call parser('ExtendOutput', l_extend_output)
  !
  call section('*','EXCPH-LifeTime')
  !
@@ -79,6 +81,12 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Allocations 
  !
  call RESIDUALS_and_EIGENVALUES_alloc(q)
+ if (l_extend_output) then
+   allocate(EXC_life_of_q(EXCPH_states(1):EXCPH_states(2),q%nbz))
+   allocate(EXC_pole_of_q(EXCPH_states(1):EXCPH_states(2),q%nbz))
+   EXC_life_of_q=rZERO
+   EXC_pole_of_q=rZERO
+ endif
  !
  ! Load excitonic energies 
  !
@@ -100,6 +108,22 @@ subroutine EXCPH_lifetime(k,q,X)
    enddo
    !
  endif
+ !
+ ! Here we find the degenerations of the first n_exc_in values of BS_all_E at gamma
+ ! and we set their energies to exactly the same value (average). This is to
+ ! improve the quality of the interpolation at gamma in the case of double grid 
+ ! (try to avoid unphysical splitting of degenerate states) 
+ !
+ call degeneration_finder(BS_all_E(EXCPH_states(1):EXCPH_states(2),1),n_exc_in,first_exc_grp,&
+ &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
+ !
+ do igrp=1,n_deg_grp
+   j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
+   i_alpha=first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
+   EXC_energy_average=sum(BS_all_E(j_alpha:i_alpha,1))/real(n_of_exc_grp(igrp),SP)
+   BS_all_E(j_alpha:i_alpha,1)=EXC_energy_average
+ enddo
+ !
  !
  ! Load the Exciton-phonon elements and phonon energies
  !
@@ -172,6 +196,9 @@ subroutine EXCPH_lifetime(k,q,X)
            EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
            EXC_pole_of_q(i_alpha,iq_bz)=EXC_pole_of_q(i_alpha,iq_bz)+Pole
          endif
+         ! DS Debug <
+         ! write(100+i_alpha,*) i_alpha,EXC_LifeTime(i_alpha)
+         ! DS Debug >
          !
        enddo
        !
@@ -207,15 +234,24 @@ subroutine EXCPH_lifetime(k,q,X)
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
+ !if (l_extend_output) EXC_life_of_q=EXC_life_of_q*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !
  call print_and_write()
  !
+ if (l_extend_output) then
+   call print_LifeTimes_of_q("L")
+   call print_LifeTimes_of_q("P")
+ endif
+ !
  ! Deallocations
  !
  YAMBO_FREE(EXC_LifeTime)
  call RESIDUALS_and_EIGENVALUES_free()
+ if (l_extend_output) then
+   deallocate(EXC_life_of_q)
+ endif
  !
  contains
   !
@@ -243,10 +279,11 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_in) [currently iq_in=1]
     !
-    ! if(iq_db==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-    ! if(iq_db==1.and.i_alpha==i_beta) return
-    !
-    if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
+    if(iq_db==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+    ! even if keeping deg states, still remove the one where i_alpha=i_beta
+    if(iq_db==1.and.i_alpha==i_beta .and. l_keep_deg) return
+    ! [FP] This removes resonances, I think it is not correct
+    !if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
     !
     N_bose  =bose_f(ph_E)
     !
@@ -283,9 +320,17 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
       !
+      !
       if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-        iq_db=Q_io_map(iq_bz)
+        !
+        ! Here we get original points for coarse grids
+        ! (partially counters inaccuracies in the interpolation in the exc.
+        ! case)
+        !
+        iq_db=Q_io_map(iq_bz) ! This mapping is because sometimes the phonon q_bz differs from the exciton one in yambo
         ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+        !
+        E_beta=BS_all_E(i_beta,iq)  ! Getting this in the IBZ for the equivalent iq to iq_bz
         !
         ! If there is the double-grid I read the gamma phonons from there
         ! because they include the LO-TO splitting and the acustic sum rule
@@ -293,20 +338,21 @@ subroutine EXCPH_lifetime(k,q,X)
         if(iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
         !
       else
-        iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
-        ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+        iE_fg=q%FGbz%E_map(iq_fg)                ! Map w(q) from BZ to IBZ
+        ph_E =PH_freqs%FG%E(il,iE_fg,1)          ! w(q_db) phonon energy in the D-Grid
+        !
+        E_beta=EXC_E_DbGd(i_beta,iq_fg)          ! E(q_bz) exciton energy in the D-Grid
       endif
       !
       if(ph_E<FAN_deltaE_treshold) cycle
       !
-      E_beta=EXC_E_DbGd(i_beta,iq_fg)
-      !
       ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
       !
-      ! if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
-      ! if(iq==1.and.i_alpha==i_beta) return
-      !
-      if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
+      if(iq==1.and.abs(E_alpha-E_beta)<FAN_deltaE_treshold .and. .not.l_keep_deg) return
+      ! even if keeping deg states, still remove the one where i_alpha=i_beta
+      if(iq==1.and.i_alpha==i_beta .and. l_keep_deg) return
+      ! [FP] This removes resonances, I think it is not correct
+      !if(abs(E_alpha-E_beta-ph_E)<FAN_deltaE_treshold.or.abs(E_alpha-E_beta+ph_E)<FAN_deltaE_treshold) return
       !
       N_bose  =bose_f(ph_E)
       F_boltz=boltzman_f(E_beta-min_EXC_E_DbGd)  ! Bose function? Boltzman function?
@@ -360,5 +406,70 @@ subroutine EXCPH_lifetime(k,q,X)
     call OUTPUT_driver(what,action="close")
     !
   end subroutine 
+  !
+  subroutine print_LifeTimes_of_q(MODE)
+    ! MODE="L"[ife]:
+    !   - print q-map of lifetimes for each exc_in state for q-space plot
+    !     We print l(q)/sum_q l(q)
+    ! MODE="P"[ole]:
+    !   - Print value of the Pole [F_occ*delta(...)] for each exc_in state for q-space plot
+    !     We print sum_{beta,mu} Pole_{beta,mu}(q)
+    !
+    use vec_operate,   ONLY:iku_v_norm
+    use com,           ONLY:of_open_close
+    !use YPPm,          ONLY:K_transform
+    !
+    implicit none
+    !
+    character(1) :: MODE
+    character(schlen), allocatable :: headings(:)
+    character(schlen)              :: file_name
+    real(SP), allocatable          :: values(:)
+    real(SP)                       :: tmp_q(3)
+    !
+    allocate(headings(n_exc_in+4))
+    YAMBO_ALLOC(values,(n_exc_in+4))
+    values=rZERO
+    !
+    headings(1)=" |q| (a.u.) "
+    do i_alpha=EXCPH_states(1),EXCPH_states(2)
+      headings(i_alpha+1)=' e'//intc(i_alpha)
+      !
+      if (MODE=="L") then
+        EXC_life_of_q(i_alpha,:)=EXC_life_of_q(i_alpha,:)/SUM(EXC_life_of_q(i_alpha,:))
+      endif
+      !
+    enddo
+    headings(n_exc_in+2:n_exc_in+4)=&
+&           (/"q_x (rlu)","q_y (rlu)","q_z (rlu)"/)
+    !
+    if (MODE=="L") file_name="LifeTimes_of_q"
+    if (MODE=="P") file_name="Resonance_of_q"
+    !
+    call of_open_close(trim(file_name),'ot')
+    call msg('o '//trim(file_name),"#",headings,INDENT=0,USE_TABS=.true.)
+    call msg('o '//trim(file_name),"#")
+    !
+    do iq=1,q%nibz
+    do i_star=1,q%nstar(iq)
+      !
+      iq_s=q%star(iq,i_star)
+      iq_bz = q%k_table(iq, iq_s)
+      !
+      if (iq_bz>1) values(1)=iku_v_norm(q%ptbz(iq_bz,:3))
+      !
+      tmp_q = q%ptbz(iq_bz,:3)
+      !
+      !call K_transform(tmp_q,'iku')
+      if (MODE=="L") values(1+1:n_exc_in+1)=EXC_life_of_q(:,iq_bz)
+      if (MODE=="P") values(1+1:n_exc_in+1)=EXC_pole_of_q(:,iq_bz)
+      values(n_exc_in+2:n_exc_in+4)=tmp_q
+      call msg('o '//trim(file_name),' ',values,INDENT=0,USE_TABS=.true.)
+      !
+    enddo
+    enddo
+    call of_open_close(trim(file_name))
+    !
+  end subroutine print_LifeTimes_of_q
   !
 end subroutine

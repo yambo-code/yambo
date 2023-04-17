@@ -59,7 +59,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg,l_extend_output
- real(SP) :: ExcPhM,EXC_life_average,Pole
+ real(SP) :: ExcPhM,EXC_life_average,EXC_energy_average,Pole
  real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
@@ -108,6 +108,24 @@ subroutine EXCPH_lifetime(k,q,X)
    enddo
    !
  endif
+ !
+ ! Here we find the degenerations of the first n_exc_in values of BS_all_E at gamma
+ ! and we set their energies to exactly the same value (average). This is to
+ ! improve the quality of the interpolation at gamma in the case of double grid 
+ ! (try to avoid unphysical splitting of degenerate states) 
+ !
+ write (*,*) "ENERGIES BEFORE: ",BS_all_E(EXCPH_states(1):EXCPH_states(2),1)
+ call degeneration_finder(BS_all_E(EXCPH_states(1):EXCPH_states(2),1),n_exc_in,first_exc_grp,&
+ &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
+ !
+ do igrp=1,n_deg_grp
+   j_alpha=first_exc_grp(igrp)+EXCPH_states(1)-1
+   i_alpha=first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
+   EXC_energy_average=sum(BS_all_E(j_alpha:i_alpha,1))/real(n_of_exc_grp(igrp),SP)
+   BS_all_E(j_alpha:i_alpha,1)=EXC_energy_average
+ enddo
+ write (*,*) "ENERGIES AFTER: ",BS_all_E(EXCPH_states(1):EXCPH_states(2),1)
+ !
  !
  ! Load the Exciton-phonon elements and phonon energies
  !

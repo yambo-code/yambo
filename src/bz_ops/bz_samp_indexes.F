@@ -103,6 +103,18 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
 #endif
+ !
+#if defined _NL
+ !
+ ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
+ !
+ if(l_nl_optics) then
+   X_scattering    =.FALSE.
+   sigma_scattering=.FALSE.
+ endif
+ !
+#endif
+ !
  call parser('K_grids', user_grids)
  if (user_grids) then
    bse_scattering=  index(k_GRIDS_string,"B")/=0
@@ -120,19 +132,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  q%description='q'
  !
-#if defined _NL
- if(l_nl_optics) then
-   !      
-   ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
-   !
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=io_db)
-   !
- else
-#endif
-   call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
-#if defined _NL
- endif
-#endif
+ call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
  !
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then

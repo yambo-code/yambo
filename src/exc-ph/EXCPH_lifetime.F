@@ -114,7 +114,6 @@ subroutine EXCPH_lifetime(k,q,X)
  ! improve the quality of the interpolation at gamma in the case of double grid 
  ! (try to avoid unphysical splitting of degenerate states) 
  !
- write (*,*) "ENERGIES BEFORE: ",BS_all_E(EXCPH_states(1):EXCPH_states(2),1)
  call degeneration_finder(BS_all_E(EXCPH_states(1):EXCPH_states(2),1),n_exc_in,first_exc_grp,&
  &        n_of_exc_grp,n_deg_grp,0.001/HA2EV,Include_single_values=.true.)
  !
@@ -124,7 +123,6 @@ subroutine EXCPH_lifetime(k,q,X)
    EXC_energy_average=sum(BS_all_E(j_alpha:i_alpha,1))/real(n_of_exc_grp(igrp),SP)
    BS_all_E(j_alpha:i_alpha,1)=EXC_energy_average
  enddo
- write (*,*) "ENERGIES AFTER: ",BS_all_E(EXCPH_states(1):EXCPH_states(2),1)
  !
  !
  ! Load the Exciton-phonon elements and phonon energies
@@ -322,9 +320,17 @@ subroutine EXCPH_lifetime(k,q,X)
     !
     do iq_fg=q%FGbz%k_range(iq_bz,1),q%FGbz%k_range(iq_bz,2)
       !
+      !
       if(iq_fg==q%FGbz%k_range(iq_bz,1)) then
-        iq_db=Q_io_map(iq_bz)
+        !
+        ! Here we get original points for coarse grids
+        ! (partially counters inaccuracies in the interpolation in the exc.
+        ! case)
+        !
+        iq_db=Q_io_map(iq_bz) ! This mapping is because sometimes the phonon q_bz differs from the exciton one in yambo
         ph_E=sqrt(abs(PH_freqs_sq(iq_db,il)))
+        !
+        E_beta=BS_all_E(i_beta,iq)  ! Getting this in the IBZ for the equivalent iq to iq_bz
         !
         ! If there is the double-grid I read the gamma phonons from there
         ! because they include the LO-TO splitting and the acustic sum rule
@@ -332,13 +338,13 @@ subroutine EXCPH_lifetime(k,q,X)
         if(iq_bz==1) ph_E=PH_freqs%FG%E(il,1,1)
         !
       else
-        iE_fg=q%FGbz%E_map(iq_fg)                      ! Map w(q) from BZ to IBZ
-        ph_E =PH_freqs%FG%E(il,iE_fg,1)                ! w(q_db) phonon energy in the D-Grid
+        iE_fg=q%FGbz%E_map(iq_fg)                ! Map w(q) from BZ to IBZ
+        ph_E =PH_freqs%FG%E(il,iE_fg,1)          ! w(q_db) phonon energy in the D-Grid
+        !
+        E_beta=EXC_E_DbGd(i_beta,iq_fg)          ! E(q_bz) exciton energy in the D-Grid
       endif
       !
       if(ph_E<FAN_deltaE_treshold) cycle
-      !
-      E_beta=EXC_E_DbGd(i_beta,iq_fg)
       !
       ! Remove degenerate states E(alpha,iq_in)=E(beta,iq_fg(iq_in)) [currently iq_in=1]
       !

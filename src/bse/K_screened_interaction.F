@@ -25,6 +25,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
+ use com,          ONLY:exp_user
  use frequency,    ONLY:w_samp
  use drivers,      ONLY:l_td_hf,l_tddft,l_rim_w
  use collision_el, ONLY:elemental_collision,elemental_collision_free
@@ -78,7 +79,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    if(     l_rim_w) call section('=','Screened interaction header I/O')
    !===================================================
    !
-   if (X%ng<BS_n_g_W) call warning(" Using screening with less G than Weh interaction")
+   if (X%ng<BS_n_g_W) then
+     if (     exp_user) call warning("Using screening with less G than Weh interaction")
+     if (.not.exp_user) call   error("Using screening with less G than Weh interaction")
+   endif
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 

@@ -186,7 +186,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! I make alpha consistent with the above, IP, definition
    ! To check if this need to be fixed with i_G_shift/=1
-   if (l_col_cut.or.l_0D) Alpha(:,2)=Alpha(:,2)*bare_qpg(1,1)**2/q_norm(1)**2
+   if (l_col_cut.or.l_0D) Alpha(:,2)=Alpha(:,2)*bare_qpg(iq,1)**2/q_norm(iq)**2
    !
    if (l_pf_fxc) then
      call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)

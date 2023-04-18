@@ -65,7 +65,7 @@
 # [@LAPACK_check@] LAPACK    : @LAPACK_LIBS@
 # [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS@ 
 # [@BLACS_check@] BLACS     : @BLACS_LIBS@
-# [@PETSC_check@] PETSC     : @PETSC_LIBS@ 
+# [@PETSC_check@] PETSC     : @PETSC_LIBS@ @BLAS_PETSC_LIBS@ @LAPACK_PETSC_LIBS@
 #                 @PETSC_INCS@ 
 # [@SLEPC_check@] SLEPC     : @SLEPC_LIBS@ 
 #                 @SLEPC_INCS@ 

@@ -115,7 +115,7 @@ if test -d "$with_petsc_path" || test -d "$with_petsc_libdir" || test x"$with_pe
 #include <petsc/finclude/petscsys.h>
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
-#include <petsc/finclude/petscvec.h90>]),
+#include <petsc/finclude/petscvec.h>]),
        [petsc=yes], [petsc=no]);
   #
   if test "x$petsc" = "xyes"; then
@@ -142,22 +142,36 @@ if test "x$enable_petsc" = "xyes" && test "x$petsc" = "xno" ; then
   #
   internal_petsc="yes"
   #
+  PETSC_LIBS_DN="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+  PETSC_LIBS_ST="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
   if test "x$lapack_shared" = "x1" ; then
-    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ;
+    PETSC_LIBS="$PETSC_LIBS_DN" ;
   else
-    PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ;
+    PETSC_LIBS="$PETSC_LIBS_ST" ;
   fi
   PETSC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   if test "$use_libdl"    = "yes"; then PETSC_LIBS="$PETSC_LIBS -ldl"   ; fi
   #
   petsc=yes
-  if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.a" ; then
+  if test -e "$PETSC_LIBS_DN" ; then
+    PETSC_LIBS="$PETSC_LIBS_DN" ;
     compile_petsc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
-  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libpetsc.so" ; then
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([dynamic already compiled]) ;
+    else
+      AC_MSG_RESULT([dynamic found, despite no dynamic lapack detected.]) ;
+      AC_MSG_RESULT([The compilation may fail. In case remove the dynamic petsc libs.]) ;
+    fi
+  elif test -e "$PETSC_LIBS_ST" ; then
+    PETSC_LIBS="$PETSC_LIBS_ST" ;
     compile_petsc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([static found, despite dynamic lapack.]) ;
+      AC_MSG_RESULT([You may delete the static petsc and re-run the configure to get smaller executables]) ;
+    else
+      AC_MSG_RESULT([static already compiled]) ;
+    fi
   else
     compile_petsc="yes" ;
     AC_MSG_RESULT([to be compiled]) ;
@@ -248,20 +262,34 @@ if test "x$enable_slepc" = "xyes" && test "x$slepc" = "xno" && test "x$enable_pe
   #
   internal_slepc="yes";
   #
+  SLEPC_LIBS_DN=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so
+  SLEPC_LIBS_ST=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a
   if test "x$lapack_shared" = "x1" ; then
-    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
+    SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
   else
-    SLEPC_LIBS="${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ;
+    SLEPC_LIBS="$SLEPC_LIBS_ST" ;
   fi
   SLEPC_INCS="${IFLAG}${extlibs_path}/${FCKIND}/${FC}/${build_precision}/include" ;
   #
   slepc=yes
-  if test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.a" ; then
+  if test -e "$SLEPC_LIBS_DN" ; then
+    SLEPC_LIBS="$SLEPC_LIBS_DN -Wl,-rpath=${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib" ;
     compile_slepc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
-  elif test -e "${extlibs_path}/${FCKIND}/${FC}/${build_precision}/lib/libslepc.so" ; then
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([dynamic already compiled]) ;
+    else
+      AC_MSG_RESULT([dynamic found, despite no dynamic lapack detected.]) ;
+      AC_MSG_RESULT([The compilation may fail. In case remove the dynamic slepc libs.]) ;
+    fi
+  elif test -e "$SLEPC_LIBS_ST" ; then
+    SLEPC_LIBS="$SLEPC_LIBS_ST" ;
     compile_slepc="no" ;
-    AC_MSG_RESULT([already compiled]) ;
+    if test "x$lapack_shared" = "x1" ; then
+      AC_MSG_RESULT([static found, despite dynamic lapack.]) ;
+      AC_MSG_RESULT([You may delete the static slepc and re-run the configure to get smaller executables]) ;
+    else
+      AC_MSG_RESULT([static already compiled]) ;
+    fi
   else
     compile_slepc="yes" ;
     AC_MSG_RESULT([to be compiled]) ;

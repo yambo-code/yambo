@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
+subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM)
  !
  ! This routine opens the fragment.
  !
@@ -45,7 +45,7 @@ subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr,COMM,cpu_id)
  integer, intent(in)  :: ID
  integer, intent(out) :: ID_frag
  integer, optional :: i_fragment,j_fragment,ierr
- integer, optional :: COMM,cpu_id
+ integer, optional :: COMM
  !
  ! Work Space
  !

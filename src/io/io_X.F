@@ -153,7 +153,7 @@ integer function io_X(X,Xw,ID)
  if (iq==0 ) goto 1
  if (iq==-1) goto 1
  !
- call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM,cpu_id=PAR_COM_X_WORLD%CPU_id)
+ call io_fragment(ID,ID_frag,i_fragment=iq,ierr=io_err,COMM=PAR_COM_X_WORLD%COMM)
  if (io_err/=0) goto 1
  !
  !  type(X_t)    ::X(4)  x s d p

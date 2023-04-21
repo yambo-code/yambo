@@ -39,7 +39,7 @@ module pars
  !
  !...MEMORY
  integer, parameter :: N_MEM_max                     = 1000
- integer, parameter :: N_MEM_max_element_components  = 200
+ integer, parameter :: N_MEM_max_element_components  = 600
  integer, parameter :: N_MEM_SAVE_max      = 500
  !
  !...MEMORY library

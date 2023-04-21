@@ -24,7 +24,7 @@
 #if defined _RT
 integer function variables_RT_dynamic(ID)
  !
- use pars,           ONLY:SP,IP
+ use pars,           ONLY:SP,IP,CR_YIO
  use units,          ONLY:AUT2FS
  use RT_output_m,    ONLY:RT_desc,n_RT_desc_static,TIME_STEP_desc
  use RT_lifetimes,   ONLY:RT_life_extrap_times,RT_life_extrap_times
@@ -77,7 +77,7 @@ integer function variables_RT_dynamic(ID)
  !
  variables_RT_dynamic=io_descriptors(TIME_STEP_desc,"TIME_STEP",ID,.FALSE.)
  !
- call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1)
+ call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=1)
  !
  variables_RT_dynamic      =io_status(ID)
  !

@@ -25,6 +25,7 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_k
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP,DB_menu_length
+ use pars,       ONLY:IP_YIO,LP_YIO,SP_YIO,DP_YIO,CR_YIO
 #if !defined _io_lib
  use drivers,    ONLY:list_dbs
 #endif
@@ -59,13 +60,11 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_k
    !
    io_rec_pos(ID)=1
    !
-   ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
-   !
-   if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
-   if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
-   if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
-   if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
-   if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
+   if(VAR_KIND==SP_YIO)     netcdf_var_kind=nf90_SP
+   if(VAR_KIND==DP_YIO)     netcdf_var_kind=nf90_double
+   if(VAR_KIND==IP_YIO)     netcdf_var_kind=nf90_int
+   if(VAR_KIND==LP_YIO)     netcdf_var_kind=nf90_byte
+   if(VAR_KIND==CR_YIO)     netcdf_var_kind=nf90_char
    !
 #if defined _PAR_IO
    !

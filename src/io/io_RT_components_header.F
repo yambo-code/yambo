@@ -24,7 +24,7 @@
 #if defined _RT
 subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_components)
  !
- use pars,           ONLY:IP,SP,LP
+ use pars,           ONLY:IP,SP,LP,IP_YIO,LP_YIO
  use R_lattice,      ONLY:nqbz
  use IO_int,         ONLY:io_header,def_variable_elemental,io_variable_elemental,&
 &                         def_variable_bulk,io_variable_bulk
@@ -61,7 +61,7 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_compone
  ! that make the RT_carriers databases independent
  !
  if (RT_do_IO("carriers")) then
-   call def_variable_elemental(ID,"RT_carriers_dimensions",4,IP+100,0) 
+   call def_variable_elemental(ID,"RT_carriers_dimensions",4,IP_YIO,0) 
    call  io_variable_elemental(ID,I0=RT_carriers%nk)
    call  io_variable_elemental(ID,I1=RT_carriers%nb)
    call  io_variable_elemental(ID,I0=RT_carriers%nstates)
@@ -72,13 +72,13 @@ subroutine io_RT_components_header(ID,what,loading_carr_before_neq,io_RT_compone
    call  io_variable_bulk(ID,4,R2=RT_carriers%kpt)
    call def_variable_bulk(ID,"RT_k_weight",5,(/RT_carriers%nk/),SP)
    call  io_variable_bulk(ID,5,R1=RT_carriers%k_weight)
-   call def_variable_bulk(ID,"RT_table",6,(/RT_carriers%nstates,4/),IP+100)
+   call def_variable_bulk(ID,"RT_table",6,(/RT_carriers%nstates,4/),IP_YIO)
    call  io_variable_bulk(ID,6,I2=RT_carriers%table)
    !
  endif
  !
  if (RT_do_IO("ANY_G")) then
-   call def_variable_elemental(ID,"Save_G_history",1,LP+100,0) 
+   call def_variable_elemental(ID,"Save_G_history",1,LP_YIO,0) 
    call  io_variable_elemental(ID,L0=SAVE_G_history)
  endif
  !

@@ -188,6 +188,7 @@ subroutine col_driver(bare_NG,q)
      endif
    endif
    !
+   call set_q0_g0_term()
    return
  endif
  !
@@ -203,4 +204,18 @@ subroutine col_driver(bare_NG,q)
    endif
  endif
  !
+ call set_q0_g0_term()
+ !
+ contains
+   !
+   subroutine set_q0_g0_term()
+     use R_lattice,      ONLY:q_norm,bare_qpg,q0_def_norm
+     !
+     if (     l_col_cut) q_norm(1)    =q0_def_norm
+     if (.not.l_col_cut.and.allocated(bare_qpg)) then
+       bare_qpg(1,1)=q0_def_norm
+     endif
+     !
+   end subroutine set_q0_g0_term
+   !
 end subroutine

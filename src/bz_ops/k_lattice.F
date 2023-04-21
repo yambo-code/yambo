@@ -157,7 +157,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  YAMBO_FREE(idist)
  !
  k_grid_dim=0
- k_grid_b=0.
+ k_grid_b=0._SP
  do i1=1,N_ext_K_pts
    v0=extended_k_points(order(i1),:)
    !
@@ -205,7 +205,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    !
    i3=0
    do i1=1,3
-     v1(1)=0.
+     v1(1)=0._SP
      do i2=1,k_grid_dim
        v1(1)=v1(1)+abs(proj(b(i1,:),k_grid_b(i2,:)))
      enddo

@@ -25,7 +25,7 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc,IO_desc_reset
- use pars,          ONLY:SP,IP,schlen
+ use pars,          ONLY:SP,IP,schlen,CR_YIO
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual,OPTICAL_averaged_dirs_string
  use IO_m,          ONLY:io_status,read_is_on,variable_exist
  use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
@@ -74,14 +74,14 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  VAR_NAME=trim(X_label)//"Time_ordering"
  if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
- call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
+ call def_variable_elemental(ID,trim(VAR_NAME),1,CR_YIO,0)
  call io_variable_elemental(ID,VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
    !
    ! TDDFT_KERNEL
    !
-   call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,0,0)
+   call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="X Hxc Kernel",CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=local_desc)
    !
    ! DRUDE
@@ -125,7 +125,7 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  endif
  !
  if (ver_is_gt_or_eq(ID,revision=21155)) then
-   call def_variable_elemental(ID,trim(X_label)//"OPTICAL_AVERAGE",1,0,0)
+   call def_variable_elemental(ID,trim(X_label)//"OPTICAL_AVERAGE",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="X Optical Averaged directions",CH0=OPTICAL_averaged_dirs_string,&
 &                                CHECK=.true.,DESCRIPTOR=local_desc)
  endif

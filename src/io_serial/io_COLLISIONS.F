@@ -25,7 +25,7 @@
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
- use pars,          ONLY:schlen,IP,SP
+ use pars,          ONLY:schlen,IP,SP,IP_YIO
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,COLLISIONS_CV_only
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
@@ -178,7 +178,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    if (read_is_on(ID).and..not.allocated(COLL%state)) then
      YAMBO_ALLOC(COLL%state,(COLL%N,4))
    endif
-   call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP+100)
+   call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP_YIO)
    call  io_variable_bulk(ID,1,I2=COLL%state)
    !
    io_COLLISIONS=io_status(ID)
@@ -215,7 +215,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  if (any(io_sec(ID,:)==2)) then     
    !
-   call def_variable_bulk(ID_frag,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
+   call def_variable_bulk(ID_frag,'N_COLLISIONS_STATES',1,(/1/),IP_YIO,silent=.true.)
    call  io_variable_bulk(ID_frag,1,I0=COLL_element%N)
    !
  endif

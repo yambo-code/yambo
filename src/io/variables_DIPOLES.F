@@ -23,7 +23,7 @@
 !
 integer function variables_DIPOLES(Dip,ID)
  !
- use pars,          ONLY:SP
+ use pars,          ONLY:SP,CR_YIO
  use units,         ONLY:HA2EV
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use IO_m,          ONLY:io_status
@@ -59,17 +59,17 @@ integer function variables_DIPOLES(Dip,ID)
  !
  ! Character variables
  !
- call def_variable_elemental(ID,"APPROACH",1,0,0)
+ call def_variable_elemental(ID,"APPROACH",1,CR_YIO,0)
  call  io_variable_elemental(ID,VAR="Approach used",CH0=Dip%approach,CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
- call def_variable_elemental(ID,"KINDS",1,0,0)
+ call def_variable_elemental(ID,"KINDS",1,CR_YIO,0)
  call  io_variable_elemental(ID,VAR="Dipoles computed",CH0=Dip%computed,CHECK=.true.,OP=(/"<="/),&
 &                           DESCRIPTOR=DIP_desc)
  !
  ! Wavefunctions xc 
  !
- call def_variable_elemental(ID,'WAVE_FUNC_XC',1,0,0)
+ call def_variable_elemental(ID,'WAVE_FUNC_XC',1,CR_YIO,0)
  call  io_variable_elemental(ID,DB_CH0=Dipole_WF_xc_string,CH0=loaded_WF_xc_string,VAR=' Wavefunctions',CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
  call io_elemental(ID,VAR="",VAR_SZ=0)

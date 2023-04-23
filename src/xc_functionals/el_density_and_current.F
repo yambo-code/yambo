@@ -57,7 +57,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use com,           ONLY:msg
  use stderr,        ONLY:real2ch
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
- use R_lattice,     ONLY:bz_samp,b
+ use R_lattice,     ONLY:bz_samp
  use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop
  use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
 #if defined _FFTW
@@ -66,7 +66,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  use wave_func,     ONLY:WF
  use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,  ONLY:PP_redux_wait
- use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp
+ use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
  use qe_pseudo_m,   ONLY:qe_omega=>omega,qe_ngm=>ngm, becsum
 #if defined _RT
  use drivers,       ONLY:l_real_time
@@ -97,7 +97,7 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  real(SP)   :: f_occ,rho_no_sym(fft_size),drho_no_sym(fft_size,3),J_no_sym(fft_size,3)
  real(SP)   :: raux
  complex(SP), allocatable :: WF_der(:,:,:)
- complex(DP), allocatable :: rhog_aug_DP(:,:), wf_DP(:), aux_DP(:)
+ complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
  logical    :: warn_done,l_si,l_rho,l_drho,l_J
  !
 #if defined _RT
@@ -118,7 +118,8 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  endif
  !
  if (l_drho) then
-   call warning(" USPP corrections to rho gradient not implemented")
+   if(pp_is_uspp)  call warning(" USPP corrections to rho gradient not implemented")
+   if(pp_has_nlcc) call warning(" NLCC corrections to rho gradient not implemented")
    YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
    drho       =0._SP
    drho_no_sym=0._SP

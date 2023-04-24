@@ -29,6 +29,9 @@ module linear_algebra
  use magma2,     ONLY: magma_init,magma_queue_create, &
 &                      magma_cgeev_m,magma_zgeev_m,MagmaVec
 #endif
+#ifdef _OPENMP
+ use omp_lib
+#endif
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -226,12 +229,20 @@ module linear_algebra
      complex(SP),intent(out)   :: E_cmpl(*),V_left(msize,*),V_right(msize,*),work(*)
      complex(SP),intent(inout) :: M(msize,*)
      !
+     integer :: nthreads
      !
-#if defined _MAGMA
      !
      ! use magma (if available)
      !
+#if defined _MAGMA
+     !
      if (.not.magma_init_done) call magma_setup()
+     !
+#  if defined _OPENMP
+     ! thread safety
+     nthreads=omp_get_max_threads()
+     call omp_set_num_threads(1)
+#  endif
      !
 #  if defined _DOUBLE
      call magma_zgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
@@ -239,6 +250,10 @@ module linear_algebra
 #  else
      call magma_cgeev_m(MagmaVec,MagmaVec, msize,M,msize,E_cmpl,V_left,msize,V_right,msize,&
 &                       work,lwork,rwk,ifail)
+#  endif
+     !
+#  if defined _OPENMP
+     call omp_set_num_threads(nthreads)
 #  endif
      !
 #else

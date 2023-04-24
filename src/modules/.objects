@@ -19,6 +19,7 @@ NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces
 #if defined _MAGMA
 MAGMA_objects    = mod_magma2_common.o mod_magma2_sfortran.o mod_magma2_dfortran.o \
                    mod_magma2_cfortran.o mod_magma2_zfortran.o mod_magma2.o
+#endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \
        mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o mod_IO_interfaces.o

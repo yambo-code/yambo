@@ -25,6 +25,8 @@
 !
 !! @param[out]      DIP_S               Overlap matrices
 !
+#include<dev_defs.h>
+!
 subroutine DIPOLE_overlaps(Xk,Dip)
  !    
  use pars,              ONLY:SP,cZERO,pi
@@ -34,7 +36,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use vec_operate,       ONLY:k_periodic_idx
  use DIPOLES,           ONLY:DIPOLE_t,DIP_S
  use electrons,         ONLY:n_spinor,n_sp_pol
- use wrapper_omp,       ONLY:Vstar_dot_V_omp
+ use wrapper,           ONLY:Vstar_dot_V
  use wave_func,         ONLY:wf_ng_1st_BZ,wf_ng_overlaps,wf_ng
  use parallel_m,        ONLY:PAR_IND_DIPk_bz,PAR_IND_DIPk_bz_ID,PAR_COM_DIPk_ibz_A2A, &
 &                            PAR_IND_CON_BANDS_OVLP,PAR_IND_VAL_BANDS_OVLP,           &
@@ -42,8 +44,6 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  use parallel_int,      ONLY:PP_redux_wait,PARALLEL_WF_index,PARALLEL_WF_distribute
  use interfaces,        ONLY:WF_shift_kpoint,WF_symm_kpoint,eval_G_minus_G,WF_load,WF_free
  use timing_m,          ONLY:timing
- !
-#include<dev_defs.h>
 #include<memory.h>
  !
  type(bz_samp), intent(in)    :: Xk 
@@ -55,10 +55,12 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  integer           :: iG0,ng_tmp,wf_ng_save,wf_ng_1st_BZ_save
  integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2)
  real(SP)          :: g0_length(3)
- complex(SP), allocatable :: WF_symm(:,:,:,:),WF_shifted(:,:,:,:),WF_ik(:,:,:,:),WF_ikp(:,:,:,:)
-#ifdef _CUDA
- attributes(device):: WF_symm,WF_shifted,WF_ik,WF_ikp
-#endif
+ !
+ complex(SP), allocatable DEV_ATTR :: WF_symm(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_shifted(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_ik(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_ikp(:,:,:,:)
+ !
  logical           :: USE_shifted_wf
  !
  call timing("DIPOLE_overlaps",OPR="start")
@@ -159,7 +161,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            do ibp=1,Dip%ib(2)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-                  &  Vstar_dot_V_omp(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol)) 
+             &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol))
            enddo ! ibp
          enddo ! ib
          !

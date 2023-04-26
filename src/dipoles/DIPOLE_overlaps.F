@@ -56,10 +56,10 @@ subroutine DIPOLE_overlaps(Xk,Dip)
  integer           :: id,idx_kp(3),idx_k(3),shift(3),g0_idx(3,2)
  real(SP)          :: g0_length(3)
  !
- complex(SP), allocatable DEV_VAR :: WF_symm(:,:,:,:)
- complex(SP), allocatable DEV_VAR :: WF_shifted(:,:,:,:)
- complex(SP), allocatable DEV_VAR :: WF_ik(:,:,:,:)
- complex(SP), allocatable DEV_VAR :: WF_ikp(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_symm(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_shifted(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_ik(:,:,:,:)
+ complex(SP), allocatable DEV_ATTR :: WF_ikp(:,:,:,:)
  !
  logical           :: USE_shifted_wf
  !
@@ -161,7 +161,7 @@ subroutine DIPOLE_overlaps(Xk,Dip)
            do ibp=1,Dip%ib(2)
              if(.not.PAR_IND_CON_BANDS_OVLP%element_1D(ibp)) cycle
              DIP_S(ib,ibp,id+(istep-1)*3,ikbz,i_sp_pol)= &
-                  &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol)) 
+             &  Vstar_dot_V(wf_ng_overlaps*n_spinor,WF_ik(:,:,ib,i_sp_pol),WF_ikp(:,:,ibp,i_sp_pol))
            enddo ! ibp
          enddo ! ib
          !

@@ -36,7 +36,8 @@ subroutine EXCPH_lifetime(k,q,X)
  use IO_m,           ONLY:manage_action,OP_RD,REP,RD_CL_IF_END,DUMP
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
 &                         EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements, &
-&                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free,alphaQ 
+&                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free,alphaQ, &
+&                         l_EXCPH_offdiago 
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder,iku_v_norm,iku_v_2D_norm
  use frequency,      ONLY:w_samp
@@ -66,6 +67,7 @@ subroutine EXCPH_lifetime(k,q,X)
  call parser('NoMatrxEl',l_no_matrix_elements)
  call parser('KeepDeg',  l_keep_deg)
  call parser('ExtendOutput', l_extend_output)
+ call parser('ExcPhOffDiago', l_EXCPH_offdiago)
  !
  call section('*','EXCPH-LifeTime')
  !

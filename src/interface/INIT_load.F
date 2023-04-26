@@ -686,6 +686,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
  call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
  call it(defs,'EXCPHdEtresh','[ELPH] Energy treshold for exc-ph denominator',EXCPH_deltaE_treshold,unit=E_unit)
+ call it('f',defs,'ExcPhOffDiago', '[EXCPH] Exciton-Phonon off-diagonal self-energy')
  !
  ! GPL_EXCLUDE_START
  !

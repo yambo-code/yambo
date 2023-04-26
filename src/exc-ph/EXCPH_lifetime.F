@@ -234,7 +234,6 @@ subroutine EXCPH_lifetime(k,q,X)
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
- !if (l_extend_output) EXC_life_of_q=EXC_life_of_q*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !

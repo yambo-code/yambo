@@ -149,8 +149,7 @@ define copy_driver
   touch $(srcdir)/lib/yambo/$(1)-installed.stamp; \
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \
-   rm -rf $(compdir)/lib/yambo/$(1) ; \
    if ! test -d $(compdir)/lib/yambo; then mkdir -p $(compdir)/lib/yambo; fi; \
-   cp -R $(srcdir)/lib/yambo/$(1) $(compdir)/lib/yambo/$(1); \
+   if ! test -d $(compdir)/lib/yambo/$(1); then cp -R $(srcdir)/lib/yambo/$(1) $(compdir)/lib/yambo/$(1); fi; \
  fi
 endef

@@ -23,7 +23,7 @@ CONFFLAGS=--prefix="$(LIBPATH)" \
          --with-x=0 \
          --with-cxx=0 \
          --with-shared-libraries=$(spetsc) \
-         --with-blaslapack-lib="$(llapackso) $(lblasso)" \
+         --with-blaslapack-lib="$(llapackpetsc) $(lblaspetsc)" \
          --with-scalar-type="complex" \
          --with-precision="${yprecision}" \
          --with-cc=$(cc) --with-fc=$(fc)

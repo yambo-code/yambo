@@ -27,7 +27,8 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  use stderr,              ONLY:write_to_log,STRING_same
  use parallel_m,          ONLY:ncpu,myid
  use electrons,           ONLY:levels,E_reset,n_bands,default_nel
- use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt
+ use R_lattice,           ONLY:bz_samp,bz_samp_reset,nkibz,ng_vec,nXkibz,nqibz,k_pt,q_pt, &
+&			       X_scattering,sigma_scattering      
  use D_lattice,           ONLY:input_GS_Tel,alat,nsym
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_RD_CL,NONE,DUMP
@@ -173,11 +174,14 @@ integer function ypp(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir
  ! BZ sampling index 
  !
  call section('*','K-point grid')
+
+ X_scattering    =.TRUE.
 #if defined _YPP_ELPH
  if(l_gkkp_db.or.l_sp_wf.or.l_mean_potential) then    ! I need qindx_S to expand gkkp and load WF
 #else
  if(l_sp_wf.or.l_mean_potential) then  
 #endif
+   sigma_scattering=.TRUE.
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3,4/),MODE=DUMP,ID=ID)
  else
    call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2,3/),MODE=DUMP,ID=ID)

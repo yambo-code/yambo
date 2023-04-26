@@ -95,6 +95,14 @@ module pars
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)
  integer, parameter  :: LP = selected_int_kind(2)
  !
+ ! Kinds used in the Yambo-IO
+ ! ===============================
+ integer, parameter  :: DP_YIO = DP
+ integer, parameter  :: SP_YIO = SP
+ integer, parameter  :: IP_YIO = IP+100
+ integer, parameter  :: LP_YIO = LP+100
+ integer, parameter  :: CR_YIO = 0              ! Character type
+ !
  ! STRINGs
  !=========
  integer, parameter  :: schlen=100

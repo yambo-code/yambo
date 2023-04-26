@@ -41,6 +41,9 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  real(SP) :: spin_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,n_spinor),&
 &            magn_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,3)
  !
+ ID_spin=0
+ ID_magn=0
+ !
  ! SPIN
  !------
  if (index(what,"S") > 0) then

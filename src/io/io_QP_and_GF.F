@@ -25,8 +25,7 @@ integer function io_QP_and_GF(what,qp,ID)
  use pars,           ONLY:SP,schlen
  use D_lattice,      ONLY:alat
  use electrons,      ONLY:n_sp_pol
- use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GW_iterations,&
-&                         GWo_iterations,GF_is_causal,QP_G_Zoom_treshold
+ use QP_m,           ONLY:QP_t,QP_G_dr,QP_G_er,GF_is_causal,QP_G_Zoom_treshold
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,io_elemental,io_bulk,&
 &                         ver_is_gt_or_eq
  use IO_m,           ONLY:io_sec,io_status,read_is_on,&
@@ -56,6 +55,9 @@ integer function io_QP_and_GF(what,qp,ID)
  logical              ::type_two_DB,QP_type_DB
  integer ,    allocatable ::qp_table_disk(:,:)
  real(SP),    allocatable ::qp_DATA_disk(:,:,:)
+ !
+ ! These variables are not used anymore, just for back compatibility
+ integer                  :: GW_iterations,GWo_iterations
  !
  integer, external :: io_descriptors
  !
@@ -162,13 +164,15 @@ integer function io_QP_and_GF(what,qp,ID)
  call io_elemental(ID,I0=qp%nk,DB_I0=QP_nk_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,I0=qp%n_states,DB_I0=QP_n_states_disk,&
 &                  VAR='QP tot states          ',CHECK=.true.,OP=(/"<="/))
- if (ver_is_gt_or_eq(ID,revision=15200)) then 
-   call io_elemental(ID,I0=GWo_iterations,&
+ if (.not.ver_is_gt_or_eq(ID,revision=22010)) then 
+   if (ver_is_gt_or_eq(ID,revision=15200)) then 
+     call io_elemental(ID,I0=GWo_iterations,&
 &                    VAR='GWo SC iterations       ',CHECK=.true.,OP=(/"=="/))
- else
-   GWo_iterations=0
+   else
+     GWo_iterations=0
+   endif
+   call io_elemental(ID,I0=GW_iterations,VAR='GW  SC iterations',CHECK=.true.,OP=(/"=="/))
  endif
- call io_elemental(ID,I0=GW_iterations,VAR='GW  SC iterations',CHECK=.true.,OP=(/"=="/))
  !
  call io_elemental(ID,I0=qp%desc%n,DB_I0=n_descs_disk,CHECK=.true.,OP=(/"<="/))
  call io_elemental(ID,VAR="",VAR_SZ=0,MENU=0)

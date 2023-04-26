@@ -21,13 +21,23 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Read and write scattering indexes
+!
+! io_sec=1   general parameters   
+! io_sec=2   q-points   
+! io_sec=3   qindx_X   
+! io_sec=4   qindx_S   
+! io_sec=5   qindx_B          
+! io_Sec=6   qindx_C
+!
 integer function io_QINDX(Xk,q,io_db,convention)
  !
- use pars,           ONLY:SP,IP,schlen
+ use pars,           ONLY:SP,IP,LP,IP_YIO,LP_YIO,CR_YIO,schlen
  use R_lattice,      ONLY:nqibz,nqbz,qindx_X,qindx_B,qindx_S,qindx_C,&
 &                         bse_scattering,QP_states_k,nXkibz,qindx_alloc,&
 &                         Xk_grid_is_uniform,bz_samp,nXkbz,coll_scattering,q_pt,&
-&                         sigma_scattering,X_scattering,k_GRIDS_string
+&                         sigma_scattering,X_scattering,k_GRIDS_string,k_GRIDS_vector, &
+&                         qindx_S_max_Go
  use IO_m,           ONLY:io_sec,frag_QINDX,io_status,read_is_on,IO_OUTDATED_DB, &
 &                         write_is_on,io_extension
  use IO_int,         ONLY:io_connect,io_disconnect,&
@@ -61,38 +71,39 @@ integer function io_QINDX(Xk,q,io_db,convention)
    !
    io_QINDX=io_header(io_db,IMPOSE_SN=.true.,FRAG=frag_QINDX)
    !
-   ! In V. 3.0.7 a real parameter (RL_v_comp_norm) has been removed
-   ! In revision 3085 the coll indx has been ceated with two new logicals
-   ! in the header
-   !
-   if (.not.ver_is_gt_or_eq(io_db,revision=5545)) io_QINDX=IO_OUTDATED_DB
+   if (.not.ver_is_gt_or_eq(io_db,revision=22000)) io_QINDX=IO_OUTDATED_DB
    if (io_QINDX/=0) goto 1
    !
-   if (.not.ver_is_gt_or_eq(io_db,revision=18984)) call def_variable_elemental(io_db,"PARS",9,SP,0)
-   if (     ver_is_gt_or_eq(io_db,revision=18984)) call def_variable_elemental(io_db,"PARS",7,SP,0)
+   call def_variable_elemental(io_db,"nXkbz",1,IP_YIO,0)
+   call io_variable_elemental(io_db,VAR="Polarization last K ( bz)",I0=nXkbz)
    !
-   call io_variable_elemental(io_db,I0=nXkbz)
-   call io_variable_elemental(io_db,VAR="Polarization last K",I0=nXkibz)
+   call def_variable_elemental(io_db,"nXkibz",1,IP_YIO,0)
+   call io_variable_elemental(io_db,VAR="Polarization last K (ibz)",I0=nXkibz)
+   !
+   call def_variable_elemental(io_db,"QP_states_k",2,IP_YIO,0)
    call io_variable_elemental(io_db,VAR="QP states",I1=QP_states_k,CHECK=.true.,OP=(/">=","<="/))
+   !
+   call def_variable_elemental(io_db,"q_nibz",1,IP_YIO,0)
    call io_variable_elemental(io_db,I0=q%nibz)
+   !
+   call def_variable_elemental(io_db,"q_nbz",1,IP_YIO,0)
    call io_variable_elemental(io_db,I0=q%nbz)
+   !
+   call def_variable_elemental(io_db,"qindx_S_max_Go",1,IP_YIO,0)
+   call io_variable_elemental(io_db,I0=qindx_S_max_Go)
+   !
+   call def_variable_elemental(io_db,"Xk_grid_is_uniform",1,LP_YIO,0)
    call io_variable_elemental(io_db,VAR="X grid is uniform",L0=Xk_grid_is_uniform)
+   !
    io_QINDX=io_status(io_db)
-   if (ver_is_gt_or_eq(io_db,revision=18984)) then
-     call def_variable_elemental(io_db,"CH_GRIDS",1,0,0)
-     call io_variable_elemental(io_db,VAR="Grids",CH0=k_GRIDS_string,CHECK=.TRUE.,OP=(/"=="/))
-     call def_variable_elemental(io_db,"GRID_LOGICALS",4,SP,0)
-   endif
    !
-   call io_variable_elemental(io_db,VAR="BS scattering",L0=bse_scattering,CHECK=.true.,OP=(/"=="/))
-   call io_variable_elemental(io_db,VAR="COLL scattering",L0=coll_scattering,CHECK=.true.,OP=(/"=="/))
-   !
-   if (ver_is_gt_or_eq(io_db,revision=18984)) then
-     call io_variable_elemental(io_db,VAR="Sigma scattering",L0=sigma_scattering,CHECK=.true.,OP=(/"=="/))
-     call io_variable_elemental(io_db,VAR="X scattering",L0=X_scattering,CHECK=.true.,OP=(/"=="/))
-   endif
+   call def_variable_elemental(io_db,"GRIDS_CH",1,CR_YIO,0)
+   call io_variable_elemental(io_db,VAR="Grids (string)",CH0=k_GRIDS_string,CHECK=.FALSE.)
+   call def_variable_elemental(io_db,"GRIDS_IV",4,IP_YIO,0)
+   call io_variable_elemental(io_db,VAR="Grids (int-vector)",I1=k_GRIDS_vector,CHECK=.TRUE.,OP=(/"<=","<=","<=","<="/))
    !
    call def_variable_elemental(io_db,"",0,0,1)
+   !
    ioScatt=io_status(io_db)
    nqbz=q%nbz
    nqibz=q%nibz
@@ -137,7 +148,7 @@ integer function io_QINDX(Xk,q,io_db,convention)
      !
      io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=1)
-     call def_variable_bulk(id_frag,"Qindx",1,shape(qindx_X),IP+100)
+     call def_variable_bulk(id_frag,"Qindx",1,shape(qindx_X),IP_YIO)
      call  io_variable_bulk(id_frag,1,I3=qindx_X)
      call io_fragment_disconnect(io_db,id_frag)
      !
@@ -152,7 +163,7 @@ integer function io_QINDX(Xk,q,io_db,convention)
      !
      io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=2)
-     call def_variable_bulk(id_frag,"Sindx",2,shape(qindx_S),IP+100)
+     call def_variable_bulk(id_frag,"Sindx",2,shape(qindx_S),IP_YIO)
      call  io_variable_bulk(id_frag,2,I3=qindx_S)
      call io_fragment_disconnect(io_db,id_frag)
      !
@@ -167,7 +178,7 @@ integer function io_QINDX(Xk,q,io_db,convention)
      !
      io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=3)
-     call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+     call def_variable_bulk(id_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP_YIO,par_io_kind='independent')
      ! 46341 is the sqare root of the maximum integer 2147483647
      ! qindx_B is size nXkbz*nXkbz
      ! NETCDF has problems in reading when this number overcomes 2147483647
@@ -200,14 +211,14 @@ integer function io_QINDX(Xk,q,io_db,convention)
  endif
  !
  if (any((/io_sec(io_db,:)==6/))) then 
-   if (coll_scattering.and.ver_is_gt_or_eq(io_db,revision=3085)) then
+   if (coll_scattering) then
      if (read_is_on(io_db)) call qindx_alloc('C')
      !
      ! Fragmentation (4): COLL indx
      !
      io_extension(io_db)=trim(filename)
      call io_fragment(io_db,id_frag,i_fragment=4)
-     call def_variable_bulk(id_frag,"Cindx",4,shape(qindx_C),IP+100)
+     call def_variable_bulk(id_frag,"Cindx",4,shape(qindx_C),IP_YIO)
      call  io_variable_bulk(id_frag,4,I3=qindx_C)
      call io_fragment_disconnect(io_db,id_frag)
    endif
@@ -221,7 +232,7 @@ end function io_QINDX
 !
 integer function qindx_B_init(ID,ID_frag,convention)
  !
- use pars,       ONLY:IP,schlen
+ use pars,       ONLY:IP,IP_YIO,schlen
  use R_lattice,  ONLY:nXkbz
  use IO_m,       ONLY:OP_RD,RD,io_status
  use IO_int,     ONLY:io_control,io_connect,def_variable_bulk,io_fragment
@@ -240,7 +251,7 @@ integer function qindx_B_init(ID,ID_frag,convention)
  qindx_B_init=io_connect(desc=trim(filename),type=1,ID=ID)
  !
  call io_fragment(ID,ID_frag,i_fragment=3)
- call def_variable_bulk(ID_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP+100,par_io_kind='independent')
+ call def_variable_bulk(ID_frag,"Bindx",3,(/nXkbz,nXkbz,2/),IP_YIO,par_io_kind='independent')
  !
  call io_control(ACTION=RD,ID=ID_frag)
  !

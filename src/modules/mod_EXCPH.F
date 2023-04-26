@@ -40,8 +40,9 @@ module EXCPH
  complex(SP), allocatable :: EXCPH_Gkkp(:,:,:)
  real(SP),    allocatable :: EXCPH_Gkkp_sq(:,:,:)
  integer                  :: n_exc_in
- integer                  :: EXCPH_states(2)
- integer                  :: EXCPH_sum(2)
+ integer                  :: EXCPH_states(2)    ! External states
+ integer                  :: EXCPH_sum(2)       ! Internal states ("virtual")
+ integer                  :: EXCPH_interband(2) ! Interband states
  real(SP), allocatable    :: EXCPH_q(:,:)
  character(schlen)        :: EXCPH_kind_name
  integer                  :: EXCPH_kind
@@ -100,9 +101,10 @@ module EXCPH
  real(SP), allocatable :: EXC_E_DbGd(:,:)
  type(bz_samp) :: q_DbGd 
  !
- ! Life Times
+ ! Life Times and Line Widths
  !
  real(SP), allocatable :: EXC_Lifetime(:)
+ real(SP), allocatable :: EXC_LineWidth(:)
  !
  ! DB Q-mapping in case symmetries are removed
  !

@@ -37,7 +37,7 @@ subroutine EXCPH_lifetime(k,q,X)
  use EXCPH,          ONLY:EXCPH_sum,EXCPH_states,BS_E,BS_all_E,BS_E_in,L_damping,n_exc_in, &
 &                         EXC_LifeTime,min_EXC_E,EXCPH_Gkkp_sq,DB_Q_map,l_no_matrix_elements, &
 &                         RESIDUALS_and_EIGENVALUES_alloc,RESIDUALS_and_EIGENVALUES_free,alphaQ, &
-&                         l_EXCPH_offdiago 
+&                         l_EXCPH_offdiago,EXCPH_Gkkp,EXC_LineWidth 
  use ELPH,           ONLY:use_PH_DbGd,elph_branches,FAN_deltaE_treshold,Q_io_map
  use vec_operate,    ONLY:degeneration_finder,iku_v_norm,iku_v_2D_norm
  use frequency,      ONLY:w_samp
@@ -60,7 +60,7 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg,l_extend_output
- real(SP) :: ExcPhM,EXC_life_average,EXC_energy_average,Pole
+ real(SP) :: ExcPhM,ExcPhW,EXC_life_average,EXC_line_average,EXC_energy_average,Pole
  real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
@@ -147,6 +147,9 @@ subroutine EXCPH_lifetime(k,q,X)
  call msg('rs','Minimum excitonic energy : ',min_EXC_E*HA2EV,' eV, at q-point :'//intc(min_pos(1)))
  call msg('rs','FAN treshold: ',FAN_deltaE_treshold*HA2CMm1,' cm-1')
  call msg('rs','Self-energy broadening : ',L_damping*HA2EV*1000._SP,'meV')
+ if (l_EXCPH_offdiago) then
+   call msg('rs','Interband transitions (off-diagonal self-energy) included.')
+ endif
  !
  ! Turn on double-grid if presents
  call EXCPH_double_grid_setup(q)
@@ -155,6 +158,10 @@ subroutine EXCPH_lifetime(k,q,X)
  !
  YAMBO_ALLOC(EXC_LifeTime,(EXCPH_states(1):EXCPH_states(2)))
  EXC_LifeTime=rZERO
+ if (l_EXCPH_offdiago) then
+   YAMBO_ALLOC(EXC_LineWidth,(EXCPH_states(1):EXCPH_states(2)))
+   EXC_LineWidth=rZERO
+ endif
  !
  call PP_indexes_reset(px)
  call PARALLEL_index(px,(/q%nbz/))
@@ -187,13 +194,29 @@ subroutine EXCPH_lifetime(k,q,X)
        !
        do il=elph_branches(1),elph_branches(2)
          !
+         ! Intraband terms only (lifetimes)
          ExcPhM=EXCPH_Gkkp_sq(il,i_beta,i_alpha)
+         ! Including interband terms (linewidths)
+         if (l_EXCPH_offdiago) then
+           !
+           ExcPhW=0._SP
+           do j_alpha=EXCPH_states(1),EXCPH_states(2)
+             !
+             ExcPhW=ExcPhW+EXCPH_Gkkp(il,i_beta,j_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
+             !
+           enddo
+           !
+         endif
+         !
          if(l_no_matrix_elements) ExcPhM=1._SP 
          !
          if(.not.use_PH_DbGd) Pole=Simple_pole()
          if(use_PH_DbGd)      Pole=DbGrid_pole()
          !
          EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
+         if (l_EXCPH_offdiago) then
+           EXC_LineWidth(i_alpha)=EXC_LineWidth(i_alpha)+ExcPhW*Pole
+         endif
          if (l_extend_output) then
            EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole
            EXC_pole_of_q(i_alpha,iq_bz)=EXC_pole_of_q(i_alpha,iq_bz)+Pole
@@ -216,6 +239,9 @@ subroutine EXCPH_lifetime(k,q,X)
  call live_timing( )
  !
  call PP_redux_wait(EXC_LifeTime)
+ if (l_EXCPH_offdiago) then
+   call PP_redux_wait(EXC_LineWidth)
+ endif
  if (l_extend_output) then
    call PP_redux_wait(EXC_life_of_q)
    call PP_redux_wait(EXC_pole_of_q)
@@ -233,9 +259,14 @@ subroutine EXCPH_lifetime(k,q,X)
    i_alpha=first_exc_grp(igrp)+n_of_exc_grp(igrp)+EXCPH_states(1)-2
    EXC_life_average=sum(EXC_LifeTime(j_alpha:i_alpha))/real(n_of_exc_grp(igrp),SP)
    EXC_LifeTime(j_alpha:i_alpha)=EXC_life_average
+   if (l_EXCPH_offdiago) then
+     EXC_line_average=sum(EXC_LineWidth(j_alpha:i_alpha))/real(n_of_exc_grp(igrp),SP) 
+     EXC_LineWidth(j_alpha:i_alpha)=EXC_line_average
+   endif
  enddo
  !
  EXC_LifeTime=EXC_LifeTime*2._SP*pi/real(q%nbz,SP)
+ if (l_EXCPH_offdiago) EXC_LineWidth=EXC_LineWidth*2._SP*pi/real(q%nbz,SP)
  !
  ! Print output and write on file
  !
@@ -249,6 +280,9 @@ subroutine EXCPH_lifetime(k,q,X)
  ! Deallocations
  !
  YAMBO_FREE(EXC_LifeTime)
+ if (l_EXCPH_offdiago) then
+   YAMBO_FREE(EXC_LineWidth)
+ endif
  call RESIDUALS_and_EIGENVALUES_free()
  if (l_extend_output) then
    deallocate(EXC_life_of_q)
@@ -390,14 +424,18 @@ subroutine EXCPH_lifetime(k,q,X)
     call msg('o '//what,'# Exciton Sum                  : '//trim(intc(EXCPH_sum(1)))//' - '//trim(intc(EXCPH_sum(2))))    
     call msg('o '//what,'# Exciton States               : '//trim(intc(EXCPH_states(1)))//' - '//trim(intc(EXCPH_states(2))))    
     call msg('o '//what,'# Self-Energy broadening       :'//trim(real2ch(L_damping*HA2EV*1000._SP))//' meV')    
-    call msg('o '//what,'# FAN treshold                 :'//trim(real2ch(FAN_deltaE_treshold*HA2EV*1000._SP))//' meV')    
-    call msg('o '//what,'# PH Doble-Grid                : '//log2ch(use_PH_DbGd))    
+    call msg('o '//what,'# FAN threshold                 :'//trim(real2ch(FAN_deltaE_treshold*HA2EV*1000._SP))//' meV')    
+    call msg('o '//what,'# PH Double-Grid                : '//log2ch(use_PH_DbGd))    
     !
     do i_alpha=EXCPH_states(1),EXCPH_states(2)
       !
       call OUTPUT_driver(what,TITLES=(/"Band   "/),I_VALUES=(/i_alpha/))
       call OUTPUT_driver(what,TITLES=(/"E"/),R_VALUES=(/real(BS_E_in(i_alpha))/),UNIT="eV")
-      call OUTPUT_driver(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
+      call OUTPUT_driver(what,TITLES=(/"Life^-1"/),R_VALUES=(/EXC_LifeTime(i_alpha)/),UNIT="meV")
+      if (l_EXCPH_offdiago) then
+        call OUTPUT_driver(what,TITLES=(/"Width"/),R_VALUES=(/EXC_LineWidth(i_alpha)/),UNIT="meV")
+      endif
+     
       call OUTPUT_driver(what,action="write")
       !
       call msg('rs','Exciton ['//trim(intc(i_alpha))//'] Lifetime: ',EXC_LifeTime(i_alpha)*HA2EV*1000._SP,'meV')

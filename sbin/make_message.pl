@@ -92,7 +92,7 @@ print "RENAMED files: $rinamefiles\n\n";
 #
 # Versions
 #
-open(VER,"<","include/driver/version.h");
+open(VER,"<","include/version/version.h");
 while($line = <VER>) {
   chomp $line;
   my @VERS = split / /, $line;

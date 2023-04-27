@@ -21,7 +21,7 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-m4_include([config/version/version.m4])
+m4_include([include/version/version.m4])
 #
 CURRENT_DIR=`echo "$PWD" | sed -e "s/ /X/g"`
 if ! test -d $CURRENT_DIR ; then 

@@ -39,15 +39,15 @@ endif
 set repo=`git remote -v | grep push`
 #
 set dummy="_VERSION"
-set version_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
+set version_old=`cat include/version/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
 set dummy="_SUBVERSION"
-set subver_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
+set subver_old=`cat include/version/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
 set dummy="_PATCHLEVEL"
-set patch_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
+set patch_old=`cat include/version/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
 set dummy="_REVISION"
-set revision_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
+set revision_old=`cat include/version/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
 set dummy="_HASH"
-set hash_old=`cat include/driver/version.h | grep $dummy | $awk '{gsub("\""," ");split($0,frags);print frags[3]}'`
+set hash_old=`cat include/version/version.h | grep $dummy | $awk '{gsub("\""," ");split($0,frags);print frags[3]}'`
 #
 set dummy1=`git rev-list --count HEAD`
 @ dummy1= $dummy1 + 10000 
@@ -146,10 +146,10 @@ if ( "$argv[1]" != "save" ) then
    mv NEW configure
    chmod a+x configure
  endif
- $awk -f version.h.awk include/driver/version.h
- mv NEW include/driver/version.h
- $awk -f version.m4.awk config/version/version.m4
- mv NEW config/version/version.m4
+ $awk -f version.h.awk include/version/version.h
+ mv NEW include/version/version.h
+ $awk -f version.m4.awk include/version/version.m4
+ mv NEW include/version/version.m4
 endif
 rm -fr version.*.awk configure.awk 
 #

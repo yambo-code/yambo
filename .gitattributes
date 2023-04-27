@@ -1,3 +1,3 @@
-configure             merge=keepTheirs
-config/version/version.m4     merge=keepTheirs
+configure                     merge=keepTheirs
+include/version/version.m4    merge=keepTheirs
 include/driver/version.h      merge=keepTheirs

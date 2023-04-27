@@ -73,19 +73,21 @@ if [ -f "$file_o_src" ]  ; then
     #
     count=`ls -1 $file_o_path/*objects.save/*.a 2>/dev/null | wc -l`
     if [ $count != 0 ]; then 
-     source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save .a files"
+     source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save .a files ($count)"
      rm -f $file_o_path/*objects.save/*.a 
     fi
-    count=`ls -1 $file_o_path/*objects.save/$file_o 2>/dev/null | wc -l`
+    file_o_base=`basename $file_o`
+    count=`ls -1 $file_o_path/*objects.save/$file_o_base 2>/dev/null | wc -l`
     if [ $count != 0 ] ; then
-      source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save $file_o"
-      rm -f $file_o_path/*objects.save/$file_o
+      source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save $file_o_base ($count)"
+      rm -f $file_o_path/*objects.save/$file_o_base
     fi
     if [ ! "$file_f90" == "" ]; then
-      count=`ls -1 $file_o_path/*objects.save/$file_f90 2>/dev/null | wc -l`
+      file_f90_base=`basename $file_f90`
+      count=`ls -1 $file_o_path/*objects.save/$file_f90_base 2>/dev/null | wc -l`
       if [ $count != 0 ] ; then
-        source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save $file_f90"
-        rm -f $file_o_path/*objects.save/$file_f90
+        source ./sbin/compilation/verbosity.sh "object_remove.sh: remove objects.save $file_f90_base ($count)"
+        rm -f $file_o_path/*objects.save/$file_f90_base
       fi
     fi
   fi

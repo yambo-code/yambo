@@ -47,6 +47,7 @@ count_mod_res=`ls -1 $dir/$restore_dir/*.mod 2>/dev/null | wc -l`
 count_f90_res=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
 #
 # Save files
+#
 if [ $count_obj != 0 ]; then
  if [ ! -d $dir/$save_dir ] ; then
   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: mkdir $save_dir"
@@ -127,14 +128,16 @@ if [[ -d $dir/$restore_dir ]] && [[ ! "$restore_dir" == "$save_dir" ]] ; then
   done
  fi
  cd $path_back
- if [[ -f $dir/$restore_dir/$library ]] || [  ! "$library" == "NONE" ]; then
+ if [[ -f $dir/$restore_dir/$library ]] && [[ ! "$library" == "NONE" ]]; then
   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: removing & linking $compdir/$dir/$restore_dir/$library in $compdir/lib"
   cd $compdir/lib
   rm -f $library
   ln -s $compdir/$dir/$restore_dir/$library ./
+  DIR_restored="yes"
+ else
+  DIR_restored="no"
  fi
  cd $path_back
- DIR_restored="yes"
  source $compdir/sbin/compilation/fix_locks.sh
 fi
 

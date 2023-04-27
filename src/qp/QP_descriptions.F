@@ -28,7 +28,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  use units,         ONLY:HA2EV
  use X_m,           ONLY:X_t,use_X_DbGd,OPTICAL_averaged_dirs_string
  use QP_m,          ONLY:QP_t,QP_ng_Sx,QP_n_G_bands,QP_cg_percent,&
-&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,GWo_iterations,&
+&                        QP_dSc_delta,QP_G_damp,QP_dSc_steps,&
 &                        COHSEX_use_empties,QP_Sc_steps,QP_G_er,QP_G_dr,QP_solver,&
 &                        use_GreenF_to_eval_QP,GF_is_causal,QP_G_Zoom_treshold,&
 &                        GW_terminator_E,l_GW_terminator,GW_terminator_Kind
@@ -72,8 +72,6 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  endif
  !
  if (.not.l_life) then
-   !
-   call IO_desc_add(qp%desc,'i','GW SC iterations',I=(/GWo_iterations/))
    !
    if (.not.l_cohsex.and.trim(QP_solver)/='g'.and..not.use_GreenF_to_eval_QP) then
      !

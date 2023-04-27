@@ -28,7 +28,7 @@ subroutine setup(en,Xen,Ken,k,Xk)
  use drivers,        ONLY:l_setup
  use C_driver,       ONLY:code_bin
  use parser_m,       ONLY:parser
- use wave_func,      ONLY:wf_ng,wf_ncx
+ use wave_func,      ONLY:wf_ng,wf_ncx,wf_igk
  use electrons,      ONLY:levels,n_met_bands,n_full_bands,E_duplicate,E_reset
  use D_lattice,      ONLY:a,alat,nsym,i_time_rev,DL_vol,Tel,dl_sop,atom_mass,atom_pos,atoms_map,&
 &                         atoms_spatial_inversion,i_space_inv,input_Tel_is_negative,&
@@ -256,6 +256,11 @@ subroutine setup(en,Xen,Ken,k,Xk)
  !====================================
  !
  call G_shells_finder()
+ !
+ if ( wf_ng > maxval(wf_igk) ) then
+   call warning("wf_ng > maxval(wf_igk), probably because FFTGvecs in input. Reducing it")
+   wf_ng=maxval(wf_igk)
+ endif
  !
  call msg('r','nG shells         ',n_g_shells)
  call msg('r','nG charge         ',ng_closed)

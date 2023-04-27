@@ -127,6 +127,7 @@ define clean_config
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
+ rm -fr $(prefix)/include/version/version.h;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile;\
  rm -fr $(prefix)/src/tools/.objects;\

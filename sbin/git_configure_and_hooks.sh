@@ -32,8 +32,7 @@ sbin/yambo_versions_update.tcsh r
 git add configure
 if [ -e include/driver/version.h  ]      ; then  git add include/driver/version.h ;     fi
 if [ -e config/version/version.m4 ]      ; then  git add config/version/version.m4 ;     fi
-if [ -e include/version/version.h  ]     ; then  git add include/version/version.h ;     fi
-if [ -e version/version/version.m4 ]     ; then  git add include/version/version.m4 ;     fi
+if [ -e include/version/version.m4 ]     ; then  git add include/version/version.m4 ;     fi
 EOF
 chmod +x .git/hooks/pre-commit
 #

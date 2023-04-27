@@ -43,6 +43,7 @@ lib/archive/git.list
 lib/archive/Ydriver
 lib/yambo/Ydriver/yambo/include/editor.h
 lib/yambo/Ydriver/yambo/include/version.h
+include/version/version.h
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects

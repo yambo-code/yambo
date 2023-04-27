@@ -87,7 +87,6 @@ else
  set file_name=$source_dir"-"$revision_new".tar"
  echo "archive of " $source_dir " is " "../"$file_name".gz"
 endif
-exit 0
 #
 set update = 0
 if ( "$argv[1]" == "v" || "$argv[1]" == "s" || "$argv[1]" == "p" ) then

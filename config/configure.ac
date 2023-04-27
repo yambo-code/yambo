@@ -56,12 +56,17 @@ m4_include([config/m4/acx_get_mpi_kind.m4])
 m4_include([config/m4/acx_fortran_flags.m4])
 m4_include([config/m4/acx_mpi.m4])
 m4_include([config/m4/cuda.m4])
+m4_include([config/m4/acx_version.m4])
 m4_include([config/m4/acx_branch.m4])
 m4_include([config/m4/acx_IO_wrap_up.m4])
 # 
 #  Report
 #
 m4_include([config/m4/acx_report.m4])
+# ============================================================================
+# version.m4 -> version.h
+ACX_VERSION
+#
 # ============================================================================
 # Current branch
 ACX_BRANCH

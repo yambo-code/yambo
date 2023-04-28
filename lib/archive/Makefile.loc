@@ -12,8 +12,6 @@ endif
 #
 WGETFLAGS=--no-check-certificate -v
 #
-.PHONY: Ydriver 
-#
 all: $(EXT_LIBS)
 #
 # Libraries (GIT + archives)
@@ -62,8 +60,8 @@ clean: clean_git_folders clean_tgz
 #
 clean_git_folders:
 	if test ! -e keep-extlibs-stamp ; then \
-          if test -d Ydriver  ; then \
-	    if test "$(keep_Ydriver)" != "yes" ;  then rm -rf Ydriver ; fi ; \
+          if test -d $(pkgname_Ydriver)  ; then \
+	    if test "$(keep_Ydriver)"   != "yes" ;  then rm -rf $(pkgname_Ydriver) ; fi ; \
 	    rm -f Ydriver.pulled ; \
 	  fi ; \
 	fi
@@ -110,18 +108,18 @@ define getsrc_git
  mkdir -p  ../../log; \
  if [ ! "$$GBRANCH" = "none" ] ; then \
   if test ! -e $(1)".pulled"; then \
-   if test ! -d $(1) ; then \
+   if test ! -d $(1)"-src" ; then \
     echo "\t[$(1)] clone via $$GIT" ; \
-    git clone $$GIT $(1) >> ../../log/clone_$(1).log 2>&1; \
+    git clone $$GIT $(1)"-src" >> ../../log/clone_$(1).log 2>&1; \
    fi ; \
-   echo "\t[$(1)] switched to $$GBRANCH"; \
-   cd $(1) ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
+   echo "\t[$(1)] $$GBRANCH switch and update"; \
+   cd $(1)"-src" ; git checkout $$GBRANCH >> ../../../log/clone_$(1).log 2>&1; \
    git pull >> ../../../log/clone_$(1).log 2>&1; cd ../ ; \
    touch $(1)".pulled" ; \
   fi ; \
  else \
   if test ! -s $$LIB".tar.gz" ; then \
-   echo "\t[$$LIB] download";\
+   echo "\t[$(1)] download $$LIB.tar.gz";\
    if [ -x $(shell which wget) ] && [ "$(shell which wget)" != "" ] ; then \
     wget $(WGETFLAGS) -O $$LIB".tar.gz" $$URL >> ../../log/download_$$LIB.log 2>&1; \
    elif [ -x $(shell which curl) ] && [ "$(shell which curl)" != "" ] ; then \
@@ -142,12 +140,12 @@ endef
 #
 define copy_driver
  if ! test -d $(srcdir)/lib/yambo/$(1); then mkdir -p $(srcdir)/lib/yambo/$(1); fi; \
- if test -s $$LIB".tar.gz" && ! test -d $(1) ; then \
+ if test -s $$LIB".tar.gz" && ! test -d $(1)"-src" ; then \
   gunzip < $(compdir)/lib/archive/$$LIB".tar.gz" | ../../config/missing --run tar xf - ; \
-  mv $$LIB $(1) ; \
+  mv $$LIB $(1)"-src" ; \
  fi;\
- if test -d $(1) &&  test ! -f $(srcdir)/lib/yambo/$(1)-installed.stamp ; then \
-  cp -R $(1)/* $(srcdir)/lib/yambo/$(1)/; \
+ if test -d $(1)"-src" &&  test ! -f $(srcdir)/lib/yambo/$(1)-installed.stamp ; then \
+  cp -R $(1)"-src"/* $(srcdir)/lib/yambo/$(1)/; \
   touch $(srcdir)/lib/yambo/$(1)-installed.stamp; \
  fi ;\
  if [ "$(srcdir)" != "$(compdir)" ]; then \

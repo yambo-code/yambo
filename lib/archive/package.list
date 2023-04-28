@@ -5,7 +5,7 @@ EXT_LIBS= yaml futile iotk hdf5 netcdf netcdff pnetcdf etsf_io libxc lapack blac
 #
 # storing options
 #
-keep_Ydriver=no
+keep_Ydriver=yes
 keep_iotk=yes
 keep_netcdf=no
 keep_netcdff=no

@@ -85,14 +85,15 @@ if [ "$new" == "yes" ]  && [[ -f $compdir/config/stamps_and_lists/active_directo
    fi
   fi
  done
+ #
  # remove broken links
+ #
  count_lib_files=`ls -1 lib/*.a 2>/dev/null | wc -l`
  if [ $count_lib_files -gt 0 ]; then
   for lib_file in lib/*.a ; do
    if [ ! -e $lib_file ]; then rm $lib_file ; fi
   done
  fi
- exit 0
 fi
 #
 # Dependencies?

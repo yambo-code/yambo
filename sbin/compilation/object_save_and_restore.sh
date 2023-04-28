@@ -48,49 +48,47 @@ count_f90_res=`ls -1 $dir/$restore_dir/*.f90 2>/dev/null | wc -l`
 #
 # Save files
 #
+if [ ! -d $dir/$save_dir ] ; then
+ source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: mkdir $save_dir"
+ mkdir -p $dir/$save_dir
+fi
+cd $dir
 if [ $count_obj != 0 ]; then
- if [ ! -d $dir/$save_dir ] ; then
-  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: mkdir $save_dir"
-  mkdir -p $dir/$save_dir
- fi
- cd $dir
- if [ $count_obj != 0 ]; then
-  for tos in *.o; do
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
-   if ! test -L $tos; then cp -u $tos $save_dir; fi
-  done
- fi
- if [ $count_mod != 0 ]; then
-  for tos in *.mod; do
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
-   if ! test -L $tos; then cp -u $tos $save_dir; fi
-  done
- fi
- if [ $count_f90 != 0 ]; then
-  for tos in *.f90; do
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
-   if ! test -L $tos; then cp -u $tos $save_dir; fi
-  done
- fi
- if [ $count_obj_tr != 0 ]; then
-  for tos in *.o_to_remove; do
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving and removing $tos"
-   if ! test -L $tos; then mv $tos $save_dir/${tos/_to_remove}; fi
-  done
- fi
- if [ $count_mod_tr != 0 ]; then
-  for tos in *.mod_to_remove; do
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving and removing $tos"
-   if ! test -L $tos; then mv $tos $save_dir/${tos/_to_remove}; fi
-   source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: removing" $compdir/include/${tos/_to_remove}
-   rm -f $compdir/include/${tos/_to_remove}
-  done
- fi
- cd $path_back
- if [[ -f "$compdir/lib/$library" ]]; then
-  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $compdir/lib/$library to $dir/$save_dir"
-  if ! test -L $compdir/lib/$library; then cp -u $compdir/lib/$library $dir/$save_dir; fi
- fi
+ for tos in *.o; do
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
+  if ! test -L $tos; then cp -u $tos $save_dir; fi
+ done
+fi
+if [ $count_mod != 0 ]; then
+ for tos in *.mod; do
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
+  if ! test -L $tos; then cp -u $tos $save_dir; fi
+ done
+fi
+if [ $count_f90 != 0 ]; then
+ for tos in *.f90; do
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $tos"
+  if ! test -L $tos; then cp -u $tos $save_dir; fi
+ done
+fi
+if [ $count_obj_tr != 0 ]; then
+ for tos in *.o_to_remove; do
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving and removing $tos"
+  if ! test -L $tos; then mv $tos $save_dir/${tos/_to_remove}; fi
+ done
+fi
+if [ $count_mod_tr != 0 ]; then
+ for tos in *.mod_to_remove; do
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving and removing $tos"
+  if ! test -L $tos; then mv $tos $save_dir/${tos/_to_remove}; fi
+  source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: removing" $compdir/include/${tos/_to_remove}
+  rm -f $compdir/include/${tos/_to_remove}
+ done
+fi
+cd $path_back
+if [[ -f "$compdir/lib/$library" ]]; then
+ source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $compdir/lib/$library to $dir/$save_dir"
+ if ! test -L $compdir/lib/$library; then cp -u $compdir/lib/$library $dir/$save_dir; fi
 fi
 #
 # Restore files

@@ -62,6 +62,7 @@ m4_include([config/m4/acx_IO_wrap_up.m4])
 # 
 #  Report
 #
+m4_include([config/m4/acx_stripe_subpath.m4])
 m4_include([config/m4/acx_report.m4])
 # ============================================================================
 # version.m4 -> version.h

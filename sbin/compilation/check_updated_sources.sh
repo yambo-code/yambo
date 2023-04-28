@@ -37,7 +37,7 @@ if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
-if [ ! -z $candidates ]; then
+if [ ! -z "$candidates" ]; then
  source ./sbin/compilation/verbosity.sh "check_updated_sources.sh: there are sources to check"
 fi
 for candidate in $candidates

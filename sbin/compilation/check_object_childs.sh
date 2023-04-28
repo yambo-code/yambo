@@ -35,13 +35,15 @@ if [ -z $file_o ] ; then return; fi
 #
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
+file_o_base=`basename $file_o`
+#
 first_level_dep=""
-if grep -q "$file_o" $compdir/config/stamps_and_lists/global_modules_dep.list; then
+if grep -q "$file_o_base" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
- deps=`grep -w $file_o $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+ deps=`grep -w $file_o_base $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
  for dep in $deps
  do
-  if test "$dep" == "$file_o"; then continue; fi
+  if test "$dep" == "$file_o_base"; then continue; fi
   first_level_dep+=" $dep"
  done
  #

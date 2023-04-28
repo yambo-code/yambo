@@ -56,8 +56,8 @@
 # > MATH: @FFT_info@ @BLAS_info@
 #
 # [@FFT_check@] FFT       : @FFT_LIBS_R@ @FFT_INCS_R@
-# [@BLAS_check@] BLAS      : @BLAS_LIBS_R@ @BLAS_PETSC_LIBS_R@
-# [@LAPACK_check@] LAPACK    : @LAPACK_LIBS_R@ @LAPACK_PETSC_LIBS_R@
+# [@BLAS_check@] BLAS      : @BLAS_LIBS_R@ [for petsc: @BLAS_PETSC_LIBS_R@]
+# [@LAPACK_check@] LAPACK    : @LAPACK_LIBS_R@ [for petsc: @LAPACK_PETSC_LIBS_R@]
 # [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS_R@ 
 # [@BLACS_check@] BLACS     : @BLACS_LIBS_R@
 # [@PETSC_check@] PETSC     : @PETSC_LIBS_R@ @PETSC_INCS_R@ 
@@ -67,8 +67,8 @@
 #
 # [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@ @LIBXC_INCS_R@
 # [@MPI_check@] MPI(libs) : @MPI_LIBS@ 
-# [@MPI_check@] MPI(info) : @MPI_info@
-# [@MPI_check@] MPI(inc)  : @MPI_INCS@
+#     MPI(inc)  : @MPI_INCS@
+#     MPI(info) : @MPI_info@
 #
 # - COMPILERS -
 #

@@ -100,7 +100,7 @@ i?86*linux*)
        ;;
       *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        ;;
       *17* | *18* | *19* )
@@ -318,7 +318,7 @@ ia64*linux* )
        ;;
       *2020* | *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;

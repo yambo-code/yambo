@@ -25,7 +25,7 @@
 integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:SP,schlen,CR_YIO
  use R_lattice,           ONLY:nqbz
  use QP_m,                ONLY:QP_G_damp,l_extended_output,QP_solver,On_Mass_Shell_approx
  use X_m,                 ONLY:X_DbGd_percentual
@@ -54,10 +54,10 @@ integer function io_PH(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    call IO_desc_reset(PHEL_desc)
-   call def_variable_elemental(ID,"CH_PHEL_PARAMETERS",1,0,0)
+   call def_variable_elemental(ID,"CH_PHEL_PARAMETERS",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[PHEL] Self-Energy mode",CH0=PH_Self_Energy_mode,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
-   call def_variable_elemental(ID,"CH_PHEL_SOLVER",1,0,0)
+   call def_variable_elemental(ID,"CH_PHEL_SOLVER",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[PHEL] Solver",CH0=QP_solver,DB_CH0=QP_solver_disk,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
    call def_variable_elemental(ID,"PHEL_PARAMETERS",13,SP,0)

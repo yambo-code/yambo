@@ -31,8 +31,8 @@ subroutine interpolate_W(X,Xw,q,mode)
  use vec_operate,   ONLY:c2a,v_norm
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use frequency,     ONLY:w_samp
- use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
-&                        deliver_IO_error_message,OP_WR_CL,REP,VERIFY
+ use IO_m,          ONLY:OP_RD_CL,NONE,RD_CL,OP_RD,RD_CL_IF_END,OP_WR_CL,&
+&                        deliver_IO_error_message,manage_action,REP,VERIFY
  use IO_int,        ONLY:io_control
  use stderr,        ONLY:intc,STRING_pack,gen_fmt
  use D_lattice,     ONLY:alat,a
@@ -57,7 +57,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  complex(SP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
  real(SP)          :: v1(3),r_dum(2)
  real(SP)          :: q_grid_b_rlu(3,2),q_grid_b_iku(3,2),q_grid_b_cc(3,2)
- integer           :: ID, io_err, ng_save,G_max_ibz(q%nibz), G_max
+ integer           :: ID, IO_ACT, io_err, ng_save,G_max_ibz(q%nibz), G_max
  integer, external :: io_X, io_RIM_W
  character(schlen) :: ch_dum,fmt_dum,msg_dum(2)
  !
@@ -142,6 +142,11 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
  call msg('r','')
+ !
+ X%ng = G_max_ibz(1)
+ call io_control(ACTION=OP_RD,COM=REP,SEC=(/1/),ID=ID)
+ io_err=io_X(X,Xw,ID)
+ !
  do iq=1,q%nibz
    !
    ! I/O of X
@@ -149,14 +154,8 @@ subroutine interpolate_W(X,Xw,q,mode)
    !Load only the G needed
    X%ng = G_max_ibz(iq)
    !
-   if (iq==1) then
-     call io_control(ACTION=OP_RD,COM=REP,       SEC=(/1,2,2*iq+1/),ID=ID)
-   else if (q%nibz==1) then
-     call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
-   else if (iq > 1) then
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
-   endif
-   !
+   IO_ACT=manage_action(RD_CL_IF_END,iq,1,q%nibz)
+   call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
    io_err=io_X(X,Xw,ID)
    !
    call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)

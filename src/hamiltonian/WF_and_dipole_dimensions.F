@@ -29,7 +29,7 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  use X_m,          ONLY:X_t
  use wave_func,    ONLY:wf_ng
  use QP_m,         ONLY:QP_ng_Sx,QP_ng_SH,QP_ng_Vxc,QP_n_G_bands,COHSEX_use_empties
- use R_lattice,    ONLY:qindx_S,G_m_G,bz_samp
+ use R_lattice,    ONLY:qindx_S,G_m_G,bz_samp,qindx_S_max_Go
  use interfaces,   ONLY:eval_G_minus_G
  use hamiltonian,  ONLY:H_ref_bands,WF_Go_indx,WF_G_max,l_sc_XC_is_local
 #if defined _RT || defined _NL
@@ -65,7 +65,13 @@ subroutine WF_and_dipole_dimensions(X,Xk)
  !
  if ( l_sc_fock.or.l_sc_exx.or.l_sc_coh.or.l_sc_sex ) then
    !
-   WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
+   if(allocated(qindx_S)) then
+     WF_Go_indx=maxval(qindx_S(:,:,2)) ! Sigma_x/c
+   elseif(qindx_S_max_Go/=-1) then
+     WF_Go_indx=qindx_S_max_Go 
+   else 
+     call error('Max Go not defined run setup again')
+   endif
    !
    if (l_sc_coh.or.l_sc_sex.or.l_sc_srpa) then
      !

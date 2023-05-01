@@ -30,7 +30,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  use electrons,     ONLY:levels,n_spin
  use R_lattice,     ONLY:bz_samp,G_m_G
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:F_xc,magn,XC_potential_driver
+ use xc_functionals,ONLY:V_xc,F_xc,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G
  !
@@ -65,6 +65,8 @@ subroutine TDDFT_ALDA_G_space(E,k)
  ! ALDA functional
  !
  YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+ YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+ V_xc=0._SP
  YAMBO_ALLOC(F_xc_DP,(fft_size))
  if (n_spin>1) then
    YAMBO_ALLOC(magn,(fft_size,3))
@@ -94,6 +96,7 @@ subroutine TDDFT_ALDA_G_space(E,k)
  !
  ! Clean
  !
+ YAMBO_FREE(V_xc)
  YAMBO_FREE(F_xc)
  YAMBO_FREE(F_xc_DP)
  YAMBO_FREE(magn)

@@ -43,7 +43,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  ! qindx_C(ikbz,iqbz,2)=iGo
  !
  use pars,           ONLY:SP,lchlen,zero_dfl
- use drivers,        ONLY:l_bse,l_elel_scatt,l_setup
+ use drivers,        ONLY:l_bse,l_elel_scatt,l_setup,l_nl_optics
  use com,            ONLY:msg,fat_log
  use parallel_m,     ONLY:PAR_K_scheme,master_cpu,PP_indexes,myid,PP_indexes_reset
  use parallel_int,   ONLY:PP_wait,PP_redux_wait,PARALLEL_index,PARALLEL_global_indexes
@@ -56,8 +56,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
 &                         qindx_X,qindx_B,qindx_S,qindx_C,qindx_free,&
 &                         bse_scattering,qindx_alloc,Xk_grid_is_uniform,&
 &                         k_grid,k_grid_b,q_pt,k_pt,bz_samp,q_norm,q0_def_norm,&
-&                         q_sstar,coll_scattering,q_source,smallest_q_norm,&
-&                         Xk_grid_new_mapping,k_GRIDS_string,X_scattering,sigma_scattering
+&                         q_sstar,coll_scattering,q_source,smallest_q_norm,qindx_S_max_Go,&
+&                         Xk_grid_new_mapping,X_scattering,sigma_scattering,&
+&                         k_GRIDS_string,k_GRIDS_vector
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,OP_WR_CL,OP_APP_CL,VERIFY,REP
  use parser_m,       ONLY:parser
@@ -91,33 +92,48 @@ subroutine bz_samp_indexes(en,k,Xk,q)
  !
  call section('*','Transferred momenta grid and indexing')
  !========================================================
- ! .... which GRIDS?
- X_scattering    =index(k_GRIDS_string,"X")>0
- sigma_scattering=index(k_GRIDS_string,"S")>0
+ ! .... defaults
+ X_scattering    =.true.
+ sigma_scattering=.true.
  bse_scattering  =l_bse .and. (BS_res_K_corr.or.BS_cpl_K_corr)
  coll_scattering =l_elel_scatt
+ !
+ ! ... User defined
 #if defined _ELPH
  call parser('BSEscatt',bse_setup_scatt)
  if (.not.bse_scattering ) bse_scattering =elph_use_q_grid.or.bse_setup_scatt.or.trim(q_source)=="Electron-Phonon databases"
 #endif
  !
- ! ... User defined
- call parser('K_grids', user_grids)
- if (user_grids) then
-   if (index(k_GRIDS_string,"B")==0.and.bse_scattering  ) bse_scattering=.FALSE.
-   if (index(k_GRIDS_string,"C")==0.and.coll_scattering ) coll_scattering=.FALSE.
-   if (index(k_GRIDS_string,"X")==0.and.X_scattering    ) X_scattering=.FALSE.
-   if (index(k_GRIDS_string,"S")==0.and.sigma_scattering) sigma_scattering=.FALSE.
-   if (len_trim(k_GRIDS_string)==0) k_GRIDS_string="none"
-   call k_GRIDS_update( )
+#if defined _NL
+ !
+ ! In the non-linear spectroscoy I don't load qindx_X and qindx_S
+ !
+ if(l_nl_optics) then
+   X_scattering    =.FALSE.
+   sigma_scattering=.FALSE.
  endif
  !
+#endif
+ !
+ call parser('K_grids', user_grids)
+ if (user_grids) then
+   bse_scattering=  index(k_GRIDS_string,"B")/=0
+   coll_scattering= index(k_GRIDS_string,"C")/=0
+   X_scattering=    index(k_GRIDS_string,"X")/=0
+   sigma_scattering=index(k_GRIDS_string,"S")/=0
+ endif
+ !
+ ! ... some over-rule needed
  if (bse_scattering)  X_scattering    =.TRUE.
  if (coll_scattering) sigma_scattering=.TRUE.
+ !
+ ! ... update string
+ call k_GRIDS_update( )
  !
  q%description='q'
  !
  call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2,3,4,6/),MODE=VERIFY,ID=io_db)
+ !
  io_err=io_QINDX(Xk,q,io_db)
  if (io_err==0) then
    call k_expand(q)
@@ -477,6 +493,9 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        exit K_LOOP
      endif
    enddo K_LOOP
+   !
+   qindx_S_max_Go=maxval(qindx_S(:,:,2))
+   !
  endif
  !
  ! Grids string update
@@ -536,10 +555,21 @@ subroutine bz_samp_indexes(en,k,Xk,q)
      !
      ! Grids string update
      !
-     k_GRIDS_string="X"
+     k_GRIDS_string="" 
+     if (X_scattering    ) k_GRIDS_string=trim(k_GRIDS_string)//" X"
      if (bse_scattering  ) k_GRIDS_string=trim(k_GRIDS_string)//" B"
      if (coll_scattering ) k_GRIDS_string=trim(k_GRIDS_string)//" C"
      if (sigma_scattering) k_GRIDS_string=trim(k_GRIDS_string)//" S"
+     !
+     if (len_trim(k_GRIDS_string)==0) k_GRIDS_string="none"
+     !
+     ! This is needed for I/O
+     !
+     k_GRIDS_vector=0
+     if (X_scattering    ) k_GRIDS_vector(1)=1
+     if (bse_scattering  ) k_GRIDS_vector(2)=1
+     if (coll_scattering ) k_GRIDS_vector(3)=1
+     if (sigma_scattering) k_GRIDS_vector(4)=1
      !
    end subroutine 
    !

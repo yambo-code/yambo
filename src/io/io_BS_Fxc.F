@@ -23,7 +23,7 @@
 !
 integer function io_BS_Fxc(iq,FXC_W,ID,X)
  !
- use pars,           ONLY:schlen,IP
+ use pars,           ONLY:schlen,IP,IP_YIO
  use units,          ONLY:HA2EV
  use stderr,         ONLY:intc
  use BS,             ONLY:BS_K_dim
@@ -72,7 +72,7 @@ integer function io_BS_Fxc(iq,FXC_W,ID,X)
    !
    if (io_BS_Fxc/=0) goto 1
    !
-   call def_variable_elemental(ID,"FXC_parameters",11,IP+100,0)
+   call def_variable_elemental(ID,"FXC_parameters",11,IP_YIO,0)
    !
    call io_variable_elemental(ID,DB_I0=FXC_n_g_db,&
 &       VAR=" FXC|Matrix size              ",I0=FXC_n_g_corr,CHECK=.true.,OP=(/"<="/),DESCRIPTOR=FXC_desc)

@@ -80,6 +80,7 @@ module com
  logical            :: write_to_of
  logical            :: write_to_report
  logical            :: fat_log
+ logical            :: exp_user
  !
  interface
    !

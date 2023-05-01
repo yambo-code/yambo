@@ -65,8 +65,13 @@ void options_control(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Verbose (fatter) log(s)";
- options[*i_opt].long_opt="fatlog"; 
+ options[*i_opt].long_opt="fatlog";
  options[*i_opt].yambo_string="fatlog";
+ options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Assume experienced user";
+ options[*i_opt].long_opt="expuser";
+ options[*i_opt].yambo_string="expuser";
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="Databases properties";

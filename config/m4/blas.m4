@@ -192,23 +192,29 @@ if test x"$enable_openmp_int_linalg" = "xyes" ; then
 fi
 
 # Test for shared BLAS
-BLAS_SO_LIBS=""
+BLAS_PETSC_LIBS=""
 if test "$internal_blas" = "yes"; then
   if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so || test $compile_blas = "yes" ; then
-    BLAS_SO_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
+    BLAS_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/libblas.so";
   fi
 fi
-if test $acx_blas_ok = yes && test -d "${MKLROOT}" ; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+
+if test "$acx_blas_ok" = "yes" ; then
+  if test -d "${MKLROOT}" || test "${BLAS_LIBS}" = "*.so"; then
+    BLAS_PETSC_LIBS=${BLAS_LIBS}
+  else
+    BLAS_PETSC_LIBS=`echo "$BLAS_LIBS" | sed "s/\.a//g" | sed "s/\.so//g" | sed "s/\ \-L//g" | sed "s/\ \-l/lib/g" `
+    BLAS_PETSC_LIBS="${BLAS_PETSC_LIBS}.so"
+    #echo "Debug: BLAS_PETSC_LIBS=$BLAS_PETSC_LIBS";
+    if ! test -e $BLAS_PETSC_LIBS ; then BLAS_PETSC_LIBS="" ; fi
+  fi
 fi
-if test $acx_blas_ok = yes && test "${BLAS_LIBS}" = "*.so"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
-fi
-blas_shared="no"
-if test x"${BLAS_SO_LIBS}" = "x"; then
-  BLAS_SO_LIBS=${BLAS_LIBS}
+#
+blas_shared="0"
+if test x"${BLAS_PETSC_LIBS}" = "x"; then
+  BLAS_PETSC_LIBS=${BLAS_LIBS}
 else
-  blas_shared="yes"
+  blas_shared="1"
 fi
 
 AC_SUBST(internal_blas)
@@ -218,7 +224,7 @@ AC_SUBST(def_openmp_int_linalg)
 AC_SUBST(compile_blas)
 AC_SUBST(BLAS_LIBS)
 AC_SUBST(BLAS_info)
-AC_SUBST(BLAS_SO_LIBS)
+AC_SUBST(BLAS_PETSC_LIBS)
 AC_SUBST(blas_shared)
 
 ])dnl ACX_BLAS

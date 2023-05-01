@@ -308,17 +308,6 @@ subroutine NL_initialize(E,k)
  ! 
  H_potential = RT_potential
  !
- ! Deallocate bare_qpg if not required
- !=============================
- ! DS 2019/06/18:
- ! bare_qpg is used by DIPOLE_dimensions
- ! The dependency maybe likey removed in the future
- ! For now I'm commenting the following lines
- !  
- !if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
- !  YAMBOX_FREE(bare_qpg)
- !endif
- !
  ! Frequencies range
  ! =========================
  NL_estep=(NL_er(2)-NL_er(1))/real(n_frequencies,SP)

@@ -21,6 +21,12 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Calculate the average value of an operator
+!
+! <A> = 1/N_k \sum_{v,k} < u_{v,k} (t) | A | u_{v,k} (t) >
+!
+! Symmetry operatoration are applied if necessary
+!
 subroutine NL_average_operator(O_VALUE,V_VALUE,O_REAL,O_MATRIX,&
 &                              V_MATRIX,PV_MATRIX,V_bands,k,en,TRANS,nK_mem)
  !

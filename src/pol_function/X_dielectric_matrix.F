@@ -107,7 +107,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
+   !
  else if (X%whoami==3) then
+   !
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamical Dielectric Matrix')
    if (l_gw0) self_detect_E_range=.true.
    !
@@ -118,15 +120,28 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
    !
  else if (X%whoami==4) then
+   !
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
    Xw%n_freqs    =2
    X_MEM_n_freqs =2
    Xw%er=(/epsilon(1._SP),0._SP/)
    Xw%dr=(/0._SP,X%ppaE/)
-   X%ordering='R'
+   X%ordering='R' !DALV: we should use 't'
+   !
+ else if (X%whoami==5) then
+   !
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (MPA)')
+   !
+   if (mod(Xw%n_freqs,2)>0) Xw%n_freqs=Xw%n_freqs+1
+   X%mpa_npoles  = Xw%n_freqs/2
+   X_MEM_n_freqs =2*X%mpa_npoles
+   X%ordering='t'
+   Xw%grid_type="mpa-lP"
+   !
  endif
  !
- call X_pre_setup(Xen,Xk,X)
+ call X_pre_setup(Xen,Xk,X) !DALV: in here the time ordering is changed to 'R' for metals
+                            !      this could be problematic for FF real-axis GW calculations
  !
  if (l_write_disk_Xo) then
    if (.not.SILENT_MODE) call warning('On-the-fly extraction of IP Response Function Matrix')

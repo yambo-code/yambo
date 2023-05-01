@@ -23,7 +23,7 @@
 !
 integer function io_Double_Grid(E,Xk,ID,what)
  !
- use pars,           ONLY:schlen
+ use pars,           ONLY:schlen,IP_YIO,CR_YIO
  use electrons,      ONLY:levels,FineGd_E_components_alloc
  use descriptors,    ONLY:IO_desc_reset
  use R_lattice,      ONLY:bz_samp,BZ_FineGd_mode,bz_samp_FineGd_alloc,FineGd_desc
@@ -83,17 +83,17 @@ integer function io_Double_Grid(E,Xk,ID,what)
    !
    if (io_Double_Grid/=0) goto 1
    !
-   call def_variable_elemental(ID,VAR="GLOBAL_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+   call def_variable_elemental(ID,VAR="GLOBAL_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
    call io_variable_elemental(ID,CH0=BZ_FineGd_mode,VAR=' [FineGd] Brillouin Symmetry  mode'&
 &                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
-   call def_variable_elemental(ID,VAR="BZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+   call def_variable_elemental(ID,VAR="BZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
    call io_variable_elemental(ID,CH0=Xk%FGbz%FG_mode,VAR=' [FineGd] Fine Grid  BZ mapped mode'&
 &                             ,DESCRIPTOR=FineGd_desc)
-   call def_variable_elemental(ID,VAR="IBZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+   call def_variable_elemental(ID,VAR="IBZ_SYMM_MODE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
    call io_variable_elemental(ID,CH0=Xk%FGibz%FG_mode,VAR=' [FineGd] Fine Grid IBZ mapped mode'&
 &                             ,DESCRIPTOR=FineGd_desc)
    !
-   call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
+   call def_variable_elemental(ID,VAR="PARS",VAR_SZ=5,VAR_KIND=IP_YIO,MENU=0) 
    call io_variable_elemental(ID,I0=E%FG%nb,VAR=' [FineGd] Bands',DESCRIPTOR=FineGd_desc)
    call io_variable_elemental(ID,I0=E%FG%nk,VAR=' [FineGd] Number of pts (Energy grid)'&
 &                             ,DESCRIPTOR=FineGd_desc)
@@ -103,11 +103,11 @@ integer function io_Double_Grid(E,Xk,ID,what)
    call io_variable_elemental(ID,I0=Xk%FGbz%N,VAR=' [FineGd] Number of pts (fine+coarse, BZ-map)'&
 &                             ,DESCRIPTOR=FineGd_desc)
    !
-   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=0,MENU=1) 
+   call def_variable_elemental(ID,VAR="",VAR_SZ=0,VAR_KIND=CR_YIO,MENU=1) 
    !
 #if defined _ELPH
    if(l_PH_DG) then
-     call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=0,MENU=0) 
+     call def_variable_elemental(ID,VAR="EKplusQmode",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0) 
      call io_variable_elemental(ID,CH0=EkplusQ_mode,VAR='[Ekpq_mode] E(k+q) energy mode'&
 &                             ,CHECK=.TRUE.,OP=(/"=="/),DESCRIPTOR=FineGd_desc)
    endif
@@ -180,15 +180,15 @@ integer function io_Double_Grid(E,Xk,ID,what)
      VAR_NAME=kind//"_"//what
      !
      if (what=="N_MAPPED") then
-       call def_variable_bulk(ID, trim(VAR_NAME),2, VAR_SZ=shape(FG%N_mapped),VAR_KIND=IP+100,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),2, VAR_SZ=shape(FG%N_mapped),VAR_KIND=IP_YIO,silent=.TRUE. )
        call io_variable_bulk(ID,2, I1=FG%N_mapped )
      endif
      if (what=="K_RANGE") then
-       call def_variable_bulk(ID, trim(VAR_NAME),3, VAR_SZ=shape(FG%k_range),VAR_KIND=IP+100,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),3, VAR_SZ=shape(FG%k_range),VAR_KIND=IP_YIO,silent=.TRUE. )
        call io_variable_bulk(ID,3, I2=FG%k_range )
      endif
      if (what=="K_MAP") then
-       call def_variable_bulk(ID, trim(VAR_NAME),4, VAR_SZ=shape(FG%k_map),VAR_KIND=IP+100,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),4, VAR_SZ=shape(FG%k_map),VAR_KIND=IP_YIO,silent=.TRUE. )
        call io_variable_bulk(ID,4, I1=FG%k_map )
      endif
      if (what=="WEIGHTS") then
@@ -200,7 +200,7 @@ integer function io_Double_Grid(E,Xk,ID,what)
        call io_variable_bulk(ID,6, R2=FG%pt )
      endif
      if (what=="E_MAP") then
-       call def_variable_bulk(ID, trim(VAR_NAME),7, VAR_SZ=shape(FG%E_map),VAR_KIND=IP+100,silent=.TRUE. )
+       call def_variable_bulk(ID, trim(VAR_NAME),7, VAR_SZ=shape(FG%E_map),VAR_KIND=IP_YIO,silent=.TRUE. )
        call io_variable_bulk(ID,7, I1=FG%E_map )
      endif
    end subroutine

@@ -166,3 +166,19 @@ EOF
 # Makefile (III): copy makefile
 cp config/mk/local/makefile $cdir/Makefile
 #
+# Restore the name of all files scheduled to be moved in directories not touched by the compilation procedure
+if [ "$mode" == "x" ] ; then
+ files_to_restore=`find $compdir -type f -name "*_to_save"`
+ for file in $files_to_restore
+ do
+   source ./sbin/compilation/verbosity.sh "helper.sh: mv $file -> ${file/_to_save/}"
+   mv $file ${file/_to_save/}
+ done
+ files_to_remove=`find $compdir -type l -name "*_to_save"`
+ for file in $files_to_remove
+ do
+   source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"
+   rm -f $file
+ done
+fi
+

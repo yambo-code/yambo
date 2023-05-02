@@ -58,8 +58,8 @@ if [ -f "$file_o_src" ]  ; then
   fi
   #
   if [ "$2" == "locks" ] && [[  ! "$file_o_path" == *"${dir/\./}" ]]; then
-   source ./sbin/compilation/verbosity.sh "object_remove.sh: $file_o_src -> ${file_o_src}_to_remove"
-   mv $file_o_src ${file_o_src}_to_remove
+   source ./sbin/compilation/verbosity.sh "object_remove.sh: $file_o_src -> ${file_o_src}_to_save"
+   mv $file_o_src ${file_o_src}_to_save
   fi
   #
   # In sources mode remove all corresponding saved objects
@@ -113,8 +113,8 @@ if [[ -f "$file_src" ]]  ; then
       fi
       #
       if [ "$2" == "locks" ] && [[  ! "$file_o_path" == *"${dir/\./}" ]]; then
-       source ./sbin/compilation/verbosity.sh "object_remove.sh: $file_o_path/$modname.mod -> $file_o_path/$modname.mod_to_remove"
-       mv $file_o_path/$modname.mod $file_o_path/$modname.mod_to_remove
+       source ./sbin/compilation/verbosity.sh "object_remove.sh: $file_o_path/$modname.mod -> $file_o_path/$modname.mod_to_save"
+       mv $file_o_path/$modname.mod $file_o_path/$modname.mod_to_save
       fi
       #
       # In sources mode remove all corresponding saved modules

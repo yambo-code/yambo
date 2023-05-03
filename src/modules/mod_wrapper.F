@@ -127,6 +127,8 @@ module wrapper
  !
  contains
    !
+#if !defined _GPU
+   !
    ! DS: 2023/05/03
    ! Workaround to fix final linking, otherwise it fails.
    ! The fails happens because lapack functions/subroutines are called
@@ -165,6 +167,8 @@ module wrapper
      call CGEMM("n","n",1,1,1,c_val,c_mat,1,c_mat,1,c_val,c_mat,1)
      return
    end function fix_compilation
+#endif
+   !
 #endif
    !
    !===================

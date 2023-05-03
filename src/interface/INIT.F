@@ -296,7 +296,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  !
  call PP_wait()
  !
- if (infile_editing) INIT = fix_compilation
+ if (infile_editing) INIT = fix_compilation()
  !
  contains
    !

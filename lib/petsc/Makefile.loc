@@ -42,6 +42,7 @@ configure: uncompress
 	 cd $(PACKAGE);  \
 	 unset PETSC_DIR; \
 	 unset PETSC_ARCH; \
+	 echo "python3 ./configure $(CONFFLAGS)" >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 python3 ./configure $(CONFFLAGS) >> ${compdir}/log/config_$(PACKAGE).log 2>&1; \
 	 touch ../configured.stamp; \
 	fi

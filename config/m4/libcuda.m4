@@ -50,6 +50,10 @@ internal_libcuda="no"
 compile_libcuda="no"
 use_libcuda="no"
 
+dnl Backup LIBS and FCFLAGS
+acx_libcuda_save_LIBS="$LIBS"
+acx_libcuda_save_FCFLAGS="$FCFLAGS"
+
 # Cuda libraries are needed only in one of the three following cases
 
 if test x"$enable_cuda_fortran" != "xno" || test x"$enable_openacc" != "xno" ; then
@@ -71,9 +75,6 @@ fi
 if test -d "$with_cuda_includedir"; then libcuda_incdir="$with_cuda_includedir" ; fi
 if test -d "$with_cuda_libdir";     then libcuda_libdir="$with_cuda_libdir"     ; fi
 
-dnl Backup LIBS and FCFLAGS
-acx_libcuda_save_LIBS="$LIBS"
-acx_libcuda_save_FCFLAGS="$FCFLAGS"
 
 #Test to be finalized, for now it is always going to succeed
 dnl The tests
@@ -176,6 +177,8 @@ else
 fi
 fi
 
+FCFLAGS="$acx_libcuda_save_FCFLAGS"
+LIBS="$acx_libcuda_save_LIBS"
 
 AC_SUBST(LIBCUDA_LIBS)
 AC_SUBST(LIBCUDA_INCS)
@@ -183,8 +186,5 @@ AC_SUBST(LIBCUDA_PATH)
 AC_SUBST(use_libcuda)
 AC_SUBST(compile_libcuda)
 AC_SUBST(internal_libcuda)
-
-FCFLAGS="$acx_libcuda_save_FCFLAGS"
-LIBS="$acx_libcuda_save_LIBS"
 
 ])

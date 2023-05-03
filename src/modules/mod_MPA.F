@@ -49,7 +49,7 @@ module mpa_m
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
  !
-#include <memory.h>
+#include <y_memory.h>
 
  complex(SP), allocatable :: MPA_E_mat(:,:,:)
  complex(SP), allocatable :: MPA_R_mat(:,:,:)

@@ -38,7 +38,7 @@ integer function io_MPA(X,Xw,ID)
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(X_t)   :: X
  type(w_samp):: Xw

@@ -60,7 +60,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
  !
-#include<memory.h>
+#include<y_memory.h>
  !
  type(levels)        ::E
  type(bz_samp)       ::Xk,k,q

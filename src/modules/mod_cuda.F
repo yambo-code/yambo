@@ -86,6 +86,19 @@ module cuda_m_y
   integer(stream_kind) :: stream_d
 
   !
+  ! async
+  !
+#ifdef _CUDAF
+  integer, parameter :: async_kind=Cuda_Stream_Kind
+#else
+  integer, parameter :: async_kind=c_int
+#endif
+  integer(async_kind) :: async_default
+  integer(async_kind) :: async_h2d
+  integer(async_kind) :: async_d2h
+  integer(async_kind) :: async_d
+
+  !
   ! public
   !
   public :: have_cuda
@@ -106,6 +119,12 @@ module cuda_m_y
   public :: stream_h2d
   public :: stream_d2h
   public :: stream_d
+  !
+  public :: async_kind
+  public :: async_default
+  public :: async_h2d
+  public :: async_d2h
+  public :: async_d
   !
 #if defined _GPU
   public :: cudaGetDevice
@@ -155,14 +174,23 @@ contains
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
+    async_default =stream_defualt
+    async_h2d     =stream_h2d
+    async_d2h     =stream_d2h
+    async_d       =stream_d
 #elif defined _OPENACC
     ! 2022-02-02 DS and AF TO BE FIXED
     !stream_default=acc_async_noval
     stream_default=acc_get_cuda_stream(acc_async_sync)
+    async_default=acc_get_cuda_stream(acc_async_sync)
     !call dev_stream_create(stream_default,default_stream=.true.)
     stream_h2d=1001
     stream_d2h=1002
     stream_d=10
+    !
+    async_h2d=1001
+    async_d2h=1002
+    async_d=10
     !
 #endif
     !

@@ -268,8 +268,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
           enddo
         enddo
         !
-        call devxlib_async_synchronize(stream_default)
-        call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), stream_d2h)
+        call devxlib_async_synchronize(async_default)
+        call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), async_d2h)
         !
      else
         !
@@ -289,7 +289,7 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    !
  enddo
  !
- call devxlib_async_synchronize(stream_d2h)
+ call devxlib_async_synchronize(async_d2h)
  !
  if (PAR_n_freqs>0) call live_timing()
  !

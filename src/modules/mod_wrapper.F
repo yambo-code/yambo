@@ -127,6 +127,46 @@ module wrapper
  !
  contains
    !
+   ! DS: 2023/05/03
+   ! Workaround to fix final linking, otherwise it fails.
+   ! The fails happens because lapack functions/subroutines are called
+   ! by devxlib but not linked from the compiler if not present in
+   ! the yambo sources. Probably the devxlib should depend on the
+   ! lapack (similarly to the petsc) (?)
+   !
+#if !defined _DOUBLE
+   integer function fix_compilation()
+     implicit none
+     real(SP)   ::r_var(1),r_val
+     complex(SP)::c_var(1),c_val
+     real(SP)   ::ddot
+     complex(SP)::zdotu,zdotc
+     r_val=DDOT(1,r_var,1,r_var,1)
+     c_val=ZDOTU(1,c_var,1,c_var,1)
+     c_val=ZDOTC(1,c_var,1,c_var,1)
+     call DAXPY(1,r_val,r_var,1,r_var,1)
+     call ZAXPY(1,c_val,c_var,1,c_var,1)
+     return
+   end function fix_compilation
+#else
+   integer function fix_compilation()
+     implicit none
+     real(selected_real_kind(6,30))   ::r_mat(1,1),r_var(1),r_val
+     complex(selected_real_kind(6,30))::c_mat(1,1),c_var(1),c_val
+     real(selected_real_kind(6,30))   ::sdot
+     complex(selected_real_kind(6,30))::cdotu,cdotc
+     r_val=SDOT(1,r_var,1,r_var,1)
+     c_val=CDOTU(1,c_var,1,c_var,1)
+     c_val=CDOTC(1,c_var,1,c_var,1)
+     call SAXPY(1,r_val,r_var,1,r_var,1)
+     call CAXPY(1,c_val,c_var,1,c_var,1)
+     call SGEMV("n",1,1,r_val,r_mat,1,r_var,1,r_val,r_var,1)
+     call CGEMV("n",1,1,c_val,c_mat,1,c_var,1,c_val,c_var,1)
+     call CGEMM("n","n",1,1,1,c_val,c_mat,1,c_mat,1,c_val,c_mat,1)
+     return
+   end function fix_compilation
+#endif
+   !
    !===================
    ! interface M_by_M 
    !===================

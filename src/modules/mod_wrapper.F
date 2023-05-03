@@ -137,8 +137,8 @@ module wrapper
 #if !defined _DOUBLE
    integer function fix_compilation()
      implicit none
-     real(SP)   ::r_var(1),r_val
-     complex(SP)::c_var(1),c_val
+     real(SP)   ::r_mat(1,1),r_var(1),r_val
+     complex(SP)::c_mat(1,1),c_var(1),c_val
      real(SP)   ::ddot
      complex(SP)::zdotu,zdotc
      r_val=DDOT(1,r_var,1,r_var,1)

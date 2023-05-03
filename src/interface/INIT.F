@@ -57,6 +57,7 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  use BS,             ONLY:BS_bands,BS_n_g_W,BS_eh_en,BSE_mode,BSK_mode,BS_K_coupling,BS_res_K_corr,BS_res_K_exchange,&
 &                         BS_W_is_diagonal,BS_cpl_K_corr,BS_cpl_K_exchange
  use BS_solvers,     ONLY:BSS_mode,BSS_q0
+ use wrapper,        ONLY:fix_compilation
 #if defined  _PHEL
  use PHEL,           ONLY:PH_Q
  use ELPH,           ONLY:PH_W_debye
@@ -294,6 +295,8 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
  ! Finalize
  !
  call PP_wait()
+ !
+ if (infile_editing) INIT = fix_compilation
  !
  contains
    !

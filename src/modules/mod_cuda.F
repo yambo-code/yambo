@@ -174,7 +174,7 @@ contains
     ierr = CudaStreamCreateWithFlags(stream_h2d,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d2h,cudaStreamNonBlocking)
     ierr = CudaStreamCreateWithFlags(stream_d,  cudaStreamNonBlocking)
-    async_default =stream_defualt
+    async_default =stream_default
     async_h2d     =stream_h2d
     async_d2h     =stream_d2h
     async_d       =stream_d

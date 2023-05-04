@@ -21,9 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
+!> @brief Construct time-dependent valence bands V(i_G,i_v,i_k,i_spin)
+!     
 subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band) 
- !
- ! Construct time-dependent valence bands
  !
  use pars,        ONLY:SP,cZERO
  use electrons,   ONLY:levels,n_sp_pol,n_spinor

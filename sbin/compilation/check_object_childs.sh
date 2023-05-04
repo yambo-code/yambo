@@ -26,26 +26,31 @@
 # - tags the library to be compiled
 # - remove the object file
 #
-#
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
-file=$obj
+source ./sbin/compilation/verbosity.sh "check_object_childs.sh on $file_src: calling object_remove.sh remove $1"
 source ./sbin/compilation/object_remove.sh "remove" $1
 #
+if [ -z $file_o ] ; then return; fi
+#
 # Check for OBJ childs (non zero only if OBJ is a module)...
 #
-first_level_dep=
-if grep -q "$obj" $compdir/config/stamps_and_lists/global_modules_dep.list; then
+file_o_base=`basename $file_o`
+#
+first_level_dep=""
+if grep -q "$file_o_base" $compdir/config/stamps_and_lists/global_modules_dep.list; then
  #
- deps=`grep -w $obj $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
+ deps=`grep -w $file_o_base $compdir/config/stamps_and_lists/global_modules_dep.list | awk '{print $1}'`
  for dep in $deps
  do
-  if test "$dep" == "$obj"; then continue; fi
+  if test "$dep" == "$file_o_base"; then continue; fi
   first_level_dep+=" $dep"
  done
  #
- for file in $first_level_dep
+ for first_dep_file in $first_level_dep
  do
-  source ./sbin/compilation/object_remove.sh "remove_child" $1
+  source ./sbin/compilation/name_me.sh $first_dep_file "search"
+  source ./sbin/compilation/verbosity.sh "check_object_childs.sh: on $file_o_src (child). calling object_remove.sh remove $1"
+  source ./sbin/compilation/object_remove.sh "remove" $1
  done
 fi

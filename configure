@@ -3296,7 +3296,7 @@ if test "$exec_prefix" = "NONE" ; then exec_prefix="$prefix" ; fi
 # YAMBO SPECIFIC
 #
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS AM
@@ -3357,7 +3357,7 @@ if [ "$compdir" != "$srcdir" ] && [ "$srcdir" != "." ] ; then
 fi
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -4653,7 +4653,7 @@ fi
 fi
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4691,7 +4691,7 @@ fi
 #
 # Copyright (C) 2002 M. Marques, A. Castro, A. Rubio, G. Bertsch
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4747,7 +4747,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4772,7 +4772,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4856,7 +4856,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4881,7 +4881,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4906,7 +4906,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -4938,7 +4938,7 @@ fi
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -4962,7 +4962,7 @@ fi
 #
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -4987,7 +4987,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -5012,7 +5012,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -5037,7 +5037,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -5065,7 +5065,7 @@ fi
 #  Report
 #
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -5090,7 +5090,7 @@ fi
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -9365,7 +9365,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 #  Scripts
 #
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -9396,7 +9396,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Original version Available from the GNU Autoconf Macro Archive at:
 # http://autoconf-archive.cryp.to/macros-by-category.html
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, DS
@@ -10471,7 +10471,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS
@@ -10498,7 +10498,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 #
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS, CA
@@ -10544,7 +10544,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF
@@ -10569,7 +10569,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -10594,7 +10594,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -10619,7 +10619,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -10644,7 +10644,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -10670,7 +10670,7 @@ url_ydb=https://github.com/yambo-code/ydb.git
 
 
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -17847,7 +17847,7 @@ fi
 # Folders
 #
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS AM

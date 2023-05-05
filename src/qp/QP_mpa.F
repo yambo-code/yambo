@@ -111,6 +111,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Reset & checks
  !
  call timing('GW(mpa)',OPR='start')
+ call timing('GW(mpa)_init',OPR='start')
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
@@ -255,6 +256,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  call PP_wait()
  !
+ call timing('GW(mpa)_init',OPR='stop')
+ !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
    if (.not.PAR_IND_Q_ibz%element_1D(q%sstar(iqbz,1))) cycle
@@ -289,6 +292,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      endif
      !
      ! Poles and Residues
+     !
+     call timing('GW(mpa)_poles',OPR='start')
      !
      MPred_rate=0._SP
      PPcond_Qrate=0._SP
@@ -338,6 +343,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      MP_Qerr=MP_Qerr/X%ng**2
      cond_numQ(:)=cond_numQ(:)/X%ng**2
      !
+     call timing('GW(mpa)_poles',OPR='stop')                                                                                                  
+     call timing('GW(mpa)_poles_io',OPR='start')
+     !
      ! I/O MPA
      !
      if (io_MULTIPOLE) then
@@ -357,6 +365,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        if(Xw%mpa_solver=='LA') call msg('r',' :: Condition numbers    ',cond_numQ)
        !
      endif
+     !
+     call timing('GW(mpa)_poles_io',OPR='stop')
      !
    endif
    !
@@ -388,6 +398,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
    MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
+   !
+   call timing('GW(mpa)_qp_loop',OPR='start')
    !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
@@ -516,6 +528,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      enddo ! loop on scattering states
      !
    enddo QP_loop
+   !
+   call timing('GW(mpa)_qp_loop',OPR='stop') 
    !
  enddo Q_loop 
  !

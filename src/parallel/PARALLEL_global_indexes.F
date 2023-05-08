@@ -25,10 +25,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  !
  ! LOGICALS
  use parallel_m,    ONLY:l_par_X_T,l_par_RT,l_par_SE,l_par_X_G,l_par_X_G_finite_q,&
-&                        l_par_DIP,l_par_BZINDX,l_par_NL
-#if defined _QED
- use parallel_m,    ONLY:l_par_SC
-#endif
+&                        l_par_DIP,l_par_BZINDX,l_par_NL,l_par_SC
  ! COMMUNICATORS
  use parallel_m,    ONLY:PAR_COM_CON_INDEX_X,PAR_COM_VAL_INDEX_X
  ! IND
@@ -42,9 +39,6 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  use parallel_int,  ONLY:PARALLEL_index,PARALLEL_live_message
  use DIPOLES,       ONLY:DIPOLE_t
  use X_m,           ONLY:X_t,l_X_terminator
-#if defined _QED
- use parallel_m,    ONLY:l_par_SC
-#endif
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
  use pars,          ONLY:SP
@@ -102,9 +96,7 @@ subroutine PARALLEL_global_indexes(E,Xk,q,ENVIRONMENT,X,Dip,RESET,Dip_limits_pre
  l_par_SE           =ENVIRONMENT=="Self_Energy"
  l_par_RT           =ENVIRONMENT=="Real_Time"
  l_par_NL           =ENVIRONMENT=="Non_Linear"
-#if defined _QED
  l_par_SC           =ENVIRONMENT=="Self_Energy"
-#endif
  !
  !==================================
  ! USER provided PARALLEL structure

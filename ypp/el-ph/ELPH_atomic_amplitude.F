@@ -34,7 +34,8 @@ subroutine ELPH_atomic_amplitude(q)
  use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL
  use stderr,              ONLY:intc
  use functions,           ONLY:bose_f
- use interfaces,          ONLY:LINEAR_ALGEBRA_driver,ELPH_alloc
+ use interfaces,          ONLY:LINEAR_ALGEBRA_driver
+ use ELPH_intfcs,         ONLY:ELPH_alloc
  use linear_algebra,      ONLY:DIAGO,USE_LK
  use stderr,              ONLY:intc
  !

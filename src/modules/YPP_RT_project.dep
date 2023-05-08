@@ -1,2 +1,4 @@
  SET_defaults.o
+ mod_ELPH.o
+ mod_PHEL.o
 

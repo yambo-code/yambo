@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _NL
 integer function io_NL(what,ID)
  !
  use pars,          ONLY:schlen
@@ -177,4 +176,3 @@ integer function io_NL(what,ID)
 #endif
  !
 end function
-#endif

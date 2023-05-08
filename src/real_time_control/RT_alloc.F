@@ -25,7 +25,9 @@ subroutine RT_alloc(en,what)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PAR_G_k_range
+#if defined _PHEL
  use ELPH,           ONLY:elph_branches
+#endif
  use drivers,        ONLY:l_use_Hxc_collisions
  use hamiltonian,    ONLY:H_alloc,H_QP_table_setup
  use FFT_m,          ONLY:fft_size
@@ -58,7 +60,9 @@ subroutine RT_alloc(en,what)
  !
  if (RT_is_dynamically_dephased) then
    call RT_EL_lifetimes_alloc(RT_bands,RT_nk)
+#if defined _PHEL
    call RT_PH_lifetimes_alloc(elph_branches,nqibz)
+#endif
  endif
  !
  nk=PAR_G_k_range
@@ -73,7 +77,9 @@ subroutine RT_alloc(en,what)
  !
  if( l_all .or. l_carriers) then
    call RT_EL_occupations_alloc(RT_bands,RT_nk)
+#if defined _PHEL
    call RT_PH_occupations_alloc(elph_branches,nqibz)
+#endif
  endif
  !
  if (l_all) then

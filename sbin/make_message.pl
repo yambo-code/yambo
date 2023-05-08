@@ -92,13 +92,13 @@ print "RENAMED files: $rinamefiles\n\n";
 #
 # Versions
 #
-open(VER,"<","include/driver/version.h");
+open(VER,"<","include/version/version.m4");
 while($line = <VER>) {
   chomp $line;
-  my @VERS = split / /, $line;
-  if ( $line =~ /YAMBO_VERSION/ ) {$SV = $VERS[2]};
-  if ( $line =~ /YAMBO_SUBVERSION/ ) {$SS = $VERS[2]};
-  if ( $line =~ /YAMBO_PATCHLEVEL/ ) {$SP = $VERS[2]};
+  my @VERS = split /"/, $line;
+  if ( $line =~ /SVERSION=/ ) {$SV = $VERS[1];};
+  if ( $line =~ /SSUBVERSION=/ ) {$SS = $VERS[1]};
+  if ( $line =~ /SPATCHLEVEL=/ ) {$SP = $VERS[1]};
 }
 close(VER);
 $Revision=`git rev-list  --count HEAD`;

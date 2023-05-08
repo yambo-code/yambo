@@ -32,7 +32,7 @@ subroutine ELPH_general_gFsq(k,en,Xk,Xen,q,BS_E_degs)
  use YPPm,                ONLY:EXCITONS_user_indexes,EXCITONS_n_user_states
  use YPP_ELPH,            ONLY:elph_steps,ph_broad
  use stderr,              ONLY:intc
- use interfaces,          ONLY:ELPH_alloc
+ use ELPH_intfcs,         ONLY:ELPH_alloc
  use ELPH,                ONLY:PH_W_debye,elph_nQ_used,ph_modes,&
 &                              gsqF_fan,gsqF_dw ,gsqF_ca_corr ,gsqF_life_bose ,&
 &                              gsqF_life_f ,elph_use_q_grid,PH_freqs_sq

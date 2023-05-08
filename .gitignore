@@ -34,15 +34,16 @@ lib/archive/git.list
 *.save
 *.f90
 *.s
-*.sw*
+*.swp*
 *dSYM
 *bk
 
 # source #
 ##########
-lib/archive/yambo-libraries-1.0/
-lib/yambo/driver/yambo/include/editor.h
-lib/yambo/driver/yambo/include/version.h
+lib/archive/Ydriver
+lib/yambo/Ydriver/yambo/include/editor.h
+lib/yambo/Ydriver/yambo/include/version.h
+include/version/version.h
 include/driver/editor.h
 include/branch.inc
 src/tools/.objects

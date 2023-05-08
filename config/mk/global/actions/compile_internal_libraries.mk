@@ -6,4 +6,3 @@ math77:
 	@+LIBS="math77";    BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)
 local: 
 	@+LIBS="local" ;    BASE="lib" ; ADF="$(STAMP_DBLE)"; LAB=""; $(todo_lib); $(mk_lib)
-

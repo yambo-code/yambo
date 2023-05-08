@@ -127,6 +127,7 @@ AC_SUBST(PW_CPP)
 AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
 AC_SUBST(internal_iotk)
+#
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 #

@@ -227,7 +227,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA workspace
  !
- if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
+ call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ ! AF: the following line needs to be moved elsewhere
  call parser('mpERdb',io_MULTIPOLE)
  !
  call PP_wait()
@@ -343,7 +344,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      MP_Qerr=MP_Qerr/X%ng**2
      cond_numQ(:)=cond_numQ(:)/X%ng**2
      !
-     call timing('GW(mpa)_poles',OPR='stop')                                                                                                  
+     call timing('GW(mpa)_poles',OPR='stop')
      call timing('GW(mpa)_poles_io',OPR='start')
      !
      ! I/O MPA

@@ -41,8 +41,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
- use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,          ONLY:fftw_plan,cufft_plan
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:WF_apply_symm
  !
  implicit none
@@ -55,7 +54,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  complex(SP), pointer DEV_ATTR :: rhotw_p(:)
  complex(DP), pointer DEV_ATTR :: rho_tw_rs_p(:)
  logical :: have_cuda_loc
-
  !
  ! define pointers to enable CUF kernels
  ! when compiling using CUDA-Fortran
@@ -69,14 +67,12 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
 #ifdef _CUDA_LOC
  have_cuda_loc=.true.
 #endif
-
  !
  ! |ib ik_is i_sp>
  call WF_apply_symm(isc%is,WF_symm_i_p)
  !
  ! | ob ok_os o_sp>   
  call WF_apply_symm(isc%os,WF_symm_o_p)
-
  !
  ! \tilde{\rho} in Real Space
  !
@@ -127,8 +123,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
 #endif
  !
 #endif
-
-
  !
  ! perform the actual FFT
  !
@@ -230,4 +224,3 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (isc%qs(2)==1 .and. isc%is(1)/=isc%os(1)) rhotw_p(1)=cZERO
 
 end subroutine DEV_SUB(scatter_Bamp)
-

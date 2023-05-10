@@ -40,6 +40,7 @@ module R_lattice
  logical           :: Xk_grid_is_uniform
  logical           :: Xk_grid_new_mapping
  character(schlen) :: k_GRIDS_string="X S B C"
+ integer           :: k_GRIDS_vector(4)=(/1,1,1,1/)
  !
  ! Q/K-sampling
  !
@@ -125,20 +126,23 @@ module R_lattice
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
  integer  :: qindx_B_max
+ integer  :: qindx_S_max_Go
  !
  ! SYMs
  !
- real(SP),allocatable :: rl_sop(:,:,:)
+ real(SP),allocatable :: rl_sop(:,:,:)  ! Symmetry matrices in reciprocal space
  !
  ! RL lattice
  !
- integer              :: n_g_shells,ng_vec,ng_closed
- integer ,allocatable :: ng_in_shell(:)
+ integer              :: n_g_shells     ! Number of G-shells
+ integer              :: ng_vec         ! Number of G-vectors
+ integer              :: ng_closed      ! Number of G closed
+ integer ,allocatable :: ng_in_shell(:) ! Number of G in each shell
  integer ,allocatable :: g_rot(:,:)
  integer ,allocatable :: G_m_G(:,:)
  integer ,allocatable :: minus_G(:)
  real(SP),allocatable :: g_vec(:,:)
- real(SP),allocatable :: E_of_shell(:)
+ real(SP),allocatable :: E_of_shell(:)  ! Energy associated at each shell
  ! GPUs
  real(SP),allocatable DEV_ATTR :: g_vec_d(:,:)
  integer ,allocatable DEV_ATTR :: g_rot_d(:,:)
@@ -166,9 +170,8 @@ module R_lattice
  complex(SP),allocatable          :: RIM_W  (:,:,:,:)
  complex(SP),allocatable DEV_ATTR :: RIM_W_d(:,:,:,:)
  complex(DP),allocatable :: f_coeff(:,:,:,:,:)
+ character(schlen)       :: rimw_type
  logical :: RIM_W_for_graph
- !complex(SP),   allocatable :: Xo_graph_wings(:)
- !real(SP):: v_fermi
  !
  ! Coulomb (including Cutoff)
  !

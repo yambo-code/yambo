@@ -5,7 +5,7 @@ define clean_driver
  if [ "$(1)" = "archive"   ] ||                  [ "$(1)" = "all" ] ; then $(clean_archive); fi ;\
  if [ "$(1)" = "bin"       ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_bins); fi;\
  if [ "$(1)" = "int-libs"  ] ||                  [ "$(1)" = "all" ] ; then \
-   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_dir_driver); \
+   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_dir_driver); \
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_lib_driver); \
    WDIR="$(libdir)";TARG="$(INT_LIBS)";$(clean_mod_driver); \
  fi;\
@@ -18,13 +18,14 @@ define clean_driver
    EXTS="Makefile .stamp";WDIR="$(libdir)";TARG="$(EXT_LIBS)";$(clean_dir_driver); \
  fi; \
  if [ "$(1)" = "stamps"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then $(clean_stamps); fi; \
+ if [ "$(1)" = "projects-stamp" ] ; then $(clean_projects_stamp); fi; \
  if [ "$(1)" = "driver"    ] || [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
-  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
+  EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";TARG="driver";$(clean_dir_driver);\
  fi
  if [ "$(1)" = "Ydriver"   ] ||                  [ "$(1)" = "all" ] ; then \
-   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
+   EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(libdir)/yambo/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_dir_driver);\
    WDIR="$(libdir)";TARG="Ydriver";$(clean_lib_driver);\
-   WDIR="$(libdir)/yambo/driver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
+   WDIR="$(libdir)/Ydriver/src";TARG="$(YLIBDRIVER)";$(clean_mod_driver);\
  fi;\
  if                             [ -z "$(1)" ] || [ "$(1)" = "all" ] ; then \
    $(clean_libs_using_stamps_driver); \
@@ -45,7 +46,7 @@ endef
 define clean_src_driver
  if [ "$(1)" = "src" ] || [ "$(1)" = "ypp" ] || [ "$(1)" = "interfaces" ] ; then \
   if  test -f config/stamps_and_lists/active_directories.list; then \
-   TARG="";MSG="$(1)";EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source";WDIR="$(compdir)";\
+   TARG="";MSG="$(1)";EXTS="\.f90 \.o \.lock \.mk \.mod \.save \.tmp_source to_save";WDIR="$(compdir)";\
    for FOLD in `cat config/stamps_and_lists/active_directories.list|grep $(1)`;do TARG="$$TARG $$FOLD";done;\
    $(clean_dir_driver);$(clean_lib_driver);$(clean_mod_driver); \
   fi;\
@@ -126,10 +127,12 @@ define clean_config
  rm -fr $(prefix)/*.log;\
  rm -fr $(prefix)/*.status;\
  rm -fr $(prefix)/autom4te.cache;\
+ rm -fr $(prefix)/include/version/version.h;\
  rm -fr $(prefix)/config/mk/local/static_variables.mk;\
  rm -fr $(prefix)/lib/archive/Makefile;\
  rm -fr $(prefix)/src/tools/.objects;\
  rm -fr $(prefix)/src/wf_and_fft/sgfft.F;\
+ rm -fr $(prefix)/lib/archive/git.list;\
  rm -fr $(prefix)/sbin/compilation/helper.inc.sh
 endef
 define clean_bins
@@ -155,24 +158,35 @@ define clean_stamps
  rm -fr $(prefix)/config/stamps_and_lists/yambo*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/ypp*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/compiling*.stamp; \
+ rm -fr $(prefix)/config/stamps_and_lists/mods*.stamp; \
  rm -fr $(prefix)/config/stamps_and_lists/*.lock;\
  rm -fr $(prefix)/include/*.save
 endef
+define clean_projects_stamp
+ $(ECHO) "\t[CLEANING] Project stamps" ; \
+ rm -fr $(prefix)/config/stamps_and_lists/project_dependencies.stamp
+endef
 define clean_dependencies
  $(ECHO) "\t[CLEANING] Dependencies" ; \
- find . \( -name '*.dep' -o -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
-           -o -name 'global_modules_dep.list' \) | xargs rm -f ;\
+ find . \( -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
+           -o -name 'global_modules_dep.list' -o -name 'local_modules.dep' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
+endef
+define clean_project_dependencies_stamp
+ if [ "$(1)" = "update"  ]; then $(ECHO) "\t[CLEANING] Project dependencies stamp" ; \
+ rm -f $(prefix)/config/stamps_and_lists/dependencies.stamp; \
+ rm -f $(prefix)/config/stamps_and_lists/project_dependencies.stamp; \
+ fi
 endef
 define clean_log_and_Ydriver_folder
  $(ECHO) "\t[CLEANING] folders and log" ; \
  rm -fr $(srcdir)/lib/yambo;\
+ rm -fr $(prefix)/lib/yambo;\
  rm -fr $(prefix)/log 
 endef
 define clean_archive
  $(ECHO) "\t[CLEANING] Libraries archive" ; \
  CWD=`pwd`;\
- cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD;\
- find lib/archive/* -type d  |xargs rm -fr
+ cd lib/archive;  $(MAKE) -s -f Makefile.loc  clean; cd $$CWD
 endef
 

@@ -8,7 +8,7 @@ acx_lapack_ok=no
 
 LAPACK_LIBS=""
 AC_ARG_WITH(lapack_libs,
-        [AC_HELP_STRING([--with-lapack-libs=<libs>], [Use LAPACK libraries <libs>],[32])])
+        [AS_HELP_STRING([--with-lapack-libs=<libs>],[Use LAPACK libraries <libs>],[32])])
 case $with_lapack_libs in
         yes | "") ;;
         no) acx_lapack_ok=disable ;;
@@ -97,9 +97,38 @@ if test "$internal_lapack" = "yes"; then
   fi
 fi
 
+# Test for shared LAPACK
+LAPACK_PETSC_LIBS=""
+if test "$internal_lapack" = "yes"; then
+  if test -e ${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so || test $compile_lapack = "yes"; then
+    LAPACK_PETSC_LIBS="${extlibs_path}/${FCKIND}/${FC}/lib/liblapack.so";
+  fi
+fi
+#
+if test "$acx_lapack_ok" = "yes" ; then
+  if test -d "${MKLROOT}" || test "${lapack_LIBS}" = "*.so"; then
+    LAPACK_PETSC_LIBS=${LAPACK_LIBS}
+  else
+    LAPACK_PETSC_LIBS=`echo "$LAPACK_LIBS" | sed "s/\.a//g" | sed "s/\.so//g" | sed "s/\ \-L//g" | sed "s/\ \-l/lib/g" `
+    LAPACK_PETSC_LIBS="${LAPACK_PETSC_LIBS}.so"
+    #echo "Debug: LAPACK_PETSC_LIBS=$LAPACK_PETSC_LIBS"
+    if ! test -e $LAPACK_PETSC_LIBS ; then LAPACK_PETSC_LIBS="" ; fi
+  fi
+fi
+#
+#
+lapack_shared="0"
+if test "x${LAPACK_PETSC_LIBS}" = "x"; then
+  LAPACK_PETSC_LIBS=${LAPACK_LIBS}
+else
+  if test "x$blas_shared" = "x1" ; then lapack_shared="1" ; fi
+fi
+
 AC_SUBST(internal_lapack)
 AC_SUBST(compile_lapack)
 AC_SUBST(LAPACK_LIBS)
+AC_SUBST(LAPACK_PETSC_LIBS)
+AC_SUBST(lapack_shared)
 
 ])dnl ACX_LAPACK
 

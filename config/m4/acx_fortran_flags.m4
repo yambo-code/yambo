@@ -31,13 +31,13 @@ AC_ARG_VAR(UFLAGS,[Unoptimized Fortran flags])
 #
 if test -z "${CFLAGS}"; then CFLAGS="-O2"; fi
 #
-AC_ARG_ENABLE(debug-flags, AC_HELP_STRING([--enable-debug-flags],
-              [Debug flags are set for compilation. Default is no.]))
+AC_ARG_ENABLE(debug-flags, AS_HELP_STRING([--enable-debug-flags],[Debug flags are set for compilation. Default is no.]))
 if test x"$enable_debug_flags" = "x"; then enable_debug_flags="no"; fi
 #
 HDF5_MODE="production";
 #
 def_compiler=
+SLK_FC_FLAGS=""
 #
 case "${host}" in
 i?86*linux*)
@@ -82,6 +82,7 @@ i?86*linux*)
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
@@ -99,7 +100,7 @@ i?86*linux*)
        ;;
       *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        ;;
       *17* | *18* | *19* )
@@ -153,6 +154,7 @@ i?86*linux*)
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
@@ -211,6 +213,7 @@ ia64*linux* )
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
@@ -283,6 +286,7 @@ ia64*linux* )
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
@@ -314,7 +318,7 @@ ia64*linux* )
        ;;
       *2020* | *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;
@@ -386,6 +390,7 @@ powerpc64*linux* )
   *gfortran*)
     SYSFLAGS="-O3 -g -mtune=native"
     FUFLAGS="-O0 -g -mtune=native"
+    SLK_FC_FLAGS="-fallow-argument-mismatch"
     FCMFLAG=""
     OMPFLAGS="-fopenmp"
     NETCDFFLAGS="-DgFortran"
@@ -450,6 +455,7 @@ AC_MSG_RESULT([$NETCDFFLAGS])
 AC_SUBST(CFLAGS)
 AC_SUBST(FCFLAGS)
 AC_SUBST(FCUFLAGS)
+AC_SUBST(SLK_FC_FLAGS)
 AC_SUBST(FUFLAGS)
 AC_SUBST(FCMFLAG)
 AC_SUBST(OMPFLAGS)

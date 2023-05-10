@@ -100,6 +100,9 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  QPTS_=.false.
  if (present(QPTS)) QPTS_=QPTS
  !
+ KPTS_=.false.
+ if (present(KPTS)) KPTS_=KPTS
+ !
  WF_=.false.
  if (present(WF)) WF_=WF
  !
@@ -243,7 +246,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
  !
  ! K points
  !
- if (present(KPTS)) then
+ if (KPTS_) then
    !
    allocate(l_pt(nkibz_disk,3))
    !

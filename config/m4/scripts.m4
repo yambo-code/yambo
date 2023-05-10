@@ -23,11 +23,11 @@
 #
 AC_DEFUN([ACX_SCRIPTS],[
 #
-AC_ARG_ENABLE(ydb, AC_HELP_STRING([--enable-ydb],[Activate the YDB support]))
+AC_ARG_ENABLE(ydb, AS_HELP_STRING([--enable-ydb],[Activate the YDB support]))
 #
 enable_yambopy="no"
 #
-# AC_ARG_ENABLE(yambopy, AC_HELP_STRING([--enable-yambopy],[Activate the Yambo PY project]))
+# AC_ARG_ENABLE(yambopy, AS_HELP_STRING([--enable-yambopy],[Activate the Yambo PY project]))
 #
 if test "x$enable_ydb" = "xyes"; then
  #

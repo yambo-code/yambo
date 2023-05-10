@@ -28,7 +28,7 @@ subroutine INIT_activate()
  use stderr,         ONLY:intc,STRING_match
  use global_XC,      ONLY:WF_exx_fraction,WF_exx_screening
  use drivers,        ONLY:l_em1s,l_acfdt,l_HF_and_locXC,l_col_cut,l_alda_fxc,l_bs_fxc,l_optics,l_bse,l_bss,&
-&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,&
+&                         l_chi,l_cohsex,l_life,l_rpa_IP,l_td_hf,l_setup,l_sc_run,l_rim,l_rim_w,&
 &                         l_real_time,l_ppa,l_mpa,l_lrc_fxc,l_gw0,l_elel_corr,l_elel_scatt,l_elph_corr,l_td_sex,&
 &                         l_elph_Hamiltonian,l_elph_scatt,l_elphoton_corr,l_elphoton_scatt,l_em1d,l_eval_collisions,&
 &                         l_sc_magnetic,l_sc_electric,l_dipoles,l_pf_fxc,l_nl_optics,l_phel_corr,l_nl_p_and_p,l_X
@@ -150,6 +150,10 @@ subroutine INIT_activate()
  !
  if (l_rim) call initactivate(1,'RandQpts RandGvec QpgFull Em1Anys IDEm1Ref')
  !
+ !RIM_W
+ !
+ if (l_rim_w) call initactivate(1,'RandQpts RandGvecW rimw_type')
+ !
  !Col CUTOFF 
  !
  if (l_col_cut) call initactivate(1,'CUTGeo CUTBox CUTRadius CUTCylLen CUTwsGvec CUTCol_test')
@@ -179,7 +183,7 @@ subroutine INIT_activate()
    if(l_bs_fxc) call initactivate(1,'FxcGRLc FxcSVdig FxcRetarded')
    !
    ! ALDA/LRC Tddft
-   if (l_alda_fxc) call initactivate(1,'FxcGRLc UseNLCC')
+   if (l_alda_fxc) call initactivate(1,'FxcGRLc FxcLibxc FxcCutScheme UseNLCC')
    if (l_lrc_fxc)  call initactivate(1,'LRC_alpha LRC_beta')
    if (l_pf_fxc)   call initactivate(1,'PF_alpha')
    !
@@ -230,7 +234,7 @@ subroutine INIT_activate()
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')
    if(l_alda_fxc) then
-     call initactivate(1,'BSENGfxc')
+     call initactivate(1,'BSENGfxc FxcLibxc FxcCutScheme')
      if( (WF_exx_fraction>0.) .or. (WF_exx_screening>0.) ) call initactivate(1,'BSENGBlk WehDiag WehCpl')
    endif
    !
@@ -371,7 +375,7 @@ subroutine INIT_activate()
        if (trim(QP_solver)=="g") then
          call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
        else
-         call initactivate(1,'GWoIter GWIter SCEtresh')
+         call initactivate(1,'SCEtresh')
          if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
        endif
      else if (l_life) then
@@ -406,7 +410,7 @@ subroutine INIT_activate()
          if (trim(QP_solver)=="g") then
            call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
-           call initactivate(1,'GWoIter GWIter SCEtresh')
+           call initactivate(1,'SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')
          endif
        endif
@@ -477,8 +481,8 @@ subroutine INIT_activate()
    call initactivate(-1,'QpntsRXs')
    !
    if( index(H_potential,"IP")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0)  call initactivate(1,'HARRLvcs ALLGHAR')
-   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC')
+   if( index(H_potential,"HARTREE")>0 .or. index(H_potential,"DEFAULT")>0 )  call initactivate(1,'HARRLvcs ALLGHAR')
+   if( index(H_potential,"GS_XC")>0   .or. index(H_potential,"DEFAULT")>0 ) call initactivate(1,'VXCRLvcs UseNLCC FxcLibxc')
    !
    if (l_eval_collisions) then
      if( STRING_match(trim(H_potential),"SEX").or.&

@@ -207,7 +207,6 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
   !
   function Classical_drude_T(W,Wd,q0_norm)
    !
-   !
    use pars,  ONLY:SP,pi,cI,cZERO
    !
    implicit none

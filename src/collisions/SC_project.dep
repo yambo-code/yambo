@@ -1,0 +1,14 @@
+ COLLISIONS_HXC.o
+ COLLISIONS_NEQ_GW_static.o
+ COLLISIONS_alloc_and_free.o
+ COLLISIONS_basic_operations.o
+ COLLISIONS_compose_sc.o
+ COLLISIONS_eval.o
+ COLLISIONS_linearize_and_IO.o
+ COLLISIONS_load.o
+ COLLISIONS_map_to_QP_table.o
+ PLASMA_build_up.o
+ PLASMA_parallel_setup.o
+ PLASMA_tables_and_dimensions.o
+ SCATTERING_GW_kinematics.o
+

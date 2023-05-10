@@ -40,12 +40,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  use stderr,        ONLY:slash
  use QP_m,          ONLY:QP_cg_percent,QP_G_damp,QP_solver,&
 &                        QP_n_G_bands,QP_ng_Sx,QP_ng_Sc,QP_ng_SH,QP_ng_Vxc,GW_terminator_E,GW_terminator_Kind,&
-&                        QP_G_solver,QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,GWo_iterations,GW_iterations,& !DALV
+&                        QP_G_er,QP_G_ir,QP_G_dr,QP_Sc_steps,QP_G_solver,&
 &                        QP_dSc_delta,QP_G_Zoom_treshold,GF_energy_range_mode
  use LIVE_t,        ONLY:nhash
  use wave_func,     ONLY:wf_ng
  use D_lattice,     ONLY:Tel,non_periodic_directions,molecule_position,Bose_Temp
- use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,&
+ use R_lattice,     ONLY:ng_closed,QP_states_k,nXkibz,k_GRIDS_string,RIM_W_ng,rimw_type,&
 &                        bz_samp,RIM_ng,RIM_epsm1,RIM_id_epsm1_reference,&
 &                        RIM_n_rand_pts,cyl_ph_radius,box_length,cyl_length,cut_geometry,ws_cutoff
  use BS,            ONLY:BSE_mode,BSE_prop,BSK_mode,BS_eh_en,BS_eh_win,BS_q,BS_bands,&
@@ -303,7 +303,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
  call it(defs,'BSENGfxc','[BSK] Fxc components', BS_n_g_fxc,G_unit,verb_level=V_resp)
- call it(defs,'FXCcutScheme', '[TDDFT] ("none","lower_Gmax","lower_GmGp") ',ALDA_cut_scheme,verb_level=V_resp)
+ call it(defs,'FxcCutScheme', '[TDDFT] ("none","lower_Gmax","lower_GmGp","full_grid") ',ALDA_cut_scheme,verb_level=V_resp)
  call it(defs,'BSEEhEny','[BSK] Electron-hole energy range',BS_eh_en,E_unit,verb_level=V_resp)
  call it(defs,'BSKCut',  '[BSK] Cutoff on the BSE Kernel, 0=full 1=none',BS_K_cutoff,verb_level=V_resp)
  call it(defs,'BSKIOmode','[BSK] ("1D_linear"/"2D_standard" + "norestart")',BSK_IO_mode,verb_level=V_resp)
@@ -327,6 +327,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'BSPLInvTrs',  '[BSS PL] Inversion treshold',K_INV_PL%treshold)
  call it(defs,'BEnSteps',  '[BSS] Energy steps',BSS_n_freqs)
  call it(defs,'DrudeWBS',  '[BSE] Drude plasmon',BSS_Wd,E_unit,verb_level=V_resp)
+ call it('f',defs,'FxcLibxc','[BSK] force computing Fxc via libxc',verb_level=V_resp)
  call it('f',defs,'WehDiag', '[BSK] diagonal (G-space) the eh interaction',verb_level=V_resp)
  call it('f',defs,'WehCpl',  '[BSK] eh interaction included also in coupling')
  call it('f',defs,'WRbsWF',  '[BSS] Write to disk excitonic the WFs')
@@ -396,7 +397,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'QpgFull', '[F RIM] Coulomb interaction: Full matrix',verb_level=V_RL)
  !
  ! RIM-W
- call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
+ !call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit,verb_level=V_RL)
+ call it(defs,'RandGvecW','[RIM-W] Screened interaction RS components',RIM_W_ng,G_unit)
+ call it(defs,'rimw_type','[RIM-W] Screened interaction limit metal/semiconductor/graphene',rimw_type)
  !
  ! CUTOFF
  !
@@ -406,8 +409,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'CUTCylLen','[CUT] [au] Cylinder length',cyl_length)
  call it(defs,'CUTwsGvec','[CUT] WS cutoff: number of G to be modified',ws_cutoff)
  call it('f',defs,'CUTCol_test','[CUT] Perform a cutoff test in R-space',verb_level=V_RL)
- call it(defs,'GWIter',     '[GW] GW  self-consistent (evGW)  iterations on eigenvalues',GW_iterations,verb_level=V_qp)
- call it(defs,'GWoIter',    '[GW] GWo self-consistent (evGWo) iterations on eigenvalues',GWo_iterations,verb_level=V_qp)
  !
  ! S_xc
  !

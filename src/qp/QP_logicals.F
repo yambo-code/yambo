@@ -33,7 +33,9 @@ subroutine QP_logicals( )
 #if defined _PHEL
  use PHEL,          ONLY:PH_Self_Energy_mode
 #endif
+#if defined _ELPH
  use ELPH,          ONLY:l_GKKP_hosts_bare_dV
+#endif
  !
  implicit none
  !

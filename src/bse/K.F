@@ -206,7 +206,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  call parser('RIM_W',l_RIM_W)
  call parser('RIM_W_diag',RIM_W_is_diagonal)
  if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
- if (l_RIM_W) call interpolate_W(X,Xw,q,'BSE')
+ if (l_RIM_W) call QP_interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
  if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)

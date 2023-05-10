@@ -87,12 +87,12 @@ subroutine QP_newton(X,Xen,Xk,en,k,q,qp,Xw,Dip)
      !
      if (l_ppa) then
        !
-       if (l_RIM_W) call interpolate_W(X,Xw,q,'PPA')
+       if (l_RIM_W) call QP_interpolate_W(X,Xw,q,'PPA')
        call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,iter)
        !
      else if (l_mpa) then
        !
-       if (l_RIM_W) call interpolate_W(X,Xw,q,'MPA')
+       if (l_RIM_W) call QP_interpolate_W(X,Xw,q,'MPA')
        call QP_mpa(X,Xk,en,k,q,qp,Xw,iter) 
        !
      else if (l_cohsex) then

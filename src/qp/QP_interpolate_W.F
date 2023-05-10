@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine interpolate_W(X,Xw,q,mode)
+subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
@@ -155,11 +155,11 @@ subroutine interpolate_W(X,Xw,q,mode)
    X%ng = G_max_ibz(iq)
    !
    if (iq==1) then
-     call io_control(ACTION=OP_RD,COM=REP,       SEC=(/1,2,2*iq+1/),ID=ID)
+     call io_control(ACTION=OP_RD,       COM=REP,  SEC=(/1,2,2*iq+1/),ID=ID)
    else if (q%nibz==1) then
-     call io_control(ACTION=OP_RD_CL,COM=NONE,    SEC=(/1,2,3/),ID=ID)
+     call io_control(ACTION=OP_RD_CL,    COM=NONE, SEC=(/1,2,3/),ID=ID)
    else if (iq > 1) then
-     call io_control(ACTION=RD_CL_IF_END,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
+     call io_control(ACTION=RD_CL_IF_END,COM=NONE, SEC=(/2*iq,2*iq+1/),ID=ID)
    endif
    !
    io_err=io_X(X,Xw,ID)

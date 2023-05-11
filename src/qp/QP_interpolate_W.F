@@ -142,7 +142,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  G_max=maxval(G_max_ibz)
  !
- if (G_max > X%ng) call error(' G_max '//trim(intc(G_max))//' for RIM-W is higher than G_max '//trim(intc(X%ng))//' of vX')
+ if (G_max > X%ng) call error(' G_max '//trim(intc(G_max))//&
+&                             ' for RIM-W is higher than G_max '//trim(intc(X%ng))//' of vX')
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
  call msg('r', 'Number of interpolated frequencies', Xw%n_freqs)
@@ -205,7 +206,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  if (RIM_id_epsm1_reference==0) em1_anis=0.
  !
  do iomega=1,Xw%n_freqs
- !call msg('r','iomega',iomega)
  do igr=1,RIM_W_ng
   !
   ig2max = RIM_W_ng
@@ -228,12 +228,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
         !
       enddo
       !
-      !test = (iq1==1.and.igr == 1.and.igc == 1)
-      !call msg('r','iq',iq1)
-      !call msg('r','igr',igr)
-      !call msg('r','igc',igc)
-      !call msg('r','test',test)
-      !
       ! q == 0 terms must be tratened separately
       if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
@@ -252,19 +246,14 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
             !
           enddo
           !
-          !call msg('r',"Re[f_coeff(1)]", real(f_coeff(1,igr,igc,iq1,iomega)))
-          !call msg('r',"Im[f_coeff(1)]",aimag(f_coeff(1,igr,igc,iq1,iomega)))
-          !call msg('r',"Re[f_coeff(2)]", real(f_coeff(2,igr,igc,iq1,iomega)))
-          !call msg('r',"Im[f_coeff(2)]",aimag(f_coeff(2,igr,igc,iq1,iomega)))
-          !call msg('r',"Re[f_coeff(3)]", real(f_coeff(3,igr,igc,iq1,iomega)))
-          !call msg('r',"Im[f_coeff(3)]",aimag(f_coeff(3,igr,igc,iq1,iomega)))
-          !
         else
           !
-          if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+          if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
+            !
             !vX is included in the anis_factor
             call msg('r','This is the anysotropy case')
             f_coeff(1,igr,igc,iq1,iomega)=(4._DP*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
+            !
           else
             f_coeff(1,igr,igc,iq1,iomega) = vX_nn(1,iq1,igr,igc,iomega)*(4._DP*pi) / &
 &                                    (bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
@@ -273,7 +262,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           do nn=2,3
             idm = MOD(nn+1,2)+1
             !
-            if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+            if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
+              !
               anis_factor=dot_product(em1_anis,q_grid_b_cc(:,idm)**2)
               f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
 &                                   (f_coeff(1,iq1,igc,iq1,iomega)*anis_factor))
@@ -283,7 +273,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
             end if
             !
           enddo
-        !
+          !
         endif
         !
       else 
@@ -292,7 +282,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
           !
           call msg("r","Evaluating coefficients q = 0 graph")
           !
-          ! Evaluate f_func next nearest neighbour
+          !Evaluate f_func next nearest neighbour
           !Index ordering of NEXT nearest-neighbour maps
           !
           !       4
@@ -383,13 +373,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
         f_coeff(5,igr,igc,iq1,iomega) =  dp_dummy(4)*a(1,2)/alat(2)+dp_dummy(5)*a(2,1)/alat(1) !fxy (iku)
         f_coeff(6,igr,igc,iq1,iomega) =  dp_dummy(5)+dp_dummy(4)*(a(1,2)/alat(2))**2           !fyy (iku)
         !
-        !call msg('r',"f_coeff", real(f_coeff(1,igr,igc,iq1,iomega)))
-        !call msg('r',"f_coeff", real(f_coeff(2,igr,igc,iq1,iomega)))
-        !call msg('r',"f_coeff", real(f_coeff(3,igr,igc,iq1,iomega)))
-        !call msg('r',"f_coeff", real(f_coeff(4,igr,igc,iq1,iomega)))
-        !call msg('r',"f_coeff", real(f_coeff(5,igr,igc,iq1,iomega)))
-        !call msg('r',"f_coeff", real(f_coeff(6,igr,igc,iq1,iomega)))
-        !
       endif
       !
       f_coeff(:,igc,igr,iq1,iomega) = f_coeff(:,igr,igc,iq1,iomega)
@@ -419,7 +402,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
        !
        do iq2=iq1,min(iq1+1,q%nibz)
          !
-         !iq=q_norm_i(i2)
          ch_dum=' < -Wc [Q = '//trim(intc(iq2))//'] >'
          if (iq1/=iq2) ch_dum=' * < -Wc [Q = '//trim(intc(iq2))//'] >'
          !
@@ -441,7 +423,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
        !
        do ig2=ig1,min(ig1+1,RIM_W_ng)
          !
-         !iq=q_norm_i(i2)
          ch_dum=' < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
          if (ig1/=ig2) ch_dum=' * < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
          !
@@ -463,6 +444,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  if (mode == 'PPA') then
+   !
    YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    RIM_W_E = rZERO
    !
@@ -470,20 +452,24 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
      do ig1=1,RIM_W_ng
        !
        if(ig1==1.and.ig2==1) then
+         !
          dummy(:) = f_coeff(1,1,1,1,:)
          if (RIM_id_epsm1_reference/=0) then
-           dummy(1) = dummy(1)*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))
+           dummy(1) = dummy(1)*0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
          end if
          !
        else
-         dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-5*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
-&                                          +1.E-5*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
-                                           +2._SP*f_coeff(5,ig1,ig2,1,:)))
-         !call msg("r","dummy",real(dummy)) 
+         !
+         ! AF: a tentative implementation with a mixing constant of 1.E-5
+         !     instead of 1.E-4 as below has been proposed, buyt lead to
+         !     numerical differencies in the result. To be investigated
+         !
+         dummy(:) = f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
+&                                         +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
+                                          +2._SP*f_coeff(5,ig1,ig2,1,:)))
          dummy(:) = dummy(:)*4._SP*pi/(bare_qpg(1,ig1)*bare_qpg(1,ig2))
-         !call msg("r","dummy",real(dummy))
          dummy(:) = dummy/(1._SP-dummy)
-         !call msg("r","dummy",real(dummy)) !DALV
+         !
        endif
        !
        if (dummy(1)/dummy(2)<=1._SP) then
@@ -491,9 +477,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
        else
          RIM_W_E(ig1,ig2)=sqrt(dummy(1)/dummy(2)-1._SP)
        endif
-       !
-       dummy(1) = 1/RIM_W_E(ig1,ig2)
-       !call msg('r','PPA_E', real(dummy(1))) !DALV
        !
      end do
    end do

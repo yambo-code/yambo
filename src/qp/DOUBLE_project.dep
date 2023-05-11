@@ -1,0 +1,27 @@
+ QED_Radiative_Lifetimes.o
+ QED_Sigma_c.o
+ QP_Green_Function.o
+ QP_W2Sc.o
+ QP_bracket.o
+ QP_descriptions.o
+ QP_driver.o
+ QP_expand.o
+ QP_interpolate_W.o
+ QP_life_transitions.o
+ QP_load_SC_xc.o
+ QP_logicals.o
+ QP_mpa.o
+ QP_newton.o
+ QP_of.o
+ QP_ppa_EET_terminator.o
+ QP_ppa_cohsex.o
+ QP_real_axis.o
+ QP_report_and_write.o
+ QP_secant.o
+ QP_secant_driver.o
+ QP_states_simmetrize.o
+ XCo_Hartree_Fock.o
+ XCo_driver.o
+ XCo_local.o
+ XCo_report.o
+

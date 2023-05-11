@@ -30,7 +30,9 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
+#if defined _ELPH || defined _PHEL
  use ELPH,           ONLY:PH_freqs_sq,PH_Q_modulus,PH_acoustic_branch,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+#endif
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use electrons,      ONLY:levels,spin_occ,E_fine_grid,n_sp_pol
  !
@@ -133,6 +135,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
    enddo
  enddo
  !
+#if defined _ELPH || defined _PHEL
  ! Ph Occupations 
  !================
  if (RT_ph_occ%active) then
@@ -150,6 +153,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
      enddo
    enddo
  endif
+#endif
  !
 #if defined _RT
  call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

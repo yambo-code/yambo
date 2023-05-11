@@ -58,6 +58,8 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
  !
  !  In the 2021 version diagonal and off-diagonal contribution are separated
  !
+ if(Phase_LifeTime<zero_dfl) return
+ !
 !$omp parallel do default(shared), private(i1,i2,Gamma_ij)
  do i1=NL_bands(1),NL_bands(2)
    do i2=i1+1,NL_bands(2)
@@ -94,7 +96,7 @@ subroutine NL_damping(E,ik,i_sp_pol,V_bands)
      do i2=i1+1,NL_bands(2)
        if ( abs(E%E(i1,ik,1)-E%E(i2,ik,1))>=RT_deph_deg_thresh ) cycle
          do ib=1,E%nbf(i_sp_pol)
-           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i1,ib))*V_bands(i2,ib))
+           I_relax(i1,i2,ib,ik_mem,i_sp_pol) = -cI*2._SP/RAD_LifeTime*(conjg(V_bands(i2,ib))*V_bands(i1,ib))
            I_relax(i2,i1,ib,ik_mem,i_sp_pol) = -conjg(I_relax(i1,i2,ib,ik_mem,i_sp_pol))
          enddo
      enddo

@@ -26,7 +26,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  ! Interface with the K_multiply_by_V from the Haydock method
  ! This function has to take the same arguments as MatMult from PETSC
  !
- use pars,          ONLY : SP
+ use pars,          ONLY : SP,cI
  use BS_solvers,    ONLY : Slepc_v,BSS_Slepc_double_grp
  use BS,            ONLY : BS_T_grp,BS_nT_grps,BS_K_dim
  use parallel_m,    ONLY : PAR_IND_T_Haydock
@@ -45,7 +45,7 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
  !
  implicit none
  !
- PetscScalar          :: tmp_value(1)
+ PetscScalar          :: tmp_value(1),tmp_value_star(1)
  PetscInt             :: H_pos(1), pet_one
  PetscErrorCode       :: ierr
  !
@@ -108,12 +108,13 @@ subroutine K_multiply_by_V_slepc(slepc_mat,vi,vo,ierr)
    do i_c=1,BS_T_grp(i_g)%size
      H_pos=start_index+i_c
      tmp_value=cmplx(Slepc_v%Vo(i_g)%fragment(i_c,1))
+     tmp_value_star=real(Slepc_v%Vo(i_g)%fragment(i_c,1))-cI*aimag(Slepc_v%Vo(i_g)%fragment(i_c,1))
      !SLEPC funcitons expect C indexes both in Fortran and C
      call VecSetValues( vo, pet_one, H_pos, tmp_value, INSERT_VALUES, ierr )
      if(BSS_slepc_double_grp) then
        ! Expand vo to anti-resonant block
        H_pos=start_index_dg+i_c
-       call VecSetValues( vo, pet_one, H_pos, fac*conjg(tmp_value), INSERT_VALUES, ierr )
+       call VecSetValues( vo, pet_one, H_pos, fac*tmp_value_star, INSERT_VALUES, ierr )
      endif
    enddo
  enddo

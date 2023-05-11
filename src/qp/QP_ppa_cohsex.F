@@ -33,7 +33,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
-&                        l_rt_carriers_in_use,l_RIM_W
+&                        l_rt_carriers_in_use,l_rim_w
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -44,7 +44,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,QP_solver,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
@@ -121,11 +121,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
  if (trim(QP_solver)=='n') then
+   !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
      YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
      forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
    enddo
+   !
  else if (trim(QP_solver)=='g') then
    !
    QP_dSc_steps=QP_Sc_steps
@@ -139,6 +141,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
        QP_G_damp=0._SP
      endif
    enddo
+   !
  endif
  !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
@@ -161,14 +164,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  if (.not.l_sc_run) then
    SECTION_name='G'//trim(intc(GW_iter))
    W_name      ='W0'
-   if(l_update_W) W_name='W'//trim(intc(GW_iter))
    if (                    l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (COHSEX)'
    if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W PPA)'
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
  if (GW_iter==0) then
-   if(l_RIM_W) then
+   if(l_rim_w) then
      call section('-',trim(SECTION_name))
    else
      call section('+',trim(SECTION_name))
@@ -329,8 +331,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              !
              ! RIM W support
              !
-             l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
-             !l_RIM_W_g=(l_RIM_W_g.and.(.not.RIM_W_for_graph))
+             l_RIM_W_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng.and.iqibz==1)
              if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
              !
              if (l_RIM_W_g) then
@@ -583,7 +584,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                !
                ! RIM W support
                !
-               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+               l_RIM_W_g=(l_rim_w.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
                if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
                !
                if (l_RIM_W_g) then

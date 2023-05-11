@@ -25,7 +25,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  use pars,          ONLY:SP,pi,cONE,cZERO
  use units,         ONLY:HA2EV
- use drivers,       ONLY:l_life,l_ppa,l_mpa,l_elel_corr,l_elph_corr,l_cohsex,Finite_Tel,l_elphoton_corr,l_RIM_W
+ use drivers,       ONLY:l_life,l_ppa,l_mpa,l_elel_corr,l_elph_corr,l_cohsex,&
+&                        Finite_Tel,l_elphoton_corr,l_rim_w
  use electrons,     ONLY:levels,n_sp_pol,spin
  use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng,RIM_W_for_graph
  use DIPOLES,       ONLY:DIPOLE_t
@@ -36,8 +37,8 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
 &                        QP_Vnl_xc,QP_n_states,QP_nb,QP_G_zoom_er,QP_G_Zoom_treshold,&
 &                        QP_nk,QP_state,QP_dSc_test,QP_reset,use_GreenF_Zoom,l_QP_symmetrize,&
 &                        QP_Sc_steps,QP_G_er,QP_G_dr,QP_SET_temperature_pre_factor,&
-&                        GF_is_causal,QP_G_amplitude_integral,l_update_W,use_GreenF_to_eval_QP,&
-&                        l_GW_terminator,QP_G_info,GW_iterations,GWo_iterations
+&                        GF_is_causal,QP_G_amplitude_integral,use_GreenF_to_eval_QP,&
+&                        l_GW_terminator,QP_G_info
  use parser_m,      ONLY:parser
 #if defined _ELPH
  use ELPH,          ONLY:QP_DW,QP_OMS_Fan
@@ -76,10 +77,9 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !
  if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
  !
- call parser('RIM_W',l_RIM_W)
  call parser('RIM_W_diag',RIM_W_is_diagonal)
  call parser('RIM_W_graph',RIM_W_for_graph)
- if(l_RIM_W .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
+ if(l_rim_w .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed
  ! 
@@ -99,13 +99,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  !==============
  call QP_reset(qp)
  !
- ! Some checks for the self-consistent GW
- ! =======================================
- if (GW_iterations/=0.and.GWo_iterations/=0) then
-   call error("Only one type of Self-Consistency at a time is possible, evGW or evGWo not both")
- endif
- if (GW_iterations/=0) l_update_W=.TRUE.
- !
  ! Setup Temperature pre-factor
  !==============================
  call QP_SET_temperature_pre_factor( )
@@ -119,14 +112,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    call IO_desc_add(qp%desc,kind="s",str='GW solver',S="Newton",check=.TRUE.,ops=(/"=="/))
    !
  else if (trim(QP_solver)=='s') then
-   !
-   ! When using secant no SC available
-   !
-   if(GW_iterations/=0.or.GWo_iterations/=0) then
-     GWo_iterations=0
-     GW_iterations =0
-     call warning("Self-consistent GW not compatible with 'secant solver' turned off")
-   endif
    !
    call section('*','Dyson equation: non perturbative QP_secant method')
    !
@@ -157,9 +142,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    QP_DB_kind=QP_SE_GoWo_PPA
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo_PPA
-   if ( GW_iterations > 0  ) QP_DB_kind=QP_SE_GW_PPA
-   !
  else if (l_mpa) then
    !
    call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="MPA",check=.TRUE.,ops=(/"=="/))
@@ -168,14 +150,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    QP_DB_kind=QP_SE_GoWo_PPA
    !
  else if (l_cohsex) then
-   !
-   ! in COHSEX no SC possible
-   !
-   if(GWo_iterations/=0) then
-     call warning("Self-consistent GWo not compatible with 'secant solver' turned off")
-     GWo_iterations=0
-   endif
-   if(GW_iterations/=0) call error('Self-consistent COHSEX not implemented yet')
    !
    call IO_desc_add(qp%desc,kind="s",str='GW approximation',S="COHSEX",check=.TRUE.,ops=(/"=="/))
    !
@@ -200,9 +174,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
    !
    if (l_elphoton_corr) QP_DB_kind=QP_SE_GW_QED
    !
-   if ( GWo_iterations > 0 ) QP_DB_kind=QP_SE_GWo
-   if ( GW_iterations > 0  ) call error("GW self-consistent not implemented with real-axis ")
-   !
  endif
  !
  ! Basic defs
@@ -217,17 +188,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  qp%nk=QP_nk
  qp%nb=QP_nb
  qp%n_states=QP_n_states
- !
- ! Check qp-indexes for SC-GW and allocate en%Eo 
- ! =============================================
- !
- if (GW_iterations+GWo_iterations/=0) then
-    !
-    ! As possible reference for GWo and GW calculations
-    ! one can consider the manuscript PRB 75, 235102(2007)
-    !
-    call check_qp_states(QP_table,QP_state,qp,en,Xen)
- endif
  !
  ! In lifetimes calculations  the X db may be not
  ! present. So I need to define some variables that 
@@ -490,7 +450,7 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   !
   ! Check if qp-indexes are continous for SC-GW
   !  
-  use QP_m,          ONLY:QP_t,l_update_W
+  use QP_m,          ONLY:QP_t
   use electrons,     ONLY:n_sp_pol,levels
 #include<memory.h>
   !
@@ -509,17 +469,9 @@ subroutine check_qp_states(QP_table,QP_state,qp,en,Xen)
   if(any(QP_state(lw_bnd:qp%nb,:).eqv..FALSE.).or.qp%nk/=en%nk) &
       & call error("Not continous QP-indexes not suppoerted in self-consistent GW")
   !
-  if(l_update_W.and.(Xen%nb/=en%nb.or.Xen%nk/=en%nk)) then
-    call error("Different number of k-points/bands in G and X not supported in SC-GW")
-  endif
-  !
   if(.not.allocated(en%Eo)) then
     YAMBO_ALLOC(en%Eo,(en%nb,en%nk,n_sp_pol))
     en%Eo=en%E            
-  endif
-  if(.not.allocated(Xen%Eo).and.l_update_W) then
-    YAMBO_ALLOC(Xen%Eo,(Xen%nb,Xen%nk,n_sp_pol))
-    Xen%Eo=Xen%E            
   endif
   !
 end subroutine check_qp_states

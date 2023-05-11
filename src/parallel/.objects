@@ -2,7 +2,7 @@ NL_objs =
 #if defined _NL
 NL_objs = PARALLEL_global_Non_Linear.o
 #endif
-#if _ELPH
+#if _PHEL || defined _ELPH
 ELPH_objs = PARALLEL_global_Phonon_Self_Energy.o
 #endif
 #if _RT 

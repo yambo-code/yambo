@@ -23,6 +23,22 @@
 !
 subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
+ ! This subroutine performes a double FFT of F_xc
+ ! F_xc(r) --> F_xc(G_l) --> F_xc(r)
+ !
+ ! Before performing the FFT bach to r space, it can lower the cutoff of F_xc(G)
+ ! There are  three options
+ ! a) "lower_GmGp" --> F_xc(G_l) with G_l=G-G' and a maximum cutoff is applied to G and G'
+ ! b) "lower_Gmax" --> a cutoff is applied directly to G_l
+ ! c) "full_grid"  --> no cutoff is applied (for debugging purposes)
+ !
+ ! The three options can be controlled from input. Notice that full grid 
+ ! means Ng = fft_size, where Ng is the number of G-vectors is reciprocal space
+ ! This means Ng >> ng_closed because F_xc is not at all smooth
+ !
+ ! The main goal of this subrotuine is to allow comparison between a
+ ! TDDFT run in G-space and one in eh-space
+ !
  use pars,          ONLY:DP,SP,cZERO
  use TDDFT,         ONLY:FXC_n_g_corr
  use BS,            ONLY:BS_n_g_fxc,l_BS_magnons
@@ -40,26 +56,21 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  !
  integer     :: i1,i2,ig_fxc,isp1,isp2,isp3,isp4,n_holes
  complex(DP) :: F_xc_DP(fft_size),F_xc_DP_reduced(fft_size)
- logical     :: procedure1, procedure2, procedure3=.false.
+ logical     :: l_lower_GmGp, l_lower_Gmax, l_use_fullgd
  !
  if(trim(ALDA_cut_scheme)=="none") return
  !
- procedure1=trim(ALDA_cut_scheme)=="lower_GmGp"
- procedure2=trim(ALDA_cut_scheme)=="lower_Gmax"
+ l_lower_GmGp=trim(ALDA_cut_scheme)=="lower_GmGp"
+ l_lower_Gmax=trim(ALDA_cut_scheme)=="lower_Gmax"
+ l_use_fullgd=trim(ALDA_cut_scheme)=="full_grid"
  !
- ! DEBUG <
- !procedure1=.false.
- !procedure1=.false.
- !procedure3=.true.
- ! DEBUG >
- !
- if (procedure1) then
+ if (l_lower_GmGp) then
    BS_n_g_fxc=maxval(G_m_G(:FXC_n_g_corr,:FXC_n_g_corr))
    call PARSER_close_G(BS_n_g_fxc,'tRL')
    call msg('s',"[TDDFT] lowering the cutoff of F_xc(G-G') for G and G' to ",FXC_n_G_corr)
  endif
  !
- if (procedure2) call msg('s',"[TDDFT] lowering the cutoff of F_xc(G) to ",BS_n_g_fxc)
+ if (l_lower_Gmax) call msg('s',"[TDDFT] lowering the cutoff of F_xc(G) to ",BS_n_g_fxc)
  !
  do isp1=1,n_spin
  do isp2=1,n_spin
@@ -93,7 +104,7 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      !! I need FXC_n_g_corr up to wf_ng to arrive up to ng_closed
      !! This is consistent with what done in G-space TDDFT
      ! DEBUG <
-     if (procedure1) then
+     if (l_lower_GmGp) then
        F_xc_DP_reduced=cZERO
        do i1=1,FXC_n_g_corr
          do i2=1,FXC_n_g_corr
@@ -114,7 +125,7 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      ! DEBUG >
      !
      ! PROCEDURE 2: I need FXC_n_g_corr up to ng_closed
-     if (procedure2) then
+     if (l_lower_Gmax) then
        n_holes=0
        F_xc_DP_reduced=cZERO
        do i1=1,BS_n_g_fxc
@@ -128,7 +139,7 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
      ! In both previous procedures I can use up to ng_closed vectors max
      ! However Fxc may need more G vecs, up to G-G' with both running till n_g_closed in principle.
      ! With this direct procedure all g-vectors are used
-     if (procedure3) F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
+     if (l_use_fullgd) F_xc_DP_reduced=F_xc_DP/real(fft_size,DP)
      ! DEBUG >
      !
      ! FFT call: FORWARD (G->R)
@@ -148,7 +159,7 @@ subroutine TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
  enddo
  enddo
  !
- if (procedure1) call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
+ if (l_lower_GmGp) call msg('s','[TDDFT] while lowering the cutoff F_xc is not defined on n_points in the last shells ',n_holes)
  !
  ! DEBUG <
  ! write(*,*) "F_xc= ",F_xc_matt(1:10,1,1,1,1)

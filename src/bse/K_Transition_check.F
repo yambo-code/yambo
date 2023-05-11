@@ -28,7 +28,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  use X_m,          ONLY:global_gauge
  use DIPOLES,      ONLY:DIPOLE_t
  use electrons,    ONLY:levels,n_sp_pol,filled_tresh,spin_occ
- use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons
+ use BS,           ONLY:BS_not_const_eh_f,BS_perturbative_SOC,BS_eh_en,l_BS_magnons,l_BS_photolum
 #if defined _RT
  use drivers,      ONLY:l_rt_carriers_in_use
  use RT_control,   ONLY:NEQ_Residuals,NEQ_Kernel,EQ_Transitions,EQ_NoOcc
@@ -44,7 +44,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  ! Work Space
  !
  integer :: i_sp_v,iv_SOC(2/n_sp_pol),ic_SOC(2/n_sp_pol),pert_range(2/n_sp_pol,2)
- real(SP):: Eo_eh,E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh_REF,f_e,f_h,f_check
+ real(SP):: Eo_eh,E_v_SOC(2/n_sp_pol),E_c_SOC(2/n_sp_pol),f_eh_REF,f_eh_EQ,f_e,f_h
  !
  K_Transition_check=.TRUE.
  !
@@ -80,7 +80,7 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  f_eh_REF =(Ken%f(iv,ikp,i_sp_v)-Ken%f(ic,ik ,i_sp_c))/spin_occ
  f_eh     =f_eh_REF
  f_eh_RES =f_eh_REF
- f_check  =f_eh_REF
+ f_eh_EQ  =f_eh_REF
  !
  ! f_eh  enter the excitonic Hamiltonian
  ! f_eh_RES enter the residual of the dielectric constant
@@ -88,12 +88,12 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
 #if defined _RT
  if (l_rt_carriers_in_use.and.allocated(Ken%fo)) then
    !
-   if (     EQ_Transitions) f_eh_REF=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
-   if (.not.EQ_Transitions) f_eh_REF=(Ken%f (iv,ikp,i_sp_v)-Ken%f (ic,ik ,i_sp_c))/spin_occ
-   if (     NEQ_Kernel    ) f_eh =(Ken%f (iv,ikp,i_sp_v)-Ken%f (ic,ik ,i_sp_c))/spin_occ
-   if (.not.NEQ_Kernel    ) f_eh =(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
-   if (     NEQ_Residuals ) f_eh_RES=(Ken%f (iv,ikp,i_sp_v)-Ken%f (ic,ik ,i_sp_c))/spin_occ
-   if (.not.NEQ_Residuals ) f_eh_RES=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
+   f_eh_EQ=(Ken%fo(iv,ikp,i_sp_v)-Ken%fo(ic,ik ,i_sp_c))/spin_occ
+   !
+   if (     EQ_Transitions) f_eh_REF=f_eh_EQ
+   if (.not.NEQ_Kernel    ) f_eh    =f_eh_EQ
+   if (.not.NEQ_Residuals ) f_eh_RES=f_eh_EQ
+   !
  endif
 #endif
  !
@@ -105,14 +105,15 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
    f_h = (spin_occ-Ken%f(iv,ikp,i_sp_v))/spin_occ
  endif
  !
- f_eh_PL = Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ if ( E_eh>=0._SP ) f_eh_PL =  Ken%f(ic,ikp,i_sp_c)*(spin_occ-Ken%f(iv,ik ,i_sp_v))/spin_occ/spin_occ
+ if ( E_eh< 0._SP ) f_eh_PL = -Ken%f(iv,ik ,i_sp_v)*(spin_occ-Ken%f(ic,ikp,i_sp_c))/spin_occ/spin_occ
  !
 #if defined _RT
  if(EQ_NoOcc) then
    f_eh_REF=1._SP
    f_eh    =1._SP
    f_eh_RES=1._SP
-   f_check =1._SP
+   f_eh_EQ =1._SP
    f_e     =1._SP
    f_h     =1._SP
  endif
@@ -129,6 +130,8 @@ logical function K_Transition_check(Ken,Dip,iq,ik,ikp,iv,ic,i_sp_c,i_res_ares,&
  !   However they contribute to the JDOS. We need to take only the E>0 component,
  ! since the E<0 component is then accounted for by the anti-resonant part
  if ( f_eh_REF==0._SP .and. E_eh*(-1._SP)**(i_res_ares-1)<0._SP ) K_Transition_check=.FALSE.
+ !   f_eh_RES=0 transitions give issue in PL. Removed in this case
+ if (l_BS_photolum .and. f_eh_RES==0._SP) K_Transition_check=.FALSE.
  !
 #if defined _RT
  !

@@ -105,7 +105,7 @@ contains
      PPcond_rate=1._SP 
    endif
    !
-   ! DALV: since MPA uses complex poles we need to garrantee the time ordering
+   ! DALV: since MPA uses complex poles we need to guarantee the time ordering
    !
    if(real(E)<0._SP) E=-E
    if(aimag(E)>-epsilon(1._SP)) E=real(E,SP)-cI*epsilon(1._SP)

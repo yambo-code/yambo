@@ -26,7 +26,7 @@ else ifneq (,$(findstring ypp_rt,$(MAKECMDGOALS)))
  YPP_SRC_LIBS=$(YPPRT_LIBS)
  YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
 else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
- Y_PRECMP=-D_ELPH
+ Y_PRECMP=-D_ELPH -D_PHEL
  YPP_PRECMP=-D_YPP_ELPH
  YPP_SRC_LIBS=$(YPPPH_LIBS)
  YPP_EXE_LIBS=$(YPPPH_LIBS_LD)
@@ -49,7 +49,7 @@ ypp ypp_ph ypp_sc ypp_rt_gpl ypp_rt ypp_nl:
 	@$(MAKE) $(MAKEFLAGS) dependencies
 	@$(MAKE) $(MAKEFLAGS) ext-libs
 	@$(MAKE) $(MAKEFLAGS) int-libs
-	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/driver/src";ADF="$(YPP_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
+	@+LIBS="$(YLIBDRIVER)";LAB="$@_Ydriver_";BASE="lib/yambo/Ydriver/src";ADF="$(YPP_PRECMP) -D_ypp";$(todo_lib);$(mk_lib)
 	@+LIBS="$(Y_SRC_LIBS)";BASE="src";ADF="$(Y_PRECMP)";$(todo_lib);$(mk_lib)
 	@+LIBS="$(YPP_SRC_LIBS)";LAB="_ypp_";BASE="ypp";ADF="$(YPP_PRECMP)";$(todo_lib);$(mk_lib)
 	@+X2DO="$@";BASE="driver";XLIBS="$(Y_EXE_LIBS)";X_ypp_LIBS="$(YPP_EXE_LIBS)";ADF="$(YPP_PRECMP)";$(todo_driver)

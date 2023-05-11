@@ -90,6 +90,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="rim_cut";
  options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Screened coulomb potential";
+ options[*i_opt].long_opt="rw";
+ options[*i_opt].short_opt='w';
+ options[*i_opt].bin="yambo";
+ options[*i_opt].yambo_string="rim_w";
+ options[*i_opt].section=desc;
+
 
  desc="Response Functions";
  *i_opt=*i_opt+1;

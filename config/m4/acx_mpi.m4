@@ -25,7 +25,7 @@
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 AC_DEFUN([ACX_MPI], [
-AC_PREREQ(2.50) dnl for AC_LANG_CASE
+AC_PREREQ([2.50]) dnl for AC_LANG_CASE
 acx_mpi_ok=no
 
 AC_LANG_CASE([C], [
@@ -91,7 +91,7 @@ if test "$acx_mpi_ok" = "yes"; then
 )
 fi
 
-# We have to use AC_TRY_COMPILE and not AC_CHECK_HEADER because the
+# We have to use AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[],[]) and not AC_CHECK_HEADER because the
 # latter uses $CPP, not $CC (which may be mpicc).
 #
 # In the following, we tentatively skip the check for mpipgicc,
@@ -108,9 +108,7 @@ AC_LANG_CASE([C], [if test "$acx_mpi_ok" = "no"; then
 fi],
 [C++], [if test "$acx_mpi_ok" = "no"; then
         AC_MSG_CHECKING([for mpi.h])
-        AC_TRY_COMPILE([#include <mpi.h>],[],
-        [AC_MSG_RESULT(yes);acx_mpi_ok="yes"],
-        [AC_MSG_RESULT(no); acx_mpi_ok="no" ])
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <mpi.h>]], [[]])],[AC_MSG_RESULT(yes);acx_mpi_ok="yes"],[AC_MSG_RESULT(no); acx_mpi_ok="no" ])
 fi])
 else
   acx_mpi_ok="yes"

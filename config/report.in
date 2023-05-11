@@ -11,7 +11,7 @@
 # [CMP] @compdir@
 # [TGT] @prefix@
 # [BIN] @exec_prefix@/bin
-# [LIB] @extlibs_path@
+# [LIB] @extlibs_path@/@FCKIND@/@FC@
 #
 # [EDITOR] @editor@
 # [ MAKE ] @MAKE@
@@ -42,37 +42,41 @@
 # 
 # - LIBRARIES - 
 #
-# [@Ydriver_check@] Ydriver : @Ydriver_LIB@
-# [@FUTILE_check@] FUTILE  : @FUTILE_LIBS@
-#                 @FUTILE_INCS@
-# [@YAML_check@] YAML    : @YAML_LIBS@
-#                 @YAML_INCS@
-# [@IOTK_check@] IOTK    : @IOTK_LIBS@ (QE @PW_VER@)
-#                 @IOTK_INCS@
-# [@ETSF_check@] ETSF_IO : @ETSF_LIBS@
-#                 @ETSF_INCS@
-# [@NETCDF_check@] NETCDF  : @NETCDFF_LIBS@ @NETCDF_LIBS@ @PNETCDF_LIBS@
-#                 @NETCDFF_INCS@ @NETCDF_INCS@ @PNETCDF_INCS@
-# [@HDF5_check@] HDF5    : @HDF5_LIBS@
-#                 @HDF5_INCS@
+# [@Ydriver_check@] Ydriver   : @Ydriver_LIB@
+# [@FUTILE_check@] FUTILE    : @FUTILE_LIBS_R@
+#                 @FUTILE_INCS_R@ 
+# [@YAML_check@] YAML      : @YAML_LIBS_R@
+#                 @YAML_INCS_R@
+# [@IOTK_check@] IOTK      : @IOTK_LIBS_R@ (QE @PW_VER@)
+#                 @IOTK_INCS_R@
+# [@ETSF_check@] ETSF_IO   : @ETSF_LIBS_R@
+#                 @ETSF_INCS_R@
+# [@NETCDF_check@] NETCDFF   : @NETCDFF_LIBS_R@
+#                 @NETCDFF_INCS_R@
+# [@NETCDF_check@] NETCDF    : @NETCDF_LIBS_R@
+#                 @NETCDF_INCS_R@
+# [@NETCDF_check@] PNETCDF   : @PNETCDF_LIBS_R@
+#                 @PNETCDF_INCS_R@
+# [@HDF5_check@] HDF5      : @HDF5_LIBS_R@
+#                 @HDF5_INCS_R@
 #
 # > MATH: @FFT_info@ @BLAS_info@
 #
-# [@FFT_check@] FFT       : @FFT_LIBS@
-#                 @FFT_INCS@
-# [@BLAS_check@] BLAS      : @BLAS_LIBS@
-# [@LAPACK_check@] LAPACK    : @LAPACK_LIBS@
-# [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS@ 
-# [@BLACS_check@] BLACS     : @BLACS_LIBS@
-# [@PETSC_check@] PETSC     : @PETSC_LIBS@ 
-#                 @PETSC_INCS@ 
-# [@SLEPC_check@] SLEPC     : @SLEPC_LIBS@ 
-#                 @SLEPC_INCS@ 
+# [@BLAS_check@] BLAS      : @BLAS_LIBS_R@ (for petsc: @BLAS_PETSC_LIBS_R@)
+# [@LAPACK_check@] LAPACK    : @LAPACK_LIBS_R@ (for petsc: @LAPACK_PETSC_LIBS_R@)
+# [@SLK_check@] SCALAPACK : @SCALAPACK_LIBS_R@ 
+# [@BLACS_check@] BLACS     : @BLACS_LIBS_R@
+# [@FFT_check@] FFT       : @FFT_LIBS_R@
+#                 @FFT_INCS_R@
+# [@PETSC_check@] PETSC     : @PETSC_LIBS_R@
+#                 @PETSC_INCS_R@ 
+# [@SLEPC_check@] SLEPC     : @SLEPC_LIBS_R@
+#                 @SLEPC_INCS_R@ 
 #
 # > OTHERs
 #
-# [@LIBXC_check@] LibXC     : @LIBXC_LIBS@
-#                 @LIBXC_INCS@
+# [@LIBXC_check@] LibXC     : @LIBXC_LIBS_R@
+#                 @LIBXC_INCS_R@
 # [@MPI_check@] MPI       : @MPI_LIBS@ @MPI_info@
 #                 @MPI_INCS@
 #

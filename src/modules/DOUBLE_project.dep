@@ -8,6 +8,7 @@
  mod_DIPOLES.o
  mod_D_lattice.o
  mod_ELPH.o
+ mod_ELPH_intfcs.o
  mod_FFT.o
  mod_H_interfaces.o
  mod_IO.o

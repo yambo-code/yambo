@@ -1,2 +1,5 @@
  SET_defaults.o
+ mod_H_interfaces.o
+ mod_collision_ext.o
+ mod_plasma.o
 

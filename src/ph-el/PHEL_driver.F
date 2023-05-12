@@ -27,7 +27,7 @@ subroutine PHEL_driver(E,k,q)
  use drivers,        ONLY:l_life
  use electrons,      ONLY:levels,n_sp_pol,E_fine_grid
  use R_lattice,      ONLY:bz_samp,bz_samp_FineGd_default,bz_samp_FineGd_alloc,bz_fine_grid
- use interfaces,     ONLY:ELPH_alloc
+ use ELPH_intfcs,    ONLY:ELPH_alloc
  use ELPH,           ONLY:QP_PH_n_G_bands,elph_branches,GKKP_pe_sq,l_GKKP_DB_exists,&
 &                         l_GKKP_expanded_DB_exists,elph_nb,elph_use_q_grid
  use PHEL,           ONLY:l_PH_uses_E_FineGd,PH_Self_Energy_mode,PHEL_free,PH_Q,PH_SF_W,PHEL_alloc,PHEL_qp,&

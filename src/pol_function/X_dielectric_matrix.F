@@ -103,7 +103,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (depth>0) sec_mode='='
  !
  X_dielectric_matrix=-1
- Xw%grid_type="ra" !DALV
+ Xw%grid_type="ra"
  !
  if (X%whoami==1) then
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamical IP Response Function Matrix')
@@ -145,9 +145,12 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    !
  endif
  !
- call X_pre_setup(Xen,Xk,X) !DALV: in here the time ordering is changed to 'R' for metals
-                            !      this could be problematic for FF real-axis GW calculations
- if(X%whoami==3) X%ordering='T'  !DALV: solved here
+ call X_pre_setup(Xen,Xk,X)      !DALV: in here the time ordering is changed to 'R' for metals
+                                 !      this could be problematic for FF real-axis GW calculations
+ ! AF: the following fix breaks Lifetime calcs
+ !     and need to be further analyzed
+ !
+ !if(X%whoami==3) X%ordering='T' !DALV: solved here
  !
  if (l_write_disk_Xo) then
    if (.not.SILENT_MODE) call warning('On-the-fly extraction of IP Response Function Matrix')

@@ -302,7 +302,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      cond_numQ(:)=0._SP
      !
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo), &
-     !$omp & reduction(+:MPred_rate),reduction(+:PPcond_Qrate),reduction(+:MP_Qerr),reduction(+:cond_numQ)
+     !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
@@ -419,7 +419,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
-     ! DALV: here the grid is center in E0
+     ! DALV: here the grid is centered in E0
      forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
@@ -435,10 +435,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
        !
        if (any(isc%is/=iscp%is))  then
          call scatter_Bamp(iscp)
-         if (have_cuda) call dev_memcpy(iscp%rhotw, iscp%rhotw_d)
        else
-         iscp%rhotw=isc%rhotw
-         if (have_cuda) call dev_memcpy(iscp%rhotw_d, iscp%rhotw)
+         call dev_memcpy(iscp_rhotw_p, isc_rhotw_p)
        endif
        !
        dc=cZERO

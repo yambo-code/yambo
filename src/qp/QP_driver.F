@@ -321,7 +321,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
      !
      if (.not.l_ppa.and..not.l_mpa.and..not.l_cohsex) call QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,0)
      !
-     ! DALV: GF for ppa and mpa
+     ! GF for ppa and mpa
      !
      if ( l_ppa ) call QP_ppa_cohsex(X,Xk,en,k,q,qp,Xw,0)
      if ( l_mpa ) call QP_mpa(X,Xk,en,k,q,qp,Xw,0)

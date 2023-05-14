@@ -38,7 +38,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use frequency,     ONLY:bare_grid_N,coarse_grid_Pt
  use collision_el,  ONLY:elemental_collision
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,sop_inv
- use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm!,Xo_graph_wings
+ use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
  use com,           ONLY:depth
@@ -85,7 +85,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  n_poles   = sum(bare_grid_N(1:i_cg-1))
  Xo_res    = cZERO
  Z_        = cONE
- !Xo_graph_wings = cZERO
  !
  ngrho     = Xo_scatt%ngrho
  !
@@ -100,13 +99,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    iv     = X_poles_tab(n_poles,2)
    ic     = X_poles_tab(n_poles,3)
    i_spin = X_poles_tab(n_poles,4)
-   !
-   !if(i_cg == 1 .and. iq == 1) then
-   !  call msg("r","ikbz",ikbz)
-   !  call msg("r","iv",iv)
-   !  call msg("r","ic",ic)
-   !  call msg("r","i_spin",i_spin)
-   !endif
    !
    ikpbz  = qindx_X(iq,ikbz,1)
    !
@@ -163,11 +155,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        !
        sop_inv_l=sop_inv(is)
        !
-#ifdef _CUDA
-       !$cuf kernel do(1) <<<*,*>>>
-#else
-       !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+       !DEV_CUF kernel do(1) <<<*,*>>>
+       !DEV_OMP parallel do default(shared), private(ig1,ig2)
+       !
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
          Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
@@ -212,7 +202,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
 #ifdef _CUDA
-   !$cuf kernel do(2) <<<*,*>>>
+   !DEV_CUF kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      !
      !Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt_rhotw_p(ig2)
@@ -225,7 +215,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
    enddo
 #else
-   !$omp parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
      !
      !if(iv /= ic) then
@@ -236,11 +226,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
-   !$omp end parallel do
+   !
 #endif
-   !do ig2=X_cols(1),X_cols(2)
-   !  call msg('r','Xo_scatt%rhotw(ig2)',real(Xo_scatt%rhotw(ig2)))
-   !enddo
    !
    ! add terminator specific corrections
    ! (ic is running in valence)
@@ -265,11 +252,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !
      sop_inv_l=sop_inv(is)
      !
-#ifdef _CUDA
-     !$cuf kernel do(1) <<<*,*>>>
-#else
-     !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig1=1,X_ng
        ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
        Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
@@ -280,7 +264,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      endif
      !
 #ifdef _CUDA
-     !$cuf kernel do(2) <<<*,*>>>
+     !DEV_CUF kernel do(2) <<<*,*>>>
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
          if (ig1 > ig2) cycle
@@ -288,7 +272,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        enddo
      enddo
 #else
-     !$omp parallel do default(shared), private(ig1,ig2)
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,min(ig2,X_rows(2))
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))

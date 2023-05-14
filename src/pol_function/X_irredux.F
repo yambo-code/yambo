@@ -56,7 +56,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use frequency,     ONLY:w_samp,bare_grid_N,coarse_grid_N,coarse_grid_Pt
  use interfaces,    ONLY:WF_load
  use electrons,     ONLY:levels
- use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph!,Xo_graph_wings,RL_vol
+ use R_lattice,     ONLY:qindx_X,bz_samp,G_m_G,q_norm,idir,RIM_W_for_graph
  use D_lattice,     ONLY:i_space_inv,alat
  use collision_el,  ONLY:elemental_collision,elemental_collision_free,elemental_collision_alloc
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc
@@ -65,7 +65,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
  use X_m,           ONLY:rhotw_save_d
  use cuda_m,        ONLY:have_cuda
- use parser_m,       ONLY:parser
+ use parser_m,      ONLY:parser
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now

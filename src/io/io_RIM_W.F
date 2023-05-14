@@ -30,8 +30,8 @@ integer function io_RIM_W(ID,mode,Xw)
  use IO_m,           ONLY:io_sec,read_is_on,io_status
  use IO_int,         ONLY:io_connect,io_disconnect,io_header,&
 &                         io_elemental,io_bulk
- use frequency,     ONLY:w_samp
- !use com,           ONLY:msg
+ use frequency,      ONLY:w_samp
+ !
 #include <memory.h>
  !
  integer :: ID

@@ -269,10 +269,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'GDmRnge',  '[GW] G_gw damping range',QP_G_dr,E_unit)
  call it(defs,'dScStep',  '[GW] Energy step to evaluate Z factors',QP_dSc_delta,E_unit,verb_level=V_qp)
  call it(defs,'DysSolver','[GW] Dyson Equation solver ("n","s","g","q")',QP_solver,protect=.FALSE.,case="a")
- call it(defs,'GsampType','[GW] Type of sampling ("ra" FF-RA, "1l" MPA-1l, "2l" MPA-2l)',QP_G_solver) !DALV
+ call it(defs,'GsampType','[GW] Type of sampling ("ra" FF-RA, "1l" MPA-1l, "2l" MPA-2l)',QP_G_solver)
  call it(defs,'GEnSteps', '[GW] Green`s Function (GF) energy steps',QP_Sc_steps)
  call it(defs,'GEnRnge',  '[GW] GF energy range',QP_G_er,E_unit)
- call it(defs,'GImRnge',  '[GW] GF imaginary range',QP_G_ir,E_unit) !DALV
+ call it(defs,'GImRnge',  '[GW] GF imaginary range',QP_G_ir,E_unit)
  call it(defs,'GEnMode',  '[GW] GF energy mode ("centered","absolute"). "Centered" around the bare energy',&
 &        GF_energy_range_mode,verb_level=V_qp)
  call it(defs,'GTermKind','[GW] GW terminator ("none","BG" Bruneval-Gonze,"BRS" Berger-Reining-Sottile)', GW_terminator_Kind)

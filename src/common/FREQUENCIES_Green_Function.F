@@ -27,8 +27,8 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  use R_lattice,  ONLY:nkibz
  use electrons,  ONLY:n_bands,spin,n_sp_pol
  use frequency,  ONLY:w_samp
- use QP_m,       ONLY:QP_table,QP_G_solver,QP_G_dr,QP_G_er,QP_G_ir,QP_G_damp,& !DALV
-                      QP_G_zoom_er,GF_energy_range_mode
+ use QP_m,       ONLY:QP_table,QP_G_solver,QP_G_dr,QP_G_er,QP_G_ir,QP_G_damp,&
+&                     QP_G_zoom_er,GF_energy_range_mode
 #if defined _ELPH
  use ELPH,       ONLY:PH_W_debye,QP_PH_n_G_bands
 #endif
@@ -54,9 +54,9 @@ subroutine FREQUENCIES_Green_Function(iqp,W,E,Spectral_Function)
  else if (.not.Spectral_Function) then
    Eo=E(QP_table(iqp,1),QP_table(iqp,3),spin(QP_table(iqp,:)))
    W%er=QP_G_er
-   W%ir=QP_G_ir !DALV
-   W%grid_type=QP_G_solver !DALV
-   if(QP_G_solver=="1l".or.QP_G_solver=="2l") then !DALV
+   W%ir=QP_G_ir
+   W%grid_type=QP_G_solver
+   if(QP_G_solver=="1l".or.QP_G_solver=="2l") then
      W%grid_type="mp"
      W%samp_type=QP_G_solver
      W%samp_grid="ho"

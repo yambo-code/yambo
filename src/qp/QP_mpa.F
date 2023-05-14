@@ -28,7 +28,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp,W_reset !DALV
+ use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
@@ -81,7 +81,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), allocatable          :: W_(:),dc(:)
  type(elemental_collision), target :: isc,iscp
  !
- type(w_samp)     :: Sc_W(qp%n_states) !DALV: for G & Sigma
+ type(w_samp)     :: Sc_W(qp%n_states)
  character(schlen):: ch,SECTION_name
  !
  integer          :: X_mpa_npoles,X_ng
@@ -119,15 +119,18 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  iq_to_start  =1
  QP_Sc        =cZERO
  !
- ! !DALV: for G & Sigma
+ ! for G & Sigma
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
+ !
  if (trim(QP_solver)=='n') then
+   !
    do i_qp=1,qp%n_states
      Sc_W(i_qp)%n_freqs=QP_dSc_steps
      YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
      forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
    enddo
+   !
  else if (trim(QP_solver)=='g') then
    !
    QP_dSc_steps=QP_Sc_steps
@@ -135,12 +138,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      call W_reset(Sc_W(i_qp))
      Sc_W(i_qp)%n_freqs=QP_Sc_steps
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
-     if(Sc_W(i_qp)%grid_type=="ra") then !DALV
+     !
+     if(Sc_W(i_qp)%grid_type=="ra") then
        Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
      else
        QP_G_damp=0._SP
      endif
    enddo
+   !
  endif
  !
  ! Section
@@ -228,6 +233,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA workspace
  !
  call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ !
  ! AF: the following line needs to be moved elsewhere
  call parser('mpERdb',io_MULTIPOLE)
  !
@@ -248,7 +254,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  if(io_MULTIPOLE) then
-   !call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=PAR_COM_NULL,DO_IT=master_cpu)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2)
    io_err=io_MPA(X,Xw,ID2)
    call IO_and_Messaging_switch("SAVE")
@@ -479,7 +484,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng) !DALV
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
                !
                if (l_RIM_W_g) then
                  !

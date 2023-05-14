@@ -98,7 +98,7 @@ module frequency
      W%samp_type="2l"
      W%samp_grid="lP"
      W%mpa_solver="PT"
-     W%grid_type="ra" !DALV: giving use to this variable
+     W%grid_type="ra"
    end subroutine W_reset
    !
 end module frequency

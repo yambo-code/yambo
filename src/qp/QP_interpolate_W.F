@@ -461,8 +461,8 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
        else
          !
          ! AF: a tentative implementation with a mixing constant of 1.E-5
-         !     instead of 1.E-4 as below has been proposed, buyt lead to
-         !     numerical differencies in the result. To be investigated
+         !     instead of 1.E-4 as below has been proposed, but led to
+         !     numerical differencies in the results. To be investigated
          !
          dummy(:) = f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
 &                                         +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&

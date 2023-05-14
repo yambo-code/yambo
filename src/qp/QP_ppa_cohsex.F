@@ -28,7 +28,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp,W_reset !DALV
+ use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
@@ -84,7 +84,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
 &                           i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps
  complex(SP), allocatable ::W_(:),dc(:),eet_factor(:,:)
  type(elemental_collision),target ::isc,iscp
- type(w_samp)     ::Sc_W(qp%n_states) !DALV: for G & Sigma
+ type(w_samp)     ::Sc_W(qp%n_states)
  character(schlen)::ch,SECTION_name,W_name
  !
  logical          ::X_is_TR_rotated,l_X_ALLOC_elemental,l_RIM_W_g
@@ -117,7 +117,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  iq_to_start  =1
  QP_Sc        =cZERO
  !
- ! !DALV: for G & Sigma
  ! Sc Energy points (1 type each QP state !)
  !-------------------------------------------
  if (trim(QP_solver)=='n') then
@@ -135,7 +134,8 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      call W_reset(Sc_W(i_qp))
      Sc_W(i_qp)%n_freqs =QP_Sc_steps
      call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
-     if(Sc_W(i_qp)%grid_type=="ra") then !DALV
+     !
+     if(Sc_W(i_qp)%grid_type=="ra") then
        Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
      else
        QP_G_damp=0._SP

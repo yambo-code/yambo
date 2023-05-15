@@ -126,7 +126,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #if defined _FL
  use fl_optics,  ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
 &                     FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode,FL_E_field_phase,&
-&                     FL_avE_degen,FL_ild
+&                     FL_avE_degen,FL_ild,FL_Pade_damping
 #endif
 #if defined _SC
  use magnetic,    ONLY:MAG_B,MAG_radius,MAG_hamiltonian_type,MAG_landau,MAG_pauli,&
@@ -728,6 +728,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  FL_E_field_phase = 0._SP
  FL_avE_degen = 0.01_SP
  FL_ild = -1._SP
+ FL_Pade_damping = 0._SP
  !
 #endif
  !

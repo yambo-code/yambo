@@ -104,7 +104,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _FL
  use fl_optics,     ONLY:FL_Chi_order,FL_Chi_thr_1,FL_Chi_thr_2,FL_Chi_thr_3,FL_deg_thrs,FL_deg_lift,&
 &                        FL_solver_mode,FL_S_inv_mode,FL_max_iterations,FL_beta,FL_add_mode,&
-&                        FL_E_field_phase,FL_avE_degen,FL_ild
+&                        FL_E_field_phase,FL_avE_degen,FL_ild,FL_Pade_damping
 #endif 
 !aim137
 #if defined _NL | defined _SC
@@ -562,6 +562,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'Field1_Phase', '[FL] Phase in external field as fraction of pi - 0 for SIN',FL_E_field_phase)
  call it(defs,'AvE_deg_thresh', '[FL] Degeneracy threshold for average energy subspace',FL_avE_degen)
  call it(defs,'FL_2D_ild',   '[FL] Interlayer distance [Bohr] (-1 for bulk)',FL_ild)
+ call it(defs,'FL_Pade',   '[FL] Additional Floquet-mode-dependent damping',FL_Pade_damping,unit=E_unit,verb_level=V_fl_optics)
  !
 #endif
  !aim137

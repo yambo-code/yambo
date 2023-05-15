@@ -45,7 +45,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 &                         NL_initial_P,E_tot,E_ext,E_ks,E_xc_0,I_relax,Alpha_ED,dG,eval_dG, & 
 &                         NL_bands,VAL_BANDS,NL_P,NL_damping
  use fl_optics,      ONLY:max_fl_mode,n_tot_fl_modes,FL_space_dim,FL_states,FL_Ho_plus_Sigma,FL_beta,&
-&                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,&
+&                         FL_Ho_lift_degeneracy,max_extra_mode,n_tot_extra_modes,FL_Pade_damping,&
 &                         FL_delta_rho,FL_delta_rho_hist,l_FL_conv_Rho,l_FL_conv_Chi,FL_FT_extra_Mm1,&
 &                         FL_dG,FL_dG_time,FL_Sigma,l_FL_dephase,l_FL_precond,l_Broyden_mixing,FL_FT_extra_M
  use global_XC,      ONLY:WF_xc_functional,WF_kind
@@ -405,6 +405,7 @@ subroutine FL_Hamiltonian(E,k,q,FL_V_bands,w0,iter_num)
 &            + E_full(i1,ik_bz,i_sp_pol) &
 &            - real(i_shifted_fl,SP) * w0 &
 &            - cI * real(i_damping_fl,SP) * NL_damping &
+&            - cI * real(abs(i_shifted_fl),SP) * FL_Pade_damping &
 &            + cI * FL_Ho_lift_degeneracy(i_fks,ik_bz,i_sp_pol) * NL_damping
        !
      enddo

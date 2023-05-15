@@ -33,6 +33,7 @@ subroutine FL_precondition(delta_rho)
  use wave_func,     ONLY: wf_ng
  use electrons,     ONLY: nel
  use fl_optics,     ONLY: FL_ild
+ use units,         ONLY: BO2ANG
  !
  implicit none
  !
@@ -51,9 +52,12 @@ subroutine FL_precondition(delta_rho)
  !
  eff_vol = DL_vol
  if (FL_ild > 0._SP) eff_vol = DL_vol * FL_ild / a(3,3)
+ if (FL_ild < 0._SP) eff_vol = DL_vol * abs(FL_ild)
  rs = (3.*eff_vol/4./pi/nel)**(1./3.)
  qtf2 = (12/pi)**(2./3.)/rs
  !
+ !print*, 'DL_vol = ',DL_vol
+ !print*, 1/sqrt(qtf2), 'Bohr = ',1/sqrt(qtf2)*BO2ANG,'Angstroms'
  ! FFT call: delta_rho in reciprocal space
  !
 #if defined _FFTW

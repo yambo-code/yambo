@@ -276,7 +276,7 @@ subroutine FL_driver(E,X,k,q,Dip)
    do while(.not.l_FL_sc_reached)
      !
      FL_iteration=FL_iteration+1
-     print*, 'Starting iteration number ',FL_iteration, ' --------------'
+   ! print*, 'Starting iteration number ',FL_iteration, ' --------------'
      FL_Chi_pol(i_f,:,:,2) = FL_Chi_pol(i_f,:,:,1)
      !
      call FL_Hamiltonian(E,k,q,FL_V_bands,Efield(1)%frequency,FL_iteration) !aim137 check, there should be (1) after frequency

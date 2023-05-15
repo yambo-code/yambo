@@ -77,6 +77,7 @@ module fl_optics
  real(SP) :: FL_E_field_phase
  real(SP) :: FL_avE_degen
  real(SP) :: FL_ild
+ real(SP) :: FL_Pade_damping
  integer  :: FL_Chi_order,FL_max_iterations
  character(1) :: FL_S_inv_mode,FL_loc_S_inv_mode,FL_solver_mode
  logical   :: l_FL_conv_Chi,l_FL_conv_Rho,l_FL_dephase,l_FL_precond

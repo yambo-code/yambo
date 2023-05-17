@@ -35,7 +35,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use LIVE_t,        ONLY:live_timing
  use stderr,        ONLY:intc
  use frequency,     ONLY:w_samp
- use R_lattice,     ONLY:bz_samp,nqibz,RIM_W_for_graph
+ use R_lattice,     ONLY:bz_samp,nqibz
  use electrons,     ONLY:levels
  use parallel_int,  ONLY:PP_wait,PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_Q_ibz_index,PAR_nQ_ibz,PAR_COM_X_WORLD,&
@@ -43,11 +43,10 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  use wave_func,     ONLY:WF_buffered_IO,WF,WF_buffer
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:OP_RD_CL,OP_APP_CL,VERIFY,REP,io_RESPONSE
- use com,           ONLY:depth,msg
+ use com,           ONLY:depth
  use TDDFT,         ONLY:F_xc_gspace
  use interfaces,    ONLY:WF_load,WF_free
  use QP_m,          ONLY:QP_n_W_freqs_redux
- use parser_m,      ONLY:parser
  use matrix,        ONLY:MATRIX_reset,MATRIX_copy
  !
 #include<memory.h>
@@ -93,9 +92,6 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! TDDFT KERNEL SETUP (-1 argument)
  !
  call TDDFT_do_X_W_typs(-1,X,Xw)
- !
- call parser('RIM_W_graph',RIM_W_for_graph)
- call msg('r','RIM_W_graph', RIM_W_for_graph)
  !
  ! Sectioning
  !

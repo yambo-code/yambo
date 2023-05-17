@@ -24,7 +24,7 @@
 function FREQUENCIES_damping(W,E)
  !
  use pars,      ONLY:SP
- use frequency, ONLY:w_samp,Mauri_damp
+ use frequency, ONLY:w_samp
  implicit none
  !
  real(SP)      :: FREQUENCIES_damping,E,beta
@@ -78,10 +78,6 @@ function FREQUENCIES_damping(W,E)
  else
    beta=1._SP/(W%damp_reference-e1)*log( (d2-d1)/d1 )
    FREQUENCIES_damping=d2/(1._SP+exp(-beta*(E_-W%damp_reference)))
- endif
- !
- if(Mauri_damp) then
-   FREQUENCIES_damping=FREQUENCIES_damping+(18.88_SP*E_+185.09*E_**2)/2000._SP
  endif
  !
 end function

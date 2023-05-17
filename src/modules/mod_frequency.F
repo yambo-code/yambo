@@ -46,7 +46,6 @@ module frequency
  integer, allocatable :: ordered_grid_index(:)
  integer, allocatable :: coarse_grid_index(:)
  integer, allocatable :: bare_grid_N(:)
- logical              :: Mauri_damp
  !
  type w_samp
    integer      :: n_freqs

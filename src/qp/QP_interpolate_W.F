@@ -27,7 +27,7 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,b,k_grid_b,bare_qpg,&
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
-&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_W_for_graph,RIM_qpg
+&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_qpg
  use vec_operate,   ONLY:c2a,v_norm
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use frequency,     ONLY:w_samp
@@ -50,7 +50,6 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  ! Work Space
  !
  integer           :: iq1,ig1,iq2,ig2,iq,ig
- integer           :: ig1_tmp,iq2_tmp,ig2_tmp
  integer           :: nn,idm,igr,igc,ig2max,iomega
  integer           :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  real(SP)          :: dummy(2),anis_factor,em1_anis(3)
@@ -61,15 +60,12 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
  integer           :: ID, IO_ACT, io_err, ng_save,G_max_ibz(q%nibz), G_max
  integer, external :: io_X, io_RIM_W
  character(schlen) :: ch_dum,fmt_dum,msg_dum(2)
- logical           :: test
  !
  call timing('RIM-W-coeff',OPR='start')
  !
  YAMBO_ALLOC(f_coeff,(6,RIM_W_ng,RIM_W_ng,q%nibz,Xw%n_freqs))
  !
  call section("+", "RIM-W interpolation")
- !
- call msg('r','RIM_W_for_graph',RIM_W_for_graph)
  !
  !Load q_grid_b in iku
  do idm=1,2
@@ -233,136 +229,43 @@ subroutine QP_interpolate_W(X,Xw,q,mode)
         !
         call msg("r","Evaluating coefficients q = 0")
         !
-        if(RIM_W_for_graph.and.iomega==1) then
+        if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
           !
-          f_coeff(1,igr,igc,iq1,iomega) = vX_nn(1,iq1,igr,igc,iomega)/((1._DP+vX_nn(1,iq1,igr,igc,iomega)) &
-&                                         *2._DP*pi*alat(idir(1)))
-          !
-          do nn=2,3
-            idm = MOD(nn+1,2)+1
-            !
-            f_coeff(nn,igr,igc,iq1,iomega)=1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
-&                                   (v_norm(q_grid_b_cc(:,idm))*f_coeff(1,iq1,igc,iq1,iomega)))
-            !
-          enddo
+          !vX is included in the anis_factor
+          call msg('r','This is the anysotropy case')
+          f_coeff(1,igr,igc,iq1,iomega)=(4._DP*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
           !
         else
+          f_coeff(1,igr,igc,iq1,iomega) = vX_nn(1,iq1,igr,igc,iomega)*(4._DP*pi) / &
+&                                  (bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
+        end if
+        !
+        do nn=2,3
+          idm = MOD(nn+1,2)+1
           !
           if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
             !
-            !vX is included in the anis_factor
-            call msg('r','This is the anysotropy case')
-            f_coeff(1,igr,igc,iq1,iomega)=(4._DP*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
-            !
+            anis_factor=dot_product(em1_anis,q_grid_b_cc(:,idm)**2)
+            f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
+&                                 (f_coeff(1,iq1,igc,iq1,iomega)*anis_factor))
           else
-            f_coeff(1,igr,igc,iq1,iomega) = vX_nn(1,iq1,igr,igc,iomega)*(4._DP*pi) / &
-&                                    (bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
+            f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
+&                                 (v_norm(q_grid_b_cc(:,idm))**2*f_coeff(1,iq1,igc,iq1,iomega)))
           end if
           !
-          do nn=2,3
-            idm = MOD(nn+1,2)+1
-            !
-            if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
-              !
-              anis_factor=dot_product(em1_anis,q_grid_b_cc(:,idm)**2)
-              f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
-&                                   (f_coeff(1,iq1,igc,iq1,iomega)*anis_factor))
-            else
-              f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
-&                                   (v_norm(q_grid_b_cc(:,idm))**2*f_coeff(1,iq1,igc,iq1,iomega)))
-            end if
-            !
-          enddo
-          !
-        endif
+        enddo
         !
       else 
         !
-        if(iq1 == 1 .and. RIM_W_for_graph) then
-          !
-          call msg("r","Evaluating coefficients q = 0 graph")
-          !
-          !Evaluate f_func next nearest neighbour
-          !Index ordering of NEXT nearest-neighbour maps
-          !
-          !       4
-          !       ^
-          !       |
-          !       2
-          !       ^
-          !       |
-          !       1 --> 3 --> 5
-          !
-          !Find nearest 1 --> 2
-          !
-          iq2_tmp = idx_q(igr,iq1,2)
-          ig1_tmp = idx_G(igr,iq1,2)
-          ig2_tmp = idx_G(igc,iq1,2)
-          !
-          !Find nearest 2 --> 4
-          !
-          iq2 = idx_q(ig1_tmp,iq2_tmp,2)
-          ig1 = idx_G(ig1_tmp,iq2_tmp,2)
-          ig2 = idx_G(ig2_tmp,iq2_tmp,2)
-          !
-          call msg('r','iq  =',iq1)
-          call msg('r','igr =',igr)
-          call msg('r','igc =',igc)
-          !
-          call msg('r','iq_nn  =',iq2_tmp)
-          call msg('r','igr_nn =',ig1_tmp)
-          call msg('r','igc_nn =',ig2_tmp)
-          !
-          call msg('r','iq_nnn  =',iq2)
-          call msg('r','igr_nnn =',ig1)
-          call msg('r','igc_nnn =',ig2)
-          !
-          f_func(4) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&                     vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega)/(vX_nn(2,iq2_tmp,ig1_tmp,ig2_tmp,iomega)+1._DP)
-          !
-          !Find nearest 1 --> 3
-          !
-          iq2_tmp = idx_q(igr,iq1,3)
-          ig1_tmp = idx_G(igr,iq1,3)
-          ig2_tmp = idx_G(igc,iq1,3)
-          !
-          !Find nearest 3 --> 5
-          !
-          iq2 = idx_q(ig1_tmp,iq2_tmp,3)
-          ig1 = idx_G(ig1_tmp,iq2_tmp,3)
-          ig2 = idx_G(ig2_tmp,iq2_tmp,3)
-          !
-          call msg('r','iq_nn  =',iq2_tmp)
-          call msg('r','igr_nn =',ig1_tmp)
-          call msg('r','igc_nn =',ig2_tmp)
-          !
-          call msg('r','iq_nnn  =',iq2)
-          call msg('r','igr_nnn =',ig1)
-          call msg('r','igc_nnn =',ig2)
-          !
-          f_func(5) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&                     vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega)/(vX_nn(3,iq2_tmp,ig1_tmp,ig2_tmp,iomega)+1._DP)
-          !
-          !
-          !Coefficients in rlu
-          dp_dummy(1) = f_func(1)                                                              !f0
-          dp_dummy(2) = (-f_func(5)+4._DP*f_func(3)-3._DP*f_func(1))/(2._DP*q_grid_b_rlu(1,1)) !f1
-          dp_dummy(3) = (-f_func(4)+4._DP*f_func(2)-3._DP*f_func(1))/(2._DP*q_grid_b_rlu(2,2)) !f2
-          dp_dummy(4) = (f_func(5)-2._DP*f_func(3)+f_func(1))/(2._DP*q_grid_b_rlu(1,1)**2)     !f11
-          dp_dummy(5) = (f_func(4)-2._DP*f_func(2)+f_func(1))/(2._DP*q_grid_b_rlu(2,2)**2)     !f22
-          !
-        else
-          !
-          !call msg("r","Evaluating coefficients q/= 0")
-          !
-          !Coefficients in rlu
-          dp_dummy(1) = f_func(1)                                                          !f0
-          dp_dummy(2) = (f_func(3)-f_func(5))/(2._DP*q_grid_b_rlu(1,1))                    !f1
-          dp_dummy(3) = (f_func(2)-f_func(4))/(2._DP*q_grid_b_rlu(2,2))                    !f2
-          dp_dummy(4) = (f_func(3)-2._DP*f_func(1)+f_func(5))/(2._DP*q_grid_b_rlu(1,1)**2) !f11
-          dp_dummy(5) = (f_func(2)-2._DP*f_func(1)+f_func(4))/(2._DP*q_grid_b_rlu(2,2)**2) !f22
-          !
-        endif
+        !call msg("r","Evaluating coefficients q/= 0")
+        !
+        !Coefficients in rlu
+        dp_dummy(1) = f_func(1)                                                          !f0
+        dp_dummy(2) = (f_func(3)-f_func(5))/(2._DP*q_grid_b_rlu(1,1))                    !f1
+        dp_dummy(3) = (f_func(2)-f_func(4))/(2._DP*q_grid_b_rlu(2,2))                    !f2
+        dp_dummy(4) = (f_func(3)-2._DP*f_func(1)+f_func(5))/(2._DP*q_grid_b_rlu(1,1)**2) !f11
+        dp_dummy(5) = (f_func(2)-2._DP*f_func(1)+f_func(4))/(2._DP*q_grid_b_rlu(2,2)**2) !f22
+        !
         !
         !Coefficients in iku
         !

@@ -171,7 +171,6 @@ module R_lattice
  complex(SP),allocatable DEV_ATTR :: RIM_W_d(:,:,:,:)
  complex(DP),allocatable :: f_coeff(:,:,:,:,:)
  character(schlen)       :: rimw_type
- logical :: RIM_W_for_graph
  !
  ! Coulomb (including Cutoff)
  !

@@ -41,7 +41,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
  use R_lattice,     ONLY:qindx_X,bz_samp,q0_def_norm
  use vec_operate,   ONLY:v_norm
  use collision_el,  ONLY:elemental_collision
- use com,           ONLY:depth
  use deviceXlib_m
  !
 #include<dev_defs.h>
@@ -204,9 +203,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #ifdef _CUDA
    !DEV_CUF kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
-     !
-     !Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt_rhotw_p(ig2)
-     !
      do ig1=X_rows(1),X_rows(2)
        if (ig1 <= ig2) then
          Xo_res(ig1,ig2) = Xo_res(ig1,ig2) + Z_eh_occ*Xo_scatt_rhotw_p(ig2) &
@@ -217,11 +213,6 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
 #else
    !DEV_OMP parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
-     !
-     !if(iv /= ic) then
-     !  Xo_graph_wings(ig2) = Xo_graph_wings(ig2)+Xo_scatt%rhotw(ig2)
-     !endif
-     !
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))

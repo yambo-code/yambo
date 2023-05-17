@@ -28,7 +28,7 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  use drivers,       ONLY:l_life,l_ppa,l_mpa,l_elel_corr,l_elph_corr,l_cohsex,&
 &                        Finite_Tel,l_elphoton_corr,l_rim_w
  use electrons,     ONLY:levels,n_sp_pol,spin
- use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng,RIM_W_for_graph
+ use R_lattice,     ONLY:bz_samp,RIM_W_is_diagonal,RIM_ng,RIM_W_ng
  use DIPOLES,       ONLY:DIPOLE_t
  use frequency,     ONLY:w_samp
  use com,           ONLY:msg
@@ -78,7 +78,6 @@ subroutine QP_driver(X,Xen,Xk,en,k,q,Xw,Dip)
  if (l_QP_symmetrize) call warning("Symmetrize states with the same energy: in rare case this symmetrization can introduce errors")
  !
  call parser('RIM_W_diag',RIM_W_is_diagonal)
- call parser('RIM_W_graph',RIM_W_for_graph)
  if(l_rim_w .and. RIM_W_ng == 0) RIM_W_ng = RIM_ng
  !
  ! The non-local (Vnl) and local (Vxc) part of the xc potentials are not always needed

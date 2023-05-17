@@ -32,7 +32,6 @@ subroutine QP_fit_energies(i_ACTION,bands,en,qp)
  use QP_CTL_m,      ONLY:QP_action
  use electrons,     ONLY:levels,n_sp_pol,spin
  use POL_FIT_m,     ONLY:POL_LK_fit
- use R_lattice,     ONLY:RIM_W_for_graph
  !
  implicit none
  !
@@ -131,15 +130,8 @@ subroutine QP_fit_energies(i_ACTION,bands,en,qp)
    QP_action(i_ACTION)%CTL(i_spin)%E_new_ref  =(/Eoc_new,Eov_new/)
    QP_action(i_ACTION)%CTL(i_spin)%db_scissor = (Ec-Eoc)-(Ev-Eov)
    QP_action(i_ACTION)%CTL(i_spin)%fit_scissor= M_con(1)-M_val(1)
-   !
-   if(.not.RIM_W_for_graph) then
-     QP_action(i_ACTION)%CTL(i_spin)%E(1:2)     =(/M_con(1)+Ec-Eoc,M_con(2)/)
-     QP_action(i_ACTION)%CTL(i_spin)%E(3:4)     =(/M_val(1)+Ev-Eov,M_val(2)/)
-   else
-     call warning('I manually block the fit of QPs due to Graphene model')
-     QP_action(i_ACTION)%CTL(i_spin)%E(1:2)     =(/0._SP,1._SP/)
-     QP_action(i_ACTION)%CTL(i_spin)%E(3:4)     =(/0._SP,1._SP/)
-   endif
+   QP_action(i_ACTION)%CTL(i_spin)%E(1:2)     =(/M_con(1)+Ec-Eoc,M_con(2)/)
+   QP_action(i_ACTION)%CTL(i_spin)%E(3:4)     =(/M_val(1)+Ev-Eov,M_val(2)/)
    !
  enddo
  !

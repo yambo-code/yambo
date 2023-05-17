@@ -36,7 +36,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
  use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
 &                        qindx_X,qindx_B_max,qindx_B_load,&
-&                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng,RIM_W_for_graph
+&                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use LIVE_t,        ONLY:live_timing
@@ -308,18 +308,18 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    BS_max_val_CPU=0._SP
  endif
  !
- if(.not.RIM_W_for_graph) then
 #if defined _PAR_IO
-   call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
-   io_BS_err=io_BS_header(iq,X,ID_head,"full")
-   !
-   call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)
-   io_BS_err=io_BS_PAR_init(iq,ID,"full")
+ !
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID_head,DO_IT=.TRUE.)
+ io_BS_err=io_BS_header(iq,X,ID_head,"full")
+ !
+ call io_control(ACTION=OP_APP,COM=REP,ID=ID,DO_IT=.TRUE.)
+ io_BS_err=io_BS_PAR_init(iq,ID,"full")
+ !
 #else
-   call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
+ call io_control(ACTION=OP_WR,COM=REP,SEC=(/1/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
 #endif
- endif
  !
  ! Timing
  !========
@@ -335,7 +335,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  BS_blk_done=.false.
  !
 #ifdef _PAR_IO
- if (l_BSE_restart.and.(.not.RIM_W_for_graph)) then
+ if (l_BSE_restart) then
    !
    if (m_steps>0) call live_timing("Loading partial kernel",m_steps)
    !
@@ -640,39 +640,33 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
-   if(.not.RIM_W_for_graph) then
-   !
 #if defined _PAR_IO
-     call io_control(ACTION=WR,ID=ID)
-     call io_BS_PAR_block(iq,i_block,ID,"full")
+   call io_control(ACTION=WR,ID=ID)
+   call io_BS_PAR_block(iq,i_block,ID,"full")
 #else
-     call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
-     io_BS_err=io_BS(iq,X,ID)
+   call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
+   io_BS_err=io_BS(iq,X,ID)
 #endif
-   endif
    !
    call live_timing(steps=i_steps)
    !
  enddo block_loop
  !
- if(.not.RIM_W_for_graph) then
- !
 #if defined _PAR_IO
-   if(BS_K_cutoff>0._SP) then
-     call PP_redux_wait(BS_max_val_CPU)
-     BS_max_val=maxval(BS_max_val_CPU)
-     call K_compress(iq,ID_compr)
-     call K_compressed_IO(iq,io_BS_err,"write")
-   endif
-   !
-   call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
-   call io_control(ACTION=WR_CL,COM=REP,ID=ID)
-   call io_BS_PAR_free(ID_head,ID,"full",.true.)
-#else
-   call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
-#endif
+ if(BS_K_cutoff>0._SP) then
+   call PP_redux_wait(BS_max_val_CPU)
+   BS_max_val=maxval(BS_max_val_CPU)
+   call K_compress(iq,ID_compr)
+   call K_compressed_IO(iq,io_BS_err,"write")
  endif
+ !
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID_head)
+ call io_control(ACTION=WR_CL,COM=REP,ID=ID)
+ call io_BS_PAR_free(ID_head,ID,"full",.true.)
+#else
+ call io_control(ACTION=WR_CL,COM=REP,SEC=(/n_BS_blks+2/),ID=ID)
+ io_BS_err=io_BS(iq,X,ID)
+#endif
  !
  if (n_steps>0) call live_timing( )
  !

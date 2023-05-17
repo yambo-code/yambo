@@ -50,7 +50,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_mat_d,X_t
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,nqibz,RIM_W_E,&
-&                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d,RIM_W_for_graph
+&                        RIM_W_is_diagonal,RIM_W_ng,RIM_W,RIM_W_d
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
@@ -191,10 +191,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  endif
  !
  call k_expand(k)
- !
- if(RIM_W_for_graph) then
-   call warning('Removing G=G`=q=0 term in Z due to X_dirac')
- endif
  !
  ! WF distributed & load
  !=======================
@@ -606,15 +602,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  endif
                endif
                !
-               if(ig1==1.and.ig2==1.and.iqbz==1.and.i_w==2.and.RIM_W_for_graph) then
-                 ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
-&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w_2-E_kmq-PPA_E)+&
-&                       (f_kmq+bose_PPA_E)/(conjg(W_i_w_2)-E_kmq+PPA_E))
-               else
-                 ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
-               end if
                !
                dp_dummy_r=dp_dummy_r+real(ctmp)   ! real(ctmp,DP)
                dp_dummy_i=dp_dummy_i+imag(ctmp)
@@ -651,15 +641,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
                  PPA_R=-X_mat(ig1,ig2,X_range(1))/2._SP*PPA_E*isc%gamp(ig1,ig2)
                end if
                !
-               if(ig1==1.and.ig2==1.and.iqbz==1.and.i_w==2.and.RIM_W_for_graph) then
-                 ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
-&                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(1)-E_kmq-PPA_E)+&
-&                       (f_kmq+bose_f(PPA_E))/(conjg(W_(1))-E_kmq+PPA_E))
-               else
-                 ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
+               ctmp = -4._SP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_f(PPA_E))/(W_(i_w)-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_f(PPA_E))/(conjg(W_(i_w))-E_kmq+PPA_E))
-               end if
                !
                dp_dummy=dp_dummy+ctmp
                !

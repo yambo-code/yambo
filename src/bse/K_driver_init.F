@@ -23,11 +23,9 @@
 !
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
- use R_lattice,    ONLY:bz_samp,RIM_W_for_graph
+ use R_lattice,    ONLY:bz_samp
  use electrons,    ONLY:levels,n_sp_pol
  use parser_m,     ONLY:parser
- use com,          ONLY:msg
- use frequency,    ONLY:Mauri_damp
  use parallel_m,   ONLY:PARALLEL_default_mode
  use stderr,       ONLY:STRING_match,STRING_same
  use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
@@ -202,12 +200,5 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  ! Double Grid support
  !=====================
  BSS_uses_DbGd = (Ken%FG%nb>=BS_bands(2)).and.STRING_match(BSS_mode,'i')
- !
- call parser('RIM_W_graph',RIM_W_for_graph)
- call msg('r','RIM_W_graph', RIM_W_for_graph)
- !
- Mauri_damp = .false.
- call parser('Mauri_damp',Mauri_damp)
- if(Mauri_damp) call warning("Using damping of Mauri paper")
  !
 end subroutine

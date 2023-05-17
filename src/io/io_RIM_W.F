@@ -89,9 +89,6 @@ integer function io_RIM_W(ID,mode,Xw)
      if(l_PPA_E) YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    endif
    !
-   !call msg("r","shape(RIM_W)", shape(RIM_W))
-   !call msg("r","shape(RIM_W)_2", (/Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng/) )
-   !
    call io_bulk(ID,VAR="RIM_W",VAR_SZ=(/2,Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng/))
    call io_bulk(ID,C4=RIM_W)
    !

@@ -26,7 +26,7 @@ subroutine ELPH_sngl_db(k,E,q)
  use units,               ONLY:HA2EV
  use pars,                ONLY:schlen,SP
  use stderr,              ONLY:intc
- use interfaces,          ONLY:ELPH_alloc 
+ use ELPH_intfcs,         ONLY:ELPH_alloc
  use ELPH,                ONLY:GKKP,elph_nb,ph_modes,elph_nQ,elph_nk_bz
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_PH_kpt,DB_nq,DB_q_map,DB_PH_qpt,&
 &                              DB_ph_modes,DB_nb,DB_nq         

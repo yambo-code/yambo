@@ -28,7 +28,7 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  use pars,                  ONLY:DP,SP,cZERO
  use stderr,                ONLY:intc
  use com,                   ONLY:msg
- use interfaces,            ONLY:ELPH_alloc
+ use ELPH_intfcs,           ONLY:ELPH_alloc
  use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt,k_sstar,q_pt,q_sstar
  use D_lattice,             ONLY:n_atoms
  use ELPH,                  ONLY:ph_modes,elph_nb,elph_bands,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&

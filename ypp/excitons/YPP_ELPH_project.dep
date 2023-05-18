@@ -1,3 +1,5 @@
+ excitons_bands.o
  excitons_driver.o
  excitons_interpolate_setup.o
+ excitons_ph_ass_dos.o
 

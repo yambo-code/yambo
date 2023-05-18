@@ -1,3 +1,6 @@
+ Berry_polarization_EQ.o
  DIPOLE_build_covariants.o
  DIPOLE_driver.o
+ Ionic_polarization.o
+ POLARIZATION_output.o
 

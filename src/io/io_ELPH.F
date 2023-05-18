@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _ELPH
 integer function io_ELPH(ID,what)
  !
  use pars,           ONLY:schlen
@@ -32,7 +31,7 @@ integer function io_ELPH(ID,what)
 &                         l_GKKP_hosts_DW,PH_pol_vector,&
 &                         GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
- use interfaces,     ONLY:ELPH_alloc
+ use ELPH_intfcs,    ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing
@@ -160,4 +159,3 @@ integer function io_ELPH(ID,what)
  call timing("io_ELPH",OPR="STOP")
  !
 end function
-#endif

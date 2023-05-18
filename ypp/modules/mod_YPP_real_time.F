@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _YPP_RT || YPP_NL
 module YPP_real_time
  !
  use units,    ONLY:HA2EV
@@ -233,4 +232,3 @@ module YPP_real_time
    end subroutine
    !
 end module YPP_real_time
-#endif

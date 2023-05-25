@@ -17,7 +17,7 @@ include ../config/external_libs_defs.mk
 #
 # Flags
 #
-CONFFLAGS=--prefix=$(LIBPATH) \
+CONFFLAGS=--prefix=$(LIBPATH) --libdir=$(LIBPATH)/lib \
           --enable-fortran --disable-shared --enable-static --without-pic --disable-cxx $(hdf5_opt) \
           CC="$(cc)" CPP="$(cpp)"  CFLAGS="$(cflags)" FC="$(fc)" --enable-build-mode=$(hdf5_mode) CPPFLAGS="$(netcdf_aux)"
 #

@@ -17,7 +17,7 @@ include ../config/external_libs_defs.mk
 #
 # Flags
 #
-CONFFLAGS=--prefix=$(LIBPATH) \
+CONFFLAGS=--prefix=$(LIBPATH) --libdir=$(LIBPATH)/lib \
                 CC="$(cc)" \
 	        CFLAGS="$(cflags)" \
 	        FC="$(fc)" \

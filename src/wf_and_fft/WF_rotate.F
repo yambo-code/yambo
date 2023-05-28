@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC
 subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  !
  ! <r|n'>= <m|n'><r|m>
@@ -81,4 +80,3 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  enddo
  !
 end subroutine
-#endif

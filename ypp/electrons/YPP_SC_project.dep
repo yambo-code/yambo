@@ -1,4 +1,7 @@
  electrons_WFs.o
+ electrons_WFs_proj_interpolate.o
+ electrons_angular_momentum.o
  electrons_bands.o
  electrons_driver.o
+ electrons_position.o
 

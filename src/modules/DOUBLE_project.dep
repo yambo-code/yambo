@@ -19,7 +19,6 @@
  mod_NL_interfaces.o
  mod_OUTPUT.o
  mod_Overlaps.o
- mod_PHEL.o
  mod_PHOTOLUM.o
  mod_POL_FIT.o
  mod_QP.o

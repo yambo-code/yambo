@@ -26,7 +26,7 @@ else ifneq (,$(findstring ypp_rt,$(MAKECMDGOALS)))
  YPP_SRC_LIBS=$(YPPRT_LIBS)
  YPP_EXE_LIBS=$(YPPRT_LIBS_LD)
 else ifneq (,$(findstring ypp_ph,$(MAKECMDGOALS)))
- Y_PRECMP=-D_ELPH
+ Y_PRECMP=-D_ELPH -D_PHEL
  YPP_PRECMP=-D_YPP_ELPH
  YPP_SRC_LIBS=$(YPPPH_LIBS)
  YPP_EXE_LIBS=$(YPPPH_LIBS_LD)

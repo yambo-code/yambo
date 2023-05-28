@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
 subroutine io_RT_components_G_lesser(ID,T_size)
  !
  use pars,           ONLY:SP,schlen
@@ -180,4 +179,3 @@ subroutine io_RT_components_G_lesser(ID,T_size)
  if (G_IO_steps>=10) call netcdf_call(nf90_sync(io_unit(ID)),ID)
  !
 end subroutine io_RT_components_G_lesser
-#endif

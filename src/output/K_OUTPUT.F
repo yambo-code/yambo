@@ -49,7 +49,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3)
+ complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
  ! 
@@ -94,7 +94,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    return
  endif
  !
- if (.not.STRING_match(WHAT,"dump")) return 
+ if (.not.STRING_match(WHAT,"dump")) return
+ !
+ fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
  !
  ! ABSORPTION
  !------------
@@ -126,8 +128,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)* fac
+   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
@@ -197,7 +199,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("beta")) then
    spectra=0._SP
-   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  ! 

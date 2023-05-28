@@ -21,8 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _ELPH
-!
 subroutine QP_load_GFs(bands,qp,E)
  !
  ! Using qp%GreenF/qp%GreenF_W I define here the Green Functions
@@ -55,5 +53,3 @@ subroutine QP_load_GFs(bands,qp,E)
  enddo
  !
 end subroutine
-!
-#endif

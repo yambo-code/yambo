@@ -40,8 +40,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  integer,            intent(in) :: DOS_bands(2)
  real(SP),          intent(out) :: dos_value(n_spin)
  logical,  optional, intent(in) :: USE_Eo,USE_W,USE_the_DbGd,USE_occupations
- real(SP), optional, intent(in) :: WF_fac(:,:,:)
- real(SP), optional, intent(in) :: PDOS_fac(:,:,:)
+ real(SP), pointer, optional, intent(in) :: WF_fac(:,:,:)
+ real(SP), pointer, optional, intent(in) :: PDOS_fac(:,:,:)
  !
  ! Work space
  !
@@ -65,8 +65,11 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
  USE_occ=.FALSE.
  if (present(USE_occupations)) USE_occ=USE_occupations
  !
- USE_WFs =present(WF_fac)
- USE_PDOS=present(PDOS_fac)
+ USE_WFs =.FALSE.
+ if(present(WF_fac)) USE_WFs = associated(WF_fac)
+ !
+ USE_PDOS =.FALSE.
+ if(present(PDOS_fac)) USE_PDOS = associated(PDOS_fac)
  !
  DOS_broadening_=DOS_broadening
  !
@@ -109,8 +112,8 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        if (n_spinor==2) then
          if (USE_WFs) then
-           proj_fac(1)=proj_fac(1)*WF_fac(ib-DOS_bands(1)+1,ik,1)
-           proj_fac(2)=proj_fac(2)*WF_fac(ib-DOS_bands(1)+1,ik,2)
+           proj_fac(1)=proj_fac(1)*WF_fac(ib,ik,1)
+           proj_fac(2)=proj_fac(2)*WF_fac(ib,ik,2)
          else
            proj_fac   =proj_fac*0.5_SP
          endif
@@ -118,7 +121,7 @@ subroutine el_density_of_states(Xk,Xen,dos_E,DOS_broadening,DOS_bands,dos_value,
        !
        ! Project on PSOC coefficients
        !
-       if (USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib-DOS_bands(1)+1,ik,i_sp_pol)
+       if (USE_PDOS) proj_fac=proj_fac*PDOS_fac(ib,ik,i_sp_pol)
        !
        ! Sum-up
        !

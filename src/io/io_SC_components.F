@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC
 integer function io_SC_components(what,E_sc,ID)
  !
  ! what can be E WF V OBSERVABLES (J,P,D...) G
@@ -240,4 +239,3 @@ integer function io_SC_components(what,E_sc,ID)
  call timing('io_SC_components',OPR='stop')
  !
 end function
-#endif

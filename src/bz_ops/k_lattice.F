@@ -37,7 +37,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
 &                         bz_samp,g_vec,ng_in_shell,Xk_grid_new_mapping
  use zeros,          ONLY:k_rlu_zero
  use parser_m,       ONLY:parser
- use drivers,        ONLY:l_RIM_W
+ use drivers,        ONLY:l_rim_w
  !
 #include<memory.h>
  !
@@ -88,8 +88,6 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  !
  N_g_vecs=ng_in_shell(G_shell)
  !
- call parser('RIM_W',l_RIM_W)
- !
  ! Andrea 31/03/2009. Bug pointed out by a user.
  !
  ! writing this routine I assumed that a subgroup of the
@@ -133,7 +131,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    !
    ! In the case of RIM-W, I need a grid which is the smallest in the rlu case
    !
-   if(.not.l_RIM_W) then
+   if(.not.l_rim_w) then
      do i2=1,2
        !
        if (i2==1) then
@@ -159,7 +157,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
  YAMBO_FREE(idist)
  !
  k_grid_dim=0
- k_grid_b=0.
+ k_grid_b=0._SP
  do i1=1,N_ext_K_pts
    v0=extended_k_points(order(i1),:)
    !
@@ -207,7 +205,7 @@ integer function k_lattice(k,Xk,G_shell,be_verbose)
    !
    i3=0
    do i1=1,3
-     v1(1)=0.
+     v1(1)=0._SP
      do i2=1,k_grid_dim
        v1(1)=v1(1)+abs(proj(b(i1,:),k_grid_b(i2,:)))
      enddo

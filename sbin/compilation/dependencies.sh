@@ -87,19 +87,21 @@ do
   cd $BASE
   continue 
  fi
-# Modules. Step II: create a local list of modules dependencies 
-#===============================================================
-# replace module names with file names
-# by applying the file of substitution patterns just created
-sed -f $compdir/config/stamps_and_lists/modules.rules modulesdep.list |
-awk '{if ($1 != $3) print}' |         # remove self dependencies
-sort  | uniq |                        # remove duplicates
-sed 's/@.*@//' >> $compdir/config/stamps_and_lists/global_modules_dep.list
-sed -f modules.rules modulesdep.list |
-awk '{if ($1 != $3) print}' |         # remove self dependencies
-sort  | uniq |                        # remove duplicates
-sed 's/@.*@//' > local_modules.dep
-cd $BASE
+ # Modules. Step II: create a local list of modules dependencies 
+ #===============================================================
+ # replace module names with file names
+ # by applying the file of substitution patterns just created
+ sed -f $compdir/config/stamps_and_lists/modules.rules modulesdep.list |
+ awk '{if ($1 != $3) print}' |         # remove self dependencies
+ sort  | uniq |                        # remove duplicates
+ sed 's/@.*@//' >> $compdir/config/stamps_and_lists/global_modules_dep.list
+ if test `cat modules.rules | wc -l` -gt 0; then
+  sed -f modules.rules modulesdep.list |
+  awk '{if ($1 != $3) print}' |         # remove self dependencies
+  sort  | uniq |                        # remove duplicates
+  sed 's/@.*@//' > local_modules.dep
+ fi
+ cd $BASE
 done
 echo
 

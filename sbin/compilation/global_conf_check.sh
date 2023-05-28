@@ -59,8 +59,8 @@ fi
 #
 # Check for missing/new precomp flags
 #
-missing=`comm -23 <(tr ' ' $'\n' <<< $lock_string | sort) <(tr ' ' $'\n' <<< $flag_string | sort)`
-new=`comm -23 <(tr ' ' $'\n' <<< $flag_string | sort) <(tr ' ' $'\n' <<< $lock_string | sort)`
+missing=`comm -23 <(tr ' ' $'\n' <<< $lock_string | sort| uniq) <(tr ' ' $'\n' <<< $flag_string | sort| uniq)`
+new=`comm -23 <(tr ' ' $'\n' <<< $flag_string | sort| uniq) <(tr ' ' $'\n' <<< $lock_string | sort| uniq)`
 #
 for lock in $missing
 do

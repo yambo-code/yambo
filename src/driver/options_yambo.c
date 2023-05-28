@@ -39,7 +39,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].section=desc;
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="GW approximation";
- options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(c)HOSEX/(r)eal-axis";
+ options[*i_opt].long_desc[i_desc]="<string>=(p)PA/(m)PA/(c)HOSEX/(r)eal-axis";
 #if defined _ELPH
  i_desc=i_desc+1;
  options[*i_opt].long_desc[i_desc]="<string>=fan";
@@ -90,6 +90,14 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="rim_cut";
  options[*i_opt].section=desc;
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Screened coulomb potential";
+ options[*i_opt].long_opt="rw";
+ options[*i_opt].short_opt='w';
+ options[*i_opt].bin="yambo";
+ options[*i_opt].yambo_string="rim_w";
+ options[*i_opt].section=desc;
+
 
  desc="Response Functions";
  *i_opt=*i_opt+1;
@@ -109,7 +117,7 @@ void options_yambo(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="yambo";
  options[*i_opt].yambo_string="screen";
  options[*i_opt].section=desc;
- options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/(d)ynamical dielectric matrix";
+ options[*i_opt].long_desc[0]="<string>=(s)static/(p)PA/m(PA)/(d)ynamical dielectric matrix";
  options[*i_opt].long_desc[1]="<string>=(X) dynamical response matrix";
  options[*i_opt].char_var=1;
  *i_opt=*i_opt+1;
@@ -133,8 +141,16 @@ void options_yambo(struct options_struct options[],int *i_opt)
  desc="Bethe-Salpeter Equation";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
- options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i/t";
- options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization/(i)nversion";
+#if defined _SLEPC && !defined _NL
+ options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i";
+#else
+ options[*i_opt].long_desc[0]="<string>=h/d/(p/f)i";
+#endif
+ options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization";
+ options[*i_opt].long_desc[2]="(pi) perturbative inversion/ (fi) full inversion";
+#if defined _SLEPC && !defined _NL
+ options[*i_opt].long_desc[2]="(s)lepc partial diagonalization";
+#endif
  options[*i_opt].long_opt="Ksolver";
  options[*i_opt].short_opt='y';
  options[*i_opt].bin="yambo";

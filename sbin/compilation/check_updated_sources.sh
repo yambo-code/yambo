@@ -22,12 +22,12 @@
 # Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 # MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
-if test -f $compdir/config/stamps_and_lists/$goal.stamp; then
+if test -f $compdir/config/stamps_and_lists/${goal}.stamp; then
  candidates=`find $srcdir/$dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${goal}.stamp`
 fi
-if test -f $compdir/config/stamps_and_lists/$target.stamp; then
+if test -f $compdir/config/stamps_and_lists/${target}.stamp; then
  candidates=`find $srcdir/$dir -type f -name "*.F" -newer $compdir/config/stamps_and_lists/${target}.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${target}.stamp`
@@ -37,11 +37,13 @@ if test -f $compdir/config/stamps_and_lists/${target}.a.stamp; then
  candidates+=`find $srcdir/$dir -type f -name "*.f" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
  candidates+=`find $srcdir/$dir -type f -name "*.c" -newer $compdir/config/stamps_and_lists/${target}.a.stamp`
 fi
-for file in $candidates
+if [ ! -z "$candidates" ]; then
+ source ./sbin/compilation/verbosity.sh "check_updated_sources.sh: there are sources to check"
+fi
+for candidate in $candidates
 do
-  if [ "$VERB" == 1 ] ; then echo "$file updated and to be recompiled"; fi
-  file_name=`basename $file`
-  obj=`echo $file_name | sed "s/\.F/\.o/" |  sed "s/\.c/\.o/" |  sed "s/\.f/\.o/"`
+  source ./sbin/compilation/verbosity.sh "check_updated_sources.sh: search for $candidate childs"
+  source ./sbin/compilation/name_me.sh $candidate "no_search"
   DIR_is_to_recompile=1
   source ./sbin/compilation/check_object_childs.sh "sources"
 done

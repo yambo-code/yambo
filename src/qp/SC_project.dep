@@ -1,4 +1,5 @@
  QP_driver.o
+ QP_load_SC_xc.o
  QP_ppa_cohsex.o
  XCo_Hartree_Fock.o
  XCo_driver.o

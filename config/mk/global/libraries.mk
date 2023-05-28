@@ -54,8 +54,15 @@ PJ_RTLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                real_time_hamiltonian real_time_propagation real_time_lifetimes \
                real_time_initialize ph-el real_time_drivers
 
-PJ_NLLIBS    = $(PJ_RTLIBS) nloptics
-PJ_NLLIBS_LD = $(PJ_RTLIBS_LD) nloptics
+
+PJ_NLLIBS    = $(BASIC_LIBS) interpolate qp_control setup \
+               tddft dipoles pol_function qp acfdt bse collisions hamiltonian \
+               real_time_control real_time_hamiltonian real_time_propagation \
+               real_time_initialize real_time_drivers nloptics
+PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
+               tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
+               real_time_hamiltonian real_time_propagation \
+               real_time_initialize real_time_drivers nloptics
 #
 # YAMBO sources needed by Interfaces
 #
@@ -86,6 +93,6 @@ YPPRT_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setu
 YPPRT_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
                      dipoles pol_function el-ph qp bse hamiltonian collisions
 YPPNL_MAIN_LIBS    = $(BASIC_LIBS) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function el-ph qp bse collisions hamiltonian nloptics 
+                     dipoles pol_function qp bse collisions hamiltonian nloptics
 YPPNL_MAIN_LIBS_LD = $(BASIC_LIBS_LD) real_time_control interpolate qp_control setup interface \
-                     dipoles pol_function el-ph qp bse hamiltonian collisions nloptics 
+                     dipoles pol_function qp bse hamiltonian collisions nloptics

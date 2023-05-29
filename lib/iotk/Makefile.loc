@@ -17,7 +17,8 @@ include ../config/external_libs_defs.mk
 #
 # redefinitions
 #
-CONFFLAGS=--prefix=$(LIBPATH) IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
+CONFFLAGS=--prefix=$(LIBPATH) --libdir=$(LIBPATH)/lib \
+          IOTK_SAFEST="yes" IOTK_MAX_RANK=4 MAKE=$(make)
 #
 # MAIN target
 #

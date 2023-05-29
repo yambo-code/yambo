@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM FP
@@ -34,7 +34,7 @@ subroutine ELPH_databases_load(GKKP_sq,E,k,q,n_bands,q_range,K_mode,SCATT_mode)
  use IO_m,           ONLY:OP_RD_CL
  use ELPH,           ONLY:PH_freqs_sq,GKKP,ph_modes,MAX_gkkp,Q_io_map,GKKP_me,K_io_map,&
 &                         l_GKKP_DB_exists,l_GKKP_expanded_DB_exists,elph_nQ,GKKP_bare
- use interfaces,     ONLY:ELPH_alloc
+ use ELPH_intfcs,    ONLY:ELPH_alloc
  use parallel_int,   ONLY:PP_redux_wait
  use LIVE_t,         ONLY:live_timing
  use parallel_m,     ONLY:PAR_Q_bz_index,PAR_IND_Q_bz,PAR_nQ_bz,PAR_Xk_nibz,PAR_Xk_ibz_index,PAR_IND_Xk_ibz,&

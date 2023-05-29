@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -27,7 +27,7 @@ subroutine ELPH_databases(k,E,q)
  use pars,                ONLY:schlen,SP
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
- use interfaces,          ONLY:ELPH_alloc
+ use ELPH_intfcs,         ONLY:ELPH_alloc
  use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
 &                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
  use com,                 ONLY:msg

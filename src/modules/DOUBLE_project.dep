@@ -8,12 +8,14 @@
  mod_DIPOLES.o
  mod_D_lattice.o
  mod_ELPH.o
+ mod_ELPH_intfcs.o
  mod_FFT.o
  mod_H_interfaces.o
  mod_IO.o
  mod_IO_interfaces.o
  mod_LIVE_t.o
  mod_MAGNONS.o
+ mod_MPA.o
  mod_NL_interfaces.o
  mod_OUTPUT.o
  mod_Overlaps.o

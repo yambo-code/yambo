@@ -1,5 +1,5 @@
 ! 
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): DS
@@ -40,6 +40,9 @@ subroutine electrons_spin_and_magn_interpolate(what,SEED_k,OUT_k,BANDS_range,ID_
  !
  real(SP) :: spin_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,n_spinor),&
 &            magn_fac(BANDS_range(1):BANDS_range(2),SEED_k%nibz,3)
+ !
+ ID_spin=0
+ ID_magn=0
  !
  ! SPIN
  !------

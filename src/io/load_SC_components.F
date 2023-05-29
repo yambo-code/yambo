@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM MG
@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC
 subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
 &                             xc_functional,perturbation)
  !
@@ -138,4 +137,3 @@ subroutine load_SC_components(what,E,COM_,MODE_,ik,i_sp_pol,n_bands,kind,&
  endif
  !
 end subroutine
-#endif

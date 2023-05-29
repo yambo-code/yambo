@@ -38,7 +38,7 @@ include config/mk/global/targets.mk
 # Libraries (ordered for compiling & linking)
 include config/mk/global/libraries.mk
 
-.PHONY: interfaces ypp
+.PHONY: interfaces ypp 
 
 nothing: 
 	@$(call yambo_help,"header")
@@ -64,6 +64,8 @@ nl-project:
 	@for target in $(NL_PROJ)  ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 rtext-project:
 	@for target in $(RTE_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
+mod-project:
+	@for target in $(MOD_PROJ) ; do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 kerr-project:
 	@for target in $(KERR_PROJ); do $(MAKE) $(MAKEFLAGS) $$target; if test ! -f "$(bindir)/$$target"; then echo "$$target build failed"; break;fi ; done
 main:
@@ -114,7 +116,7 @@ libs: ext-libs int-libs
 # Yambo 
 include config/mk/global/actions/compile_yambo.mk
 #
-# Interfaces #
+# Interfaces 
 include config/mk/global/actions/compile_interfaces.mk
 #
 # YPP 
@@ -127,7 +129,7 @@ include config/mk/global/actions/clean.mk
 # Functions
 #===========
 #
-# Global Configuration Check (DOUBLE, FFTW ...)
+# Global Configuration Check 
 include config/mk/global/functions/global_check.mk
 #
 # Libraries download/clone/checkout

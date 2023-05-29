@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -275,7 +275,7 @@ subroutine k_grids(en,k,Xk,q)
  !
  if(l_regular_grid) then
    if(product(INTERP_grid)<=0) call error("Nk_x Nk_y Nk_z must be positive ")
-   call INTERPOLATION_create_the_grid(USER_k,'i',INTERP_grid)
+   call INTERPOLATION_grid(USER_k,'i',INTERP_grid)
    call k_ibz2bz(USER_k,'a',.false.)
    USER_k%ptbz(:,:)=USER_k%ptbz(:,:)-nint(USER_k%ptbz(:,:)) ! Bring in the BZ
    USER_k%pt(:,:)  =USER_k%pt(:,:)  -nint(USER_k%pt(:,:)) ! Bring in the BZ

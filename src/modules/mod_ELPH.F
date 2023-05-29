@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -64,6 +64,7 @@ module ELPH
  integer              :: ID_E_kpq=1
  integer              :: ID_E_kpq_obj=1
  real(SP)             :: E_kpq_sh_fact=20.0_SP
+ real(SP)             :: Efermi_DbGd=0._SP
  !
  type E_kpq_fine_grid
    integer         :: nk

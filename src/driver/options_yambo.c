@@ -1,5 +1,5 @@
 /*
-         Copyright (C) 2000-2022 the YAMBO team
+         Copyright (C) 2000-2023 the YAMBO team
                http://www.yambo-code.org
  
   Authors (see AUTHORS file for details): AM
@@ -141,8 +141,16 @@ void options_yambo(struct options_struct options[],int *i_opt)
  desc="Bethe-Salpeter Equation";
  *i_opt=*i_opt+1;
  options[*i_opt].short_desc="BSE solver";
- options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i/t";
- options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization/(i)nversion";
+#if defined _SLEPC && !defined _NL
+ options[*i_opt].long_desc[0]="<string>=h/d/s/(p/f)i";
+#else
+ options[*i_opt].long_desc[0]="<string>=h/d/(p/f)i";
+#endif
+ options[*i_opt].long_desc[1]="(h)aydock/(d)iagonalization";
+ options[*i_opt].long_desc[2]="(pi) perturbative inversion/ (fi) full inversion";
+#if defined _SLEPC && !defined _NL
+ options[*i_opt].long_desc[2]="(s)lepc partial diagonalization";
+#endif
  options[*i_opt].long_opt="Ksolver";
  options[*i_opt].short_opt='y';
  options[*i_opt].bin="yambo";

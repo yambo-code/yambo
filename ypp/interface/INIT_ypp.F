@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -435,6 +435,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_q_grid    = runlevel_is_on('Q_grid')
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_random_grid  = runlevel_is_on('Random_Grid')
+ l_regular_grid = runlevel_is_on('Regular_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
@@ -711,7 +712,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
-     call initactivate(1,"PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
+     call initactivate(1,"ElPhModes PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
      call initactivate(2,"BoseTemp")
    endif
 #endif

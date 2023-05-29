@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _YPP_ELPH || defined _YPP_RT
 module YPP_ELPH
  !
  use pars,                ONLY:SP,schlen,DP
@@ -151,4 +150,3 @@ module YPP_ELPH
    end subroutine
    !
 end module YPP_ELPH
-#endif

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -40,6 +40,7 @@ module R_lattice
  logical           :: Xk_grid_is_uniform
  logical           :: Xk_grid_new_mapping
  character(schlen) :: k_GRIDS_string="X S B C"
+ integer           :: k_GRIDS_vector(4)=(/1,1,1,1/)
  !
  ! Q/K-sampling
  !
@@ -127,6 +128,7 @@ module R_lattice
  integer, allocatable :: qindx_S(:,:,:)
  integer, allocatable :: qindx_C(:,:,:)
  integer  :: qindx_B_max
+ integer  :: qindx_S_max_Go
  !
  ! SYMs
  !

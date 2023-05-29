@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -80,6 +80,7 @@ module com
  logical            :: write_to_of
  logical            :: write_to_report
  logical            :: fat_log
+ logical            :: exp_user
  !
  interface
    !

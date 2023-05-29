@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): CA
@@ -221,7 +221,7 @@ subroutine ELPH_double_grid(k,E,q)
    !
  endif
  !
- if(any(E%nbm/=E%nbf)) call error("ELPH_double_grid: This code for the moment works only for semiconductors/insulators")
+ if(any(E%nbm/=E%nbf)) call warning("Metallic system")
  !
  ! Final I/O
  !===========

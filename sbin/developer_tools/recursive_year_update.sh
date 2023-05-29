@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -58,7 +58,7 @@ cat << EOF > php.awk
 }
 EOF
 #
-file_list=`find .  -type f  | grep -v bz2 | grep -E '\.F|\.pm|\.pl|\.php|\.m4|\.h|\.in|\.c|\.sh' `
+file_list=`find .  -type f  | grep -v bz2 | grep -E '\.F|\.pm|\.pl|\.php|\.m4|\.h|\.in|\.c|\.sh' | grep -v '\.swp' | grep -v 'gsl_complex_math.h' | grep -v 'PARSER_math.c' `
 for file in $file_list; do
  php=`echo $file| grep -E '\.php' |wc -l`
  sh=`echo $file| grep -E '\.sh' |wc -l`

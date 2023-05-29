@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -144,8 +144,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! COLOUMB DRIVER
  !================
+ ! In non-linear optics we do not need bare_qpg
+ ! it will be loaded only if required
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !=============================

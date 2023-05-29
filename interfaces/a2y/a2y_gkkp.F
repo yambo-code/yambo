@@ -28,10 +28,10 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  use pars,                  ONLY:DP,SP,cZERO
  use stderr,                ONLY:intc
  use com,                   ONLY:msg
- use interfaces,            ONLY:ELPH_alloc
+ use ELPH_intfcs,           ONLY:ELPH_alloc
  use R_lattice,             ONLY:nkibz,nkbz,nqibz,nqbz,k_pt,k_sstar,q_pt,q_sstar
  use D_lattice,             ONLY:n_atoms
- use ELPH,                  ONLY:ph_modes,elph_nb,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
+ use ELPH,                  ONLY:ph_modes,elph_nb,elph_bands,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW,&
 &                                elph_nQ,elph_nk_bz,elph_grids_are_expanded,elph_use_q_grid,&
 &                                PH_qpt,PH_kpt_bz,GKKP,PH_freqs_sq
  !
@@ -67,7 +67,9 @@ subroutine a2y_gkkp_header(i_sp_pol,ncid,grpid)
  elph_nk_bz = netcdf_get_dimension(grpid, "glob_nk")
  elph_nQ    = netcdf_get_dimension(grpid, "glob_nq")
  !
- call msg('s','ELPH dims',(/elph_nb,ph_modes,elph_nk_bz,elph_nQ/))
+ elph_bands=(/1,elph_nb/)
+ !
+ call msg('s','ELPH dims',(/elph_bands,ph_modes,elph_nk_bz,elph_nQ/))
  !
  call ELPH_alloc("PHONONS dV LEVELS",GKKP=GKKP)
  !
@@ -282,12 +284,20 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  !
  do ik=1,elph_nk_bz
    do i_modes=1,ph_modes
-     ! Invert the band indexes and do the complex conjugate
+     ! Here we should invert the band indexes and do the complex conjugate
      ! See eq.(5) of the notes of Fulvio
+     ! This operation however is already performed inside the subrtouine
+     ! src/el-ph/ELPH_databases_load.F
+     !
+     ! See comment there, reported also here.
+     ! There has been a key error in the definition of the el-ph SE of the BKE (Eq. 30_9_11.18)
+     ! where the band indexes have been exchanged. Instead of doing a global change of the notes
+     ! and of the code I decided, here, to exchange the indexes:
+     !
      do i_n=1,elph_nb
        do i_m=1,elph_nb
-         GKKP%dVc(i_modes,i_n,i_m,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
-         &                                   -gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
+         GKKP%dVc(i_modes,i_m,i_n,ik,1)=cmplx(gstore_abinit(1,i_m,i_n,i_modes,ik,1),&
+         &                                    gstore_abinit(2,i_m,i_n,i_modes,ik,1),kind=SP)
        enddo
      enddo
    enddo
@@ -303,6 +313,7 @@ subroutine a2y_gkkp(iq,i_sp_pol,ncid,grpid)
  isize(1:5)=(/2,3,n_atoms,ph_modes,1/)
  !
  varid = netcdf_inquire_varid(ncid, "pheigvec_cart_ibz")
+ !varid = netcdf_inquire_varid(ncid, "phdispl_cart_ibz")
  netcdf_error = nf90_get_var(ncid, varid, pheigvec_cart_ibz, ipos(1:5), isize(1:5))
  !
  do xyz=1,3

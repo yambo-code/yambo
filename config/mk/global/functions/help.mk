@@ -17,6 +17,7 @@ define yambo_help
    $(ECHO) -n " [rt-project]    "; for target in $(RT_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [nl-project]    "; for target in $(NL_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) -n " [rtext-project] "; for target in $(RTE_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO) -n " [mod-project]   "; for target in $(MOD_PROJ); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** GPL components *** ";\
    $(ECHO) -n " [gpl]           "; for target in $(GPL); do $(ECHO) -n "$$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Libraries ***"; \
@@ -32,7 +33,9 @@ define yambo_help
    $(ECHO)  " make clean what=<MODULE> \n";\
    $(ECHO)  " make clean               =  remove all modules except int-libs, ext-libs, Ydriver, dependencies and configure files.";\
    $(ECHO)  " make clean_all           =  remove all modules. Complete cleaning.";\
-   $(ECHO)  " make reset               =  clean  + int-libs.";\
+   $(ECHO)  " make reset               =  clean + int-libs.";\
+   $(ECHO)  " make gitclean            =  clean all git untracked files.";\
+   $(ECHO)  " make check               =  list all git untracked files and empty directories.";\
    $(ECHO);\
   fi
   if [ "$(1)" = "intro" ] ; then \

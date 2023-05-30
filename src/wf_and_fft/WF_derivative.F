@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC || defined _RT
 subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_derivative,use_live_timing)
  !
  !  Remember wf_t = -i \der_t wf   with t=x,y,z
@@ -138,4 +137,3 @@ subroutine WF_derivative(derivative_bands,derivative_kpt,derivative_sppol,do_der
  YAMBO_FREE(wf_der)
  !
 end subroutine
-#endif

@@ -1,3 +1,5 @@
+ QED_Radiative_Lifetimes.o
+ QED_Sigma_c.o
  QP_descriptions.o
  QP_driver.o
  QP_newton.o

@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
 subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_time,TYP)
  !
  use pars,           ONLY:IP,SP,schlen,IP_YIO
@@ -98,4 +97,3 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  if (write_is_on(ID)) TYP%first_IO(2)=.FALSE.
  !
 end subroutine io_RT_components_TIME_points
-#endif

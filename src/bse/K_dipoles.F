@@ -95,7 +95,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
    geometry_ok=abs(dot_product(BSS_E_dir,BSS_Q_dir))<1.E-5_SP
    !
    if ( l_BS_trace .and. .not. geometry_ok ) then
-     call warning(" Propagation direction not ortogonal to field direction. Setting z for field propagation and x-y for direction")
+     call warning(" Propagation direction not ortogonal to field polarization. Setting z for propagation and x-y for polarization")
      BS_field_direction(:,1)=(/1._SP,0._SP,0._SP/)
      BS_field_direction(:,2)=(/0._SP,1._SP,0._SP/)
      BS_field_direction(:,3)=(/0._SP,0._SP,1._SP/)

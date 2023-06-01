@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _SC
 integer function variables_SC(ID,what)
  !
  use units,          ONLY:AU2Tesla,DEG2RAD,AU2VMm1
@@ -183,4 +182,3 @@ integer function variables_SC(ID,what)
  if (variables_SC/=0) return
  !
 end function
-#endif

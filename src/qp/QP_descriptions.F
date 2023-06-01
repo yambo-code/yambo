@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -233,7 +233,7 @@ subroutine QP_descriptions(qp,X,Xw,Update)
  ! Force all desc components to be checked at the I/O time
  !
  do id=1,qp%desc%n
-   qp%desc%ops(1,id)="=="
+   qp%desc%ops(1:qp%desc%size(id),id)="=="
    qp%desc%check(id)=.TRUE.
  enddo
  !

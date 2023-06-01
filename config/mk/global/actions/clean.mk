@@ -11,6 +11,5 @@ reset:
 	@$(call clean_driver,"")
 	@$(call clean_driver,"int-libs")
 check: 
-	@FILES=`git ls-files --others|grep -v .tar.gz|grep -v .sw`; for target in $$FILES ; do echo $$target; done
+	@FILES=`git ls-files --others|grep -v .tar.gz|grep -v .swp`; for target in $$FILES ; do echo $$target; done
 	@find . -empty -type d
-

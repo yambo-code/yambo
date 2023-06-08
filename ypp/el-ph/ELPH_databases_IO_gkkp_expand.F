@@ -25,7 +25,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  !
  use pars,                ONLY:SP
  use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
- use ELPH_intfcs,         ONLY:ELPH_alloc
+ use interfaces,          ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
  use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB

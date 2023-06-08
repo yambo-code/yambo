@@ -30,7 +30,7 @@ integer function io_ELPH(ID,what)
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
 &                         PH_pol_vector,GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
- use ELPH_intfcs,    ONLY:ELPH_alloc
+ use interfaces,     ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz
  use D_lattice,      ONLY:n_atoms
  use timing_m,       ONLY:timing

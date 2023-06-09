@@ -125,6 +125,10 @@ module IO_m
  complex(SP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_real,  nf90_fill_real)
 #endif
  !
+ ! Netcdf chunking
+ ! For SP, we chunk in 2MB and double 4MB. These are in general small chunk sizes. 
+ integer, parameter :: YAMBO_DEF_CHUNK = 512
+ !
  ! Units
  !
  integer :: io_action(max_io_units)

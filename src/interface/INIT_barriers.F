@@ -94,7 +94,7 @@ subroutine INIT_barriers()
  endif
  !
  if (l_nl_optics) then
-   on_runlevels='chi tddft bse ss ppa em1s dipoles em1d nloptics'
+   on_runlevels='dipoles nloptics rim_cut'
    call switch_off_runlevel('all',on_name=trim(on_runlevels)//' '//trim(always_on_runlevels))
    goto 1
  endif

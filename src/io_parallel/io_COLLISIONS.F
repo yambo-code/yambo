@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -21,10 +21,9 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT || defined _SC || defined _QED
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  !
- use pars,          ONLY:schlen,IP,SP
+ use pars,          ONLY:schlen,IP,SP,IP_YIO,CR_YIO
  use parallel_m,    ONLY:master_cpu
  use iso_c_binding, ONLY:C_LOC,C_F_POINTER
  use collision_ext, ONLY:COLLISIONS_element,COLLISIONS_group,LAST_COLL_sync,PAR_COLL_min
@@ -76,7 +75,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  io4=any(io_sec(ID,:)==4)
  !
  if (def1) then
-   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP+100,par_io_kind='independent')
+   call def_variable_bulk(ID,'N_COLLISIONS_STATES',1,(/1/),IP_YIO,par_io_kind='independent')
    if (write_is_on(ID)) COLL_element%N=(COLL%D(3,2)-COLL%D(3,1)+1)*(COLL%D(2,2)-COLL%D(2,1)+1)*(COLL%D(1,2)-COLL%D(1,1)+1)
  endif
  !
@@ -113,7 +112,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
    !
  endif
  !
- if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),0,par_io_kind='independent')
+ if (def1) call def_variable_bulk(ID,'COLLISIONS_DONE',3,(/COLL%N/),CR_YIO,par_io_kind='independent')
  !
  if (io4) then
    if (write_is_on(ID)) then
@@ -142,4 +141,3 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
  call timing('io_COLLISIONS',OPR='stop')
  !
 end function io_COLLISIONS
-#endif

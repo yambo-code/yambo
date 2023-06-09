@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !            http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -307,17 +307,6 @@ subroutine NL_initialize(E,k)
  if(eval_COLLISIONS.and.COLLISIONS_CV_only) call warning(' ONLY cv scattering in COLLISIONS! ')
  ! 
  H_potential = RT_potential
- !
- ! Deallocate bare_qpg if not required
- !=============================
- ! DS 2019/06/18:
- ! bare_qpg is used by DIPOLE_dimensions
- ! The dependency maybe likey removed in the future
- ! For now I'm commenting the following lines
- !  
- !if(.not.eval_HARTREE.and.CORRELATION/=JGM) then
- !  YAMBOX_FREE(bare_qpg)
- !endif
  !
  ! Frequencies range
  ! =========================

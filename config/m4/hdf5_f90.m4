@@ -1,7 +1,7 @@
 #
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM, AF, DS, CA
@@ -242,7 +242,9 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
     NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
     #
-    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
+    HDF5_LIBS_F="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a";
+    HDF5_LIBS_C="${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a";
+    HDF5_LIBS="$HDF5_LIBS_F $HDF5_LIBS_C";
     HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     hdf5=yes ;

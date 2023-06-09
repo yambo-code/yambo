@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -39,7 +39,7 @@ module pars
  !
  !...MEMORY
  integer, parameter :: N_MEM_max                     = 1000
- integer, parameter :: N_MEM_max_element_components  = 200
+ integer, parameter :: N_MEM_max_element_components  = 600
  integer, parameter :: N_MEM_SAVE_max      = 500
  !
  !...MEMORY library
@@ -94,6 +94,14 @@ module pars
  !
  ! Equivalent to OneByteInt in NetCdf (normal integer is 4 byte)
  integer, parameter  :: LP = selected_int_kind(2)
+ !
+ ! Kinds used in the Yambo-IO
+ ! ===============================
+ integer, parameter  :: DP_YIO = DP             ! Float double precision 
+ integer, parameter  :: SP_YIO = SP             ! Float single precision
+ integer, parameter  :: IP_YIO = IP+100         ! Integer 
+ integer, parameter  :: LP_YIO = LP+100         ! Logical 
+ integer, parameter  :: CR_YIO = 0              ! Character type
  !
  ! STRINGs
  !=========

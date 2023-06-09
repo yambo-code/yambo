@@ -1,0 +1,6 @@
+ ELPH_acoustic_phonon_properties.o
+ ELPH_databases_check.o
+ ELPH_databases_grids_map.o
+ ELPH_databases_load.o
+ ELPH_databases_symmetrize.o
+

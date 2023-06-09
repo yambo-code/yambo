@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -21,7 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-#if defined _RT
 integer function io_RT_components(what,ID)
  !
  ! What can be E WF V OBSERV(J,P,M,...) G_lesser G_lesser_RESTART
@@ -236,4 +235,3 @@ integer function io_RT_components(what,ID)
  call timing('io_RT_components',OPR='stop')
  !
 end function
-#endif

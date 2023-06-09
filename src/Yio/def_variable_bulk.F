@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, HM, DS
@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
+subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent,chunksize)
  !
  use netcdf
  use com,        ONLY:fat_log
- use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP
+ use pars,       ONLY:SP,DP,IP,LP,schlen,nf90_SP,CR_YIO,LP_YIO,IP_YIO
  use parallel_m, ONLY:ncpu,mpi_comm_null
  use IO_m,       ONLY:write_is_on,read_is_on,io_unit,netcdf_call,io_netcdf_var,&
 &                     netcdf_dim,io_file,io_PAR_comm
@@ -40,6 +40,7 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  character(schlen), optional, intent(in) :: dim_names(:)
  character(*),      optional, intent(in) :: par_io_kind
  logical,           optional, intent(in) :: silent
+ integer,           optional, intent(in) :: chunksize(:) ! Chunking parameter
  !
  ! Work Space
  !
@@ -50,13 +51,11 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
  integer              :: shuffle,deflate,deflate_level
 #endif
  !
- ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
- !
  if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
  if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
- if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
- if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
- if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
+ if(VAR_KIND==IP_YIO) netcdf_var_kind=nf90_int
+ if(VAR_KIND==LP_YIO) netcdf_var_kind=nf90_byte
+ if(VAR_KIND==CR_YIO) netcdf_var_kind=nf90_char
  !
  silent_=.not.fat_log
  if(present(silent)) silent_=silent
@@ -104,6 +103,14 @@ subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind
      if (present(par_io_kind).and.io_PAR_comm(ID)/=mpi_comm_null) then
        nf_error=nf90_var_par_access(io_unit(ID), io_netcdf_var(ID,VAR_ID), netcdf_par_io_kind)
        call netcdf_call(nf_error,ID,VAR=VAR)
+     endif
+     ! Add chunking to the variable. 
+     if (present(chunksize)) then
+       if (PRODUCT(chunksize)>0) then
+         ! Only chuck if all the dims are greater than 0
+         nf_error = nf90_def_var_chunking(io_unit(ID), io_netcdf_var(ID,VAR_ID), NF90_CHUNKED, chunksize)
+         call netcdf_call(nf_error,ID,VAR=VAR)
+       endif
      endif
 #endif
    endif

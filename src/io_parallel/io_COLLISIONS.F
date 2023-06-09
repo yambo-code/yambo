@@ -91,7 +91,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      ! Real collisions
      if(def2) then
        COLL_chunksize(1:2)=YAMBO_DEF_CHUNK
-       if (COLL%N<YAMBO_DEF_CHUNK) COLL_chunksize(2)=0
+       if (COLL_element%N<YAMBO_DEF_CHUNK) COLL_chunksize(1)=COLL_element%N
+       if (COLL%N<YAMBO_DEF_CHUNK)         COLL_chunksize(2)=0
        call def_variable_bulk(ID,'COLLISIONS_v',2,(/COLL_element%N,COLL%N/),SP,&
        &                      par_io_kind='independent',chunksize=COLL_chunksize(1:2))
      endif
@@ -105,7 +106,8 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_)
      if(def2) then
        COLL_chunksize(1)=2
        COLL_chunksize(2:3)=YAMBO_DEF_CHUNK
-       if (COLL%N<YAMBO_DEF_CHUNK) COLL_chunksize(3)=0
+       if (COLL_element%N<YAMBO_DEF_CHUNK) COLL_chunksize(2)=COLL_element%N
+       if (COLL%N<YAMBO_DEF_CHUNK)         COLL_chunksize(3)=0
        call def_variable_bulk(ID,'COLLISIONS_v',2,(/2,COLL_element%N,COLL%N/),SP,&
        &                      par_io_kind='independent',chunksize=COLL_chunksize(1:2))
      endif

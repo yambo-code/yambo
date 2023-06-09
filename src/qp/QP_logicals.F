@@ -30,10 +30,8 @@ subroutine QP_logicals( )
 &                        use_GreenF_to_eval_QP,l_extended_output,use_GreenF_Zoom,QP_G_Zoom_treshold,&
 &                        GW_terminator_Kind,l_GW_terminator,l_QP_eval_GF,l_QP_eval_Z,QP_solver
  use stderr,        ONLY:STRING_same
-#if defined _PHEL
+#if defined _ELPH || defined _PHEL
  use PHEL,          ONLY:PH_Self_Energy_mode
-#endif
-#if defined _ELPH
  use ELPH,          ONLY:l_GKKP_hosts_bare_dV
 #endif
  !
@@ -65,11 +63,10 @@ subroutine QP_logicals( )
  if (l_life) QP_solver="none"
  !
  ! Ph-El...
-#if defined _PHEL
  !
+#if defined _ELPH || defined _PHEL
  ! ... Kind
  if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
- !
 #endif
  !
 end subroutine

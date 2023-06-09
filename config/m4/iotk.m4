@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -127,6 +127,7 @@ AC_SUBST(PW_CPP)
 AC_SUBST(compile_p2y)
 AC_SUBST(compile_iotk)
 AC_SUBST(internal_iotk)
+#
 AC_SUBST(IOTK_INCS)
 AC_SUBST(IOTK_LIBS)
 #

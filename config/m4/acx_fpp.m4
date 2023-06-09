@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -69,16 +69,16 @@ cat > conftest.F << EOF_
  write (*,'('//a//')') 'hello'
  end program
 EOF_
-# ! Replace "S" with "\" and find the max length of
+#
 (eval $FPP conftest.F > conftest.${FCSUFFIX}) 2> conftest.er1
 if ! test -s conftest.er1 || test -n "`grep successful conftest.er1`" ||
-                             test -n "`grep "warning" conftest.er1`" ||
+                             test -n "`grep -i "warning" conftest.er1`" ||
                              test -n "`grep "command line remark" conftest.er1`" ; then 
  eval $FPP conftest.F > conftest.${FCSUFFIX} 
  eval $FC $FCFLAGS -c conftest.${FCSUFFIX} 2> conftest.er2 >&5
  if test -s conftest.er2 ; then 
   if ! ( test -n "`grep successful conftest.er2`" ||
-         test -n "`grep "warning" conftest.er2`" || 
+         test -n "`grep -i "warning" conftest.er2`" ||
          test -n "`grep "command line remark" conftest.er2`" ) ; then 
    acx_FC_ok=no ; 
    FPP_TESTS_PASSED=no;

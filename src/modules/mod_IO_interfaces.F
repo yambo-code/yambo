@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -110,7 +110,7 @@ module IO_int
      character(*),      optional, intent(in) :: par_io_kind
    end subroutine def_variable_elemental
    !
-   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent)
+   subroutine def_variable_bulk(ID,VAR,VAR_ID,VAR_SZ,VAR_KIND,dim_names,par_io_kind,silent,chunksize)
      use pars,              ONLY:schlen
      integer,      intent(in)  :: ID
      character(*), intent(in)  :: VAR
@@ -120,6 +120,7 @@ module IO_int
      character(schlen), optional, intent(in) :: dim_names(:)
      character(*),      optional, intent(in) :: par_io_kind
      logical,           optional, intent(in) :: silent
+     integer,           optional, intent(in) :: chunksize(:)
    end subroutine def_variable_bulk
    !
    subroutine io_variable_elemental(ID,VAR,CHECK,WARN,OP,     &

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -33,7 +33,9 @@ subroutine QP_logicals( )
 #if defined _PHEL
  use PHEL,          ONLY:PH_Self_Energy_mode
 #endif
+#if defined _ELPH
  use ELPH,          ONLY:l_GKKP_hosts_bare_dV
+#endif
  !
  implicit none
  !

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2022 the YAMBO team
+#        Copyright (C) 2000-2023 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): DS
@@ -24,19 +24,19 @@
 #
 #
 for lock in $missing ; do
-  #
-  # Remove old lock 
-  #
- if [ "$VERB" == 1    ] ; then  echo "rm -f $dir/$lock.lock"; fi
+ #
+ # Remove old lock 
+ #
+ source ./sbin/compilation/verbosity.sh "fix_locks.sh: rm -f $dir/$lock.lock"
  rm -f $dir/$lock.lock
  #
 done
 #
 for lock in $new ; do
-  #
-  # Add new lock 
-  #
- if [ "$VERB" == 1    ] ; then  echo "touch $dir/$lock.lock"; fi
+ #
+ # Add new lock 
+ #
+ source ./sbin/compilation/verbosity.sh "fix_locks.sh: touch  $dir/$lock.lock"
  touch $dir/$lock.lock
  #
 done

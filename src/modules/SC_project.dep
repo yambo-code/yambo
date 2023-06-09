@@ -1,2 +1,9 @@
  SET_defaults.o
+ mod_H_interfaces.o
+ mod_SC.o
+ mod_collision_ext.o
+ mod_electric.o
+ mod_fields.o
+ mod_magnetic.o
+ mod_plasma.o
 

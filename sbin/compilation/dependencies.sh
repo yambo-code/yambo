@@ -38,8 +38,6 @@ done
 Nd=`echo $directories | wc -w`
 Nd=$((Nd-1))
 #
-BASE=$PWD
-#
 proj_dep_stamp=config/stamps_and_lists/project_dependencies.stamp
 if [ ! -f $proj_dep_stamp ] ; then
 idir=0
@@ -69,7 +67,6 @@ do
  ((i=i%N)); ((i++==0)) && wait
  idir=$((idir+1))
  source ./sbin/compilation/dependencies_element.sh  &
- #
 done
 wait
 echo

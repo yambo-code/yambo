@@ -12,17 +12,15 @@ RT_objects_post  = mod_fields.o mod_RT_output.o mod_RT_control.o mod_RT_operatio
 #if defined _ELPH_ITERATIVE
 RT_objects_iterative  = mod_RT_iterative.o
 #endif
-RT_objects_pre   = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
 #if defined _NL
 NL_objects       = mod_fields.o mod_electric.o mod_nl_optics.o mod_NL_interfaces.o
-#endif
-#if defined _YPP_ELPH || defined _YPP_RT || defined _ELPH || defined _PHEL
-ELPH_objects = mod_ELPH_intfcs.o mod_ELPH.o mod_PHEL.o
 #endif
 #if defined _io_lib
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \
        mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o mod_IO_interfaces.o
 #else
+ELPH_objects = mod_ELPH.o mod_PHEL.o
+RT_objects_pre = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
 DEV_objects = mod_cusolverdn_y.o mod_cuda.o
 objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_parallel_interface.o mod_matrix.o mod_SLK.o  \
        mod_linear_algebra.o mod_wrapper.o mod_wrapper_omp.o mod_drivers.o mod_FFT.o\

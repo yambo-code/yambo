@@ -24,7 +24,8 @@
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
- use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
+ use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,BS_E_sorted_indx, &
+&                        Epsilon_ij,X_magnons,X_dichroism,                  &
 &                        X_fxc,EEL,Alpha,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
 #ifdef _CUDA
@@ -68,6 +69,8 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    case('BS_E_SORTED')
      YAMBO_ALLOC(BS_E_sorted,(DIM(1),DIM(2),DIM(3)))
      BS_E_sorted=cZERO
+     YAMBO_ALLOC(BS_E_sorted_indx,(DIM(1),2*DIM(2),5))
+     BS_E_sorted_indx=-1
    case('FXC')
      YAMBO_ALLOC(X_fxc,(DIM(1)))
      X_fxc=cZERO

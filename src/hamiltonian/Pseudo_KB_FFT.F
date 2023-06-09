@@ -63,6 +63,7 @@ subroutine Pseudo_KB_FFT(kbv,kbv_real_space,kpt,pp_range,npp,i_atom,is,ia,ik)
      !
 #if defined _RT
      if(l_real_time) then
+       call error("call to load cc to be fixed")
        call load_cc(.false.,atom_pos(:,ia,is),i_atom)
        k_dot_x(:)=(kpt(1)*x_cc(:,1,i_atom)+kpt(2)*x_cc(:,2,i_atom)+kpt(3)*x_cc(:,3,i_atom))
        kpt_factor(:)  =cmplx( cos(k_dot_x(:)),sin(k_dot_x(:)) )

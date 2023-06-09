@@ -47,7 +47,6 @@ module BS
  character(schlen) :: BSE_L_kind
  character(schlen) :: BSE_mode
  character(schlen) :: BSE_prop
- character(schlen) :: BSE_dipole_geometry="none"
  character(schlen) :: BSK_mode
  character(schlen) :: BSK_IO_mode
  !
@@ -64,6 +63,7 @@ module BS
  logical :: l_BS_jdos
  logical :: l_BS_abs
  logical :: l_BS_kerr
+ logical :: l_BS_kerr_asymm
  logical :: l_BS_photolum
  logical :: l_BS_magnons
  logical :: l_BS_dichroism

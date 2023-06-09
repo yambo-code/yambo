@@ -40,6 +40,8 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  implicit none
  !
+#include<yambo_wfs.h>
+ !
  type(levels) ::en
  type(bz_samp)::Xk
  !
@@ -56,7 +58,7 @@ subroutine WF_spatial_inversion(en,Xk)
  !
  ! WF procedure
  !
- if (.not.allocated(WF%c).or.WF%space/='R') return
+ if (.not.allocated(WF%r).or.WF%space/='R') return
  !
  ! When using wf's the space inv is tested using the first
  ! nsym/(i_time_rev+1) and all the nsym. If there is not
@@ -77,7 +79,7 @@ subroutine WF_spatial_inversion(en,Xk)
    !
 #if !defined _OPENMP
    !
-   forall(i1=1:fft_size) cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
+   forall(i1=1:fft_size) cv(i1)=wfconjg(cmplx(WF%r(i1,i_spinor,1),kind=SP))*WF%r(i1,i_spinor,1)
    mv(1)=sum(rho_nsi(:)*cv(:))
    mv(2)=sum(rho_si(:)*cv(:))
    !
@@ -86,7 +88,7 @@ subroutine WF_spatial_inversion(en,Xk)
    !$omp parallel do default(shared), private(i1,i_spinor), reduction(+:mv)
    do i_spinor=1,n_spinor
      do i1=1,fft_size
-       cv(i1)=conjg(WF%c(i1,i_spinor,1))*WF%c(i1,i_spinor,1)
+       cv(i1)=wfconjg(WF%r(i1,i_spinor,1))*WF%r(i1,i_spinor,1)
        mv(1)=mv(1) +rho_nsi(i1)*cv(i1)
        mv(2)=mv(2) +rho_si(i1) *cv(i1)
      enddo

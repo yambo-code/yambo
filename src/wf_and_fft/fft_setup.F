@@ -34,7 +34,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
 #if defined _FFTQE
  use fft_base,       ONLY:dffts
 #endif
- use wave_func,      ONLY:wf_ng
+ use wave_func,      ONLY:wf_ng,rho_map_size,rho_map
  use timing_m,       ONLY:timing
  use cuda_m,         ONLY:have_cuda
  use deviceXlib_m,   ONLY:dev_memcpy,dev_memset
@@ -187,6 +187,7 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
      i4=1
      cycle
    endif
+   if(.not.allocated(rho_map)) rho_map_size=fft_size
    !
    YAMBO_FREE(fft_rot_r)
    YAMBO_ALLOC(fft_rot_r,(fft_size,nsym))

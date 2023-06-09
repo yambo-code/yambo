@@ -66,7 +66,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
  call BSS_DICH_alloc( )
  call BSS_PL_alloc( )
  !
- if (BS_nT_grps>0) call live_timing("Folding BSE Kernel",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
+ if (BS_nT_grps>0) call live_timing("Unfolding BSE components",PAR_IND_T_groups%n_of_elements(PAR_COM_eh_INDEX%CPU_id+1))
  !
  BS_n_eh_spaces_solver=1
  if(BS_n_eh_spaces==1.and.BS_K_coupling) BS_n_eh_spaces_solver=2
@@ -122,7 +122,7 @@ subroutine K_components_folded_in_serial_arrays(iq)
        !
        if (l_BS_magnons) BSS_dipoles_magn(:,H_pos)=BS_T_grp(i_g)%dipoles_mag(:,i_Tr,i_res_ares_solver)
        !
-       if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_c,i_res_ares_solver)
+       if (l_BS_dichroism) BSS_dipoles_dich(:,H_pos)=BS_T_grp(i_g)%dipoles_dic(:,i_Tr,i_res_ares_solver)
        !
        if (l_BS_photolum) BSS_dipoles_PL(:,H_pos)=BS_T_grp(i_g)%dipoles_opt(:,i_Tr,i_res_ares_solver)*PL_weights(:)
        !

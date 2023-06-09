@@ -30,7 +30,8 @@ integer function io_DIPOLES(Dip,ID)
  use IO_m,          ONLY:io_sec,frag_DIP,io_DIP,read_is_on,io_extension,IO_NOT_ALLOWED, &
 &                        nf90_sync,io_unit,netcdf_call,io_PAR_cpu
  use IO_int,        ONLY:io_connect,io_disconnect,io_variable_bulk,def_variable_bulk,io_header
- use DIPOLES,       ONLY:DIP_spin,DIP_orbital, compute_Orb_dipoles,compute_Spin_dipoles
+ use DIPOLES,       ONLY:DIP_spin,DIP_orbital, &
+&                        compute_Orb_rt_dipoles,compute_Orb_cd_dipoles,compute_Spin_dipoles
  use electrons,     ONLY:n_spinor
 #if defined _RT
  use DIPOLES,       ONLY:DIP_P_spinor
@@ -125,8 +126,10 @@ integer function io_DIPOLES(Dip,ID)
    call DIP_alloc('DIP_P' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    call DIP_alloc('DIP_v' ,(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
    !
-   if (compute_Orb_dipoles) &
+   if (compute_Orb_rt_dipoles) &
    & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,2/))
+   if (compute_Orb_cd_dipoles) &
+   & call DIP_alloc('DIP_orbital',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz,1/))
    if (compute_Spin_dipoles) &
    & call DIP_alloc('DIP_spin',(/3,Dip%ib_lim(2),Dip%ib(2),Dip%ib(1),Dip%ib_lim(1),PAR_K_scheme%nibz/))
 #if defined _RT
@@ -161,7 +164,7 @@ integer function io_DIPOLES(Dip,ID)
  if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
  if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_v(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol),IPOS=DIP_ipos)
  !
- if (compute_Orb_dipoles) then
+ if (compute_Orb_rt_dipoles) then
    !
    ! Itinerant magnetization
    !
@@ -169,6 +172,17 @@ integer function io_DIPOLES(Dip,ID)
    VAr_name='DIP_itinerant'
    if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
    if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,2),IPOS=DIP_ipos)
+   !
+   ! Orbital magnetization
+   !
+   VAR_ID=5
+   VAR_name='DIP_orbital'
+   if (i_fragment< 1) call def_variable_bulk(ID,trim(VAR_name),VAR_ID,DIP_size,SP,par_io_kind='independent')
+   if (i_fragment>=1) call  io_variable_bulk(ID,VAR_ID,C5=DIP_orbital(:,:,:,ik_mem:ik_mem,i_sp_pol:i_sp_pol,1),IPOS=DIP_ipos)
+   !
+ endif
+ !
+ if (compute_Orb_cd_dipoles) then
    !
    ! Orbital magnetization
    !

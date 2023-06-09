@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
+subroutine Dipole_orbital_magnetization_cd(Xen,Xk,Dip)
  !
  ! This routine returns <L>
  !
@@ -51,7 +51,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization(cd)',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -76,7 +76,7 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
          do ib=Dip%ib(1),Dip%ib(2)
            !
            DIP_x_loc(:)=-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
-           
+           !
            DIP_v_loc(:)=DIP_v(:,ic,ib,ik_mem,i_sp_pol)
            !
            DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)+ &
@@ -99,4 +99,4 @@ subroutine Dipole_orb_magn_forCD(Xen,Xk,Dip)
  !
  call live_timing()
  !
-end subroutine Dipole_orb_magn_forCD
+end subroutine Dipole_orbital_magnetization_cd

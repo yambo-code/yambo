@@ -41,7 +41,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  ! Load and (eventually) FFTs the wavefunctions
  !
- use pars,          ONLY:SP,DP,schlen
+ use pars,          ONLY:SP,DP,schlen,cZERO
  use com,           ONLY:msg,core_io_path,fat_log
  use vec_operate,   ONLY:c2a
  use stderr,        ONLY:intc
@@ -50,7 +50,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use interfaces,    ONLY:WF_free
  use FFT_m,         ONLY:fft_dim_loaded,fft_dim,fft_norm,fft_g_table,fft_size,&
 &                        fftw_plan,cufft_plan,fft_g_table_d
- use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,&
+ use wave_func,     ONLY:wf_nc_k,wf_igk,wf_igk_d,WF_buffer,rho_map,&
 &                        wf_ng,wf_norm_test,wf_ncx,io_WF,wf_b_indx,&
 &                        wf_nb_io,wf_nb_to_load,wf_nb_io_groups,WAVEs,states_to_load
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
@@ -67,6 +67,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
 #include<dev_defs.h>
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  integer               :: iG_in,iGo_max_in,bands_to_load(2),kpts_to_load(2)
  type(WAVEs), target   :: WF
@@ -84,7 +85,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  character(schlen)::wf_title
  integer          ::i_sp_pol,ikibz,ifrag,ib_grp,ib_to_load,ib,ib1,ib2,i_spinor,ic,ig,igfft,&
 &                   iG_max,iG_bounds_loaded(2),iGo_max,sp_pol_to_load_(2),wf_grid_size,&
-&                   npwk
+&                   npwk,N
  real(SP)         ::mndp,mxdp,xk(3)
  complex(SP)      ::c
  logical          ::loaded_bounds_ok,free_and_alloc,buffer_is_ok,clean_up_states,force_WFo_,QUIET_wf,SIZE_msg
@@ -93,7 +94,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  complex(DP), allocatable DEV_ATTR :: wf_DP_d(:)
  complex(SP), allocatable DEV_ATTR :: wf_disk_d(:,:,:)
- complex(SP), pointer     DEV_ATTR :: wfc_d(:,:,:)
+ WF_RSPACE(SP),   pointer DEV_ATTR :: wfr_d(:,:,:)
+ !
  integer :: WFN
  !
  ! I/O
@@ -281,7 +283,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  if (have_cuda) then
    YAMBO_ALLOC(wf_DP_d,(wf_grid_size))
-   wfc_d => WF%c_d
+   wfr_d => WF%r_d
    WFN = WF%N
  endif
  !
@@ -415,10 +417,17 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               call fft_3d_cuda(wf_DP_d,fft_dim,+1,cufft_plan)
               !
               WFN = WF%N
-              !$cuf kernel do(1)
-              do ic=1,wf_grid_size
-                wfc_d(ic,i_spinor,WFN)=cmplx(wf_DP_d(ic),kind=SP)*fft_norm
-              enddo
+              if(allocated(rho_map)) then
+                !$cuf kernel do(1)
+                do ic=1,rho_map_size
+                  wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(rho_map(ic)),kind=SP)*fft_norm
+                enddo
+              else
+                !$cuf kernel do(1)
+                do ic=1,fft_size
+                  wfr_d(ic,i_spinor,WFN)=wfcmplx(wf_DP_d(ic),kind=SP)*fft_norm
+                enddo
+              endif
               !
             enddo  ! i_spinor
             !
@@ -454,7 +463,8 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
               !
               call fft_3d(wf_DP,fft_dim,+2)
 #endif
-              WF%c(:,i_spinor,WF%N)=cmplx(wf_DP(:),kind=SP)*fft_norm
+              if(     allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(rho_map(:)),kind=SP)*fft_norm
+              if(.not.allocated(rho_map)) WF%r(:,i_spinor,WF%N)=wfcmplx(wf_DP(:)         ,kind=SP)*fft_norm
               !
             enddo  ! i_spinor
 #ifdef _CUDA
@@ -476,7 +486,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    !
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then
-     WF%c = WF%c_d
+     WF%r = WF%r_d
    else
      WF%c_d = WF%c
    endif
@@ -548,7 +558,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    if (WF%space=='G') wf_grid_size=wf_ng
    do i_sp_pol=WF%sp_pol(1),WF%sp_pol(2)
      do ikibz=WF%k(1),WF%k(2)
-       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size)
+       call WF_rotate(ikibz,i_sp_pol,WF,wf_grid_size,WF%space)
      enddo
    enddo
    !
@@ -572,7 +582,10 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
      !
      if ( WF%index(ib1,1,1)==0 .or. WF%index(ib2,1,1)==0 ) cycle
      !
-     c=Vstar_dot_V( size(WF%c(:,:,WF%index(1,1,1))),  WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
+     c=cZERO
+     N=size(WF%r(:,:,WF%index(1,1,1)))
+     if (WF%space=='R') c=Vstar_dot_V( N, WF%r(:,:,WF%index(ib1,1,1) ) , WF%r(:,:,WF%index(ib2,1,1)) )
+     if (WF%space/='R') c=Vstar_dot_V( N, WF%c(:,:,WF%index(ib1,1,1) ) , WF%c(:,:,WF%index(ib2,1,1)) )
      !
      if (abs(c)>mxdp) mxdp=abs(c)
      if (abs(c)<mndp) mndp=abs(c)

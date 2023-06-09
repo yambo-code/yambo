@@ -21,11 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_IP_sort(what,I,N,El,vC)
+subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  !
  use pars,          ONLY:SP,cZERO
  use parallel_m,    ONLY:PAR_COM_eh_INDEX,PAR_COM_Xk_ibz_INDEX
- use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted
+ use X_m,           ONLY:BS_E_sorted,N_BS_E_sorted,BS_E_sorted_indx
  use BS,            ONLY:BS_H_dim
  use vec_operate,   ONLY:sort,degeneration_finder
  use units,         ONLY:HA2EV
@@ -34,7 +34,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
 #include<memory.h>
  !
  character(*)  ::what
- integer       ::I,N
+ integer       ::I,N,Indexes(5),vI(BS_H_dim,5)
  complex(SP)   ::El,vC(BS_H_dim,N_BS_E_sorted)
  !
  ! Work space
@@ -46,6 +46,7 @@ subroutine K_IP_sort(what,I,N,El,vC)
  if (what=="add") then
    N=N+1
    vC(I,N)=El
+   if(N==1) vI(I,:)=Indexes
    return
  endif
  !
@@ -72,15 +73,25 @@ subroutine K_IP_sort(what,I,N,El,vC)
    BS_E_sorted(:,i_VAR,1)=cZERO
    do i_grp=1,n_deg_grp
      if(i_grp>EDIM/Ntmp) cycle
+     !
+     if(i_VAR==1) then
+       if (n_of_el(i_grp)>18) call warning("More than 18 degenerate transitions detected. Printing only first 18")
+       do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
+         BS_E_sorted_indx(i_grp,i_cv-first_el(i_grp)+1,1:5)=vI(sort_indx(i_cv),:)
+       enddo
+     endif
+     !
      if(i_VAR==2) then
        BS_E_sorted(i_grp,i_VAR,1)=real(n_of_el(i_grp),SP)
        cycle
      endif
+     !
      do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
        BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)+vC(sort_indx(i_cv),i_VAR)
      enddo
-     BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
+     if(i_VAR==1) BS_E_sorted(i_grp,i_VAR,1)=BS_E_sorted(i_grp,i_VAR,1)/real(n_of_el(i_grp),SP)
    enddo
+   !
  enddo
  !
  ! Free

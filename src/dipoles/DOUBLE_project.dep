@@ -13,8 +13,8 @@
  DIPOLE_kb_pwscf_comp.o
  DIPOLE_kb_pwscf_def_dim.o
  DIPOLE_kb_sum.o
- DIPOLE_orb_magn_forCD.o
- DIPOLE_orbital_magnetization.o
+ DIPOLE_orbital_magnetization_cd.o
+ DIPOLE_orbital_magnetization_rt.o
  DIPOLE_overlaps.o
  DIPOLE_p_matrix_elements.o
  DIPOLE_shifted_grids.o

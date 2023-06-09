@@ -70,6 +70,15 @@ AC_SUBST(def_dp)
 AC_SUBST(build_precision)
 #
 # ============================================================================
+# VERSION for gamma only case
+AC_ARG_ENABLE(gamma_only, AC_HELP_STRING([--enable-gamma-only], [Gamma only build. Default is no.]))
+def_gamma_only=""
+if test x"$enable_gamma_only" = "x";    then enable_gamma_only="no";   fi
+if test x"$enable_gamma_only" = "xyes"; then def_gamma_only="-D_GAMMA_ONLY";  fi
+AC_SUBST(enable_gamma_only)
+AC_SUBST(def_gamma_only)
+#
+# ============================================================================
 #
 # Time Profiling (mod_timing)
 #

@@ -31,7 +31,7 @@ subroutine K_observables( )
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -48,6 +48,8 @@ subroutine K_observables( )
  l_BS_kerr      = STRING_match(BSE_prop,'kerr')
  l_BS_photolum  = STRING_match(BSE_prop,'photolum')
  l_BS_magnons   = STRING_match(BSE_prop,'magn') .and.n_spin>1
+ l_BS_kerr_asymm= STRING_match(BSE_prop,'asymm') .and. l_BS_kerr
+ l_BS_anomalous_Hall = STRING_match(BSE_prop,'anHall') .and. l_BS_kerr
  !
  ! How ...
  !---------
@@ -66,11 +68,19 @@ subroutine K_observables( )
    call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
  endif
  if (l_BS_kerr) then
-   call parser('AnHall',l_BS_anomalous_Hall)
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif
  if (l_BS_photolum) global_gauge="velocity"
+ if ((l_BS_photolum.or.l_BS_kerr).and.l_BS_trace) then
+   call warning(" Trace not compatible with kerr or pl. Switching it off")
+   l_BS_trace  = .false.
+ endif
+ if (l_BS_dichroism.and..not.l_BS_trace) then
+   call warning(" Trace is automatically switched of with dichroism")
+   l_BS_trace=.true.
+ endif
+ !
  if (l_BS_trace   ) BS_dip_size = 3
  if (l_BS_trace .and. .not.l_rpa_IP) call error(" trace coded only at the IP level")
  !

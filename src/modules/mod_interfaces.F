@@ -120,7 +120,7 @@ module interfaces
      !
    end subroutine
    !
-   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
+   subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,compute_rho_map)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels
      use R_lattice,      ONLY:bz_samp
@@ -132,6 +132,7 @@ module interfaces
      real(SP), optional             ::J(fft_size,3)
      integer,  optional, intent(in) ::bands(2)
      logical,  optional, intent(in) ::force_spatial_inversion
+     logical,  optional, intent(in) ::compute_rho_map
    end subroutine el_density_and_current
    !
    subroutine el_magnetization(en,Xk,magn,bands)
@@ -202,10 +203,11 @@ module interfaces
      logical,     optional, intent(in) :: quiet
    end subroutine
    !
-   subroutine WF_free(WF,keep_fft)
+   subroutine WF_free(WF,keep_fft,keep_states_to_load)
      use wave_func,       ONLY:WAVEs
      type(WAVEs)           :: WF
      logical     ,optional :: keep_fft
+     logical     ,optional :: keep_states_to_load
    end subroutine
    !
    subroutine OCCUPATIONS_Gaps(E,E_g_dir,E_g_ind,N_f,N_m,I_dir,E_k_dir,E_k_ind)
@@ -221,20 +223,43 @@ module interfaces
      integer , optional :: E_k_ind(n_sp_pol,2)  ! k->k'   of the indirect gap
    end subroutine 
    !
-   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS_E_SOC_corr,&
-     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_right_kerr,BS_R_PL)
+   subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left_abs,BS_R_right_abs,BS_E_SOC_corr,&
+     &                                  BS_R_left_magn,BS_R_right_magn,BS_R_left_kerr,BS_R_right_kerr,BS_R_right_dich,BS_R_PL)
      use BS_solvers,    ONLY:BSS_n_eig
      use pars,          ONLY:SP
      use frequency,     ONLY:w_samp
      type(w_samp),intent(in)  :: W
      integer,     intent(in)  :: iq,i_BS_mat
      complex(SP), intent(in)  :: BS_E(BSS_n_eig)
-     complex(SP), pointer, intent(in) :: BS_R_left(:),BS_R_right(:)
+     complex(SP), pointer, intent(in) :: BS_R_left_abs(:),BS_R_right_abs(:)
      real(SP),    pointer, intent(in) :: BS_E_SOC_corr(:,:)
      complex(SP), pointer, intent(in) :: BS_R_left_magn(:,:),BS_R_right_magn(:,:)
-     complex(SP), pointer, intent(in) :: BS_R_right_kerr(:)
+     complex(SP), pointer, intent(in) :: BS_R_left_kerr(:),BS_R_right_kerr(:),BS_R_right_dich(:,:)
      real(SP),    pointer, intent(in) :: BS_R_PL(:,:)
    end subroutine
+   !
+   subroutine K_diago_right_residuals(mode,i_BS_mat,BS_E,BS_R_right,BS_V_right)
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP), intent(out) :: BS_R_right(BSS_n_eig)
+     complex(SP), intent(in)  :: BS_V_right(:,:)
+   end subroutine K_diago_right_residuals
+   !
+   subroutine K_diago_left_residuals(mode,i_BS_mat,BS_E,BS_R_left,BS_V_left,BS_overlap)
+     use BS_solvers,    ONLY:BSS_n_eig
+     use pars,          ONLY:SP
+     implicit none
+     character(*),intent(in)  :: mode
+     integer,     intent(in)  :: i_BS_mat
+     complex(SP), intent(in)  :: BS_E(BSS_n_eig)
+     complex(SP),target,  intent(out) :: BS_R_left(BSS_n_eig)
+     complex(SP),         intent(in)  :: BS_V_left(:,:)
+     complex(SP),optional,intent(in)  :: BS_overlap(BSS_n_eig,BSS_n_eig)
+   end subroutine K_diago_left_residuals
    !
    subroutine PL_diago_residual(BS_V_left,BS_V_right,BS_R_PL,K_is_not_hermitian,BS_overlap) 
      use pars,           ONLY:SP

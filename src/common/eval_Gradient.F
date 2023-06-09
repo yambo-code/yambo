@@ -37,13 +37,13 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use FFT_m,         ONLY:fftw_plan
 #endif
  use R_lattice,     ONLY:g_vec,ng_vec
- use wave_func,     ONLY:wf_ng
+ use wave_func,     ONLY:wf_ng,rho_map,rho_map_size
  !
 #include<memory.h>
  !
  integer,          intent(in) ::spinor_size
- complex(SP),      intent(in) ::f(fft_size,spinor_size)
- complex(SP),      intent(out)::f_gradient(fft_size,spinor_size,3)
+ complex(SP),      intent(in) ::f(rho_map_size,spinor_size)
+ complex(SP),      intent(out)::f_gradient(rho_map_size,spinor_size,3)
  character(len=*), intent(in) ::f_type       ! "wave", "density" or "potential"
  !
  ! Work Space 
@@ -70,7 +70,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  !
  do i_spinor=1,spinor_size
    !
-   Vr=cmplx(f(:,i_spinor),kind=DP)
+   if(rho_map_size< fft_size) Vr(rho_map(:))=cmplx(f(:,i_spinor),kind=DP)
+   if(rho_map_size==fft_size) Vr(     :    )=cmplx(f(:,i_spinor),kind=DP)
    !
 #if defined _FFTW
  call dfftw_destroy_plan(fftw_plan)
@@ -92,7 +93,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #else
    call fft_3d(Vr,fft_dim,1)
 #endif
-     f_gradient(:,i_spinor,ic) = cmplx(Vr(:),kind=SP)
+     if(rho_map_size< fft_size) f_gradient(:,i_spinor,ic) = cmplx(Vr(rho_map(:)),kind=SP)
+     if(rho_map_size==fft_size) f_gradient(:,i_spinor,ic) = cmplx(Vr(        : ),kind=SP)
    enddo
    !
  enddo

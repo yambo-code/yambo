@@ -29,7 +29,6 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,MORE)
  use X_m,            ONLY:global_gauge,X_obs,alpha_dim,N_X_obs,X_ng
  use global_XC,      ONLY:X_E_xc_string
  use stderr,         ONLY:intc,STRING_match
- use BS,             ONLY:BSE_dipole_geometry
  !
  implicit none
  !
@@ -56,8 +55,7 @@ subroutine X_OUTPUT_messages(iq,ig,Vnl,GF,ordering,Q_plus_G,MORE)
        if (iq> 1) call msg("o "//trim(X_obs(it)%prefix),trim(wk),Q_plus_G,INDENT=0,after_msg="[iku]")
        if (STRING_match(X_obs(it)%what,"off").or.STRING_match(X_obs(it)%what,"beta").or.&
 &          STRING_match(X_obs(it)%what,"moke")) then
-         call msg("o "//trim(X_obs(it)%prefix),com_compose_msg(pre="# ",body="[DIP] Rotation plane"),&
-&                 trim(BSE_dipole_geometry),INDENT=0)
+             ! TO DO: add info on BSS_E_dir and BSS_Q_dir
        endif
      else
        wk=com_compose_msg(pre='# ',body=trim(X_obs(it)%title)//' @Q('//trim(intc(iq))//') + G('//trim(intc(ig))//')')

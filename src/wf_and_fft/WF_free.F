@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine WF_free(WF,keep_fft)
+subroutine WF_free(WF,keep_fft,keep_states_to_load)
  !
  use wave_func,  ONLY:WAVEs
  use pseudo,     ONLY:pp_is_uspp,PP_uspp_free
@@ -31,26 +31,39 @@ subroutine WF_free(WF,keep_fft)
  !
  type(WAVEs)       :: WF
  logical, optional :: keep_fft 
+ logical, optional :: keep_states_to_load
  !
  ! Work-space
  !
  logical           :: keep_fft_
+ logical           :: keep_states_to_load_
  !
  keep_fft_=.false.
  if (present(keep_fft)) keep_fft_=keep_fft
+ !
+ keep_states_to_load_=.false.
+ if (present(keep_states_to_load)) keep_states_to_load_=keep_states_to_load
  !
  ! USPP
  if (pp_is_uspp) call PP_uspp_free()
  !
  if (have_cuda) then
    if (.not. ( allocated(WF%c) .eqv. allocated(WF%c_d) ) ) &
-&    call error("[WF] inconsistent alloc of GPU wfcs")
+&    call error("[WF] inconsistent alloc of GPU wfcs in G/C sapce")
+   if (.not. ( allocated(WF%r) .eqv. allocated(WF%r_d) ) ) &
+&    call error("[WF] inconsistent alloc of GPU wfcs in R sapce")
  endif
  !
- if (.not.allocated(WF%c)) return
+ if (.not.(allocated(WF%c).or.allocated(WF%r))) return
  !
- YAMBO_FREE(WF%c)
- YAMBO_FREE(WF%c_d)
+ if (allocated(WF%c)) then
+   YAMBO_FREE(WF%c)
+   YAMBO_FREE(WF%c_d)
+ endif
+ if (allocated(WF%r)) then
+   YAMBO_FREE(WF%r)
+   YAMBO_FREE(WF%r_d)
+ endif
  YAMBO_FREE(WF%state)
  YAMBO_FREE(WF%index)
  !
@@ -60,6 +73,9 @@ subroutine WF_free(WF,keep_fft)
  WF%b=0
  WF%sp_pol=0
  WF%space=' '
+ !
+ if (keep_states_to_load_) return
+ !
  WF%to_load=.TRUE.
  !
 end subroutine

@@ -21,26 +21,26 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
+subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! K = <2V-W> for n_spin=1
  !
  use pars,          ONLY:SP,schlen,pi,cZERO,cI
- use stderr,        ONLY:intc
  use LOGO,          ONLY:pickup_a_random
  use drivers,       ONLY:l_bs_fxc,l_tddft,l_rim_w
  use frequency,     ONLY:w_samp
- use electrons,     ONLY:levels,spin_occ,spin,n_spin,n_spinor
+ use electrons,     ONLY:levels,spin_occ,spin,n_spin,n_spinor,n_sp_pol
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_R_space
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:G_m_G,qindx_B,bz_samp,RIM_W,&
-&                        qindx_X,qindx_B_max,qindx_B_load,&
+ use R_lattice,     ONLY:G_m_G_maxval,qindx_X,bz_samp,ng_closed,&
+&                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
  use stderr,        ONLY:intc
  use LIVE_t,        ONLY:live_timing
  use X_m,           ONLY:X_t
+ use interfaces,    ONLY:el_density_and_current
  use QP_m,          ONLY:QP_ng_Vxc
  use BS,            ONLY:BS_bands,BS_res_K_corr,BS_W,BS_W_is_diagonal,&
 &                        BS_res_K_exchange,BS_Block_size,&
@@ -50,7 +50,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -58,10 +58,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        ALDA_cut_scheme,tddft_wf_t
  use xc_functionals,ONLY:V_xc,F_xc,F_xc_mat,magn,XC_potential_driver
  use global_XC,     ONLY:WF_xc_functional,WF_kind,WF_exx_fraction
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map,rho_map_thresh
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
@@ -94,19 +94,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
  !
- integer    :: i_block,O_ng_shift,NG,&
+ integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
- complex(SP):: Co,H_x,H_c
+ complex(SP):: Co,H_x,H_c,BS_mat_tmp
  complex(SP):: sqrt_f_itk,sqrt_f_itp
- real(SP), allocatable :: BS_max_val_CPU(:)
+ real(SP), allocatable :: BS_max_val_CPU(:),rho(:)
  !
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- ! Oscillators
- !
- logical    :: load_O_X
+ logical    :: l_bs_exch,l_bs_corr,l_matrix_init,l_load_kernel,l_write_kernel
  !
  ! I/O
  !
@@ -155,33 +153,36 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//")"
    !
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//" (Coupling"
-   if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
-   if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
-   if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
+   !if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
+   !if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
+   !if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//")"
    !
  endif
  !
  call section('=',trim(section_title))
  !
- ! Exchange
- !==========
- !
- load_O_X=BS_res_K_exchange.or.l_bs_fxc
- !
- if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
- !
  ! Oscillators Setup
  !===================
  O_ng=1
- O_ng_shift=maxval(qindx_X(iq,:,2))
+ O_ng_exch =maxval(qindx_X(iq,:,2))
+ O_ng_shift=O_ng_exch
  !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) then
-   O_ng=maxval(G_m_G)
-   call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
-   ! Hybrid functional.
-   ! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
-   if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"Kx")
+ l_bs_exch=any((/BS_res_K_exchange,BS_cpl_K_exchange/)).or.l_bs_fxc.and..not.(l_BS_magnons.and.n_sp_pol==2)
+ l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)) .and. .not.l_bs_fxc
+ !
+ if (l_bs_exch) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
+ !
+ if (l_bs_corr) then
+   O_ng=G_m_G_maxval
+   ! < WARNIGN: 2021/03/19
+   ! The following can be safely removed with the new implementation 
+   ! However it maybe needed for internal consistency. Otherwise the output of many BSE tests could change
+   !! The cutoff on the non-hybrid part, BS_n_g_fxc, need to be lowered
+   !call fft_check_size(1,O_ng,BS_n_g_exch,"Kx")
+   !! Hybrid functional.
+   !if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"fxc")
+   ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
  endif
  !
@@ -198,7 +199,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if( l_BSE_kernel_complete ) return
  !
  io_QINDX_err=0
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
+ if (l_bs_corr) io_QINDX_err=qindx_B_init(qindx_ID,qindx_ID_frag)
  if(io_QINDX_err/=0) call error('Error reading qindx_B database ')
  !
  ! Screened interaction
@@ -210,7 +211,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (l_rim_w) call interpolate_W(X,Xw,q,'BSE')
  !
  io_X_err=0
- if (BS_res_K_corr) call K_screened_interaction(X,Xw,q,io_X_err)
+ if (l_bs_corr) call K_screened_interaction(X,Xw,q,io_X_err)
  !
  if (io_X_err<0) then
    call deliver_IO_error_message(io_X_err,'PP/Em1s')
@@ -245,55 +246,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- ! Wave Functions
- !================
- bands_to_load=BS_bands
- if (BS_K_is_ALDA) bands_to_load=(/1,BS_bands(2)/)
- !
- section_title='-BSK'
- if (l_bs_fxc) section_title='-BSK->Fxc'
- !
- NG=max(O_ng,BS_n_g_exch)
- if (BS_K_is_ALDA) NG=max(NG,BS_n_g_fxc)
- !
- call WF_load(WF,NG,O_ng_shift,bands_to_load,(/1,Xk%nibz/),space='R',title=trim(section_title))
- !
- ! Wave Functions Phases
- !=======================
- call K_WF_phases(Xk)
- ! 
- ! Spatial Inversion Test
- !========================
- call WF_spatial_inversion(Ken,Xk)
- !
- ! ALDA
- !======
- if (BS_K_is_ALDA) then
-   !
-   YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
-   YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
-   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
-   !
-   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
-   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
-   V_xc=0._SP
-   QP_ng_Vxc=BS_n_g_fxc
-   if(n_spin>1) then
-     YAMBO_ALLOC(magn,(fft_size,3))
-   endif
-   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
-   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
-   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
-   YAMBO_FREE(F_xc)
-   YAMBO_FREE(V_xc)
-   if(n_spin>1) then
-     YAMBO_FREE(magn)
-   endif
-   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-   !
- endif
- !
  ! DB identifier 
  !===============
  BS_identifier=pickup_a_random(10000._SP)
@@ -321,6 +273,94 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  io_BS_err=io_BS(iq,X,ID)
 #endif
  !
+ ! This loop is on the exchange and correlation of the BSE
+ ! iHxc=1 --> K_H=v
+ ! iHxc=2 --> K_TDDFT=fxc
+ ! iHxc=3 --> K_c=W
+ !
+ l_matrix_init=.true.
+ l_load_kernel=.true.
+ l_write_kernel=.false.
+ !
+ do iHxc=1,3
+ !
+ if (iHxc==1) BS_blk_done=.false.
+ !
+ if ((.not.l_bs_exch).and.iHxc==1) cycle
+ !
+ if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
+ !
+ if ((.not.l_bs_corr).and.iHxc==3) cycle
+ !
+ section_title='-BSK-'//trim(intc(iHxc))
+ if (l_bs_fxc) section_title='-BSK->Fxc-'//trim(intc(iHxc))
+ !
+ if (iHxc==1) NG=(/BS_n_g_exch,O_ng_exch/)
+ if (iHxc==2) NG=(/BS_n_g_fxc, 1/)
+ ! < WARNIGN: 2021/03/19
+ ! The following has been changed to the commente line 
+ ! However the commented line maybe needed for internal consistency. Otherwise the output of many BSE tests could change
+ if (iHxc==3) NG=(/O_ng,O_ng_shift/)
+ !if (iHxc==3) NG(2)=O_ng_shift
+ ! WARNING >
+ !
+ ! ALDA
+ !======
+ if (iHxc==2) then
+   !
+   ! This part could be done just by the master bypassing the PAR_IND_WF_linear ...
+   !
+   if(rho_map_thresh>0._SP) then
+     call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
+     YAMBO_ALLOC(rho,(fft_size))
+     call el_density_and_current(Ken,Xk,rho=rho,compute_rho_map=.true.)
+     YAMBO_FREE(rho)
+     call WF_free(WF,keep_states_to_load=.true.)
+   endif
+   !
+   call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
+   !
+   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
+   !
+   QP_ng_Vxc=BS_n_g_fxc
+   !
+   YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
+   YAMBO_ALLOC(tddft_wf%rhotwr2,(fft_size*n_spinor*n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm1,(fft_size,n_spinor))
+   YAMBO_ALLOC(tddft_wf%WF_symm2,(fft_size,n_spinor))
+   !
+   YAMBO_ALLOC(F_xc,(fft_size,n_spin,n_spin))
+   YAMBO_ALLOC(V_xc,(fft_size,n_spin))
+   V_xc=0._SP
+   !
+   if(n_spin>1) then
+     YAMBO_ALLOC(magn,(fft_size,3))
+   endif
+   call XC_potential_driver(Ken,Xk,WF_kind,WF_xc_functional,2)
+   YAMBO_ALLOC(F_xc_mat,(fft_size,n_spin,n_spin,n_spin,n_spin))
+   call Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
+   YAMBO_FREE(F_xc)
+   if(l_BS_magnons) then
+     YAMBO_FREE(V_xc)
+   endif
+   if(n_spin>1) then
+     YAMBO_FREE(magn)
+   endif
+   !
+   call WF_free(WF,keep_states_to_load=.true.)
+   !
+ endif
+ !
+ call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
+ !
+ ! Wave Functions Phases
+ !=======================
+ if (iHxc==3) call K_WF_phases(Xk)
+ ! 
+ ! Spatial Inversion Test
+ !========================
+ if (iHxc==1) call WF_spatial_inversion(Ken,Xk)
+ !
  ! Timing
  !========
  !
@@ -332,10 +372,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  ! First load previously computed matrix elements.
  !=================================================
  !
- BS_blk_done=.false.
- !
 #ifdef _PAR_IO
- if (l_BSE_restart) then
+ if (l_BSE_restart.and.l_load_kernel) then
    !
    if (m_steps>0) call live_timing("Loading partial kernel",m_steps)
    !
@@ -376,11 +414,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call msg("s","Kernel loaded percentual ",real(n_steps-m_steps,SP)/real(n_steps,SP)*100._SP,'[%]')
    !
+   l_load_kernel=.false.
+   !
  endif
 #endif
  !
  if (.not.l_bs_fxc) section_title='Kernel'
  if (     l_bs_fxc) section_title='Kernel->Fxc'
+ !
+ if (iHxc==1) section_title=trim(section_title)//' exch'
+ if (iHxc==2) section_title=trim(section_title)//' tddft'
+ if (iHxc==3) section_title=trim(section_title)//' corr'
  !
  if (m_steps>0) call live_timing(trim(section_title),m_steps)
  !
@@ -391,9 +435,25 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  block_loop:&
  do i_block=1,n_BS_blks
    !
+   mode_now=BS_blk(i_block)%mode
+   if (.not.l_BS_ares_from_res) mode_now="F"
+   !
+   if (.not.trim(BS_blk(i_block)%mode)=="C") then
+     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
+     if (iHxc==2) l_write_kernel=.not. l_bs_corr
+     if (iHxc==3) l_write_kernel=.true.
+   else
+     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.BS_cpl_K_corr)
+     if (iHxc==2) l_write_kernel=.not. BS_cpl_K_corr
+     if (iHxc==3) l_write_kernel=.true.
+     !
+     if (iHxc==3.and..not.BS_cpl_K_corr) cycle
+     !
+   endif
+   !
    if (BS_blk_done(i_block)) then
 #if defined _PAR_IO
-     if(l_partial_kernel_loaded) then
+     if(l_partial_kernel_loaded.and.l_write_kernel) then
        call io_control(ACTION=WR,ID=ID)
        call io_BS_PAR_block(iq,i_block,ID,"full")
      endif
@@ -415,15 +475,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Exchange oscillators
    !----------------------
-   ! 
-   call K_exchange_collisions(iq,Xk,i_Tgrp_k)
    !
-   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+   if(iHxc==1) then
+     call K_exchange_collisions(iq,Xk,i_Tgrp_k)
+     if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+   endif
    !
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+   if(iHxc==3) call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    ! Transition Loops
    !------------------
@@ -434,11 +495,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,tddft_wf )
+   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,BS_mat_tmp,tddft_wf )
 #endif
    !
    call OPENMP_update(master_thread)   
@@ -480,7 +541,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s =Xk%sstar(i_kmq_bz,2) 
        i_pmq_s =Xk%sstar(i_pmq_bz,2) 
        !
-       if (BS_res_K_corr) then 
+       if (iHxc==3) then 
          i_kmq_t=BS_blk(i_block)%kp_table(1,i_kmq) 
          i_pmq_t=BS_blk(i_block)%kp_table(2,i_pmq) 
        endif 
@@ -488,7 +549,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        i_kmq_s_m1 = sop_inv(i_kmq_s) 
        i_kp_mq_s  = sop_tab(i_kmq_s_m1,i_pmq_s) 
        !
-       if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
+       if (iHxc==3) then 
          i_k_bz_mem=PAR_K_scheme%bz_index(i_k_bz) 
          if (i_p_bz_last/=i_p_bz.or.i_k_bz_last/=i_k_bz) then 
            i_p_bz_last=i_p_bz 
@@ -528,7 +589,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
-       if ((BS_res_K_corr.or.BS_cpl_K_corr)) then 
+       if (iHxc==3) then 
          i_kmq_bz_mem=PAR_K_scheme%bz_index(i_kmq_bz) 
          if (i_pmq_bz_last/=i_pmq_bz.or.i_kmq_bz_last/=i_kmq_bz) then 
            i_pmq_bz_last=i_pmq_bz 
@@ -553,14 +614,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
        endif 
        ! 
-       if (BS_K_is_ALDA) then 
+       if (iHxc==2) then 
          is_k = (/i_c_k,i_k,i_k_s,i_k_sp_pol_c/) 
          os_k = (/i_v_k,i_kmq,i_kmq_s,i_k_sp_pol_v/) 
          is_p = (/i_c_p,i_p,i_p_s,i_p_sp_pol_c/) 
          os_p = (/i_v_p,i_pmq,i_pmq_s,i_p_sp_pol_v/) 
        endif 
        !
-       if (BS_res_K_corr.or.BS_cpl_K_corr) then 
+       if (iHxc==3) then 
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
          !
@@ -571,9 +632,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        H_x=cZERO
        H_c=cZERO
        !
-       mode_now=BS_blk(i_block)%mode
-       if (.not.l_BS_ares_from_res) mode_now="F"
-       !
        select case (mode_now)
        !
        case ("R","A","F")
@@ -582,14 +640,14 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !===================================
          !
          ! Exchange
-         if (BS_res_K_exchange) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
+         if (iHxc==1) H_x=K_exchange_kernel_resonant(iq, BS_n_g_exch,               &
 &                                   BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk)
          !
          ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
+         if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
-         if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
@@ -600,29 +658,32 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          !=============================
          !
          ! Exchange
-         if (BS_cpl_K_exchange) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
-                                   &    BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
+         if (iHxc==1) H_x=K_exchange_kernel_coupling(iq, BS_n_g_exch,              &
+&                                 BS_T_grp(i_Tgrp_p),i_Tp, BS_T_grp(i_Tgrp_k),i_Tk) 
          !
          ! ALDA
-         if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
+         if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (BS_cpl_K_corr.and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
          !
        end select
        !
-       if (l_tddft.and.WF_exx_fraction>0._SP) H_c=H_c*WF_exx_fraction
+       if (l_tddft.and.WF_exx_fraction>0._SP.and.iHxc==3) H_c=H_c*WF_exx_fraction
        !
        sqrt_f_itk=sqrt(cmplx(BS_T_grp(i_Tgrp_k)%f(i_Tk),kind=SP))
        sqrt_f_itp=sqrt(cmplx(BS_T_grp(i_Tgrp_p)%f(i_Tp),kind=SP))
        !
-       BS_blk(i_block)%mat(i_Tk,i_Tp)=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
-       if (mode_now=="C") BS_blk(i_block)%mat(i_Tk,i_Tp)= cI*BS_blk(i_block)%mat(i_Tk,i_Tp)
+       BS_mat_tmp=sqrt_f_itk*(H_x*Co-H_c)*sqrt_f_itp
+       if (mode_now=="C") BS_mat_tmp= cI*BS_mat_tmp
        !
-       BS_blk(i_block)%done(i_Tk,i_Tp)="t"
+       if (     l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_mat_tmp
+       if (.not.l_matrix_init) BS_blk(i_block)%mat(i_Tk,i_Tp) = BS_blk(i_block)%mat(i_Tk,i_Tp)+BS_mat_tmp
+       !
+       if (l_write_kernel) BS_blk(i_block)%done(i_Tk,i_Tp)="t"
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
@@ -631,26 +692,67 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp end parallel
 #endif
    !
-   if(BS_K_cutoff>0._SP) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
+   if(BS_K_cutoff>0._SP.and.l_write_kernel) &
+&     BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
    !
-   call BS_oscillators_free(0,i_block)
-   !
-   if(l_BSE_minimize_memory) then
+   if(l_BSE_minimize_memory.and.iHxc==1) then
      call BS_oscillators_free(i_Tgrp_p,0)
      call BS_oscillators_free(i_Tgrp_k,0)
    endif
    !
+   if(iHxc==3) call BS_oscillators_free(0,i_block)
+   !
+   if(l_write_kernel) then
 #if defined _PAR_IO
-   call io_control(ACTION=WR,ID=ID)
-   call io_BS_PAR_block(iq,i_block,ID,"full")
+     call io_control(ACTION=WR,ID=ID)
+     call io_BS_PAR_block(iq,i_block,ID,"full")
 #else
-   call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
-   io_BS_err=io_BS(iq,X,ID)
+     call io_control(ACTION=WR,COM=REP,SEC=(/i_block+1/),ID=ID)
+     io_BS_err=io_BS(iq,X,ID)
 #endif
+   endif
    !
    call live_timing(steps=i_steps)
    !
  enddo block_loop
+ !
+ if (n_steps>0) call live_timing( )
+ !
+ ! GLOBAL CLEANING 
+ !=================
+ !
+ if(iHxc==1) call BS_oscillators_free(BS_nT_grps,0)
+ !
+ if(iHxc==2) then
+   !
+   YAMBO_FREE(tddft_wf%rhotwr1)
+   YAMBO_FREE(tddft_wf%rhotwr2)
+   YAMBO_FREE(tddft_wf%WF_symm1)
+   YAMBO_FREE(tddft_wf%WF_symm2)
+   !
+   if(rho_map_thresh>0._SP) deallocate(rho_map)
+   !
+   if (l_bs_fxc) then
+     YAMBO_FREE(F_xc_gspace)
+     YAMBO_FREE(FXC_K_diagonal)
+   else if (BS_K_is_ALDA) then
+     YAMBO_FREE(F_xc_mat)
+   endif
+   !
+ endif
+ !
+ if(iHxc==3) then
+   YAMBO_FREE(WF_phase)
+   qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
+   YAMBO_FREE(BS_W)
+   YAMBO_FREE(RIM_W)
+ endif
+ !
+ call WF_free(WF,keep_states_to_load=iHxc<3)
+ !
+ l_matrix_init=.false.
+ !
+ enddo ! iHxc loop
  !
 #if defined _PAR_IO
  if(BS_K_cutoff>0._SP) then
@@ -668,39 +770,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  io_BS_err=io_BS(iq,X,ID)
 #endif
  !
- if (n_steps>0) call live_timing( )
- !
- ! GLOBAL CLEANING 
- !=================
- !
- call BS_oscillators_free(BS_nT_grps,0)
- !
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
-   YAMBO_FREE(WF_phase)
- endif
- !
- if (l_bs_fxc) then
-   !
-   YAMBO_FREE(F_xc_gspace)
-   YAMBO_FREE(FXC_K_diagonal)
-   !
- else if (BS_K_is_ALDA) then
-   !
-   YAMBO_FREE(tddft_wf%rhotwr1)
-   YAMBO_FREE(tddft_wf%rhotwr2)
-   YAMBO_FREE(tddft_wf%WF_symm1)
-   YAMBO_FREE(tddft_wf%WF_symm2)
-   !
-   YAMBO_FREE(F_xc_mat)
-   !
- endif
- !
- if (any((/BS_res_K_corr,BS_cpl_K_corr/)).and..not.l_bs_fxc) qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
- !
- YAMBO_FREE(BS_W)
- YAMBO_FREE(RIM_W)
- call WF_free(WF)
- !
  call timing('X T_space Kernel',OPR='stop')
  !
-end subroutine K
+end subroutine K_kernel

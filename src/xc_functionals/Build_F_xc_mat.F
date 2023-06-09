@@ -27,6 +27,7 @@ subroutine Build_F_xc_mat(V_xc,F_xc,F_xc_mat)
  use BS,             ONLY:l_BS_magnons
  use FFT_m,          ONLY:fft_size
  use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
+ use D_lattice,      ONLY:DL_vol
  use xc_functionals, ONLY:magn
  use vec_operate,    ONLY:v_norm
  !

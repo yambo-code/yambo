@@ -38,6 +38,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
 #if defined _SC || defined _RT
  use hamiltonian,    ONLY:rho_n,magn_n
 #endif
+ use wave_func,      ONLY:rho_map_thresh
  use electrons,      ONLY:levels,n_spin,n_spinor
  use FFT_m,          ONLY:fft_size
  use wrapper,        ONLY:V_dot_V
@@ -356,7 +357,7 @@ subroutine XC_libxc_driver(en,Xk,FUNCTIONAL,ORDER,EXX_FRACTION,EXX_SCREENING)
  !
  if (l_Fxc_from_Vxc.and.ORDER==2) then
    do ifft=1,fft_size
-     if (abs(spin_rho_DP(1,ifft))<1.E-7_DP) cycle
+     if (abs(spin_rho_DP(1,ifft))<rho_map_thresh) cycle
      F_xc(ifft,1,1)=real( real(V_xc_pert(ifft,1)-V_xc(ifft,1),DP)/(spin_rho_DP(1,ifft)*(PERT_FAC-1._DP)),SP)
    enddo
  endif

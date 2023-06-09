@@ -163,11 +163,11 @@ subroutine XCo_local(E,Xk)
      ! 
 !$omp parallel do default(shared), private(ifft)
      do ifft=1,fft_size
-       c_ws(ifft,1)=V_xc(ifft,1)*WF%c(ifft,1,iwfp)
+       c_ws(ifft,1)=V_xc(ifft,1)*WF%r(ifft,1,iwfp)
      enddo
 !$omp end parallel do
      !
-     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+     QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
      !
      if (pp_is_uspp) then
        call PP_vloc_augment(QP_Vxc(i1),V_xc,ik,ib,ibp)
@@ -218,9 +218,9 @@ subroutine XCo_local(E,Xk)
        iwf =WF%index(ib,ik,i_sp_pol)
        iwfp=WF%index(ibp,ik,i_sp_pol)
        !
-       c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%c(:,1,iwfp)
+       c_ws(:,1)=V_xc_mat(:,i_sp_pol,i_sp_pol)*WF%r(:,1,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor=1 not implemented')
@@ -231,10 +231,10 @@ subroutine XCo_local(E,Xk)
        iwf=WF%index(ib,ik,1)
        iwfp=WF%index(ibp,ik,1)
        !
-       c_ws(:,1)=V_xc_mat(:,1,1)*WF%c(:,1,iwfp)+V_xc_mat(:,1,2)*WF%c(:,2,iwfp)
-       c_ws(:,2)=V_xc_mat(:,2,1)*WF%c(:,2,iwfp)+V_xc_mat(:,2,2)*WF%c(:,2,iwfp)
+       c_ws(:,1)=V_xc_mat(:,1,1)*WF%r(:,1,iwfp)+V_xc_mat(:,1,2)*WF%r(:,2,iwfp)
+       c_ws(:,2)=V_xc_mat(:,2,1)*WF%r(:,2,iwfp)+V_xc_mat(:,2,2)*WF%r(:,2,iwfp)
        !
-       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,WF%c(:,:,iwf),c_ws)
+       QP_Vxc(i1)=Vstar_dot_V_omp(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),c_ws(:,:))
        !
        if (pp_is_uspp) then
          call error('[PPs] USPP: nspin=2 and n_spinor>1 not implemented')

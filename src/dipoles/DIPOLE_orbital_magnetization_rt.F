@@ -21,9 +21,10 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
+subroutine Dipole_orbital_magnetization_rt(Xen,Xk,Dip)
  !
  ! This routine returns <L>
+ ! Using PRB 74, 024408 (2006)
  !
  use pars,                ONLY:SP,cI
  use LIVE_t,              ONLY:live_timing
@@ -52,7 +53,7 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
 &                    PAR_IND_VAL_BANDS_DIP%n_of_elements(PAR_IND_VAL_BANDS_DIP_ID+1)*&
 &                    PAR_IND_CON_BANDS_DIP%n_of_elements(PAR_IND_CON_BANDS_DIP_ID+1)
  !
- if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization',n_LT_steps)
+ if (n_LT_steps>0) call live_timing('Dipoles: orbital magnetization(rt)',n_LT_steps)
  !
  ! Main loop over k in IBZ
  !
@@ -85,12 +86,15 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
            Eb=Xen%E(ib,ik,i_sp_pol)
            if (allocated(Xen%Eo)) Eb=Xen%Eo(ib,ik,i_sp_pol)
            !
-           if (iv< ib) DIP_pos(:,1)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
-           if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
-           if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
-           if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
+           !if (iv< ib) DIP_pos(:,1)=conjg(-cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol))
+           !if (iv>=ib) DIP_pos(:,1)=      -cI*DIP_iR(:,iv,ib,ik_mem,i_sp_pol)
+           !if (ic< ib) DIP_pos(:,2)=conjg(-cI*DIP_iR(:,ib,ic,ik_mem,i_sp_pol))
+           !if (ic>=ib) DIP_pos(:,2)=      -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
+           DIP_pos(:,1)= -cI*DIP_iR(:,ib,iv,ik_mem,i_sp_pol)
+           DIP_pos(:,2)= -cI*DIP_iR(:,ic,ib,ik_mem,i_sp_pol)
            !
-           DIP_tmp=-cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           !DIP_tmp=-cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
+           DIP_tmp=cI*cross_product(DIP_pos(:,1),DIP_pos(:,2))
            !
            ! Local part
            !
@@ -113,4 +117,4 @@ subroutine Dipole_orbital_magnetization(Xen,Xk,Dip)
  !
  call live_timing()
  !
-end subroutine Dipole_orbital_magnetization
+end subroutine Dipole_orbital_magnetization_rt

@@ -175,7 +175,7 @@ subroutine Pseudo_Hamiltonian(Xk,Xen,l_equilibrium)
          !
          if (iwf==0) cycle
          !
-         kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,WF%c(:,:,iwf),kbv_gauged)
+         kbv_ks_space(ib)=V_dot_V(fft_size*n_spinor,cmplx(WF%r(:,:,iwf),kind=SP),kbv_gauged(:,:))
          !
          do ibp=H_ref_bands(1),ib
            !

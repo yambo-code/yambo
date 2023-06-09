@@ -30,7 +30,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
-&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
+&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,BS_E_sorted_indx,X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D
@@ -47,7 +47,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Work Space
  !
  character(2)      :: ordering
- integer           :: id
+ integer           :: id,it,index_sort(5)
  character(10)     :: solver
  complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
@@ -148,6 +148,16 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      data_sort(:N_BS_E_sorted)=real(BS_E_sorted(id,:N_BS_E_sorted,1),SP)
      if (data_sort(1)==0._SP) cycle
      call X_OUTPUT_driver("WRITE E_IP",data=data_sort(:N_BS_E_sorted))
+   enddo
+   do id=1,min(BS_H_dim,1000)
+     data_sort(1)=real(BS_E_sorted(id,1,1),SP)
+     if (data_sort(1)==0._SP) cycle
+     do it=1,18
+       if (BS_E_sorted_indx(id,it,1)==-1) exit
+       data_sort(1)=real(BS_E_sorted(id,1,1),SP)
+       index_sort(1:5)=real(BS_E_sorted_indx(id,it,1:5),SP)
+       call X_OUTPUT_driver("WRITE E_INDX_IP",data=data_sort(1:1),indexes=index_sort)
+     enddo
    enddo
  endif
  !

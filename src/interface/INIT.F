@@ -489,10 +489,6 @@ integer function INIT(en,q,k,X,Xw,Dip,instr,lnstr,CLOSE_Gs,FINALIZE)
    !
    subroutine LOCAL_after_input_IO
      !
-     ! q0 renormalization
-     !
-     BSS_q0(:) = BSS_q0(:)*q0_def_norm/v_norm( BSS_q0)
-     !
      if (len_trim(BSE_mode)==0                ) BSE_mode="retarded"
      if (STRING_same(trim(BSE_mode),"causal") ) BSE_mode="retarded"
      !

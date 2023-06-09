@@ -56,8 +56,8 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
    call WF_load(WF,0,1,(/ib_ref,ib_ref/),(/ik_ref,ik_ref/),title='-Spinor Factor',impose_free_and_alloc=.TRUE.)
    !
    i_wf=WF%index(ib_ref,ik_ref,1)
-   v(1)=real(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf ), WF%c(:,1,i_wf) ),SP)
-   v(2)=real(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf ), WF%c(:,2,i_wf) ),SP)
+   v(1)=real(Vstar_dot_V_omp( fft_size, WF%r(:,1,i_wf ), WF%r(:,1,i_wf) ),SP)
+   v(2)=real(Vstar_dot_V_omp( fft_size, WF%r(:,2,i_wf ), WF%r(:,2,i_wf) ),SP)
    !
    call WF_free(WF)
    !
@@ -87,8 +87,8 @@ subroutine electrons_spin_factors(kpts,bands,spin_factors)
    do ib=bands(1),bands(2)
      if( .not. px%element_2D(ik-kpts(1)+1,ib-bands(1)+1) ) cycle
      i_wf=WF%index(ib,ik,1)
-     v(1)=real(Vstar_dot_V_omp( fft_size, WF%c(:,1,i_wf), WF%c(:,1,i_wf) ),SP)
-     v(2)=real(Vstar_dot_V_omp( fft_size, WF%c(:,2,i_wf), WF%c(:,2,i_wf) ),SP)
+     v(1)=real(Vstar_dot_V_omp( fft_size, WF%r(:,1,i_wf), WF%r(:,1,i_wf) ),SP)
+     v(2)=real(Vstar_dot_V_omp( fft_size, WF%r(:,2,i_wf), WF%r(:,2,i_wf) ),SP)
      spin_factors(ib,ik,1)=abs(dot_product(v,ref_dir(:,1)))
      spin_factors(ib,ik,2)=abs(dot_product(v,ref_dir(:,2)))
      call live_timing(steps=1)

@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
+subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion,compute_rho_map)
  !
  ! Electronic density (and current).
  !
@@ -55,15 +55,15 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  !
  use pars,          ONLY:SP,DP
  use com,           ONLY:msg
- use stderr,        ONLY:real2ch
+ use stderr,        ONLY:real2ch,intc
  use electrons,     ONLY:levels,n_spinor,n_sp_pol
  use R_lattice,     ONLY:bz_samp
- use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop
+ use D_lattice,     ONLY:nsym,i_time_rev,mag_syms,dl_sop,DL_vol
  use FFT_m,         ONLY:fft_size,fft_dim,fft_rot_r,fft_rot_r_inv,fft_g_table
 #if defined _FFTW
  use FFT_m,         ONLY:fftw_plan
 #endif
- use wave_func,     ONLY:WF
+ use wave_func,     ONLY:WF,rho_map,rho_map_thresh,rho_map_size
  use parallel_m,    ONLY:PAR_IND_WF_linear,PAR_COM_density
  use parallel_int,  ONLY:PP_redux_wait
  use pseudo,        ONLY:pp_is_uspp,qe_pseudo_alloc,becp,pp_has_nlcc
@@ -86,19 +86,20 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  real(SP), optional             ::J(fft_size,3)
  integer,  optional, intent(in) ::bands(2)
  logical,  optional, intent(in) ::force_spatial_inversion
+ logical,  optional, intent(in) ::compute_rho_map
  !
  ! Work Space 
  !
 #if defined _YPP_RT
  integer    :: ik_RT
 #endif
- integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2)
- integer    :: ig,i_dir,ifft
+ integer    :: ib,ik,i_sp_pol,i_spinor,rho_syms,i_symm,i_wf,bands_range(2),ifft,ig,i_dir
+ integer    :: rho_map_tmp(fft_size)
  real(SP)   :: f_occ,rho_no_sym(fft_size),drho_no_sym(fft_size,3),J_no_sym(fft_size,3)
  real(SP)   :: raux
  complex(SP), allocatable :: WF_der(:,:,:)
  complex(DP), allocatable :: rhog_aug_DP(:,:), aux_DP(:)
- logical    :: warn_done,l_si,l_rho,l_drho,l_J
+ logical    :: warn_done,l_si,l_rho,l_drho,l_J,l_rho_map
  !
 #if defined _RT
  call timing('el_density',OPR='start')
@@ -110,7 +111,9 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  l_drho    =present(drho)
  l_J       =present(J)
  l_si      =.false.
- if (present(force_spatial_inversion)) l_si=force_spatial_inversion
+ l_rho_map =.false.
+ if (present(force_spatial_inversion)) l_si     =force_spatial_inversion
+ if (present(compute_rho_map)        ) l_rho_map=compute_rho_map
  !
  if (l_rho) then
    rho       =0._SP
@@ -120,13 +123,13 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
  if (l_drho) then
    if(pp_is_uspp)  call warning(" USPP corrections to rho gradient not implemented")
    if(pp_has_nlcc) call warning(" NLCC corrections to rho gradient not implemented")
-   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   YAMBO_ALLOC(WF_der,(rho_map_size,n_spinor,3))
    drho       =0._SP
    drho_no_sym=0._SP
  endif
  !
  if (l_J) then
-   YAMBO_ALLOC(WF_der,(fft_size,n_spinor,3))
+   YAMBO_ALLOC(WF_der,(rho_map_size,n_spinor,3))
    call error(" Calculation of current is implemented but not tested")
    J         =0._SP
    J_no_sym  =0._SP
@@ -183,30 +186,40 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
        !
        !
        if (l_rho) then
+         !
          do i_spinor=1,n_spinor
-           rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%c(:,i_spinor,i_wf))**2
+           if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
+             rho_no_sym(rho_map(:))=rho_no_sym(rho_map(:))+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
+           else
+             rho_no_sym(:)=rho_no_sym(:)+f_occ*k%weights(ik)*abs(WF%r(:,i_spinor,i_wf))**2
+           endif
          enddo
          !
          ! uspp becsum
          !
          if (pp_is_uspp) then
-           !
            call sum_bec(ik,i_sp_pol, ib,ib,1, (/f_occ*k%weights(ik)/), becp(ik,i_sp_pol) )
-           !
          endif
          !
        endif
        !
        if (l_drho) then
          !
-         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         call eval_Gradient(cmplx(WF%r(:,:,i_wf),kind=SP),WF_der,n_spinor,"wave")
          !
          do i_dir=1,3
            do i_spinor=1,n_spinor
-             do ifft=1,fft_size
-               drho_no_sym(ifft,i_dir)=drho_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
-               &  k%weights(ik)*2._SP*real(WF%c(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
-             enddo
+             if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
+               do ifft=1,rho_map_size
+                 drho_no_sym(rho_map(ifft),i_dir)=drho_no_sym(rho_map(ifft),i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &  k%weights(ik)*2._SP*real(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             else
+               do ifft=1,fft_size
+                 drho_no_sym(ifft,i_dir)=drho_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &  k%weights(ik)*2._SP*real(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             endif
            enddo
          enddo
          !
@@ -214,14 +227,21 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
        !
        if (l_J) then
          !
-         call eval_Gradient(WF%c(:,:,i_wf),WF_der,n_spinor,"wave")
+         call eval_Gradient(cmplx(WF%r(:,:,i_wf),kind=SP),WF_der,n_spinor,"wave")
          !
          do i_dir=1,3
            do i_spinor=1,n_spinor
-             do ifft=1,fft_size
-               J_no_sym(ifft,i_dir)=J_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
-               &   k%weights(ik)*aimag(WF%c(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
-             enddo
+             if (size(WF%r(:,i_spinor,i_wf))<fft_size) then
+               do ifft=1,rho_map_size
+                 J_no_sym(rho_map(ifft),i_dir)=J_no_sym(rho_map(ifft),i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &   k%weights(ik)*aimag(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             else
+               do ifft=1,fft_size
+                 J_no_sym(ifft,i_dir)=J_no_sym(ifft,i_dir)+E%f(ib,ik,i_sp_pol)*&
+                 &   k%weights(ik)*aimag(WF%r(ifft,i_spinor,i_wf)*WF_der(ifft,i_spinor,i_dir))
+               enddo
+             endif
            enddo
          enddo
          !
@@ -292,6 +312,21 @@ subroutine el_density_and_current(E,k,rho,drho,J,bands,force_spatial_inversion)
      if (.not.l_si) rho(:)=real(1+i_time_rev,SP)*rho(:)
      if (     l_si) rho(:)=real(  i_time_rev,SP)*rho(fft_rot_r_inv(:))+rho(:)
    endif
+ endif
+ !
+ if(l_rho_map) then
+   !
+   rho_map_size=0
+   do ifft=1,fft_size
+     if(rho(ifft)*real(fft_size,SP)/real(DL_vol,SP)<rho_map_thresh) cycle
+     rho_map_size=rho_map_size+1
+     rho_map_tmp(rho_map_size)=ifft
+   enddo
+   !
+   call msg('s','[FFT] Instead of full fft_size '//trim(intc(fft_size))//' using rho_map_size '//trim(intc(rho_map_size)))
+   allocate(rho_map(rho_map_size))
+   rho_map=rho_map_tmp(:rho_map_size)
+   !
  endif
  !
  if (l_drho) then

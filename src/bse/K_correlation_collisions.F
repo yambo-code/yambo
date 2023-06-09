@@ -73,7 +73,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  logical, allocatable :: O_todo_table(:,:,:,:,:,:)
  !
- if (.not.BS_res_K_corr) return 
+ if (.not.BS_res_K_corr) return
  !
  call timing('T_space CORR Osc.',OPR='start')
  !

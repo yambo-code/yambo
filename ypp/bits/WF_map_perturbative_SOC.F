@@ -42,6 +42,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  use interfaces,          ONLY:io_DB1_selective_scan
  !
 #include<memory.h>
+#include<yambo_wfs.h>
  !
  type(bz_samp), intent(in)    :: kpt
  type(levels),  intent(inout) :: En
@@ -151,7 +152,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
  !
  YAMBO_ALLOC(x_cc,(fft_size,3,1))
  !
- call load_cc(.false.,(/a(1,1)/2._SP,a(2,2)/2._SP,a(3,3)/2._SP/),1)
+ call load_cc(.false.,(/0.5_SP,0.5_SP,0.5_SP/),1)
  !
 1 continue
  !
@@ -208,10 +209,10 @@ subroutine WF_map_perturbative_SOC(kpt,En)
      if(i_symm>1) then
        do i_fft=1,fft_size
          i_fft_rot=fft_rot_r(i_fft,i_symm)
-         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%c(i_fft_rot,:,i_wf_SOC) )
+         WF_SOC_rot(i_fft,:)=matmul( spin_sop(:,:,i_symm), WF_SOC%r(i_fft_rot,:,i_wf_SOC) )
        enddo
      else
-       WF_SOC_rot=WF_SOC%c(:,:,i_wf_SOC)
+       WF_SOC_rot=WF_SOC%r(:,:,i_wf_SOC)
      endif
      !
      do i_fft=1,fft_size
@@ -261,7 +262,7 @@ subroutine WF_map_perturbative_SOC(kpt,En)
            !
            if (n_sp_pol==2 .and. i_spinor/=i_sp_pol) cycle
            !
-           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_spinor),WF%c(:,1,i_wf )))**2
+           sq2=sq2+abs(dot_product(WF_SOC_rot(:,i_spinor),WF%r(:,1,i_wf )))**2
            !
          enddo
          !

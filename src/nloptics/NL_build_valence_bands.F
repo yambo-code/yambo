@@ -58,7 +58,7 @@ subroutine NL_build_valence_bands(en,V_input,VAL_BANDS,lowest_band)
 !$omp parallel do default(shared), private(i_v,i_spinor)
        do i_v=1,en%nbf(is)
          do i_spinor=1,n_spinor
-           Val_bands(:,i_v,ik_mem,is)=Val_bands(:,i_v,ik_mem,is)+V_input(ib,i_v,ik,is)*WF%c(:,i_spinor,i_wf)
+           Val_bands(:,i_v,ik_mem,is)=Val_bands(:,i_v,ik_mem,is)+V_input(ib,i_v,ik,is)*WF%r(:,i_spinor,i_wf)
          enddo
        enddo
 !$omp end parallel do

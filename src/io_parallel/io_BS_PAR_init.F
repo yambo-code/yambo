@@ -159,6 +159,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
    chunksize(3) = YAMBO_DEF_CHUNK
    ! If BSE matrix is <YAMBO_DEF_CHUNK, we do not chunk.
    if (BS_K_dim(1) < YAMBO_DEF_CHUNK) chunksize(3) = 0
+   if (BS_n_eh_spaces==2 .and. BS_K_dim(2) < YAMBO_DEF_CHUNK) chunksize(3) = 0
    !
  end select
  !

@@ -127,6 +127,7 @@ module IO_m
  !
  ! Netcdf chunking
  ! For SP, we chunk in 2MB and double 4MB. These are in general small chunk sizes. 
+ ! For more information see https://www.unidata.ucar.edu/software/netcdf/workshops/2011/nc4chunking/
  integer, parameter :: YAMBO_DEF_CHUNK = 512
  !
  ! Units

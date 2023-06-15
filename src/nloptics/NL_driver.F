@@ -157,17 +157,16 @@ subroutine NL_driver(E,X,k,q,Dip)
         call warning('With Collisions TDDFT is approximated to the linear contribution!')
      endif
      eval_HARTREE=.FALSE.
-   else
-     eval_HARTREE=.TRUE.
    endif
    !
+   if(l_use_Hxc_collisions.and..not.COLLISIONS_have_HARTREE) eval_HARTREE=.TRUE.
+   !     
    if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
    !
  endif
  !
- if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
-   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
- endif
+ if(eval_HARTREE.or.eval_DFT) & 
+&   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  !
  ! Load Collisions if necessary
  ! ============================

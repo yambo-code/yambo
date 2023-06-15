@@ -156,6 +156,9 @@ subroutine NL_driver(E,X,k,q,Dip)
      elseif(Correlation==TDDFT) then
         call warning('With Collisions TDDFT is approximated to the linear contribution!')
      endif
+     eval_HARTREE=.FALSE.
+   else
+     eval_HARTREE=.TRUE.
    endif
    !
    if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')

@@ -23,17 +23,19 @@
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
- use pars,           ONLY:pi,SP,cI
+ use pars,           ONLY:pi,SP,cI,cZERO
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
- use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
+ use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
+&                         l_eps_res_ares,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BSqpts,BS_field_direction,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
- use X_m,            ONLY:Epsilon_ii,eps_2_alpha,EPS_2_eels,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
-&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,X_magnons
+ use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
+&                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
+&                         X_magnons
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,q_norm,FineGd_desc,nkbz
- use D_lattice,      ONLY:l_0D
+ use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
  use electrons,      ONLY:spin_occ
  use DIPOLES,        ONLY:DIP_desc
  use PHOTOLUM,       ONLY:PL
@@ -49,10 +51,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),fac
+ complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),alpha(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
- logical           :: l_last_col,eval_eels
- ! 
+ logical           :: l_last_col
+ !
  if (STRING_match(WHAT,"open")) then
    !
    if (STRING_match(WHAT,"Haydock"))   solver="haydock"
@@ -69,7 +71,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if (                   BS_K_is_ALDA) call X_OUTPUT_driver(WHAT="keys "//OBS,IQ=iq,keys=trim(solver)//' alda bse')
    endif
    !
+   ! If epsilon is not evaluated or extendable to the negative axis, eels is not evaluated
+   ! This is not really needed and could be removed with just a warning
+   if (X_do_obs("eel")   .and. .not.l_eps_res_ares     ) call X_obs_onoff("- eel")
+   !
    call X_OUTPUT_driver("open "//OBS)
+   !
  endif
  !
  if (STRING_match(WHAT,"append"))    call X_OUTPUT_driver("append "//OBS)
@@ -96,9 +103,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  if (.not.STRING_match(WHAT,"dump")) return
  !
- fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
+ fac=eps_2_alpha/4._SP/pi
+ if (l_col_cut) fac=fac*bare_qpg(iq,1)**2/q_norm(iq)**2
  !
  ! ABSORPTION
+ !
+ ! Epsilon_ii
  !------------
  if (X_do_obs("eps")) then
    !
@@ -108,29 +118,82 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    if (.not.STRING_match(WHAT,"IP")) call msg("o eps",com_compose_msg(pre="# ",body="A"),&
 &                                             real(A_drude(2))/real(nkbz,SP)*spin_occ,INDENT=0,after_msg="[nel]")
    !
-   ! ... Epsilon
+   ! ... Epsilon_ii
    call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)
  endif
  !
- ! EELS 
- !-------
- if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.TRUE.,ordering)
-   if (.not.eval_eels) call X_obs_onoff("- eel")
- endif
- if (X_do_obs("eel")) then
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2)+1._SP,eel(:,1)) 
-   eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3)+1._SP,eel(:,2)) 
-   if (l_last_col) eval_eels=EPS_2_eels(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4)+1._SP,eel(:,3)) 
-   call ELEMENTAL_dump("eel",eel)
+ ! Epsilon_ij
+ !------------
+ if (X_do_obs("off")) then
+   !
+   ! ... Anomalous Hall term
+   call msg("o eps",com_compose_msg(pre="# ",body="Anomalous Hall effect (B_Hall)")," ",INDENT=0)
+   hall(1,1:2)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
+   hall(2,1:2)=hall(1,1:2)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
+   hall(3,1:2)=hall(2,1:2)*1.E2_SP*HBAR_SI/e_SI**2
+   call msg("o eps",com_compose_msg(pre="# ",body="B_Hall (IP)"),real(hall(1,1)),INDENT=0,after_msg="[fs]^-1")
+   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(hall(2,1)),INDENT=0,after_msg="[Ohm*cm]^-1")
+   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(hall(3,1)),INDENT=0,after_msg="[e^2/hbar]")
+   if (.not.STRING_match(WHAT,"IP")) then
+     call msg("o eps",com_compose_msg(pre="# ",body="B_Hall"),real(hall(1,2)),INDENT=0,after_msg="[fs]^-1")
+     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(hall(2,2)),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(hall(3,2)),INDENT=0,after_msg="[e^2/hbar]")
+   endif
+   !
+   ! ... Eps_ij
+   call ELEMENTAL_dump("off",Epsilon_ij(:,2:))
+   !
  endif
  !
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)* fac
-   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
-   call ELEMENTAL_dump("alpha",spectra)
+   !
+   eps(:,1)=Epsilon_ii(:,2)
+   eps(:,2)=Epsilon_ii(:,3)
+   if (l_last_col) eps(:,3)=Epsilon_ii(:,4)
+   !
+   if (.not.l_ab_from_eels) alpha=eps*fac
+   ! With eel the 3D eel, this is true in any dimension
+   ! Remember that here eps does not contain the "+1"
+   ! eel3D=-1./(eps+1.) ;  alpha=(1+eel3D)*fac
+   ! accordingly alpha=eps/(1+eps)*fac
+   if (     l_ab_from_eels) alpha=eps/(eps+1._SP)*fac
+   call ELEMENTAL_dump("alpha",alpha)
+ endif
+ !
+ ! Beta
+ !------
+ if (X_do_obs("beta")) then
+   !
+   spectra(:,1)=Epsilon_ij(:,2)
+   spectra(:,2)=Epsilon_ij(:,3)
+   if (l_last_col) spectra(:,3)=Epsilon_ij(:,4)
+   !
+   ! This would be the equivalent of alpha
+   ! but it needs to be checked
+   !! eel3D_ij=-1./(eps_ij) ;  beta=(eel3D_ij)*fac
+   !! accordingly beta=-1./(eps_ij)*fac
+   !if (.not.l_ab_from_eels) spectra=       spectra*fac
+   !if (     l_ab_from_eels) spectra=-1._SP/spectra*fac
+   spectra=       spectra*fac
+   call ELEMENTAL_dump("beta",spectra)
+ endif
+ !
+ ! EELS 
+ !------
+ if (X_do_obs("eel")) then
+   !
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eps(:,1))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))
+   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eps(:,3))
+   !
+   alpha=eps/(eps+1._SP)*fac
+   if(l_3D) spectra= -1._SP/(eps+1._SP)
+   !if(l_3D) spectra=alpha*4._SP*pi-1._SP ! This should be equivalent to the previous
+   if(l_2D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
+   if(l_1D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
+   call ELEMENTAL_dump("eel",spectra)
  endif
  !
  !  DICHROISM
@@ -171,37 +234,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !---------
  if (X_do_obs("Spm")) call ELEMENTAL_dump("Spm",X_magnons(:,1,2:))
  if (X_do_obs("Smp")) call ELEMENTAL_dump("Smp",X_magnons(:,2,2:))
- !
- ! Off-diagonal
- !--------------
- if (X_do_obs("off")) then
-   !
-   ! ... Anomalous Hall term
-   call msg("o eps",com_compose_msg(pre="# ",body="Anomalous Hall effect (B_Hall)")," ",INDENT=0)
-   spectra(1,1:2)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
-   spectra(2,1:2)=spectra(1,1:2)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
-   spectra(3,1:2)=spectra(2,1:2)*1.E2_SP*HBAR_SI/e_SI**2
-   call msg("o eps",com_compose_msg(pre="# ",body="B_Hall (IP)"),real(spectra(1,1)),INDENT=0,after_msg="[fs]^-1")
-   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(spectra(2,1)),INDENT=0,after_msg="[Ohm*cm]^-1")
-   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(spectra(3,1)),INDENT=0,after_msg="[e^2/hbar]")
-   if (.not.STRING_match(WHAT,"IP")) then
-     call msg("o eps",com_compose_msg(pre="# ",body="B_Hall"),real(spectra(1,2)),INDENT=0,after_msg="[fs]^-1")
-     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(spectra(2,2)),INDENT=0,after_msg="[Ohm*cm]^-1")
-     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(spectra(3,2)),INDENT=0,after_msg="[e^2/hbar]")
-   endif
-   !
-   ! ... Eps_ij
-   call ELEMENTAL_dump("off",Epsilon_ij(:,2:))
-   !
- endif
- !
- ! Beta
- !------
- if (X_do_obs("beta")) then
-   spectra=0._SP
-   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
-   call ELEMENTAL_dump("beta",spectra)
- endif
  ! 
  ! Moke
  !------

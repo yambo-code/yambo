@@ -208,15 +208,6 @@ module X_m
      real(SP),            optional :: nTrans_percent,Radius
    end subroutine
    !
-   logical function EPS_2_eels(wv,nw,be_verbose,ordering,eps,eel)
-     use pars,          ONLY:SP
-     integer              :: nw 
-     complex(SP)          :: wv(nw)
-     logical              :: be_verbose
-     character(2)         :: ordering
-     complex(SP) ,optional:: eps(nw),eel(nw)
-   end function
-   !
    subroutine X_ALLOC_elemental(WHAT,DIM)
      character(*)      :: WHAT
      integer, optional :: DIM(:)

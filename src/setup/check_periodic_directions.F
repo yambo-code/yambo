@@ -100,7 +100,7 @@ subroutine check_periodic_directions(is_cut)
    enddo
  endif
  !
- if (trim(alpha_dim)=="none") then
+ if (trim(alpha_dim)=="adim") then
    call warning('Non periodic geometry and unit cell are incompatible')
    return
  endif

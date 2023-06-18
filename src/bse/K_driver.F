@@ -28,13 +28,13 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  use stderr,         ONLY:intc,STRING_match
  use electrons,      ONLY:levels,n_sp_pol
  use frequency,      ONLY:w_samp,W_reset
- use X_m,            ONLY:X_t,X_duplicate,X_reset,global_gauge,X_OUTPUT_driver
+ use X_m,            ONLY:X_t,X_duplicate,X_reset,X_OUTPUT_driver
  use DIPOLES,        ONLY:DIPOLE_t
  use IO_int,         ONLY:io_control
  use IO_m,           ONLY:OP_RD_CL,REP
- use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_eels_to_eps,&
-&                         BSS_uses_DbGd,BSS_Q_dir,BSS_E_dir
- use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_K_is_ALDA,BS_cpl_K_corr,&
+ use BS_solvers,     ONLY:BSS_n_freqs,BSS_er,BSS_dr,BSS_mode,BSS_damp_reference,BSS_q0,BSS_uses_DbGd,&
+&                         BSS_Q_dir,BSS_E_dir
+ use BS,             ONLY:BS_bands,BS_q,BS_n_g_exch,BS_res_K_corr,BS_n_g_W,BS_cpl_K_corr,&
 &                         BS_Blocks_and_Transitions_free,BSqpts,l_BS_photolum
  use TDDFT,          ONLY:FXC_per_memstps,FXC_n_mem_freqs,FXC_is_retarded
  use drivers,        ONLY:l_rpa_IP,l_bs_fxc,l_bss
@@ -75,18 +75,6 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  !=========================
  call K_driver_init("init",1,Ken,Xk)
  !
- ! Observables initialization
- !============================
- call K_observables( )
- !
- ! PL is implemented only in velocity gauge
- if (l_BS_photolum) global_gauge="velocity"
- !
- if(.not.any((/trim(global_gauge)=="velocity".or.trim(global_gauge)=="length"/)) ) then
-   call warning(" Not a valid gauge in input. Switching to length gauge")
-   global_gauge="length"
- endif
- !
  ! q0 renormalization and field direction
  !
  BSS_E_dir(:) = BSS_E_dir(:)/v_norm(BSS_E_dir)
@@ -103,6 +91,10 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
  W_bss%per_memstps=FXC_per_memstps
  call FREQUENCIES_setup(W_bss)
  FXC_n_mem_freqs=W_bss%n_freqs
+ !
+ ! Observables initialization
+ !============================
+ call K_observables(W_bss)
  !
  ! Double Grid support
  !=====================

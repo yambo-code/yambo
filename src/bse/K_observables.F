@@ -85,7 +85,10 @@ subroutine K_observables( W )
    l_BS_trace  = .false.
  endif
  if (l_BS_dichroism.and..not.l_BS_trace) then
+   BS_dip_size=2
    call warning(" Natural dichroism without trace")
+ !  NB: in the case without trace the quadripolar terms should be taken into account,
+ !  With trace these terms average to zero
  !  call warning(" Trace is automatically switched on with dichroism")
  !  l_BS_trace=.true.
  endif

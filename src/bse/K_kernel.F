@@ -320,8 +320,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    call WF_load(WF,NG(1),NG(2),(/1,Ken%nbm/),(/1,Xk%nibz/),space='R',title="-TDDFT",keep_states_to_load=.true.)
    !
-   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
-   !
    QP_ng_Vxc=BS_n_g_fxc
    !
    YAMBO_ALLOC(tddft_wf%rhotwr1,(fft_size*n_spinor*n_spinor))
@@ -346,6 +344,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if(n_spin>1) then
      YAMBO_FREE(magn)
    endif
+   !
+   call TDDFT_ALDA_lower_cutoff(ALDA_cut_scheme)
    !
    call WF_free(WF,keep_states_to_load=.true.)
    !

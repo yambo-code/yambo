@@ -85,8 +85,9 @@ subroutine K_observables( W )
    l_BS_trace  = .false.
  endif
  if (l_BS_dichroism.and..not.l_BS_trace) then
-   call warning(" Trace is automatically switched of with dichroism")
-   l_BS_trace=.true.
+   call warning(" Natural dichroism without trace")
+ !  call warning(" Trace is automatically switched on with dichroism")
+ !  l_BS_trace=.true.
  endif
  !
  if (l_BS_trace   ) BS_dip_size = 3

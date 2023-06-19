@@ -127,8 +127,8 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data,indexes)
        X_obs(ic)%COL_header(1:2)  = (/'E    ','N_deg'/)
      enddo
      if (BS_K_coupling) then
-       X_obs(3)%N_columns=3
-       X_obs(3)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
+       X_obs(4)%N_columns=3
+       X_obs(4)%COL_header(1:3)  = (/'Re(E)','Im(E)','N_deg'/)
      endif
      do it=1,N_X_obs
        if (.not.X_do_obs(trim(X_obs(it)%what))) cycle

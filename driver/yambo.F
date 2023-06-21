@@ -193,6 +193,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_mpa.or.l_X
  !
+ if(l_nl_optics.and.driver_now) call error('Please run the calculation of em1s/d/x in a separate run')
+ !
  if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (driver_now) call mem_manager_report
  !

@@ -62,7 +62,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  ! Other checks
  !
  if (X%ib(1)<0.or.X%ib(1)>maxval(Xen%nbm).or.X%ib(2)<X%ib(1))  X%ib(1)=1
- if (X%ib(2)>Xen%nb.or.X%ib(2)<minval((/Xen%nbf(:n_sp_pol)/))) X%ib(2)=Xen%nb
+ !if (X%ib(2)>Xen%nb.or.X%ib(2)<minval((/Xen%nbf(:n_sp_pol)/))) X%ib(2)=Xen%nb
  !
  ! Here I set up the Double Grid flag to (for example) skip the coarse 
  ! grid generator in the Xo calculation

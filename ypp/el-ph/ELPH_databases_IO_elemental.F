@@ -135,8 +135,10 @@ integer function ELPH_databases_IO_elemental(what,IDB)
  !
  ! GKKP
  !
- if (IDB==1) DB_grad_at_gamma=cZERO
-                      DB_gkkp=cZERO
+ if (IDB==1) then
+   DB_grad_at_gamma=cZERO
+   DB_gkkp=cZERO
+ endif
  !
  do ik=1,DB_nk
    !

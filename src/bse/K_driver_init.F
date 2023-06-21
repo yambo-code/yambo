@@ -60,7 +60,8 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !
  ! BSE_L_kind check
  !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) call error('set Lkind = BAR or FULL')
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full").and..not.STRING_match(BSE_L_kind,"tilde")) &
+ &   call error('set Lkind = BAR or FULL or TILDE')
  !
  if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
    call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
@@ -177,6 +178,19 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      call parser('FxcRetarded',FXC_is_retarded)
    endif
  endif
+ !
+ ! Remove exchange if computing the irreducible response
+ if (index(BSE_L_kind,"tilde")>0) then
+   BS_res_K_exchange=.FALSE.
+   BS_cpl_K_exchange=.FALSE.
+ endif
+#if defined _PHEL
+ ! [EXCPH]: Allow code to go back to different Lkind calculations after Ltilde
+ if (index(BSE_L_kind,"tilde")==0.and.(.not.l_bs_fxc).and.(BS_res_K_exchange.eqv..FALSE.)) then
+   BS_res_K_exchange=.TRUE.
+   BS_cpl_K_exchange=BS_res_K_exchange
+ endif
+#endif
  !
  ! CORE Logicals
  !===============

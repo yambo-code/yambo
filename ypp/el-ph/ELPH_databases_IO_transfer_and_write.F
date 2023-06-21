@@ -26,7 +26,7 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,GKKP)
  use pars,                ONLY:SP,DP,rZERO,cZERO
  use D_lattice,           ONLY:n_atoms
  use R_lattice,           ONLY:bz_samp
- use ELPH,                ONLY:GKKP_me,elph_use_q_grid
+ use ELPH,                ONLY:GKKP_me,elph_use_q_grid,elph_bands
  use YPP_ELPH,            ONLY:DB_ph_pol_vec,DB_E_k,DB_kind,DB_K_map,DB_nk,DB_gkkp,&
 &                              DB_nb,DB_ph_modes,DB_grad_at_gamma,DB_E_k_plus_q,DB_Q_map
  use electrons,           ONLY:levels
@@ -48,7 +48,7 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,GKKP)
  if (elph_use_q_grid) iq=DB_Q_map(IDB)
  !
  GKKP%dVc=cZERO
- if (allocated(GKKP%dVr)) GKKP%dVr=rZERO
+ if (allocated(GKKP%dVr))  GKKP%dVr=rZERO
  !
  ! GKKP & Levels
  !===============
@@ -86,14 +86,14 @@ subroutine ELPH_databases_IO_transfer_and_write(IDB,k,E,GKKP)
      !
      E_shift=DB_E_k(1,ik_db)-(E%E(1,k%sstar(ik_bz,1),1)+E%E_Fermi)
      !
-     GKKP%E_kpq(iq)%E(:,ik_bz,1)=DB_E_k_plus_q(:,ik_db)-E_shift
+     GKKP%E_kpq(iq)%E(elph_bands(1):elph_bands(2),ik_bz,1)=DB_E_k_plus_q(elph_bands(1):elph_bands(2),ik_db)-E_shift
      !
    endif
    !
-   do ib1=1,DB_nb
-     do ib2=1,DB_nb
+   do ib1=elph_bands(1),elph_bands(2)
+     do ib2=elph_bands(1),elph_bands(2)
        !
-       GKKP%dVc(:,ib1,ib2,ik_bz,1)=DB_gkkp(ib1,ib2,:,ik_db)
+       GKKP%dVc(:,ib1,ib2,ik_bz,1)=cmplx(DB_gkkp(ib1,ib2,:,ik_db),kind=SP)
        !
        if (trim(GKKP%KIND)=="dV_bare") cycle
        !

@@ -1,5 +1,6 @@
  a2y.o
  a2y_db1.o
+ a2y_gkkp.o
  a2y_kb_pp.o
  a2y_wf.o
  netcdf_data.o

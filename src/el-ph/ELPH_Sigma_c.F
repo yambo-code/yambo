@@ -48,7 +48,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
 &                        On_Mass_Shell_approx,QP_time_order_sign
  use D_lattice,     ONLY:sop_inv,nsym,i_time_rev,sop_tab
  use R_lattice,     ONLY:qindx_S,bz_samp,RL_vol,nqibz
- use ELPH,          ONLY:elph_nb,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
+ use ELPH,          ONLY:elph_bands,PH_freqs_sq,GKKP,ph_modes,PH_freqs,FineGd_E_kpq_components_reset,&
 &                        QP_PH_n_G_bands,PH_W_debye,use_PH_DbGd,EkplusQ_mode,gkkp_db,elph_grids_are_expanded, &
 &                        elph_nQ,elph_use_q_grid,setup_k_plus_q_levels,elph_nQ_used,&
 &                        E_kpq_sh_fact,Efermi_DbGd,gsqF_energy_steps,eval_G_using_KK,PH_qpt,ID_E_kpq,ID_E_kpq_obj, &
@@ -108,8 +108,8 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  call k_build_up_BZ_tables(k)
  call k_expand(k)
  !
- if (QP_PH_n_G_bands(2)<=0.or.QP_PH_n_G_bands(2)>elph_nb) QP_PH_n_G_bands=(/1,elph_nb/)
- if (QP_PH_n_G_bands(1)<=0.or.QP_PH_n_G_bands(1)>elph_nb) QP_PH_n_G_bands=(/1,elph_nb/)
+ if (QP_PH_n_G_bands(2)<=elph_bands(1).or.QP_PH_n_G_bands(2)>elph_bands(2)) QP_PH_n_G_bands=elph_bands
+ if (QP_PH_n_G_bands(1)<=elph_bands(1).or.QP_PH_n_G_bands(1)>elph_bands(2)) QP_PH_n_G_bands=elph_bands
  !
  call msg('r', '[GW/El-Ph] Bands range       ',(/QP_PH_n_G_bands(1),QP_PH_n_G_bands(2)/))
  if (trim(QP_solver)=='n') &
@@ -310,7 +310,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
        !
        call setup_k_plus_q_levels(iq_db,E_random_shift)
        !
-       call QP_apply((/1,elph_nb/),GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
+       call QP_apply(elph_bands,GKKP%E_kpq(iq_db),k,"G",msg_fmt=' ')
        !
      endif
      !
@@ -422,7 +422,7 @@ subroutine ELPH_Sigma_c(en,k,q,qp)
  !
  ! Debye energy
  !
- call msg('nr','[Ph] Debye energy         ',(/PH_W_debye*HA2EV,PH_W_debye*HA2THZ/),"[ev/ThZ]")
+ call msg('nrs','[Ph] Debye energy         ',(/PH_W_debye*HA2EV,PH_W_debye*HA2THZ/),"[ev/ThZ]")
  !
  ! Here I use the Cardona-Allen g^2 F functions to evaluate their integrated value.
  ! I also calculate the full frequency dependent self-energy

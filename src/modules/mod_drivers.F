@@ -67,6 +67,14 @@ module drivers
  !
  logical :: l_elph_Hamiltonian   =.FALSE.
  !
+ ! Exciton-phonon specific flags
+ !
+ logical :: l_EXCPH_Sigma        =.FALSE.
+ logical :: l_EXCPH_gkkp         =.FALSE.
+ logical :: l_EXCPH_optics       =.FALSE.
+ logical :: l_EXCPH_lifetime     =.FALSE.
+ logical :: l_EXCPH_offdiago     =.FALSE.
+ !
  ! Real Axis non SC Self-energies
  !
  logical :: l_HF_and_locXC       =.FALSE.

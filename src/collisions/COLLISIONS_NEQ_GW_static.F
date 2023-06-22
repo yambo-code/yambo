@@ -99,10 +99,6 @@ subroutine COLLISIONS_NEQ_GW_static(X,Xk,E,k,q,Xw)
  !
  call timing('NEQ GW collisions',OPR='start')
  !
- ! Test the spatial Inversion
- !   
- call WF_spatial_inversion(E,Xk)
- !
  ! ALLOCATION
  !------------
  !

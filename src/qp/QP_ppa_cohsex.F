@@ -215,10 +215,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  io_err=io_X(X,Xw,ID)
  if (io_err<0.and.io_RESPONSE) call error('Incomplete and/or broken PPA/Static diel. fun. database')
  !
- ! Test the spatial Inversion
- !   
- call WF_spatial_inversion(E,Xk)
- !
  ! ALLOCATION
  !------------
  !

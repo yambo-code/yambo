@@ -36,6 +36,8 @@ subroutine el_magnetization(en,Xk,magn,bands)
  use D_lattice,      ONLY:nsym,dl_sop,i_time_rev
  use FFT_m,          ONLY:fft_size,fft_rot_r
  use wave_func,      ONLY:WF
+ use interfaces,     ONLY:WF_load,WF_free
+ use hamiltonian,    ONLY:WF_G_max,WF_Go_indx
  use electrons,      ONLY:Spin_magn
  use matrix_operate, ONLY:m3det
  use parallel_m,     ONLY:PAR_IND_WF_linear,PAR_COM_density
@@ -56,6 +58,7 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  ! Work Space
  !
+ logical :: l_WFs_on_the_fly
  integer :: isym,ifft,ib,ik,i_sp_pol,i_wf,bands_range(2)
  real(SP):: cv(fft_size,3),tmp_sop(3,3),f_occ
  !
@@ -70,11 +73,18 @@ subroutine el_magnetization(en,Xk,magn,bands)
  !
  if (n_spin==1) return
  !
+ l_WFs_on_the_fly=.not.allocated(WF%r)
  !
  do i_sp_pol=1,n_sp_pol
    bands_range=(/1,en%nbm(i_sp_pol)/)
    if(present(bands)) bands_range=bands
    do ik=1,Xk%nibz
+     !
+     if (l_WFs_on_the_fly) then
+       call WF_load(WF,WF_G_max,WF_Go_indx,bands_range,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+&                   space='R',title='-mang',keep_states_to_load=.true.)
+     endif
+     !
      do ib=bands_range(1),bands_range(2)
        !
        if (allocated(PAR_IND_WF_linear%element_2D)) then
@@ -124,6 +134,9 @@ subroutine el_magnetization(en,Xk,magn,bands)
        endif
        !
      enddo
+     !
+     if (l_WFs_on_the_fly) call WF_free(WF,keep_fft=.true.)
+     !
    enddo
  enddo
  !

@@ -24,12 +24,12 @@
 subroutine eval_Mtot(en,k,q)
  !
  use pars,           ONLY:SP
+ use parser_m,       ONLY:parser
  use FFT_m,          ONLY:fft_size
  use wave_func,      ONLY:WF
  use R_lattice,      ONLY:bz_samp
- use electrons,      ONLY:levels
+ use electrons,      ONLY:levels,n_spin,Spin_magn,eval_magn
  use com,            ONLY:msg
- use electrons,      ONLY:eval_magn
  use interfaces,     ONLY:WF_load,el_magnetization
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,&
 &                         PARALLEL_WF_index
@@ -43,7 +43,11 @@ subroutine eval_Mtot(en,k,q)
  !
  real(SP), allocatable :: magn_tmp(:,:)
  !
- if (eval_magn) return
+ if(n_spin==1) return
+ !
+ call parser("EvalMagn",eval_magn)
+ !
+ if(.not.eval_magn) return
  !
  call msg('r','DL Magnetization [cc]')
  !
@@ -51,12 +55,11 @@ subroutine eval_Mtot(en,k,q)
  call PARALLEL_WF_distribute(CLEAN_UP=.TRUE.)
  call PARALLEL_WF_index( )
  !
- call WF_load(WF,0,1,(/1,en%nbm/),(/1,k%nibz/),space='R',title='-WF')
- !
+ call fft_setup(0,1,.true.)
  YAMBO_ALLOC(magn_tmp,(fft_size,3))
  call el_magnetization(en,k,magn_tmp)
  YAMBO_FREE(magn_tmp)
  !
- call WF_free(WF)
+ call msg('s','Total magnetization (x,y,z)',real(Spin_magn(:),SP),"[Bohr_magneton]")
  !
 end subroutine eval_Mtot

@@ -351,16 +351,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
  !
- call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
- !
- ! Wave Functions Phases
- !=======================
- if (iHxc==3) call K_WF_phases(Xk)
- ! 
- ! Spatial Inversion Test
- !========================
- if (iHxc==1) call WF_spatial_inversion(Ken,Xk)
- !
  ! Timing
  !========
  !
@@ -418,6 +408,12 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  endif
 #endif
+ !
+ call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
+ !
+ ! Wave Functions Phases
+ !=======================
+ if (iHxc==3) call K_WF_phases(Xk)
  !
  if (.not.l_bs_fxc) section_title='Kernel'
  if (     l_bs_fxc) section_title='Kernel->Fxc'

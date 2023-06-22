@@ -57,6 +57,7 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  !
  ! Work Space
  !
+ logical :: l_WFs_on_the_fly
  integer :: ib1,ib2,i_sp_pol,ik,ik_RT,isym,ifft,i_wf1,i_wf2
  real(SP):: cv(fft_size,3),tmp_sop(3,3)
  complex(SP) :: f_occ
@@ -70,6 +71,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
  if (n_spin==1) return
  !
  if (n_sp_pol==2) call error(' case n_sp_pol=2 not yet coded in yambo_rt')
+ !
+ l_WFs_on_the_fly=.not.allocated(WF%r)
  !
  if(lowest_band<RT_bands(1)) then
    !
@@ -123,11 +126,16 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
    !  
  endif
  !
+ i_sp_pol=1
  do ik=1,Xk%nibz
    !
 #if !defined _YPP_RT
    if (.not.PAR_IND_WF_k%element_1D(ik)) cycle
 #endif
+   if (l_WFs_on_the_fly) then
+     call WF_load(WF,WF_G_max,WF_Go_indx,RT_bands,(/ik,ik/),(/i_sp_pol,i_sp_pol/),&
+&                   space='R',title='-RT',keep_states_to_load=.true.)
+   endif
    !      
    do ib1=RT_bands(1),RT_bands(2)
      !
@@ -174,6 +182,8 @@ subroutine el_magnetization_matrix(G_lesser,en,Xk,magn,lowest_band)
        !
      enddo
    enddo
+   !
+   if (l_WFs_on_the_fly) call WF_free(WF,keep_fft=.true.)
    !
  enddo
  !

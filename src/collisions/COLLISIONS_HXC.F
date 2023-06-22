@@ -178,10 +178,6 @@ subroutine COLLISIONS_HXC(X,Xk,E,k,q,Xw)
  !
  if (l_compute_screening) then
    !
-   ! Test the spatial Inversion
-   !   
-   call WF_spatial_inversion(E,Xk)
-   !
    ! Allocation (EM1S can be bigger than N_g_vecs_C)
    !
    call X_ALLOC_elemental('X',(/X%ng,X%ng,1/))

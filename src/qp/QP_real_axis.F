@@ -273,10 +273,6 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
    QP_W=cZERO
  endif
  !
- ! Test the spatial Inversion
- !
- call WF_spatial_inversion(en,Xk)
- !
  ! ALLOCATION (scattering_main)
  !
  call X_ALLOC_elemental('X',(/X%ng,X%ng,QP_n_W_freqs_redux/))

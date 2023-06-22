@@ -131,7 +131,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! Basical 
  !
- call setup(en,Xen,Ken,k,Xk)
+ call setup(en,q,Xen,Ken,k,Xk)
  !
  ! Update the default variables
  !

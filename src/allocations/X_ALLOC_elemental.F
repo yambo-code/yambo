@@ -70,7 +70,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      YAMBO_ALLOC(BS_E_sorted,(DIM(1),DIM(2),DIM(3)))
      BS_E_sorted=cZERO
      YAMBO_ALLOC(BS_E_sorted_indx,(DIM(1),2*DIM(2),5))
-     BS_E_sorted_indx=-1
+     BS_E_sorted_indx=0
    case('FXC')
      YAMBO_ALLOC(X_fxc,(DIM(1)))
      X_fxc=cZERO

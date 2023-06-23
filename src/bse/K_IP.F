@@ -123,7 +123,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
    YAMBO_ALLOC(vtmpC,(BS_H_dim,n_BS_E_sorted))
    vtmpC=cZERO
    YAMBO_ALLOC(vtmpI,(BS_H_dim,5))
-   vtmpI=-1
+   vtmpI=0
  endif
  !
  if (BSS_uses_DbGd .and. (index(BSS_mode,'h')/=0)) then

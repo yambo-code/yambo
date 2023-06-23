@@ -50,8 +50,11 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
    return
  endif
  !
+ !
  call PP_redux_wait(vC,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ call PP_redux_wait(vI,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(vC,COMM=PAR_COM_eh_INDEX%COMM )
+ call PP_redux_wait(vI,COMM=PAR_COM_eh_INDEX%COMM )
  !
  YAMBO_ALLOC(vR,(BS_H_dim)) 
  YAMBO_ALLOC(sort_indx,(BS_H_dim))

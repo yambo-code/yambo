@@ -216,7 +216,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      data_sort(1)=real(BS_E_sorted(id,1,1),SP)
      if (data_sort(1)==0._SP) cycle
      do it=1,18
-       if (BS_E_sorted_indx(id,it,1)==-1) exit
+       if (BS_E_sorted_indx(id,it,1)==0) exit
        data_sort(1)=real(BS_E_sorted(id,1,1),SP)
        index_sort(1:5)=real(BS_E_sorted_indx(id,it,1:5),SP)
        call X_OUTPUT_driver("WRITE E_INDX_IP",data=data_sort(1:1),indexes=index_sort)

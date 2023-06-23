@@ -58,7 +58,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size,space)
    do ibp = H_ref_bands(1),H_ref_bands(2)
      i_wfp = WFo%index(ibp,ik,i_sp_pol)
      if (i_wfp==0) cycle
-     if (space=="G") WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
+     if (space/="R") WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%c(:,:,i_wfp)
      if (space=="R") WS_wf(:,:,ib)=WS_wf(:,:,ib)+H_rotation(ibp,ib,ik,i_sp_pol)*WFo%r(:,:,i_wfp)
    end do
    !
@@ -69,7 +69,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size,space)
    i_wf = WFo%index(ib,ik,i_sp_pol)
    if (i_wf==0) cycle
    !
-   if (space=="G") then
+   if (space/="R") then
      !
      !$omp parallel do default(shared), private(i_c,i_spinor)
      do i_spinor=1,n_spinor

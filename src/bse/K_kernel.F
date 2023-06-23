@@ -61,7 +61,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use wave_func,     ONLY:WF,rho_map,rho_map_thresh
  use openmp,        ONLY:OPENMP_update,master_thread
  use timing_m,      ONLY:timing
- use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,master_cpu
+ use parallel_m,    ONLY:myid,ncpu,PAR_K_scheme,PARALLEL_default_mode,master_cpu
  use parallel_int,  ONLY:PP_redux_wait
  use MAGNONS,       ONLY:BSS_MAGN_free
  use PHOTOLUM,      ONLY:BSS_PL_free
@@ -94,7 +94,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
 &               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
  !
- integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),&
+ integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),NK(2),&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
 &              bands_to_load(2),is_k(4),os_k(4),is_p(4),os_p(4)
  complex(SP):: Co,H_x,H_c,BS_mat_tmp
@@ -104,7 +104,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP),   external ::K_correlation_kernel
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_matrix_init,l_load_kernel,l_write_kernel
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_matrix_init,l_load_kernel,l_write_kernel
  !
  ! I/O
  !
@@ -170,6 +170,17 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  l_bs_exch=any((/BS_res_K_exchange,BS_cpl_K_exchange/)).or.l_bs_fxc.and..not.(l_BS_magnons.and.n_sp_pol==2)
  l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)) .and. .not.l_bs_fxc
+ !
+ ! I load the WFs for exachange in a loop in two cases
+ ! - q=0 and more than one k-point.
+ !   In this case it is the default, unless I specify workload in the parallel mode
+ ! - q/=0
+ !   In this case it is activated only if I specify KQmemory in the parallel mode
+ !   The code would work fine also in this case, however it would require continuous loading and unloading of WFs.
+ !   To avoid this one would need to move the loop over i_star in K_Transitions_setup outside the
+ !   loop over ic and iv (see related comment in K_Transiontion_setup.F) 
+ l_bs_exch_wf_in_loop= ((iq==1) .and. (Xk%nbz>=1).and..not.trim(PARALLEL_default_mode)=="workload") .or. &
+ &                     ((iq> 1) .and.                      trim(PARALLEL_default_mode)=="KQmemory")
  !
  if (l_bs_exch) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
@@ -409,11 +420,19 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
 #endif
  !
- call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',title=trim(section_title),keep_states_to_load=.true.)
- !
- ! Wave Functions Phases
- !=======================
- if (iHxc==3) call K_WF_phases(Xk)
+ if (iHxc==1 .and. l_bs_exch_wf_in_loop) then
+   ! DS this is used only for iq==1
+   call fft_setup(NG(1),NG(2),.true.)
+ else
+   !
+   call WF_load(WF,NG(1),NG(2),BS_bands,(/1,Xk%nibz/),space='R',&
+   &            title=trim(section_title),keep_states_to_load=.true.)
+   !
+   ! Wave Functions Phases
+   !=======================
+   if (iHxc==3) call K_WF_phases(Xk)
+   !
+ endif
  !
  if (.not.l_bs_fxc) section_title='Kernel'
  if (     l_bs_fxc) section_title='Kernel->Fxc'
@@ -473,8 +492,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !----------------------
    !
    if(iHxc==1) then
-     call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-     if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
+     call K_exchange_collisions(iq,Xk,i_Tgrp_k,NG,l_bs_exch_wf_in_loop)
+     if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p,NG,l_bs_exch_wf_in_loop)
    endif
    !
    ! Exchange oscillators
@@ -744,7 +763,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    YAMBO_FREE(RIM_W)
  endif
  !
- call WF_free(WF,keep_states_to_load=iHxc<3)
+ if (iHxc==1 .and. l_bs_exch_wf_in_loop) then
+   call fft_free()
+ else
+   call WF_free(WF,keep_states_to_load=iHxc<3)
+ endif
  !
  l_matrix_init=.false.
  !

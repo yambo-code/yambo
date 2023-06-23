@@ -188,8 +188,8 @@ module interfaces
      type(yMPI_comm), optional :: COMM
    end function
    !
-   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,&
-&                     sp_pol_to_load,space,title,impose_free_and_alloc,&
+   subroutine WF_load(WF,iG_max,iGo_max,bands_to_load,kpts_to_load,sp_pol_to_load,&
+&                     k_extrema_only,space,title,impose_free_and_alloc,&
 &                     force_WFo,keep_states_to_load,quiet)
      use wave_func,       ONLY:WAVEs
      integer :: iG_max,iGo_max,bands_to_load(2),kpts_to_load(2)
@@ -197,6 +197,7 @@ module interfaces
      integer,     optional :: sp_pol_to_load(2)
      character(*),optional :: space
      character(*),optional :: title
+     logical     ,optional :: k_extrema_only
      logical     ,optional :: impose_free_and_alloc
      logical     ,optional :: force_WFo
      logical     ,optional :: keep_states_to_load

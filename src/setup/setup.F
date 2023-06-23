@@ -225,9 +225,6 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  call msg('r','Inversion symmetry    ',inv_index>0)
  call msg('r','Spatial inversion     ',i_space_inv==1)
  if (inv_index>0) call msg('r','Inversion index       ',inv_index)
- ! 
- ! Test Spatial Inversion for WFs
- call WF_spatial_inversion(en,k,q)
  !
  ! Time reversal
  !
@@ -420,6 +417,11 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  ! Once the occupations have been evaluated I dump Xen in Ken
  !
  call E_duplicate(Xen,Ken)
+ ! 
+ ! Test Spatial Inversion for WFs
+ ! Notice that the variable i_space_inv is already defined by
+ ! atoms_spatial_inversion()
+ call WF_spatial_inversion(en,k,q)
  !
  ! Magnetization
  call eval_Mtot(en,k)

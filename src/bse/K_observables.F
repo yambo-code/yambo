@@ -99,6 +99,20 @@ subroutine K_observables( W )
  !
  l_BS_optics=l_BS_abs.or.l_BS_kerr.or.l_BS_dichroism.or.l_BS_photolum
  !
+ ! Now fix BSE_prop string
+ !
+ BSE_prop=""
+ if(l_BS_abs)            BSE_prop=trim(BSE_prop)//'abs '
+ if(l_BS_jdos)           BSE_prop=trim(BSE_prop)//'jdos '
+ if(l_BS_dichroism)      BSE_prop=trim(BSE_prop)//'dich '
+ if(l_BS_kerr)           BSE_prop=trim(BSE_prop)//'kerr '
+ if(l_BS_kerr_asymm)     BSE_prop=trim(BSE_prop)//'asymm '
+ if(l_BS_anomalous_Hall) BSE_prop=trim(BSE_prop)//'anHall '
+ if(l_BS_photolum)       BSE_prop=trim(BSE_prop)//'photolum '
+ if(l_BS_magnons)        BSE_prop=trim(BSE_prop)//'magn '
+ if(l_BS_esort)          BSE_prop=trim(BSE_prop)//'esrt '
+ if(l_BS_trace)          BSE_prop=trim(BSE_prop)//'trace '
+ !
  ! Solver Logicals
  !=================
  run_Diago     = STRING_match(BSS_mode,'d')

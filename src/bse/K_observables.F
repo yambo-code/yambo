@@ -31,7 +31,7 @@ subroutine K_observables( W )
  use X_m,          ONLY:global_gauge
  use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,l_eps_res_ares
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
-&                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
+&                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
 &                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,l_BS_kerr_asymm,BSE_mode
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match

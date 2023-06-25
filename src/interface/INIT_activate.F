@@ -221,7 +221,7 @@ subroutine INIT_activate()
    !
    ! Dipoles & Gauges
    !
-   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge AnHall')
+   call initactivate(1,'DipApproach DipComputed DipPDirect ShiftedPaths Gauge')
    !
  endif
  !
@@ -259,7 +259,7 @@ subroutine INIT_activate()
    call INIT_RT_ctl_switch('R')
 #endif
    !
-   call initactivate(1,'NoCondSumRule MetDamp AnHall')
+   call initactivate(1,'NoCondSumRule MetDamp')
    !
 #if defined _NL || defined _SC
    call initactivate(1,'EvPolarization FrSndOrd')

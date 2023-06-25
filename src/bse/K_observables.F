@@ -76,6 +76,7 @@ subroutine K_observables( W )
    call warning(" n_sp_pol=2 and magnons requested. Spin flip BSE only is computed")
  endif
  if (l_BS_kerr) then
+   call parser('AnHall',l_BS_anomalous_Hall)
    BS_dip_size=2
    l_BS_abs=.TRUE.
  endif

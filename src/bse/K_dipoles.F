@@ -93,7 +93,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
      BSS_P_dir=0._SP
      call v_rotate(trim(BSE_dipole_geometry),-pi/2._SP,BSS_E_dir,v_out=BSS_P_dir)
      geometry_ok=abs(v_norm(BSS_P_dir)-1._SP)<1.E-5_SP .and. &
-     &  abs(dot_product(BSS_E_dir,BSS_Q_dir))<1.E-5_SP
+     &  abs(dot_product(BSS_E_dir,BSS_P_dir))<1.E-5_SP
      if ( .not. geometry_ok) call error(" Field direction and BSEdips do not agree")
      call msg("r"," BSEdips set in input. This imposes the propagation direction")
      BSS_Q_dir=-cross_product(BSS_E_dir,BSS_P_dir)

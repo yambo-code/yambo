@@ -258,7 +258,8 @@ subroutine setup(en,q,Xen,Ken,k,Xk)
  call G_shells_finder()
  !
  if ( wf_ng > maxval(wf_igk) ) then
-   call warning("wf_ng > maxval(wf_igk), probably because FFTGvecs in input. Reducing it")
+   call msg("r","wf_ng > maxval(wf_igk), likely because FFTGvecs was set in input.")
+   call msg("rn","Reducing wf_ng from "//trim(intc(wf_ng))//" to "//trim(intc(maxval(wf_igk))))
    wf_ng=maxval(wf_igk)
  endif
  !

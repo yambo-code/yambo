@@ -74,8 +74,9 @@ module BS_solvers
  real(SP) :: BSS_dr(2)
  real(SP) :: BSS_damp_reference
  real(SP) :: BSS_q0(3)
- real(SP) :: BSS_E_dir(3)
- real(SP) :: BSS_Q_dir(3)
+ real(SP) :: BSS_E_dir(3)         ! Electric field
+ real(SP) :: BSS_P_dir(3)         ! Induced polarization
+ real(SP) :: BSS_Q_dir(3)         ! Field propagation direction
  logical  :: BSS_uses_DbGd
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF

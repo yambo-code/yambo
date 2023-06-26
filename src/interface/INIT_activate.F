@@ -283,7 +283,7 @@ subroutine INIT_activate()
    !
    call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps BLongDir QPropDir')
    !call initactivate(1,'BEnRange BDmRange BDmERef BEnSteps EFieldDir QPropDir')
-   call initactivate(1,'BSEprop')
+   call initactivate(1,'BSEprop BSEdips')
    !
    ! Special case: the BSE_Fxc kernel has been constructed
    !               Thus I move to g-space to solve the Dyson equation

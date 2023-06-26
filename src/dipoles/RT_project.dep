@@ -1,6 +1,5 @@
  DIPOLE_IO.o
  DIPOLE_driver.o
- DIPOLE_orbital_magnetization.o
  DIPOLE_p_matrix_elements.o
  DIPOLE_shifted_grids.o
  DIPOLE_transverse.o

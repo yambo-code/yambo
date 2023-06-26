@@ -167,14 +167,13 @@ if test x"$enable_hdf5" = "xyes"; then
        h5fc=$(command -v h5fc) 
     fi
     #
-    # This should be fixed
-    # Serial / Parallel libraries should be accepted only if they correspond to what needed by yambo
+    # Check for the existence of the pre-compiled library corresponding to what needed by yambo
     #
-    if test -e $h5pfc; then
+    if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
        try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="parallel";
-    elif test -e $h5fc; then 
+    elif test -e $h5fc && test $IO_LIB_VER = "serial"; then 
        try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";

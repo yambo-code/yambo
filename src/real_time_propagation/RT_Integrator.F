@@ -109,7 +109,9 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    ! ... Update of logicals before the occupations update
    !
+#if defined _RT_SCATT
    call RT_relaxation_logicals( )
+#endif
    !
    call RT_occupations_eval(dG_tmp(:,:,:,i_step))
    !
@@ -125,7 +127,9 @@ subroutine RT_Integrator(G_new,dG_new,dG_old,A_new,A_old,E,k,q)
    !
    call RT_Hamiltonian(dG_tmp(:,:,:,i_step),A_tmp(i_step),E,k)             ! The time specifications here is useless
    !
+#if defined _RT_SCATT
    call RT_relaxation(E,k,q,NE_time+delta_T1)                                 ! since nothing explicitely depends on time
+#endif
    !
    call timing('RT integrator',OPR='start')
    !

@@ -112,6 +112,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  endif
  if (STRING_match(WHAT,"BS_E_SORTED").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(BS_E_sorted)
+   YAMBO_FREE(BS_E_sorted_indx)
  endif
  if (STRING_match(WHAT,"FXC").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(X_fxc)

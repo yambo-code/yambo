@@ -39,6 +39,7 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  !
  ! Work space
  !
+ logical                  :: l_print_warning
  integer                  :: EDIM,Ntmp,i_VAR,i_cv,i_grp,n_deg_grp
  real(SP),    allocatable :: vR(:)
  integer,     allocatable :: sort_indx(:),first_el(:),n_of_el(:)
@@ -72,14 +73,16 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
  ! Threshold is 1meV
  call degeneration_finder(vR(:EDIM),EDIM,first_el,n_of_el,n_deg_grp,0.001_SP/HA2EV,Include_single_values=.TRUE.)
  !
+ l_print_warning=.false.
+ !
  do i_VAR=1,n_BS_E_sorted
    BS_E_sorted(:,i_VAR,1)=cZERO
    do i_grp=1,n_deg_grp
      if(i_grp>EDIM/Ntmp) cycle
      !
      if(i_VAR==1) then
-       if (n_of_el(i_grp)>18) call warning("More than 18 degenerate transitions detected. Printing only first 18")
-       do i_cv=first_el(i_grp),first_el(i_grp)+n_of_el(i_grp)-1
+       if (n_of_el(i_grp)>18) l_print_warning=.true.
+       do i_cv=first_el(i_grp),first_el(i_grp)+min(18,n_of_el(i_grp))-1
          BS_E_sorted_indx(i_grp,i_cv-first_el(i_grp)+1,1:5)=vI(sort_indx(i_cv),:)
        enddo
      endif
@@ -96,6 +99,8 @@ subroutine K_IP_sort(what,I,N,Indexes,vI,El,vC)
    enddo
    !
  enddo
+ !
+ if (l_print_warning) call warning("More than 18 degenerate transitions detected. Printing only first 18")
  !
  ! Free
  deallocate(first_el) 

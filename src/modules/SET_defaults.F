@@ -589,6 +589,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_ext_fields=0
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
+   Efield(i1)%t_initial=RT_step
  enddo
  !
  call A_vecpot_reset(A_tot)
@@ -693,6 +694,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  do i1=1,n_ext_fields_max
    call Efield_reset(Efield(i1))
+   Efield(i1)%t_initial=RT_step
    Efield(i1)%frequency=0.1_SP/HA2EV
    Efield(i1)%intensity=0.0_SP
    Efield(i1)%FWHM=2._SP*FS2AUT

@@ -29,7 +29,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  use BS,            ONLY:BS_K_dim,BS_IO_dim,BS_K_coupling,l_BSE_kernel_complete,&
 &                        BSK_IO_mode,MAX_BSK_LIN_size,BS_lin_size_compressed,BS_K_cutoff,     &
 &                        BS_res_ares_n_mat,l_BS_ares_from_res,BS_n_eh_spaces
- use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on
+ use IO_m,          ONLY:io_BS_K,io_file,write_is_on,read_is_on,YAMBO_DEF_CHUNK
  use IO_int,        ONLY:io_connect,def_variable_bulk
  !
  implicit none
@@ -44,7 +44,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  logical           :: def_var, io_var
  integer(IPL)      :: BS_lin_size
  integer           :: n_vars, i1,i2, i_rep,i_var, BSK_n_dims,n_replica
- integer           :: chunksize(3) ! Chunking Dimensions
+ integer           :: chunksize(3)
  !
  io_BS_PAR_init=-1
  !
@@ -88,6 +88,7 @@ integer function io_BS_PAR_init(iq,ID,mode)
  ch(1,:)="BSE_RESONANT"
  ch(2,:)="BSE_COUPLING"
  ch(3,:)="BSE_ANTI-RESONANT"
+ !
  ! Intitiate chucking array with 0
  chunksize(1) = 2 !! Complex dim
  chunksize(2) = 0
@@ -154,12 +155,12 @@ integer function io_BS_PAR_init(iq,ID,mode)
    endif
    !
    ! For now we adapt chunking only to 2D_standard
-   ! For SP, we chunk in 2MB and double 4MB. These are in general 
-   ! small chunk sizes. 
-   chunksize(2) = 512
-   chunksize(3) = 512
-   ! If BSE matrix is <512, we do not chunk.
-   if (BS_K_dim(1) < 512) chunksize(3) = 0
+   chunksize(2) = YAMBO_DEF_CHUNK
+   chunksize(3) = YAMBO_DEF_CHUNK
+   ! If BSE matrix is <YAMBO_DEF_CHUNK, we do not chunk.
+   if (BS_K_dim(1) < YAMBO_DEF_CHUNK) chunksize(2:3) = 0
+   if (BS_n_eh_spaces==2 .and. BS_K_dim(2) < YAMBO_DEF_CHUNK) chunksize(2:3) = 0
+   !
  end select
  !
  do i_rep=1,n_replica

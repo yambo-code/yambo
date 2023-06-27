@@ -148,8 +148,11 @@ subroutine RT_start_and_restart(E,k,q)
  !  3. The REFERENCE -> G_lesser_ref
  !
  RESTART = io_err(RT_return_db_ID("G_lesser_RESTART"))==0.and.&
-&          io_err(RT_return_db_ID("OBSERVABLES"))==0.and.&
-&          io_err(RT_return_db_ID("REFERENCE"))==0
+&          io_err(RT_return_db_ID("OBSERVABLES"))==0
+ !
+#if defined _RT_SCATT
+ RESTART = RESTART .and. io_err(RT_return_db_ID("REFERENCE"))==0
+#endif
  !
 #if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)

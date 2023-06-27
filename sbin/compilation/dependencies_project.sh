@@ -81,7 +81,7 @@ do
       continue
     fi
   elif [ "$PJ" == "_SC"  ] ; then
-    if test `grep $PJ $file | grep '#' | grep -v _SCALAPACK | grep -v _YPP_SC | wc -l` -ge 1 ; then
+    if test `grep $PJ $file | grep '#' | grep -v _RT_SCATT | grep -v _SCALAPACK | grep -v _YPP_SC | wc -l` -ge 1 ; then
       sources_pj_dependent+=" ${obj}\n"
       continue
     fi

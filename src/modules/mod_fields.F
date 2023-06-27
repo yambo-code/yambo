@@ -370,9 +370,8 @@ module fields
    end subroutine
    !
    subroutine Efield_reset(E)
-     use real_time,  ONLY:RT_step
      type(ext_field) :: E
-     E%t_initial    =RT_step
+     E%t_initial    =0._SP
      E%t_initial_indx=2
      E%t_final      =0._SP
      E%t_final_indx =0

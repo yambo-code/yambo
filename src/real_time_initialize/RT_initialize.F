@@ -78,7 +78,9 @@ subroutine RT_initialize(E,k,q)
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
+#if defined _RT_SCATT
  integer,  external       :: RT_Lifetimes_evaluation_plan
+#endif
  !
  ! Logicals
  !==========
@@ -343,8 +345,12 @@ subroutine RT_initialize(E,k,q)
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt.or.l_phel_scatt
  !
+#if defined _RT_SCATT
  if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
  if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
+#else
+ N_T_samplings = 0
+#endif
  !
  call RT_adjust_equilibrium()
  !

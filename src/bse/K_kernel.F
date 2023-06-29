@@ -153,9 +153,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    if (BS_res_K_corr.or.BS_res_K_exchange)     section_title=trim(section_title)//")"
    !
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//" (Coupling"
-   !if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
-   !if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
-   !if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
+   if (BS_K_is_ALDA.and.BS_cpl_K_exchange)     section_title=trim(section_title)//" ALDA"
+   if (BS_cpl_K_corr    )                      section_title=trim(section_title)//" CORRRELATION"
+   if (BS_cpl_K_exchange)                      section_title=trim(section_title)//" EXCHANGE"
    if (BS_cpl_K_corr.or.BS_cpl_K_exchange)     section_title=trim(section_title)//")"
    !
  endif
@@ -168,21 +168,25 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  O_ng_exch =maxval(qindx_X(iq,:,2))
  O_ng_shift=O_ng_exch
  !
- l_bs_exch=any((/BS_res_K_exchange,BS_cpl_K_exchange/)).or.l_bs_fxc.and..not.(l_BS_magnons.and.n_sp_pol==2)
- l_bs_corr=any((/BS_res_K_corr,BS_cpl_K_corr/)) .and. .not.l_bs_fxc
+ l_bs_exch=(any((/BS_res_K_exchange,BS_cpl_K_exchange/)).or.l_bs_fxc).and..not.(l_BS_magnons.and.n_sp_pol==2)
+ l_bs_corr=(any((/BS_res_K_corr,BS_cpl_K_corr/)) .and. .not.l_bs_fxc)
  !
- ! I load the WFs for exachange in a loop in two cases
- ! - q=0 and more than one k-point.
- !   In this case it is the default, unless I specify workload in the parallel mode
- ! - q/=0
- !   In this case it is activated only if I specify KQmemory in the parallel mode
- !   The code would work fine also in this case, however it would require continuous loading and unloading of WFs.
- !   To avoid this one would need to move the loop over i_star in K_Transitions_setup outside the
- !   loop over ic and iv (see related comment in K_Transiontion_setup.F) 
- l_bs_exch_wf_in_loop= ((iq==1) .and. (Xk%nbz>=1).and..not.trim(PARALLEL_default_mode)=="workload") .or. &
- &                     ((iq> 1) .and.                      trim(PARALLEL_default_mode)=="KQmemory")
- !
- if (l_bs_exch) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
+ if (l_bs_exch) then
+   !
+   call msg('r','[BSE] Exchange components ',BS_n_g_exch)
+   !
+   ! I load the WFs for exachange in a loop in two cases
+   ! - q=0 and more than one k-point.
+   !   In this case it is the default, unless I specify workload in the parallel mode
+   ! - q/=0
+   !   In this case it is activated only if I specify KQmemory in the parallel mode
+   !   The code would work fine also in this case, however it would require continuous loading and unloading of WFs.
+   !   To avoid this one would need to move the loop over i_star in K_Transitions_setup outside the
+   !   loop over ic and iv (see related comment in K_Transiontion_setup.F) 
+   l_bs_exch_wf_in_loop= ((iq==1) .and. (Xk%nbz>=1).and..not.trim(PARALLEL_default_mode)=="workload") .or. &
+   &                     ((iq> 1) .and.                      trim(PARALLEL_default_mode)=="KQmemory")
+   !
+ endif
  !
  if (l_bs_corr) then
    O_ng=G_m_G_maxval
@@ -293,10 +297,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  l_load_kernel=.true.
  l_write_kernel=.false.
  !
+ BS_blk_done=.false.
+ !
  do iHxc=1,3
- !
- if (iHxc==1) BS_blk_done=.false.
- !
+   !
  if ((.not.l_bs_exch).and.iHxc==1) cycle
  !
  if ((.not.BS_K_is_ALDA).and.iHxc==2) cycle
@@ -309,8 +313,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  if (iHxc==1) NG=(/BS_n_g_exch,O_ng_exch/)
  if (iHxc==2) NG=(/BS_n_g_fxc, 1/)
  ! < WARNIGN: 2021/03/19
- ! The following has been changed to the commente line 
- ! However the commented line maybe needed for internal consistency. Otherwise the output of many BSE tests could change
+ ! The following has been changed to the commented line 
+ ! However the commented line maybe needed for internal consistency.
+ ! Otherwise the output of many BSE tests could change
  if (iHxc==3) NG=(/O_ng,O_ng_shift/)
  !if (iHxc==3) NG(2)=O_ng_shift
  ! WARNING >

@@ -416,7 +416,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
      !
    enddo
    !
-   call live_timing()
+   if (m_steps>0) call live_timing()
    !
    call msg("s","Kernel loaded percentual ",real(n_steps-m_steps,SP)/real(n_steps,SP)*100._SP,'[%]')
    !
@@ -458,7 +458,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    mode_now=BS_blk(i_block)%mode
    if (.not.l_BS_ares_from_res) mode_now="F"
    !
-   if (.not.trim(BS_blk(i_block)%mode)=="C") then
+   if (.not.trim(mode_now)=="C") then
      if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
      if (iHxc==2) l_write_kernel=.not. l_bs_corr
      if (iHxc==3) l_write_kernel=.true.
@@ -540,7 +540,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        H_pos(1) = sum(BS_T_grp(I_Tgrp_k_st:I_Tgrp_k-1)%size)+i_Tk+& 
        &              (BS_T_grp(I_Tgrp_k)%i_res_ares-1)*BS_K_dim(1) 
        H_pos(2) = sum(BS_T_grp(I_Tgrp_p_st:I_Tgrp_p-1)%size)+i_Tp+& 
-       &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1) 
+       &              (BS_T_grp(I_Tgrp_p)%i_res_ares-1)*BS_K_dim(1)
        if (H_pos(1)>H_pos(2)) cycle 
        !
        i_k_bz  = BS_T_grp(i_Tgrp_k)%table(i_Tk,1) 
@@ -736,7 +736,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
  enddo block_loop
  !
- if (n_steps>0) call live_timing( )
+ if (m_steps>0) call live_timing( )
  !
  ! GLOBAL CLEANING 
  !=================

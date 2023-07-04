@@ -458,18 +458,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    mode_now=BS_blk(i_block)%mode
    if (.not.l_BS_ares_from_res) mode_now="F"
    !
-   if (.not.trim(mode_now)=="C") then
-     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
-     if (iHxc==2) l_write_kernel=.not. l_bs_corr
-     if (iHxc==3) l_write_kernel=.true.
-   else
-     if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.BS_cpl_K_corr)
-     if (iHxc==2) l_write_kernel=.not. BS_cpl_K_corr
-     if (iHxc==3) l_write_kernel=.true.
-     !
-     if (iHxc==3.and..not.BS_cpl_K_corr) cycle
-     !
-   endif
+   if (iHxc==1) l_write_kernel=.not.(BS_K_is_ALDA.or.l_bs_corr)
+   if (iHxc==2) l_write_kernel=.not. l_bs_corr
+   if (iHxc==3) l_write_kernel=.true.
    !
    if (BS_blk_done(i_block)) then
 #if defined _PAR_IO
@@ -485,6 +476,13 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if (BS_LiveTiming_steps>= 0) i_steps=BS_Block_size(i_block)
    if (BS_LiveTiming_steps==-1) i_steps=1
+   !
+   ! Nothing to do, just write the kernel to disk
+   if (trim(BS_blk(i_block)%mode)=="C" .and. iHxc==3 .and. .not.BS_cpl_K_corr) then
+     BS_blk(i_block)%done(:,:)="t"
+     if(BS_K_cutoff>0._SP) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )
+     goto 100
+   endif
    !
    i_Tgrp_k   =BS_blk(i_block)%iT_k
    i_Tgrp_p   =BS_blk(i_block)%iT_p
@@ -667,7 +665,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
-         if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+	 if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
@@ -685,7 +683,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr.and.iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+	 if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
@@ -722,7 +720,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    if(iHxc==3) call BS_oscillators_free(0,i_block)
    !
-   if(l_write_kernel) then
+100 if(l_write_kernel) then
 #if defined _PAR_IO
      call io_control(ACTION=WR,ID=ID)
      call io_BS_PAR_block(iq,i_block,ID,"full")

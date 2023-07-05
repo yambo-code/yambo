@@ -242,7 +242,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 !$omp end parallel do
    !
   enddo  !---- loop on k-point
- enddo
+ enddo  !---- loop in spin polarizations
  !
 #if defined _TIMING
  call timing('NL Hamiltonian',OPR='stop')

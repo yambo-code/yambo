@@ -36,8 +36,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
 &                        use_X_DbGd,eps_2_alpha,EPS_2_eels,X_par_lower_triangle,X_OUTPUT_messages,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs,&
-&                        l_X_abs,l_X_kerr,l_X_magn,Chi_prop,i_G_shift
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
@@ -58,7 +57,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq
+ integer          :: iw,iq,i_G_shift
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
  !
@@ -165,13 +164,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    Epsilon_ii(:,1)=1._SP+Alpha(:,1)
    !
    ! X Dyson equation solver
-   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X,"optics")
+   if (.not.l_rpa_IP) call X_redux(iq,"X",X_par(1),wv,X)
    !
-   ! i_G_shift is now handled in X_redux
-   i_G_shift=1
-   ! Also all cores have allocated X_par(1)%blc(1,1,:), although only
-   ! some have it filled properly
-   Macroscopic_CPU=.true.
+   ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
+   Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
+&                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
    if (Macroscopic_CPU) then
      !
@@ -246,7 +243,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      enddo
    endif
    !
-   ! TDDFT Kernel output .. to check what to do with this
+   ! TDDFT Kernel output
    if (l_bs_fxc) then
      if (iq==1) call PP_redux_wait(X_fxc)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)

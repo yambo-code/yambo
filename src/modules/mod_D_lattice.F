@@ -67,7 +67,7 @@ module D_lattice
  !
  complex(SP), dimension(2,2), parameter :: sigma_0=reshape((/ cONE , cZERO, cZERO, cONE /),(/2,2/))
  complex(SP), dimension(2,2), parameter :: sigma_x=reshape((/ cZERO, cONE , cONE , cZERO/),(/2,2/))
- complex(SP), dimension(2,2), parameter :: sigma_y=reshape((/ cZERO,-cI   , cI   , cZERO/),(/2,2/))
+ complex(SP), dimension(2,2), parameter :: sigma_y=reshape((/ cZERO, cI   ,-cI   , cZERO/),(/2,2/))
  complex(SP), dimension(2,2), parameter :: sigma_z=reshape((/ cONE , cZERO, cZERO,-cONE /),(/2,2/))
  !
  ! Cell & atoms

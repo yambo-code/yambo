@@ -21,10 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-integer function OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+integer function OPTICS_select_q_and_G(iq,q,X)
  !
  use pars,           ONLY:SP,schlen
- use X_m,            ONLY:q_plus_G_direction,X_t,Q_Shift_Order
+ use X_m,            ONLY:q_plus_G_direction,X_t,Q_Shift_Order,&
+&                         Q_plus_G_pt,Q_plus_G_sq_modulus 
  use R_lattice,      ONLY:bz_samp,g_vec,q_norm
  use vec_operate,    ONLY:v_norm,v_is_zero,iku_v_norm
  use stderr,         ONLY:intc
@@ -35,7 +36,6 @@ integer function OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
  integer      ::iq
  type(X_t)    ::X
  type(bz_samp)::q
- real(SP)     ::Q_plus_G_pt(3),Q_plus_G_sq_modulus
  !
  ! Work Space
  !

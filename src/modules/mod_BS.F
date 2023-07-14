@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, MG
@@ -328,7 +328,6 @@ module BS
      do iB=iB_ref,1,-1
        ik_loop=BS_blk(iB)%ik
        ip_loop=BS_blk(iB)%ip
-       if ( ik_now==ik_loop .and. ip_now==ip_loop ) cycle
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)

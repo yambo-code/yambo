@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2023 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM
@@ -31,7 +31,6 @@ do
    ;;
  esac
 done
-#
 #
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"

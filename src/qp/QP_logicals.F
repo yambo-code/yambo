@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -65,11 +65,10 @@ subroutine QP_logicals( )
  if (l_life) QP_solver="none"
  !
  ! Ph-El...
-#if defined _PHEL
  !
+#if defined _PHEL
  ! ... Kind
  if ( index(PH_Self_Energy_mode,"bare")>0 ) l_GKKP_hosts_bare_dV = .true.
- !
 #endif
  !
 end subroutine

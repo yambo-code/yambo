@@ -1,4 +1,2 @@
- mod_ELPH.o
- mod_ELPH_intfcs.o
- mod_PHEL.o
+ mod_interfaces.o
 

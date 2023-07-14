@@ -169,7 +169,7 @@ endef
 define clean_dependencies
  $(ECHO) "\t[CLEANING] Dependencies" ; \
  find . \( -name '*.rules' -o -name 'modules.list' -o -name 'modulesdep.list'\
-           -o -name 'global_modules_dep.list' -o -name 'local_modules.dep' \) | xargs rm -f ;\
+           -o -name 'global_modules_dep.list' -o -name 'local_modules*.dep' \) | xargs rm -f ;\
  rm -fr $(prefix)/config/stamps_and_lists/dependencies.stamp
 endef
 define clean_project_dependencies_stamp

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -124,6 +124,11 @@ module IO_m
 #else
  complex(SP), parameter :: YAMBO_CMPLX_NO_FILL = cmplx(nf90_fill_real,  nf90_fill_real)
 #endif
+ !
+ ! Netcdf chunking
+ ! For SP, we chunk in 2MB and double 4MB. These are in general small chunk sizes. 
+ ! For more information see https://www.unidata.ucar.edu/software/netcdf/workshops/2011/nc4chunking/
+ integer, parameter :: YAMBO_DEF_CHUNK = 512
  !
  ! Units
  !

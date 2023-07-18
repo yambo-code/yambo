@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS
@@ -264,7 +264,9 @@ subroutine QP_apply_interpolate_QP(i_ACTION,bands,en,k,qp)
      !
      if (QP_action(i_ACTION)%plan(3)) then
        if(action_kind=="Stnd_Gd") en%Z(iband,ik,i_spin)=qp%Z(i_qp)
+       !DEBUG>
        !if(action_kind=="Fine_Gd") en%Z_FineGd(iband,ik_fg,i_spin)=qp%Z(i_qp)
+       !DEBUG<
        if(action_kind=="Stnd_Gd") QP_action(i_ACTION)%STATES_done(iband,ik,i_spin)=1
      endif
      !

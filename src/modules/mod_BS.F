@@ -335,8 +335,12 @@ module BS
        if ( ik_now==ik_loop .and. ip_now==ip_loop .and. .not.l_BSE_minimize_memory ) cycle
        if (.not.allocated(BS_blk(iB)%O_c)) exit
        YAMBO_FREE(BS_blk(iB)%O_c)
-       YAMBO_FREE(BS_blk(iB)%O_table1)
-       YAMBO_FREE(BS_blk(iB)%O_table2)
+       if (allocated(BS_blk(iB)%O_table)) then
+         YAMBO_FREE(BS_blk(iB)%O_table)
+       else if (allocated(BS_blk(iB)%O_table1)) then
+         YAMBO_FREE(BS_blk(iB)%O_table1)
+         YAMBO_FREE(BS_blk(iB)%O_table2)
+       endif
        YAMBO_FREE(BS_blk(iB)%kp_table)
 #ifdef _CUDA
        if (allocated(BS_blk(iB)%O_c_d)) deallocate(BS_blk(iB)%O_c_d)

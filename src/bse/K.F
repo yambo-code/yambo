@@ -101,7 +101,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP):: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:)
  !
- complex(SP),   external ::K_correlation_kernel
+ complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
  ! Oscillators
@@ -264,7 +264,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Wave Functions Phases
  !=======================
- call K_WF_phases(Xk)
+ if(l_std_alg) call K_WF_phases(Xk)
  ! 
  ! Spatial Inversion Test
  !========================
@@ -624,7 +624,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr)
+         if (BS_cpl_K_corr) then
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
@@ -698,7 +698,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  call BS_oscillators_free(BS_nT_grps,0)
  !
- if (BS_res_K_corr.or.BS_cpl_K_corr) then
+ if ( (BS_res_K_corr.or.BS_cpl_K_corr) .and. l_std_alg) then
    YAMBO_FREE(WF_phase)
  endif
  !

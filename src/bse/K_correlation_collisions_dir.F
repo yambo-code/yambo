@@ -21,23 +21,11 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
  !  <n k1_bz |exp iG.r|m k2_bz> = <n k1_ibz s1 |exp iG.r|m k2_ibz s2>  =
- !                                <n k1_ibz |exp iG.r|m k2_ibz s1^{-1} x s2 > 
- !
- ! now, in general, s1^{-1} x s2 is not a symmetry in the star of k2_ibz, so we
- ! define and use the table Xk%s_table:
- !
- ! is_in_the_star_of_k2=Xk%s_table(k2,s1^{-1} x s2 )
- !
- ! to get
- !
- !  <n k1_bz |exp iG.r|m k2_bz> =  <n k1_ibz |exp iG.r|m k2_ibz  is_in_the_star_of_k2>*PHASE
- !
- ! where |k2 ib s1^{-1} x s2 > = PHASE * |k2 ib is_in_the_star_of_k2>
  !
  use pars,          ONLY:SP
  use D_lattice,     ONLY:nsym
@@ -126,7 +114,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  YAMBO_ALLOC(BS_blk(i_block)%O_table1,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  YAMBO_ALLOC(BS_blk(i_block)%O_table2,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
- !AMBO_ALLOC(O_todo_table,(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  allocate(O_todo_table(nsym,nsym,N_kmq,N_pmq,BS_bands(1):BS_bands(2),BS_bands(1):BS_bands(2),n_sp_pol))
  !
  BS_blk(i_block)%N_oscillators=0
@@ -163,14 +150,10 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       !i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
-       !call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kp_mq_s,i_s_collision)
        call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_v_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       !i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol_c,i_s_star,i_kp_s)
-       !call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_kp_s,i_k_s,i_s_collision)
        call EVAL_table(i_block,1,1,i_c_k,i_c_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
@@ -200,14 +183,10 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       !i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
-       !call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kp_mq_s,i_s_collision)
        call EVAL_table(i_block,i_kmq_t,i_pmq_t,i_v_k,i_c_p,i_k_sp_pol_v,i_kmq_s,i_pmq_s)
        !
        ! c->v', i.e. k -> p=k-q_W transitions
        !
-       !i_s_collision=collision_star(i_p,i_kp_s,i_v_p,i_p_sp_pol_v,i_s_star,i_kp_s)
-       !call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_kp_s,i_s_collision)
        call EVAL_table(i_block,1,1,i_c_k,i_v_p,i_k_sp_pol_c,i_k_s,i_p_s)
        !
      enddo
@@ -260,18 +239,11 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        ! v->v', i.e. k-q -> p-q=k-q_W-q transitions
        !
-       !i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
-       !i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_v_p,i_p_sp_pol_v,i_s_mq_star,i_kp_mq_s)
-       !call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,i_p_sp_pol_v,&
-       !&                                   i_v_k,i_v_p,iq_W,i_s_collision,K_CORR_collision)
        call EVAL_collision(i_block,i_kmq,i_pmq,i_kmq_t,i_pmq_t,i_k_sp_pol_v,i_p_sp_pol_v,&
        &                                   i_v_k,i_v_p,iq_W,i_kmq_s,i_pmq_s,K_CORR_collision)
        !
        ! c->c', i.e. k -> p=k-q_w transitions
        !
-       !i_s_collision=collision_star(i_p,i_kp_s,i_c_p,i_p_sp_pol_c,i_s_star,i_kp_s)
-       !call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_c,&
-       !&                        i_c_k,i_c_p,iq_W,i_s_collision,K_CORR_collision)
        call EVAL_collision(i_block,i_k,i_p,1,1,i_k_sp_pol_c,i_p_sp_pol_c,&
        &                        i_c_k,i_c_p,iq_W,i_k_s,i_p_s,K_CORR_collision)
        !
@@ -305,6 +277,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
        if(i_k_sp_pol_c/=i_p_sp_pol_v) cycle
        !
+       ! DS: Is coupling inmplemented or to do ??
+       !
        ! v->c', i.e. k-q -> p-q=k-q_W-q transitions
        !
        !i_s_collision=collision_star(i_pmq,i_kp_mq_s,i_c_p,i_p_sp_pol_c,i_s_mq_star,i_kp_mq_s)
@@ -334,15 +308,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  call timing('T_space CORR Osc.',OPR='stop')
  !
  contains
-   !
-   function collision_star(ik,is,ib,i_sp_pol,i_s_star_in,i_s_new)
-       use BS,            ONLY:WF_phase
-       implicit none
-       integer,intent(in) :: ik,is,ib,i_sp_pol,i_s_star_in,i_s_new
-       integer :: collision_star
-       collision_star=i_s_star_in
-       if (WF_phase(ik,is,ib,i_sp_pol)==-99._SP) collision_star=i_s_new
-   end function collision_star
    !
    subroutine fill_indexes(j_Tk,j_Tp,j_Tgrp_k,j_Tgrp_p,j_block,j_q,            &
        &                        j_kp_s,j_s_star,j_kp_mq_s,j_s_mq_star,j_pmq_s, &
@@ -438,15 +403,6 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      integer, intent(in) :: iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko
      integer :: iB_ref, iB_p
      iB_ref=-1
-     !do iB_p=iB,1,-1
-     !  if(BS_blk(iB_p)%ira_k/=BS_blk(iB)%ira_k .or. BS_blk(iB_p)%ira_p/=BS_blk(iB)%ira_p) exit
-     !  if(BS_blk(iB_p)%ik/=BS_blk(iB)%ik .or. BS_blk(iB_p)%ip/=BS_blk(iB)%ip) exit
-     !  if(.not.allocated(BS_blk(iB_p)%O_table1)) cycle
-     !  if( iki>size(BS_blk(iB_p)%O_table1(1,1,:,1,1,1,1)) .or. iko>size(BS_blk(iB_p)%O_table1(1,1,1,:,1,1,1)) ) cycle
-     !  if(BS_blk(iB_p)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)==0) cycle
-     !  iB_ref=iB_p
-     !  exit
-     !enddo
      if ( iB_ref==-1 ) then
        iB_ref=iB
        BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
@@ -480,4 +436,4 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      O_todo_table(i_s_ki,i_s_ko,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine
    !
-end subroutine K_correlation_collisions
+end subroutine K_correlation_collisions_dir

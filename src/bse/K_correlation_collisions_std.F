@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! This routine evaluates the correlation collisions:
  !
@@ -466,4 +466,4 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine
    !
-end subroutine K_correlation_collisions
+end subroutine K_correlation_collisions_std

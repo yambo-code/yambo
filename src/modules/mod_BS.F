@@ -241,8 +241,11 @@ module BS
    !------------------
    integer                       :: N_oscillators 
    integer,     allocatable      :: kp_table(:,:)            ! 2,nkibz @ k = (i_kmq,i_pmq)
-   integer,     allocatable      :: O_table1(:,:,:,:,:,:,:)  ! 1,sym,nkmq,npmq,n,n',spin @ k = iOnn
-   integer,     allocatable      :: O_table2(:,:,:,:,:,:,:)  ! 2,sym,nkmq,npmq,n,n',spin @ k = i_block_ref
+   ! O_table is used by the std algorithm
+   integer,     allocatable      :: O_table(:,:,:,:,:,:,:)   ! 2,sym,nkmq,npmq,n,n',spin @ k = (iOnn,i_block_ref)
+   ! O_table1 and O_table2 are used by the dir algorithm
+   integer,     allocatable      :: O_table1(:,:,:,:,:,:,:)  ! symk,symp,nkmq,npmq,n,n',spin @ k = iOnn
+   integer,     allocatable      :: O_table2(:,:,:,:,:,:,:)  ! symk,symp,nkmq,npmq,n,n',spin @ k = i_block_ref
    complex(SP), allocatable      :: O_c(:,:)
 #ifdef _CUDA
    complex(SP), allocatable, device :: O_c_d(:,:)

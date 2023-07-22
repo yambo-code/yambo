@@ -33,7 +33,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  use FFT_m,         ONLY:fft_size
  use interfaces,    ONLY:WF_load,WF_free,eval_G_minus_G,TDDFT_ALDA_R_space
  use D_lattice,     ONLY:nsym,DL_vol,i_time_rev,i_space_inv,sop_inv,sop_tab
- use R_lattice,     ONLY:G_m_G_maxval,qindx_X,bz_samp,ng_closed,&
+ use R_lattice,     ONLY:G_m_G_maxval,qindx_X,bz_samp,g_rot,&
 &                        qindx_B,qindx_B_max,qindx_B_load,RIM_W,&
 &                        RIM_ng,RIM_W_is_diagonal,RIM_W_ng
  use com,           ONLY:msg
@@ -50,7 +50,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &                        BS_oscillators_free,WF_phase,n_BS_blks,BS_blk,BS_T_grp,&
 &                        BS_nT_grps,BS_blks_free,l_BS_ares_from_res,&
 &                        l_BSE_minimize_memory,l_BSE_restart,l_BSE_kernel_complete,&
-&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,l_BS_magnons
+&                        BS_perturbative_SOC,BS_K_cutoff,BS_max_val,BSE_L_kind,l_BS_magnons
  use collision_el,  ONLY:elemental_collision_free
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:REP,OP_WR,RD,WR_CL,OP_APP,deliver_IO_error_message,WR
@@ -92,7 +92,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
 &               i_kmq_t,i_pmq_t,i_k_bz_mem,i_kmq_bz_mem,qindx_tmp(2) 
  ! OMP LAST DEF
  integer ::     i_k_bz_last,i_p_bz_last,i_pmq_bz_last,i_kmq_bz_last, & 
-&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last 
+&               iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last,ig_W_final 
  !
  integer    :: i_block,O_ng_shift,O_ng_exch,iHxc,NG(2),NK(2),&
 &              ig_kmq,ig_pmq,ig_W_mq,iq_W_bz_mq,iq_W_mq,iq_W_s_mq,&
@@ -101,10 +101,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  complex(SP):: sqrt_f_itk,sqrt_f_itp
  real(SP), allocatable :: BS_max_val_CPU(:),rho(:)
  !
- complex(SP),   external ::K_correlation_kernel
+ complex(SP),   external ::K_correlation_kernel_std,K_correlation_kernel_dir
  complex(SP),   external ::K_exchange_kernel_resonant,K_exchange_kernel_coupling
  !
- logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_matrix_init,l_load_kernel,l_write_kernel
+ logical    :: l_bs_exch,l_bs_corr,l_bs_exch_wf_in_loop,l_matrix_init,&
+ &             l_load_kernel,l_write_kernel,l_std_alg,l_dir_alg
  !
  ! I/O
  !
@@ -189,6 +190,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if (l_bs_corr) then
+   !
    O_ng=G_m_G_maxval
    ! < WARNIGN: 2021/03/19
    ! The following can be safely removed with the new implementation 
@@ -199,6 +201,11 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !if (BS_K_is_ALDA) call fft_check_size(1,O_ng,BS_n_g_fxc,"fxc")
    ! WARNING >
    if(iq/=1) O_ng_shift=max(qindx_B_max,O_ng_shift)
+   !
+   call parser('ImposeDirAlg',l_dir_alg)
+   if(.not.l_dir_alg) l_dir_alg=(iq/=1 .and. n_spinor==2 .and. nsym>1) 
+   l_std_alg=.not.l_dir_alg
+   !
  endif
  !
  if (BS_K_is_ALDA.and.trim(ALDA_cut_scheme)=="lower_GmGp") then
@@ -435,7 +442,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Wave Functions Phases
    !=======================
-   if (iHxc==3) call K_WF_phases(Xk)
+   if (iHxc==3.and.l_std_alg) call K_WF_phases(Xk)
    !
  endif
  !
@@ -502,7 +509,10 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   if(iHxc==3) call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+   if(iHxc==3) then
+     if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
+     if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
+   endif
    !
    ! Transition Loops
    !------------------
@@ -513,7 +523,7 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
    !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
    !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
    !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t, &
+   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,ig_W_final,&
    !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
    !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
    !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
@@ -603,7 +613,6 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        i_k_sp_pol_v=BS_T_grp(i_Tgrp_k)%table(i_Tk,5) 
        i_p_sp_pol_v=BS_T_grp(i_Tgrp_p)%table(i_Tp,5) 
        !
-       ! 
        ig_kmq    = qindx_X(iq,i_k_bz,2) 
        ig_pmq    = qindx_X(iq,i_p_bz,2) 
        !        
@@ -627,9 +636,14 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          else 
            iq_W_bz_mq=iq_W_bz_mq_last 
            ig_W_mq   =ig_W_mq_last    
-         endif 
+         endif
+         !
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
+         !
+         !if (iq==1) ig_W_final=      ig_W_mq
+         !if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_kmq,ig_pmq),iq_W_s_mq))
+         !
        endif 
        ! 
        if (iHxc==2) then 
@@ -642,6 +656,8 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
        if (iHxc==3) then 
          !
          if (iq_W_bz/=iq_W_bz_mq.or.iq_W/=iq_W_mq.or.iq_W_s/=iq_W_s_mq) call error("Wrong transferred momentum")
+         !
+         !if ( G_m_G(ig_W,ig_W_mq) /= G_m_G(ig_kmq,ig_pmq) )             call error("Wrong gvector shifts")
          !
          if ( (.not.BS_W_is_diagonal) .and. iq_W_s>nsym/(i_time_rev+1) .and. i_space_inv == 0 ) iq_W=q%nibz+iq_W
          !
@@ -665,10 +681,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
-	 if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (iHxc==3) then
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                   i_k_s,i_p_s, i_c_k,i_c_p,i_kmq_s,i_pmq_s  ,i_v_k,i_v_p,     &
+&                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !         
        case ("C","Q")
          !
@@ -683,10 +705,16 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
          if (iHxc==2) H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-	 if (iHxc==3) H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
+         if (iHxc==3) then
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                 i_k_s,i_p_s ,i_c_k,i_v_p,i_kmq_s,i_pmq_s  ,i_v_k,i_c_p,    &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !
        end select
        !
@@ -760,7 +788,9 @@ subroutine K_kernel(iq,Ken,Xk,q,X,Xw,W_bss)
  endif
  !
  if(iHxc==3) then
-   YAMBO_FREE(WF_phase)
+   if (l_std_alg) then
+     YAMBO_FREE(WF_phase)
+   endif
    qindx_tmp=qindx_B_close(qindx_ID,qindx_ID_frag)
    YAMBO_FREE(BS_W)
    YAMBO_FREE(RIM_W)

@@ -178,6 +178,12 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    endif
  endif
  !
+ ! Remove exchange if computing the irreducible response
+ if (trim(BSE_L_kind)=="tilde") then
+   BS_res_K_exchange=.FALSE.
+   BS_cpl_K_exchange=.FALSE.
+ endif
+ !
  ! CORE Logicals
  !===============
  if (l_rpa_IP.and.STRING_match(BSE_mode,'coupling')) BSE_mode='retarded'

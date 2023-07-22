@@ -172,6 +172,8 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
      if (.not.iq==1) then
        iGo_BSE=maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
        iG_BSE =max(BS_n_g_exch,BS_n_g_W)
+       !iGo_BSE=4*maxval((/4*qindx_B_max,qindx_X(iq,:,2)/))
+       !iG_BSE =maxval((/BS_n_g_exch,BS_n_g_W,qindx_B_max/))
      endif
      !
      Max_G_m_G=eval_G_minus_G(iG_BSE,iGo_BSE)

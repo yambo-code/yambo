@@ -23,7 +23,7 @@
 !
 integer function variables_BS_more(ID,mode)
  !
- use pars,       ONLY:IP,SP,LP,schlen
+ use pars,       ONLY:IP,SP,LP,schlen,LP_YIO
  use BS,         ONLY:BS_K_cutoff,BS_K_cutoff_done,BS_max_val,l_BSE_kernel_complete
  use IO_m,       ONLY:nf90_sync,io_unit,write_is_on,read_is_on,&
 &                     variable_exist,NF90_unlimited,netcdf_dim_size
@@ -53,7 +53,7 @@ integer function variables_BS_more(ID,mode)
  if(write_is_on(ID)) io_var=trim(mode)=="start".or.(trim(mode)=="end".and.l_BSE_kernel_complete)
  if( read_is_on(ID)) io_var=trim(mode)=="start".and.variable_exist(ID,"BSE_KERNEL_COMPLETE")
  if(io_var) then
-   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP+100,0)
+   call def_variable_elemental(ID,"BSE_KERNEL_COMPLETE",1,LP_YIO,0)
    call  io_variable_elemental(ID,VAR=" Kernel complete",DB_L0=l_BSE_kernel_complete,L0=l_BSE_kernel_complete)
  endif
  !

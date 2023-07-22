@@ -43,7 +43,8 @@ case "${host}" in
 i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     #FUFLAGS="-O0 -g -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
@@ -53,7 +54,8 @@ i?86*linux*)
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame -Mbackslash"
     ;;
   *nvfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -100,7 +102,7 @@ i?86*linux*)
        ;;
       *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        ;;
       *17* | *18* | *19* )
@@ -135,7 +137,8 @@ i?86*linux*)
 *86*apple* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -143,7 +146,8 @@ i?86*linux*)
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *nvfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -193,7 +197,8 @@ i?86*linux*)
 ia64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -202,7 +207,8 @@ ia64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *nvfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -318,7 +324,7 @@ ia64*linux* )
        ;;
       *2020* | *2021* )
        CPU_FLAG=" "
-       OMPFLAGS="-qopenmp"
+       OMPFLAGS="-qopenmp -parallel"
        FCMFLAG="-nofor-main"
        CFLAGS="-O2 -std=gnu99"
        ;;
@@ -370,7 +376,8 @@ alphaev*)
 powerpc64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -379,7 +386,8 @@ powerpc64*linux* )
     DEBUG_FLAGS="-g -Minform=inform -Mbounds -Mchkptr -Mchkstk -Meh_frame"
     ;;
   *nvfortran* )
-    SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
+    SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
+    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"

@@ -29,7 +29,8 @@
 cat <<EOF > .git/hooks/pre-commit
 #!/bin/bash
 sbin/yambo_versions_update.tcsh r
-if [ -e include/driver/version.h ]   ; then  git add include/driver/version.h ;     fi
+git add configure
+if [ -e include/version/version.m4 ]     ; then  git add include/version/version.m4 ;     fi
 EOF
 chmod +x .git/hooks/pre-commit
 #

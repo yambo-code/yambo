@@ -32,7 +32,6 @@ do
  esac
 done
 #
-#
 llocal="-lqe_pseudo -lmath77 -lslatec -llocal"
 lPLA="\$(lscalapack) \$(lblacs) \$(llapack) \$(lblas)"
 lSL="\$(lslepc) \$(lpetsc)"

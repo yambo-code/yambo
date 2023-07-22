@@ -21,8 +21,6 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-
-!
 !====================
 ! scatter_Bamp (cpu)
 !====================
@@ -30,19 +28,14 @@
 #include<dev_defs_nocuda.h>
 #undef _CUDA_LOC
 #include"scatter_Bamp.F"
-!
 #include<dev_undefs.h>
-
 !
 !====================
 ! scatter_Bamp_gpu 
 !====================
 !
 #if defined _CUDA
-
 #include<dev_defs.h>
 #define _CUDA_LOC
 #include"scatter_Bamp.F"
-
 #endif
-

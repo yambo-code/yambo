@@ -87,7 +87,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
  if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
  if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- ! The next line is to switch of section of the codes due to the calculation
+ ! The next line is to switch off sections of the code due to the calculation
  ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
  if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
  !

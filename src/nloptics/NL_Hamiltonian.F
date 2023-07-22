@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): MG CA
@@ -242,7 +242,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 !$omp end parallel do
    !
   enddo  !---- loop on k-point
- enddo
+ enddo  !---- loop in spin polarizations
  !
 #if defined _TIMING
  call timing('NL Hamiltonian',OPR='stop')

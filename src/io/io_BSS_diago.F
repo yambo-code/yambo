@@ -65,7 +65,8 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    ! As this DB must respect the BS ideentifier I only need to
    ! check the K QP corrections
    !
-   io_BSS_diago=io_header(ID,XC_KIND="K_E force")
+   !io_BSS_diago=io_header(ID,XC_KIND="K_E force")
+   io_BSS_diago=io_header(ID,XC_KIND="K_E")
    !
    io_BSS_diago=variables_BS(ID,iq,local_desc,.FALSE.,X=X_static)
    !

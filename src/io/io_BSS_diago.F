@@ -70,6 +70,10 @@ integer function io_BSS_diago(iq,i_BS_mat,ID,X_static,bsE,bsRl,bsRr,BsE_corr,&
    !
    io_BSS_diago=variables_BS(ID,iq,local_desc,.FALSE.,X=X_static)
    !
+   ! DS: 2023/07/22
+   !     THE PARS variable should be removed and changed with single
+   !     variables. Moreover few variables may be needed related to the
+   !     slepc solver
    call io_elemental(ID,VAR="PARS",VAR_SZ=6,MENU=0)
    !
    call io_elemental(ID,VAR="[BSS] Eigenstates included",L0=BSS_write_eig_2_db,CHECK=.true.,OP=(/"=="/))

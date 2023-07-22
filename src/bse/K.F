@@ -106,7 +106,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  ! Oscillators
  !
- logical    :: load_O_X
+ logical    :: load_O_X,l_std_alg,l_dir_alg
  !
  ! I/O
  !
@@ -170,6 +170,10 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  load_O_X=BS_res_K_exchange.or.l_bs_fxc
  !
  if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
+ !
+ call parser('ImposeDirAlg',l_dir_alg)
+ if(.not.l_dir_alg) l_dir_alg=(iq/=1 .and. n_spinor==2 .and. nsym>1) 
+ l_std_alg=.not.l_dir_alg
  !
  ! Oscillators Setup
  !===================
@@ -423,7 +427,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   call K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
+   if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
+   if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    !
    ! Transition Loops
    !------------------

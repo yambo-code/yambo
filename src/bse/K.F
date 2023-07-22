@@ -416,10 +416,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Exchange oscillators
    !----------------------
    ! 
-   if (trim(BSE_L_kind)/="tilde") then
-     call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-     if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
-   endif
+   call K_exchange_collisions(iq,Xk,i_Tgrp_k)
+   !
+   if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
    !
    ! Exchange oscillators
    !----------------------
@@ -596,10 +595,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'RES')
          !
          ! Correlations
-         if (BS_res_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                   i_k_s,i_p_s,i_c_k,i_c_p,i_kmq_s,i_pmq_s,i_v_k,i_v_p,     &
+         if (BS_res_K_corr) then
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
+&                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
 &                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                   i_k_s,i_p_s, i_c_k,i_c_p,i_kmq_s,i_pmq_s  ,i_v_k,i_v_p,     &
+&                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !         
        case ("C","Q")
          !
@@ -614,10 +619,16 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          if (BS_K_is_ALDA)      H_x=H_x+TDDFT_ALDA_R_space(is_k,os_k,is_p,os_p,tddft_wf,'CPL')
          !
          ! Correlations
-         if (BS_cpl_K_corr)     H_c=K_correlation_kernel(i_block,i_p,i_pmq, &
-&                                 i_k_s,i_p_s,i_c_k,i_v_p,i_kmq_s,i_pmq_s,i_v_k,i_c_p,    &
+         if (BS_cpl_K_corr)
+           if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
+&                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
 &                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+           if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
+&                                 i_k_s,i_p_s ,i_c_k,i_v_p,i_kmq_s,i_pmq_s  ,i_v_k,i_c_p,    &
+&                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+         endif
          !
        end select
        !

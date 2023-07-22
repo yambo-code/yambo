@@ -124,6 +124,9 @@ subroutine K_WF_phases(Xk)
  call PP_redux_wait(WF_phase)
  call PP_redux_wait(n_phases)
  !
+ n_phases=0
+ WF_phase=-99._SP
+ !
  call msg('r','[BSE] WF phases found       ',real(n_phases(1),SP)/real(size(WF_phase),SP)*100._SP,"[o/o]")
  !
  call timing("K_WF_phases","stop")

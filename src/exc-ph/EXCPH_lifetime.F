@@ -60,7 +60,8 @@ subroutine EXCPH_lifetime(k,q,X)
  integer  :: elph_branches_save(2)
  integer  :: min_pos(1),first_exc_grp(n_exc_in),n_of_exc_grp(n_exc_in),n_deg_grp
  logical  :: l_keep_deg,l_extend_output
- real(SP) :: ExcPhM,ExcPhW,EXC_life_average,EXC_line_average,EXC_energy_average,Pole
+ real(SP) :: ExcPhM,EXC_life_average,EXC_line_average,EXC_energy_average,Pole
+ complex(SP) :: ExcPhW
  real(SP) , allocatable :: EXC_life_of_q(:,:),EXC_pole_of_q(:,:)
  type(PP_indexes)::px
  !
@@ -199,7 +200,7 @@ subroutine EXCPH_lifetime(k,q,X)
          ! Including interband terms (linewidths)
          if (l_EXCPH_offdiago) then
            !
-           ExcPhW=0._SP
+           ExcPhW=cZERO
            do j_alpha=EXCPH_states(1),EXCPH_states(2)
              !
              ExcPhW=ExcPhW+EXCPH_Gkkp(il,i_beta,j_alpha)*conjg(EXCPH_Gkkp(il,i_beta,i_alpha))
@@ -215,7 +216,7 @@ subroutine EXCPH_lifetime(k,q,X)
          !
          EXC_LifeTime(i_alpha)=EXC_LifeTime(i_alpha)+ExcPhM*Pole
          if (l_EXCPH_offdiago) then
-           EXC_LineWidth(i_alpha)=EXC_LineWidth(i_alpha)+ExcPhW*Pole
+           EXC_LineWidth(i_alpha)=EXC_LineWidth(i_alpha)+REAL(ExcPhW,SP)*Pole
          endif
          if (l_extend_output) then
            EXC_life_of_q(i_alpha,iq_bz)=EXC_life_of_q(i_alpha,iq_bz)+ExcPhM*Pole

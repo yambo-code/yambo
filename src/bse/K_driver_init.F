@@ -24,7 +24,6 @@
 subroutine K_driver_init(what,iq,Ken,Xk)
  !
  use R_lattice,    ONLY:bz_samp
- use D_lattice,    ONLY:nsym
  use electrons,    ONLY:levels,n_sp_pol,n_spinor
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
@@ -58,9 +57,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !==========
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
- !
- if ( iq/=1 .and. n_spinor==2 .and. nsym>1) &
-&  call error(' Finite q bse with spinors works only without symmetries. Use ypp to generate SAVE without symmetries.')
  !
  ! BSE_L_kind check
  !==============

@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
+!        Copyright (C) 2000-2023 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM, DS, AF
@@ -74,6 +74,10 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use pseudo,        ONLY:pp_kbv_dim_yambo
  use cuda_m,        ONLY:have_cuda
  use deviceXlib_m,  ONLY:dev_memcpy
+#if defined _SURF
+ use surface_geometry,   ONLY:setup_surface_geometry,az
+ use optcut,        ONLY:loptcut,setup_cutoff,dc
+#endif
  !
 #include<dev_defs.h>
  !
@@ -86,6 +90,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  ! Work Space
  !
  integer     :: i1,i2,i_spinor
+ logical     :: lfail
  !
  complex(SP)          :: drho(n_spinor,3,pp_kbv_dim_yambo)
 #ifdef _CUDA
@@ -107,6 +112,17 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  enddo
  !
  if (have_cuda) call dev_memcpy(drho,DEV_VAR(drho))
+#if defined _SURF
+ if (loptcut) then
+    lfail=.false.
+    call setup_surface_geometry(lfail)
+    call setup_cutoff(lfail)
+    forall(i1=1:3) rho(i1)=rho(i1)+(sum(drho(:,i1,:))*dc/az)
+ else
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
+ endif
+#else
+ forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
+#endif 
  !
 end subroutine DIPOLE_kb_sum

@@ -52,6 +52,7 @@ module DIPOLES
  ! Allocs
  !
  complex(SP), allocatable :: DIP_iR(:,:,:,:,:)
+ complex(SP), allocatable :: DIP_iR_cut(:,:,:,:,:)
  complex(SP), allocatable :: DIP_P(:,:,:,:,:)
  complex(SP), allocatable :: DIP_v(:,:,:,:,:)
  complex(SP), allocatable :: DIP_S(:,:,:,:,:)
@@ -100,6 +101,10 @@ module DIPOLES
          if (allocated(DIP_iR)) return
          YAMBO_ALLOC(DIP_iR,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
          DIP_iR=cZERO
+       case('DIP_iR_cut')
+         if (allocated(DIP_iR_cut)) return
+         YAMBO_ALLOC(DIP_iR_cut,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
+         DIP_iR_cut=cZERO
        case('DIP_P')
          if (allocated(DIP_P)) return
          YAMBO_ALLOC(DIP_P,(d(1),d(2):d(3),d(4):d(5),d(6),n_sp_pol))
@@ -134,6 +139,9 @@ module DIPOLES
        case('DIP_iR')
          if (.not.allocated(DIP_iR)) return
          YAMBO_FREE(DIP_iR)
+       case('DIP_iR_cut')
+         if (.not.allocated(DIP_iR_cut)) return
+         YAMBO_FREE(DIP_iR_cut)
        case('DIP_P')
          if (.not.allocated(DIP_P)) return
          YAMBO_FREE(DIP_P)
@@ -256,6 +264,7 @@ module DIPOLES
      if(trim(what)=="DIP_P" ) DIP_in=DIP_P(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_v" ) DIP_in=DIP_v(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_iR") DIP_in=DIP_iR(:,ic,iv,ik_mem,i_sp_pol)
+     if(trim(what)=="DIP_iR_cut") DIP_in=DIP_iR_cut(:,ic,iv,ik_mem,i_sp_pol)
      if(trim(what)=="DIP_S" ) DIP_in=DIP_spin(:,ic,iv,ik_mem,i_sp_pol,1)
      if(trim(what)=="DIP_L" ) DIP_in=DIP_orbital(:,ic,iv,ik_mem,i_sp_pol,1)  
      !

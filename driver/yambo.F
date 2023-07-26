@@ -49,6 +49,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  use electrons,     ONLY:levels,E_reset
  use R_lattice,     ONLY:bz_samp,bz_samp_reset
  use frequency,     ONLY:w_samp
+#if defined _SURF
+ use ras_module,    ONLY:lras, lreels
+#endif
+
  !
  implicit none
  !
@@ -95,6 +99,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! ... C_driver -> YPP information transfer
  !
  call C_driver_transfer()
+ !
+#if defined _SURF
+ call ras_presets()
+#endif
  !
  call it_reset(1)
 #if defined _MEM_CHECK 
@@ -163,6 +171,9 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !=========
  !
  driver_now= any((/l_em1d,l_em1s,l_ppa,l_mpa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
+#if defined _SURF
+&                  lras,lreels,&
+#endif
 &                  l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
@@ -175,6 +186,16 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  if (driver_now) call OPTICS_driver(Xen,Xk,q,Xw(3),X(3),Dip)
  if (driver_now) call mem_manager_report
+ !
+#if defined _SURF
+ !
+ ! SURFACE SPECTROSCOPY
+ !=======================
+ !
+driver_now=lras.or.lreels
+ if (driver_now) call surfdriver(Xen,Xk,q,Xw(3),X(3),Dip)
+ if (driver_now) call mem_manager_report
+#endif
  !
  ! INVERSE DIELECTRIC FUNCTIONS
  !===============================

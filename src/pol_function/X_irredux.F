@@ -70,6 +70,10 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use SC,            ONLY:it_now
 #endif
  use timing_m,      ONLY:timing
+#if defined _SURF
+ use ras_module,    ONLY: lras, lreels
+ use optcut,        ONLY: loptcut
+#endif
  !
 #include<dev_defs.h>
 #include<memory.h>
@@ -120,6 +124,14 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  force_bare_X_G=use_X_DbGd.or.allocated(Xen%W).or.allocated(Xen%GreenF)
  !
  skip_WF_load= (iq==1.and.X%ng==1)
+
+#if defined _SURF
+ ! Project's dependent presets
+ if(lras.or.lreels) then
+    skip_WF_load   = .true.  ! No LFE, q=0
+ endif
+#endif
+
  !
  ! Drude term  !DALV: this should be move to point ### for avoiding a shift of the frequency grid in FF real-axis GW calculations 
  !============
@@ -127,9 +139,9 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Dipoles
  !=========
- if (iq==1) then
+if (iq==1) then
    call DIPOLE_dimensions(Xen,Dip,X%ib,X%q0)
-   call DIPOLE_IO(Xk,Xen,Dip,'read ',io_err,'X')
+   call DIPOLE_IO(Xk,Xen,Dip,'read',io_err,'X')
  endif
  !
  ! WF load
@@ -417,11 +429,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
          if (PAR_COM_RL_INDEX_n_CPU>1) then
            lda=size(X_par_lower_triangle%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, & 
-&                        X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
+                   & X_par_lower_triangle%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          else
            lda=size(X_par%blc(:,1,1))
            call vv_caxpy(X_nrows_l,GreenF(iw),conjg(Xo_res(X_rows1_l:X_rows2_l,ig_col)),1, &
-&                        X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
+&                             X_par%blc(ig_row_transp,X_cols_transp(1),iw),lda)
          endif
          !
 #  if defined _OPENMP
@@ -456,6 +468,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  if (iq==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')
+   call DIP_alloc('DIP_iR_cut')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_v')
    call DIP_alloc('DIP_spin')

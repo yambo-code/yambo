@@ -47,6 +47,10 @@ subroutine INIT_activate()
 #if defined _SCALAPACK
  use drivers,        ONLY:l_slk_test
 #endif
+#if defined _SURF
+ use ras_module,     ONLY:lras, lreels
+#endif
+
  !
  implicit none
  !
@@ -583,6 +587,34 @@ subroutine INIT_activate()
    call initactivate(1,'EvPolarization ExtF_Dir ExtF_Int FrSndOrd')
  endif
  !
+#endif
+ !
+ ! Surface spectroscopy
+ !
+#if defined _SURF
+ if (lras.or.lreels) then
+    !call CPU_activate("DIP")
+    !call CPU_activate("X")
+!   call X_activate('Xd',(/'QpntsR','BndsRn','NGsBlk',& ! Head only
+    call X_activate('Xd',(/'BndsRn',&
+&                 'GrFnTp','EnRnge','DmRnge','CGrdSp','ETStps','EMStps',&
+&                 'DrudeW','EhEngy'/))
+    call initactivate(1,'FFTGvecs XfnQP_E'//&
+&     ' BulkFile BulkForm BlkShift BlkBroad Layers'//&  ! Bulk eps data
+&     ' q0x q0y'//&                                     ! Polarizations
+&     ' Cutoff CutZero CutStep')               ! Cut off fn
+ endif
+ if (lras) then
+    call initactivate(1,&
+&     ' LocLimit LocType')               ! Analyse
+ endif
+ if (lreels) then
+    call initactivate(1,&
+&     ' E0 Theta0 Thetap Phi DetAngle'//&               ! Kinematics
+&     ' LossForm ImpactFt'//&                        ! Model of loss function
+&     ' DetIntMd NumIntPt'//&                           ! Det. integration
+&     ' PenDepth GausConv')                    ! General flags
+ endif
 #endif
  !
  contains

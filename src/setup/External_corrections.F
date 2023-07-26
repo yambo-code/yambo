@@ -40,6 +40,9 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  use drivers,       ONLY:l_elph_corr
  use ELPH,          ONLY:GKKP,elph_nQ,elph_branches,QP_PH_n_G_bands
 #endif
+#if defined _SURF
+ use ras_module,    ONLY:lras, lreels
+#endif
  !
  implicit none
  !
@@ -67,9 +70,17 @@ subroutine External_corrections(en,Xen,Ken,DIPen,Xk,k,X)
  !
  ! 1) Screening
  ! ==============
- l_apply_QP_corrections=(l_optics.and.l_chi).or.l_em1d.or.l_em1s.or.l_acfdt
+ l_apply_QP_corrections=(l_optics.and.l_chi).or. &
+#if defined _SURF
+&       lras.or.lreels.or.&
+#endif
+& l_em1d.or.l_em1s.or.l_acfdt
  !
- l_dynamical=(l_optics.and.l_chi) .or. l_em1d
+ l_dynamical=(l_optics.and.l_chi) .or.&
+#if defined _SURF
+ & lras .or. lreels .or. &
+#endif
+& l_em1d
  !
  if( l_acfdt )                      X_kind=1
  if( l_em1s  )                      X_kind=2

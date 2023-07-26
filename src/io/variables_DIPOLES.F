@@ -30,6 +30,9 @@ integer function variables_DIPOLES(Dip,ID)
  use IO_int,        ONLY:io_variable_elemental,def_variable_elemental,io_elemental
  use global_XC,     ONLY:Dipole_WF_xc_string,loaded_WF_xc_string
  use descriptors,   ONLY:IO_desc_reset
+#if defined _SURF
+ use optcut,           ONLY : loptcut,z0f,dcf
+#endif
  !
  implicit none
  !
@@ -40,7 +43,7 @@ integer function variables_DIPOLES(Dip,ID)
  !
  call IO_desc_reset(DIP_desc)
  !
- call def_variable_elemental(ID,"PARS",11,SP,0)
+ call def_variable_elemental(ID,"PARS",12,SP,0)
  !
  call io_variable_elemental(ID,DB_I1=Dip%db_ib,VAR="DIP band range",I1=Dip%ib,CHECK=.true.,OP=(/">=","<="/),&
 &                           DESCRIPTOR=DIP_desc)
@@ -56,6 +59,16 @@ integer function variables_DIPOLES(Dip,ID)
 &                           DESCRIPTOR=DIP_desc)
  call io_variable_elemental(ID,VAR="Direct v evaluation",L0=Dip%force_v_g_space,CHECK=.true.,OP=(/"=="/),&
 &                           DESCRIPTOR=DIP_desc)
+#if defined _SURF
+ if (loptcut) then
+ call io_elemental(ID,&
+&     VAR=" Cutoff zero                                      :",R0=z0f,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=DIP_desc)
+ call io_elemental(ID,&
+&     VAR=" Cutoff width                                     :",R0=dcf,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=DIP_desc)
+ call io_elemental(ID,VAR="",VAR_SZ=0)
+ endif
+#endif
+
  !
  ! Character variables
  !

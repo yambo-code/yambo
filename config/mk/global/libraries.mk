@@ -47,6 +47,12 @@ PJ_NLLIBS_LD = $(BASIC_LIBS_LD) interpolate real_time_control qp_control setup \
                tddft dipoles pol_function qp acfdt bse hamiltonian collisions \
                real_time_hamiltonian real_time_propagation \
                real_time_initialize real_time_drivers nloptics
+
+PJ_SURFLIBS   = driver tools modules memory allocations matrices linear_algebra parallel parser communicate output common timing Yio surf_modules io $(IO_MODE) \
+               xc_functionals interface stop_and_restart wf_and_fft bz_ops coulomb interpolate qp_control setup tddft surf dipoles pol_function qp acfdt bse
+PJ_SURFLIBS_LD= tools memory allocations communicate modules matrices linear_algebra bz_ops parallel parser output common timing Yio surf_modules io $(IO_MODE) \
+               xc_functionals interface stop_and_restart wf_and_fft coulomb interpolate qp_control setup tddft surf dipoles pol_function qp acfdt bse
+
 #
 # Yambo folders needed by Interfaces
 #=====================================

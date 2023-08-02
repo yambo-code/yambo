@@ -118,30 +118,13 @@ if test x"$enable_hdf5" = "xyes"; then
   FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
   LIBS="$try_HDF5_LIBS" ;
   #
-  #if test "$HDF5_VER" = "serial" ; then
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-       use hdf5
-       implicit none
-       integer  error
-       call h5open_f(error)
-       call h5close_f(error)
-       ]),[hdf5=yes], [hdf5=no]);
-  #fi;
-  ##
-  #AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-  #   use hdf5
-  #   implicit none
-  #   integer  error
-  #   error = NF90_HDF5
-  #   call h5open_f(error)
-  #   call h5close_f(error)
-  #   ]),[hdf5_par=yes], [hdf5_par=no]);
-  ##
-  #if test "$HDF5_VER" = "parallel" ; then hdf5="$hdf5_par" ; fi
-  #if test "$HDF5_VER" = "serial" ; then
-  #  if test "x$hdf5_par" = "xyes" ; then HDF5_VER="parallel" ; fi
-  #fi;
-  #
+  AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+     use hdf5
+     implicit none
+     integer  error
+     call h5open_f(error)
+     call h5close_f(error)
+     ]),[hdf5=yes], [hdf5=no]);
   #
   FCFLAGS="$save_fcflags" ;
   LIBS="$save_libs" ;

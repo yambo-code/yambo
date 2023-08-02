@@ -101,7 +101,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
     case('PALEARI')
         EXCPH_kind=PALEARI
     case('BERNARDI')
-        EXCPH_kind=BERNARDI
+        call error("Bernardi formulation not implemented")
     case default
         call error("Unknow exciton-phonon coupling type")
  end select
@@ -219,7 +219,7 @@ subroutine EXCPH_gkkp_driver(E,k,q,X)
          ! 
        elseif(EXCPH_kind==BERNARDI) then
          !      
-         call EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
+!         call EXCPH_gkkp_eval_ber(iq_s,iq_bz,il,k,q,ID_gkkp)
          !
        endif
        !

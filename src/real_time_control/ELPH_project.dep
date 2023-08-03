@@ -1,2 +1,3 @@
  RT_free.o
+ RT_alloc.o
 

@@ -1,4 +1,4 @@
-#if defined YPP_NL
+#if defined _YPP_NL
 RT_obj = mod_YPP_real_time.o
 #endif
 #if defined _YPP_RT 

@@ -25,7 +25,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  !
  use pars,          ONLY:SP
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,l_X_terminator,X_use_lin_sys,&
-&                        X_use_gpu,Chi_linalg_mode,X_ng,l_write_disk_Xo
+&                        X_use_gpu,Chi_linalg_mode,X_ng,l_write_disk_Xo,l_X_jdos,X_prop
  use electrons,     ONLY:levels,n_sp_pol
  use drivers,       ONLY:l_bs_fxc,l_col_cut,Finite_Tel,l_cohsex,l_rt_carriers_in_use,l_rpa_IP
  use R_lattice,     ONLY:nqibz,bz_samp
@@ -33,7 +33,7 @@ subroutine X_pre_setup(Xen,Xk,X)
  use TDDFT,         ONLY:FXC_n_g_corr
  use interfaces,    ONLY:eval_G_minus_G
  use parallel_m,    ONLY:PAR_COM_WORLD
- use stderr,        ONLY:intc
+ use stderr,        ONLY:intc,STRING_match
  use parser_m,      ONLY:parser
  use cuda_m,        ONLY:have_cuda
  !
@@ -127,5 +127,9 @@ subroutine X_pre_setup(Xen,Xk,X)
  call parser('WriteXo',l_write_disk_Xo)
  !
  if (l_rpa_IP) l_write_disk_Xo=.FALSE.
+ !
+ ! Jdos?
+ !
+ l_X_jdos= STRING_match(X_prop,'jdos')
  !
 end subroutine

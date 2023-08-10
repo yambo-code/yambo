@@ -38,7 +38,7 @@ subroutine X_ALLOC_global(WHAT,W)
  !
  if (WHAT=="ALLOC") then
    !
-   if (X_do_obs("eps")) then
+   if (X_do_obs("eps").or.(X_do_obs("jdos").and.l_chi)) then
      call X_ALLOC_elemental("EPS",(/W%n_freqs,4/))
      if (l_optics.and.l_chi) call X_ALLOC_elemental("ALPHA",(/W%n_freqs,2/))
      Epsilon_ii(:,1)=W%p(:)

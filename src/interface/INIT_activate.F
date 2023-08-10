@@ -201,7 +201,7 @@ subroutine INIT_activate()
    call X_activate(X_kind,(/'QpntsR','BndsRn',&
 &                  'GrFnTp','EnRnge','DmRnge','DmERef','CGrdSp','ETStps','EMStps',&
 &                  'DrudeW','EhEngy','LongDr'/))
-   call initactivate(1,'DrClassic')
+   call initactivate(1,'DrClassic Xprop')
    if (.not.l_rpa_IP) call initactivate(1,'WriteXo')
    !
    call INIT_QP_ctl_switch('X')

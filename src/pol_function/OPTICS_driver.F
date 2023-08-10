@@ -60,6 +60,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  integer          :: iw,iq,i_G_shift
  real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels
+ character(4)     :: X_obs
  !
  integer,external :: OPTICS_select_q_and_G
  !
@@ -209,12 +210,15 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
    if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
    !
-   ! Epsilon
+   ! Epsilon/Jdos
+   if (X_do_obs("eps" )) X_obs="eps"
+   if (X_do_obs("jdos")) X_obs="jdos"
+   write (*,*) X_obs
    do iw=1,wv%n_freqs
      output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
 &                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data(:3))
-     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE eps",data=output_data)
+     if (     l_rpa_IP) call X_OUTPUT_driver("WRITE "//X_obs,data=output_data(:3))
+     if (.not.l_rpa_IP) call X_OUTPUT_driver("WRITE "//X_obs,data=output_data)
    enddo
    !
    ! EEL

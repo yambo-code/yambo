@@ -25,7 +25,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  use pars,          ONLY:schlen,SP
  use D_lattice,     ONLY:l_0D
- use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs
+ use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs,l_X_jdos
  use drivers,       ONLY:l_chi,l_optics,l_bs_fxc
  use electrons,     ONLY:n_spinor
  use PHOTOLUM,      ONLY:PL
@@ -75,7 +75,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    !------------------------
    if (l_bs_fxc) call X_obs_onoff("+ fxc")
    if (l_BS_photolum) call X_obs_onoff("+ pl")
-   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi)) call X_obs_onoff("+ eps")
+   if (l_BS_abs.or.l_BS_kerr.or.(l_optics.and.l_chi.and..not.l_X_jdos)) call X_obs_onoff("+ eps")
    !
    ! Check if EELS has to be evaluated
    if (X_do_obs("eps")) call X_obs_onoff("+ eel")
@@ -89,7 +89,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
      if (l_flag) call X_obs_onoff("+ refl") 
      if (X_do_obs("eel")) call X_obs_onoff("- refl")
    endif
-   if (l_BS_jdos) call X_obs_onoff("+ jdos")
+   if (l_BS_jdos.or.l_X_jdos) call X_obs_onoff("+ jdos")
    if (trim(alpha_dim)/='adim'.and.X_do_obs("eps")) call X_obs_onoff("+ alpha")
    if (l_BS_esort) call X_obs_onoff("+ Esort E_IP")
    if (l_BS_kerr) call X_obs_onoff("+ off")

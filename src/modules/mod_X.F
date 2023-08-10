@@ -37,7 +37,9 @@ module X_m
  !
  real(SP)                 :: eps_2_alpha
  character(6)             :: alpha_dim ! 'adim' 'area' 'length' 'volume'
+ character(schlen)        :: X_prop = "abs"
  logical                  :: l_drude
+ logical                  :: l_X_jdos
  integer                  :: drude_n_states
  !
  ! Main Gauge

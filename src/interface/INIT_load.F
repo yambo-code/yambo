@@ -33,7 +33,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 &                        Time_unit,I_unit,Angle_unit,V_parallel,initmode,V_ph,&
 &                        V_RL,V_kpt,V_sc,V_qp,V_io,V_general,V_resp,V_real_time,V_nl_optics
  use X_m,           ONLY:Chi_mode,X_t,q_plus_G_direction,Q_Shift_Order,&
-&                        global_gauge,Chi_linalg_mode, &
+&                        global_gauge,Chi_linalg_mode,X_prop, &
 &                        X_terminator_Kind,X_terminator_E,X_DbGd_percentual
  use DIPOLES,       ONLY:DIPOLE_t
  use com,           ONLY:grid_paths
@@ -292,6 +292,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'DrClassic', '[X] Use a classical model for the drude term',verb_level=V_resp)
  call it('f',defs,'mpERdb',  '[Xm] Write to disk MPA poles and residues')
  call it('f',defs,'WriteXo', '[X] Write on the-fly the IP response function',verb_level=V_resp)
+ call it(defs,'Xprop',   '[X] Can be any among abs/jdos',X_prop,verb_level=V_resp)
  !
  ! BSE/BSK
  !

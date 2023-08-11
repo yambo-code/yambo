@@ -172,7 +172,6 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
  call parser('ImposeDirAlg',l_dir_alg)
- if(.not.l_dir_alg) l_dir_alg=(iq/=1 .and. n_spinor==2 .and. nsym>1) 
  l_std_alg=.not.l_dir_alg
  !
  ! Oscillators Setup

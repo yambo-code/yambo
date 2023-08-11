@@ -7,6 +7,8 @@
  mod_RT_output.o
  mod_collision_ext.o
  mod_fields.o
+ mod_interpolate.o
+ mod_interpolate_tools.o
  mod_plasma.o
  mod_real_time.o
 

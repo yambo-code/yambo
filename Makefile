@@ -75,7 +75,8 @@ all:
 ext-libs:
 	@for target in $(EXT_LIBS) ; do if ! test "$$target" = Ydriver; then $(MAKE) $(MAKEFLAGS) $$target; fi; done
 int-libs:
-	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
+	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; \
+	if test ! -f "lib/lib$$target."*; then echo "$$target build failed"; exit 1; fi done
 yambo-int-libs: 
 	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 conf-check:

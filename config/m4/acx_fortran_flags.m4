@@ -44,8 +44,6 @@ i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
-    #FUFLAGS="-O0 -g -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -55,7 +53,6 @@ i?86*linux*)
     ;;
   *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -138,7 +135,6 @@ i?86*linux*)
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -147,7 +143,6 @@ i?86*linux*)
     ;;
   *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -208,7 +203,6 @@ ia64*linux* )
     ;;
   *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -377,7 +371,6 @@ powerpc64*linux* )
   case "${FC}" in
   *pgf9* | *ftn* | *pgfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"
@@ -387,7 +380,6 @@ powerpc64*linux* )
     ;;
   *nvfortran* )
     SYSFLAGS="-O1 -gopt -Mnoframe -Mdalign -Mbackslash -cpp"
-    #SYSFLAGS="-O2 -g -fast -Munroll -Mnoframe -Mdalign -Mbackslash"
     FUFLAGS="-O0 -g -Mbackslash"
     FCMFLAG="-Mnomain"
     OMPFLAGS="-mp"

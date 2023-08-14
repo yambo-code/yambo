@@ -87,8 +87,8 @@ if [ $count_mod_ts != 0 ]; then
 fi
 cd $path_back
 if [[ -f "$compdir/lib/$library" ]]; then
- source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: saving $compdir/lib/$library to $dir/$save_dir"
- if ! test -L $compdir/lib/$library; then cp -u $compdir/lib/$library $dir/$save_dir; fi
+ source $compdir/sbin/compilation/verbosity.sh "object_save_and_restore.sh: moving $compdir/lib/$library to $dir/$save_dir"
+ if ! test -L $compdir/lib/$library; then mv $compdir/lib/$library $dir/$save_dir; fi
 fi
 #
 # Restore files

@@ -27,6 +27,9 @@ define yambo_help
    $(ECHO) -n " [yambo-int-libs]"; for target in $(YAMBO_INT_LIBS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
    $(ECHO) "\n *** Utils ***";\
    $(ECHO) -n " [utils]         "; for target in $(UTILS); do $(ECHO) -n " $$target" ; done;$(ECHO) ;\
+   $(ECHO)  "\n *** Files & Packages ***" ;\
+   $(ECHO)  " make check-packages      =  check the packages required (and optional) for Yambo to compile correctly";\
+   $(ECHO)  " make check-files         =  list all git untracked files and empty directories.";\
    $(ECHO)  "\n *** Cleaning ***" ;\
    $(ECHO)  " The cleaning procedure of yambo is divided in several modules: bin int-libs driver Ydriver src ypp interfaces conf dep";\
    $(ECHO)  " Each of these module can be called by using";\
@@ -35,7 +38,6 @@ define yambo_help
    $(ECHO)  " make clean_all           =  remove all modules. Complete cleaning.";\
    $(ECHO)  " make reset               =  clean + int-libs.";\
    $(ECHO)  " make gitclean            =  clean all git untracked files.";\
-   $(ECHO)  " make check               =  list all git untracked files and empty directories.";\
    $(ECHO);\
   fi
   if [ "$(1)" = "intro" ] ; then \

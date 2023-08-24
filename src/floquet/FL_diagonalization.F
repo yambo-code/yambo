@@ -39,6 +39,9 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
 &                         FL_eigenvectors,FL_eigenvalues,FL_beta,l_FL_avEnergy
  use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_Xk_ibz_index,myid
  use parallel_int,   ONLY:PP_redux_wait
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -67,6 +70,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  complex(SP) :: FL_V_bands_hist(NL_bands(2),n_tot_fl_modes,maxval(E%nbf),QP_nk,n_sp_pol)
  logical     :: l_assume_Hermitian
  real(SP)    :: energy_crossing,modul,beta
+ !
+#if defined _TIMING
+ call timing('FL Diagonalization',OPR='start')
+#endif
  !
  FL_eigenvalues = 0._SP
  energy_difference = 0._SP
@@ -307,6 +314,10 @@ subroutine FL_diagonalization(E,k,FL_V_bands,FL_QE,iter_num)
  call PP_redux_wait(FL_QE, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(FL_V_bands, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
  call PP_redux_wait(FL_eigenvalues, COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+ !
+#if defined _TIMING
+ call timing('FL Diagonalization',OPR='stop')
+#endif
  !
  !Mixing of eigenvectors
  !FL_V_bands = FL_V_bands * FL_beta + FL_V_bands_hist * (1._SP - FL_beta)

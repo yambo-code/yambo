@@ -37,6 +37,9 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
 &                         max_time_step,n_tot_time_steps
  use parallel_m,     ONLY:PAR_IND_Xk_bz,PAR_COM_Xk_ibz_INDEX
  use parallel_int,   ONLY:PP_redux_wait
+#if defined _TIMING
+ use timing_m,       ONLY:timing
+#endif
  !
  implicit none
  !
@@ -60,6 +63,10 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
  !
  ! Update Floquet Overlaps and determinant
  ! ===================================================================
+ !
+#if defined _TIMING
+ call timing('FL Berry Pol NEQ',OPR='start')
+#endif
  !
  FL_S_minus=cZERO
  FL_S_plus =cZERO
@@ -197,6 +204,10 @@ subroutine FL_polarization(E,k,FL_V_bands,FL_Chi_pol)
    endif
    !
  enddo
+ !
+#if defined _TIMING
+ call timing('FL Berry Pol NEQ',OPR='stop')
+#endif
  !
  !aim137 DEBUG <
  !write(filename,'(f4.2)') Efield(1)%frequency(1)*HA2EV

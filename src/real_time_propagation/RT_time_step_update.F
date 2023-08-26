@@ -51,7 +51,9 @@ subroutine RT_time_step_update( E )
  integer           :: ib,ibp,ik,nT_updated,i_desc_ref
  complex(SP)       :: dG_dT_max(2),dG_dT(2),ERROR,dG(3)
  real(SP)          :: dT_now,dT_previous,dT_next
+#if defined _RT_SCATT
  integer, external :: RT_Lifetimes_evaluation_plan
+#endif
  logical, external :: RT_do_it
  !
  l_Update_Time_Step=NE_time>=NE_initial_time_step_update.and.NE_initial_time_step_update>0._SP
@@ -135,7 +137,11 @@ subroutine RT_time_step_update( E )
    !
    ! ... and Lifetimes evaluation plan update
    !
+#if defined _RT_SCATT
    nT_updated =RT_Lifetimes_evaluation_plan( )
+#else
+   nT_updated =0
+#endif
    !
    ! ... create the linked descriptions
    !

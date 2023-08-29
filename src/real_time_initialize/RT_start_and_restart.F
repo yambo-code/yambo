@@ -75,7 +75,9 @@ subroutine RT_start_and_restart(E,k,q)
  !
  integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(N_RT_databases),COM_MODE,ib,iE_fg,ik_RT
  integer, external :: io_RT_components
+#if defined _RT_SCATT
  integer, external :: RT_Lifetimes_evaluation_plan
+#endif
  logical :: RESTART
  !
  ! Initialize the Gf, potentials, levels and occupations
@@ -146,8 +148,11 @@ subroutine RT_start_and_restart(E,k,q)
  !  3. The REFERENCE -> G_lesser_ref
  !
  RESTART = io_err(RT_return_db_ID("G_lesser_RESTART"))==0.and.&
-&          io_err(RT_return_db_ID("OBSERVABLES"))==0.and.&
-&          io_err(RT_return_db_ID("REFERENCE"))==0
+&          io_err(RT_return_db_ID("OBSERVABLES"))==0
+ !
+#if defined _RT_SCATT
+ RESTART = RESTART .and. io_err(RT_return_db_ID("REFERENCE"))==0
+#endif
  !
 #if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)
@@ -218,7 +223,11 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
+#if defined _RT_SCATT
    nt=RT_Lifetimes_evaluation_plan( )
+#else
+   nt=0
+#endif
    !
    ! Update occupations after loading from DB
    !==========================================

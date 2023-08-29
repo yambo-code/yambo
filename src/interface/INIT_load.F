@@ -631,8 +631,6 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'AC_n_FR',  '[ACFDT] Integration frequency points',ACFDT_n_freqs)
  call it(defs,'AC_E_Rng', '[ACFDT] Imaginary axis 2nd & 3rd energy points',ACFDT_E_range,E_unit)
  !
- ! GPL_EXCLUDE_END
- !
  ! DIPOLES
  !
  call it(defs,'DipBands',       '[DIP] Bands range for dipoles',Dip%ib,verb_level=V_resp)
@@ -660,15 +658,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
- !
- ! GPL_EXCLUDE_START
- !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
  call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)
- !
- ! GPL_EXCLUDE_END
- !
  call it('f',defs,'WRgFsq','[ELPH] Dump on file gFsq coefficients')
 #endif
  ! 
@@ -983,10 +975,10 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
      !
      if(initmode/=4) return
      !
-     call parser('SCbands',  is_def(1))
-     call parser('RTbands',  is_def(2))
-     call parser('COLLbands',is_def(3))
-     call parser('NLbands',  is_def(4))
+     call parser('SCBands',  is_def(1))
+     call parser('RTBands',  is_def(2))
+     call parser('COLLBands',is_def(3))
+     call parser('NLBands',  is_def(4))
 #endif
      !
 #if defined _SC 

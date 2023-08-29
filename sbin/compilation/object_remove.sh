@@ -24,7 +24,7 @@
 #
 mode=$1
 #
-if [ "$file_o" = "driver.o" ] ; then
+if [[ "$file_o" == "driver.o" ]] ; then
  source ./sbin/compilation/verbosity.sh "object_remove.sh: WARNING driver.o case is problematic."
  source ./sbin/compilation/verbosity.sh "object_remove.sh: mode is $mode. Skipping it"
  source ./sbin/compilation/verbosity.sh "object_remove.sh: driver.o is created at the linking step. See config/mk/local/functions.mk, define_link"
@@ -46,18 +46,18 @@ if [[  "$file_o_path" == *"${dir/\./}" ]] || [ "$2" == "locks" ]; then
  source ./sbin/compilation/stamp_remove.sh "lib"
 fi
 #
-if [ -f "$file_o_src" ]  ; then
+if [[ -f "$file_o_src" ]]  ; then
   #
   if [[  "$file_o_path" == *"${dir/\./}" ]]; then 
    source ./sbin/compilation/verbosity.sh "object_remove.sh: remove $file_o_src"
    rm -f $file_o_src  
   fi
-  if [ -f "$file_f90_src" ] ; then 
+  if [[ -f "$file_f90_src" ]] ; then 
    source ./sbin/compilation/verbosity.sh "object_remove.sh: remove $file_f90_src"
    rm -f $file_f90_src 
   fi
   #
-  if [ "$2" == "locks" ] && [[  ! "$file_o_path" == *"${dir/\./}" ]]; then
+  if [[ "$2" == "locks" ]] && [[  ! "$file_o_path" == *"${dir/\./}" ]]; then
    source ./sbin/compilation/verbosity.sh "object_remove.sh: $file_o_src -> ${file_o_src}_to_save"
    mv $file_o_src ${file_o_src}_to_save
   fi
@@ -66,7 +66,7 @@ if [ -f "$file_o_src" ]  ; then
   #
   if [ "$2" == "sources" ]; then
     #
-    if [ -f "$file_src" ] ; then
+    if [[ -f "$file_src" ]] ; then
      source ./sbin/compilation/verbosity.sh "object_remove.sh: touch $file_src"
      touch $file_src
     fi
@@ -97,15 +97,16 @@ fi
 #
 if [[ -f "$file_src" ]]  ; then
   modfile=`grep -i module $file_src | grep -i -v end | grep -i -v use | grep -i -v procedure | grep -v !`
+  source ./sbin/compilation/verbosity.sh "object_remove.sh: modules to remove originated by $file_src: $modfile"
   for modname_tmp in $modfile; do
     # Global
     modname=`echo "$modname_tmp" | tr '[:upper:]' '[:lower:]'`
-    if [ -f "$compdir/include/$modname.mod" ]; then
+    if [[ -f "$compdir/include/$modname.mod" ]]; then
       source ./sbin/compilation/verbosity.sh "object_remove.sh: remove $compdir/include/$modname.mod"
       rm -f $compdir/include/$modname.mod
     fi
     # Local
-    if [ -f "$file_o_path/$modname.mod" ]; then
+    if [[ -f "$file_o_path/$modname.mod" ]]; then
       #
       if [[  "$file_o_path" == *"${dir/\./}" ]]; then
        source ./sbin/compilation/verbosity.sh "object_remove.sh: remove $file_o_path/$modname.mod"

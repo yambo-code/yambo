@@ -25,7 +25,8 @@ ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
  include config/mk/global/defs.mk
  include config/mk/defs.mk
 else ifeq ($(MAKECMDGOALS), download)
-else ifeq ($(MAKECMDGOALS), check)
+else ifeq ($(MAKECMDGOALS), check-files)
+else ifeq ($(MAKECMDGOALS), check-packages)
 else
  include config/mk/global/no_configure_help.mk
 endif
@@ -78,7 +79,7 @@ int-libs:
 	@for target in $(INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
 yambo-int-libs: 
 	@for target in $(YAMBO_INT_LIBS) ; do $(MAKE) $(MAKEFLAGS) $$target; done
-conf-check:
+check-packages:
 	@$(global_check)
 #
 #=====================

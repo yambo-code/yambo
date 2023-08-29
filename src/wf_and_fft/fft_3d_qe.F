@@ -100,4 +100,3 @@ subroutine fft_3d(c,n,fft_sign)
 #endif
  !
 end subroutine
-

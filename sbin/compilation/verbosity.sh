@@ -61,12 +61,13 @@ if [ "$1" == "locks" ] ; then
 fi
 #
 if [ "$1" == "filename" ] ; then
- echo                      "file        " $file   >> $vlog
+ echo                              "file        " $file   >> $vlog
  if [ ! -z $file_o ];   then  echo ".o          " $file_o_src >> $vlog; fi
  if [ ! -z $file_c ];   then  echo ".c          " $file_c_src >> $vlog; fi
  if [ ! -z $file_f ];   then  echo ".f          " $file_f_src >> $vlog; fi
  if [ ! -z $file_f90 ]; then  echo ".f90        " $file_f90_src >> $vlog; fi
  if [ ! -z $file_F ];   then  echo ".F          " $file_F_src >> $vlog; fi
+ if [ ! -z $file_src ]; then  echo "(file_src)  " $file_src >> $vlog; fi
  return
 fi
 #

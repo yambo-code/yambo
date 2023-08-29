@@ -3,7 +3,7 @@
 !
 ! Copyright (C) 2000 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Authors (see AUTHORS file for details): AM DS
 !
 integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !

@@ -4,7 +4,7 @@
 #
 # Copyright (C) 2000 The Yambo Team
 #
-# Authors (see AUTHORS file for details): CDH
+# Authors (see AUTHORS file for details): CH
 #
 # Wonderful script to generate a commit message template
 #

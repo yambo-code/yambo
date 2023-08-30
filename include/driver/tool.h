@@ -1,7 +1,7 @@
 /*
   License-Identifier: GPL
  
-  Copyright (C) 2000 The Yambo Team
+  Copyright (C) 2019 The Yambo Team
  
   Authors (see AUTHORS file for details): DS
 

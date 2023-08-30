@@ -2,7 +2,7 @@
 ! Copyright (C) 2004 WanT Group
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2013 The Yambo Team
 !
 ! Authors (see AUTHORS file for details):
 ! 

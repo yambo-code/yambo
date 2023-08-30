@@ -1,7 +1,7 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2009 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
 !
@@ -16,7 +16,7 @@ subroutine acknowledge_yambo()
  call msg('r','| the YAMBO group (those specified in the GNU General Public')
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2009 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
  call msg('r','| common practice in the scientific literature, to acknowledge the')

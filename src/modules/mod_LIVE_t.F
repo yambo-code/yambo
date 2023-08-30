@@ -1,7 +1,7 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
 !
@@ -429,7 +429,7 @@ module LIVE_t
    ! GNU General Public License, see ~ABINIT/Infos/copyright
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
    ! 

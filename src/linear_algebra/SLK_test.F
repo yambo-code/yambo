@@ -1,7 +1,7 @@
 !
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM AF
 !
@@ -12,7 +12,7 @@
 ! in the root directory of the present distribution,
 ! License-Identifier: GPL
 !
-! Copyright (C) 2000 The Yambo Team
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM AF
 !

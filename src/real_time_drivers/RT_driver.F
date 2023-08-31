@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM CA DS
@@ -223,6 +223,7 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
  !
  ! Reference lifetimes and/or G_lesser
  !=====================================
+#if defined _RT_SCATT
  !
  if (NE_i_start_time==1) then
    !
@@ -240,6 +241,8 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    call msg('l','done')
    !
  endif
+ !
+#endif
  !
  l_initial_equilibrium=.FALSE.
  !
@@ -297,7 +300,9 @@ if (l_phel_scatt)                   sec_title=trim(sec_title)//'+ph-el'
    !
    ! Calculate all relaxation and dissipation terms
    !===============================================
+#if defined _RT_SCATT
    call RT_relaxation(E,k,q,NE_time)
+#endif
    !
    ! Write DBs and output
    !=====================

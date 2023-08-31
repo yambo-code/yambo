@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2023 the YAMBO team
+!        Copyright (C) 2000-2022 the YAMBO team
 !              http://www.yambo-code.org
 !
 ! Authors (see AUTHORS file for details): AM
@@ -370,9 +370,8 @@ module fields
    end subroutine
    !
    subroutine Efield_reset(E)
-     use real_time,  ONLY:RT_step
      type(ext_field) :: E
-     E%t_initial    =RT_step
+     E%t_initial    =0._SP
      E%t_initial_indx=2
      E%t_final      =0._SP
      E%t_final_indx =0

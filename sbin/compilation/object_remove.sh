@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2023 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AM DS
@@ -66,8 +66,6 @@ if [ -f "$file_o_src" ]  ; then
   #
   if [ "$2" == "sources" ]; then
     #
-    # The following procedure should be changed, because it prevents from
-    # running two independent compilation instances in different compile folders
     if [ -f "$file_src" ] ; then
      source ./sbin/compilation/verbosity.sh "object_remove.sh: touch $file_src"
      touch $file_src

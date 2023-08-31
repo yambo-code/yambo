@@ -1,5 +1,5 @@
 #
-#        Copyright (C) 2000-2023 the YAMBO team
+#        Copyright (C) 2000-2022 the YAMBO team
 #              http://www.yambo-code.org
 #
 # Authors (see AUTHORS file for details): AF
@@ -106,18 +106,21 @@ if test "x$enable_iotk" = "xyes" ; then
       AC_MSG_RESULT(already compiled)
     fi
   fi
+  #
+  PW_VER="no-hdf5-support"
+  PW_CPP=
+  #
+  #if test x"$hdf5" = "xyes" && test "$IO_LIB_VER" = "parallel"; then
+  if test x"$hdf5" = "xyes" && test x"$enable_hdf5_p2y_support" != "xno"; then
+    PW_VER="hdf5-support"
+    PW_CPP="-D_P2Y_QEXSD_HDF5"
+  fi
+  #
 else
+  PW_VER="no support"
+  PW_CPP=""
   AC_MSG_CHECKING([for IOTK library])
   AC_MSG_RESULT([no])
-fi
-#
-PW_VER="no-hdf5-support"
-PW_CPP=
-#
-#if test x"$hdf5" = "xyes" && test "$IO_LIB_VER" = "parallel"; then
-if test x"$hdf5" = "xyes" && test x"$enable_hdf5_p2y_support" != "xno"; then
-  PW_VER="hdf5-support"
-  PW_CPP="-D_P2Y_QEXSD_HDF5"
 fi
 #
 #

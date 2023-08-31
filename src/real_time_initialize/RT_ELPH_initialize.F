@@ -49,7 +49,7 @@ subroutine RT_ELPH_initialize(E,k,q)
  !
  ! El-Ph databases check
  !=======================
- call ELPH_databases_check(RT_bands(2))
+ call ELPH_databases_check(RT_bands)
  if (.not.l_GKKP_expanded_DB_exists) then
    call warning('ELPH (expanded) database not found and/or incompatible OR QP widths not provided. E-P scattering switched off')
    l_elph_scatt   =.FALSE.

@@ -419,6 +419,20 @@ subroutine INIT_read_command_line(rstr,init_)
      endif
 #endif
      !
+#if defined _ELPH
+     !
+     ! Exciton-phonon
+     !
+     if ( trim(rstr_piece(i1)) == 'excph' ) then
+       !
+       call initactivate(1,'ExcGkkp')
+       if ( trim(rstr_piece(i1+1)) == 'o'   ) call initactivate(1,'ExcPhOptics') 
+       if ( trim(rstr_piece(i1+1)) == 'l'   ) call initactivate(1,'ExcPhLifeT')  
+       !
+     endif
+     !
+#endif
+
 #if defined _NL
      !
      ! NL

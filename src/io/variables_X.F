@@ -111,7 +111,7 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  endif
  !
  call io_variable_elemental(ID,&
-&     VAR="Field direction",R1=X%q0,CHECK=.true.,OP=(/"==","==","=="/),DESCRIPTOR=local_desc)
+&     VAR="Field direction",R1=X%q0,WARN=.true.,OP=(/"==","==","=="/),DESCRIPTOR=local_desc)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,1/))) then
    call io_variable_elemental(ID,&

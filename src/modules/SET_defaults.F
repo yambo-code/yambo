@@ -24,7 +24,7 @@
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  use debug,      ONLY:dbg
- use pars,       ONLY:SP,cZERO
+ use pars,       ONLY:SP,cZERO,rZERO
  use C_driver,   ONLY:code_branch
  use units,      ONLY:HA2EV,FS2AUT,kWCMm22AU
  use LOGO,       ONLY:ID_logo,ID_logo_stderr
@@ -48,13 +48,13 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use functions,  ONLY:bose_E_cut
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
-&                     molecule_position
+&                     molecule_position,Boltz_Temp
  use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
 &                     cutoff_presets,k_map,qindx_S_max_Go
- use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn
+ use electrons,  ONLY:n_spin,n_sp_pol,n_spinor,filled_tresh,l_spin_orbit,n_spin_den,eval_magn,nel_cond
  use parallel_m, ONLY:ncpu,CPU_str_reset,CREATE_hosts_COMM
  use com,        ONLY:isec,depth,secnm,previous_secmode,of_name,n_ofs_defined,of_opened,of_unit,max_open_ofs,&
 &                     more_io_path,core_io_path,com_path,repfile,grid_paths,fat_log,exp_user
@@ -81,7 +81,10 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use ACFDT,      ONLY:ACFDT_n_lambda,ACFDT_n_freqs,ACFDT_E_range
 #if defined _ELPH 
  use ELPH,       ONLY:ph_modes,elph_nb,gsqF_energy_steps,eval_G_using_KK,use_PH_DbGd,EkplusQ_mode,gkkp_db,&
-&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold
+&                     elph_Ham_bands,elph_Ham_ik,elph_branches,RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,&
+&                     elph_bands
+ use EXCPH,      ONLY:Lin_path,Lout_path,EXCPH_states,EXCPH_sum,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
+&                     EXCPH_deltaE_treshold
 #endif
  use zeros,      ONLY:zero_norm,k_iku_zero,k_rlu_zero,G_iku_zero,G_mod_zero,zero_dfl
  use memory,     ONLY:MEMs,LARGE_MEMs,N_MEM_max,N_MEM_SAVE_max,MEM_element_init
@@ -271,6 +274,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  molecule_position=0._SP
  lattice='Unknown'
  Bose_Temp=-1./HA2EV
+ Boltz_Temp=0._SP
  !
  ! R_lattice
  !
@@ -323,7 +327,8 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  n_spinor=1
  n_spin_den=1
  l_spin_orbit       = .FALSE.
- filled_tresh       =0.00001_SP
+ filled_tresh       = 0.00001_SP
+ nel_cond=rZERO
  !
  ! Magnetization and density
  !
@@ -522,17 +527,30 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ph_modes=0
  elph_nb=0
+ elph_bands=-1
  elph_branches=0
  gsqF_energy_steps=2
  eval_G_using_KK=.FALSE.
  elph_Ham_bands=0
  elph_Ham_ik=1
  RES_tresh=0.01_SP
- DW_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on electronic energy differences
- FAN_deltaE_treshold=1.E-6_SP/HA2EV  ! This is a cutoff on phonon energies
+ DW_deltaE_treshold=1.E-6_SP/HA2EV    ! This is a cutoff on electronic energy differences
+ FAN_deltaE_treshold=1.E-6_SP/HA2EV   ! This is a cutoff on phonon energies
  use_PH_DbGd=.FALSE.
  EkplusQ_mode='interp' ! E(k+q) energies (interp | dftp )
  gkkp_db='gkkp'        ! gkkp_db ( gkkp | gkkp_expanded | genFroh )
+ !
+ ! EXC-PH
+ !
+ Lin_path ='none'
+ Lout_path='none'
+ EXCPH_states=(/1,1/)
+ EXCPH_kind_name='PALEARI'
+ EXCPH_sum=(/1,1/)
+ L_damping=0.0005/HA2EV ! set to 0.5 meV
+ EXCPH_deltaE_treshold=1.E-6_SP/HA2EV ! This is a cutoff for denominator in the exc-ph spectra
+ EXC_q0=(/0.0,0.0,0.0/)
+ alphaQ=rZERO
  !
 #endif
  !

@@ -28,7 +28,8 @@ integer function io_ELPH(ID,what)
  use IO_int,         ONLY:io_connect,io_disconnect,io_fragment,&
 &                         io_bulk,io_header
  use ELPH,           ONLY:ph_modes,elph_nb,PH_freqs_sq,l_GKKP_hosts_bare_dV,&
-&                         PH_pol_vector,GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
+&                         l_GKKP_hosts_DW,PH_pol_vector,&
+&                         GKKP,elph_grids_are_expanded,GKKP,GKKP_bare
  use stderr,         ONLY:intc
  use ELPH_intfcs,    ONLY:ELPH_alloc
  use R_lattice,      ONLY:nkbz
@@ -110,6 +111,7 @@ integer function io_ELPH(ID,what)
  !
  call io_bulk(ID_frag,VAR="PH_FREQS"//trim(intc(iq)),VAR_SZ=(/ph_modes/))
  call io_bulk(ID_frag,R1=PH_freqs_sq(iq,:))
+! write(*,*) "w(",iq,")= ",PH_freqs_sq(iq,:)
  !
  ! Polarization vectors
  ! 
@@ -131,6 +133,7 @@ integer function io_ELPH(ID,what)
  call io_bulk(ID_frag,VAR="ELPH_GKKP_Q"//trim(intc(iq)),VAR_SZ=(/2,ph_modes,elph_nb,elph_nb,nkbz/) )
  call io_bulk(ID_frag,C4=GKKP%dVc(:,:,:,:,1))
  !
+ !
  if (l_GKKP_hosts_bare_dV) then
    ! 
    ! ELPH_gkkp_bare 
@@ -140,10 +143,14 @@ integer function io_ELPH(ID,what)
    !
  endif
  !
- ! ELPH_DW 
- !
- call io_bulk(ID_frag,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
- call io_bulk(ID_frag,R4=GKKP%dVr(:,:,:,:,1))
+ if (l_GKKP_hosts_DW) then
+   !
+   ! ELPH_DW 
+   !
+   call io_bulk(ID_frag,VAR="ELPH_DW_Q"//trim(intc(iq)),VAR_SZ=(/ph_modes,elph_nb,elph_nb,nkbz/))
+   call io_bulk(ID_frag,R4=GKKP%dVr(:,:,:,:,1))
+   !
+ endif
  !
 1 call io_fragment_disconnect(ID,ID_frag)
  !

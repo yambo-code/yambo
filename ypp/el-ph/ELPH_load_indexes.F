@@ -46,6 +46,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  integer            ::io_err(3),ID
  integer, external  ::io_QINDX,qindx_B_init
  !
+      write(*,*) 'passo qui ',l_use_qindxB,bse_scattering,coll_scattering
  if(l_use_qindxB) then
    !
    if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')

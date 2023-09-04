@@ -41,8 +41,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use D_lattice,      ONLY:idt_index
  use R_lattice,      ONLY:DEV_VAR(g_rot)
  use pseudo,         ONLY:pp_is_uspp
- use FFT_m,          ONLY:fft_size,fft_dim,DEV_VAR(fft_g_table)
- use FFT_m,          ONLY:fftw_plan,cufft_plan
+ use FFT_m,          ONLY:fftw_plan,cufft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
  use devxlib,        ONLY:devxlib_memory_set
  !
@@ -55,7 +54,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  complex(SP), pointer DEV_ATTR :: WF_symm_i_p(:,:), WF_symm_o_p(:,:)
  complex(SP), pointer DEV_ATTR :: rhotw_p(:)
  complex(DP), pointer DEV_ATTR :: rho_tw_rs_p(:)
-
  !
  ! define pointers to enable CUF kernels
  ! when compiling using CUDA-Fortran
@@ -64,15 +62,13 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  WF_symm_o_p => DEV_VAR(isc%WF_symm_o)
  rho_tw_rs_p => DEV_VAR(isc%rho_tw_rs)
  rhotw_p     => DEV_VAR(isc%rhotw)
- !
-
+ 
  !
  ! |ib ik_is i_sp>
  call DEV_SUB(WF_apply_symm)(isc%is,WF_symm_i_p)
  !
  ! | ob ok_os o_sp>   
  call DEV_SUB(WF_apply_symm)(isc%os,WF_symm_o_p)
-
  !
  ! \tilde{\rho} in Real Space
  !
@@ -119,8 +115,6 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !DEV_ACC end data
  !
 #endif
-
-
  !
  ! perform the actual FFT
  !
@@ -224,4 +218,3 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call devxlib_memory_set(rhotw_p, cZERO, range1=[1,1])
  !
 end subroutine DEV_SUB(scatter_Bamp)
-

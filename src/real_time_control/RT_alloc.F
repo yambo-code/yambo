@@ -25,7 +25,7 @@ subroutine RT_alloc(en,what)
  !
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PAR_G_k_range
-#if defined _PHEL
+#if defined _ELPH || defined _PHEL
  use ELPH,           ONLY:elph_branches
 #endif
  use drivers,        ONLY:l_use_Hxc_collisions
@@ -77,7 +77,7 @@ subroutine RT_alloc(en,what)
  !
  if( l_all .or. l_carriers) then
    call RT_EL_occupations_alloc(RT_bands,RT_nk)
-#if defined _PHEL
+#if defined _ELPH || defined _PHEL
    call RT_PH_occupations_alloc(elph_branches,nqibz)
 #endif
  endif

@@ -26,6 +26,7 @@
 LC_ALL=C
 export LC_ALL
 #
+BASE=$PWD
 #
 ARGS=$@;
 source ./sbin/compilation/helper.inc.sh
@@ -140,11 +141,11 @@ DTARG=`echo $target | sed "s/\.a//" | sed "s/\-//"`
 $cpp $cppflags $precomp_flags -D_$DTARG $cdir/objects.c  > $cdir/objects.mk
 rm -f $cdir/objects.c 
 #
-# Makefile (II): common vars
+# Makefile (III): common vars
 rm_command="@rm -f \$*\$(f90suffix)"
 if [ "$KEEPSRC" == "yes" ]; then rm_command=" "; fi ;
 #
-# Makefile creation: (III) special sources 
+# Makefile creation: (IV) special sources 
 source ./sbin/compilation/special_sources.sh
 #
 cat <<EOF > $compdir/config/mk/local/static_variables.mk
@@ -163,18 +164,17 @@ FC_NOOPT_SRC   =$FC_NOOPT_SRC
 FC_LOCAL_SRC   =$FC_LOCAL_SRC
 EOF
 #
-# Makefile (III): copy makefile
+# Makefile (V): copy makefile
 cp config/mk/local/makefile $cdir/Makefile
 #
-# Restore the name of all files scheduled to be moved in directories not touched by the compilation procedure
+# Makefile (VI): clean orphan _to_save files
+#
+# Some files scheduled to be moved can still be unmoved. This happens if the _to_save flag is added
+# to a file that has no explicit dependence on the projects (see for example ypp/dipoles/DIPOLES_ypp_driver).
+# In this case the file cannot be saved in a project dependent folder and needs to be removed.
+#
 if [ "$mode" == "x" ] ; then
- files_to_restore=`find $compdir -type f -name "*_to_save"`
- for file in $files_to_restore
- do
-   source ./sbin/compilation/verbosity.sh "helper.sh: mv $file -> ${file/_to_save/}"
-   mv $file ${file/_to_save/}
- done
- files_to_remove=`find $compdir -type l -name "*_to_save"`
+ files_to_remove=`find $compdir -type f -name "*_to_save"`
  for file in $files_to_remove
  do
    source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"

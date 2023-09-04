@@ -70,18 +70,8 @@ subroutine INIT_barriers()
  ! except the ones specified. switch_off_runlevel switches off
  ! only already activated runlevels
  !
- ! NON-GPL RUNLEVELS that MUST BE SWITCHED OFF  
- ! (those runlevels can be on if a non-gpl input file is being reading)
- !======================================================================
- !
- ! GPL_INCLUDE_START
- !call switch_off_runlevel('acfdt',on_name=' ')
- ! GPL_INCLUDE_END
- !
  ! RUNLEVELS
  !===========
- !
- ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
    on_runlevels='HF_and_locXC cohsex em1s dipoles negf collisions el_el_corr el_ph_corr ph_el_corr '//&
@@ -112,22 +102,16 @@ subroutine INIT_barriers()
    goto 1
  endif
  !
- ! GPL_EXCLUDE_END SC_IGNORE
- !
  if (gw0_cohsex) then
    call switch_off_runlevel('all',on_name='dyson gw0 em1s dipoles cohsex el_el_corr el_ph_corr ph_el_corr HF_and_locXC '//&
 &                            trim(always_on_runlevels))
    goto 1
  endif
  !
- ! GPL_EXCLUDE_START
- !
  if (l_acfdt) then
    call switch_off_runlevel('all',on_name='acfdt HF_and_locXC '//trim(always_on_runlevels))
    goto 1
  endif
- !
- ! GPL_EXCLUDE_END
  !
  if (l_life) then
    call switch_off_runlevel('all',on_name='life dipoles em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))

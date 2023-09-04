@@ -36,7 +36,7 @@ subroutine ELPH_eliashberg_dos(k,en,q)
 &                              GKKP,setup_k_plus_q_levels,use_PH_DbGd
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,OP_RD,RD_CL_IF_END,DUMP,RD_CL,REP
- use ELPH_intfcs,         ONLY:ELPH_alloc
+ use interfaces,          ONLY:ELPH_alloc
  use LIVE_t,              ONLY:live_timing
  use parallel_m,          ONLY:PP_indexes,myid
  use parallel_int,        ONLY:PP_redux_wait,PARALLEL_index 

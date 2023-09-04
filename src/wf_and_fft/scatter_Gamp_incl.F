@@ -39,10 +39,8 @@
 !====================
 !
 #if defined _GPU
-
-#include<dev_defs.h>
-#define _GPU_LOC
-#include"scatter_Gamp.F"
-
+#  include<dev_defs.h>
+#  define _GPU_LOC
+#  include"scatter_Gamp.F"
 #endif
 

@@ -174,7 +174,17 @@ cp config/mk/local/makefile $cdir/Makefile
 # In this case the file cannot be saved in a project dependent folder and needs to be removed.
 #
 if [ "$mode" == "x" ] ; then
- files_to_remove=`find $compdir -type f -name "*_to_save"`
+ # this part is different from the main branch, where the following lines
+ # have been replaced by the line commented below
+ # with this changes I have problems in compilation
+ files_to_restore=`find $compdir -type f -name "*_to_save"`
+ for file in $files_to_restore
+ do
+   source ./sbin/compilation/verbosity.sh "helper.sh: mv $file -> ${file/_to_save/}"
+   mv $file ${file/_to_save/}
+ done
+ files_to_remove=`find $compdir -type l -name "*_to_save"`
+ #files_to_remove=`find $compdir -type f -name "*_to_save"`
  for file in $files_to_remove
  do
    source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"

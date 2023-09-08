@@ -1,3 +1,3 @@
 define global_check
- ./sbin/compilation/helper.sh -G -- $(xcpp)
+ ./sbin/check_packages.sh
 endef

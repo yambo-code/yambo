@@ -134,7 +134,7 @@ module nl_optics
  ! 
  ! Dephasing time (in units of NL_damping) 
  !
- integer, parameter :: DephMult=5 
+ integer, parameter :: DephMult=6 
  !
  ! Wavefunction sampling
  !

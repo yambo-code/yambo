@@ -186,6 +186,9 @@ subroutine fft_setup(iG_max,iGo_max,ONLY_SIZE)
    endif
    fft_dim=ln
    fft_size=product(fft_dim)
+   ! to avoid issues with CUDA
+   fft_size=max(fft_size,1)
+   !
    fft_norm=sqrt(1._SP/real(fft_size,SP))
    if (ONLY_SIZE) then
      i4=1

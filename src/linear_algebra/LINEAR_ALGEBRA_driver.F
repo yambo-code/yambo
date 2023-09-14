@@ -47,7 +47,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  use interfaces,    ONLY:MATRIX_transfer
  use BS,            ONLY:BS_block,BS_H_dim
  use timing_m,      ONLY:timing
- use cuda_m_y,      ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -72,20 +72,20 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  complex(SP)         :: det_
  integer             :: N,lib_in_use
  type (PAR_matrix)   :: M_loc,B_loc,C_loc,V_loc
- logical             :: USE_CUDA
+ logical             :: USE_GPU
  !
  call timing("LINEAR ALGEBRA",OPR="start")
  !
  ! M dimension
  !
- USE_CUDA=.false.
+ USE_GPU=.false.
  !
  if (present(M_slk)) then
    N=M_slk%N
 #if defined _SCALAPACK 
    if (M_slk%kind=="SLK") lib_in_use=USE_SLK
 #endif
-   if (have_cuda.and.allocated(M_slk%blc_d)) USE_CUDA=.true.
+   if (have_gpu.and.allocated(M_slk%blc_d)) USE_GPU=.true.
  else if (present(M_bse)) then
    N=BS_H_dim
  else if (present(M)) then
@@ -107,8 +107,8 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  ! whether to use CUDA lib
  !
  if (idriver==SVD_INV.or.idriver==INV.or.idriver==DIAGO&
-&                    .or.idriver==MAT_MUL) USE_CUDA=.false.
- if (USE_CUDA) lib_in_use=USE_LK
+&                    .or.idriver==MAT_MUL) USE_GPU=.false.
+ if (USE_GPU) lib_in_use=USE_LK
  !
 #if defined _SCALAPACK
  if (idriver==DIAGO.and.present(E_cmpl).and.ncpu>1) then
@@ -120,7 +120,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== PARALLEL SECTION ==========================================================
  !
- if (lib_in_use==USE_SLK.and..not.USE_CUDA) then 
+ if (lib_in_use==USE_SLK.and..not.USE_GPU) then 
    !
    if (.not.present(M_slk)) then
      !
@@ -211,7 +211,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== SERIAL SECTION ============================================================
  !
- if (lib_in_use==USE_LK.and..not.USE_CUDA) then
+ if (lib_in_use==USE_LK.and..not.USE_GPU) then
    !
    ! ####> SVD INVERSION (Using Singular Value decomposition)
    !
@@ -284,7 +284,7 @@ subroutine LINEAR_ALGEBRA_driver(idriver,lib_in,&
  !
  ! =============== SERIAL SECTION GPU ============================================================
  !
- if (lib_in_use==USE_LK.and.USE_CUDA) then
+ if (lib_in_use==USE_LK.and.USE_GPU) then
    !
    ! ####> LINEAR SYSTEM SOLUTION
    !

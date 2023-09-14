@@ -37,7 +37,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  use parallel_m,   ONLY:yMPI_comm,PP_indexes,PP_indexes_reset,myid
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index,PARALLEL_live_message
  use R_lattice,    ONLY:G_m_G,DEV_VAR(G_m_G),g_vec,ng_in_shell,n_g_shells,E_of_shell
- use cuda_m_y,     ONLY:have_cuda
+ use gpu_m,        ONLY:have_gpu
  use timing_m,     ONLY:timing
  !
 #include<y_memory.h>
@@ -244,7 +244,7 @@ integer function eval_G_minus_G(iG,iGo,COMM)
  call PP_indexes_reset(PAR_IND_G)
  YAMBO_FREE(E_G_m_G)
  !
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_FREE_GPU(DEV_VAR(G_m_G))
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(G_m_G),G_m_G)
  endif

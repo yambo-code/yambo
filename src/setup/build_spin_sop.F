@@ -31,7 +31,7 @@ subroutine build_spin_sop()
 &                         sigma_0,sigma_x,sigma_y,sigma_z
  use D_lattice,      ONLY:DEV_VAR(spin_sop)
  use electrons,      ONLY:n_spinor
- use cuda_m_y,       ONLY:have_cuda
+ use gpu_m,          ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -105,7 +105,7 @@ subroutine build_spin_sop()
    !
  enddo
  !
- if (have_cuda) then
+ if (have_gpu) then
     YAMBO_FREE_GPU(DEV_VAR(spin_sop))
     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(spin_sop),spin_sop)
  endif

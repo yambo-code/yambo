@@ -2,7 +2,7 @@
 !======================
 subroutine startup()
   !======================
-  use gpu_m
+  use gpu_loc_m
   implicit none
   !
   if (.not. cuda_linalg_init) then

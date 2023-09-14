@@ -42,7 +42,7 @@ subroutine G_shells_finder()
  use zeros,        ONLY:G_iku_zero,G_mod_zero
  use parallel_m,   ONLY:PP_indexes,myid,PP_indexes_reset
  use parallel_int, ONLY:PP_redux_wait,PARALLEL_index 
- use cuda_m_y,     ONLY:have_cuda
+ use gpu_m,        ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -171,7 +171,7 @@ subroutine G_shells_finder()
  call PP_redux_wait(g_rot)
  call PP_redux_wait(E_of_shell_TMP)
  !
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_rot),g_rot)
  endif
  !
@@ -229,7 +229,7 @@ subroutine G_shells_finder()
    enddo
    ng_in_shell(:n_g_shells)=ng_in_shell_TMP(:n_g_shells)
    !
-   if (have_cuda) then
+   if (have_gpu) then
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
    endif
    !

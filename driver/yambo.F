@@ -37,7 +37,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
 #if defined _ELPH
  use drivers,       ONLY:l_elph_Hamiltonian
 #endif
- use cuda_m_y,      ONLY:GPU_test_dim
+ use gpu_m,         ONLY:GPU_test_dim
  use X_m,           ONLY:X_t,i_X_kind_existing_DB
  use DIPOLES,       ONLY:DIPOLE_t
  use parallel_m,    ONLY:myid,ncpu

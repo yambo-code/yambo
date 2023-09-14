@@ -36,7 +36,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
 &                              PAR_IND_VAL_BANDS_DIP,PAR_IND_CON_BANDS_DIP
  use pseudo,              ONLY:PP_free,pp_table,pp_n_l_comp,pp_kbv_dim_yambo,pp_kbv_table,pp_factor,pp_kbv_dim_atom,pp_kbv_dim
  use D_lattice,           ONLY:n_atomic_species,n_atoms_species
- use R_lattice,           ONLY:bz_samp,g_vec_d,g_vec
+ use R_lattice,           ONLY:bz_samp,g_vec,DEV_VAR(g_vec)
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
 &                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
  use X_m,                 ONLY:l_X_terminator
@@ -45,8 +45,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
- use cuda_m_y,            ONLY:have_cuda
- use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memory_set
+ use gpu_m,               ONLY:have_gpu
+ use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
  !
 #include<y_memory.h>
  !
@@ -96,7 +96,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  l_eval_DIP_P2=compute_P2_dipoles
  !
  ! Synchronize some memory
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_FREE_GPU(DEV_VAR(g_vec))
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
@@ -129,14 +129,16 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  endif
  !
  if(l_use_comm) then
+   !
    ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
    pp_dim_yambo=max(pp_kbv_dim_yambo,1)
    pp_dim_atom =max(pp_kbv_dim_atom, 1)
    YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
-   if (have_cuda) then
+   !
+   if (have_gpu) then
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
-     call devxlib_memory_set(DEV_VAR(kbv),cZERO)
+     call devxlib_memset_d(DEV_VAR(kbv),cZERO)
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -209,7 +211,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
            pp_range(2)=pp_range(1)+npp-1
            !
-           if (have_cuda) call devxlib_memcpy_h2d(kbv_d,kbv)
+           if (have_gpu) call devxlib_memcpy_h2d(kbv_d,kbv)
            !
            !nc=wf_nc_k(ik)
            nc=wf_ncx
@@ -340,6 +342,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  if (l_use_comm) then
    call DIP_alloc("DIP_work")
    YAMBO_FREE_GPU(DEV_VAR(kbv))
+   YAMBO_FREE(DEV_VAR(kbv))
    YAMBO_FREE(XX)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)

@@ -61,7 +61,7 @@ subroutine col_driver(bare_NG,q)
  use wave_func,     ONLY:wf_ng
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,REP,VERIFY
- use cuda_m_y,      ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -196,7 +196,7 @@ subroutine col_driver(bare_NG,q)
  ! copy again,
  ! bare_qpg is modified by cutff_driver
  !
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_FREE_GPU(DEV_VAR(bare_qpg))
    if (size(bare_qpg)>0) then
      YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(bare_qpg),bare_qpg)

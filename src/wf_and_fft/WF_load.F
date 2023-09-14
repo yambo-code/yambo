@@ -66,9 +66,9 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  use pseudo,        ONLY:pp_is_uspp,becp
  use qe_pseudo_m,   ONLY:vkb,tpiba
  use timing_m,      ONLY:timing
- use cuda_m_y,      ONLY:have_cuda, cuda_devsync, cuda_getstat
+ use gpu_m,         ONLY:have_gpu, gpu_devsync, gpu_getstat
  use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_memcpy_d2d,&
-                         devxlib_allocated,devxlib_memory_set
+                         devxlib_allocated,devxlib_memset_d
  !
 #include<y_memory.h>
  !
@@ -283,7 +283,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
  !
  YAMBO_ALLOC(wf_DP,(wf_grid_size))
  !
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(wf_DP),(wf_grid_size))
    wfc_p => DEV_VAR(WF%c)
    WFN = WF%N
@@ -364,7 +364,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
        if (.not.buffer_is_ok) then
          !
          YAMBO_ALLOC(wf_disk,(wf_ncx,n_spinor,wf_nb_to_load))
-         if (have_cuda) then
+         if (have_gpu) then
            YAMBO_ALLOC_GPU(DEV_VAR(wf_disk),(wf_ncx,n_spinor,wf_nb_to_load))
          endif
          !
@@ -400,7 +400,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
             !
             do i_spinor=1,n_spinor
               !
-              call devxlib_memory_set(DEV_VAR(wf_DP), cZERO_DP)
+              call devxlib_memset_d(DEV_VAR(wf_DP), cZERO_DP)
               !
               npwk=wf_nc_k(ikibz)
               !
@@ -481,7 +481,7 @@ subroutine WF_load(WF,iG_in,iGo_max_in,bands_to_load,kpts_to_load,sp_pol_to_load
    enddo        ! i_k
  enddo          ! i_sp_pol
 
- if (have_cuda) then
+ if (have_gpu) then
    !
    call msg('rns', '[WF] Copying WF data from GPU device')
    if(WF%space=='R') then

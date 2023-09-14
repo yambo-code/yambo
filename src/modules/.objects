@@ -22,7 +22,7 @@ DEV_objects_EXTRA = mod_cudafor.o mod_cufft.o
 objs = mod_pars.o mod_stderr.o mod_parallel.o mod_parallel_interface.o  \
        mod_com_interfcs.o mod_descriptors.o mod_com.o mod_IO.o mod_IO_interfaces.o
 #else
-DEV_objects = mod_cusolverdn_y.o mod_cuda.o 
+DEV_objects = mod_cusolverdn_y.o mod_gpu.o 
 ELPH_objects = mod_ELPH.o mod_PHEL.o
 RT_objects_pre = mod_RT_lifetimes.o mod_RT_occupations.o mod_real_time.o
 objs = mod_pars.o mod_units.o mod_lexical_sort.o mod_stderr.o mod_memory.o mod_openmp.o mod_parallel.o mod_parallel_interface.o mod_matrix.o mod_SLK.o  \

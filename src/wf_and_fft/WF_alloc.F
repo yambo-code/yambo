@@ -28,8 +28,8 @@ subroutine WF_alloc(WF)
  use FFT_m,         ONLY:fft_size
  use electrons,     ONLY:n_spinor
  use parallel_int,  ONLY:PARALLEL_live_message
- use cuda_m_y,      ONLY:have_cuda
- use devxlib,       ONLY:devxlib_memory_set
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memset_d
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -68,7 +68,7 @@ subroutine WF_alloc(WF)
  if (WF%space=='B')  wf_grid_size=wf_ncx
  !
  YAMBO_ALLOC(WF%c,(wf_grid_size,n_spinor,WF%N))
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_ALLOC_GPU(DEV_VAR(WF%c),(wf_grid_size,n_spinor,WF%N))
  endif
  !
@@ -77,7 +77,7 @@ subroutine WF_alloc(WF)
  YAMBO_ALLOC(WF%index,(WF%b(2),WF%k(2),WF%sp_pol(2)))
  !
  WF%c=cZERO
- if (have_cuda) call devxlib_memory_set(DEV_VAR(WF%c),cZERO)
+ if (have_gpu) call devxlib_memset_d(DEV_VAR(WF%c),cZERO)
  !
  WF%index=0
  !

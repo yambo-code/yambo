@@ -89,7 +89,7 @@ use iso_c_binding
 implicit none
 private
 
-#if defined _GPU && ! defined _CUDAF
+#if defined _OPENACC
 
 public :: c_devptr
 public :: cuda_stream_kind
@@ -112,53 +112,6 @@ integer(c_intptr_t), parameter :: cuda_stream_kind = c_intptr_t
 !End cuda_stream_kind
 
 !End types
-
-!Start interfaces
-
-!Start cudaGetDeviceCount
-interface cudaGetDeviceCount
-integer(c_int) function cudaGetDeviceCount(count) bind(c, name = "cudaGetDeviceCount")
-import :: c_int
-implicit none
-integer(c_int) :: count
-end function cudaGetDeviceCount
-end interface cudaGetDeviceCount
-!End cudaGetDeviceCount
-
-!Start cudaSetDevice
-interface cudaSetDevice
-integer(c_int) function cudaSetDevice(device) bind(c, name = "cudaSetDevice")
-import :: c_int
-implicit none
-integer(c_int), value :: device
-end function cudaSetDevice
-end interface cudaSetDevice
-!End cudaSetDevice
-
-!
-! THe following have been added by Andrea Ferretti on Jun 2021
-!
-
-!Start cudaGetLastError
-interface cudaGetLastError
-integer(c_int) function cudaGetLastError() bind(c, name = "cudaGetLastError")
-import :: c_int
-implicit none
-end function cudaGetLastError
-end interface cudaGetLastError
-!End cudaGetLastError
-
-!Start cudaGetDevice
-interface cudaGetDevice
-integer(c_int) function cudaGetDevice(device) bind(c, name = "cudaGetDevice")
-import :: c_int
-implicit none
-integer(c_int) :: device
-end function cudaGetDevice
-end interface cudaGetDevice
-!End cudaGetDevice
-
-!End interfaces
 
 #endif
 

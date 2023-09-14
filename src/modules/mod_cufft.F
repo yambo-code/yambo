@@ -3,8 +3,8 @@
 !
 module cufft_m_y
   use iso_c_binding
-#if defined _GPU && !defined _CUDAF 
-  use dev_openacc_m
+#if defined _OPENACC
+  use openacc
   implicit none
 
   integer(c_int), parameter :: CUFFT_FORWARD = -1

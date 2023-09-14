@@ -77,7 +77,7 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  use drivers,        ONLY:l_nl_optics,l_real_time
  use linear_algebra, ONLY:LINEAR_ALGEBRA_error,LINEAR_ALGEBRA_WS_reset,LALGEBRA_WS
  use timing_m,       ONLY:timing
- use cuda_m_y
+ use gpu_m
 #include<dev_defs.h>
 #include<y_memory.h>
  !
@@ -102,16 +102,13 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  YAMBO_ALLOC_GPU(DEV_VAR(WS%vp_int),(WS%dim))
  !
  ! init
- if (.not.cuda_linalg_init) call cuda_linalg_setup()
+ if (.not.gpu_linalg_init) call gpu_linalg_setup()
  !
 #if defined _DOUBLE
  !
  WS%i_fail = cusolverDnZgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
  !
- if (have_openacc) then
-   YAMBO_ALLOC(WS%v_cmplx,(lwork))
- endif
  YAMBO_ALLOC_GPU(DEV_VAR(WS%v_cmplx),(lwork))
  !
  WS%i_fail = cusolverDnZgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
@@ -125,9 +122,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  WS%i_fail = cusolverDnCgetrf_bufferSize(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,lwork)
  if(WS%i_fail/=CUSOLVER_STATUS_SUCCESS) call LINEAR_ALGEBRA_error(subname,'cusolverDnZgetrf_bufferSize failed')
  !
- if (have_openacc) then
-   YAMBO_ALLOC(WS%v_cmplx,(lwork))
- endif
  YAMBO_ALLOC_GPU(DEV_VAR(WS%v_cmplx),(lwork))
  !
  WS%i_fail = cusolverDnCgetrf(cusolv_h,WS%dim,WS%dim,A_d,WS%dim,DEV_VAR(WS%v_cmplx),DEV_VAR(WS%v_int),DEV_VAR(WS%vp_int))
@@ -143,5 +137,6 @@ subroutine SERIAL_lin_system_gpu(n,nrhs,A_d,B_d)
  if(.not.(l_nl_optics.or.l_real_time)) call timing(trim(subname),OPR='stop')
  !
 end subroutine SERIAL_lin_system_gpu
+ !
 #endif
 

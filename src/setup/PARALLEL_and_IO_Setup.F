@@ -41,9 +41,9 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  use openmp,         ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_NL,n_threads
  use y_memory,         ONLY:USER_MEM_limit_string
  use LIVE_t,         ONLY:USER_wall_time_string
- use cuda_m_y,       ONLY:cuda_visible_devices,have_cuda_devices,cuda_gpu_subscription
+ use gpu_m,          ONLY:cuda_visible_devices,have_gpu_devices,gpu_subscription
 #if defined _GPU
- use cuda_m_y,       ONLY:cudaGetDevice
+ use gpu_m,          ONLY:cudaGetDevice
 #endif
  !
  implicit none
@@ -123,10 +123,10 @@ subroutine PARALLEL_and_IO_Setup(en,k)
  call msg('r', 'Nodes Computing     ',n_nodes(1))
  call msg('r', 'Nodes IO            ',n_IO_nodes)
 #ifdef _GPU
- call msg('r', 'CUDA support        ',"yes")
- call msg('r', 'CUDA devices        ',have_cuda_devices)
+ call msg('r', 'GPU support         ',"yes")
+ call msg('r', 'GPU devices         ',have_gpu_devices)
  if (len_trim(cuda_visible_devices)>0) call msg('r', 'CUDA visible dev    ',trim(cuda_visible_devices))
- call msg('r', 'MPI tasks / GPU     ',cuda_gpu_subscription)
+ call msg('r', 'MPI tasks / GPU     ',gpu_subscription)
  ierr = cudaGetDevice(i_dev)
  call msg('s', 'MPI assigned to GPU ',i_dev)
 #endif

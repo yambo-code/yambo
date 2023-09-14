@@ -26,7 +26,7 @@ module DIPOLES
  use pars,          ONLY:SP,lchlen,schlen
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc
- use cuda_m_y,      ONLY:have_cuda,have_openacc
+ use gpu_m,         ONLY:have_gpu
  !
 #include <dev_defs.h>
 #include <y_memory.h>
@@ -140,7 +140,7 @@ module DIPOLES
          P_square=cZERO
        case('DIP_work')
          YAMBO_ALLOC(DIP_work_drho,(n_spinor,3,d(1)))
-         if (have_cuda) then
+         if (have_gpu) then
            YAMBO_ALLOC_GPU(DEV_VAR(DIP_work_drho),(n_spinor,3,d(1)))
          endif
        end select

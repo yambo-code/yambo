@@ -44,7 +44,7 @@ integer function io_DB1(E,k,ID)
  use BS,               ONLY:BS_bands
  use xc_functionals,   ONLY:GS_xc_KIND,GS_xc_FUNCTIONAL,GS_exx_FRACTION,GS_exx_SCREENING
  use global_XC,        ONLY:setup_global_XC,EXT_NONE
- use cuda_m_y,         ONLY:have_cuda
+ use gpu_m,            ONLY:have_gpu
  use devxlib,          ONLY:devxlib_memcpy_h2d
 #if defined _SC || defined _RT
  use collision_ext,    ONLY:COLL_bands
@@ -59,7 +59,6 @@ integer function io_DB1(E,k,ID)
 #if defined _RT
  use real_time,        ONLY:RT_bands
 #endif
- use cuda_m_y,         ONLY:cuda_devsync
  !
 #include<y_memory.h>
  !
@@ -289,7 +288,7 @@ integer function io_DB1(E,k,ID)
    YAMBO_ALLOC(wf_nc_k,(k%nibz))
    YAMBO_ALLOC(wf_igk,(wf_ncx,k%nibz))
    !
-   if (have_cuda) then
+   if (have_gpu) then
      YAMBO_ALLOC_GPU(DEV_VAR(wf_igk),(wf_ncx,k%nibz))
    endif
    !
@@ -365,7 +364,7 @@ integer function io_DB1(E,k,ID)
  call io_bulk(ID, VAR="WFC_GRID", VAR_SZ=shape(wf_igk) )
  call io_bulk(ID, I2=wf_igk )
  !
- if(have_cuda.and.read_is_on(ID)) then
+ if(have_gpu.and.read_is_on(ID)) then
    !
    ! host2dev,  wf_igk_d = wf_igk
    call devxlib_memcpy_h2d(DEV_VAR(wf_igk),wf_igk)

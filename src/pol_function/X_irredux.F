@@ -63,11 +63,12 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  use X_m,           ONLY:X_t,X_poles,X_Ein_poles,current_iq,X_poles_tab,X_lower_triangle_matrix_in_use,&
 &                        self_detect_E_range,X_FILL_UP_matrix_only,use_X_DbGd,&
 &                        l_X_terminator,X_terminator_E,X_term_E,X_par_lower_triangle,drude_n_states
- use cuda_m_y,      ONLY:have_cuda
 #if defined _SC 
  use drivers,       ONLY:l_sc_run,l_eval_collisions
  use SC,            ONLY:it_now
 #endif
+ use gpu_m,         ONLY:have_gpu
+ use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_d2h,devxlib_memcpy_h2d
  use timing_m,      ONLY:timing
  !
 #include<dev_defs.h>
@@ -84,22 +85,23 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! Work Space
  !
- character(schlen)        :: live_t_string
- integer                  :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
-&                            X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
- logical                  :: force_bare_X_G,Drude_pole,skip_WF_load
- real(SP)                 :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
- complex(SP)              :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
- complex(SP),allocatable  :: Xo_res(:,:)
- !
- complex(SP),allocatable DEV_ATTR :: Xo_res_d(:,:)
+ character(schlen)    :: live_t_string
+ integer              :: ig1,ig_row,ig_col,ig_row_transp,ig_col_transp,iw,n_poles,i_cg,i_bg,mutexid,ngrho,&
+&                        X_cols_transp(2),X_rows1,X_rows2,X_cols1,X_cols2,X_rows1_l,X_rows2_l,X_nrows_l,io_err
+ logical              :: force_bare_X_G,Drude_pole,skip_WF_load
+ real(SP)             :: minmax_ehe(2,PAR_COM_X_WORLD%n_CPU),cutoff
+ complex(SP)          :: GreenF(Xw%n_freqs),drude_GreenF(Xw%n_freqs),ctmp
+
+ complex(SP),allocatable, target          :: Xo_res(:,:)
+ complex(SP),allocatable, target DEV_ATTR :: Xo_res_d(:,:)
  complex(SP),allocatable DEV_ATTR :: work(:)
- complex(SP),pointer     DEV_ATTR :: X_par_blc_d(:,:,:)
- complex(SP),pointer     DEV_ATTR :: X_par_lowtri_blc_d(:,:,:)
- complex(SP)              :: GreenF_iw
- integer                  :: lda,lwork,PAR_COM_RL_INDEX_n_CPU
+ complex(SP),pointer     DEV_ATTR :: Xo_res_p(:,:)
+ complex(SP),pointer     DEV_ATTR :: X_par_p(:,:,:)
+ complex(SP),pointer     DEV_ATTR :: X_par_lowtri_p(:,:,:)
+ complex(SP)          :: GreenF_iw
+ integer              :: lda,lwork,PAR_COM_RL_INDEX_n_CPU
  !
- integer,    external     :: X_eh_setup
+ integer, external    :: X_eh_setup
  type(elemental_collision), target :: Xo_scatt
  !
  ! Defaults & Setups
@@ -195,7 +197,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! omp settings and workspace
  !=================================
  !
- if (have_cuda) then
+ if (have_gpu) then
    n_threads_FFT=1
    n_threads_X=1
    call OPENMP_set_threads(n_threads_in=n_threads_X, use_nested=.false.)
@@ -225,22 +227,26 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  ! OpenMP setup
  !==============
+ ! AF: note that DEV_OMP is switched off by the precompiler when _GPU is defined
  !
-#if !defined _CUDA
- !$omp parallel num_threads(n_out_threads) default(shared), &
- !$omp &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_scatt,ig_col,&
- !$omp &        ig1,ig_row_transp,iw,mutexid,work,lwork,&
- !$omp &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
-#endif
+ !DEV_OMP parallel num_threads(n_out_threads) default(shared), &
+ !DEV_OMP &        private(i_cg,Drude_pole,GreenF,i_bg,Xo_res,Xo_res_p,Xo_scatt,ig_col,&
+ !DEV_OMP &        ig1,ig_row_transp,iw,mutexid,work,lwork,&
+ !DEV_OMP &        X_rows1_l,X_rows2_l,X_nrows_l,X_cols_transp)
  !
  call OPENMP_update(master_thread)
  !
  ! memory estimate and local alloc
  !=================================
  YAMBO_ALLOC(Xo_res,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
- if (have_cuda) then
-   YAMBO_ALLOC(Xo_res_d,(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU(DEV_VAR(Xo_res),(X_par%rows(1):X_par%rows(2),X_par%cols(1):X_par%cols(2)))
  endif
+ !
+ Xo_res_p => DEV_VAR(Xo_res)
+ X_par_p  => DEV_VAR(X_par%blc)
+ if (X_lower_triangle_matrix_in_use)  X_par_lowtri_p => DEV_VAR(X_par_lower_triangle%blc)
+
  !
  ! workspace used in X_irredux_residuals
  ! (rhotw_save and rhotw_save2, the latter just used only with X_term)
@@ -251,11 +257,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  !
  call elemental_collision_free(Xo_scatt)
  call elemental_collision_alloc(Xo_scatt,NG=ngrho,TITLE="Xo") 
- !
- if (have_cuda) then
-   X_par_blc_d => X_par%blc_d
-   if (X_lower_triangle_matrix_in_use)  X_par_lowtri_blc_d => X_par_lower_triangle%blc_d
- endif
+
  !
  ! Drude term
  !
@@ -265,17 +267,17 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      if(.not.Drude_pole) cycle
      if(.not.(X_par%rows(1)==1.and.X_par%cols(1)==1)) cycle
      !
-     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt,work,lwork)
-     ctmp = DEV_VAR(Xo_res)(1,1)
+     call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
+     ctmp = Xo_res_p(1,1)
      !
      ! DALV: we must guarantee that ctmp is always 1 and that we enter the loop just
      !       once to avoid an inconsistency with the Drude frequency given by input
      !
      X_par%blc(1,1,:)=X_par%blc(1,1,:)+ctmp*drude_GreenF(:)
      !
-     if (have_cuda) then
+     if (have_gpu) then
        do iw=1,Xw%n_freqs
-         X_par%blc_d(1,1,iw)=X_par%blc(1,1,iw)
+         call devxlib_memcpy_h2d(DEV_VAR(X_par%blc)(1:1,1,iw),X_par%blc(1:1,1,iw))
        enddo
      endif
      !
@@ -286,9 +288,8 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  ! MAIN LOOP
  !===========
  !
-#if !defined _CUDA
- !$omp do
-#endif
+ !DEV_OMP do
+ !
  do i_cg = 1,coarse_grid_N
    !
    i_bg=sum(bare_grid_N(1:i_cg-1))+1
@@ -303,7 +304,7 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
    ! 1) First compute the residuals
    !================================
-   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,DEV_VAR(Xo_res),Xo_scatt,work,lwork)
+   call X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res_p,Xo_scatt,work,lwork)
    !
    ! 2) Then the frequency dependent term
    !=======================================
@@ -328,16 +329,19 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
      ! ---- => ----
      ! ----    ----
      !
-#ifdef _CUDA
+#ifdef _GPU
      !
      GreenF_iw=GreenF(iw)
      !
-     !$cuf kernel do(2) <<<*,*>>>
+     !DEV_ACC data present(X_par_p,Xo_res_p)
+     !DEV_ACC parallel loop async
+     !DEV_CUF kernel do(2) <<<*,*>>>
      do ig_col=X_cols1,X_cols2
        do ig1=X_rows1,X_rows2
-         if (ig1 <= ig_col) X_par_blc_d(ig1,ig_col,iw)=X_par_blc_d(ig1,ig_col,iw)+GreenF_iw*Xo_res_d(ig1,ig_col)
+         if (ig1 <= ig_col) X_par_p(ig1,ig_col,iw)=X_par_p(ig1,ig_col,iw)+GreenF_iw*Xo_res_p(ig1,ig_col)
        enddo
      enddo
+     !DEV_ACC end data
      !
 #else
      !
@@ -370,36 +374,42 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
        ! ---- => -x--
        ! ----    -x--
        !
-#ifdef _CUDA
+#ifdef _GPU
        !
        if (PAR_COM_RL_INDEX_n_CPU>1) then
          !
-         !$cuf kernel do(2)
+         !DEV_ACC data present(X_par_lowtri_p,Xo_res_p)
+         !DEV_ACC parallel loop collapse(2) async
+         !DEV_CUF kernel do(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
            !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
-             X_par_lowtri_blc_d(ig_row_transp,ig1,iw)=X_par_lowtri_blc_d(ig_row_transp,ig1,iw) + &
-&                                                     GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             X_par_lowtri_p(ig_row_transp,ig1,iw)=X_par_lowtri_p(ig_row_transp,ig1,iw) + &
+&                                                     GreenF_iw*conjg(Xo_res_p(ig1,ig_col))
            endif
            !
          enddo
          enddo
+         !DEV_ACC end data
          !
        else
          !
-         !$cuf kernel do(2)
+         !DEV_ACC data present(X_par_p,Xo_res_p)
+         !DEV_ACC parallel loop collapse(2) async
+         !DEV_CUF kernel do(2)
          do ig_col=X_cols1,X_cols2
          do ig1=X_rows1,X_rows2
            !
            if (ig1 < ig_col) then
              ig_row_transp = ig_col
-             X_par_blc_d(ig_row_transp,ig1,iw)=X_par_blc_d(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_d(ig1,ig_col))
+             X_par_p(ig_row_transp,ig1,iw)=X_par_p(ig_row_transp,ig1,iw)+GreenF_iw*conjg(Xo_res_p(ig1,ig_col))
            endif
            !
          enddo
          enddo
+         !DEV_ACC end data
          !
        endif
 #else
@@ -445,20 +455,17 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
    !
  enddo 
  !
-#if !defined _CUDA
- !$omp end do
-#endif
+ !DEV_OMP end do
  !
  ! CLEAN
  !=======
+ YAMBO_FREE_GPU(DEV_VAR(Xo_res))
  YAMBO_FREE(Xo_res)
- YAMBO_FREE(Xo_res_d)
+ YAMBO_FREE_GPU(work)
  YAMBO_FREE(work)
  call elemental_collision_free(Xo_scatt)
  !
-#if !defined _CUDA
-!$omp end parallel
-#endif
+!DEV_OMP end parallel
  !
  !
  if (iq==1.and.io_DIP) then
@@ -482,11 +489,11 @@ subroutine X_irredux(iq,what,X_par,Xen,Xk,Xw,X,Dip)
  call timing(what//' (procedure)',OPR='stop')
  call timing(what//' (REDUX)',OPR='start')
  !
- if (have_cuda) then
-   X_par%blc=X_par%blc_d
-   if (X_lower_triangle_matrix_in_use) X_par_lower_triangle%blc=X_par_lower_triangle%blc_d
-   YAMBO_FREE(X_par%blc_d)
-   YAMBO_FREE(X_par_lower_triangle%blc_d)
+ if (have_gpu) then
+   call devxlib_memcpy_d2h(X_par%blc,DEV_VAR(X_par%blc))
+   if (X_lower_triangle_matrix_in_use) call devxlib_memcpy_d2h(X_par_lower_triangle%blc,DEV_VAR(X_par_lower_triangle%blc))
+   YAMBO_FREE_GPU(DEV_VAR(X_par%blc))
+   YAMBO_FREE_GPU(DEV_VAR(X_par_lower_triangle%blc))
  endif
  !
  do iw=1,Xw%n_freqs

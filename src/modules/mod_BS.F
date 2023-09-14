@@ -25,7 +25,7 @@ module BS
  !
  use pars,          ONLY: IP,IPL,SP,schlen,lchlen
  use collision_el,  ONLY: elemental_collision
- use cuda_m_y,      ONLY: have_cuda
+ use gpu_m,         ONLY: have_gpu
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -287,7 +287,7 @@ module BS
      if (EXCHANGE) then
        if (BS_T_grp(iG)%size==0) return
        YAMBO_ALLOC(BS_T_grp(iG)%O_x,(BS_n_g_exch,BS_T_grp(iG)%size))
-       if (have_cuda) then
+       if (have_gpu) then
          !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_T_grp(iG)%O_x),BS_T_grp(iG)%O_x)
          YAMBO_ALLOC_GPU(DEV_VAR(BS_T_grp(iG)%O_x),(BS_n_g_exch,BS_T_grp(iG)%size))
        endif
@@ -296,7 +296,7 @@ module BS
      if (CORRELATION) then
        if (BS_blk(iB)%N_oscillators==0) return
        YAMBO_ALLOC(BS_blk(iB)%O_c,(O_ng,BS_blk(iB)%N_oscillators))
-       if (have_cuda) then
+       if (have_gpu) then
          !AMBO_ALLOC_GPU_MOLD(DEV_VAR(BS_blk(iB)%O_c),BS_blk(iB)%O_c)
          YAMBO_ALLOC_GPU(DEV_VAR(BS_blk(iB)%O_c),(O_ng,BS_blk(iB)%N_oscillators))
        endif

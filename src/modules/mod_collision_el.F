@@ -30,7 +30,7 @@ module collision_el
  use pars,        ONLY:DP,SP,LP,schlen
  use parallel_m,  ONLY:PP_indexes
  use qe_pseudo_m, ONLY:bec_type,deallocate_bec_type
- use cuda_m_y,    ONLY:have_cuda
+ use gpu_m,       ONLY:have_gpu
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -133,7 +133,7 @@ module collision_el
        YAMBO_ALLOC(ggw%WF_symm_i,(fft_size,n_spinor))
        YAMBO_ALLOC(ggw%WF_symm_o,(fft_size,n_spinor))
        !
-       if (have_cuda) then
+       if (have_gpu) then
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%rho_tw_rs),(fft_size))
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_i),(fft_size,n_spinor))
          YAMBO_ALLOC_GPU(DEV_VAR(ggw%WF_symm_o),(fft_size,n_spinor))
@@ -146,7 +146,7 @@ module collision_el
          if (     present(GRADIENT)) RHOSIZE=3*NG
          if (.not.present(GRADIENT)) RHOSIZE=1*NG
          YAMBO_ALLOC(ggw%rhotw,(RHOSIZE))
-         if (have_cuda) then
+         if (have_gpu) then
            YAMBO_ALLOC_GPU(DEV_VAR(ggw%rhotw),(RHOSIZE))
          endif
          !
@@ -156,7 +156,7 @@ module collision_el
      if (present(NG_GAMP)) then
        if (all((/NG_GAMP>0/))) then
          YAMBO_ALLOC(ggw%gamp,(NG_GAMP(1),NG_GAMP(2)))
-         if (have_cuda) then
+         if (have_gpu) then
            YAMBO_ALLOC_GPU(DEV_VAR(ggw%gamp),(NG_GAMP(1),NG_GAMP(2)))
          endif
        endif

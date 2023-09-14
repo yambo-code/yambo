@@ -28,7 +28,7 @@ module X_m
  use units,          ONLY:HA2EV
  use matrix,         ONLY:PAR_matrix
  use OUTPUT,         ONLY:N_MAX_columns
- use cuda_m_y,       ONLY:have_cuda
+ use gpu_m,          ONLY:have_gpu
  !
 #include <dev_defs.h>
 #include <y_memory.h>
@@ -90,7 +90,7 @@ module X_m
  !
  character(schlen)        :: Chi_mode
  character(schlen)        :: Chi_linalg_mode
- logical                  :: X_use_gpu=have_cuda
+ logical                  :: X_use_gpu=have_gpu
  logical                  :: X_use_lin_sys=.false.
  real(SP),    allocatable :: X_poles(:)
  real(SP),    allocatable :: X_Ein_poles(:)
@@ -129,8 +129,8 @@ module X_m
  logical                       :: X_lower_triangle_matrix_in_use=.FALSE.
  integer                       :: X_rows(2) = 0
  integer                       :: X_cols(2) = 0
- complex(SP),      allocatable :: X_mat(:,:,:)
- complex(SP),      allocatable DEV_ATTR :: X_mat_d(:,:,:)
+ complex(SP), allocatable, target :: X_mat(:,:,:)
+ complex(SP), allocatable, target DEV_ATTR :: X_mat_d(:,:,:)
  !
  type X_t
    ! DS: is 1 Xo (see X_dielectric_matrix:109) or Xx (see io_X.F) ?

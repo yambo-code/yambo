@@ -39,7 +39,7 @@ subroutine DEV_SUB(scatter_Gamp)(isc,mode)
 &                        bare_qpg,RIM_anisotropy,RIM_n_rand_pts,cut_is_slab,&
 &                        DEV_VAR(RIM_qpg),DEV_VAR(bare_qpg)
  use devxlib,       ONLY:devxlib_allocated
- use cuda_m_y
+ use gpu_m
  use timing_m
  !
 #include<y_memory.h>

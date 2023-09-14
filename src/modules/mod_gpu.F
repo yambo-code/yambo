@@ -22,12 +22,10 @@
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 !================
-module cuda_m_y
+module gpu_m
   !================
   !
-  !use dev_openacc_m
-  ! 2022-02-02 DS and AF TO BE FIXED
-  !use dev_cudafor_m
+  use devxlib_environment
   use devxlib_cublas
   use devxlib_memcpy
   use cusolverdn_y
@@ -35,7 +33,6 @@ module cuda_m_y
   use cufft
   !use cusolverdn_y
 # elif defined _OPENACC
-  use cudafor_m_y
   use cufft_m_y
 # endif
   use parallel_m,   ONLY:myid,host_name,PAR_COM_HOST
@@ -47,9 +44,9 @@ module cuda_m_y
   integer :: GPU_test_dim = 1000000
 
 #ifdef _GPU
-  logical, parameter:: have_cuda=.true.
+  logical, parameter:: have_gpu=.true.
 #else
-  logical, parameter:: have_cuda=.false.
+  logical, parameter:: have_gpu=.false.
 #endif
 #ifdef _CUDAF
   logical, parameter:: have_cuf=.true.
@@ -61,12 +58,17 @@ module cuda_m_y
 #else
   logical, parameter:: have_openacc=.false.
 #endif
+#ifdef _OPENMP5
+  logical, parameter:: have_openmp5=.true.
+#else
+  logical, parameter:: have_openmp5=.false.
+#endif
   !
-  logical:: have_cuda_devices=.false.
+  logical:: have_gpu_devices=.false.
   character(256) :: cuda_visible_devices=" "
-  integer:: cuda_gpu_subscription
+  integer:: gpu_subscription
 
-  logical:: cuda_linalg_init=.false.
+  logical:: gpu_linalg_init=.false.
 #ifdef _GPU
   type(cusolverDnHandle)   :: cusolv_h
   public :: cusolv_h
@@ -101,18 +103,19 @@ module cuda_m_y
   !
   ! public
   !
-  public :: have_cuda
+  public :: have_gpu
   public :: have_cuf
   public :: have_openacc
-  public :: have_cuda_devices
+  public :: have_openmp5
+  public :: have_gpu_devices
   public :: cuda_visible_devices
-  public :: cuda_setup
-  public :: cuda_linalg_init
-  public :: cuda_linalg_setup
-  public :: cuda_getstat
-  public :: cuda_devsync
+  public :: gpu_setup
+  public :: gpu_linalg_init
+  public :: gpu_linalg_setup
+  public :: gpu_getstat
+  public :: gpu_devsync
   !
-  public :: cuda_gpu_subscription
+  public :: gpu_subscription
   !
   public :: stream_kind
   public :: stream_default
@@ -132,12 +135,12 @@ module cuda_m_y
 
 contains
 
-  subroutine cuda_setup()
+  subroutine gpu_setup()
     implicit none
     integer :: ndev,myid_host_loc
     integer :: ierr
     !
-    cuda_gpu_subscription=1
+    gpu_subscription=1
     !
     ! GPU assignment
     ! This needs to be done first
@@ -153,7 +156,7 @@ contains
     ierr = cudaDeviceSynchronize()
     if (ierr/=0) call error("[GPU] cannot device-sync")
     !
-    cuda_gpu_subscription=PAR_COM_HOST%n_CPU / ndev
+    gpu_subscription=PAR_COM_HOST%n_CPU / ndev
     !
     !<debug>
     !write(*,*) "MPI ", myid, " on node ", trim(host_name), " is using GPU: ", mod(myid_host_loc, ndev)
@@ -161,11 +164,11 @@ contains
     !
 #endif
     !
-    have_cuda_devices=.false. 
-    if (have_cuda) then
+    have_gpu_devices=.false. 
+    if (have_gpu) then
       !
       call get_environment_variable("CUDA_VISIBLE_DEVICES",cuda_visible_devices)
-      if (len_trim(cuda_visible_devices) >0) have_cuda_devices=.true.
+      if (len_trim(cuda_visible_devices) >0) have_gpu_devices=.true.
       !
     endif
     !
@@ -194,25 +197,25 @@ contains
     !
 #endif
     !
-  end subroutine cuda_setup
+  end subroutine gpu_setup
   !
-  subroutine cuda_linalg_setup()
+  subroutine gpu_linalg_setup()
     implicit none
-#ifdef _GPU
+#if defined _CUDAF || defined  _OPNEACC 
     integer :: istat 
     istat = cublasInit()
     if(istat/=0) call error('cublasInit failed')
     istat = cusolverDnCreate(cusolv_h)
     if(istat/=CUSOLVER_STATUS_SUCCESS) call error('cusolverDnCreate failed')
 #endif
-    cuda_linalg_init=.true.
+    gpu_linalg_init=.true.
   end subroutine
 
-  function cuda_getstat() result(ierr)
+  function gpu_getstat() result(ierr)
     implicit none
     integer :: ierr
     ierr = 0
-#ifdef _GPU
+#if defined _CUDAF || defined  _OPNEACC 
     ierr = CudaDeviceSynchronize()
     ierr = CudaGetLastError()
     !<debug>
@@ -222,7 +225,7 @@ contains
     return
   end function
 
-  function cuda_devsync() result(ierr)
+  function gpu_devsync() result(ierr)
     implicit none
     integer :: ierr
     ierr = 0 
@@ -232,122 +235,5 @@ contains
     return
   end function
   
-end module cuda_m_y
-
-
-!=========================
-
-! ----
-! nvtx
-! ----
-
-module nvtx
-  use iso_c_binding
-#ifdef _CUDAF
-  use cudafor
-#endif
-#if defined _OPENACC || defined _OPENMP5
-  use cudafor_m_y
-#endif
-  implicit none
-
-#ifdef _NVTX
-  integer,private :: col(7) = [ Z'0000ff00', Z'000000ff', Z'00ffff00',Z'00ff00ff',Z'0000ffff', &
-                                Z'00ff0000', Z'00ffffff']
-  character(len=256),private :: tempName
-!  logical, save :: use_nvtx=.false.
-  type, bind(C):: nvtxEventAttributes
-     integer(C_INT16_T):: version=1
-     integer(C_INT16_T):: size=48 !
-     integer(C_INT):: category=0
-     integer(C_INT):: colorType=1 ! NVTX_COLOR_ARGB = 1
-     integer(C_INT):: color
-     integer(C_INT):: payloadType=0 ! NVTX_PAYLOAD_UNKNOWN = 0
-     integer(C_INT):: reserved0
-     integer(C_INT64_T):: payload   ! union uint,int,double
-     integer(C_INT):: messageType=1  ! NVTX_MESSAGE_TYPE_ASCII     = 1 
-     type(C_PTR):: message  ! ascii char
-  end type nvtxEventAttributes
-
-  interface nvtxRangePush
-     ! push range with custom label and standard color
-     subroutine nvtxRangePushA(name) bind(C, name='nvtxRangePushA')
-       use iso_c_binding
-       character(kind=C_CHAR,len=*) :: name
-     end subroutine nvtxRangePushA
-
-     ! push range with custom label and custom color
-     subroutine nvtxRangePushEx(event) bind(C, name='nvtxRangePushEx')
-       use iso_c_binding
-       import:: nvtxEventAttributes
-       type(nvtxEventAttributes):: event
-     end subroutine nvtxRangePushEx
-  end interface nvtxRangePush
-
-  interface nvtxRangePop
-     subroutine nvtxRangePop() bind(C, name='nvtxRangePop')
-     end subroutine nvtxRangePop
-  end interface nvtxRangePop
-#endif
-
-contains
-
-  subroutine nvtxStartRange(name,id)
-    character(kind=c_char,len=*) :: name
-    integer, optional:: id
-#ifdef _NVTX
-    type(nvtxEventAttributes):: event
-#ifdef _GPU
-    integer :: istat
-    istat = cudaDeviceSynchronize()
-#endif
-
-    tempName=trim(name)//c_null_char
-
-    if ( .not. present(id)) then
-       call nvtxRangePush(tempName)
-    else
-       event%color=col(mod(id,7)+1)
-       event%message=c_loc(tempName)
-       call nvtxRangePushEx(event)
-    end if
-#endif
-  end subroutine nvtxStartRange
-
-  subroutine nvtxStartRangeAsync(name,id)
-    character(kind=c_char,len=*) :: name
-    integer, optional:: id
-#ifdef _NVTX
-    type(nvtxEventAttributes):: event
-
-    tempName=trim(name)//c_null_char
-
-    if ( .not. present(id)) then
-       call nvtxRangePush(tempName)
-    else
-       event%color=col(mod(id,7)+1)
-       event%message=c_loc(tempName)
-       call nvtxRangePushEx(event)
-    end if
-#endif
-  end subroutine nvtxStartRangeAsync
-
-
-  subroutine nvtxEndRange
-#ifdef _NVTX
-#ifdef _GPU
-    integer :: istat
-    istat = cudaDeviceSynchronize()
-#endif
-    call nvtxRangePop
-#endif
-  end subroutine nvtxEndRange
-
-  subroutine nvtxEndRangeAsync
-#ifdef _NVTX
-    call nvtxRangePop
-#endif
-  end subroutine nvtxEndRangeAsync
-
-end module nvtx
+end module gpu_m
 

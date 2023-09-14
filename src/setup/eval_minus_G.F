@@ -32,7 +32,7 @@ subroutine eval_minus_G()
  use D_lattice,    ONLY:inv_index
  use R_lattice,    ONLY:ng_closed,g_rot,minus_G
  use R_lattice,    ONLY:DEV_VAR(minus_G)
- use cuda_m_y,     ONLY:have_cuda
+ use gpu_m,        ONLY:have_gpu
  !
 #include<y_memory.h>
  !
@@ -56,7 +56,7 @@ subroutine eval_minus_G()
    if (ng_closed>1) call G_rot_grid(-1,'set_table')
  endif
  !
- if (have_cuda) then
+ if (have_gpu) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(minus_G),minus_G)
  endif
  !

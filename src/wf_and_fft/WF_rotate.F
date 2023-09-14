@@ -37,7 +37,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
  use pars,           ONLY:SP
  use wave_func,      ONLY:WAVEs,WF
  use hamiltonian,    ONLY:H_rotation,H_ref_bands
- use cuda_m_y,       ONLY:have_cuda
+ use gpu_m,          ONLY:have_gpu
  use devxlib,        ONLY:devxlib_memcpy_h2d
  !
  implicit none
@@ -78,7 +78,7 @@ subroutine WF_rotate(ik,i_sp_pol,WFo,wf_size)
    enddo
    !$omp end parallel do
    !
-   if (have_cuda) call devxlib_memcpy_h2d(DEV_VAR(WF%c)(:,:,i_wf), WF%c(:,:,i_wf))
+   if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(WF%c)(:,:,i_wf), WF%c(:,:,i_wf))
    !
  enddo
  !

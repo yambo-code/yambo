@@ -132,7 +132,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
 #endif
  use timing_m,    ONLY:timing_allocate,nclockx
  use openmp,      ONLY:OPENMP_initialize,OPENMP_update,master_thread,omp_is_off
- use cuda_m_y,    ONLY:cuda_setup,have_cuda
+ use gpu_m,       ONLY:gpu_setup,have_gpu
  !
  implicit none
  !
@@ -180,7 +180,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
  ! CUDA environment defs
  !
- call cuda_setup()
+ call gpu_setup()
  !
  ! Stack Size 
  !
@@ -359,7 +359,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  Chi_mode=' '
  Chi_linalg_mode="lin_sys"
  X_use_lin_sys=.FALSE.
- X_use_gpu=have_cuda
+ X_use_gpu=have_gpu
  current_iq=0
  X_DbGd_nkpts=0
  self_detect_E_range=.FALSE.

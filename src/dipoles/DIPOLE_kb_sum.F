@@ -31,7 +31,6 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  use iso_c_binding, ONLY:C_F_POINTER,C_LOC
  use pars,          ONLY:SP,cONE,cZERO
- !use wrapper,       ONLY:DEV_SUB(M_by_M)
  use electrons,     ONLY:n_spinor
 #if defined _CUDAF
  use cudafor,       ONLY:C_DEVLOC
@@ -52,7 +51,7 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  !
  dim_flat=n_spinor*4*npp
  !
-#if defined _CUDA
+#if defined _CUDAF
  call C_F_POINTER(C_DEVLOC(kbv), kbv_p, (/ncomp,dim_flat/) )
  call C_F_POINTER(C_DEVLOC(XX),  XX_p,  (/n_spinor,dim_flat/) )
 #else
@@ -70,7 +69,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  use pars,          ONLY:SP
  use electrons,     ONLY:n_spinor
  use pseudo,        ONLY:pp_kbv_dim_yambo
- use cuda_m_y,      ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
  use devxlib,       ONLY:devxlib_memcpy_d2h
 #if defined _CUDAF
  use DIPOLES,       ONLY:DEV_VAR(drho)=>DEV_VAR(DIP_work_drho)
@@ -105,7 +104,7 @@ subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  enddo
  !DEV_ACC end data
  !
- if (have_cuda) call devxlib_memcpy_d2h(drho,DEV_VAR(drho))
+ if (have_gpu) call devxlib_memcpy_d2h(drho,DEV_VAR(drho))
  forall(i1=1:3) rho(i1)=rho(i1)+sum(drho(:,i1,:))
  !
 end subroutine DIPOLE_kb_sum

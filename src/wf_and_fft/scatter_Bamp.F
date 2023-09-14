@@ -43,7 +43,7 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  use pseudo,         ONLY:pp_is_uspp
  use FFT_m,          ONLY:fftw_plan,cufft_plan,fft_size,fft_dim,DEV_VAR(fft_g_table)
  use interfaces,     ONLY:DEV_SUB(WF_apply_symm)
- use devxlib,        ONLY:devxlib_memory_set
+ use devxlib,        ONLY:devxlib_memset_d,devxlib_memset_h
  !
  implicit none
  !
@@ -214,7 +214,12 @@ subroutine DEV_SUB(scatter_Bamp)(isc)
  !
  ! q=0, G=0 case
  !
- if (isc%qs(2)==1.and.isc%is(1)==isc%os(1)) call devxlib_memory_set(rhotw_p, cONE,  range1=[1,1])
- if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call devxlib_memory_set(rhotw_p, cZERO, range1=[1,1])
+#ifdef _GPU_LOC
+ if (isc%qs(2)==1.and.isc%is(1)==isc%os(1)) call devxlib_memset_d(rhotw_p, cONE,  range1=[1,1])
+ if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call devxlib_memset_d(rhotw_p, cZERO, range1=[1,1])
+#else
+ if (isc%qs(2)==1.and.isc%is(1)==isc%os(1)) call devxlib_memset_h(rhotw_p, cONE,  range1=[1,1])
+ if (isc%qs(2)==1.and.isc%is(1)/=isc%os(1)) call devxlib_memset_h(rhotw_p, cZERO, range1=[1,1])
+#endif
  !
 end subroutine DEV_SUB(scatter_Bamp)

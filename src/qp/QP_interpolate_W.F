@@ -37,9 +37,10 @@ subroutine interpolate_W(X,Xw,q,mode)
  use stderr,        ONLY:intc,STRING_pack,gen_fmt
  use D_lattice,     ONLY:alat,a
  use timing_m,      ONLY:timing
- use cuda_m_y,      ONLY:have_cuda
+ use gpu_m,         ONLY:have_gpu
  use parallel_m,    ONLY:master_cpu
  !
+#include<dev_defs.h>
 #include<y_memory.h>
  !
  type(X_t)    :: X
@@ -106,8 +107,8 @@ subroutine interpolate_W(X,Xw,q,mode)
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
    YAMBO_FREE(f_coeff)
-   if (have_cuda) then
-     YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
+   if (have_gpu) then
+     YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
    endif
    return
  endif
@@ -351,8 +352,8 @@ subroutine interpolate_W(X,Xw,q,mode)
    io_err=io_RIM_W(ID,mode)
  endif
  !
- if (have_cuda) then
-   YAMBO_ALLOC_SOURCE(RIM_W_d,RIM_W)
+ if (have_gpu) then
+   YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(RIM_W),RIM_W)
  endif
  !
  YAMBO_FREE(f_coeff)

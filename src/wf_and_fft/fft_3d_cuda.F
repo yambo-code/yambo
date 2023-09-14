@@ -48,15 +48,16 @@
 subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  !
  use pars,          ONLY:DP
+ use devxlib_environment
 #if defined _CUDAF
  use cufft
 #endif
 #if defined _OPENACC
  use dev_openacc_m
- use cudafor_m_y
+ !use cudafor_m_y
  use cufft_m_y
 #endif
- use cuda_m_y,  only: cuda_devsync
+ use gpu_m,  only: gpu_devsync
  !
 #include<y_memory.h> 
  !
@@ -80,7 +81,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
    !istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_sync) )
    istat = cufftSetStream( cufft_plan, acc_get_cuda_stream(acc_async_noval) )
    !istat = cufftSetStream( cufft_plan, stream_default )
-   !istat = cuda_devsync()
+   !istat = gpu_devsync()
 #endif
    istat = cufftPlan3d( cufft_plan, n(3), n(2), n(1), CUFFT_Z2Z )
    !
@@ -90,7 +91,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  ! 2022-02-02 DS and AF TO BE FIXED
  !DEV_ACC wait(acc_async_noval)
  !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
- istat = cuda_devsync()
+ istat = gpu_devsync()
 #endif
  !
  !DEV_ACC data present(c_d)
@@ -102,7 +103,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
 #ifdef _OPENACC
  !DEV_ACC wait(acc_async_noval)
  !istat = cudaStreamSynchronize(acc_get_cuda_stream(acc_async_noval))
- istat = cuda_devsync()
+ istat = gpu_devsync()
 #endif
  !
 end subroutine fft_3d_cuda

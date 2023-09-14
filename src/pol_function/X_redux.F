@@ -51,10 +51,10 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  use X_m,           ONLY:X_t,X_use_lin_sys,X_use_gpu,X_par_lower_triangle
  use TDDFT,         ONLY:FXC_n_g_corr,F_xc_gspace,FXC_LRC_alpha,FXC_LRC_beta,FXC_SVD_digits
  use timing_m,      ONLY:timing
- use cuda_m_y
- use devxlib,       ONLY:devxlib_memory_set,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&
+ use devxlib,       ONLY:devxlib_memset_d,devxlib_memcpy_h2d,devxlib_memcpy_d2d,&
                          devxlib_memcpy_d2h
  use devxlib_async, ONLY:devxlib_async_synchronize
+ use gpu_m
  !
 #include<dev_defs.h>
 #include<y_memory.h>
@@ -74,7 +74,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  logical          :: compute_on_gpu
  type(PAR_matrix) :: K_FXC
  type(PAR_matrix), target      :: BUFFER,KERNEL,Xo
- complex(SP), pointer DEV_ATTR :: BUFFER_blc_d(:,:,:)
+ complex(SP), pointer DEV_ATTR :: BUFFER_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
  !
  ! Setup 
  !
@@ -91,11 +92,11 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  ! if SLK are present .and. ncpu_SLK >1 .and. CUDA => SLK on CPU
  ! otherwise a problem is obtained since SLK doesn't work on GPU yet
  !
- compute_on_gpu=have_cuda.and.X_use_gpu
+ compute_on_gpu=have_gpu.and.X_use_gpu
  !
- if (PAR_COM_SLK%n_CPU>=4.and.have_cuda) compute_on_gpu=.false.
+ if (PAR_COM_SLK%n_CPU>=4.and.have_gpu) compute_on_gpu=.false.
  !
- if (have_cuda) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
+ if (have_gpu) call msg('s','[LA] '//what//' compute_on_gpu ',compute_on_gpu )
  !
  ! ... and frequencies distribution
  !         ========================
@@ -119,12 +120,12 @@ subroutine X_redux(iq,what,X_par,Xw,X)
  BUFFER%blc=cZERO
  !
  if (compute_on_gpu) then
-   YAMBO_ALLOC(KERNEL%blc_d,(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
-   YAMBO_ALLOC(BUFFER%blc_d,(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
-   YAMBO_ALLOC(Xo%blc_d,(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
-   call devxlib_memory_set(KERNEL%blc_d,cZERO)
-   call devxlib_memory_set(BUFFER%blc_d,cZERO)
-   call devxlib_memory_set(Xo%blc_d,cZERO)   
+   YAMBO_ALLOC_GPU(DEV_VAR(KERNEL%blc),(KERNEL%BLCrows(1):KERNEL%BLCrows(2),KERNEL%BLCcols(1):KERNEL%BLCcols(2),1))
+   YAMBO_ALLOC_GPU(DEV_VAR(BUFFER%blc),(BUFFER%BLCrows(1):BUFFER%BLCrows(2),BUFFER%BLCcols(1):BUFFER%BLCcols(2),max(PAR_n_freqs,1)))
+   YAMBO_ALLOC_GPU(DEV_VAR(Xo%blc),(Xo%BLCrows(1):Xo%BLCrows(2),Xo%BLCcols(1):Xo%BLCcols(2),1))
+   call devxlib_memset_d(DEV_VAR(KERNEL%blc),cZERO)
+   call devxlib_memset_d(DEV_VAR(BUFFER%blc),cZERO)
+   call devxlib_memset_d(DEV_VAR(Xo%blc),cZERO)   
  endif
  !
  if (l_alda_fxc.and.Xo%kind=="SLK") then
@@ -178,7 +179,10 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    iw         = PAR_FREQS_index(iw_par)
    BUFFER%I   = iw_par
    KERNEL%blc = cZERO
-   if (compute_on_gpu) call devxlib_memory_set(KERNEL%blc_d,cZERO)
+   !
+   BUFFER_p => DEV_VAR(BUFFER%blc)
+   KERNEL_p => DEV_VAR(KERNEL%blc)
+   if (compute_on_gpu) call devxlib_memset_d(KERNEL_p,cZERO)
    !
    Xo_cols(:)=Xo%cols(:)
    Xo_rows(:)=Xo%rows(:)
@@ -222,8 +226,8 @@ subroutine X_redux(iq,what,X_par,Xw,X)
    endif
    !
    if (compute_on_gpu) then
-     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call devxlib_memcpy_h2d(KERNEL%blc_d,KERNEL%blc)
-     call devxlib_memcpy_h2d(Xo%blc_d,Xo%blc)
+     if (l_bs_fxc.or.l_lrc_fxc.or.l_alda_fxc) call devxlib_memcpy_h2d(KERNEL_p,KERNEL%blc)
+     call devxlib_memcpy_h2d(DEV_VAR(Xo%blc),Xo%blc)
    endif
    !
    ! no Fxc [delta_(g1,g2)-Xo(g1,g2)*v(g2)]
@@ -237,9 +241,10 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      ! Linear System
      !
      if (compute_on_gpu) then
-       call devxlib_memcpy_d2d(BUFFER%blc_d(:,:,BUFFER%I), Xo%blc_d(:,:,1))
+       !call devxlib_memcpy_d2d(BUFFER_p(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
+       call devxlib_memcpy_d2d(DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), DEV_VAR(Xo%blc)(:,:,1))
      else
-                       BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
+       BUFFER%blc(:,:,BUFFER%I) =  Xo%blc(:,:,1)
      endif
      !
      call LINEAR_ALGEBRA_driver(LIN_SYS,M_slk=KERNEL,B_slk=BUFFER)
@@ -259,25 +264,27 @@ subroutine X_redux(iq,what,X_par,Xw,X)
      !
      if (compute_on_gpu) then
         !
-        BUFFER_blc_d => BUFFER%blc_d
-        !
-        !$cuf kernel do(2)
+        !DEV_ACC data present(BUFFER_p,bare_qpg)
+        !DEV_ACC parallel loop collapse(2) async
+        !DEV_CUF kernel do(2)
         do ig2=Xo_cols(1),Xo_cols(2)
-          do ig1=Xo_rows(1),Xo_rows(2)
-            BUFFER_blc_d(ig1,ig2,iw_par)=BUFFER_blc_d(ig1,ig2,iw_par)*4._SP*pi/bare_qpg_d(iq,ig1)/bare_qpg_d(iq,ig2)
-          enddo
+        do ig1=Xo_rows(1),Xo_rows(2)
+           BUFFER_p(ig1,ig2,iw_par)=BUFFER_p(ig1,ig2,iw_par)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig1)/DEV_VAR(bare_qpg)(iq,ig2)
         enddo
+        enddo
+        !DEV_ACC end data
         !
         call devxlib_async_synchronize(async_default)
-        call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER%blc_d(:,:,BUFFER%I), async_d2h)
+        !call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),BUFFER_p(:,:,BUFFER%I), async_d2h)
+        call devxlib_memcpy_d2h(BUFFER%blc(:,:,BUFFER%I),DEV_VAR(BUFFER%blc)(:,:,BUFFER%I), async_d2h)
         !
      else
         !
         !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
         do ig2=Xo%cols(1),Xo%cols(2)
-          do ig1=Xo%rows(1),Xo%rows(2)
-            BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
-          enddo
+        do ig1=Xo%rows(1),Xo%rows(2)
+           BUFFER%blc(ig1,ig2,iw_par)=BUFFER%blc(ig1,ig2,iw_par)*4._SP*pi/bare_qpg(iq,ig1)/bare_qpg(iq,ig2)
+        enddo
         enddo
         !$omp end parallel do
         !
@@ -360,39 +367,41 @@ subroutine X_redux(iq,what,X_par,Xw,X)
 contains
    !
    subroutine X_redux_build_kernel(KERNEL,Xo,Xo_rows,Xo_cols)
-     use R_lattice,     ONLY:bare_qpg, bare_qpg_d
+     use R_lattice,     ONLY:bare_qpg, DEV_VAR(bare_qpg)
      use pars,          ONLY:pi,cONE
      implicit none
      type(PAR_matrix), target :: KERNEL,Xo
      integer, intent(in)      :: Xo_rows(2),Xo_cols(2)
      integer :: ig1,ig2
      !
-     complex(SP), pointer DEV_ATTR :: KERNEL_blc_d(:,:,:)
-     complex(SP), pointer DEV_ATTR :: Xo_blc_d(:,:,:)
+     complex(SP), pointer DEV_ATTR :: KERNEL_p(:,:,:)
+     complex(SP), pointer DEV_ATTR :: Xo_p(:,:,:)
      !
      if (compute_on_gpu) then
        !
-       KERNEL_blc_d=>KERNEL%blc_d(:,:,:)
-       Xo_blc_d    => Xo%blc_d(:,:,:)
+       KERNEL_p => DEV_VAR(KERNEL%blc)(:,:,:)
+       Xo_p     => DEV_VAR(Xo%blc)(:,:,:)
        !
-       !$cuf kernel do(2) <<<*,*>>>
+       !DEV_ACC data present(KERNEL_p,Xo_p,bare_qpg)
+       !DEV_ACC parallel loop collapse(2) async
+       !DEV_CUF kernel do(2) <<<*,*>>>
        do ig2=Xo_cols(1),Xo_cols(2)
-         do ig1=Xo_rows(1),Xo_rows(2)
-           KERNEL_blc_d(ig1,ig2,1) =KERNEL_blc_d(ig1,ig2,1)-Xo_blc_d(ig1,ig2,1)*4._SP*pi/bare_qpg_d(iq,ig2)**2
-           if (ig1==ig2) KERNEL_blc_d(ig1,ig1,1)=KERNEL_blc_d(ig1,ig1,1)+cONE
-         enddo
+       do ig1=Xo_rows(1),Xo_rows(2)
+          KERNEL_p(ig1,ig2,1) =KERNEL_p(ig1,ig2,1)-Xo_p(ig1,ig2,1)*4._SP*pi/DEV_VAR(bare_qpg)(iq,ig2)**2
+          if (ig1==ig2) KERNEL_p(ig1,ig1,1)=KERNEL_p(ig1,ig1,1)+cONE
        enddo
+       enddo
+       !DEV_ACC end data
        !
      else
        !
-       !$omp parallel do default(shared), private(ig1,ig2), collapse(2)
+       !DEV_OMP parallel do default(shared), private(ig1,ig2), collapse(2)
        do ig2=Xo%cols(1),Xo%cols(2)
-         do ig1=Xo%rows(1),Xo%rows(2)
-           KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
-           if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
-         enddo
+       do ig1=Xo%rows(1),Xo%rows(2)
+          KERNEL%blc(ig1,ig2,1) =KERNEL%blc(ig1,ig2,1)-Xo%blc(ig1,ig2,1)*4._SP*pi/bare_qpg(iq,ig2)**2
+          if (ig1==ig2) KERNEL%blc(ig1,ig1,1)=KERNEL%blc(ig1,ig1,1)+cONE
        enddo
-       !$omp end parallel do
+       enddo
        !
      endif
      !

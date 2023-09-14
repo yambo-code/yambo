@@ -24,7 +24,7 @@
 module D_lattice
  !
  use pars,        ONLY:SP,lchlen,cONE,cZERO,cI,schlen
- use cuda_m_y,    ONLY:have_cuda
+ use gpu_m,       ONLY:have_gpu
  use devxlib
  !
 #include<dev_defs.h>
@@ -140,7 +140,7 @@ module D_lattice
      if (any(sop_inv==0)) call error('[SYMs] check the input symmetries!')
      call msg(msg_where,'Group table correct   ',.true.)
      !
-     if (have_cuda) then
+     if (have_gpu) then
        YAMBO_FREE_GPU(DEV_VAR(sop_inv))
        YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(sop_inv),sop_inv)
      endif

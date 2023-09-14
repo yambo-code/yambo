@@ -4,8 +4,7 @@
 
 subroutine GPU_test(N)
   use iso_c_binding
-  use cuda_m_y,         ONLY: GPU_test_dim, cuda_devsync
-  use gpu_m,            ONLY: have_device
+  use gpu_m,            ONLY: GPU_test_dim, gpu_devsync, have_gpu
   use devxlib,          ONLY: devxlib_memcpy_d2h, devxlib_memcpy_h2d, devxlib_xaxpy, devxlib_xaxpy_gpu
   use data_m,           ONLY: data_t, data_alloc, data_free
   use pars,             ONLY: SP
@@ -95,7 +94,7 @@ subroutine GPU_test(N)
   ! prototype of a standard explicit loop to be computed on GPUs
   !
   device_str="GPU"
-  if (.not. have_device) device_str="CPU"
+  if (.not. have_gpu) device_str="CPU"
   !
   write(*,"(/,50('='))")
   write(*,*) "Running "//trim(device_str)//"_EXPL"
@@ -109,21 +108,21 @@ subroutine GPU_test(N)
   !
   ! data transfer host2dev
   !
-  write(*,*) "Memcpy host2dev",cuda_devsync()
+  write(*,*) "Memcpy host2dev",gpu_devsync()
   call devxlib_memcpy_h2d(var_x_p,var_gpu%x)
   call devxlib_memcpy_h2d(var_y_p,var_gpu%y)
   !
   ! running on GPUs
   !
-  write(*,*) "Compute EXPLICIT",cuda_devsync()
+  write(*,*) "Compute EXPLICIT",gpu_devsync()
   t0=qe_cclock()
   !
-  write(*,*) "saxpy EXPLICIT",cuda_devsync()
+  write(*,*) "saxpy EXPLICIT",gpu_devsync()
   call saxpy_explicit(var_gpu%N, a, var_x_p, var_y_p)
-  write(*,*) "saxpy EXPLICIT done",cuda_devsync()
+  write(*,*) "saxpy EXPLICIT done",gpu_devsync()
   !
   t1=qe_cclock()
-  write(*,*) "Timing ("//trim(device_str)//"_EXPL): ", t1-t0,cuda_devsync()
+  write(*,*) "Timing ("//trim(device_str)//"_EXPL): ", t1-t0,gpu_devsync()
   !
   ! data transfer dev2host
   !
@@ -131,7 +130,7 @@ subroutine GPU_test(N)
   !
   ! Check
   !
-  write(*,*) "Results EXPLICIT",cuda_devsync()
+  write(*,*) "Results EXPLICIT",gpu_devsync()
   write(*,"(8f15.9)") var_gpu%y(1:16)
   !
   if ( any( abs(var_gpu%y(:)-var_cpu%y(:))>eps ) ) then

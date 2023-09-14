@@ -40,8 +40,8 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  use FFT_m,         ONLY:fftw_plan,cufft_plan
  use R_lattice,     ONLY:g_vec,DEV_VAR(g_vec),ng_vec
  use wave_func,     ONLY:wf_ng
- use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memory_set
- use cuda_m_y,      ONLY:have_cuda,have_openacc
+ use devxlib,       ONLY:devxlib_memcpy_h2d,devxlib_memcpy_d2h,devxlib_allocated,devxlib_memset_d
+ use gpu_m,         ONLY:have_gpu
  use timing_m
  !
 #include<y_memory.h>
@@ -73,14 +73,11 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
  end select
  !
  YAMBO_ALLOC(Vr,(fft_size))
- if (have_openacc) then
-   YAMBO_ALLOC(V3g,(ng_,3))
- endif
  YAMBO_ALLOC_GPU(DEV_VAR(Vr),(fft_size))
  YAMBO_ALLOC_GPU(DEV_VAR(V3g),(ng_,3))
  !
  ! Synchronize g_vec host/dev if needed
- if (have_cuda.and..not.devxlib_allocated(DEV_VAR(g_vec))) then
+ if (have_gpu.and..not.devxlib_allocated(DEV_VAR(g_vec))) then
    YAMBO_ALLOC_GPU_SOURCE(DEV_VAR(g_vec),g_vec)
  endif
  !
@@ -110,7 +107,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
 #  endif
 #endif
    !
-   call devxlib_memory_set(V3g_p,cZERO_DP)
+   call devxlib_memset_d(V3g_p,cZERO_DP)
    !
    !DEV_ACC data present(Vr_p,V3g_p,fft_g_table,g_vec)
    !DEV_ACC parallel loop collapse(2) async
@@ -124,7 +121,7 @@ subroutine eval_Gradient(f,f_gradient,spinor_size,f_type)
    !
    do ic = 1,3
      !
-     call devxlib_memory_set(Vr_p,cZERO_DP)
+     call devxlib_memset_d(Vr_p,cZERO_DP)
      !
      !DEV_ACC data present(Vr_p,V3g_p,fft_g_table)
      !DEV_ACC parallel loop async

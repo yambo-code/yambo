@@ -1,6 +1,6 @@
 
 !=================
-module gpu_m
+module gpu_loc_m
   !=================
   !
   use cusolverdn_y
@@ -48,7 +48,7 @@ contains
 
   subroutine cuda_linalg_setup()
     implicit none
-#ifdef _CUDA
+#ifdef _CUDAF || defined 
     integer :: istat 
     istat = cublasInit()
     if(istat/=0) stop 'cublasInit failed'

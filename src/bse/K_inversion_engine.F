@@ -26,7 +26,7 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
  use pars,           ONLY:SP,cZERO
  use parallel_m,     ONLY:PP_indexes
  use frequency,      ONLY:w_samp
- use X_m,            ONLY:Epsilon_ii,global_gauge
+ use X_m,            ONLY:Epsilon_ii,global_gauge,i_G_shift
  use LIVE_t,         ONLY:live_timing
  use R_lattice,      ONLY:bare_qpg
  use wrapper,        ONLY:Vstar_dot_V,M_by_V,V_dot_V
@@ -58,11 +58,12 @@ subroutine K_inversion_engine(what,iw_2start,iw_2do,iq,px,W,Lo,Lo_dim,Lo_n_loop,
    Mm1=cZERO
  endif
  !
+ if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/bare_qpg(iq,i_G_shift)**2
+ !
  do i2=1,iw_2do
    !
    iw=i2+iw_2start-1
    !
-   if (trim(global_gauge)=='length'  ) gauge_factor=-Co_factor/bare_qpg(iq,1)**2
    if (trim(global_gauge)=='velocity') gauge_factor=-Co_factor/   W%p(iw)    **2
    !
    ! The parallel loop is controlled in the manin body loop 

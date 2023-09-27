@@ -25,7 +25,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  use drivers,       ONLY:infile_editing
  use pars,          ONLY:schlen,SP
- use electrons,     ONLY:levels,nel,filled_tresh
+ use electrons,     ONLY:levels,nel,filled_tresh,nel_cond
  use zeros,         ONLY:G_mod_zero
  use frequency,     ONLY:w_samp
  use it_tools,      ONLY:it,runlevel_is_on
@@ -108,6 +108,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  use ELPH,          ONLY:QP_PH_n_G_bands,elph_nQ_used,elph_Ham_ik,elph_Ham_bands,elph_branches,&
 &                               RES_tresh,FAN_deltaE_treshold,DW_deltaE_treshold,E_kpq_sh_fact,gkkp_db
+ use EXCPH,         ONLY:EXCPH_states,EXCPH_sum,Lout_path,L_damping,EXC_q0,EXCPH_kind_name,alphaQ, &
+&                        EXCPH_deltaE_treshold
+ use D_lattice,     ONLY:Boltz_Temp
 #endif
 #if defined _OPENMP
  use openmp,        ONLY:n_threads_X,n_threads_SE,n_threads_RT,n_threads_DIP,n_threads_K,n_threads_NL
@@ -172,6 +175,9 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #endif
 #if defined _ELPH 
  call it('r',defs,'el_ph_corr',    '[R] Electron-Phonon Correlation')   
+ call it('r',defs,'ExcGkkp',       '[R][EXCPH] Exciton-Phonon Matrix Elelements')
+ call it('r',defs,'ExcPhOptics',   '[R][EXCPH] Exciton-Phonon Optics')
+ call it('r',defs,'ExcPhLifeT',    '[R][EXCPH] Exciton-Phonon Life-Times')
 #endif
 #if defined _PHEL 
  call it('r',defs,'ph_el_corr',    '[R] Phonon-Electron Correlation')   
@@ -206,9 +212,14 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it(defs,'IkSigLim','[KPT] QP K-points indices range',QP_states_k,verb_level=V_kpt)
  call it(defs,'IkXLim',  '[KPT] X grid last k-point index',nXkibz,verb_level=V_kpt)
  call it(defs,'Nelectro','Electrons number',nel,verb_level=V_general)
+ call it(defs,'NelCond' ,'Number of electrons in conduction (Quasi-Fermi distribution)',nel_cond,verb_level=V_general)
  call it(defs,'ElecTemp','Electronic Temperature',Tel,T_unit,verb_level=V_general)
  call it(defs,'OccTresh','Occupation treshold (metallic bands)',filled_tresh,verb_level=V_general)
+#if defined _ELPH 
+ call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit)
+#else
  call it(defs,'BoseTemp','Bosonic Temperature',Bose_Temp,T_unit,verb_level=V_general)
+#endif
  call it(defs,'BoseCut', '[BOSE] Finite T Bose function cutoff',bose_E_cut,verb_level=V_general)
 #if defined _ELPH 
  call it('f',defs,'BSEscatt', '[KPT] Compute extended k/q scatering',verb_level=V_kpt)
@@ -296,7 +307,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  ! BSE/BSK
  !
  call it(defs,'BSEmod',  '[BSE] resonant/retarded/coupling',BSE_mode,case="a")
- call it(defs,'Lkind',   '[BSE,X] bar(default)/full',BSE_L_kind,verb_level=V_resp)
+ call it(defs,'Lkind',   '[BSE,X] bar(default)/full/tilde',BSE_L_kind,verb_level=V_resp)
  call it(defs,'BSEBands','[BSK] Bands range',BS_bands)
  call it(defs,'BSENGBlk','[BSK] Screened interaction block size [if -1 uses all the G-vectors of W(q,G,Gp)]',BS_n_g_W,G_unit)
  call it(defs,'BSENGexx','[BSK] Exchange components',BS_n_g_exch,G_unit)
@@ -655,9 +666,27 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
 #if defined _ELPH 
  call it(defs,'GphBRnge',  '[ELPH] G[W] bands range',QP_PH_n_G_bands)
  call it(defs,'ElPhModes', '[ELPH] Phonon modes included',elph_branches)
- call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,verb_level=V_ph,unit=E_unit)
+ call it(defs,'FANdEtresh','[ELPH] Energy treshold for Fan denominator',FAN_deltaE_treshold,unit=E_unit)
  call it(defs,'DWdEtresh', '[ELPH] Energy treshold for DW denominator',DW_deltaE_treshold,verb_level=V_ph,unit=E_unit)
  call it(defs,'GkkpDB',    '[ELPH] GKKP database (gkkp | gkkp_expanded | genFroh )',gkkp_db,verb_level=V_ph)
+ !
+ call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
+ call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
+ call it(defs,'ExcPhKind',     '[EXCPH] Exciton-phonon kind (PALEARI | BERNARDI)',EXCPH_kind_name,verb_level=V_ph)
+ call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
+ call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
+ call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)
+ call it(defs,'EXCLongDr'     ,'[EXCPH] Electric field versor for the excitons',EXC_q0)
+ call it('f',defs,'DbGdOnlyPh'   , '[EXCPH] Use Double-Grid only for phonon energies (do not interpolate excitons)')
+ call it('f',defs,'NoMatrxEl'   , '[EXCPH] Set all exciton-phonon matrix elements to one (for testing purpose)')
+ call it('f',defs,'DbGdWEIGHTs', '[EXCPH] Use Double-grid also for satellite weights and renormalization')
+ call it('f',defs,'PLqres', '[EXCPH] Write contribution from each q-point')
+ call it(defs,'LDamping', '[EXCPH] Damping of exc-ph self-energy',L_damping,E_unit)
+ call it(defs,'EXCPHdEtresh','[ELPH] Energy treshold for exc-ph denominator',EXCPH_deltaE_treshold,unit=E_unit)
+ call it('f',defs,'ExcPhOffDiago', '[EXCPH] Exciton-Phonon off-diagonal self-energy')
+ !
+ ! GPL_EXCLUDE_START
+ !
  call it(defs,'ElPhHBRnge','[ELPH] Hamiltonian bands range',elph_Ham_bands)
  call it(defs,'ElPhHKpt',  '[ELPH] Hamiltonian k-point',elph_Ham_ik)
  call it(defs,'REStresh',  '[ELPH] Residual treshold to report in output files',RES_tresh)

@@ -11,6 +11,8 @@
  ELPH_eliashberg_dos.o
  ELPH_excitonic_gkkp.o
  ELPH_general_gFsq.o
+ ELPH_load_indexes.o
  ELPH_plot_gkkp.o
+ ELPH_sngl_db.o
  Eliashberg_Dos_Func.o
 

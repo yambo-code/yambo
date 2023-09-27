@@ -1,9 +1,9 @@
 #
 # Variable definitions
 #
-I_PRECMP=
+I_PRECMP=-D_ELPH
 ifneq (,$(findstring p2y,$(MAKECMDGOALS)))
- I_PRECMP=$(p2ycpp)
+ I_PRECMP+=$(p2ycpp)
 endif
 #
 GOALS=a2y c2y

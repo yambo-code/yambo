@@ -24,11 +24,12 @@
 subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag,GKKP)
  !
  use pars,                ONLY:SP
- use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_S
+ use R_lattice,           ONLY:bz_samp,qindx_B,qindx_B_load,qindx_C
  use ELPH_intfcs,         ONLY:ELPH_alloc
  use D_lattice,           ONLY:nsym,i_time_rev,sop_inv,sop_tab
- use ELPH,                ONLY:elph_nb,GKKP_me,PH_qpt
+ use ELPH,                ONLY:elph_bands,GKKP_me,PH_qpt,l_GKKP_debug
  use YPP_ELPH,            ONLY:DB_ph_K_sym_table,YAMBO_K_found,l_use_qindxB
+ use parser_m,            ONLY:parser
  !
  implicit none
  !
@@ -45,6 +46,31 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  type(GKKP_me) ::GKKP_expanded
  integer, external ::qindx_B_init,qindx_B_close 
  integer       :: qindx_tmp(2),iq_bz
+ !
+ ! Debug: print kpt/qpt coordinates for plotting
+ integer :: iaux
+ if (l_GKKP_debug) then
+   open(1, file='K_grid_bz.dat')
+   open(2, file='Q_grid_bz.dat')
+   open(3, file='PH_Q_grid_bz.dat')
+   open(4, file='K_grid_Ibz.dat')
+   call k_ibz2bz(k,"i",.false.)
+   call k_ibz2bz(q,"i",.false.)
+   do iaux=1,k%nibz
+     write (4,*) k%pt(iaux,:)
+   enddo
+   do iaux=1,k%nbz
+     write (1,*) k%ptbz(iaux,:)
+   enddo
+   do iaux=1,q%nbz
+     write (2,*) q%ptbz(iaux,:)
+     write (3,*) PH_qpt(iaux,:)
+   enddo
+   close(1)
+   close(2)
+   close(3)
+   close(4)
+ endif
  !
  ! "K" mode
  !==========
@@ -63,6 +89,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      do is=1,nsmall
        ik_bz=DB_ph_K_sym_table(ik,sop_inv(small(is)))
        if (local_K_found(ik_bz)) cycle
+       if (l_GKKP_debug) write (*,*) "Expanding k ",ik_bz," from ",ik
        GKKP%dVc(:,:,:,ik_bz,1)=GKKP%dVc(:,:,:,ik,1)
        if (allocated(GKKP%dVr)) GKKP%dVr(:,:,:,ik_bz,1)=GKKP%dVr(:,:,:,ik,1)
        GKKP%E_kpq(iq)%E(:,ik_bz,1)=GKKP%E_kpq(iq)%E(:,ik,1)
@@ -83,7 +110,7 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
  !
  call ELPH_alloc("LEVELS dV",GKKP=GKKP_expanded,Nq_mem=1)
  !
- if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag) 
+ if(l_use_qindxB) qindx_tmp=qindx_B_init(qindx_ID,qindx_ID_frag,"minus_q") 
  !
  do ik_bz=1,k%nbz
    !
@@ -97,6 +124,8 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
        qindx_tmp=qindx_B_load(ok_bz,ik_bz,qindx_ID_frag)
        iq_bz=qindx_tmp(1)
        !
+       ! q_bz = ki_bz - ko_bz
+       !
        if (iq_bz==iq) then
          ok=k%sstar(ok_bz,1)
          os=k%sstar(ok_bz,2)
@@ -106,9 +135,10 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    else
      !
-     ! Use qindx_S     
+     ! Use qindx_S:   q_bz = ki_ibz - ko_bz
+     ! Use qindx_C:   q_bz = ki_bz - ko_bz
      !
-     ok_bz=qindx_S(ik,iq,1)
+     ok_bz=qindx_C(ik_bz,iq,1)
      ok=k%sstar(ok_bz,1)
      os=k%sstar(ok_bz,2)
      !
@@ -142,16 +172,16 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    endif
    !
-   do ib=1,elph_nb
-     do ob=1,elph_nb
+   do ib=elph_bands(1),elph_bands(2)
+     do ob=elph_bands(1),elph_bands(2)
        if (l_bands_reverted) then
          GKKP_expanded%dVc(:,ob,ib,ik_bz,1)=conjg(GKKP%dVc(:,ib,ob,ik_bz_gkkp,1))
        else
          GKKP_expanded%dVc(:,ib,ob,ik_bz,1)=GKKP%dVc(:,ib,ob,ik_bz_gkkp,1)
        endif
-       !
      enddo
    enddo
+   !
  enddo
  !
  ! For the energies E(k+q)
@@ -180,9 +210,9 @@ subroutine ELPH_databases_IO_gkkp_expand(mode,iq,iq_s,k,q,qindx_ID,qindx_ID_frag
      !
    else
      !      
-     ! Use qindx_S
+     ! Use qindx_C
      !
-     ok_bz=qindx_S(ik,iq,1)
+     ok_bz=qindx_C(ik_bz,iq,1)
      ok=k%sstar(ok_bz,1)
      os=k%sstar(ok_bz,2)
      !

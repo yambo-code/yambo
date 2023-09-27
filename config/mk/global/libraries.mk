@@ -79,6 +79,8 @@ YPPNL_LIBS_LD      = $(YPPRT_LIBS_LD)
 #
 YPP_MAIN_LIBS      = $(BASIC_LIBS) interpolate qp_control setup interface tddft dipoles pol_function qp bse
 YPP_MAIN_LIBS_LD   = $(BASIC_LIBS_LD) interpolate qp_control setup interface tddft dipoles pol_function qp bse
+YPPPH_MAIN_LIBS    = $(YPP_MAIN_LIBS) el-ph exc-ph
+YPPPH_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) el-ph exc-ph
 YPPSC_MAIN_LIBS    = $(YPP_MAIN_LIBS) collisions hamiltonian sc
 YPPSC_MAIN_LIBS_LD = $(YPP_MAIN_LIBS_LD) collisions hamiltonian sc
 YPPPH_MAIN_LIBS    = $(YPP_MAIN_LIBS)

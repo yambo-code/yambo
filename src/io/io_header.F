@@ -153,7 +153,7 @@ integer function io_header(ID,QPTS,R_LATT,WF,IMPOSE_SN,TEMP,KPTS,D_LATT,XC_KIND,
      goto 1
    endif
    if (WARN_SERIAL.and.io_com(ID)/=NONE) then 
-     call warning('Wrong serial number for '//trim(io_file(ID)))
+     call warning('Different serial number for '//trim(io_file(ID)))
    endif
  endif
  !

@@ -28,17 +28,19 @@ subroutine ELPH_databases(k,E,q)
  use stderr,              ONLY:intc
  use electrons,           ONLY:levels
  use ELPH_intfcs,         ONLY:ELPH_alloc
- use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
-&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,l_GKKP_hosts_bare_dV
+ use ELPH,                ONLY:elph_use_q_grid,ph_modes,elph_bands,elph_nb,elph_nQ,GKKP,GKKP_bare,PH_W_debye,&
+&                              PH_freqs_sq,PH_qpt,PH_pol_vector,GKKP_me,elph_nk_bz,PH_kpt_bz,&
+&                              l_GKKP_debug,l_GKKP_hosts_bare_dV,l_GKKP_hosts_DW
  use com,                 ONLY:msg
  use D_lattice,           ONLY:nsym,sop_tab
- use R_lattice,           ONLY:bz_samp,qindx_B,nqibz,bse_scattering
+ use R_lattice,           ONLY:bz_samp,nqbz,nqibz
  use parser_m,            ONLY:parser
  use vec_operate,         ONLY:v_is_zero
  use zeros,               ONLY:k_iku_zero
  use YPP_ELPH,            ONLY:ELPH_DB_alloc,ELPH_DB_free,DB_kind,DB_nq,DB_ph_K_sym_table,DB_nb,&
 &                              ph_freqs_file,ph_modes_file,use_ext_ph_freqs,use_ext_ph_modes,DB_ph_modes,&
-&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand,l_use_qindxB
+&                              DB_PH_pol_vec,DB_Q_map,DB_ph_freq_sq,DB_PH_qpt,DB_nk,l_gkkp_expand,l_use_qindxB, &
+&                              l_gkkp_expand_only_k
  use LIVE_t,              ONLY:live_timing 
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:OP_APP_CL,REP,OP_RD_CL
@@ -52,8 +54,9 @@ subroutine ELPH_databases(k,E,q)
  ! Work Space...
  !
  integer            ::io_err(3),iq,ik,is,idb,i_star,iq_bz,ID,qindx_ID,qindx_ID_frag
- character(schlen)  ::what
- integer, external  ::ELPH_databases_IO_elemental,io_ELPH,io_QINDX,qindx_B_init
+ logical            ::l_GKKP_skip_DW
+ character(schlen)  ::what,db_name
+ integer, external  ::ELPH_databases_IO_elemental,io_ELPH
  logical, external  ::file_exists
  real(SP)           ::v(3)
  type(GKKP_me)      ::GKKP_save,GKKP_bare_save
@@ -64,44 +67,20 @@ subroutine ELPH_databases(k,E,q)
  !=================
  call parser('GkkpReadBare',l_GKKP_hosts_bare_dV)
  call parser('GkkpExpand',l_gkkp_expand)
+ call parser('GkkpDebug',l_GKKP_debug)
+ call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
+ call parser('GkkpSkipDW',l_GKKP_skip_DW)
  call parser('UseQindxB',l_use_qindxB)
  !
- if(l_gkkp_expand) then
-   !      
-   ! Setup parallelization to load qindx_B
-   ! ======================================
-   !
-   call PARALLEL_global_indexes(E,k,q,"BZ_Indexes")
-   call PARALLEL_SETUP_K_scheme("BZINDX")
-   !
-   if(l_use_qindxB) then
-     !
-     if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
-     !
-     ! here qindx_B is allocated
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
-     io_err(1)=io_QINDX(k,q,ID)
-     if (io_err(1)/=0) then
-       call msg('s',"Missing k/q scattering database")
-       call error("Please run a setup with the BSEscatt flag activated")
-     endif
-     !
-     ! Initialize qindx_B IO
-     ! =============================
-     io_err(2)=qindx_B_init(qindx_ID,qindx_ID_frag) 
-     if(io_err(2)/=0) call error("Error reading qindx_B")
-     !
-   else
-     ! otherwise qindx_S is allocated
-     call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/4/),ID=ID)
-     io_err(1)=io_QINDX(k,q,ID)
-     if (io_err(1)/=0) then
-       call msg('s',"Missing k/q scattering database")
-       call error("Please (re)run the setup")
-     endif
-   endif
-   !
- endif
+ l_GKKP_hosts_DW=.not.l_GKKP_skip_DW
+ !
+ if(l_gkkp_expand.and.l_gkkp_expand_only_k) &
+&  call error(' Both flags "GkkpExpand" and "GkkpExpOnlyK" cannot be present at the same moment! ')
+ !
+ ! Load symmetry indexes if expantion is required
+ ! =================================================
+ ! 
+ if(l_gkkp_expand.or.l_gkkp_expand_only_k) call ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  !
  ! Existence and dimensions 
  !==========================
@@ -210,6 +189,24 @@ subroutine ELPH_databases(k,E,q)
  elph_use_q_grid=.FALSE.
  if(DB_nq==nqibz.and.all(DB_Q_map/=0)) elph_use_q_grid=.TRUE.
  !
+ ! If l_gkkp_expand_only_k I suppose the q-grid is in the BZ
+ !
+ if(l_gkkp_expand_only_k) then
+   DB_Q_map=0
+   do idb=1,DB_nq
+     do iq=1,nqbz
+       v=DB_PH_qpt(idb,:)
+       if (v_is_zero(v+q%ptbz(iq,:),zero_=k_iku_zero)) DB_Q_map(idb)=iq
+     enddo
+   enddo
+   !
+   elph_use_q_grid=.FALSE.
+   if(DB_nq==nqbz.and.all(DB_Q_map/=0)) elph_use_q_grid=.TRUE.
+   !
+   if(.not.elph_use_q_grid) call error('Expand only-k works only with uniform q-grids in the BZ')
+   !
+ endif
+ !
  if (.not.elph_use_q_grid) then
    if (DB_Q_map(1)/=1) call error("First qpt must be Gamma.")
    do idb=1,DB_nq
@@ -224,7 +221,12 @@ subroutine ELPH_databases(k,E,q)
  ! ... Transfer and write ...
  !----------------------------
  ph_modes   =DB_ph_modes
- elph_nb    =DB_nb
+ if(elph_bands(1)>=1 .and. elph_bands(2)<DB_nb) then
+   elph_nb=elph_bands(2)-elph_bands(1)+1
+ else
+   elph_nb    =DB_nb
+   elph_bands=(/1,elph_nb/)
+ endif
  elph_nQ    =DB_nq
  elph_nk_bz =k%nbz
  if (l_gkkp_expand) elph_nQ=q%nbz
@@ -240,9 +242,11 @@ subroutine ELPH_databases(k,E,q)
  call msg('s',':: Q-points(read)        :',DB_nq)
  call msg('s',':: Q-points(written)     :',elph_nQ)
  call msg('s',':: K-points              :',DB_nk)
- call msg('s',':: Bands                 :',DB_nb)
+ call msg('s',':: Bands (all)           :',DB_nb)
+ call msg('s',':: Bands (loading)       :',elph_bands)
  call msg('s',':: Branches              :',DB_ph_modes)
  call msg('s',':: Uniform sampling      :',elph_use_q_grid)
+ if(l_gkkp_expand_only_k) call msg('s',':: Q-points in the BZ     :',l_gkkp_expand_only_k)
  call msg('s',':: Symmetry expanded     :',l_gkkp_expand)
  if(l_gkkp_expand) call msg('s',':: Use qindx_B to expand gkkp     :',l_use_qindxB)
  call msg('s',':: Debye Energy          :',PH_W_debye*HA2EV*1000.,"[meV]")
@@ -280,8 +284,13 @@ subroutine ELPH_databases(k,E,q)
  enddo
  !
  !... GKKP
- call live_timing('ELPH databases: transfer and I/O',DB_nq)
  call section("*","== Q-points list in Yambo (iku units) ==")
+ !
+ db_name='gkkp'
+ if(l_gkkp_expand.or.l_gkkp_expand_only_k) db_name='gkkp_expanded'
+ !
+ call live_timing('ELPH databases: transfer and I/O',DB_nq)
+ !
  do idb=1,DB_nq
    !
    if(elph_use_q_grid) then
@@ -319,13 +328,13 @@ subroutine ELPH_databases(k,E,q)
        endif
        if (iq_bz==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
        if (iq_bz> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq_bz+1/),ID=ID)
-       io_err(3)=io_ELPH(ID,'gkkp_expanded')
+       io_err(3)=io_ELPH(ID,db_name)
        call msg('r','',PH_qpt(iq_bz,:),USE_TABS=.TRUE.)
      enddo
    else
      if (iq==1) call io_control(ACTION=OP_APP_CL,SEC=(/1,2/),ID=ID)
      if (iq> 1) call io_control(ACTION=OP_APP_CL,SEC=(/iq+1/),ID=ID)
-     io_err(3)=io_ELPH(ID,'gkkp')
+     io_err(3)=io_ELPH(ID,db_name)
      call msg('r','',PH_qpt(iq,:),USE_TABS=.TRUE.)
    endif
    !

@@ -294,6 +294,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
        l_gkkp_db   =STRING_match(rstr_piece(i1+1),'g')
        l_gkkp_dg   =STRING_match(rstr_piece(i1+1),'d')
        l_gkkp_plot =STRING_match(rstr_piece(i1+1),'p')
+       l_gkkp_sngl =STRING_match(rstr_piece(i1+1),'s')
      endif
 #endif
      if ( trim(rstr_piece(i1)) == 'dipoles') then
@@ -393,9 +394,10 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
  !
  if (l_eliashberg)        call initactivate(1,'eliashberg')
- if (l_gkkp.or.l_gkkp_db) call initactivate(1,'gkkp')
+ if (l_gkkp.or.l_gkkp_db.or.l_gkkp_sngl) call initactivate(1,'gkkp')
  if (l_gkkp_db)           call initactivate(1,'gkkp_db')
  if (l_gkkp_dg)           call initactivate(1,'gkkp_dg')
+ if (l_gkkp_sngl)         call initactivate(1,'gkkp_sngl')
  if (l_gkkp_plot)         call initactivate(1,'gkkp_plot')
  if (l_ph_ass_dos)        call initactivate(1,'ph_ass_dos')
  !
@@ -452,6 +454,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_phonons   =runlevel_is_on('phonons')
  l_gkkp      =runlevel_is_on('gkkp')
  l_gkkp_db   =runlevel_is_on('gkkp_db')
+ l_gkkp_sngl =runlevel_is_on('gkkp_sngl')
  l_gkkp_dg   =runlevel_is_on('gkkp_dg')
  l_gkkp_plot =runlevel_is_on('gkkp_plot')
  l_ph_ass_dos=runlevel_is_on('ph_ass_dos').and.runlevel_is_on('excitons')
@@ -587,7 +590,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
  if (l_flag) then
    call initactivate(1,"OutputAlat cooIn cooOut NormN NelFac")
-   if (l_bands) call initactivate(1,"BANDS_bands")
+   if (l_bands) call initactivate(1,"NelCond BANDS_bands")
    call initactivate(1,"CIRCUIT_E_DB_path BANDS_path BANDS_steps BANDS_built_in")
  endif
  if (l_flag) then
@@ -706,6 +709,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #endif
    if (l_interp) then
      call initactivate(-1,"BSQindex")
+     call initactivate(1,"NelCond ExcMin EXCTemp AlphaQ")
      call initactivate(1,"INTERP_mode INTERP_Grid BANDS_steps cooIn cooOut")
      call initactivate(1,"PrtDOS DOSERange DOSESteps DOS_broad")
    endif
@@ -719,8 +723,13 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  endif
  !
 #if defined _YPP_ELPH
- if (l_gkkp_db)                call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand UseQindxB")
- if (l_gkkp_dg.or.l_gkkp_db)   call initactivate(1,"PHfreqF PHmodeF")
+ if (l_gkkp_db) then
+   call initactivate(1,"GkkpReadBare DBsPATH PHfreqF PHmodeF GkkpExpand GkkpExpOnlyK UseQindxB")
+   call initactivate(1,"GkkpBands GkkpSkipDW")
+ endif
+ if (l_gkkp_sngl)               call initactivate(1,"DBsPATH GkkpExpOnlyK UseQindxB")
+ if (l_gkkp_dg.or.l_gkkp_db)    call initactivate(1,"PHfreqF PHmodeF")
+ if (l_gkkp_dg.or.l_gkkp_db.or.l_gkkp_sngl)  call initactivate(-1,"ElecTemp")
  if (l_gkkp_dg)                call initactivate(1,"FineGd_mode SkipBorderPts EkplusQmode TestPHDGrid")
  if (l_gkkp_plot)              call initactivate(1,"Degen_Step cooOut")
  if (l_phonons.and.l_eliashberg)   call initactivate(1,"EE_Fermi EfGbroad")

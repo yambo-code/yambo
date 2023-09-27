@@ -27,12 +27,14 @@ function FREQUENCIES_damping(W,E)
  use frequency, ONLY:w_samp
  implicit none
  !
- real(SP)      :: FREQUENCIES_damping,E,beta
+ real(SP)      :: FREQUENCIES_damping
+ real(SP),     intent(in)  :: E
  type(w_samp)  :: W
  ! 
  ! Work Space
  !
- real(SP):: e1,e2,d1,d2,E_
+ real(SP) :: e1,e2,d1,d2,E_
+ real(SP) :: beta
  !
  e1=W%er(1)
  e2=W%er(2)

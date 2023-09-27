@@ -24,8 +24,8 @@
 subroutine k_build_map(k,k_save,kpoints_map,action_kind)
  !
  use pars,                ONLY:SP
- use zeros,               ONLY:k_rlu_zero
- use vec_operate,         ONLY:rlu_v_is_zero,c2a
+ use zeros,               ONLY:k_rlu_zero,k_iku_zero
+ use vec_operate,         ONLY:rlu_v_is_zero,c2a,v_is_zero
  use R_lattice,           ONLY:bz_samp
  !
  implicit none
@@ -54,21 +54,35 @@ subroutine k_build_map(k,k_save,kpoints_map,action_kind)
  if(action_kind==2) nk=k_save%nibz
  !
  kpoints_map=0
+ if(action_kind==2) kpoints_map(2, : )=-1
+ !
  do ik=1,k%nibz 
-   do ik_save=1,k_save%nbz
+   do ik_save=1,nk
      if(action_kind==1) v1=k_save%ptbz(ik_save,:)
      if(action_kind==2) v1=k_save%pt(ik_save,:)
      !
-     call c2a(v_in=v1,mode='ki2a')
-     call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
+     ! DEBUG <
+     !call c2a(v_in=v1,mode='ki2a')
+     !call c2a(v_in=k%pt(ik,:),v_out=v2,mode='ki2a')
+     ! DEBUG >
+     v2=k%pt(ik,:)
      !
-     if (rlu_v_is_zero(v2-v1,zero_=k_rlu_zero)) then
+     ! 2022/05/25 DS: If we have problems with the following procedure,
+     !                It means that we need to use the procedure in between DEBUG
+     !                commands and track the Go shifts
+     !
+     ! DEBUG <
+     !if (rlu_v_is_zero(v2-v1,zero_=k_rlu_zero)) then
+     ! DEBUG >
+     if ( v_is_zero(v1-v2,k_iku_zero) ) then
        if(action_kind==1) kpoints_map(:, ik ) = k_save%sstar(ik_save,:)
        if(action_kind==2) kpoints_map(1, ik ) = ik_save
        exit 
      endif
    enddo
  enddo
+ !
+ if ( any(kpoints_map==0) ) call error(" kpoints map is not complete")
  !
  if(action_kind==2) return
  !

@@ -39,15 +39,17 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
 &                        PAR_COM_Q_A2A
  ! IND
  use parallel_m,    ONLY:PAR_IND_QP,PAR_IND_Q_ibz,PAR_IND_G_b,PAR_IND_Q_bz,PAR_IND_Xk_ibz,PAR_IND_G_k,&
-&                        PAR_IND_DIPk_bz,PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz
+&                        PAR_IND_DIPk_bz,PAR_IND_DIPk_ibz,PAR_IND_OVLPk_ibz,PAR_IND_Xk_bz
  ! INDEX
- use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index,PAR_IND_Bp_mat
+ use parallel_m,    ONLY:PAR_QP_index,PAR_Q_ibz_index,PAR_Q_bz_index,PAR_G_bands_index,PAR_IND_Bp_mat,&
+&                        PAR_Xk_ibz_index,PAR_Xk_bz_index
  ! DIMENSIONS
- use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ_ibz,PAR_nQ_bz,PAR_nQP,PAR_n_Bp_mat_elements
+ use parallel_m,    ONLY:PAR_nG_bands,PAR_nQ_ibz,PAR_nQ_bz,PAR_nQP,PAR_n_Bp_mat_elements,&
+&                        PAR_Xk_nbz,PAR_Xk_nibz
  ! ID's
- use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
+ use parallel_m,    ONLY:PAR_IND_Xk_ibz_ID,PAR_IND_Xk_bz_ID,PAR_IND_G_b_ID,PAR_IND_QP_ID,PAR_IND_Q_ibz_ID,PAR_IND_Q_bz_ID
 #if defined _SC
- use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_bz
+ use parallel_m,    ONLY:PAR_COM_Xk_ibz_INDEX
 #endif
 #if defined _SC || defined _RT || defined _QED
  use drivers,       ONLY:l_elphoton_corr,l_life,l_real_time,l_sc_run
@@ -186,9 +188,21 @@ subroutine PARALLEL_global_Self_Energy(E,Xk,q)
  if (trim(WHAT)=="ibz".or.trim(WHAT)=="RIM") then
    call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                PAR_IND_Q_ibz,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+   PAR_Xk_nibz=PAR_IND_Xk_ibz%n_of_elements(PAR_IND_Xk_ibz_ID+1)
+   !
+   ! ... indexes
+   !
+   YAMBO_ALLOC(PAR_Xk_ibz_index,(nXkibz))
+   call PAR_build_index(PAR_IND_Xk_ibz,nXkibz,PAR_Xk_ibz_index,PAR_Xk_nibz)
  else if (trim(WHAT)=="bz") then
    call PARALLEL_add_Q_to_K_list('k_qp_q_'//trim(WHAT),PAR_IND_QP,PAR_IND_QP_ID,PAR_IND_Xk_ibz,PAR_IND_Xk_ibz_ID,&
 &                                PAR_IND_Q_bz,PAR_COM_QP_INDEX,(/0,0/),Xk,q)
+   PAR_Xk_nbz=PAR_IND_Xk_bz%n_of_elements(PAR_IND_Xk_bz_ID+1)
+   !
+   ! ... indexes
+   !
+   YAMBO_ALLOC(PAR_Xk_bz_index,(nXkbz))
+   call PAR_build_index(PAR_IND_Xk_bz,nXkbz,PAR_Xk_bz_index,PAR_Xk_nbz)
  endif
  !
  ! G bands

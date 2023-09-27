@@ -21,7 +21,7 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine Bare_Hamiltonian(E,Xk,k)
+subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
  !
  use pars,           ONLY:cZERO
  use electrons,      ONLY:levels,n_sp_pol,spin,n_spin
@@ -36,16 +36,15 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  use interfaces,     ONLY:el_density_and_current,el_magnetization,WF_load
  use H_interfaces,   ONLY:V_real_space_to_H
  use timing_m,       ONLY:timing
+ use parser_m,       ONLY:parser
 #if defined _SC
- use drivers,        ONLY:l_sc_run
+ use drivers,        ONLY:l_sc_run,l_sc_magnetic
 #endif
 #if defined _RT
  use drivers,        ONLY:l_real_time
  use real_time,      ONLY:REF_V_xc_sc,REF_V_hartree_sc,rho_reference,magn_reference
 #endif
-#if defined _SC
- use drivers,        ONLY:l_sc_magnetic
-#endif
+ !
 #include<memory.h>
  !
  type(levels)             :: E
@@ -57,8 +56,12 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  Hzero=cZERO
  !
- call timing('Bare_Hamiltonian',OPR='start')
+ call timing('Bare_Hamiltonian_as_E_ks_minus_Vxc',OPR='start')
  !
+ ! [DEBUG>]
+ open(1, file='REF_Hbare_real.dat')
+ open(2, file='REF_Hbare_imag.dat')
+ ! [<DEBUG]
 #if defined _SC
  !
  if (l_sc_magnetic) then
@@ -76,7 +79,7 @@ subroutine Bare_Hamiltonian(E,Xk,k)
    !
    call Pseudo_KB_G_to_R_space(k,E)
    call Pseudo_Hamiltonian(Xk,E,.true.)
-   call Pseudo_Hamiltonian(Xk,E,.false.)
+   !call Pseudo_Hamiltonian(Xk,E,.false.)
    !
  endif
  !
@@ -152,6 +155,16 @@ subroutine Bare_Hamiltonian(E,Xk,k)
      !
      call V_qp_basis_to_H(ik,i_sp_pol,-QP_Vxc,Hzero(:,:,ik,i_sp_pol))
      !
+     ! [DEBUG>]
+     write (*,*) "H_bare (ik,i_sp_pol) ",ik,i_sp_pol
+     write(1,*) "#Re H_bare (ik,i_sp_pol) ",ik,i_sp_pol
+     write(2,*) "#Im H_bare (ik,i_sp_pol) ",ik,i_sp_pol
+     do ib=H_ref_bands(1),H_ref_bands(2)
+       write(*,*) Hzero(ib,:,ik,i_sp_pol)
+       write(1,*) real (Hzero(ib,:,ik,i_sp_pol))
+       write(2,*) aimag(Hzero(ib,:,ik,i_sp_pol))
+     enddo
+     ! [<DEBUG]
    enddo
    !
  enddo
@@ -172,6 +185,10 @@ subroutine Bare_Hamiltonian(E,Xk,k)
  !
  call PP_redux_wait(Hzero)
  !
- call timing('Bare_Hamiltonian',OPR='stop')
+ close(2)
+ close(1)
+ write (*,*) "End of Bare Hamiltonian as E_ks-V_xc "
  !
-end subroutine Bare_Hamiltonian
+ call timing('Bare_Hamiltonian_as_E_ks_minus_Vxc',OPR='stop')
+ !
+end subroutine Bare_Hamiltonian_as_E_ks_minus_Vxc

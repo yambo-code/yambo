@@ -49,7 +49,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use D_lattice,  ONLY:i_space_inv,inv_index,n_atoms_species_max,n_atomic_species,mag_syms,&
 &                     input_Tel_is_negative,non_periodic_directions,lattice,Bose_Temp,    &
 &                     molecule_position
- use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim
+ use pseudo,     ONLY:pp_n_l_times_proj_max,pp_kbv_dim,l_use_p2_Vloc_becp
  use R_lattice,  ONLY:n_g_shells,ng_closed,bse_scattering,coll_scattering,&
 &                     Xk_grid_is_uniform,RIM_id_epsm1_reference,RIM_epsm1,&
 &                     RIM_anisotropy,RIM_ng,RIM_W_ng,rimw_type,RIM_n_rand_pts,nqibz,q0_def_norm,&
@@ -581,7 +581,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  l_force_SndOrd =.FALSE.
  !
 #endif
- !
+ ! [FP]
+ l_use_p2_Vloc_becp=.false.
+ ! [FP]
 #if defined _RT
  !
  ! Real Time

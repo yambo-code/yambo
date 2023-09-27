@@ -108,7 +108,7 @@ subroutine RT_start_and_restart(E,k,q)
    call              el_density_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,rho_reference,1)
    if(n_spin>1) call el_magnetization_matrix(G_lesser_reference(:,:,PAR_G_k_range(1):PAR_G_k_range(2)),E,k,magn_reference,1)
    !
-   call Bare_Hamiltonian(E,k,k)
+   call Bare_Hamiltonian_as_E_ks_minus_Vxc(E,k,k)
    !
    ! Reference Hartree and XC
    !==========================

@@ -21,13 +21,14 @@
 ! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
 ! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
-subroutine XCo_driver(E,k,Xk,q)
+subroutine XCo_driver(E,k,Xk,q,Dip)
  !
  use zeros,         ONLY:zero_dfl
  use drivers,       ONLY:l_acfdt,l_sc_run,l_real_time
  use pars,          ONLY:schlen,cZERO
  use electrons,     ONLY:levels
  use R_lattice,     ONLY:bz_samp
+ use DIPOLES,       ONLY:DIPOLE_t
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:OP_RD_CL,OP_WR_CL,VERIFY,REP
  use QP_m,          ONLY:XCo_Hartree_Fock,QP_t,Vxc_kind,Vnlxc_kind,&
@@ -36,7 +37,9 @@ subroutine XCo_driver(E,k,Xk,q)
  use wave_func,     ONLY:WF
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
+ use parser_m,      ONLY:parser 
 #if defined _SC
+ use pseudo,        ONLY:l_use_p2_Vloc_becp
  use hamiltonian,   ONLY:l_sc_V_is_local
  use global_XC,     ONLY:H_SE_FOCK,H_SE_HARTREE,H_SE_COH,H_SE_SEX
 #endif
@@ -45,6 +48,7 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  type(levels) ::E       
  type(bz_samp)::k,Xk,q
+ type(DIPOLE_t),optional ::Dip
  !
  ! Reporting
  !
@@ -52,6 +56,8 @@ subroutine XCo_driver(E,k,Xk,q)
  integer           ::WF_kind_no_H
  logical           ::l_section,l_load_SC_V
  logical           ::l_Vxc,l_Vnl_xc,l_screen_hyb
+ ! Vxc from libxc or from H-Hbare
+ logical           ::l_use_libxc,l_use_qe_pseudo
  type(QP_t)        ::qp
  !
  ! IO
@@ -104,7 +110,7 @@ subroutine XCo_driver(E,k,Xk,q)
  if (.not.l_Vxc.and..not.l_Vnl_xc) then
   if (l_sc_run) call QP_XCo_alloc(l_Vxc,l_Vnl_xc,l_screen_hyb)
   return
- endif
+ endif 
  !
  ! Section
  !
@@ -157,7 +163,7 @@ subroutine XCo_driver(E,k,Xk,q)
      call XCo_Hartree_Fock(E,k,xk,q,mode='hyb')
      QP_Vnl_sex=QP_Vnl_xc                        
      QP_Vnl_xc=cZERO                                
-   end if
+   endif
    !
    ! ... pure HF
    !
@@ -170,14 +176,34 @@ subroutine XCo_driver(E,k,Xk,q)
  !
  if (l_Vxc) then
    !
-   call XCo_local(E,Xk)
+   l_use_libxc=.true.
+#if defined _SC
+   ! l_use_p2_Vloc_becp changes the behaviour of WF_load causing
+   ! it to enter uspp sections in order to get Hbare parameters
+   call parser('BareHfromScratch', l_use_p2_Vloc_becp)
+   l_use_libxc=.not.l_use_p2_Vloc_becp
+   l_use_qe_pseudo=l_use_p2_Vloc_becp 
+#endif
    !
-   if (.not.l_screen_hyb) then
-     QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
-   else
-     QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
-     call QP_XCo_free(l_screen_hyb=.true.)
+   if (l_use_libxc) then 
+     !
+     call XCo_local(E,Xk)
+     !
+     if (.not.l_screen_hyb) then
+       QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_xc !Hybridize...
+     else
+       QP_Vxc = QP_Vxc + WF_exx_fraction*QP_Vnl_sex 
+       call QP_XCo_free(l_screen_hyb=.true.)
+     endif
+     !
    endif
+   !
+#if defined _SC
+   if (l_use_qe_pseudo) call XCo_from_H_minus_Hbare(E,Xk,k,Dip)
+   !
+   ! Now WF_load can be safely called again
+   l_use_p2_Vloc_becp=.false.
+#endif
    !
  endif
  !

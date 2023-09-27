@@ -31,7 +31,7 @@ subroutine XCo_local(E,Xk)
  use R_lattice,     ONLY:bz_samp
  use FFT_m,         ONLY:fft_size
  use wave_func,     ONLY:WF
- use xc_functionals,ONLY:E_xc,V_xc,XC_potential_driver,magn,XC_potential_driver
+ use xc_functionals,ONLY:E_xc,V_xc,XC_potential_driver,magn
  use global_XC,     ONLY:WF_xc_functional,WF_exx_fraction,WF_exx_screening,WF_kind
  use wrapper_omp,   ONLY:Vstar_dot_V_omp
  use parallel_m,    ONLY:PAR_IND_WF_linear 
@@ -52,6 +52,7 @@ subroutine XCo_local(E,Xk)
  use SC,            ONLY:load_SC_components,SC_fft_size,compatible_SC_DB
 #endif
  use timing_m,      ONLY:timing
+ use parser_m,      ONLY:parser
  !
 #include<memory.h>
  !
@@ -70,7 +71,11 @@ subroutine XCo_local(E,Xk)
  !
  complex(SP), allocatable :: V_xc_mat(:,:,:)
  !
+ ! Debug
+ logical :: l_write_Vxc
+ !
  call timing('XCo_local',OPR="start")
+ call parser('WriteVxc',l_write_Vxc) ! only for testing purposes
  !
  ! Allocation 
  !
@@ -180,6 +185,24 @@ subroutine XCo_local(E,Xk)
    call LOCAL_clean( )
    !
    call timing('XCo_local',OPR="stop")
+   !
+   ![DEBUG>]
+   if (l_write_Vxc) then
+     open(4, file='QPVxc_REF.dat')
+     do i1=1,QP_n_states
+      !
+      ib =QP_table(i1,1)
+      ibp=QP_table(i1,2)
+      ik =QP_table(i1,3)
+      i_sp_pol=spin(QP_table(i1,:))
+      !
+      write(4,*) "#QP_Vxc (ik,i_sp_pol,ib,ibp) ",ik,i_sp_pol,ib,ibp
+      write(4,*) QP_Vxc(i1)
+      !
+     enddo
+     close(4)
+   endif
+   ![DEBUG<]
    !
    return
    !

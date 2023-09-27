@@ -199,9 +199,15 @@ subroutine G_shells_finder()
  enddo
  !
  if (n_g_shells_no_holes/=n_g_shells) then
-   call warning(' Found non closed shells. Max cutoff will be reduced.')
-   call warning(' Set Gthresh>1.E-5 in input to avoid this. Too big Gthresh will pack shells together')
-   call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
+   !
+   if(G_mod_zero/=1.E-5) then
+     call warning(' Found non closed shells. Max cutoff will be reduced.')
+     call warning(' Try to change Gthresh in input to avoid this. Too big Gthresh will pack shells together')
+     call msg('rn','Full and reduced cutoff',(/E_of_shell_TMP(n_g_shells_no_holes),E_of_shell_TMP(n_g_shells)/)*1000._SP,'[mHa]')
+   else
+     call error(' Found non closed shells. Set Gthresh>1.E-5 in input to avoid this.')
+   endif
+   !
  endif
  !
  n_g_shells=n_g_shells_no_holes

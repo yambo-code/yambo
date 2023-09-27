@@ -30,6 +30,7 @@
  io_RT_components_header.o
  io_SC_components.o
  io_USPP_pwscf.o
+ io_VLOC_pwscf.o
  io_Vnl.o
  io_WF.o
  io_X.o

@@ -1,5 +1,7 @@
- Bare_Hamiltonian.o
+ Bare_Hamiltonian_as_E_ks_minus_Vxc.o
+ Bare_Hamiltonian_from_Scratch.o
  Check_symmetries.o
+ FFT_vloc_G_to_R.o
  Pseudo_Hamiltonian.o
  Pseudo_KB_FFT.o
  Pseudo_KB_G_to_R_space.o

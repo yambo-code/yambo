@@ -53,6 +53,7 @@ subroutine PP_compute_becp(becp, npwk, wf_nb, wf_c, wf_b_indx)
  !
  ! checks
  !
+ !write (*,*) 'PP_compute_becp: pp_is_uspp is ',pp_is_uspp 
  if (.not.pp_is_uspp) return
  if (.not.qe_pseudo_alloc) call error(' [PP] qe_pseudo not alloc in PP_compute_becp')
  call timing("PP_compute_becp","start")

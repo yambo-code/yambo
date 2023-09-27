@@ -63,6 +63,8 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  use collision_ext,  ONLY:COH_COLL_element,HXC_COLL_element,COLLISIONS_have_HARTREE
  use electrons,      ONLY:Spin_magn
  use electric,       ONLY:ELECTRIC_alloc,ELECTRIC_free,W_electric
+ use parser_m,       ONLY:parser
+ use pseudo,         ONLY:l_use_p2_Vloc_becp 
  !
 #include<memory.h>
  !
@@ -148,6 +150,10 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
 #if defined _ELECTRIC
  l_load_dipoles=l_load_dipoles.or.l_sc_electric
 #endif
+ ! [FP]
+ call parser('BareHfromScratch', l_use_p2_Vloc_becp)
+ !l_load_dipoles=l_load_dipoles.or.l_use_p2_Vloc_becp
+ ! [FP]
  if ( l_load_dipoles ) then
    call DIPOLE_dimensions(E,Dip,SC_bands,(/0._SP,0._SP,0._SP/))
    call DIPOLE_IO(k,E,Dip,'read ',io_DIP_err,"SC")
@@ -201,7 +207,15 @@ subroutine SC_driver(X,Xw,Xk,E,k,q,Dip)
  !
  !  Hzero (kinetic + potential)
  !=============================
- call Bare_Hamiltonian(E,Xk,k)
+ !
+ ! [FP]
+ if (l_use_p2_Vloc_becp) then 
+   call Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
+ else
+   call Bare_Hamiltonian_as_E_ks_minus_Vxc(E,Xk,k)
+ endif
+ l_use_p2_Vloc_becp=.false.
+ ! [FP]
  !
  call OCCUPATIONS_Fermi(E,k,"E",mode="OCCUPATIONS") 
  !

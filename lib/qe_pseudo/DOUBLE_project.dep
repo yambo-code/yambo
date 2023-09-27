@@ -9,6 +9,7 @@
  init_us_0.o
  init_us_1.o
  init_us_2.o
+ init_vloc.o
  invmat.o
  kind.o
  matches.o
@@ -38,5 +39,7 @@
  upf_to_internal.o
  us_module.o
  uspp.o
+ vloc_of_g.o
+ vlocal.o
  ylmr2.o
 

@@ -203,7 +203,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  driver_now=l_HF_and_locXC.and..not.any((/l_sc_run,l_eval_collisions,l_real_time/))
  !
- if (driver_now) call XCo_driver(en,k,Xk,q)
+ if (driver_now) call XCo_driver(en,k,Xk,q,Dip)
  if (driver_now) call mem_manager_report
  !
  ! EXTENDED COLLISIONS 

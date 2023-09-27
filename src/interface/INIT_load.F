@@ -679,6 +679,12 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  call it('f',defs,'Mean_Potential','[SC] Real-space Mean Potential',verb_level=V_sc)
  call it('f',defs,'SCnlMix','[SC] Use SC non-local mixing',verb_level=V_sc)
  call it('f',defs,'FrozeDensity','[NL] Do not update density (for testing purposes)',verb_level=V_sc)
+ ! [FP]
+ call it('f',defs,'BareHfromScratch','Compute bare H_0 from scratch with p**2, Vloc and becp%k')
+ call it('f',defs,'BareHScaleFermi','Shift BareH matrix elements by Fermi energy')
+ call it('f',defs,'WriteHsc','Print Hamiltonian matrix elements (for testing purpose)')
+ !
+ ! [FP]
  !
  ! SC [NEQ]
  !

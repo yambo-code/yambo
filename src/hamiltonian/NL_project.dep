@@ -1,9 +1,11 @@
- Bare_Hamiltonian.o
+ Bare_Hamiltonian_as_E_ks_minus_Vxc.o
+ Bare_Hamiltonian_from_Scratch.o
  Berry_polarization_NEQ.o
  Build_Overlaps_det_NEQ.o
  Build_W_operator.o
  Build_tilde_vbands.o
  Check_symmetries.o
+ FFT_vloc_G_to_R.o
  V_Hartree.o
  V_qp_basis_to_H.o
  V_real_space_to_H.o

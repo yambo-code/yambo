@@ -297,10 +297,10 @@ module D_lattice
           !
         enddo search_loop
         !
-        if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
-        !
      enddo
      enddo
+     !
+     if (any(map(:,:)==0)) call error(' [Atoms] incomplete mapping found')
      !
      YAMBO_FREE(tau_)
      !

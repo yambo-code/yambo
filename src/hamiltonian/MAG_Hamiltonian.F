@@ -93,7 +93,7 @@ subroutine MAG_Hamiltonian()
  H_magn_z_on=allocated(A_magn_z)
  !
  ! Symmetries check
- call Check_symmetries((/Bx,By,Bz/),"magnetic")
+ !call Check_symmetries((/Bx,By,Bz/),"magnetic")
  !
  call local_alloc(0) 
  !

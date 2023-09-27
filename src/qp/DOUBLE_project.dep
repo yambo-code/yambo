@@ -22,6 +22,7 @@
  QP_states_simmetrize.o
  XCo_Hartree_Fock.o
  XCo_driver.o
+ XCo_from_H_minus_Hbare.o
  XCo_local.o
  XCo_report.o
 

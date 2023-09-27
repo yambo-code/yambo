@@ -60,7 +60,7 @@ contains
     allocate(tau(3,nat))
     !
     call allocate_nlpot()
-    ! 
+    !
   end subroutine
 
   subroutine qe_pseudo_deallocate()

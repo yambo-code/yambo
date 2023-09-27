@@ -38,6 +38,9 @@ subroutine p2y_pseudo(k)
  use IO_int,                ONLY:io_control
  use IO_m,                  ONLY:OP_WR_CL,OP_APP_CL,REP
  use read_pseudo_mod,       ONLY:readpp
+ use mod_com2y,             ONLY:write_Vloc_Vnl
+ use pw_data,               ONLY:ngm_,nsp_
+ use vlocal,                ONLY:vloc_yambo
  !
  implicit none
  !
@@ -49,12 +52,14 @@ subroutine p2y_pseudo(k)
  !
  ! Work space
  !
- integer        :: ngmax,ID,ibeta,ik,io_err,itype
+ integer        :: ngmax,ID,ibeta,ik,io_err,itype,ID_vloc
  character(64)  :: input_dft="none"
+ logical        :: l_Vnl
  !
  integer, external :: io_KB_pwscf
  integer, external :: io_NLCC_pwscf
  integer, external :: io_USPP_pwscf
+ integer, external :: io_VLOC_pwscf
  !
  interface
     subroutine fill_basis(basis,struct,ik,ngmax)
@@ -87,57 +92,67 @@ subroutine p2y_pseudo(k)
  !
  call pw_basis_init(basis_con,struct)
  !
- if( all(atoms%pseudo(:)%nbeta==0) ) return
- pp_n_l_times_proj_max=maxval((/atoms%pseudo(:)%nbeta/))
+ l_Vnl=.true.
+ if( all(atoms%pseudo(:)%nbeta==0) ) l_Vnl=.false. 
  !
- allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
- allocate(pp_n_l_comp(n_atomic_species))
- call PP_alloc_PWscf()
- pp_table=0
+ if(.not.l_Vnl.and..not.write_Vloc_Vnl) return
  !
- pp_n_l_max=0
- do itype=1,n_atomic_species
-   pp_n_l_comp(itype)=maxval((/atoms%pseudo(itype)%lbeta(:)/))
-   if(atoms%pseudo(itype)%nbeta==0) pp_n_l_comp(itype)=0   
-   do ibeta=1,atoms%pseudo(itype)%nbeta
-     pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
-     pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1
-     pp_table(2,itype,ibeta) = 0
-     if(atoms%pseudo(itype)%has_so) &
-&      pp_table(2,itype,ibeta) = nint(2._SP*atoms%pseudo(itype)%jbeta(ibeta))   ! 2j
+ if(l_Vnl) then
+   !
+   pp_n_l_times_proj_max=maxval((/atoms%pseudo(:)%nbeta/))
+   !
+   allocate(pp_table(3,n_atomic_species,pp_n_l_times_proj_max))
+   allocate(pp_n_l_comp(n_atomic_species))
+   call PP_alloc_PWscf()
+   pp_table=0
+   !
+   pp_n_l_max=0
+   do itype=1,n_atomic_species
+     pp_n_l_comp(itype)=maxval((/atoms%pseudo(itype)%lbeta(:)/))
+     if(atoms%pseudo(itype)%nbeta==0) pp_n_l_comp(itype)=0   
+     do ibeta=1,atoms%pseudo(itype)%nbeta
+       pp_n_l_max=(max(pp_n_l_max,atoms%pseudo(itype)%lbeta(ibeta)+1))
+       pp_table(1,itype,ibeta) = atoms%pseudo(itype)%lbeta(ibeta)+1               ! l+1
+       pp_table(2,itype,ibeta) = 0
+       if(atoms%pseudo(itype)%has_so) &
+&        pp_table(2,itype,ibeta) = nint(2._SP*atoms%pseudo(itype)%jbeta(ibeta))   ! 2j
+     enddo
    enddo
- enddo
- pp_table(3,:,:)=1                                                              ! pp_spin
- !
- call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
- io_err=io_KB_pwscf(ID)
- !
- do ik=1,k%nibz
-   !
-   call fill_basis(basis_con,struct,ik,ngmax)
-   call PP_PWscf_comp(basis_con,atoms)
-   !
-   ! Write pseudovelocity to disk
-   !
-   call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/ik+1/),ID=ID)
-   io_err=io_KB_pwscf(ID)
-   !
- end do
- !
- ! write NLCC info if needed
- !
- if( any(atoms%pseudo(:)%has_nlcc) ) then
-   !
-   call PP_nlcc_alloc()
-   !
-   call fill_basis_rho(basis_con,struct,ng_vec)
-   call PP_PWscf_comp_nlcc(basis_con,atoms)
+   pp_table(3,:,:)=1                                                              ! pp_spin
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
-   io_err=io_NLCC_pwscf(ID)
+   io_err=io_KB_pwscf(ID)
    !
-   call PP_nlcc_free()
+   do ik=1,k%nibz
+     !
+     call fill_basis(basis_con,struct,ik,ngmax)
+     call PP_PWscf_comp(basis_con,atoms)
+     !
+     ! Write pseudovelocity to disk
+     !
+     call io_control(ACTION=OP_APP_CL,COM=REP,SEC=(/ik+1/),ID=ID)
+     io_err=io_KB_pwscf(ID)
+     !
+   end do
    !
+   ! write NLCC info if needed
+   !
+   if( any(atoms%pseudo(:)%has_nlcc) ) then
+     !
+     call PP_nlcc_alloc()
+     !
+     call fill_basis_rho(basis_con,struct,ng_vec)
+     call PP_PWscf_comp_nlcc(basis_con,atoms)
+     !
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
+     io_err=io_NLCC_pwscf(ID)
+     !
+     call PP_nlcc_free()
+     !
+   endif
+   !
+ else
+   call warning(' Pseudo-potentials contain only local part!! ')
  endif
  !
  ! write USPP data
@@ -147,13 +162,24 @@ subroutine p2y_pseudo(k)
  !
  call pre_init()
  call allocate_nlpot()
- !
- if ( any(atoms%pseudo(:)%is_uspp) ) then
+ ! [FP]
+ if ( any(atoms%pseudo(:)%is_uspp) .or. write_Vloc_Vnl ) then
    !
 #ifndef _USPP
-   call error("[PPs] Ultrasoft PP not supported")
+   if (.not. write_Vloc_Vnl) call error("[PPs] Ultrasoft PP not supported")
 #endif
+   ! [FP]
    call init_us_1()
+   !
+   if (write_Vloc_Vnl) then
+     !
+     allocate(vloc_yambo(ngm_,nsp_))
+     call set_vloc_yambo()
+     !
+     call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID_vloc)
+     io_err = io_VLOC_pwscf(ID_vloc)
+     !
+   endif
    !
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID)
    io_err=io_USPP_pwscf(ID)
@@ -165,7 +191,8 @@ subroutine p2y_pseudo(k)
  ! cleanup
  !
  call PP_free()
- deallocate(pp_table,pp_n_l_comp)
+ if (allocated(pp_table))   deallocate(pp_table,pp_n_l_comp)
+ if (allocated(vloc_yambo)) deallocate(vloc_yambo) 
  !
  return
  !
@@ -325,3 +352,32 @@ subroutine fill_basis_rho(basis,struct,ngmax)
  ! 
  return
 end subroutine fill_basis_rho
+!
+subroutine set_vloc_yambo()
+ use gvect,     ONLY: ngl,igtongl,gshells
+ use pw_data,   ONLY: ngm_,nsp_
+ use vlocal,    ONLY: vloc,vloc_yambo
+ implicit none
+ integer :: ig
+ !
+ ! Allocate shells: gl, ngl, igtongl
+ !
+ call gshells()
+ !
+ ! QE vloc without strf is dimensioned over |G|^2 shells (ngl)
+ !
+ allocate(vloc(ngl,nsp_))
+ !
+ ! Calculate QE vloc
+ !
+ call init_vloc()
+ !
+ ! Set up vloc as a function of Gvects and not Gshells
+ !
+ do ig=1,ngm_
+   vloc_yambo(ig,:) = vloc(igtongl(ig),:)
+ enddo
+ !
+ deallocate(vloc)
+ !
+end subroutine set_vloc_yambo 

@@ -78,7 +78,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  !
  integer           :: ik,io_err
  character(schlen) :: msg
- logical           :: l_warning,use_dipole_transverse,idir_not_done(3)
+ logical           :: l_warning,use_dipole_transverse,idir_not_done(3),l_Hbare
  !
  call timing('Dipoles',OPR='start')
  !
@@ -107,6 +107,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
    endif
  endif
 #endif
+ ! Needed for kinetic part of bare Hamiltonian
+ call parser('BareHfromScratch', l_Hbare)
  !
  ! Setup logicals 
  !================
@@ -118,6 +120,8 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
  compute_P2_dipoles          = index(Dip%computed,"P2")  /=0
  compute_Spin_dipoles        = index(Dip%computed,"Spin")/=0
  compute_Orb_dipoles         = index(Dip%computed,"Orb") /=0
+
+ compute_P2_dipoles          = compute_P2_dipoles .or. l_Hbare
 #if defined _SC
  compute_P2_dipoles          = compute_P2_dipoles .or. l_sc_run
 #endif

@@ -79,6 +79,9 @@ module pseudo
  logical                 :: qe_pseudo_alloc=.FALSE. 
  integer,     allocatable:: qe_atoms_map(:,:)
  type(bec_type), allocatable:: becp(:,:)
+ ! [FP] Direct H bare calculation (testing)
+ logical              :: l_use_p2_Vloc_becp
+ ! [FP]
  !
  ! PW (OLD)
  !=========

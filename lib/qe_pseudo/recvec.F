@@ -122,6 +122,62 @@
        IF( ALLOCATED( igtongl ) ) DEALLOCATE( igtongl )
        IF( ALLOCATED( ig_l2g ) ) DEALLOCATE( ig_l2g )
      END SUBROUTINE deallocate_gvect_exx
+
+     !-----------------------------------------------------------------------
+     SUBROUTINE gshells ( )!vc )
+        !----------------------------------------------------------------------
+        !
+        ! calculate number of G shells: ngl, and the index ng = igtongl(ig)
+        ! that gives the shell index ng for (local) G-vector of index ig
+        !
+        USE kinds,              ONLY : DP
+        USE constants,          ONLY : eps8
+        !
+        IMPLICIT NONE
+        !
+        !LOGICAL, INTENT(IN) :: vc
+        !
+        INTEGER :: ng, igl
+        !
+        ! [FP]
+        ALLOCATE( igtongl(ngm) )
+        ! [FP]
+        !IF ( vc ) THEN
+           !
+           ! in case of a variable cell run each G vector has its shell
+           !
+           !ngl = ngm
+           !gl => gg
+           !DO ng = 1, ngm
+           !   igtongl (ng) = ng
+           !ENDDO
+        !ELSE
+           !
+           ! G vectors are grouped in shells with the same norm
+           !
+        ngl = 1
+        igtongl (1) = 1
+        DO ng = 2, ngm
+           IF (gg (ng) > gg (ng - 1) + eps8) THEN
+              ngl = ngl + 1
+           ENDIF
+           igtongl (ng) = ngl
+        ENDDO
+
+        ALLOCATE (gl( ngl))
+        gl (1) = gg (1)
+        igl = 1
+        DO ng = 2, ngm
+           IF (gg (ng) > gg (ng - 1) + eps8) THEN
+              igl = igl + 1
+              gl (igl) = gg (ng)
+           ENDIF
+        ENDDO
+
+        IF (igl /= ngl) CALL errore ('gshells', 'igl <> ngl', ngl)
+
+        !ENDIF
+     END SUBROUTINE gshells
 !=----------------------------------------------------------------------------=!
    END MODULE gvect
 !=----------------------------------------------------------------------------=!

@@ -86,4 +86,11 @@ void options_interfaces(struct options_struct options[],int *i_opt)
  options[*i_opt].bin="a2y c2y";
  options[*i_opt].yambo_string="dupl";
  options[*i_opt].section="Interface";
+ *i_opt=*i_opt+1;
+ options[*i_opt].short_desc="Write V_loc and V_nl";
+ options[*i_opt].long_opt="pseudofull";
+ options[*i_opt].short_opt='p';
+ options[*i_opt].bin="p2y";
+ options[*i_opt].yambo_string="pseu";
+ options[*i_opt].section="Interface";
 };

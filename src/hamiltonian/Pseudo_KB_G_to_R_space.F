@@ -34,7 +34,7 @@ subroutine Pseudo_KB_G_to_R_space(Xk,Xen)
  use D_lattice,     ONLY:n_atomic_species,n_atoms_species
  use LIVE_t,        ONLY:live_timing
  use IO_int,        ONLY:io_control
- use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END
+ use IO_m,          ONLY:manage_action,OP_WR_CL,OP_RD,OP_IF_START_APP_CL_IF_END,RD_CL_IF_END,OP_APP_CL
  use timing_m,      ONLY:timing
  use parallel_int,  ONLY:PP_wait
  use parallel_m,    ONLY:master_cpu,PAR_IND_Xk_ibz_ID,PAR_IND_Xk_ibz

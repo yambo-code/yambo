@@ -90,8 +90,9 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      !
      max_step=1
 ! 
-!    Uncommenting this line a better approximation for the current is possible  
-!     if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+!    Using higher order for the k-derivative gives a worst result
+!    when compared with dP/dt for this reason this line is commented
+!    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
 !
      !
      do ikbz=1,nXkbz

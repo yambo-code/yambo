@@ -80,6 +80,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  isp  =1
  !
+ ! Calculate | \der_k v_k> and make the product < v_k | H_k | \der_k v_k >
+ !
  do id_red=1,3
    !
    if(k_map%max_kdir(id_red)/=1) then   

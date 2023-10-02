@@ -35,6 +35,7 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
+ use electric,	     ONLY:l_force_SndOrd
  !
  implicit none           
  !
@@ -88,8 +89,10 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
      !
      max_step=1
-     !
+! 
+!    Uncommenting this line a better approximation for the current is possible  
 !     if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+!
      !
      do ikbz=1,nXkbz
        !

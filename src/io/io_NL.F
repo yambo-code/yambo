@@ -26,7 +26,7 @@ integer function io_NL(what,ID)
  use pars,          ONLY:schlen
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
-&                        n_frequencies
+&                        n_frequencies,NL_J_t
  use real_time,     ONLY:NE_steps
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
@@ -148,6 +148,12 @@ integer function io_NL(what,ID)
  call io_bulk(ID_frag,R2=NL_P_t)
  !
  if(what=="Nonlinear_REF") goto 1
+ !
+ ! Current
+ !
+ write (VAR_name,'(a,i4.4)') 'NL_J_freq_',i_fragment
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(NL_J_t))
+ call io_bulk(ID_frag,R2=NL_J_t)
  !
  ! E_ext
  ! 

@@ -32,7 +32,7 @@ integer function io_NL(what,ID)
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
- use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,def_variable_elemental,&
 &                        io_fragment,io_elemental,io_variable_elemental
  use stderr,        ONLY:intc
  !
@@ -117,32 +117,34 @@ integer function io_NL(what,ID)
  ! Efields are stored in each fragment with the different parameters 
  !
  do i_Prb=1,n_ext_fields
-   call def_variable_elemental(ID,"Field_Name_"//trim(intc(i_Prb)),1,CR_YIO,0)
-   call io_variable_elemental(ID,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
+   call def_variable_elemental(ID_frag,"Field_Name_"//trim(intc(i_Prb)),1,CR_YIO,0)
+   call io_variable_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
 
-   call def_variable_elemental(ID,"Field_Versor_"//trim(intc(i_Prb)),3,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Versor                 ",R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
-   call def_variable_elemental(ID,"Field_Intensity_"//trim(intc(i_Prb)),1,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Intensity     ",TERMINATOR="[kWCMm2]",&
+   call def_variable_elemental(ID_frag,"Field_Versor_"//trim(intc(i_Prb)),3,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Versor                 ",R1=Efield(i_Prb)%versor, &
+&           WARN=.true.,OP=(/"==","==","=="/))
+   call def_variable_elemental(ID_frag,"Field_Intensity_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Intensity     ",TERMINATOR="[kWCMm2]",&
 &         R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
 
-   call def_variable_elemental(ID,"Field_Damping_"//trim(intc(i_Prb)),1,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Damping           ",TERMINATOR="[fs]",&
+   call def_variable_elemental(ID_frag,"Field_Damping_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Damping           ",TERMINATOR="[fs]",&
 &         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
 
-   call def_variable_elemental(ID,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
+   call def_variable_elemental(ID_frag,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
 &         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
 
-   call def_variable_elemental(ID,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency steps",I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
+   call def_variable_elemental(ID_frag,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency steps", &
+&   I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
 
-   call def_variable_elemental(ID,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)
-   call io_variable_elemental(ID,VAR="[FIELDs] Frequency step    ",TERMINATOR="[eV]",&
+   call def_variable_elemental(ID_frag,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency step    ",TERMINATOR="[eV]",&
 &         R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
 
-   call def_variable_elemental(ID,"Field_Initial_time_"//trim(intc(i_Prb)),1,SP,0)
-   call io_variable_elemental(ID,VAR=" [FIELDs] Initial time      ",TERMINATOR="[fs]",&
+   call def_variable_elemental(ID_frag,"Field_Initial_time_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR=" [FIELDs] Initial time      ",TERMINATOR="[fs]",&
 &         R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
 
  enddo

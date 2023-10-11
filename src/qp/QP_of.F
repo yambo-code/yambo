@@ -198,7 +198,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
      endif
      !
      do i_w=1,qp%GreenF_n_steps
-       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy"/),R_VALUES=(/real(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
+       call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Energy","IM(En)"/),&
+                              R_VALUES=(/real(qp%GreenF_W(i_qp,i_w)),aimag(qp%GreenF_W(i_qp,i_w))/),UNIT="eV")
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(G)","Im(G)"/),&
 &                         R_VALUES=(/real(qp%GreenF(i_qp,i_w)),aimag(qp%GreenF(i_qp,i_w))/),UNIT="eVm1")
        if (allocated(QP_Vxc).and.allocated(QP_Vnl_xc)) then
@@ -208,7 +209,8 @@ subroutine QP_of(qp,en,QPdb_read_err,what)
        call OUTPUT_driver(trim(G_sc_name),TITLES=(/"Re(S_tot)","Im(S_c)  "/),&
 &                         R_VALUES=(/real(qp%S_total(i_qp,i_w)),aimag(qp%S_total(i_qp,i_w))/),UNIT="eV")
        !
-       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Energ","Re(G)","Im(G)"/))
+       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Energy","Im(En)"/))
+       call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(G)","Im(G)"/))
        call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(S_tot)","Im(S_c)  "/))
        if (report_Vnlxc) call OUTPUT_driver(trim(G_sc_name),ORDER=(/"Re(S_c)"/))
        !

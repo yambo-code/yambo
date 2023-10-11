@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): AM
 !
-subroutine rim(mode)
+subroutine rim(mode,Xw)
  !
  use pars,          ONLY:SP,pi,DP
  use com,           ONLY:msg
@@ -20,6 +20,7 @@ subroutine rim(mode)
 &                        RIM_id_epsm1_reference,RIM_anisotropy,RIM_W,&
 &                        cut_is_slab,idir
  use timing_m,      ONLY:timing
+ use frequency,     ONLY:w_samp
  !
 #include<memory.h>
  !
@@ -27,9 +28,10 @@ subroutine rim(mode)
  !
  ! Work Space
  !
- type(PP_indexes)::px
- integer   :: iq
- real(SP)  :: em1_anis(3),G_radii,G_circ
+ type(PP_indexes)      ::px
+ type(w_samp),optional :: Xw
+ integer               :: iq
+ real(SP)              :: em1_anis(3),G_radii,G_circ
  !
  ! Random generator
  !
@@ -162,7 +164,7 @@ subroutine rim(mode)
    G_circ=0._SP
    N_out_G=0
  else if (mode == "c") then
-   YAMBO_ALLOC(RIM_W,(nqibz,RIM_W_ng,RIM_W_ng))
+   YAMBO_ALLOC(RIM_W,(Xw%n_freqs,nqibz,RIM_W_ng,RIM_W_ng))
    RIM_W=0._SP
  end if
  !
@@ -175,7 +177,7 @@ subroutine rim(mode)
    if (mode == "x") then
      call rim_integrate_v(iq,qr,em1_anis,N_out,N_out_G,G_radii,G_circ)
    else
-     call rim_integrate_w(iq,qr,N_out,em1_anis)
+     call rim_integrate_w(iq,qr,N_out,em1_anis,Xw)
    endif
    call live_timing(steps=1)
    !

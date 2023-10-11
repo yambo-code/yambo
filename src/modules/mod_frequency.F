@@ -40,6 +40,7 @@ module frequency
    real(SP)     :: per_memstps
    complex(SP),allocatable :: p(:)
    character(2) :: samp_type
+   character(2) :: samp_grid
    character(2) :: mpa_solver
    character(16):: grid_type
  end type w_samp
@@ -59,6 +60,7 @@ module frequency
        Wo%p=Wi%p
      endif
      Wo%samp_type=Wi%samp_type
+     Wo%samp_grid=Wi%samp_grid
      Wo%mpa_solver=Wi%mpa_solver
      Wo%grid_type=Wi%grid_type
    end subroutine W_duplicate
@@ -77,8 +79,9 @@ module frequency
      W%damp_reference=0._SP
      YAMBO_FREE(W%p)
      W%samp_type="2l"
+     W%samp_grid="lP"
      W%mpa_solver="PT"
-     W%grid_type="" ! DALV: conflict with FF real axis in FREQUENCIES_setup
+     W%grid_type="ra"
    end subroutine W_reset
    !
 end module frequency

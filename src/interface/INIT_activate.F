@@ -58,7 +58,7 @@ subroutine INIT_activate()
  ! CPU structure
  !
  if((l_optics.and..not.l_bse).or.l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life.or.l_X) then
-     if (l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life.or.l_X) then      
+     if (l_em1s.or.l_em1d.or.l_ppa.or.l_mpa.or.l_life.or.l_X) then
        call CPU_activate("X_and_IO")
      else
        call CPU_activate("X")
@@ -321,7 +321,7 @@ subroutine INIT_activate()
    endif
    if (l_mpa) then
      call X_activate('Xm',(/'QpntsR','BndsRn','NGsBlk','CGrdSp',&
-&                           'EhEngy','LongDr','EnSamp','EnRnge','ImRnge','DmRnge','ETStps','IntSol'/))
+&                           'EhEngy','LongDr','EnSamp','EnGrid','EnRnge','ImRnge','DmRnge','ETStps','IntSol'/))
      call initactivate(1,'mpERdb')
    endif
    if (l_cohsex) then
@@ -392,7 +392,7 @@ subroutine INIT_activate()
          if (.not.l_cohsex) call initactivate(1,'GTermKind GTermEn DysSolver')
          if (     l_cohsex) call initactivate(1,'UseEbands')
          if (trim(QP_solver)=="g") then
-           call initactivate(1,'GEnSteps GEnRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
+           call initactivate(1,'GsampType GEnSteps GEnRnge GImRnge GEnMode GDmRnge GreenFTresh GreenF2QP') 
          else
            call initactivate(1,'SCEtresh')
            if (.not.l_cohsex) call initactivate(1,'NewtDchk ExtendOut OnMassShell QPExpand')

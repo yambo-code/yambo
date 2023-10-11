@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # BLACS& SLK : Parallel compilation of blacs and scalapack fails
 # SLEPC&PETSC: The internal build system of petsc and slepc already compiles the two libraries in parallel.
 #

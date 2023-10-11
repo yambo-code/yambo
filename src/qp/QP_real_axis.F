@@ -47,13 +47,14 @@ subroutine QP_real_axis(X,Xen,Xk,en,k,q,qp,Xw,Dip,GW_iter)
  use timing_m,      ONLY:timing
  !
 #include<memory.h>
- type(levels) ::en,Xen
- type(bz_samp)::Xk,k,q
- type(X_t)    ::X
- type(QP_t)   ::qp
- type(w_samp) ::Xw
- type(DIPOLE_t)       :: Dip
- integer      ::GW_iter
+ !
+ type(levels)   :: en,Xen
+ type(bz_samp)  :: Xk,k,q
+ type(X_t)      :: X
+ type(QP_t)     :: qp
+ type(w_samp)   :: Xw
+ type(DIPOLE_t) :: Dip
+ integer        :: GW_iter
  !
  ! WorkSpace
  !

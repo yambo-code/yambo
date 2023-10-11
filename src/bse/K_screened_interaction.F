@@ -149,10 +149,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
 #if defined _CUDA
-           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(iq_W,i_g2,i_g3)
+           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW_d(i_g2,i_g2)=RIM_vpW_d(i_g2,i_g2)+2._SP*gamp_d(i_g2,i_g2)
 #else
-           RIM_vpW(i_g2,i_g3) = RIM_W(iq_W,i_g2,i_g3)
+           RIM_vpW(i_g2,i_g3) = RIM_W(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW(i_g2,i_g2)=RIM_vpW(i_g2,i_g2)+2._SP*isc%gamp(i_g2,i_g2)
 #endif
          enddo

@@ -138,11 +138,9 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        !
        sop_inv_l=sop_inv(is)
        !
-#ifdef _CUDA
-       !$cuf kernel do(1) <<<*,*>>>
-#else
-       !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+       !DEV_CUF kernel do(1) <<<*,*>>>
+       !DEV_OMP parallel do default(shared), private(ig1,ig2)
+       !
        do ig1=2,X_ng
          ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
          Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
@@ -187,7 +185,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
    ! Filling the upper triangular part of the residual here ! 
    !-------------^^^^^---------------------------------------
 #ifdef _CUDA
-   !$cuf kernel do(2) <<<*,*>>>
+   !DEV_CUF kernel do(2) <<<*,*>>>
    do ig2=X_cols(1),X_cols(2)
      do ig1=X_rows(1),X_rows(2)
        if (ig1 <= ig2) then
@@ -197,13 +195,13 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      enddo
    enddo
 #else
-   !$omp parallel do default(shared), private(ig2)
+   !DEV_OMP parallel do default(shared), private(ig2)
    do ig2=X_cols(1),X_cols(2)
      ROWS=(/X_rows(1),min(ig2,X_rows(2))/)
      call V_plus_alpha_V(ROWS(2)-ROWS(1)+1,Z_eh_occ*Xo_scatt%rhotw(ig2),&
 &                       conjg(Xo_scatt%rhotw(ROWS(1):ROWS(2))),Xo_res(ROWS(1):ROWS(2),ig2))
    enddo
-   !$omp end parallel do
+   !
 #endif
    !
    ! add terminator specific corrections
@@ -229,11 +227,8 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      !
      sop_inv_l=sop_inv(is)
      !
-#ifdef _CUDA
-     !$cuf kernel do(1) <<<*,*>>>
-#else
-     !$omp parallel do default(shared), private(ig1,ig2)
-#endif
+     !DEV_CUF kernel do(1) <<<*,*>>>
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig1=1,X_ng
        ig2=DEV_VAR(g_rot)(ig1,sop_inv_l)
        Xo_scatt_rhotw_p(ig1)=DEV_VAR(rhotw_save)(ig2)
@@ -244,7 +239,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
      endif
      !
 #ifdef _CUDA
-     !$cuf kernel do(2) <<<*,*>>>
+     !DEV_CUF kernel do(2) <<<*,*>>>
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,X_rows(2)
          if (ig1 > ig2) cycle
@@ -252,7 +247,7 @@ subroutine X_irredux_residuals(Xen,Xk,X,Dip,i_cg,iq,Xo_res,Xo_scatt)
        enddo
      enddo
 #else
-     !$omp parallel do default(shared), private(ig1,ig2)
+     !DEV_OMP parallel do default(shared), private(ig1,ig2)
      do ig2=X_cols(1),X_cols(2)
        do ig1=ig_start,min(ig2,X_rows(2))
          Xo_res(ig1,ig2)=Xo_res(ig1,ig2)-Z_eh_occ*Xo_scatt%rhotw(G_m_G(ig2,ig1))

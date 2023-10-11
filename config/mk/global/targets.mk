@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 ifeq ($(do_p2y),yes)
   p2y   = p2y
 endif

@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 dependencies: 
 	@$(call clean_project_dependencies_stamp,$(what))
 	@LIB2DO="Ydriver"; $(get_external_libraries)

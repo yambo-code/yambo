@@ -1,25 +1,9 @@
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2017 The Yambo Team
 #
 # Authors (see AUTHORS file for details): DS
-#
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 # PATH FOR EXT LIBS
 # ============================================================================= 
@@ -63,8 +47,11 @@ AC_SUBST(enable_keep_extlibs)
 # DP
 AC_ARG_ENABLE(dp, AS_HELP_STRING([--enable-dp],[Double-precision build. Default is no.]))
 def_dp=""
-if test x"$enable_dp" = "x";    then enable_dp="no";     build_precision="single"; fi
+build_precision=""
+if test x"$enable_dp" = "x";    then enable_dp="no"; fi
+if test x"$enable_dp" = "xno" ; then def_dp="";          build_precision="single"; fi
 if test x"$enable_dp" = "xyes"; then def_dp="-D_DOUBLE"; build_precision="double"; fi
+if test x"$build_precision" = "x"; then AC_MSG_ERROR([Non correct specification of compilation precision]); fi
 AC_SUBST(enable_dp)
 AC_SUBST(def_dp)
 AC_SUBST(build_precision)

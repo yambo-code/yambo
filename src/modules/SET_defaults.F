@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  !
@@ -40,7 +24,7 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  use QP_m,       ONLY:QP_dSc_steps,QP_n_W_freqs,QP_G_Zoom_treshold,&
 &                     QP_dSc_test,QP_solver,QP_G_damp,QP_dSc_delta,&
 &                     QP_cg_percent,QP_n_states,SC_E_threshold, &
-&                     QP_Sc_steps,QP_G_er,QP_G_dr,SC_band_mixing,&
+&                     QP_Sc_steps,QP_G_er,QP_G_ir,QP_G_dr,SC_band_mixing,QP_G_solver,&
 &                     COHSEX_use_empties,On_Mass_Shell_approx,&
 &                     Vnlxc_kind,Vxc_kind,l_extended_output,l_GW_terminator,&
 &                     GW_terminator_E
@@ -404,7 +388,9 @@ subroutine SET_defaults(INSTR,IND,OD,COM_DIR)
  QP_solver=' '
  QP_G_damp=0.1/HA2EV
  QP_dSc_delta=0.1/HA2EV
+ QP_G_solver='ra'
  QP_G_er=(/-10._SP/HA2EV,10._SP/HA2EV/)
+ QP_G_ir=(/0._SP/HA2EV,0._SP/HA2EV/)
  QP_G_dr=0.1/HA2EV
  QP_cg_percent=100._SP
  COHSEX_use_empties=.FALSE.

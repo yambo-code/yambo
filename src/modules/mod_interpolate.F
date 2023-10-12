@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module interpolate
  !
@@ -50,7 +34,7 @@ module interpolate
  logical           :: INTERPOLATE_use_symm=.TRUE.
  character(schlen) :: INTERPOLATE_msg_fmt="rs"
  !
- integer, parameter :: max_interpls=20
+ integer, parameter :: max_interpls=40
  !
  ! NN method
  !
@@ -166,10 +150,15 @@ module interpolate
      type(levels),  intent(out), optional  :: CIRCUIT_dE
    end subroutine electrons_bands_interpolate
    !
+#if defined _RT
    subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,SEED_RT,SEED_QP,SEED_R3,&
 &                                       NEAREST,QUIET,SERIAL)
-     use pars,        ONLY:SP
      use real_time,   ONLY:RT_t
+#else
+   subroutine INTERPOLATION_driver_seed(operation,ID,dims,SEED_k,SEED_E,        SEED_QP,SEED_R3,&
+&                                       NEAREST,QUIET,SERIAL)
+#endif
+     use pars,        ONLY:SP
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
      use QP_m,        ONLY:QP_t
@@ -179,7 +168,9 @@ module interpolate
      integer,       intent(in)              :: dims(2)
      type(bz_samp), intent(in)              :: SEED_k
      real(SP),      intent(in),    optional :: SEED_R3(:,:,:)
+#if defined _RT
      type(RT_t),    intent(in),    optional :: SEED_RT
+#endif
      type(QP_t),    intent(in),    optional :: SEED_QP
      type(levels),  intent(in),    optional :: SEED_E
      logical,       intent(in),    optional :: NEAREST
@@ -188,11 +179,8 @@ module interpolate
    end subroutine INTERPOLATION_driver_seed
    !
    subroutine INTERPOLATION_driver_do(operation,ID,OUT_k,OUT_E,FineGrid)
-     use pars,        ONLY:SP
-     use real_time,   ONLY:RT_t
      use R_lattice,   ONLY:bz_samp
      use electrons,   ONLY:levels
-     use QP_m,        ONLY:QP_t
      implicit none
      character(*),  intent(in)              :: operation
      integer,       intent(in)              :: ID

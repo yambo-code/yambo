@@ -1,5 +1,11 @@
 #!/usr/bin/perl
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2022 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 use Getopt::Long;
 use File::Find;
 use File::Copy;

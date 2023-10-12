@@ -1,38 +1,22 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): DALV, AF, AM
+! Copyright (C) 2006 The Yambo Team
+!
+! Authors (see AUTHORS file for details): DALV AF AM
 ! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-! 
-subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
+subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Multipole approximation to the Correlation Self-Energy
  !
  use pars,          ONLY:SP,DP,pi,schlen,cZERO,cI
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp 
+ use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
- use drivers,       ONLY:l_sc_run
+ use drivers,       ONLY:l_sc_run,l_RIM_W
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parser_m,      ONLY:parser
@@ -44,22 +28,25 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  use IO_int,        ONLY:io_control,IO_and_Messaging_switch
  use IO_m,          ONLY:manage_action,OP_RD_CL,OP_WR_CL,OP_APP_CL,REP,VERIFY,NONE,RD_CL,OP_RD,RD_CL_IF_END,&
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,&
+ use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use wave_func,     ONLY:WF
- use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G
+ use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
  use wrapper,       ONLY:M_by_V
  use interfaces,    ONLY:QP_state_print,WF_load,WF_free
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
-&                        MPA_alloc,MPA_free
+&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
+ use deviceXlib_m,  ONLY:dev_memcpy
+ use cuda_m,        ONLY:have_cuda
  !
+#include<dev_defs.h>
 #include<memory.h>
  !
  type(levels)        ::E
@@ -67,7 +54,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  type(X_t)           ::X
  type(QP_t)          ::qp
  type(w_samp)        ::Xw
- real(SP),intent(in) ::W(QP_dSc_steps) ! DALV: this is the frequency grid for Sc now set in the solvers('n','s','g')
  integer             ::GW_iter
  !
  ! Work Space
@@ -76,14 +62,24 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
 &                    i_qp_to_start,iq_to_start,is,iq_mem,X_range(2),io_err,ID,IO_ACT,timing_steps,&
 &                    cond_g, cond_b
  !
- complex(SP), allocatable :: W_(:),dc(:),eet_factor(:,:)
- type(elemental_collision):: isc,iscp
+ complex(SP), allocatable          :: W_(:),dc(:)
+ type(elemental_collision), target :: isc,iscp
+ !
+ type(w_samp)     :: Sc_W(qp%n_states)
  character(schlen):: ch,SECTION_name
  !
- logical          :: X_is_TR_rotated,l_X_alloc
- real(SP)         :: eet_cutoff0(n_sp_pol),E_kmq,f_kmq,eet_cutoff1(n_sp_pol)
- complex(SP)      :: local_rhotw(X%ng),pre_factor
- complex(DP)      :: dp_dummy,ctmp
+ integer          :: X_mpa_npoles,X_ng
+ logical          :: X_is_TR_rotated,l_RIM_W_g
+ real(SP)         :: E_kmq,f_kmq
+ real(DP)         :: dp_dummy_r,dp_dummy_i
+ complex(DP)      :: dp_dummy,ctmp,W_1,W_i
+ !
+ complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
+ complex(SP), pointer DEV_ATTR :: MPA_R_mat_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: MPA_E_mat_p(:,:,:)
+ 
  !
  ! MPA variables
  !
@@ -94,14 +90,47 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  character(len=99):: str
  !
  integer, external::io_X,io_MPA,QP_state_extract
+
  !
  ! Reset & checks
+ !
+ call timing('GW(mpa)',OPR='start')
+ call timing('GW(mpa)_init',OPR='start')
  !
  call elemental_collision_free(isc)
  call elemental_collision_free(iscp)
  i_qp_to_start=1
  iq_to_start  =1
  QP_Sc        =cZERO
+ !
+ ! for G & Sigma
+ ! Sc Energy points (1 type each QP state !)
+ !-------------------------------------------
+ !
+ if (trim(QP_solver)=='n') then
+   !
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs=QP_dSc_steps
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
+     forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+   enddo
+   !
+ else if (trim(QP_solver)=='g') then
+   !
+   QP_dSc_steps=QP_Sc_steps
+   do i_qp=1,qp%n_states
+     call W_reset(Sc_W(i_qp))
+     Sc_W(i_qp)%n_freqs=QP_Sc_steps
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
+     !
+     if(Sc_W(i_qp)%grid_type=="ra") then
+       Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
+     else
+       QP_G_damp=0._SP
+     endif
+   enddo
+   !
+ endif
  !
  ! Section
  !
@@ -160,7 +189,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  call elemental_collision_alloc(isc,NG=isc%ngrho,NG_GAMP=(/X%ng,X%ng/),TITLE="GW")
  call elemental_collision_alloc(iscp,NG=isc%ngrho,TITLE="GW")
  !
- call timing('GW(mpa)',OPR='start')
+ isc_gamp_p   => DEV_VAR(isc%gamp)
+ isc_rhotw_p  => DEV_VAR(isc%rhotw)
+ iscp_rhotw_p => DEV_VAR(iscp%rhotw)
+ !
+ X_mpa_npoles=X%mpa_npoles
+ X_ng=X%ng
+ !
  !
  ! MPA dynamic X DB I/O
  !
@@ -176,12 +211,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !------------
  !
  if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
- allocate(W_(QP_dSc_steps))
- allocate(dc(QP_dSc_steps),stat=alloc_err)
+ YAMBO_ALLOC(W_,(QP_dSc_steps))
+ YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
  ! MPA workspace
  !
- if (io_MULTIPOLE) call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/)) 
+ call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ !
+ ! AF: the following line needs to be moved elsewhere
  call parser('mpERdb',io_MULTIPOLE)
  !
  call PP_wait()
@@ -201,7 +238,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  endif
  !
  if(io_MULTIPOLE) then
-   !call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2,COMM=PAR_COM_NULL,DO_IT=master_cpu)
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1/),ID=ID2)
    io_err=io_MPA(X,Xw,ID2)
    call IO_and_Messaging_switch("SAVE")
@@ -209,6 +245,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  endif
  !
  call PP_wait()
+ !
+ call timing('GW(mpa)_init',OPR='stop')
  !
  Q_loop: do iqbz=iq_to_start,q%nbz 
    !
@@ -224,7 +262,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      X_range=(/1,Xw%n_freqs/)
      if (.not.io_RESPONSE) X_range=(/Xw%n_freqs*(iq_mem-1)+1,iq_mem*Xw%n_freqs/)
      !
-     call scatter_Gamp(isc,'c')
+     call DEV_SUB(scatter_Gamp)(isc,'c')
+     if (have_cuda) call dev_memcpy(isc%gamp,isc%gamp_d)
      !
      ! I/O
      !
@@ -244,13 +283,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      !
      ! Poles and Residues
      !
+     call timing('GW(mpa)_poles',OPR='start')
+     !
      MPred_rate=0._SP
      PPcond_Qrate=0._SP
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
      !
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo), &
-     !$omp & reduction(+:MPred_rate),reduction(+:PPcond_Qrate),reduction(+:MP_Qerr),reduction(+:cond_numQ)
+     !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
@@ -258,7 +299,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      do ig2=1,X%ng
        do ig1=1,X%ng
          !
-         MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)! DALV: Differently from PPA the factor isc%gamp(ig1,ig2) is included later
+         l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
+         if(l_RIM_W_g) then
+           MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
+         else
+           !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
+           MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)
+         endif
          MPred=.false.
          PPcond_rate=0._SP
          MP_err=0._SP
@@ -281,10 +328,13 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      !
      X_is_TR_rotated=.false.
      !
-     MPred_rate=MPred_rate/X%ng**2
+     MPred_rate=X%mpa_npoles-MPred_rate/X%ng**2
      PPcond_Qrate=PPcond_Qrate/X%ng**2
      MP_Qerr=MP_Qerr/X%ng**2
      cond_numQ(:)=cond_numQ(:)/X%ng**2
+     !
+     call timing('GW(mpa)_poles',OPR='stop')
+     call timing('GW(mpa)_poles_io',OPR='start')
      !
      ! I/O MPA
      !
@@ -305,6 +355,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
        if(Xw%mpa_solver=='LA') call msg('r',' :: Condition numbers    ',cond_numQ)
        !
      endif
+     !
+     call timing('GW(mpa)_poles_io',OPR='stop')
      !
    endif
    !
@@ -329,6 +381,16 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      X_is_TR_rotated=.true.
    endif
    !
+   if (have_cuda) then
+     call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
+     call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
+   endif
+   !
+   MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
+   MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
+   !
+   call timing('GW(mpa)_qp_loop',OPR='start')
+   !
    QP_loop: do i_qp=i_qp_to_start,QP_n_states
      !
      if (.not.PAR_IND_QP%element_1D(i_qp)) cycle
@@ -346,8 +408,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      iscp%is=(/QP_table(i_qp,2),QP_table(i_qp,3),1,spin(QP_table(i_qp,:))/)
      iscp%qs=isc%qs
      !
-     ! DALV: here the grid is center in E0
-     forall (i_w=1:QP_dSc_steps) W_(i_w)=W(i_w)+qp%E_bare(i_qp)+cI*QP_G_damp
+     ! DALV: here the grid is centered in E0
+     forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
      !
      do ib=QP_n_G_bands(1),QP_n_G_bands(2)
        !
@@ -357,11 +419,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
        !
        isc%os(1)=ib
        !
-       call scatter_Bamp(isc)
+       call DEV_SUB(scatter_Bamp)(isc)
        iscp%os=isc%os
        !
-       iscp%rhotw=isc%rhotw
-       if (any(isc%is/=iscp%is)) call scatter_Bamp(iscp)
+       if (any(isc%is/=iscp%is))  then
+         call scatter_Bamp(iscp)
+       else
+         call dev_memcpy(iscp_rhotw_p, isc_rhotw_p)
+       endif
        !
        dc=cZERO
        !
@@ -370,45 +435,76 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
        !
        do i_w=1,QP_dSc_steps
          !
-         dp_dummy = 0.0_SP
+         dp_dummy_r = 0.0_DP
+         dp_dummy_i = 0.0_DP
+         dp_dummy = 0.0_DP
          !
-         !$omp parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp), &
-         !$omp &           reduction(+:dp_dummy), collapse(3)
+         W_1=W_(1)
+         W_i=W_(i_w)
          !
-         do i_np=1,X%mpa_npoles
-           do ig2=1,X%ng
-             do ig1=1,X%ng
+         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp), &
+         !DEV_OMP &           reduction(+:dp_dummy), collapse(3)
+         !
+         !DEV_CUF kernel do(3)
+         !
+         do i_np=1,X_mpa_npoles
+           do ig2=1,X_ng
+             do ig1=1,X_ng
                !
                ! DALV: inline bose_f function
                bose_PPA_E=0._SP
-               if (real(MPA_E_mat(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
+               !
+               if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
-                 if (real(MPA_E_mat(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
-                   if (real(MPA_E_mat(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_mat(ig1,ig2,i_np),SP)
+                 if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
+                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_mat_p(ig1,ig2,i_np),SP)
                    endif 
-                   if (real(MPA_E_mat(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(real(MPA_E_mat(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ/(exp(real(MPA_E_mat_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
                    endif
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
                  endif
                endif
                !
-               ! DALV: the factor isc%gamp(ig1,ig2) is included here
-               ctmp = -4._DP/spin_occ*pi*isc%rhotw(ig1)*conjg(iscp%rhotw(ig2)) *isc%gamp(ig1,ig2)  *&
-&                                 (sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np))) *MPA_R_mat(ig1,ig2,i_np))*&
-&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_(i_w)-E_kmq &
-&                                             +sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np))+&
-&                       (f_kmq+bose_PPA_E)/(conjg(W_(i_w))-E_kmq   &
-&                                             -sign(1._SP,aimag(MPA_E_mat(ig1,ig2,i_np)))*MPA_E_mat(ig1,ig2,i_np)) )
+               l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
                !
+               if (l_RIM_W_g) then
+                 !
+                 ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))  *&
+&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_1-E_kmq &
+&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_PPA_E)/(conjg(W_1)-E_kmq   &
+&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+                 !
+               else
+                 !
+                 ! DALV: the factor isc%gamp(ig1,ig2) is included here
+                 ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2)) *isc_gamp_p(ig1,ig2) *&
+&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i-E_kmq &
+&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                       (f_kmq+bose_PPA_E)/(conjg(W_i)-E_kmq   &
+&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+                 !
+               endif
+               !
+#ifdef _CUDA
+               dp_dummy_r=dp_dummy_r+real(ctmp,DP)
+               dp_dummy_i=dp_dummy_i+imag(ctmp)
+#else
                dp_dummy=dp_dummy+ctmp
+#endif
                !
              enddo
            enddo
          enddo
-         !$omp end parallel do
+         !
+         !DEV_OMP end parallel do
+         !
+         if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
          dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !
@@ -421,6 +517,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      !
    enddo QP_loop
    !
+   call timing('GW(mpa)_qp_loop',OPR='stop') 
+   !
  enddo Q_loop 
  !
  if(io_MULTIPOLE) call IO_and_Messaging_switch("RESTORE")
@@ -429,8 +527,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  !
  ! CLEAN
  !
- deallocate(dc)
- deallocate(W_)
+ YAMBO_FREE(dc)
+ YAMBO_FREE(W_)
  call X_ALLOC_elemental('X')
  call MPA_free()
  !

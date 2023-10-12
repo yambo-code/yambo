@@ -1,3 +1,10 @@
+#
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 define yambo_help
   $(ECHO) "\n This is $(y_version)";
   if [ "$(1)" = "header" ] || [ -z "$(1)" ] ; then \

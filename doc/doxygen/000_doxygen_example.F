@@ -1,9 +1,4 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
-!
-! Authors (see AUTHORS file for details): AM
-!
 !> @ch   (Name added through macro expansion)
 !> @author Mr. Ed
 !> - 10/01/2015 Added bug

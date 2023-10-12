@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
@@ -165,10 +149,10 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
 #if defined _CUDA
-           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(iq_W,i_g2,i_g3)
+           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW_d(i_g2,i_g2)=RIM_vpW_d(i_g2,i_g2)+2._SP*gamp_d(i_g2,i_g2)
 #else
-           RIM_vpW(i_g2,i_g3) = RIM_W(iq_W,i_g2,i_g3)
+           RIM_vpW(i_g2,i_g3) = RIM_W(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW(i_g2,i_g2)=RIM_vpW(i_g2,i_g2)+2._SP*isc%gamp(i_g2,i_g2)
 #endif
          enddo

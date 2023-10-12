@@ -118,7 +118,7 @@ module nl_optics
  ! 
  ! Dephasing time (in units of NL_damping) 
  !
- integer, parameter :: DephMult=5 
+ integer, parameter :: DephMult=6 
  !
  ! Wavefunction sampling
  !
@@ -146,6 +146,7 @@ module nl_optics
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
+ real(SP),     allocatable :: NL_J_t(:,:)
  complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
  complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: freqs_done(:)
@@ -196,6 +197,7 @@ module nl_optics
      endif
      !
      YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+     YAMBO_ALLOC(NL_J_t,(NE_steps,6))
      YAMBO_ALLOC(E_tot_t,(NE_steps,3))
      YAMBO_ALLOC(E_ext_t,(NE_steps,3))
      YAMBO_ALLOC(E_ks_t,(NE_steps,3))
@@ -254,6 +256,7 @@ module nl_optics
      endif
      !
      YAMBO_FREE(NL_P_t)
+     YAMBO_FREE(NL_J_t)
      YAMBO_FREE(E_tot_t)
      YAMBO_FREE(E_ext_t)
      YAMBO_FREE(E_ks_t)

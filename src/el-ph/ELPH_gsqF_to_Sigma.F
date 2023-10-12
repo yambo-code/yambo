@@ -1,29 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  !
- use pars,          ONLY:SP,DP,pi
+ use pars,          ONLY:SP,DP,cZERO,pi
  use functions,     ONLY:bose_f
  use units,         ONLY:HA2EV
  use LIVE_t,        ONLY:live_timing
@@ -50,8 +34,8 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  !
  integer            ::i_qp,iw,il,iq_loop,iq_mem,ib,ik,nq
  type(w_samp)       ::Sc_local_W
- complex(DP)        ::DP_FAN(gsqF_energy_steps),DP_DW
- complex(SP)        ::coefficient,Sc_local(gsqF_energy_steps)
+ complex(DP)        ::DP_FAN(gsqF_energy_steps),DP_DW,coefficient
+ complex(SP)        ::Sc_local(gsqF_energy_steps)
  real(SP)           ::ph_freq
  !
  call ELPH_simmetrize_and_distribute_gsqF(en)
@@ -67,12 +51,12 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
  ! If the self-energy has to be plotted, instead, the contribution from the
  ! lifetimes-related gsqF must be real (spectral function).
  !
- coefficient=(0.,1.)
+ coefficient=cmplx(0.,1.,kind=DP)
  !
  ! Setup energy range for Sc/G plotting (I)
  !
  if ( trim(QP_solver)=='g' ) then
-   coefficient=(1.,0.)
+   coefficient=cmplx(1.,0.,kind=DP)
    call W_reset(Sc_local_W)
    Sc_local_W%n_freqs =QP_Sc_steps
  endif
@@ -88,14 +72,14 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
      !
      ! Overwrites the damping defined in FREQUENCIES_Green_Function
      !
-     forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0.,0.00001/HA2EV)
+     forall(iw=1:QP_Sc_steps) Sc_local_W%p(iw)= real( Sc_local_W%p(iw)) + cmplx(0._SP,0.00001_SP/HA2EV)
    endif
    !
    ib   =QP_table(i_qp,1)
    ik   =QP_table(i_qp,3)
    !
-   DP_FAN=cmplx(0.,0.,DP)
-   DP_DW =cmplx(0.,0.,DP)
+   DP_FAN=cmplx(0.,0.,kind=DP)
+   DP_DW =cmplx(0.,0.,kind=DP)
    !
    do iq_loop=1,nq
      !
@@ -112,11 +96,11 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
          ! QP lifetimes/Green's function
          !-------------------------------
          if (l_GF_from_CA.and.trim(QP_solver)=='g') then
-           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2.*bose_f(ph_freq)/spin_occ+1.)/2.+&
-&                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2._DP*bose_f(ph_freq)/spin_occ+1._DP)/2._DP+&
+&                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real(PAR_COM_G_b_INDEX%n_CPU,kind=DP)
          else
-           DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)/spin_occ+1.)/2.+&
-&                                             gsqF_life_f(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
+           DP_FAN(iw)=DP_FAN(iw)+coefficient*(gsqF_life_bose(i_qp,iq_mem,il,iw)*(bose_f(ph_freq)/spin_occ+1._DP)/2._DP+&
+&                                 gsqF_life_f(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU,kind=DP)
          endif
          !
          if ( trim(QP_solver)=='n' )  then
@@ -126,7 +110,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
            ! QP energies: FAN+correction
            !-----------------------------
            ! 
-           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2.*bose_f(ph_freq)/spin_occ+1.)/2.+&
+           DP_FAN(iw)=DP_FAN(iw)+(gsqF_fan(i_qp,iq_mem,il,iw)*(2._DP*bose_f(ph_freq)/spin_occ+1._DP)/2._DP+&
 &                                 gsqF_ca_corr(i_qp,iq_mem,il,iw))/real( PAR_COM_G_b_INDEX%n_CPU)
            !
          endif
@@ -138,7 +122,7 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
        ! QP energies : DW
        !------------------
        !
-       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(2.*bose_f(ph_freq)/spin_occ+1.)/2./real( PAR_COM_G_b_INDEX%n_CPU)
+       DP_DW=DP_DW+gsqF_dw(i_qp,iq_mem,il)*(2._DP*bose_f(ph_freq)/spin_occ+1._DP)/2._DP/real(PAR_COM_G_b_INDEX%n_CPU,kind=DP)
        ! 
      enddo
      !
@@ -161,10 +145,10 @@ subroutine ELPH_gsqF_to_Sigma(en,q,l_GF_from_CA,Sc_W)
      !
      if (.not.l_GF_from_CA) then
        !
-       Sc_local=(0.,0.)
+       Sc_local=cZERO
        !
-       call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p) ,QP_Sc_steps,&
-&                          Sc_local           ,conjg(Sc_local_W%p),QP_Sc_steps,(0.,0.))
+       call Kramers_Kronig(cmplx(DP_FAN(:))/pi,real(Sc_W(i_qp)%p),QP_Sc_steps,&
+&                                    Sc_local,conjg(Sc_local_W%p),QP_Sc_steps,cZERO)
        !
        QP_Sc(i_qp,:)=QP_Sc(i_qp,:)+Sc_local(:)+DP_DW
        !

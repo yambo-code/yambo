@@ -1,31 +1,15 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2011 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  use units,         ONLY:HA2EV
  use descriptors,   ONLY:IO_desc,IO_desc_reset
- use pars,          ONLY:SP,IP,schlen
+ use pars,          ONLY:SP,IP,schlen,CR_YIO
  use X_m,           ONLY:X_t,use_X_DbGd,X_DbGd_nkpts,X_DbGd_percentual,OPTICAL_averaged_dirs_string
  use IO_m,          ONLY:io_status,read_is_on,variable_exist
  use IO_int,        ONLY:def_variable_elemental,io_variable_elemental,ver_is_gt_or_eq
@@ -74,14 +58,14 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  !
  VAR_NAME=trim(X_label)//"Time_ordering"
  if (read_is_on(ID) .and. .not. variable_exist(ID,trim(VAR_NAME))) VAR_NAME=trim(X_label)//"PARS_2"
- call def_variable_elemental(ID,trim(VAR_NAME),1,0,0)
+ call def_variable_elemental(ID,trim(VAR_NAME),1,CR_YIO,0)
  call io_variable_elemental(ID,VAR="X Time ordering",CH0=X%ordering,WARN=.true.,DESCRIPTOR=local_desc)
  !
  if (ver_is_gt_or_eq(ID,(/3,0,5/))) then
    !
    ! TDDFT_KERNEL
    !
-   call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,0,0)
+   call def_variable_elemental(ID,trim(X_label)//"TDDFT_KERNEL",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="X Hxc Kernel",CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=local_desc)
    !
    ! DRUDE
@@ -125,7 +109,7 @@ integer function variables_X(ID,local_desc,X,EM1S_NOSOC)
  endif
  !
  if (ver_is_gt_or_eq(ID,revision=21155)) then
-   call def_variable_elemental(ID,trim(X_label)//"OPTICAL_AVERAGE",1,0,0)
+   call def_variable_elemental(ID,trim(X_label)//"OPTICAL_AVERAGE",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="X Optical Averaged directions",CH0=OPTICAL_averaged_dirs_string,&
 &                                CHECK=.true.,DESCRIPTOR=local_desc)
  endif

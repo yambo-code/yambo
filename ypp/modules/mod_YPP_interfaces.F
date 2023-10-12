@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module YPP_interfaces
  !
@@ -41,7 +25,7 @@ module YPP_interfaces
    !
 #endif
    !
-   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,ID_spin,ID_pdos,USE_the_DbGd,QUIET,FORCE_occ)
+   subroutine electrons_dos_elemental(k,E,bands,el_dos,dos_E,spin_fac,pdos_fac,USE_the_DbGd,QUIET,FORCE_occ)
      use pars,           ONLY:SP
      use electrons,      ONLY:levels,n_spin
      use R_lattice,      ONLY:bz_samp 
@@ -50,9 +34,11 @@ module YPP_interfaces
      implicit none
      type(bz_samp),    intent(in) :: k
      type(levels),     intent(in) :: E
-     integer,          intent(in) :: bands(2),ID_spin,ID_pdos
+     integer,          intent(in) :: bands(2)
      real(SP),         intent(in) :: dos_E(DOS_E_steps)
      real(SP),         intent(out):: el_dos(DOS_E_steps,n_spin)
+     real(SP),pointer, optional, intent(in):: spin_fac(:,:,:)
+     real(SP),pointer, optional, intent(in):: pdos_fac(:,:,:)
      logical, optional,intent(in) :: USE_the_DbGd,QUIET,FORCE_occ
    end subroutine electrons_dos_elemental
    !

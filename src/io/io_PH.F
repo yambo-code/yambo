@@ -1,31 +1,14 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-#if defined _PHEL
 integer function io_PH(ID)
  !
  use units,               ONLY:HA2EV
- use pars,                ONLY:SP,schlen
+ use pars,                ONLY:SP,schlen,CR_YIO
  use R_lattice,           ONLY:nqbz
  use QP_m,                ONLY:QP_G_damp,l_extended_output,QP_solver,On_Mass_Shell_approx
  use X_m,                 ONLY:X_DbGd_percentual
@@ -54,10 +37,10 @@ integer function io_PH(ID)
  !
  if (any((/io_sec(ID,:)==1/))) then
    call IO_desc_reset(PHEL_desc)
-   call def_variable_elemental(ID,"CH_PHEL_PARAMETERS",1,0,0)
+   call def_variable_elemental(ID,"CH_PHEL_PARAMETERS",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[PHEL] Self-Energy mode",CH0=PH_Self_Energy_mode,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
-   call def_variable_elemental(ID,"CH_PHEL_SOLVER",1,0,0)
+   call def_variable_elemental(ID,"CH_PHEL_SOLVER",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[PHEL] Solver",CH0=QP_solver,DB_CH0=QP_solver_disk,DESCRIPTOR=PHEL_desc,&
 &                                CHECK=.TRUE.,OP=(/"=="/))
    call def_variable_elemental(ID,"PHEL_PARAMETERS",13,SP,0)
@@ -138,4 +121,3 @@ integer function io_PH(ID)
  call io_disconnect(ID=ID)
  !
 end function
-#endif

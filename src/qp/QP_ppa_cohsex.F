@@ -1,6 +1,5 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
 ! Authors (see AUTHORS file for details): AM [AF,IM,MB]
 ! 
@@ -16,24 +15,21 @@
 ! PARTICULAR PURPOSE.  See the GNU General Public License 
 ! for more details.
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM
 !
-subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
+subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! Plasmon Pole & COHSEX Correlation Self-Energy
  !
  use pars,          ONLY:DP,SP,pi,schlen,cZERO,cI,cONE
  use units,         ONLY:HA2EV
  use stderr,        ONLY:intc
- use frequency,     ONLY:w_samp
+ use frequency,     ONLY:w_samp,W_reset
  use electrons,     ONLY:levels,spin_occ,spin,n_met_bands,n_sp_pol
  use LIVE_t,        ONLY:live_timing
  use com,           ONLY:msg
  use drivers,       ONLY:l_ppa,l_cohsex,l_sc_srpa,l_sc_sex,l_sc_coh,l_sc_run,&
-&                        l_rt_carriers_in_use,l_RIM_W
+&                        l_rt_carriers_in_use,l_rim_w
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,&
 &                        PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Xk_ibz,PAR_IND_G_b,PAR_IND_QP,&
@@ -77,11 +73,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
- !
- ! DALV: this is the frequency grid for Sc,
- !       now set in the solvers('n','s','g')
- !
- real(SP),intent(in) ::W(QP_dSc_steps)
  !
  ! Work Space
  !
@@ -127,6 +118,33 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  iq_to_start  =1
  QP_Sc        =cZERO
  !
+ ! Sc Energy points (1 type each QP state !)
+ !-------------------------------------------
+ if (trim(QP_solver)=='n') then
+   !
+   do i_qp=1,qp%n_states
+     Sc_W(i_qp)%n_freqs=QP_dSc_steps
+     YAMBO_ALLOC(Sc_W(i_qp)%p,(Sc_W(i_qp)%n_freqs))
+     forall (i_w=1:QP_dSc_steps) Sc_W(i_qp)%p(i_w)=qp%E_bare(i_qp)+(i_w-1)*QP_dSc_delta
+   enddo
+   !
+ else if (trim(QP_solver)=='g') then
+   !
+   QP_dSc_steps=QP_Sc_steps
+   do i_qp=1,qp%n_states
+     call W_reset(Sc_W(i_qp))
+     Sc_W(i_qp)%n_freqs =QP_Sc_steps
+     call FREQUENCIES_Green_Function(i_qp,Sc_W(i_qp),E%E,.FALSE.)
+     !
+     if(Sc_W(i_qp)%grid_type=="ra") then
+       Sc_W(i_qp)%p=real(Sc_W(i_qp)%p,SP)
+     else
+       QP_G_damp=0._SP
+     endif
+   enddo
+   !
+ endif
+ !
  if (l_GW_terminator.and.trim(GW_terminator_Kind)/='BG'.and.&
 &    trim(GW_terminator_Kind)/='BRS') &
 &    call error(' [GW/PPA] unknown GW_terminator_Kind = '//trim(GW_terminator_Kind))
@@ -147,14 +165,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  if (.not.l_sc_run) then
    SECTION_name='G'//trim(intc(GW_iter))
    W_name      ='W0'
-   if(l_update_W) W_name='W'//trim(intc(GW_iter))
    if (                    l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (COHSEX)'
    if (     l_ppa                  ) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W PPA)'
    if (.not.l_ppa.and..not.l_cohsex) SECTION_name=trim(SECTION_name)//trim(W_name)//' (W real-axis)'
  endif
  !
  if (GW_iter==0) then
-   if(l_RIM_W) then
+   if(l_rim_w) then
      call section('-',trim(SECTION_name))
    else
      call section('+',trim(SECTION_name))
@@ -630,7 +647,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
          endif
          !
          ! DALV: here the grid is center in E0
-         forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
+         forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
          !
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
@@ -729,7 +746,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
      if(l_ppa.and.l_GW_terminator) then
        !
        ! DALV: here the grid is center in E0
-       forall (i_w=1:QP_dSc_steps) W_(i_w)=qp%E(i_qp)+W(i_w)+cI*QP_G_damp 
+       forall (i_w=1:QP_dSc_steps) W_(i_w)=Sc_W(i_qp)%p(i_w)+cI*QP_G_damp
        !
        do i_w=1,QP_dSc_steps
          !

@@ -1,30 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2020 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Authors (see AUTHORS file for details): AM DS
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-#if defined _RT
 subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_time,TYP)
  !
- use pars,           ONLY:IP,SP,schlen
+ use pars,           ONLY:IP,SP,schlen,IP_YIO
  use drivers,        ONLY:l_real_time
  use units,          ONLY:AUT2FS
  use RT_output_m,    ONLY:RT_desc
@@ -57,14 +40,14 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
 &                       DESCRIPTOR=RT_desc,UNIT=AUT2FS)
  endif
  !
- call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP+100,0) 
+ call def_variable_elemental(ID,"IO_TIME_steps_last_nsteps",3,IP_YIO,0) 
  call io_variable_elemental(ID,I0=TYP%INTERVAL_steps)
  call io_variable_elemental(ID,I0=TYP%last_point)
  call io_variable_elemental(ID,I0=TYP%N)
  !
  if (RT_do_IO("G_lesser_RESTART").and. l_real_time) then
    dim_name="G_MEM_steps"
-   call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP+100,dim_name,silent=.true.)
+   call def_variable_bulk(ID,"MEMORY_TIME_POINTS",2,(/G_MEM_steps/),IP_YIO,dim_name,silent=.true.)
    call io_variable_bulk(ID,2,I1=MEM_pointer)
    if (read_is_on(ID)) then
      i_min_index=minval(MEM_pointer)
@@ -98,4 +81,3 @@ subroutine io_RT_components_TIME_points(ID,VAR_SZ,load_RESTART_info,UNLIMITED_ti
  if (write_is_on(ID)) TYP%first_IO(2)=.FALSE.
  !
 end subroutine io_RT_components_TIME_points
-#endif

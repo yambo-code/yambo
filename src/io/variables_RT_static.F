@@ -1,30 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-#if defined _RT
 integer function variables_RT_static(ID)
  !
- use pars,           ONLY:SP,LP,IP
+ use pars,           ONLY:SP,LP,IP,IP_YIO,CR_YIO,LP_YIO
  use units,          ONLY:AUT2FS,AU2KWCMm2,HA2EV
  use drivers,        ONLY:l_elph_scatt,l_elel_scatt,l_elel_corr,l_elphoton_scatt
  use stderr,         ONLY:intc
@@ -63,17 +46,17 @@ integer function variables_RT_static(ID)
  !
  ! RT_vars
  !
- call def_variable_elemental(ID,VAR="RT_bands_kpts",VAR_SZ=3,VAR_KIND=IP+100,MENU=0) 
+ call def_variable_elemental(ID,VAR="RT_bands_kpts",VAR_SZ=3,VAR_KIND=IP_YIO,MENU=0) 
  call io_variable_elemental(ID,I1=RT_bands,VAR=' [RT] Bands',CHECK=.true.,OP=(/"==","=="/),DESCRIPTOR=RT_desc)
  if (read_is_on(ID)) H_ref_bands=RT_bands
  call io_variable_elemental(ID,I0=RT_nk,VAR=' [RT] K-points',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
- call def_variable_elemental(ID,VAR="POTENTIAL",VAR_SZ=1,VAR_KIND=0,MENU=0)
+ call def_variable_elemental(ID,VAR="POTENTIAL",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0)
  call io_variable_elemental(ID,CH0=RT_potential,VAR=' [RT] Potential',WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  !
  ! ELPH_vars
  !
 #if defined _ELPH
- call def_variable_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,VAR_KIND=IP+100,MENU=0) 
+ call def_variable_elemental(ID,VAR="ELPH_vars",VAR_SZ=5,VAR_KIND=IP_YIO,MENU=0) 
  call io_variable_elemental(ID,L0=l_elph_scatt,&
 &   VAR=" [E-P] Electron-phonon", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  call io_variable_elemental(ID,L0=l_RT_iterative_ELPH_lifetimes,&
@@ -86,13 +69,13 @@ integer function variables_RT_static(ID)
  !
  ! E-E_vars
  !
- call def_variable_elemental(ID,VAR="E-E_vars",VAR_SZ=2,VAR_KIND=LP+100,MENU=0) 
+ call def_variable_elemental(ID,VAR="E-E_vars",VAR_SZ=2,VAR_KIND=LP_YIO,MENU=0) 
  call io_variable_elemental(ID,L0=l_elel_scatt,VAR=" [E-E] Coulomb scattering", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  call io_variable_elemental(ID,L0=l_elel_corr,VAR=" [E-E] Coulomb correlation", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  !
  ! E-PHOTON_vars
  !
- call def_variable_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,VAR_KIND=LP+100,MENU=0) 
+ call def_variable_elemental(ID,VAR="E-PHOTON_vars",VAR_SZ=1,VAR_KIND=LP_YIO,MENU=0) 
  call io_variable_elemental(ID,L0=l_elphoton_scatt,VAR=" [E-PHOTON] Scattering", CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
  !
  ! FineGrid descriptors
@@ -116,13 +99,13 @@ integer function variables_RT_static(ID)
    !
    ! Lifetimes Extrapolation
    !
-   call def_variable_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,VAR_KIND=LP+100,MENU=0)
+   call def_variable_elemental(ID,VAR='RT_life_extrapolation',VAR_SZ=1,VAR_KIND=LP_YIO,MENU=0)
    call io_variable_elemental(ID,L0=l_RT_lifetimes_extrapolation,&
 &                             VAR=" [RT] Lifetimes extrapolation",WARN=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
    ! INTEGRATOR
    !   
-   call def_variable_elemental(ID,VAR="INTEGRATOR",VAR_SZ=1,VAR_KIND=0,MENU=0)
+   call def_variable_elemental(ID,VAR="INTEGRATOR",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0)
    call io_variable_elemental(ID,CH0=Integrator_name, VAR=' [RT] Integrator',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    !
    ! RT_OTHERS
@@ -153,7 +136,7 @@ integer function variables_RT_static(ID)
    !
    ! CONSTRAINS
    !======================
-   call def_variable_elemental(ID,VAR="CONSTRAINS",VAR_SZ=2,VAR_KIND=LP+100,MENU=0) 
+   call def_variable_elemental(ID,VAR="CONSTRAINS",VAR_SZ=2,VAR_KIND=LP_YIO,MENU=0) 
    call io_variable_elemental(ID,L0=l_RT_impose_N_dN,&
 &      VAR=' [CONSTRAINS] N (ee+ep) & dN (ep)',  CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
    call io_variable_elemental(ID,L0=l_RT_impose_E,&
@@ -163,7 +146,7 @@ integer function variables_RT_static(ID)
    !======================
    if (l_NE_with_fields_disk) then
      !
-     call def_variable_elemental(ID,VAR="GAUGE_TYPE",VAR_SZ=1,VAR_KIND=0,MENU=0)
+     call def_variable_elemental(ID,VAR="GAUGE_TYPE",VAR_SZ=1,VAR_KIND=CR_YIO,MENU=0)
      call io_variable_elemental(ID,CH0=global_gauge, VAR=' [FIELDs] Gauge Type',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=RT_desc)
      !
      do i1=1,n_ext_fields
@@ -201,4 +184,3 @@ integer function variables_RT_static(ID)
  variables_RT_static     =io_status(ID)
  !
 end function variables_RT_static
-#endif

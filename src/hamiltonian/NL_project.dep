@@ -1,2 +1,14 @@
+ Bare_Hamiltonian.o
+ Berry_polarization_NEQ.o
+ Build_Overlaps_det_NEQ.o
+ Build_W_operator.o
+ Build_tilde_vbands.o
+ Check_symmetries.o
+ V_Hartree.o
+ V_qp_basis_to_H.o
+ V_real_space_to_H.o
+ Vgrad_real_space_to_H.o
  WF_and_dipole_dimensions.o
+ XC_additional_SC_potentials.o
+ XC_potentials.o
 

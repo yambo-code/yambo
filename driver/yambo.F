@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
@@ -144,8 +128,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! COLOUMB DRIVER
  !================
+ ! In non-linear optics we do not need bare_qpg
+ ! it will be loaded only if required
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !=============================
@@ -190,6 +176,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  endif
  !
  driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_mpa.or.l_X
+ !
+ if(l_nl_optics.and.driver_now) call error('Please run the calculation of em1s/d/x in a separate run')
  !
  if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (driver_now) call mem_manager_report

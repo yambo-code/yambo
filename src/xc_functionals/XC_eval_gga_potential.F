@@ -1,27 +1,11 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): MG, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2012 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Authors (see AUTHORS file for details): MG DS
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
+subroutine XC_eval_gga_potential(v1rho,v1sigma,drho,V_xc)
   !
   ! Given the partial derivatives, v1rho, v1sigma, provide the vxc_tot:
   ! Remember sigma = drho(1)^2+drho(2)^2+drho(3)^2
@@ -35,7 +19,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   use QP_m,          ONLY:QP_ng_Vxc
   use D_lattice,     ONLY:alat
   use electrons,     ONLY:n_spin
-  use xc_functionals,ONLY:xc_spin,V_xc
+  use xc_functionals,ONLY:xc_spin
   use FFT_m,         ONLY:fft_size,fft_dim,fft_g_table
 #if defined _FFTW
   use FFT_m,         ONLY:fftw_plan
@@ -45,6 +29,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
   !
   real(DP),intent(in) :: v1rho(n_spin,fft_size),v1sigma(xc_spin(1),fft_size)
   real(SP),intent(in) :: drho(fft_size,n_spin,3)
+  real(SP),intent(inout) :: V_xc(fft_size,n_spin)
   !
   ! Work space
   !
@@ -105,7 +90,7 @@ subroutine XC_eval_gga_potential(v1rho,v1sigma,drho)
     !
     ! 2: sum up with the other partial derivative (and in case the other xc component)
     !
-    V_xc(:,is1) = V_xc(:,is1) + real(v1rho(is1,:),SP) + Gv_drho(:)
+    V_xc(:,is1) = V_xc(:,is1) + real(v1rho(is1,:),SP)+ Gv_drho(:)
     !
   enddo
   !

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_ypp(E,instr,FINALIZE)
  !
@@ -436,6 +420,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
  l_q_grid    = runlevel_is_on('Q_grid')
  l_shifted_grid = runlevel_is_on('Shifted_Grid')
  l_random_grid  = runlevel_is_on('Random_Grid')
+ l_regular_grid = runlevel_is_on('Regular_Grid')
  l_high_sym_pts = runlevel_is_on('High_Symm')
  l_dos       =runlevel_is_on('dos')
  l_bands     =runlevel_is_on('bnds')
@@ -712,7 +697,7 @@ subroutine INIT_ypp(E,instr,FINALIZE)
 #if defined _YPP_ELPH
    if (l_ph_ass_dos) then
      call initactivate(-1,"BSQindex")
-     call initactivate(1,"PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
+     call initactivate(1,"ElPhModes PHfreqF PHmodeF DOSERange DOSESteps DOS_broad")
      call initactivate(2,"BoseTemp")
    endif
 #endif

@@ -89,7 +89,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (.not.STRING_match(WHAT,"dump")) return
  !
  fac=eps_2_alpha/4._SP/pi
- if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/q_norm(iq)**2
+ if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
  !
  ! ABSORPTION
  !

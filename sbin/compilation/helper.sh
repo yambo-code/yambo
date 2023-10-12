@@ -1,26 +1,10 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2021 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM DS
-# 
-# This file is distributed under the terms of the GNU 
-# General Public License. You can redistribute it and/or 
-# modify it under the terms of the GNU General Public 
-# License as published by the Free Software Foundation; 
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will 
-# be useful, but WITHOUT ANY WARRANTY; without even the 
-# implied warranty of MERCHANTABILITY or FITNESS FOR A 
-# PARTICULAR PURPOSE.  See the GNU General Public License 
-# for more details.
-#
-# You should have received a copy of the GNU General Public 
-# License along with this program; if not, write to the Free 
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 # make sure there is no locale setting creating unneeded differences.
 #
 LC_ALL=C
@@ -167,8 +151,16 @@ EOF
 # Makefile (V): copy makefile
 cp config/mk/local/makefile $cdir/Makefile
 #
-# Restore the name of all files scheduled to be moved in directories not touched by the compilation procedure
+# Makefile (VI): clean orphan _to_save files
+#
+# Some files scheduled to be moved can still be unmoved. This happens if the _to_save flag is added
+# to a file that has no explicit dependence on the projects (see for example ypp/dipoles/DIPOLES_ypp_driver).
+# In this case the file cannot be saved in a project dependent folder and needs to be removed.
+#
 if [ "$mode" == "x" ] ; then
+ # this part is different from the main branch, where the following lines
+ # have been replaced by the line commented below
+ # with this changes I have problems in compilation
  files_to_restore=`find $compdir -type f -name "*_to_save"`
  for file in $files_to_restore
  do
@@ -176,6 +168,7 @@ if [ "$mode" == "x" ] ; then
    mv $file ${file/_to_save/}
  done
  files_to_remove=`find $compdir -type l -name "*_to_save"`
+ #files_to_remove=`find $compdir -type f -name "*_to_save"`
  for file in $files_to_remove
  do
    source ./sbin/compilation/verbosity.sh "helper.sh: rm $file"

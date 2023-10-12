@@ -1,5 +1,5 @@
 !
-!        Copyright (C) 2000-2021 the Yambo team
+!        Copyright (C) 2018-2020 the Yambo team
 !              http://www.yambo-code.org/ 
 !
 ! Authors (see AUTHORS file for details): CA
@@ -31,10 +31,11 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  use R_lattice,      ONLY:bz_samp,bz_map,nXkbz
  use D_lattice,      ONLY:a
  use vec_operate,    ONLY:get_id_perpendicular
- use parallel_m,     ONLY:PAR_IND_Xk_ibz,PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
+ use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz,PAR_IND_Xk_bz
  use parallel_int,   ONLY:PP_redux_wait
  use QP_m,           ONLY:QP_nk
  use nl_optics,      ONLY:NL_bands
+ use electric,	     ONLY:l_force_SndOrd
  !
  implicit none           
  !
@@ -79,6 +80,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
  !
  isp  =1
  !
+ ! Calculate | \der_k v_k> and make the product < v_k | H_k | \der_k v_k >
+ !
  do id_red=1,3
    !
    if(k_map%max_kdir(id_red)/=1) then   
@@ -88,11 +91,16 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
      Nperpend=k_map%max_kdir(id2)*k_map%max_kdir(id3)       
      !
      max_step=1
-!     if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+! 
+!    Using higher order for the k-derivative gives a worst result
+!    when compared with dP/dt for this reason this line is commented
+!
+!    if(k_map%max_kdir(id_red)>=6.and..not.l_force_SndOrd) max_step=2
+!
      !
      do ikbz=1,nXkbz
        !
-!       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
+       if(.not.PAR_IND_Xk_bz%element_1D(ikbz)) cycle
        !
        do istep=1,max_step
          call Build_tilde_vbands(en,Xk,ikbz,isp,istep,id_red,V_bands(:,:en%nbf(isp),:,isp),V_tilde)
@@ -121,6 +129,8 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
    !
  enddo
  !
+ call PP_redux_wait(NL_J_red,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+ !  
  ! Transform in cartesian coordinates
  ! 
 !$omp parallel do default(shared), private(i1)
@@ -128,7 +138,5 @@ subroutine NL_Berry_current(en,Xk,k_map,V_bands,NL_J)
    NL_J(id)=-sum(NL_J_red(:)*a(:,id))/(4.0*pi)
  enddo
 !$omp end parallel do
- !
-! call PP_redux_wait(NL_J,COMM=PAR_COM_Xk_bz_INDEX%COMM)
  !
 end subroutine NL_Berry_current

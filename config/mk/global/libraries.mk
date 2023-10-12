@@ -1,4 +1,10 @@
 #
+# License-Identifier: GPL
+#
+# Copyright (C) 2020 The Yambo Team
+#
+# Authors (see AUTHORS file for details): AM
+#
 # EXT_LIBS imported 
 #
 ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
@@ -6,7 +12,10 @@ ifeq ($(wildcard config/mk/global/defs.mk),config/mk/global/defs.mk)
 endif
 include lib/archive/package.list
 #
-INT_LIBS      = qe_pseudo slatec math77 local
+INT_LIBS      = slatec math77 local
+ifeq ($(do_p2y),yes)
+ INT_LIBS+=qe_pseudo
+endif
 YAMBO_INT_LIBS= Yio 
 YLIBDRIVER    = interface main options 
 YLIBDRIVER_LD = _Ydriver_options _Ydriver_interface _Ydriver_main 

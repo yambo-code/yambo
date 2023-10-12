@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): DALV, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2019 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): DALV,AF
 !
 !------------------------------------------------------------
 ! Multipole interpolation:
@@ -49,11 +33,15 @@ module mpa_m
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
  !
+#include <dev_defs.h>
 #include <memory.h>
 
- complex(SP), allocatable :: MPA_E_mat(:,:,:)
- complex(SP), allocatable :: MPA_R_mat(:,:,:)
- complex(SP), allocatable :: MPA_freqs(:)
+ complex(SP), allocatable, target :: MPA_E_mat(:,:,:)
+ complex(SP), allocatable, target :: MPA_R_mat(:,:,:)
+ complex(SP), allocatable, target :: MPA_freqs(:)
+ !
+ complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
@@ -67,12 +55,20 @@ contains
    YAMBO_ALLOC(MPA_E_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_R_mat,(d(1),d(2),d(3)))
    YAMBO_ALLOC(MPA_freqs,(d(4)))
+#ifdef _CUDA
+   YAMBO_ALLOC(MPA_E_mat_d,(d(1),d(2),d(3)))
+   YAMBO_ALLOC(MPA_R_mat_d,(d(1),d(2),d(3)))
+#endif
  end subroutine
 
  subroutine MPA_free()
    YAMBO_FREE(MPA_E_mat)
    YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
+#ifdef _CUDA
+   YAMBO_FREE(MPA_E_mat_d)
+   YAMBO_FREE(MPA_R_mat_d)
+#endif
  end subroutine
  !
  subroutine mpa_cond1(z, E, PPcond_rate)

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!            http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2009 The Yambo Team
 !
 ! Authors (see AUTHORS file for details):
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_initialize(E,k,q)
  !
@@ -78,7 +62,9 @@ subroutine RT_initialize(E,k,q)
  real(SP)                 :: T_memory
  logical                  :: l_Full_RT_T_evolution,l_skip_it,l_velocity_gauge_tmp
  real(SP), parameter      :: thresh=1.E-5_SP
+#if defined _RT_SCATT
  integer,  external       :: RT_Lifetimes_evaluation_plan
+#endif
  !
  ! Logicals
  !==========
@@ -343,8 +329,12 @@ subroutine RT_initialize(E,k,q)
  !
  RT_is_dynamically_dephased=l_elel_scatt.or.l_elph_scatt.or.l_elphoton_scatt.or.l_phel_scatt
  !
+#if defined _RT_SCATT
  if (     RT_is_dynamically_dephased) N_T_samplings = RT_Lifetimes_evaluation_plan( )
  if (.not.RT_is_dynamically_dephased) N_T_samplings = 0
+#else
+ N_T_samplings = 0
+#endif
  !
  call RT_adjust_equilibrium()
  !

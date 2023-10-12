@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2010 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
  !
@@ -135,7 +119,7 @@ subroutine SC_add_XC(X,Xw,Xk,E,k,q,iteration,V_xc_nm1,ELEC,HOLE,DELTA)
      !
      call IO_and_Messaging_switch("+io_in")
      !
-     if (l_sc_sex.or.l_sc_coh)  call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),(/0._SP,0._SP/),-1)
+     if (l_sc_sex.or.l_sc_coh)  call QP_ppa_cohsex(X(2),Xk,E,k,q,qp_dummy,Xw(2),-1)
      !
      call IO_and_Messaging_switch("+report +io_out",CONDITION=master_cpu)
      !

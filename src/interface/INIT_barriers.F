@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_barriers()
  !
@@ -70,18 +54,8 @@ subroutine INIT_barriers()
  ! except the ones specified. switch_off_runlevel switches off
  ! only already activated runlevels
  !
- ! NON-GPL RUNLEVELS that MUST BE SWITCHED OFF  
- ! (those runlevels can be on if a non-gpl input file is being reading)
- !======================================================================
- !
- ! GPL_INCLUDE_START
- !call switch_off_runlevel('acfdt',on_name=' ')
- ! GPL_INCLUDE_END
- !
  ! RUNLEVELS
  !===========
- !
- ! GPL_EXCLUDE_START SC_IGNORE
  !
  if (l_real_time) then
    on_runlevels='HF_and_locXC cohsex em1s dipoles negf collisions el_el_corr el_ph_corr ph_el_corr '//&
@@ -112,22 +86,16 @@ subroutine INIT_barriers()
    goto 1
  endif
  !
- ! GPL_EXCLUDE_END SC_IGNORE
- !
  if (gw0_cohsex) then
    call switch_off_runlevel('all',on_name='dyson gw0 em1s dipoles cohsex el_el_corr el_ph_corr ph_el_corr HF_and_locXC '//&
 &                            trim(always_on_runlevels))
    goto 1
  endif
  !
- ! GPL_EXCLUDE_START
- !
  if (l_acfdt) then
    call switch_off_runlevel('all',on_name='acfdt HF_and_locXC '//trim(always_on_runlevels))
    goto 1
  endif
- !
- ! GPL_EXCLUDE_END
  !
  if (l_life) then
    call switch_off_runlevel('all',on_name='life dipoles em1d el_el_corr ph_el_corr el_photon_corr '//trim(always_on_runlevels))

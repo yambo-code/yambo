@@ -290,7 +290,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      MP_Qerr=0._SP
      cond_numQ(:)=0._SP
      !
-     !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo), &
+     !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_RIM_W_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
@@ -442,7 +442,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          W_1=W_(1)
          W_i=W_(i_w)
          !
-         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp), &
+         !DEV_OMP parallel do default(shared), private(i_np,ig1,ig2,bose_PPA_E,ctmp,l_RIM_W_g), &
          !DEV_OMP &           reduction(+:dp_dummy), collapse(3)
          !
          !DEV_CUF kernel do(3)

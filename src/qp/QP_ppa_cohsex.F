@@ -41,7 +41,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  use IO_int,        ONLY:io_control
  use IO_m,          ONLY:manage_action,OP_RD_CL,REP,VERIFY,NONE,OP_RD,RD_CL_IF_END,&
 &                        io_RESPONSE,deliver_IO_error_message
- use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_dSc_steps,QP_table,l_update_W,l_QP_symmetrize,&
+ use QP_m,          ONLY:QP_solver,QP_t,QP_n_G_bands,QP_dSc_steps,QP_Sc_steps,QP_table,l_QP_symmetrize,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta,GW_terminator_E,&
 &                        COHSEX_use_empties,l_GW_terminator,GW_terminator_Kind,QP_states_simmetrize
  use X_m,           ONLY:X_ALLOC_elemental,X_par,X_t
@@ -73,6 +73,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  type(QP_t)   ::qp
  type(w_samp) ::Xw
  integer      ::GW_iter
+ type(w_samp)     ::Sc_W(qp%n_states)
  !
  ! Work Space
  !
@@ -101,7 +102,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
  complex(SP), pointer DEV_ATTR :: X_blc_p(:,:,:)
- real(SP),    pointer DEV_ATTR :: RIM_W_p(:,:,:)
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -441,9 +441,6 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
      isc_gamp_p => DEV_VAR(isc%gamp)
    endif
    !
-   if(l_ppa.and.l_RIM_W) then
-     RIM_W_p=>DEV_VAR(RIM_W)
-   endif
    !
    if(l_ppa.and.l_GW_terminator) then
      YAMBO_ALLOC(eet_factor,(X_rows1:X_rows2,X_cols1:X_cols2))
@@ -678,7 +675,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,GW_iter)
              if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(ig1==ig2)
              !
              if (l_RIM_W_g) then
-               PPA_R=-cmplx(RIM_W_p(iqibz,ig1,ig2)/2._SP, &
+               PPA_R=-cmplx(real(RIM_W_d(1,iqibz,ig1,ig2))/2._SP, &
 &                           aimag(X_blc_p(ig1,ig2,X_range1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
              else
                PPA_R=-X_blc_p(ig1,ig2,X_range1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)

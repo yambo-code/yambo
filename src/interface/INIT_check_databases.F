@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2019 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,INIT,&
 &                               io_X_err,io_BS_err,io_BS_Fxc_err,io_QINDX_err,&
@@ -52,9 +36,9 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
 #include<memory.h>
  !
- type(X_t)        :: X(4),Xbsk
+ type(X_t)        :: X(5),Xbsk
  type(QP_t)       :: qp
- type(w_samp)     :: Xxcw,Xw(4)
+ type(w_samp)     :: Xxcw,Xw(5)
  type(levels)     :: en,en_sc
  type(bz_samp)    :: q,k
  type(DIPOLE_t)   :: Dip
@@ -62,7 +46,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  integer          :: lnstr
  character(lnstr) :: instr
  integer          :: INIT
- integer          :: io_X_err(4),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
+ integer          :: io_X_err(5),io_BS_err,io_BS_Fxc_err,io_QINDX_err,io_ELPH_err(2),io_SC_E_err
  !
  ! Workspace
  !
@@ -220,7 +204,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  if (io_DIP_err==0) OSTNTS_Vnl_included= Dip%Vnl_included
  if (io_DIP_err/=0) OSTNTS_Vnl_included= (io_KB_abinit_err==0.or.io_KB_pwscf_err==0)
  !
- do i_io=1,4 ! Xx Xs Xd Xp
+ do i_io=1,5 ! Xx Xs Xd Xp Xm
    ! .a
    X(i_io)%ib=(/1,en%nb/)
    ! .b
@@ -229,7 +213,7 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
  !
  if (nqibz>0) then
    if (trim(code_branch)=="devel-cumulant") BS_q=(/1,nqibz/)
-   do i_io=1,4 ! Xx Xs Xd Xp
+   do i_io=1,5 ! Xx Xs Xd Xp Xm
      X(i_io)%iq=(/1,nqibz/)
      call io_control(ACTION=OP_RD_CL,COM=NONE,SEC=(/1,2/),MODE=DUMP,ID=io_ID)
      io_X_err(i_io)=io_X(X(i_io),Xw(i_io),io_ID)
@@ -321,3 +305,4 @@ subroutine INIT_check_databases(X,Xbsk,qp,Xxcw,Xw,q,k,en,en_sc,Dip,lnstr,instr,I
 #endif
  !
 end subroutine
+

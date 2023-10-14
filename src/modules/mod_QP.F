@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module QP_m
  !
@@ -46,13 +30,9 @@ module QP_m
  integer           :: QP_ng_SH
  integer           :: QP_ng_Vxc
  integer           :: QP_n_G_bands(2)
- integer           :: GWo_iterations
- integer           :: GW_iterations
- logical           :: GWo_SC_done
  logical           :: COHSEX_use_empties
  logical           :: l_QP_symmetrize=.FALSE.
  logical           :: l_GW_terminator=.FALSE.
- logical           :: l_update_W=.FALSE.
  logical           :: l_QP_Expand
  logical           :: use_GreenF_to_eval_QP
  logical           :: use_GreenF_Zoom
@@ -63,6 +43,7 @@ module QP_m
  real(SP)          :: QP_time_order_sign=-1 ! T-ordered. Set to +1 (causal) in QP_SET_temperature_pre_factor
  real(SP)          :: QP_G_damp
  real(SP)          :: QP_G_er(2)
+ real(SP)          :: QP_G_ir(2)
  real(SP)          :: QP_G_dr(2)
  real(SP)          :: QP_cg_percent
  character(schlen) :: GW_terminator_Kind="none"
@@ -84,6 +65,7 @@ module QP_m
  logical,    allocatable:: QP_state(:,:)
  !
  ! Solver...
+ character(2)      :: QP_G_solver
  real(SP)          :: QP_dSc_delta
  logical           :: QP_dSc_test
  logical           :: On_Mass_Shell_approx

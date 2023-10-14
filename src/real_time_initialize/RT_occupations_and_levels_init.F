@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM FP
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  !
@@ -30,7 +14,9 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
  use parallel_m,     ONLY:PAR_COM_Xk_ibz_INDEX,PAR_IND_Xk_ibz
  use parallel_int,   ONLY:PP_redux_wait
  use real_time,      ONLY:RT_bands,RT_levels,RT_is_dynamically_dephased,RT_nk
+#if defined _ELPH || defined _PHEL
  use ELPH,           ONLY:PH_freqs_sq,PH_Q_modulus,PH_acoustic_branch,l_GKKP_expanded_DB_exists,l_GKKP_DB_exists
+#endif
  use R_lattice,      ONLY:bz_samp,bz_fine_grid
  use electrons,      ONLY:levels,spin_occ,E_fine_grid,n_sp_pol
  !
@@ -133,6 +119,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
    enddo
  enddo
  !
+#if defined _ELPH || defined _PHEL
  ! Ph Occupations 
  !================
  if (RT_ph_occ%active) then
@@ -150,6 +137,7 @@ subroutine RT_occupations_and_levels_init(bands,E,k,q,k_FG,E_FG)
      enddo
    enddo
  endif
+#endif
  !
 #if defined _RT
  call PP_redux_wait(RT_el_occ%N,COMM=PAR_COM_Xk_ibz_INDEX%COMM)

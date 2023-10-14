@@ -1,27 +1,11 @@
 #
 # from http://www.arsc.edu/support/news/HPCnews/HPCnews249.shtml
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
 #
-# Authors (see AUTHORS file for details): AM, AF, DS, CA
+# Copyright (C) 2021 The Yambo Team
 #
-# This file is distributed under the terms of the GNU
-# General Public License. You can redistribute it and/or
-# modify it under the terms of the GNU General Public
-# License as published by the Free Software Foundation;
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will
-# be useful, but WITHOUT ANY WARRANTY; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A
-# PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-#
-# You should have received a copy of the GNU General Public
-# License along with this program; if not, write to the Free
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+# Authors (see AUTHORS file for details): AM AF DS CA
 #
 AC_DEFUN([AC_HAVE_HDF5_F90],[
 #
@@ -86,6 +70,14 @@ if test x"$enable_hdf5_par_io" = "xno"   ; then IO_LIB_VER="serial"; fi
 hdf5="no"
 #
 if test x"$enable_hdf5" = "xyes"; then
+ #
+ if ! test "$with_hdf5_libs" = "internal" ; then
+  #
+  AC_MSG_CHECKING([for HDF5]) ;
+  if   test -d "$with_hdf5_libdir"    ; then AC_MSG_RESULT([in libdir $with_hdf5_libdir]) ;
+  elif test -d "$with_hdf5_path"    ;   then AC_MSG_RESULT([in path $with_hdf5_path]) ;
+  elif test x"$with_hdf5_libs" != "x" ; then AC_MSG_RESULT([using $with_hdf5_libs]) ;
+  fi
   #
   AC_LANG([Fortran])       
   #
@@ -98,30 +90,31 @@ if test x"$enable_hdf5" = "xyes"; then
   if test -d "$with_hdf5_libdir"     ; then try_hdf5_libdir=$with_hdf5_libdir ; fi
   if test -d "$with_hdf5_includedir" ; then try_hdf5_incdir=$with_hdf5_includedir ; fi
   #
-  if test x"$with_hdf5_libs" != "x" ; then 
-    #
-    AC_MSG_CHECKING([for HDF5 using $with_hdf5_libs]) ;
-    try_HDF5_LIBS="$with_hdf5_libs" ; 
-    if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
-    #
-    save_libs="$LIBS" ;
-    save_fcflags="$FCFLAGS" ;
-    #
-    FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
-    LIBS="$try_HDF5_LIBS" ;
-    #
-    AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
-       use hdf5
-       implicit none
-       integer  error
-       call h5open_f(error)
-       call h5close_f(error)
-       ]),[hdf5=yes], [hdf5=no]);
-    #
-    FCFLAGS="$save_fcflags" ;
-    LIBS="$save_libs" ;
-    #
-  else
+  if test x"$with_hdf5_libs" != "x" ; then try_HDF5_LIBS="$with_hdf5_libs" ; fi
+  #
+  if test -d "$try_hdf5_libdir" ; then try_HDF5_LIBS="-L$try_hdf5_libdir -lhdf5hl_fortran -lhdf5_fortran -lhdf5_hl -lhdf5" ; fi
+  #
+  if test -d "$try_hdf5_incdir" ; then try_HDF5_INCS="$IFLAG$try_hdf5_incdir" ; fi
+  #
+  save_libs="$LIBS" ;
+  save_fcflags="$FCFLAGS" ;
+  #
+  FCFLAGS="$try_HDF5_INCS $save_fcflags" ;
+  LIBS="$try_HDF5_LIBS" ;
+  #
+  AC_LINK_IFELSE(AC_LANG_PROGRAM([], [
+     use hdf5
+     implicit none
+     integer  error
+     call h5open_f(error)
+     call h5close_f(error)
+     ]),[hdf5=yes], [hdf5=no]);
+  #
+  FCFLAGS="$save_fcflags" ;
+  LIBS="$save_libs" ;
+  #
+  if test "x$hdf5" = "xno" ; then
+    AC_MSG_RESULT([no]) ;
     #
     # Automatic detection of hdf5 libs copied from QE
     #
@@ -141,11 +134,13 @@ if test x"$enable_hdf5" = "xyes"; then
        h5fc=$(command -v h5fc) 
     fi
     #
-    if test -e $h5pfc; then
+    # Check for the existence of the pre-compiled library corresponding to what needed by yambo
+    #
+    if test -e $h5pfc && test $IO_LIB_VER = "parallel"; then
        try_HDF5_LIBS=`$h5pfc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5pfc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="parallel";
-    elif test -e $h5fc; then 
+    elif test -e $h5fc && test $IO_LIB_VER = "serial"; then 
        try_HDF5_LIBS=`$h5fc -show | awk -F'-L' '{@S|@1=""; for (i=2; i<=NF;i++) @S|@i="-L"@S|@i; print @S|@0}'`
        try_hdf5_incdir=`$h5fc -show | awk -F'-I' '{print @S|@2}' | awk '{print @S|@1}'`
        IO_LIB_VER="serial";
@@ -171,7 +166,9 @@ if test x"$enable_hdf5" = "xyes"; then
     FCFLAGS="$save_fcflags" ;
     LIBS="$save_libs" ;
     #
-    if test "x$hdf5" = xno; then
+   fi
+   #
+   if test "x$hdf5" = xno; then
       AC_MSG_RESULT([no]) ;
       AC_MSG_CHECKING([for HDF5 using automatic library list]) ;
       #
@@ -215,6 +212,8 @@ if test x"$enable_hdf5" = "xyes"; then
     fi
   fi
   #
+  # To be fixed
+  #
   if test "x$hdf5" = xyes; then
     HDF5_LIBS="$try_HDF5_LIBS" ;
     HDF5_INCS="$try_HDF5_INCS" ;
@@ -231,8 +230,9 @@ if test x"$enable_hdf5" = "xyes"; then
   fi
   #
   if test "x$hdf5" = xno; then
-    AC_MSG_RESULT([no]) ;
-    if   test -d "$with_hdf5_libdir" || test -d "$with_hdf5_path"; then AC_MSG_RESULT([no]) ; fi
+    if ! test "$with_hdf5_libs" = "internal" ; then
+      AC_MSG_RESULT([no]) ;
+    fi
     #
     AC_MSG_CHECKING([for internal HDF5 library]);
     internal_hdf5="yes" ;
@@ -242,7 +242,9 @@ if test x"$enable_hdf5" = "xyes"; then
     NETCDF_HDF5_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/${IO_LIB_VER}" ;
     NETCDF_HDF5_PAR_PATH="${extlibs_path}/${FCKIND}/${FC}/${NETCDF_VER}/parallel" ;
     #
-    HDF5_LIBS="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a" ;
+    HDF5_LIBS_F="${NETCDF_HDF5_PATH}/lib/libhdf5_hl_fortran.a ${NETCDF_HDF5_PATH}/lib/libhdf5_fortran.a";
+    HDF5_LIBS_C="${NETCDF_HDF5_PATH}/lib/libhdf5_hl.a ${NETCDF_HDF5_PATH}/lib/libhdf5.a";
+    HDF5_LIBS="$HDF5_LIBS_F $HDF5_LIBS_C";
     HDF5_INCS="${IFLAG}${NETCDF_HDF5_PATH}/include" ;
     #
     hdf5=yes ;

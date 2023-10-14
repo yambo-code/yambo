@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  !
@@ -71,31 +55,27 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
  call timing('NL Hamiltonian',OPR='start')
 #endif
  !
- if(.not.l_use_Hxc_collisions.or..not.COLLISIONS_have_HARTREE) then
+ if(eval_HARTREE .or.  eval_DFT) then
    !
-   if(eval_HARTREE .or.  eval_DFT) then
-     !
-     call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
-     !
-     call el_density_vbands(E,k,rho_n,VAL_BANDS)
-     !
-   endif
+   call NL_build_valence_bands(E,V_bands,VAL_BANDS,NL_bands(1))
    !
-   if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+   call el_density_vbands(E,k,rho_n,VAL_BANDS)
    !
-   ! I reconstruct the full density if necessary because both TDDFT 
-   ! and JGM are not linear in rho_n and require the full density
-   ! 
-   if(eval_DFT) then
-     !
-     if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
-     !
-     ! Reconstruct the full density
-     !
-     call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
-     V_xc_sc=V_xc-V_xc_0
-     !
-   endif
+ endif
+ !
+ if(eval_HARTREE) call V_Hartree(rho_n-rho_reference,V_hartree_sc)
+ !
+ ! I reconstruct the full density if necessary because both TDDFT 
+ ! and JGM are not linear in rho_n and require the full density
+ ! 
+ if(eval_DFT) then
+   !
+   if(NL_bands(1)>1) rho_n=full_rho+rho_n-rho_reference
+   !
+   ! Reconstruct the full density
+   !
+   call XC_potential_driver(E,k,WF_kind,WF_xc_functional,1)
+   V_xc_sc=V_xc-V_xc_0
    !
  endif
  !
@@ -246,7 +226,7 @@ subroutine NL_Hamiltonian(E,k,q,X,Time,i_time,V_bands)
 !$omp end parallel do
    !
   enddo  !---- loop on k-point
- enddo
+ enddo  !---- loop in spin polarizations
  !
 #if defined _TIMING
  call timing('NL Hamiltonian',OPR='stop')

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  ! 
@@ -99,6 +83,7 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (depth>0) sec_mode='='
  !
  X_dielectric_matrix=-1
+ Xw%grid_type="ra"
  !
  if (X%whoami==1) then
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamical IP Response Function Matrix')
@@ -107,7 +92,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (.not.SILENT_MODE) call section(sec_mode,'Static Dielectric Matrix')
    Xw%n_freqs    =1
    X_MEM_n_freqs =1
+   !
  else if (X%whoami==3) then
+   !
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamical Dielectric Matrix')
    if (l_gw0) self_detect_E_range=.true.
    !
@@ -118,15 +105,32 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
    if (l_life) X_MEM_n_freqs = QP_n_W_freqs_redux
    !
  else if (X%whoami==4) then
+   !
    if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (PPA)')
    Xw%n_freqs    =2
    X_MEM_n_freqs =2
    Xw%er=(/epsilon(1._SP),0._SP/)
    Xw%dr=(/0._SP,X%ppaE/)
-   X%ordering='R'
+   X%ordering='R' !DALV: we should use 't'
+   !
+ else if (X%whoami==5) then
+   !
+   if (.not.SILENT_MODE) call section(sec_mode,'Dynamic Dielectric Matrix (MPA)')
+   !
+   if (mod(Xw%n_freqs,2)>0) Xw%n_freqs=Xw%n_freqs+1
+   X%mpa_npoles  = Xw%n_freqs/2
+   X_MEM_n_freqs =2*X%mpa_npoles
+   X%ordering='t'
+   Xw%grid_type="mp"
+   !
  endif
  !
- call X_pre_setup(Xen,Xk,X)
+ call X_pre_setup(Xen,Xk,X)      !DALV: in here the time ordering is changed to 'R' for metals
+                                 !      this could be problematic for FF real-axis GW calculations
+ ! AF: the following fix breaks Lifetime calcs
+ !     and need to be further analyzed
+ !
+ !if(X%whoami==3) X%ordering='T' !DALV: solved here
  !
  if (l_write_disk_Xo) then
    if (.not.SILENT_MODE) call warning('On-the-fly extraction of IP Response Function Matrix')
@@ -200,9 +204,9 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
  if (.not.io_RESPONSE) X_MEM_n_tot_freqs=X_MEM_n_freqs*PAR_nQ_ibz
  if (.not.allocated(X_par)) then
    if (     io_RESPONSE) allocate(X_par(1))
-#if !defined _PAR_IO
-   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
-#endif
+!#if !defined _PAR_IO
+!   if (     io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
+!#endif
    if (.not.io_RESPONSE) allocate(X_par(PAR_nQ_ibz))
    if (.not.io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,X_MEM_n_tot_freqs/))
  endif
@@ -320,11 +324,35 @@ integer function X_dielectric_matrix(Xen,Xk,q,X,Xw,Dip,SILENT_MODE)
      call X_AVERAGE_setup("CLOSE",iq,X%q0)
    endif
    !
+   ! DS MERGE <
+   ! The following lines were after the call to X_redux and before the call to io_X before the merge
+   ! I moved them here after the merge
+   !
+   ! allocation of X_mat
+   if (io_RESPONSE.and..not.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+#endif
+   endif
+   !
+! XXX
+write(*,*) "upto before io_RESPONSE"
+! XXX
+   ! DS MERGE >
+   !
    ! X_par => X_mat
    !
    call X_mat_filling(iq_mem,X,Xw,X_MEM_n_freqs,X_MEM_n_tot_freqs,X_mat)
    !
    call elemental_IO( iq , .FALSE. )
+   !
+   ! X_mat (and other few quantities) deallocate
+   !
+   if (io_RESPONSE.and.allocated(X_mat)) then
+#if ! defined _PAR_IO
+     call X_ALLOC_elemental('X')
+#endif
+   endif
    !
    ! CLEAN (1)
    ! Frequencies must not be cleaned in the case of lifetimes calculations when the EM1d

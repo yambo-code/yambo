@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): MG, CA, DS, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2015 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): MG CA DS AF
 !
 subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
  !
@@ -70,9 +54,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
        !
        if (n_spinor==1) then
          !
-#ifdef _CUDA_LOC
-         !$cuf kernel do(2) <<<*,*>>>
-#endif
+         !DEV_CUF kernel do(2) <<<*,*>>>
          do i_spinor=1,n_spinor
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),i_spinor,ib,i_sp_pol)=WF_p(i_g,i_spinor,iwf)
@@ -81,9 +63,7 @@ subroutine DEV_SUB_ALT(WF_symm_kpoint)(b_to_load,ikbz,Xk,WF_k_out)
          !
        else
          !
-#ifdef _CUDA_LOC
-         !$cuf kernel do(1) <<<*,*>>>
-#endif
+         !DEV_CUF kernel do(1) <<<*,*>>>
          do i_g=1,wf_ng
            WF_k_out(DEV_VAR(g_rot)(i_g,is),1,ib,i_sp_pol)=DEV_VAR(spin_sop)(1,1,is)*WF_p(i_g,1,iwf)+ &
 &                                                         DEV_VAR(spin_sop)(1,2,is)*WF_p(i_g,2,iwf)

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2020 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_free( )
  !
@@ -27,8 +11,8 @@ subroutine RT_free( )
  use DIPOLES,        ONLY:DIP_alloc
 #if defined _ELPH
  use interfaces,     ONLY:ELPH_alloc
-#endif
  use ELPH,           ONLY:Q_io_map,GKKP_ep_sq,GKKP_pe_sq
+#endif
  use hamiltonian,    ONLY:H_free
  use xc_functionals, ONLY:E_xc
  use real_time,      ONLY:DbGd_EE_scatt_table,RT_TIME_status,REF_V_xc_sc,&
@@ -88,9 +72,11 @@ subroutine RT_free( )
  YAMBO_FREE(rho_reference)
  YAMBO_FREE(magn_reference)
  YAMBO_FREE(RT_Deph_Matrix)
- YAMBO_FREE(Q_io_map)
  !
 #if defined _ELPH
+ !
+ YAMBO_FREE(Q_io_map)
+ !
  call ELPH_alloc('FREE',GKKP=GKKP_ep_sq)
  call ELPH_alloc('FREE',GKKP=GKKP_pe_sq)
 #endif

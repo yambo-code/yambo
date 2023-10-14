@@ -1,39 +1,24 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): MG, CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2016 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
+! Authors (see AUTHORS file for details): MG CA
 !
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-#if defined _NL
 integer function io_NL(what,ID)
  !
- use pars,          ONLY:schlen
+ use pars,          ONLY:schlen,SP,IP,LP,IP_YIO,LP_YIO,CR_YIO
  use units,         ONLY:HA2EV, AU2KWCMm2, AUT2FS
  use nl_optics,     ONLY:E_tot_t,E_ext_t,E_ks_t,NL_P_t, &
-&                        n_frequencies
+&                        n_frequencies,NL_J_t
  use real_time,     ONLY:NE_steps
+ use fields,        ONLY:n_ext_fields
  use RT_control,    ONLY:OBS_RT_IO_t
  use fields,        ONLY:Efield
  use IO_m,          ONLY:io_sec,read_is_on,write_is_on,io_extension
- use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,&
-&                        io_fragment,io_elemental
+ use IO_int,        ONLY:io_connect,io_disconnect,io_bulk,io_header,def_variable_elemental,&
+&                        io_fragment,io_elemental,io_variable_elemental
+ use stderr,        ONLY:intc
  !
 #if defined _TIMING
  use timing_m,      ONLY:timing
@@ -113,34 +98,40 @@ integer function io_NL(what,ID)
  !
  if(what=="Nonlinear_REF") goto 2
  !
- ! Efield 
+ ! Efields are stored in each fragment with the different parameters 
  !
- i_Prb=1 ! we store only the first field in the fragments
- !
- call io_elemental(ID_frag,VAR="FIELD_NAME",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
- !
- call io_elemental(ID_frag,VAR="EXTERNAL_FIELD",VAR_SZ=10,MENU=0)
- call io_elemental(ID_frag,VAR="[FIELDs] Versor                 ",&
-         &                 R1=Efield(i_Prb)%versor,WARN=.true.,OP=(/"==","==","=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Intensity     [kWCMm2] ",&
-         &                 R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
- call io_elemental(ID_frag,VAR="[FIELDs] Field width       [fs] ",&
-         &                 R0=Efield(i_Prb)%width,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency range   [eV] ",&
-         &                 R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency steps        ",&
-         &                 I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="[FIELDs] Frequency step    [eV] ",&
-         &                 R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
- call io_elemental(ID_frag,VAR='[FIELDs] Initial time      [fs] ',&
-         &                 R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
- !
- call io_elemental(ID_frag,VAR="FIELD_POL",CH0="",VAR_SZ=1,MENU=0)
- call io_elemental(ID_frag,CH0=Efield(i_Prb)%ef_pol,VAR="[FIELDs] Polarization  ",CHECK=.true.,OP=(/"=="/))
- call io_elemental(ID_frag,VAR="",VAR_SZ=0,MENU=0)
+ do i_Prb=1,n_ext_fields
+   call def_variable_elemental(ID_frag,"Field_Name_"//trim(intc(i_Prb)),1,CR_YIO,0)
+   call io_variable_elemental(ID_frag,CH0=Efield(i_Prb)%ef_name,VAR=' [FIELDs] Type           ',CHECK=.true.,OP=(/"=="/))
+
+   call def_variable_elemental(ID_frag,"Field_Versor_"//trim(intc(i_Prb)),3,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Versor                 ",R1=Efield(i_Prb)%versor, &
+&           WARN=.true.,OP=(/"==","==","=="/))
+   call def_variable_elemental(ID_frag,"Field_Intensity_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Intensity     ",TERMINATOR="[kWCMm2]",&
+&         R0=Efield(i_Prb)%intensity,CHECK=.true.,OP=(/"=="/),UNIT=AU2KWCMm2)
+
+   call def_variable_elemental(ID_frag,"Field_Damping_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Damping           ",TERMINATOR="[fs]",&
+&         R0=Efield(i_Prb)%FWHM,CHECK=.true.,OP=(/"=="/))
+
+   call def_variable_elemental(ID_frag,"Field_Freq_range_"//trim(intc(i_Prb)),2,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency range   ",TERMINATOR="[eV]",&
+&         R1=Efield(i_Prb)%frequency,CHECK=.true.,OP=(/"==","=="/),UNIT=HA2EV)
+
+   call def_variable_elemental(ID_frag,"Field_Freq_steps_"//trim(intc(i_Prb)),1,IP_YIO,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency steps", &
+&   I0=Efield(i_Prb)%n_frequencies,CHECK=.true.,OP=(/"=="/))
+
+   call def_variable_elemental(ID_frag,"Field_Freq_step_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR="[FIELDs] Frequency step    ",TERMINATOR="[eV]",&
+&         R0=Efield(i_Prb)%W_step,CHECK=.true.,OP=(/"=="/),UNIT=HA2EV)
+
+   call def_variable_elemental(ID_frag,"Field_Initial_time_"//trim(intc(i_Prb)),1,SP,0)
+   call io_variable_elemental(ID_frag,VAR=" [FIELDs] Initial time      ",TERMINATOR="[fs]",&
+&         R0=Efield(i_Prb)%t_initial,CHECK=.true.,OP=(/"=="/),UNIT=AUT2FS)
+
+ enddo
  !
  ! Polarization
  ! 
@@ -149,6 +140,12 @@ integer function io_NL(what,ID)
  call io_bulk(ID_frag,R2=NL_P_t)
  !
  if(what=="Nonlinear_REF") goto 1
+ !
+ ! Current
+ !
+ write (VAR_name,'(a,i4.4)') 'NL_J_freq_',i_fragment
+ call io_bulk(ID_frag,VAR=trim(VAR_name),VAR_SZ=shape(NL_J_t))
+ call io_bulk(ID_frag,R2=NL_J_t)
  !
  ! E_ext
  ! 
@@ -177,4 +174,3 @@ integer function io_NL(what,ID)
 #endif
  !
 end function
-#endif

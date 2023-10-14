@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module vec_operate
  !
@@ -33,6 +17,10 @@ module vec_operate
  !
  interface cross_product
    module procedure r_cross_product,c_cross_product
+ end interface
+ !
+ interface c2a
+   module procedure  c2a_scal,c2a_vec
  end interface
  !
  contains
@@ -183,11 +171,17 @@ module vec_operate
      !
      select case(plane)
        case('xy')
-         M=reshape((/cos(t),-sin(t),rZERO,sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+         M=reshape((/cos(t),-sin(t),rZERO, sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
+       case('yx')
+         M=reshape((/cos(t), sin(t),rZERO,-sin(t),cos(t),rZERO,rZERO,rZERO,rONE/),(/3,3/))
        case('xz')
-         M=reshape((/cos(t),rZERO,-sin(t),sin(t),rZERO,cos(t),rZERO,rONE,rZERO/),(/3,3/))
+         M=reshape((/cos(t),rZERO,-sin(t),rZERO,rONE,rZERO, sin(t),rZERO,cos(t)/),(/3,3/))
+       case('zx')
+         M=reshape((/cos(t),rZERO, sin(t),rZERO,rONE,rZERO,-sin(t),rZERO,cos(t)/),(/3,3/))
        case('yz')
-         M=reshape((/rZERO,cos(t),-sin(t),rZERO,sin(t),cos(t),rONE,rZERO,rZERO/),(/3,3/))
+         M=reshape((/rONE,rZERO,rZERO,rZERO,cos(t),-sin(t),rZERO, sin(t),cos(t)/),(/3,3/))
+       case('zy')
+         M=reshape((/rONE,rZERO,rZERO,rZERO,cos(t), sin(t),rZERO,-sin(t),cos(t)/),(/3,3/))
      end select
      !
      v_loc=matmul(M,v_in)
@@ -196,7 +190,7 @@ module vec_operate
      !
    end subroutine v_rotate
    !
-   subroutine c2a(b_in,v_in,v_out,mode)
+   subroutine c2a_scal(b_in,v_in,v_out,mode) !_scal
      !
      ! rlu = Reduced Lattice Units (crystal coordinated in Quantum-Espresso)
      ! cc  = Cartesian Coordinates (atomic units)
@@ -255,7 +249,70 @@ module vec_operate
        v_in=matmul(mat,u) 
        if (index(mode,'2i')/=0) v_in(:)=v_in(:)/n(:) ! * -> iku
      endif
-   end subroutine c2a
+   end subroutine c2a_scal 
+   !
+   subroutine c2a_vec(b_in,nvec,v_in,v_out,mode)
+     !
+     ! mode = 'k/r c2a' 'k/r a2c' (cc  <-> rlu)
+     ! mode = 'k/r i2a' 'k/r a2i' (iku <-> rlu)
+     ! mode = 'k/r i2c' 'k/r c2i' (cc  <-> iku)
+     !
+     use D_lattice,      ONLY:alat,a
+     use R_lattice,      ONLY:b
+     use matrix_operate, ONLY:m3inv
+     integer           :: nvec
+     real(SP)          :: v_in(nvec,3)
+     real(SP), optional:: b_in(3,3),v_out(nvec,3)
+     character(4)::mode
+     !
+     ! Work Space
+     !
+     integer :: i
+     real(SP):: a_here(3,3),mat(3,3),n(3,3),n_m1(3,3),u(nvec,3)
+     !
+     ! Define local unit cell vectors
+     !
+     if (index(mode,'r')/=0) then
+       a_here=a
+       if (present(b_in)) a_here=b_in
+     else
+       a_here=b
+       if (present(b_in)) a_here=b_in
+     endif
+     !
+     ! Scale factor if input vector is in iku
+     !     
+     n(:,:)=0
+     n_m1(:,:)=0
+     do i =1, 3
+       if (index(mode,'r')/=0) n(i,i)=alat(i)
+       if (index(mode,'k')/=0) n(i,i)=2._SP*pi/alat(i)
+       if (index(mode,'2i')/=0) n_m1(i,i)=1._SP/n(i,i)
+     enddo
+     !
+     ! u is rlu or cc (no iku)
+     !
+     u(:,:)=v_in(:,:)
+     !
+     if (index(mode,'i2')/=0) u(:,:)=matmul(v_in(1:nvec,1:3),n(1:3,1:3)) ! iku -> cc
+     !
+     ! i2c/c2i
+     mat=reshape((/1._SP,0._SP,0._SP,0._SP,1._SP,0._SP,0._SP,0._SP,1._SP/),(/3,3/))
+     !
+     ! a2c/a2i
+     if (index(mode,'a2c')/=0.or.index(mode,'a2i')/=0) mat=transpose(a_here)
+     !
+     ! c2a/i2a
+     if (index(mode,'c2a')/=0.or.index(mode,'i2a')/=0) call m3inv(transpose(a_here),mat) 
+     !
+     if (present(v_out)) then
+       v_out=transpose(matmul(mat,transpose(u)))
+       if (index(mode,'2i')/=0) v_out(:,:)=matmul(v_out(1:nvec,1:3),n_m1(:,:)) ! * -> iku
+     else
+       v_in=transpose(matmul(mat,transpose(u)))
+       if (index(mode,'2i')/=0) v_in(:,:)=matmul(v_in(1:nvec,1:3),n_m1(:,:)) ! * -> iku
+     endif
+   end subroutine c2a_vec
    !
    subroutine define_b_and_DL_vol()
      !

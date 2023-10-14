@@ -1,25 +1,9 @@
 ! 
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG AC
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module nl_optics
  !
@@ -134,7 +118,7 @@ module nl_optics
  ! 
  ! Dephasing time (in units of NL_damping) 
  !
- integer, parameter :: DephMult=5 
+ integer, parameter :: DephMult=6 
  !
  ! Wavefunction sampling
  !
@@ -162,6 +146,7 @@ module nl_optics
  ! IO variables
  !
  real(SP),     allocatable :: NL_P_t(:,:)
+ real(SP),     allocatable :: NL_J_t(:,:)
  complex(SP),  allocatable :: E_tot_t(:,:),E_ext_t(:,:), E_ks_t(:,:),V_bands_t(:,:,:,:,:)
  complex(SP)               :: E_tot(3),E_ext(3),E_ks(3)
  logical,      allocatable :: freqs_done(:)
@@ -212,6 +197,7 @@ module nl_optics
      endif
      !
      YAMBO_ALLOC(NL_P_t,(NE_steps,3))
+     YAMBO_ALLOC(NL_J_t,(NE_steps,6))
      YAMBO_ALLOC(E_tot_t,(NE_steps,3))
      YAMBO_ALLOC(E_ext_t,(NE_steps,3))
      YAMBO_ALLOC(E_ks_t,(NE_steps,3))
@@ -270,6 +256,7 @@ module nl_optics
      endif
      !
      YAMBO_FREE(NL_P_t)
+     YAMBO_FREE(NL_J_t)
      YAMBO_FREE(E_tot_t)
      YAMBO_FREE(E_ext_t)
      YAMBO_FREE(E_ks_t)

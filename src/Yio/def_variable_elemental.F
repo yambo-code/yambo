@@ -1,30 +1,15 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
+! Copyright (C) 2018 The Yambo Team
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_kind)
  !
  use netcdf
  use pars,       ONLY:SP,DP,IP,LP,schlen,lchlen,nf90_SP,DB_menu_length
+ use pars,       ONLY:IP_YIO,LP_YIO,SP_YIO,DP_YIO,CR_YIO
 #if !defined _io_lib
  use drivers,    ONLY:list_dbs
 #endif
@@ -59,13 +44,11 @@ subroutine def_variable_elemental(ID,VAR,VAR_SZ,VAR_KIND,MENU,dim_names,par_io_k
    !
    io_rec_pos(ID)=1
    !
-   ! Define var kind. Notice that SP=IP, this is why I need to shift by 100
-   !
-   if(VAR_KIND==SP)     netcdf_var_kind=nf90_SP
-   if(VAR_KIND==DP)     netcdf_var_kind=nf90_double
-   if(VAR_KIND==IP+100) netcdf_var_kind=nf90_int
-   if(VAR_KIND==LP+100) netcdf_var_kind=nf90_byte
-   if(VAR_KIND==0 )     netcdf_var_kind=nf90_char
+   if(VAR_KIND==SP_YIO)     netcdf_var_kind=nf90_SP
+   if(VAR_KIND==DP_YIO)     netcdf_var_kind=nf90_double
+   if(VAR_KIND==IP_YIO)     netcdf_var_kind=nf90_int
+   if(VAR_KIND==LP_YIO)     netcdf_var_kind=nf90_byte
+   if(VAR_KIND==CR_YIO)     netcdf_var_kind=nf90_char
    !
 #if defined _PAR_IO
    !

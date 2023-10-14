@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): DS, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2013 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): DS AF
 !
 subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
@@ -63,11 +47,8 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  if(n_spinor==1) then
    !
-#ifdef _CUDA_LOC   
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ifft)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)
    enddo
@@ -76,11 +57,8 @@ subroutine DEV_SUB_ALT(WF_apply_symm)(isc,WF_symm)
  !
  if (n_spinor==2) then
    !
-#ifdef _CUDA_LOC   
-   !$cuf kernel do(1) <<<*,*>>>
-#else
-   !$omp parallel do default(shared), private(ifft)
-#endif
+   !DEV_CUF kernel do(1) <<<*,*>>>
+   !DEV_OMP parallel do default(shared), private(ifft)
    do ifft = 1, fft_size
      WF_symm(ifft,1)=DEV_VAR(spin_sop)(1,1,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),1,i_wf)+ &
                      DEV_VAR(spin_sop)(1,2,isymm)*WF_p(DEV_VAR(fft_rot_r)(ifft,isymm),2,i_wf)

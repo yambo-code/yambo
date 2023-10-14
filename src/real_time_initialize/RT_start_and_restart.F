@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2009 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine RT_start_and_restart(E,k,q)
  !
@@ -75,7 +59,9 @@ subroutine RT_start_and_restart(E,k,q)
  !
  integer :: i_mem,i_sp_pol,ik,IO_ACT,nt,i_db,io_err(N_RT_databases),COM_MODE,ib,iE_fg,ik_RT
  integer, external :: io_RT_components
+#if defined _RT_SCATT
  integer, external :: RT_Lifetimes_evaluation_plan
+#endif
  logical :: RESTART
  !
  ! Initialize the Gf, potentials, levels and occupations
@@ -146,8 +132,11 @@ subroutine RT_start_and_restart(E,k,q)
  !  3. The REFERENCE -> G_lesser_ref
  !
  RESTART = io_err(RT_return_db_ID("G_lesser_RESTART"))==0.and.&
-&          io_err(RT_return_db_ID("OBSERVABLES"))==0.and.&
-&          io_err(RT_return_db_ID("REFERENCE"))==0
+&          io_err(RT_return_db_ID("OBSERVABLES"))==0
+ !
+#if defined _RT_SCATT
+ RESTART = RESTART .and. io_err(RT_return_db_ID("REFERENCE"))==0
+#endif
  !
 #if defined _ELPH_ITERATIVE
  !  4. The THETA (no CCA mode)
@@ -218,7 +207,11 @@ subroutine RT_start_and_restart(E,k,q)
    !
    ! Last thing to do is to update the planned time sampling time (if needed)
    !
+#if defined _RT_SCATT
    nt=RT_Lifetimes_evaluation_plan( )
+#else
+   nt=0
+#endif
    !
    ! Update occupations after loading from DB
    !==========================================

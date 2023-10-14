@@ -1,26 +1,10 @@
 #! /bin/tcsh -f
 #
-#        Copyright (C) 2000-2018 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2008 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM
-# 
-# This file is distributed under the terms of the GNU 
-# General Public License. You can redistribute it and/or 
-# modify it under the terms of the GNU General Public 
-# License as published by the Free Software Foundation; 
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will 
-# be useful, but WITHOUT ANY WARRANTY; without even the 
-# implied warranty of MERCHANTABILITY or FITNESS FOR A 
-# PARTICULAR PURPOSE.  See the GNU General Public License 
-# for more details.
-#
-# You should have received a copy of the GNU General Public 
-# License along with this program; if not, write to the Free 
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 #==================================================
 set awk     = awk
@@ -36,26 +20,17 @@ endif
 #
 # Get current version & revision
 #
-set repo=`git remote -v | grep push`
-#
-set dummy="_VERSION"
-set version_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
-set dummy="_SUBVERSION"
-set subver_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
-set dummy="_PATCHLEVEL"
-set patch_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
-set dummy="_REVISION"
-set revision_old=`cat include/driver/version.h | grep $dummy | $awk '{split($0,frags);print frags[3]}'`
-set dummy="_HASH"
-set hash_old=`cat include/driver/version.h | grep $dummy | $awk '{gsub("\""," ");split($0,frags);print frags[3]}'`
+set  version_old=`cat include/version/version.m4 | grep SVERSION | $awk '{split($0,frags,"SVERSION=");gsub("\"","",frags[2]);print frags[2]}'`
+set   subver_old=`cat include/version/version.m4 | grep SSUBVERSION | $awk '{split($0,frags,"SSUBVERSION=");gsub("\"","",frags[2]);print frags[2]}'`
+set revision_old=`cat include/version/version.m4 | grep SREVISION | $awk '{split($0,frags,"SREVISION=");gsub("\"","",frags[2]);print frags[2]}'`
+set    patch_old=`cat include/version/version.m4 | grep SPATCHLEVEL | $awk '{split($0,frags,"SPATCHLEVEL=");gsub("\"","",frags[2]);print frags[2]}'`
+set     hash_old=`cat include/version/version.m4 | grep SHASH | $awk '{split($0,frags,"SHASH=");gsub("\"","",frags[2]);print frags[2]}'`
 #
 set dummy1=`git rev-list --count HEAD`
 @ dummy1= $dummy1 + 10000 
 if ( "$dummy1" >= "$revision_old" ) set revision_HEAD=`echo $dummy1`
 if ( "$dummy1" <  "$revision_old" ) set revision_HEAD=`echo $revision_old`
 set hash_HEAD=`git rev-parse --short HEAD`
-#
-echo "Detected version" $version_old"."$subver_old"."$patch_old "Rev.(CURRENT)" $revision_old "(HEAD)" $revision_HEAD "Hash" $hash_old
 #
 # Increase counters
 #
@@ -119,16 +94,6 @@ cat << EOF > configure.awk
 }
 EOF
 endif
-cat << EOF > version.h.awk
-{
- gsub("_VERSION $version_old"  ,"_VERSION $version_new"  ,\$0)
- gsub("_SUBVERSION $subver_old","_SUBVERSION $subver_new",\$0)
- gsub("_PATCHLEVEL $patch_old" ,"_PATCHLEVEL $patch_new", \$0)
- gsub("_REVISION $use_rev_old" ,"_REVISION $use_rev_new" ,\$0)
- gsub("_HASH \"$hash_old\""    ,"_HASH \"$hash_new\"" ,   \$0)
- print \$0 > "NEW"
-}
-EOF
 cat << EOF > version.m4.awk
 {
  gsub("$v_string_old","$v_string_new",\$0)
@@ -146,10 +111,8 @@ if ( "$argv[1]" != "save" ) then
    mv NEW configure
    chmod a+x configure
  endif
- $awk -f version.h.awk include/driver/version.h
- mv NEW include/driver/version.h
- $awk -f version.m4.awk config/version/version.m4
- mv NEW config/version/version.m4
+ $awk -f version.m4.awk include/version/version.m4
+ mv NEW include/version/version.m4
 endif
 rm -fr version.*.awk configure.awk 
 #

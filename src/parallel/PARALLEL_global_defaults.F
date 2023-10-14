@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2015 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
@@ -66,7 +50,7 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
  !
  if ((.not.PARALLEL_ENV_uses_default(i_PAR_structure)).and.ncpu_now/=ncpu.and.ENVIRONMENT=="BZ_Indexes") then
    call warning("MPI for BZ indexes is "//trim(intc(ncpu_now))//&
-   &" while number of cores is"//trim(intc(ncpu))//". Assuming expert user.")
+   &" while number of cores is "//trim(intc(ncpu))//". Assuming expert user.")
    return
  endif
  !
@@ -86,14 +70,14 @@ subroutine PARALLEL_global_defaults(ENVIRONMENT)
    case("Phonon_Self_Energy") 
      call GIMME_a_parallel_proposal(3,(/"q","k","b"/))
    case("Non_Linear") 
-     call GIMME_a_parallel_proposal(2,(/" w"," k"/))
+     call GIMME_a_parallel_proposal(2,(/" k"," w"/))
    case("ScaLapacK") 
      CPU_structure(i_PAR_structure)%ROLE(1)="p"
      CPU_structure(i_PAR_structure)%CPU(1)=ncpu
      CPU_structure(i_PAR_structure)%ROLE(2)="d"
      CPU_structure(i_PAR_structure)%CPU(2)=1
    case("Self_Energy") 
-      call GIMME_a_parallel_proposal(3,(/" b","qp"," q"/))
+      call GIMME_a_parallel_proposal(4,(/" b","qp"," g"," q"/))
    case("Response_T_space") 
       call GIMME_a_parallel_proposal(2,(/"eh"," k"/))
    case("BZ_Indexes")

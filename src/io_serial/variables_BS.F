@@ -1,29 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2007 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  !
- use pars,          ONLY:SP,IP,LP
+ use pars,          ONLY:SP,IP,LP,IP_YIO,LP_YIO,CR_YIO
  use units,         ONLY:HA2EV
  use drivers,       ONLY:l_td_hf
  use X_m,           ONLY:X_t
@@ -143,14 +127,14 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
        !
        ! v 3.0.11: Inclusion of cut_geometry
        !
-       call def_variable_elemental(ID,"W_Cutoff",1,0,0)
+       call def_variable_elemental(ID,"W_Cutoff",1,CR_YIO,0)
        call io_variable_elemental(ID,&
 &           VAR="[W] Coulomb Cutoff",CH0=cut_geometry,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
      endif
      !
      ! W_TDDFT_KERNEL
      !
-     call def_variable_elemental(ID,"W_TDDFT_KERNEL",1,0,0)
+     call def_variable_elemental(ID,"W_TDDFT_KERNEL",1,CR_YIO,0)
      call io_variable_elemental(ID,VAR='[W] Hxc Kernel',CH0=X%KERNEL,CHECK=.true.,DESCRIPTOR=desc)
      !
    endif
@@ -161,7 +145,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    ! However the ndb.BS_PAR_Q1 used for restart in the test-suite should
    ! be updated, otherwise the hBN/GW-OPTICS/ corresponding test fails
    !
-   call def_variable_elemental(ID,"W_DbGd",2,IP+100,0)
+   call def_variable_elemental(ID,"W_DbGd",2,IP_YIO,0)
      call io_variable_elemental(ID,I0=RIM_ng,&
 &     VAR='[RIM] RL components',TERMINATOR='[col]',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
      call io_variable_elemental(ID,I0=RIM_n_rand_pts,&
@@ -171,7 +155,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
    ! Perturbative SOC
    !
    if (write_is_on(ID).or.variable_exist(ID,"PERT_SOC")) then
-     call def_variable_elemental(ID,"PERT_SOC",1,LP+100,MENU=0)
+     call def_variable_elemental(ID,"PERT_SOC",1,LP_YIO,MENU=0)
      call io_variable_elemental(ID,L0=BS_perturbative_SOC,&
 &       VAR='[SOC] Perturbative SOC',CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc,DO_NOT_DUMP=.TRUE.)
    endif
@@ -179,7 +163,7 @@ integer function variables_BS(ID,iq,desc,CLOSE_the_menu,X)
  endif
  !
  if (ver_is_gt_or_eq(ID,revision=20415)) then
-   call def_variable_elemental(ID,"X_kind",1,0,0)
+   call def_variable_elemental(ID,"X_kind",1,CR_YIO,0)
    call io_variable_elemental(ID,VAR="[K] Kernel long-range exchange",CH0=BSE_L_kind,CHECK=.true.,OP=(/"=="/),DESCRIPTOR=desc)
  endif
  !

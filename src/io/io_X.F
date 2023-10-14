@@ -1,32 +1,16 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2014 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 integer function io_X(X,Xw,ID)
  !
  use pars,          ONLY:SP,schlen
  use units,         ONLY:HA2EV
  use R_lattice,     ONLY:g_vec
- use X_m,           ONLY:X_t,X_mat,X_RLcomp_ig,X_desc,X_ALLOC_elemental
+ use X_m,           ONLY:X_t,X_mat,X_par,X_RLcomp_ig,X_desc,X_ALLOC_elemental
  use frequency,     ONLY:w_samp
  use IO_int,        ONLY:io_connect,io_disconnect,io_elemental,io_bulk,io_header,&
 &                        def_variable_bulk,io_variable_bulk,def_variable_elemental,io_variable_elemental,&
@@ -36,9 +20,6 @@ integer function io_X(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_RESPONSE,IO_NO_DATABASE,io_mode,DUMP
  use stderr,        ONLY:intc,STRING_same
  use timing_m,      ONLY:timing
-#if defined _PAR_IO
- use X_m,           ONLY:X_par
-#endif
  !
 #include<memory.h>
  !
@@ -48,7 +29,7 @@ integer function io_X(X,Xw,ID)
  !
  !Work Space
  !
- integer             ::sec_size,i1,iq,i_err,io_com_save,io_err,ID_frag
+ integer             ::sec_size,i1,ig1,ig2,iq,i_err,io_com_save,io_err,ID_frag
  logical             ::different_db_RL_order,EM1S_NOSOC
  character (schlen)  ::ch,db_desc
  character (2)       ::local_XC_KIND
@@ -64,7 +45,7 @@ integer function io_X(X,Xw,ID)
    return
  endif
  !
- ! I assume that he RL ordering used to build X is not different
+ ! I assume that the RL ordering used to build X is not different
  ! from the one in DB1
  !
  different_db_RL_order=.false.
@@ -75,6 +56,7 @@ integer function io_X(X,Xw,ID)
  if (X%whoami==2) db_desc='em1s'
  if (X%whoami==3) db_desc='em1d'
  if (X%whoami==4) db_desc='pp'
+ if (X%whoami==5) db_desc='Xmpa'
  if (STRING_same(X%KERNEL,"IP")) db_desc='Xo'
  !
  io_X=io_connect(desc=trim(db_desc),type=2,ID=ID,FORCE_READ_MODE=(.not.any((/io_sec(ID,:)==1/))).and.frag_RESPONSE)
@@ -88,6 +70,7 @@ integer function io_X(X,Xw,ID)
    if (X%whoami==2) local_XC_KIND="Xs"
    if (X%whoami==3) local_XC_KIND="Xd"
    if (X%whoami==4) local_XC_KIND="Xp"
+   if (X%whoami==5) local_XC_KIND="Xm"
    !
    EM1S_NOSOC=.TRUE.
    !
@@ -149,7 +132,7 @@ integer function io_X(X,Xw,ID)
  io_X=io_err
  if (io_err/=0) goto 1
  !
- !  type(X_t)    ::X(4)  x s d p
+ !  type(X_t)    ::X(5)  x s d p m
  !
  if (any((/io_sec(ID,:)==2*iq/)) ) then
    !
@@ -201,29 +184,75 @@ integer function io_X(X,Xw,ID)
    !
    ch="X_Q_"//trim(intc(iq))
    !
-#if defined _PAR_IO
+   ! on write:
+   !   -   serial IO => use X_mat
+   !   - parallel IO => use X_par
+   !
+   ! on read: (independently of _PAR_IO)
+   !   -  if  allocated X_mat =>  use X_mat
+   !   -  if  allocated X_par =>  use X_par
+   !   -  if nothing allocated use X_mat (backward compatibility)
+   !   -  if both are allocated, but are filled
+   !
+   ! Note that only X_par(1) is used since io_X is called
+   ! only when io_RESPONSE=.true., implying one q-point
+   ! at a time is dealt with.
+   !
    if(write_is_on(ID)) then
      !
+#if defined _PAR_IO
      call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP,par_io_kind='collective')
      call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
-     !
-   else if(read_is_on(ID)) then
-#endif
-     !
-     if (.not.allocated(X_mat).and.read_is_on(ID)) call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+#else
      call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
      call  io_variable_bulk(ID_frag,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
-     !
-#if defined _PAR_IO
-   endif
 #endif
+     !
+   else if(read_is_on(ID)) then
+     !
+     if (.not.allocated(X_par)) then
+       if (.not.allocated(X_mat)) call X_ALLOC_elemental('X',(/X%ng,X%ng,Xw%n_freqs/))
+     endif
+     !
+     if (allocated(X_mat)) then
+       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+       call  io_variable_bulk(ID_frag,1,C3=X_mat(:,:,:Xw%n_freqs),IPOS=(/1,1,1,1/))
+     endif
+     !
+     if (allocated(X_par)) then
+       call def_variable_bulk(ID_frag,trim(ch),1,(/2,X%ng_db,X%ng_db,Xw%n_freqs/),SP)
+       call  io_variable_bulk(ID_frag,1,C3=X_par(1)%blc(:,:,:Xw%n_freqs),IPOS=(/1,X_par(1)%rows(1),X_par(1)%cols(1),1/))
+     endif
+     !
+   endif
+   !
+   ! handle different RL_ordering
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 
-     YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
-     do i1=1,Xw%n_freqs
-       X_on_disk=X_mat(:,:,i1)
-       X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
-     enddo
+     !
+     if (allocated(X_mat)) then
+       YAMBO_ALLOC(X_on_disk,(X%ng,X%ng))
+       do i1=1,Xw%n_freqs
+         X_on_disk=X_mat(:,:,i1)
+         X_mat(X_RLcomp_ig(:),X_RLcomp_ig(:),i1)=X_on_disk
+       enddo
+     endif
+     !
+     if (allocated(X_par)) then
+       YAMBO_ALLOC(X_on_disk,(X_par(1)%rows(1):X_par(1)%rows(2),X_par(1)%cols(1):X_par(1)%cols(2)))
+       do i1=1,Xw%n_freqs
+         !
+         X_on_disk=X_par(1)%blc(:,:,i1)
+         !
+         do ig2=X_par(1)%cols(1),X_par(1)%cols(2)
+         do ig1=X_par(1)%rows(1),X_par(1)%rows(2)
+           X_par(1)%blc(X_RLcomp_ig(ig1),X_RLcomp_ig(ig2),i1)=X_on_disk(ig1,ig2)
+         enddo
+         enddo
+         !
+       enddo
+     endif
+     !
      YAMBO_FREE(X_on_disk)
    endif
    !

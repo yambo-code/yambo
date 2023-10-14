@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2013 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-!
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine SET_logicals()
  !
@@ -27,9 +11,10 @@ subroutine SET_logicals()
  use drivers,    ONLY:l_eval_collisions
  use parallel_m, ONLY:IO_write_default,master_cpu,myid,master_cpu,myid,n_log_CPUs,ncpu
  use com,        ONLY:write_to_of,write_to_report,fat_log
- use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string,                   &
-&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,io_BS_K,io_SCREEN, &
-&                     frag_DIP,frag_RESPONSE,frag_HF,frag_SC,frag_DG,   &
+ use IO_m,       ONLY:IO_write,IO_read,DBs_IO_control_string,DBs_FRAG_control_string, &
+&                     io_DIP,io_RESPONSE,io_HF,io_COLLs,io_GF,io_OBSERVABLES,io_CARRIERs,io_SC,&
+&                     io_BS_K,io_SCREEN,io_MULTIPOLE, &
+&                     frag_DIP,frag_RESPONSE,frag_MULTIPOLE,frag_HF,frag_SC,frag_DG,   &
 &                     frag_BS_K,frag_SCREEN,frag_QINDX,frag_ELPH,frag_RT
  use stderr,     ONLY:write_to_log,write_fragments_IO_log,STRING_split,write_to_log_default
  use LIVE_t,     ONLY:live_timing_is_on
@@ -68,6 +53,7 @@ subroutine SET_logicals()
  !========
  io_DIP         =.TRUE.
  io_RESPONSE    =.TRUE.
+ io_MULTIPOLE   =.TRUE.
  io_SCREEN      =.FALSE.
  io_HF          =.TRUE.
  io_COLLs       =.TRUE.
@@ -103,16 +89,17 @@ subroutine SET_logicals()
  !
  ! DBs fragmentation
  !===================
- frag_DIP     =.TRUE.
- frag_RESPONSE=.TRUE.
- frag_SCREEN  =.TRUE.
- frag_HF      =.FALSE.
- frag_SC      =.TRUE.
- frag_RT      =.TRUE.
- frag_ELPH    =.TRUE.
- frag_QINDX   =.FALSE.
- frag_BS_K    =.FALSE.
- frag_DG      =.TRUE.
+ frag_DIP      =.TRUE.
+ frag_RESPONSE =.TRUE.
+ frag_MULTIPOLE=.TRUE.
+ frag_SCREEN   =.TRUE.
+ frag_HF       =.FALSE.
+ frag_SC       =.TRUE.
+ frag_RT       =.TRUE.
+ frag_ELPH     =.TRUE.
+ frag_QINDX    =.FALSE.
+ frag_BS_K     =.FALSE.
+ frag_DG       =.TRUE.
  !
  ch_piece=' '
  call STRING_split(DBs_FRAG_control_string,ch_piece)

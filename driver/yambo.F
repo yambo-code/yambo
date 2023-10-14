@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2006 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_dir,js)
  !
@@ -31,7 +15,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !   /   /      Y88b /          Y888b 888__/    `88_-~   
  !
  use drivers,       ONLY:l_HF_and_locXC,l_sc_run,l_eval_collisions,l_real_time,&
-&                        l_optics,l_chi,l_em1s,l_ppa,l_bss,l_bse,l_em1d,l_X,&
+&                        l_optics,l_chi,l_em1s,l_ppa,l_mpa,l_bss,l_bse,l_em1d,l_X,&
 &                        l_gw0,l_life,l_acfdt,l_dipoles,l_nl_optics,l_elel_corr,l_phel_corr
 #if defined _SCALAPACK
  use drivers,       ONLY:l_slk_test
@@ -57,8 +41,8 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! 
  ! 4 response function & energies types: x s d p
  !
- type(X_t)    ::X(4) 
- type(w_samp) ::Xw(4)
+ type(X_t)    ::X(5) 
+ type(w_samp) ::Xw(5)
  !
  type(DIPOLE_t) :: Dip
  !
@@ -144,8 +128,10 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  !
  ! COLOUMB DRIVER
  !================
+ ! In non-linear optics we do not need bare_qpg
+ ! it will be loaded only if required
  !
- call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
+ if(.not.l_nl_optics) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! reset the section numbering
  !=============================
@@ -160,7 +146,7 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  ! DIPOLES
  !=========
  !
- driver_now= any((/l_em1d,l_em1s,l_ppa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
+ driver_now= any((/l_em1d,l_em1s,l_ppa,l_mpa,l_optics,l_life.and.l_elel_corr,l_dipoles,l_real_time,&
 &                  l_sc_run,l_nl_optics/)).and.Dip%iq(1)==1
  !
  if (driver_now) call DIPOLE_driver(DIPen, Xk, q, Dip)
@@ -183,12 +169,15 @@ integer function yambo(np,pid,lnstr,iinf,iind,iod,icd,ijs,instr,inf,ind,od,com_d
  if ( l_em1s                              ) i_X_kind=2
  if ( l_em1d .or.(l_life.and.l_elel_corr) ) i_X_kind=3
  if ( l_ppa                               ) i_X_kind=4
+ if ( l_mpa                               ) i_X_kind=5
  if ( i_X_kind==0 ) then
    i_X_kind=1
    if ( i_X_kind_existing_DB >0 ) i_X_kind=i_X_kind_existing_DB
  endif
  !
- driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_X
+ driver_now=l_em1s.or.(l_em1d.and..not.l_life).or.l_ppa.or.l_mpa.or.l_X
+ !
+ if(l_nl_optics.and.driver_now) call error('Please run the calculation of em1s/d/x in a separate run')
  !
  if (driver_now) i_err=X_dielectric_matrix(Xen,Xk,q,X(i_X_kind),Xw(i_X_kind),Dip,.false.)
  if (driver_now) call mem_manager_report

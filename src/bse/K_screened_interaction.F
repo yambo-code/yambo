@@ -1,32 +1,17 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2018 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine K_screened_interaction(X,Xw,q,io_X_err)
  !
  use pars,         ONLY:SP
  use stderr,       ONLY:intc
+ use com,          ONLY:exp_user
  use frequency,    ONLY:w_samp
- use drivers,      ONLY:l_td_hf,l_tddft,l_RIM_W
+ use drivers,      ONLY:l_td_hf,l_tddft,l_rim_w
  use collision_el, ONLY:elemental_collision,elemental_collision_free
  use R_lattice,    ONLY:bz_samp,RIM_qpg,RIM_anisotropy,RIM_W,RIM_W_d,RIM_W_is_diagonal,&
 &                       RIM_W_ng
@@ -74,11 +59,14 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
    !
  else
    !
-   if(.not.l_RIM_W) call section('+','Screened interaction header I/O')
-   if(     l_RIM_W) call section('=','Screened interaction header I/O')
+   if(.not.l_rim_w) call section('+','Screened interaction header I/O')
+   if(     l_rim_w) call section('=','Screened interaction header I/O')
    !===================================================
    !
-   if (X%ng<BS_n_g_W) call warning(" Using screening with less G than Weh interaction")
+   if (X%ng<BS_n_g_W) then
+     if (     exp_user) call warning("Using screening with less G than Weh interaction")
+     if (.not.exp_user) call   error("Using screening with less G than Weh interaction")
+   endif
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/1,2/),MODE=VERIFY,ID=XID)
    io_X_err=io_X(X,Xw,XID) 
@@ -149,22 +137,22 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
      !
 #if defined _CUDA
      ! device <- host transfer
-     X_mat_d=X_mat
+     YAMBO_ALLOC_SOURCE(X_mat_d,X_mat)
      !
      ! CUDA Fortran workarounds
      gamp_d => isc%gamp_d
      nibz=q%nibz
 #endif
      !
-     if(l_RIM_W) then
+     if(l_rim_w) then
        !$cuf kernel do(2) <<<*,*>>>
        do i_g3=1,RIM_W_ng
          do i_g2=1,RIM_W_ng
 #if defined _CUDA
-           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(iq_W,i_g2,i_g3)
+           RIM_vpW_d(i_g2,i_g3)= RIM_W_d(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW_d(i_g2,i_g2)=RIM_vpW_d(i_g2,i_g2)+2._SP*gamp_d(i_g2,i_g2)
 #else
-           RIM_vpW(i_g2,i_g3) = RIM_W(iq_W,i_g2,i_g3)
+           RIM_vpW(i_g2,i_g3) = RIM_W(1,iq_W,i_g2,i_g3)
            if(i_g2==i_g3) RIM_vpW(i_g2,i_g2)=RIM_vpW(i_g2,i_g2)+2._SP*isc%gamp(i_g2,i_g2)
 #endif
          enddo
@@ -190,7 +178,7 @@ subroutine K_screened_interaction(X,Xw,q,io_X_err)
            i_g2_mat=min(i_g2,X%ng)
            !
            !RIM_W support
-           l_RIM_W_g=(l_RIM_W.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
+           l_RIM_W_g=(l_rim_w.and.i_g2<=RIM_W_ng.and.i_g3<=RIM_W_ng)
            if (RIM_W_is_diagonal.and.l_RIM_W_g) l_RIM_W_g=(i_g2==i_g3)
            !
            if (l_RIM_W_g) then

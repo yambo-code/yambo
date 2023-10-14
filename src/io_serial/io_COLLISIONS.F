@@ -1,31 +1,13 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2009 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM CA DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-#if defined _SC || _RT || _QED
 !
 integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
- use pars,          ONLY:schlen,IP,SP
+ use pars,          ONLY:schlen,IP,SP,IP_YIO
  use R_lattice,     ONLY:RIM_ng,RIM_n_rand_pts
  use collision_ext, ONLY:COLLISIONS_cutoff,COLLISIONS_element,COLL_bands,COLLISIONS_group,COLLISIONS_CV_only
  use IO_m,          ONLY:io_sec,io_status,IO_OUTDATED_DB,read_is_on,IO_mode,&
@@ -178,7 +160,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
    if (read_is_on(ID).and..not.allocated(COLL%state)) then
      YAMBO_ALLOC(COLL%state,(COLL%N,4))
    endif
-   call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP+100)
+   call def_variable_bulk(ID,'COLLISIONS_STATE',1,(/COLL%N,4/),IP_YIO)
    call  io_variable_bulk(ID,1,I2=COLL%state)
    !
    io_COLLISIONS=io_status(ID)
@@ -215,7 +197,7 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  !
  if (any(io_sec(ID,:)==2)) then     
    !
-   call def_variable_bulk(ID_frag,'N_COLLISIONS_STATES',1,(/1/),IP+100,silent=.true.)
+   call def_variable_bulk(ID_frag,'N_COLLISIONS_STATES',1,(/1/),IP_YIO,silent=.true.)
    call  io_variable_bulk(ID_frag,1,I0=COLL_element%N)
    !
  endif
@@ -252,5 +234,3 @@ integer function io_COLLISIONS(ID,COLL,COLL_element,i_coll_,COMM)
  call timing('io_COLLISIONS',OPR='stop')
  !
 end function io_COLLISIONS
-!
-#endif

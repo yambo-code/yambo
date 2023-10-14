@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM, DS
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2021 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
@@ -49,7 +33,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(2)      :: ordering
  integer           :: id
  character(10)     :: solver
- complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3)
+ complex(SP)       :: spectra(BSS_n_freqs,3),eel(BSS_n_freqs,3),fac
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col,eval_eels
  ! 
@@ -94,7 +78,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    return
  endif
  !
- if (.not.STRING_match(WHAT,"dump")) return 
+ if (.not.STRING_match(WHAT,"dump")) return
+ !
+ fac=eps_2_alpha/4._SP/pi*bare_qpg(iq,1)**2/q_norm(iq)**2
  !
  ! ABSORPTION
  !------------
@@ -126,8 +112,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
-   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (      l_col_cut.or.l_0D ) spectra(:,1:3)=Epsilon_ii(:,2:4)* fac
+   if (.not.(l_col_cut.or.l_0D)) spectra(:,1:3)=(1._SP+eel(:,1:3))*fac
    call ELEMENTAL_dump("alpha",spectra)
  endif
  !
@@ -197,7 +183,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("beta")) then
    spectra=0._SP
-   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*eps_2_alpha/4._SP/pi*bare_qpg(1,1)**2/q_norm(1)**2
+   if (l_col_cut) spectra(:,1:3)=Epsilon_ij(:,2:4)*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  ! 

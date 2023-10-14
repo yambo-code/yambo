@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2016 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): MG CA
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 subroutine NL_driver(E,X,k,q,Dip)
  !
@@ -38,12 +22,11 @@ subroutine NL_driver(E,X,k,q,Dip)
  use R_lattice,      ONLY:bz_samp,qindx_free
  use fields,         ONLY:Efield
  use QP_CTL_m,       ONLY:QP_apply
- use R_lattice,      ONLY:qindx_S
  use nl_optics,      ONLY:n_frequencies,Correlation,IPA,NL_alloc,NL_free,V_bands,eval_dG,NL_J,NL_initial_J, &
 &                         NL_estep,NL_er,Integrator,l_use_DIPOLES,NL_P_t,JGM,TDDFT,NL_P,l_pump_and_probe, &
 &                         E_ext_t,E_tot_t,E_ks_t,E_ks,E_tot,E_ext,freqs_done,n_freqs_todo,l_eval_CURRENT,&
-&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed
- use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT
+&                         HF,SEX,NL_bands,NL_nbands,WF_sample,V_bands_t,NL_alloc_k_distributed,NL_J_t
+ use real_time,      ONLY:RT_step,NE_steps,NE_i_time,RT_nbands,RT_bands,eval_DFT,eval_HARTREE
  use IO_m,           ONLY:io_COLLs
  use parallel_int,   ONLY:PARALLEL_global_indexes,PARALLEL_WF_distribute,PARALLEL_WF_index
  use parallel_m,     ONLY:PAR_IND_freqs,PAR_IND_freqs_ID,PAR_IND_Xk_ibz
@@ -94,10 +77,6 @@ subroutine NL_driver(E,X,k,q,Dip)
  !=========================
  call WF_and_dipole_dimensions(X,k)
  !
- ! Deallocate qindx_S (used only in previous subroutine)
- ! ========================
- YAMBO_FREE(qindx_S)
- !
  ! QP dimensions
  !================
  call H_QP_table_setup(E)
@@ -114,6 +93,10 @@ subroutine NL_driver(E,X,k,q,Dip)
  call DIPOLE_dimensions(E,Dip,NL_bands,(/0._SP,0._SP,0._SP/))
  call DIPOLE_IO(k,E,Dip,'read ',io_err,'NL')
  if(io_err/=0) call error("Error in DIPOLES! ")
+ !
+ ! Generate bare_qpg if required
+ !=============================
+ if(eval_HARTREE.or.CORRELATION==JGM) call col_driver(maxval((/wf_ng,QP_ng_Sx,QP_ng_SH/)),q)
  !
  ! Free memory: qindx_* and unused DIPOLES
  ! =====================================================
@@ -157,15 +140,17 @@ subroutine NL_driver(E,X,k,q,Dip)
      elseif(Correlation==TDDFT) then
         call warning('With Collisions TDDFT is approximated to the linear contribution!')
      endif
+     eval_HARTREE=.FALSE.
    endif
    !
+   if(l_use_Hxc_collisions.and..not.COLLISIONS_have_HARTREE) eval_HARTREE=.TRUE.
+   !     
    if(COLLISIONS_CV_only) call msg('rs','Collisions contains C<->V ONLY scatterings')
    !
  endif
  !
- if(Correlation/=IPA.and..not.COLLISIONS_have_HARTREE)  then
-   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
- endif
+ if(eval_HARTREE.or.eval_DFT) & 
+&   call WF_load(WF,wf_ng,WF_Go_indx,(/1,NL_bands(2)/),(/1,k%nibz/),space='R',title='-NL')  
  !
  ! Load Collisions if necessary
  ! ============================
@@ -245,6 +230,7 @@ subroutine NL_driver(E,X,k,q,Dip)
      ! Store Variables
      !
      NL_P_t (NE_i_time,:)=real(NL_P(1:3),SP)
+     NL_J_t (NE_i_time,:)=real(NL_J(1:6),SP)
      E_ext_t(NE_i_time,:)=E_ext
      E_tot_t(NE_i_time,:)=E_tot
      E_ks_t (NE_i_time,:)=E_ks

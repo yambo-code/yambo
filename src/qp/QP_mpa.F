@@ -504,12 +504,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !
          if (have_cuda) dp_dummy=cmplx(dp_dummy_r,dp_dummy_i,kind=DP)
          !
-        !dc(i_w) = cmplx(dp_dummy,KIND=SP)
-         QP_Sc(i_qp,i_w)=QP_Sc(i_qp,i_w)+cmplx(dp_dummy,kind=SP)
+         dc(i_w) = cmplx(dp_dummy,KIND=SP)
          !
        enddo
        !
-       !QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
+       QP_Sc(i_qp,:QP_dSc_steps)=QP_Sc(i_qp,:QP_dSc_steps)+dc(:QP_dSc_steps)
        !
        !
      enddo ! loop on scattering states

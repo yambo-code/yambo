@@ -39,7 +39,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
-&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d
+&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d,MPA_Xo
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -86,7 +86,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  integer          :: i_np,ID2
  logical          :: MPred
  real(SP)         :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,MP_err,MP_Qerr,cond_num(2),cond_numQ(2) 
- complex(SP), allocatable :: MPA_Xo(:)
  character(len=99):: str
  !
  integer, external::io_X,io_MPA,QP_state_extract
@@ -293,7 +292,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !$omp parallel default(shared),private(ig1,ig2,MPred,PPcond_rate,MP_err,cond_num,i_np,MPA_Xo,l_RIM_W_g), &
      !$omp &        reduction(+:MPred_rate,PPcond_Qrate,MP_Qerr,cond_numQ)
      !
-     YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
      do ig2=1,X%ng
@@ -302,9 +300,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
          if(l_RIM_W_g) then
            MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
-         else
+         !MB: the else now is no more needed. it is already done in io_MPA
+         !else
            !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
-           MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)
+           !MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)
          endif
          MPred=.false.
          PPcond_rate=0._SP
@@ -322,7 +321,6 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      enddo
      !$omp end do
      !     
-     YAMBO_FREE(MPA_Xo)
      !
      !$omp end parallel
      !

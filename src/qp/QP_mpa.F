@@ -30,7 +30,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  &                       io_RESPONSE,io_MULTIPOLE,deliver_IO_error_message
  use QP_m,          ONLY:QP_t,QP_n_G_bands,QP_Sc_steps,QP_dSc_steps,QP_solver,&
 &                        QP_Sc,QP_n_states,QP_G_damp,QP_table,QP_dSc_delta
- use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
+ use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t,X_par
  use wave_func,     ONLY:WF
  use R_lattice,     ONLY:qindx_S,bz_samp,G_m_G,RIM_W_ng,RIM_W
  use D_lattice,     ONLY:nsym,i_time_rev,i_space_inv,mag_syms
@@ -210,7 +210,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! ALLOCATION
  !------------
  !
- if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
+ !MB: we load X_par and not X_mat. refer to QP_ppa_cohsex.
+ ! deallocate X_mat
+ call X_ALLOC_elemental("X")
+ !
+ if (.not.allocated(X_par).and.io_RESPONSE) then
+   allocate(X_par(1))
+ endif
+ !if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
+ if (io_RESPONSE) call X_ALLOC_parallel('X',X_par(1),X%ng,2*X%mpa_npoles)
  YAMBO_ALLOC(W_,(QP_dSc_steps))
  YAMBO_ALLOC(dc,(QP_dSc_steps))
  !
@@ -296,15 +304,15 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      YAMBO_ALLOC(MPA_Xo,(Xw%n_freqs))
      !
      !$omp do collapse(2)
-     do ig2=1,X%ng
-       do ig1=1,X%ng
+     do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+      do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
          !
          l_RIM_W_g=(l_RIM_W.and.ig1<=RIM_W_ng.and.ig2<=RIM_W_ng)
          if(l_RIM_W_g) then
            MPA_Xo(1:Xw%n_freqs)=RIM_W(1:Xw%n_freqs,iqibz,ig1,ig2)/2._SP
          else
            !DALV: the multiplication by isc%gamp(ig1,ig2) is performed later
-           MPA_Xo(1:Xw%n_freqs)=X_mat(ig1,ig2,1:Xw%n_freqs)
+           MPA_Xo(1:Xw%n_freqs)=X_par(iq_mem)%blc(ig1,ig2,1:Xw%n_freqs)
          endif
          MPred=.false.
          PPcond_rate=0._SP

@@ -20,7 +20,8 @@ integer function io_MPA(X,Xw,ID)
 &                        IO_OUTDATED_DB,frag_MULTIPOLE,IO_NO_DATABASE,io_mode,DUMP,frag_RESPONSE
  use stderr,        ONLY:intc
  use timing_m,      ONLY:timing
- use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc
+ use mpa_m,         ONLY:MPA_E_mat,MPA_R_mat,MPA_freqs,MPA_alloc, &
+ &                       MPA_E_par,MPA_R_par
  !
 #include<memory.h>
  !

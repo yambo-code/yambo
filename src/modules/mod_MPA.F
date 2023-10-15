@@ -32,6 +32,7 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
+ use matrix,         ONLY:PAR_matrix
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -45,6 +46,12 @@ module mpa_m
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
+
+ ! MB: 
+ ! PARALLEL distribution
+ !
+ type(PAR_matrix), allocatable, target :: MPA_E_par(:,:,:)
+ type(PAR_matrix), allocatable, target :: MPA_R_par(:,:,:)
 
 contains
  !

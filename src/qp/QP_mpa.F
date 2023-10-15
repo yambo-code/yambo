@@ -218,7 +218,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    allocate(X_par(1))
  endif
  !if (io_RESPONSE) call X_ALLOC_elemental('X',(/X%ng,X%ng,2*X%mpa_npoles/))
- if (io_RESPONSE) call X_ALLOC_parallel('X',X_par(1),X%ng,2*X%mpa_npoles)
+ if (io_RESPONSE) call X_ALLOC_parallel(X_par(1),X%ng,2*X%mpa_npoles,"X")
  YAMBO_ALLOC(W_,(QP_dSc_steps))
  YAMBO_ALLOC(dc,(QP_dSc_steps))
  !

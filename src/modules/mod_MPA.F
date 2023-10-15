@@ -42,8 +42,6 @@ module mpa_m
  !
  complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
  complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
- !MB MPA_Xo from QP_mpa to here.
- complex(SP), allocatable :: MPA_Xo(:)
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free
@@ -67,8 +65,6 @@ contains
    YAMBO_FREE(MPA_E_mat)
    YAMBO_FREE(MPA_R_mat)
    YAMBO_FREE(MPA_freqs)
-   !MB: adding free MPA_Xo
-   YAMBO_FREE(MPA_Xo)
 #ifdef _CUDA
    YAMBO_FREE(MPA_E_mat_d)
    YAMBO_FREE(MPA_R_mat_d)

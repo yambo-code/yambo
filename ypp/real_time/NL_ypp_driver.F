@@ -345,8 +345,8 @@ subroutine NL_ypp_driver(en,k)
      !
      RT_conf%T_range(2)  = RT_conf%T_range(1)+ T_range
      !
-     if (RT_conf%T_range(2)> NE_steps*RT_step) then
-       RT_conf%T_range(2)  = NE_steps*RT_step
+     if (RT_conf%T_range(2)> (NE_steps-1)*RT_step) then
+       RT_conf%T_range(2)  = (NE_steps-1)*RT_step
        RT_conf%T_range(1)  = RT_conf%T_range(2)-T_range
      endif 
      !

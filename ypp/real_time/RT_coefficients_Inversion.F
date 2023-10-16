@@ -40,10 +40,6 @@ subroutine RT_coefficients_Inversion(NW,NX,P,X,W,T_period)
  i_t_start=nint(RT_conf%T_range(1)/RT_step)+1
  i_deltaT =nint(T_period/RT_step)/M_size
  !
- write(*,*) ' start ',i_t_start
- write(*,*) ' delt ',T_period,i_deltaT
-
- !
  YAMBO_ALLOC(M,(M_size,M_size))
  YAMBO_ALLOC(P_i,(M_size))
  YAMBO_ALLOC(T_i,(M_size))

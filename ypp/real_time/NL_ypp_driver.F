@@ -178,7 +178,7 @@ subroutine NL_ypp_driver(en,k)
        !
        if(.not.runs_ok(i_f)) cycle
        !
-       T_period=T_range(1,i_f)
+       T_period=T_range_nl(1,i_f)
        !
        do i_d = 1,3
          call RT_coefficients_Inversion(X_order+1,X_order+1,RT_P_probe(:,i_f,i_d),X_effective(0:,i_f,i_d),&
@@ -329,7 +329,7 @@ subroutine NL_ypp_driver(en,k)
      !
    end subroutine
    !
-   real(SP) function T_range(i_n,i_f)
+   real(SP) function T_range_nl(i_n,i_f)
      !
      integer :: i_n,i_f
      !

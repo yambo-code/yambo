@@ -335,13 +335,7 @@ subroutine NL_ypp_driver(en,k)
      !
      RT_conf%T_range=time_range_save
      !
-     if (i_f>  0) T_range_nl = EtoT(E=Harmonic_Frequency(i_n,i_f))
-     if (i_f== 0) T_range_nl = EtoT(E=maxval(Harmonic_Frequency(:,:)))
-     !
-     if (i_f==-1) then
-       T_range_nl = RT_conf%T_range(2)- RT_conf%T_range(1)
-       return
-     endif
+     T_range_nl = EtoT(E=Harmonic_Frequency(i_n,i_f))
      !
      RT_conf%T_range(2)  = RT_conf%T_range(1)+ T_range_nl
      !

@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2013 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AM
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 !
 module parallel_int
  !
@@ -43,7 +27,7 @@ module parallel_int
  interface PP_redux_wait
    module procedure l1share,                                           &
 &                   i0share, i1share, i2share,i3share,                 &
-&                   r0share, r1share, r2share,r3share,                 &
+&                   r0share, r1share, r2share,r3share,r4share,         &
 &                   c0share, c1share, c2share,c3share,c4share,c5share, &
 #if ! defined _DOUBLE
 &                   d0share, d1share, d2share,d3share,                 &
@@ -489,6 +473,37 @@ module parallel_int
      allocate(larray(dimension))
      larray=0.
      call mpi_allreduce(array(1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
+     array=reshape(larray,dimensions)
+     deallocate(larray)
+     call mpi_barrier(LOCAL_COMM,i_err)
+#endif
+   end subroutine
+   !
+   subroutine r4share(array,COMM)
+     real(SP):: array(:,:,:,:)
+     integer, optional :: COMM
+#if defined _MPI
+     integer::dimensions(4),dimension,LOCAL_COMM  ! Work Space
+     real(SP),allocatable::larray(:)  ! Work Space
+     if (ncpu==1) return
+     !
+     if (present(COMM)) then
+       LOCAL_COMM=COMM
+     else
+       LOCAL_COMM=mpi_comm_world
+     endif
+     if (LOCAL_COMM==comm_default_value) return
+     !
+     local_type=MPI_REAL
+     if (SP==DP) local_type=MPI_DOUBLE_PRECISION
+     !
+     call mpi_barrier(LOCAL_COMM,i_err)
+     dimensions=shape(array)
+     if( any(dimensions<1) ) return
+     dimension=product(dimensions)
+     allocate(larray(dimension))
+     larray=0.
+     call mpi_allreduce(array(1,1,1,1),larray,dimension,local_type,mpi_sum,LOCAL_COMM,i_err)
      array=reshape(larray,dimensions)
      deallocate(larray)
      call mpi_barrier(LOCAL_COMM,i_err)

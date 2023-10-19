@@ -9,6 +9,7 @@ include ../archive/package.list
 LIBNAME=libetsf_io.a
 LIBPATH=$(libs_prefix)/$(fc_kind)/${fc}
 LIBRARY=$(LIBPATH)/lib/$(LIBNAME)
+MODPATH=$(LIBPATH)/include
 #
 PACKAGE=$(pkgname_etsf_io)
 #
@@ -17,7 +18,7 @@ include ../config/external_libs_defs.mk
 #
 # Flags
 #
-CONFFLAGS=--prefix=$(LIBPATH) \
+CONFFLAGS=--prefix=$(LIBPATH) --with-moduledir=$(MODPATH) \
          --with-netcdf-incs="$(inetcdff) $(inetcdf) $(ihdf5)" \
          --with-netcdf-libs="$(lnetcdff) $(lnetcdf) $(lhdf5)" 
 

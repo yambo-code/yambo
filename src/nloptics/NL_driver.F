@@ -204,7 +204,7 @@ subroutine NL_driver(E,X,k,q,Dip)
    !
    ! Efield
    ! ================
-   if(.not.l_pump_and_probe) Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
+   if(all(NL_er>0.0)) Efield(1)%frequency=NL_er(1)+real(i_f-1,SP)*NL_estep
    !
    l_dynamics_is_over=.false.
    !

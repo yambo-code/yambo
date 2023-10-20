@@ -155,6 +155,7 @@ subroutine NL_initialize(E,k)
  else
    call msg('sr','[NL] Non-linear optics configuration')
    call msg('sr','[NL] Loop on frequencies of the first field ')
+   call warning('Variables Field1_Freq and Field1_NFreqs ignored')
  endif
  !
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &

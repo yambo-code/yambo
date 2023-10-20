@@ -1,25 +1,9 @@
 /*
-        Copyright (C) 2000-2022 the YAMBO team
-              http://www.yambo-code.org
-
- Authors (see AUTHORS file for details): AF
+  License-Identifier: GPL
  
- This file is distributed under the terms of the GNU 
- General Public License. You can redistribute it and/or 
- modify it under the terms of the GNU General Public 
- License as published by the Free Software Foundation; 
- either version 2, or (at your option) any later version.
-
- This program is distributed in the hope that it will 
- be useful, but WITHOUT ANY WARRANTY; without even the 
- implied warranty of MERCHANTABILITY or FITNESS FOR A 
- PARTICULAR PURPOSE.  See the GNU General Public License 
- for more details.
-
- You should have received a copy of the GNU General Public 
- License along with this program; if not, write to the Free 
- Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
- MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+  Copyright (C) 2016 The Yambo Team
+ 
+  Authors (see AUTHORS file for details): AF
 */
 
 
@@ -50,11 +34,24 @@
 #define DEV_ATTR            DEV_ATTRIBUTE
 #define DEV_PIN             DEV_PINNED
 
-!#ifdef CUDA
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$cuf kernel do(nloop) <<<*,*>>>
-!  #define YAMBO_CUDA_OR_OMP_END
-!#else 
-!  #define YAMBO_CUDA_OR_OMP(priv_list,nloop)  !$omp parallel do default(shared), private(private_list), collapse(nloop)
-!  #define YAMBO_CUDA_OR_OMP_END               !$omp end parallel do
-!#endif
+
+#if defined _OPENACC
+#  define DEV_ACC $acc
+#  define _HAVE_DEVICE
+#else
+#  define DEV_ACC !!!!
+#endif
+
+#if defined _CUDA
+#  define DEV_CUF $cuf
+#  define _HAVE_DEVICE
+#else
+#  define DEV_CUF !!!!
+#endif
+
+#if defined _OPENMP && !defined (_HAVE_DEVICE)
+#  define DEV_OMP $omp
+#else
+#  define DEV_OMP !!!!
+#endif
 

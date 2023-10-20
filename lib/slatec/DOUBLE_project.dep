@@ -1,4 +1,4 @@
- avint.o
+ objects.oavint.o
  besi0.o
  besi0e.o
  besi1.o

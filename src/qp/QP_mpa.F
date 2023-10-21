@@ -39,7 +39,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use matrix_operate,ONLY:mat_transpose
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
-&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d
+&                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d, MPA_E_par,MPA_R_par,&
+&                        MPA_ALLOC_parallel
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -224,7 +225,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  ! MPA workspace
  !
- call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ !Instead of MPA_alloc, we try MPA_ALLOC_parallel
+ !call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),X%ng,2*X%mpa_npoles,"MPA")
+ ! todo: update mat=>par for MPA case.
+ !
  !
  ! AF: the following line needs to be moved elsewhere
  call parser('mpERdb',io_MULTIPOLE)

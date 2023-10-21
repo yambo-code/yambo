@@ -107,7 +107,7 @@ integer function io_MPA(X,Xw,ID)
    !            must go through the definitions of the variables although only one is writing
    !
    io_com_save=io_com(ID_frag)
-   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1)
+   call def_variable_elemental(ID_frag,trim(ch),sec_size,SP,1,par_io_kind='independent')
    !
    call io_variable_elemental(ID_frag,  VAR=" :: Current Q-pt index     :",I0=iq)
    call io_variable_elemental(ID_frag,  VAR=" :: Number of poles  :",I0=Xw%n_freqs/2,CHECK=.true.,OP=(/"=="/))
@@ -135,14 +135,16 @@ integer function io_MPA(X,Xw,ID)
    ch="MPA_E_Q_"//trim(intc(iq))
    !
    !
-   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP)
+   !MB: here I let shape(MPA_E_mat), not sure about that, hope it works.
+   !MB: also, let's check the shapes also wrt #poles and Xfreqs.
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_E_mat)/),SP,par_io_kind='independent')
    call  io_variable_bulk(ID_frag,1,C3=MPA_E_mat,IPOS=(/1,1,1,1/))
    !
    ! residues @iq
    !
    ch="MPA_R_Q_"//trim(intc(iq))
    !
-   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP)
+   call def_variable_bulk(ID_frag,trim(ch),1,(/2,shape(MPA_R_mat)/),SP,par_io_kind='independent')
    call  io_variable_bulk(ID_frag,1,C3=MPA_R_mat,IPOS=(/1,1,1,1/))
    !
    if (read_is_on(ID) .and. different_db_RL_order) then 

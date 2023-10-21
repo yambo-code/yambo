@@ -32,7 +32,7 @@ module mpa_m
  !
  use pars,            ONLY:SP,DP,cZERO,cONE,cI
  use functions,       ONLY:NAN
- use matrix,         ONLY:PAR_matrix
+ use matrix,          ONLY:PAR_matrix
  !
 #include <dev_defs.h>
 #include <memory.h>
@@ -50,9 +50,9 @@ module mpa_m
  ! MB: 
  ! PARALLEL distribution
  !
- type(PAR_matrix), allocatable, target :: MPA_E_par(:,:,:)
- type(PAR_matrix), allocatable, target :: MPA_R_par(:,:,:)
-
+ type(PAR_matrix), allocatable, target :: MPA_E_par(:)
+ type(PAR_matrix), allocatable, target :: MPA_R_par(:)
+ !
 contains
  !
  subroutine MPA_alloc(d)
@@ -742,5 +742,70 @@ contains
    !
  end subroutine mpa_RQ_3p_solver
  !
+!
+ subroutine MPA_ALLOC_parallel(MPA_E_par,NG,NW,mode)
+  !
+  use pars,          ONLY:cZERO
+  use parallel_m,    ONLY:COMM_copy,PAR_COM_RL_INDEX,PAR_COM_RL_A2A
+  use matrix,        ONLY:MATRIX_reset,PAR_matrix
+  use X_m,           ONLY:X_par_lower_triangle,X_rows,X_cols,&
+ &                        X_FILL_UP_matrix_only,X_lower_triangle_matrix_in_use
+  use parallel_int,  ONLY:PARALLEL_live_message
+  use cuda_m,        ONLY:have_cuda
+  !
+  !
+  type(PAR_matrix) :: MPA_E_par, MPA_R_par
+  integer          :: NG,NW
+  character(*)     :: mode
+  integer                       :: MPA_rows(2) = 0
+  integer                       :: MPA_cols(2) = 0
+  !
+  ! Work Space
+  !
+  logical :: l_XUP,l_PAR,l_CPU_ONLY
+  !
+  ! Reset...
+  !
+  call MATRIX_reset(MPA_E_par)
+  call MATRIX_reset(MPA_R_par)
+  !
+  ! Type of allocation....
+  !
+  !l_XUP      = index(mode,"XUP")>0
+  !l_PAR      = index(mode,"X")>0.and.index(mode,"XUP")==0
+  !l_CPU_ONLY = index(mode,"CPU_ONLY")>0
+  !
+  ! Initialization
+  !
+  !if (l_XUP) then
+  !  call MATRIX_init( "XUP", X_par , NG, NW )
+  !else if (l_PAR) then
+  call MATRIX_init( "MPA_E"  , MPA_E_par , NG, NW )  
+  call MATRIX_init( "MPA_R"  , MPA_R_par , NG, NW )
+  !endif
+  !
+  MPA_rows = MPA_E_par%rows
+  MPA_cols = MPA_E_par%cols
+  !
+  !
+  YAMBO_ALLOC(MPA_E_par%blc,(MPA_E_par%rows(1):MPA_E_par%rows(2),MPA_E_par%cols(1):MPA_E_par%cols(2),NW))
+  MPA_E_par%blc=cZERO
+  if (have_cuda.and..not.l_CPU_ONLY) then
+    YAMBO_ALLOC(MPA_E_par%blc_d,(MPA_E_par%rows(1):MPA_E_par%rows(2),MPA_E_par%cols(1):MPA_E_par%cols(2),NW))
+    MPA_E_par%blc_d=cZERO
+  endif
+ 
+  YAMBO_ALLOC(MPA_R_par%blc,(MPA_R_par%rows(1):MPA_R_par%rows(2),MPA_R_par%cols(1):MPA_R_par%cols(2),NW))
+  MPA_R_par%blc=cZERO
+  if (have_cuda.and..not.l_CPU_ONLY) then
+    YAMBO_ALLOC(MPA_R_par%blc_d,(MPA_R_par%rows(1):MPA_R_par%rows(2),MPA_R_par%cols(1):MPA_R_par%cols(2),NW))
+    MPA_R_par%blc_d=cZERO
+  endif
+  !
+  call PARALLEL_live_message("RL vectors(X)",LOADED=MPA_E_par%ncols*MPA_E_par%nrows,TOTAL=NG**2,NCPU=MPA_E_par%INTER_comm%n_CPU)
+  !
+ end subroutine
+ !
 end module mpa_m
+
 

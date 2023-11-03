@@ -28,11 +28,6 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  !
  complex(SP) :: Mij
  integer     :: i_Tk,i_Tp,i_r,i_c,H_pos(2),H_shift(2),i_B,BS_mat_dim
-!****************************** SAVIO NEW **********************************
- integer(8),parameter :: max_int_kind4=2147483647
- integer(8)           :: BS_mat_dim_kind8
- logical              :: go_to_kind8
-!***************************************************************************
  !
  if (allocated(BS_mat)) return
  !
@@ -128,30 +123,7 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  ! BS_mat lives in the entire world.
  !
  call timing('BSE matrix (REDUX)',OPR='start')
-! call PP_redux_wait(BS_mat)
-!****************************** SAVIO NEW **********************************
- ! 
- ! ------------------ Check for possible integer overflow ------------------
- ! When BS_mat_dim is bigger than 32768 its square can give rise to an
- ! integer overflow error, i.e. its square is bigger than the maximum
- ! integer number that can be stored in a space reserved or a 32 bit
- ! integer data type. [this is integer or integer(4)]. Ideally, we could
- ! use new variables defined with integer(8), but the argument 'count' in
- ! the 'mpi_allreduce' call is only defined as integer(4), and the compiler
- ! will give an error message. The easier solution to this problem is
- ! splitting the two-particle Hamiltonian in several block matrices, whose
- ! dimensionality does not give rise to an integer overflow error.
- ! 
- go_to_kind8=.false.
- BS_mat_dim_kind8=int(BS_mat_dim,8)*int(BS_mat_dim,8)
- if (BS_mat_dim_kind8 > max_int_kind4) go_to_kind8=.true.
- ! 
- if (go_to_kind8) then
-   call PP_redux_wait_kind8(BS_mat,BS_mat_dim)
- else
-   call PP_redux_wait(BS_mat)
- endif
-!***************************************************************************
+ call PP_redux_wait(BS_mat)
  call timing('BSE matrix (REDUX)',OPR='stop')
  !
  ! After the folding the %mat's are (in some cases) not needed anymore 
@@ -162,136 +134,3 @@ subroutine K_stored_in_a_big_matrix(i_BS_mat,iq,what)
  call BS_blks_free(i_BS_mat)
  !
 end subroutine K_stored_in_a_big_matrix
-!****************************** SAVIO NEW **********************************
-subroutine PP_redux_wait_kind8(BS_mat,BS_mat_dim)
- ! 
- use pars,           ONLY:SP,DP
- use parallel_m,     ONLY:n_nodes,ncpu
- use parallel_int,   ONLY:PP_redux_wait
- ! 
-#include <memory.h>
- ! 
- integer                 :: BS_mat_dim
- complex(SP)             :: BS_mat(BS_mat_dim,BS_mat_dim)
- ! 
- ! Work space
- ! 
- integer                 :: ncpu_per_node,rest,nblocks,n_partitions_space
- integer                 :: i_partition,i_partition_a,i_partition_b
- integer                 :: ii,ii2,ia,ib,dim_a,dim_b,factor,BS_mat_mem
- integer,allocatable     :: BB_mat_dim(:),BB_mat_pos(:)
- real(SP)                :: rnblocks     
- real(SP),parameter      :: mem_per_node=250._SP
- real(SP),parameter      :: byte2gb=1073741824._SP
- complex(SP),allocatable :: BB_mat(:,:)
- ! 
- ncpu_per_node=ncpu/n_nodes(1)
- rest=mod(ncpu,n_nodes(1))
- if (rest /= 0) ncpu_per_node=ncpu_per_node+1
- ! 
- factor=1
- if (SP==DP) factor=2
- BS_mat_mem=8._SP*factor*real(BS_mat_dim)**2/byte2gb
- ! 
- ! The number of block matrices used in the BS_mat splitting also
- ! depends on their size, i.e. on the condition
- ! 
- !                    m(BS_mat) + m(BB_mat) <= m                   [a]
- ! 
- ! where m is the total memory available on the node, m(BS_mat) is
- ! the memory required to allocate the BS_mat array, and where m(BB_mat)
- ! is the memory required to allocate the block matrix BB_mat.
- ! 
- ! Knowing that
- ! 
- ! a) the total memory available on the node can be also defined as
- !    
- !                       m = M(node)/ncpu_per_node
- !    
- !    with M(node) the total memory one can have access to on the node and
- !    ncpu_per_node the number of MPI tasks used per node;
- ! b) the memory m(BB_mat) can be defined as a fraction of m(BS_mat), i.e. 
- !    
- !                     m(BB_mat) = m(BS_mat)/nblocks
- !    
- ! one can easily find the condition
- ! 
- !                         [      m(BS_mat)*ncpu_per_node      ]
- !           nblocks >= Int| --------------------------------- |   [b]
- !                         [ M(node) - m(BS_mat)*ncpu_per_node ]
- ! 
- ! This condition is useful in case of a very large BS_mat matrix, case in
- ! which one needs to split it in very small blocks in order to satisfy
- ! to the condition [a]. In the above condition [b] Int indicates that
- ! function rounding up to the next integer value. In Fortran the function
- ! int takes only the integer part (e.g. int(0.6) gives 0), so that we add 
- ! 1 to the condition [b] to round up to the next integer value.
- ! 
- ! Note that, based on the algorithm used in this routine, the minimum
- ! splitting required to avoid an integer overflow error must use nblocks=4.
- ! 
- rnblocks=ncpu_per_node*BS_mat_mem/(mem_per_node-ncpu_per_node*BS_mat_mem)+1
- nblocks=max(int(rnblocks),49)
- ! 
- ! The number of blocks BB_mat computed above is just indicative. Such a number
- ! must also satisfy to the condition 
- ! 
- !        n_partitions_space = sqrt[nblocks]   "must be an integer" 
- ! 
- ! where n_partitions_space is the space states partitioning number, i.e. the 
- ! number of groups in which the space of the states |k,v,c> is divided. We are
- ! partitioning the square matrix BS_mat in nblocks and the easier algorithm
- ! requires an equal division of both the dimensions. In the following the
- ! routine looks for the closest nblocks number that satisfies the above
- ! condition
- ! 
- do ii=2,100
-   ii2=ii*ii
-   if (ii2 >= nblocks) then
-     nblocks=ii2
-     n_partitions_space=ii
-     exit
-   endif
- enddo
- ! 
- YAMBO_ALLOC(BB_mat_dim,(n_partitions_space))
- YAMBO_ALLOC(BB_mat_pos,(n_partitions_space))
- ! 
- rest=mod(BS_mat_dim,n_partitions_space)
- if (n_partitions_space > 1) then
-   BB_mat_dim(1:(n_partitions_space-1))=int(BS_mat_dim/n_partitions_space)
-   BB_mat_dim(n_partitions_space)=int(BS_mat_dim/n_partitions_space)+rest
- else
-   BB_mat_dim(1)=BS_mat_dim
- endif
- ! 
- BB_mat_pos(1)=1
- do i_partition=2,n_partitions_space
-   BB_mat_pos(i_partition)=BB_mat_pos(i_partition-1)+BB_mat_dim(i_partition-1)
- enddo
- ! 
- do i_partition_a=1,n_partitions_space
-   do i_partition_b=1,n_partitions_space
-     ! 
-     dim_a=BB_mat_dim(i_partition_a)
-     dim_b=BB_mat_dim(i_partition_b)
-     YAMBO_ALLOC(BB_mat,(dim_a,dim_b))
-     ! 
-     ia=BB_mat_pos(i_partition_a)
-     ib=BB_mat_pos(i_partition_b)
-     BB_mat(1:dim_a,1:dim_b)=BS_mat(ia:ia+dim_a-1,ib:ib+dim_b-1)
-     ! 
-     call PP_redux_wait(BB_mat)
-     ! 
-     BS_mat(ia:ia+dim_a-1,ib:ib+dim_b-1)=BB_mat(1:dim_a,1:dim_b)
-     ! 
-     YAMBO_FREE(BB_mat)
-     !
-   enddo
- enddo
- ! 
- YAMBO_FREE(BB_mat_dim)
- YAMBO_FREE(BB_mat_pos)
- ! 
-end subroutine PP_redux_wait_kind8
-!***************************************************************************

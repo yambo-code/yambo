@@ -1,25 +1,9 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): AM,DS,AG
+! Copyright (C) 2006 The Yambo Team
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): AMDSAG
 !
 subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
@@ -28,7 +12,7 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  use com,           ONLY:msg
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels,spin_occ,n_sp_pol,filled_tresh
- use R_lattice,     ONLY:bz_samp,q_norm,RIM_W_for_graph
+ use R_lattice,     ONLY:bz_samp,q_norm
  use X_m,           ONLY:use_X_DbGd,l_drude,drude_n_states
  use parser_m,      ONLY:parser
  use drivers,       ONLY:l_ppa,l_mpa !DALV: needed for the complex sampling in MPA
@@ -73,12 +57,12 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  !
  ! Drude Contrib. if all of following conditions hold
  !====================================================
- !  . Non zero Drude Freq. or graphene model
+ !  . Non zero Drude Freq.
  !  . Metallic system 
  !  . Metallic occupations
  !  . Optical response @ q = Gamma
  !
- Drude_term(1) = ((real(Wd)>0._SP .and. aimag(Wd)>0._SP) .or. (RIM_W_for_graph))
+ Drude_term(1) = real(Wd)>0._SP .and. aimag(Wd)>0._SP
  Drude_term(2) = any( (/Xen%nbf(:n_sp_pol)/=Xen%nbm(:n_sp_pol)/) )
  Drude_term(3) = (f_eh>0._SP) 
  Drude_term(4) = (iq==1)
@@ -104,19 +88,13 @@ subroutine X_Drude(iq,Xen,Xk,Xw,Wd,drude_GreenF)
  l_drude=all(Drude_term)
  if(.not.l_drude) return
  !
- if(RIM_W_for_graph) then
-   l_Classical = .False.
-   l_Jellium = .False.
- else
-   call parser('DrClassic',l_Classical)
-   l_Jellium=.not.l_Classical
- end if
+ call parser('DrClassic',l_Classical)
+ l_Jellium=.not.l_Classical
  if(.not.all(Drude_term)) return
  !
  call msg(' rs','[X/K] Drude nstates            ',drude_n_states)
  call msg(' rs','[X/K] Drude average occ        ',f_eh)
  call msg('nrs','[X/K] Drude energies           ',(/real(Wd),aimag(Wd)/)*HA2EV,'[eV]')
- if(RIM_W_for_graph) call msg('r', 'Graphene analytical model of intraband transitions')
  !
  do iw=1,Xw%n_freqs
    !

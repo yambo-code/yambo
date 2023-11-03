@@ -1,32 +1,16 @@
 !
-!        Copyright (C) 2000-2019 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): DALV, AF
-! 
-! This file is distributed under the terms of the GNU 
-! General Public License. You can redistribute it and/or 
-! modify it under the terms of the GNU General Public 
-! License as published by the Free Software Foundation; 
-! either version 2, or (at your option) any later version.
+! Copyright (C) 2019 The Yambo Team
 !
-! This program is distributed in the hope that it will 
-! be useful, but WITHOUT ANY WARRANTY; without even the 
-! implied warranty of MERCHANTABILITY or FITNESS FOR A 
-! PARTICULAR PURPOSE.  See the GNU General Public License 
-! for more details.
-!
-! You should have received a copy of the GNU General Public 
-! License along with this program; if not, write to the Free 
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): DALV AF
 !
 !
 !---------------------------------------------------------------
 ! Pair sampling of a positive unidimentional (frequency) domain 
 ! as a function of a parameter (the scale)
 ! 
-!                     to be used in the MPA approximation*
+!                     to be used in the MPA interpolation*
 !
 ! *DA. Leon et al, PRB 104, 115157 (2021)
 !
@@ -52,7 +36,7 @@
    character(2), intent(in)  :: gs       ! type of grid: (ho)mo, (lP)PS, (qP)PS, (cP)PS, ...
    complex(SP),  intent(out) :: w(2*np)
    !
-   integer     :: i
+   integer     :: i,ex
    integer(SP) :: lp,r,c,p
    real(SP)    :: aux
    complex(SP) :: ws
@@ -102,11 +86,11 @@
              case ('ho') !homo
                w=(/w1,w1+0.2_SP*ws,w1+0.4_SP*ws,w1+0.6_SP*ws,w1+0.8_SP*ws,w2/)
              case ('lP') !lPPS
-               w=(/w1,w1+0.0625_SP*ws,w1+0.25_SP*ws,w1+0.5_SP*ws,w1+0.75_SP*ws,w2/)
+               w=(/w1,w1+0.125_SP*ws,w1+0.25_SP*ws,w1+0.5_SP*ws,w1+0.75_SP*ws,w2/)
              case ('qP') !qPPS
-               w=(/w1,w1+0.00390625_SP*ws,w1+0.0625_SP*ws,w1+0.25_SP*ws,w1+0.5625_SP*ws,w2/)
+               w=(/w1,w1+0.015625_SP*ws,w1+0.0625_SP*ws,w1+0.25_SP*ws,w1+0.5625_SP*ws,w2/)
              case ('cP') !cPPS
-               w=(/w1,w1+0.000244141_SP*ws,w1+0.015625_SP*ws,w1+0.125_SP*ws,w1+0.421875_SP*ws,w2/)
+               w=(/w1,w1+0.00195313_SP*ws,w1+0.015625_SP*ws,w1+0.125_SP*ws,w1+0.421875_SP*ws,w2/)
              case default
                ! error 
            end select
@@ -148,6 +132,35 @@
                  enddo
                endif  
                !
+             case default !qPPS or cPPS
+               ex=2 !gs='qP'
+               if(gs=='cP') ex=3
+               !
+               w(np+1) = w1
+               w(1)=real(w1,SP)+d(1)*cI
+               w(2*np) = w2
+               w(np)=real(w2,SP)+d(2)*cI
+               lp=log(-1._SP+np)/log(2._SP)
+               r=mod(np-1,2**lp)
+               if (r>0) then
+                 do i=2,2*r
+                   w(np+i)=w1+ws*( (i-1)/2._SP**(lp+1) )**ex
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
+                 enddo
+                 !
+                 do i=2*r+1,np-1
+                   w(np+i)=w1+ws*( (i-1-r)/2._SP**(lp) )**ex
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
+                 enddo
+               else
+                 w(np+2)=w1+ws/( 2._SP**(lp+1) )**ex
+                 w(2)=real(w(np+2),SP)+d(2)*cI 
+                 do i=2*r+3,np-1
+                   w(np+i)=w1+ws*( (i-2-r)/2._SP**(lp) )**ex
+                   w(i)=real(w(np+i),SP)+d(2)*cI 
+                 enddo
+               endif  
+               !
            end select
          case('1l') !1line
            select case(gs)
@@ -156,7 +169,7 @@
                do i=2, 2*np 
                  w(i)=w1+ws*(i-1)/(2*np-1) 
                enddo
-             case('lP') !hPPS
+             case('lP') !lPPS
                w(1) = w1
                w(2*np) = w2
                lp=log(-1._SP+2._SP*np)/log(2._SP)
@@ -175,7 +188,30 @@
                    w(i)=w1+ws*(i-2-r)/2._SP**(lp)
                  enddo
                endif 
-               !    
+               !
+             case default !qPPS or cPPS
+               ex=2 !gs='qP'
+               if(gs=='cP') ex=3
+               !
+               w(1) = w1
+               w(2*np) = w2
+               lp=log(-1._SP+2._SP*np)/log(2._SP)
+               r=mod(2*np-1,2**lp)
+               if (r>0) then
+                 do i=2,2*r
+                   w(i)=w1+ws*( (i-1)/2._SP**(lp+1) )**ex
+                 enddo
+                 !
+                 do i=2*r+1,2*np-1
+                   w(i)=w1+ws*( (i-1-r)/2._SP**(lp) )**ex
+                 enddo
+               else
+                 w(2)=w1+ws/2._SP**(lp+1)
+                 do i=2*r+3,2*np-1
+                   w(i)=w1+ws*( (i-2-r)/2._SP**(lp) )**ex
+                 enddo
+               endif 
+               !
            end select
        end select
    end select 

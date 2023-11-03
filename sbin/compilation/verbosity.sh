@@ -1,26 +1,10 @@
 #!/bin/bash
 #
-#        Copyright (C) 2000-2022 the YAMBO team
-#              http://www.yambo-code.org
+# License-Identifier: GPL
+#
+# Copyright (C) 2023 The Yambo Team
 #
 # Authors (see AUTHORS file for details): AM
-# 
-# This file is distributed under the terms of the GNU 
-# General Public License. You can redistribute it and/or 
-# modify it under the terms of the GNU General Public 
-# License as published by the Free Software Foundation; 
-# either version 2, or (at your option) any later version.
-#
-# This program is distributed in the hope that it will 
-# be useful, but WITHOUT ANY WARRANTY; without even the 
-# implied warranty of MERCHANTABILITY or FITNESS FOR A 
-# PARTICULAR PURPOSE.  See the GNU General Public License 
-# for more details.
-#
-# You should have received a copy of the GNU General Public 
-# License along with this program; if not, write to the Free 
-# Software Foundation, Inc., 59 Temple Place - Suite 330,Boston, 
-# MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
 #
 VERB=0
 #
@@ -61,12 +45,13 @@ if [ "$1" == "locks" ] ; then
 fi
 #
 if [ "$1" == "filename" ] ; then
- echo                      "file        " $file   >> $vlog
+ echo                              "file        " $file   >> $vlog
  if [ ! -z $file_o ];   then  echo ".o          " $file_o_src >> $vlog; fi
  if [ ! -z $file_c ];   then  echo ".c          " $file_c_src >> $vlog; fi
  if [ ! -z $file_f ];   then  echo ".f          " $file_f_src >> $vlog; fi
  if [ ! -z $file_f90 ]; then  echo ".f90        " $file_f90_src >> $vlog; fi
  if [ ! -z $file_F ];   then  echo ".F          " $file_F_src >> $vlog; fi
+ if [ ! -z $file_src ]; then  echo "(file_src)  " $file_src >> $vlog; fi
  return
 fi
 #

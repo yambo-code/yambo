@@ -1,25 +1,9 @@
 ! 
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
 !
-! Authors (see AUTHORS file for details): CA, DS, AM
+! Copyright (C) 2015 The Yambo Team
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
+! Authors (see AUTHORS file for details): CA DS AM
 !
 subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRID_E,CIRCUIT_dE)
  !
@@ -57,7 +41,7 @@ subroutine electrons_bands_interpolate(Xen,Xk,BANDS_range,ID_bands,CIRCUIT_E,GRI
  !
  if (any(BANDS_range<=0))                call error(" Wrong bands range")
  !
- if (BANDS_range(2)-BANDS_range(1)+1>20) call error(" YPP cannot interpolate more than 20 bands. Reduce bands range")
+ if (BANDS_range(2)-BANDS_range(1)+1>40) call error(" YPP cannot interpolate more than 40 bands. Reduce bands range")
  !
  l_interp_dE= (allocated(Xen%Eo).and.BANDS_from_db)
  !

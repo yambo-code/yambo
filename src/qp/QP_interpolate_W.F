@@ -1,33 +1,17 @@
 !
-!        Copyright (C) 2000-2022 the YAMBO team
-!              http://www.yambo-code.org
+! License-Identifier: GPL
+!
+! Copyright (C) 2006 The Yambo Team
 !
 ! Authors (see AUTHORS file for details): AG
 !
-! This file is distributed under the terms of the GNU
-! General Public License. You can redistribute it and/or
-! modify it under the terms of the GNU General Public
-! License as published by the Free Software Foundation;
-! either version 2, or (at your option) any later version.
-!
-! This program is distributed in the hope that it will
-! be useful, but WITHOUT ANY WARRANTY; without even the
-! implied warranty of MERCHANTABILITY or FITNESS FOR A
-! PARTICULAR PURPOSE.  See the GNU General Public License
-! for more details.
-!
-! You should have received a copy of the GNU General Public
-! License along with this program; if not, write to the Free
-! Software Foundation, Inc., 59 Temple Place - Suite 330,Boston,
-! MA 02111-1307, USA or visit http://www.gnu.org/copyleft/gpl.txt.
-!
-subroutine interpolate_W(X,Xw,q,mode)
+subroutine QP_interpolate_W(X,Xw,q,mode)
  !
  use pars,          ONLY:SP,pi,zero_dfl,schlen,DP,rZERO
  use com,           ONLY:msg
  use R_lattice,     ONLY:bz_samp,RIM_W_ng,b,k_grid_b,bare_qpg,&
 &                        RIM_W_is_diagonal,RIM_W,RIM_W_d,f_coeff,idir,RIM_W_E,&
-&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_W_for_graph,RIM_qpg
+&                        RIM_id_epsm1_reference,RIM_epsm1,RIM_qpg
  use vec_operate,   ONLY:c2a,v_norm
  use X_m,           ONLY:X_ALLOC_elemental,X_mat,X_t
  use frequency,     ONLY:w_samp
@@ -53,8 +37,8 @@ subroutine interpolate_W(X,Xw,q,mode)
  integer           :: nn,idm,igr,igc,ig2max,iomega
  integer           :: idx_q(RIM_W_ng,q%nibz,5),idx_G(RIM_W_ng,q%nibz,5),idx_is(RIM_W_ng,q%nibz,5)
  real(SP)          :: dummy(2),anis_factor,em1_anis(3)
- real(DP)          :: f_func(5),dp_dummy(5)
- complex(SP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,2)
+ complex(DP)       :: f_func(5),dp_dummy(5)
+ complex(DP)       :: vX_nn(5,q%nibz,RIM_W_ng,RIM_W_ng,Xw%n_freqs)
  real(SP)          :: v1(3),r_dum(2)
  real(SP)          :: q_grid_b_rlu(3,2),q_grid_b_iku(3,2),q_grid_b_cc(3,2)
  integer           :: ID, IO_ACT, io_err, ng_save,G_max_ibz(q%nibz), G_max
@@ -101,7 +85,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  !Check if RIM-W has been alreay calculated
  call io_control(ACTION=OP_RD_CL,COM=REP,MODE=VERIFY,SEC=(/1,2/),ID=ID)
- io_err=io_RIM_W(ID,mode)
+ io_err=io_RIM_W(ID,mode,Xw)
  !
  if (io_err==0) then
    call timing('RIM-W-coeff',OPR='stop')
@@ -138,9 +122,11 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  G_max=maxval(G_max_ibz)
  !
- if (G_max > X%ng) call error(' G_max '//trim(intc(G_max))//' for RIM-W is higher than G_max '//trim(intc(X%ng))//' of vX')
+ if (G_max > X%ng) call error(' G_max '//trim(intc(G_max))//&
+&                             ' for RIM-W is higher than G_max '//trim(intc(X%ng))//' of vX')
  !
  call msg('r', 'G-vectors loaded', maxval(G_max_ibz))
+ call msg('r', 'Number of interpolated frequencies', Xw%n_freqs)
  call msg('r','')
  !
  X%ng = G_max_ibz(1)
@@ -156,6 +142,7 @@ subroutine interpolate_W(X,Xw,q,mode)
    !
    IO_ACT=manage_action(RD_CL_IF_END,iq,1,q%nibz)
    call io_control(ACTION=IO_ACT,COM=NONE,SEC=(/2*iq,2*iq+1/),ID=ID)
+   !
    io_err=io_X(X,Xw,ID)
    !
    call deliver_IO_error_message(io_err,'PP/Em1s',STOP_it=.TRUE.)
@@ -207,7 +194,8 @@ subroutine interpolate_W(X,Xw,q,mode)
     !
     do iq1=1,q%nibz
       !
-      !Evaluate f_func
+      ! Evaluate f_func nearest neighbour
+      !
       do nn=1,5
         !
         !Select the index of the reference/n.n.
@@ -216,17 +204,21 @@ subroutine interpolate_W(X,Xw,q,mode)
         ig2 = idx_G(igc,iq1,nn)
         !
         f_func(nn) = real(bare_qpg(iq2,ig1)*bare_qpg(iq2,ig2),kind=DP)/(4._DP*pi)*&
-&                    real(vX_nn(nn,iq1,igr,igc,iomega),kind=DP)/(real(vX_nn(nn,iq1,igr,igc,iomega),kind=DP)+1._DP)
+&                    vX_nn(nn,iq1,igr,igc,iomega)/(vX_nn(nn,iq1,igr,igc,iomega)+1._DP)
         !
       enddo
       !
       ! q == 0 terms must be tratened separately
-      if (iq1 == 1 .and. igr == 1 .and. igc == 1 .and. (.not. RIM_W_for_graph)) then
+      if (iq1 == 1 .and. igr == 1 .and. igc == 1) then
         !
-        if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+        call msg("r","Evaluating coefficients q = 0")
+        !
+        if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
+          !
           !vX is included in the anis_factor
           call msg('r','This is the anysotropy case')
           f_coeff(1,igr,igc,iq1,iomega)=(4._DP*pi)/(bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
+          !
         else
           f_coeff(1,igr,igc,iq1,iomega) = vX_nn(1,iq1,igr,igc,iomega)*(4._DP*pi) / &
 &                                  (bare_qpg(iq1,igr)*bare_qpg(iq1,igc)*(2._DP*pi*alat(idir(1)))**2)
@@ -235,7 +227,8 @@ subroutine interpolate_W(X,Xw,q,mode)
         do nn=2,3
           idm = MOD(nn+1,2)+1
           !
-          if(RIM_id_epsm1_reference/=0 .and. iomega==1) then
+          if (RIM_id_epsm1_reference/=0 .and. iomega==1) then
+            !
             anis_factor=dot_product(em1_anis,q_grid_b_cc(:,idm)**2)
             f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
 &                                 (f_coeff(1,iq1,igc,iq1,iomega)*anis_factor))
@@ -243,10 +236,12 @@ subroutine interpolate_W(X,Xw,q,mode)
             f_coeff(nn,igr,igc,iq1,iomega)=-1._DP/q_grid_b_rlu(idm,idm)*log(f_func(nn)/ &
 &                                 (v_norm(q_grid_b_cc(:,idm))**2*f_coeff(1,iq1,igc,iq1,iomega)))
           end if
-
+          !
         enddo
         !
-      else
+      else 
+        !
+        !call msg("r","Evaluating coefficients q/= 0")
         !
         !Coefficients in rlu
         dp_dummy(1) = f_func(1)                                                          !f0
@@ -254,6 +249,7 @@ subroutine interpolate_W(X,Xw,q,mode)
         dp_dummy(3) = (f_func(2)-f_func(4))/(2._DP*q_grid_b_rlu(2,2))                    !f2
         dp_dummy(4) = (f_func(3)-2._DP*f_func(1)+f_func(5))/(2._DP*q_grid_b_rlu(1,1)**2) !f11
         dp_dummy(5) = (f_func(2)-2._DP*f_func(1)+f_func(4))/(2._DP*q_grid_b_rlu(2,2)**2) !f22
+        !
         !
         !Coefficients in iku
         !
@@ -263,6 +259,7 @@ subroutine interpolate_W(X,Xw,q,mode)
         f_coeff(4,igr,igc,iq1,iomega) =  dp_dummy(4)+dp_dummy(5)*(a(2,1)/alat(1))**2           !fxx (iku)
         f_coeff(5,igr,igc,iq1,iomega) =  dp_dummy(4)*a(1,2)/alat(2)+dp_dummy(5)*a(2,1)/alat(1) !fxy (iku)
         f_coeff(6,igr,igc,iq1,iomega) =  dp_dummy(5)+dp_dummy(4)*(a(1,2)/alat(2))**2           !fyy (iku)
+        !
       endif
       !
       f_coeff(:,igc,igr,iq1,iomega) = f_coeff(:,igr,igc,iq1,iomega)
@@ -271,13 +268,14 @@ subroutine interpolate_W(X,Xw,q,mode)
   enddo
  enddo
  enddo
+ !
  call timing('RIM-W-coeff',OPR='stop')
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Calculation of RIM-W integrals
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
- call rim('c')
+ call rim('c',Xw)
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !Debugging output
@@ -291,11 +289,10 @@ subroutine interpolate_W(X,Xw,q,mode)
        !
        do iq2=iq1,min(iq1+1,q%nibz)
          !
-         !iq=q_norm_i(i2)
          ch_dum=' < -Wc [Q = '//trim(intc(iq2))//'] >'
          if (iq1/=iq2) ch_dum=' * < -Wc [Q = '//trim(intc(iq2))//'] >'
          !
-         r_dum(1)= -RIM_W(iq2,1,1)*2._SP*pi
+         r_dum(1)= -RIM_W(1,iq2,1,1)*2._SP*pi
          r_dum(2)= -vX_nn(1,iq2,1,1,1)*RIM_qpg(iq2,1,1)*2_SP*pi
          !
          fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
@@ -306,6 +303,27 @@ subroutine interpolate_W(X,Xw,q,mode)
        if (iq1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
    enddo
    call msg('r','')
+   call msg('nr','Comparison between head Wc = W - v averages: < Wc > [au] RIM-W/RIM')
+   do ig1=1,RIM_W_ng,2
+       !
+       msg_dum=' '
+       !
+       do ig2=ig1,min(ig1+1,RIM_W_ng)
+         !
+         ch_dum=' < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
+         if (ig1/=ig2) ch_dum=' * < -Wc [G = '//trim(intc(ig2))//',G`=0] >'
+         !
+         r_dum(1)= -RIM_W(1,1,ig2,1)*2._SP*pi
+         r_dum(2)= -vX_nn(1,1,ig2,1,1)*RIM_qpg(1,ig2,1)*2_SP*pi
+         !
+         fmt_dum='(a,2('//trim(gen_fmt(r_v=r_dum))//'))'
+         write (msg_dum(ig2-ig1+1),trim(fmt_dum)) trim(ch_dum),r_dum
+         !
+       enddo
+       if (ig1==1) call msg('nr',trim(STRING_pack(msg_dum(1),msg_dum(2))))
+       if (ig1/=1) call msg(' r',trim(STRING_pack(msg_dum(1),msg_dum(2))))
+   enddo
+
  end if
  !
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -313,24 +331,32 @@ subroutine interpolate_W(X,Xw,q,mode)
  !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  !
  if (mode == 'PPA') then
+   !
    YAMBO_ALLOC(RIM_W_E,(RIM_W_ng,RIM_W_ng))
    RIM_W_E = rZERO
    !
    do ig2=1,RIM_W_ng
      do ig1=1,RIM_W_ng
        !
-       if(ig1==1.and.ig2==1.and.(.not. RIM_W_for_graph)) then
+       if(ig1==1.and.ig2==1) then
+         !
          dummy(:) = f_coeff(1,1,1,1,:)
          if (RIM_id_epsm1_reference/=0) then
-           dummy(1) = dummy(1)*0.5*(em1_anis(idir(2))+em1_anis(idir(3)))
+           dummy(1) = dummy(1)*0.5_SP*(em1_anis(idir(2))+em1_anis(idir(3)))
          end if
          !
        else
-         dummy(:) =  f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
-&                                          +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
-                                           +2._SP*f_coeff(5,ig1,ig2,1,:)))
+         !
+         ! AF: a tentative implementation with a mixing constant of 1.E-5
+         !     instead of 1.E-4 as below has been proposed, but led to
+         !     numerical differencies in the results. To be investigated
+         !
+         dummy(:) = f_coeff(1,ig1,ig2,1,:)+1.E-4*(f_coeff(2,ig1,ig2,1,:)+f_coeff(3,ig1,ig2,1,:)&
+&                                         +1.E-4*(f_coeff(4,ig1,ig2,1,:)+f_coeff(6,ig1,ig2,1,:)&
+                                          +2._SP*f_coeff(5,ig1,ig2,1,:)))
          dummy(:) = dummy(:)*4._SP*pi/(bare_qpg(1,ig1)*bare_qpg(1,ig2))
-         dummy(:) = dummy/(1-dummy)
+         dummy(:) = dummy/(1._SP-dummy)
+         !
        endif
        !
        if (dummy(1)/dummy(2)<=1._SP) then
@@ -348,7 +374,7 @@ subroutine interpolate_W(X,Xw,q,mode)
  !
  if (master_cpu) then
    call io_control(ACTION=OP_WR_CL,COM=REP,SEC=(/1,2/),ID=ID)
-   io_err=io_RIM_W(ID,mode)
+   io_err=io_RIM_W(ID,mode,Xw)
  endif
  !
  if (have_cuda) then

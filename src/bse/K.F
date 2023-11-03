@@ -402,14 +402,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Exchange oscillators
    !----------------------
-   ! 
    call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-   !
    if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
    !
-   ! Exchange oscillators
+   ! Correlation oscillators
    !----------------------
-   ! 
    if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
    if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    !

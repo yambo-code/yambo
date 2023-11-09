@@ -20,7 +20,8 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
  use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
 &                        use_X_DbGd,eps_2_alpha,X_par_lower_triangle,X_OUTPUT_messages,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs,&
+&                        i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
 &                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
@@ -41,9 +42,9 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq,i_G_shift,n_data
+ integer          :: iw,iq,n_data
  complex(SP)      :: fac,spectra(wv%n_freqs,2)
- real(SP)         :: output_data(5),Q_plus_G_pt(3),Q_plus_G_sq_modulus,a_xc,b_xc
+ real(SP)         :: output_data(5),a_xc,b_xc
  logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps,&
 &                    l_eels_from_ext_eps
  !
@@ -100,7 +101,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    ! Check if this q is compatible with the user defined direction in chartesian coordinates
    ! and if an additional RL vectors must be added
-   i_G_shift=OPTICS_select_q_and_G(iq,q,X,Q_plus_G_pt,Q_plus_G_sq_modulus)
+   i_G_shift=OPTICS_select_q_and_G(iq,q,X)
    if (i_G_shift<0) cycle
    !
    ! In TDDFT with BS based kernel eps0 is non-sense

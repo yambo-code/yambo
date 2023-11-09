@@ -195,7 +195,7 @@ subroutine K_driver(Xen,Ken,Xk,q,X_static_pp,Xw,Dip)
    !
    ! 0. The Dipoles 
    ! ===============
-   call K_dipoles(iq,Ken,Xk,Dip,W_bss)
+   call K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip,W_bss)
    !
    ! 1. The IP Part
    ! ===============

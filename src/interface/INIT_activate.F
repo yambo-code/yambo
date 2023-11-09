@@ -215,6 +215,7 @@ subroutine INIT_activate()
  if (l_optics.and.l_bse) then
    !                     
    call initactivate(1,'BSENGexx ALLGexx')
+   call initactivate(1,'Qdirection QShiftOrder')
    !
    if(l_td_hf.or.l_td_sex) call initactivate(1,'BSENGBlk')
    if(l_td_sex)            call initactivate(1,'WehDiag WehCpl')

@@ -155,9 +155,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
- call parser('ImposeDirAlg',l_dir_alg)
- if(.not.l_dir_alg) l_dir_alg=(iq/=1 .and. n_spinor==2 .and. nsym>1) 
- l_std_alg=.not.l_dir_alg
+ if (iq/=1 .and. n_spinor==2 .and. nsym>1) then
+   ! Default is direct algorithm, unless imposed from input
+   call parser('ImposeStdAlg',l_std_alg)
+   l_dir_alg=.not.l_std_alg
+ else         
+   ! Default is standard algorithm, unless imposed from input
+   call parser('ImposeDirAlg',l_dir_alg)
+   l_std_alg=.not.l_dir_alg
+ endif 
  !
  ! Oscillators Setup
  !===================
@@ -404,14 +410,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    !
    ! Exchange oscillators
    !----------------------
-   ! 
    call K_exchange_collisions(iq,Xk,i_Tgrp_k)
-   !
    if (i_Tgrp_k/=i_Tgrp_p) call K_exchange_collisions(iq,Xk,i_Tgrp_p)
    !
-   ! Exchange oscillators
+   ! Correlation oscillators
    !----------------------
-   ! 
    if (l_std_alg) call K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
    if (l_dir_alg) call K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    !
@@ -542,8 +545,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
          iq_W_mq   =q%sstar( iq_W_bz_mq,1) 
          iq_W_s_mq =q%sstar( iq_W_bz_mq,2) 
          !
-         !if (iq==1) ig_W_final=      ig_W_mq
-         !if (iq> 1) ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_kmq,ig_pmq),iq_W_s_mq))
+         ig_W_final=       ig_W_mq
+         !ig_W_final=G_m_G(ig_W_mq,g_rot(G_m_G(ig_kmq,ig_pmq),iq_W_s_mq))
          !
        endif 
        ! 
@@ -589,7 +592,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_kp_s,i_c_k,i_c_p,i_kmq_s,i_kp_mq_s,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
-&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                   iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
            if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
 &                                   i_k_s,i_p_s, i_c_k,i_c_p,i_kmq_s,i_pmq_s  ,i_v_k,i_v_p,     &
 &                                   i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,  &
@@ -613,7 +616,7 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            if (l_std_alg)       H_c=K_correlation_kernel_std(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_kp_s,i_c_k,i_v_p,i_kmq_s,i_kp_mq_s,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &
-&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_mq,i_kmq_s_m1)
+&                                 iq_W,iq_W_s,ig_W,i_k_s_m1,iq_W_s_mq,ig_W_final,i_kmq_s_m1)
            if (l_dir_alg)       H_c=K_correlation_kernel_dir(i_block,i_p,i_pmq, &
 &                                 i_k_s,i_p_s ,i_c_k,i_v_p,i_kmq_s,i_pmq_s  ,i_v_k,i_c_p,    &
 &                                 i_kmq_t,i_pmq_t,i_k_sp_pol_c,i_p_sp_pol_v,i_k_sp_pol_v,i_p_sp_pol_c,  &

@@ -10,7 +10,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use pars,           ONLY:pi,SP,cI,cZERO,schlen
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
- use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall
+ use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
+&                         l_eps_res_ares,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&

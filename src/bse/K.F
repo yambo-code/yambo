@@ -155,8 +155,15 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
  !
  if (load_O_X) call msg('r','[BSE] Exchange components ',BS_n_g_exch)
  !
- call parser('ImposeDirAlg',l_dir_alg)
- l_std_alg=.not.l_dir_alg
+ if (iq/=1 .and. n_spinor==2 .and. nsym>1) then
+   ! Default is direct algorithm, unless imposed from input
+   call parser('ImposeStdAlg',l_std_alg)
+   l_dir_alg=.not.l_std_alg
+ else         
+   ! Default is standard algorithm, unless imposed from input
+   call parser('ImposeDirAlg',l_dir_alg)
+   l_std_alg=.not.l_dir_alg
+ endif 
  !
  ! Oscillators Setup
  !===================

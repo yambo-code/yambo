@@ -397,19 +397,14 @@ subroutine K_correlation_collisions_dir(iq,i_block,qindx_ID_frag,Xk,q)
    subroutine EVAL_table(iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko)
      implicit none
      integer, intent(in) :: iB,iki,iko,ibi,ibo,i_sp_pol,i_s_ki,i_s_ko
-     integer :: iB_ref, iB_p
-     iB_ref=-1
-     if ( iB_ref==-1 ) then
-       iB_ref=iB
-       BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
-       BS_blk(iB)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
-       BS_blk(iB)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=iB
-       O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=.true.
-     endif
-     BS_blk(iB)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)= &
-&      BS_blk(iB_ref)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)
-     BS_blk(iB)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)= &
-&      BS_blk(iB_ref)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)
+     !
+     if( O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol) ) return
+     !
+     BS_blk(iB)%N_oscillators=BS_blk(iB)%N_oscillators+1 
+     BS_blk(iB)%O_table1(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=BS_blk(iB)%N_oscillators
+     BS_blk(iB)%O_table2(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=iB
+     O_todo_table(i_s_ki,i_s_ko,iki,iko,ibi,ibo,i_sp_pol)=.true.
+     !
    end subroutine
    !
    subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_sp_pol_i,i_sp_pol_o,ibi,ibo,iq_W_in,i_s_ki,i_s_ko,isc)

@@ -658,7 +658,7 @@ subroutine INIT_load(defs,en,q,k,X,Xw,Dip)
  !
  call it(defs,'ELPhExcStates', '[EXCPH] Incoming (external) exciton states',EXCPH_states)
  call it(defs,'ELPhExcSum',    '[EXCPH] Outgoing (virtual) exciton states',EXCPH_sum)
- call it(defs,'ExcPhKind',     '[EXCPH] Exciton-phonon kind (PALEARI | BERNARDI)',EXCPH_kind_name)
+ call it(defs,'ExcPhKind',     '[EXCPH] Exciton-phonon kind (PALEARI | BERNARDI)',EXCPH_kind_name,verb_level=V_ph)
  call it(defs,'LoutPath',      '[EXCPH] Path of the outgoing L',Lout_path)
  call it(defs,'EXCTemp'       ,'[EXCPH] Excitonic Temperature (for luminescence spectra)',Boltz_Temp,T_unit)
  call it(defs,'AlphaQ'       ,'[EXCPH] Excitonic band structure 2D distortion',alphaQ)

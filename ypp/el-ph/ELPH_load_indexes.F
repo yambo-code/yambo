@@ -48,7 +48,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  !
  if(l_use_qindxB) then
    !
-   if(.not.bse_scattering) call error(' Please run setup with BSEscatt flag ')
+   bse_scattering=.true.
    !
    ! here qindx_B is allocated
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/5/),ID=ID)
@@ -66,7 +66,7 @@ subroutine ELPH_load_indexes(k,E,q,qindx_ID,qindx_ID_frag)
  else
    ! otherwise qindx_C is allocated
    !
-   if(.not.coll_scattering) call error(' Please run setup with COLLscatt flag ')
+   coll_scattering=.true.
    !
    call io_control(ACTION=OP_RD_CL,COM=REP,SEC=(/6/),ID=ID)
    io_err(1)=io_QINDX(k,q,ID,'minus_q')

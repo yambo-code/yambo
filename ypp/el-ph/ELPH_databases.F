@@ -54,6 +54,8 @@ subroutine ELPH_databases(k,E,q)
  call parser('GkkpDebug',l_GKKP_debug)
  call parser('GkkpExpOnlyK',l_gkkp_expand_only_k)
  call parser('GkkpSkipDW',l_GKKP_skip_DW)
+ call parser('UseQindxB',l_use_qindxB)
+ !
  l_GKKP_hosts_DW=.not.l_GKKP_skip_DW
  !
  if(l_gkkp_expand.and.l_gkkp_expand_only_k) &

@@ -65,6 +65,7 @@ subroutine REPORT_Energies(E,k,Xk,n_bands_,k_range,what,l_kpoints,l_what)
      call msg('r',trim(dumb_ch1),k_al,'[rlu]')
      if (fat_log) call msg('r','      :',k%pt(ik,:),'[iku]')
      if (fat_log) call msg('r','      :',k_cc,'[cc]')
+     call msg('r','      : weight ',k%weights(ik))
      if (trim(what)/="Q") then
        call msg('r','      : wf components',wf_nc_k(ik) )
      endif

@@ -423,7 +423,7 @@ subroutine INIT_read_command_line(rstr,init_)
      !
      if ( trim(rstr_piece(i1)) == 'nloptics' ) then
        !
-       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=1
+       if ( trim(rstr_piece(i1+1)) == 'n'   ) n_ext_fields=3
        if ( trim(rstr_piece(i1+1)) == 'p'   ) then
           n_ext_fields=3
           l_nl_p_and_p=.TRUE.

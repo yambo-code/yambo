@@ -1,9 +1,9 @@
-#
+# 
 # License-Identifier: GPL
 #
 # Copyright (C) 2015 The Yambo Team
 #
-# Authors (see AUTHORS file for details): AF
+# Authors (see AUTHORS file for details): AF, DS
 #
 AC_DEFUN([AC_HAVE_IOTK],[
 

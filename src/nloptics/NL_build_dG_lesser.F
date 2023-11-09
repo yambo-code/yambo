@@ -10,6 +10,8 @@ subroutine NL_build_dG_lesser(en,V_bands,dG)
  ! Construct dG = G_lesser(t) - G_lesser(t=0) 
  ! from the time-dependent valence bands
  !
+ ! \rho(i1,i2,ik) = \sum_{iv}^{N_v}  V*(i2,iv,ik) V(i1,iv,ik)
+ !
  use pars,           ONLY:SP,cI,cZERO
  use electrons,      ONLY:levels,spin_occ,n_sp_pol
  use nl_optics,      ONLY:NL_bands

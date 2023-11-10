@@ -178,7 +178,7 @@ subroutine NL_ypp_driver(en,k)
        !
        if(.not.runs_ok(i_f)) cycle
        !
-       T_period=T_range(1,i_f)
+       T_period=T_range_nl(1,i_f)
        !
        do i_d = 1,3
          call RT_coefficients_Inversion(X_order+1,X_order+1,RT_P_probe(:,i_f,i_d),X_effective(0:,i_f,i_d),&
@@ -329,25 +329,19 @@ subroutine NL_ypp_driver(en,k)
      !
    end subroutine
    !
-   real(SP) function T_range(i_n,i_f)
+   real(SP) function T_range_nl(i_n,i_f)
      !
      integer :: i_n,i_f
      !
      RT_conf%T_range=time_range_save
      !
-     if (i_f>  0) T_range = EtoT(E=Harmonic_Frequency(i_n,i_f))
-     if (i_f== 0) T_range = EtoT(E=maxval(Harmonic_Frequency(:,:)))
+     T_range_nl = EtoT(E=Harmonic_Frequency(i_n,i_f))
      !
-     if (i_f==-1) then
-       T_range = RT_conf%T_range(2)- RT_conf%T_range(1)
-       return
-     endif
+     RT_conf%T_range(2)  = RT_conf%T_range(1)+ T_range_nl
      !
-     RT_conf%T_range(2)  = RT_conf%T_range(1)+ T_range
-     !
-     if (RT_conf%T_range(2)> NE_steps*RT_step) then
-       RT_conf%T_range(2)  = NE_steps*RT_step
-       RT_conf%T_range(1)  = RT_conf%T_range(2)-T_range
+     if (RT_conf%T_range(2)> (NE_steps-1)*RT_step) then
+       RT_conf%T_range(2)  = (NE_steps-1)*RT_step
+       RT_conf%T_range(1)  = RT_conf%T_range(2)-T_range_nl
      endif 
      !
    end function 

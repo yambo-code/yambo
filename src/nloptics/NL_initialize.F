@@ -146,15 +146,16 @@ subroutine NL_initialize(E,k)
  !
  call msg('s','[NL] Number of active fields : ',n_active_fields)
  !
- if(n_active_fields>1.or.all(NL_er<0._SP)) then
+ if(all(NL_er<0._SP)) then
    l_pump_and_probe=.true.
    l_NE_with_fields=.true.
    call msg('s', '[NL] Variables NLEnSteps and NLEnRange are ignored ')
    call msg('sr','[NL] Pump and probe configuration: verbosity set to high')
-   if(n_frequencies/=1) call error("NLEnSteps /=1 not compatible with Pump and Probe ")
    NL_verbosity=VERB_HIGH
- elseif((Efield(1)%ef_name/='none').and.all(Efield(2:3)%ef_name=='none')) then
+ else
    call msg('sr','[NL] Non-linear optics configuration')
+   call msg('sr','[NL] Loop on frequencies of the first field ')
+   call warning('Variables Field1_Freq and Field1_NFreqs ignored')
  endif
  !
  if(.not.l_pump_and_probe.and.Efield(1)%ef_name/='SOFTSIN'.and.Efield(1)%ef_name/='SIN') &

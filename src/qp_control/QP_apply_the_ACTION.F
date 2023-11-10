@@ -64,9 +64,9 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
      endif
    endif
    !
-   do ib=bands(1),bands(2)
+   do ik=1,E%nk
      !
-     do ik=1,E%nk
+     do ib=bands(1),bands(2)
        !
        if (allocated(QP_action(i_ACTION)%STATES_done)) then
           if (QP_action(i_ACTION)%STATES_done(ib,ik,i_spin)==1) cycle
@@ -94,6 +94,11 @@ subroutine QP_apply_the_ACTION(i_ACTION,bands,E,k)
        endif
        !
      enddo
+     !
+     if(bands(1)>1) E%E(:bands(1)-1,ik,i_spin)=E%E(:bands(1)-1,ik,i_spin)+ &
+     &                        E%E(bands(1),ik,i_spin)-E%Eo(bands(1),ik,i_spin)
+     if(bands(2)<E%nb) E%E(bands(2)+1:,ik,i_spin)=E%E(bands(2)+1:,ik,i_spin)+ &
+     &                        E%E(bands(2),ik,i_spin)-E%Eo(bands(2),ik,i_spin)
      !
    enddo
    !

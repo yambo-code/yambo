@@ -47,7 +47,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full").and..not.STRING_match(BSE_L_kind,"tilde")) &
  &   call error('set Lkind = BAR or FULL or TILDE')
  !
- if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+ if (STRING_match(BSE_L_kind,"full").and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
    call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
    BSE_mode="resonant"
  endif
@@ -87,7 +87,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  !================================================================
  !
  ! If the system is 3D eps/=eps^-1
- if (l_3D)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
+ if (l_3D)          BSS_eels_to_eps=STRING_match(BSE_L_kind,"full")
  !
  ! If the Coulomb cutoff is     used ...
  if (l_col_cut) then
@@ -98,7 +98,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
    if (l_1D.or.l_2D) then
      if (iq==1) BSS_eels_to_eps=.false.
-     if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
+     if (iq/=1) BSS_eels_to_eps=STRING_match(BSE_L_kind,"full")
    endif
    !
  endif

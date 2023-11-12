@@ -317,7 +317,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
          enddo
          !
        else
-         !  
+         !
          v1=matmul(k_b_m1,v1)
          iv1=nint(v1)
          call k_grid_shift(iv1)
@@ -415,8 +415,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        !
        if (.not.PAR_IND_k%element_1D(ikbz_p)) cycle
        !
-       if (trim(convention)=="minus_q") v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:) ! K-K_p= Q + Go
-       if (trim(convention)=="plus_q" ) v1=Xk%ptbz(ikbz_p,:)-Xk%ptbz(ikbz,:) ! K_p-K= Q + Go
+       if (trim(convention)=="minus_q") v1=k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:) ! K-K_p= Q + Go
+       if (trim(convention)=="plus_q" ) v1=k%ptbz(ikbz_p,:)-k%ptbz(ikbz,:) ! K_p-K= Q + Go
        !
        if(Xk_grid_new_mapping) then
          !
@@ -433,7 +433,7 @@ subroutine bz_samp_indexes(en,k,Xk,q)
          enddo
          !
        else
-         !   
+         !
          v1=matmul(k_b_m1,v1)
          iv1=nint(v1)
          !
@@ -452,8 +452,8 @@ subroutine bz_samp_indexes(en,k,Xk,q)
        !
        if (iks==1) qindx_S(ikibz,iqbz,1)=ikbz_p
        if (coll_scattering) qindx_C(ikbz,iqbz,1)=ikbz_p
-       if (trim(convention)=="minus_q") v1=Xk%ptbz(ikbz,:)-Xk%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
-       if (trim(convention)=="plus_q" ) v1=Xk%ptbz(ikbz_p,:)-Xk%ptbz(ikbz,:)-q%ptbz(iqbz,:)
+       if (trim(convention)=="minus_q") v1=k%ptbz(ikbz,:)-k%ptbz(ikbz_p,:)-q%ptbz(iqbz,:)
+       if (trim(convention)=="plus_q" ) v1=k%ptbz(ikbz_p,:)-k%ptbz(ikbz,:)-q%ptbz(iqbz,:)
        call c2a(v_in=v1,mode='ka2i')
        if (iks==1) qindx_S(ikibz,iqbz,2)=G_index(v1,.false.)
        if (coll_scattering) qindx_C(ikbz,iqbz,2)=G_index(v1,.false.)

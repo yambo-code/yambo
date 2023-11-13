@@ -123,8 +123,9 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !
  ! (NB:  this turns pp_is_uspp to .true., later on it is restored to .false.)
  ! (NB2: this calls vloc_alloc(), it is deallocated below) 
+ ! (NB3: quantities in real space [vlocal and VHartree] require loading all occupied states)
  !=====================================================================
- WFbands=(/H_ref_bands(1),max(H_ref_bands(2),maxval(E%nbm))/)
+ WFbands=(/1,max(H_ref_bands(2),maxval(E%nbm))/)
  call WF_load(WF,WF_G_max,WF_Go_indx,WFbands,(/1,nkibz/),title='-vloc')
  !
  ! FFT of vloc into real space
@@ -296,11 +297,11 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !write(*,*) "End of Bare hamiltonian from scratch "
  !
  !
- ! Now calculating V_Hartree in real space. First density...
+ ! Now calculating V_Hartree in real space. First density [including all valence states]...
  !
  if ((.not.allocated(rho_n)).or.(size(rho_n)/=fft_size)) call H_alloc_real_space()
  !
- call el_density_and_current(E,Xk,rho=rho_n,bands=H_ref_bands)
+ call el_density_and_current(E,Xk,rho=rho_n,bands=(/1,H_ref_bands(2)/))
  !
 #if defined _SC
  if(l_sc_run) then

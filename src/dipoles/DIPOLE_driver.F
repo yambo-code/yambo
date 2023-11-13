@@ -325,7 +325,7 @@ subroutine DIPOLE_driver(Xen,Xk,Xq,Dip)
         !
         do iv=Dip%ib(1),Dip%ib_lim(1)
           if(iv>=Dip%ib_lim(2)) then
-            DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,daimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
+            DIP_iR(:,iv,iv,ik_mem,i_sp_pol)=cmplx(0.,aimag(DIP_iR(:,iv,iv,ik_mem,i_sp_pol)),SP)
             DIP_P (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_P(:,iv,iv,ik_mem,i_sp_pol), SP),0. ,SP)
             DIP_v (:,iv,iv,ik_mem,i_sp_pol)=cmplx( real(DIP_v(:,iv,iv,ik_mem,i_sp_pol), SP),0. ,SP)
             !

@@ -16,9 +16,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use DIPOLES,       ONLY:DIPOLE_t
  use stderr,        ONLY:intc
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
- use X_m,           ONLY:Epsilon_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
+ use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
-&                        skip_cond_sum_rule,l_drude,X_magnons,Epsilon_ij,X_dichroism
+&                        skip_cond_sum_rule,l_drude,X_magnons,Resp_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,&
@@ -243,9 +243,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_abs) then
          do i_ColFG=1,BS_nkFGbz_in_Tgrp(i_T_g)
-           Epsilon_ii(:,3)=Epsilon_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
+           Resp_ii(:,3)=Resp_ii(:,3)-res_abs/(W_bss%p(:)-E_plus_W(i_pert_SOC)-E_DbGd(i_ColFG))
            if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-             Epsilon_ii(:,3)=Epsilon_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_ColFG)))
+             Resp_ii(:,3)=Resp_ii(:,3)+conjg(res_abs)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)+E_DbGd(i_ColFG)))
            endif
          enddo
        endif
@@ -259,9 +259,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        !
        if (l_BS_kerr) then
          !
-         Epsilon_ij(:,3)=Epsilon_ij(:,3)-  res_kerr/(W_bss%p(:)-E_plus_W(i_pert_SOC))
+         Resp_ij(:,3)=Resp_ij(:,3)-  res_kerr/(W_bss%p(:)-E_plus_W(i_pert_SOC))
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           Epsilon_ij(:,3)=Epsilon_ij(:,3)+conjg(res_kerr)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
+           Resp_ij(:,3)=Resp_ij(:,3)+conjg(res_kerr)/(W_bss%p(:)+conjg(E_plus_W(i_pert_SOC)))
          endif
          !
          ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
@@ -304,7 +304,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  call live_timing()
  !
- if (l_BS_abs) Epsilon_ii(:,3) = Epsilon_ii(:,3) * FG_factor
+ if (l_BS_abs) Resp_ii(:,3) = Resp_ii(:,3) * FG_factor
  !
  ! Sorting procedure
  !===================
@@ -313,8 +313,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! ALL 2 ALL
  !==============
  if (l_BS_abs) then
-   call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Epsilon_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( Resp_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Resp_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
@@ -325,8 +325,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  endif
  !
  if(l_BS_kerr) then
-   call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( Epsilon_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( Resp_ij(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( Resp_ij(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
    !
    call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( B_Hall(1) ,COMM=PAR_COM_eh_INDEX%COMM )
@@ -355,47 +355,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
  !                                                      ! However it is commented for now since all test-suite
  !                                                      ! references needs to be updated before insterting it
- if (l_BS_abs) then
-   !
-   if (trim(global_gauge)=='velocity') then
-     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-   endif
-   !
-   if (trim(global_gauge)=='length'  ) Epsilon_ii(:,3)=Co_factor* Epsilon_ii(:,3)                /bare_qpg(iq,i_G_shift)**2
-   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Co_factor*(Epsilon_ii(:,3)-diam_term_used)/W_bss%p(:)**2
-   !
-   ! Drude term
-   !
-   if (l_drude           ) X_drude_term(:)=       -drude_GreenF(:)       *4._SP*pi/bare_qpg(iq,i_G_shift)**2
-   if (skip_cond_sum_rule) X_drude_term(:)=(para_term_w0-diam_term_exact)*Co_factor/W_bss%p(:)**2
-   !
-   Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
-   !
- endif
  !
- if (l_BS_abs) then
-   !
-   ! Eq.(1.12) PRB 48, 11705 (1993)
-   !
-   A_drude(1)=para_term_w0-diam_term_exact
-   !
- endif
+ if (l_BS_abs) Resp_ii(:,3)=Resp_ii(:,3)*Co_factor
  !
- if (l_BS_kerr) then
-   !
-   B_Hall(1)=B_Hall(1)*Co_factor
-   if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
-   !
-   if(trim(global_gauge)=='length'   ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/bare_qpg(iq,i_G_shift)**2
-   if(trim(global_gauge)=='velocity' ) Epsilon_ij(:,3)= Epsilon_ij(:,3)*Co_factor/ W_bss%p(:)   **2
-   !
-   ! I add the term describing the Anomalous Hall effect which is
-   ! missing in the length gauge (this should be zero for systems with a gap)
-   !
-   if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
-   !
- endif
+ if (l_BS_kerr) Resp_ij(:,3)=Resp_ij(:,3)*Co_factor
  !
  if (l_BS_dichroism) then
    !

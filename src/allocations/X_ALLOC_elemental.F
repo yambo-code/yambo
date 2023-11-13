@@ -9,7 +9,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
-&                        X_fxc,EEL,Alpha,X_mat,X_drude_term,X_RLcomp_ig
+&                        X_fxc,EEL,Alpha_ii,,Alpha_ij,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
@@ -23,6 +23,10 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  if (present(DIM)) then
    select case(what)
+   case('RESP')
+     if (allocated(Resp_ii)) return
+     YAMBO_ALLOC(Resp_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
+     Resp_ii   = cZERO
    case('EPS')
      if (allocated(Epsilon_ii)) return
      YAMBO_ALLOC(Epsilon_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
@@ -30,6 +34,11 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      Epsilon_ii   = cZERO
      X_drude_term = cZERO
    case('OFF')
+     if (allocated(Resps_ij)) return
+     YAMBO_ALLOC(Resp_ij,(DIM(1),DIM(2)))
+     Resp_ij=cZERO
+     YAMBO_ALLOC(Alpha_ij,(DIM(1),DIM(2)))
+     Alpha_ij=cZERO
      YAMBO_ALLOC(Epsilon_ij,(DIM(1),DIM(2)))
      Epsilon_ij=cZERO
    case('MAGNONS')
@@ -42,10 +51,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      YAMBO_ALLOC(EEL,(DIM(1),DIM(2)))
      EEL=cZERO
    case('ALPHA')
-     if (.not.allocated(Alpha)) then
-       YAMBO_ALLOC(Alpha,(DIM(1),DIM(2)))
-       Alpha=cZERO
-     endif
+     if (allocated(Alpha_ii)) return
+     YAMBO_ALLOC(Alpha_ii,(DIM(1),DIM(2)))
+     Alpha_ii=cZERO
    case('JDOS')
      YAMBO_ALLOC(Joint_DOS,(DIM(1),DIM(2)))
      Joint_DOS=cZERO
@@ -69,11 +77,16 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    return
  endif
  !
+ if (STRING_match(WHAT,"RESP").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(Epsilon_ii)
+   YAMBO_FREE(X_drude_term)
+ endif
  if (STRING_match(WHAT,"EPS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Epsilon_ii)
    YAMBO_FREE(X_drude_term)
  endif
  if (STRING_match(WHAT,"OFF").or.STRING_match(WHAT,"ALL")) then
+   YAMBO_FREE(Alpha_ij)
    YAMBO_FREE(Epsilon_ij)
  endif
  if (STRING_match(WHAT,"MAGNONS").or.STRING_match(WHAT,"ALL")) then
@@ -86,7 +99,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    YAMBO_FREE(EEL)
  endif
  if (STRING_match(WHAT,"ALPHA").or.STRING_match(WHAT,"ALL")) then
-   YAMBO_FREE(ALPHA)
+   YAMBO_FREE(ALPHA_ii)
  endif
  if (STRING_match(WHAT,"JDOS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Joint_DOS)

@@ -89,14 +89,62 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  if (.not.STRING_match(WHAT,"dump")) return
  !
- fac=eps_2_alpha/4._SP/pi
- if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+ if (X_do_obs("eps").or.X_do_obs("Alpha")) then
+   !
+   fac=eps_2_alpha/4._SP/pi
+   if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+   !
+   if(trim(global_gauge)=='length'  ) Resp_ii(:,2:)= Resp_ii(:,2:)/bare_qpg(iq,i_G_shift)**2
+   if(trim(global_gauge)=='velocity') Resp_ii(:,2:)= Resp_ii(:,2:)/  W%p(:)  **2
+   !
+   if (X_do_obs("off")) then
+     !
+     if(trim(global_gauge)=='length'  ) Resp_ij(:,2:)=Resp_ij(:,2:)/bare_qpg(iq,i_G_shift)**2
+     if(trim(global_gauge)=='velocity') Resp_ij(:,2:)=Resp_ij(:,2:)/    W%p(:)    **2
+     !
+   endif
+   !
+ endif
  !
  ! ABSORPTION
  !
  ! Epsilon_ii
  !------------
  if (X_do_obs("eps")) then
+   !
+   Epsilon_ii= Resp_ii
+   !
+   ! The response function contains Lfull
+   !
+   if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
+   !
+   ! ... Drude term (Part to be fixed)
+   !
+   ! ******* first IP part
+   if (trim(global_gauge)=='velocity') then
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+   endif
+   !
+   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Epsilon_ii(:,3)-diam_term_used/W_bss%p(:)**2
+   if (trim(global_gauge)=='velocity') Epsilon_ii(:,2)=Epsilon_ii(:,2)-diam_term_used/W%p(:)**2
+   !
+   ! Eq.(1.12) PRB 48, 11705 (1993)
+   !
+   A_drude(1)=para_term_w0-diam_term_exact
+   !
+   if (l_drude           ) X_drude_term(:)=-drude_GreenF(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
+   if (skip_cond_sum_rule) X_drude_term(:)=  A_drude(1)    *Co_factor/W_bss%p(:)**2
+   !
+   Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
+   !
+   ! ******* then correlated part
+   if (trim(global_gauge)=='velocity') then
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+   endif
+   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W%p(:)**2
+   !
    !
    ! ... Diamagnetic term
    call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
@@ -111,6 +159,30 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Epsilon_ij
  !------------
  if (X_do_obs("off")) then
+   !
+   Epsilon_ij=Resp_ij
+   Epsilon_ij=Resp_ij
+   !
+   if(l_BS_anomalous_Hall) then
+   
+     !
+     B_Hall(1)=B_Hall(1)*Co_factor
+     if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+     !
+     ! I add the term describing the Anomalous Hall effect which is
+     ! missing in the length gauge (this should be zero for systems with a gap)
+     !
+     if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
+     !
+     if(BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(iq,i_G_shift)**2
+     if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
+     !
+     ! I add the term describing the Anomalous Hall effect which is
+     ! missing in the length gauge (this should be zero for systems with a gap)
+     if (trim(global_gauge)=='length') Epsilon_ij(:,2)=Epsilon_ij(:,2)+B_Hall(2)/W%p(:)
+     !
+   endif
    !
    ! ... Anomalous Hall term
    call msg("o eps",com_compose_msg(pre="# ",body="Anomalous Hall effect (B_Hall)")," ",INDENT=0)
@@ -135,10 +207,11 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   eps(:,1)=Epsilon_ii(:,2)
-   eps(:,2)=Epsilon_ii(:,3)
-   if (l_last_col) eps(:,3)=Epsilon_ii(:,4)
+   Alpha(:,1)=Resp_ii(:,2)
+   Alpha(:,2)=Resp_ii(:,3)
+   if (l_last_col) Alpha(:,3)=Resp_ii(:,4)
    !
+   ! To be fixed
    if (.not.l_ab_from_eels) alpha=eps*fac
    ! With eel the 3D eel, this is true in any dimension
    ! Remember that here eps does not contain the "+1"
@@ -152,10 +225,11 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("beta")) then
    !
-   spectra(:,1)=Epsilon_ij(:,2)
-   spectra(:,2)=Epsilon_ij(:,3)
-   if (l_last_col) spectra(:,3)=Epsilon_ij(:,4)
+   spectra(:,1)=Resp_ij(:,2)
+   spectra(:,2)=Resp_ij(:,3)
+   if (l_last_col) spectra(:,3)=Resp_ij(:,4)
    !
+   ! To be fixed
    ! This would be the equivalent of alpha
    ! but it needs to be checked
    !! eel3D_ij=-1./(eps_ij) ;  beta=(eel3D_ij)*fac

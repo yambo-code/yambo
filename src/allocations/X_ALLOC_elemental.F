@@ -8,8 +8,8 @@
 subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
- use X_m,           ONLY:Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
-&                        X_fxc,EEL,Alpha_ii,,Alpha_ij,X_mat,X_drude_term,X_RLcomp_ig
+ use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
+&                        X_fxc,EEL,Alpha_ii,Alpha_ij,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
@@ -34,7 +34,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      Epsilon_ii   = cZERO
      X_drude_term = cZERO
    case('OFF')
-     if (allocated(Resps_ij)) return
+     if (allocated(Resp_ij)) return
      YAMBO_ALLOC(Resp_ij,(DIM(1),DIM(2)))
      Resp_ij=cZERO
      YAMBO_ALLOC(Alpha_ij,(DIM(1),DIM(2)))

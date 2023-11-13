@@ -42,45 +42,41 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
+ if (l_col_cut) then
+   ! We are here in 0D, 1D or 2D
+   ! The G=0 term included in L-full is representative
+   ! one portion of the line (2D) / plane (1D) / volume (0D)  around G=0
+   ! which contributes to the L-T splitting.
+   ! Such term goes to zero as the volume goes to infinity.
+   if (iq==1) then
+     ! At q=0 there is no L-T spliting. So Lbar and Lfull give the same result
+     ! It is useless to compute the non analytical Lfull and better to
+     ! directly remove the G=0 term
+     call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
+     if(BSE_L_kind="default") BSE_L_kind="bar"
+   endif
+   if (iq/=1) then
+     ! We are here in 1D or 2D.
+     ! At q>0 there is L-T spliting in 1D or 2D
+     ! Lbar and Lfull give the same result only in the limit V->infinity
+     ! The above mentioned G=0 term is part of this effect.
+     ! Here we assume it would be better to include it, to be double checked
+     call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
+     if(BSE_L_kind="default") BSE_L_kind="full"
+     ! N.B.: One could compute the calculation without L-T slitting,
+     ! by remonving such full line (2D) / plane (1D). Not coded at the moment.
+   endif
+ endif
+ !
  ! BSE_L_kind check
  !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) call error('set Lkind = BAR or FULL')
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
+ & call error('set Lkind = DEFAULT or BAR or FULL')
  !
- if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
-   call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
-   BSE_mode="resonant"
- endif
- !
- ! RES/ANTI-RES (q-dependent)
- !==============
- !
- ! Do I need the anti-res part?
- if (BS_K_coupling) BS_K_anti_resonant=.TRUE.
- if (STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded')) BS_K_anti_resonant=.TRUE.
-#if defined _RT 
- if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
-#endif
- !
- ! Is ARES derivable from RES?
- !-----------------------------
- ! Developer options. Without the code works in default mode
- ! With the user can switch to experimental coding
- call parser('ImposeAsym',l_flag)
- if (l_flag)        l_BS_ares_from_res=.FALSE.
- !
- if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
- if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
- if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
- ! The next line is to switch of section of the codes due to the calculation
- ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
- if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
- !
- ! I need ARES and I cannot get it from RES
- ! 
- if (BS_K_anti_resonant.and..not.l_BS_ares_from_res) then
-   BS_n_eh_spaces=2
-   if (.not.BS_K_coupling) BS_res_ares_n_mat=2
- endif
+ !if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+ !  call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
+ !  BSE_mode="resonant"
+ !endif
  !
  ! Need to convert eels to epsilon ? (part A, part B in K_driver)
  !================================================================
@@ -114,6 +110,37 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  l_ab_from_eels=.false.
  !if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = .true.
  if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) l_ab_from_eels = .true.
+ !
+ ! RES/ANTI-RES (q-dependent)
+ !==============
+ !
+ ! Do I need the anti-res part?
+ if (BS_K_coupling) BS_K_anti_resonant=.TRUE.
+ if (STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded')) BS_K_anti_resonant=.TRUE.
+#if defined _RT 
+ if (l_rt_carriers_in_use) BS_K_anti_resonant=.TRUE.
+#endif
+ !
+ ! Is ARES derivable from RES?
+ !-----------------------------
+ ! Developer options. Without the code works in default mode
+ ! With the user can switch to experimental coding
+ call parser('ImposeAsym',l_flag)
+ if (l_flag)        l_BS_ares_from_res=.FALSE.
+ !
+ if (iq/=1.and.i_time_rev==0.and.i_space_inv==0 )  l_BS_ares_from_res=.FALSE.
+ if (l_BS_photolum)                                l_BS_ares_from_res=.FALSE.
+ if (l_BS_magnons.and.n_sp_pol==2)                 l_BS_ares_from_res=.FALSE.
+ ! The next line is to switch of section of the codes due to the calculation
+ ! of the ARES part without checking the BSE_mode (see io_BS_PAR_init for example)
+ if (trim(BSE_mode)=="resonant")                   l_BS_ares_from_res=.TRUE.
+ !
+ ! I need ARES and I cannot get it from RES
+ ! 
+ if (BS_K_anti_resonant.and..not.l_BS_ares_from_res) then
+   BS_n_eh_spaces=2
+   if (.not.BS_K_coupling) BS_res_ares_n_mat=2
+ endif
  !
  if (what=="loop-init") return
  !

@@ -11,12 +11,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
-&                         l_eps_res_ares,l_ab_from_eels
+&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_eels
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
-&                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+&                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,Resp_ii,Resp_ij
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
@@ -36,7 +36,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  integer           :: id
  character(10)     :: solver
  character(schlen) :: out_string
- complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),alpha(BSS_n_freqs,3),fac
+ complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),alpha(BSS_n_freqs,3),&
+ &                    fac,diam_term_used(2)
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col
  !
@@ -94,14 +95,19 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    fac=eps_2_alpha/4._SP/pi
    if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
    !
+   if (trim(global_gauge)=='velocity') then
+     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
+     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
+     Resp_ii(:,2)=Resp_ii(:,2)-diam_term_used(1)
+     Resp_ii(:,3)=Resp_ii(:,3)-diam_term_used(2)
+   endif
+   !
    if(trim(global_gauge)=='length'  ) Resp_ii(:,2:)= Resp_ii(:,2:)/bare_qpg(iq,i_G_shift)**2
    if(trim(global_gauge)=='velocity') Resp_ii(:,2:)= Resp_ii(:,2:)/  W%p(:)  **2
    !
    if (X_do_obs("off")) then
-     !
      if(trim(global_gauge)=='length'  ) Resp_ij(:,2:)=Resp_ij(:,2:)/bare_qpg(iq,i_G_shift)**2
      if(trim(global_gauge)=='velocity') Resp_ij(:,2:)=Resp_ij(:,2:)/    W%p(:)    **2
-     !
    endif
    !
  endif
@@ -114,37 +120,17 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    Epsilon_ii= Resp_ii
    !
-   ! The response function contains Lfull
+   ! In case the response function contains Lfull
+   if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
    !
-   if(BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
-   !
-   ! ... Drude term (Part to be fixed)
-   !
-   ! ******* first IP part
-   if (trim(global_gauge)=='velocity') then
-     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-   endif
-   !
-   if (trim(global_gauge)=='velocity') Epsilon_ii(:,3)=Epsilon_ii(:,3)-diam_term_used/W_bss%p(:)**2
-   if (trim(global_gauge)=='velocity') Epsilon_ii(:,2)=Epsilon_ii(:,2)-diam_term_used/W%p(:)**2
-   !
-   ! Eq.(1.12) PRB 48, 11705 (1993)
-   !
-   A_drude(1)=para_term_w0-diam_term_exact
-   !
+   ! ... Drude term
    if (l_drude           ) X_drude_term(:)=-drude_GreenF(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
-   if (skip_cond_sum_rule) X_drude_term(:)=  A_drude(1)    *Co_factor/W_bss%p(:)**2
-   !
+   ! ... IP version
+   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W_bss%p(:)**2
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
-   !
-   ! ******* then correlated part
-   if (trim(global_gauge)=='velocity') then
-     if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
-     if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-   endif
-   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W%p(:)**2
-   !
+   ! ... full version
+   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(2)*Co_factor/W%p(:)**2
+   Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)
    !
    ! ... Diamagnetic term
    call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)

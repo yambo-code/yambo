@@ -19,7 +19,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
 &                        skip_cond_sum_rule,l_drude,X_magnons,Resp_ij,X_dichroism
- use BS_solvers,    ONLY:Co_factor,diam_term_exact,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
+ use BS_solvers,    ONLY:Co_factor,diam_term_exact,para_term_w0,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,&
  &                       l_BS_abs,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_photolum,&
@@ -251,9 +251,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
-         para_term_w0=para_term_w0+res_abs*g_fac
+         para_term_w0(1)=para_term_w0(1)+res_abs*g_fac
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           para_term_w0=para_term_w0+conjg(res_abs*g_fac)
+           para_term_w0(1)=para_term_w0(1)+conjg(res_abs*g_fac)
          endif
        endif
        !
@@ -315,8 +315,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_abs) then
    call PP_redux_wait( Resp_ii(:,3) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
    call PP_redux_wait( Resp_ii(:,3) ,COMM=PAR_COM_eh_INDEX%COMM )
-   call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
-   call PP_redux_wait( para_term_w0 ,COMM=PAR_COM_eh_INDEX%COMM )
+   call PP_redux_wait( para_term_w0(1) ,COMM=PAR_COM_Xk_ibz_INDEX%COMM )
+   call PP_redux_wait( para_term_w0(1) ,COMM=PAR_COM_eh_INDEX%COMM )
  endif
  !
  if (l_BS_jdos) then
@@ -357,6 +357,10 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !                                                      ! references needs to be updated before insterting it
  !
  if (l_BS_abs) Resp_ii(:,3)=Resp_ii(:,3)*Co_factor
+ !
+ ! Eq.(1.12) PRB 48, 11705 (1993)
+ !
+ A_drude(1)=para_term_w0(1)-diam_term_exact
  !
  if (l_BS_kerr) Resp_ij(:,3)=Resp_ij(:,3)*Co_factor
  !

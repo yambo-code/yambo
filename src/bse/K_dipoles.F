@@ -5,7 +5,7 @@
 !
 ! Authors (see AUTHORS file for details): DS AM
 !
-subroutine K_dipoles(iq,Ken,Xk,Dip)
+subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  !
  use pars,          ONLY:SP,IP,pi,cZERO,cI
  use IO_m,          ONLY:io_DIP
@@ -16,7 +16,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  use wave_func,     ONLY:WF
  use interfaces,    ONLY:WF_load,WF_free
  use electrons,     ONLY:levels,spin
- use X_m,           ONLY:global_gauge
+ use X_m,           ONLY:X_t,global_gauge,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
  use DIPOLES,       ONLY:DIPOLE_t,DIP_alloc,DIP_rotated
  use BS_solvers,    ONLY:BSS_Vnl_included
  use BS,            ONLY:BS_T_grp,BS_K_coupling,BS_nT_grps,BSE_L_kind,BS_bands,&
@@ -34,8 +34,11 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  !
  integer       ::iq
  type(levels)  ::Ken
- type(bz_samp) ::Xk
+ type(bz_samp) ::Xk,q
+ type(X_t)     ::X_oscillators
  type(DIPOLE_t)::Dip
+ !
+ integer,external :: OPTICS_select_q_and_G
  !
  ! Work space
  !
@@ -53,21 +56,26 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  if (trim(global_gauge)=='length'  ) DIP_kind ="DIP_iR"
  if (trim(global_gauge)=='velocity') DIP_kind ="DIP_v"
  !
+ ! Check if in 1st BZ or outside
+ !
+ i_G_shift=OPTICS_select_q_and_G(iq,q,X_oscillators)
+ if (i_G_shift<0) call error("wrong QShift in input")
+ !
  ! The residuals of the BSE are <wf_k|e^{iqr}|wf_k+q>
  ! These are trivial to compute at finite q, instead they are 
  ! obtained via the dipoles in the q->0 limit and stored to disk
  !
- if (iq==1) then
+ if (iq==1.and.i_G_shift==1) then
    call DIPOLE_IO(Xk,Ken,Dip,'read ',io_err,'K')
  else
    call WF_load(WF,1,maxval(qindx_X(:,:,2)),BS_bands,(/1,Xk%nibz/),title='-Oscillators/R space/K_IP')
    call elemental_collision_free(BSE_scatt)
-   call elemental_collision_alloc(BSE_scatt,NG=1,TITLE="BSE") 
+   call elemental_collision_alloc(BSE_scatt,NG=i_G_shift,TITLE="BSE") 
  endif
  !
  BSS_Vnl_included=Dip%Vnl_included
  !
- if (iq==1) then
+ if (iq==1.and.i_G_shift==1) then
    !
    ! Directions for the external field
    !
@@ -104,7 +112,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
      i_sp_pol_c = BS_T_grp(i_T_g)%table(i_T,4)
      i_sp_pol_v = BS_T_grp(i_T_g)%table(i_T,5)
      !
-     if(iq/=1) then
+     if(iq/=1.or.i_G_shift/=1) then
        !
        ok_bz=qindx_X(iq,ik_bz,1)
        iGo  =qindx_X(iq,ik_bz,2)
@@ -127,7 +135,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
      ! Absorption, KERR, PL, Dichroism
      if(l_BS_abs.or.l_BS_kerr.or.l_BS_photolum.or.l_BS_dichroism) then
        !
-       if(iq==1) then
+       if(iq==1.and.i_G_shift==1) then
          DIP_expanded=-cI*DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,DIP_kind,Xk)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
@@ -135,7 +143,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
        else
          if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
          if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")
-         DIP_projected(1)=-conjg(BSE_scatt%rhotw(1))
+         DIP_projected(1)=-conjg(BSE_scatt%rhotw(i_G_shift))
        endif
        !
        BS_T_grp(i_T_g)%dipoles_opt(:BS_dip_size,i_T,1)=conjg(DIP_projected(:BS_dip_size))
@@ -147,7 +155,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
      !
      ! Dichroism
      if (l_BS_dichroism) then
-       if(iq==1) then  
+       if(iq==1.and.i_G_shift==1) then  
          DIP_expanded=DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_L",Xk)
          do i_dip=1,BS_dip_size
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
@@ -171,7 +179,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
        ! However to follow the same structure in K_IP.F fow WFs load / DIPOLE_IO here I keep it
        ! The implementation with scatter can be used to double check the spin dipoles
        !
-       if(iq==1) then
+       if(iq==1.and.i_G_shift==1) then
          DIP_expanded   = DIP_rotated(ic,iv,ik_bz,i_sp_pol_c,"DIP_S",Xk)
        else
          call scatter_Bamp_spin(BSE_scatt,'x')
@@ -222,7 +230,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
  !
  ! CLEAN
  !
- if (iq==1.and.io_DIP) then
+ if (iq==1.and.i_G_shift==1.and.io_DIP) then
    call DIP_alloc('DIP_iR')
    call DIP_alloc('DIP_P')
    call DIP_alloc('DIP_v')
@@ -237,7 +245,7 @@ subroutine K_dipoles(iq,Ken,Xk,Dip)
    !
  endif
  !
- if(iq>1) then
+ if(iq>1.or.i_G_shift>1) then
    call elemental_collision_free(BSE_scatt)
    call WF_free(WF)
  endif

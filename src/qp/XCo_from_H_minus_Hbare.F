@@ -50,6 +50,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
 &                        WF_G_max!,WF_Go_indx
  use H_interfaces,  ONLY:V_real_space_to_H
  use parallel_int,  ONLY:PP_redux_wait
+ use parallel_m,    ONLY:PAR_IND_QP
  use IO_int,        ONLY:IO_and_Messaging_switch
  use timing_m,      ONLY:timing
  use FFT_m,         ONLY:fft_size
@@ -91,7 +92,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
  WF_G_max=ng_vec
  !
  ! Allocate only quantities not in real space, because
- ! fft_size might change inside Bare_Hamiltonian_from_scratch
+ ! fft_size might change inside Bare_Hamiltonian_from_Scratch
  ! when calling WF_load with new WF_G_max
  call H_alloc(E,.false.,.false.)
  ! 
@@ -157,12 +158,12 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
   !
   enddo
  enddo
- !
- call PP_redux_wait(Hzero)
  !  
  ! Then we get E_dft-Hzero-Vhartree in QP space
  !
  do i1=1,QP_n_states
+  !
+  !if (.not.PAR_IND_QP%element_1D(i1)) cycle
   !
   ib =QP_table(i1,1)
   ibp=QP_table(i1,2)
@@ -180,7 +181,7 @@ subroutine XCo_from_H_minus_Hbare(E,Xk,k,Dip)
   !
  enddo
  !
- call PP_redux_wait(QP_Vxc)
+ !call PP_redux_wait(QP_Vxc)
  !
  ![DEBUG>]
  if (l_write_Vxc) then

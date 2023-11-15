@@ -65,7 +65,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  ! Work space
  !
  integer     :: ik,ikb,ib1,ib2,i_sp_pol,WFbands(2),ia,it,i1,i2,ia_qe,ia_per_type
- integer     :: i_wf1,i_wf2,io_DIP_err,ID_DIP
+ integer     :: i_wf1,i_wf2,io_DIP_err,ID_DIP,i_qp
  complex(SP), allocatable :: vloc_full_r(:)
  character(schlen)  :: DIP_par_scheme
  character(schlen) :: Hsc_file,headings(6),msg_format
@@ -104,11 +104,13 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !
  call timing('Bare_Hamiltonian_from_Scratch',OPR='start')
  !
- if (pp_is_uspp) call error("[PPs] Currently, USPP not implemented for ED")
+ if (pp_is_uspp) call error("[PPs] USPP not implemented for bare Hamiltonian reconstruction")
  !
  ! Read dipoles
  !
- ! NB: this is a workaround. In the final version this should be done externally
+ ! (NB : In the final version this may be done in a different subroutine)
+ ! (NB2: Incompatibility of DIP_par_scheme and DIPOLE_IO call in the present version
+ !       is the reason why SE parall. over q is turned off in XCo_driver)
  !=====================================================================
  if (.not.compute_P2_dipoles) call error("[DIP] P_square not activated")
  call DIPOLE_dimensions(E,Dip,H_ref_bands,(/0._SP,0._SP,0._SP/))
@@ -121,7 +123,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !
  ! Load WF, compute Vloc and becp and setup FFT
  !
- ! (NB:  this turns pp_is_uspp to .true., later on it is restored to .false.)
+ ! (NB : this turns pp_is_uspp to .true., later on it is restored to .false.)
  ! (NB2: this calls vloc_alloc(), it is deallocated below) 
  ! (NB3: quantities in real space [vlocal and VHartree] require loading all occupied states)
  !=====================================================================
@@ -286,7 +288,6 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
    !
  enddo
  !
- call PP_redux_wait(Hzero)
  pp_is_uspp=.false. 
  call vloc_dealloc() ! Dealloc here since we couldn't do it in PP_uspp_init 
  deallocate(vloc_full_r)
@@ -305,7 +306,7 @@ subroutine Bare_Hamiltonian_from_Scratch(E,Xk,k,Dip)
  !
 #if defined _SC
  if(l_sc_run) then
-   if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=H_ref_bands)
+   if(n_spin>1) call el_magnetization(E,Xk,magn_n,bands=(/1,H_ref_bands(2)/))
  endif
 #endif
  !

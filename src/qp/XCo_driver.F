@@ -38,6 +38,7 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
  use global_XC,     ONLY:WF_exx_fraction,WF_exx_screening,EXT_NONE,WF_kind,&
 &                        global_XC_string,WF_perturbation,WF_xc_functional
  use parser_m,      ONLY:parser 
+ use parallel_m,    ONLY:CPU_structure
 #if defined _SC
  use pseudo,        ONLY:l_use_p2_Vloc_becp
  use hamiltonian,   ONLY:l_sc_V_is_local
@@ -182,7 +183,11 @@ subroutine XCo_driver(E,k,Xk,q,Dip)
    ! it to enter uspp sections in order to get Hbare parameters
    call parser('BareHfromScratch', l_use_p2_Vloc_becp)
    l_use_libxc=.not.l_use_p2_Vloc_becp
-   l_use_qe_pseudo=l_use_p2_Vloc_becp 
+   l_use_qe_pseudo=l_use_p2_Vloc_becp
+   ! FP 15/11/23: MPI q-tasks lead to problems with DIPOLE_IO of P_square in Bare_Hamiltonian_from_Scracth (to be fixed)
+   if (l_use_p2_Vloc_becp) then
+     if (CPU_structure(5)%CPU_string(1:1)/="1")  call error("[PARALLEL] Turn off MPI tasks over 'q' for Hbare reconstruction")
+   endif
 #endif
    !
    if (l_use_libxc) then 

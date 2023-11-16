@@ -3,7 +3,16 @@
 !
 ! Copyright (C) 2018 The Yambo Team
 !
-! Authors (see AUTHORS file for details): DS
+! Authors (see AUTHORS file for details): AM, DS
+!
+!************************* WARNING **************************
+!* In this subroutine there is a bug for finite q (iq/=1)   *
+!* plus spin-orbit that we were not able to solve yet.      * 
+!* An alternative subroutine that applies symmetries in a   *
+!* different way is proposed K_correlation_kernel_dir.F     *
+!* This second subroutine is automatically called when      *
+!* iq/=1 and spin_orbit is present.                         *
+!************************************************************
 !
 function K_correlation_kernel_std(i_block,i_p,i_pmq,                               &
 &                                 i_k_s,i_kp_s,i_n_k,i_n_p,i_kmq_s,i_kp_mq_s,i_m_k,i_m_p,  &

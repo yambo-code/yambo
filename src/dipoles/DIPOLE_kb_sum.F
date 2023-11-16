@@ -10,7 +10,6 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  use pars,          ONLY:SP,cONE,cZERO
  use wrapper,       ONLY:M_by_M
  use electrons,     ONLY:n_spinor
- use deviceXlib_m,  ONLY:dev_memcpy
  use iso_c_binding, ONLY:C_F_POINTER
 #if defined _CUDA
  use cudafor,       ONLY:C_DEVLOC
@@ -45,7 +44,6 @@ subroutine DIPOLE_kb_project(pp_range,npp,ncomp,WF_ib,kbv,XX)
  call M_by_M('T','N', n_spinor, dim_flat, ncomp, cONE, WF_ib, ncomp, kbv_p, ncomp, cZERO, XX_p, n_spinor)
  !
 end subroutine DIPOLE_kb_project
-!
 !
 subroutine DIPOLE_kb_sum(rho,XXv,XXc)
  !

@@ -174,12 +174,13 @@ module IO_int
      logical, optional :: CONDITION
    end subroutine
    !
-   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,ierr)
-     integer, intent(in)   :: ID
-     integer, intent(out)  :: ID_frag
-     integer, optional     :: i_fragment
-     integer, optional     :: j_fragment
-     integer, optional     :: ierr
+   subroutine io_fragment(ID,ID_frag,i_fragment,j_fragment,extension,ierr)
+     integer,      intent(in)   :: ID
+     integer,      intent(out)  :: ID_frag
+     integer,      optional     :: i_fragment
+     integer,      optional     :: j_fragment
+     integer,      optional     :: ierr
+     character(*), optional     :: extension
    end subroutine
 #endif
    !

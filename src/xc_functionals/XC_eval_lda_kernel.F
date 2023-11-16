@@ -7,7 +7,7 @@
 !
 subroutine XC_eval_lda_kernel(v1rho,v2rho2)
  !
- use pars,           ONLY:SP,DP,cZERO
+ use pars,           ONLY:SP,DP
  use xc_functionals, ONLY:F_xc,magn,xc_spin,xc_spin_map1
  use electrons,      ONLY:n_spin,n_spinor,n_sp_pol
  use FFT_m,          ONLY:fft_size

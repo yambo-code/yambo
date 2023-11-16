@@ -42,7 +42,10 @@ module X_m
  ! Large Q-vector support 
  !
  real(SP)                 :: q_plus_G_direction(3)
+ real(SP)                 :: Q_plus_G_pt(3)
+ real(SP)                 :: Q_plus_G_sq_modulus
  integer                  :: Q_Shift_Order
+ integer                  :: i_G_shift
  !
  ! Double Grid
  !

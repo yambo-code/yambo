@@ -11,8 +11,7 @@ subroutine Check_symmetries(field_dir,field_kind)
   use vec_operate,   ONLY:v_norm
   use matrix_operate,ONLY:m3det
   use com,           ONLY:msg
-  use R_lattice,     ONLY:rl_sop
-  use D_lattice,     ONLY:nsym
+  use D_lattice,     ONLY:nsym,dl_sop
   use stderr,        ONLY:intc
   implicit none
   !
@@ -31,19 +30,19 @@ subroutine Check_symmetries(field_dir,field_kind)
   select case(field_kind)
   case("magnetic")
     do is=1,nsym
-      v(:) = matmul( rl_sop(:,:,is), field_dir )
+      v(:) = matmul( dl_sop(:,:,is), field_dir )
       i_wrong=0
       if( all( abs(v(:)-field_dir(:))<1E-5 )) i_wrong=+1
       if( all( abs(v(:)+field_dir(:))<1E-5 )) i_wrong=-1
       if(i_wrong==0) then
         nsym_wrong=nsym_wrong+1
       else
-        if( m3det(rl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
+        if( m3det(dl_sop(:,:,is))/i_wrong-1>1E-5 ) nsym_wrong=nsym_wrong+1
       endif
     enddo
   case("electric")
     do is=1,nsym
-      v(:) = matmul( rl_sop(:,:,is), field_dir )
+      v(:) = matmul( dl_sop(:,:,is), field_dir )
       i_wrong=0
       if( v_norm(v(:)-field_dir(:))>1.E-5) nsym_wrong=nsym_wrong+1
     enddo

@@ -337,7 +337,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
 !&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          !MB: in the following we introduce the MPA_E/R_par. should be same as X_par(iq_mem)%blc(ig1,ig2,X_range2),
          ! where X_range2 -> : ... not sure if I have to introduce the iq_mem.
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(iq_mem)%blc(ig1,ig2,:),MPA_E_par(iq_mem)%blc(ig1,ig2,:),&
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(1)%blc(ig1,ig2,:),MPA_E_par(1)%blc(ig1,ig2,:),&
 &                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
@@ -401,8 +401,8 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Note (AF) that $omp directives are inside mat_transpose
      !
      do i_np=1,X%mpa_npoles
-       call mat_transpose(MPA_E_par(iq_mem)%blc(:,:,i_np))
-       call mat_transpose(MPA_R_par(iq_mem)%blc(:,:,i_np))
+       call mat_transpose(MPA_E_par(1)%blc(:,:,i_np))
+       call mat_transpose(MPA_R_par(1)%blc(:,:,i_np))
      enddo
      !
      X_is_TR_rotated=.true.
@@ -418,14 +418,14 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    !MB:
    if (have_cuda) then
-      !call dev_memcpy(MPA_E_par_d,MPA_E_par(iq_mem)%blc)
-      !call dev_memcpy(MPA_R_par_d,MPA_R_par(iq_mem)%blc)
-      YAMBO_ALLOC_SOURCE(MPA_E_par(iq_mem)%blc_d,MPA_E_par(iq_mem)%blc)
-      YAMBO_ALLOC_SOURCE(MPA_R_par(iq_mem)%blc_d,MPA_R_par(iq_mem)%blc)
+      !call dev_memcpy(MPA_E_par_d,MPA_E_par(1)%blc)
+      !call dev_memcpy(MPA_R_par_d,MPA_R_par(1)%blc)
+      YAMBO_ALLOC_SOURCE(MPA_E_par(1)%blc_d,MPA_E_par(1)%blc)
+      YAMBO_ALLOC_SOURCE(MPA_R_par(1)%blc_d,MPA_R_par(1)%blc)
    endif
    ! 
-   MPA_E_par_p=>DEV_VAR(MPA_E_par(iq_mem)%blc)
-   MPA_R_par_p=>DEV_VAR(MPA_E_par(iq_mem)%blc)
+   MPA_E_par_p=>DEV_VAR(MPA_E_par(1)%blc)
+   MPA_R_par_p=>DEV_VAR(MPA_E_par(1)%blc)
    !
    call timing('GW(mpa)_qp_loop',OPR='start')
    !

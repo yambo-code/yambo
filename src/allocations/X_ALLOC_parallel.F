@@ -105,8 +105,8 @@ subroutine MPA_ALLOC_parallel(MPA_E_par,MPA_R_par,NG,NW,mode)
   !
   ! Reset...
   !
-  !call MATRIX_reset(MPA_E_par)
-  !call MATRIX_reset(MPA_R_par)
+  call MATRIX_reset(MPA_E_par)
+  call MATRIX_reset(MPA_R_par)
   !
   ! Type of allocation....
   !

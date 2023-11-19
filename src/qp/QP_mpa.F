@@ -230,6 +230,12 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  !Instead of MPA_alloc, we try MPA_ALLOC_parallel
  !call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
+ if (.not.allocated(MPA_E_par).and.io_RESPONSE) then
+  allocate(MPA_E_par(1))
+ endif
+ if (.not.allocated(MPA_R_par).and.io_RESPONSE) then
+  allocate(MPA_R_par(1))
+ endif
  if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"MPA")
  ! todo: update mat=>par for MPA case.
  !

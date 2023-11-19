@@ -769,8 +769,9 @@ contains
   !
   ! Reset...
   !
-  call MATRIX_reset(MPA_E_par)
-  call MATRIX_reset(MPA_R_par)
+  ! The reset is already done in the MPA_ALLOC_parallel
+  !call MATRIX_reset(MPA_E_par)
+  !call MATRIX_reset(MPA_R_par)
   !
   ! Type of allocation....
   !

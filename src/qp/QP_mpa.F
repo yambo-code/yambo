@@ -40,7 +40,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
 &                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d, MPA_E_par,MPA_R_par,&
-&                        MPA_ALLOC_parallel
+&                        MPA_ALLOC_parallel,MPA_E_par_d,MPA_R_par_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -80,7 +80,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
  complex(SP), pointer DEV_ATTR :: MPA_R_mat_p(:,:,:)
  complex(SP), pointer DEV_ATTR :: MPA_E_mat_p(:,:,:)
- 
+ !
+ !MB:
+ complex(SP), pointer DEV_ATTR :: MPA_R_par_p(:,:,:)
+ complex(SP), pointer DEV_ATTR :: MPA_E_par_p(:,:,:)
  !
  ! MPA variables
  !
@@ -324,7 +327,11 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          MP_err=0._SP
          cond_num(:)=0._SP
          !
-         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
+         !call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_mat(ig1,ig2,:),MPA_E_mat(ig1,ig2,:),&
+!&                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
+         !MB: in the following we introduce the MPA_E/R_par. should be same as X_par(iq_mem)%blc(ig1,ig2,X_range2),
+         ! where X_range2 -> : ... not sure if I have to introduce the iq_mem.
+         call mpa_RE_solver(X%mpa_npoles,MPA_freqs,MPA_Xo,MPA_R_par(iq_mem)%blc(ig1,ig2,:),MPA_E_par(iq_mem)%blc(ig1,ig2,:),&
 &                                                  Xw%mpa_solver,MPred,PPcond_rate,MP_err,cond_num)
          if(MPred) MPred_rate=MPred_rate+1._SP
          PPcond_Qrate=PPcond_Qrate+PPcond_rate
@@ -351,6 +358,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      !
      ! I/O MPA
      !
+     ! MB: is this the "fake loading?"
      if (io_MULTIPOLE) then
        !
 ! #if defined _PAR_IO
@@ -387,20 +395,29 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
      ! Note (AF) that $omp directives are inside mat_transpose
      !
      do i_np=1,X%mpa_npoles
-       call mat_transpose(MPA_E_mat(:,:,i_np))
-       call mat_transpose(MPA_R_mat(:,:,i_np))
+       call mat_transpose(MPA_E_par(iq_mem)%blc(:,:,i_np))
+       call mat_transpose(MPA_R_par(iq_mem)%blc(:,:,i_np))
      enddo
      !
      X_is_TR_rotated=.true.
    endif
    !
-   if (have_cuda) then
-     call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
-     call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
-   endif
+   !if (have_cuda) then
+   !  call dev_memcpy(MPA_E_mat_d,MPA_E_mat)
+   !  call dev_memcpy(MPA_R_mat_d,MPA_R_mat)
+   !endif
    !
-   MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
-   MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
+   !MPA_E_mat_p=>DEV_VAR(MPA_E_mat)
+   !MPA_R_mat_p=>DEV_VAR(MPA_R_mat)
+   !
+   !MB:
+   if (have_cuda) then
+      call dev_memcpy(MPA_E_par_d,MPA_E_par(iq_mem)%blc)
+      call dev_memcpy(MPA_R_par_d,MPA_R_par(iq_mem)%blc)
+   endif
+   ! 
+   MPA_E_par_p=>DEV_VAR(MPA_E_par(iq_mem)%blc)
+   MPA_R_par_p=>DEV_VAR(MPA_E_par(iq_mem)%blc)
    !
    call timing('GW(mpa)_qp_loop',OPR='start')
    !
@@ -461,20 +478,20 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
          !DEV_CUF kernel do(3)
          !
          do i_np=1,X_mpa_npoles
-           do ig2=1,X_ng
-             do ig1=1,X_ng
+           do ig2=X_par(iq_mem)%cols(1),X_par(iq_mem)%cols(2)
+             do ig1=X_par(iq_mem)%rows(1),X_par(iq_mem)%rows(2)
                !
                ! DALV: inline bose_f function
                bose_PPA_E=0._SP
                !
-               if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
+               if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<0._SP) bose_PPA_E=-spin_occ
                if (Finite_Tel) then
-                 if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
-                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_mat_p(ig1,ig2,i_np),SP)
+                 if (real(MPA_E_par_p(ig1,ig2,i_np),SP)>epsilon(1._SP)) then
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)<=bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ*Bose_Temp/real(MPA_E_par_p(ig1,ig2,i_np),SP)
                    endif 
-                   if (real(MPA_E_mat_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
-                     bose_PPA_E=spin_occ/(exp(real(MPA_E_mat_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
+                   if (real(MPA_E_par_p(ig1,ig2,i_np),SP)> bose_E_cut*Bose_Temp) then
+                     bose_PPA_E=spin_occ/(exp(real(MPA_E_par_p(ig1,ig2,i_np),SP)/Bose_Temp)-1._SP)
                    endif
                  else
                    bose_PPA_E=spin_occ*Bose_Temp/epsilon(1._SP)
@@ -486,21 +503,21 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
                if (l_RIM_W_g) then
                  !
                  ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))  *&
-&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_1-E_kmq &
-&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_1)-E_kmq   &
-&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np)) )
                  !
                else
                  !
                  ! DALV: the factor isc%gamp(ig1,ig2) is included here
                  ctmp = -4._DP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2)) *isc_gamp_p(ig1,ig2) *&
-&                                 (sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np))) *MPA_R_mat_p(ig1,ig2,i_np))*&
+&                                 (sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np))) *MPA_R_par_p(ig1,ig2,i_np))*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i-E_kmq &
-&                                             +sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np))+&
+&                                             +sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np))+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i)-E_kmq   &
-&                                             -sign(1._SP,aimag(MPA_E_mat_p(ig1,ig2,i_np)))*MPA_E_mat_p(ig1,ig2,i_np)) )
+&                                             -sign(1._SP,aimag(MPA_E_par_p(ig1,ig2,i_np)))*MPA_E_par_p(ig1,ig2,i_np)) )
                  !
                endif
                !
@@ -543,6 +560,9 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(dc)
  YAMBO_FREE(W_)
  call X_ALLOC_elemental('X')
+ !
+ ! the following only free the MPA_mats
+ !
  call MPA_free()
  !
  call timing('GW(mpa)',OPR='stop')

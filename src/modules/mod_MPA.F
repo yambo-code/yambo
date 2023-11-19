@@ -43,6 +43,9 @@ module mpa_m
  !
  complex(SP), allocatable DEV_ATTR, target :: MPA_E_mat_d(:,:,:)
  complex(SP), allocatable DEV_ATTR, target :: MPA_R_mat_d(:,:,:)
+ !MB:
+ complex(SP), allocatable DEV_ATTR, target :: MPA_E_par_d(:,:,:)
+ complex(SP), allocatable DEV_ATTR, target :: MPA_R_par_d(:,:,:)
 
  public :: mpa_RE_solver,err_func_X
  public :: MPA_alloc,MPA_free

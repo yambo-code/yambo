@@ -40,7 +40,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  use timing_m,      ONLY:timing
  use mpa_m,         ONLY:mpa_RE_solver,err_func_X,MPA_E_mat,MPA_R_mat,MPA_freqs,&
 &                        MPA_alloc,MPA_free,MPA_E_mat_d,MPA_R_mat_d, MPA_E_par,MPA_R_par,&
-&                        MPA_ALLOC_parallel,MPA_E_par_d,MPA_R_par_d
+&                        MPA_E_par_d,MPA_R_par_d
  use drivers,       ONLY:Finite_Tel
  use D_lattice,     ONLY:Bose_Temp
  use functions,     ONLY:bose_E_cut
@@ -88,7 +88,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  ! MPA variables
  !
  integer          :: i_np,ID2
- logical          :: MPred
+ logical          :: MPred,l_CPU_ONLY
  real(SP)         :: bose_PPA_E,MPred_rate,PPcond_rate,PPcond_Qrate,MP_err,MP_Qerr,cond_num(2),cond_numQ(2) 
  complex(SP), allocatable :: MPA_Xo(:)
  character(len=99):: str
@@ -230,7 +230,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  !
  !Instead of MPA_alloc, we try MPA_ALLOC_parallel
  !call MPA_alloc((/X%ng,X%ng,X%mpa_npoles,2*X%mpa_npoles/))
- if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),X%ng,2*X%mpa_npoles,"MPA")
+ if (io_RESPONSE) call MPA_ALLOC_parallel(MPA_E_par(1),MPA_R_par(1),X%ng,2*X%mpa_npoles,"MPA")
  ! todo: update mat=>par for MPA case.
  !
  !
@@ -561,7 +561,7 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
  YAMBO_FREE(W_)
  call X_ALLOC_elemental('X')
  !
- ! the following only free the MPA_mats
+ ! the following only unload 
  !
  call MPA_free()
  !

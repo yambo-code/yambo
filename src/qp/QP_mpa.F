@@ -418,8 +418,10 @@ subroutine QP_mpa(X,Xk,E,k,q,qp,Xw,GW_iter)
    !
    !MB:
    if (have_cuda) then
-      call dev_memcpy(MPA_E_par_d,MPA_E_par(iq_mem)%blc)
-      call dev_memcpy(MPA_R_par_d,MPA_R_par(iq_mem)%blc)
+      !call dev_memcpy(MPA_E_par_d,MPA_E_par(iq_mem)%blc)
+      !call dev_memcpy(MPA_R_par_d,MPA_R_par(iq_mem)%blc)
+      YAMBO_ALLOC_SOURCE(MPA_E_par(iq_mem)%blc_d,MPA_E_par(iq_mem)%blc)
+      YAMBO_ALLOC_SOURCE(MPA_R_par(iq_mem)%blc_d,MPA_R_par(iq_mem)%blc)
    endif
    ! 
    MPA_E_par_p=>DEV_VAR(MPA_E_par(iq_mem)%blc)

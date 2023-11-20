@@ -168,7 +168,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    BS_res_K_exchange=.FALSE.
    BS_cpl_K_exchange=.FALSE.
  endif
-#if defined _PHEL
+#if defined _ELPH
  ! [EXCPH]: Allow code to go back to different Lkind calculations after Ltilde
  if (index(BSE_L_kind,"tilde")==0.and.(.not.l_bs_fxc).and.(BS_res_K_exchange.eqv..FALSE.)) then
    BS_res_K_exchange=.TRUE.

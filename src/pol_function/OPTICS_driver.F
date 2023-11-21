@@ -122,13 +122,12 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    ! Observables allocation
    call X_ALLOC_global("ALLOC",wv)
    !
-   ! Old Yambo implementation, needed without cut-off
-   ! In 0D, and in 2D/1D at q=0, eps=eels.
+   ! * Old Yambo implementation, needed without cut-off
+   ! In 0D,1D,2D, eps=eels in the limit V--> infinity.
    ! However it is convinient to define alpha as proportional to epsilon
    ! since the latter converges faster to the V --> infinity limit
-   ! This is not needed anymore with coulomb cut-off
-   l_alpha_from_eps=.false.
-   if ( ( l_0D .or. (  (l_1D.or.l_2D) .and. iq==1 ) ) .and. .not. l_col_cut ) l_alpha_from_eps=.true.
+   ! * With coulomb cut-off eps=eels=1, and alpha is proportional to chi
+   l_alpha_from_eps=.not.l_col_cut
    !
    ! Check if EELS can be evaluated
    ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
@@ -168,33 +167,18 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    endif
    call PP_redux_wait(spectra(:,1),COMM=PAR_COM_RL_INDEX%COMM)
    !
-   ! Epsilon. This is always the 3D one (for now)
+   ! Epsilon. This is always the 3D one
    Epsilon_ii(:,1)=spectra(:,1)+1._SP
    !
    ! Alpha
-   if(.not.l_alpha_from_eps) then
-     ! ******* Point 1 to discuss *********
-     ! Do I need to extend spectra to get alpha ...
-     !   In case the alpha is defined from the extended eps,
-     !   which includes v(G=0) in coupling mode regardless or the X%ordering.
-     !   This is like the Lbar case in BSE.
-     call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,1),Alpha(:,1))
-     ! .. or not ??
-     !   In case I'm not sure at which level the v(G=0) term is accounted for
-     !Alpha(:,1)=spectra(:,1)
-     ! ******* End of Point 1     *********
-     Alpha(:,1)=Alpha(:,1)/(1._SP+Alpha(:,1))/4._SP/pi
-   else
-     Alpha(:,1)=spectra(:,1)/4._SP/pi
-   endif
+   Alpha(:,1)=spectra(:,1)/4._SP/pi
    !
    ! EEL: TO FIX EEL as function of dimensions
    if (X_do_obs("eel")) then
      !
-     ! The RPA part is always defined in the same way
-     ! otherwise I get IP instead of RPA without LF.
-     ! This is like the Lbar case in BSE. Via EPS_extend v_{G=0} is
-     ! included in coupling mode regardless or the ordering
+     ! The RPA part is always defined in the same way otherwise I get IP instead of RPA without LF.
+     ! This is like the Lbar case in BSE.
+     ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
      call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
      EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
      !
@@ -221,78 +205,55 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
        ! (1) at variance with the IP case, after the call to X_redux,
        !     X_par now contains the factor 4*pi/bare_qpg**2
        ! (2) the factor is with the coulomb cutoff-term
-       spectra(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP) 
+       !spectra(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP) 
+       spectra(:,2)=X_par(1)%blc(i_G_shift,i_G_shift,:)
        !
      endif
      call PP_redux_wait(spectra(:,2),COMM=PAR_COM_RL_INDEX%COMM)
      !
-     ! ******* Point 2 to discuss *********
+     !
+     ! Epsilon. Procedure to get epsilon from Lfull
+     Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+     !
+     ! Alpha
+     if (.not.l_alpha_from_eps) then
+       ! Alpha proportional to Lfull
+       Alpha(:,2)=spectra(:,2)
+       ! Maybe we could extend Alpha ??
+       if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
+       & call warning(" Res (or ares) only alpha")
+     else
+       ! Alpha proportional to Lbar
+       Alpha(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)
+     endif
+     !
      ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
      ! To check
      !  (i) if this is correct
      !  (ii) why it is done for alpha and not for Epsilon_ii
      fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
-     !
-     ! Epsilon. This is always the 3D one (for now)
-     Epsilon_ii(:,2)=spectra(:,2)+1._SP
-     !Epsilon_ii(:,2)=spectra(:,2)*fac+1._SP
-     ! ******* End of Point 2     *********
-     !
-     ! Alpha
-     if (.not.l_alpha_from_eps) then
-       ! ******* Point 1 to discuss *********
-       ! See IP above.
-       ! Here the opposite choice, compared to IP, was done by yambo
-       !call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,2),Alpha(:,2))
-       Alpha(:,2)=spectra(:,2)
-       ! ******* End of Point 1     *********
-       Alpha(:,2)=Alpha(:,2)/(1._SP+Alpha(:,2))/4._SP/pi
-     else
-       Alpha(:,2)=spectra(:,2)/4._SP/pi
-     endif
-     !
-     ! ******* Point 2 to discuss *********
-     ! See above
-     !Alpha(:,2)=Alpha(:,2)
-     Alpha(:,2)=Alpha(:,2)*fac
-     ! ******* End of Point 2     *********
+     Alpha(:,2)=Alpha(:,2)*fac/4._SP/pi
      !
      ! EEL: TO FIX EEL as function of dimensions
      if (X_do_obs("eel")) then
        !
-       if(l_alpha_from_eps .or. l_eels_from_ext_eps) then
+       if(l_eels_from_ext_eps) then
          !
-         ! Yambo original version
-         ! This is now used only without coulomb cutoff
-         ! a) for 0D, or 1D and 2D at q=0
-         ! (see l_alpha_from_eps definition)
-         ! b) for 3D when ordering not R or T
+	 ! Yambo original version, I performer a double inversion
+         ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
 	 !
-         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,spectra(:,2),EEL(:,2))
+         EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+         call warning(" G=0 term accounted for in coupling mode for eels")
+         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,EEL(:,2),EEL(:,2))
          EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
 	 !
        else
 	 !
-	 ! In the other cases we obtain EEL directly
-	 ! from the definition of Alpha, using exact equations.
-         ! The relation between eels and alpha is dimension dependent.
-	 ! Accordingly this corresponds to the above procedure only in 3D
-         !
-         ! I'm using:
-         ! alpha = ( 1 +eels )/4/pi  
-         ! 3D case: eels =    1 -alpha*4*pi  
-         ! 2D case: eels = ??? Alpha ???
-         ! 1D case: eels = ??? Alpha ???
-         ! 0D case: eels cannot be measured
-         !! 2D, 1D and 0D cases to be fixed
+	 ! eels proportional to Lfull as it is computed
 	 !
-	 ! Maybe we could extend Alpha ??
-         if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
-         & call warning(" Res (or ares) only eels")
-         !
-         if(l_3D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP
-         if(l_2D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
-         if(l_1D) EEL(:,2)=Alpha(:,2)*4._SP*pi-1._SP ! To be fixed
+         if(l_3D) EEL(:,2)=spectra(:,2)-1._SP
+         if(l_2D) EEL(:,2)=spectra(:,2)-1._SP ! To be fixed
+         if(l_1D) EEL(:,2)=spectra(:,2)-1._SP ! To be fixed
 	 ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
 	 !
        endif

@@ -42,6 +42,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  BS_n_eh_spaces=1
  BS_res_ares_n_mat=1
  !
+ ! default mode
+ if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
+ !
  if (l_col_cut) then
    ! We are here in 0D, 1D or 2D
    ! The G=0 term included in L-full is representative
@@ -53,7 +56,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      ! It is useless to compute the non analytical Lfull and better to
      ! directly remove the G=0 term
      call warning('Coulomb cutoff at q=0. Default/Suggested Lkind= bar')
-     if(BSE_L_kind="default") BSE_L_kind="bar"
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-bar"
    endif
    if (iq/=1) then
      ! We are here in 1D or 2D.
@@ -62,54 +65,45 @@ subroutine K_driver_init(what,iq,Ken,Xk)
      ! The above mentioned G=0 term is part of this effect.
      ! Here we assume it would be better to include it, to be double checked
      call warning('Coulomb cutoff at q>0. Default/Suggested Lkind= full')
-     if(BSE_L_kind="default") BSE_L_kind="full"
+     if(STRING_match(BSE_L_kind,"default")) BSE_L_kind="default-full"
      ! N.B.: One could compute the calculation without L-T slitting,
-     ! by remonving such full line (2D) / plane (1D). Not coded at the moment.
+     ! by removing such full line (2D) / plane (1D). Not coded at the moment.
+     ! I would define it as L="transverse"
    endif
  endif
  !
- ! BSE_L_kind check
- !==============
- if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
- & call error('set Lkind = DEFAULT or BAR or FULL')
- !
- !if (trim(BSE_L_kind)=="full".and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
+ !if (STRING_match(BSE_L_kind,"full").and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
  !  call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
  !  BSE_mode="resonant"
  !endif
  !
- ! Need to convert eels to epsilon ? (part A, part B in K_driver)
- !================================================================
+ ! Need to convert eels to epsilon ?
+ !===================================
  !
  ! If the system is 3D eps/=eps^-1
- if (l_3D)          BSS_eels_to_eps=trim(BSE_L_kind)=="full"
+ ! In case I compute L-full I need to invert the response function
+ if (l_3D)      BSS_eels_to_eps=STRING_match(BSE_L_kind,"full")
  !
- ! If the Coulomb cutoff is     used ...
- if (l_col_cut) then
-   !
-   !...the system is 0D  eps= eps^-1=1 since vbar=0
-   if (l_0D)  BSS_eels_to_eps=.false.
-   !
-   ! If the Coulomb cutoff is used and the system is 1D or 2D eps and eels are different at finite q
-   if (l_1D.or.l_2D) then
-     if (iq==1) BSS_eels_to_eps=.false.
-     if (iq/=1) BSS_eels_to_eps=STRING_same(BSE_L_kind,"full")
-   endif
-   !
- endif
+ ! If the system is 2D, 1D or 0D eps=eps^-1=1 and it makes no sense to print the two
+ if (l_col_cut) BSS_eels_to_eps=.false.
  !
- ! In general alpha depend on eels
- ! Without cutoff, this is used only in 3D, and in (2D or 1D) at q>0,
- ! otherwise eps=eel and eps converges faster to the +inf volume limit,
- ! thus it is convenient un relate alpha to eps
+ ! * In 3D Alpha is proporitonal to Lbar, e.g. to epsilon
  !
- ! Also to remember that standard BSE is with Lbar, i.e. something proportional to eps
- ! For the case Lfull we could use the same logic of G-space since we have something proportional to eps^-1
- ! The following logical could be merged with the BSS_eels_to_eps logical
- !-------
- l_ab_from_eels=.false.
- !if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. (l_col_cut .and. STRING_same(BSE_L_kind,"Lbar")) ) l_ab_from_eels = .true.
- if ( l_3D .or. (  (l_1D.or.l_2D) .and. iq>1 ) .or. l_col_cut ) l_ab_from_eels = .true.
+ ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
+ !   L(low_dim)=Lfull=Lbar since the two are equal in the V-> infinity volume
+ !
+ !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
+ !     e.g. same situation of the 3D case
+ !
+ !   - If the cut-off is used maybe Lfull is better, but in general the
+ !     difference is expected to be tiny. The code will always use that
+ !     Alpha is proporional to L(computed), and the user can check he differences
+ !
+ ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
+ ! e.g. it is proportional to epsilon. This is important in 3D only
+ !
+ l_ab_from_resp=.true.
+ if ( .not. l_col_cut) l_ab_from_resp=STRING_same(BSE_L_kind,"bar")
  !
  ! RES/ANTI-RES (q-dependent)
  !==============
@@ -143,6 +137,11 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  endif
  !
  if (what=="loop-init") return
+ !
+ ! BSE_L_kind check
+ !==============
+ if (.not.STRING_match(BSE_L_kind,"bar").and..not.STRING_match(BSE_L_kind,"full")) &
+ & call error('set Lkind = DEFAULT or BAR or FULL')
  !
  BS_K_is_ALDA=l_alda_fxc
  BS_dip_size=1

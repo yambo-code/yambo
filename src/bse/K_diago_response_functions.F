@@ -24,7 +24,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
- use BS_solvers,     ONLY:B_Hall
+ use BS_solvers,     ONLY:A_drude,B_Hall,para_term_w0
  use X_m,            ONLY:Resp_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
@@ -44,7 +44,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  type(PP_indexes)          :: px
  integer                   :: i1,i_pert_SOC,n_SOC,ares_fac,i_VAR,i_grp,i_lambda,nVAR,EDIM,n_deg_grp 
- complex(SP)               :: para_term_w0,diam_term_used,EXC_E(2/n_sp_pol),res_abs
+ complex(SP)               :: EXC_E(2/n_sp_pol),res_abs
  real(SP), allocatable     :: vtmpR(:)
  complex(SP), allocatable  :: BS_E_sorted_tmp(:,:)
  integer, allocatable      :: sort_indx(:),first_exc(:),n_of_exc(:)
@@ -53,6 +53,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  n_SOC=1
  ares_fac=(-1)**(i_BS_mat-1)
+ !
+ if (trim(global_gauge)=='length'  ) gauge_factor=cmplx(1._SP/bare_qpg(iq,i_G_shift)**2)
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
@@ -67,8 +69,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    BS_E_sorted_tmp=cZERO
  endif
  !
- para_term_w0=cZERO
- !
  l_ADD_the_ARES_using_the_RES=BS_K_anti_resonant.and.(.not.BS_K_coupling).and.l_BS_ares_from_res
  !
  ! If perturbative SOC energies are loaded compute the SOC energies
@@ -82,11 +82,17 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    if (.not.px%element_1D(i1)) cycle
    !
-   if (l_BS_kerr.and.l_BS_anomalous_Hall) then
-     if (trim(global_gauge)=='length'  ) gauge_factor=cONE
-     if (trim(global_gauge)=='velocity') gauge_factor=BS_E(i1)
-     B_Hall(2)=B_Hall(2)+   BS_R_left(i1)*BS_R_right_kerr(i1) / gauge_factor **2._SP
+   if (trim(global_gauge)=='velocity') gauge_factor=1._SP/BS_E(i1)**2
+   !
+   if (l_BS_abs) then
+     res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
+     para_term_w0(2)=para_term_w0(2)+res_abs*BS_E(i1)*gauge_factor
    endif
+   if (l_BS_kerr) then
+     res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
+     B_Hall(2)=B_Hall(2)+res_kerr*gauge_factor
+   endif
+   if(l_BS_magnons) res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
    !
    if (     BS_perturbative_SOC) EXC_E(:)=BS_E(i1)+BS_E_SOC_corr(:,i1)
    !
@@ -108,7 +114,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_abs) then
-       res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_abs
          nVAR=nVAR+1
@@ -117,12 +122,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        if (l_ADD_the_ARES_using_the_RES) then
          Resp_ii(:,2)=Resp_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
-       ! This is only for q=0. To be improveds.
-       if(trim(global_gauge)=='length')   para_term_w0=para_term_w0+res_abs*EXC_E(i_pert_SOC)/bare_qpg(1,i_G_shift)**2
-       if(trim(global_gauge)=='velocity') para_term_w0=para_term_w0+res_abs/EXC_E(i_pert_SOC)
      endif
      if(l_BS_kerr) then
-       res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+1)=res_kerr
          nVAR=nVAR+1
@@ -133,7 +134,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        endif
      endif
      if(l_BS_magnons) then
-       res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
        if(l_BS_esort.and.i_BS_mat==1) then
          BS_E_sorted_tmp(i1,nVAR+1:nVAR+n_spinor)=res_magn(:n_spinor)
          nVAR=nVAR+n_spinor
@@ -199,8 +199,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if(l_BS_abs) then
    call PP_redux_wait(Resp_ii(:,2))
-   call PP_redux_wait(para_term_w0)
-   if (BS_K_anti_resonant.and..not.BS_K_coupling) para_term_w0=para_term_w0+conjg(para_term_w0)
+   call PP_redux_wait(para_term_w0(2))
  endif
  !
  if(l_BS_photolum) then
@@ -209,7 +208,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if(l_BS_kerr) then
    call PP_redux_wait(Resp_ij(:,2))
-   if(l_BS_anomalous_Hall) call PP_redux_wait(B_Hall(2))
+   call PP_redux_wait(B_Hall(2))
  endif
  !
  if(l_BS_magnons) then
@@ -222,9 +221,16 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !                                         ! references needs to be updated before insterting it
  endif
  !
- if (l_BS_abs) Resp_ii(:,2)=Resp_ii(:,2)*Co_factor
+ if (l_BS_abs) then
+   Resp_ii(:,2)=Resp_ii(:,2)*Co_factor
+   if (BS_K_anti_resonant.and..not.BS_K_coupling) para_term_w0(2)=para_term_w0(2)+conjg(para_term_w0(2))
+ endif
  !
- if (l_BS_kerr) Resp_ij(:,2)=Resp_ij(:,2)*Co_factor
+ if (l_BS_kerr) then
+   Resp_ij(:,2)=Resp_ij(:,2)*Co_factor
+   B_Hall(2)=B_Hall(2)*Co_factor
+   if (BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
+ endif
  !
  if (l_BS_magnons) X_magnons(:,:,2)=X_magnons(:,:,2)*Co_factor/(4._SP*pi)
  !

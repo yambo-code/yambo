@@ -48,7 +48,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
  complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    para_term_w0,diam_term_used,Z_eh,E_eh,g_fac
+&                    gauge_factor,diam_term_used,Z_eh,E_eh,g_fac
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
@@ -265,8 +265,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
          !
          ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-         if(trim(global_gauge)=='length')   B_Hall(1)=B_Hall(1)+res_kerr/   bare_qpg(1,i_G_shift)**2
-         if(trim(global_gauge)=='velocity') B_Hall(1)=B_Hall(1)+res_kerr/ E_plus_W(i_pert_SOC)**2
+         if (trim(global_gauge)=='length'  ) gauge_factor=cONE
+         if (trim(global_gauge)=='velocity') gauge_factor=E_plus_W(i_pert_SOC)
+         B_Hall(1)=B_Hall(1)+res_kerr/gauge_factor**2
          !
        endif
        !
@@ -361,6 +362,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  ! Eq.(1.12) PRB 48, 11705 (1993)
  !
  A_drude(1)=para_term_w0(1)-diam_term_exact
+ !
+ B_Hall(1)=B_Hall(1)*Co_factor
+ if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if (l_BS_kerr) Resp_ij(:,3)=Resp_ij(:,3)*Co_factor
  !

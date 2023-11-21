@@ -36,7 +36,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  integer           :: id
  character(10)     :: solver
  character(schlen) :: out_string
- complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),alpha(BSS_n_freqs,3),&
+ complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
  &                    fac,diam_term_used(2)
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col
@@ -82,6 +82,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  endif
  !
  l_last_col=STRING_match(WHAT,"Haydock").or.( STRING_match(WHAT,"Inversion").and..not.K_diago_in_BS_mat)
+ n_resp=2
+ if(l_last_col) n_resp=3
  !
  if (STRING_match(WHAT,"close").and..not.STRING_match(WHAT,"dump")) then
    call X_OUTPUT_driver("close "//OBS)
@@ -118,10 +120,16 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("eps")) then
    !
+   ! Resp = -vX
    Epsilon_ii= Resp_ii
    !
    ! In case the response function contains Lfull
-   if (BSS_eels_to_eps) Epsilon_ii(:,2)=(1._SP-Epsilon_ii(:,2))**(-1)-1._SP
+   ! and I need to invert it to get epsilon.
+   ! Warning, this procedure holds as long as epsilon is diagonal
+   if (BSS_eels_to_eps) then
+     Epsilon_ii(:,2)=-Resp_ii(:,2)/(1._SP-Resp_ii(:,2))
+     Epsilon_ii(:,4)=-Resp_ii(:,4)/(1._SP-Resp_ii(:,4))
+   endif
    !
    ! ... Drude term
    if (l_drude           ) X_drude_term(:)=-drude_GreenF(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
@@ -131,6 +139,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! ... full version
    if (skip_cond_sum_rule) X_drude_term(:)=A_drude(2)*Co_factor/W%p(:)**2
    Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)
+   Epsilon_ii(:,4)=Epsilon_ii(:,4)+X_drude_term(:)
    !
    ! ... Diamagnetic term
    call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
@@ -147,26 +156,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (X_do_obs("off")) then
    !
    Epsilon_ij=Resp_ij
-   Epsilon_ij=Resp_ij
    !
-   if(l_BS_anomalous_Hall) then
-   
+   if(l_BS_anomalous_Hall.and.trim(global_gauge)=='length') then
      !
-     B_Hall(1)=B_Hall(1)*Co_factor
-     if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
+     ! I add the term describing the Anomalous Hall effect,
+     ! that is missing in the length gauge
+     ! This is zero for systems with zero chern number
      !
-     ! I add the term describing the Anomalous Hall effect which is
-     ! missing in the length gauge (this should be zero for systems with a gap)
-     !
-     if (l_BS_anomalous_Hall.and.trim(global_gauge)=='length') Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W_bss%p(:)
-     !
-     if(BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
-     if(trim(global_gauge)=='length'  ) B_Hall(2)=B_Hall(2)*Co_factor/bare_qpg(iq,i_G_shift)**2
-     if(trim(global_gauge)=='velocity') B_Hall(2)=B_Hall(2)*Co_factor
-     !
-     ! I add the term describing the Anomalous Hall effect which is
-     ! missing in the length gauge (this should be zero for systems with a gap)
-     if (trim(global_gauge)=='length') Epsilon_ij(:,2)=Epsilon_ij(:,2)+B_Hall(2)/W%p(:)
+     Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W%p(:)
+     Epsilon_ij(:,2)=Epsilon_ij(:,2)+B_Hall(2)/W%p(:)
      !
    endif
    !
@@ -193,36 +191,21 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   Alpha(:,1)=Resp_ii(:,2)
-   Alpha(:,2)=Resp_ii(:,3)
-   if (l_last_col) Alpha(:,3)=Resp_ii(:,4)
+   Alpha_ii(:,1:n_resp)=Resp_ii(:,2:n_resp+1)
    !
-   ! To be fixed
-   if (.not.l_ab_from_eels) alpha=eps*fac
-   ! With eel the 3D eel, this is true in any dimension
-   ! Remember that here eps does not contain the "+1"
-   ! eel3D=-1./(eps+1.) ;  alpha=(1+eel3D)*fac
-   ! accordingly alpha=eps/(1+eps)*fac
-   if (     l_ab_from_eels) alpha=eps/(eps+1._SP)*fac
+   ! Here Resp contains Lfull, but I want alpha proportional to Lbar
+   ! I'm in the case without Coulomb cutoff
+   ! Warning, this procedure holds as long as epsilon is diagonal
+   if (.not.l_ab_from_Resp) Alpha_ii(:,1)=-Alpha_ii(:,1)/(Alpha_ii(:,1)+1._SP)
+   !
+   Alpha_ii=Alpha_ii*fac
    call ELEMENTAL_dump("alpha",alpha)
  endif
  !
  ! Beta
  !------
  if (X_do_obs("beta")) then
-   !
-   spectra(:,1)=Resp_ij(:,2)
-   spectra(:,2)=Resp_ij(:,3)
-   if (l_last_col) spectra(:,3)=Resp_ij(:,4)
-   !
-   ! To be fixed
-   ! This would be the equivalent of alpha
-   ! but it needs to be checked
-   !! eel3D_ij=-1./(eps_ij) ;  beta=(eel3D_ij)*fac
-   !! accordingly beta=-1./(eps_ij)*fac
-   !if (.not.l_ab_from_eels) spectra=       spectra*fac
-   !if (     l_ab_from_eels) spectra=-1._SP/spectra*fac
-   spectra=       spectra*fac
+   spectra(:,1:n_resp)=Resp_ij(:,2:n_resp+1)*fac
    call ELEMENTAL_dump("beta",spectra)
  endif
  !
@@ -230,13 +213,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("eel")) then
    !
+   ! TO DO: to define logical l_eels_from_ext_eps
+   !
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eps(:,1))
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))
    if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eps(:,3))
    !
    alpha=eps/(eps+1._SP)*fac
    if(l_3D) spectra= -1._SP/(eps+1._SP)
-   !if(l_3D) spectra=alpha*4._SP*pi-1._SP ! This should be equivalent to the previous
    if(l_2D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
    if(l_1D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
    call ELEMENTAL_dump("eel",spectra)

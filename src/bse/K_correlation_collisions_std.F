@@ -5,6 +5,15 @@
 !
 ! Authors (see AUTHORS file for details): AM DS HM
 !
+!************************* WARNING **************************
+!* In this subroutine there is a bug for finite q (iq/=1)   *
+!* plus spin-orbit that we were not able to solve yet.      * 
+!* An alternative subroutine that applies symmetries in a   *
+!* different way is proposed K_correlation_collisions_dir.F *
+!* This second subroutine is automatically called when      *
+!* iq/=1 and spin_orbit is present.                         *
+!************************************************************
+!
 subroutine K_correlation_collisions_std(iq,i_block,qindx_ID_frag,Xk,q)
  !
  ! This routine evaluates the correlation collisions:

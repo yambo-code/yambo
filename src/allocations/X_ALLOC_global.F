@@ -24,7 +24,7 @@ subroutine X_ALLOC_global(WHAT,W)
  if (WHAT=="ALLOC") then
    !
    if (l_optics) then
-     call X_ALLOC_elemental("RESP",(/W%n_freqs,2/))
+     call X_ALLOC_elemental("RESP",(/W%n_freqs,4/))
      Resp_ii(:,1)=W%p(:)
    endif
    !

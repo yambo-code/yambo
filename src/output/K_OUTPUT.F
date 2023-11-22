@@ -100,20 +100,26 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    fac=eps_2_alpha/4._SP/pi
    if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
    !
+   do i_rsp=1,n_resp
+     spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
+     spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
+   enddo
+   !
    if (trim(global_gauge)=='velocity') then
      if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-     Resp_ii(:,2)=Resp_ii(:,2)-diam_term_used(1)
-     Resp_ii(:,3)=Resp_ii(:,3)-diam_term_used(2)
+     spectra(:,1)=spectra(:,1)-diam_term_used(2)*Co_factor
+     spectra(:,2)=spectra(:,2)-diam_term_used(1)*Co_factor
+     spectra(:,3)=spectra(:,3)-diam_term_used(2)*Co_factor
    endif
    !
    do i_rsp=1,n_resp
-     if(trim(global_gauge)=='length'  ) Resp_ii(:,i_rsp)= Resp_ii(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
-     if(trim(global_gauge)=='velocity') Resp_ii(:,i_rsp)= Resp_ii(:,i_rsp)/  W%p(:)  **2
+     if(trim(global_gauge)=='length'  ) spectra(:,i_rsp)= spectra(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+     if(trim(global_gauge)=='velocity') spectra(:,i_rsp)= spectra(:,i_rsp)/ W%p(:)**2
      !
      if (X_do_obs("off")) then
-       if(trim(global_gauge)=='length'  ) Resp_ij(:,i_rsp)=Resp_ij(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
-       if(trim(global_gauge)=='velocity') Resp_ij(:,i_rsp)=Resp_ij(:,i_rsp)/    W%p(:)    **2
+       if(trim(global_gauge)=='length'  ) spectra(:,i_rsp)=spectra(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='velocity') spectra(:,i_rsp)=spectra(:,i_rsp)/ W%p(:)**2
      endif
    enddo
    !
@@ -126,14 +132,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if (X_do_obs("eps")) then
    !
    ! Resp = -vX
-   Epsilon_ii= Resp_ii
+   Epsilon_ii(:,2:n_resp+1)= spectra(:,1:n_resp)
    !
    ! In case the response function contains Lfull
    ! and I need to invert it to get epsilon.
    ! Warning, this procedure holds as long as epsilon is diagonal
    if (BSS_eels_to_eps) then
-     Epsilon_ii(:,2)=-Resp_ii(:,2)/(1._SP-Resp_ii(:,2))
-     Epsilon_ii(:,4)=-Resp_ii(:,4)/(1._SP-Resp_ii(:,4))
+     Epsilon_ii(:,2)=-spectra(:,1)/(1._SP-spectra(:,1))
+     Epsilon_ii(:,4)=-spectra(:,3)/(1._SP-spectra(:,3))
    endif
    !
    ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)
@@ -141,11 +147,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    ! ... IP version
    if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W%p(:)**2
-   Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
+   if (l_drude.or.skip_cond_sum_rule) Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
    ! ... full version
    if (skip_cond_sum_rule) X_drude_term(:)=A_drude(2)*Co_factor/W%p(:)**2
-   Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)
-   Epsilon_ii(:,4)=Epsilon_ii(:,4)+X_drude_term(:)
+   if (l_drude.or.skip_cond_sum_rule) then
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)
+     Epsilon_ii(:,4)=Epsilon_ii(:,4)+X_drude_term(:)
+   endif
    !
    ! ... Diamagnetic term
    call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
@@ -197,7 +205,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   Alpha(:,1:n_resp)=Resp_ii(:,2:n_resp+1)
+   Alpha(:,1:n_resp)=spectra(:,1:n_resp)
    !
    ! Here Resp contains Lfull, but I want alpha proportional to Lbar
    ! I'm in the case without Coulomb cutoff
@@ -225,8 +233,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))
    if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eps(:,3))
    !
-   spectra=eps/(eps+1._SP)*fac
-   spectra= -1._SP/(spectra+1._SP)
+   spectra= -1._SP/(eps+1._SP)
    !if(l_3D) spectra= -1._SP/(eps+1._SP)
    !if(l_2D) spectra= -1._SP/(eps+1._SP)
    !if(l_1D) spectra= -1._SP/(eps+1._SP)

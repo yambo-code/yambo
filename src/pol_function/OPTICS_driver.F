@@ -171,7 +171,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    Epsilon_ii(:,1)=spectra(:,1)+1._SP
    !
    ! Alpha
-   Alpha(:,1)=spectra(:,1)/4._SP/pi
+   if (X_do_obs("alpha")) Alpha(:,1)=spectra(:,1)/4._SP/pi
    !
    ! EEL: TO FIX EEL as function of dimensions
    if (X_do_obs("eel")) then
@@ -186,7 +186,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    !
    if (     l_rpa_IP) then
      Epsilon_ii(:,2)=Epsilon_ii(:,1)
-     Alpha(:,2)=Alpha(:,1)
+     if(X_do_obs("alpha")) Alpha(:,2)=Alpha(:,1)
      if(X_do_obs("eel")) EEL(:,2) = EEL(:,1)
    else
      !
@@ -216,6 +216,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
      !
      ! Alpha
+    if (X_do_obs("alpha")) then 
      if (.not.l_alpha_from_eps) then
        ! Alpha proportional to Lfull
        Alpha(:,2)=spectra(:,2)
@@ -233,6 +234,7 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !  (ii) why it is done for alpha and not for Epsilon_ii
      fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
      Alpha(:,2)=Alpha(:,2)*fac/4._SP/pi
+    endif
      !
      ! EEL: TO FIX EEL as function of dimensions
      if (X_do_obs("eel")) then

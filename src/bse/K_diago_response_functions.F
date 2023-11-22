@@ -82,15 +82,11 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
    !
    if (.not.px%element_1D(i1)) cycle
    !
-   if (trim(global_gauge)=='velocity') gauge_factor=1._SP/BS_E(i1)**2
-   !
    if (l_BS_abs) then
      res_abs=BS_R_left(i1)*BS_R_right(i1)*ares_fac
-     para_term_w0(2)=para_term_w0(2)+res_abs*BS_E(i1)*gauge_factor
    endif
    if (l_BS_kerr) then
      res_kerr=BS_R_left(i1)*BS_R_right_kerr(i1)*ares_fac
-     B_Hall(2)=B_Hall(2)+res_kerr*gauge_factor
    endif
    if(l_BS_magnons) res_magn(:)=BS_R_left_magn(:,i1)*BS_R_right_magn(:,i1)*ares_fac
    !
@@ -104,6 +100,8 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        BS_E_sorted_tmp(i1,1)=EXC_E(1)
        nVAR=2
      endif
+     !
+     if (trim(global_gauge)=='velocity') gauge_factor=1._SP/EXC_E(i_pert_SOC)**2
      !
      if(l_BS_jdos) then
        ! DS. Note. Jdos with coupling seems to have the wrong ordering, i.e.
@@ -122,6 +120,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        if (l_ADD_the_ARES_using_the_RES) then
          Resp_ii(:,2)=Resp_ii(:,2)+conjg(res_abs)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
+       para_term_w0(2)=para_term_w0(2)+res_abs*EXC_E(i_pert_SOC)*gauge_factor
      endif
      if(l_BS_kerr) then
        if(l_BS_esort.and.i_BS_mat==1) then
@@ -132,6 +131,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        if (l_ADD_the_ARES_using_the_RES) then
          Resp_ij(:,2)=Resp_ij(:,2)+conjg(res_kerr)/(W%p(:)+conjg(EXC_E(i_pert_SOC)))
        endif
+       B_Hall(2)=B_Hall(2)+res_kerr*gauge_factor
      endif
      if(l_BS_magnons) then
        if(l_BS_esort.and.i_BS_mat==1) then

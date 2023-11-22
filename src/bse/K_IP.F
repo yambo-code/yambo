@@ -230,7 +230,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      do i_pert_SOC=1,n_SOC
        !
-       if(trim(global_gauge)=='length') g_fac=E_plus_W(i_pert_SOC)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='length')   g_fac=E_plus_W(i_pert_SOC)/bare_qpg(iq,i_G_shift)**2
        if(trim(global_gauge)=='velocity') g_fac=1._SP/E_plus_W(i_pert_SOC)
        !
        if (l_BS_jdos) then

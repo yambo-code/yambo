@@ -139,7 +139,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! Warning, this procedure holds as long as epsilon is diagonal
    if (BSS_eels_to_eps) then
      Epsilon_ii(:,2)=spectra(:,1)/(1._SP-spectra(:,1))
-     Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
+     if(l_last_col.and.trim(solver)=="haydock") &
+     & Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
    endif
    !
    ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)
@@ -226,8 +227,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! EELS 
  !------
  if (X_do_obs("eel")) then
-   !
-   ! TO DO: to define logical l_eels_from_ext_eps
    !
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eps(:,1))
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))

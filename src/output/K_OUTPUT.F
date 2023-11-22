@@ -138,8 +138,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! and I need to invert it to get epsilon.
    ! Warning, this procedure holds as long as epsilon is diagonal
    if (BSS_eels_to_eps) then
-     Epsilon_ii(:,2)=-spectra(:,1)/(1._SP-spectra(:,1))
-     Epsilon_ii(:,4)=-spectra(:,3)/(1._SP-spectra(:,3))
+     Epsilon_ii(:,2)=spectra(:,1)/(1._SP-spectra(:,1))
+     Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
    endif
    !
    ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)

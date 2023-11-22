@@ -9,7 +9,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  !
  use pars,           ONLY:SP,cZERO,cI,pi,rZERO,schlen
  use R_lattice,      ONLY:bz_samp,bare_qpg
- use X_m,            ONLY:Resp_ii,global_gauge,l_drude,X_Double_Grid_setup,&
+ use X_m,            ONLY:Resp_ii,global_gauge,X_Double_Grid_setup,&
 &                         X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,skip_cond_sum_rule,X_do_obs,&
 &                         i_G_shift
  use electrons,      ONLY:levels
@@ -41,7 +41,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
  type(w_samp)     :: W_mins,W_plus
  integer          :: iw_ref,i_bsk,i_res,i_cpl,i_Lo_trans,ik_bz,iv,ic,iw,i_sp_c,i_sp_v,ik_ibz,&
  &                   i_res_ares,i_loop,n_loop,i_eps,i_Lo,transition(4)
- complex(SP)      :: E_plus_W,residual,diam_term_used,para_term_w0
+ complex(SP)      :: E_plus_W,residual,para_term_w0
  complex(SP)      :: SF(W%n_freqs,2)
  character(schlen):: LT_title
  !
@@ -202,9 +202,6 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    call PP_redux_wait(resp_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    call PP_redux_wait(para_term_w0,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    if (l_BS_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   !
-   if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-   if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
    !
    Resp_ii(:,i_eps)= Resp_ii(:,i_eps)*Co_factor
    !

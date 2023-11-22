@@ -9,7 +9,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  !
  use pars,          ONLY:rZERO,cZERO
  use X_m,           ONLY:Resp_ii,Resp_ij,Epsilon_ii,Joint_DOS,BS_E_sorted,Epsilon_ij,X_magnons,X_dichroism,&
-&                        X_fxc,EEL,Alpha_ii,Alpha_ij,X_mat,X_drude_term,X_RLcomp_ig
+&                        X_fxc,EEL,Alpha,X_mat,X_drude_term,X_RLcomp_ig
  use PHOTOLUM,      ONLY:PL
 #ifdef _CUDA
  use X_m,           ONLY:X_mat_d
@@ -37,8 +37,6 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(Resp_ij)) return
      YAMBO_ALLOC(Resp_ij,(DIM(1),DIM(2)))
      Resp_ij=cZERO
-     YAMBO_ALLOC(Alpha_ij,(DIM(1),DIM(2)))
-     Alpha_ij=cZERO
      YAMBO_ALLOC(Epsilon_ij,(DIM(1),DIM(2)))
      Epsilon_ij=cZERO
    case('MAGNONS')
@@ -51,9 +49,9 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      YAMBO_ALLOC(EEL,(DIM(1),DIM(2)))
      EEL=cZERO
    case('ALPHA')
-     if (allocated(Alpha_ii)) return
-     YAMBO_ALLOC(Alpha_ii,(DIM(1),DIM(2)))
-     Alpha_ii=cZERO
+     if (allocated(Alpha)) return
+     YAMBO_ALLOC(Alpha,(DIM(1),DIM(2)))
+     Alpha=cZERO
    case('JDOS')
      YAMBO_ALLOC(Joint_DOS,(DIM(1),DIM(2)))
      Joint_DOS=cZERO
@@ -78,15 +76,14 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
  endif
  !
  if (STRING_match(WHAT,"RESP").or.STRING_match(WHAT,"ALL")) then
-   YAMBO_FREE(Epsilon_ii)
-   YAMBO_FREE(X_drude_term)
+   YAMBO_FREE(Resp_ii)
  endif
  if (STRING_match(WHAT,"EPS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Epsilon_ii)
    YAMBO_FREE(X_drude_term)
  endif
  if (STRING_match(WHAT,"OFF").or.STRING_match(WHAT,"ALL")) then
-   YAMBO_FREE(Alpha_ij)
+   YAMBO_FREE(Resp_ij)
    YAMBO_FREE(Epsilon_ij)
  endif
  if (STRING_match(WHAT,"MAGNONS").or.STRING_match(WHAT,"ALL")) then
@@ -99,7 +96,7 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
    YAMBO_FREE(EEL)
  endif
  if (STRING_match(WHAT,"ALPHA").or.STRING_match(WHAT,"ALL")) then
-   YAMBO_FREE(ALPHA_ii)
+   YAMBO_FREE(Alpha)
  endif
  if (STRING_match(WHAT,"JDOS").or.STRING_match(WHAT,"ALL")) then
    YAMBO_FREE(Joint_DOS)

@@ -9,7 +9,7 @@ subroutine X_ALLOC_global(WHAT,W)
  !
  use pars,          ONLY:cZERO
  use X_m,           ONLY:X_ALLOC_elemental,Resp_ii,Resp_ij,Epsilon_ii,Epsilon_ij,&
-&                        Alpha_ii,Alpha_ij,Joint_DOS,X_magnons,X_dichroism,EEL,X_do_obs
+&                        Alpha,Joint_DOS,X_magnons,X_dichroism,EEL,X_do_obs
  use frequency,     ONLY:w_samp
  use drivers,       ONLY:l_chi,l_optics
  use BS_solvers,    ONLY:B_Hall
@@ -35,14 +35,15 @@ subroutine X_ALLOC_global(WHAT,W)
    !
    if (X_do_obs("alpha")) then
      call X_ALLOC_elemental("ALPHA",(/W%n_freqs,2/))
-     Alpha_ij(:,1)=W%p(:)
+     Alpha(:,1)=W%p(:)
    endif
    !
    if (X_do_obs("kerr")) then
      call X_ALLOC_elemental("OFF",(/W%n_freqs,4/))
      Resp_ij(:,1)=W%p(:)
-     Alpha_ij(:,1)=W%p(:)
-     Epsilon_ij(:,1)=W%p(:)
+     if (X_do_obs("eps")) then
+       Epsilon_ij(:,1)=W%p(:)
+     endif
    endif
    if(l_BS_anomalous_Hall) B_Hall=cZERO
    !

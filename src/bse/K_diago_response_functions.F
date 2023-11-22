@@ -20,14 +20,14 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use LIVE_t,         ONLY:live_timing
  use BS,             ONLY:BS_perturbative_SOC,BS_res_ares_n_mat,l_BS_abs,l_BS_jdos,l_BS_esort,&
 &                         BS_K_anti_resonant,l_BS_ares_from_res,BS_K_coupling
- use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact,BSS_eels_to_eps
+ use BS_solvers,     ONLY:BSS_n_eig,Co_factor,diam_term_exact
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
  use BS_solvers,     ONLY:A_drude,B_Hall,para_term_w0
  use X_m,            ONLY:Resp_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
- use BS,             ONLY:l_BS_kerr,l_BS_anomalous_Hall,l_BS_magnons,l_BS_photolum,l_BS_dichroism
+ use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_dichroism
  !
  implicit none
  !

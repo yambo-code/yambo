@@ -29,7 +29,6 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
- use BS,            ONLY:l_BS_anomalous_Hall
  use BS_solvers,    ONLY:A_drude,B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
@@ -47,8 +46,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer           ::iv,ic,i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR,i_dip
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
- complex(SP)       ::drude_GreenF(W_bss%n_freqs),res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    gauge_factor,diam_term_used,Z_eh,E_eh,g_fac
+ complex(SP)       ::res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
+&                    gauge_factor,Z_eh,E_eh,g_fac
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
@@ -71,7 +70,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
  !...Drude
- call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,drude_GreenF)
+ if(l_drude) call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,X_drude_term)
  !
  ! Prefactors
  !------------

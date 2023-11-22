@@ -13,7 +13,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
  use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
- use BS_solvers,     ONLY:BSS_eels_to_eps,Co_factor,diam_term_exact,Haydock_v0_mod,&
+ use BS_solvers,     ONLY:Co_factor,diam_term_exact,Haydock_v0_mod,&
  &                        Haydock_terminator,Haydock_threshold,B_Hall
  use parser_m,       ONLY:parser
  !
@@ -35,7 +35,7 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  real(SP)    :: Co,tmp_tresh
  complex(SP) :: sums,diff
  !
- complex(SP) :: para_term_w0(2),diam_term_used(2)
+ complex(SP) :: para_term_w0(2)
  complex(SP) :: gauge_factor
  complex(SP) :: freq_axis(0:W%n_freqs)
  !
@@ -66,7 +66,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  i_resp(2)=4
  !
  para_term_w0  =cZERO
- diam_term_used=cZERO
  !
  ! DEBUG <
  !tmp_tresh=0._SP
@@ -224,11 +223,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
    end select
    !
  enddo
- !
- if (trim(global_gauge)=="velocity") then
-   if (     skip_cond_sum_rule) diam_term_used(:)=diam_term_exact
-   if (.not.skip_cond_sum_rule) diam_term_used(:)=para_term_w0(:)
- endif
  !
  do iw=1,W%n_freqs
    !

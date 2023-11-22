@@ -11,7 +11,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
  use IO_m,          ONLY:io_DIP
  use LIVE_t,        ONLY:live_timing
  use vec_operate,   ONLY:v_norm
- use R_lattice,     ONLY:bz_samp,qindx_X
+ use R_lattice,     ONLY:bz_samp,q0_def_norm,qindx_X
  use stderr,        ONLY:intc
  use wave_func,     ONLY:WF
  use interfaces,    ONLY:WF_load,WF_free

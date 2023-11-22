@@ -11,12 +11,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
-&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_eels
- use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling
+&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_resp,BSS_eels_to_eps, &
+&                         Co_factor
+ use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling,&
+&                         l_BS_anomalous_Hall
  use stderr,         ONLY:STRING_match
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
-&                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,Resp_ii,Resp_ij
+&                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,Resp_ii,Resp_ij,&
+&                         Alpha,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
@@ -33,7 +36,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Work Space
  !
  character(2)      :: ordering
- integer           :: id
+ integer           :: id,i_rsp,n_resp
  character(10)     :: solver
  character(schlen) :: out_string
  complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
@@ -104,13 +107,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      Resp_ii(:,3)=Resp_ii(:,3)-diam_term_used(2)
    endif
    !
-   if(trim(global_gauge)=='length'  ) Resp_ii(:,2:)= Resp_ii(:,2:)/bare_qpg(iq,i_G_shift)**2
-   if(trim(global_gauge)=='velocity') Resp_ii(:,2:)= Resp_ii(:,2:)/  W%p(:)  **2
-   !
-   if (X_do_obs("off")) then
-     if(trim(global_gauge)=='length'  ) Resp_ij(:,2:)=Resp_ij(:,2:)/bare_qpg(iq,i_G_shift)**2
-     if(trim(global_gauge)=='velocity') Resp_ij(:,2:)=Resp_ij(:,2:)/    W%p(:)    **2
-   endif
+   do i_rsp=1,n_resp
+     if(trim(global_gauge)=='length'  ) Resp_ii(:,i_rsp)= Resp_ii(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+     if(trim(global_gauge)=='velocity') Resp_ii(:,i_rsp)= Resp_ii(:,i_rsp)/  W%p(:)  **2
+     !
+     if (X_do_obs("off")) then
+       if(trim(global_gauge)=='length'  ) Resp_ij(:,i_rsp)=Resp_ij(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='velocity') Resp_ij(:,i_rsp)=Resp_ij(:,i_rsp)/    W%p(:)    **2
+     endif
+   enddo
    !
  endif
  !
@@ -131,10 +136,11 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      Epsilon_ii(:,4)=-Resp_ii(:,4)/(1._SP-Resp_ii(:,4))
    endif
    !
-   ! ... Drude term
-   if (l_drude           ) X_drude_term(:)=-drude_GreenF(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
+   ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)
+   if (l_drude) X_drude_term(:)=-X_drude_term(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
+   !
    ! ... IP version
-   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W_bss%p(:)**2
+   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W%p(:)**2
    Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
    ! ... full version
    if (skip_cond_sum_rule) X_drude_term(:)=A_drude(2)*Co_factor/W%p(:)**2
@@ -191,15 +197,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   Alpha_ii(:,1:n_resp)=Resp_ii(:,2:n_resp+1)
+   Alpha(:,1:n_resp)=Resp_ii(:,2:n_resp+1)
    !
    ! Here Resp contains Lfull, but I want alpha proportional to Lbar
    ! I'm in the case without Coulomb cutoff
    ! Warning, this procedure holds as long as epsilon is diagonal
-   if (.not.l_ab_from_Resp) Alpha_ii(:,1)=-Alpha_ii(:,1)/(Alpha_ii(:,1)+1._SP)
+   if (.not.l_ab_from_resp) Alpha(:,1)=-Alpha(:,1)/(Alpha(:,1)+1._SP)
    !
-   Alpha_ii=Alpha_ii*fac
-   call ELEMENTAL_dump("alpha",alpha)
+   Alpha=Alpha*fac
+   call ELEMENTAL_dump("alpha",Alpha)
  endif
  !
  ! Beta
@@ -219,10 +225,11 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))
    if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eps(:,3))
    !
-   alpha=eps/(eps+1._SP)*fac
-   if(l_3D) spectra= -1._SP/(eps+1._SP)
-   if(l_2D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
-   if(l_1D) spectra= -1._SP/(eps+1._SP) ! To be fixed using alpha
+   spectra=eps/(eps+1._SP)*fac
+   spectra= -1._SP/(spectra+1._SP)
+   !if(l_3D) spectra= -1._SP/(eps+1._SP)
+   !if(l_2D) spectra= -1._SP/(eps+1._SP)
+   !if(l_1D) spectra= -1._SP/(eps+1._SP)
    call ELEMENTAL_dump("eel",spectra)
  endif
  !

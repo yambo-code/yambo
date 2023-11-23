@@ -139,7 +139,7 @@ subroutine K_dipoles(iq,Ken,Xk,q,X_oscillators,Dip)
            DIP_projected(i_dip)=dot_product(BS_field_direction(:,i_dip),DIP_expanded)
          enddo
          ! This is needed to have something consistent with the definiion from scatter_Bamp at finite-q
-         if (trim(global_gauge)=='length'  ) DIP_projected=DIP_projected*q0_def_norm
+         if (trim(global_gauge)=="length") DIP_projected=DIP_projected*q0_def_norm
        else
          if(trim(global_gauge)=="length")   call scatter_Bamp(BSE_scatt)
          if(trim(global_gauge)=="velocity") call scatter_Bamp_using_the_gradient(BSE_scatt,"o")

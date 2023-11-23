@@ -19,7 +19,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use X_m,            ONLY:Epsilon_ii,eps_2_alpha,X_OUTPUT_driver,Epsilon_ij,X_obs_onoff,&
 &                         X_do_obs,X_OUTPUT_messages,X_dichroism,Joint_DOS,BS_E_sorted,N_BS_E_sorted,&
 &                         X_magnons,i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus,Resp_ii,Resp_ij,&
-&                         Alpha,l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
+&                         l_drude,skip_cond_sum_rule,X_drude_term,global_gauge
  use com,            ONLY:msg,com_compose_msg
  use R_lattice,      ONLY:bare_qpg,FineGd_desc,nkbz
  use D_lattice,      ONLY:l_0D,l_1D,l_2D,l_3D
@@ -39,8 +39,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  integer           :: id,i_rsp,n_resp
  character(10)     :: solver
  character(schlen) :: out_string
- complex(SP)       :: hall(3,2),eps(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
- &                    fac,diam_term_used(2)
+ complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
+ &                    fac,diam_term_used(2),spectra_ij(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1)
  logical           :: l_last_col
  !
@@ -103,6 +103,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    do i_rsp=1,n_resp
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
+     if (X_do_obs("off")) then
+       spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
+       spectra_ij(:,i_rsp)=Resp_ij(:,i_rsp+1)
+     endif
    enddo
    !
    if (trim(global_gauge)=='velocity') then
@@ -118,8 +122,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if(trim(global_gauge)=='velocity') spectra(:,i_rsp)= spectra(:,i_rsp)/ W%p(:)**2
      !
      if (X_do_obs("off")) then
-       if(trim(global_gauge)=='length'  ) spectra(:,i_rsp)=spectra(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
-       if(trim(global_gauge)=='velocity') spectra(:,i_rsp)=spectra(:,i_rsp)/ W%p(:)**2
+       if(trim(global_gauge)=='length'  ) spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/bare_qpg(iq,i_G_shift)**2
+       if(trim(global_gauge)=='velocity') spectra_ij(:,i_rsp)=spectra_ij(:,i_rsp)/ W%p(:)**2
      endif
    enddo
    !
@@ -143,17 +147,28 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      & Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
    endif
    !
+   tmp_var=cZERO
    ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)
-   if (l_drude) X_drude_term(:)=-X_drude_term(:)*4._SP*pi /bare_qpg(iq,i_G_shift)**2
+   if (l_drude) then
+     tmp_var(:,1)=-X_drude_term(:)*4._SP*pi/bare_qpg(iq,i_G_shift)**2
+     tmp_var(:,2)=tmp_var(:,1)
+     if(l_last_col) tmp_var(:,3)=tmp_var(:,1)
+   endif
    !
-   ! ... IP version
-   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(1)*Co_factor/W%p(:)**2
-   if (l_drude.or.skip_cond_sum_rule) Epsilon_ii(:,3)=Epsilon_ii(:,3)+X_drude_term(:)
-   ! ... full version
-   if (skip_cond_sum_rule) X_drude_term(:)=A_drude(2)*Co_factor/W%p(:)**2
+   ! ... Drude term via sum rule breaking
+   if (skip_cond_sum_rule) then
+     tmp_var(:,1)=A_drude(2)*Co_factor/W%p(:)**2
+     tmp_var(:,2)=A_drude(1)*Co_factor/W%p(:)**2
+     if(l_last_col) then
+       if(trim(solver)=="haydock")   tmp_var(:,3)=tmp_var(:,1)
+       if(trim(solver)=="inversion") tmp_var(:,3)=tmp_var(:,2)
+     endif
+   endif
+   !
    if (l_drude.or.skip_cond_sum_rule) then
-     Epsilon_ii(:,2)=Epsilon_ii(:,2)+X_drude_term(:)
-     Epsilon_ii(:,4)=Epsilon_ii(:,4)+X_drude_term(:)
+     Epsilon_ii(:,2)=Epsilon_ii(:,2)+tmp_var(:,1)
+     Epsilon_ii(:,3)=Epsilon_ii(:,3)+tmp_var(:,2)
+     if(l_last_col) Epsilon_ii(:,4)=Epsilon_ii(:,4)+tmp_var(:,3)
    endif
    !
    ! ... Diamagnetic term
@@ -170,7 +185,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("off")) then
    !
-   Epsilon_ij=Resp_ij
+   ! Resp = -vX
+   Epsilon_ij(:,2:n_resp+1)= spectra_ij(:,1:n_resp)
    !
    if(l_BS_anomalous_Hall.and.trim(global_gauge)=='length') then
      !
@@ -178,23 +194,31 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      ! that is missing in the length gauge
      ! This is zero for systems with zero chern number
      !
-     Epsilon_ij(:,3)=Epsilon_ij(:,3)+B_Hall(1)/W%p(:)
-     Epsilon_ij(:,2)=Epsilon_ij(:,2)+B_Hall(2)/W%p(:)
+     tmp_var=cZERO
+     tmp_var(:,1)=B_Hall(2)/W%p(:)
+     tmp_var(:,2)=B_Hall(1)/W%p(:)
+     if(l_last_col) then
+       if(trim(solver)=="haydock")   tmp_var(:,3)=tmp_var(:,1)
+       if(trim(solver)=="inversion") tmp_var(:,3)=tmp_var(:,2)
+     endif
+     !
+     Epsilon_ij(:,2:n_resp+1)=Epsilon_ij(:,2:n_resp+1)+tmp_var(:,1:n_resp)
      !
    endif
    !
    ! ... Anomalous Hall term
-   call msg("o eps",com_compose_msg(pre="# ",body="Anomalous Hall effect (B_Hall)")," ",INDENT=0)
+   call msg("o off",com_compose_msg(pre="# ",body="Anomalous Hall effect (B_Hall)")," ",INDENT=0)
    hall(1,1:2)=B_Hall(:)*HA2EV/(4*pi*cI*HBAR_eVfs)
    hall(2,1:2)=hall(1,1:2)*1.E5_SP/(SPEED_OF_LIGHT_SI)**2/FEMTO
    hall(3,1:2)=hall(2,1:2)*1.E2_SP*HBAR_SI/e_SI**2
-   call msg("o eps",com_compose_msg(pre="# ",body="B_Hall (IP)"),real(hall(1,1)),INDENT=0,after_msg="[fs]^-1")
-   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(hall(2,1)),INDENT=0,after_msg="[Ohm*cm]^-1")
-   call msg("o eps",com_compose_msg(pre="# ",body="           "),real(hall(3,1)),INDENT=0,after_msg="[e^2/hbar]")
+   !
+   call msg("o off",com_compose_msg(pre="# ",body="B_Hall (IP)"),real(hall(1,1)),INDENT=0,after_msg="[fs]^-1")
+   call msg("o off",com_compose_msg(pre="# ",body="           "),real(hall(2,1)),INDENT=0,after_msg="[Ohm*cm]^-1")
+   call msg("o off",com_compose_msg(pre="# ",body="           "),real(hall(3,1)),INDENT=0,after_msg="[e^2/hbar]")
    if (.not.STRING_match(WHAT,"IP")) then
-     call msg("o eps",com_compose_msg(pre="# ",body="B_Hall"),real(hall(1,2)),INDENT=0,after_msg="[fs]^-1")
-     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(hall(2,2)),INDENT=0,after_msg="[Ohm*cm]^-1")
-     call msg("o eps",com_compose_msg(pre="# ",body="      "),real(hall(3,2)),INDENT=0,after_msg="[e^2/hbar]")
+     call msg("o off",com_compose_msg(pre="# ",body="B_Hall"),real(hall(1,2)),INDENT=0,after_msg="[fs]^-1")
+     call msg("o off",com_compose_msg(pre="# ",body="      "),real(hall(2,2)),INDENT=0,after_msg="[Ohm*cm]^-1")
+     call msg("o off",com_compose_msg(pre="# ",body="      "),real(hall(3,2)),INDENT=0,after_msg="[e^2/hbar]")
    endif
    !
    ! ... Eps_ij
@@ -206,37 +230,37 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   Alpha(:,1:n_resp)=spectra(:,1:n_resp)
+   tmp_var(:,1:n_resp)=spectra(:,1:n_resp)
    !
    ! Here Resp contains Lfull, but I want alpha proportional to Lbar
    ! I'm in the case without Coulomb cutoff
    ! Warning, this procedure holds as long as epsilon is diagonal
-   if (.not.l_ab_from_resp) Alpha(:,1)=-Alpha(:,1)/(Alpha(:,1)+1._SP)
+   if (.not.l_ab_from_resp) tmp_var(:,1)=-tmp_var(:,1)/(tmp_var(:,1)+1._SP)
    !
-   Alpha=Alpha*fac
-   call ELEMENTAL_dump("alpha",Alpha)
+   tmp_var=tmp_var*fac
+   call ELEMENTAL_dump("alpha",tmp_var)
  endif
  !
  ! Beta
  !------
  if (X_do_obs("beta")) then
-   spectra(:,1:n_resp)=Resp_ij(:,2:n_resp+1)*fac
-   call ELEMENTAL_dump("beta",spectra)
+   tmp_var(:,1:n_resp)=spectra_ij(:,1:n_resp)*fac
+   call ELEMENTAL_dump("beta",tmp_var)
  endif
  !
  ! EELS 
  !------
  if (X_do_obs("eel")) then
    !
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),eps(:,1))
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),eps(:,2))
-   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),eps(:,3))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),tmp_var(:,1))
+   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
+   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),tmp_var(:,3))
    !
-   spectra= -1._SP/(eps+1._SP)
+   tmp_var= -1._SP/(tmp_var+1._SP)
    !if(l_3D) spectra= -1._SP/(eps+1._SP)
    !if(l_2D) spectra= -1._SP/(eps+1._SP)
    !if(l_1D) spectra= -1._SP/(eps+1._SP)
-   call ELEMENTAL_dump("eel",spectra)
+   call ELEMENTAL_dump("eel",tmp_var)
  endif
  !
  !  DICHROISM
@@ -281,10 +305,10 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! Moke
  !------
  if (X_do_obs("moke")) then
-   call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,2),Epsilon_ij(:,2),spectra(:,1)) 
-   call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,3),Epsilon_ij(:,3),spectra(:,2)) 
-   if (l_last_col) call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,4),Epsilon_ij(:,4),spectra(:,3)) 
-   call ELEMENTAL_dump("moke",spectra)
+   call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,2),Epsilon_ij(:,2),tmp_var(:,1))
+   call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,3),Epsilon_ij(:,3),tmp_var(:,2))
+   if (l_last_col) call EPS_2_moke(Epsilon_ii(:,1),BSS_n_freqs,Epsilon_ii(:,4),Epsilon_ij(:,4),tmp_var(:,3))
+   call ELEMENTAL_dump("moke",tmp_var)
  endif
  !
  ! REFLECTIVITY
@@ -293,15 +317,15 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    ! Reflectance is assumed for a 3D system
    ! r=(sqrt(eps)-1)/(sqrt(eps)+1)
    ! R=|r|^2
-   spectra(:,1:3)=(sqrt(Epsilon_ii(:,2:4)+1._SP)-1._SP)/(sqrt(Epsilon_ii(:,2:4)+1._SP)+1._SP)
-   call ELEMENTAL_dump("refl",spectra)
+   tmp_var(:,1:3)=(sqrt(Epsilon_ii(:,2:4)+1._SP)-1._SP)/(sqrt(Epsilon_ii(:,2:4)+1._SP)+1._SP)
+   call ELEMENTAL_dump("refl",tmp_var)
  endif
  !
  ! PHOTOLUMINESCENCE
  !--------------------
  if (X_do_obs("PL")) then
-   spectra=PL
-   call ELEMENTAL_dump("PL",spectra)
+   tmp_var=PL
+   call ELEMENTAL_dump("PL",tmp_var)
  endif
  !
  if (STRING_match(WHAT,"close")) call X_OUTPUT_driver("close "//OBS)

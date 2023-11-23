@@ -46,8 +46,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  integer           ::iv,ic,i_T_g,i_T,n_SOC,i_pert_SOC,i_res_ares,i_sort,nVAR,i_dip
  real(SP)          ::f_eh,f_eh_PL,res_PL
  logical           ::dip_v,dip_r
- complex(SP)       ::res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),&
-&                    gauge_factor,Z_eh,E_eh,g_fac
+ complex(SP)       ::res_abs,E_plus_W0,E_plus_W(2/n_sp_pol),Z_eh,E_eh,g_fac
  !
  integer       :: i_ColFG
  complex(SP), allocatable :: E_DbGd(:)
@@ -87,6 +86,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !-------
  diam_term_exact=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
  para_term_w0=cZERO
+ if (trim(global_gauge)=='length') g_fac=cmplx(1._SP/bare_qpg(iq,i_G_shift)**2,kind=SP)
  dip_r=.true.
  dip_v=.false.
  if (trim(global_gauge)=='velocity') then
@@ -230,8 +230,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      do i_pert_SOC=1,n_SOC
        !
-       if(trim(global_gauge)=='length')   g_fac=E_plus_W(i_pert_SOC)/bare_qpg(iq,i_G_shift)**2
-       if(trim(global_gauge)=='velocity') g_fac=1._SP/E_plus_W(i_pert_SOC)
+       if(trim(global_gauge)=='velocity') g_fac=1._SP/E_plus_W(i_pert_SOC)**2
        !
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3)+(-1._SP)**(i_res_ares)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
@@ -250,9 +249,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
        endif
        !
        if(abs(E_plus_W(i_pert_SOC))>0._SP) then
-         para_term_w0(1)=para_term_w0(1)+res_abs*g_fac
+         para_term_w0(1)=para_term_w0(1)+res_abs*g_fac*E_plus_W(i_pert_SOC)
          if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
-           para_term_w0(1)=para_term_w0(1)+conjg(res_abs*g_fac)
+           para_term_w0(1)=para_term_w0(1)+conjg(res_abs*g_fac*E_plus_W(i_pert_SOC))
          endif
        endif
        !
@@ -264,9 +263,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
          endif
          !
          ! Anomalous Hal term, Eq.(1.12) PRB 48, 11705 (1993)
-         if (trim(global_gauge)=='length'  ) gauge_factor=cONE
-         if (trim(global_gauge)=='velocity') gauge_factor=E_plus_W(i_pert_SOC)
-         B_Hall(1)=B_Hall(1)+res_kerr/gauge_factor**2
+         B_Hall(1)=B_Hall(1)+res_kerr*g_fac
          !
        endif
        !

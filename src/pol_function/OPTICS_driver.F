@@ -11,26 +11,23 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  !
  ! Calculates dielectric function for a generic q vector.
  ! 
- use pars,          ONLY:pi,SP,cZERO
+ use pars,          ONLY:SP,cZERO,pi
  use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
  use frequency,     ONLY:w_samp
  use electrons,     ONLY:levels
- use D_lattice,     ONLY:l_0D,l_1D,l_2D,l_3D
- use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
- use DIPOLES,       ONLY:DIPOLE_t,DIP_desc
- use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,X_par,X_Double_Grid_setup,&
-&                        use_X_DbGd,eps_2_alpha,X_par_lower_triangle,X_OUTPUT_messages,&
-&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,X_OUTPUT_driver,X_do_obs,&
-&                        i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+ use R_lattice,     ONLY:bz_samp
+ use DIPOLES,       ONLY:DIPOLE_t
+ use X_m,           ONLY:X_t,X_par,X_fxc,X_Double_Grid_setup,&
+&                        use_X_DbGd,X_par_lower_triangle,X_OUTPUT_messages,&
+&                        X_DbGd_nkpt_at_q,X_DbGd_nkpt_at_q_table,&
+&                        i_G_shift,Q_plus_G_sq_modulus
  use parallel_int,  ONLY:PP_wait,PP_redux_wait,PARALLEL_global_indexes,PARALLEL_WF_index,PARALLEL_WF_distribute
  use parallel_m,    ONLY:PAR_IND_Q_ibz,PAR_COM_Q_A2A,PAR_COM_RL_INDEX,PAR_IND_CON_BANDS_X,&
-&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X,master_cpu
+&                        PAR_IND_Xk_ibz,PAR_IND_VAL_BANDS_X
  use wave_func,     ONLY:WF,WF_buffer,WF_buffered_IO
- use TDDFT,         ONLY:FXC_desc,FXC_type,&
-&                        F_xc_gspace,FXC_K_diagonal
+ use TDDFT,         ONLY:F_xc_gspace,FXC_K_diagonal
  use interfaces,    ONLY:WF_load,WF_free,WF_load
  use matrix,        ONLY:MATRIX_reset
- use IO_int,        ONLY:IO_and_Messaging_switch
  !
 #include<memory.h>
  !
@@ -42,14 +39,11 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  ! 
  ! Work Space
  !
- integer          :: iw,iq,n_data
+ integer          :: iq
  complex(SP)      :: fac,spectra(wv%n_freqs,2)
- real(SP)         :: output_data(5),a_xc,b_xc
- logical          :: l_skip_non_int_eps,Macroscopic_CPU,l_eels,l_alpha_from_eps,&
-&                    l_eels_from_ext_eps
+ logical          :: l_skip_non_int_eps,Macroscopic_CPU
  !
  integer,external :: OPTICS_select_q_and_G
- logical,external :: EPS_check
  !
  call section('*','Optics')
  !
@@ -59,10 +53,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  allocate(X_par(1))
  !
  do iq=X%iq(1),X%iq(2)
-   !
-   ! Output files init 
-   !===================
-   call X_OUTPUT_driver("DEF INIT")
    !
    ! PARALLEL indexes
    !==================
@@ -119,38 +109,6 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
 &                  X_par(1)%cols(1)<=i_G_shift.and.i_G_shift<=X_par(1)%cols(2)
    !
-   ! Observables allocation
-   call X_ALLOC_global("ALLOC",wv)
-   !
-   ! * Old Yambo implementation, needed without cut-off
-   ! In 0D,1D,2D, eps=eels in the limit V--> infinity.
-   ! However it is convinient to define alpha as proportional to epsilon
-   ! since the latter converges faster to the V --> infinity limit
-   ! * With coulomb cut-off eps=eels=1, and alpha is proportional to chi
-   l_alpha_from_eps=.not.l_col_cut
-   !
-   ! Check if EELS can be evaluated
-   ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
-   ! Not needed for "R" or "T" orderings. Used only for 3D materials now
-   l_eels=.false.
-   if (X_do_obs("eel")) l_eels=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
-   l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels .and. l_3D
-   !
-   ! OutPut files...
-   if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
-   if (     l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
-   !
-   ! ... permissions ...
-   if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
-   !
-   ! ... open ...
-   call X_OUTPUT_driver("open ALL")
-   if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
-   !
-   ! Initial Messages
-   call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift,MORE="X_size")
-   if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
-   !
    if (iq==1) call PP_wait()
    if (iq> 1) call PP_wait(COMM=PAR_COM_Q_A2A%COMM)
    !
@@ -167,32 +125,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
    endif
    call PP_redux_wait(spectra(:,1),COMM=PAR_COM_RL_INDEX%COMM)
    !
-   ! Epsilon. This is always the 3D one
-   Epsilon_ii(:,1)=spectra(:,1)+1._SP
-   !
-   ! Alpha
-   if (X_do_obs("alpha")) Alpha(:,1)=spectra(:,1)/4._SP/pi
-   !
-   ! EEL: TO FIX EEL as function of dimensions
-   if (X_do_obs("eel")) then
-     !
-     ! The RPA part is always defined in the same way otherwise I get IP instead of RPA without LF.
-     ! This is like the Lbar case in BSE.
-     ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
-     call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
-     EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
-     !
-   endif
-   !
-   if (     l_rpa_IP) then
-     Epsilon_ii(:,2)=Epsilon_ii(:,1)
-     if(X_do_obs("alpha")) Alpha(:,2)=Alpha(:,1)
-     if(X_do_obs("eel")) EEL(:,2) = EEL(:,1)
-   else
+   if (.not.l_rpa_IP) then
      !
      ! X Dyson equation solver
      call X_redux(iq,"X",X_par(1),wv,X)
-     !
      !
      ! X_redux can change the matrix distribution. Need to recheck who is Macroscopic CPU
      Macroscopic_CPU=X_par(1)%rows(1)<=i_G_shift.and.i_G_shift<=X_par(1)%rows(2).and.&
@@ -200,133 +136,24 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
      !
      if (Macroscopic_CPU) then
        !
-       ! With LF. I start defining spectra=eps-1
-       ! using the definition of epsilon-1 in terms of chi
-       ! (1) at variance with the IP case, after the call to X_redux,
-       !     X_par now contains the factor 4*pi/bare_qpg**2
-       ! (2) the factor is with the coulomb cutoff-term
-       !spectra(:,2)=-X_par(1)%blc(i_G_shift,i_G_shift,:)/(X_par(1)%blc(i_G_shift,i_G_shift,:)+1._SP) 
+       ! At variance with the IP case, after the call to X_redux,
+       ! X_par now contains the factor 4*pi/bare_qpg**2
+       ! constructed with the coulomb cutoff-term
        spectra(:,2)=X_par(1)%blc(i_G_shift,i_G_shift,:)
        !
      endif
      call PP_redux_wait(spectra(:,2),COMM=PAR_COM_RL_INDEX%COMM)
      !
-     !
-     ! Epsilon. Procedure to get epsilon from Lfull
-     Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
-     !
-     ! Alpha
-    if (X_do_obs("alpha")) then 
-     if (.not.l_alpha_from_eps) then
-       ! Alpha proportional to Lfull
-       Alpha(:,2)=spectra(:,2)
-       ! Maybe we could extend Alpha ??
-       if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
-       & call warning(" Res (or ares) only alpha")
-     else
-       ! Alpha proportional to Lbar
-       Alpha(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)
-     endif
-     !
-     ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
-     ! To check
-     !  (i) if this is correct
-     !  (ii) why it is done for alpha and not for Epsilon_ii
-     fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
-     Alpha(:,2)=Alpha(:,2)*fac/4._SP/pi
-    endif
-     !
-     ! EEL: TO FIX EEL as function of dimensions
-     if (X_do_obs("eel")) then
-       !
-       if(l_eels_from_ext_eps) then
-         !
-	 ! Yambo original version, I performer a double inversion
-         ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
-	 !
-         EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
-         call warning(" G=0 term accounted for in coupling mode for eels")
-         call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,EEL(:,2),EEL(:,2))
-         EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
-	 !
-       else
-	 !
-	 ! eels proportional to Lfull as it is computed
-	 !
-         EEL(:,2)=-(spectra(:,2)+1._SP)
-         !if(l_3D) EEL(:,2)=1._SP-spectra(:,2)
-         !if(l_2D) EEL(:,2)=1._SP-spectra(:,2)
-         !if(l_1D) EEL(:,2)=-spectra(:,2)
-	 ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
-	 !
-       endif
-       !
-     endif
-     !
    endif
    !
-   if (l_pf_fxc) then
-     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
-     if (abs(b_xc).le.1.e-5) then
-       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
-     else
-       do iw=1,wv%n_freqs
-         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
-&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
-       enddo
-     end if
-   end if
-   !
-   ! Prepare output
-   ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
-   call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
-   !
-   ! Descriptors 
-   call X_OUTPUT_driver("DESC",DESC=DIP_desc)
-   call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
-   if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
-   !
-   if (     l_rpa_IP) n_data=3
-   if (.not.l_rpa_IP) n_data=5
-   !
-   ! Epsilon output
-   do iw=1,wv%n_freqs
-     output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
-&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-     call X_OUTPUT_driver("WRITE eps",data=output_data(:n_data))
-   enddo
-   !
-   ! Alpha output
-   if (X_do_obs("alpha")) then 
-     Alpha=Alpha*eps_2_alpha
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
-       call X_OUTPUT_driver("WRITE alpha",data=output_data(:n_data))
-     enddo
-   endif
-   !
-   ! EEL output
-   if (X_do_obs("eel")) then
-     do iw=1,wv%n_freqs
-       output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
-       call X_OUTPUT_driver("WRITE eel",data=output_data(:n_data))
-     enddo
-   endif
-   !
-   ! TDDFT Kernel output
    if (l_bs_fxc) then
      if (iq==1) call PP_redux_wait(X_fxc)
      if (iq> 1) call PP_redux_wait(X_fxc,COMM=PAR_COM_Q_A2A%COMM)
-     do iw=1,wv%n_freqs
-       output_data(1:3)=(/real(wv%p(iw)),real(X_fxc(iw)*q_norm(iq)**2),aimag(X_fxc(iw)*q_norm(iq)**2)/)
-       call X_OUTPUT_driver("WRITE fxc",data=output_data(:3))
-     enddo
    endif
    !
-   call X_OUTPUT_driver("close ALL")
+   call X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
    !
    ! CLEAN (each q)
-   call X_ALLOC_global("FREE",wv)
    call FREQUENCIES_reset(wv,"all")
    call MATRIX_reset(X_par(1))
    YAMBO_FREE(X_par_lower_triangle%blc)
@@ -351,3 +178,212 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
  endif
  !
 end subroutine
+!
+!
+subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
+ !
+ use pars,          ONLY:pi,SP
+ use D_lattice,     ONLY:l_0D,l_1D,l_2D,l_3D
+ use drivers,       ONLY:l_rpa_IP,l_bs_fxc,l_alda_fxc,l_pf_fxc,l_col_cut
+ use IO_int,        ONLY:IO_and_Messaging_switch
+ use frequency,     ONLY:w_samp
+ use electrons,     ONLY:levels
+ use DIPOLES,       ONLY:DIP_desc
+ use TDDFT,         ONLY:FXC_desc,FXC_type
+ use R_lattice,     ONLY:bz_samp,q_norm,bare_qpg,FineGd_desc
+ use parallel_m,    ONLY:master_cpu
+ use X_m,           ONLY:X_t,Epsilon_ii,EEL,Alpha,X_fxc,&
+&                        eps_2_alpha,X_OUTPUT_messages,X_OUTPUT_driver,X_do_obs,&
+&                        i_G_shift,Q_plus_G_pt,Q_plus_G_sq_modulus
+ !
+ implicit none
+ !
+ integer, intent(in) :: iq
+ type(levels)  :: Xen
+ type(bz_samp) :: Xk
+ type(X_t)     :: X
+ type(w_samp)  :: wv 
+ complex(SP), intent(in)  :: spectra(wv%n_freqs,2)
+ !
+ ! Workspace
+ !
+ complex(SP)      :: fac
+ real(SP)         :: output_data(5),a_xc,b_xc
+ logical          :: l_eels,l_alpha_from_eps,l_eels_from_ext_eps
+ integer          :: iw,n_data
+ !
+ logical,external :: EPS_check
+ !
+ ! Output files init 
+ !===================
+ call X_OUTPUT_driver("DEF INIT")
+ !
+ ! Observables allocation
+ call X_ALLOC_global("ALLOC",wv)
+ !
+ ! * Old Yambo implementation, needed without cut-off
+ ! In 0D,1D,2D, eps=eels in the limit V--> infinity.
+ ! However it is convinient to define alpha as proportional to epsilon
+ ! since the latter converges faster to the V --> infinity limit
+ ! * With coulomb cut-off eps=eels=1, and alpha is proportional to chi
+ l_alpha_from_eps=.not.l_col_cut
+ !
+ ! Check if EELS can be evaluated
+ ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
+ ! Not needed for "R" or "T" orderings. Used only for 3D materials now
+ l_eels=.false.
+ if (X_do_obs("eel")) l_eels=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+ l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels .and. l_3D
+ !
+ ! OutPut files...
+ if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
+ if (     l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="ip",IG=i_G_shift)
+ !
+ ! ... permissions ...
+ if (iq==1) call IO_and_Messaging_switch("+output SAVE",CONDITION=master_cpu)
+ !
+ ! ... open ...
+ call X_OUTPUT_driver("open ALL")
+ if (iq==1) call IO_and_Messaging_switch("+output RESTORE")
+ !
+ ! Initial Messages
+ call X_OUTPUT_messages(iq,Q_plus_G=Q_plus_G_pt,ig=i_G_shift,MORE="X_size")
+ if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
+ !
+ ! Epsilon. This is always the 3D one
+ Epsilon_ii(:,1)=spectra(:,1)+1._SP
+ !
+ ! Alpha
+ if (X_do_obs("alpha")) Alpha(:,1)=spectra(:,1)/4._SP/pi
+ !
+ ! EEL: TO FIX EEL as function of dimensions
+ if (X_do_obs("eel")) then
+   !
+   ! The RPA part is always defined in the same way otherwise I get IP instead of RPA without LF.
+   ! This is like the Lbar case in BSE.
+   ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
+   call EPS_extend(wv%p,wv%n_freqs,.TRUE.,X%ordering,Epsilon_ii(:,1)-1._SP,EEL(:,1))
+   EEL(:,1)=-1._SP/(1._SP+EEL(:,1))
+   !
+ endif
+ !
+ if (     l_rpa_IP) then
+   Epsilon_ii(:,2)=Epsilon_ii(:,1)
+   if(X_do_obs("alpha")) Alpha(:,2)=Alpha(:,1)
+   if(X_do_obs("eel")) EEL(:,2) = EEL(:,1)
+ else
+   !
+   ! Epsilon. Procedure to get epsilon from Lfull
+   Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+   !
+   ! Alpha
+   if (X_do_obs("alpha")) then 
+     if (.not.l_alpha_from_eps) then
+       ! Alpha proportional to Lfull
+       Alpha(:,2)=spectra(:,2)
+       ! Maybe we could extend Alpha ??
+       if ( .not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') ) &
+       & call warning(" Res (or ares) only alpha")
+     else
+       ! Alpha proportional to Lbar
+       Alpha(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)
+     endif
+     !
+     ! As for the IP definition, I change bare_qpg into Q_plus_G_sq_modulus
+     ! To check
+     !  (i) if this is correct
+     !  (ii) why it is done for alpha and not for Epsilon_ii
+     fac=bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
+     Alpha(:,2)=Alpha(:,2)*fac/4._SP/pi
+   endif
+   !
+   ! EEL: TO FIX EEL as function of dimensions
+   if (X_do_obs("eel")) then
+     !
+     if(l_eels_from_ext_eps) then
+       !
+       ! Yambo original version, I performer a double inversion
+       ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
+       !
+       EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+       call warning(" G=0 term accounted for in coupling mode for eels")
+       call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,EEL(:,2),EEL(:,2))
+       EEL(:,2)=-1._SP/(1._SP+EEL(:,2))
+       !
+     else
+       !
+       ! eels proportional to Lfull as it is computed
+       !
+       EEL(:,2)=-(spectra(:,2)+1._SP)
+       !if(l_3D) EEL(:,2)=1._SP-spectra(:,2)
+       !if(l_2D) EEL(:,2)=1._SP-spectra(:,2)
+       !if(l_1D) EEL(:,2)=-spectra(:,2)
+       ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
+       !
+     endif
+     !
+   endif
+   !
+   if (l_pf_fxc) then
+     call TDDFT_PF_coefficient(Xen,Xk,a_xc,b_xc)
+     if (abs(b_xc).le.1.e-5) then
+       Epsilon_ii(:,2)= 1._SP + 4._SP*pi*(Epsilon_ii(:,2)-1._SP)/(4._SP*pi -a_xc*(Epsilon_ii(:,2)-1._SP))
+     else
+       do iw=1,wv%n_freqs
+         Epsilon_ii(iw,2)= 1._SP + 4._SP*pi*(Epsilon_ii(iw,2)-1._SP)/& 
+&                          (4._SP*pi -(a_xc + b_xc*real(wv%p(iw))**2) *(Epsilon_ii(iw,2)-1._SP))
+       enddo
+     end if
+   end if
+   !
+ endif
+ !
+ ! Prepare output
+ ! Unfortunately some of the variables need in this second bunch of messages is setup only in X_os
+ call X_OUTPUT_messages(iq,GF=allocated(Xen%GreenF),Vnl=X%Vnl_included,ordering=X%ordering)
+ !
+ ! Descriptors 
+ call X_OUTPUT_driver("DESC",DESC=DIP_desc)
+ call X_OUTPUT_driver("DESC",DESC=FineGd_desc)
+ if (l_bs_fxc) call X_OUTPUT_driver("DESC",DESC=FXC_desc)
+ !
+ if (     l_rpa_IP) n_data=3
+ if (.not.l_rpa_IP) n_data=5
+ !
+ ! Epsilon output
+ do iw=1,wv%n_freqs
+   output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
+&                aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
+   call X_OUTPUT_driver("WRITE eps",data=output_data(:n_data))
+ enddo
+ !
+ ! Alpha output
+ if (X_do_obs("alpha")) then 
+   Alpha=Alpha*eps_2_alpha
+   do iw=1,wv%n_freqs
+     output_data=(/real(wv%p(iw)),aimag(Alpha(iw,2)),real(Alpha(iw,2)),aimag(Alpha(iw,1)),real(Alpha(iw,1))/)
+     call X_OUTPUT_driver("WRITE alpha",data=output_data(:n_data))
+   enddo
+ endif
+ !
+ ! EEL output
+ if (X_do_obs("eel")) then
+   do iw=1,wv%n_freqs
+     output_data=(/real(wv%p(iw)),aimag(EEL(iw,2)),real(EEL(iw,2)),aimag(EEL(iw,1)),real(EEL(iw,1))/)
+     call X_OUTPUT_driver("WRITE eel",data=output_data(:n_data))
+   enddo
+ endif
+ !
+ ! TDDFT Kernel output
+ if (l_bs_fxc) then
+   do iw=1,wv%n_freqs
+     output_data(1:3)=(/real(wv%p(iw)),real(X_fxc(iw)*q_norm(iq)**2),aimag(X_fxc(iw)*q_norm(iq)**2)/)
+     call X_OUTPUT_driver("WRITE fxc",data=output_data(:3))
+   enddo
+ endif
+ !
+ call X_OUTPUT_driver("close ALL")
+ !
+ call X_ALLOC_global("FREE",wv)
+ !
+end subroutine X_macroscopic_quantities

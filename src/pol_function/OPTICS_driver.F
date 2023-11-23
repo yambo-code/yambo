@@ -253,9 +253,10 @@ subroutine OPTICS_driver(Xen,Xk,q,wv,X,Dip)
 	 !
 	 ! eels proportional to Lfull as it is computed
 	 !
-         if(l_3D) EEL(:,2)=1._SP-spectra(:,2)-1._SP
-         if(l_2D) EEL(:,2)=1._SP-spectra(:,2)-1._SP
-         if(l_1D) EEL(:,2)=1._SP-spectra(:,2)-1._SP
+         EEL(:,2)=-(spectra(:,2)+1._SP)
+         !if(l_3D) EEL(:,2)=1._SP-spectra(:,2)
+         !if(l_2D) EEL(:,2)=1._SP-spectra(:,2)
+         !if(l_1D) EEL(:,2)=-spectra(:,2)
 	 ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
 	 !
        endif

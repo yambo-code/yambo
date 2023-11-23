@@ -24,7 +24,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  use R_lattice,      ONLY:bare_qpg
  use units,          ONLY:HA2EV
  use vec_operate,    ONLY:degeneration_finder,sort
- use BS_solvers,     ONLY:A_drude,B_Hall,para_term_w0
+ use BS_solvers,     ONLY:B_Hall,para_term_w0
  use X_m,            ONLY:Resp_ij,X_magnons
  use PHOTOLUM,       ONLY:PL,PL_prefactor
  use BS,             ONLY:l_BS_kerr,l_BS_magnons,l_BS_photolum,l_BS_dichroism
@@ -54,7 +54,9 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  n_SOC=1
  ares_fac=(-1)**(i_BS_mat-1)
  !
- if (trim(global_gauge)=='length') g_fac=cmplx(1._SP/bare_qpg(iq,i_G_shift)**2,kind=SP)
+ if(l_BS_abs) para_term_w0(2)=cZERO
+ !
+ if (trim(global_gauge)=='length') g_fac=cONE*Co_factor/bare_qpg(iq,i_G_shift)**2
  !
  if( BS_perturbative_SOC.and.n_sp_pol==1) n_SOC=2
  !
@@ -101,7 +103,7 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
        nVAR=2
      endif
      !
-     if (trim(global_gauge)=='velocity') g_fac=1._SP/EXC_E(i_pert_SOC)**2
+     if (trim(global_gauge)=='velocity') g_fac=Co_factor/EXC_E(i_pert_SOC)**2
      !
      if(l_BS_jdos) then
        ! DS. Note. Jdos with coupling seems to have the wrong ordering, i.e.
@@ -228,7 +230,6 @@ subroutine K_diago_response_functions(iq,i_BS_mat,W,BS_E,BS_R_left,BS_R_right,BS
  !
  if (l_BS_kerr) then
    Resp_ij(:,2)=Resp_ij(:,2)*Co_factor
-   B_Hall(2)=B_Hall(2)*Co_factor
    if (BS_K_anti_resonant.and..not.BS_K_coupling) B_Hall(2)=B_Hall(2)-conjg(B_Hall(2))
  endif
  !

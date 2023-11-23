@@ -29,7 +29,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
 &                        PAR_COM_Xk_ibz_INDEX
  use parser_m,      ONLY:parser
  use timing_m,      ONLY:timing
- use BS_solvers,    ONLY:A_drude,B_Hall
+ use BS_solvers,    ONLY:B_Hall
  use PHOTOLUM,      ONLY:PL,PL_prefactor,PL_weights
  use units,         ONLY:SPEED_OF_LIGHT
  !
@@ -84,9 +84,9 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  !
  ! Setup
  !-------
- diam_term_exact=cmplx(nel*real(Xk%nbz,SP)/spin_occ,0._SP,SP)
+ diam_term_exact=cONE*Co_factor*nel*real(Xk%nbz,SP)/spin_occ
  para_term_w0=cZERO
- if (trim(global_gauge)=='length') g_fac=cmplx(1._SP/bare_qpg(iq,i_G_shift)**2,kind=SP)
+ if (trim(global_gauge)=='length') g_fac=cONE*Co_factor/bare_qpg(iq,i_G_shift)**2
  dip_r=.true.
  dip_v=.false.
  if (trim(global_gauge)=='velocity') then
@@ -230,7 +230,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
      !
      do i_pert_SOC=1,n_SOC
        !
-       if(trim(global_gauge)=='velocity') g_fac=1._SP/E_plus_W(i_pert_SOC)**2
+       if(trim(global_gauge)=='velocity') g_fac=Co_factor/E_plus_W(i_pert_SOC)**2
        !
        if (l_BS_jdos) then
          Joint_DOS(:,3) =Joint_DOS(:,3)+(-1._SP)**(i_res_ares)/(W_bss%p(:)-E_plus_W(i_pert_SOC))
@@ -352,14 +352,8 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if (l_BS_jdos) Joint_DOS(:,3)=Joint_DOS(:,3)*Co_factor !/(4._SP*pi) This factor is needed for the correct Jdos
  !                                                      ! However it is commented for now since all test-suite
  !                                                      ! references needs to be updated before insterting it
- !
  if (l_BS_abs) Resp_ii(:,3)=Resp_ii(:,3)*Co_factor
  !
- ! Eq.(1.12) PRB 48, 11705 (1993)
- !
- A_drude(1)=para_term_w0(1)-diam_term_exact
- !
- B_Hall(1)=B_Hall(1)*Co_factor
  if (BS_K_anti_resonant) B_Hall(1)=B_Hall(1)-conjg(B_Hall(1))
  !
  if (l_BS_kerr) Resp_ij(:,3)=Resp_ij(:,3)*Co_factor

@@ -12,9 +12,9 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
 &                         X_magnons,Resp_ij,i_G_shift
  use R_lattice,      ONLY:bare_qpg
  use frequency,      ONLY:w_samp
- use BS,             ONLY:BSE_mode,l_BS_anomalous_Hall
- use BS_solvers,     ONLY:Co_factor,diam_term_exact,Haydock_v0_mod,&
- &                        Haydock_terminator,Haydock_threshold,B_Hall
+ use BS,             ONLY:BSE_mode
+ use BS_solvers,     ONLY:Co_factor,para_term_w0,Haydock_v0_mod,&
+ &                        Haydock_terminator,Haydock_threshold
  use parser_m,       ONLY:parser
  !
  implicit none
@@ -35,7 +35,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  real(SP)    :: Co,tmp_tresh
  complex(SP) :: sums,diff
  !
- complex(SP) :: para_term_w0(2)
  complex(SP) :: gauge_factor
  complex(SP) :: freq_axis(0:W%n_freqs)
  !
@@ -65,7 +64,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  i_resp(1)=2
  i_resp(2)=4
  !
- para_term_w0  =cZERO
  !
  ! DEBUG <
  !tmp_tresh=0._SP
@@ -77,7 +75,8 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  !endif
  ! DEBUG >
  !
- if(.not.trim(global_gauge)=='velocity') gauge_factor=cONE*Co/bare_qpg(iq,i_G_shift)**2
+ if(trim(global_gauge)=='length')   gauge_factor=cONE*Co/bare_qpg(iq,i_G_shift)**2
+ if(trim(global_gauge)=='velocity') gauge_factor=cONE*Co
  !
  if (it > MIN_ITER.and.Haydock_terminator) UseTerminator = .true.
  if (use_Cf) allocate(X_i(2,it))
@@ -105,7 +104,10 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  end if
  !
  iw_start=1
- if(trim(global_gauge)=='velocity'.and. any(Af/=0._SP)) iw_start=0
+ if(trim(OBS)=="optics") then
+   para_term_w0(2)=cZERO
+   if(any(Af/=0._SP)) iw_start=0
+ endif
  !
  freq_axis(0 )=cZERO
  freq_axis(1:)=W%p(:)
@@ -206,15 +208,15 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
      X_o(2,:)=X_o(2,:)+X_a(2,:)
    endif
    !
-   if(trim(global_gauge)=='velocity'.and.iw==0) then
-     para_term_w0(:)=X_o(1:2,1)
-     cycle
-   endif
    !
    select case(trim(OBS))
    case("jdos")
      Joint_DOS(iw,i_resp(:))=  -X_o(1:2,1)*Co
    case("optics")
+     if(iw==0) then
+       para_term_w0(:)=-X_o(1:2,1)*gauge_factor
+       cycle
+     endif
      Resp_ii(iw,i_resp(:))= -X_o(1:2,1)*Co
    case("kerr")
      Resp_ij(iw,i_resp(:))= -X_o(1:2,1)*Co
@@ -225,19 +227,6 @@ subroutine K_Haydock_response(iq,it,Cf_size,OBS,scheme,W,Af,Bf,Cf,reached_thresh
  enddo
  !
  do iw=1,W%n_freqs
-   !
-   if (trim(global_gauge)=="velocity") gauge_factor=Co/W%p(iw)**2
-   !
-   ! I add the term describing the Anomalous Hall effect which is
-   ! missing in the length gauge (this should be zero for systems with a gap)
-   !
-   if (l_BS_anomalous_Hall.and.trim(OBS)=="kerr") then
-     if (trim(global_gauge)=='length') then
-       B_Hall(2)=B_Hall(2)*Co/bare_qpg(iq,i_G_shift)**2
-     else if (trim(global_gauge)=='velocity') then
-       B_Hall(2)=B_Hall(2)*Co
-     endif
-   endif
    !
    select case(trim(OBS))
    case("jdos")

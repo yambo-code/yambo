@@ -172,13 +172,13 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
        if(i_res_ares==1) then
          residual=BSS_dipoles_opt(1,i_res)*conjg(BSS_dipoles_opt(1,i_res))
          if (allocated(BSS_eh_W) .and. trim(global_gauge)=="velocity") residual=residual*E_plus_W/conjg(E_plus_W)
-         if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)
+         para_term_w0=para_term_w0+Lo(i_res,iw_ref,1)*Co_factor
          Resp_ii(:,i_eps)=Resp_ii(:,i_eps)-residual*Lo(i_res,:,1)
        endif     
        !
        if (BS_K_anti_resonant.and.l_BS_ares_from_res) then
          residual=conjg(BSS_dipoles_opt(1,i_Lo_trans))*BSS_dipoles_opt(1,i_Lo_trans)
-         if (trim(global_gauge)=='velocity') para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)
+         para_term_w0=para_term_w0+Lo(i_Lo_trans,iw_ref,i_Lo)*Co_factor
          Resp_ii(:,i_eps)=Resp_ii(:,i_eps)-conjg(residual)*Lo(i_Lo_trans,:,i_Lo)
        endif
        !
@@ -200,7 +200,7 @@ subroutine K_inversion_Lo(iq,W,E,k,Lo_dim,Lo_n_loop,Lo)
    if(i_loop==n_loop) call PP_redux_wait(Lo,COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    call PP_redux_wait(resp_ii(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
-   call PP_redux_wait(para_term_w0,       COMM=PAR_COM_Xk_ibz_INDEX%COMM)
+   call PP_redux_wait(para_term_w0,    COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    if (l_BS_photolum.and.i_loop==1) call PP_redux_wait(PL(:,i_eps),COMM=PAR_COM_Xk_ibz_INDEX%COMM)
    !
    Resp_ii(:,i_eps)= Resp_ii(:,i_eps)*Co_factor

@@ -11,7 +11,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
-&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_resp,BSS_eels_to_eps, &
+&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_resp,BSS_eels_to_eps,&
 &                         Co_factor
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling,&
 &                         l_BS_anomalous_Hall
@@ -41,7 +41,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  character(schlen) :: out_string
  complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
  &                    fac,diam_term_used(2),spectra_ij(BSS_n_freqs,3)
- real(SP)          :: data_sort(N_BS_E_sorted+1)
+ real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(2)
  logical           :: l_last_col
  !
  if (STRING_match(WHAT,"open")) then
@@ -109,12 +109,16 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      endif
    enddo
    !
+   ! Eq.(1.12) PRB 48, 11705 (1993)
+   !
+   A_drude=para_term_w0-diam_term_exact
+   !
    if (trim(global_gauge)=='velocity') then
      if (     skip_cond_sum_rule) diam_term_used=diam_term_exact
      if (.not.skip_cond_sum_rule) diam_term_used=para_term_w0
-     spectra(:,1)=spectra(:,1)-diam_term_used(2)*Co_factor
-     spectra(:,2)=spectra(:,2)-diam_term_used(1)*Co_factor
-     spectra(:,3)=spectra(:,3)-diam_term_used(2)*Co_factor
+     spectra(:,1)=spectra(:,1)-diam_term_used(2)
+     spectra(:,2)=spectra(:,2)-diam_term_used(1)
+     spectra(:,3)=spectra(:,3)-diam_term_used(2)
    endif
    !
    do i_rsp=1,n_resp
@@ -157,8 +161,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
    ! ... Drude term via sum rule breaking
    if (skip_cond_sum_rule) then
-     tmp_var(:,1)=A_drude(2)*Co_factor/W%p(:)**2
-     tmp_var(:,2)=A_drude(1)*Co_factor/W%p(:)**2
+     tmp_var(:,1)=A_drude(2)/W%p(:)**2
+     tmp_var(:,2)=A_drude(1)/W%p(:)**2
      if(l_last_col) then
        if(trim(solver)=="haydock")   tmp_var(:,3)=tmp_var(:,1)
        if(trim(solver)=="inversion") tmp_var(:,3)=tmp_var(:,2)
@@ -171,11 +175,13 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      if(l_last_col) Epsilon_ii(:,4)=Epsilon_ii(:,4)+tmp_var(:,3)
    endif
    !
+   nel_diam(:)=real(A_drude(:))/real(nkbz,SP)*spin_occ/Co_factor
+   !
    ! ... Diamagnetic term
    call msg("o eps",com_compose_msg(pre="# ",body="Diamagnetic term")," ",INDENT=0)
-   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),real(A_drude(1))/real(nkbz,SP)*spin_occ,INDENT=0,after_msg="[nel]")
-   if (.not.STRING_match(WHAT,"IP")) call msg("o eps",com_compose_msg(pre="# ",body="A"),&
-&                                             real(A_drude(2))/real(nkbz,SP)*spin_occ,INDENT=0,after_msg="[nel]")
+   call msg("o eps",com_compose_msg(pre="# ",body="Ao"),nel_diam(1),INDENT=0,after_msg="[nel]")
+   if (.not.STRING_match(WHAT,"IP")) &
+   &call msg("o eps",com_compose_msg(pre="# ",body="A"),nel_diam(2),INDENT=0,after_msg="[nel]")
    !
    ! ... Epsilon_ii
    call ELEMENTAL_dump("eps",Epsilon_ii(:,2:4)+1._SP)

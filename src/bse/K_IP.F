@@ -69,7 +69,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
  !...Drude
- call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,X_drude_term)
+ if(l_BS_abs) call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,X_drude_term)
  !
  ! Prefactors
  !------------

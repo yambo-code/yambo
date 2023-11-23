@@ -18,7 +18,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  use electrons,     ONLY:levels,spin_occ,spin,nel,n_sp_pol,n_spinor
  use X_m,           ONLY:Resp_ii,Joint_DOS,alpha_dim,eps_2_alpha,&
 &                        X_drude_term,global_gauge,N_BS_E_sorted,i_G_shift,&
-&                        skip_cond_sum_rule,l_drude,X_magnons,Resp_ij,X_dichroism
+&                        skip_cond_sum_rule,X_magnons,Resp_ij,X_dichroism
  use BS_solvers,    ONLY:Co_factor,diam_term_exact,para_term_w0,BSS_Wd,BSS_mode,BSS_uses_DbGd,FG_factor
  use BS,            ONLY:BS_T_grp,BS_nkFGbz_in_Tgrp,BS_nT_grps,BS_perturbative_SOC,&
  &                       BS_dip_size,l_BS_jdos,l_BS_esort,l_BS_trace,BS_H_dim,&
@@ -69,7 +69,7 @@ subroutine K_IP(iq,Ken,Xk,Dip,W_bss)
  if(trim(global_gauge)=="velocity") call parser('NoCondSumRule',skip_cond_sum_rule)
  !
  !...Drude
- if(l_drude) call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,X_drude_term)
+ call X_Drude(1,Ken,Xk,W_bss,BSS_Wd,X_drude_term)
  !
  ! Prefactors
  !------------

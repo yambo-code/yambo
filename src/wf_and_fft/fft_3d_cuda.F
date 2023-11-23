@@ -53,7 +53,7 @@ subroutine fft_3d_cuda(c_d,n,fft_sign,cufft_plan)
  use cufft
 #endif
 #if defined _OPENACC
- use dev_openacc_m
+ use openacc
  !use cudafor_m_y
  use cufft_m_y
 #endif

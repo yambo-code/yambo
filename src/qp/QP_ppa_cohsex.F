@@ -96,15 +96,13 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
  complex(SP)      ::PPA_R,local_rhotw(X%ng),pre_factor
  complex(DP)      ::dp_dummy,ctmp
  !
-#ifdef _CUDA
- integer                      :: Xng, Xr1, Xr2
- real(SP)                     :: XppaE, bose_PPA_E
- real(DP)                     :: dp_dummy_r, dp_dummy_i
- complex(SP)                  :: W_i_w
- complex(SP), pointer, device :: isc_rhotw_d(:)
- complex(SP), pointer, device :: iscp_rhotw_d(:)
- complex(SP), pointer, device :: isc_gamp_d(:,:)
-#endif
+ integer          :: Xng, Xr1, Xr2
+ real(SP)         :: XppaE, bose_PPA_E
+ real(DP)         :: dp_dummy_r, dp_dummy_i
+ complex(SP)      :: W_i_w
+ complex(SP), pointer DEV_ATTR :: isc_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: iscp_rhotw_p(:)
+ complex(SP), pointer DEV_ATTR :: isc_gamp_p(:,:)
  !
  integer,     external ::io_X
  complex(SP), external ::QP_ppa_EET_terminator
@@ -530,15 +528,15 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
          E_kmq=E%E(isc%os(1),isc%os(2),isc%os(4))
          f_kmq=E%f(isc%os(1),isc%os(2),isc%os(4))
          !
-#ifdef _CUDA
+#ifdef _GPU
          Xng = X%ng
          XppaE = X%ppaE
          Xr1 = X_range(1)
          Xr2 = X_range(2)
 
-         isc_gamp_d => isc%gamp_d
-         isc_rhotw_d => isc%rhotw_d
-         iscp_rhotw_d => iscp%rhotw_d
+         isc_gamp_p => DEV_VAR(isc%gamp)
+         isc_rhotw_p => DEV_VAR(isc%rhotw)
+         iscp_rhotw_p => DEV_VAR(iscp%rhotw)
 
          do i_w=1,QP_dSc_steps
            W_i_w = W_(i_w)
@@ -561,9 +559,9 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                !
                if (l_RIM_W_g) then
                  PPA_R=-cmplx(RIM_W_d(iqibz,ig1,ig2)/2._SP, &
-&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_d(ig1,ig2)),kind=SP)/2._SP*PPA_E
+&                             aimag(X_mat_d(ig1,ig2,Xr1))*real(isc_gamp_p(ig1,ig2)),kind=SP)/2._SP*PPA_E
                else
-                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_d(ig1,ig2)
+                 PPA_R=-X_mat_d(ig1,ig2,Xr1)/2._SP*PPA_E*isc_gamp_p(ig1,ig2)
                endif
                !
                ! inline bose_f function
@@ -578,7 +576,7 @@ subroutine QP_ppa_cohsex(X,Xk,E,k,q,qp,Xw,W,GW_iter)
                  endif
                endif
                !
-               ctmp = -4._SP/spin_occ*pi*isc_rhotw_d(ig1)*conjg(iscp_rhotw_d(ig2))*(-PPA_R)*&
+               ctmp = -4._SP/spin_occ*pi*isc_rhotw_p(ig1)*conjg(iscp_rhotw_p(ig2))*(-PPA_R)*&
 &                     ( (spin_occ-f_kmq+bose_PPA_E)/(W_i_w-E_kmq-PPA_E)+&
 &                       (f_kmq+bose_PPA_E)/(conjg(W_i_w)-E_kmq+PPA_E))
                !

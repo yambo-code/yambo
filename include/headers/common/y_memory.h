@@ -24,7 +24,7 @@
 */
  use y_memory,     ONLY:MEM_err,MEM_msg,MEM_count,MEM_count_d,MEM_global_mesg,IPL
 #if defined _OPENACC || defined _OPENMP5
- use devxlib,      ONLY:dev_malloc,dev_free,dev_allocated,dev_memcpy_h2d
+ use devxlib,      ONLY:devxlib_map,devxlib_unmap,devxlib_mapped,devxlib_memcpy_h2d
 #endif
  implicit none
 
@@ -173,10 +173,10 @@
 
 #if defined _OPENACC || defined _OPENMP5
 #define YAMBO_FREE(x) \
-  if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
-  if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
-  if ( dev_allocated(x)) &NEWLINE& call error(QUOTES Trying to deallocate var x still on device memory QUOTES)NEWLINE \
-  if (     allocated(x)) &NEWLINE& deallocate(x)
+  if ( .not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
+  if (      allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
+  if ( devxlib_mapped(x)) &NEWLINE& call error(QUOTES Trying to deallocate var x still on device memory QUOTES)NEWLINE \
+  if (      allocated(x)) &NEWLINE& deallocate(x)
 #else
 #define YAMBO_FREE(x) YAMBO_FREE_NO_DEV_CHECK(x)
 #endif
@@ -196,24 +196,24 @@
 #define YAMBO_ALLOC_GPU(x,SIZE) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC(x,SIZE) NEWLINE \
   endif NEWLINE \
-  call dev_malloc(x) NEWLINE \
+  call devxlib_map(x) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_SOURCE(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_SOURCE(x,y) NEWLINE \
   endif NEWLINE \
-  call dev_malloc(x) NEWLINE \
-  call dev_memcpy_h2d(x,y) NEWLINE \
+  call devxlib_map(x) NEWLINE \
+  call devxlib_memcpy_h2d(x,y) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 #define YAMBO_ALLOC_GPU_MOLD(x,y) \
   if (.not.allocated(x)) then NEWLINE YAMBO_ALLOC_MOLD(x,y) NEWLINE \
   endif NEWLINE \
-  call dev_malloc(x) NEWLINE \
+  call devxlib_map(x) NEWLINE \
   YAMBO_ALLOC_CHECK_GPU(x)
 
 #define YAMBO_FREE_GPU(x) \
   if (.not.allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,int(-1,KIND=IPL))NEWLINE \
   if (     allocated(x)) &NEWLINE& call MEM_free(QUOTES x QUOTES,size(x,KIND=IPL))NEWLINE \
-  if (     allocated(x)) &NEWLINE& call dev_free(x,MEM_err)
+  if (     allocated(x)) &NEWLINE& call devxlib_unmap(x,MEM_err)
 
 #else
 

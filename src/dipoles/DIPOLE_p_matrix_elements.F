@@ -92,7 +92,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
          rho_acc_i=0.0_SP
          !
          !DEV_ACC data present(WF_p,g_vec,wf_igk)
-         !DEV_ACC parallel loop async
+         !DEV_ACC parallel loop private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
          !DEV_CUF kernel do(1)
          do ic=1,wf_nc_ik
            ig=DEV_VAR(wf_igk)(ic,ik)
@@ -114,7 +114,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
      rho_acc_i=0.0_SP
      ! 
      !DEV_ACC data present(WF_p,g_vec,wf_igk)
-     !DEV_ACC parallel loop collapse(2) async
+     !DEV_ACC parallel loop collapse(2) private(ig,rho_acc) reduction(+:rho_acc_r,rho_acc_i)
      !DEV_CUF kernel do(2)
      do i_spinor=1,n_spinor
      do ic=1,wf_nc_ik
@@ -134,7 +134,7 @@ subroutine DIPOLE_p_matrix_elements(Xk,iv_wf,ic_wf,ik,rho,rho_spinor,P2,l_eval_P
  enddo
  !
  if(l_eval_P2) then
-   call error("P2 not coded for CUDA")
+   call error("P2 not coded with GPUs")
  endif
  !
 #else

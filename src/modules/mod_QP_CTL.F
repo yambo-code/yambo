@@ -28,6 +28,7 @@ module QP_CTL_m
  use QP_m,      ONLY:QP_t
  use electrons, ONLY:n_sp_pol
  use global_XC, ONLY:QP_SE_NONE
+ use devxlib
  !
  implicit none
  !

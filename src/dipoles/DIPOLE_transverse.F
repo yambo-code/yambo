@@ -39,13 +39,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  use R_lattice,           ONLY:bz_samp,g_vec,DEV_VAR(g_vec)
  use DIPOLES,             ONLY:DIPOLE_t,DIP_iR,P_square,DIP_P,DIP_v,DIP_P_spinor,use_g_space_approach,&
 &                              compute_P2_dipoles,compute_Spin_dipoles,DIP_alloc
+
  use X_m,                 ONLY:l_X_terminator
  use IO_int,              ONLY:io_control
  use IO_m,                ONLY:manage_action,OP_IF_START_RD_CL_IF_END,OP_RD_CL
  use wave_func,           ONLY:wf_ncx,WF
  use com,                 ONLY:msg
  use timing_m,            ONLY:timing
- use gpu_m,               ONLY:have_gpu
+ use gpu_m,               ONLY:have_gpu,  gpu_devsync
  use devxlib,             ONLY:devxlib_memcpy_h2d,devxlib_memset_d
  !
 #include<y_memory.h>
@@ -59,7 +60,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
  character(schlen)            :: live_t_string
  logical                      :: l_eval_DIP_iR,l_eval_DIP_V,l_eval_DIP_P2,l_use_comm,l_check
  logical, allocatable         :: element_1D_spin(:)
- integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,nc,pp_dim_yambo,pp_dim_atom,&
+ integer                      :: ik,ic_wf,iv_wf,i_wf,ic,iv,ib,ifrag,pp_dim_yambo,pp_dim_atom,&
 &                                i_sp_pol,N_elements_todo,ik_mem,ic_min,is,ia,pp_range(2),npp,npp_tab
  complex(SP), allocatable     :: kbv(:,:,:,:)
  complex(SP), allocatable DEV_ATTR :: kbv_d(:,:,:,:)
@@ -133,12 +134,14 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    ! allocation of DEV variabless with zero dims is a problem (PGI, CUDA For)
    pp_dim_yambo=max(pp_kbv_dim_yambo,1)
    pp_dim_atom =max(pp_kbv_dim_atom, 1)
-   YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
    YAMBO_ALLOC(kbv,(wf_ncx,n_spinor,4,pp_dim_atom))
    !
    if (have_gpu) then
+     YAMBO_ALLOC_GPU(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
      YAMBO_ALLOC_GPU(DEV_VAR(kbv),(wf_ncx,n_spinor,4,pp_dim_atom))
      call devxlib_memset_d(DEV_VAR(kbv),cZERO)
+   else
+     YAMBO_ALLOC(XX,(n_spinor,n_spinor,4,pp_dim_yambo,Dip%ib(1):Dip%ib(2)))
    endif
    !
    ! Eo    are always the eigenvalues consistent with the WFs
@@ -151,7 +154,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    !
    ! sum_kb workspace
    !
-   call DIP_alloc("DIP_work",[pp_dim_yambo,nc])
+   call DIP_alloc("DIP_work",[pp_dim_yambo])
    !
  endif
                                       live_t_string='Dipoles: P (T)'
@@ -198,7 +201,8 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
        npp=0
        npp_tab=0
        pp_range(2)=0
-       XX=cZERO
+       call devxlib_memset_d(XX,cZERO)
+       !
        do is = 1,n_atomic_species
          do ia = 1,n_atoms_species(is)
            !
@@ -211,19 +215,22 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
            !
            pp_range(2)=pp_range(1)+npp-1
            !
-           if (have_gpu) call devxlib_memcpy_h2d(kbv_d,kbv)
+           if (have_gpu) call devxlib_memcpy_h2d(DEV_VAR(kbv),kbv)
            !
-           !nc=wf_nc_k(ik)
-           nc=wf_ncx
            do ib=Dip%ib(1),Dip%ib(2)
+             !
              if( ib<=Dip%ib_lim(1) ) then
                l_check= .not.(PAR_IND_VAL_BANDS_DIP%element_1D(ib).or.PAR_IND_CON_BANDS_DIP%element_1D(ib))
              else
                l_check= .not.PAR_IND_CON_BANDS_DIP%element_1D(ib)
              endif
              if ( l_check ) cycle
+             !
              i_wf=WF%index(ib,ik,i_sp_pol)
-             call DIPOLE_kb_project(pp_range,npp,nc,DEV_VAR(WF%c)(:,:,i_wf),DEV_VAR(kbv)(:,:,:,:npp),XX(:,:,:,pp_range(1):pp_range(2),ib))
+             !
+             call DIPOLE_kb_project(pp_range,Dip%ib,ib,i_wf,wf_ncx,size(WF%c,3),npp,pp_dim_yambo,&
+&                                   DEV_VAR(WF%c),DEV_VAR(kbv),XX)
+             !
            enddo
            !
          enddo
@@ -280,7 +287,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
          !
          ! Evaluate <iv_wf|[x,Vnl]|ic_wf>
          !================================
-         if (l_use_comm) call DIPOLE_kb_sum(rho,XX(:,:,:,:,iv),XX(:,:,:,:,ic))
+         if (l_use_comm) call DIPOLE_kb_sum(rho,pp_dim_yambo,Dip%ib,iv,ic,XX)
          !
          ! define a different thr for val-val transitions
          ! used for XTerm (here Ev_m_Ev_KS may become very large)
@@ -343,6 +350,7 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    call DIP_alloc("DIP_work")
    YAMBO_FREE_GPU(DEV_VAR(kbv))
    YAMBO_FREE(DEV_VAR(kbv))
+   YAMBO_FREE_GPU(XX)
    YAMBO_FREE(XX)
    YAMBO_FREE(pp_n_l_comp)
    YAMBO_FREE(pp_table)
@@ -350,7 +358,9 @@ subroutine Dipole_transverse(Xen,Xk,Dip)
    YAMBO_FREE(pp_factor)
    call PP_free()
  endif
- YAMBO_FREE_GPU(DEV_VAR(g_vec))
+ if (have_gpu) then
+   YAMBO_FREE_GPU(DEV_VAR(g_vec))
+ endif
  !
  call timing('DIPOLE_transverse',OPR='stop')
  !

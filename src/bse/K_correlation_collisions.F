@@ -210,15 +210,13 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  !
  call BS_oscillators_alloc(.FALSE.,0,.TRUE.,i_block)
  !
-#if !defined _GPU
- !$omp parallel default(shared), private(i_Tk,i_Tp, &
- !$omp &          i_kp_s,i_s_star,H_pos,&
- !$omp &          i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
- !$omp &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,&
- !$omp &          i_kmq_t,i_pmq_t, &
- !$omp &          i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last, &
- !$omp &          K_CORR_collision, i_s_collision)
-#endif
+ !DEV_OMP parallel default(shared), private(i_Tk,i_Tp, &
+ !DEV_OMP &          i_kp_s,i_s_star,H_pos,&
+ !DEV_OMP &          i_kmq,i_pmq,i_kp_mq_s,i_s_mq_star,&
+ !DEV_OMP &          i_v_k,i_v_p,i_c_k,i_c_p,i_k_sp_pol_c,i_p_sp_pol_c,i_k_sp_pol_v,i_p_sp_pol_v,iq_W,&
+ !DEV_OMP &          i_kmq_t,i_pmq_t, &
+ !DEV_OMP &          i_p_bz_last,i_k_bz_last,iq_W_bz_last,ig_W_last, &
+ !DEV_OMP &          K_CORR_collision, i_s_collision)
  !
  call OPENMP_update(master_thread)
  !
@@ -229,9 +227,7 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
  select case (mode_now)
  case("R","A","F")
    !
-#if !defined _GPU
-   !$omp do collapse(2), schedule(dynamic)
-#endif
+   !DEV_OMP do collapse(2), schedule(dynamic)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
@@ -265,15 +261,11 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
        !
      enddo
    enddo
-#if !defined _GPU
-   !$omp end do
-#endif
+   !DEV_OMP end do
    !
  case("C","Q")
    !
-#if !defined _GPU
-   !$omp do collapse(2), schedule(dynamic)
-#endif
+   !DEV_OMP do collapse(2), schedule(dynamic)
    do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
      do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
        !
@@ -308,16 +300,13 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      enddo
    enddo
    !
-#if !defined _GPU
-   !$omp end do
-#endif
+   !DEV_OMP end do
    !
  end select
  !
  call elemental_collision_free(K_CORR_collision)
-#if !defined _GPU
- !$omp end parallel
-#endif
+ !
+ !DEV_OMP end parallel
  !
  call timing('T_space CORR Osc.',OPR='stop')
  !
@@ -387,11 +376,11 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
          j_p_bz_last=j_p_bz 
          j_k_bz_last=j_k_bz 
          if (j_k_bz_mem==0) then 
-           !$omp critical 
+           !DEV_OMP critical 
            qindx_tmp=qindx_B_load(j_p_bz,j_k_bz,qindx_ID_frag) 
            j_q_W_bz=qindx_tmp(1) 
            j_g_W   =qindx_tmp(2) 
-           !$omp end critical 
+           !DEV_OMP end critical 
          else 
            j_q_W_bz=qindx_B(j_p_bz,j_k_bz_mem,1) 
            j_g_W   =qindx_B(j_p_bz,j_k_bz_mem,2) 
@@ -448,11 +437,12 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
    !
    subroutine EVAL_collision(iB,iki,iko,ikit,ikot,i_sp_pol_i,i_sp_pol_o,ibi,ibo,iq_W_in,i_s_collision,isc)
      use collision_el,  ONLY:elemental_collision
-     use devxlib,       ONLY:devxlib_memcpy_d2d,devxlib_memcpy_h2h
+     use devxlib,       ONLY:devxlib_memcpy_d2d
      implicit none
      integer,intent(in) :: iB,iki,iko,ikit,ikot,ibi,ibo,i_sp_pol_i,i_sp_pol_o,iq_W_in,i_s_collision
      type(elemental_collision),intent(inout) :: isc
      integer :: iB_oscillator
+     !
      if (.not.O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)) return 
      isc%is=(/ibi,iki,1,i_sp_pol_i/)
      isc%os=(/ibo,iko,i_s_collision,i_sp_pol_o/)
@@ -461,12 +451,8 @@ subroutine K_correlation_collisions(iq,i_block,qindx_ID_frag,Xk,q)
      iB_oscillator = BS_blk(iB)%O_table(1,i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i)
      !
      call DEV_SUB(scatter_Bamp)(isc)
-! NS: to be cleaned
-#ifdef _CUDA
+     !
      call devxlib_memcpy_d2d( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
-#else
-     call devxlib_memcpy_h2h( DEV_VAR(BS_blk(iB)%O_c)(:,iB_oscillator), DEV_VAR(isc%rhotw) )
-#endif
      !
      O_todo_table(i_s_collision,ikit,ikot,ibi,ibo,i_sp_pol_i) = .false.
    end subroutine

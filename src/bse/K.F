@@ -428,17 +428,17 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    ! Transition Loops
    !------------------
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp parallel default(shared), &
-   !$omp private(i_Tk,i_Tp, &
-   !$omp &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
-   !$omp &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
-   !$omp &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
-   !$omp &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
-   !$omp &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
-   !$omp &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
-   !$omp &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
-   !$omp &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,tddft_wf )
+#if defined _OPENMP
+   !DEV_OMP parallel default(shared), &
+   !DEV_OMP private(i_Tk,i_Tp, &
+   !DEV_OMP &       sqrt_f_itk,i_k_bz,i_v_k,i_c_k,i_k_sp_pol_c,i_k_sp_pol_v,i_k_s,is_k,os_k,i_k_s_m1,H_pos, &
+   !DEV_OMP &       sqrt_f_itp,i_p_bz,i_v_p,i_c_p,i_p_sp_pol_c,i_p_sp_pol_v,i_p_s,is_p,os_p,i_kp_s, &
+   !DEV_OMP &       i_kmq_bz,ig_kmq,i_kmq,i_kmq_s,i_kmq_t,i_kmq_s_m1,i_kp_mq_s, &
+   !DEV_OMP &       i_pmq_bz,ig_pmq,i_pmq,i_pmq_s,i_pmq_t,mode_now, &
+   !DEV_OMP &       ig_W,iq_W,iq_W_s,iq_W_bz,iq_W_bz_mq,ig_W_mq,iq_W_mq,iq_W_s_mq,H_x,H_c, &
+   !DEV_OMP &       i_p_bz_last,i_k_bz_last,i_pmq_bz_last,i_kmq_bz_last, &
+   !DEV_OMP &       iq_W_bz_last,ig_W_last,iq_W_bz_mq_last,ig_W_mq_last, &
+   !DEV_OMP &       i_k_bz_mem,i_kmq_bz_mem,qindx_tmp,tddft_wf )
 #endif
    !
    call OPENMP_update(master_thread)   
@@ -446,8 +446,8 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
    i_p_bz_last=0   ; i_k_bz_last=0
    i_pmq_bz_last=0 ; i_kmq_bz_last=0
    !
-#if defined _OPENMP && ! defined _CUDA
-   !$omp do collapse(2), schedule(dynamic)
+#if defined _OPENMP
+   !DEV_OMP do collapse(2), schedule(dynamic)
 #endif
    do i_Tp=1,BS_T_grp(i_Tgrp_p)%size
      do i_Tk=1,BS_T_grp(i_Tgrp_k)%size
@@ -494,11 +494,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            i_p_bz_last=i_p_bz 
            i_k_bz_last=i_k_bz 
            if (i_k_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_p_bz,i_k_bz,qindx_ID_frag) 
              iq_W_bz=qindx_tmp(1) 
              ig_W   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz=qindx_B(i_p_bz,i_k_bz_mem,1) 
              ig_W   =qindx_B(i_p_bz,i_k_bz_mem,2) 
@@ -534,11 +534,11 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
            i_pmq_bz_last=i_pmq_bz 
            i_kmq_bz_last=i_kmq_bz 
            if (i_kmq_bz_mem==0) then 
-             !$omp critical 
+             !DEV_OMP critical 
              qindx_tmp=qindx_B_load(i_pmq_bz,i_kmq_bz,qindx_ID_frag) 
              iq_W_bz_mq=qindx_tmp(1) 
              ig_W_mq   =qindx_tmp(2) 
-             !$omp end critical 
+             !DEV_OMP end critical 
            else 
              iq_W_bz_mq=qindx_B(i_pmq_bz,i_kmq_bz_mem,1) 
              ig_W_mq   =qindx_B(i_pmq_bz,i_kmq_bz_mem,2) 
@@ -626,9 +626,9 @@ subroutine K(iq,Ken,Xk,q,X,Xw,W_bss)
        !
      enddo   ! i_Tk
    enddo     ! i_Tp
-#if defined _OPENMP && ! defined _CUDA
-   !$omp end do
-   !$omp end parallel
+#if defined _OPENMP
+   !DEV_OMP end do
+   !DEV_OMP end parallel
 #endif
    !
    if(BS_K_cutoff>0._SP) BS_max_val_CPU(myid+1)=maxval( (/BS_max_val_CPU(myid+1),abs(BS_blk(i_block)%mat(:,:))/) )

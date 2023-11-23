@@ -46,9 +46,7 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  !
  integer :: i_T_el,i_T_el_p,N_T_el_p,i_c,i_v,i_sp_c,i_sp_v,i_k_bz,i_k,i_s,i_g0,i_g1,i_g2,i_p_bz,i_g_p,i_p,&
 &           i_sp,i_T_el_last_with_identity_sym,i_T_grp_last_with_identity_sym,i_T_grp_p
-#ifdef _CUDA
-  complex(SP), pointer, device :: O_x_d(:,:),O_x_sym_d(:,:)
-#endif
+ complex(SP), pointer DEV_ATTR :: O_x_p(:,:),O_x_sym_p(:,:)
  !
  ! Oscillators already done ?
  !
@@ -63,19 +61,19 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
  call elemental_collision_free(K_EXCH_collision)
  call BS_oscillators_alloc(.TRUE.,i_T_grp,.FALSE.,0)
  !
-#if defined(__NOTNOW) && ! defined(_CUDA)
- !$omp parallel default(shared), private( K_EXCH_collision, &
- !$omp &        i_T_el,i_k_bz,i_k,i_s, i_p_bz,i_p,i_sp, i_v,i_c,i_sp_c,i_sp_v, &
- !$omp &        i_T_grp_last_with_identity_sym, i_T_el_last_with_identity_sym, &
- !$omp &        i_T_grp_p, N_T_el_p, i_T_el_p, i_g1, i_g2)
+#if defined(__NOTNOW)
+ !DEV_OMP parallel default(shared), private( K_EXCH_collision, &
+ !DEV_OMP &        i_T_el,i_k_bz,i_k,i_s, i_p_bz,i_p,i_sp, i_v,i_c,i_sp_c,i_sp_v, &
+ !DEV_OMP &        i_T_grp_last_with_identity_sym, i_T_el_last_with_identity_sym, &
+ !DEV_OMP &        i_T_grp_p, N_T_el_p, i_T_el_p, i_g1, i_g2)
 #endif
  !
  call OPENMP_update(master_thread)
  !
  call elemental_collision_alloc(K_EXCH_collision,NG=BS_n_g_exch,TITLE="EXCH_COLL")
  !
-#if defined(__NOTNOW) && ! defined(_CUDA)
- !$omp do schedule(dynamic)
+#if defined(__NOTNOW)
+ !DEV_OMP do schedule(dynamic)
 #endif
  T_loop: do i_T_el=1,BS_T_grp(i_T_grp)%size
    !
@@ -129,36 +127,24 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
        !
        call DEV_SUB(scatter_Bamp)(K_EXCH_collision)
        !
-#ifdef _CUDA
-       call devxlib_memcpy_d2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d,range1=(/2,BS_n_g_exch/) )
-#else
-       call devxlib_memcpy_h2h(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw,range1=(/2,BS_n_g_exch/) )
-#endif
+       call devxlib_memcpy_d2d( DEV_VAR(BS_T_grp(i_T_grp)%O_x)(:,i_T_el),&
+                                DEV_VAR(K_EXCH_collision%rhotw),range1=(/2,BS_n_g_exch/) )
        !
      else
        !
-#ifdef _CUDA
+       O_x_p     => DEV_VAR(BS_T_grp(i_T_grp)%O_x)
+       O_x_sym_p => DEV_VAR(BS_T_grp(i_T_grp_last_with_identity_sym)%O_x)
        !
-       O_x_d     => BS_T_grp(i_T_grp)%O_x_d
-       O_x_sym_d => BS_T_grp(i_T_grp_last_with_identity_sym)%O_x_d
-       !
-       !$cuf kernel do (1) <<<*,*>>>
+       !DEV_ACC data present(O_x_p,O_x_sym_p,g_rot,sop_inv)
+       !DEV_ACC parallel loop async
+       !DEV_CUF kernel do (1) <<<*,*>>>
+       !DEV_OMP parallel do default(shared), private(i_g1,i_g2)
        do i_g1=2,BS_n_g_exch
-         i_g2=g_rot_d(i_g1,sop_inv_d(i_s))
-         O_x_d(i_g1,i_T_el) = O_x_sym_d(i_g2,i_T_el_last_with_identity_sym)
+         i_g2=DEV_VAR(g_rot)(i_g1,DEV_VAR(sop_inv)(i_s))
+         O_x_p(i_g1,i_T_el) = O_x_sym_p(i_g2,i_T_el_last_with_identity_sym)
        enddo
+       !DEV_ACC end data
        !
-#else
-       !
-       !$omp parallel do default(shared), private(i_g1,i_g2)
-       do i_g1=2,BS_n_g_exch
-         i_g2=g_rot(i_g1,sop_inv(i_s))
-         BS_T_grp(i_T_grp)%O_x(i_g1,i_T_el)=&
-         & BS_T_grp(i_T_grp_last_with_identity_sym)%O_x(i_g2,i_T_el_last_with_identity_sym)
-       enddo
-       !$omp end parallel do
-       !
-#endif
        if (i_s>nsym/(i_time_rev+1)) call devxlib_conjg(BS_T_grp(i_T_grp)%DEV_VAR(O_x)(:,i_T_el),range1=(/2,BS_n_g_exch/) )
        !
      endif
@@ -172,22 +158,20 @@ subroutine K_exchange_collisions(iq,Xk,i_T_grp)
      if (STRING_match(BSE_L_kind,"full")) i_g0=1
      if (STRING_match(BSE_L_kind,"bar"))  i_g0=2
      !
-#ifdef _CUDA
-     call devxlib_memcpy_d2d(BS_T_grp(i_T_grp)%O_x_d(:,i_T_el),K_EXCH_collision%rhotw_d, range1=(/i_g0,BS_n_g_exch/))
-#else
-     call devxlib_memcpy_h2h(BS_T_grp(i_T_grp)%O_x(:,i_T_el),K_EXCH_collision%rhotw, range1=(/i_g0,BS_n_g_exch/))
-#endif
+     call devxlib_memcpy_d2d( DEV_VAR(BS_T_grp(i_T_grp)%O_x)(:,i_T_el), &
+&                             DEV_VAR(K_EXCH_collision%rhotw), range1=(/i_g0,BS_n_g_exch/))
      !
    endif
    !
  enddo T_loop
-#if defined(__NOTNOW) && ! defined(_CUDA)
- !$omp end do
+#if defined(__NOTNOW)
+ !DEV_OMP end do
 #endif
  !
  call elemental_collision_free(K_EXCH_collision) 
-#if defined(__NOTNOW) && ! defined(_CUDA)
- !$omp end parallel
+ !
+#if defined(__NOTNOW)
+ !DEV_OMP end parallel
 #endif
  !
  call timing('T_space EXX Osc.',OPR='stop')

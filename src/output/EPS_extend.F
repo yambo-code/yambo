@@ -20,7 +20,7 @@ logical function EPS_check(wv,nw,be_verbose,ordering)
  !
  EPS_check=.TRUE.
  !
- if (ordering=='Tr'.or.ordering=='Ta') then
+ if (ordering=="r".or.ordering=='Ra'.or.ordering=='Ta') then
    if (real(wv(1))<-real(wv(1))) then
      EPS_check=.FALSE.
      if (be_verbose) call warning(' [EPS_check] Impossible to extend EPS in the w<0 axis')

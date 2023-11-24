@@ -72,31 +72,6 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    endif
  endif
  !
- ! Is absorption (alpha or epsilon) proportional to chi
- !===================================
- !
- ! * In 3D Alpha and epsilon are proporitonal to Lbar
- !
- ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
- !   L(low_dim)=Lfull=Lbar in the V-> infinity volume
- !
- !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
- !     e.g. same situation of the 3D case
- !
- !   - If the cut-off is used Lfull is probably a better approximation to L(low_dim),
- !     e.g. opposite situation of the 3D case
- !
- ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
- ! e.g. it is proportional to epsilon. This is important without cut-off only
- !
- if (       l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"full")
- if ( .not. l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
- !
- ! However in general the difference with the coulomb cutoff is expected to be tiny.
- ! Advanced user can impose to change behaviour
- call parser('ImposeAlphaChiBar',l_flag)
- if (l_flag.and.l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
- !
  ! RES/ANTI-RES (q-dependent)
  !==============
  !

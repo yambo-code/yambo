@@ -63,8 +63,10 @@ module BS_solvers
  logical  :: BSS_Vnl_included
  logical  :: BSS_uses_GreenF
  logical  :: BSS_perturbative_width
- logical  :: l_resp_can_be_extended
- logical  :: l_abs_prop_chi_bse
+ logical  :: l_resp_can_be_extended=.TRUE.
+ logical  :: l_abs_prop_chi_bse=.TRUE.
+ logical  :: l_eels_can_be_computed=.TRUE.
+ logical  :: l_eels_from_inversion=.TRUE.
  logical  :: BSS_uses_pert_SOC=.FALSE.
  logical  :: run_Haydock=.FALSE.
  logical  :: run_inversion=.FALSE.

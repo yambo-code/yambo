@@ -12,7 +12,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
 &                         diam_term_exact,para_term_w0,l_resp_can_be_extended,l_abs_prop_chi_bse,&
-&                         Co_factor
+&                         l_eels_from_inversion,Co_factor
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling,&
 &                         l_BS_anomalous_Hall
  use stderr,         ONLY:STRING_match
@@ -42,7 +42,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
  &                    fac,diam_term_used(2),spectra_ij(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(2)
- logical           :: l_last_col,l_inv,l_hay,l_eels_from_inversion,l_eels_can_be_computed
+ logical           :: l_last_col,l_inv,l_hay,l_sle
  !
  if (STRING_match(WHAT,"open")) then
    !
@@ -65,19 +65,14 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    !
  endif
  !
- ! Either I'm forced to get the epsilon from extension + inversion
- ! or I want to get the epsilon from extension + inversion
- ! to account of G=0 term in  coupling mode
- ! Not needed if already in coupling mode
- ! Not possible with slepc
- l_eels_from_inversion= l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling"
- ! However in case of slepc this cannot be done
- l_eels_from_inversion=l_eels_from_inversion .and. .not.trim(solver)=="slepc"
- ! Here I'm ignoring the logical l_resp_can_be_inverted
- !l_eels_from_inversion=l_eels_from_inversion .and. .not.l_resp_can_be_extended
+ l_inv=STRING_match(WHAT,"Inversion")
+ l_hay=STRING_match(WHAT,"Haydock")
+ l_sle=STRING_match(WHAT,"Slepc")
+ l_last_col=l_inv.or.l_hay.and.(.not.K_diago_in_BS_mat)
  !
- ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
- l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
+ if(.not.l_last_col) n_resp=2
+ if(     l_last_col) n_resp=3
+ !
  !
  if (STRING_match(WHAT,"append"))    call X_OUTPUT_driver("append "//OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
@@ -93,13 +88,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call X_OUTPUT_driver("DESC "//OBS,DESC=FineGd_desc)
    call X_OUTPUT_driver("DESC "//OBS,DESC=BSS_desc)
  endif
- !
- l_inv=STRING_match(WHAT,"Inversion")
- l_hay=STRING_match(WHAT,"Haydock")
- l_last_col=l_inv.or.l_hay.and.(.not.K_diago_in_BS_mat)
- !
- if(.not.l_last_col) n_resp=2
- if(     l_last_col) n_resp=3
  !
  if (STRING_match(WHAT,"close").and..not.STRING_match(WHAT,"dump")) then
    call X_OUTPUT_driver("close "//OBS)
@@ -275,7 +263,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  ! EELS 
  !------
- if (X_do_obs("eel").and.l_eels_can_be_computed) then
+ if (X_do_obs("eel")) then
    !
    ! IP part
    !if (l_resp_can_be_extended) then

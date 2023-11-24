@@ -3,20 +3,21 @@
 !
 ! Copyright (C) 2021 The Yambo Team
 !
-! Authors (see AUTHORS file for details): AM
+! Authors (see AUTHORS file for details): AM DS
 !
 subroutine K_observables( W )
  !
 #if defined _SLEPC && !defined _NL
  use BS_solvers,   ONLY:run_Slepc
 #endif
- use drivers,      ONLY:l_rpa_IP
+ use drivers,      ONLY:l_rpa_IP,l_col_cut
  use frequency,    ONLY:w_samp
  use X_m,          ONLY:global_gauge
- use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,l_resp_can_be_extended
+ use BS_solvers,   ONLY:run_Haydock,run_inversion,run_Diago,BSS_mode,l_resp_can_be_extended,&
+&                       l_abs_prop_chi_bse,l_eels_can_be_computed,l_eels_from_inversion
  use BS,           ONLY:BS_dip_size,l_BS_anomalous_Hall,l_BS_abs,l_BS_jdos,l_BS_trace,BSE_prop,&
 &                       l_BS_esort,l_BS_kerr,l_BS_magnons,l_BS_dichroism,l_BS_anomalous_Hall,l_BS_photolum,&
-&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,BSE_mode
+&                       l_BS_optics,BS_dip_size,l_BS_magnons,l_BS_photolum,BSE_mode,BSE_L_kind
  use parser_m,     ONLY:parser
  use stderr,       ONLY:STRING_match
  use electrons,    ONLY:levels,n_sp_pol,n_spin
@@ -29,8 +30,9 @@ subroutine K_observables( W )
  !
  ! Work space
  !
- type(levels)  ::Ken
- character(2)      :: ordering
+ type(levels)  :: Ken
+ character(2)  :: ordering
+ logical       :: l_flag
  !
  ! What...
  !=========
@@ -90,10 +92,48 @@ subroutine K_observables( W )
    global_gauge="length"
  endif
  !
+ ! Is absorption (alpha or epsilon) proportional to chi
+ !===================================
+ !
+ ! * In 3D Alpha and epsilon are proporitonal to Lbar
+ !
+ ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
+ !   L(low_dim)=Lfull=Lbar in the V-> infinity volume
+ !
+ !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
+ !     e.g. same situation of the 3D case
+ !
+ !   - If the cut-off is used Lfull is probably a better approximation to L(low_dim),
+ !     e.g. opposite situation of the 3D case
+ !
+ ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
+ ! e.g. it is proportional to epsilon. This is important without cut-off only
+ !
+ if (       l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"full")
+ if ( .not. l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
+ !
+ ! However in general the difference with the coulomb cutoff is expected to be tiny.
+ ! Advanced user can impose to change behaviour
+ call parser('ImposeAlphaChiBar',l_flag)
+ if (l_flag.and.l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
+ !
  ! Check if eels can be evaluated
- !-------
  if (     trim(BSE_mode)=='resonant' ) ordering='r'
  if (.not.trim(BSE_mode)=='resonant' ) ordering='R'
  l_resp_can_be_extended=EPS_check(W%p,W%n_freqs,.TRUE.,ordering)
+ !
+ ! Either I'm forced to get the epsilon from extension + inversion
+ ! or I want to get the epsilon from extension + inversion
+ ! to account of G=0 term in  coupling mode
+ ! Not needed if already in coupling mode
+ ! Not possible with slepc
+ l_eels_from_inversion= (l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling")
+ ! Here I'm ignoring the logical l_resp_can_be_inverted
+ !l_eels_from_inversion=l_eels_from_inversion .and. .not.l_resp_can_be_extended
+ !
+ ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
+ l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
+ !
+ if (.not.l_eels_can_be_computed) call warning("EELs evaluation switched-off")
  !
 end subroutine

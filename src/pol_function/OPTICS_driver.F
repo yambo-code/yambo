@@ -209,7 +209,7 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  !
  complex(SP)      :: fac
  real(SP)         :: output_data(5),a_xc,b_xc
- logical          :: l_eels,l_alpha_prop_to_chi_full,l_eels_from_ext_eps
+ logical          :: l_ext_eps,l_alpha_prop_to_chi_full,l_eels_from_ext_eps
  integer          :: iw,n_data
  !
  logical,external :: EPS_check
@@ -231,12 +231,14 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  !   would obtained in the V --> infinity limit (to be checked)
  l_alpha_prop_to_chi_full=l_col_cut
  !
- ! Check if EELS can be evaluated
+ ! Check if EELS can be evaluated, e.g. if we are using only w>0 frequencies
  ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
- ! Not needed for "R" or "T" orderings. Used only for 3D materials now
- l_eels_from_ext_eps=.false.
- if (X_do_obs("eel")) l_eels_from_ext_eps=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
- l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels_from_ext_eps .and. l_3D
+ ! Not needed for "R" orderings. Used only for 3D materials now
+ l_ext_eps=.false.
+ if (X_do_obs("eel")) l_ext_eps=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+ !! l_ext_eps is for now ignored since  for back compatibility in the test-suite
+ !l_eels_from_ext_eps=.not.(trim(X%ordering)=='R') .and. l_ext_eps .and. l_3D
+ l_eels_from_ext_eps=.not.(trim(X%ordering)=='R') .and. l_3D
  !
  ! OutPut files...
  if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -306,10 +308,10 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
      !
      if(l_eels_from_ext_eps) then
        !
-       ! Yambo original version, I performer a double inversion
-       ! Via EPS_extend v_{G=0} is included in coupling mode regardless or the ordering
+       ! I performer a double inversion, plus KK to extend epsilon
+       ! Doing so, the v_{G=0} term is included in coupling mode regardless or the ordering
        !
-       EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+       EEL(:,2)=-spectra(:,2)/(spectra(:,2)+1._SP)
        call warning(" G=0 term accounted for in coupling mode for eels")
        call EPS_extend(wv%p,wv%n_freqs,.FALSE.,X%ordering,EEL(:,2),EEL(:,2))
        EEL(:,2)=-1._SP/(1._SP+EEL(:,2))

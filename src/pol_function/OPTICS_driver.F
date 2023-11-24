@@ -209,7 +209,7 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  !
  complex(SP)      :: fac
  real(SP)         :: output_data(5),a_xc,b_xc
- logical          :: l_eels,l_alpha_from_eps,l_eels_from_ext_eps
+ logical          :: l_eels,l_alpha_prop_to_chi_full,l_eels_from_ext_eps
  integer          :: iw,n_data
  !
  logical,external :: EPS_check
@@ -221,19 +221,22 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  ! Observables allocation
  call X_ALLOC_global("ALLOC",wv)
  !
- ! * Old Yambo implementation, needed without cut-off
- ! In 0D,1D,2D, eps=eels in the limit V--> infinity.
- ! However it is convinient to define alpha as proportional to epsilon
- ! since the latter converges faster to the V --> infinity limit
- ! * With coulomb cut-off eps=eels=1, and alpha is proportional to chi
- l_alpha_from_eps=.not.l_col_cut
+ ! In 0D,1D,2D, chi=chibar and eps=eels=1 in the limit V--> infinity
+ ! However we perform simulations at finite volume and there are differences
+ ! * Without cotoff (old yambo implementation)
+ !   it is convinient to define alpha as proportional to chibar
+ !   since the latter converges faster to the V --> infinity limit
+ ! * With coulomb cut-off the small difference should correctly describe
+ !   the effect of the region around G=0 of this integral which one
+ !   would obtained in the V --> infinity limit (to be checked)
+ l_alpha_prop_to_chi_full=l_col_cut
  !
  ! Check if EELS can be evaluated
  ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
  ! Not needed for "R" or "T" orderings. Used only for 3D materials now
- l_eels=.false.
- if (X_do_obs("eel")) l_eels=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
- l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels .and. l_3D
+ l_eels_from_ext_eps=.false.
+ if (X_do_obs("eel")) l_eels_from_ext_eps=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
+ l_eels_from_ext_eps=.not.(trim(X%ordering)=='T'.or.trim(X%ordering)=='R') .and. l_eels_from_ext_eps .and. l_3D
  !
  ! OutPut files...
  if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)
@@ -251,7 +254,7 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  if (l_bs_fxc) call X_OUTPUT_messages(iq,MORE="FXC_size")
  !
  ! Epsilon. This is always the 3D one
- Epsilon_ii(:,1)=spectra(:,1)+1._SP
+ if (X_do_obs("eps")) Epsilon_ii(:,1)=spectra(:,1)+1._SP
  !
  ! Alpha
  if (X_do_obs("alpha")) Alpha(:,1)=spectra(:,1)/4._SP/pi
@@ -268,17 +271,19 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  endif
  !
  if (     l_rpa_IP) then
-   Epsilon_ii(:,2)=Epsilon_ii(:,1)
-   if(X_do_obs("alpha")) Alpha(:,2)=Alpha(:,1)
-   if(X_do_obs("eel")) EEL(:,2) = EEL(:,1)
+   if (X_do_obs("eps"))   Epsilon_ii(:,2)=Epsilon_ii(:,1)
+   if (X_do_obs("alpha")) Alpha(:,2)=Alpha(:,1)
+   if (X_do_obs("eel"))   EEL(:,2) = EEL(:,1)
  else
    !
    ! Epsilon. Procedure to get epsilon from Lfull
-   Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+   if (X_do_obs("eps")) then 
+     Epsilon_ii(:,2)=1._SP-spectra(:,2)/(spectra(:,2)+1._SP)!*fac
+   endif
    !
    ! Alpha
    if (X_do_obs("alpha")) then 
-     if (.not.l_alpha_from_eps) then
+     if (l_alpha_prop_to_chi_full) then
        ! Alpha proportional to Lfull
        Alpha(:,2)=spectra(:,2)
        ! Maybe we could extend Alpha ??
@@ -297,7 +302,6 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
      Alpha(:,2)=Alpha(:,2)*fac/4._SP/pi
    endif
    !
-   ! EEL: TO FIX EEL as function of dimensions
    if (X_do_obs("eel")) then
      !
      if(l_eels_from_ext_eps) then
@@ -315,10 +319,6 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
        ! eels proportional to Lfull as it is computed
        !
        EEL(:,2)=-(spectra(:,2)+1._SP)
-       !if(l_3D) EEL(:,2)=1._SP-spectra(:,2)
-       !if(l_2D) EEL(:,2)=1._SP-spectra(:,2)
-       !if(l_1D) EEL(:,2)=-spectra(:,2)
-       ! In 0D EEL X_do_obs("eel") is set to falso by X_output_driver 
        !
      endif
      !

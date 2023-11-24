@@ -11,9 +11,9 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  use electrons,    ONLY:levels,n_sp_pol,n_spinor
  use parser_m,     ONLY:parser
  use parallel_m,   ONLY:PARALLEL_default_mode
- use stderr,       ONLY:STRING_match,STRING_same
- use BS_solvers,   ONLY:BSS_eels_to_eps,BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
-&                       l_ab_from_resp,BSS_slepc_double_grp
+ use stderr,       ONLY:STRING_match
+ use BS_solvers,   ONLY:BSS_mode,BSS_slepc_matrix,BSS_uses_DbGd,&
+&                       l_abs_prop_chi_bse,BSS_slepc_double_grp
  use BS,           ONLY:BSE_L_kind,BSE_mode,BS_K_is_ALDA,BS_dip_size,l_BSE_minimize_memory,BS_perturbative_SOC,&
 &                       BS_perturbative_SOC,l_BS_magnons,l_BS_photolum,&
 &                       BS_cpl_K_exchange,BS_n_g_exch,BS_res_K_exchange,BS_K_coupling,BS_res_ares_n_mat,&
@@ -48,7 +48,7 @@ subroutine K_driver_init(what,iq,Ken,Xk)
  if (l_col_cut) then
    ! We are here in 0D, 1D or 2D
    ! The G=0 term included in L-full is representative
-   ! one portion of the line (2D) / plane (1D) / volume (0D)  around G=0
+   ! of the portion of the line (2D) / plane (1D) / volume (0D)  around G=0
    ! which contributes to the L-T splitting.
    ! Such term goes to zero as the volume goes to infinity.
    if (iq==1) then
@@ -72,38 +72,30 @@ subroutine K_driver_init(what,iq,Ken,Xk)
    endif
  endif
  !
- !if (STRING_match(BSE_L_kind,"full").and.(STRING_match(BSE_mode,'causal').or.STRING_match(BSE_mode,'retarded'))) then
- !  call warning(' Lkind=full with retarded leads to bad epsilon. Use either resonant or coupling. Setting resonant. ')
- !  BSE_mode="resonant"
- !endif
- !
- ! Need to convert eels to epsilon ?
+ ! Is absorption (alpha or epsilon) proportional to chi
  !===================================
  !
- ! If the system is 3D eps/=eps^-1
- ! In case I compute L-full I need to invert the response function
- if (l_3D)      BSS_eels_to_eps=STRING_match(BSE_L_kind,"full")
- !
- ! If the system is 2D, 1D or 0D eps=eps^-1=1 and it makes no sense to print the two
- if (l_col_cut) BSS_eels_to_eps=.false.
- !
- ! * In 3D Alpha is proporitonal to Lbar, e.g. to epsilon
+ ! * In 3D Alpha and epsilon are proporitonal to Lbar
  !
  ! * In 2D, 1D, and 0D Alpha is proportional to L(low_dim), where
- !   L(low_dim)=Lfull=Lbar since the two are equal in the V-> infinity volume
+ !   L(low_dim)=Lfull=Lbar in the V-> infinity volume
  !
  !   - If the cut-off is not used Lbar is a better approximation to L(low_dim)
  !     e.g. same situation of the 3D case
  !
- !   - If the cut-off is used maybe Lfull is better, but in general the
- !     difference is expected to be tiny. The code will always use that
- !     Alpha is proporional to L(computed), and the user can check he differences
+ !   - If the cut-off is used Lfull is probably a better approximation to L(low_dim),
+ !     e.g. opposite situation of the 3D case
  !
  ! Thus, overall, only without the coulomb cutoff Alpha il proporional to Lbar,
- ! e.g. it is proportional to epsilon. This is important in 3D only
+ ! e.g. it is proportional to epsilon. This is important without cut-off only
  !
- l_ab_from_resp=.true.
- if ( .not. l_col_cut) l_ab_from_resp=STRING_same(BSE_L_kind,"bar")
+ if (       l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"full")
+ if ( .not. l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
+ !
+ ! However in general the difference with the coulomb cutoff is expected to be tiny.
+ ! Advanced user can impose to change behaviour
+ call parser('ImposeAlphaChiBar',l_flag)
+ if (l_flag.and.l_col_cut) l_abs_prop_chi_bse=STRING_match(BSE_L_kind,"bar")
  !
  ! RES/ANTI-RES (q-dependent)
  !==============

@@ -8,7 +8,7 @@
 subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
  !
  use pars,          ONLY:schlen,SP
- use D_lattice,     ONLY:l_0D
+ use D_lattice,     ONLY:l_0D,l_1D,l_2D
  use X_m,           ONLY:X_obs,N_X_obs,alpha_dim,X_obs_onoff,X_do_obs
  use drivers,       ONLY:l_chi,l_optics,l_bs_fxc
  use electrons,     ONLY:n_spinor
@@ -63,7 +63,7 @@ subroutine X_OUTPUT_driver(WHAT,keys,solver,IQ,IG,DESC,data)
    !
    ! Check if EELS has to be evaluated
    if (X_do_obs("eps")) call X_obs_onoff("+ eel")
-   if (l_0D) call X_obs_onoff("- eel")
+   if (l_0D.or.l_1D.or.l_2D) call X_obs_onoff("- eel eps")
    if (BS_K_anti_resonant.and..not.BS_K_coupling) then
      call warning("Anti-Resonant kernel but no coupling: EELs evaluation switched-off")
    endif

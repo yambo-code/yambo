@@ -11,7 +11,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  use drivers,        ONLY:l_col_cut
  use frequency,      ONLY:w_samp
  use BS_solvers,     ONLY:BSS_desc,BSS_uses_GreenF,BSS_Vnl_included,BSS_n_freqs,K_diago_in_BS_mat,A_drude,B_Hall,&
-&                         diam_term_exact,para_term_w0,l_eps_res_ares,l_ab_from_resp,BSS_eels_to_eps,&
+&                         diam_term_exact,para_term_w0,l_resp_can_be_extended,l_abs_prop_chi_bse,&
 &                         Co_factor
  use BS,             ONLY:BSE_mode,BS_K_is_ALDA,BS_dip_size,BS_H_dim,BS_K_coupling,&
 &                         l_BS_anomalous_Hall
@@ -42,7 +42,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  complex(SP)       :: hall(3,2),tmp_var(BSS_n_freqs,3),spectra(BSS_n_freqs,3),&
  &                    fac,diam_term_used(2),spectra_ij(BSS_n_freqs,3)
  real(SP)          :: data_sort(N_BS_E_sorted+1),nel_diam(2)
- logical           :: l_last_col
+ logical           :: l_last_col,l_inv,l_hay,l_eels_from_inversion,l_eels_can_be_computed
  !
  if (STRING_match(WHAT,"open")) then
    !
@@ -61,13 +61,23 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    endif
    call X_OUTPUT_driver(WHAT="keys"//OBS,IQ=iq,IG=i_G_shift,keys=trim(out_string))
    !
-   ! If epsilon is not evaluated or extendable to the negative axis, eels is not evaluated
-   ! This is not really needed and could be removed with just a warning
-   if (X_do_obs("eel")   .and. .not.l_eps_res_ares     ) call X_obs_onoff("- eel")
-   !
    call X_OUTPUT_driver("open "//OBS)
    !
  endif
+ !
+ ! Either I'm forced to get the epsilon from extension + inversion
+ ! or I want to get the epsilon from extension + inversion
+ ! to account of G=0 term in  coupling mode
+ ! Not needed if already in coupling mode
+ ! Not possible with slepc
+ l_eels_from_inversion= l_abs_prop_chi_bse .or. .not.trim(BSE_mode)=="coupling"
+ ! However in case of slepc this cannot be done
+ l_eels_from_inversion=l_eels_from_inversion .and. .not.trim(solver)=="slepc"
+ ! Here I'm ignoring the logical l_resp_can_be_inverted
+ !l_eels_from_inversion=l_eels_from_inversion .and. .not.l_resp_can_be_extended
+ !
+ ! If I cannot get the eels from the inversion and I'm in Lbar case I'm in troubles
+ l_eels_can_be_computed = l_eels_from_inversion .or. .not.l_abs_prop_chi_bse
  !
  if (STRING_match(WHAT,"append"))    call X_OUTPUT_driver("append "//OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
@@ -84,9 +94,12 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    call X_OUTPUT_driver("DESC "//OBS,DESC=BSS_desc)
  endif
  !
- l_last_col=STRING_match(WHAT,"Haydock").or.( STRING_match(WHAT,"Inversion").and..not.K_diago_in_BS_mat)
- n_resp=2
- if(l_last_col) n_resp=3
+ l_inv=STRING_match(WHAT,"Inversion")
+ l_hay=STRING_match(WHAT,"Haydock")
+ l_last_col=l_inv.or.l_hay.and.(.not.K_diago_in_BS_mat)
+ !
+ if(.not.l_last_col) n_resp=2
+ if(     l_last_col) n_resp=3
  !
  if (STRING_match(WHAT,"close").and..not.STRING_match(WHAT,"dump")) then
    call X_OUTPUT_driver("close "//OBS)
@@ -100,6 +113,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
    fac=eps_2_alpha/4._SP/pi
    if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
    !
+   ! Resp = -vX
    do i_rsp=1,n_resp
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
      spectra(:,i_rsp)=Resp_ii(:,i_rsp+1)
@@ -139,16 +153,16 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("eps")) then
    !
-   ! Resp = -vX
-   Epsilon_ii(:,2:n_resp+1)= spectra(:,1:n_resp)
+   ! IP part is always proportional to Xo
+   Epsilon_ii(:,3)=spectra(:,2)
+   if (l_last_col.and.l_inv) Epsilon_ii(:,4)=spectra(:,3)
    !
-   ! In case the response function contains Lfull
-   ! and I need to invert it to get epsilon.
-   ! Warning, this procedure holds as long as epsilon is diagonal
-   if (BSS_eels_to_eps) then
-     Epsilon_ii(:,2)=spectra(:,1)/(1._SP-spectra(:,1))
-     if(l_last_col.and.trim(solver)=="haydock") &
-     & Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
+   ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
+   if (.not.l_abs_prop_chi_bse) Epsilon_ii(:,2)=spectra(:,1)/(1._SP-spectra(:,1))
+   if (     l_abs_prop_chi_bse) Epsilon_ii(:,2)=spectra(:,1)
+   if (l_last_col .and. l_hay) then
+     if (.not.l_abs_prop_chi_bse) Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
+     if (     l_abs_prop_chi_bse) Epsilon_ii(:,4)=spectra(:,3)
    endif
    !
    tmp_var=cZERO
@@ -164,8 +178,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      tmp_var(:,1)=A_drude(2)/W%p(:)**2
      tmp_var(:,2)=A_drude(1)/W%p(:)**2
      if(l_last_col) then
-       if(trim(solver)=="haydock")   tmp_var(:,3)=tmp_var(:,1)
-       if(trim(solver)=="inversion") tmp_var(:,3)=tmp_var(:,2)
+       if(l_hay) tmp_var(:,3)=tmp_var(:,1)
+       if(l_inv) tmp_var(:,3)=tmp_var(:,2)
      endif
    endif
    !
@@ -204,8 +218,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
      tmp_var(:,1)=B_Hall(2)/W%p(:)
      tmp_var(:,2)=B_Hall(1)/W%p(:)
      if(l_last_col) then
-       if(trim(solver)=="haydock")   tmp_var(:,3)=tmp_var(:,1)
-       if(trim(solver)=="inversion") tmp_var(:,3)=tmp_var(:,2)
+       if(l_hay) tmp_var(:,3)=tmp_var(:,1)
+       if(l_inv) tmp_var(:,3)=tmp_var(:,2)
      endif
      !
      Epsilon_ij(:,2:n_resp+1)=Epsilon_ij(:,2:n_resp+1)+tmp_var(:,1:n_resp)
@@ -236,12 +250,17 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !----------------
  if (X_do_obs("alpha")) then
    !
-   tmp_var(:,1:n_resp)=spectra(:,1:n_resp)
+   ! IP part
+   tmp_var(:,2)=spectra(:,2)
+   if (l_last_col .and. l_inv) tmp_var(:,3)=spectra(:,3)
    !
-   ! Here Resp contains Lfull, but I want alpha proportional to Lbar
-   ! I'm in the case without Coulomb cutoff
-   ! Warning, this procedure holds as long as epsilon is diagonal
-   if (.not.l_ab_from_resp) tmp_var(:,1)=-tmp_var(:,1)/(tmp_var(:,1)+1._SP)
+   ! BSE_part
+   if (.not.l_abs_prop_chi_bse) tmp_var(:,1)=spectra(:,1)/(spectra(:,1)+1._SP)
+   if (     l_abs_prop_chi_bse) tmp_var(:,1)=spectra(:,1)
+   if (l_last_col .and. l_hay) then
+     if (.not.l_abs_prop_chi_bse) tmp_var(:,3)=spectra(:,3)/(spectra(:,3)+1._SP)
+     if (     l_abs_prop_chi_bse) tmp_var(:,3)=spectra(:,3)
+   endif
    !
    tmp_var=tmp_var*fac
    call ELEMENTAL_dump("alpha",tmp_var)
@@ -256,17 +275,31 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  ! EELS 
  !------
- if (X_do_obs("eel")) then
+ if (X_do_obs("eel").and.l_eels_can_be_computed) then
    !
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),tmp_var(:,1))
-   call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
-   if (l_last_col) call EPS_extend(Epsilon_ii(:,1),BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),tmp_var(:,3))
+   ! IP part
+   !if (l_resp_can_be_extended) then
+   !  call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
+   !else
+   !  tmp_var(:,2)=Epsilon_ii(:,3)
+   !endif
+   call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
+   tmp_var(:,2)= -1._SP/(tmp_var(:,2)+1._SP)
+   if(l_last_col .and. l_inv) then
+     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),tmp_var(:,3))
+     tmp_var(:,3)= -1._SP/(tmp_var(:,3)+1._SP)
+   endif
    !
-   tmp_var= -1._SP/(tmp_var+1._SP)
-   !if(l_3D) spectra= -1._SP/(eps+1._SP)
-   !if(l_2D) spectra= -1._SP/(eps+1._SP)
-   !if(l_1D) spectra= -1._SP/(eps+1._SP)
+   ! BSE part
+   if (l_eels_from_inversion ) then
+     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),tmp_var(:,1))
+     tmp_var(:,1)= -1._SP/(tmp_var(:,1)+1._SP)
+   else
+     tmp_var(:,1)=spectra(:,1)
+     if(l_last_col.and.l_hay) tmp_var(:,3)=spectra(:,3)
+   endif
    call ELEMENTAL_dump("eel",tmp_var)
+   !
  endif
  !
  !  DICHROISM

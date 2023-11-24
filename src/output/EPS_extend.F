@@ -20,7 +20,7 @@ logical function EPS_check(wv,nw,be_verbose,ordering)
  !
  EPS_check=.TRUE.
  !
- if (ordering=="r".or.ordering=='Ra'.or.ordering=='Ta'.or.ordering=="T") then
+ if (ordering=="r".or.ordering=='Ra'.or.ordering=='Ta') then
    if (real(wv(1))<0._SP) then
      EPS_check=.FALSE.
      if (be_verbose) call warning(' [EPS_check] Impossible to extend EPS in the w<0 axis')
@@ -54,7 +54,7 @@ subroutine EPS_extend(wv,nw,be_verbose,ordering,eps,eps_extended)
  integer            :: iw
  complex(SP)        :: eps_kk(nw),wv_kk(nw)
  !
- if (trim(ordering)=='R') then
+ if (trim(ordering)=='R'.or.trim(ordering)=="T") then
    eps_extended=eps
    return
  endif

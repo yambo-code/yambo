@@ -233,12 +233,12 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  !
  ! Check if EELS can be evaluated, e.g. if we are using only w>0 frequencies
  ! This allows to include the v_{G=0} term with coupling also for "r" or "a" orderings.
- ! Not needed for "R" orderings. Used only for 3D materials now
+ ! Not needed for "T" or  "R" orderings. Used only for 3D materials now
  l_ext_eps=.false.
  if (X_do_obs("eel")) l_ext_eps=EPS_check(wv%p,wv%n_freqs,.TRUE.,X%ordering)
  !! l_ext_eps is for now ignored since  for back compatibility in the test-suite
- !l_eels_from_ext_eps=.not.(trim(X%ordering)=='R') .and. l_ext_eps .and. l_3D
- l_eels_from_ext_eps=.not.(trim(X%ordering)=='R') .and. l_3D
+ !l_eels_from_ext_eps=.not.(trim(X%ordering)=='R'.or.trim(X%ordering)=="T") .and. l_ext_eps .and. l_3D
+ l_eels_from_ext_eps=.not.(trim(X%ordering)=='R'.or.trim(X%ordering)=="T") .and. l_3D
  !
  ! OutPut files...
  if (.not.l_rpa_IP) call X_OUTPUT_driver("keys ALL",IQ=iq,keys="inv "//trim(FXC_type)//" dyson",IG=i_G_shift)

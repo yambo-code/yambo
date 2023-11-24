@@ -96,7 +96,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !
  if (.not.STRING_match(WHAT,"dump")) return
  !
- if (X_do_obs("eps").or.X_do_obs("Alpha")) then
+ if (X_do_obs("eps").or.X_do_obs("Alpha").or.X_do_obs("eel")) then
    !
    fac=eps_2_alpha/4._SP/pi
    if (l_col_cut) fac=fac*bare_qpg(iq,i_G_shift)**2/Q_plus_G_sq_modulus
@@ -265,26 +265,25 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------
  if (X_do_obs("eel")) then
    !
+   tmp_var(:,1:n_resp)=spectra(:,1:n_resp)
+   !
    ! IP part
    !if (l_resp_can_be_extended) then
-   !  call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
-   !else
-   !  tmp_var(:,2)=Epsilon_ii(:,3)
-   !endif
-   call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,3),tmp_var(:,2))
+   call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,2),tmp_var(:,2))
    tmp_var(:,2)= -1._SP/(tmp_var(:,2)+1._SP)
    if(l_last_col .and. l_inv) then
-     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,4),tmp_var(:,3))
+     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,3),tmp_var(:,3))
      tmp_var(:,3)= -1._SP/(tmp_var(:,3)+1._SP)
    endif
    !
    ! BSE part
-   if (l_eels_from_inversion ) then
-     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,Epsilon_ii(:,2),tmp_var(:,1))
+   if (l_eels_from_inversion .and. .not. l_sle ) then
+     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,1),tmp_var(:,1))
      tmp_var(:,1)= -1._SP/(tmp_var(:,1)+1._SP)
-   else
-     tmp_var(:,1)=spectra(:,1)
-     if(l_last_col.and.l_hay) tmp_var(:,3)=spectra(:,3)
+     if(l_last_col.and.l_hay) then
+       call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,3),tmp_var(:,3))
+       tmp_var(:,3)= -1._SP/(tmp_var(:,3)+1._SP)
+     endif
    endif
    call ELEMENTAL_dump("eel",tmp_var)
    !

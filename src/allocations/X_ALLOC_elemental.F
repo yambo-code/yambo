@@ -27,12 +27,12 @@ subroutine X_ALLOC_elemental(WHAT,DIM)
      if (allocated(Resp_ii)) return
      YAMBO_ALLOC(Resp_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
      Resp_ii   = cZERO
+     YAMBO_ALLOC(X_drude_term,(DIM(1)))
+     X_drude_term = cZERO
    case('EPS')
      if (allocated(Epsilon_ii)) return
      YAMBO_ALLOC(Epsilon_ii,(DIM(1),DIM(2))) !2(int)3(nonint)4(n-1 Haydock/inv shifted)
-     YAMBO_ALLOC(X_drude_term,(DIM(1)))
      Epsilon_ii   = cZERO
-     X_drude_term = cZERO
    case('OFF')
      if (allocated(Resp_ij)) return
      YAMBO_ALLOC(Resp_ij,(DIM(1),DIM(2)))

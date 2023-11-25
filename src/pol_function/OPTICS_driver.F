@@ -353,11 +353,13 @@ subroutine X_macroscopic_quantities(iq,Xen,Xk,wv,X,spectra)
  if (.not.l_rpa_IP) n_data=5
  !
  ! Epsilon output
- do iw=1,wv%n_freqs
-   output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
-&                aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
-   call X_OUTPUT_driver("WRITE eps",data=output_data(:n_data))
- enddo
+ if (X_do_obs("eps")) then 
+   do iw=1,wv%n_freqs
+     output_data=(/real(wv%p(iw)),aimag(Epsilon_ii(iw,2)),real(Epsilon_ii(iw,2)),&
+&                  aimag(Epsilon_ii(iw,1)),real(Epsilon_ii(iw,1))/)
+     call X_OUTPUT_driver("WRITE eps",data=output_data(:n_data))
+   enddo
+ endif
  !
  ! Alpha output
  if (X_do_obs("alpha")) then 

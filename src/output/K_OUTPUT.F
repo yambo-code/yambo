@@ -73,7 +73,6 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  if(.not.l_last_col) n_resp=2
  if(     l_last_col) n_resp=3
  !
- !
  if (STRING_match(WHAT,"append"))    call X_OUTPUT_driver("append "//OBS)
  if (STRING_match(WHAT,"override"))  call X_OUTPUT_driver("override "//OBS)
  !
@@ -141,17 +140,7 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  !------------
  if (X_do_obs("eps")) then
    !
-   ! IP part is always proportional to Xo
-   Epsilon_ii(:,3)=spectra(:,2)
-   if (l_last_col.and.l_inv) Epsilon_ii(:,4)=spectra(:,3)
-   !
-   ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
-   if (.not.l_abs_prop_chi_bse) Epsilon_ii(:,2)=spectra(:,1)/(1._SP-spectra(:,1))
-   if (     l_abs_prop_chi_bse) Epsilon_ii(:,2)=spectra(:,1)
-   if (l_last_col .and. l_hay) then
-     if (.not.l_abs_prop_chi_bse) Epsilon_ii(:,4)=spectra(:,3)/(1._SP-spectra(:,3))
-     if (     l_abs_prop_chi_bse) Epsilon_ii(:,4)=spectra(:,3)
-   endif
+   call get_from_Lbar_or_Lfull_inverted(Epsilon_ii(:,2:4),spectra)
    !
    tmp_var=cZERO
    ! ... Drude term (if l_drude is computed previously by X_drude call in K_IP.F)
@@ -237,19 +226,9 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! POLARIZABILITY
  !----------------
  if (X_do_obs("alpha")) then
-   !
-   ! IP part
-   tmp_var(:,2)=spectra(:,2)
-   if (l_last_col .and. l_inv) tmp_var(:,3)=spectra(:,3)
-   !
-   ! BSE_part
-   if (.not.l_abs_prop_chi_bse) tmp_var(:,1)=spectra(:,1)/(spectra(:,1)+1._SP)
-   if (     l_abs_prop_chi_bse) tmp_var(:,1)=spectra(:,1)
-   if (l_last_col .and. l_hay) then
-     if (.not.l_abs_prop_chi_bse) tmp_var(:,3)=spectra(:,3)/(spectra(:,3)+1._SP)
-     if (     l_abs_prop_chi_bse) tmp_var(:,3)=spectra(:,3)
-   endif
-   !
+   ! WARNING: case with flag ImposeAlphaChiBar from input to be fixed
+   if(.not.l_col_cut) call get_from_Lbar_or_Lfull_inverted(tmp_var,spectra)
+   if(     l_col_cut) call get_from_Lfull_or_Lbar_inverted(tmp_var,spectra)
    tmp_var=tmp_var*fac
    call ELEMENTAL_dump("alpha",tmp_var)
  endif
@@ -264,29 +243,8 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
  ! EELS 
  !------
  if (X_do_obs("eel")) then
-   !
-   tmp_var(:,1:n_resp)=spectra(:,1:n_resp)
-   !
-   ! IP part
-   !if (l_resp_can_be_extended) then
-   call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,2),tmp_var(:,2))
-   tmp_var(:,2)= -1._SP/(tmp_var(:,2)+1._SP)
-   if(l_last_col .and. l_inv) then
-     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,3),tmp_var(:,3))
-     tmp_var(:,3)= -1._SP/(tmp_var(:,3)+1._SP)
-   endif
-   !
-   ! BSE part
-   if (l_eels_from_inversion .and. .not. l_sle ) then
-     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,1),tmp_var(:,1))
-     tmp_var(:,1)= -1._SP/(tmp_var(:,1)+1._SP)
-     if(l_last_col.and.l_hay) then
-       call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,tmp_var(:,3),tmp_var(:,3))
-       tmp_var(:,3)= -1._SP/(tmp_var(:,3)+1._SP)
-     endif
-   endif
+   call get_eel_from_spectra(tmp_var,spectra)
    call ELEMENTAL_dump("eel",tmp_var)
-   !
  endif
  !
  !  DICHROISM
@@ -377,6 +335,76 @@ subroutine K_OUTPUT(iq,W,WHAT,OBS)
          if (     l_last_col) call X_OUTPUT_driver("WRITE "//OBS_local,data=data(:7))
        endif
      enddo
-   end subroutine
+   end subroutine ELEMENTAL_dump
+   !
+   !
+   subroutine get_from_Lbar_or_Lfull_inverted(spec_o,spec_i)
+     !
+     complex(SP), intent(in)  :: spec_i(BSS_n_freqs,3)
+     complex(SP), intent(out) :: spec_o(BSS_n_freqs,3)
+     !
+     ! IP part is always proportional to Xo
+     spec_o(:,2)= spec_i(:,2)
+     if (l_last_col.and.l_inv) spec_o(:,3)= spec_i(:,3)
+     !
+     ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
+     if (.not.l_abs_prop_chi_bse) spec_o(:,1)=-spec_i(:,1)/(spec_i(:,1)-1._SP)
+     if (     l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)
+     if (l_last_col .and. l_hay) then
+       if (.not.l_abs_prop_chi_bse) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)-1._SP)
+       if (     l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)
+     endif
+     !
+   end subroutine get_from_Lbar_or_Lfull_inverted
+   !
+   !
+   subroutine get_from_Lfull_or_Lbar_inverted(spec_o,spec_i)
+     !
+     complex(SP), intent(in)  :: spec_i(BSS_n_freqs,3)
+     complex(SP), intent(out) :: spec_o(BSS_n_freqs,3)
+     !
+     ! IP part is always proportional to Xo/(Xo+1._SP)
+     ! To discuss and agree what to put here
+     spec_o(:,2)=-spec_i(:,2)/(spec_i(:,2)+1._SP)
+     if (l_last_col.and.l_inv) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)+1._SP)
+     !
+     ! BSE_part, equations depends if Lbse contasin Lfull or Lbar
+     if (.not.l_abs_prop_chi_bse) spec_o(:,1)=-spec_i(:,1)/(spec_i(:,1)+1._SP)
+     if (     l_abs_prop_chi_bse) spec_o(:,1)= spec_i(:,1)
+     if (l_last_col .and. l_hay) then
+       if (.not.l_abs_prop_chi_bse) spec_o(:,3)=-spec_i(:,3)/(spec_i(:,3)+1._SP)
+       if (     l_abs_prop_chi_bse) spec_o(:,3)= spec_i(:,3)
+     endif
+     !
+   end subroutine get_from_Lfull_or_Lbar_inverted
+   !
+   !
+   subroutine get_eel_from_spectra(spec_o,spec_i)
+     !
+     complex(SP), intent(in)  :: spec_i(BSS_n_freqs,3)
+     complex(SP), intent(out) :: spec_o(BSS_n_freqs,3)
+     !
+     spec_o(:,1:n_resp)=spec_i(:,1:n_resp)
+     !
+     ! IP part
+     !if (l_resp_can_be_extended) then
+     call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,spec_o(:,2),spec_o(:,2))
+     spec_o(:,2)= -1._SP/(spec_o(:,2)+1._SP)
+     if(l_last_col .and. l_inv) then
+       call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,spec_o(:,3),spec_o(:,3))
+       spec_o(:,3)= -1._SP/(spec_o(:,3)+1._SP)
+     endif
+     !
+     ! BSE part
+     if (l_eels_from_inversion .and. .not. l_sle ) then
+       call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,spec_o(:,1),spec_o(:,1))
+       spec_o(:,1)= -1._SP/(spec_o(:,1)+1._SP)
+       if(l_last_col.and.l_hay) then
+         call EPS_extend(W%p,BSS_n_freqs,.FALSE.,ordering,spec_o(:,3),spec_o(:,3))
+         spec_o(:,3)= -1._SP/(spec_o(:,3)+1._SP)
+       endif
+     endif
+     !
+   end subroutine get_eel_from_spectra
    !
 end subroutine
